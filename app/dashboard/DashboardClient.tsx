@@ -42,7 +42,7 @@ function warmDashboardRoleTools(role: DashboardRole) {
   const tools = role === "dancer"
     ? [import("./DancerNfcPanel"), import("./DancerShiftManager")]
     : role === "venue"
-      ? [import("./VenueNfcTagPanel"), import("./VenueTeamPanel"), import("./VenueTvPanel")]
+      ? [import("./VenueDashboardPanels")]
       : [];
   // Warming must never block authentication or private data loading. React's
   // dynamic component still owns rendering and normal chunk error handling.
@@ -120,7 +120,7 @@ export default function DashboardClient({
     function requestOptionalPanel<T>(path: string, fallback: T) {
       return requestOptionalDashboardJson(path, fallback, {
         signal: controller.signal,
-        timeoutMs: role === "customer" ? 8000 : undefined,
+        timeoutMs: 8000,
       });
     }
 
@@ -188,16 +188,15 @@ export default function DashboardClient({
       }
 
       const loadDashboardPanels = async () => {
-        return Promise.all([
-          requestOptionalPanel("/api/venue/profile", { profile: null }),
-          requestOptionalPanel("/api/venue/dashboard?period=30d", {}),
-          requestOptionalPanel("/api/support", { threads: [] }),
-        ]);
+        return requestDashboardJson("/api/venue/dashboard?view=summary", {
+          cache: "no-store", expectedRole: "venue", signal: controller.signal, timeoutMs: 15000,
+          fallbackMessage: "Unable to load your venue.",
+        });
       };
 
       try {
         const accountRequest = requestAccountJson({
-          cache: "no-store", fallbackMessage: "Unable to load account.", signal: controller.signal,
+          cache: "no-store", fallbackMessage: "Unable to load account.", signal: controller.signal, timeoutMs: 15000,
         });
         // Refresh expiring credentials once before starting concurrent reads.
         if (!storedSessionIsFresh(session)) await accountRequest;
@@ -222,42 +221,34 @@ export default function DashboardClient({
         if (cancelled) return;
         const requestStatus = requestResult.data;
         if (requestStatus.request && requestStatus.request.status !== "approved") {
+          setState({ account: account.account, venueRequest: requestStatus.request });
+          setIsLoading(false);
           const support = await requestOptionalPanel("/api/support", { threads: [] });
           if (cancelled) return;
-          setState({ account: account.account, venueRequest: requestStatus.request, supportThreads: support.threads || [] });
-          setIsLoading(false);
+          setState((current) => ({ ...current, supportThreads: support.threads || [] }));
           return;
         }
-        const [panels, agentAccess] = await Promise.all([
-          loadDashboardPanels(),
-          requestOptionalPanel("/api/agent/commissions?access=1", { access: { active: false } }),
+        await Promise.all([
+          loadDashboardPanels().then((summary) => {
+            if (cancelled) return;
+            setState((current) => ({
+              ...current, account: account.account, profile: summary.profile,
+              deal: summary.deal || null,
+              venueDeals: Array.isArray(summary.deals) ? summary.deals : [],
+              venueAccess: summary.venueAccess || null,
+              publication: summary.publication || null,
+            }));
+            // Opening the controls starts the existing live refresh. Support
+            // and agent access can finish independently of this summary.
+            setIsLoading(false);
+          }),
+          requestOptionalPanel("/api/support", { threads: [] }).then((support) => {
+            if (!cancelled) setState((current) => ({ ...current, supportThreads: support.threads || [] }));
+          }),
+          requestOptionalPanel("/api/agent/commissions?access=1", { access: { active: false } }).then((agentAccess) => {
+            if (!cancelled) setState((current) => ({ ...current, agentAccess: agentAccess.access || null }));
+          }),
         ]);
-        const [profile, secondary, support] = panels;
-
-        if (!cancelled) {
-          setState({
-            account: account.account,
-            profile: profile.profile,
-            saved: secondary.saved || null,
-            analytics: secondary.analytics || null,
-            deals: secondary.deals || null,
-            supportThreads: support.threads || [],
-            workingNow: secondary.workingNow || [],
-            deal: secondary.deal || null,
-            venueDeals: Array.isArray(secondary.deals) ? secondary.deals : [],
-            dealRequests: Array.isArray(secondary.dealRequests) ? secondary.dealRequests : [],
-            dealRevenue: secondary.dealRevenue || null,
-            finance: secondary.finance || null,
-            affiliations: secondary.affiliations || [],
-            nfc: secondary.nfc || null,
-            venueAccess: secondary.venueAccess || profile.venueAccess || null,
-            referralFee: secondary.referralFee || null,
-            agentAccess: agentAccess?.access || null,
-            publication: secondary.publication || null,
-            refreshedAt: secondary.refreshedAt || null,
-          });
-          setIsLoading(false);
-        }
       } catch (error) {
         if (!cancelled) {
           controller.abort();
@@ -317,6 +308,7 @@ export default function DashboardClient({
         cache: "no-store",
         fallbackMessage: "Unable to refresh live venue data.",
         signal: controller.signal,
+        timeoutMs: 15000,
       });
       if (!isCurrentRequest()) return;
       setState((current) => ({
@@ -337,7 +329,7 @@ export default function DashboardClient({
       }));
       if (showStatus) setVenueRefreshStatus("Live venue data is up to date.");
     } catch (error) {
-      if (isCurrentRequest() && showStatus) {
+      if (isCurrentRequest()) {
         setVenueRefreshStatus(error instanceof Error ? error.message : "Unable to refresh live venue data.");
       }
     } finally {
@@ -474,7 +466,7 @@ export default function DashboardClient({
         <p>{state.venueRequest.status === "rejected" ? "Your club request was reviewed and was not approved. Contact support if you need help with the decision." : "Your manager login is saved. We’ll email you when your club is approved. Your dashboard will unlock with this same account—no new password or access code needed."}</p>
         <div className="action-row"><button type="button" onClick={retryDashboard}>Check approval status</button><a href="#venue-support">Contact support</a></div>
       </article>
-      <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="venue-support" />
+      {state.supportThreads ? <SupportInboxPanel initialThreads={state.supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
     </main>;
   }
 
@@ -630,7 +622,7 @@ export default function DashboardClient({
                   initialAffiliations={state.affiliations || []}
                   venueAccess={state.venueAccess || null}
                   refreshedAt={state.refreshedAt || null}
-                  supportThreads={state.supportThreads || []}
+                  supportThreads={state.supportThreads}
                   analyticsPeriod={analyticsPeriod}
                   isRefreshing={isVenueRefreshing}
                   refreshStatus={venueRefreshStatus}

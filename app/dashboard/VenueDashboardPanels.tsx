@@ -79,7 +79,7 @@ export function VenuePanel({
   initialAffiliations: Array<Record<string, unknown>>;
   venueAccess?: LoadState["venueAccess"];
   refreshedAt?: string | null;
-  supportThreads: Array<Record<string, unknown>>;
+  supportThreads?: Array<Record<string, unknown>>;
   analyticsPeriod: "tonight" | "7d" | "30d";
   isRefreshing: boolean;
   refreshStatus: string;
@@ -95,6 +95,7 @@ export function VenuePanel({
   const [reviewNotes, setReviewNotes] = useState("");
   const [notificationRevision, setNotificationRevision] = useState(0);
   const connectedVenueId = profile?.id;
+  const liveDataReady = Boolean(refreshedAt);
   useEffect(() => {
     if (connectedVenueId) offerPushNotifications("venue-dashboard");
   }, [connectedVenueId]);
@@ -102,6 +103,11 @@ export function VenuePanel({
     const sectionId = typeof window === "undefined" ? "" : window.location.hash.replace(/^#/, "");
     return venueWorkspaceForSection(sectionId) || initialVenueWorkspace(profile?.isActive === true);
   });
+  // Defer unopened tools, then keep them mounted to preserve forms and drafts.
+  const [openedWorkspaces, setOpenedWorkspaces] = useState<VenueWorkspace[]>([]);
+  useEffect(() => {
+    setOpenedWorkspaces((opened) => opened.includes(activeWorkspace) ? opened : [...opened, activeWorkspace]);
+  }, [activeWorkspace]);
   const [rosterWorkingOnly, setRosterWorkingOnly] = useState(() => typeof window !== "undefined" && window.location.hash === "#venue-working-now");
   useEffect(() => {
     let frame = 0;
@@ -133,7 +139,7 @@ export function VenuePanel({
     openLinkedWorkspace();
     window.addEventListener("hashchange", openLinkedWorkspace);
     return () => { window.cancelAnimationFrame(frame); window.removeEventListener("hashchange", openLinkedWorkspace); };
-  }, []);
+  }, [liveDataReady]);
   const mountedRef = useRef(false);
   const publicationSequenceRef = useRef(0);
   const publicationAbortRef = useRef<AbortController | null>(null);
@@ -308,6 +314,7 @@ export function VenuePanel({
         role="tabpanel"
         aria-labelledby="venue-workspace-tonight-tab"
       >
+        {(activeWorkspace === "tonight" || openedWorkspaces.includes("tonight")) && <>
         <section className="info-panel venue-dashboard-section" id="venue-guest-list" aria-labelledby="venue-guest-list-heading" tabIndex={-1}>
           <VenueGuestListPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
         </section>
@@ -318,9 +325,11 @@ export function VenuePanel({
             ? <PickupDashboardPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
             : <p>Pickup requests are available to your venue owner and managers.</p>}
         </section>
+        </>}
       </section>
 
       <section className="venue-roster-panel venue-dashboard-section" hidden={activeWorkspace !== "roster"} id="venue-workspace-roster" role="tabpanel" aria-labelledby="venue-workspace-roster-tab">
+        {(activeWorkspace === "roster" || openedWorkspaces.includes("roster")) && (liveDataReady ? <>
         <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "roster"}>
           <Metric label="Working now" value={String(workingNow.length)} />
           <Metric label="Live Club Deals" value={String(activeDealCount)} />
@@ -350,6 +359,7 @@ export function VenuePanel({
             canRequestSupport={canRequestNfcSupport}
           />
         </DashboardSection>
+        </> : <p role="status">{refreshStatus || "Loading dancers and tables…"}</p>)}
       </section>
 
       <section
@@ -359,6 +369,7 @@ export function VenuePanel({
         id="venue-workspace-business"
         role="tabpanel"
       >
+        {(activeWorkspace === "business" || openedWorkspaces.includes("business")) && <>
         <section className="info-panel" id="venue-overview" aria-labelledby="venue-results-heading">
           <h2 id="venue-results-heading">Results</h2>
           <div className="venue-analytics-period" role="group" aria-label="Analytics period">
@@ -375,11 +386,13 @@ export function VenuePanel({
             timezone={String(profile?.timezone || "America/Los_Angeles")}
             totalFollowers={Number(analytics.totalFollowers || 0)}
             conversion={readOptionalNumber(analytics.claimToAdmissionPercent)}
-          /> : <p role="status">Analytics are unavailable. Refresh to try again.</p>}
+          /> : <p role="status">{!liveDataReady ? refreshStatus || "Loading results…" : "Analytics are unavailable. Refresh to try again."}</p>}
         </section>
+        </>}
       </section>
 
       <section className="venue-manage-panel venue-dashboard-section" hidden={activeWorkspace !== "venue"} id="venue-workspace-venue" role="tabpanel" aria-labelledby="venue-workspace-venue-tab">
+        {(activeWorkspace === "venue" || openedWorkspaces.includes("venue")) && <>
         <h2 className="dashboard-group-heading">Club page &amp; offers</h2>
 
         <section
@@ -389,7 +402,7 @@ export function VenuePanel({
         >
             <span className="eyebrow">Tonight at a glance</span>
             <strong>{liveDealSummary}</strong>
-            <p>{workingNow.length} working now</p>
+            <p>{liveDataReady ? `${workingNow.length} working now` : "Loading working-now roster…"}</p>
             <div className="venue-command-links">
               <a className="primary-link venue-current-deals-link" href="#venue-club-deals" onClick={(event) => openVenueSection(event, "venue-club-deals")}>
                 {activeDealCount ? `View ${activeDealCount} current Club ${activeDealCount === 1 ? "Deal" : "Deals"}` : "View Club Deal status"}
@@ -534,7 +547,7 @@ export function VenuePanel({
           toggleAffordance="chevron"
           title="Current Club Deals"
         >
-          <VenueDealReadOnlyPanel
+          {liveDataReady ? <VenueDealReadOnlyPanel
             deals={dashboardDeals}
             dealRequests={dealRequests}
             isVenuePublished={isPublished}
@@ -542,7 +555,7 @@ export function VenuePanel({
             venueSlug={venueSlug}
             canRequestDeals={permissions.includes("request_deals") || venueRole === "owner" || venueRole === "manager"}
             onDealRequestsChange={onDealRequestsChange}
-          />
+          /> : <p role="status">{refreshStatus || "Loading Club Deal requests…"}</p>}
         </DashboardSection>
 
         <VenueTvPanel
@@ -592,7 +605,7 @@ export function VenuePanel({
             </article>
             <NotificationPanel refreshKey={notificationRevision} preferencesHref="#venue-notification-settings" />
             <VenueNotificationSettings onSaved={() => setNotificationRevision(value => value + 1)} />
-            <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" />
+            {supportThreads ? <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
             <AccountControlsPanel
               accountRole="venue"
               accountState={String(account?.accountState || "active")}
@@ -603,6 +616,7 @@ export function VenuePanel({
             />
           </div>
         </DashboardSection>
+        </>}
       </section>
 
     </>

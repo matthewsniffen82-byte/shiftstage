@@ -51,6 +51,7 @@ async function renderDashboard(role, initialState = {}, loading = true) {
       if (path.endsWith('/payout-copy')) return require('../src/lib/dancr/payout-copy.ts');
       if (path.endsWith('/profile-approval')) return require('../src/lib/dancr/profile-approval.ts');
       if (path.endsWith('/club-deal-presets')) return require('../src/lib/dancr/club-deal-presets.ts');
+      if (path === './avatar-upload-state') return require('../app/dashboard/avatar-upload-state.ts');
       if (files.includes(path.slice(2))) return load(path.slice(2));
       return new Proxy(() => null, { get: (_target, key) => key === 'then' ? undefined : key === '__esModule' ? false : () => null });
     } });

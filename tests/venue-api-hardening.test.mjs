@@ -34,6 +34,7 @@ const expectedRoutes = [
   "deal/route.ts",
   "finance/route.ts",
   "finance/statement/route.ts",
+  "guest-list/route.ts",
   "logo-image/route.ts",
   "nfc-support/route.ts",
   "nfc-tags/route.ts",

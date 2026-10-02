@@ -11,7 +11,7 @@ const code = ts.transpileModule(warmup, { compilerOptions: { target: ts.ScriptTa
 for (const [role, expected] of [
   ["customer", []],
   ["dancer", ["./DancerNfcPanel", "./DancerShiftManager"]],
-  ["venue", ["./VenueNfcTagPanel", "./VenueTeamPanel", "./VenueTvPanel"]],
+  ["venue", ["./VenueDashboardPanels"]],
 ]) {
   test(`${role} warms only its own core tools without waiting for chunks`, async () => {
     const requested = [];

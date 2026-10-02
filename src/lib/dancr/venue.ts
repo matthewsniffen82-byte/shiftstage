@@ -483,6 +483,18 @@ export async function reviewVenuePageForAccount(
   };
 }
 
+// Opening the workspace needs its identity and publication state, not the
+// historical analytics or dancer roster. Keep these reads request-scoped.
+export async function getVenueDashboardSummary(client: DancrClient, userId: string) {
+  await requireVenueAccess(client, userId, "view_dashboard");
+  const [profile, venueDeal] = await Promise.all([
+    requireVenueForAccount(client, userId),
+    getVenueDealsForAccount(client, userId),
+  ]);
+  const deals = venueDeal?.deals || [];
+  return { profile, deal: deals[0] || null, deals, publication: getVenuePublicationState(profile, deals) };
+}
+
 export async function getVenueDashboard(
   client: DancrClient,
   userId: string,

@@ -52,7 +52,7 @@ for (const blocked of ["failed", "pending"]) test(`verified paused venue recover
   assert.equal(context.state.profile, undefined);
 });
 
-test("an active venue verifies account and request together, then loads its panels concurrently", async () => {
+test("an active venue opens from its summary without waiting for support or agent access", async () => {
   const { context, requests, find } = fixture();
   const loading = context.load();
   await settle();
@@ -60,9 +60,15 @@ test("an active venue verifies account and request together, then loads its pane
   find("account").resolve({ account: { role: "venue", accountState: "active" } });
   find("/api/venue/signup-requests").resolve({ request: null });
   await settle();
-  for (const path of ["/api/venue/profile", "/api/venue/dashboard?period=30d", "/api/support", "/api/agent/commissions?access=1"]) assert.ok(find(path));
-  find("/api/venue/profile").resolve({ profile: { id: "verified-venue" } });
-  find("/api/venue/dashboard?period=30d").resolve({ venueAccess: { role: "manager" } });
+  for (const path of ["/api/venue/dashboard?view=summary", "/api/support", "/api/agent/commissions?access=1"]) assert.ok(find(path));
+  assert.ok(!find("/api/venue/profile"), "the summary already includes the authorized profile");
+  assert.ok(!find("/api/venue/dashboard?period=30d"), "the live refresh loads detailed data after the summary opens");
+  find("/api/venue/dashboard?view=summary").resolve({ profile: { id: "verified-venue" }, venueAccess: { role: "manager" }, deals: [{ id: "live-deal", isActive: true }] });
+  await settle();
+  assert.equal(context.loading, false, "slow optional panels must not block the venue controls");
+  assert.equal(context.state.profile.id, "verified-venue");
+  assert.equal(context.state.venueDeals[0].id, "live-deal");
+  assert.equal(context.state.refreshedAt, undefined, "live data must remain loading, not show false zero counts");
   find("/api/support").resolve({ threads: [] });
   find("/api/agent/commissions?access=1").resolve({ access: { active: false } });
   await loading;
@@ -80,11 +86,29 @@ test("an expiring venue session refreshes once before any venue requests", async
   await settle();
   find("/api/venue/signup-requests").resolve({ request: { status: "pending" } });
   await settle();
+  assert.equal(context.loading, false, "pending approval must not wait for support");
   find("/api/support").resolve({ threads: [] });
   await loading;
   assert.equal(context.state.venueRequest.status, "pending");
   assert.equal(requests.filter(({ path }) => path === "account").length, 1);
   assert.ok(!find("/api/venue/profile"));
+});
+
+test("a failed summary cannot open an empty venue dashboard", async () => {
+  const { context, find } = fixture();
+  const loading = context.load();
+  find("account").resolve({ account: { role: "venue", accountState: "active" } });
+  find("/api/venue/signup-requests").resolve({ request: null });
+  await settle();
+  find("/api/venue/dashboard?view=summary").reject(new Error("Venue unavailable."));
+  await loading;
+  assert.equal(context.state.error, "Venue unavailable.");
+  assert.equal(context.state.profile, undefined);
+  assert.equal(context.controller.signal.aborted, true);
+  context.cancelled = true;
+  find("/api/support").resolve({ threads: [] });
+  find("/api/agent/commissions?access=1").resolve({ access: { active: false } });
+  await settle();
 });
 
 for (const failedPath of ["account", "/api/venue/signup-requests"]) test(`a failed ${failedPath} cannot authorize recovery using cached account state`, async () => {

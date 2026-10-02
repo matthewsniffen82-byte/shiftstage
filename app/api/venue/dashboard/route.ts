@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
-import { getVenueDashboard, readVenueAnalyticsPeriod } from "@/src/lib/dancr/venue";
+import { getVenueDashboard, getVenueDashboardSummary, readVenueAnalyticsPeriod } from "@/src/lib/dancr/venue";
 import { requireVenueAccess, withVenueAccessReadScope } from "@/src/lib/dancr/venue-access";
 import { getVenueDancerVerificationState } from "@/src/lib/dancr/venue-affiliations";
 import { getVenueClubDealRequests } from "@/src/lib/dancr/venue-deal-requests";
@@ -20,7 +20,12 @@ export async function GET(request: Request) {
     return await withVenueAccessReadScope(admin, user.id, async () => {
       const access = await requireVenueAccess(admin, user.id, "view_dashboard");
 
-      const period = readVenueAnalyticsPeriod(new URL(request.url).searchParams.get("period"));
+      const params = new URL(request.url).searchParams;
+      if (params.get("view") === "summary") {
+        const summary = await getVenueDashboardSummary(admin, user.id);
+        return NextResponse.json({ ok: true, ...summary, venueAccess: access }, { headers: { "Cache-Control": "no-store" } });
+      }
+      const period = readVenueAnalyticsPeriod(params.get("period"));
 
       const [dashboard, verification, dealRequests] = await Promise.all([
         getVenueDashboard(admin, user.id, period),
