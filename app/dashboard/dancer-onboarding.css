@@ -66,3 +66,18 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onb
 
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-command .dancer-age-verification :is(p, label) { color: #c1bdcc !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-command .dancer-age-footer { margin-top: 12px; }
+
+dialog.dancer-profile-builder-panel.dancer-identity-editor-dialog {
+  position: fixed;
+  inset: 0;
+  width: min(480px, calc(100% - 24px));
+  height: fit-content;
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  margin: auto;
+  color: #f8fafc;
+}
+dialog.dancer-identity-editor-dialog:not([open]) { display: none; }
+dialog.dancer-identity-editor-dialog[open] { display: grid; }
+dialog.dancer-identity-editor-dialog::backdrop { background: rgba(0, 0, 0, .72); }
+dialog.dancer-identity-editor-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+dialog.dancer-identity-editor-dialog fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }

@@ -140,13 +140,11 @@ test("approved videos refresh into the builder and video cards render a visible 
 });
 
 
-test("the three-item counter remains the authoritative profile essentials counter", () => {
-  assert.match(dashboard, /label: "Stage name & city", section: "identity"/);
-  assert.match(dashboard, /label: "Avatar", section: "avatar"/);
-  assert.match(dashboard, /label: "Profile photo", section: "photos"/);
-  assert.match(dashboard, /`Profile essentials: \$\{completedRequirements\}\/\$\{builderRequirements\.length\} complete`/);
-  assert.doesNotMatch(dashboard, /label: "Videos", section: "videos"/);
-  assert.doesNotMatch(dashboard, /label: "Socials", section: "socials"/);
+test("saving onboarding identity stays separate from the profile completion requirements", () => {
+  assert.match(dashboard, /const profileReady = Boolean\(\s*persistedStageName\s*&& persistedCity\s*&& avatarUrl\s*&& approvedPhotos\.length,\s*\)/);
+  const workspace = dashboard.match(/function DancerOnboardingProfileMediaWorkspace[\s\S]*?(?=\nfunction |$)/)?.[0] || "";
+  assert.match(workspace, /<DancerIdentityEditor[^>]*>\s*\{identityContent\(\)\}\s*<\/DancerIdentityEditor>/);
+  assert.doesNotMatch(workspace, /DancerProfilePreview|builderRequirements|continueAfterSave/);
 });
 
 test("completed compact editors do not report a false save failure after they unmount", () => {

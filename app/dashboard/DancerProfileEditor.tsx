@@ -12,6 +12,7 @@ import { persistedDancerStageName, DANCER_PROFILE_EDITOR_SECTION_LABELS, DANCER_
 import { relabelPhotoItems, dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerAgeVerificationGate";
 import DancerProfileAgreementReview, { type DancerProfileAgreementInput } from "./DancerProfileAgreementReview";
+import DancerIdentityEditor from "./DancerIdentityEditor";
 const DancerProfileMediaUploads = dynamic(() => import("./DancerProfileMediaUploads"));
 
 
@@ -862,34 +863,21 @@ function persistedStageNameAndCity(profile?: LoadState["profile"]) {
 }
 
 
-function dancerStepOneStateLabel(state: DancerStepOneItemState) {
-  if (state === "complete") return "Complete";
-  if (state === "checking") return "Checking";
-  if (state === "replace") return "Choose another";
-  if (state === "unsaved") return "Unsaved changes";
-  return "Missing";
-}
-
-
 export function DancerOnboardingProfileMediaWorkspace({
   avatarContent,
-  continueToAgreement,
   draftIdentity,
   identityContent,
   photoContent,
   mainPhotoContent,
-  onProfileChange,
   profile,
   profileReady,
   videoContent,
 }: {
   avatarContent: ReactNode;
-  continueToAgreement: () => void;
   draftIdentity: DancerIdentityDraft;
   identityContent: (field?: keyof DancerIdentityDraft) => ReactNode;
   photoContent: ReactNode;
   mainPhotoContent?: ReactNode;
-  onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   profileReady: boolean;
   videoContent: ReactNode;
@@ -898,36 +886,13 @@ export function DancerOnboardingProfileMediaWorkspace({
   const persistedCity = String(profile?.city || "").trim();
   const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
   const avatarUrl = String(profile?.avatarPhotoUrl || "").trim();
-  const photos = dancerPhotoItemsFromProfile(profile);
-  const approvedPhotos = photos.filter((photo) => photo.status === "approved");
-  const pendingPhotos = photos.filter((photo) => photo.status === "pending");
-  const rejectedPhotos = photos.filter((photo) => photo.status === "rejected");
   const draftChanged = draftIdentity.stageName.trim() !== persistedStageName
     || draftIdentity.city.trim() !== persistedCity;
-  const identityState: DancerStepOneItemState = draftChanged
-    ? "unsaved"
-    : persistedStageName && persistedCity
-      ? "complete"
-      : "missing";
   const avatarState: DancerStepOneItemState = pendingAvatar
     ? "checking"
     : avatarUrl
       ? "complete"
       : "missing";
-  const photoState: DancerStepOneItemState = approvedPhotos.length
-    ? "complete"
-    : pendingPhotos.length
-      ? "checking"
-      : rejectedPhotos.length
-        ? "replace"
-        : "missing";
-  const photoDetail = [
-    `${photos.length} ${photos.length === 1 ? "picture" : "pictures"} added`,
-    `${approvedPhotos.length} approved`,
-    pendingPhotos.length ? `${pendingPhotos.length} checking` : "",
-    rejectedPhotos.length ? `${rejectedPhotos.length} needs replacement` : "",
-  ].filter(Boolean).join(" · ");
-  const [continueAfterSave, setContinueAfterSave] = useState(false);
   const [videosOpened, setVideosOpened] = useState(false);
   const [hasStoredDraft, setHasStoredDraft] = useState<boolean | null>(null);
   const refreshDraftStatus = useCallback(() => {
@@ -944,43 +909,7 @@ export function DancerOnboardingProfileMediaWorkspace({
     refreshDraftStatus();
   }, [draftIdentity, profile, refreshDraftStatus]);
   const hasUnsavedChanges = draftChanged || hasStoredDraft === true;
-  const profileIsSaved = profileReady && hasStoredDraft === false && !hasUnsavedChanges;
-  const readyAfterSave = Boolean(
-    draftIdentity.stageName.trim()
-    && draftIdentity.city.trim()
-    && avatarUrl
-    && approvedPhotos.length,
-  );
-
-  useEffect(() => {
-    if (!continueAfterSave || !profileReady) return;
-    setContinueAfterSave(false);
-    continueToAgreement();
-  }, [continueAfterSave, continueToAgreement, profileReady]);
-
-  async function saveProfile() {
-    if (!readyAfterSave) return false;
-    const saved = await saveDancerProfileEditor();
-    if (saved) {
-      refreshDraftStatus();
-      setContinueAfterSave(true);
-    }
-    return saved;
-  }
-
-  const builderRequirements: DancerProfileBuilderRequirement[] = [
-    { complete: Boolean(draftIdentity.stageName.trim() && draftIdentity.city.trim()), label: "Stage name & city", section: "identity", status: dancerStepOneStateLabel(identityState) },
-    { complete: avatarState === "complete", label: "Avatar", section: "avatar", status: dancerStepOneStateLabel(avatarState) },
-    { complete: photoState === "complete", label: "Profile photo", section: "photos", status: photoDetail },
-  ];
-  const editorSections: DancerProfileEditorSections = {
-    identity: identityContent(),
-    stageName: identityContent("stageName"),
-    city: identityContent("city"),
-    avatar: avatarContent,
-    photos: <>{mainPhotoContent}{photoContent}</>,
-    videos: videoContent,
-  };
+  const profileIsSaved = Boolean(persistedStageName && persistedCity) && hasStoredDraft === false && !hasUnsavedChanges;
 
   return (
     <div className="dancer-onboarding-profile-workspace">
@@ -994,20 +923,9 @@ export function DancerOnboardingProfileMediaWorkspace({
           </span>
           <small>{persistedStageName && persistedCity ? `${persistedStageName} · ${persistedCity}` : "Add your stage name and city."}</small>
         </span>
-        <DancerProfilePreview
-          builderRequirements={builderRequirements}
-          buttonClassName="dancer-profile-editor-launch-button"
-          buttonLabel="Edit"
-          initialEditorSection="identity"
-          city={draftIdentity.city}
-          editorSections={editorSections}
-          name={draftIdentity.stageName}
-          onClose={refreshDraftStatus}
-          onEditorSave={saveProfile}
-          onProfileChange={onProfileChange}
-          profile={profile}
-          saveLabel="Save profile"
-        />
+        <DancerIdentityEditor key={String(profile?.id || "profile")} onClose={refreshDraftStatus}>
+          {identityContent()}
+        </DancerIdentityEditor>
       </article>
       <details className="dancer-setup-extra" open={avatarState !== "complete" ? true : undefined}>
         <summary>Avatar <small>{avatarState === "complete" ? "✓ Saved" : "Required"}</small></summary>

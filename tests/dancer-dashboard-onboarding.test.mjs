@@ -57,7 +57,7 @@ test("initial onboarding nests every production workspace directly under its ste
   const checklist = panel.indexOf("<DancerOnboardingCommand");
 
   assert.ok(checklist >= 0, "setup checklist should render");
-  assert.match(panel, /profileMediaContent=\{\(\{ continueToAgreement, profileReady \}\) => \(/);
+  assert.match(panel, /profileMediaContent=\{\(\{ profileReady \}\) => \(/);
   assert.match(panel, /<DancerOnboardingProfileMediaWorkspace/);
   assert.match(panel, /venueVerificationContent=\{<DancerNfcPanel/);
   assert.doesNotMatch(panel, /\{!isApproved \? profileMediaSection : null\}/);
@@ -154,20 +154,18 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /\.tv-video-source-cta \{ min-width: 60px; display: grid; place-items: center;/);
 });
 
-test("step one guides dancers through required work in the live profile layout", () => {
-  assert.match(dashboard, /const builderRequirements: DancerProfileBuilderRequirement\[\]/);
-  assert.match(dashboard, /label: "Stage name & city", section: "identity"/);
-  assert.match(dashboard, /label: "Avatar", section: "avatar"/);
-  assert.match(dashboard, /label: "Profile photo", section: "photos"/);
-  assert.match(dashboard, /`Profile essentials: \$\{completedRequirements\}\/\$\{builderRequirements\.length\} complete`/);
+test("step one edits identity directly and keeps media in the setup dropdowns", () => {
+  assert.match(dashboard, /<DancerIdentityEditor[^>]*onClose=\{refreshDraftStatus\}>\s*\{identityContent\(\)\}\s*<\/DancerIdentityEditor>/);
+  assert.match(dashboard, /<summary>Avatar/);
+  assert.match(dashboard, /\{mainPhotoContent\}\s*<details[^>]*>\s*<summary>More photos/);
+  assert.match(dashboard, /<summary>Videos/);
   assert.match(dashboard, /videos: videoContent/);
   assert.doesNotMatch(dashboard, /socials: socialContent/);
   assert.match(dashboard, /Profile details/);
   assert.doesNotMatch(dashboard, /required items ready|Choose from your device or open your camera\. At least one approved photo is required\./);
   assert.match(dashboard, /buttonLabel="Edit"/);
-  assert.match(dashboard, /saveLabel="Save profile"/);
   assert.doesNotMatch(dashboard, /Set up profile|Save & continue/);
-  assert.match(dashboard, /if \(!continueAfterSave \|\| !profileReady\) return;[\s\S]*?continueToAgreement\(\)/);
+  assert.doesNotMatch(dashboard, /continueAfterSave/);
   assert.match(dashboard, /continueToAgreement: continueToProfileAgreement/);
   assert.match(dashboard, /document\.getElementById\("dancer-onboarding-agreement"\)\?\.scrollIntoView/);
 });
@@ -217,7 +215,7 @@ test("approved dancers retain analytics without commission promotions", () => {
   assert.doesNotMatch(dashboard, /title="Club Deal activity"|title="Weekly results"/);
 });
 
-test("step one uses accessible live-profile add targets that preserve the active editor", () => {
+test("the full profile editor retains accessible add targets that preserve the active editor", () => {
   assert.match(dashboard, /const \[activeEditorSection, setActiveEditorSection\] = useState<DancerProfileEditorSectionId \| null>\(null\)/);
   assert.match(dashboard, /aria-label=\{headerImage \? "Edit avatar" : "Add avatar"\}/);
   assert.match(dashboard, /className="dancer-profile-builder-avatar-camera" viewBox="0 0 24 24"/);
@@ -251,7 +249,6 @@ test("step one uses accessible live-profile add targets that preserve the active
   assert.doesNotMatch(dashboard, /className="dancer-social-link-form"[\s\S]*?Profile link or username/);
   assert.match(dashboard, /\.dancer-profile-preview-overlay \.social-list :is\(a,button\) \{ width: 48px;[^}]*height: 48px;[^}]*justify-content: center;/);
   assert.match(dashboard, /body\.dancr-button-system \.public-profile-shell \.dancer-profile-builder-social-platform \{[^}]*width:48px !important;[^}]*height:48px !important;/);
-  assert.match(dashboard, /dancerStepOneStateLabel/);
   assert.match(dashboard, /"complete" \| "checking" \| "missing" \| "replace" \| "unsaved"/);
 });
 
@@ -313,10 +310,11 @@ test("step one shows clear save, photo-count, and automatic-check states", () =>
   assert.match(dashboard, /className="dancer-profile-save-action primary-action"/);
   assert.match(dashboard, /aria-label="Reload saved profile" className="dancer-profile-reload-action"/);
   assert.match(dashboard, /\.dancer-profile-form-actions button \{ min-height: 44px !important;[\s\S]*?border-radius: 999px !important;/);
-  assert.match(dashboard, /\$\{photos\.length\} \$\{photos\.length === 1 \? "picture" : "pictures"\} added/);
+  assert.match(dashboard, /acceptedCount \? `\$\{acceptedCount\} uploaded`/);
   assert.doesNotMatch(dashboard, /\$\{photos\.length\} of \$\{MAX_DANCER_PROFILE_PHOTOS\}/);
   assert.doesNotMatch(dashboard, /\{remainingPhotoSlots\} \{remainingPhotoSlots === 1 \? "spot" : "spots"\} open/);
-  assert.match(dashboard, /pendingPhotos\.length \? `\$\{pendingPhotos\.length\} checking`/);
+  assert.match(dashboard, /photoStatusLabel\(photo\.status, photo\.moderationStatus\)/);
+  assert.match(dashboard, /const profileIsSaved = Boolean\(persistedStageName && persistedCity\) && hasStoredDraft === false && !hasUnsavedChanges/);
   assert.doesNotMatch(dashboard, /We are checking this photo\. This page updates automatically/);
   assert.match(dashboard, /if \(status === "rejected"\) return "Choose another photo\."/);
 });
@@ -324,8 +322,8 @@ test("step one shows clear save, photo-count, and automatic-check states", () =>
 test("one approved profile photo completes the requirement without hiding extra moderation states", () => {
   assert.match(dashboard, /const profileReady = Boolean\([\s\S]*?&& approvedPhotos\.length,\s*\);/);
   assert.doesNotMatch(dashboard, /&& !pendingPhotos\.length/);
-  assert.match(dashboard, /const photoState: DancerStepOneItemState = approvedPhotos\.length\s*\? "complete"/);
-  assert.match(dashboard, /rejectedPhotos\.length \? `\$\{rejectedPhotos\.length\} needs replacement`/);
+  assert.match(dashboard, /className=\{`photo-saved-preview is-\$\{photo\.status\}`\}/);
+  assert.match(dashboard, /photoStatusLabel\(photo\.status, photo\.moderationStatus\)/);
 });
 
 test("embedded video management uses a contained mobile stack", () => {
@@ -404,7 +402,7 @@ test("the full profile preview renders approved media and restores the dashboard
   assert.match(dashboard, /focusRoot\?\.querySelectorAll<HTMLElement>/);
 });
 
-test("approved dancers launch the same focused profile editor as onboarding", () => {
+test("approved dancers retain the full profile editor and its media controls", () => {
   const sections = dashboard.match(/const profileEditorSections: DancerProfileEditorSections = \{[\s\S]*?\n  \};/)?.[0] || "";
   const workspace = dashboard.match(/const profileMediaWorkspace = \([\s\S]*?\n  \);/)?.[0] || "";
   assert.match(workspace, /className="dancer-profile-editor-launch-card"/);
