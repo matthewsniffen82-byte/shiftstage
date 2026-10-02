@@ -14330,9 +14330,9 @@ html body.dancr-button-system #customerNotificationsQuickPanel :is(.customer-qui
 html body.dancr-button-system #customerNotificationsQuickPanel :is(.customer-quick-item, .customer-quick-clear, .customer-notification-close)::after { content: none !important; }
 html body.dancr-button-system #customerNotificationsQuickPanel .customer-quick-item {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto !important;
+  grid-template-columns: minmax(0, 1fr) !important;
   align-items: center !important;
-  gap: 10px !important;
+  gap: 4px !important;
   padding: 10px !important;
   text-align: left !important;
   white-space: normal !important;
@@ -14340,7 +14340,7 @@ html body.dancr-button-system #customerNotificationsQuickPanel .customer-quick-i
 }
 html body.dancr-button-system #customerNotificationsQuickPanel .customer-notification-title {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
   min-width: 0;
@@ -14350,9 +14350,8 @@ html body.dancr-button-system #customerNotificationsQuickPanel .customer-notific
 html body.dancr-button-system #customerNotificationsQuickPanel .customer-notification-label {
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   color: inherit;
   font: inherit;
 }
@@ -14379,12 +14378,14 @@ html body.dancr-button-system #customerNotificationsQuickPanel .customer-notific
   white-space: nowrap;
 }
 html body.dancr-button-system #customerNotificationsQuickPanel .customer-notification-date {
+  padding-inline-start: 28px;
   color: #aaa6b3 !important;
   font: 500 11px/1.4 var(--font-ui) !important;
-  white-space: nowrap;
+  white-space: normal;
 }
 html body.dancr-button-system #customerNotificationsQuickPanel .customer-notification-unread {
   flex: 0 0 6px;
+  margin-top: 6px;
   width: 6px;
   height: 6px;
   border-radius: 50%;
