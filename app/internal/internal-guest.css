@@ -48,12 +48,20 @@ body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy strong {
   line-height: 1.18; white-space: normal; overflow-wrap: anywhere;
 }
 body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy > span {
-  color: #d1d1d6;
+  justify-self: start;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 3px 5px;
+  border-radius: 4px;
+  color: #fff;
   -webkit-text-fill-color: currentColor;
-  font-size: 10px;
-  font-weight: 650;
+  background: linear-gradient(#15151b, #15151b);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2);
+  font-size: 11px;
+  font-weight: 750;
   line-height: 1.3;
   text-decoration: none;
+  text-shadow: none;
 }
 body .ir-guest .ir-dancer::after { content: ""; position: absolute; z-index: 4; inset: auto 0 0; height: 1px; background: color-mix(in srgb, var(--dancr-color-brand-primary-deep, #4c1d95) 88%, transparent); pointer-events: none; }
 body .ir-guest .ir-dancer[data-request-state]::after {
