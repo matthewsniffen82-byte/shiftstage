@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import vm from "node:vm";
 
 const homeSource = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
@@ -448,31 +449,46 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   );
 });
 
-test("venue cards keep active Club Deals first, then preserve live status, schedule, and popularity priority", () => {
-  assert.match(
-    homeSource,
-    /function mapLiveVenue\(item, city, venueShiftCounts\) \{[\s\S]*?popularity: \{[\s\S]*?followerCount: Math\.max\(0, Number\(item\.popularity\?\.followerCount\) \|\| 0\)[\s\S]*?directionRequests30d:[\s\S]*?profileViews30d:/,
-  );
-  assert.match(
-    homeSource,
-    /function venueSchedulePriority\(venue, city\) \{[\s\S]*?venueDancers\(city, venue\.name\)[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?return 0;[\s\S]*?profile\.scheduled[\s\S]*?return 1;[\s\S]*?return 2;/,
-  );
-  assert.match(
-    homeSource,
-    /function venueDiscoveryIsActiveNow\(venue, city\) \{[\s\S]*?venueDancers\(city, venue\.name\)[\s\S]*?isWorkingTonight\(profile, city\)[\s\S]*?if \(hasWorkingDancer\) return true;[\s\S]*?venueOperatingStatus\(venue\?\.hours \|\| "", city\)\.state === "open";/,
-  );
-  assert.match(
-    homeSource,
-    /function compareVenuePopularity\(left, right\) \{[\s\S]*?rightPopularity\.followerCount[\s\S]*?leftPopularity\.followerCount[\s\S]*?rightPopularity\.directionRequests30d[\s\S]*?leftPopularity\.directionRequests30d[\s\S]*?rightPopularity\.profileViews30d[\s\S]*?leftPopularity\.profileViews30d/,
-  );
-  assert.match(
-    homeSource,
-    /function compareVenueDiscoveryPriority\(left, right, city\) \{[\s\S]*?Number\(Boolean\(right\?\.activeDeal\?\.id\)\) - Number\(Boolean\(left\?\.activeDeal\?\.id\)\)[\s\S]*?Number\(venueDiscoveryIsActiveNow\(right, city\)\) - Number\(venueDiscoveryIsActiveNow\(left, city\)\)[\s\S]*?venueSchedulePriority\(left, city\) - venueSchedulePriority\(right, city\)[\s\S]*?dealDifference \|\| activeDifference \|\| scheduleDifference \|\| compareVenuePopularity\(left, right\) \|\| compareVenueDistance\(left, right, city\)/,
-  );
-  assert.match(
-    homeSource,
-    /if \(tab === "venues"\) \{[\s\S]*?\.filter\(venueMatchesCurrentFilter\)[\s\S]*?\.sort\(\(a, b\) => compareVenueDiscoveryPriority\(a, b, city\)\)/,
-  );
+test("venue cards put the largest dancer counts first and keep randomized ties fixed during browsing", () => {
+  const source = ["orderedVenueDiscoveryCards", "getItems"].map(name => {
+    const start = homeSource.indexOf(`    function ${name}(`);
+    assert.ok(start >= 0);
+    return homeSource.slice(start, homeSource.indexOf("\n    }", start) + "\n    }".length);
+  }).join("\n");
+  const original = [{id:"low",now:2,activeDeal:{id:"deal"}}, {id:"high-a",now:100}, {id:"high-b",now:100}, {id:"mid",now:50}, {id:"empty",now:0}];
+  const market = {venues:original};
+  const hidden = new Set();
+  let randomCalls = 0;
+  const context = vm.createContext({
+    venueDiscoveryOrderByCity:new Map(), discoveryMarket:()=>market,
+    liveMarketState:{"Las Vegas":"loading"}, userLocationOutsideMarkets:false,
+    venueMatchesCurrentFilter:venue=>!hidden.has(venue.id), venueWorkingNowCount:venue=>venue.now,
+    Math:{random:()=>[0.9,0.8,0.1,0.7,0.2][randomCalls++ % 5]},
+  });
+  vm.runInContext(source,context);
+  const items = () => context.getItems("Las Vegas","venues");
+  const ids = rows => Array.from(rows,venue=>venue.id);
+  assert.deepEqual(ids(items()),[]);
+  assert.equal(randomCalls,0,"loading cannot lock in empty counts");
+  context.liveMarketState["Las Vegas"]="ready";
+  const expected=["high-b","high-a","mid","low","empty"];
+  assert.deepEqual(ids(items()),expected);
+  assert.equal(market.venues,original,"sorting does not mutate the source roster");
+  hidden.add("high-b");
+  assert.deepEqual(ids(items()),expected.slice(1));
+  hidden.clear();
+  market.venues=[...original].reverse().map(venue=>({...venue,now:venue.id==="low"?200:1}));
+  assert.deepEqual(ids(items()),expected,"refreshes and filter changes retain the initial order");
+  assert.equal(items().find(venue=>venue.id==="low").now,200,"displayed counts still update");
+  assert.equal(randomCalls,5,"refreshes never reshuffle ties");
+  market.venues=market.venues.filter(venue=>venue.id!=="empty");
+  market.venues.push({id:"new",now:300});
+  assert.deepEqual(ids(items()),[...expected.slice(0,-1),"new"],"removed venues disappear and new ones do not move existing cards");
+  context.venueDiscoveryOrderByCity.clear();
+  market.venues=original;
+  context.Math.random=()=>[0.9,0.1,0.8,0.7,0.2][randomCalls++ % 5];
+  randomCalls=0;
+  assert.deepEqual(ids(items()).slice(0,2),["high-a","high-b"],"a new page load can show a different order among the highest counts");
 });
 
 test("TV uses document-level mobile snapping while discovery cards keep natural page scrolling", () => {

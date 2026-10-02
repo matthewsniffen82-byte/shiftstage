@@ -855,37 +855,20 @@
         .map((profile) => withTrendingRank(profile, city));
     }
 
-    function venueSchedulePriority(venue, city) {
-      city = venue?.city || city;
-      const profiles = venueDancers(city, venue.name);
-      if (profiles.some((profile) => isWorkingTonight(profile, city))) return 0;
-      if (profiles.some((profile) => profile.scheduled)) return 1;
-      return 2;
-    }
-
-    function venueDiscoveryIsActiveNow(venue, city) {
-      city = venue?.city || city;
-      const hasWorkingDancer = venueDancers(city, venue.name)
-        .some((profile) => isWorkingTonight(profile, city));
-      if (hasWorkingDancer) return true;
-      return venueOperatingStatus(venue?.hours || "", city).state === "open";
-    }
-
-    function compareVenuePopularity(left, right) {
-      const leftPopularity = left?.popularity || {};
-      const rightPopularity = right?.popularity || {};
-      return (
-        (Number(rightPopularity.followerCount) || 0) - (Number(leftPopularity.followerCount) || 0) ||
-        (Number(rightPopularity.directionRequests30d) || 0) - (Number(leftPopularity.directionRequests30d) || 0) ||
-        (Number(rightPopularity.profileViews30d) || 0) - (Number(leftPopularity.profileViews30d) || 0)
-      );
-    }
-
-    function compareVenueDiscoveryPriority(left, right, city) {
-      const dealDifference = Number(Boolean(right?.activeDeal?.id)) - Number(Boolean(left?.activeDeal?.id));
-      const activeDifference = Number(venueDiscoveryIsActiveNow(right, city)) - Number(venueDiscoveryIsActiveNow(left, city));
-      const scheduleDifference = venueSchedulePriority(left, city) - venueSchedulePriority(right, city);
-      return dealDifference || activeDifference || scheduleDifference || compareVenuePopularity(left, right) || compareVenueDistance(left, right, city);
+    function orderedVenueDiscoveryCards(venues, city) {
+      let order = venueDiscoveryOrderByCity.get(city);
+      if (!order) {
+        order = new Map();
+        venueDiscoveryOrderByCity.set(city, order);
+      }
+      const key = (venue) => venue.id || `${venue.city || city}:${venue.slug || venue.name}`;
+      // Rank once after discovery loads. Live counts may update without moving
+      // cards under the guest; newly discovered venues append to the saved order.
+      venues.filter((venue) => !order.has(key(venue)))
+        .map((venue) => ({ venue, count: venueWorkingNowCount(venue, city), tie: Math.random() }))
+        .sort((a, b) => b.count - a.count || a.tie - b.tie)
+        .forEach(({ venue }) => order.set(key(venue), order.size));
+      return [...venues].sort((a, b) => order.get(key(a)) - order.get(key(b)));
     }
 
     function getItems(city, tab) {
@@ -902,9 +885,8 @@
         return dancerDirectoryProfiles(profiles, city);
       }
       if (tab === "venues") {
-        return market.venues
-          .filter(venueMatchesCurrentFilter)
-          .sort((a, b) => compareVenueDiscoveryPriority(a, b, city));
+        return orderedVenueDiscoveryCards(market.venues, city)
+          .filter(venueMatchesCurrentFilter);
       }
       return [];
     }

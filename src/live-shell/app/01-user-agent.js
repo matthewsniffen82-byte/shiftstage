@@ -583,6 +583,7 @@
     const trendEventStoreKey = "dancrTrendEventsV1";
     const trendEventStore = loadTrendEventStore();
     const liveMarketState = {};
+    const venueDiscoveryOrderByCity = new Map();
     const liveMarketRefreshes = new Set();
     const liveMarketPendingRefreshes = new Set();
     let liveDancerAnalytics = null;

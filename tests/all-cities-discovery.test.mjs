@@ -195,17 +195,15 @@ test('combined club filters and profile references distinguish same-named venues
   assert.equal(ctx.citySelect.value, 'All cities');
 });
 
-test('combined club ranking uses each venue city for hours and lineup', () => {
+test('combined club counts use each venue city and only working dancers', () => {
   const seen = [];
-  const ctx = context({ venueDancers: city => { seen.push(city); return []; },
-    isWorkingTonight: () => false,
-    venueOperatingStatus: (_hours, city) => ({ state: city === 'Miami' ? 'open' : 'closed' }),
+  const ctx = context({ venueDancers: city => { seen.push(city); return [{now:city === 'Miami'}, {now:false}]; },
+    discoveryMarket: () => ({}), isWorkingTonight: profile => profile.now,
   });
-  vm.runInContext(fn('venueDiscoveryIsActiveNow') + fn('venueSchedulePriority'), ctx);
-  assert.equal(ctx.venueDiscoveryIsActiveNow({ name: 'The Club', city: 'Miami' }, 'All cities'), true);
-  assert.equal(ctx.venueDiscoveryIsActiveNow({ name: 'The Club', city: 'Las Vegas' }, 'All cities'), false);
-  assert.equal(ctx.venueSchedulePriority({ name: 'The Club', city: 'Miami' }, 'All cities'), 2);
-  assert.deepEqual(seen, ['Miami', 'Las Vegas', 'Miami']);
+  vm.runInContext(fn('venueWorkingNowCount'), ctx);
+  assert.equal(ctx.venueWorkingNowCount({ name: 'The Club', city: 'Miami' }, 'All cities'), 1);
+  assert.equal(ctx.venueWorkingNowCount({ name: 'The Club', city: 'Las Vegas' }, 'All cities'), 0);
+  assert.deepEqual(seen, ['Miami', 'Las Vegas']);
 });
 
 
