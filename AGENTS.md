@@ -1,5 +1,7 @@
 # Production delivery requirements
 
+Never run end-to-end (E2E) tests on this project, including automated browser journeys against local, preview, or production environments. Use focused unit or component tests, static checks, and read-only deployment status checks as appropriate instead.
+
 This repository is a production application. For every implementation task:
 
 1. Preserve unrelated user changes and inspect the final diff before staging.
