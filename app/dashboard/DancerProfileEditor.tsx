@@ -537,7 +537,8 @@ export function DancerOnboardingCommand({
   );
   const submitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
   const ageVerified = ageVerification?.status === "verified";
-  const ageAccessAllowed = ageVerified || ageVerification?.required === false;
+  const ageNotRequired = !ageVerified && ageVerification?.required === false;
+  const ageAccessAllowed = ageVerified || ageNotRequired;
   const setupDetail = profileReady
     ? "Identity, avatar, and at least one profile picture are approved. Other media can finish review separately."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
@@ -552,10 +553,11 @@ export function DancerOnboardingCommand({
     {
       id: "dancer-onboarding-age",
       label: "Verify 18+",
-      complete: ageAccessAllowed,
+      complete: ageVerified,
+      notRequired: ageNotRequired,
       detail: ageVerified ? "Your age is verified. You're ready for your first club tap."
+        : ageNotRequired ? "Not required for your account. No age check has been completed."
         : !submitted ? "Unlocks after profile submission."
-        : ageVerification?.required === false ? "Age verification is not required for your account yet."
         : "Verify with Ondato before your first club tap.",
       locked: !submitted,
     },
@@ -566,8 +568,9 @@ export function DancerOnboardingCommand({
       detail: isVenueApproved ? "Club confirmed." : submitted && ageAccessAllowed ? "Tap the club’s NFC tag when you arrive." : "Unlocks after profile setup and age verification.",
       locked: !submitted || !ageAccessAllowed,
     },
-  ], [ageAccessAllowed, ageVerification?.required, ageVerified, isVenueApproved, profileReady, setupDetail, submitted]);
-  const firstIncomplete = steps.find((step) => !step.complete) || steps[steps.length - 1];
+  ], [ageAccessAllowed, ageNotRequired, ageVerified, isVenueApproved, profileReady, setupDetail, submitted]);
+  const firstIncomplete = steps.find((step) => !step.complete && !step.notRequired) || steps[steps.length - 1];
+  const progressLabel = `${steps.filter((step) => step.complete).length} of ${steps.length} complete${ageNotRequired ? " · 1 not required" : ""}`;
   const visibleExpandedStepId = expandedStepId === null ? firstIncomplete.id : expandedStepId;
   const previousCurrentStep = useRef(firstIncomplete.id);
   useEffect(() => {
@@ -717,10 +720,10 @@ export function DancerOnboardingCommand({
           <p>Three steps to get your profile ready.</p>
         </span>
         <div className="dancer-onboarding-progress">
-          <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={steps.filter((step) => step.complete).length}>
-            {steps.map((step) => <span className={step.complete ? "is-complete" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>{step.complete ? "✓" : ""}</span>)}
+          <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={steps.filter((step) => step.complete).length} aria-valuetext={progressLabel}>
+            {steps.map((step) => <span className={step.complete ? "is-complete" : step.notRequired ? "is-not-required" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>{step.complete ? "✓" : step.notRequired ? "–" : ""}</span>)}
           </div>
-          <b>{steps.filter((step) => step.complete).length} of {steps.length} complete</b>
+          <b>{progressLabel}</b>
         </div>
       </div>
       <ol className="dancer-onboarding-steps" aria-label="Dancer profile approval progress">
@@ -731,10 +734,12 @@ export function DancerOnboardingCommand({
             ? "Locked"
             : displayComplete
               ? "Complete"
-              : step.id === "dancer-profile-media"
-                ? profileStarted ? "Continue" : "Start"
-                : "Verify";
-          const controlTone = step.locked ? "locked" : displayComplete ? "complete" : "action";
+              : step.notRequired
+                ? "Not required"
+                : step.id === "dancer-profile-media"
+                  ? profileStarted ? "Continue" : "Start"
+                  : "Verify";
+          const controlTone = step.locked ? "locked" : displayComplete ? "complete" : step.notRequired ? "optional" : "action";
           const panelId = `${step.id}-panel`;
           return (
             <li

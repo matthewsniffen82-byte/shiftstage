@@ -65,3 +65,35 @@ test('verified adults unlock the tap; an explicitly disabled rollout preserves e
     assert.ok(html.indexOf('id="dancer-onboarding-age"') < html.indexOf('id="dancer-onboarding-nfc"'));
   }
 });
+
+test('an age check that is not required never appears completed or advances the completed count', () => {
+  for (const status of ['not_started', 'pending', 'in_review', 'declined', 'expired']) {
+    const verification = { required: false, status };
+    for (const [profileStatus, completed, currentStep] of [
+      ['draft', 0, 'dancer-profile-media'],
+      ['pending_review', 1, 'dancer-onboarding-nfc'],
+    ]) {
+      const html = render(profileStatus, verification);
+      const ageRow = html.match(/<li[^>]*id="dancer-onboarding-age"[\s\S]*?<\/li>/)?.[0] || '';
+      assert.ok(ageRow.includes('No age check has been completed.'));
+      assert.doesNotMatch(ageRow, /is-complete|✓/);
+      assert.match(html, new RegExp(`aria-valuenow="${completed}"`));
+      assert.ok(html.includes(`${completed} of 3 complete · 1 not required`));
+      assert.match(html, /<span class="is-not-required">–<\/span>/);
+      const currentButton = html.match(new RegExp(`<button[^>]*id="${currentStep}-button"[^>]*>`))?.[0] || '';
+      assert.ok(currentButton.includes('aria-current="step"'));
+    }
+  }
+});
+
+test('only an actual verified result gives the age step a completion checkmark', () => {
+  for (const required of [true, false]) {
+    const html = render('pending_review', { required, status: 'verified' });
+    const ageRow = html.match(/<li[^>]*id="dancer-onboarding-age"[\s\S]*?<\/li>/)?.[0] || '';
+    assert.match(ageRow, /class="is-complete/);
+    assert.ok(ageRow.includes('✓'));
+    assert.match(html, /aria-valuenow="2"/);
+    assert.ok(html.includes('2 of 3 complete'));
+    assert.ok(!html.includes('1 not required'));
+  }
+});
