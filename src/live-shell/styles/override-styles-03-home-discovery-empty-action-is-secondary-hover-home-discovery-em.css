@@ -518,6 +518,9 @@
             margin: 0 !important;
             padding: 3px 1px 2px !important;
             overflow: visible !important;
+            /* The dock clips its own corners; a pill clip on each tab cuts off counts. */
+            -webkit-clip-path: none !important;
+            clip-path: none !important;
             border: 0 !important;
             border-radius: 0 !important;
             color: var(--home-nav-accent-soft) !important;
