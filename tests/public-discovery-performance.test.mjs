@@ -44,7 +44,7 @@ test("live-card metrics use one bounded aggregate instead of row paging or per-d
 test("the consolidated tonight list still requires a confirmed active check-in", () => {
   assert.match(publicServiceSource, /isActiveNfcPresence\(item, now\)/);
   assert.match(publicServiceSource, /const liveShift = visibleShifts\.find\(\(item: any\) => isActiveNfcPresence\(item, now\)\)/);
-  assert.match(publicServiceSource, /item\.shift_source === "scheduled"/);
+  assert.match(publicServiceSource, /card\.locationStatus === "club_confirmed"/);
   assert.match(publicServiceSource, /card\.locationStatus !== "self_reported"/);
   assert.match(publicServiceSource, /location_verification_expires_at/);
 });

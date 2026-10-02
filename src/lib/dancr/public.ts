@@ -11,7 +11,8 @@ import { isActiveNfcPresence } from "./shift-presence";
 
 type DancrClient = SupabaseClient;
 
-const PUBLIC_DANCER_DIRECTORY_LIMIT = 200;
+const PUBLIC_DANCER_DIRECTORY_LIMIT = 500;
+const ALL_CITIES_DANCER_DIRECTORY_LIMIT = 800;
 const PUBLIC_PROFILE_MEDIA_LIMIT = 50;
 const PUBLIC_PROFILE_SHIFT_LIMIT = 50;
 
@@ -105,7 +106,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
     .order("starts_at", { referencedTable: "live_shifts", ascending: true })
     .order("id", { referencedTable: "live_shifts", ascending: true })
     .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "live_shifts" })
-    .limit(isAllMyDancrCities(cityName) ? PUBLIC_DANCER_DIRECTORY_LIMIT * 4 : PUBLIC_DANCER_DIRECTORY_LIMIT);
+    .limit(isAllMyDancrCities(cityName) ? ALL_CITIES_DANCER_DIRECTORY_LIMIT : PUBLIC_DANCER_DIRECTORY_LIMIT);
 
   const data: any[] | null = current.data as any[] | null;
   const error: any = current.error;

@@ -4,10 +4,13 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import nextEnv from '@next/env';
 import { createClient } from '@supabase/supabase-js';
-import { DEMO_MARKER, ECHO_ID, SOURCE_SLUGS, DEMO_NAMES, gridPhoto, photoStoragePaths, publishSql } from './lib/echo-demo-grid.mjs';
+import { DEMO_GRIDS, SOURCE_SLUGS, DEMO_NAMES, gridPhoto, photoStoragePaths, publishSql } from './lib/echo-demo-grid.mjs';
 
 nextEnv.loadEnvConfig(process.env.DANCR_ENV_DIR || process.cwd());
 const args = new Map(process.argv.slice(2).map(arg => arg.replace(/^--/, '').split('=')));
+const grid = DEMO_GRIDS.find(g => g.key === (args.get('venue') || 'echo'));
+if (!grid) throw new Error('Choose one of the configured demo venues');
+const DEMO_MARKER = grid.marker;
 if (!['inspect','prepare'].includes(args.get('mode'))) throw new Error('Use --mode=inspect or --mode=prepare');
 if (args.get('target') !== 'production') throw new Error('Specify --target=production');
 if (args.get('mode') === 'prepare' && args.get('confirm') !== DEMO_MARKER) throw new Error(`Use --confirm=${DEMO_MARKER} for preparation`);
@@ -16,18 +19,18 @@ const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUP
 const check = async query => { const result = await query; if (result.error) throw result.error; return result.data; };
 const [sources, roster, settings, venue] = await Promise.all([
   check(admin.from('dancer_profiles').select('id,slug,stage_name,dancer_photos(id,storage_path,review_status,is_primary,is_pinned,sort_order)').in('slug', SOURCE_SLUGS).eq('is_public', true).eq('status','approved').eq('verification_status','approved').is('disabled_at',null)),
-  check(admin.rpc('internal_roster_members', { p_venue_id: ECHO_ID })),
+  check(admin.rpc('internal_roster_members', { p_venue_id: grid.venueId })),
   check(admin.from('dancer_age_verification_settings').select('enabled').eq('singleton',true).single()),
-  check(admin.from('venues').select('id,name,is_active').eq('id',ECHO_ID).single()),
+  check(admin.from('venues').select('id,name,is_active').eq('id',grid.venueId).single()),
 ]);
-if (settings.enabled || venue.name !== 'Echo House' || !venue.is_active) throw new Error('Expected active Echo House in existing demo mode');
+if (settings.enabled || venue.name !== grid.name || !venue.is_active) throw new Error('Expected configured active venue in existing demo mode');
 if (sources.length !== SOURCE_SLUGS.length || sources.some(p => !gridPhoto(p))) throw new Error('Every existing grid source must have an approved photo');
 sources.sort((a,b) => SOURCE_SLUGS.indexOf(a.slug) - SOURCE_SLUGS.indexOf(b.slug));
-const existing = await check(admin.from('dancer_profiles').select('id,user_id,slug,status,is_public').like('slug','echo-grid-%'));
+const existing = await check(admin.from('dancer_profiles').select('id,user_id,slug,status,is_public').like('slug',`${grid.key}-grid-%`));
 const baseIds = roster.filter(p => !existing.some(e => e.id === p.id)).map(p => p.id);
-const additions = 100 - baseIds.length;
+const additions = grid.target - baseIds.length;
 if (additions < 1 || additions > DEMO_NAMES.length) throw new Error('Unexpected baseline roster size');
-console.log(JSON.stringify({ mode: args.get('mode'), baselineRoster: baseIds.length, additions, sourcePhotos: sources.length, existingAddedProfiles: existing.length }));
+console.log(JSON.stringify({ mode: args.get('mode'), venue: grid.name, target: grid.target, baselineRoster: baseIds.length, additions, sourcePhotos: sources.length, existingAddedProfiles: existing.length }));
 if (args.get('mode') === 'inspect') process.exit(0);
 if (!args.get('out')) throw new Error('An --out directory is required for the reviewable publication plan');
 const out = path.resolve(args.get('out'));
@@ -39,9 +42,9 @@ for (let page = 1; ; page++) {
   users.push(...result.data.users);
   if (result.data.users.length < 1000) break;
 }
-const plan = { marker: DEMO_MARKER, venueId: ECHO_ID, target: 100, baseIds, profiles: [] };
+const plan = { marker: DEMO_MARKER, venueId: grid.venueId, target: grid.target, baseIds, profiles: [] };
 for (let index = 0; index < additions; index++) {
-  const slug = `echo-grid-${String(index + 1).padStart(3,'0')}`, email = `${slug}@synthetic.mydancr.invalid`;
+  const slug = `${grid.key}-grid-${String(index + 1).padStart(3,'0')}`, email = `${slug}@synthetic.mydancr.invalid`;
   const source = sources[index % sources.length], photo = gridPhoto(source);
   let user = users.find(u => u.email === email);
   if (user && (user.user_metadata?.dataset_marker !== DEMO_MARKER || user.user_metadata?.source_photo_id !== photo.id || user.user_metadata?.source_storage_path !== photo.storage_path)) throw new Error(`Refusing to reuse unexpected ${slug}`);

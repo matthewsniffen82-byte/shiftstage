@@ -48,7 +48,7 @@ function queryFixture(rows = []) {
           if (kind === 'ilike') return String(row[key]).toLowerCase() === String(value).toLowerCase();
           if (kind === 'eq' || kind === 'is') return row[key] === value;
           return true;
-        })), count: rows.length, error: null,
+        })).slice(0, log.filters.findLast(([kind, , options]) => kind === 'limit' && !options)?.[1] ?? rows.length), count: rows.length, error: null,
       }).then(resolve);
       return (...args) => { log.filters.push([method, ...args]); return query; };
     } });
@@ -75,6 +75,17 @@ test('combined dancer queries retain approval and visibility while city queries 
   assert.ok(all.queries[0].filters.some(([kind, n]) => kind === 'limit' && n === 800));
   const local = queryFixture(rows);
   assert.deepEqual(Array.from(await service.getApprovedDancerRowsByCity(local, 'Miami'), row => row.city), ['Miami']);
+});
+
+test('city discovery includes all dancers in the four large demo venue rosters', async () => {
+  const service = loadService('src/lib/dancr/public.ts', '\nexport { getApprovedDancerRowsByCity };');
+  const counts = { afterglow: 80, aurora: 75, blueEmber: 85, echo: 100 };
+  const rows = Object.entries(counts).flatMap(([venue, count]) => Array.from({ length: count }, (_, i) => ({
+    id: `${venue}-${i}`, venue, city: 'Las Vegas', status: 'approved', verification_status: 'approved', is_public: true, disabled_at: null,
+  })));
+  const result = await service.getApprovedDancerRowsByCity(queryFixture(rows), 'Las Vegas');
+  assert.equal(result.length, 340);
+  for (const [venue, count] of Object.entries(counts)) assert.equal(result.filter(row => row.venue === venue).length, count);
 });
 
 test('TV feed and video count support All cities without a literal city filter', async () => {
