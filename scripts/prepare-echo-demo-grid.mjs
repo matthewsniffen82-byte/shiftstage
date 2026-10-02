@@ -19,7 +19,12 @@ const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUP
 const check = async query => { const result = await query; if (result.error) throw result.error; return result.data; };
 const [sources, roster, settings, venue] = await Promise.all([
   check(admin.from('dancer_profiles').select('id,slug,stage_name,dancer_photos(id,storage_path,review_status,is_primary,is_pinned,sort_order)').in('slug', SOURCE_SLUGS).eq('is_public', true).eq('status','approved').eq('verification_status','approved').is('disabled_at',null)),
-  check(admin.rpc('internal_roster_members', { p_venue_id: grid.venueId })),
+  check(grid.key === 'echo' ? admin.rpc('internal_roster_members', { p_venue_id: grid.venueId })
+    : admin.from('dancer_profiles').select('id,shifts!inner(venue_id,status,checked_in_at,checked_out_at,location_status,location_verification_expires_at)')
+      .eq('status','approved').eq('verification_status','approved').eq('is_public',true).is('disabled_at',null)
+      .eq('shifts.venue_id',grid.venueId).eq('shifts.status','posted').not('shifts.checked_in_at','is',null)
+      .is('shifts.checked_out_at',null).eq('shifts.location_status','club_confirmed')
+      .gt('shifts.location_verification_expires_at',new Date().toISOString()).lt('shifts.location_verification_expires_at','infinity')),
   check(admin.from('dancer_age_verification_settings').select('enabled').eq('singleton',true).single()),
   check(admin.from('venues').select('id,name,is_active').eq('id',grid.venueId).single()),
 ]);

@@ -29,12 +29,22 @@ export function photoStoragePaths(master) {
 
 export const sqlText = value => "'" + String(value).replaceAll("'", "''") + "'";
 
+export function demoRosterSql(grid) {
+  if (grid.key === 'echo') return `select id from public.internal_roster_members('${grid.venueId}')`;
+  return `select distinct d.id from public.dancer_profiles d join public.shifts s on s.dancer_id=d.id
+    where s.venue_id='${grid.venueId}' and d.status='approved' and d.verification_status='approved'
+      and d.is_public and d.disabled_at is null and s.status='posted' and s.checked_in_at is not null
+      and s.checked_out_at is null and s.location_status='club_confirmed'
+      and s.location_verification_expires_at>now() and s.location_verification_expires_at<'infinity'`;
+}
+
 export function publishSql(plan) {
   const grid = DEMO_GRIDS.find(g => g.venueId === plan.venueId);
   if (!grid || plan.target !== grid.target || plan.baseIds.length + plan.profiles.length !== grid.target) throw new Error('Unexpected venue or demo roster total');
   if (plan.profiles.length < 1 || plan.profiles.length > grid.target || new Set(plan.profiles.map(p => p.dancer_id)).size !== plan.profiles.length
     || new Set(plan.baseIds).size !== plan.baseIds.length || plan.profiles.some(p => plan.baseIds.includes(p.dancer_id))) throw new Error('Invalid demo plan');
   const marker = grid.marker, venueId = grid.venueId;
+  const roster = demoRosterSql(grid);
   return `-- Reviewed, repeat-safe publication of prepared login-disabled demo accounts.
 begin;
 set local lock_timeout='3s';
@@ -46,9 +56,10 @@ as p(user_id uuid,dancer_id uuid,slug text,name text,storage_path text,photo_id 
 create temp table echo_demo_base on commit drop as select jsonb_array_elements_text(${sqlText(JSON.stringify(plan.baseIds))}::jsonb)::uuid id;
 do $$ begin
   if not exists(select 1 from public.dancer_age_verification_settings where singleton and enabled=false) then raise exception 'Real age enforcement is active'; end if;
-  if not exists(select 1 from public.venues v join public.app_users a on a.id=v.owner_user_id where v.id='${venueId}' and v.name=${sqlText(grid.name)} and v.is_active and a.role='venue' and a.account_state='active') then raise exception 'Expected active demo venue'; end if;
-  if exists(select id from public.internal_roster_members('${venueId}') where id not in(select dancer_id from echo_demo_plan) except select id from echo_demo_base)
-    or exists(select id from echo_demo_base except select id from public.internal_roster_members('${venueId}')) then raise exception 'Original roster changed; inspect again'; end if;
+  if not exists(select 1 from public.venues v left join public.app_users a on a.id=v.owner_user_id where v.id='${venueId}' and v.name=${sqlText(grid.name)} and v.is_active
+    and ((v.owner_user_id is null and '${grid.key}'<>'echo') or (a.role='venue' and a.account_state='active'))) then raise exception 'Expected active demo venue'; end if;
+  if exists(select id from (${roster}) current_roster where id not in(select dancer_id from echo_demo_plan) except select id from echo_demo_base)
+    or exists(select id from echo_demo_base except ${roster}) then raise exception 'Original roster changed; inspect again'; end if;
   if (select count(*) from echo_demo_plan p join public.dancer_profiles d on d.id=p.dancer_id and d.user_id=p.user_id join auth.users u on u.id=p.user_id join public.app_users a on a.id=p.user_id
       where u.email=p.slug||'@synthetic.mydancr.invalid' and u.raw_user_meta_data->>'dataset_marker'='${marker}' and u.banned_until>now()
       and p.slug ~ '^${grid.key}-grid-(0[0-9][1-9]|0[1-9]0|100)$' and a.role='dancer' and a.account_state='active' and d.disabled_at is null
@@ -70,11 +81,12 @@ select p.shift_id,p.dancer_id,'${venueId}',a.id,now(),'2099-12-31 23:59:59+00','
 from echo_demo_plan p join public.venue_dancer_affiliations a on a.dancer_id=p.dancer_id and a.venue_id='${venueId}' on conflict(id) do nothing;
 insert into public.dancer_shift_channels(shift_id,dancer_id,venue_id,visibility) select shift_id,dancer_id,'${venueId}','both' from echo_demo_plan on conflict(shift_id) do nothing;
 do $$ begin
-  if (select count(*) from public.internal_roster_members('${venueId}'))<>${grid.target} then raise exception 'Unexpected Internal roster total; rolling back'; end if;
-  if (select count(*) from public.venue_roster_members('${venueId}') where internal_visible and external_visible and working_until>now())<>${grid.target} then raise exception 'Staff roster does not match'; end if;
+  if (select count(*) from (${roster}) current_roster)<>${grid.target} then raise exception 'Unexpected demo roster total; rolling back'; end if;
+  if exists(select 1 from public.venues where id='${venueId}' and owner_user_id is not null)
+    and (select count(*) from public.venue_roster_members('${venueId}') where internal_visible and external_visible and working_until>now())<>${grid.target} then raise exception 'Staff roster does not match'; end if;
   if (select count(*) from public.dancer_photos p join echo_demo_plan d on d.dancer_id=p.dancer_id)<>${plan.profiles.length} then raise exception 'Expected one photo per added profile'; end if;
 end $$;
-select ${sqlText(grid.name)} as venue, count(*) as internal_profiles from public.internal_roster_members('${venueId}');
+select ${sqlText(grid.name)} as venue, count(*) as demo_profiles from (${roster}) current_roster;
 commit;
 `;
 }

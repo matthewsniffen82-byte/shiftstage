@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { createInternalRosterDatabase } from './helpers/internal-roster-database.mjs';
 import { fixtureId as id } from './helpers/dancer-tap-database.mjs';
-import { DEMO_GRIDS, DEMO_NAMES, gridPhoto, photoStoragePaths, publishSql, sqlText } from '../scripts/lib/echo-demo-grid.mjs';
+import { DEMO_GRIDS, DEMO_NAMES, gridPhoto, photoStoragePaths, publishSql, sqlText, demoRosterSql } from '../scripts/lib/echo-demo-grid.mjs';
 
 test('clones only the actual grid-facing approved photo and its existing sizes', () => {
   const primary = {id:'a',review_status:'approved',is_primary:true,sort_order:0};
@@ -69,6 +69,13 @@ for (const grid of DEMO_GRIDS) test(`publishes exactly ${grid.target} scoped ${g
     assert.ok((await pg.query('select public.internal_roster_request($1,$2,$3) result',[id(71),id(2001),id(80)])).rows[0].result.id);
     for(const role of ['anon','authenticated','service_role']) {
       await pg.exec('begin;set role '+role);await assert.rejects(()=>pg.query('select public.is_internal_demo_shift($1)',[id(4001)]),{code:'42501'});await pg.exec('rollback');
+    }
+    if (grid.key !== 'echo') {
+      await pg.query('update public.venues set owner_user_id=null where id=$1',[venueId]);
+      await pg.exec(publishSql(plan));
+      assert.equal((await pg.query(demoRosterSql(grid))).rows.length,grid.target,'Unclaimed venue cards retain their public demo roster');
+      assert.equal((await roster()).length,0,'Unclaimed venues do not gain internal staff access');
+      assert.equal((await pg.query('select owner_user_id from public.venues where id=$1',[venueId])).rows[0].owner_user_id,null);
     }
   } finally {await pg.close();}
 });
