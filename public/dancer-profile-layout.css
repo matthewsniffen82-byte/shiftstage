@@ -503,6 +503,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   --profile-frame-radius: 20px;
   --profile-frame-row-end: 4;
   box-sizing: border-box !important;
+  border: 0 !important;
   padding: 8px var(--profile-frame-inset) 0 !important;
 }
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) {
@@ -527,7 +528,22 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-featured-column {
   border-radius: 0 var(--profile-frame-radius) var(--profile-frame-radius) 0;
 }
-/* Media retains its original width below the card instead of joining the frame. */
+/* Photos and videos use the directory's content gutter, independently of the
+   narrower inset around the profile frame above them. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > :is(.profile-modal-media, .profile-media-section) {
-  margin-inline: calc(-1 * var(--profile-frame-inset)) !important;
+  margin-inline: calc(var(--dancer-discovery-content-gutter, 12px) - var(--profile-frame-inset)) !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(#modalGallery, .profile-media-grid) {
+  box-sizing: border-box !important;
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(#modalGallery > .thumb, .profile-media-grid-item) {
+  box-sizing: border-box !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  box-shadow: none !important;
 }
