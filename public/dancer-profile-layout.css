@@ -387,7 +387,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 /* Refine the existing profile hierarchy without changing its content or actions. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
-  --profile-bottom-nav-clearance: calc(var(--mydancr-preview-banner-offset, 0px) + 92px + env(safe-area-inset-bottom, 0px));
+  --profile-bottom-nav-clearance: calc(var(--mydancr-preview-banner-offset, 46px) + 92px + env(safe-area-inset-bottom, 0px));
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(#modalName, .profile-titlebar h1) {
   font-size: clamp(26px, 3.1vw, 40px) !important;
@@ -465,8 +465,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-activity-metrics, .profile-header-metrics) dt { font-size: 9px !important; }
 }
 @media (min-width: 760px) {
-  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) { --profile-bottom-nav-clearance: calc(var(--mydancr-preview-banner-offset, 0px) + 16px); }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) { --profile-bottom-nav-clearance: calc(var(--mydancr-preview-banner-offset, 34px) + 16px); }
 }
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout {
-  --profile-bottom-nav-clearance: calc(var(--mydancr-preview-banner-offset, 0px) + 16px);
+  --profile-bottom-nav-clearance: calc(var(--mydancr-preview-banner-offset, 46px) + 16px);
 }

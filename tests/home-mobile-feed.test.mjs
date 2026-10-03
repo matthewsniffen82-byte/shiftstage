@@ -130,18 +130,18 @@ test("the homepage selects Dancers on first load and keeps destination navigatio
   );
 });
 
-test("all three destinations land at their title before the cards", () => {
+test("all three destinations land at the city filters before the title and cards", () => {
   assert.match(
     homeSource,
     /const homeDestinationOrder = \["dancers", "tv", "venues"\];/,
   );
   assert.match(
     homeSource,
-    /function homeResultsDocumentTop\(element\) \{[\s\S]*?Number\(node\.offsetTop\)[\s\S]*?node = node\.offsetParent[\s\S]*?function alignHomeResultsTitle\(behavior = "auto"\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?getComputedStyle\(destinationStart\)\.top[\s\S]*?homeResultsDocumentTop\(destinationStart\) - landingTop[\s\S]*?window\.scrollTo\(\{ top: targetTop, left: 0, behavior \}\)/,
+    /function homeResultsDocumentTop\(element\) \{[\s\S]*?Number\(node\.offsetTop\)[\s\S]*?node = node\.offsetParent[\s\S]*?function alignHomeDiscoveryStart\(behavior = "auto"\) \{[\s\S]*?tabTitle\?\.closest\("\.content-head"\)[\s\S]*?getComputedStyle\(destinationStart\)\.scrollMarginTop[\s\S]*?homeResultsDocumentTop\(destinationStart\) - landingTop[\s\S]*?window\.scrollTo\(\{ top: targetTop, left: 0, behavior \}\)/,
   );
   assert.match(
     homeSource,
-    /function cancelHomeResultsFocus\(\{ releaseTvLanding = false \} = \{\}\) \{[\s\S]*?cancelAnimationFrame\(homeResultsFocusFrame\)[\s\S]*?clearTimeout\(homeResultsFocusTimer\)[\s\S]*?homeResultsFocusRun \+= 1[\s\S]*?releaseTvLanding\) homeTvFeedLandingPending = false;[\s\S]*?function focusHomeResults\(\) \{[\s\S]*?cancelHomeResultsFocus\(\);[\s\S]*?const focusRun = homeResultsFocusRun[\s\S]*?alignHomeResultsTitle\(\)[\s\S]*?requestAnimationFrame\(\(\) => settle\(remainingFrames - 1\)\)[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?alignHomeResultsTitle\(\)[\s\S]*?160/,
+    /function cancelHomeResultsFocus\(\{ releaseTvLanding = false \} = \{\}\) \{[\s\S]*?cancelAnimationFrame\(homeResultsFocusFrame\)[\s\S]*?clearTimeout\(homeResultsFocusTimer\)[\s\S]*?homeResultsFocusRun \+= 1[\s\S]*?releaseTvLanding\) homeTvFeedLandingPending = false;[\s\S]*?function focusHomeResults\(\) \{[\s\S]*?cancelHomeResultsFocus\(\);[\s\S]*?const focusRun = homeResultsFocusRun[\s\S]*?alignHomeDiscoveryStart\(\)[\s\S]*?requestAnimationFrame\(\(\) => settle\(remainingFrames - 1\)\)[\s\S]*?setTimeout\(\(\) => \{[\s\S]*?alignHomeDiscoveryStart\(\)[\s\S]*?160/,
   );
   assert.match(
     homeSource,
@@ -166,12 +166,12 @@ test("all three destinations land at their title before the cards", () => {
   );
   assert.match(
     homeSource,
-    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-top: calc\(14px \+ env\(safe-area-inset-top, 0px\)\);[\s\S]*?#results\.home-tv-feed \{[\s\S]*?margin: 0 -7px calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-snap-type: none;/,
+    /@media \(max-width: 720px\) \{[\s\S]*?html\.home-tv-page-snap \{[\s\S]*?scroll-snap-type: y proximity;[\s\S]*?scroll-padding-top: calc\(var\(--mydancr-preview-banner-offset, env\(safe-area-inset-top, 0px\)\) \+ 12px\);[\s\S]*?#results\.home-tv-feed \{[\s\S]*?margin: 0 -7px calc\(112px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?scroll-snap-type: none;/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-locked|home-destination-immersive/);
 });
 
-test("manual scrolling releases the initial title landing without disabling page snap", () => {
+test("manual scrolling releases the initial filters landing without disabling page snap", () => {
   assert.match(
     homeSource,
     /const homeResultsScrollIntentKeys = new Set\(\[[\s\S]*?"ArrowUp"[\s\S]*?"ArrowDown"[\s\S]*?"PageUp"[\s\S]*?"PageDown"[\s\S]*?"Home"[\s\S]*?"End"[\s\S]*?" "[\s\S]*?"Spacebar"[\s\S]*?\]\);/,

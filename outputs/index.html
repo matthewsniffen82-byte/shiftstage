@@ -32514,6 +32514,7 @@
       <style>
         main.stack,
         main.stack > * { min-width: 0; max-width: 100%; }
+        .home-discovery-controls { scroll-margin-top: calc(var(--mydancr-preview-banner-offset, env(safe-area-inset-top, 0px)) + 12px); }
         @media (max-width: 720px) {
           body .toast {
             z-index: 110;
@@ -35108,7 +35109,7 @@
           }
           html.home-tv-page-snap {
             scroll-snap-type: y proximity;
-            scroll-padding-top: calc(14px + env(safe-area-inset-top, 0px));
+            scroll-padding-top: calc(var(--mydancr-preview-banner-offset, env(safe-area-inset-top, 0px)) + 12px);
             scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
             scrollbar-width: none;
           }
@@ -35151,11 +35152,14 @@
             }
           }
           html.home-tv-page-snap .hero.reference-hero,
-          html.home-tv-page-snap .content-head,
+          html.home-tv-page-snap .home-discovery-controls,
           html.home-tv-page-snap #results.home-tv-feed > .home-tv-feed-loading,
           html.home-tv-page-snap #results.home-tv-feed > .home-tv-feed-slide {
             scroll-snap-align: start;
             scroll-snap-stop: normal;
+          }
+          html.home-tv-page-snap .home-discovery-controls {
+            scroll-margin-top: 0;
           }
           #results.home-tv-feed {
             position: relative !important;
@@ -61254,11 +61258,15 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       return top;
     }
 
-    function alignHomeResultsTitle(behavior = "auto") {
-      const destinationStart = tabTitle?.closest(".content-head") || tabTitle || results;
-      if (!destinationStart.isConnected) return;
-      const stickyTop = Number.parseFloat(window.getComputedStyle(destinationStart).top);
-      const landingTop = Number.isFinite(stickyTop) ? stickyTop : 0;
+    function alignHomeDiscoveryStart(behavior = "auto") {
+      const destinationStart = citySelect?.closest(".home-discovery-controls")
+        || tabTitle?.closest(".content-head") || tabTitle || results;
+      if (!destinationStart?.isConnected) return;
+      // Match native scroll snapping: the destination's margin plus the page's
+      // scroll padding keeps the filters below the notice on every destination.
+      const marginTop = Number.parseFloat(window.getComputedStyle(destinationStart).scrollMarginTop) || 0;
+      const paddingTop = Number.parseFloat(window.getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+      const landingTop = Math.max(0, marginTop + paddingTop);
       const targetTop = Math.max(0, homeResultsDocumentTop(destinationStart) - landingTop);
       window.scrollTo({ top: targetTop, left: 0, behavior });
     }
@@ -61306,22 +61314,22 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       homeResultsSmoothLandingPending = false;
       if (smoothLanding) {
-        alignHomeResultsTitle("smooth");
+        alignHomeDiscoveryStart("smooth");
         homeResultsFocusTimer = window.setTimeout(() => {
           if (focusRun !== homeResultsFocusRun) return;
           homeResultsFocusTimer = 0;
-          alignHomeResultsTitle("auto");
+          alignHomeDiscoveryStart("auto");
           homeResultsFocusFrame = window.requestAnimationFrame(() => {
             if (focusRun !== homeResultsFocusRun) return;
             homeResultsFocusFrame = 0;
-            alignHomeResultsTitle("auto");
+            alignHomeDiscoveryStart("auto");
           });
         }, 240);
         return;
       }
       const settle = (remainingFrames) => {
         if (focusRun !== homeResultsFocusRun) return;
-        alignHomeResultsTitle();
+        alignHomeDiscoveryStart();
         if (remainingFrames > 0) {
           homeResultsFocusFrame = window.requestAnimationFrame(() => settle(remainingFrames - 1));
           return;
@@ -61330,7 +61338,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         homeResultsFocusTimer = window.setTimeout(() => {
           if (focusRun !== homeResultsFocusRun) return;
           homeResultsFocusTimer = 0;
-          alignHomeResultsTitle();
+          alignHomeDiscoveryStart();
         }, 160);
       };
       settle(2);

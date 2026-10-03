@@ -103,7 +103,7 @@ test("the current discovery content follows the finger and settles smoothly", ()
   );
   assert.match(
     homeSource,
-    /function focusHomeResults\(\)[\s\S]*?homeResultsSmoothLandingPending[\s\S]*?alignHomeResultsTitle\("smooth"\)[\s\S]*?alignHomeResultsTitle\("auto"\)/,
+    /function focusHomeResults\(\)[\s\S]*?homeResultsSmoothLandingPending[\s\S]*?alignHomeDiscoveryStart\("smooth"\)[\s\S]*?alignHomeDiscoveryStart\("auto"\)/,
   );
 });
 

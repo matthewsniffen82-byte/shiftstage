@@ -779,11 +779,15 @@
       return top;
     }
 
-    function alignHomeResultsTitle(behavior = "auto") {
-      const destinationStart = tabTitle?.closest(".content-head") || tabTitle || results;
-      if (!destinationStart.isConnected) return;
-      const stickyTop = Number.parseFloat(window.getComputedStyle(destinationStart).top);
-      const landingTop = Number.isFinite(stickyTop) ? stickyTop : 0;
+    function alignHomeDiscoveryStart(behavior = "auto") {
+      const destinationStart = citySelect?.closest(".home-discovery-controls")
+        || tabTitle?.closest(".content-head") || tabTitle || results;
+      if (!destinationStart?.isConnected) return;
+      // Match native scroll snapping: the destination's margin plus the page's
+      // scroll padding keeps the filters below the notice on every destination.
+      const marginTop = Number.parseFloat(window.getComputedStyle(destinationStart).scrollMarginTop) || 0;
+      const paddingTop = Number.parseFloat(window.getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+      const landingTop = Math.max(0, marginTop + paddingTop);
       const targetTop = Math.max(0, homeResultsDocumentTop(destinationStart) - landingTop);
       window.scrollTo({ top: targetTop, left: 0, behavior });
     }
@@ -831,22 +835,22 @@
         !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       homeResultsSmoothLandingPending = false;
       if (smoothLanding) {
-        alignHomeResultsTitle("smooth");
+        alignHomeDiscoveryStart("smooth");
         homeResultsFocusTimer = window.setTimeout(() => {
           if (focusRun !== homeResultsFocusRun) return;
           homeResultsFocusTimer = 0;
-          alignHomeResultsTitle("auto");
+          alignHomeDiscoveryStart("auto");
           homeResultsFocusFrame = window.requestAnimationFrame(() => {
             if (focusRun !== homeResultsFocusRun) return;
             homeResultsFocusFrame = 0;
-            alignHomeResultsTitle("auto");
+            alignHomeDiscoveryStart("auto");
           });
         }, 240);
         return;
       }
       const settle = (remainingFrames) => {
         if (focusRun !== homeResultsFocusRun) return;
-        alignHomeResultsTitle();
+        alignHomeDiscoveryStart();
         if (remainingFrames > 0) {
           homeResultsFocusFrame = window.requestAnimationFrame(() => settle(remainingFrames - 1));
           return;
@@ -855,7 +859,7 @@
         homeResultsFocusTimer = window.setTimeout(() => {
           if (focusRun !== homeResultsFocusRun) return;
           homeResultsFocusTimer = 0;
-          alignHomeResultsTitle();
+          alignHomeDiscoveryStart();
         }, 160);
       };
       settle(2);

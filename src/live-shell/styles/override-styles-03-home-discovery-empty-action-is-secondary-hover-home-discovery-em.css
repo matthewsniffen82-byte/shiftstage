@@ -199,7 +199,7 @@
           }
           html.home-tv-page-snap {
             scroll-snap-type: y proximity;
-            scroll-padding-top: calc(14px + env(safe-area-inset-top, 0px));
+            scroll-padding-top: calc(var(--mydancr-preview-banner-offset, env(safe-area-inset-top, 0px)) + 12px);
             scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
             scrollbar-width: none;
           }
@@ -242,11 +242,14 @@
             }
           }
           html.home-tv-page-snap .hero.reference-hero,
-          html.home-tv-page-snap .content-head,
+          html.home-tv-page-snap .home-discovery-controls,
           html.home-tv-page-snap #results.home-tv-feed > .home-tv-feed-loading,
           html.home-tv-page-snap #results.home-tv-feed > .home-tv-feed-slide {
             scroll-snap-align: start;
             scroll-snap-stop: normal;
+          }
+          html.home-tv-page-snap .home-discovery-controls {
+            scroll-margin-top: 0;
           }
           #results.home-tv-feed {
             position: relative !important;
