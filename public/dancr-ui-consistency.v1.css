@@ -1089,11 +1089,11 @@ html body.dancr-button-system #results.venue-card-grid > .venue-card .venue-card
 
 }
 
-/* Venue details share the scroll-card identity layout while retaining the full profile. */
+/* Detail information leads on the left; the logo stays centered on the right. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row {
   --venue-detail-logo-size: clamp(112px, 34vw, 184px);
   display: grid !important;
-  grid-template-columns: var(--venue-detail-logo-size) minmax(0, 1fr) !important;
+  grid-template-columns: minmax(0, 1fr) var(--venue-detail-logo-size) !important;
   align-items: stretch !important;
   gap: 0 !important;
   min-height: var(--venue-detail-logo-size) !important;
@@ -1105,7 +1105,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row .venue-main-photo[data-venue-visual-source] {
   position: relative !important;
-  grid-column: 1 !important;
+  grid-column: 2 !important;
   grid-row: 1 !important;
   width: 100% !important;
   height: 100% !important;
@@ -1159,13 +1159,14 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
   min-width: 0;
   display: grid;
   align-content: center;
   gap: 6px;
-  padding: 12px 12px 8px 6px;
+  /* Clear the Back control: 8px inset + 44px touch target + 8px gap. */
+  padding: 60px 6px 8px 12px;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-identity-copy {
