@@ -660,6 +660,10 @@
            the main Dancers directory while retaining its own status sections. */
         .venue-dancer-grid {
           display: grid !important;
+          width: 100% !important;
+          min-width: 0;
+          margin-inline: 0 !important;
+          padding-inline: 0 !important;
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           align-items: start !important;
           gap: 2px !important;
@@ -764,12 +768,6 @@
           font-size: clamp(7px, 1.9vw, 9px);
         }
         @media (max-width: 420px) {
-          .venue-dancer-grid {
-            width: calc(100% + 16px) !important;
-            margin-inline: -8px !important;
-            padding-right: max(12px, env(safe-area-inset-right, 0px)) !important;
-            gap: 2px !important;
-          }
           .venue-dancer-grid .home-dancer-grid-copy {
             padding: 20px 5px 5px;
           }

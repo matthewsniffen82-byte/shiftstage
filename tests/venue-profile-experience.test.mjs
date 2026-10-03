@@ -111,7 +111,7 @@ test("venue details reuse the production Dancers grid for dancers working now", 
   assert.match(liveApp, /\.venue-dancer-grid img\.home-dancer-grid-photo \{[\s\S]*?display: block !important;[\s\S]*?object-fit: cover;[\s\S]*?object-position: center top;/);
   assert.match(
     liveApp,
-    /@media \(max-width: 420px\) \{[\s\S]*?\.venue-dancer-grid \{[\s\S]*?width: calc\(100% \+ 16px\) !important;[\s\S]*?margin-inline: -8px !important;[\s\S]*?padding-right: max\(12px, env\(safe-area-inset-right, 0px\)\) !important;[\s\S]*?gap: 2px !important;/,
+    /\.venue-dancer-grid \{[^}]*width: 100% !important;[^}]*margin-inline: 0 !important;[^}]*padding-inline: 0 !important;[^}]*gap: 2px !important;/,
   );
   assert.match(
     liveApp,
@@ -263,7 +263,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-identity-block \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?align-items: start;[\s\S]*?gap: 0;/);
   assert.match(refinement, /\.venue-detail-close \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?justify-self: end !important;[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?display: inline-grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
   assert.match(refinement, /\.venue-detail-close \.icon \{[\s\S]*?width: 15px !important;[\s\S]*?height: 15px !important;[\s\S]*?stroke-width: 1\.85 !important;/);
-  assert.match(refinement, /\.venue-detail-exploration \{[\s\S]*?display: grid;[\s\S]*?gap: 12px;[\s\S]*?padding: 10px 12px 16px;/);
+  assert.match(refinement, /\.venue-detail-exploration \{[\s\S]*?display: grid;[\s\S]*?gap: 12px;[\s\S]*?padding: 10px 0 16px;/);
   assert.match(refinement, /\.venue-activity-empty\.is-compact \{[\s\S]*?grid-template-columns: 34px minmax\(0, 1fr\);[\s\S]*?padding: 10px 11px;/);
   assert.match(refinement, /\.venue-hero \+ \.venue-detail-exploration \{[\s\S]*?margin-top: 0;/);
   assert.doesNotMatch(refinement, /\.venue-information-section|\.venue-contact-details-content/);

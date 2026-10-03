@@ -12,6 +12,7 @@
   --mydancr-scrollbar-thumb: rgba(255, 255, 255, .18);
   --mydancr-scrollbar-thumb-active: rgba(255, 255, 255, .32);
   --mydancr-preview-banner-height: 34px;
+  --dancer-discovery-content-gutter: 12px;
   --mydancr-preview-banner-offset: calc(var(--mydancr-preview-banner-height) + env(safe-area-inset-top, 0px));
 }
 
@@ -6154,10 +6155,10 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail {
   box-shadow: none !important;
 }
 
-/* The hero/card supplies the venue detail's single visible frame. Keep the
- * wrapper's border geometry so removing the duplicate line cannot shift it. */
+/* The hero supplies the visible frame. The wrapper adds no border inset,
+ * so the roster shares the main dancer grid's content boundary. */
 body.dancr-button-system #results.venue-profile-overlay .venue-detail {
-  border-color: transparent !important;
+  border: 0 !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay :is(
@@ -7856,7 +7857,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   min-width: 0;
   display: grid;
   gap: 12px;
-  padding: 10px 12px 16px;
+  padding: 10px 0 16px;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-section {
@@ -8550,7 +8551,6 @@ html:is(
  * schedule, and result state while moving the first profile row materially
  * higher on mobile. This scope deliberately excludes TV and Clubs. */
 body.dancer-directory-active > .app > main.stack {
-  --dancer-discovery-content-gutter: 12px;
   gap: 8px !important;
 }
 

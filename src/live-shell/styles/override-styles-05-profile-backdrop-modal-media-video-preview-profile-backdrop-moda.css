@@ -1008,7 +1008,7 @@
           margin: 0 !important;
           padding:
             max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
-            max(12px, calc((100vw - 760px) / 2))
+            max(var(--dancer-discovery-content-gutter, 12px), calc((100vw - 760px) / 2))
             calc(140px + env(safe-area-inset-bottom, 0px)) !important;
           display: block !important;
           overflow-x: hidden !important;
