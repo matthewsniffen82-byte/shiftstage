@@ -1097,8 +1097,8 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   align-items: stretch !important;
   gap: 0 !important;
   min-height: var(--venue-detail-logo-size) !important;
-  /* Give both columns the same space below Back and the same inset as the CTA. */
-  padding: 60px 12px 8px !important;
+  /* Lift the identity row while the text keeps its own Back-button clearance. */
+  padding: 40px 12px 8px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1164,9 +1164,10 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   grid-row: 1;
   min-width: 0;
   display: grid;
-  align-content: center;
+  align-content: start;
   gap: 6px;
-  padding: 0 8px 0 0;
+  /* 40px row inset + 20px here keeps long names below the 44px Back target. */
+  padding: 20px 8px 0 0;
   text-align: center;
 }
 
