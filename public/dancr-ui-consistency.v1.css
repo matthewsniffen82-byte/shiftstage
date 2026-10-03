@@ -1186,17 +1186,19 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   z-index: 3;
 }
 
-/* Match the shared close-control specificity; the final class limits this to
- * Club Detail. Keep its 44px target and keyboard outline, without a circle. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal #modalClose,
-  #results.venue-profile-overlay .venue-detail .venue-detail-close).venue-detail-close {
+/* Plain profile Back controls retain their 44px targets and keyboard outlines.
+ * Scope the shared close-control override to dancer profiles and Club Detail. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout #modalClose,
+  .public-profile-shell.profile-split-layout > .profile-titlebar .public-profile-close,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close) {
   border: 0 !important;
   border-radius: 8px !important;
   background: none !important;
   box-shadow: none !important;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal #modalClose,
-  #results.venue-profile-overlay .venue-detail .venue-detail-close).venue-detail-close::before {
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout #modalClose,
+  .public-profile-shell.profile-split-layout > .profile-titlebar .public-profile-close,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close)::before {
   content: none !important;
   display: none !important;
 }
