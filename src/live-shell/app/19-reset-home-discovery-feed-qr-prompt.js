@@ -335,7 +335,10 @@
       const status = homeDiscoveryFeedStatus(profile);
       const scheduleLabel = homeDancerGridScheduleLabel(profile, city);
       const venueMarkup = hasPublishedVenue
-        ? `<span class="home-dancer-grid-venue">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
+        ? `<span class="home-dancer-grid-venue">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel && !compactDirectory ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
+        : "";
+      const distanceMarkup = compactDirectory && hasPublishedVenue && distanceLabel
+        ? `<span class="home-dancer-grid-distance">${escapeHtml(distanceLabel)}</span>`
         : "";
       const groupClass = status.className === "is-now"
         ? "is-now"
@@ -350,6 +353,7 @@
               <h3 class="home-dancer-grid-name">${safeName}</h3>
               ${cityMarkup}
               ${venueMarkup}
+              ${distanceMarkup}
               <span class="home-dancer-grid-status ${status.className}">${escapeHtml(scheduleLabel)}</span>
             </span>
           </a>
