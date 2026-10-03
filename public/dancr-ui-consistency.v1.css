@@ -1182,7 +1182,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 /* Share the dancer profile's Back control without adding a row above the card. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero > .venue-detail-close {
   position: absolute !important;
-  inset: 8px auto auto 8px !important;
+  inset: 2px auto auto 2px !important;
   z-index: 3;
   -webkit-tap-highlight-color: transparent;
 }

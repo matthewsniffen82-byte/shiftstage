@@ -138,6 +138,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   align-items: center !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-header-controls, .profile-titlebar-controls) button { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; }
+/* Match Club Detail's 2px corner inset while retaining the full Back hit area. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close) {
+  translate: calc(2px - var(--split-inset)) -6px;
+}
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-header-report-action > svg { transform: none !important; }
 /* Show the profile's Back icon instead of the shared close-control X. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout #modalClose, .public-profile-shell.profile-split-layout > .profile-titlebar .public-profile-close, #results.venue-profile-overlay .venue-detail .venue-detail-close)::after { display: none !important; }

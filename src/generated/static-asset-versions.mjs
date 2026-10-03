@@ -2,7 +2,7 @@
 export const staticAssetVersions = {
   "/dancer-main-photo.css": "4a961384d5462652",
   "/dancr-account-forms.v1.css": "d1eeca79e59c905a",
-  "/dancr-ui-consistency.v1.css": "b4727631c003ab3b",
+  "/dancr-ui-consistency.v1.css": "20a5a0d6378ec151",
   "/dancr-aesthetic.v1.css": "6183550e9690016e",
   "/dancr-brand-tokens.v1.css": "2a718f138858ab5a",
   "/dancr-button-system.v1.css": "5a7673110531b585",
@@ -29,7 +29,7 @@ export const staticAssetVersions = {
   "/outputs/mydancr-logo.png": "4b6b66793bf7a63d",
   "/profile-media-owner-controls.css": "23f95b3a66febb0a",
   "/profile-actions-compact.css": "eeeba9e5abc125d8",
-  "/dancer-profile-layout.css": "3a431e8ce8853af5",
+  "/dancer-profile-layout.css": "9b3176fae05619de",
   "/profile-media-card-feed.css": "8d4b0a8a5a714609",
   "/profile-photo-crop.css": "31341ca79743b0d4",
   "/profile-photo-crop.js": "b17ae56b4ff08aed",
