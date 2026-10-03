@@ -138,9 +138,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   align-items: center !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-header-controls, .profile-titlebar-controls) button { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; }
-/* Match Club Detail's 2px corner inset while retaining the full Back hit area. */
+/* Keep Back at the left corner, level with Report in the shared control row. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls, .profile-titlebar-controls) :is(#modalClose, .public-profile-close) {
-  translate: calc(2px - var(--split-inset)) -6px;
+  translate: calc(2px - var(--split-inset)) 0;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-header-report-action > svg { transform: none !important; }
 /* Show the profile's Back icon instead of the shared close-control X. */
@@ -437,7 +437,11 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   -webkit-text-fill-color: var(--profile-secondary-text) !important;
   box-shadow: none !important;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-summary, .profile-titlebar) { padding-bottom: 14px !important; }
+/* Raise the profile content while preserving the full 44px navigation targets. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-summary, .profile-titlebar) {
+  padding-top: 2px !important;
+  padding-bottom: 8px !important;
+}
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-metrics, .profile-header-metrics) { margin-top: 12px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-activity-metrics, .profile-header-metrics) {
   height: auto !important;
@@ -518,7 +522,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   --profile-frame-row-end: 4;
   box-sizing: border-box !important;
   border: 0 !important;
-  padding: 8px var(--profile-frame-inset) 0 !important;
+  padding: 2px var(--profile-frame-inset) 0 !important;
 }
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) {
   --profile-frame-row-end: 3;
