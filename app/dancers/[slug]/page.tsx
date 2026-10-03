@@ -123,136 +123,52 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
         />
         <PublicProfileStyles />
 
-        <div className="profile-info-panel">
-          <header className="profile-titlebar">
-            <div className="profile-titlebar-controls">
-              <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
-              <ProfileCloseButton
-                fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
-              />
-            </div>
-            <div className="profile-titlebar-person">
-              <div
-                aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : ""}`}
-                className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
-                data-dancer-avatar=""
-                data-working-now={activeShift ? "true" : undefined}
-                role="img"
-              >
-                <span aria-hidden="true" data-dancer-avatar-border="">
-                  {avatarPhoto ? (
-                    <img
-                      alt=""
-                      decoding="async"
-                      fetchPriority="high"
-                      height={avatarPhotoHeight || undefined}
-                      sizes="72px"
-                      src={avatarPhoto}
-                      srcSet={avatarPhotoSrcSet || undefined}
-                      style={{
-                        height: "100%",
-                        objectFit: "cover",
-                        objectPosition: imageFocalPointCss(avatarPhotoFocalX, avatarPhotoFocalY),
-                        width: "100%",
-                      }}
-                      width={avatarPhotoWidth || undefined}
-                    />
-                  ) : initials(profile.stageName)}
-                </span>
-                {activeShift ? <span aria-hidden="true" data-working-now-indicator="">NOW</span> : null}
-              </div>
-              <div className="profile-titlebar-identity">
-                <div>
-                  <h1>{profile.stageName}</h1>
-                </div>
-                <div className="profile-titlebar-context">
-                  <span className="profile-titlebar-city">{profile.city}</span>
-                </div>
-              </div>
-            </div>
-          </header>
-
-          {profile.metricsUnavailable || secondaryUnavailable ? (
-            <p role="status">Some profile details are temporarily unavailable. Reload the page to try again.</p>
-          ) : null}
-
-          <DancerProfileActions
-            dancerId={profile.id}
-            hasClubDeal={Boolean(activeDeal)}
-            shareControl={<ProfileShareButton dancerId={profile.id} stageName={profile.stageName} />}
-            shifts={profile.upcomingShifts.map((shift) => ({
-              id: shift.id,
-              label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
-              isActive: isActiveNow(shift),
-            }))}
-          >
-            {activeShift ? (
+        <header className="profile-titlebar">
+          <div className="profile-titlebar-controls">
+            <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
+            <ProfileCloseButton
+              fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
+            />
+          </div>
+          <div className="profile-titlebar-person">
             <div
-              className="profile-shift-card profile-working-card is-now"
-              aria-labelledby="profile-working-title"
+              aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : ""}`}
+              className={`profile-titlebar-avatar${avatarPhoto ? " has-photo" : ""}`}
+              data-dancer-avatar=""
+              data-working-now={activeShift ? "true" : undefined}
+              role="img"
             >
-              <div className="profile-working-head">
-                <Link
-                  className="profile-working-destination"
-                  href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}
-                >
-                  <span className="profile-live-state" id="profile-working-title">Working now</span>
-                  <span className="profile-working-copy">
-                    <VenuePinIcon />
-                    <strong>{activeShift.venueName}</strong>
-                  </span>
-                  <span aria-hidden="true" className="profile-working-cue">›</span>
-                </Link>
-              </div>
-            </div>
-            ) : (
-            <div className="profile-shift-card profile-schedule-empty is-empty has-working-alert" aria-label="Schedule status">
-              <span className="profile-empty-state">Not working now</span>
-              <DancerWorkingAlertHint stageName={profile.stageName} />
-            </div>
-            )}
-
-            {activeShift && activeDeal ? (
-              <div className="profile-tonight-deal">
-                <div
-                  className="profile-active-deal has-club-deal"
-                  aria-label="Active Club Deal admission pass"
-                >
-                  <ClubDealCard
-                    deal={toPublicClubDeal(activeDeal)}
-                    deals={activeDeals.map(toPublicClubDeal)}
-                    venueId={activeShift.venueId}
-                    venueName={activeShift.venueName}
-                    sourceType={dealSourceType}
-                    dancerId={dancerAttributionEligible ? profile.id : null}
-                    attributionToken={dealAttributionToken}
-                    attributionTokens={dealAttributionTokens}
-                    dancerNote={dancerAttributionEligible}
-                    presentation="profileCompact"
-                    ctaLabel="Free Entry"
-                    sectionId="club-deal"
+              <span aria-hidden="true" data-dancer-avatar-border="">
+                {avatarPhoto ? (
+                  <img
+                    alt=""
+                    decoding="async"
+                    fetchPriority="high"
+                    height={avatarPhotoHeight || undefined}
+                    sizes="72px"
+                    src={avatarPhoto}
+                    srcSet={avatarPhotoSrcSet || undefined}
+                    style={{
+                      height: "100%",
+                      objectFit: "cover",
+                      objectPosition: imageFocalPointCss(avatarPhotoFocalX, avatarPhotoFocalY),
+                      width: "100%",
+                    }}
+                    width={avatarPhotoWidth || undefined}
                   />
-                </div>
+                ) : initials(profile.stageName)}
+              </span>
+              {activeShift ? <span aria-hidden="true" data-working-now-indicator="">NOW</span> : null}
+            </div>
+            <div className="profile-titlebar-identity">
+              <div>
+                <h1>{profile.stageName}</h1>
               </div>
-            ) : actionShift ? (
-              <div className="profile-tonight-deal">
-                <p className="profile-deal-availability-line">
-                  {activeShift ? "Free entry unavailable" : "Going tonight? View free entry"}
-                </p>
+              <div className="profile-titlebar-context">
+                <span className="profile-titlebar-city">{profile.city}</span>
               </div>
-            ) : null}
-
-
-            {!activeShift && actionVenue ? (
-              <div
-                aria-label="Venue travel actions"
-                className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming has-venue-deal-link"}`}
-              >
-                <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
-              </div>
-            ) : null}
-          </DancerProfileActions>
-
+            </div>
+          </div>
           <dl className="profile-header-metrics" aria-label="Profile activity">
             <div>
               <DancerFollowerMetric />
@@ -266,7 +182,88 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
               <dt>Views today</dt>
             </div>
           </dl>
-        </div>
+        </header>
+
+        {profile.metricsUnavailable || secondaryUnavailable ? (
+          <p role="status">Some profile details are temporarily unavailable. Reload the page to try again.</p>
+        ) : null}
+
+        <DancerProfileActions
+          dancerId={profile.id}
+          hasClubDeal={Boolean(activeDeal)}
+          shareControl={<ProfileShareButton dancerId={profile.id} stageName={profile.stageName} />}
+          shifts={profile.upcomingShifts.map((shift) => ({
+            id: shift.id,
+            label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
+            isActive: isActiveNow(shift),
+          }))}
+        >
+          {activeShift ? (
+          <div
+            className="profile-shift-card profile-working-card is-now"
+            aria-labelledby="profile-working-title"
+          >
+            <div className="profile-working-head">
+              <Link
+                className="profile-working-destination"
+                href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}
+              >
+                <span className="profile-live-state" id="profile-working-title">Working now</span>
+                <span className="profile-working-copy">
+                  <VenuePinIcon />
+                  <strong>{activeShift.venueName}</strong>
+                </span>
+                <span aria-hidden="true" className="profile-working-cue">›</span>
+              </Link>
+            </div>
+          </div>
+          ) : (
+          <div className="profile-shift-card profile-schedule-empty is-empty has-working-alert" aria-label="Schedule status">
+            <span className="profile-empty-state">Not working now</span>
+            <DancerWorkingAlertHint stageName={profile.stageName} />
+          </div>
+          )}
+
+          {activeShift && activeDeal ? (
+            <div className="profile-tonight-deal">
+              <div
+                className="profile-active-deal has-club-deal"
+                aria-label="Active Club Deal admission pass"
+              >
+                <ClubDealCard
+                  deal={toPublicClubDeal(activeDeal)}
+                  deals={activeDeals.map(toPublicClubDeal)}
+                  venueId={activeShift.venueId}
+                  venueName={activeShift.venueName}
+                  sourceType={dealSourceType}
+                  dancerId={dancerAttributionEligible ? profile.id : null}
+                  attributionToken={dealAttributionToken}
+                  attributionTokens={dealAttributionTokens}
+                  dancerNote={dancerAttributionEligible}
+                  presentation="profileCompact"
+                  ctaLabel="Free Entry"
+                  sectionId="club-deal"
+                />
+              </div>
+            </div>
+          ) : actionShift ? (
+            <div className="profile-tonight-deal">
+              <p className="profile-deal-availability-line">
+                {activeShift ? "Free entry unavailable" : "Going tonight? View free entry"}
+              </p>
+            </div>
+          ) : null}
+
+
+          {!activeShift && actionVenue ? (
+            <div
+              aria-label="Venue travel actions"
+              className={`profile-tonight-travel-actions${activeShift ? " is-working-now" : " is-upcoming has-venue-deal-link"}`}
+            >
+              <DancerDirectionsButton dancerId={profile.id} venue={actionVenue} />
+            </div>
+          ) : null}
+        </DancerProfileActions>
 
         <DancerPhotoCarousel
           featured
