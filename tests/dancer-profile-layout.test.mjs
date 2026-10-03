@@ -321,7 +321,7 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
   const liveScheduleBranch = shiftsFunction.split("if (profile.scheduled)")[0];
   assert.match(liveScheduleBranch, /class="info-tile profile-schedule-card profile-shift-card working-now-tile schedule-live"/);
   assert.match(liveScheduleBranch, /<strong>Current shift<\/strong>/);
-  assert.match(liveScheduleBranch, /profile-schedule-primary modal-schedule-text tonight">Working Now<\/div>/);
+  assert.match(liveScheduleBranch, /profile-schedule-primary modal-schedule-text tonight">Working now<\/div>/);
   assert.match(liveScheduleBranch, /class="schedule-stack"[\s\S]*?profileVenueDestinationMarkup\(profile, \{ live: true \}\)/);
   assert.match(liveScheduleBranch, /This dancer is venue-confirmed as working here now\.<\/p>/);
   assert.doesNotMatch(liveScheduleBranch, /rideMarkup|profile-uber-ride/);

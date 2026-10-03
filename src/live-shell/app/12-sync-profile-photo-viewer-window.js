@@ -578,7 +578,7 @@
         return `
           <div class="info-tile profile-schedule-card profile-shift-card working-now-tile schedule-live">
             <strong>Current shift</strong>
-            <div class="profile-schedule-primary modal-schedule-text tonight">Working Now</div>
+            <div class="profile-schedule-primary modal-schedule-text tonight">Working now</div>
             <div class="schedule-stack">
               ${profileVenueDestinationMarkup(profile, { live: true })}
             </div>
