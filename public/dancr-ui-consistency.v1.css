@@ -1184,6 +1184,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   position: absolute !important;
   inset: 8px auto auto 8px !important;
   z-index: 3;
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Plain profile Back controls retain their 44px targets and keyboard outlines.
@@ -1201,6 +1202,14 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-l
   #results.venue-profile-overlay .venue-detail .venue-detail-close)::before {
   content: none !important;
   display: none !important;
+}
+
+/* Venue Back keeps its focus and tap behavior without ever drawing a focus box. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout #modalClose,
+  #results.venue-profile-overlay .venue-detail .venue-detail-close).venue-detail-close:is(:focus, :focus-visible, :active) {
+  outline: 0 !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary #venueDetailName.venue-detail-accessible-name {
