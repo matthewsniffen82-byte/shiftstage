@@ -1676,6 +1676,196 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   background: currentColor !important;
 }
 
+/* Dancer discovery: a quieter header and a compact path from filters to cards. */
+html body.dancer-directory-active.dancr-button-system > .app {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+html body.dancer-directory-active.dancr-button-system .mydancr-preview-banner {
+  border-bottom: 1px solid #28282f;
+  box-shadow: none;
+}
+html body.dancer-directory-active.dancr-button-system .mydancr-preview-banner > span {
+  font-weight: 450;
+}
+html body.dancer-directory-active.dancr-button-system > .app > header {
+  padding-block: 4px 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app > header .topbar {
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  padding-block: 4px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  -webkit-box-shadow: none !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app > header .topbar::before,
+html body.dancer-directory-active.dancr-button-system > .app > header .topbar::after {
+  content: none !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app > header #brandHome.brand {
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+@media (min-width: 721px) {
+  html body.dancer-directory-active.dancr-button-system > .app > header #brandHome.brand {
+    width: 160px !important;
+    min-width: 160px !important;
+    max-width: 160px !important;
+    padding: 0 8px !important;
+  }
+  html body.dancer-directory-active.dancr-button-system > .app > header #brandHome .mydancr-live-logo {
+    font-size: 28px !important;
+  }
+}
+/* The 36px faces sit inside full 44px targets. */
+html body.dancer-directory-active.dancr-button-system > .app > header
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
+  --discovery-header-face: #141418;
+  --discovery-header-edge: #292930;
+  position: relative !important;
+  isolation: isolate;
+  width: 44px !important;
+  min-width: 44px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  color: #c5c3cd !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app > header
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn)::before {
+  content: "" !important;
+  position: absolute;
+  inset: 4px !important;
+  z-index: -1;
+  border: 1px solid var(--discovery-header-edge) !important;
+  border-radius: 50%;
+  background: linear-gradient(var(--discovery-header-face), var(--discovery-header-face)) !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+html body.dancer-directory-active.dancr-button-system > .app > header
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn) :is(.action-icon, .account-icon, svg) {
+  width: 18px !important;
+  height: 18px !important;
+  color: inherit !important;
+  stroke-width: 1.8 !important;
+  filter: none !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app > header
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(:hover, .active, .is-open, [aria-expanded="true"]) {
+  --discovery-header-face: #202026;
+  --discovery-header-edge: #494550;
+  color: #f8fafc !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app > header
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn):focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 1px !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app > main.stack {
+  padding-top: 4px !important;
+  gap: 8px !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > .hero.reference-hero.uploaded-hero-ready {
+  margin-block: 0 !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls {
+  margin-block: 0 !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(#citySelectButton, #homeFilterToggle) {
+  --discovery-control-edge: #303038;
+  font-weight: 600 !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(#citySelectButton, #homeFilterToggle)::before {
+  inset: 4px 0 !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
+  :is(#citySelectButton[aria-expanded="true"], #homeFilterToggle:is(.has-active-filters, .is-open)) {
+  --discovery-control-edge: #745696;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > #homeLiveSummary {
+  display: flex !important;
+  margin-block: 0 4px !important;
+}
+/* Working counts remain in the status tabs; the summary describes the search. */
+html body.dancer-directory-active.dancr-button-system > .app main.stack > #homeLiveSummary
+  :is(.home-live-summary-divider, #homeLiveWorking) {
+  display: none !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > .content-head.discovery-section-head {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: baseline !important;
+  justify-content: space-between;
+  gap: 8px !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > .content-head.discovery-section-head > #tabTitle {
+  min-width: 0;
+  margin: 0 !important;
+  font-weight: 650 !important;
+  overflow-wrap: anywhere;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > .content-head.discovery-section-head > #tabCount {
+  flex: 0 0 auto;
+  align-self: baseline !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters::before {
+  border-color: #28282f;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected="true"],
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty) {
+  --discovery-control-face: #1b1b21;
+  color: #f5f3f8 !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty)
+  > .dancer-directory-filter-status {
+  background: var(--dancr-color-live) !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid > .roster-participation-note {
+  margin: 2px 0 6px !important;
+  color: #b3b5c2;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+}
+
 /* Improve card-caption contrast without changing the shared card layout. */
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-copy {
