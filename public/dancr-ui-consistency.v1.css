@@ -646,7 +646,9 @@ html body.dancr-button-system > .app main.stack > section.stack
 
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
-  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action :is(.action-icon, .action-icon > svg) {
+  .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-secondary-action :is(.action-icon, .action-icon > svg),
+html body.dancr-button-system :is(#profileBackdrop #profileModal, #results.venue-profile-overlay) .venue-detail
+  .venue-location-section .venue-action-stack :is(.action-icon, .action-icon > svg) {
   width: 16px !important;
   height: 16px !important;
   min-width: 16px !important;
@@ -756,7 +758,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   border-top: 0 !important;
   background: transparent !important;
   gap: 8px !important;
-  padding: 4px 12px 4px !important;
+  padding: 4px 12px 12px !important;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-location-section {

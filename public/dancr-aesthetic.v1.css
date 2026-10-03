@@ -7898,6 +7898,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-act
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-activity-section.is-working .section-title {
   border-left-color: var(--dancr-color-success) !important;
+  color: var(--dancr-color-live) !important;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail
