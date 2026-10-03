@@ -305,11 +305,40 @@ body.dancr-button-system :is(#profileBackdrop #profileModal,.public-profile-shel
   outline: 2px solid #c4b5fd !important; outline-offset: 3px !important;
 }
 
-/* Avoid an inline text baseline lifting the header share icon above center. */
-body.dancr-button-system header #dancerProfileShareQuickBtn > [data-quick-icon="share"] {
-  display: grid;
+/* Icon wrappers center their artwork without inheriting a text baseline. */
+body.dancr-button-system :is(.action-icon, .profile-action-icon-frame) {
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 0 !important;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+body.dancr-button-system :is(.action-icon, .profile-action-icon-frame) > svg:not([hidden]) {
+  display: block !important;
+  flex-shrink: 0;
+}
+html body.dancr-button-system > .app > header .topbar
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn, #guestMenuBtn):not([hidden]) {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  line-height: 0 !important;
+}
+html body.dancr-button-system > .app > header .topbar
+  .customer-quick-btn > [data-quick-icon] {
+  display: grid !important;
   place-items: center;
-  line-height: 0;
+  line-height: 0 !important;
+  flex: 0 0 auto;
+}
+html body.dancr-button-system > .app > header .topbar
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn, #guestMenuBtn) svg,
+body.dancr-button-system .home-discovery-controls
+  :is(.city-picker-trigger-icon, .city-picker-chevron, .home-filter-toggle-icon, .venue-picker-chevron) {
+  display: block !important;
+  align-self: center;
+  flex-shrink: 0;
 }
 
 /* One compact report card for live discovery and standalone profiles/media. */
