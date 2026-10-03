@@ -1605,12 +1605,12 @@ html body.dancr-button-system #distanceSelectDialog .distance-picker-options spa
   }
 }
 
-/* A 30px segmented face retains separate 44px touch targets for both statuses. */
+/* Separate 40px button faces retain full 44px touch targets for both statuses. */
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters {
   position: relative;
   isolation: isolate;
-  gap: 0 !important;
+  gap: 8px !important;
   padding: 0 !important;
   border: 0 !important;
   background: none !important;
@@ -1618,32 +1618,25 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters::before {
-  content: "";
-  position: absolute;
-  inset: 7px 0;
-  z-index: -1;
-  border: 1px solid #34343c;
-  border-radius: 9px;
-  background: linear-gradient(#08080c, #08080c);
-  pointer-events: none;
+  content: none;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected] {
-  --discovery-control-inset: 8px;
-  --discovery-control-face: transparent;
-  --discovery-control-edge: transparent;
+  --discovery-control-inset: 2px;
+  --discovery-control-face: #15151b;
+  --discovery-control-edge: #44414d;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
-  border-radius: 7px !important;
-  color: #96939f !important;
+  border-radius: 10px !important;
+  color: #c6c3cf !important;
   font-size: clamp(11px, 2.8vw, 12px) !important;
   font-weight: 650 !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected]::before {
-  inset-inline: 1px !important;
-  border: 0 !important;
-  box-shadow: none !important;
+  inset-inline: 0 !important;
+  border: 1px solid var(--discovery-control-edge) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected="true"] {
@@ -1841,19 +1834,30 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   font-weight: 500 !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
-  > #results.home-dancer-grid .dancer-directory-filters::before {
-  border-color: #28282f;
-}
-html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected="true"],
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty) {
-  --discovery-control-face: #1b1b21;
+  --discovery-control-face: #27272f;
+  --discovery-control-edge: #73717d;
   color: #f5f3f8 !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty) {
+  --discovery-control-edge: #48755c;
   color: var(--dancr-color-live) !important;
+}
+@media (hover: hover) {
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected="false"]:hover {
+    --discovery-control-face: #202027;
+    --discovery-control-edge: #6a6673;
+    color: #f5f3f8 !important;
+  }
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected]:active::before {
+  transform: translateY(1px) !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .4) !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty)
