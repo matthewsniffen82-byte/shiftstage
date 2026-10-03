@@ -297,18 +297,18 @@ test("venue scroll cards remain separate from the deeper venue detail hierarchy"
   assert.match(venueCard, /venueExperienceHref\(venue, city\)/);
 });
 
-test("venue profiles stay full-screen with X dismissal and the shared floating navigation", () => {
+test("venue profiles keep X dismissal inside the card and preserve the shared floating navigation", () => {
   assert.match(
     liveApp,
     /<div\b[^>]*\bclass="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">/,
   );
   assert.match(
     liveApp,
-    /class="venue-detail-toolbar">\s*<button class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{escapeHtml\(details\.name\)\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>\s*<\/button>\s*<\/div>\s*<article class="venue-hero">\s*<div class="venue-hero-brand-row">[\s\S]*?class="venue-main-photo\$\{visual\.attrs\.className\}"[\s\S]*?class="venue-hero-body">/,
+    /<article class="venue-hero">\s*<div class="venue-hero-brand-row">[\s\S]*?class="venue-identity-heading">\s*<h2 id="venueDetailName"[^>]*>[^<]*<\/h2>\s*<button class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{escapeHtml\(details\.name\)\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>\s*<\/button>\s*<\/div>\s*<div class="venue-identity-meta">/,
   );
   assert.doesNotMatch(
     liveApp,
-    /class="venue-identity-block">[\s\S]*?class="close-btn venue-detail-close"/,
+    /class="venue-detail-toolbar"/,
   );
   assert.match(
     liveApp,

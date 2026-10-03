@@ -712,13 +712,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   box-shadow: inset 0 -1px 0 rgba(167, 139, 250, .18) !important;
 }
 
-/* Give the logo the same full-width stage as the scroll cards. Close sits above it. */
-html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-detail-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  min-height: 44px;
-}
+/* Give the logo the same full-width stage as the scroll cards. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row .venue-main-photo {
   height: 95px !important;
   min-height: 95px !important;
@@ -1175,6 +1169,18 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-identity-copy {
   gap: 6px !important;
+}
+
+/* Keep dismissal inside the card, with space for the name to wrap beside it. */
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 6px;
+}
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-heading > .venue-detail-close {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary #venueDetailName.venue-detail-accessible-name {
