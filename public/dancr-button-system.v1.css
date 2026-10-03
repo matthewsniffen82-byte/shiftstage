@@ -354,9 +354,7 @@
       var(--dancr-color-brand-primary) 54%,
       var(--dancr-color-brand-primary-deep) 100%
   ) !important;
-  box-shadow:
-    var(--dancr-shadow-brand-control),
-    inset 0 1px 0 var(--dancr-color-white-medium) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
   text-shadow: none !important;
 }
 

@@ -58,7 +58,7 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell .accou
   border-radius: 12px !important;
   background: linear-gradient(110deg, #7c3aed, #6d28d9) !important;
   color: #fff !important;
-  box-shadow: none !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
   font-size: 14px !important; font-weight: 700 !important;
 }
 body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head h2 { font-size: 22px !important; font-weight: 650 !important; letter-spacing: -.025em; }
@@ -111,7 +111,7 @@ body.dancr-button-system #authPage .auth-choice-card > .auth-form .password-togg
 body.dancr-button-system #authPage #authSubmit {
   min-height: 45px !important; padding-block: 10px !important;
   border-color: rgba(196,181,253,.35) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 3px 12px rgba(109,40,217,.12) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
 }
 body.dancr-button-system #authPage .auth-admin-entry {
   width: 100%; min-height: 44px; margin-top: -4px;
@@ -280,7 +280,7 @@ body.dancr-button-system :is(#publicContactForm,#contentReportForm,#dancer-profi
 body.dancr-button-system #dancer-profile-builder-panel .dancer-profile-editor-modal-actions > button {
   min-height: 50px !important; padding: 12px 16px !important; border: 1px solid rgba(196,181,253,.45) !important; border-radius: 12px !important;
   color: #fff !important; background: linear-gradient(110deg,#7c3aed,#6d28d9) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.14),0 6px 18px rgba(124,58,237,.16) !important; font-size: 14px !important; font-weight: 700 !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important; font-size: 14px !important; font-weight: 700 !important;
 }
 body.dancr-button-system :is(#contentReportCancel,.public-report-reason-options > button,.dancer-social-link-remove) { min-height: 50px !important; padding: 12px 16px !important; border-radius: 12px !important; font-size: 14px !important; font-weight: 600 !important; }
 @media (max-width: 620px) {

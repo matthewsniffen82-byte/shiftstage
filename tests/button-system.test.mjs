@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [buttonCss, aestheticCss, layoutSource, liveSource, dealCardSource] = await Promise.all([
+const [buttonCss, aestheticCss, layoutSource, liveSource, dealCardSource, brandTokens, profileCss, internalGuestCss] = await Promise.all([
   readFile(new URL("../public/dancr-button-system.v1.css", import.meta.url), "utf8"),
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/components/ClubDealCard.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancr-brand-tokens.v1.css", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancer-profile-layout.css", import.meta.url), "utf8"),
+  readFile(new URL("../app/internal/internal-guest.css", import.meta.url), "utf8"),
 ]);
 
 test("the live shell and every Next page load one shared production button system", () => {
@@ -65,37 +68,37 @@ test("primary, selected, destructive, utility, disabled, and keyboard states rem
   assert.match(buttonCss, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
-test("venue-card QR revenue actions use the semantic emerald success treatment", () => {
+test("venue-card Free Entry actions use the shared violet glow and retain availability and focus", () => {
   assert.match(
     liveSource,
-    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-club-deal-cta[\s\S]*?data-feed-venue-qr[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)/,
+    /venue\?\.id && venue\.activeDeal\?\.id[\s\S]*?home-card-qr-rail-action home-venue-discovery-rail-qr is-available[\s\S]*?data-club-deal-cta[\s\S]*?data-feed-venue-qr[\s\S]*?freeEntryButtonLabel\(\)/,
   );
   assert.match(
-    buttonCss,
-    /\.home-venue-discovery-action-rail\s+\.home-venue-discovery-rail-qr\.is-available \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important;[\s\S]*?var\(--dancr-color-success\)[\s\S]*?0 8px 18px var\(--dancr-color-black-soft\)/,
+    aestheticCss,
+    /\.free-entry-cta:not\(\.is-unavailable\) \{[^}]*var\(--dancr-color-brand-primary\)[^}]*box-shadow: var\(--dancr-shadow-brand-control\) !important;/,
   );
   assert.match(
-    buttonCss,
-    /\.home-venue-discovery-action-rail[\s\S]*?\.home-venue-discovery-rail-qr\.is-available:hover \{[\s\S]*?border-color: var\(--dancr-color-success\) !important/,
+    aestheticCss,
+    /\.free-entry-cta:not\(:disabled\):not\(\.is-unavailable\):is\(:hover, :focus-visible\) \{[^}]*filter: brightness\(1\.08\)/,
   );
   assert.match(
-    buttonCss,
-    /\.home-venue-discovery-action-rail[\s\S]*?\.home-venue-discovery-rail-qr\.is-available:active \{[\s\S]*?border-color: var\(--dancr-color-success-strong\) !important/,
+    liveSource,
+    /home-venue-discovery-rail-qr is-unavailable[^>]*data-club-deal-state="unavailable"/,
   );
   assert.match(
-    buttonCss,
-    /\[data-feed-venue-qr\],[\s\S]*?:focus-visible \{[\s\S]*?outline-color: var\(--dancr-color-success\)[\s\S]*?0 0 0 4px var\(--dancr-color-success-medium\)/,
+    aestheticCss,
+    /\.free-entry-cta:focus-visible \{[^}]*outline: 2px solid #c4b5fd/,
   );
 });
 
-test("active NFC Club Deal controls use one emerald system with primary and compact glow levels", () => {
+test("public offers and Internal requests share the dancer profile's soft primary glow", () => {
   assert.match(
     liveSource,
     /home-tv-feed-deal-action home-card-qr-rail-action[\s\S]*?is-available[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass/,
   );
   assert.match(
-    buttonCss,
-    /Active NFC Club Deals share the venue-card treatment everywhere[\s\S]*?button\[data-club-deal-cta\][\s\S]*?button\[data-club-deal-state="available"\][\s\S]*?\.club-deal-active-action[\s\S]*?0 0 20px var\(--dancr-color-success-medium\)/,
+    brandTokens,
+    /--dancr-shadow-brand-control: 0 2px 8px rgba\(124, 58, 237, 0\.1\);/,
   );
   assert.match(
     dealCardSource,
@@ -107,8 +110,12 @@ test("active NFC Club Deal controls use one emerald system with primary and comp
   );
   assert.match(
     aestheticCss,
-    /Club Deal actions use one emerald language with two intentional glow levels[\s\S]*?venue-detail-club-deal-cta[\s\S]*?profile-club-deal-qr-button[\s\S]*?club-deal-profile-action[\s\S]*?0 0 20px var\(--dancr-color-success-medium\)[\s\S]*?home-card-qr-rail-action\.is-available[\s\S]*?home-tv-feed-deal-action\.is-available[\s\S]*?0 0 12px var\(--dancr-color-success-soft\)/,
+    /\.club-deal-launcher-action,\s*\.venue-detail-club-deal-cta,[\s\S]*?\.home-tv-feed-deal-action\.is-available,\s*\.venue-card-deal-action\s*\) \{[^}]*box-shadow: var\(--dancr-shadow-brand-control\) !important;/,
   );
+  assert.match(profileCss, /\.free-entry-cta:not\(\.is-unavailable\) \{[^}]*box-shadow: var\(--dancr-shadow-brand-control\) !important;/);
+  assert.match(internalGuestCss, /\.ir-table-request:enabled:not\(\[data-request-sent\]\)::before \{\s*box-shadow: var\(--dancr-shadow-brand-control\);/);
+  assert.match(liveSource, /\[data-internal-table-request\]:enabled:not\(\[data-request-sent\]\)::before \{[^}]*var\(--dancr-shadow-brand-control\)/);
+  assert.doesNotMatch(aestheticCss, /--free-entry-shadow\s*:/);
 });
 
 test("profile media thumbnails and play controls retain their gallery-specific shapes", () => {

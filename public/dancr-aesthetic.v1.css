@@ -365,9 +365,7 @@ body.dancr-button-system .page-panel :is(
     var(--dancr-color-brand-primary),
     var(--dancr-color-brand-primary-deep)
   ) !important;
-  box-shadow:
-    var(--dancr-shadow-brand-control),
-    inset 0 1px 0 var(--dancr-color-brand-core-soft) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
   text-shadow: none !important;
 }
 
@@ -2644,9 +2642,7 @@ body.dancr-button-system :is(
     var(--dancr-color-brand-primary),
     var(--dancr-color-brand-primary-deep)
   ) !important;
-  box-shadow:
-    var(--dancr-shadow-brand-control),
-    inset 0 1px 0 var(--dancr-color-brand-core-soft) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
 }
 
 /* Schedule and popularity chips use semantic colors; violet remains reserved
@@ -13696,9 +13692,7 @@ body.dancr-button-system :is(
   border-color: var(--free-entry-border, var(--dancr-color-avatar-ring-violet)) !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--free-entry-background, linear-gradient(135deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep))) !important;
-  box-shadow: var(--free-entry-shadow, 0 5px 14px var(--dancr-color-black-soft),
-    0 0 12px var(--dancr-color-brand-primary-medium),
-    inset 0 1px 0 var(--dancr-color-white-soft)) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
   text-shadow: none !important;
 }
 
@@ -13770,9 +13764,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   border-color: var(--free-entry-border, var(--dancr-color-avatar-ring-violet)) !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--free-entry-background, linear-gradient(135deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary-deep))) !important;
-  box-shadow: var(--free-entry-shadow, 0 5px 14px var(--dancr-color-black-soft),
-    0 0 12px var(--dancr-color-brand-primary-medium),
-    inset 0 1px 0 var(--dancr-color-white-soft)) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
 }
 
 /* Match iOS admission buttons to the deeper violet in the Android reference. */
@@ -13782,9 +13774,6 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   html body.dancr-button-system #results.home-tv-feed .home-tv-feed-deal-action.is-available {
     --free-entry-border: #5636a5;
     --free-entry-background: linear-gradient(135deg, #240293, #1b0165);
-    --free-entry-shadow: 0 5px 14px var(--dancr-color-black-soft),
-      0 0 12px rgba(91, 48, 174, .28),
-      inset 0 1px 0 rgba(248, 250, 252, .05);
   }
 }
 

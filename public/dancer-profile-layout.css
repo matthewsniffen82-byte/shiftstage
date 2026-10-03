@@ -397,7 +397,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout
   .profile-tonight-card :is(.profile-club-deal-qr-button, .club-deal-profile-action).free-entry-cta {
-  box-shadow: 0 3px 12px rgba(124, 58, 237, .18) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
 }
 @media (min-width: 760px) {
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout
@@ -490,7 +490,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-tonight-card .free-entry-cta:not(.is-unavailable) {
   --free-entry-border: #59349a;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, .1) !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .modal-grid { row-gap: 10px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-tonight-card { margin-top: 10px !important; }

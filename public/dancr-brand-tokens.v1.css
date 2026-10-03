@@ -100,9 +100,8 @@
   --dancr-shadow-surface: 0 10px 24px rgba(5, 5, 7, 0.3);
   --dancr-shadow-modal: 0 24px 72px rgba(5, 5, 7, 0.72);
   --dancr-shadow-brand-subtle: 0 0 10px var(--dancr-color-brand-glow-soft);
-  --dancr-shadow-brand-control:
-    0 8px 18px rgba(5, 5, 7, 0.34),
-    0 0 10px var(--dancr-color-brand-glow-soft);
+  /* The dancer profile's Free Entry glow is shared by violet primary actions. */
+  --dancr-shadow-brand-control: 0 2px 8px rgba(124, 58, 237, 0.1);
   --dancr-shadow-avatar-live:
     0 0 0 1px var(--dancr-color-avatar-ring-live),
     0 0 12px var(--dancr-color-success-strong),

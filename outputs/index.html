@@ -41417,6 +41417,11 @@ html.internal-profile-embed [data-internal-table-request]:enabled:not([data-requ
 html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent]):active {
   --profile-action-background: linear-gradient(#5b21b6, #5b21b6) !important;
 }
+/* Pending requests use the same glow as the roster and public Free Entry. */
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout
+  .profile-actions-compact :is(#goingBtn, .profile-action-going)[data-internal-table-request]:enabled:not([data-request-sent])::before {
+  box-shadow: inset 0 0 0 .65px var(--profile-action-border), var(--dancr-shadow-brand-control) !important;
+}
 /* Keep the sent state gray through confirmation and the available cancel action. */
 html.internal-profile-embed [data-internal-table-request][data-request-sent] {
   --profile-action-background: linear-gradient(#29292f, #29292f) !important;

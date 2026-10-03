@@ -136,7 +136,7 @@ body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before {
   background: linear-gradient(180deg, rgba(255, 255, 255, .1), transparent 48%), linear-gradient(120deg, #7c3aed, #6d28d9);
 }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent])::before {
-  box-shadow: 0 0 14px rgba(139, 92, 246, .3), inset 0 1px 0 rgba(255, 255, 255, .22);
+  box-shadow: var(--dancr-shadow-brand-control);
 }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):is(:hover, :active) { --ir-guest-control-edge: #c4b5fd; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):active::before { background: linear-gradient(120deg, #7c3aed, #6d28d9); }
