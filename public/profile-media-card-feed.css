@@ -16,11 +16,11 @@
   z-index: 1600;
 }
 
-/* Keep the demo notice visible without covering the public viewer's close control. */
+/* The viewer header and back control provide their own device safe-area inset. */
 .public-profile-shell .profile-media-viewer.profile-media-card-feed:not(:is(:fullscreen, :-webkit-full-screen)) {
-  top: var(--mydancr-preview-banner-offset, 0px) !important;
-  height: calc(100vh - var(--mydancr-preview-banner-offset, 0px)) !important;
-  height: calc(100dvh - var(--mydancr-preview-banner-offset, 0px)) !important;
+  top: 0 !important;
+  height: 100vh !important;
+  height: 100dvh !important;
 }
 
 .profile-media-card-feed .profile-media-card-header {

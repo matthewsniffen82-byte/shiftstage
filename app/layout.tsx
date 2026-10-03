@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import Script from "next/script";
 import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
-import { MyDancrPreviewBanner } from "./components/MyDancrPreviewBanner";
 import { versionedStaticAssetUrl } from "../src/lib/dancr/static-asset-cache.mjs";
 import { androidDeviceClassScript } from "../src/lib/security/android-device-script.mjs";
 import "../public/dancr-brand-tokens.v1.css";
@@ -59,7 +58,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           dangerouslySetInnerHTML={{ __html: androidDeviceClassScript }}
           id="dancr-android-device-classes"
         />
-        <MyDancrPreviewBanner />
         {children}
         <GlobalMobileBottomNav />
         <script defer src={versionedStaticAssetUrl("/dancer-content-visibility.js")} />

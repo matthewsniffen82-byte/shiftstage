@@ -83,6 +83,6 @@ test("Login / Join visibly links to separate platform admin access", () => {
   assert.match(homeRoute, /#authPage\.venue-request-succeeded \.auth-admin-entry\{display:none\}/);
   assert.match(
     homeRoute,
-    /withPreviewBanner\.replace\([\s\S]*?passwordRecoveryCard[\s\S]*?ADMIN_AUTH_ENTRY_HTML/,
+    /withPushInvitations\.replace\([\s\S]*?passwordRecoveryCard[\s\S]*?ADMIN_AUTH_ENTRY_HTML/,
   );
 });

@@ -8,6 +8,7 @@ test("concurrent origin requests share one production artifact render with indep
   const bodies = await Promise.all(responses.map(response => response.text()));
   assert.deepEqual(f.reads, ['outputs/index.html'], 'one shell read; styles are independent static assets');
   assert.ok(bodies[0].length > 100000);
+  assert.doesNotMatch(bodies[0], /<aside[^>]*class="mydancr-preview-banner"/, "the cached public shell must not reintroduce the demo banner");
   assert.equal(bodies[0], bodies[1]); assert.equal(bodies[0], bodies[2]);
   const fresh = await liveShellRoute().route.GET();
   assert.equal(bodies[0], await fresh.text(), "cached output equals a fresh route render");

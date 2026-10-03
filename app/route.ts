@@ -1,7 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { myDancrPreviewBannerHtml } from "./components/MyDancrPreviewBanner";
 
 import { LIVE_SHELL_SHA256 } from "../src/generated/live-shell-version";
 import { LIVE_SHELL_SCRIPT_SHA256 } from "../src/generated/live-shell-script-version.mjs";
@@ -66,11 +65,7 @@ async function renderLiveShell() {
     `<link rel="stylesheet" href="/mobile-social-strip.css?v=4"><link rel="stylesheet" href="/third-party-social-link-warning.css?v=3"><link rel="stylesheet" href="/profile-video-scroll-controls.css?v=4"><script src="/profile-video-progress-line.js?v=1" defer></script><script src="/video-sound-preference.js?v=1" defer></script><script src="/video-autoplay-recovery.js?v=4" defer></script><script src="/third-party-social-link-warning.js?v=1" defer></script>${ADMIN_AUTH_ENTRY_STYLES}</head>`,
   );
   const withPushInvitations = withLiveProfileAssets.replace("</head>", `<link rel="stylesheet" href="/mydancr-push-invitations.css"><script defer src="/mydancr-push-invitations.js" data-device-module="${versionedStaticAssetUrl("/mydancr-push-device.js")}"></script></head>`);
-  const withPreviewBanner = withPushInvitations.replace(
-    '<body class="dancr-button-system">',
-    `<body class="dancr-button-system">${myDancrPreviewBannerHtml}`,
-  );
-  const withAdminAuthEntry = withPreviewBanner.replace(
+  const withAdminAuthEntry = withPushInvitations.replace(
     '<section class="recovery-popover" id="passwordRecoveryCard"',
     `${ADMIN_AUTH_ENTRY_HTML}<section class="recovery-popover" id="passwordRecoveryCard"`,
   );
