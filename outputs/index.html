@@ -41440,6 +41440,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           <h2 id="tabTitle">Working Now in Las Vegas</h2>
           <div class="count" id="tabCount">0 results</div>
         </div>
+        <p class="roster-participation-note venue-directory-roster-note">Only dancers checked in on MyDancr are shown. Additional dancers may be working at each club.</p>
         <div class="list" id="results"></div>
         <button
           class="home-feed-return-home"
@@ -53243,7 +53244,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
             </div>
           </a>
           ${venueLineupMarkup(venue, city, { profiles: workingNow })}
-          <p class="roster-participation-note venue-card-roster-note">Only dancers checked in on MyDancr are shown. Additional dancers may be working at this club.</p>
           <button class="venue-card-follow ${followsVenue ? "is-active" : ""}" type="button" data-venue-follow="${venueValue}" data-account-action="venue-follow" aria-label="${followsVenue ? `Unfollow ${safeName}` : `Follow ${safeName}`}" title="${followsVenue ? "Following" : "Follow"}" aria-pressed="${followsVenue}">${actionIconMarkup(followsVenue ? "check" : "personPlus")}</button>
           <div class="venue-card-actions" aria-label="${safeName} quick actions">
             ${venueCardQrMarkup(venue)}
@@ -60724,7 +60724,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
           </div>
           <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
-          <p class="roster-participation-note venue-card-roster-note">Only dancers checked in on MyDancr are shown. Additional dancers may be working at this club.</p>
           <div class="home-venue-discovery-context-actions venue-card-primary-actions" aria-label="${safeName} primary actions">
             ${railQrMarkup}
           </div>

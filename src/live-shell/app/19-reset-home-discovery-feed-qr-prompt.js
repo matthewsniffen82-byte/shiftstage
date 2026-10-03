@@ -249,7 +249,6 @@
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
           </div>
           <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>
-          <p class="roster-participation-note venue-card-roster-note">Only dancers checked in on MyDancr are shown. Additional dancers may be working at this club.</p>
           <div class="home-venue-discovery-context-actions venue-card-primary-actions" aria-label="${safeName} primary actions">
             ${railQrMarkup}
           </div>
