@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InternalRoster, VenueRosterProfileButton } from "../internal/InternalRoster";
+import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { getVenueRosterEntries, filterRosterChannel, rosterChannelVisibility, sortVenueRosterEntries, type VenueRosterSort, type VenueRosterChannel, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import {
   readDashboardAccessToken,
@@ -334,6 +335,7 @@ export default function VenueNfcTagPanel({
       <InternalRoster operationsOnly roster={<>
       <details className="venue-nfc-roster" ref={rosterRef}>
         <summary className="venue-nfc-roster-head">
+          <VenueDashboardIcon section="roster" />
           <span><strong>Dancer roster</strong><small>Dressing-room NFC sets working status.</small></span>
           <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} affiliated`}</b>
         </summary>
@@ -408,7 +410,7 @@ export default function VenueNfcTagPanel({
       {status ? <p role="status">{status}</p> : null}
       </>} />
       <details className="venue-roster-stickers">
-        <summary>Dancer &amp; legacy stickers <span>{tags.length} assigned</span></summary>
+        <summary><VenueDashboardIcon section="stickers" />Dancer &amp; legacy stickers <span>{tags.length} assigned</span></summary>
       {tags.length ? <div className="nfc-tag-list" aria-label="Assigned sticker inventory">
         {tags.map((tag) => (
           <section key={tag.id} className={`nfc-tag-row ${tag.status}`}>

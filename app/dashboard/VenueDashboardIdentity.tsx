@@ -1,7 +1,10 @@
-type VenueIcon = "tonight" | "venue" | "business" | "deals" | "roster" | "stickers" | "analytics" | "tv" | "team" | "account";
+type VenueIcon = "tonight" | "venue" | "business" | "deals" | "roster" | "stickers" | "analytics" | "tv" | "team" | "account" | "guests" | "pickups" | "requests";
 
 export function VenueDashboardIcon({ section }: { section: VenueIcon }) {
   const paths: Record<VenueIcon, string> = {
+    guests: "M8 3h8v4H8ZM6 5H4v16h16V5h-2M8 12l2 2 5-5M8 18h8",
+    pickups: "m5 5-2 7v7h3v-3h12v3h3v-7l-2-7ZM3 12h18M7 9h10M7 14h1M16 14h1",
+    requests: "M4 4h16v13H9l-5 4ZM8 8h8M8 12h5",
     tonight: "M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z",
     venue: "M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 9h1M14 9h1",
     business: "M3 7h18v14H3ZM8 7V3h8v4M3 12h18M10 12v3h4v-3",

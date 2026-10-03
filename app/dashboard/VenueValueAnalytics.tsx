@@ -22,13 +22,13 @@ export default function VenueValueAnalytics({ report, periodStart, periodEnd, ti
   return <div className="venue-value-analytics">
     <p className="venue-value-dates">{dateRange}</p>
     <div className="venue-value-metrics">{primary.map(([key, label]) => metric(key, label, key === "directions"))}</div>
-    <div className="venue-value-supporting">
+    <details className="venue-supporting-disclosure"><summary>Audience &amp; conversion <span>Supporting metrics</span></summary><div className="venue-value-supporting">
       {metric("visitors", "Unique browsers")}{metric("followers", "New followers")}
       {metric("impressions", "Venue-card impressions", true)}{metric("passengers", "Requested passengers")}
       <div className="metric"><span>Total followers</span><strong>{number(totalFollowers)}</strong><small>Current audience</small></div>
       <div className="metric"><span>Claim → admission</span><strong>{conversion === null ? "—" : `${conversion}%`}</strong><small>Passes claimed during this period</small></div>
       {metric("admissions", "QR scan results")}
-    </div>
+    </div></details>
     <section className="venue-value-breakdown" aria-labelledby="venue-interactions-heading"><h3 id="venue-interactions-heading">Customer actions</h3>
       <label className="venue-action-location">Location <select value={source} onChange={event => setSource(event.target.value)}><option value="all">All locations</option>{Object.entries(sources).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       {rows.length ? <><ul className="venue-action-mobile" aria-label="Customer actions">{rows.map(row => <li key={`${row.event_type}:${row.source}`}><strong>{labels[row.event_type] || row.event_type}</strong><span>{sources[row.source] || row.source}</span><small>{number(row.total)} actions · {number(row.visitors)} unique browsers</small></li>)}</ul><div className="venue-value-table venue-actions-desktop"><table aria-labelledby="venue-interactions-heading"><thead><tr><th>Action</th><th>Location</th><th>Actions</th><th>Unique browsers</th></tr></thead><tbody>{rows.map(row => <tr key={`${row.event_type}:${row.source}`}><th>{labels[row.event_type] || row.event_type}</th><td>{sources[row.source] || row.source}</td><td>{number(row.total)}</td><td>{number(row.visitors)}</td></tr>)}</tbody></table></div></>

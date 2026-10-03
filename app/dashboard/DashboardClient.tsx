@@ -17,6 +17,7 @@ import "./dashboard-polish.css";
 import "./professional-dashboard-compact.css";
 import "./venue-dashboard-compact.css";
 import "./venue-operations.css";
+import "./venue-premium.css";
 import VenueAdminUtilities from "./VenueAdminUtilities";
 import "./dancer-profile-builder-polish.css";
 import "./dancer-onboarding.css";
@@ -471,13 +472,17 @@ export default function DashboardClient({
   }
 
   return (
-    <main className={`dashboard-shell dashboard-shell-${role}`}>
+    <main className={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : undefined}>
       {role === "venue" ? <VenueAdminUtilities /> : null}
       <DashboardStyles />
       <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
         <div className="dashboard-head-row">
           {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
           {role === "customer" ? <CustomerDashboardAvatar name={dashboardHeading} /> : null}
+          {role === "venue" ? <span className="venue-dashboard-logo" aria-hidden="true">
+            <span>{dashboardHeading.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("")}</span>
+            {state.profile?.logoImageUrl ? <img key={String(state.profile.logoImageUrl)} src={String(state.profile.logoImageUrl)} srcSet={state.profile.logoImageSrcSet ? String(state.profile.logoImageSrcSet) : undefined} sizes="64px" alt="" onError={event => { event.currentTarget.style.display = "none"; }} /> : null}
+          </span> : null}
           <div className="dashboard-head-copy">
             <span className="eyebrow">{dashboardEyebrow}</span>
             <div className="dashboard-head-title-row">
@@ -486,6 +491,7 @@ export default function DashboardClient({
             </div>
             {dashboardDescription ? <p>{dashboardDescription}</p> : null}
             {role === "customer" && !dashboardDescription ? <p className="customer-dashboard-intro">Your favorites, plans, and updates.</p> : null}
+            {role === "venue" ? <Link className="venue-public-site-link" href={dashboardCloseHref}>View public site <span aria-hidden="true">↗</span></Link> : null}
           </div>
           <DashboardCloseButton
             fallbackHref={dashboardCloseHref}

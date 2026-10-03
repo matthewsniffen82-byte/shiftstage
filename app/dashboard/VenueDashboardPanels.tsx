@@ -225,16 +225,16 @@ export function VenuePanel({
     setActiveWorkspace(venueWorkspaceForSection(sectionId) || activeWorkspace);
     window.history.replaceState(null, "", `#${sectionId}`);
     window.setTimeout(() => {
-      const section = document.getElementById(targetSectionId) as HTMLDetailsElement | null;
+      const section = document.getElementById(targetSectionId);
       if (!section) return;
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      section.open = true;
+      if (section instanceof HTMLDetailsElement) section.open = true;
       if (sectionId === "venue-working-now") {
         const roster = section.querySelector<HTMLDetailsElement>("details.venue-nfc-roster");
         if (roster) roster.open = true;
       }
       section.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-      window.setTimeout(() => section.querySelector<HTMLElement>("summary")?.focus({ preventScroll: true }), reduceMotion ? 0 : 350);
+      window.setTimeout(() => (section.querySelector<HTMLElement>("summary") || section).focus({ preventScroll: true }), reduceMotion ? 0 : 350);
     }, 50);
   }
 
@@ -300,6 +300,7 @@ export function VenuePanel({
             tabIndex={activeWorkspace === workspace ? 0 : -1}
             type="button"
           >
+            <VenueDashboardIcon section={workspace === "business" ? "analytics" : workspace} />
             <strong>{label}</strong>
           </button>
         ))}
@@ -315,12 +316,20 @@ export function VenuePanel({
         aria-labelledby="venue-workspace-tonight-tab"
       >
         {(activeWorkspace === "tonight" || openedWorkspaces.includes("tonight")) && <>
+        <section className="venue-shift-overview" aria-label="Tonight at a glance">
+          <div className="venue-section-heading"><h2>Tonight at a glance</h2><a className="venue-text-link" href="#table-requests" onClick={event => openVenueSection(event, "table-requests")}>Table requests <span aria-hidden="true">→</span></a></div>
+          <div className="venue-dashboard-metrics venue-tonight-metrics">
+            <Metric label="Working now" value={liveDataReady ? String(workingNow.length) : "—"} />
+            <Metric label="Live Club Deals" value={liveDataReady ? String(activeDealCount) : "—"} />
+            <Metric label="Affiliated dancers" value={liveDataReady ? String(nfcAuthorizedDancerCount) : "—"} />
+          </div>
+        </section>
         <section className="info-panel venue-dashboard-section" id="venue-guest-list" aria-labelledby="venue-guest-list-heading" tabIndex={-1}>
           <VenueGuestListPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
         </section>
         <hr className="venue-section-divider" />
         <section className="info-panel venue-dashboard-section" id="venue-pickups" aria-labelledby="venue-pickups-heading" tabIndex={-1}>
-          <h2 id="venue-pickups-heading">Pickup requests</h2>
+          <h2 className="venue-icon-heading" id="venue-pickups-heading"><VenueDashboardIcon section="pickups" />Pickup requests</h2>
           {(venueRole === "owner" || venueRole === "manager")
             ? <PickupDashboardPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
             : <p>Pickup requests are available to your venue owner and managers.</p>}
@@ -337,16 +346,11 @@ export function VenuePanel({
         </section>
         <hr className="venue-section-divider" />
 
-        <DashboardSection
-          description="Live requests, dancer access, and table tools."
-          defaultOpen
-          eyebrow="Venue roster"
-          hidden={activeWorkspace !== "roster"}
+        <section
+          className="venue-roster-workspace"
+          aria-label="Dancers & tables"
           id="venue-dancer-roster"
-          icon={<VenueDashboardIcon section="roster" />}
-          toggleAffordance="chevron"
-          title="Dancers & tables"
-          badge={`${nfcAuthorizedDancerCount} affiliated`}
+          tabIndex={-1}
         >
           <VenueNfcTagPanel
             initialAffiliations={initialAffiliations}
@@ -358,7 +362,7 @@ export function VenuePanel({
             canManageRoster={canManageRoster}
             canRequestSupport={canRequestNfcSupport}
           />
-        </DashboardSection>
+        </section>
         </> : <p role="status">{refreshStatus || "Loading dancers and tables…"}</p>)}
       </section>
 
@@ -371,7 +375,7 @@ export function VenuePanel({
       >
         {(activeWorkspace === "business" || openedWorkspaces.includes("business")) && <>
         <section className="info-panel" id="venue-overview" aria-labelledby="venue-results-heading">
-          <h2 id="venue-results-heading">Results</h2>
+          <h2 className="venue-icon-heading" id="venue-results-heading"><VenueDashboardIcon section="analytics" />Results</h2>
           <div className="venue-analytics-period" role="group" aria-label="Analytics period">
             {(["tonight", "7d", "30d"] as const).map((period) => (
               <button className={analyticsPeriod === period ? "active" : ""} aria-pressed={analyticsPeriod === period} type="button" key={period} onClick={() => onAnalyticsPeriodChange(period)}>

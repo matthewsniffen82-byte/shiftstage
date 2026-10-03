@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { homeTvHref } from "@/src/lib/dancr/navigation";
 import { readDashboardAccessToken, requestVenueTvVideosJson } from "./dashboard-session";
+import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 
 type VenueTvVideo = {
   id: string;
@@ -55,7 +56,7 @@ export default function VenueTvPanel({ city, venueId, hidden = false }: { city: 
     <section className="venue-tv-panel" id="venue-tv" hidden={hidden} aria-labelledby="venue-tv-heading" tabIndex={-1}>
       <VenueTvPanelStyles />
       <div className="venue-tv-title">
-        <h2 id="venue-tv-heading">MyDancr TV <span aria-live="polite">· {isLoading ? "…" : status ? "Unavailable" : `${videos.length} ${videos.length === 1 ? "video" : "videos"}`}</span></h2>
+        <h2 className="venue-icon-heading" id="venue-tv-heading"><VenueDashboardIcon section="tv" />MyDancr TV <span aria-live="polite">· {isLoading ? "…" : status ? "Unavailable" : `${videos.length} ${videos.length === 1 ? "video" : "videos"}`}</span></h2>
         <Link href={homeTvHref(city, { venueId })}>View venue TV</Link>
       </div>
       {status ? <p className="venue-tv-status" role="status">{status}</p> : null}

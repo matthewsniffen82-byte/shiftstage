@@ -75,7 +75,9 @@ export function InternalRequestPushSettings() {
   }
 
   return <div className="ir-push-settings" aria-label="Table request phone alerts">
-    <div><strong>Table alerts {on ? "· On" : ""}</strong><p>Get notified when a customer requests a dancer.</p></div>
+    <div className="ir-alert-summary"><strong>Table alerts</strong><span className={on ? "ir-alert-state is-on" : "ir-alert-state"}>{!settings ? status ? "Unavailable" : "Checking…" : on ? "● On" : "Off"}</span></div>
+    <details className="ir-alert-controls"><summary>Manage alerts</summary>
+    <p>Get notified when a customer requests a dancer.</p>
     <details className="ir-alert-help"><summary>How alerts work</summary><p>Tap an alert to open the request inbox.</p>
     {support ? <p className="ir-push-help">{support}</p> : <p className="ir-push-help">iPhone: add MyDancr to your Home Screen and open its icon (iOS 16.4+). Android: enable alerts in your browser.</p>}
     </details>
@@ -85,5 +87,6 @@ export function InternalRequestPushSettings() {
       <button type="button" disabled={busy || (!on && (!delivery.pushAvailable || Boolean(support) || !settings.alertsEnabled))} onClick={() => void change()}>{busy ? "Saving…" : on ? "Turn off table alerts" : "Enable table alerts"}</button>
     </> : status ? <button type="button" onClick={() => setAttempt(value => value + 1)}>Retry phone alert setup</button> : <p role="status">Checking phone alerts…</p>}
     {status ? <p role="status">{status}</p> : null}
+    </details>
   </div>;
 }

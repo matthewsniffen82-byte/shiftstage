@@ -179,6 +179,7 @@ export function GlobalMobileBottomNav() {
   }, []);
 
   useEffect(() => {
+    if (pathname === "/dashboard/venue" || pathname.startsWith("/dashboard/venue/")) return;
     const currentIndex = destinations.findIndex((destination) =>
       isActiveDestination(pathname, destination.id),
     );
@@ -351,6 +352,7 @@ export function GlobalMobileBottomNav() {
   }, [city, pathname]);
 
   if (pathname.startsWith("/internal")) return null;
+  if (pathname === "/dashboard/venue" || pathname.startsWith("/dashboard/venue/")) return null;
 
   return (
     <>

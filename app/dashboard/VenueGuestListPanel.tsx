@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import { clubArrivalLabel } from "@/src/lib/dancr/club-deal-transportation";
 import type { VenueGuestListEntry } from "@/src/lib/dancr/guest-list";
+import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 
 export default function VenueGuestListPanel({ refreshKey }: { refreshKey?: string | null }) {
   const [entries, setEntries] = useState<VenueGuestListEntry[]>([]);
@@ -36,11 +37,11 @@ export default function VenueGuestListPanel({ refreshKey }: { refreshKey?: strin
   }, [refreshKey]);
 
   return <div className="venue-guest-list">
-    <header className="venue-section-heading"><h2 id="venue-guest-list-heading">Guest list</h2>
+    <header className="venue-section-heading"><h2 className="venue-icon-heading" id="venue-guest-list-heading"><VenueDashboardIcon section="guests" />Guest list</h2>
       <button className="venue-utility" type="button" aria-label="Refresh guest list" disabled={busy} onClick={() => void load()}>{busy ? "Loading…" : "Refresh"}</button></header>
     <p>Guests with active passes. Verify arrival and scan each pass.</p>
     {error ? <p role="alert">{error}</p> : null}
-    {loaded && !entries.length ? <p>No guests on the list yet.</p> : null}
+    {loaded && !entries.length ? <p className="venue-value-empty">No guests on the list yet.</p> : null}
     <div className="notification-list">
       {entries.map(entry => <article className="notification-row" key={entry.id}>
         <strong>{entry.name}</strong>
