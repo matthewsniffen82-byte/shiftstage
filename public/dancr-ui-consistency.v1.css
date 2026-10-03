@@ -1322,21 +1322,10 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   text-align: center;
 }
 
-/* Compact discovery intro without changing the venue cards below it. */
+/* Keep compact spacing around the hero's original, uncropped artwork. */
 html body.dancr-button-system > .app main.stack > .hero.reference-hero.uploaded-hero-ready {
-  aspect-ratio: 12 / 5 !important;
-  min-height: 0 !important;
-  height: auto !important;
-  overflow: hidden !important;
   border-radius: 0 !important;
   margin-bottom: 8px !important;
-}
-html body.dancr-button-system > .app main.stack > .hero.reference-hero.uploaded-hero-ready > .hero-art {
-  position: absolute !important;
-  inset: 0 !important;
-  height: 100% !important;
-  object-fit: cover !important;
-  object-position: center 20% !important;
 }
 
 /* City stays visible; the existing filter toggle reveals the advanced controls. */
