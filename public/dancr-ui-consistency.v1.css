@@ -689,6 +689,7 @@ html body.dancr-button-system :is(#dealPassOverlay .deal-pass-sheet, .club-deal-
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
+  position: relative;
   overflow: hidden !important;
 }
 
@@ -1171,16 +1172,11 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   gap: 6px !important;
 }
 
-/* Keep dismissal inside the card, with space for the name to wrap beside it. */
-html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-heading {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 44px;
-  align-items: center;
-  gap: 6px;
-}
-html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-identity-heading > .venue-detail-close {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
+/* Share the dancer profile's Back control without adding a row above the card. */
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero > .venue-detail-close {
+  position: absolute !important;
+  inset: 8px auto auto 8px !important;
+  z-index: 3;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary #venueDetailName.venue-detail-accessible-name {

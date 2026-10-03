@@ -38313,7 +38313,7 @@
           }
         }
 
-        /* Venue profiles keep X dismissal while the shared destination dock stays available. */
+        /* Venue profiles keep in-card Back navigation while the shared destination dock stays available. */
         body.venue-full-view-open {
           overflow: hidden !important;
           overscroll-behavior: none !important;
@@ -38334,7 +38334,7 @@
           margin: 0 !important;
           padding:
             max(10px, calc(env(safe-area-inset-top, 0px) + var(--dancr-viewport-top)))
-            max(var(--dancer-discovery-content-gutter, 12px), calc((100vw - 760px) / 2))
+            max(var(--profile-frame-inset, 8px), calc((100vw - var(--profile-shell-max-width, 1180px)) / 2 + var(--profile-frame-inset, 8px)))
             calc(140px + env(safe-area-inset-bottom, 0px)) !important;
           display: block !important;
           overflow-x: hidden !important;
@@ -38351,7 +38351,7 @@
           box-shadow: none !important;
         }
         #results.venue-profile-overlay .venue-detail {
-          width: min(100%, 720px);
+          width: min(100%, calc(var(--profile-shell-max-width, 1180px) - 2 * var(--profile-frame-inset, 8px)));
           margin: 0 auto;
           padding: 0 0 12px;
           background: #050507 !important;
@@ -53295,6 +53295,9 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       return `
         <div data-stable-media-key="venue-detail:${escapeOptionValue(venue.id || venue.name)}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
           <article class="venue-hero">
+            <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Back to previous view from ${escapeHtml(details.name)} club profile">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
+            </button>
             <div class="venue-hero-brand-row">
               <div class="venue-main-photo${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
                 <div class="venue-art">
@@ -53308,12 +53311,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               <div class="venue-hero-summary">
                 <div class="venue-identity-block">
                   <div class="venue-identity-copy">
-                    <div class="venue-identity-heading">
-                      <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
-                      <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${escapeHtml(details.name)} club profile">
-                        <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-                      </button>
-                    </div>
+                    <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
                     <div class="venue-identity-meta">
                       <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
                       <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>

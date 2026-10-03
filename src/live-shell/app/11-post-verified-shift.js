@@ -326,6 +326,9 @@
       return `
         <div data-stable-media-key="venue-detail:${escapeOptionValue(venue.id || venue.name)}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
           <article class="venue-hero">
+            <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Back to previous view from ${escapeHtml(details.name)} club profile">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
+            </button>
             <div class="venue-hero-brand-row">
               <div class="venue-main-photo${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
                 <div class="venue-art">
@@ -339,12 +342,7 @@
               <div class="venue-hero-summary">
                 <div class="venue-identity-block">
                   <div class="venue-identity-copy">
-                    <div class="venue-identity-heading">
-                      <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
-                      <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Close ${escapeHtml(details.name)} club profile">
-                        <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-                      </button>
-                    </div>
+                    <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
                     <div class="venue-identity-meta">
                       <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
                       <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>

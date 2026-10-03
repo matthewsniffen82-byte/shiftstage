@@ -13,6 +13,8 @@
   --mydancr-scrollbar-thumb-active: rgba(255, 255, 255, .32);
   --mydancr-preview-banner-height: 34px;
   --dancer-discovery-content-gutter: 12px;
+  --profile-frame-inset: 8px;
+  --profile-shell-max-width: 1180px;
   --mydancr-preview-banner-offset: calc(var(--mydancr-preview-banner-height) + env(safe-area-inset-top, 0px));
 }
 
@@ -7857,7 +7859,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-det
   min-width: 0;
   display: grid;
   gap: 12px;
-  padding: 10px 0 16px;
+  padding: 10px max(0px, calc(var(--dancer-discovery-content-gutter) - var(--profile-frame-inset))) 16px;
 }
 
 body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-activity-section {

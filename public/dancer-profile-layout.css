@@ -12,7 +12,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   row-gap: 0 !important;
   padding: 0 !important;
   width: 100% !important;
-  max-width: 1180px !important;
+  max-width: var(--profile-shell-max-width, 1180px) !important;
   min-height: 100dvh !important;
   background: #050509 !important;
 }
@@ -140,15 +140,15 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-header-controls, .profile-titlebar-controls) button { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout :is(.profile-modal-header-controls, .profile-titlebar-controls) .profile-header-report-action > svg { transform: none !important; }
 /* Retain the shared circular face but show the profile's Back icon instead of X. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout #modalClose, .public-profile-shell.profile-split-layout > .profile-titlebar .public-profile-close)::after { display: none !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout #modalClose, .public-profile-shell.profile-split-layout > .profile-titlebar .public-profile-close) > svg {
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout #modalClose, .public-profile-shell.profile-split-layout > .profile-titlebar .public-profile-close, #results.venue-profile-overlay .venue-detail .venue-detail-close)::after { display: none !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout #modalClose, .public-profile-shell.profile-split-layout > .profile-titlebar .public-profile-close, #results.venue-profile-overlay .venue-detail .venue-detail-close) > svg {
   display: block !important;
   grid-area: 1 / 1;
   width: 22px !important;
   height: 22px !important;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  stroke-width: 1.8 !important;
   stroke-linecap: round;
   stroke-linejoin: round;
   z-index: 1;
@@ -510,7 +510,6 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
 /* Frame only the portrait and profile details. The decorative grid layer follows
    their natural height without wrapping or clipping interactive content. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
-  --profile-frame-inset: 8px;
   --profile-frame-radius: 20px;
   --profile-frame-row-end: 4;
   box-sizing: border-box !important;

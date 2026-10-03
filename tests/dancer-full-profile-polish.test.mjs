@@ -24,7 +24,7 @@ const publicProfileMedia = await readFile(
 );
 
 const profilePolishBlock = liveApp.match(
-  /\/\* Instagram-familiar dancer profile hierarchy; scoped away from global navigation\. \*\/[\s\S]*?\/\* Venue profiles keep X dismissal/,
+  /\/\* Instagram-familiar dancer profile hierarchy; scoped away from global navigation\. \*\/[\s\S]*?\/\* Venue profiles keep in-card Back navigation/,
 )?.[0];
 
 test("empty schedules use the compact neutral hierarchy while upcoming schedules retain their destination", () => {

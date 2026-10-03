@@ -263,7 +263,7 @@ test("venue profile hierarchy stays compact and carries the restrained venue bra
   assert.match(refinement, /\.venue-identity-block \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);[\s\S]*?align-items: start;[\s\S]*?gap: 0;/);
   assert.match(refinement, /\.venue-detail-close \{[\s\S]*?position: static !important;[\s\S]*?inset: auto !important;[\s\S]*?justify-self: end !important;[\s\S]*?width: 36px !important;[\s\S]*?height: 36px !important;[\s\S]*?display: inline-grid !important;[\s\S]*?place-items: center !important;[\s\S]*?border-radius: 50% !important;[\s\S]*?line-height: 0 !important;/);
   assert.match(refinement, /\.venue-detail-close \.icon \{[\s\S]*?width: 15px !important;[\s\S]*?height: 15px !important;[\s\S]*?stroke-width: 1\.85 !important;/);
-  assert.match(refinement, /\.venue-detail-exploration \{[\s\S]*?display: grid;[\s\S]*?gap: 12px;[\s\S]*?padding: 10px 0 16px;/);
+  assert.match(refinement, /\.venue-detail-exploration \{[\s\S]*?display: grid;[\s\S]*?gap: 12px;[\s\S]*?padding: 10px max\(0px, calc\(var\(--dancer-discovery-content-gutter\) - var\(--profile-frame-inset\)\)\) 16px;/);
   assert.match(refinement, /\.venue-activity-empty\.is-compact \{[\s\S]*?grid-template-columns: 34px minmax\(0, 1fr\);[\s\S]*?padding: 10px 11px;/);
   assert.match(refinement, /\.venue-hero \+ \.venue-detail-exploration \{[\s\S]*?margin-top: 0;/);
   assert.doesNotMatch(refinement, /\.venue-information-section|\.venue-contact-details-content/);
@@ -297,14 +297,14 @@ test("venue scroll cards remain separate from the deeper venue detail hierarchy"
   assert.match(venueCard, /venueExperienceHref\(venue, city\)/);
 });
 
-test("venue profiles keep X dismissal inside the card and preserve the shared floating navigation", () => {
+test("venue profiles keep Back inside the card and preserve the shared floating navigation", () => {
   assert.match(
     liveApp,
     /<div\b[^>]*\bclass="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">/,
   );
   assert.match(
     liveApp,
-    /<article class="venue-hero">\s*<div class="venue-hero-brand-row">[\s\S]*?class="venue-identity-heading">\s*<h2 id="venueDetailName"[^>]*>[^<]*<\/h2>\s*<button class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Close \$\{escapeHtml\(details\.name\)\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"><\/path><path d="m6 6 12 12"><\/path><\/svg>\s*<\/button>\s*<\/div>\s*<div class="venue-identity-meta">/,
+    /<article class="venue-hero">\s*<button class="close-btn venue-detail-close"[\s\S]*?data-close-venue-profile[\s\S]*?aria-label="Back to previous view from \$\{escapeHtml\(details\.name\)\} club profile"[\s\S]*?<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"><\/path><\/svg>\s*<\/button>\s*<div class="venue-hero-brand-row">/,
   );
   assert.doesNotMatch(
     liveApp,
