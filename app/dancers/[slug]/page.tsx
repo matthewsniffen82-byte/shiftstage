@@ -125,10 +125,10 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
 
         <header className="profile-titlebar">
           <div className="profile-titlebar-controls">
-            <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
             <ProfileCloseButton
               fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
             />
+            <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
           </div>
           <div className="profile-titlebar-person">
             <div

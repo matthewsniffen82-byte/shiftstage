@@ -43,12 +43,16 @@ export function ProfileCloseButton({
 
   return (
     <button
-      aria-label={`Close full ${profileType} profile and return to the previous page or discovery results`}
+      aria-label={profileType === "dancer" ? "Back to previous page or dancer discovery results" : `Close full ${profileType} profile and return to the previous page or discovery results`}
       className="public-profile-close"
       onClick={closeProfile}
       type="button"
     >
-      ×
+      {profileType === "dancer" ? (
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m12 5-7 7 7 7M5 12h14" />
+        </svg>
+      ) : "×"}
     </button>
   );
 }

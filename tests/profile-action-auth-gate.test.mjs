@@ -40,10 +40,10 @@ test("account-only live modal actions check for a customer profile while Going a
   );
 });
 
-test("the live dancer profile close control exits shared links and remains touchable", () => {
+test("the live dancer profile back control exits shared links and remains touchable", () => {
   assert.match(
     homeSource,
-    /id="modalClose" type="button" aria-label="Close profile"/,
+    /id="modalClose" type="button" aria-label="Back to previous view"/,
   );
   assert.match(
     homeSource,
@@ -112,7 +112,7 @@ test("the live dancer profile close control exits shared links and remains touch
   assert.match(profileNavigationSource, /className="public-profile-close"/);
   assert.match(
     profileNavigationSource,
-    /profileType = "dancer"[\s\S]*?aria-label={`Close full \$\{profileType\} profile and return to the previous page or discovery results`}/,
+    /profileType = "dancer"[\s\S]*?aria-label=\{profileType === "dancer" \? "Back to previous page or dancer discovery results" : `Close full \$\{profileType\} profile and return to the previous page or discovery results`\}/,
   );
   assert.match(profileNavigationSource, /window\.history\.back\(\)/);
   assert.match(profileNavigationSource, /window\.setTimeout\(navigateToFallback, 900\)/);
@@ -290,7 +290,7 @@ test("the live mobile profile separates profile actions from venue travel action
   assert.doesNotMatch(liveActionMarkup, /"account"|"public"|"no-shift"/);
   assert.match(homeSource, /class="profile-header-report-action" id="reportBtn"[^>]*aria-haspopup="dialog"/);
   assert.doesNotMatch(homeSource, /class="profile-modal-report-link"/);
-  assert.match(homeSource, /class="profile-modal-header-controls">[\s\S]*?id="reportBtn"[\s\S]*?id="modalClose"/);
+  assert.match(homeSource, /class="profile-modal-header-controls">[\s\S]*?id="modalClose"[\s\S]*?id="reportBtn"/);
   assert.doesNotMatch(homeSource, /data-profile-more-menu|data-profile-more-actions|data-profile-schedule-action/);
   assert.match(
     homeSource,
