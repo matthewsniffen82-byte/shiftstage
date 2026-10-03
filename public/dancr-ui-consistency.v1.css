@@ -1286,7 +1286,24 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   text-align: center;
 }
 
-/* Compact discovery controls: this scope ends before the results heading. */
+/* Compact discovery intro without changing the venue cards below it. */
+html body.dancr-button-system > .app main.stack > .hero.reference-hero.uploaded-hero-ready {
+  aspect-ratio: 12 / 5 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow: hidden !important;
+  border-radius: 0 !important;
+  margin-bottom: 8px !important;
+}
+html body.dancr-button-system > .app main.stack > .hero.reference-hero.uploaded-hero-ready > .hero-art {
+  position: absolute !important;
+  inset: 0 !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  object-position: center 20% !important;
+}
+
+/* City stays visible; the existing filter toggle reveals the advanced controls. */
 html body.dancr-button-system > .app main.stack > .home-discovery-controls {
   grid-template-columns: minmax(0, 1fr) auto !important;
   align-items: center !important;
@@ -1348,9 +1365,9 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters {
   grid-column: 1 / -1;
-  display: none;
+  display: none !important;
 }
-html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open { display: grid; }
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open { display: grid !important; }
 html body.dancr-button-system > .app main.stack > #homeLiveSummary {
   min-height: 14px !important;
   margin-block: -6px -5px !important;
@@ -1388,6 +1405,14 @@ html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWork
   background: currentColor;
 }
 @media (max-width: 720px) {
+  html body.dancr-button-system:not(.dancer-directory-active) > .app main.stack > section.stack
+    > .content-head.discovery-section-head:not(.tv-section-head) {
+    padding-block: 2px 4px !important;
+  }
+  html body.dancr-button-system:not(.dancer-directory-active) > .app main.stack > section.stack
+    > .content-head.discovery-section-head:not(.tv-section-head) > #tabTitle {
+    font-size: clamp(22px, 6.2vw, 27px) !important;
+  }
   html body.dancr-button-system > .app main.stack > .home-discovery-controls { grid-template-columns: minmax(0, 1fr) 44px !important; }
   html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle {
     width: 44px !important;
@@ -1444,7 +1469,8 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
   height: 8px !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {
-  gap: 6px 8px !important;
+  gap: 4px 8px !important;
+  padding: 6px !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .field {
   gap: 2px !important;
@@ -1463,9 +1489,12 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
   font-weight: 600 !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters #locationBtn {
+  --discovery-control-face: transparent;
   --discovery-control-edge: transparent;
   flex: 1 1 auto;
   color: #c4b5fd !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters #locationBtn .icon {
   width: 16px !important;
