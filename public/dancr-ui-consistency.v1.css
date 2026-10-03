@@ -1170,7 +1170,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   gap: 6px;
   /* Keep the details inset from the logo's top and beside the Back control. */
   padding: 20px 8px 0 0;
-  text-align: center;
+  text-align: left;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-identity-copy {
@@ -1178,7 +1178,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-identity-meta {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 /* Share the dancer profile's Back control without adding a row above the card. */
@@ -1242,7 +1242,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-profile-hours {
-  justify-content: center;
+  justify-content: flex-start;
   min-width: 0;
   margin: 0;
   color: #9ca3af;
@@ -1257,7 +1257,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-detail-club-deal-heading {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   min-width: 0;
   margin: 0;
   padding: 0;
