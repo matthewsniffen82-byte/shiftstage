@@ -618,30 +618,6 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className={`live-actions profile-actions-compact${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving}>
-        <button
-          aria-pressed={saved.following}
-          className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
-          type="button"
-          onClick={() => {
-            if (requireCustomerAccount("follow")) updateFollow();
-          }}
-          disabled={!savedLoaded || followSaving}
-        >
-          <span className="profile-action-main">
-            <DancerProfileActionPreviewIcon type={saved.following ? "check" : "personPlus"} />
-            <span>{saved.following ? "Following" : "Follow"}</span>
-          </span>
-        </button>
-        {shareControl ? (
-          <div className="profile-action-share-slot">{shareControl}</div>
-        ) : (
-          <button aria-label="Share" className="profile-action-secondary profile-action-unavailable profile-action-icon-control profile-share-action" disabled type="button">
-            <span className="profile-action-main"><DancerProfileActionPreviewIcon type="share" /><span>Share</span></span>
-          </button>
-        )}
-        {status ? <span className="profile-action-status" role="status">{status}</span> : null}
-      </div>
       <section
         aria-label="Tonight"
         className={`profile-tonight-card${hasLiveActions ? " is-now" : " is-no-schedule"}${hasClubDeal ? " has-club-deal" : ""}`}
@@ -666,6 +642,30 @@ export function DancerProfileActions({
           </button>
         </div>
       </section>
+      <div className={`live-actions profile-actions-compact${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving}>
+        <button
+          aria-pressed={saved.following}
+          className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
+          type="button"
+          onClick={() => {
+            if (requireCustomerAccount("follow")) updateFollow();
+          }}
+          disabled={!savedLoaded || followSaving}
+        >
+          <span className="profile-action-main">
+            <DancerProfileActionPreviewIcon type={saved.following ? "check" : "personPlus"} />
+            <span>{saved.following ? "Following" : "Follow"}</span>
+          </span>
+        </button>
+        {shareControl ? (
+          <div className="profile-action-share-slot">{shareControl}</div>
+        ) : (
+          <button aria-label="Share" className="profile-action-secondary profile-action-unavailable profile-action-icon-control profile-share-action" disabled type="button">
+            <span className="profile-action-main"><DancerProfileActionPreviewIcon type="share" /><span>Share</span></span>
+          </button>
+        )}
+        {status ? <span className="profile-action-status" role="status">{status}</span> : null}
+      </div>
       {accountRequiredAction ? (
         <div
           className="profile-account-gate"
