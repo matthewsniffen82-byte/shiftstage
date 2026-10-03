@@ -1097,8 +1097,8 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   align-items: stretch !important;
   gap: 0 !important;
   min-height: var(--venue-detail-logo-size) !important;
-  /* Tighten the card's top space now that Back has no circular face. */
-  padding: 28px 12px 4px !important;
+  /* Reduce empty top space while preserving the logo's existing size. */
+  padding: 12px 12px 4px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
