@@ -123,15 +123,13 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
         />
         <PublicProfileStyles />
 
-        <div className="profile-dismiss-toolbar">
+        <header className="profile-titlebar">
           <div className="profile-titlebar-controls">
             <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
             <ProfileCloseButton
               fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
             />
           </div>
-        </div>
-        <header className="profile-titlebar">
           <div className="profile-titlebar-person">
             <div
               aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : ""}`}

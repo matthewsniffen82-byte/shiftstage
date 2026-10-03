@@ -567,10 +567,10 @@ test("profile polish preserves the existing site color system", () => {
   );
 });
 
-test("profile close controls sit above the portrait and compact identity section", () => {
+test("profile identity and media controls form a compact balanced top section", () => {
   assert.match(
     liveApp,
-    /<div class="profile-dismiss-toolbar">\s*<div class="profile-modal-header-controls">[\s\S]*?<button class="close-btn" id="modalClose" type="button" aria-label="Close profile">[\s\S]*?<aside class="profile-featured-column"[\s\S]*?<div class="profile-modal-summary">/,
+    /<div class="profile-modal-summary">[\s\S]*?<button class="close-btn" id="modalClose" type="button" aria-label="Close profile">/,
   );
   assert.doesNotMatch(liveApp, /<div class="modal-top">\s*<button class="close-btn" id="modalClose"/);
   assert.match(
