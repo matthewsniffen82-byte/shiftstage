@@ -1091,13 +1091,14 @@ html body.dancr-button-system #results.venue-card-grid > .venue-card .venue-card
 
 /* Detail information leads on the left; the logo stays centered on the right. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row {
-  --venue-detail-logo-size: clamp(112px, 34vw, 184px);
+  --venue-detail-logo-size: clamp(96px, 28vw, 152px);
   display: grid !important;
   grid-template-columns: minmax(0, 1fr) var(--venue-detail-logo-size) !important;
   align-items: stretch !important;
   gap: 0 !important;
   min-height: var(--venue-detail-logo-size) !important;
-  padding: 0 !important;
+  /* Give both columns the same space below Back and the same inset as the CTA. */
+  padding: 60px 12px 8px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1165,8 +1166,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   display: grid;
   align-content: center;
   gap: 6px;
-  /* Clear the Back control: 8px inset + 44px touch target + 8px gap. */
-  padding: 60px 6px 8px 12px;
+  padding: 0 8px 0 0;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-identity-copy {
