@@ -42781,6 +42781,14 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
       <section class="profile-modal profile-split-layout" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
+        <div class="profile-dismiss-toolbar">
+          <div class="profile-modal-header-controls">
+            <button class="profile-header-report-action" id="reportBtn" type="button" aria-label="Report profile" title="Report profile" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></button>
+            <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+            </button>
+          </div>
+        </div>
         <aside class="profile-featured-column" aria-label="Featured profile photo">
           <div class="modal-image" id="modalImage" role="button" tabindex="0" aria-label="Open main profile photo">
             <span class="profile-modal-playback-feedback" id="modalVideoPlaybackFeedback" aria-hidden="true"></span>
@@ -42801,12 +42809,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           <span class="profile-featured-empty">No approved profile photos yet.</span>
         </aside>
         <div class="profile-modal-summary">
-          <div class="profile-modal-header-controls">
-            <button class="profile-header-report-action" id="reportBtn" type="button" aria-label="Report profile" title="Report profile" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></button>
-            <button class="close-btn" id="modalClose" type="button" aria-label="Close profile">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
-            </button>
-          </div>
           <div class="profile-modal-person">
             <div class="profile-modal-avatar-column">
               <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
