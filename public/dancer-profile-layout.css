@@ -477,3 +477,39 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout {
   --profile-bottom-nav-clearance: calc(var(--mydancr-preview-banner-offset, 46px) + 16px);
 }
+
+/* Frame only the portrait and profile details. The decorative grid layer follows
+   their natural height without wrapping or clipping interactive content. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
+  --profile-frame-inset: 8px;
+  --profile-frame-radius: 20px;
+  --profile-frame-row-end: 4;
+  box-sizing: border-box !important;
+  padding: 8px var(--profile-frame-inset) 0 !important;
+}
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) {
+  --profile-frame-row-end: 3;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)::before {
+  content: "";
+  grid-column: 1 / -1;
+  grid-row: 1 / var(--profile-frame-row-end);
+  position: relative;
+  align-self: stretch;
+  justify-self: stretch;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid rgba(203, 213, 225, .2);
+  border-radius: var(--profile-frame-radius);
+  background: transparent;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+  pointer-events: none;
+  z-index: 2;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-featured-column {
+  border-radius: var(--profile-frame-radius) 0 0 var(--profile-frame-radius);
+}
+/* Media retains its original width below the card instead of joining the frame. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > :is(.profile-modal-media, .profile-media-section) {
+  margin-inline: calc(-1 * var(--profile-frame-inset)) !important;
+}
