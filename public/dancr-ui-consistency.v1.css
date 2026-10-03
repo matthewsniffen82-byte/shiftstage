@@ -1852,6 +1852,10 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   color: #f5f3f8 !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty) {
+  color: var(--dancr-color-live) !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty)
   > .dancer-directory-filter-status {
   background: var(--dancr-color-live) !important;
