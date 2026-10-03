@@ -1396,7 +1396,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle:is(.has-active-filters, .is-open),
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton[aria-expanded="true"] {
   --discovery-control-face: #0c0812;
-  --discovery-control-edge: #745696;
+  --discovery-control-edge: #a78bfa;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters {
   grid-column: 1 / -1;
@@ -1779,7 +1779,7 @@ html body.dancer-directory-active.dancr-button-system > .app > header
   filter: none !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app > header
-  :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(:hover, .active, .is-open, [aria-expanded="true"]) {
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(.active, .is-open, [aria-expanded="true"]) {
   --discovery-header-face: #202026;
   --discovery-header-edge: #494550;
   color: #f8fafc !important;
@@ -1788,6 +1788,34 @@ html body.dancer-directory-active.dancr-button-system > .app > header
   :is(.customer-quick-btn, #accountBtn.account-icon-btn):focus-visible {
   outline: 2px solid #c4b5fd !important;
   outline-offset: 1px !important;
+}
+
+/* Header utilities match the city controls across all discovery tabs. */
+html body.dancr-button-system > .app > header .topbar
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
+  --discovery-header-edge: #34343c;
+  color: #a78bfa !important;
+  border-color: #34343c !important;
+  box-shadow: none !important;
+}
+html body.dancr-button-system > .app > header .topbar
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn) :is([data-quick-icon], .action-icon, .account-icon, svg) {
+  color: inherit !important;
+  filter: none !important;
+}
+html body.dancr-button-system > .app > header .topbar
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(.active, .is-open, [aria-expanded="true"], :focus-visible) {
+  --discovery-header-edge: #a78bfa;
+  color: #c4b5fd !important;
+  border-color: #a78bfa !important;
+}
+@media (hover: hover) {
+  html body.dancr-button-system > .app > header .topbar
+    :is(.customer-quick-btn, #accountBtn.account-icon-btn):hover {
+    --discovery-header-edge: #a78bfa;
+    color: #c4b5fd !important;
+    border-color: #a78bfa !important;
+  }
 }
 html body.dancer-directory-active.dancr-button-system > .app > main.stack {
   padding-top: 4px !important;
@@ -1810,7 +1838,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton[aria-expanded="true"], #homeFilterToggle:is(.has-active-filters, .is-open)) {
-  --discovery-control-edge: #745696;
+  --discovery-control-edge: #a78bfa;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > #homeLiveSummary {
   display: flex !important;
