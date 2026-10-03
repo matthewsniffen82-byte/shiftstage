@@ -755,14 +755,14 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-body {
   border-top: 0 !important;
   background: transparent !important;
-  gap: 10px !important;
-  padding: 4px 12px 8px !important;
+  gap: 8px !important;
+  padding: 4px 12px 4px !important;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-location-section {
   border-top: 0 !important;
   padding-top: 0 !important;
-  gap: 10px !important;
+  gap: 8px !important;
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-address-line {
@@ -1098,7 +1098,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   gap: 0 !important;
   min-height: var(--venue-detail-logo-size) !important;
   /* Lift the identity row while the text keeps its own Back-button clearance. */
-  padding: 40px 12px 8px !important;
+  padding: 40px 12px 4px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1167,7 +1167,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   align-content: start;
   gap: 6px;
   /* 40px row inset + 20px here keeps long names below the 44px Back target. */
-  padding: 20px 8px 0 0;
+  padding: 20px 0 0 8px;
   text-align: center;
 }
 
