@@ -1097,8 +1097,8 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   align-items: stretch !important;
   gap: 0 !important;
   min-height: var(--venue-detail-logo-size) !important;
-  /* Lift the identity row while the text keeps its own Back-button clearance. */
-  padding: 40px 12px 4px !important;
+  /* Tighten the card's top space now that Back has no circular face. */
+  padding: 28px 12px 4px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1166,7 +1166,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   display: grid;
   align-content: start;
   gap: 6px;
-  /* 40px row inset + 20px here keeps long names below the 44px Back target. */
+  /* Keep the details inset from the logo's top and beside the Back control. */
   padding: 20px 8px 0 0;
   text-align: center;
 }
