@@ -1,10 +1,10 @@
-/* Match the external dancer directory: three columns, 2px gutters, 9:16 tiles. */
+/* Match the public directory's portrait rhythm and quiet violet accents. */
 body .ir-shell { color-scheme: only dark; }
 body .ir-shell .ir-directory-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
-  gap: 2px;
+  gap: 6px;
 }
 body .ir-shell .ir-directory-grid .ir-dancer {
   position: relative;
@@ -15,9 +15,19 @@ body .ir-shell .ir-directory-grid .ir-dancer {
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 2px;
+  border-radius: 8px;
   background: #050507;
-  box-shadow: none;
+  box-shadow: 0 0 0 1px rgba(160, 154, 175, .12);
+  overflow: hidden;
+}
+body .ir-shell .ir-directory-grid .ir-dancer::after {
+  content: "";
+  position: absolute;
+  z-index: 4;
+  inset: auto 0 0;
+  height: 1px;
+  background: color-mix(in srgb, var(--dancr-color-brand-primary-deep, #4c1d95) 88%, transparent);
+  pointer-events: none;
 }
 body .ir-shell .ir-directory-grid .ir-profile-link,
 body.dancr-button-system .ir-shell .ir-directory-grid .ir-profile-link {
@@ -31,7 +41,7 @@ body.dancr-button-system .ir-shell .ir-directory-grid .ir-profile-link {
   padding: 0 !important;
   overflow: hidden !important;
   border: 0 !important;
-  border-radius: 2px !important;
+  border-radius: inherit !important;
   background: #050507 !important;
   box-shadow: none !important;
   transform: none !important;
@@ -52,10 +62,19 @@ body .ir-directory-grid .ir-main-photo {
   border-radius: 0;
   object-fit: cover;
   object-position: center top;
-  background: #17121f;
-  color: #bda4dc;
+  background: linear-gradient(145deg, #18151e, #09090d);
+  color: #b8b5c2;
   font-size: 12px;
 }
+body .ir-directory-grid .ir-photo-placeholder {
+  box-sizing: border-box;
+  padding: 8px 6px 52px;
+  font-size: clamp(9px, 2.5vw, 11px);
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: center;
+}
+body .ir-directory-grid .ir-dancer-requestable .ir-photo-placeholder { padding-bottom: 98px; }
 /* Match the public directory's photo exposure, including Android table pages. */
 body .ir-directory-grid img.ir-main-photo {
   -webkit-filter: brightness(1.14) contrast(1.03);
@@ -69,37 +88,37 @@ body .ir-shell .ir-directory-grid .ir-dancer-copy {
   inset: auto 0 0;
   display: grid;
   gap: 3px;
-  padding: 24px 7px 7px;
+  padding: 28px 6px 8px;
   color: #fff;
-  background: linear-gradient(180deg, transparent, rgba(5, 5, 8, .08) 38%, rgba(5, 5, 8, .55) 70%, rgba(5, 5, 8, .88));
-  text-shadow: 0 1px 3px #000;
+  background: linear-gradient(180deg, rgba(5, 5, 8, 0), rgba(5, 5, 8, .24) 20%, rgba(5, 5, 8, .6) 42%, rgba(5, 5, 8, .82) 65%, rgba(5, 5, 8, .94));
+  text-shadow: 0 1px 4px rgba(0, 0, 0, .65);
   pointer-events: none;
 }
-body .ir-shell .ir-directory-grid .ir-dancer-requestable .ir-dancer-copy { padding-bottom: 52px; }
+body .ir-shell .ir-directory-grid .ir-dancer-requestable .ir-dancer-copy { padding-bottom: 54px; }
 body .ir-directory-grid .ir-dancer-copy strong {
   overflow: hidden;
   text-overflow: ellipsis;
   font-family: var(--font-ui, Arial, sans-serif);
   font-size: clamp(11px, 3vw, 15px);
-  font-weight: 950;
+  font-weight: 700;
   letter-spacing: -.02em;
-  line-height: 1.05;
+  line-height: 1.15;
   white-space: nowrap;
 }
-body .ir-directory-grid .ir-dancer-copy > span { font-size: 10px; color: #e0cefa; }
+body .ir-directory-grid .ir-dancer-copy > span { font-size: 10px; font-weight: 500; line-height: 1.3; color: #c6c3cf; }
 body .ir-shell .ir-directory-grid .ir-table-request,
 body.dancr-button-system .ir-shell .ir-directory-grid .ir-table-request {
   position: absolute !important;
   z-index: 3 !important;
-  inset: auto 5px 4px !important;
+  inset: auto 6px 6px !important;
   display: flex !important;
-  width: calc(100% - 10px) !important;
+  width: calc(100% - 12px) !important;
   min-width: 0 !important;
   min-height: 44px !important;
   margin: 0 !important;
   padding: 4px !important;
   border: 1px solid #9061cb !important;
-  border-radius: 5px !important;
+  border-radius: 8px !important;
   color: #fff !important;
   background: #36204f !important;
   box-shadow: none !important;
@@ -107,6 +126,3 @@ body.dancr-button-system .ir-shell .ir-directory-grid .ir-table-request {
   line-height: 1.1 !important;
 }
 body .ir-directory-grid button:focus-visible { outline-offset: -3px; }
-@media (max-width: 420px) {
-  body .ir-shell .ir-directory-grid .ir-dancer-copy { padding-left: 5px; padding-right: 5px; }
-}

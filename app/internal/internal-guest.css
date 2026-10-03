@@ -26,46 +26,40 @@ body .ir-guest p { color: #b8b5c2; font-size: 13px; line-height: 1.5; overflow-w
 body .ir-guest .ir-header p { grid-column: 2; grid-row: 2; align-self: start; justify-self: center; margin: 0; padding: 5px 9px; border: 1px solid #48444f; border-radius: 8px; color: #f8fafc; background: linear-gradient(#17131d, #17131d); font-size: 16px; font-weight: 700; line-height: 1.25; text-align: center; }
 body .ir-guest .ir-section-title { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-bottom: 12px; }
 body .ir-guest .ir-section-title h2 { min-width: 0; margin: 0; }
-body .ir-guest .ir-roster-scope-note { margin: 0 0 12px; color: #b8b5c2; font-size: 13px; line-height: 1.5; text-align: center; text-wrap: balance; }
+body .ir-guest .ir-roster-scope-note { margin: 0 0 12px; color: #b8b5c2; font-size: 13px; line-height: 1.5; text-align: left; }
 body .ir-guest .ir-live { padding: 0; color: var(--dancr-color-success, #34d399); font-size: 12px; line-height: 1.4; }
 body .ir-guest .ir-section-title .ir-live { padding: 3px 7px; border: 1px solid #254b3b; border-radius: 999px; background: #07110c; font-size: 11px; font-weight: 600; white-space: nowrap; }
 
 /* Static placeholders avoid flashing invented venue/table labels on reload. */
 body .ir-guest .ir-loading-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 body .ir-guest .ir-loading-header { height: 86px; margin-bottom: 64px; border-radius: 14px; background: #101014; }
-body .ir-guest .ir-loading-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; }
-body .ir-guest .ir-loading-grid > span { aspect-ratio: 9 / 16; max-height: 320px; border-radius: 2px; background: #101014; }
+body .ir-guest .ir-loading-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+body .ir-guest .ir-loading-grid > span { aspect-ratio: 9 / 16; max-height: 320px; border-radius: 8px; background: #101014; }
 
-/* Keep the portrait visible above a localized name fade and 44px request. */
-body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy {
-  gap: 3px;
-  padding-top: 14px;
-  background: linear-gradient(180deg, transparent, rgba(5, 5, 8, .56) 32%, rgba(5, 5, 8, .78) 68%, rgba(5, 5, 8, .92));
-}
-body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-requestable .ir-dancer-copy { padding-bottom: 48px; }
+/* Lighter captions keep Request prominent without competing with the photo. */
 body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy strong {
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
-  font-size: clamp(11px, 3.1vw, 14px); font-weight: 750;
+  font-size: clamp(11px, 3.1vw, 14px); font-weight: 700;
   line-height: 1.18; white-space: normal; overflow-wrap: anywhere;
 }
 body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy > span {
-  color: #fff;
+  color: #c6c3cf;
   -webkit-text-fill-color: currentColor;
-  font-size: 11px;
-  font-weight: 650;
+  font-size: clamp(9px, 2.5vw, 10px);
+  font-weight: 500;
   line-height: 1.3;
   text-decoration: none;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, .9);
+  text-shadow: inherit;
 }
-body .ir-guest .ir-dancer::after { content: ""; position: absolute; z-index: 4; inset: auto 0 0; height: 1px; background: color-mix(in srgb, var(--dancr-color-brand-primary-deep, #4c1d95) 88%, transparent); pointer-events: none; }
-body .ir-guest .ir-dancer[data-request-state]::after {
-  inset: 0; height: auto; border: 1px solid #9b78ce; border-bottom-width: 2px;
+body .ir-shell .ir-directory-grid .ir-dancer[data-request-state]::after {
+  inset: 0; height: auto; border: 1px solid #8463ad; border-bottom-width: 2px;
   border-radius: inherit; background: none;
 }
 body .ir-guest .ir-card-request-state {
-  position: absolute; z-index: 2; top: 6px; left: 5px; max-width: calc(100% - 10px);
-  box-sizing: border-box; padding: 3px 5px; border: 1px solid #735594; border-radius: 5px;
-  background: #1d142bea; color: #eee5fc; font-size: 10px; font-weight: 650; line-height: 1.2;
+  position: absolute; z-index: 2; top: 6px; left: 6px; max-width: calc(100% - 12px);
+  box-sizing: border-box; padding: 4px 5px; border: 1px solid rgba(167, 139, 250, .4); border-radius: 6px;
+  background: linear-gradient(rgba(22, 16, 31, .94), rgba(12, 10, 18, .94)); color: #eee5fc;
+  font-size: clamp(9px, 2.5vw, 10px); font-weight: 600; line-height: 1.25;
 }
 body.dancr-button-system .ir-shell.ir-guest .ir-profile-link { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 
@@ -128,18 +122,25 @@ body .ir-guest .ir-refresh-message:not([data-error]) { position: absolute; width
   body .ir-guest .ir-roster-refresh[aria-busy="true"] svg { animation: none; opacity: .55; }
 }
 
-/* Give Request the lit face of Free Entry, in the roster's violet palette.
-   The visible face retains its full 44px tap target. */
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request { --ir-guest-control-edge: #b597ff; padding: 4px !important; border-radius: 8px !important; font-size: clamp(11px, 3vw, 12px) !important; }
+/* A restrained violet face keeps the full 44px target and clear saved states. */
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request {
+  --ir-guest-control-edge: #8c62c9;
+  --dancr-shadow-brand-control: 0 2px 6px rgba(124, 58, 237, .08);
+  padding: 4px !important;
+  border-radius: 8px !important;
+  font-size: clamp(10px, 2.8vw, 12px) !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+}
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before {
-  inset-block: 6px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .1), transparent 48%), linear-gradient(120deg, #7c3aed, #6d28d9);
+  inset-block: 2px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .08), transparent 48%), linear-gradient(120deg, #6930c4, #482083);
 }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent])::before {
   box-shadow: var(--dancr-shadow-brand-control);
 }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):is(:hover, :active) { --ir-guest-control-edge: #c4b5fd; }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):active::before { background: linear-gradient(120deg, #7c3aed, #6d28d9); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):active::before { background: linear-gradient(120deg, #55259f, #3e1b72); }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled { --ir-guest-control-edge: #55545f; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled::before { background: linear-gradient(#111118, #111118); }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent] { --ir-guest-control-edge: #494653; color: #dddbe5 !important; }
