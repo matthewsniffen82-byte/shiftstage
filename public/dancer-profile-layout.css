@@ -569,10 +569,11 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
 /* Frame only the portrait and profile details. The decorative grid layer follows
    their natural height without wrapping or clipping interactive content. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
-  --profile-frame-radius: 20px;
+  --profile-frame-radius: 0px;
   --profile-frame-row-end: 4;
   box-sizing: border-box !important;
   border: 0 !important;
+  border-radius: var(--profile-frame-radius) !important;
   padding: 2px var(--profile-frame-inset) 0 !important;
 }
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) {
@@ -615,6 +616,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   margin: 0 !important;
   padding: 0 !important;
   border: 1px solid rgba(167, 139, 250, .65) !important;
+  border-radius: 0 !important;
   background-clip: padding-box !important;
   box-shadow: none !important;
 }
