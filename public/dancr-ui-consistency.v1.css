@@ -1964,6 +1964,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid 
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory .home-dancer-grid-name {
+  font-size: clamp(12.5px, calc(3vw + 1.5px), 16.5px);
   font-weight: 700;
   line-height: 1.15;
 }
