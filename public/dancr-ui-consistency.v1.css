@@ -1935,7 +1935,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 /* Keep the shared three-column portraits compact with fine violet edges. */
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
-  gap: 2px !important;
+  gap: 1px !important;
 }
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)

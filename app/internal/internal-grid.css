@@ -4,7 +4,7 @@ body .ir-shell .ir-directory-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
-  gap: 2px;
+  gap: 1px;
 }
 body .ir-shell .ir-directory-grid .ir-dancer {
   position: relative;

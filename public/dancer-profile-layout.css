@@ -607,7 +607,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   box-sizing: border-box !important;
   min-width: 0 !important;
   margin: 0 !important;
-  gap: 2px !important;
+  gap: 1px !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(#modalGallery > .thumb, .profile-media-grid-item) {
   box-sizing: border-box !important;
