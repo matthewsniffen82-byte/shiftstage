@@ -442,6 +442,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   padding-top: 2px !important;
   padding-bottom: 8px !important;
 }
+/* Bring the details closer to the controls without moving their tap targets. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls + .profile-modal-person, .profile-titlebar-controls + .profile-titlebar-person) {
+  margin-top: -6px !important;
+}
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-metrics, .profile-header-metrics) { margin-top: 12px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-activity-metrics, .profile-header-metrics) {
   height: auto !important;
