@@ -427,8 +427,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-context, .profile-titlebar-context) {
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-start !important;
-  text-align: left !important;
+  justify-content: center !important;
+  text-align: center !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(#modalCity, .profile-titlebar-city, .profile-city) {
   font-size: clamp(11.5px, 1.3vw, 15px) !important;
