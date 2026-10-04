@@ -383,6 +383,7 @@
           }
           .home-tv-feed-slide {
             --home-tv-action-inset-right: calc(9px + env(safe-area-inset-right, 0px));
+            --home-tv-action-inset-left: calc(9px + env(safe-area-inset-left, 0px));
           }
           .home-tv-feed-actions {
             bottom: 76px;

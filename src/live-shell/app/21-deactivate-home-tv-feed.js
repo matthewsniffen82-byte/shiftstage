@@ -667,8 +667,8 @@
     function createHomeTvFeedFullViewCloseButton(slide, video) {
       const button = createHomeTvFeedActionButton(
         "home-tv-feed-full-view-close",
-        "Exit full-screen videos",
-        actionIconMarkup("close")
+        "Back to video feed",
+        actionIconMarkup("back")
       );
       button.dataset.homeTvFullViewClose = "true";
       button.hidden = !homeTvFeedIsImmersive();

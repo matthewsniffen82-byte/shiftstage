@@ -54,7 +54,7 @@ test("expanded TV fills video in native and fallback fullscreen without a large-
   assert.match(live, /#results\.home-tv-feed:is\(:fullscreen, :-webkit-full-screen, \.is-fullscreen-feed\) \.home-tv-feed-video \{\s*object-fit: cover;\s*\}/);
 });
 
-test("expanded close circles stay inset from the top and right safe-area edges", () => {
+test("expanded exit controls stay inset from their top and side safe-area edges", () => {
   for (const [source, selector] of [
     [live, "profile-photo-viewer-close"],
     [live, "profile-tv-viewer-close"],
@@ -66,7 +66,8 @@ test("expanded close circles stay inset from the top and right safe-area edges",
     const rule = source.match(new RegExp(`\\.${selector} \\{[^}]*\\}`))?.[0] || "";
     assert.match(rule, /top: calc\(16px \+ env\(safe-area-inset-top, 0px\)\)/);
     if (selector === "home-tv-feed-full-view-close") {
-      assert.match(rule, /right: var\(--home-tv-action-inset-right\);/);
+      assert.match(rule, /left: var\(--home-tv-action-inset-left\);/);
+      assert.match(rule, /right: auto;/);
     } else {
       assert.match(rule, /right: calc\(16px \+ env\(safe-area-inset-right, 0px\)\)/);
     }

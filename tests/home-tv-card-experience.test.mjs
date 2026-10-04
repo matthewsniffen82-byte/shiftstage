@@ -564,7 +564,7 @@ test("TV action rail keeps every rail control visible without exposing the full-
   );
 });
 
-test("TV close control shares rail glass and alignment without becoming visible on scroll cards", () => {
+test("TV back control shares rail glass at the upper left and stays hidden on scroll cards", () => {
   const sharedGlass = aestheticSource.match(/\.home-tv-feed-action\.home-tv-feed-full-view-close:not\(\.home-tv-feed-deal-action\) \{[^}]*\}/)?.[0] || "";
   assert.match(sharedGlass, /background-color: rgba\(18, 18, 28, 0\.38\) !important;/);
   assert.match(sharedGlass, /-webkit-backdrop-filter: blur\(16px\) saturate\(1\.18\) !important;/);
@@ -572,9 +572,11 @@ test("TV close control shares rail glass and alignment without becoming visible 
   assert.doesNotMatch(sharedGlass, /display:/);
   assert.match(homeSource, /--home-tv-action-inset-right: calc\(10px \+ env\(safe-area-inset-right, 0px\)\);/);
   assert.match(homeSource, /--home-tv-action-inset-right: calc\(9px \+ env\(safe-area-inset-right, 0px\)\);/);
-  for (const selector of ["home-tv-feed-actions", "home-tv-feed-full-view-close"]) {
+  assert.match(homeSource, /--home-tv-action-inset-left: calc\(10px \+ env\(safe-area-inset-left, 0px\)\);/);
+  assert.match(homeSource, /--home-tv-action-inset-left: calc\(9px \+ env\(safe-area-inset-left, 0px\)\);/);
+  for (const [selector, side] of [["home-tv-feed-actions", "right"], ["home-tv-feed-full-view-close", "left"]]) {
     const rule = homeSource.match(new RegExp(`\\.${selector} \\{[^}]*\\}`))?.[0] || "";
-    assert.match(rule, /right: var\(--home-tv-action-inset-right\);/);
+    assert.ok(rule.includes(`${side}: var(--home-tv-action-inset-${side});`));
   }
   assert.match(homeSource, /\.home-tv-feed-full-view-close \{[^}]*top: calc\(16px \+ env\(safe-area-inset-top, 0px\)\);[^}]*display: none;/);
   assert.match(homeSource, /\.home-tv-feed-full-view-close\[hidden\] \{\s*display: none !important;/);

@@ -369,6 +369,7 @@
         .home-tv-feed-slide {
           --home-tv-action-control-size: 46px;
           --home-tv-action-inset-right: calc(10px + env(safe-area-inset-right, 0px));
+          --home-tv-action-inset-left: calc(10px + env(safe-area-inset-left, 0px));
           position: relative;
           box-sizing: border-box;
           width: 100%;
@@ -868,7 +869,8 @@
           position: absolute;
           z-index: 12;
           top: calc(16px + env(safe-area-inset-top, 0px));
-          right: var(--home-tv-action-inset-right);
+          left: var(--home-tv-action-inset-left);
+          right: auto;
           display: none;
           border-color: rgba(255,255,255,.24);
           background-color: rgba(5,5,10,.5);

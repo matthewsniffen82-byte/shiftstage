@@ -443,6 +443,7 @@
         car: '<svg viewBox="0 0 24 24"><path d="m5 11 1.7-4.3A2.7 2.7 0 0 1 9.2 5h5.6a2.7 2.7 0 0 1 2.5 1.7L19 11"></path><path d="M4 11h16a1 1 0 0 1 1 1v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-5a1 1 0 0 1 1-1Z"></path><path d="M6.5 15h.01M17.5 15h.01M6 19v2M18 19v2"></path></svg>',
         check: '<svg viewBox="0 0 24 24"><path d="m5 12 4.2 4.2L19 6.5"></path></svg>',
         close: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12"></path><path d="M18 6 6 18"></path></svg>',
+        back: '<svg viewBox="0 0 24 24"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>',
         share: '<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.7 6.8-4.4"></path><path d="m8.6 13.3 6.8 4.4"></path></svg>',
         report: '<svg viewBox="0 0 24 24"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg>',
         more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"></circle><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"></circle></svg>',
