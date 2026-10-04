@@ -555,6 +555,8 @@
       const actions = document.createElement("div");
       actions.className = "home-tv-feed-actions";
       actions.setAttribute("aria-label", "Video actions");
+      const sound = createHomeTvFeedSoundButton(slide);
+      const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
 
       const like = createHomeTvFeedActionButton(
         "home-tv-feed-like-action",
@@ -592,19 +594,17 @@
       follow.innerHTML = actionIconMarkup(isFollowed ? "check" : "personPlus");
       follow.addEventListener("click", () => closeHomeTvFeedReportMenus());
 
-      actions.append(follow, like, share);
+      actions.append(sound, fullscreen, follow, like, share);
       return actions;
     }
 
-    function createHomeTvFeedTools(item, slide, video) {
+    function createHomeTvFeedTools(item) {
       const videoId = String(item.id);
       const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
       const tools = document.createElement("div");
       tools.className = "home-tv-feed-tools";
       tools.setAttribute("role", "group");
-      tools.setAttribute("aria-label", "Playback and video options");
-      const sound = createHomeTvFeedSoundButton(slide);
-      const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
+      tools.setAttribute("aria-label", "Video options");
       const options = document.createElement("details");
       options.className = "home-tv-feed-options";
       const summary = document.createElement("summary");
@@ -652,7 +652,7 @@
       });
       panel.appendChild(overflow);
       options.append(summary, panel);
-      tools.append(sound, fullscreen, options);
+      tools.append(options);
       return tools;
     }
 
@@ -756,7 +756,7 @@
         playback,
         createHomeTvFeedFullViewCloseButton(slide, video),
         createHomeTvFeedActions(item, slide, video),
-        createHomeTvFeedTools(item, slide, video),
+        createHomeTvFeedTools(item),
         createHomeTvFeedCopy(item, scheduleContext),
         createHomeTvFeedProgress(slide, video),
         applause,

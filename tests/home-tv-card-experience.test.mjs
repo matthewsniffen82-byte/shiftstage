@@ -94,7 +94,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.doesNotMatch(homeSource, /scrubber\.type = "range"|createElement\("input"\)[\s\S]{0,300}?home-tv-feed-scrubber/);
 });
 
-test("TV cards separate social actions from playback tools and keep the seek bar", () => {
+test("TV cards stack playback and social actions together and keep the seek bar", () => {
   const actionsFactory = homeSource.match(
     /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
   )?.[0] || "";
@@ -102,8 +102,8 @@ test("TV cards separate social actions from playback tools and keep the seek bar
     /function renderHomeTvFeedSlide\(slide, item, videoIndex, totalVideos\) \{[\s\S]*?(?=\n    function createHomeTvFeedSlide)/,
   )?.[0] || "";
 
-  assert.match(actionsFactory, /actions\.append\(follow, like, share\)/);
-  assert.match(actionsFactory, /tools\.append\(sound, fullscreen, options\)/);
+  assert.match(actionsFactory, /actions\.append\(sound, fullscreen, follow, like, share\)/);
+  assert.match(actionsFactory, /tools\.append\(options\)/);
   assert.match(actionsFactory, /options\.className = "home-tv-feed-options"[\s\S]*?summary\.setAttribute\("aria-label", "Video options"\)/);
   assert.doesNotMatch(actionsFactory, /"home-tv-feed-profile-action"/);
   assert.doesNotMatch(actionsFactory, /actionIconMarkup\("star"\)|"Applaud"/);
@@ -529,7 +529,7 @@ test("TV action rail keeps every rail control visible without exposing the full-
   );
   assert.match(
     actionsFactory,
-    /actions\.append\(follow, like, share\);[\s\S]*?tools\.append\(sound, fullscreen, options\);/,
+    /actions\.append\(sound, fullscreen, follow, like, share\);[\s\S]*?tools\.append\(options\);/,
   );
   assert.doesNotMatch(
     railConsistency,
