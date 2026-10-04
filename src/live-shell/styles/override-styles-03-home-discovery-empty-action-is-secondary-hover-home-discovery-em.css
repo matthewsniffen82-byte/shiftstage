@@ -9,7 +9,7 @@
           min-height: 0;
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 2px;
+          gap: 6px;
           pointer-events: none;
         }
         .home-discovery-loading.is-venues { grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -19,11 +19,15 @@
           aspect-ratio: 9 / 16;
           overflow: hidden;
           border: 1px solid rgba(255,255,255,.08);
-          border-radius: 3px;
+          border-radius: 8px;
           background:
             radial-gradient(circle at 68% 20%, rgba(126,234,255,.09), transparent 34%),
             radial-gradient(circle at 20% 82%, rgba(139,92,246,.17), transparent 42%),
             linear-gradient(145deg,#111118,#07070b);
+        }
+        .home-discovery-loading.is-dancers .home-discovery-loading-card {
+          border: 0;
+          background: linear-gradient(145deg,#111118,#07070b);
         }
         .home-discovery-loading.is-venues .home-discovery-loading-card {
           min-height: 390px;

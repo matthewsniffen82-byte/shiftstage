@@ -715,7 +715,8 @@
     async function loadLiveDiscovery(city = selectedCity(), options = {}) {
       const force = Boolean(options.force);
       const cacheBust = force && options.cacheBust !== false;
-      const background = Boolean(options.background && liveMarketState[city] === "ready");
+      const keepCurrentResults = liveMarketState[city] === "ready";
+      const background = Boolean(options.background && keepCurrentResults);
       if (!discoveryMarket(city)) return;
       if (liveMarketState[city] === "loading" || liveMarketRefreshes.has(city)) {
         // Publication or browser Back must not lose a fresh read behind an older request.
@@ -723,7 +724,8 @@
         return;
       }
       if (!force && liveMarketState[city] === "ready") return;
-      if (background) liveMarketRefreshes.add(city);
+      // Once this city has loaded, keep its cards and counts visible during any refresh.
+      if (keepCurrentResults) liveMarketRefreshes.add(city);
       else liveMarketState[city] = "loading";
       const params = new URLSearchParams({ city });
       if (cacheBust) params.set("refresh", String(Date.now()));
@@ -749,7 +751,7 @@
         // refreshes also must not refetch saved state and render every card twice.
         if (isCustomerSession() && !background) void loadLiveCustomerSaved();
       } catch (error) {
-        if (background) {
+        if (keepCurrentResults) {
           liveMarketState[city] = "ready";
           console.warn("Live discovery refresh failed; keeping the current public results", error);
           return;

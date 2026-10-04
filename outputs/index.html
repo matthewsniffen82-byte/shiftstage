@@ -34921,7 +34921,7 @@
           min-height: 0;
           display: grid;
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          gap: 2px;
+          gap: 6px;
           pointer-events: none;
         }
         .home-discovery-loading.is-venues { grid-template-columns: minmax(0, 1fr); gap: 0; }
@@ -34931,11 +34931,15 @@
           aspect-ratio: 9 / 16;
           overflow: hidden;
           border: 1px solid rgba(255,255,255,.08);
-          border-radius: 3px;
+          border-radius: 8px;
           background:
             radial-gradient(circle at 68% 20%, rgba(126,234,255,.09), transparent 34%),
             radial-gradient(circle at 20% 82%, rgba(139,92,246,.17), transparent 42%),
             linear-gradient(145deg,#111118,#07070b);
+        }
+        .home-discovery-loading.is-dancers .home-discovery-loading-card {
+          border: 0;
+          background: linear-gradient(145deg,#111118,#07070b);
         }
         .home-discovery-loading.is-venues .home-discovery-loading-card {
           min-height: 390px;
@@ -48106,7 +48110,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     async function loadLiveDiscovery(city = selectedCity(), options = {}) {
       const force = Boolean(options.force);
       const cacheBust = force && options.cacheBust !== false;
-      const background = Boolean(options.background && liveMarketState[city] === "ready");
+      const keepCurrentResults = liveMarketState[city] === "ready";
+      const background = Boolean(options.background && keepCurrentResults);
       if (!discoveryMarket(city)) return;
       if (liveMarketState[city] === "loading" || liveMarketRefreshes.has(city)) {
         // Publication or browser Back must not lose a fresh read behind an older request.
@@ -48114,7 +48119,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         return;
       }
       if (!force && liveMarketState[city] === "ready") return;
-      if (background) liveMarketRefreshes.add(city);
+      // Once this city has loaded, keep its cards and counts visible during any refresh.
+      if (keepCurrentResults) liveMarketRefreshes.add(city);
       else liveMarketState[city] = "loading";
       const params = new URLSearchParams({ city });
       if (cacheBust) params.set("refresh", String(Date.now()));
@@ -48140,7 +48146,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         // refreshes also must not refetch saved state and render every card twice.
         if (isCustomerSession() && !background) void loadLiveCustomerSaved();
       } catch (error) {
-        if (background) {
+        if (keepCurrentResults) {
           liveMarketState[city] = "ready";
           console.warn("Live discovery refresh failed; keeping the current public results", error);
           return;

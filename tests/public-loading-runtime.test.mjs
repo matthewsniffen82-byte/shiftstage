@@ -73,6 +73,53 @@ test("signed-in discovery renders and settles while saved-account data is stalle
   assert.equal(ctx.liveMarketRefreshes.size, 0);
 });
 
+test("refreshing a loaded city keeps its results available until replacement data arrives", async () => {
+  for (const background of [false, true]) {
+    const requests = [];
+    let renders = 0;
+    let savedCalls = 0;
+    const original = { dancers: [{ id: "existing" }], venues: [] };
+    const panel = { classList: { contains: () => false } };
+    const ctx = context({
+      markets: { Vegas: original, Miami: { dancers: [], venues: [] } },
+      liveMarketState: { Vegas: "ready" }, liveMarketRefreshes: new Set(), liveMarketPendingRefreshes: new Set(),
+      citySelect: { value: "Vegas" }, customerDashboard: panel, adminDashboard: panel,
+      console: { warn() {} }, isCustomerSession: () => true,
+      fetchJson: () => new Promise((resolve, reject) => requests.push({ resolve, reject })),
+      applyLiveMarket: (city, dancers, _tonight, venues) => { ctx.markets[city] = { dancers, venues }; },
+      render: () => { renders += 1; },
+      loadLiveCustomerSaved: () => { savedCalls += 1; },
+    });
+    vm.runInContext(discoverySource, ctx);
+    const refresh = ctx.loadLiveDiscovery("Vegas", { force: true, background });
+    assert.equal(ctx.liveMarketState.Vegas, "ready", "a render during the request must still see loaded results");
+    assert.equal(ctx.discoveryMarket("Vegas"), original);
+    assert.equal(ctx.liveMarketRefreshes.has("Vegas"), true);
+    assert.equal(renders, 0, "starting a refresh must not replace the current cards");
+
+    const firstVisit = ctx.loadLiveDiscovery("Miami", { background: true });
+    assert.equal(ctx.liveMarketState.Miami, "loading", "a different city still needs its initial loading state");
+    assert.equal(ctx.liveMarketState.Vegas, "ready");
+    requests[1].resolve({ dancers: [] });
+    await firstVisit;
+    const savedBeforeRefresh = savedCalls;
+    requests[0].resolve({ dancers: [{ id: "updated" }] });
+    await refresh;
+    assert.equal(ctx.discoveryMarket("Vegas").dancers[0].id, "updated");
+    assert.equal(renders, 1);
+    assert.equal(savedCalls - savedBeforeRefresh, background ? 0 : 1, "preserve explicit account-data refresh behavior");
+    assert.equal(ctx.liveMarketRefreshes.size, 0);
+
+    const retry = ctx.loadLiveDiscovery("Vegas", { force: true, background });
+    requests[2].reject(new Error("Connection interrupted"));
+    await retry;
+    assert.equal(ctx.liveMarketState.Vegas, "ready");
+    assert.equal(ctx.discoveryMarket("Vegas").dancers[0].id, "updated");
+    assert.equal(renders, 1, "a failed refresh must leave the displayed cards intact");
+    assert.equal(ctx.liveMarketRefreshes.size, 0);
+  }
+});
+
 test("failed profile-video prefetches are evicted so opening the profile can recover", async () => {
   const profile = { id: "11111111-1111-4111-8111-111111111111" };
   let calls = 0;
@@ -100,6 +147,7 @@ test("a failed TV request exits loading and cannot replace a newer city's videos
   let rejectOld;
   const ctx = context({
     homeTvFeedAbort: null, homeTvFeedRequest: 0, homeTvFeedCity: "Vegas", homeTvFeedVenueId: "", homeTvFeedSelectedVideoId: "",
+    homeTvFeedPageAbort: null, homeTvFeedNextCursor: null, homeTvFeedPageError: false, homeTvFeedLoopStarted: false,
     homeTvFeedStatus: "loading", homeTvFeedVideos: [], activeTab: "tv", citySelect: { value: "Vegas" },
     renderHomeTvFeed: () => { renders += 1; },
     loadAdaptiveVideoController: async () => ({}), loadLiveShellFeature: async () => {},
