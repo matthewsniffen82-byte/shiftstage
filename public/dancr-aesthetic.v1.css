@@ -14563,6 +14563,10 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action:
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::before,
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::after { display: none !important; }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-copy { right: 76px; }
+@media (max-width: 720px) {
+  html body.dancr-button-system #results.home-tv-feed .home-tv-feed-copy { padding-bottom: 32px; }
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-context { row-gap: 2px; }
 html body.dancr-button-system #results.home-tv-feed :is(.home-tv-feed-dancer-name, .home-tv-feed-venue) {
   color: #fff !important;
   -webkit-text-fill-color: currentColor !important;
