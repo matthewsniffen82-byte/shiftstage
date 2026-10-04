@@ -464,69 +464,41 @@
     function revealDancerGridRows(grid) {
       grid.dancerGridRevealObserver?.disconnect();
       grid.dancerGridRevealObserver = null;
-      grid.dancerGridRevealedPhotos ||= new WeakMap();
-      const rows = [];
-      let row = null;
-      // This directory has three columns at every width. Section headings start
-      // a fresh row, including when the preceding section has only one or two cards.
-      for (const card of grid.children) {
-        if (!card.matches(".home-dancer-grid-card")) {
-          row = null;
-          continue;
-        }
-        if (!row || row.cards.length === 3) {
-          row = { cards: [], pendingCards: [], photos: [], decoding: false, ready: false };
-          rows.push(row);
-        }
-        row.cards.push(card);
-        const photos = [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
-        // A new neighbor must not hide portraits that have already loaded.
-        const revealed = grid.dancerGridRevealedPhotos.get(card);
-        const staysVisible = revealed && revealed.length === photos.length && photos.every((photo, index) => (
-          photo === revealed[index] && ["ready", "error"].includes(photo.dataset.imageState)
-        ));
-        if (!staysVisible) {
-          row.pendingCards.push(card);
-          row.photos.push(...photos);
-          card.setAttribute("data-row-loading", "true");
-          card.setAttribute("aria-busy", "true");
-        }
-      }
-      if (!rows.length) return;
-      // Refreshes must not re-decode the entire loaded directory. Only new or
-      // replaced portraits participate in the loading gate for each row.
-      rows.forEach((row) => { row.ready = row.pendingCards.length === 0; });
-      if (rows.every((row) => row.ready)) return;
-      const firstCard = rows[0].cards[0];
+      const pending = new Set([...grid.children].filter((card) => card.matches(".home-dancer-grid-card")));
+      if (!pending.size) return;
+      // The stable-image loader already marks each portrait ready or failed.
+      // Never hold its neighbors behind a whole-row or second decode barrier.
+      // Keep the loading marker only for accessibility and TV preload scheduling;
+      // the card's captions and link remain available while its photo loads.
       const observer = new MutationObserver(check);
       grid.dancerGridRevealObserver = observer;
 
       function check() {
-        // Old image completions must never reveal a newer filter's cards.
-        if (firstCard.parentNode !== grid || grid.dancerGridRevealObserver !== observer) {
+        if (grid.dancerGridRevealObserver !== observer) {
           observer.disconnect();
-          if (grid.dancerGridRevealObserver === observer) grid.dancerGridRevealObserver = null;
           return;
         }
-        for (const row of rows) {
-          if (row.ready || row.decoding || row.photos.some((photo) => !["ready", "error"].includes(photo.dataset.imageState))) continue;
-          row.decoding = true;
-          Promise.allSettled(row.photos.filter((photo) => photo.dataset.imageState === "ready").map((photo) => photo.decode()))
-            .then(() => {
-              if (firstCard.parentNode !== grid || grid.dancerGridRevealObserver !== observer) return;
-              // Reveal this row in one paint without waiting on other rows.
-              row.pendingCards.forEach((card) => {
-                card.removeAttribute("data-row-loading");
-                card.removeAttribute("aria-busy");
-                grid.dancerGridRevealedPhotos.set(card, [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")]);
-              });
-              row.ready = true;
-              homeTvLandingPreload.schedule();
-              if (rows.every((item) => item.ready)) {
-                observer.disconnect();
-                if (grid.dancerGridRevealObserver === observer) grid.dancerGridRevealObserver = null;
-              }
-            });
+        let settled = false;
+        for (const card of pending) {
+          if (card.parentNode !== grid) {
+            pending.delete(card);
+            continue;
+          }
+          const photos = [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
+          if (photos.some((photo) => !["ready", "error"].includes(photo.dataset.imageState))) {
+            card.setAttribute("data-row-loading", "true");
+            card.setAttribute("aria-busy", "true");
+            continue;
+          }
+          card.removeAttribute("data-row-loading");
+          card.removeAttribute("aria-busy");
+          pending.delete(card);
+          settled = true;
+        }
+        if (settled) homeTvLandingPreload.schedule();
+        if (!pending.size) {
+          observer.disconnect();
+          grid.dancerGridRevealObserver = null;
         }
       }
 

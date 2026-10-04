@@ -918,8 +918,8 @@
         #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state] {
           z-index: 1;
         }
-        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state="loading"],
-        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state="error"] {
+        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo.has-custom-photo[data-image-state="loading"],
+        #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo.has-custom-photo[data-image-state="error"] {
           opacity: 0 !important;
         }
         #results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state="ready"] {

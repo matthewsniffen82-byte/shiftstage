@@ -53,7 +53,11 @@ test("home card photography keeps final geometry and never exposes an empty rect
   );
   assert.match(
     liveShell,
-    /img\.home-dancer-grid-photo\[data-image-state="loading"\],[\s\S]*?data-image-state="error"[\s\S]*?opacity: 0 !important;[\s\S]*?data-image-state="ready"[\s\S]*?opacity: 1 !important;/,
+    /img\.home-dancer-grid-photo\.has-custom-photo\[data-image-state="loading"\],[\s\S]*?data-image-state="error"[\s\S]*?opacity: 0 !important;[\s\S]*?data-image-state="ready"[\s\S]*?opacity: 1 !important;/,
+  );
+  assert.match(
+    aesthetic,
+    /img\.home-dancer-grid-photo\.has-custom-photo\[data-image-state="loading"\],[\s\S]*?opacity: 0 !important;/,
   );
   assert.match(
     liveShell,

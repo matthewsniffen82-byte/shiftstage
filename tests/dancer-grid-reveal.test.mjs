@@ -46,27 +46,27 @@ function harness(children) {
   };
 }
 
-test("a ready row appears while another waits, and each row waits for all three photos to decode", async () => {
-  let finishDecode;
-  const delayed = photo("loading", () => new Promise((resolve) => { finishDecode = resolve; }));
+test("a slow middle photo cannot hold back either neighboring card or another row", async () => {
+  const delayed = photo("loading", () => assert.fail("The grid must not decode a loaded photo again"));
   const first = [card(), card(delayed), card()];
   const second = [card(), card(), card()];
   const h = harness([...first, ...second]);
   h.start();
   await flush();
-  assert.ok(first.every(loading));
+  assert.equal(loading(first[0]), false);
+  assert.equal(loading(first[1]), true);
+  assert.equal(first[1].attributes.get("aria-busy"), "true");
+  assert.equal(loading(first[2]), false);
   assert.ok(second.every((item) => !loading(item)));
   delayed.dataset.imageState = "ready";
   h.update();
   await flush();
-  assert.ok(first.every(loading));
-  finishDecode();
-  await flush();
   assert.ok(first.every((item) => !loading(item)));
+  assert.equal(first[1].attributes.has("aria-busy"), false);
   assert.ok(h.observers.every((observer) => !observer.connected));
 });
 
-test("section headings start new rows and incomplete rows reveal independently", async () => {
+test("headings and incomplete rows do not couple unrelated cards", async () => {
   const delayed = card(photo("loading"));
   const ready = [card(), card()];
   const h = harness([heading(), delayed, heading(), ...ready]);
@@ -76,24 +76,26 @@ test("section headings start new rows and incomplete rows reveal independently",
   assert.ok(ready.every((item) => !loading(item)));
 });
 
-test("failed photos and decode rejections cannot keep a row hidden", async () => {
-  const cards = [card(photo("ready", () => Promise.reject(new Error("Decode failed")))), card(photo("error", () => assert.fail("Failed photos should not decode"))), card()];
+test("ready and failed photos never wait for an extra decode, even if it would hang", async () => {
+  let decodes = 0;
+  const cards = [card(photo("ready", () => { decodes++; return new Promise(() => {}); })), card(photo("error", () => assert.fail("Failed photos should not decode"))), card()];
   const h = harness(cards);
   h.start();
   await flush();
   assert.ok(cards.every((item) => item.attributes.size === 0));
+  assert.equal(decodes, 0);
 });
 
-test("a stale decode cannot reveal a replacement filter's row", async () => {
-  let finishOldDecode;
-  const h = harness([card(photo("ready", () => new Promise((resolve) => { finishOldDecode = resolve; })))]);
+test("an old observer cannot reveal a replacement filter's cards", async () => {
+  const h = harness([card(photo("loading"))]);
   h.start();
+  const oldObserver = h.observers[0];
   const newPhoto = photo("loading");
   const newCard = card(newPhoto);
   h.replace([newCard]);
   h.start();
   h.update();
-  finishOldDecode();
+  oldObserver.callback();
   await flush();
   assert.equal(loading(newCard), true);
   newPhoto.dataset.imageState = "ready";
@@ -137,7 +139,7 @@ test("a slow new neighbor never hides an already revealed portrait", async () =>
   h.update();
   await flush();
   assert.equal(loading(added), false);
-  assert.equal(existingDecodes, 1, "a newly loaded neighbor must not re-decode visible portraits");
+  assert.equal(existingDecodes, 0, "a newly loaded neighbor must not re-decode visible portraits");
 });
 
 test("background refreshes never re-decode already visible rows", async () => {
@@ -149,13 +151,13 @@ test("background refreshes never re-decode already visible rows", async () => {
   const h = harness(cards);
   h.start();
   await flush();
-  assert.equal(decodes, 9);
+  assert.equal(decodes, 0);
   for (let refresh = 0; refresh < 4; refresh++) {
     h.start();
     assert.ok(cards.every(item => !loading(item)));
     await flush();
   }
-  assert.equal(decodes, 9);
+  assert.equal(decodes, 0);
   assert.ok(h.observers.every(observer => !observer.connected));
 });
 
@@ -172,4 +174,33 @@ test("a replaced photo on a retained card waits for the new source to load", asy
   h.update();
   await flush();
   assert.equal(loading(retained), false);
+});
+
+test("removing the first card does not abandon another card's pending photo", () => {
+  const removed = card(photo("loading"));
+  const delayed = photo("loading");
+  const retained = card(delayed);
+  const h = harness([removed, retained]);
+  h.start();
+  h.replace([retained]);
+  h.update();
+  assert.equal(loading(retained), true);
+  assert.ok(h.observers.some(observer => observer.connected));
+  delayed.dataset.imageState = "ready";
+  h.update();
+  assert.equal(loading(retained), false);
+  assert.ok(h.observers.every(observer => !observer.connected));
+});
+
+test("one failed image clears only its own loading state while retries continue elsewhere", () => {
+  const failed = photo("loading"), delayed = photo("loading");
+  const cards = [card(failed), card(delayed), card()];
+  const h = harness(cards);
+  h.start();
+  failed.dataset.imageState = "error";
+  h.update();
+  assert.deepEqual(cards.map(loading), [false, true, false]);
+  delayed.dataset.imageState = "ready";
+  h.update();
+  assert.ok(cards.every(item => item.attributes.size === 0));
 });

@@ -936,22 +936,8 @@
           overflow: visible;
           background: #050505 !important;
         }
-        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card[data-row-loading="true"] > * {
-          visibility: hidden !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-        }
-        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card[data-row-loading="true"]::after {
-          content: "" !important;
-          display: block !important;
-          position: absolute;
-          inset: 0;
-          border: 1px solid var(--dancr-color-border-subtle);
-          border-radius: inherit;
-          background: linear-gradient(145deg, var(--dancr-color-surface-raised), var(--dancr-color-surface));
-          box-shadow: none;
-          pointer-events: none;
-        }
+        /* Image readiness only controls the portrait. Keep each card's name,
+           venue, status, and profile link usable while its photo is loading. */
         .home-dancer-grid-heading {
           grid-column: 1 / -1;
           min-width: 0;

@@ -2284,8 +2284,8 @@ body > .app main.stack > .hero.reference-hero {
 
 body > .app main.stack > .hero.reference-hero > .hero-art[data-image-state="loading"],
 body > .app main.stack > .hero.reference-hero > .hero-art[data-image-state="error"],
-#results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state="loading"],
-#results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo[data-image-state="error"],
+#results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo.has-custom-photo[data-image-state="loading"],
+#results.home-dancer-grid.home-dancer-three-column img.home-dancer-grid-photo.has-custom-photo[data-image-state="error"],
 #profileBackdrop .gallery .thumb > img.portrait[data-image-state="loading"],
 #profileBackdrop .gallery .thumb > img.portrait[data-image-state="error"],
 .public-profile-shell .profile-media-grid-item img[data-image-state="loading"],
