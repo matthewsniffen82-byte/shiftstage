@@ -1941,7 +1941,7 @@ html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory {
   border: 1px solid rgba(167, 139, 250, .65) !important;
-  border-radius: 0 !important;
+  border-radius: 8px !important;
   background-clip: padding-box !important;
 }
 /* Dashboard media grids follow the same clean photo edge as public galleries. */
