@@ -1707,13 +1707,6 @@ html body.dancer-directory-active.dancr-button-system > .app {
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-html body.dancer-directory-active.dancr-button-system .mydancr-preview-banner {
-  border-bottom: 1px solid #28282f;
-  box-shadow: none;
-}
-html body.dancer-directory-active.dancr-button-system .mydancr-preview-banner > span {
-  font-weight: 450;
-}
 html body.dancer-directory-active.dancr-button-system > .app > header {
   padding-block: 4px 0 !important;
   border: 0 !important;

@@ -133,17 +133,9 @@ body .ir-staff .ir-alert-help summary { min-height: 44px !important; display: fl
 .pickup-inbox .pickup-list-item { padding: 10px 0; border: 0; border-bottom: 1px solid #303039; border-radius: 0; background: transparent; gap: 3px; }
 .pickup-contact-actions { display: flex; gap: 8px; }
 .pickup-inbox .pickup-contact-actions a { min-height: 44px; padding: 6px 14px; margin: 0; background: #251a35; border: 1px solid #614a7c; border-radius: 8px; text-decoration: none; font-size: 13px; }
-/* Compact demo strip only on venue operations pages, retaining the full notice. */
-.venue-demo-disclosure { display: none; }
-body:has(.dashboard-shell-venue, .pickup-inbox, .ir-staff) { --mydancr-preview-banner-offset: 36px; }
-body:has(.dashboard-shell-venue, .pickup-inbox, .ir-staff) .mydancr-preview-banner { min-height: 36px !important; height: auto; padding: 0 12px !important; display: block; }
-body:has(.dashboard-shell-venue, .pickup-inbox, .ir-staff) .mydancr-preview-banner > :is(strong, span) { display: none; }
-body:has(.dashboard-shell-venue, .pickup-inbox, .ir-staff) .venue-demo-disclosure { display: block; font-size: 11px !important; }
-.venue-demo-disclosure summary { min-height: 36px; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; color: #bba0df; }
-.venue-demo-disclosure p { margin: 0 auto 10px; max-width: 620px; color: #c4c4ce; font-size: 12px; }
 body.dancr-button-system button.venue-scroll-top { position: fixed !important; z-index: 1501; left: auto !important; top: auto !important; right: 16px !important; transform: none !important; bottom: calc(104px + env(safe-area-inset-bottom,0px)); width: 44px; height: 44px; min-height: 44px !important; padding: 0 !important; background: #22212a !important; border: 1px solid #514363 !important; border-radius: 12px !important; color: #dcc7fb !important; box-shadow: none !important; }
 body.dancr-button-system button.venue-scroll-top::before { display: none; }
-body :is(.dashboard-shell-venue, .ir-staff, .pickup-inbox, .venue-demo-disclosure) :is(button, a, summary, input, select, textarea):focus-visible { outline: 2px solid #b99ae1; outline-offset: 3px; }
+body :is(.dashboard-shell-venue, .ir-staff, .pickup-inbox) :is(button, a, summary, input, select, textarea):focus-visible { outline: 2px solid #b99ae1; outline-offset: 3px; }
 @media(max-width:640px) {
   .venue-action-mobile { display: grid; list-style: none; padding: 0; margin: 4px 0; }
   .venue-action-mobile li { display: grid; gap: 3px; padding: 10px 0; border-bottom: 1px solid #303039; font-size: 13px; }

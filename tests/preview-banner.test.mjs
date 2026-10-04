@@ -1,34 +1,41 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { liveShellRoute } from "./helpers/live-shell-route.mjs";
 
-const [layout, homeRoute, banner, aesthetic] = await Promise.all([
+const [layout, homeRoute, aesthetic, operations, consistency] = await Promise.all([
   readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/components/MyDancrPreviewBanner.tsx", import.meta.url), "utf8"),
   readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8"),
+  readFile(new URL("../app/dashboard/venue-operations.css", import.meta.url), "utf8"),
+  readFile(new URL("../public/dancr-ui-consistency.v1.css", import.meta.url), "utf8"),
 ]);
 
-test("the root layout presents one persistent preview notice across the application", () => {
-  assert.equal((layout.match(/<MyDancrPreviewBanner \/>/g) || []).length, 1);
-  assert.match(banner, /DEMO MODE/);
-  assert.match(banner, /All profiles, venues, schedules, offers, and activity shown are fictional demo content\./);
-  assert.doesNotMatch(banner, /TEST\s+SITE|shown are test\s+data/);
-  assert.doesNotMatch(banner, /MyDancr Preview|Venue participation/);
-  assert.equal((banner.match(/aria-label="Demo mode notice"/g) || []).length, 2);
-  assert.match(homeRoute, /myDancrPreviewBannerHtml/);
-  assert.match(homeRoute, /<body class=\"dancr-button-system\">\$\{myDancrPreviewBannerHtml\}/);
-  assert.match(aesthetic, /\.mydancr-preview-banner \{[\s\S]*?position: fixed;[\s\S]*?inset: 0 0 auto;/);
+test("the root layout and homepage no longer render a demo mode banner", async () => {
+  assert.doesNotMatch(layout, /MyDancrPreviewBanner|Demo mode notice/);
+  assert.doesNotMatch(homeRoute, /myDancrPreviewBannerHtml|withPreviewBanner/);
+  for (const production of [true, false]) {
+    const response = await liveShellRoute({ production }).route.GET();
+    const html = await response.text();
+    assert.equal(response.status, 200);
+    assert.doesNotMatch(html, /<aside[^>]*class="mydancr-preview-banner"|aria-label="Demo mode notice"/);
+    assert.match(html, /<body class="dancr-button-system">/);
+    assert.match(html, /id="platformAdminAuthLink"/);
+  }
+});
+
+test("pages retain device safe-area clearance without desktop, mobile, or operations banner space", () => {
+  const heights = [...aesthetic.matchAll(/--mydancr-preview-banner-height:\s*([^;]+);/g)].map(match => match[1]);
+  assert.deepEqual(heights, ["0px"]);
+  assert.match(aesthetic, /--mydancr-preview-banner-offset: calc\(var\(--mydancr-preview-banner-height\) \+ env\(safe-area-inset-top, 0px\)\);/);
   assert.match(aesthetic, /body\.dancr-button-system \{[\s\S]*?padding-top: var\(--mydancr-preview-banner-offset\) !important;/);
+  for (const source of [aesthetic, operations, consistency]) {
+    assert.doesNotMatch(source, /\.mydancr-preview-banner|\.venue-demo-disclosure/);
+  }
+  assert.doesNotMatch(operations, /--mydancr-preview-banner-offset:/);
 });
 
-test("the preview notice remains compact and responsive on mobile", () => {
-  assert.match(aesthetic, /@media \(max-width: 600px\)[\s\S]*?--mydancr-preview-banner-height: 46px;/);
-  assert.match(aesthetic, /\.mydancr-preview-banner span \{[\s\S]*?max-width: min\(52ch, 100%\);/);
-  assert.match(aesthetic, /@media \(prefers-reduced-transparency: reduce\)[\s\S]*?backdrop-filter: none;/);
-});
-
-test("full dancer and venue profiles remain entirely below the persistent notice", () => {
+test("full dancer and venue profiles account for the remaining device safe area", () => {
   assert.match(
     aesthetic,
     /\.page-panel\.show \{[\s\S]*?top: var\(--mydancr-preview-banner-offset\) !important;[\s\S]*?height: calc\(100dvh - var\(--mydancr-preview-banner-offset\)\) !important;/,
