@@ -15,7 +15,7 @@ body .ir-shell .ir-directory-grid .ir-dancer {
   aspect-ratio: 9 / 16;
   margin: 0;
   padding: 0;
-  border: 1px solid rgba(167, 139, 250, .65);
+  border: 0;
   border-radius: 8px;
   background: #050507;
   background-clip: padding-box;

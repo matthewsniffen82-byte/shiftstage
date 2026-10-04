@@ -51,11 +51,6 @@ body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy > span {
   text-decoration: none;
   text-shadow: inherit;
 }
-body .ir-shell .ir-directory-grid .ir-dancer[data-request-state]::after {
-  content: ""; position: absolute; z-index: 4; pointer-events: none;
-  inset: 0; height: auto; border: 1px solid #8463ad;
-  border-radius: inherit; background: none;
-}
 body .ir-guest .ir-card-request-state {
   position: absolute; z-index: 2; top: 6px; left: 6px; max-width: calc(100% - 12px);
   box-sizing: border-box; padding: 4px 5px; border: 1px solid rgba(167, 139, 250, .4); border-radius: 6px;
