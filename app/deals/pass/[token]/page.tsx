@@ -41,26 +41,34 @@ export default async function ClubDealPassPage({ params }: PageProps) {
 function DealPassStyles() {
   return (
     <style>{`
-      body { margin: 0; background: #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-      .deal-pass-page { display: grid; align-content: start; gap: 10px; padding: 12px; box-sizing: border-box; background: radial-gradient(circle at 80% 5%, rgba(34,199,255,.2), transparent 24rem), radial-gradient(circle at 10% 20%, rgba(109,40,217,.3), transparent 28rem), #050507; }
-      .deal-pass-page > nav { width: min(100%, 420px); margin: 0 auto; display: flex; justify-content: space-between; gap: 14px; }
-      .deal-pass-page > nav a { color: #fff; font-weight: 950; text-decoration: none; }
-      .deal-pass-card { width: min(100%, 420px); margin: 0 auto; display: grid; justify-items: center; gap: 8px; padding: 18px; box-sizing: border-box; border: 1px solid rgba(126,234,255,.42); border-radius: 20px; background: rgba(10,8,18,.94); box-shadow: 0 30px 100px rgba(0,0,0,.72), 0 0 44px rgba(109,40,217,.18); text-align: center; }
-      .deal-pass-card.unavailable { border-color: rgba(255,255,255,.16); }
-      .eyebrow { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
-      .deal-pass-card h1 { margin: 0; font-size: 30px; line-height: 1.15; }
-      .deal-pass-card p { margin: 0; color: #cfc5de; font-size: 16px; }
-      .admission-qr { width: 240px; max-width: 100%; height: auto; border-radius: 12px; background: white; }
-      .admission-facts { display: grid; gap: 3px; font-size: 13px; line-height: 1.4; }
-      .deal-pass-card strong { font-size: 15px; }
-      .deal-pass-card small { max-width: 42ch; color: #b9accd; font-size: 12px; line-height: 1.4; }
-      .admission-details { width: 100%; font-size: 13px; }
-      .admission-details summary { min-height: 44px; align-content: center; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
-      .deal-pass-card .admission-details p { padding: 4px 0 10px; font-size: 13px; line-height: 1.5; text-align: left; }
-      .admission-details summary:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 2px; border-radius: 6px; }
-      .admission-actions { width: 100%; display: flex; gap: 8px; }
-      body .deal-pass-card .admission-actions .deal-pass-continue { flex: 1; min-width: 0; margin-top: 0; padding: 10px 8px; font-size: 13px; }
-      .deal-pass-continue { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 18px; border-radius: 999px; color: #fff; background: #6538c7; font-weight: 600; text-decoration: none; }
+      body:has(> .deal-pass-page) { margin: 0; }
+      .deal-pass-page { min-height: 100dvh; display: grid; align-content: start; gap: 16px; padding: 24px 16px calc(104px + env(safe-area-inset-bottom,0px)); box-sizing: border-box; background: radial-gradient(ellipse at 50% 0,#1a1026,transparent 480px),#050507; color: #f8fafc; }
+      .deal-pass-page > nav { width: min(100%,440px); margin: 0 auto; display: flex; justify-content: space-between; gap: 14px; }
+      .deal-pass-page > nav a { min-height: 44px; display: inline-flex; align-items: center; color: #c8bed6; font-size: 13px; font-weight: 500; text-decoration: none; }
+      body .deal-pass-page .deal-pass-card { width: min(100%,440px); margin: 0 auto; display: grid; justify-items: center; gap: 16px; padding: 24px; box-sizing: border-box; border: 1px solid #51405f !important; border-radius: 16px !important; background: #100d15 !important; box-shadow: 0 12px 36px #0005 !important; text-align: center; overflow-wrap: anywhere; }
+      body .deal-pass-page .deal-pass-card.unavailable { border-color: #403b48 !important; }
+      .admission-header { display: grid; gap: 6px; }
+      .deal-pass-page .eyebrow { color: #b99aea; font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+      .deal-pass-page .deal-pass-card h1 { margin: 0; color: #f8fafc; font-size: 30px; font-weight: 650; line-height: 1.15; letter-spacing: -.5px; }
+      .deal-pass-page .admission-header .admission-venue { margin: 4px 0 0; color: #e0d9e9; font-size: 17px; font-weight: 500; }
+      .deal-pass-page .admission-status { display: flex; align-items: center; gap: 6px; color: #7fdbac; font-size: 12px; font-weight: 550; }
+      .admission-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+      .deal-pass-page .unavailable .admission-status { color: #e7c291; }
+      .deal-pass-page .admission-qr { display: block; width: 280px; max-width: 100%; height: auto; border-radius: 8px; background: #fff; }
+      .deal-pass-page .deal-pass-card .admission-instruction { margin: 0; color: #fff; font-size: 16px; font-weight: 600; }
+      .deal-pass-page .admission-facts { display: grid; gap: 6px; color: #ded7e7; font-size: 13px; line-height: 1.5; }
+      .deal-pass-page .deal-pass-card small { max-width: 42ch; color: #bfc0cc; font-size: 12px; line-height: 1.5; }
+      .deal-pass-page .admission-details { width: 100%; border-top: 1px solid #35303d; text-align: left; font-size: 13px; }
+      .admission-details summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; list-style: none; color: #d7c8e9; }
+      .admission-details summary::-webkit-details-marker { display: none; }
+      .admission-details summary > span { color: #b99aea; font-size: 20px; }
+      .admission-details[open] summary > span { transform: rotate(180deg); }
+      .deal-pass-page .admission-details p { margin: 0; padding-bottom: 12px; color: #bfc0cc; font-size: 12px; line-height: 1.6; }
+      .deal-pass-page :is(a,button,summary):focus-visible { outline: 2px solid #b99aea; outline-offset: 3px; }
+      .deal-pass-page .admission-actions { width: 100%; display: grid; grid-template-columns: minmax(0,1fr); gap: 8px; }
+      body .deal-pass-page .deal-pass-card .deal-pass-continue { box-sizing: border-box; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; padding: 12px; border: 1px solid #9465d1 !important; border-radius: 10px !important; background: linear-gradient(115deg,#6833c7,#5022a3) !important; color: #fff !important; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
+      body .deal-pass-page .deal-pass-card .deal-pass-continue.is-secondary { border-color: #403747 !important; background: #18131e !important; color: #d2c9df !important; }
+      @media(max-width:480px) { .deal-pass-page { padding-inline: 12px; } body .deal-pass-page .deal-pass-card { padding: 20px 16px; } }
     `}</style>
   );
 }

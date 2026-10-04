@@ -42,7 +42,7 @@ function client(props = {}, options = {}) {
   const slots = []; let cursor = 0, tree, failStorage = false, requestSequence = 0;
   const stored = new Map(); const requests = [], copies = [], invitations = [];
   const hooks = {
-    useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], next => { slots[index] = next; }]; },
+    useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], next => { slots[index] = typeof next === "function" ? next(slots[index]) : next; }]; },
     useRef(initial) { const index = cursor++; if (!(index in slots)) slots[index] = { current: initial }; return slots[index]; },
     useEffect() {},
   };
@@ -99,6 +99,45 @@ function client(props = {}, options = {}) {
   };
 }
 
+test("multiple invalid fields retain individual feedback and only the edited field clears", () => {
+  const f = client({ initialTransportation: "club_shuttle" });
+  const input = id => nodes(f.render()).find(node => node.type === "input" && node.props.id === id);
+  const initialFields = nodes(f.render()).filter(node => node.type === "input");
+  for (const id of ["pickup-name", "pickup-email"]) {
+    initialFields.find(node => node.props.id === id).props.onInvalid({ currentTarget: { validationMessage: `Check ${id}` } });
+  }
+  for (const id of ["pickup-name", "pickup-email"]) {
+    assert.equal(input(id).props["aria-invalid"], true);
+    assert.equal(input(id).props["aria-describedby"], `${id}-error`);
+    assert.match(f.html(), new RegExp(`Check ${id}`));
+  }
+  input("pickup-name").props.onInput();
+  assert.equal(input("pickup-name").props["aria-invalid"], false);
+  assert.equal(input("pickup-email").props["aria-invalid"], true);
+  assert.equal(f.requests.length, 0);
+});
+
+test("invalid guest contact details show linked field errors without submitting", async () => {
+  const f = client();
+  await f.joinGuestList({ name: "A", phone: "123", email: "bad-email", guestConsent: null });
+  assert.equal(f.requests.length, 0);
+  for (const name of ["name", "phone", "email", "guestConsent"]) {
+    const field = nodes(f.render()).find(node => node.type === "input" && node.props.id === `guest-${name}`);
+    assert.equal(field.props["aria-invalid"], true);
+    assert.ok(nodes(f.render()).some(node => node.props.id === field.props["aria-describedby"]));
+  }
+});
+
+test("offer hours are visible before choosing a section and the venue logo has a fallback", () => {
+  const f = client({ deal: { ...deal, validDays: ["Friday"], validStartTime: "20:00", validEndTime: "23:00" }, venue: { ...venue, logoImageUrl: "/logo.png" } });
+  const essentials = nodes(f.render()).find(node => node.props.className === "club-entry-essentials");
+  assert.match(renderToStaticMarkup(essentials), /Friday.*8:00 PM.*11:00 PM/);
+  assert.equal(nodes(f.render()).filter(node => node.props["aria-expanded"] === true).length, 0);
+  nodes(f.render()).find(node => node.type === "img").props.onError();
+  assert.doesNotMatch(f.html(), /src="\/logo.png"/);
+  assert.match(f.html(), /Test Club/);
+});
+
 test("shuttle phone formats typed and pasted numbers without changing the submitted contact", async () => {
   for (const props of [{}, { deal: undefined }]) {
     const f = client({ ...props, initialTransportation: "club_shuttle" });
@@ -154,7 +193,7 @@ test("private-car arrival prepares free entry without sending a ride request", a
 
 test("free entry requires only arrival while the optional guest list has its own section and form", async () => {
   const f = client();
-  assert.match(f.html(), /Guest List/); assert.match(f.html(), /Free transport/);
+  assert.match(f.html(), /Guest list/); assert.match(f.html(), /Free club transport/);
   assert.doesNotMatch(f.html(), /Full name|Pickup location|type="submit"/);
   f.toggle("arrival");
   assert.match(f.html(), /How will you arrive/);
@@ -188,7 +227,7 @@ test("only one entry section opens at a time, preserving arrival selection and b
   f.select("self_drive");f.toggle("arrival");await f.submit();
   assert.equal(f.requests.length,0);assert.doesNotMatch(f.html(),/Full name|type="submit"/);
   f.toggle("arrival");assert.equal(nodes(f.render()).find(node=>node.props?.value==='self_drive').props.checked,true);
-  f.toggle("guest_list");assert.match(f.html(),/Join guest list &amp; get pass/);
+  f.toggle("guest_list");assert.match(f.html(),/Join guest list/);
   assert.doesNotMatch(f.html(),/How will you arrive/);assert.match(f.html(),/Full name/);
   await f.submit();assert.equal(f.requests.length,0);
   f.toggle("club_shuttle");assert.doesNotMatch(f.html(),/How will you arrive/);assert.match(f.html(),/Pickup location/);
@@ -488,18 +527,24 @@ test("free-entry page supplies the public destination while retaining venue publ
     "next/navigation": { notFound() { throw new Error("NOT_FOUND"); } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from() { return {
       select(value) { selections.push(value); return this; }, eq(...args) { filters.push(args); return this; }, not(...args) { filters.push(args); return this; },
-      maybeSingle: async () => ({data:{...venue,address:"123 Test Rd",owner_user_id:"private-owner",phone:"private-phone"}}),
+      maybeSingle: async () => ({data:{...venue,address:"123 Test Rd",logo_storage_path:"club/logo.png",owner_user_id:"private-owner",phone:"private-phone"}}),
     }; } }) },
     "@/src/lib/dancr/deals": { getActiveClubDealById: async () => deal },
     "@/src/lib/dancr/public-club-deal": { toPublicClubDeal: value => value },
     "@/src/lib/dancr/club-shuttle-requests": { getClubShuttleRecipientIds: async () => ["owner"] },
     "@/src/lib/dancr/uber": { formatPublicVenueAddress },
+    "@/src/lib/dancr/responsive-image": { responsivePublicImage(_admin, bucket, path) {
+      assert.equal(bucket, "venue-logo-images"); assert.equal(path, "club/logo.png");
+      return { imageUrl: "https://images.example.test/club/logo.png" };
+    } },
+    "@/src/lib/dancr/venue-branding": { verifiedVenueLogoUrl() { throw new Error("Use the uploaded public logo first"); } },
     "./TransportationClient": { default: "transportation" },
   });
   const result = await api.default({params:Promise.resolve({dealId:deal.id}),searchParams:Promise.resolve({})});
   assert.equal(result.props.pickupAvailable, undefined);
   assert.equal(result.props.venue.address, venue.address);
-  assert.deepEqual(Object.keys(result.props.venue).sort(), ["address","id","name","slug"]);
+  assert.deepEqual(Object.keys(result.props.venue).sort(), ["address","id","logoImageUrl","name","slug"]);
+  assert.equal(result.props.venue.logoImageUrl, "https://images.example.test/club/logo.png");
   assert.match(selections[0], /address, city, state/);
   assert.doesNotMatch(selections[0], /club_pickup_available/);
   assert.ok(filters.some(([key,value]) => key === "is_active" && value === true));
@@ -515,9 +560,10 @@ test("accepted pickup shows its persistent confirmation while the pass is still 
   const submission = f.submit();
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(typeof releasePass, "function");
-  const confirmation = nodes(f.render()).find(node => node.type === "button" && node.props.className?.includes("is-confirmed"));
+  const confirmation = nodes(f.render()).find(node => node.props.className === "club-transport-confirmation");
   assert.ok(confirmation);
-  assert.equal(confirmation.props.disabled, true);
+  assert.equal(confirmation.props.role, "status");
+  assert.ok(nodes(confirmation).some(node => node.type === "span" && node.props.className?.includes("is-pending")));
   assert.match(f.html(), /Request sent/);
   assert.match(f.html(), /Awaiting club confirmation/);
   assert.match(f.html(), /Your ride is not booked yet/);
