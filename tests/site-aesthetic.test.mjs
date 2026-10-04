@@ -467,10 +467,10 @@ test("profile violet side beams are limited to live, upcoming, and active deals"
   );
 });
 
-test("Android and iPhone share the violet page canvas and neutral content surfaces", () => {
+test("Android and iPhone share the same near-black and charcoal content foundation", () => {
   assert.match(
     aesthetic,
-    /html body\.dancr-button-system,[\s\S]*?html body\.dancr-button-system > \.app,[\s\S]*?html body\.dancr-button-system > \.app main\.stack,[\s\S]*?html body\.dancr-button-system > \.app main\.stack > section\.stack \{[\s\S]*?background: var\(--dancr-color-page-background\) !important/,
+    /body\.dancr-button-system,[\s\S]*?body > \.app,[\s\S]*?body > \.app main\.stack \{[\s\S]*?background: var\(--dancr-color-background\) !important/,
   );
   assert.match(
     aesthetic,
@@ -544,7 +544,7 @@ test("discovery feeds retain neutral edges while TV media is completely borderle
   );
   assert.match(
     aesthetic,
-    /main\.stack > section\.stack > #results:is\([\s\S]*?\.home-dancer-grid,[\s\S]*?\.home-discovery-feed,[\s\S]*?\.home-tv-feed,[\s\S]*?\.card-grid,[\s\S]*?\.venue-card-grid[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
+    /main\.stack > section\.stack,[\s\S]*?main\.stack > section\.stack > #results:is\([\s\S]*?\.home-dancer-grid,[\s\S]*?\.home-discovery-feed,[\s\S]*?\.home-tv-feed,[\s\S]*?\.card-grid,[\s\S]*?\.venue-card-grid[\s\S]*?background-color: var\(--dancr-color-background\) !important;[\s\S]*?background-image: none !important;[\s\S]*?box-shadow: none !important;/,
   );
   assert.match(
     aesthetic,

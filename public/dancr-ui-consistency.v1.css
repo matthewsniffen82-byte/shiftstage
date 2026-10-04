@@ -1975,7 +1975,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   position: absolute;
   inset: -6px 0 -9px;
   z-index: -1;
-  background: var(--dancr-color-page-background, #2d1450);
+  background: var(--dancr-color-background, #050507);
   pointer-events: none;
 }
 html body.dancr-button-system > .app main.stack > section.stack
