@@ -2016,12 +2016,20 @@ html body.dancr-button-system > .app main.stack > section.stack
   stroke-width: 1.5 !important;
 }
 
-/* Match the dancer-grid note's left edge and paragraph spacing below Clubs. */
+/* Keep the Clubs heading, roster disclaimer, and first card close together. */
+html body.dancr-button-system > .app main.stack > section.stack:has(> #results:is(.home-venue-discovery-feed, .venue-card-grid):not(.venue-profile-overlay)) {
+  row-gap: 6px !important;
+}
+html body.dancr-button-system > .app main.stack > section.stack:has(> #results:is(.home-venue-discovery-feed, .venue-card-grid):not(.venue-profile-overlay))
+  > .content-head.discovery-section-head {
+  margin-block: 0 !important;
+  padding-block: 2px 4px !important;
+}
 html body.dancr-button-system > .app main.stack > section.stack > .venue-directory-roster-note {
   display: none;
   width: 100%;
   min-width: 0;
-  margin: 4px 0 10px;
+  margin: 0 0 4px;
   padding: 0;
   color: #b3b5c2;
   font-size: 12px;
