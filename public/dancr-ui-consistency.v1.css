@@ -1939,34 +1939,6 @@ html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
   gap: 6px !important;
 }
-/* A dark tint of the header icons' violet connects the portrait gutters at every
- * scroll depth, independent of the number of profiles or the grid's height. */
-html body.dancr-button-system > .app main.stack > section.stack
-  > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card) {
-  background-color: color-mix(in srgb, #a78bfa 35%, var(--dancr-color-background)) !important;
-  background-image: none !important;
-}
-/* Keep the full-width controls and participation note on the page foundation,
- * including their six-pixel gaps. Paint a flat layer instead of a spread shadow,
- * which can appear as a gray frame in mobile browser dark mode. */
-html body.dancr-button-system > .app main.stack > section.stack
-  > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card)
-  > :is(.dancer-directory-filters, .roster-participation-note, .home-dancer-grid-heading) {
-  position: relative;
-  isolation: isolate;
-  background: var(--dancr-color-background) !important;
-  box-shadow: none !important;
-}
-html body.dancr-button-system > .app main.stack > section.stack
-  > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card)
-  > :is(.dancer-directory-filters, .roster-participation-note, .home-dancer-grid-heading)::before {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  z-index: -1;
-  background: var(--dancr-color-background);
-  pointer-events: none;
-}
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory {
