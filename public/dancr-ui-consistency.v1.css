@@ -1356,7 +1356,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 /* Keep compact spacing around the hero's original, uncropped artwork. */
 html body.dancr-button-system > .app main.stack > .hero.reference-hero.uploaded-hero-ready {
   border-radius: 0 !important;
-  margin-bottom: 8px !important;
+  margin-block: 0 !important;
 }
 
 /* City stays visible; the existing filter toggle reveals the advanced controls. */
@@ -1701,13 +1701,13 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   background: currentColor !important;
 }
 
-/* Dancer discovery: a quieter header and a compact path from filters to cards. */
-html body.dancer-directory-active.dancr-button-system > .app {
+/* Shared discovery header: Dancers, TV, and Clubs use the same unshaded frame. */
+html body.dancr-button-system > .app {
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
 }
-html body.dancer-directory-active.dancr-button-system > .app > header {
+html body.dancr-button-system > .app > header {
   padding-block: 4px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -1716,7 +1716,7 @@ html body.dancer-directory-active.dancr-button-system > .app > header {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-html body.dancer-directory-active.dancr-button-system > .app > header .topbar {
+html body.dancr-button-system > .app > header .topbar {
   height: 52px !important;
   min-height: 52px !important;
   max-height: 52px !important;
@@ -1729,11 +1729,11 @@ html body.dancer-directory-active.dancr-button-system > .app > header .topbar {
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-html body.dancer-directory-active.dancr-button-system > .app > header .topbar::before,
-html body.dancer-directory-active.dancr-button-system > .app > header .topbar::after {
+html body.dancr-button-system > .app > header .topbar::before,
+html body.dancr-button-system > .app > header .topbar::after {
   content: none !important;
 }
-html body.dancer-directory-active.dancr-button-system > .app > header #brandHome.brand {
+html body.dancr-button-system > .app > header #brandHome.brand {
   height: 44px !important;
   min-height: 44px !important;
   max-height: 44px !important;
@@ -1744,18 +1744,18 @@ html body.dancer-directory-active.dancr-button-system > .app > header #brandHome
   backdrop-filter: none !important;
 }
 @media (min-width: 721px) {
-  html body.dancer-directory-active.dancr-button-system > .app > header #brandHome.brand {
+  html body.dancr-button-system > .app > header #brandHome.brand {
     width: 160px !important;
     min-width: 160px !important;
     max-width: 160px !important;
     padding: 0 8px !important;
   }
-  html body.dancer-directory-active.dancr-button-system > .app > header #brandHome .mydancr-live-logo {
+  html body.dancr-button-system > .app > header #brandHome .mydancr-live-logo {
     font-size: 28px !important;
   }
 }
 /* The 36px faces sit inside full 44px targets. */
-html body.dancer-directory-active.dancr-button-system > .app > header
+html body.dancr-button-system > .app > header
   :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
   --discovery-header-face: #141418;
   --discovery-header-edge: #292930;
@@ -1773,7 +1773,7 @@ html body.dancer-directory-active.dancr-button-system > .app > header
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
 }
-html body.dancer-directory-active.dancr-button-system > .app > header
+html body.dancr-button-system > .app > header
   :is(.customer-quick-btn, #accountBtn.account-icon-btn)::before {
   content: "" !important;
   position: absolute;
@@ -1785,7 +1785,7 @@ html body.dancer-directory-active.dancr-button-system > .app > header
   box-shadow: none !important;
   pointer-events: none;
 }
-html body.dancer-directory-active.dancr-button-system > .app > header
+html body.dancr-button-system > .app > header
   :is(.customer-quick-btn, #accountBtn.account-icon-btn) :is(.action-icon, .account-icon, svg) {
   width: 18px !important;
   height: 18px !important;
@@ -1793,13 +1793,13 @@ html body.dancer-directory-active.dancr-button-system > .app > header
   stroke-width: 1.8 !important;
   filter: none !important;
 }
-html body.dancer-directory-active.dancr-button-system > .app > header
+html body.dancr-button-system > .app > header
   :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(.active, .is-open, [aria-expanded="true"]) {
   --discovery-header-face: #202026;
   --discovery-header-edge: #494550;
   color: #f8fafc !important;
 }
-html body.dancer-directory-active.dancr-button-system > .app > header
+html body.dancr-button-system > .app > header
   :is(.customer-quick-btn, #accountBtn.account-icon-btn):focus-visible {
   outline: 2px solid #c4b5fd !important;
   outline-offset: 1px !important;
@@ -1832,13 +1832,13 @@ html body.dancr-button-system > .app > header .topbar
     border-color: #a78bfa !important;
   }
 }
-/* Tighten the discovery introduction without reducing control touch targets. */
-html body.dancer-directory-active.dancr-button-system > .app > main.stack {
+/* Keep the header-to-hero spacing identical on every discovery landing tab. */
+html body.dancr-button-system > .app > main.stack {
   padding-top: 4px !important;
-  gap: 6px !important;
 }
-html body.dancer-directory-active.dancr-button-system > .app main.stack > .hero.reference-hero.uploaded-hero-ready {
-  margin-block: 0 !important;
+/* Tighten the dancer introduction without reducing control touch targets. */
+html body.dancer-directory-active.dancr-button-system > .app > main.stack {
+  gap: 6px !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls {
   margin-block: 0 !important;
