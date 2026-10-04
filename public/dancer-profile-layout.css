@@ -469,28 +469,44 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   color: var(--profile-secondary-text) !important;
   -webkit-text-fill-color: var(--profile-secondary-text) !important;
 }
-/* Follow and Share share one face height and shape inside their full hit areas. */
+/* Compact utility faces retain their original row size and full tap targets. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact {
   --profile-utility-background: #101014;
   --profile-utility-border: #35353f;
-  --profile-utility-radius: 12px;
+  --profile-utility-radius: 10px;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact:not(.profile-venue-actions) :is(#followBtn, .profile-action-icon-control) {
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control) {
   padding-inline: 2px !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact:not(.profile-venue-actions) :is(#followBtn, .profile-action-icon-control)::before {
-  inset: 2px 0 !important;
+  inset: 4px 0 !important;
   border: 0 !important;
   background: var(--profile-action-background) !important;
   box-shadow: inset 0 0 0 .65px var(--profile-action-border) !important;
 }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact:not(.profile-venue-actions) :is(#followBtn, .profile-action-icon-control):is(.profile-share-action, .profile-share-trigger)::before {
+  inset: 4px !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main {
+  gap: 4px !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main svg {
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 16px !important;
+}
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact :is(#followBtn, #goingBtn, .profile-action-icon-control) .profile-action-main > span:last-child {
+  font-size: clamp(13px, 1.4vw, 16px) !important;
   font-weight: 550 !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact :is(#goingBtn, .profile-action-going)::before {
-  inset: 2px 0 !important;
+  inset: 4px 0 !important;
   border: 0 !important;
   box-shadow: inset 0 0 0 .65px var(--profile-action-border) !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-tonight-card .free-entry-cta {
+  border-radius: 10px !important;
+  gap: 5px !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-tonight-card .free-entry-cta:not(.is-unavailable) {
   --free-entry-border: #59349a;
