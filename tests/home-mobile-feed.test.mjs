@@ -311,7 +311,7 @@ test("incomplete dancer rows start from the left edge of the three-card director
   assert.doesNotMatch(homeSource, /homeDancerGridPlacementClass/);
   assert.match(
     homeSource,
-    /profiles\.map\(\(profile, index\) => homeDancerGridCard\(profile, city, compactDirectory, startIndex \+ index\)\)/,
+    /spreadDancerGridPhotos\(profiles\)\.map\(\(profile, index\) => homeDancerGridCard\(profile, city, compactDirectory, startIndex \+ index\)\)/,
   );
 });
 
