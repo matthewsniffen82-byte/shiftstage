@@ -63024,11 +63024,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       });
       const panel = document.createElement("div");
       panel.className = "home-tv-feed-options-panel";
-      const overflow = createHomeTvFeedActionButton(
-        "home-tv-feed-report-action",
-        "Report video",
-        `${actionIconMarkup("report")}<span>Report video</span>`
-      );
+      const overflow = document.createElement("button");
+      overflow.className = "home-tv-feed-report-action";
+      overflow.type = "button";
+      overflow.title = "Report video";
+      overflow.setAttribute("aria-haspopup", "dialog");
+      overflow.innerHTML = `${actionIconMarkup("report")}<span>Report video</span>`;
       overflow.dataset.homeTvReport = "true";
       overflow.dataset.reportDefaultLabel = "Report video";
       prepareContentReportButton(

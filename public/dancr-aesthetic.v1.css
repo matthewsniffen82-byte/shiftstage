@@ -14502,11 +14502,11 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-options-panel 
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
-  width: 172px;
-  padding: 5px;
-  border: 1px solid #4c395e;
-  border-radius: 12px;
-  background: #19151f;
+  width: 160px;
+  padding: 4px;
+  border: 1px solid #403747;
+  border-radius: 10px;
+  background: #161319;
   box-shadow: 0 8px 24px #0008;
 }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-options-panel .home-tv-feed-report-action {
@@ -14517,16 +14517,48 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-options-panel 
   min-height: 44px !important;
   max-height: none !important;
   display: flex !important;
+  flex-direction: row !important;
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
-  padding: 8px !important;
+  margin: 0 !important;
+  padding: 8px 10px !important;
   border: 0 !important;
   border-radius: 8px !important;
   background: transparent !important;
   box-shadow: none !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: currentColor !important;
   font-size: 13px !important;
   font-weight: 500 !important;
+  line-height: 20px !important;
+  letter-spacing: 0 !important;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action :is(.action-icon, svg) {
+  width: 16px !important;
+  height: 16px !important;
+  flex: 0 0 16px;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action:not(:disabled):is(:hover, :focus-visible) {
+  background: #292331 !important;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action:focus-visible {
+  outline: 2px solid #a78bfa !important;
+  outline-offset: -2px;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action:disabled {
+  cursor: default;
+  opacity: .5 !important;
 }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::before,
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::after { display: none !important; }
