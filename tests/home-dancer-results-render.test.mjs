@@ -57,6 +57,7 @@ function directoryFixture(profiles) {
     setHomeTvFeedCount: (text) => { state.headerCount = text; },
     homeDiscoveryLoadingStateMarkup: () => "Loading dancers",
     homeDancerGridCard: (profile) => `<article data-profile="${profile.name}"></article>`,
+    publicProfilePhotoUrl: (profile) => profile.mainPhotoUrl || "",
     escapeHtml: String,
   };
   for (const name of [
@@ -65,7 +66,7 @@ function directoryFixture(profiles) {
   ]) state[name] = () => {};
   const functions = [
     "demoDancerGridPriority", "dancerDirectoryGroups", "dancerDirectorySections", "dancerDirectoryFilterMarkup",
-    "homeDancerGridSectionMarkup", "homeDancerGridContentKey", "renderHomeDancerGrid", "render",
+    "spreadDancerGridPhotos", "homeDancerGridSectionMarkup", "homeDancerGridContentKey", "renderHomeDancerGrid", "render",
   ].map((name) => {
     const source = homeSource.match(new RegExp(`    function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?(?=\\r?\\n    (?:async )?function )`))?.[0];
     assert.ok(source, `${name} must come from the production renderer`);
@@ -151,6 +152,30 @@ test("ending a shift moves a dancer to the other tab and updates both counts", (
   fixture.state.render();
   assert.equal(fixture.state.headerCount, "1 dancer");
   assert.match(fixture.markup, /<article data-profile="Checked-in dancer"/);
+});
+
+test("mixing photos preserves status filtering and pins Star only when she belongs in the results", () => {
+  const star = { id: "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2", name: "Star", now: false };
+  const profiles = [
+    { name: "A", now: true, mainPhotoUrl: "https://images.test/same.webp" },
+    { name: "B", now: true, mainPhotoUrl: "https://images.test/same.webp" },
+    { name: "C", now: true, mainPhotoUrl: "https://images.test/other.webp" },
+    star,
+  ];
+  const fixture = directoryFixture(profiles);
+  const names = () => [...fixture.markup.matchAll(/<article data-profile="([^"]+)"/g)].map(match => match[1]);
+  fixture.state.render();
+  assert.deepEqual(names(), ["A", "C", "B"]);
+  assert.equal(fixture.state.headerCount, "4 dancers");
+  fixture.state.dancerDirectoryFilter = "not_now";
+  fixture.state.render();
+  assert.deepEqual(names(), ["Star"]);
+  star.now = true;
+  fixture.state.dancerDirectoryFilter = "now";
+  fixture.state.render();
+  assert.equal(names()[0], "Star");
+  assert.equal(names().length, 4);
+  assert.match(fixture.markup, /Only participating MyDancr dancers are shown\./);
 });
 
 test("choosing a specific club resets Not Working Now and shows only the Working Now tab", () => {
