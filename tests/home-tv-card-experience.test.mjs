@@ -102,7 +102,7 @@ test("TV cards stack playback and social actions together and keep the seek bar"
     /function renderHomeTvFeedSlide\(slide, item, videoIndex, totalVideos\) \{[\s\S]*?(?=\n    function createHomeTvFeedSlide)/,
   )?.[0] || "";
 
-  assert.match(actionsFactory, /actions\.append\(sound, fullscreen, follow, like, share\)/);
+  assert.match(actionsFactory, /actions\.append\(sound, follow, like, share, fullscreen\)/);
   assert.match(actionsFactory, /tools\.append\(options\)/);
   assert.match(actionsFactory, /options\.className = "home-tv-feed-options"[\s\S]*?summary\.setAttribute\("aria-label", "Video options"\)/);
   assert.doesNotMatch(actionsFactory, /"home-tv-feed-profile-action"/);
@@ -529,7 +529,7 @@ test("TV action rail keeps every rail control visible without exposing the full-
   );
   assert.match(
     actionsFactory,
-    /actions\.append\(sound, fullscreen, follow, like, share\);[\s\S]*?tools\.append\(options\);/,
+    /actions\.append\(sound, follow, like, share, fullscreen\);[\s\S]*?tools\.append\(options\);/,
   );
   assert.doesNotMatch(
     railConsistency,

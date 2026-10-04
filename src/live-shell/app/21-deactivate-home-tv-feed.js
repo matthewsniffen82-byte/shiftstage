@@ -594,7 +594,7 @@
       follow.innerHTML = actionIconMarkup(isFollowed ? "check" : "personPlus");
       follow.addEventListener("click", () => closeHomeTvFeedReportMenus());
 
-      actions.append(sound, fullscreen, follow, like, share);
+      actions.append(sound, follow, like, share, fullscreen);
       return actions;
     }
 
