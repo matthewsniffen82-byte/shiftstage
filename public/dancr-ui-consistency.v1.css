@@ -1939,6 +1939,21 @@ html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
   gap: 6px !important;
 }
+/* A uniform violet wash connects the portrait gutters to the hero at every
+ * scroll depth, independent of the number of profiles or the grid's height. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card) {
+  background-color: color-mix(in srgb, var(--dancr-color-avatar-ring-violet) 20%, var(--dancr-color-background)) !important;
+  background-image: none !important;
+}
+/* Keep the full-width controls and participation note on the page foundation,
+ * including their surrounding six-pixel gaps, so violet belongs to the photos. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card)
+  > :is(.dancer-directory-filters, .roster-participation-note, .home-dancer-grid-heading) {
+  background: var(--dancr-color-background) !important;
+  box-shadow: 0 0 0 6px var(--dancr-color-background) !important;
+}
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory {
@@ -1961,7 +1976,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid 
     rgba(5, 5, 8, .94) 100%) !important;
   text-shadow: 0 1px 4px rgba(0, 0, 0, .65);
 }
-/* A quiet violet base keeps the directory gutters black and card sizes intact. */
+/* A quiet violet base echoes the directory backdrop inside each card. */
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {
   box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--dancr-color-avatar-ring-violet) 50%, transparent);
 }
