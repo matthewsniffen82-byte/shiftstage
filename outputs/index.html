@@ -35848,8 +35848,10 @@
           overflow: visible;
           background: #050505 !important;
         }
-        /* Image readiness only controls the portrait. Keep each card's name,
-           venue, status, and profile link usable while its photo is loading. */
+        /* Coordinate the opening photos without hiding names or profile links. */
+        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card[data-row-loading="true"] img.home-dancer-grid-photo {
+          visibility: hidden !important;
+        }
         .home-dancer-grid-heading {
           grid-column: 1 / -1;
           min-width: 0;
@@ -43206,6 +43208,16 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         }, { rootMargin: "1200px 0px" })
       : null;
 
+    // Warm the next few grid rows before scrolling reaches them, while keeping
+    // the rest of a large directory out of the opening photo request queue.
+    const stableGridVisibility = typeof IntersectionObserver === "function"
+      ? new IntersectionObserver((entries) => {
+          entries.forEach(({ target, isIntersecting }) => {
+            if (isIntersecting) watchStableImage(target);
+          });
+        }, { rootMargin: "1200px 0px" })
+      : null;
+
     function stableImageRequest(image) {
       let state = stableImageRequests.get(image);
       if (!state) {
@@ -43263,11 +43275,13 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         image.dataset.imageState = "ready";
         stableImageVisibility?.unobserve(image);
         stableLineupVisibility?.unobserve(image);
+        stableGridVisibility?.unobserve(image);
         if (image.matches(".home-venue-discovery-logo, .venue-card-logo, .venue-detail-logo")) fitVenueLogoImage(image);
       } else if (!retryStableImage(image)) {
         image.dataset.imageState = "error";
         stableImageVisibility?.unobserve(image);
         stableLineupVisibility?.unobserve(image);
+        stableGridVisibility?.unobserve(image);
       }
     }
 
@@ -43283,6 +43297,20 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     function watchStableImage(image) {
       if (!image.isConnected || image.dataset.imageState !== "loading" || stableImageRequest(image).timer !== null) return;
+      if (image.hasAttribute("data-grid-src")) {
+        image.loading = "eager";
+        // Set picture candidates first so high-DPI phones request the small
+        // grid image directly, without briefly downloading a larger fallback.
+        image.closest("picture")?.querySelectorAll("source[data-grid-srcset]").forEach((source) => {
+          source.setAttribute("srcset", source.getAttribute("data-grid-srcset"));
+          source.removeAttribute("data-grid-srcset");
+        });
+        for (const attribute of ["srcset", "src"]) {
+          const value = image.getAttribute(`data-grid-${attribute}`);
+          if (value) image.setAttribute(attribute, value);
+          image.removeAttribute(`data-grid-${attribute}`);
+        }
+      }
       if (image.complete) settleStableImage(image);
       else {
         // Visible cards must not remain deferred by a mobile browser's lazy loader.
@@ -43296,8 +43324,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       if (root instanceof HTMLImageElement && root.dataset.imageState === "loading") images.push(root);
       images.forEach((image) => {
         if (stableImageRequest(image).timer !== null) return;
-        const visibility = image.matches(".venue-lineup-avatar-photo") ? stableLineupVisibility : stableImageVisibility;
-        if (image.complete) settleStableImage(image);
+        const visibility = image.matches(".venue-lineup-avatar-photo") ? stableLineupVisibility
+          : image.matches(".home-dancer-grid-photo") ? stableGridVisibility : stableImageVisibility;
+        if (image.hasAttribute("data-grid-src")) {
+          if (visibility) visibility.observe(image);
+          else watchStableImage(image);
+        } else if (image.complete) settleStableImage(image);
         else if (image.loading !== "lazy" || !visibility) watchStableImage(image);
         else visibility.observe(image);
       });
@@ -60798,15 +60830,20 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const photoSrcSet = publicProfilePhotoSrcSet(profile);
       const photoAttrs = customPhotoAttrs(photoUrl, photoSrcSet);
       const nativePhotoAttrs = nativeResponsivePhotoAttrs(photoUrl, photoSrcSet);
-      // Start every photo in the rendered directory together. Rows below the
-      // first six cards must not wait for scrolling or run at low priority.
-      const imageLoading = "eager";
-      const imageFetchPriority = imageIndex < 3 ? "high" : "auto";
-      const photoMarkup = photoUrl
+      // Give the opening four rows the connection first. Hundreds of distant
+      // portraits must not compete with these photos or start retry timers.
+      const imageLoading = imageIndex < 12 ? "eager" : "lazy";
+      const imageFetchPriority = imageIndex < 12 ? "high" : "auto";
+      let photoMarkup = photoUrl
         ? compactDirectory && nativePhotoAttrs
           ? `<picture class="photo-thumbnail">${mobileThumbnailSource(photoSrcSet)}<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="${imageLoading}" fetchpriority="${imageFetchPriority}" decoding="async" draggable="false" alt="" aria-hidden="true" data-image-state="loading"></picture>`
           : `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
+      if (compactDirectory && imageIndex >= 12) {
+        // Native lazy loading can still fetch many screens ahead. Activate the
+        // original responsive sources only inside our bounded preload window.
+        photoMarkup = photoMarkup.replace(/(^|\s)(src|srcset)=/g, "$1data-grid-$2=");
+      }
       const venueName = String(profile.venue || "").trim();
       const hasPublishedVenue = Boolean(
         isWorkingTonight(profile, city) &&
@@ -60946,12 +60983,18 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     function revealDancerGridRows(grid) {
       grid.dancerGridRevealObserver?.disconnect();
       grid.dancerGridRevealObserver = null;
+      window.clearTimeout(grid.dancerGridRevealTimer);
+      grid.dancerGridRevealTimer = null;
+      grid.dancerGridPaintedPhotos ||= new WeakSet();
       const pending = new Set([...grid.children].filter((card) => card.matches(".home-dancer-grid-card")));
       if (!pending.size) return;
-      // The stable-image loader already marks each portrait ready or failed.
-      // Never hold its neighbors behind a whole-row or second decode barrier.
-      // Keep the loading marker only for accessibility and TV preload scheduling;
-      // the card's captions and link remain available while its photo loads.
+      const photosFor = (card) => [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
+      const ready = (card) => photosFor(card).every((photo) => ["ready", "error"].includes(photo.dataset.imageState));
+      // Paint the eagerly requested opening four rows together. Already visible
+      // portraits survive refreshes; only new images join this first paint.
+      const opening = new Set([...pending].slice(0, 12).filter((card) => (
+        photosFor(card).some((photo) => !grid.dancerGridPaintedPhotos.has(photo))
+      )));
       const observer = new MutationObserver(check);
       grid.dancerGridRevealObserver = observer;
 
@@ -60960,20 +61003,28 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           observer.disconnect();
           return;
         }
+        for (const card of opening) {
+          if (card.parentNode !== grid) opening.delete(card);
+        }
+        if ([...opening].every(ready)) {
+          opening.clear();
+          window.clearTimeout(grid.dancerGridRevealTimer);
+          grid.dancerGridRevealTimer = null;
+        }
         let settled = false;
         for (const card of pending) {
           if (card.parentNode !== grid) {
             pending.delete(card);
             continue;
           }
-          const photos = [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
-          if (photos.some((photo) => !["ready", "error"].includes(photo.dataset.imageState))) {
+          if (opening.has(card) || !ready(card)) {
             card.setAttribute("data-row-loading", "true");
             card.setAttribute("aria-busy", "true");
             continue;
           }
           card.removeAttribute("data-row-loading");
           card.removeAttribute("aria-busy");
+          photosFor(card).forEach((photo) => grid.dancerGridPaintedPhotos.add(photo));
           pending.delete(card);
           settled = true;
         }
@@ -60987,6 +61038,16 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       observer.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-image-state"] });
       settleCompletedStableImages(grid);
       check();
+      if (opening.size) {
+        // A failed connection must not turn the coordinated paint into another
+        // blank-row hang. The image loader continues its bounded recovery.
+        grid.dancerGridRevealTimer = window.setTimeout(() => {
+          if (grid.dancerGridRevealObserver !== observer) return;
+          grid.dancerGridRevealTimer = null;
+          opening.clear();
+          check();
+        }, 1000);
+      }
     }
 
     function renderHomeDancerGrid(city, profiles) {

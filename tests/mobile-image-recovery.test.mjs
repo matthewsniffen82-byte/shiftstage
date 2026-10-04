@@ -28,7 +28,9 @@ function harness() {
     }
     hasAttribute(name) { return this.attrs.has(name); }
     getAttribute(name) { return this.attrs.get(name); }
+    setAttribute(name, value) { this.attrs.set(name, value); if (name === "src") this.src = value; }
     removeAttribute(name) { this.attrs.delete(name); }
+    closest() { return this.picture || null; }
     querySelectorAll() { return []; }
     matches() { return false; }
     set src(url) {
@@ -120,6 +122,55 @@ test("cached images inserted after their load event are revealed immediately", (
   assert.equal(image.dataset.imageState, "ready");
   assert.equal(image.requests.length, 0);
   assert.equal(h.timers.size, 0);
+});
+
+test("dancer grid preloads nearby rows without arming retries for the whole directory", () => {
+  const h = harness();
+  const images = Array.from({ length: 500 }, (_, index) => {
+    const image = new h.Image();
+    image.loading = index < 12 ? "eager" : "lazy";
+    image.matches = selector => selector === ".home-dancer-grid-photo";
+    h.insert(image);
+    return image;
+  });
+  assert.equal(h.timers.size, 12);
+  const observer = h.observers.find(item => item.lastImage === images[499]);
+  assert.equal(observer.options.rootMargin, "1200px 0px");
+  h.visible(images[12]);
+  assert.equal(images[12].loading, "eager");
+  assert.equal(images[499].loading, "lazy");
+  assert.equal(h.timers.size, 13);
+  h.load(images[12]);
+  assert.equal(h.observed.has(images[12]), false);
+});
+
+test("deferred grid photos activate their original picture sources once when approaching the viewport", () => {
+  const h = harness();
+  const image = new h.Image();
+  image.loading = "lazy";
+  image.complete = true; // An img without src is complete, but is not a failed photo.
+  image.matches = selector => selector === ".home-dancer-grid-photo";
+  image.attrs.delete("src");
+  image.attrs.delete("srcset");
+  image.attrs.set("data-grid-src", transformed);
+  image.attrs.set("data-grid-srcset", `${transformed} 320w`);
+  const source = new h.Image();
+  source.attrs = new Map([["data-grid-srcset", "https://images.example/small 160w"]]);
+  image.picture = { querySelectorAll: () => [source] };
+  h.insert(image);
+  assert.equal(image.requests.length, 0);
+  assert.equal(h.timers.size, 0);
+  h.visible(image);
+  assert.deepEqual(image.requests, [transformed]);
+  assert.equal(source.getAttribute("srcset"), "https://images.example/small 160w");
+  assert.equal(image.getAttribute("srcset"), `${transformed} 320w`);
+  assert.equal(image.hasAttribute("data-grid-src"), false);
+  assert.equal(image.hasAttribute("data-grid-srcset"), false);
+  assert.equal(source.hasAttribute("data-grid-srcset"), false);
+  h.visible(image);
+  assert.equal(image.requests.length, 1);
+  h.load(image);
+  assert.equal(image.dataset.imageState, "ready");
 });
 
 test("club lineup thumbnails start ahead of the card without eagerly loading distant portraits", () => {

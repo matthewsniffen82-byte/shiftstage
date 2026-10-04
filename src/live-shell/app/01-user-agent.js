@@ -30,6 +30,16 @@
         }, { rootMargin: "1200px 0px" })
       : null;
 
+    // Warm the next few grid rows before scrolling reaches them, while keeping
+    // the rest of a large directory out of the opening photo request queue.
+    const stableGridVisibility = typeof IntersectionObserver === "function"
+      ? new IntersectionObserver((entries) => {
+          entries.forEach(({ target, isIntersecting }) => {
+            if (isIntersecting) watchStableImage(target);
+          });
+        }, { rootMargin: "1200px 0px" })
+      : null;
+
     function stableImageRequest(image) {
       let state = stableImageRequests.get(image);
       if (!state) {
@@ -87,11 +97,13 @@
         image.dataset.imageState = "ready";
         stableImageVisibility?.unobserve(image);
         stableLineupVisibility?.unobserve(image);
+        stableGridVisibility?.unobserve(image);
         if (image.matches(".home-venue-discovery-logo, .venue-card-logo, .venue-detail-logo")) fitVenueLogoImage(image);
       } else if (!retryStableImage(image)) {
         image.dataset.imageState = "error";
         stableImageVisibility?.unobserve(image);
         stableLineupVisibility?.unobserve(image);
+        stableGridVisibility?.unobserve(image);
       }
     }
 
@@ -107,6 +119,20 @@
 
     function watchStableImage(image) {
       if (!image.isConnected || image.dataset.imageState !== "loading" || stableImageRequest(image).timer !== null) return;
+      if (image.hasAttribute("data-grid-src")) {
+        image.loading = "eager";
+        // Set picture candidates first so high-DPI phones request the small
+        // grid image directly, without briefly downloading a larger fallback.
+        image.closest("picture")?.querySelectorAll("source[data-grid-srcset]").forEach((source) => {
+          source.setAttribute("srcset", source.getAttribute("data-grid-srcset"));
+          source.removeAttribute("data-grid-srcset");
+        });
+        for (const attribute of ["srcset", "src"]) {
+          const value = image.getAttribute(`data-grid-${attribute}`);
+          if (value) image.setAttribute(attribute, value);
+          image.removeAttribute(`data-grid-${attribute}`);
+        }
+      }
       if (image.complete) settleStableImage(image);
       else {
         // Visible cards must not remain deferred by a mobile browser's lazy loader.
@@ -120,8 +146,12 @@
       if (root instanceof HTMLImageElement && root.dataset.imageState === "loading") images.push(root);
       images.forEach((image) => {
         if (stableImageRequest(image).timer !== null) return;
-        const visibility = image.matches(".venue-lineup-avatar-photo") ? stableLineupVisibility : stableImageVisibility;
-        if (image.complete) settleStableImage(image);
+        const visibility = image.matches(".venue-lineup-avatar-photo") ? stableLineupVisibility
+          : image.matches(".home-dancer-grid-photo") ? stableGridVisibility : stableImageVisibility;
+        if (image.hasAttribute("data-grid-src")) {
+          if (visibility) visibility.observe(image);
+          else watchStableImage(image);
+        } else if (image.complete) settleStableImage(image);
         else if (image.loading !== "lazy" || !visibility) watchStableImage(image);
         else visibility.observe(image);
       });

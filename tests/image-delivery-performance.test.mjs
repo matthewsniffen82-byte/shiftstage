@@ -144,6 +144,28 @@ test("small profile galleries load together while large galleries prioritize the
   }
 });
 
+test("a large dancer directory prioritizes all opening rows without eagerly requesting every photo", () => {
+  const context = vm.createContext({
+    ALL_CITIES: "All cities", profileDiscoveryCity: (_, city) => city,
+    escapeHtml: String, escapeOptionValue: String, slugify: String,
+    profileReferenceValue: profile => profile.id,
+    publicProfilePhotoUrl: () => "https://images.example/photo",
+    publicProfilePhotoSrcSet: () => "https://images.example/photo-small 320w",
+    customPhotoAttrs: () => ({ className: "", style: "" }),
+    nativeResponsivePhotoAttrs: () => 'src="https://images.example/photo-small"',
+    mobileThumbnailSource: () => '<source media="(max-width: 520px)" srcset="https://images.example/photo-small 320w">', isWorkingTonight: () => false,
+    profileCardDistanceLabel: () => "", homeDiscoveryFeedStatus: () => ({className: "is-open"}),
+    homeDancerGridScheduleLabel: () => "Not working now",
+  });
+  vm.runInContext(shell.match(/function homeDancerGridCard\([^]*?(?=\n    function spreadDancerGridPhotos)/)[0], context);
+  const cards = Array.from({length: 500}, (_, index) => context.homeDancerGridCard({id: String(index), name: `Dancer ${index}`}, "Las Vegas", true, index));
+  assert.equal(cards.filter(markup => markup.includes('loading="eager" fetchpriority="high"')).length, 12);
+  assert.equal(cards.filter(markup => markup.includes('loading="lazy" fetchpriority="auto"')).length, 488);
+  assert.ok(cards.slice(0, 12).every(markup => markup.includes(' src="https://images.example/photo-small"')));
+  assert.ok(cards.slice(12).every(markup => markup.includes(' data-grid-src="https://images.example/photo-small"') && markup.includes('data-grid-srcset="https://images.example/photo-small 320w"')));
+  assert.ok(cards.slice(12).every(markup => !/\s(?:src|srcset)=/.test(markup)), "distant cards must not start native image requests");
+});
+
 test("responsive hero assets retain geometry and use content-addressed, smaller WebP files", async () => {
   const original = readFileSync("public/outputs/dancr-hero.webp");
   const hero = shell.match(/<img[^>]*class="hero-art"[^>]*>/)?.[0];

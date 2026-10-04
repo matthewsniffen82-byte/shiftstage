@@ -936,8 +936,10 @@
           overflow: visible;
           background: #050505 !important;
         }
-        /* Image readiness only controls the portrait. Keep each card's name,
-           venue, status, and profile link usable while its photo is loading. */
+        /* Coordinate the opening photos without hiding names or profile links. */
+        #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card[data-row-loading="true"] img.home-dancer-grid-photo {
+          visibility: hidden !important;
+        }
         .home-dancer-grid-heading {
           grid-column: 1 / -1;
           min-width: 0;

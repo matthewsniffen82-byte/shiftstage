@@ -316,15 +316,20 @@
       const photoSrcSet = publicProfilePhotoSrcSet(profile);
       const photoAttrs = customPhotoAttrs(photoUrl, photoSrcSet);
       const nativePhotoAttrs = nativeResponsivePhotoAttrs(photoUrl, photoSrcSet);
-      // Start every photo in the rendered directory together. Rows below the
-      // first six cards must not wait for scrolling or run at low priority.
-      const imageLoading = "eager";
-      const imageFetchPriority = imageIndex < 3 ? "high" : "auto";
-      const photoMarkup = photoUrl
+      // Give the opening four rows the connection first. Hundreds of distant
+      // portraits must not compete with these photos or start retry timers.
+      const imageLoading = imageIndex < 12 ? "eager" : "lazy";
+      const imageFetchPriority = imageIndex < 12 ? "high" : "auto";
+      let photoMarkup = photoUrl
         ? compactDirectory && nativePhotoAttrs
           ? `<picture class="photo-thumbnail">${mobileThumbnailSource(photoSrcSet)}<img class="home-dancer-grid-photo has-custom-photo" ${nativePhotoAttrs} sizes="(max-width: 720px) calc((100vw - 20px) / 3), (max-width: 1280px) calc((100vw - 64px) / 3), 390px" width="360" height="640" loading="${imageLoading}" fetchpriority="${imageFetchPriority}" decoding="async" draggable="false" alt="" aria-hidden="true" data-image-state="loading"></picture>`
           : `<div class="home-dancer-grid-photo${photoAttrs.className}"${photoAttrs.style}></div>`
         : `<div class="home-dancer-grid-photo" aria-hidden="true">${escapeHtml(String(profile.name).trim().charAt(0))}</div>`;
+      if (compactDirectory && imageIndex >= 12) {
+        // Native lazy loading can still fetch many screens ahead. Activate the
+        // original responsive sources only inside our bounded preload window.
+        photoMarkup = photoMarkup.replace(/(^|\s)(src|srcset)=/g, "$1data-grid-$2=");
+      }
       const venueName = String(profile.venue || "").trim();
       const hasPublishedVenue = Boolean(
         isWorkingTonight(profile, city) &&
@@ -464,12 +469,18 @@
     function revealDancerGridRows(grid) {
       grid.dancerGridRevealObserver?.disconnect();
       grid.dancerGridRevealObserver = null;
+      window.clearTimeout(grid.dancerGridRevealTimer);
+      grid.dancerGridRevealTimer = null;
+      grid.dancerGridPaintedPhotos ||= new WeakSet();
       const pending = new Set([...grid.children].filter((card) => card.matches(".home-dancer-grid-card")));
       if (!pending.size) return;
-      // The stable-image loader already marks each portrait ready or failed.
-      // Never hold its neighbors behind a whole-row or second decode barrier.
-      // Keep the loading marker only for accessibility and TV preload scheduling;
-      // the card's captions and link remain available while its photo loads.
+      const photosFor = (card) => [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
+      const ready = (card) => photosFor(card).every((photo) => ["ready", "error"].includes(photo.dataset.imageState));
+      // Paint the eagerly requested opening four rows together. Already visible
+      // portraits survive refreshes; only new images join this first paint.
+      const opening = new Set([...pending].slice(0, 12).filter((card) => (
+        photosFor(card).some((photo) => !grid.dancerGridPaintedPhotos.has(photo))
+      )));
       const observer = new MutationObserver(check);
       grid.dancerGridRevealObserver = observer;
 
@@ -478,20 +489,28 @@
           observer.disconnect();
           return;
         }
+        for (const card of opening) {
+          if (card.parentNode !== grid) opening.delete(card);
+        }
+        if ([...opening].every(ready)) {
+          opening.clear();
+          window.clearTimeout(grid.dancerGridRevealTimer);
+          grid.dancerGridRevealTimer = null;
+        }
         let settled = false;
         for (const card of pending) {
           if (card.parentNode !== grid) {
             pending.delete(card);
             continue;
           }
-          const photos = [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
-          if (photos.some((photo) => !["ready", "error"].includes(photo.dataset.imageState))) {
+          if (opening.has(card) || !ready(card)) {
             card.setAttribute("data-row-loading", "true");
             card.setAttribute("aria-busy", "true");
             continue;
           }
           card.removeAttribute("data-row-loading");
           card.removeAttribute("aria-busy");
+          photosFor(card).forEach((photo) => grid.dancerGridPaintedPhotos.add(photo));
           pending.delete(card);
           settled = true;
         }
@@ -505,6 +524,16 @@
       observer.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-image-state"] });
       settleCompletedStableImages(grid);
       check();
+      if (opening.size) {
+        // A failed connection must not turn the coordinated paint into another
+        // blank-row hang. The image loader continues its bounded recovery.
+        grid.dancerGridRevealTimer = window.setTimeout(() => {
+          if (grid.dancerGridRevealObserver !== observer) return;
+          grid.dancerGridRevealTimer = null;
+          opening.clear();
+          check();
+        }, 1000);
+      }
     }
 
     function renderHomeDancerGrid(city, profiles) {
