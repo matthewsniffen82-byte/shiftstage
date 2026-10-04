@@ -5,6 +5,7 @@ import ts from "typescript";
 export const LIVE_SHELL_FEATURE_FUNCTIONS = Object.freeze({
   tv: [
     "createHomeTvFeedCopy", "createHomeTvFeedVideo", "createHomeTvFeedActions",
+    "createHomeTvFeedTools", "createHomeTvFeedDealButton",
     "createHomeTvFeedProgress", "renderHomeTvFeedSlide", "syncHomeTvFeedProgress",
     "toggleHomeTvFeedFullscreen", "homeTvFeedDealState", "shareHomeTvFeedVideo",
     "createHomeTvFeedSoundButton", "createHomeTvFeedFullscreenButton",

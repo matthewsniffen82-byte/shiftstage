@@ -424,7 +424,7 @@
         if (scheduleContext) {
           const schedule = document.createElement("span");
           schedule.className = `home-tv-feed-schedule ${scheduleContext.className}`;
-          schedule.textContent = scheduleContext.label;
+          schedule.textContent = scheduleContext.className === "is-now" ? "Working now" : scheduleContext.label;
           context.appendChild(schedule);
         }
         if (venueName) {
@@ -447,7 +447,12 @@
           const venueLabel = document.createElement("span");
           venueLabel.textContent = venueName;
           venue.appendChild(venueLabel);
-          context.appendChild(venue);
+          const clubRow = document.createElement("div");
+          clubRow.className = "home-tv-feed-club-row";
+          clubRow.appendChild(venue);
+          const deal = createHomeTvFeedDealButton(item);
+          if (deal) clubRow.appendChild(deal);
+          context.appendChild(clubRow);
         }
         copy.appendChild(context);
       }
@@ -500,7 +505,44 @@
       };
     }
 
+    function createHomeTvFeedDealButton(item) {
+      const dealState = homeTvFeedDealState(item);
+      let deal = null;
+      if (dealState.key === "available") {
+        deal = createHomeTvFeedActionButton(
+          "home-tv-feed-deal-action is-available",
+          dealState.label,
+          actionIconMarkup("qr")
+        );
+        deal.dataset.cardActionSlot = "qr";
+        deal.dataset.clubDealState = dealState.key;
+        const dealTitle = String(item.deal.dealTitle || "Club Deal").trim() || "Club Deal";
+        const venueName = String(item.venue.name || "this club").trim() || "this club";
+        const offerCount = Array.isArray(item.deals) && item.deals.length ? item.deals.length : 1;
+        deal.setAttribute("aria-label", `View free entry for ${venueName}`);
+        deal.title = offerCount > 1 ? `${offerCount} Club Deals` : dealTitle;
+        deal.insertAdjacentHTML("beforeend", `<span class="home-tv-feed-deal-count">Free Entry</span>`);
+        deal.dataset.clubDealCta = encodeDealPass({
+          deal: item.deal,
+          deals: item.deals,
+          venueId: item.venue.id,
+          venueSlug: item.venue.slug,
+          venueName,
+          sourceType: "dancer_profile",
+          dancerId: item.dancer.id,
+          dancerName: item.dancer.stageName,
+          attributionToken: item.dealAttributionToken,
+          dealAttributionTokens: item.dealAttributionTokens
+        });
+        deal.dataset.feedLiveQr = "true";
+        deal.addEventListener("click", () => closeHomeTvFeedReportMenus());
+      }
+
+      return deal;
+    }
+
     function closeHomeTvFeedReportMenus() {
+      results.querySelectorAll(".home-tv-feed-options[open]").forEach((menu) => { menu.open = false; });
       if (activeContentReport?.button?.dataset?.homeTvReport === "true") {
         closeContentReportDialog({ restoreFocus: false });
       }
@@ -513,20 +555,6 @@
       const actions = document.createElement("div");
       actions.className = "home-tv-feed-actions";
       actions.setAttribute("aria-label", "Video actions");
-
-      const sound = createHomeTvFeedSoundButton(slide);
-
-      const profile = createHomeTvFeedActionButton(
-        "home-tv-feed-profile-action",
-        `Open ${dancerName}'s full profile`,
-        actionIconMarkup("profile")
-      );
-      profile.dataset.homeTvProfile = "true";
-      profile.title = "Profile";
-      profile.addEventListener("click", () => {
-        closeHomeTvFeedReportMenus();
-        slide.querySelector(".home-tv-feed-dancer")?.click();
-      });
 
       const like = createHomeTvFeedActionButton(
         "home-tv-feed-like-action",
@@ -564,42 +592,42 @@
       follow.innerHTML = actionIconMarkup(isFollowed ? "check" : "personPlus");
       follow.addEventListener("click", () => closeHomeTvFeedReportMenus());
 
-      const dealState = homeTvFeedDealState(item);
-      let deal = null;
-      if (dealState.key === "available") {
-        deal = createHomeTvFeedActionButton(
-          "home-tv-feed-deal-action home-card-qr-rail-action is-available",
-          dealState.label,
-          actionIconMarkup("qr")
-        );
-        deal.dataset.cardActionSlot = "qr";
-        deal.dataset.clubDealState = dealState.key;
-        const dealTitle = String(item.deal.dealTitle || "Club Deal").trim() || "Club Deal";
-        const venueName = String(item.venue.name || "this club").trim() || "this club";
-        const offerCount = Array.isArray(item.deals) && item.deals.length ? item.deals.length : 1;
-        deal.setAttribute("aria-label", `View free entry for ${venueName}`);
-        deal.title = offerCount > 1 ? `${offerCount} Club Deals` : dealTitle;
-        deal.insertAdjacentHTML("beforeend", `<span class="home-tv-feed-deal-count">Free Entry</span>`);
-        deal.dataset.clubDealCta = encodeDealPass({
-          deal: item.deal,
-          deals: item.deals,
-          venueId: item.venue.id,
-          venueSlug: item.venue.slug,
-          venueName,
-          sourceType: "dancer_profile",
-          dancerId: item.dancer.id,
-          dancerName: item.dancer.stageName,
-          attributionToken: item.dealAttributionToken,
-          dealAttributionTokens: item.dealAttributionTokens
-        });
-        deal.dataset.feedLiveQr = "true";
-        deal.addEventListener("click", () => closeHomeTvFeedReportMenus());
-      }
+      actions.append(follow, like, share);
+      return actions;
+    }
 
+    function createHomeTvFeedTools(item, slide, video) {
+      const videoId = String(item.id);
+      const dancerName = String(item?.dancer?.stageName || "MyDancr TV").trim() || "MyDancr TV";
+      const tools = document.createElement("div");
+      tools.className = "home-tv-feed-tools";
+      tools.setAttribute("role", "group");
+      tools.setAttribute("aria-label", "Playback and video options");
+      const sound = createHomeTvFeedSoundButton(slide);
+      const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
+      const options = document.createElement("details");
+      options.className = "home-tv-feed-options";
+      const summary = document.createElement("summary");
+      summary.className = "home-tv-feed-overflow-action";
+      summary.setAttribute("aria-label", "Video options");
+      summary.title = "Video options";
+      summary.innerHTML = '<span aria-hidden="true">•••</span>';
+      summary.addEventListener("click", () => {
+        if (!options.open) closeHomeTvFeedReportMenus();
+      });
+      options.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape" || !options.open) return;
+        event.preventDefault();
+        event.stopPropagation();
+        options.open = false;
+        summary.focus({ preventScroll: true });
+      });
+      const panel = document.createElement("div");
+      panel.className = "home-tv-feed-options-panel";
       const overflow = createHomeTvFeedActionButton(
-        "home-tv-feed-overflow-action",
+        "home-tv-feed-report-action",
         "Report video",
-        actionIconMarkup("report")
+        `${actionIconMarkup("report")}<span>Report video</span>`
       );
       overflow.dataset.homeTvReport = "true";
       overflow.dataset.reportDefaultLabel = "Report video";
@@ -621,12 +649,10 @@
           quickReasons: true
         });
       });
-      const fullscreen = createHomeTvFeedFullscreenButton(slide, video);
-      actions.append(sound, profile, follow, like);
-      if (deal) actions.appendChild(deal);
-      actions.append(share, fullscreen);
-      actions.appendChild(overflow);
-      return actions;
+      panel.appendChild(overflow);
+      options.append(summary, panel);
+      tools.append(sound, fullscreen, options);
+      return tools;
     }
 
     function createHomeTvFeedSoundButton(slide) {
@@ -636,6 +662,7 @@
       sound.dataset.homeTvSound = "true";
       sound.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H3v6h4l4 4V5Z"></path><path class="home-tv-feed-sound-waves" d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"></path><path class="home-tv-feed-sound-muted" d="m16 9 5 5m0-5-5 5"></path></svg>';
       sound.addEventListener("click", () => {
+        closeHomeTvFeedReportMenus();
         homeTvFeedMuted = !homeTvFeedMuted;
         results.querySelectorAll(".home-tv-feed-video").forEach((feedVideo) => {
           feedVideo.muted = homeTvFeedMuted;
@@ -728,6 +755,7 @@
         playback,
         createHomeTvFeedFullViewCloseButton(slide, video),
         createHomeTvFeedActions(item, slide, video),
+        createHomeTvFeedTools(item, slide, video),
         createHomeTvFeedCopy(item, scheduleContext),
         createHomeTvFeedProgress(slide, video),
         applause,

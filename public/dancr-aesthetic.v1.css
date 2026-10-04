@@ -14462,3 +14462,117 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail
   --profile-action-icon-color: #c4b5fd;
   color: var(--profile-action-icon-color) !important;
 }
+
+/* TV cards separate playback tools, social actions, and the club offer. */
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-tools {
+  position: absolute;
+  z-index: 9;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: var(--home-tv-action-inset-right);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-actions { bottom: 144px !important; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-options { position: relative; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-overflow-action {
+  display: grid;
+  place-items: center;
+  width: var(--home-tv-action-control-size, 46px);
+  min-width: 44px;
+  height: var(--home-tv-action-control-size, 46px);
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  list-style: none;
+  cursor: pointer;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-shadow: 0 1px 5px #000;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-overflow-action::-webkit-details-marker { display: none; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-overflow-action::before,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-overflow-action::after { display: none !important; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-overflow-action:focus-visible { outline: 2px solid #c4b5fd; outline-offset: -3px; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-options-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 172px;
+  padding: 5px;
+  border: 1px solid #4c395e;
+  border-radius: 12px;
+  background: #19151f;
+  box-shadow: 0 8px 24px #0008;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-options-panel .home-tv-feed-report-action {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: none !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 8px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::before,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::after { display: none !important; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-copy { right: 76px; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-meta {
+  font-size: 12px !important;
+  font-weight: 450 !important;
+  color: #d0cbd5 !important;
+  -webkit-text-fill-color: currentColor !important;
+  letter-spacing: 0;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule.is-now {
+  min-height: 20px !important;
+  gap: 6px;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  color: var(--dancr-color-avatar-ring-live, #34e3a4) !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule.is-now::before { content: ""; flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; width: 100%; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-venue { min-width: 0; font-weight: 650; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-deal-action {
+  width: auto !important;
+  min-width: 98px !important;
+  max-width: none !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+  border-color: var(--dancr-color-brand-primary, #7c3aed) !important;
+  background: linear-gradient(135deg, #3500a8, #240072) !important;
+  color: #fff !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
+}
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-deal-count { width: auto; height: auto; font-size: 11px !important; font-weight: 650 !important; line-height: 1.1; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-deal-action :is(.action-icon, svg) { width: 16px !important; height: 16px !important; flex-basis: 16px !important; }

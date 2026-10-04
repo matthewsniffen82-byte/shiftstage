@@ -341,7 +341,7 @@
     results.addEventListener("touchstart", handleProfileNavigationIntent, { passive: true });
 
     results.addEventListener("click", async (event) => {
-      if (!event.target.closest(".home-tv-feed-actions")) closeHomeTvFeedReportMenus();
+      if (!event.target.closest(".home-tv-feed-actions, .home-tv-feed-tools")) closeHomeTvFeedReportMenus();
       const emptyStateAction = event.target.closest("[data-home-empty-action]");
       if (emptyStateAction) {
         event.preventDefault();

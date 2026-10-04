@@ -79,7 +79,7 @@ test("every public report entry point uses the same flag symbol", () => {
   assert.match(carousel.match(/function ReportIcon\(\)[\s\S]*?\n}/)?.[0] || "", flagPattern);
   assert.match(profileActions.match(/function ReportFlagIcon\(\)[\s\S]*?\n}/)?.[0] || "", flagPattern);
   assert.match(liveShell.match(/report: '<svg[\s\S]*?<\/svg>'/)?.[0] || "", flagPattern);
-  assert.match(liveShell, /"home-tv-feed-overflow-action"[\s\S]*?"Report video"[\s\S]*?actionIconMarkup\("report"\)/);
+  assert.match(liveShell, /"home-tv-feed-report-action"[\s\S]*?"Report video"[\s\S]*?actionIconMarkup\("report"\)/);
   assert.doesNotMatch(liveShell, /"home-tv-feed-overflow-action"[\s\S]{0,120}?"More video options"/);
 });
 

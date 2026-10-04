@@ -51,17 +51,15 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
     /actions\.className = "home-tv-feed-actions"[\s\S]*?follow\.className = `home-tv-feed-action home-tv-feed-follow-action feed-card-action[\s\S]*?follow\.dataset\.feedAction = "follow"[\s\S]*?follow\.dataset\.profile = String\(item\?\.dancer\?\.id \|\| dancerName\)[\s\S]*?follow\.dataset\.homeTvVideoId = videoId[\s\S]*?follow\.dataset\.iconOnlyAction = "true"[\s\S]*?follow\.innerHTML = actionIconMarkup\(isFollowed \? "check" : "personPlus"\)/,
   );
   assert.doesNotMatch(homeSource, /home-tv-feed-dancer-actions/);
-  assert.match(
-    homeSource,
-    /profile\.className = "home-tv-feed-action home-tv-feed-profile-action"|"home-tv-feed-profile-action",[\s\S]*?actionIconMarkup\("profile"\)/,
-  );
+  assert.doesNotMatch(homeSource, /profile\.dataset\.homeTvProfile/);
+  assert.match(homeSource, /dancer\.addEventListener\("click", openDancerProfile\)/);
   assert.match(
     homeSource,
     /const dancerPhotoUrl = String\(item\?\.dancer\?\.avatarPhotoUrl \|\| item\?\.dancer\?\.primaryPhotoUrl[\s\S]*?dancerPhoto\.className = "home-tv-feed-dancer-photo"[\s\S]*?dancerPhotoImage\.src = dancerPhotoUrl[\s\S]*?dancerPhotoImage\.addEventListener\("error", \(\) => dancerPhotoImage\.remove\(\)\)[\s\S]*?dancer\.append\(dancerPhoto, dancerCopy\)/,
   );
   assert.match(
     homeSource,
-    /function homeTvFeedDealState\(item\)[\s\S]*?item\?\.venue\?\.id[\s\S]*?item\?\.deal\?\.id[\s\S]*?item\?\.dealAttributionToken[\s\S]*?home-tv-feed-deal-action home-card-qr-rail-action[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass[\s\S]*?sourceType: "dancer_profile"[\s\S]*?deal\.dataset\.feedLiveQr = "true"/,
+    /function homeTvFeedDealState\(item\)[\s\S]*?item\?\.venue\?\.id[\s\S]*?item\?\.deal\?\.id[\s\S]*?item\?\.dealAttributionToken[\s\S]*?home-tv-feed-deal-action is-available[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass[\s\S]*?sourceType: "dancer_profile"[\s\S]*?deal\.dataset\.feedLiveQr = "true"/,
   );
   assert.match(
     homeSource,
@@ -96,7 +94,7 @@ test("the homepage TV card uses a resilient, readable media-first presentation",
   assert.doesNotMatch(homeSource, /scrubber\.type = "range"|createElement\("input"\)[\s\S]{0,300}?home-tv-feed-scrubber/);
 });
 
-test("TV cards expose one compact priority rail and a standalone seek bar", () => {
+test("TV cards separate social actions from playback tools and keep the seek bar", () => {
   const actionsFactory = homeSource.match(
     /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
   )?.[0] || "";
@@ -104,8 +102,10 @@ test("TV cards expose one compact priority rail and a standalone seek bar", () =
     /function renderHomeTvFeedSlide\(slide, item, videoIndex, totalVideos\) \{[\s\S]*?(?=\n    function createHomeTvFeedSlide)/,
   )?.[0] || "";
 
-  assert.match(actionsFactory, /const sound = createHomeTvFeedSoundButton\(slide\)[\s\S]*?"home-tv-feed-profile-action"[\s\S]*?actionIconMarkup\("profile"\)[\s\S]*?slide\.querySelector\("\.home-tv-feed-dancer"\)\?\.click\(\)[\s\S]*?"Share"[\s\S]*?follow\.dataset\.feedAction = "follow"/);
-  assert.match(actionsFactory, /const fullscreen = createHomeTvFeedFullscreenButton\(slide, video\)[\s\S]*?actions\.append\(sound, profile, follow, like\)[\s\S]*?if \(deal\) actions\.appendChild\(deal\)[\s\S]*?actions\.append\(share, fullscreen\)[\s\S]*?actions\.appendChild\(overflow\)/);
+  assert.match(actionsFactory, /actions\.append\(follow, like, share\)/);
+  assert.match(actionsFactory, /tools\.append\(sound, fullscreen, options\)/);
+  assert.match(actionsFactory, /options\.className = "home-tv-feed-options"[\s\S]*?summary\.setAttribute\("aria-label", "Video options"\)/);
+  assert.doesNotMatch(actionsFactory, /"home-tv-feed-profile-action"/);
   assert.doesNotMatch(actionsFactory, /actionIconMarkup\("star"\)|"Applaud"/);
   assert.match(actionsFactory, /"home-tv-feed-overflow-action"[\s\S]*?"Report video"[\s\S]*?actionIconMarkup\("report"\)/);
   assert.match(actionsFactory, /prepareContentReportButton\([\s\S]*?"tv_video"[\s\S]*?openContentReportDialog\(\{[\s\S]*?quickReasons: true/);
@@ -119,41 +119,14 @@ test("TV cards expose one compact priority rail and a standalone seek bar", () =
   assert.match(homeSource, /#results\.home-tv-feed > \.home-tv-feed-loading,[\s\S]*?#results\.home-tv-feed > \.home-tv-feed-slide \{[\s\S]*?border: 0 !important;[\s\S]*?background: #000 !important;/);
 });
 
-test("TV cards render Deals only for an applicable verified live Club Deal", () => {
-  const dealStateFactory = homeSource.match(
-    /function homeTvFeedDealState\(item\) \{[\s\S]*?(?=\n    function closeHomeTvFeedReportMenus)/,
-  )?.[0] || "";
-  const actionsFactory = homeSource.match(
-    /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
-  )?.[0] || "";
-
-  assert.match(dealStateFactory, /key: "available"[\s\S]*?key: "no-active-offer"[\s\S]*?key: "available-when-working"[\s\S]*?key: "not-available-now"/);
-  assert.match(actionsFactory, /let deal = null;[\s\S]*?if \(dealState\.key === "available"\)/);
-  assert.match(actionsFactory, /deal\.dataset\.cardActionSlot = "qr"/);
-  assert.doesNotMatch(actionsFactory, /cardQrLabel|cardQrMessage|aria-disabled/);
-  assert.match(actionsFactory, /if \(deal\) actions\.appendChild\(deal\)/);
-  assert.match(actionsFactory, /home-tv-feed-deal-count">Free Entry<\/span>/);
-  assert.doesNotMatch(actionsFactory, /home-tv-feed-deal-count">NFC/);
+test("TV cards show the verified deal beside the club with attribution intact", () => {
+  const dealFactory = homeSource.match(/function createHomeTvFeedDealButton\(item\) \{[\s\S]*?(?=\n    function closeHomeTvFeedReportMenus)/)?.[0] || "";
+  assert.match(dealFactory, /let deal = null;[\s\S]*?if \(dealState\.key === "available"\)/);
+  assert.match(dealFactory, /deal\.dataset\.clubDealCta = encodeDealPass[\s\S]*?sourceType: "dancer_profile"[\s\S]*?attributionToken: item\.dealAttributionToken/);
+  assert.equal((dealFactory.match(/home-tv-feed-deal-count">Free Entry<\/span>/g) || []).length, 1);
+  assert.match(homeSource, /clubRow\.appendChild\(venue\)[\s\S]*?createHomeTvFeedDealButton\(item\)[\s\S]*?if \(deal\) clubRow\.appendChild\(deal\)/);
+  assert.match(aestheticSource, /\.home-tv-feed-club-row \.home-tv-feed-deal-action \{[\s\S]*?width: auto !important;[\s\S]*?height: 44px !important;[\s\S]*?display: flex !important;/);
   assert.doesNotMatch(fullTvFeedSource, /<TvClubDealUnavailable video=\{video\} \/>|function TvClubDealUnavailable/);
-});
-
-test("TV Club Deal states keep one fixed rounded-square shape", () => {
-  const dealShell = homeSource.match(
-    /\.home-tv-feed-deal-action \{[\s\S]*?\n        \}/,
-  )?.[0] || "";
-  const dealLabel = homeSource.match(
-    /\.home-tv-feed-deal-count \{[\s\S]*?\n        \}/,
-  )?.[0] || "";
-  const actionsFactory = homeSource.match(
-    /function createHomeTvFeedActions\(item, slide, video\) \{[\s\S]*?(?=\n    function createHomeTvFeedSoundButton)/,
-  )?.[0] || "";
-
-  assert.match(dealShell, /box-sizing: border-box !important;/);
-  assert.match(dealShell, /width: var\(--home-tv-action-control-size\) !important;[\s\S]*?min-width: var\(--home-tv-action-control-size\) !important;[\s\S]*?max-width: var\(--home-tv-action-control-size\) !important;/);
-  assert.match(dealShell, /height: var\(--home-tv-action-control-size\) !important;[\s\S]*?min-height: var\(--home-tv-action-control-size\) !important;[\s\S]*?max-height: var\(--home-tv-action-control-size\) !important;/);
-  assert.match(dealShell, /padding: 5px 3px !important;[\s\S]*?border-radius: 14px !important;[\s\S]*?overflow: hidden !important;/);
-  assert.match(dealLabel, /position: static;[\s\S]*?width: 100%;[\s\S]*?background: transparent;/);
-  assert.equal((actionsFactory.match(/home-tv-feed-deal-count">Free Entry<\/span>/g) || []).length, 1);
 });
 
 test("TV Club Deal branding keeps the active control semantic without introducing inactive presentation", () => {
@@ -336,7 +309,7 @@ test("empty schedules are hidden while real city, venue, and shift context remai
   assert.doesNotMatch(shiftDateFormatter, /hour:|minute:|toLocaleTimeString|formatClock/);
   assert.match(
     homeSource,
-    /if \(scheduleContext \|\| venueName\)[\s\S]*?context\.className = "home-tv-feed-context"[\s\S]*?if \(scheduleContext\)[\s\S]*?context\.appendChild\(schedule\)[\s\S]*?if \(venueName\)[\s\S]*?venue\.className = "home-tv-feed-venue"[\s\S]*?context\.appendChild\(venue\)[\s\S]*?copy\.appendChild\(context\)/,
+    /if \(scheduleContext \|\| venueName\)[\s\S]*?context\.className = "home-tv-feed-context"[\s\S]*?if \(scheduleContext\)[\s\S]*?context\.appendChild\(schedule\)[\s\S]*?if \(venueName\)[\s\S]*?venue\.className = "home-tv-feed-venue"[\s\S]*?clubRow\.appendChild\(venue\)[\s\S]*?context\.appendChild\(clubRow\)[\s\S]*?copy\.appendChild\(context\)/,
   );
 });
 
@@ -454,7 +427,7 @@ test("intentional pauses persist while fullscreen resumes playback and keeps ver
   assert.doesNotMatch(fullscreenToggle, /slide\.requestFullscreen|video\.webkitEnterFullscreen/);
 });
 
-test("TV sound and fullscreen controls share the compact rail and remain icon-only", () => {
+test("TV sound and fullscreen controls retain their sizes and remain icon-only", () => {
   assert.match(
     homeSource,
     /\.home-tv-feed-action \{[\s\S]*?width: var\(--home-tv-action-control-size\);[\s\S]*?min-width: var\(--home-tv-action-control-size\);[\s\S]*?max-width: var\(--home-tv-action-control-size\);[\s\S]*?height: var\(--home-tv-action-control-size\);[\s\S]*?min-height: var\(--home-tv-action-control-size\);[\s\S]*?max-height: var\(--home-tv-action-control-size\);/,
@@ -556,11 +529,11 @@ test("TV action rail keeps every rail control visible without exposing the full-
   );
   assert.match(
     actionsFactory,
-    /actions\.append\(sound, profile, follow, like\);[\s\S]*?if \(deal\) actions\.appendChild\(deal\);[\s\S]*?actions\.append\(share, fullscreen\);[\s\S]*?actions\.appendChild\(overflow\);/,
+    /actions\.append\(follow, like, share\);[\s\S]*?tools\.append\(sound, fullscreen, options\);/,
   );
   assert.doesNotMatch(
     railConsistency,
-    /home-tv-feed-(?:profile|follow|like|share|fullscreen|overflow)[^{}]*\{[^{}]*display:\s*none/,
+    /home-tv-feed-(?:profile|follow|like|share|fullscreen|overflow)(?:-action)?(?![-:\w])[^{}]*\{[^{}]*display:\s*none/,
   );
 });
 

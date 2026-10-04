@@ -94,7 +94,7 @@ test("venue-card Free Entry actions use the shared violet glow and retain availa
 test("public offers and Internal requests share the dancer profile's soft primary glow", () => {
   assert.match(
     liveSource,
-    /home-tv-feed-deal-action home-card-qr-rail-action[\s\S]*?is-available[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass/,
+    /home-tv-feed-deal-action is-available[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass/,
   );
   assert.match(
     brandTokens,
