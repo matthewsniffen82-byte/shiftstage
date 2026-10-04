@@ -589,3 +589,118 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   border: 0 !important;
   box-shadow: none !important;
 }
+
+
+/* Refine the existing left column and media selector without moving content or
+   changing the portrait, split proportions, or gallery geometry. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) { --split-inset: clamp(12px, 1.8vw, 20px); }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)::before { border-color: #483851; box-shadow: 0 3px 12px #0003; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-titlebar, .profile-modal-summary) { z-index: 3; border-radius: var(--profile-frame-radius) 0 0 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(#modalName, .profile-titlebar h1) { font-weight: 700 !important; letter-spacing: -.025em !important; margin-bottom: 7px !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-titlebar-city, #modalCity) { color: #b9b3c2 !important; -webkit-text-fill-color: #b9b3c2 !important; font-weight: 450 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-header-metrics, .profile-modal-header-metrics) { width: 100% !important; margin: 14px 0 0 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-header-metrics, .profile-activity-metrics) { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-header-metrics, .profile-activity-metrics) > div { gap: 4px !important; padding-inline: 0 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-header-metrics, .profile-activity-metrics) dd { font-size: clamp(16px, 2.1vw, 24px) !important; font-weight: 650 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-header-metrics, .profile-activity-metrics) dt { font-size: clamp(9px, 1.1vw, 12px) !important; font-weight: 450 !important; color: #b1abb9 !important; -webkit-text-fill-color: #b1abb9 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options { position: relative; flex: 0 0 44px; width: 44px; height: 44px; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options > summary {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  list-style: none;
+  cursor: pointer;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options > summary::-webkit-details-marker { display: none; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options > summary > span { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid #37303f; border-radius: 9px; background: #121015; color: #d7cedf; font-size: 13px; letter-spacing: 2px; line-height: 1; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options-panel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 184px;
+  padding: 5px;
+  border: 1px solid #4c395e;
+  border-radius: 12px;
+  background: #19151f;
+  box-shadow: 0 8px 24px #0008;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options-panel .profile-header-report-action {
+  position: static !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 44px !important;
+  gap: 8px;
+  padding: 8px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #e4ddea !important;
+  box-shadow: none !important;
+  font-size: 13px;
+  font-weight: 500;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options-panel .profile-header-report-action svg { flex: 0 0 18px; width: 18px !important; height: 18px !important; transform: none !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options-panel .profile-header-report-action::before,
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options-panel .profile-header-report-action::after { display: none !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options-panel .profile-report-confirmation { position: static; display: block; padding: 6px 8px; font-size: 12px; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-options > summary:focus-visible { outline: 2px solid #b894e1; outline-offset: 1px; border-radius: 10px; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact { --profile-utility-background: #141217; --profile-utility-border: #453b4d; --profile-utility-radius: 12px; --profile-action-height: 44px; --split-action-height: 44px; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact:not(.profile-venue-actions) { grid-template-columns: minmax(0, 1fr) 44px !important; gap: 8px !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact:not(.profile-venue-actions) :is(#followBtn, .profile-action-icon-control)::before {
+  inset: 0 !important;
+  border: 1px solid var(--profile-action-border, #453b4d) !important;
+  border-radius: 12px !important;
+  background: var(--profile-action-background, #141217) !important;
+  box-shadow: none !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact:not(.profile-venue-actions) :is(#followBtn, .profile-action-icon-control):first-child:not(.profile-share-action):not([aria-pressed="true"])::before { background: #141217 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact:not(.profile-venue-actions) :is(#followBtn, .profile-action-icon-control):is(.profile-share-action, .profile-action-share-slot button)::before { inset: 0 !important; border-radius: 12px !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main > span:last-child { font-weight: 550 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .modal-grid { row-gap: 14px !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-tonight-card { margin-top: 14px !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-tonight-card { row-gap: 8px !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.schedule-live > .profile-schedule-primary, .profile-working-destination > .profile-live-state) { font-weight: 650 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-tonight-card :is(.profile-club-deal-qr-button, .club-deal-profile-action, .free-entry-cta) { height: 44px !important; min-height: 44px !important; max-height: 44px !important; border-radius: 12px !important; box-shadow: none !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-venue-actions :is(#goingBtn, .profile-action-going)::before { inset: 0 !important; border: 1px solid var(--profile-action-border, #453b4d) !important; border-radius: 12px !important; background: #141217 !important; box-shadow: none !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-venue-actions :is(#goingBtn, .profile-action-going).is-going::before { background: #10271f !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) { gap: 6px !important; padding: 0 !important; margin: 8px 0 10px !important; border: 0 !important; background: none !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button {
+  min-height: 48px !important;
+  height: 48px !important;
+  padding: 0 8px !important;
+  gap: 7px !important;
+  border: 1px solid #39303f !important;
+  border-radius: 12px !important;
+  background: #100e14 !important;
+  box-shadow: none !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button:not([aria-selected="true"]):not(:disabled),
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button:not([aria-selected="true"]):not(:disabled) :is(.profile-media-tab-label, .profile-media-tab-count, .profile-media-tab-icon) { color: #c2bbca !important; -webkit-text-fill-color: #c2bbca !important; opacity: 1 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button[aria-selected="true"] { background: #272130 !important; border-color: #765591 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button[aria-selected="true"],
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button[aria-selected="true"] :is(.profile-media-tab-label, .profile-media-tab-count, .profile-media-tab-icon) { color: #fff !important; -webkit-text-fill-color: #fff !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button::before,
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button::after,
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button.active::before,
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button.active::after { display: none !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-media-tabs, .profile-modal-media-tabs) > button:focus-visible { outline: 2px solid #b894e1 !important; outline-offset: 2px; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-media-tab-label { font-size: 14px !important; font-weight: 600 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-media-tab-count { width: auto !important; min-width: 0 !important; height: auto !important; padding: 0 2px !important; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; font-size: 12px !important; font-weight: 500 !important; }
+@media (max-width: 360px) {
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) { --split-inset: 10px; }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-header-metrics, .profile-activity-metrics) dd { font-size: 15px !important; }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-header-metrics, .profile-activity-metrics) dt { white-space: normal !important; }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main > span:last-child { font-size: 12px !important; }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main svg { width: 16px !important; height: 16px !important; flex-basis: 16px !important; }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact .profile-action-main { gap: 4px !important; }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-actions-compact:not(.profile-venue-actions) > button[aria-pressed="true"] .profile-action-main { display: flex !important; flex-direction: column; gap: 1px !important; }
+}
