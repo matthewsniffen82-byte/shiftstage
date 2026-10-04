@@ -1811,30 +1811,28 @@ html body.dancer-directory-active.dancr-button-system > .app > header
   outline-offset: 1px !important;
 }
 
-/* Header utilities match the city controls across all discovery tabs. */
+/* Every role's topbar utilities share quiet violet edges and neutral icons. */
 html body.dancr-button-system > .app > header .topbar
-  :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
-  --discovery-header-edge: #34343c;
-  color: #a78bfa !important;
-  border-color: #34343c !important;
+  :is(.customer-quick-btn, #accountBtn.menu-btn, .utility-menu > .menu-btn) {
+  --discovery-header-edge: #59456f;
+  color: #c5c3cd !important;
+  border-color: #59456f !important;
   box-shadow: none !important;
 }
 html body.dancr-button-system > .app > header .topbar
-  :is(.customer-quick-btn, #accountBtn.account-icon-btn) :is([data-quick-icon], .action-icon, .account-icon, svg) {
+  :is(.customer-quick-btn, #accountBtn.menu-btn, .utility-menu > .menu-btn) :is([data-quick-icon], .action-icon, .account-icon, svg) {
   color: inherit !important;
   filter: none !important;
 }
 html body.dancr-button-system > .app > header .topbar
-  :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(.active, .is-open, [aria-expanded="true"], :focus-visible) {
+  :is(.customer-quick-btn, #accountBtn.menu-btn, .utility-menu > .menu-btn):is(.active, .is-open, [aria-expanded="true"], :active, :focus-visible) {
   --discovery-header-edge: #a78bfa;
-  color: #c4b5fd !important;
   border-color: #a78bfa !important;
 }
 @media (hover: hover) {
   html body.dancr-button-system > .app > header .topbar
-    :is(.customer-quick-btn, #accountBtn.account-icon-btn):hover {
+    :is(.customer-quick-btn, #accountBtn.menu-btn, .utility-menu > .menu-btn):hover {
     --discovery-header-edge: #a78bfa;
-    color: #c4b5fd !important;
     border-color: #a78bfa !important;
   }
 }
@@ -1947,12 +1945,25 @@ html body.dancr-button-system > .app main.stack > section.stack
   background-image: none !important;
 }
 /* Keep the full-width controls and participation note on the page foundation,
- * including their surrounding six-pixel gaps, so violet belongs to the photos. */
+ * including their six-pixel gaps. Paint a flat layer instead of a spread shadow,
+ * which can appear as a gray frame in mobile browser dark mode. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card)
   > :is(.dancer-directory-filters, .roster-participation-note, .home-dancer-grid-heading) {
+  position: relative;
+  isolation: isolate;
   background: var(--dancr-color-background) !important;
-  box-shadow: 0 0 0 6px var(--dancr-color-background) !important;
+  box-shadow: none !important;
+}
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card)
+  > :is(.dancer-directory-filters, .roster-participation-note, .home-dancer-grid-heading)::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  z-index: -1;
+  background: var(--dancr-color-background);
+  pointer-events: none;
 }
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
