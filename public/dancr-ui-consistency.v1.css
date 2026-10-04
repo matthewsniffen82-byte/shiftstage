@@ -1945,23 +1945,31 @@ html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
   gap: 6px !important;
 }
-/* Static violet swells repeat about every four phone rows, independent of
- * roster length. Clip to the content so bottom navigation clearance stays dark. */
+/* One smoked violet-black surface stays uniform for the entire dancer feed.
+ * Clip to the content so bottom navigation clearance stays dark. */
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card) {
-  background-image: linear-gradient(180deg,
-    #050507 0%,
-    #120b20 25%,
-    #211336 50%,
-    #120b20 75%,
-    #050507 100%) !important;
-  background-size: 100% clamp(680px, 210vw, 1800px) !important;
-  background-repeat: repeat-y !important;
+  position: relative;
+  isolation: isolate;
+  background: #120d1d !important;
   background-origin: content-box !important;
   background-clip: content-box !important;
 }
+/* Extend only the backdrop into the existing outer gutters without moving cards. */
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card)::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute;
+  inset: 0 calc(-1 * var(--dancer-discovery-content-gutter));
+  z-index: -1;
+  padding-block: inherit;
+  background: #120d1d;
+  background-clip: content-box;
+  pointer-events: none;
+}
 /* Cover the full-width introductory rows and their gaps without adding a frame
- * or painting over the cards. The wave treatment belongs to the photo gutters. */
+ * or painting over the cards. The violet treatment belongs to the photo gutters. */
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid.home-dancer-three-column
   > :is(.dancer-directory-filters, .roster-participation-note) {
@@ -1973,7 +1981,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   > :is(.dancer-directory-filters, .roster-participation-note)::after {
   content: "";
   position: absolute;
-  inset: -6px 0 -9px;
+  inset: -6px calc(-1 * var(--dancer-discovery-content-gutter)) -9px;
   z-index: -1;
   background: var(--dancr-color-background, #050507);
   pointer-events: none;
