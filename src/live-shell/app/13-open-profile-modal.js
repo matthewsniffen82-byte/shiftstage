@@ -49,7 +49,6 @@
       savedScrollY = window.scrollY;
 
       modalName.textContent = profile.name;
-      profileModal.querySelector(".profile-options")?.removeAttribute("open");
       modalGallery.dataset.profileMediaProfile = String(profile.id || "");
       const profileReportButton = document.getElementById("reportBtn");
       if (profileReportButton) {

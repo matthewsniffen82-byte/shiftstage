@@ -324,7 +324,6 @@ export function DancerReportControl({
         type="button"
       >
         <ReportFlagIcon />
-        <span>{reportSubmitted ? "Profile reported" : "Report profile"}</span>
       </button>
       {reportSubmitted ? (
         <span className="profile-report-confirmation" role="status">Report submitted for review.</span>
