@@ -3,9 +3,9 @@
  *
  * Components consume semantic tokens from this file so the brand palette has
  * one source of truth. The intended UI-chrome balance is 84% neutral, 10%
- * hero-beam brand, and 6% semantic state color. Approved media and the supplied
- * hero artwork are excluded from that visual-weight target. Navigation keeps
- * its existing, independently owned visual contract.
+ * hero-beam brand, and 6% semantic state color. The violet page canvas, approved
+ * media, and supplied hero artwork are excluded from that visual-weight target.
+ * Navigation keeps its existing, independently owned visual contract.
  */
 
 :root {
@@ -48,6 +48,7 @@
   --dancr-color-text-on-bright: #050507;
 
   --dancr-color-background: #050507;
+  --dancr-color-page-background: #2d1450;
   --dancr-color-surface: #111118;
   --dancr-color-surface-raised: #111118;
   --dancr-color-surface-soft: rgba(17, 17, 24, 0.88);

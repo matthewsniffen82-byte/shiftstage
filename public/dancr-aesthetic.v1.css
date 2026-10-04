@@ -891,19 +891,26 @@ body.dancr-button-system .page-panel :is(
 
 /*
  * One device-neutral foundation is shared by iPhone, Android, and desktop.
- * Media and semantic status colors remain untouched above these neutral layers.
+ * The violet page canvas connects to the hero; media and controls keep their
+ * existing colors on separate surfaces.
  */
-body.dancr-button-system,
-body > .app,
-body > .app main.stack {
-  background: var(--dancr-color-background) !important;
+html:has(> body.dancr-button-system),
+html body.dancr-button-system,
+html body.dancr-button-system > .app,
+html body.dancr-button-system > .app main.stack,
+html body.dancr-button-system > .app main.stack > section.stack {
+  background: var(--dancr-color-page-background) !important;
+}
+
+html body.dancr-button-system > .app > header,
+html body.dancr-button-system > .app > header .topbar {
+  background: transparent !important;
 }
 
 /*
  * Scrolling discovery gutters are part of the neutral foundation, not a brand
  * accent. This removes legacy violet washes between cards on iOS and Android.
  */
-body > .app main.stack > section.stack,
 body > .app main.stack > section.stack > #results:is(
   .home-dancer-grid,
   .home-discovery-feed,
@@ -2212,7 +2219,7 @@ body.dancr-button-system .home-tv-feed-action:not(
   .is-samsung-browser,
   .samsung-rendering
 ) {
-  background-color: var(--dancr-color-background) !important;
+  background-color: var(--dancr-color-page-background) !important;
   background-image: none !important;
   color-scheme: dark !important;
 }
@@ -2223,10 +2230,6 @@ body.dancr-button-system .home-tv-feed-action:not(
   .is-samsung-browser,
   .samsung-rendering
 ) :is(
-  body,
-  .app,
-  main.stack,
-  main.stack > section.stack,
   #results,
   #results.home-dancer-grid,
   #results.home-discovery-feed,
@@ -13884,7 +13887,7 @@ body.dancer-directory-active.dancr-button-system > .app main.stack > section.sta
   > .content-head.discovery-section-head {
   align-items: center !important;
   padding-block: 2px 4px !important;
-  background: var(--dancr-color-background) !important;
+  background: var(--dancr-color-page-background) !important;
 }
 
 body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
