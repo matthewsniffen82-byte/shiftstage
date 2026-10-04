@@ -1947,8 +1947,8 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   text-align: left;
 }
 
-/* Give the shared three-column portraits breathing room while keeping their
- * violet bottom accent and the normal mobile paint flow. */
+/* Give the shared three-column portraits breathing room with clean edges
+ * and the normal mobile paint flow. */
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
   gap: 6px !important;
@@ -1957,6 +1957,11 @@ html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory {
   border-radius: 8px !important;
+}
+/* Dashboard media grids follow the same clean photo edge as public galleries. */
+html body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer
+  :is(.is-compact .profile-upload-thumbnail, .dancer-profile-inline-preview .profile-media-grid-item) {
+  border-bottom: 0 !important;
 }
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-copy {

@@ -1,4 +1,4 @@
-/* Match the public directory's portrait rhythm and quiet violet accents. */
+/* Match the public directory's portrait rhythm and clean card edges. */
 body .ir-shell { color-scheme: only dark; }
 body .ir-shell .ir-directory-grid {
   display: grid;
@@ -19,15 +19,6 @@ body .ir-shell .ir-directory-grid .ir-dancer {
   background: #050507;
   box-shadow: 0 0 0 1px rgba(160, 154, 175, .12);
   overflow: hidden;
-}
-body .ir-shell .ir-directory-grid .ir-dancer::after {
-  content: "";
-  position: absolute;
-  z-index: 4;
-  inset: auto 0 0;
-  height: 1px;
-  background: color-mix(in srgb, var(--dancr-color-brand-primary-deep, #4c1d95) 88%, transparent);
-  pointer-events: none;
 }
 body .ir-shell .ir-directory-grid .ir-profile-link,
 body.dancr-button-system .ir-shell .ir-directory-grid .ir-profile-link {
