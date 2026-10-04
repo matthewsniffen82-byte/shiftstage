@@ -422,7 +422,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   font-weight: 750 !important;
   line-height: 1.12 !important;
   padding-top: 0 !important;
-  text-align: left !important;
+  text-align: center !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-context, .profile-titlebar-context) {
   display: flex !important;
