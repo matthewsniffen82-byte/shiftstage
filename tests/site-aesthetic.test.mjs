@@ -23,7 +23,7 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   assert.match(layout, /import "\.\.\/public\/dancr-aesthetic\.v1\.css";/);
   assert.match(
     liveApp,
-    /<link href="\/dancr-aesthetic\.v1\.css\?v=271" rel="stylesheet">/,
+    /<link href="\/outputs\/dancr-aesthetic\.css" rel="stylesheet">/,
   );
 });
 
@@ -63,13 +63,13 @@ test("scrollable production surfaces use one quiet neutral scrollbar", () => {
 
 test("venue detail branding is neutral first with scoped brand and semantic actions", () => {
   const venueDetailBranding = aesthetic.match(
-    /Production venue-detail branding is neutral first[\s\S]*?(?=\/\* Production venue-detail refinement)/,
+    /Production venue-detail branding is neutral first[\s\S]*?(?=\/\* Production venue scroll-card branding)/,
   )?.[0] || "";
 
   assert.ok(venueDetailBranding, "the production venue-detail brand layer must exist");
   assert.match(
     venueDetailBranding,
-    /The hero\/card supplies the venue detail's single visible frame[\s\S]*?#results\.venue-profile-overlay \.venue-detail \{[\s\S]*?border-color: transparent !important;/,
+    /#results\.venue-profile-overlay \.venue-detail \{\s*border: 0 !important;/,
   );
   assert.match(
     venueDetailBranding,
@@ -234,7 +234,7 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   assert.match(liveApp, /const empty = counts\[filter\.id\] === 0;/);
   assert.match(
     liveApp,
-    /const hasPublishedVenue = Boolean\([\s\S]*?profile\.scheduled[\s\S]*?venueName\.toLowerCase\(\) !== "venue pending"[\s\S]*?const venueMarkup = hasPublishedVenue/,
+    /const hasPublishedVenue = Boolean\(\s*isWorkingTonight\(profile, city\) &&\s*venueName &&\s*venueName\.toLowerCase\(\) !== "venue pending"[\s\S]*?const venueMarkup = hasPublishedVenue/,
   );
 });
 
@@ -839,12 +839,12 @@ test("the city selector is compact, neutral, and reports only real active filter
   );
   assert.match(
     liveApp,
-    /class="home-filter-toggle-icon"[\s\S]*?class="home-filter-toggle-count" id="homeFilterCount" hidden>0<\/span>/,
+    /class="home-filter-toggle-icon"[\s\S]*?class="home-filter-toggle-count" id="homeFilterCount" aria-hidden="true" hidden>0<\/span>/,
   );
   assert.doesNotMatch(liveApp, /home-filter-toggle-symbol|id="homeLiveCity"/);
   assert.match(
     liveApp,
-    /function syncHomeFilterToggleState\(\)[\s\S]*?distanceSelect\?\.value !== "25 mi"[\s\S]*?selectedVenueFilter\(\) !== "all"[\s\S]*?`Filters, \$\{activeFilterCount\} active`/,
+    /function syncHomeFilterToggleState\(\)[\s\S]*?distanceSelect\?\.value !== "25 mi"[\s\S]*?selectedVenueFilter\(\) !== "all"[\s\S]*?`Open filters, \$\{activeFilterCount\} active`/,
   );
   assert.match(
     aesthetic,

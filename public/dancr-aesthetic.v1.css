@@ -14531,10 +14531,15 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-options-panel 
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::before,
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::after { display: none !important; }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-copy { right: 76px; }
+html body.dancr-button-system #results.home-tv-feed :is(.home-tv-feed-dancer-name, .home-tv-feed-venue) {
+  color: #fff !important;
+  -webkit-text-fill-color: currentColor !important;
+  opacity: 1 !important;
+}
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-meta {
   font-size: 12px !important;
   font-weight: 450 !important;
-  color: #d0cbd5 !important;
+  color: #e4e4e7 !important;
   -webkit-text-fill-color: currentColor !important;
   letter-spacing: 0;
 }
