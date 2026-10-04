@@ -1,0 +1,233 @@
+/* Customer My Night workspace; scoped above the shared button and legacy dashboard styles. */
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer { --customer-surface:#131117; --customer-line:#44364f; --customer-muted:#b4adbf; --customer-green:#52d5a0; box-sizing:border-box; width:min(1040px,100%); max-width:1040px; padding:24px 18px 40px; color:#f5f2fa; background:radial-gradient(ellipse 85% 240px at 45% 0,#6430a824,transparent),#070609; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer *, body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer *::before, body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer *::after { box-sizing:border-box; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer [hidden] { display:none !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,a,summary,input,select,textarea):focus-visible { outline:2px solid #c9a7ff !important; outline-offset:3px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,summary,a) { -webkit-tap-highlight-color:transparent; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,summary) { cursor:pointer; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,input,select,textarea):disabled { cursor:default; opacity:.6; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(h2,h3,p) { overflow-wrap:anywhere; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .dashboard-head { margin:0; padding:0 0 20px !important; border:0 !important; background:transparent !important; box-shadow:none !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .dashboard-head-row { grid-template-columns:52px minmax(0,1fr) 44px; align-items:center; gap:14px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dashboard-avatar { width:52px; height:52px; border-color:#685078; background:#211829; box-shadow:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .dashboard-head .eyebrow { color:#baa5d6; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .dashboard-head h1 { font-weight:600 !important; font-size:clamp(23px,4vw,31px) !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore-link { display:inline-flex; align-items:center; gap:6px; min-height:32px; color:#c6a5fa; font-size:13px; text-decoration:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-dashboard-grid,.customer-workspace,.customer-view) { display:grid; grid-template-columns:minmax(0,1fr); min-width:0; gap:20px !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav { position:sticky; top:calc(var(--mydancr-demo-banner-height,0px) + 8px); z-index:25; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:6px; padding:6px; border:1px solid var(--customer-line); border-radius:16px; background:#100d16f5; box-shadow:0 6px 20px #0004; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav button { position:relative; display:flex !important; flex-direction:column; align-items:center; justify-content:center; gap:7px; min-width:0; min-height:66px !important; padding:10px 4px !important; border:1px solid transparent !important; border-radius:11px !important; background:transparent !important; color:#bcb4c8 !important; box-shadow:none !important; font-size:13px !important; font-weight:500 !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav button[aria-current] { border-color:#82609e !important; background:linear-gradient(140deg,#30213f,#211b2b) !important; color:#fff !important; box-shadow:inset 0 2px #a16ee3 !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav svg { width:22px; height:22px; color:#b68deb; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-nav-count { position:absolute; top:5px; right:8px; min-width:19px; padding:2px 5px; border-radius:8px; background:#6d28d9; color:#fff; font-size:10px; line-height:1.3; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-view-heading,.customer-surface-heading)>h2, body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-view-heading h2 { margin:0; font-size:27px; font-weight:600; letter-spacing:-.035em; line-height:1.2; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-view-heading .eyebrow { display:block; margin-bottom:6px; color:#ad97c9; font-size:10px; letter-spacing:.12em; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-view-heading,.customer-surface-heading) p { margin:7px 0 0; color:var(--customer-muted); font-size:13px; font-weight:400; line-height:1.55; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-view,.customer-surface,#customer-alerts,#customer-account,#customer-followed-dancers,#customer-followed-clubs,#customer-saved-deals) { scroll-margin-top:150px; min-width:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface { padding:20px; border:1px solid var(--customer-line); border-radius:16px; background:var(--customer-surface); box-shadow:0 5px 16px #0003,inset 0 1px #ffffff04; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface-heading { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin:0 0 18px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface-heading h2 { margin:0; font-size:20px; font-weight:600; letter-spacing:-.025em; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-count { display:grid; place-items:center; min-width:29px; min-height:27px; padding:3px 7px; border:1px solid #604975; border-radius:9px; background:#251b30; color:#dbcaee; font-size:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer #customer-working-now .customer-surface-heading h2 { color:var(--customer-green); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer #customer-working-now .customer-count { border-color:#315c4b; color:var(--customer-green); background:#13251e; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-pass-list,.customer-night-list,.customer-account-stack) { display:grid; gap:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-card { display:grid; grid-template-columns:42px minmax(0,1fr) auto; align-items:center; gap:16px; padding:20px; border:1px solid #765294; border-radius:14px; color:#fff; text-decoration:none; background:radial-gradient(ellipse at 0 0,#6c36a642,transparent 70%),#201628; box-shadow:inset 0 1px #ffffff0c; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-icon { width:42px; height:48px; display:grid; place-items:center; color:#c4a0f5; border-right:1px dashed #a87bcc66; padding-right:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-icon svg { width:30px; height:30px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-copy { min-width:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-copy .eyebrow { color:#ccb3e7; font-size:10px; letter-spacing:.1em; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-copy h3 { margin:6px 0; font-size:20px; font-weight:600; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-copy p { margin:0 0 7px; color:#d3c4df; font-size:14px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-copy time { color:#cbbbd9; font-size:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-cta { display:flex; align-items:center; justify-content:center; gap:10px; min-height:44px; padding:11px 18px; border:1px solid #a066ff; border-radius:10px; background:#6c24ca; font-size:14px; font-weight:600; white-space:nowrap; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-pass-help,.past-deal-history) { margin:14px 0 0; border:0; border-top:1px solid #ffffff12; border-radius:0; background:transparent; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-pass-help,.past-deal-history)>summary { min-height:44px; padding:13px 0; color:#c5bbd0; font-size:12px; font-weight:500; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-help p { color:var(--customer-muted); font-size:13px; line-height:1.6; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-past-pass { display:flex; justify-content:space-between; align-items:center; gap:16px; min-height:64px; padding:12px 0; border-top:1px solid #ffffff0e; color:#c2b7cd; font-size:12px; text-decoration:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-past-pass strong { display:block; color:#e3dce9; font-weight:500; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-past-pass small { display:block; margin-top:5px; color:var(--customer-muted); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header { padding:2px 0 12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header>span { color:#c4a4e9; font-size:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header h3 { margin:7px 0 4px; font-size:17px; font-weight:600; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header small { color:var(--customer-muted); font-size:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group+.customer-plan-group { border-top:1px solid #ffffff12; padding-top:16px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-card { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; margin:0 0 8px; padding:12px; border:1px solid #4a3a5655; border-radius:12px; background:#1a161f; box-shadow:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-identity { display:flex; align-items:center; gap:12px; min-width:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-portrait { width:64px; height:76px; flex:0 0 64px; border-radius:9px; overflow:hidden; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-portrait .customer-saved-card-image { display:block; width:100%; height:100%; object-fit:cover; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-copy { min-width:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-copy h3 { margin:0 0 5px; font-size:16px; font-weight:600; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-copy .customer-night-date { display:block; margin:0; color:#c4b8d1; font-size:12px; line-height:1.6; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-controls { display:flex; align-items:center; gap:8px; margin:0; padding:0; border:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-actions { display:flex !important; align-items:center; flex-wrap:wrap; gap:8px; margin:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-card-actions a,.customer-card-actions button,.customer-empty-state a,.customer-card-menu button,.customer-card-menu a,.notification-panel button,.account-action-button) { display:inline-flex !important; align-items:center; justify-content:center; min-height:44px !important; padding:10px 14px !important; border:1px solid #5b496d !important; border-radius:10px !important; color:#eee7f6 !important; background:#251e2d !important; line-height:1.3; font-family:inherit !important; font-size:13px !important; font-weight:500 !important; text-decoration:none; box-shadow:none !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-primary,.customer-explore .customer-primary) { background:#6822c7 !important; border-color:#aa72f5 !important; color:#fff !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu { position:relative; flex:0 0 auto; border:0; background:transparent; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu>summary { display:grid; place-items:center; min-width:44px; min-height:44px; width:44px; padding:0; border:1px solid #ffffff26; border-radius:10px; background:#151019e8; color:#dbd2e4; list-style:none; font-size:14px; line-height:1; letter-spacing:2px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu>summary::-webkit-details-marker { display:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu[open] { z-index:12; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu>div { position:absolute; right:0; top:calc(100% + 4px); z-index:12; min-width:160px; max-width:220px; padding:5px; border:1px solid #766186; border-radius:12px; background:#201926; box-shadow:0 6px 20px #0009; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu :is(button,a) { width:100% !important; height:auto !important; max-width:none !important; border:0 !important; white-space:normal; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:14px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-filters { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); flex:1; min-width:260px; padding:5px; gap:5px; border:1px solid var(--customer-line); border-radius:14px; background:#111015; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-filters button { display:flex !important; align-items:center; justify-content:center; gap:7px; min-width:0; min-height:44px !important; padding:8px !important; border:1px solid transparent !important; border-radius:9px !important; background:transparent !important; box-shadow:none !important; color:#bdb5c7 !important; font-size:13px !important; font-weight:500 !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-filters button[aria-pressed=true] { border-color:#73538a !important; background:#302239 !important; color:#fff !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-filters button span { color:#b9a1ca; font-size:11px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-city-filter,.customer-explore label) { display:grid; gap:6px; margin:0; color:#b7aabd; font-size:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer select { min-width:0; max-width:100%; min-height:44px; padding:8px 30px 8px 12px; border:1px solid #5b456e; border-radius:10px; background:#18121e; color:#f3edf8; font-family:inherit; font-size:16px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-city-heading { padding-bottom:10px; margin:0 0 12px; border-bottom:1px solid #ffffff16; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-city-heading h3 { margin:0; font-size:18px; font-weight:600; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-city-heading span { color:var(--customer-muted); font-size:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-city-list { gap:24px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-card { position:relative; min-width:0; overflow:visible; border:0; background:transparent; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-tile { position:relative; display:block; width:100%; aspect-ratio:1/1.5; overflow:hidden; border:1px solid #655077; border-radius:12px; background:#211628; box-shadow:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-tile>.customer-saved-card-image { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-copy { position:absolute; inset:auto 0 0; display:flex; flex-direction:column; gap:5px; min-height:45%; justify-content:flex-end; padding:45px 12px 14px; background:linear-gradient(transparent,#08060dba 38%,#08060df5); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-copy strong { order:0; color:#fff; font-size:17px; font-weight:600; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-copy small { color:#ddd3e5; font-size:12px; line-height:1.4; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status { order:3; border:0; padding:0; font-size:11px; font-weight:500; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status.is-working { color:var(--customer-green); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status.is-working::before { content:""; display:inline-block; width:5px; height:5px; border-radius:50%; margin-right:5px; vertical-align:middle; background:currentColor; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status:is(.is-upcoming,.is-quiet) { color:#c2b9cd; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { position:absolute; top:7px; right:7px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card { min-width:0; padding:16px; border:1px solid var(--customer-line); border-radius:16px; background:var(--customer-surface); overflow:visible; box-shadow:0 4px 14px #0003; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { display:grid; grid-template-columns:64px minmax(0,1fr) 44px; gap:12px; align-items:center; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-favorite-club-brand,.customer-favorite-club-logo) { width:64px; height:70px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-logo img { width:100%; height:100%; object-fit:contain; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-identity { min-width:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-identity strong { font-size:17px; font-weight:600; line-height:1.3; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-identity small { color:var(--customer-muted); font-size:12px; line-height:1.5; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-copy { margin-top:12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity { margin:0 0 12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now { display:inline-flex; gap:6px; align-items:center; min-height:36px; color:var(--customer-green); border:0; background:transparent; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now i { width:6px; height:6px; border-radius:50%; background:currentColor; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now:not(.has-dancers) { color:var(--customer-muted); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now:not(.has-dancers) i { display:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-actions { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-panel { padding:0; border:0; background:transparent; box-shadow:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-head { display:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-privacy-note { margin:0 0 16px; color:var(--customer-muted); font-size:13px; line-height:1.5; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; padding:18px; border:1px solid var(--customer-line); border-radius:16px; background:var(--customer-surface); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark>span { flex:1; min-width:140px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark>span>strong { color:#fff; font-size:17px; font-weight:600; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark>span>small { display:block; margin-top:6px; font-size:12px; color:var(--customer-muted); line-height:1.5; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-empty-state { display:grid; justify-items:start; gap:8px; padding:16px; border:1px dashed #65517477; border-radius:12px; background:#1d172233; text-align:left; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-empty-state strong { color:#e7deee; font-size:15px; font-weight:500; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-empty-state p { margin:0; max-width:56ch; color:var(--customer-muted); font-size:13px; line-height:1.6; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore { display:grid; gap:16px; padding:24px; border:1px solid #5a3b73; border-radius:16px; background:radial-gradient(ellipse at 100% 0,#702ab13b,transparent 75%),#15101d; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore .eyebrow { color:#c0a5db; font-size:10px; letter-spacing:.1em; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore h2 { margin:8px 0; font-size:24px; font-weight:600; letter-spacing:-.03em; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore p { margin:0; max-width:55ch; font-size:13px; line-height:1.6; color:var(--customer-muted); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore label { max-width:320px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-welcome-card,.customer-action-status) { border:1px solid #534162; border-radius:14px; background:#1a1322; padding:16px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-card { display:grid; grid-template-columns:30px minmax(0,1fr) 44px; align-items:start; gap:10px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-lock { width:28px; height:28px; padding:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-copy .eyebrow { display:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-copy h2 { font-size:16px; font-weight:600; margin:0 0 6px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-copy p { font-size:12px; line-height:1.5; margin:0; color:var(--customer-muted); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-card>button { min-width:44px; min-height:44px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-manage-alerts, body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-account-disclosure { border:1px solid var(--customer-line); border-radius:16px; background:var(--customer-surface); overflow:hidden; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-manage-alerts { margin-bottom:16px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-manage-alerts,.customer-account-disclosure)>summary { display:flex; justify-content:space-between; align-items:center; gap:12px; min-height:60px; padding:16px; color:#ede6f3; font-size:15px; font-weight:500; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-manage-alerts,.customer-account-disclosure)>summary::after { content:"+"; color:#c29ceb; font-size:21px; font-weight:400; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-manage-alerts,.customer-account-disclosure)[open]>summary::after { content:"−"; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-manage-alerts,.customer-account-disclosure)>summary>span { flex:1; text-align:right; color:var(--customer-muted); font-size:11px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-account-stack { margin-top:20px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.notification-panel,.customer-account-details) { padding:20px; border:1px solid var(--customer-line); border-radius:16px; background:var(--customer-surface); box-shadow:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-title-row { align-items:center; gap:14px; margin-bottom:16px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-title-row h2 { margin:5px 0 0; font-size:24px; font-weight:600; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-title-row>div>span { color:#b49acb; font-size:11px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-toolbar { flex-wrap:wrap; gap:8px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-panel .notification-mark-read-button { min-height:36px !important; font-size:12px !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-row { display:grid; gap:8px; position:relative; padding:16px; border:1px solid #725389 !important; border-radius:12px; background:#271b33 !important; text-align:left; box-shadow:none !important; color:#e3dbe9 !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-row.read { border-color:#46394f !important; background:#19151e !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-row-meta { color:#b9abc7; font-size:11px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-row>strong { color:#f5eff9; font-size:14px; font-weight:550; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-row>span:not(.notification-row-meta) { color:#bfb3c9; font-size:13px; line-height:1.6; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-row>em { color:#c5a0ef; font-size:12px; font-style:normal; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-notification-image { width:36px; height:40px; object-fit:cover; border:1px solid #80608e66; border-radius:8px; flex:0 0 36px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-manage-alerts,.customer-account-disclosure)>.info-panel { border:0; border-top:1px solid #4a3a56; border-radius:0; padding:18px; margin:0; background:#15111a; box-shadow:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-account-details h2,.support-panel h2) { font-size:19px; font-weight:600; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(input,textarea) { min-width:0; font-size:16px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-loading-state { color:var(--customer-muted); font-size:13px; line-height:1.6; }
+@media (hover:hover) {
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav button:hover, body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-filters button:hover { border-color:#725587 !important; color:#fff !important; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-card:hover { border-color:#be8fed; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-tile:hover { border-color:#bb8be8; }
+}
+@media (max-width:700px) {
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer { padding:18px 12px 100px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav { position:fixed; top:auto; bottom:10px; bottom:max(10px,env(safe-area-inset-bottom)); left:12px; right:12px; width:auto; padding:5px; backdrop-filter:blur(16px); }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav button { min-height:58px !important; font-size:12px !important; gap:5px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-view,.customer-surface,#customer-alerts,#customer-account,#customer-followed-dancers,#customer-followed-clubs,#customer-saved-deals) { scroll-margin-top:90px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface { padding:14px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface-heading { margin-bottom:14px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface-heading h2 { font-size:18px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-card { grid-template-columns:30px minmax(0,1fr); gap:12px; padding:16px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-icon { width:30px; padding-right:8px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-icon svg { width:26px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-cta { grid-column:1/-1; margin-top:4px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-pass-copy h3 { font-size:19px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-card { grid-template-columns:minmax(0,1fr); }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-controls { justify-content:space-between; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions { flex:1; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions>* { flex:1; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-grid { grid-template-columns:minmax(0,1fr); }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-grid { gap:6px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-tile { aspect-ratio:1/1.9; border-radius:9px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-copy { padding:35px 7px 10px; gap:4px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-copy strong { font-size:14px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-copy small { font-size:11px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status { font-size:10px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { top:3px; right:3px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary { border-color:#ffffff12; background:#0e0914b3; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-toolbar { align-items:stretch; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-city-filter { width:100%; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-title-row { align-items:flex-start; flex-direction:column; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.notification-panel,.customer-account-details) { padding:16px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore { padding:18px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore .customer-card-actions>* { flex:1; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-card { grid-template-columns:minmax(0,1fr) 44px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-lock { display:none; }
+}
+@media (max-width:360px) {
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .dashboard-head-row { grid-template-columns:38px minmax(0,1fr) 44px; gap:9px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dashboard-avatar { width:38px; height:38px; font-size:16px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-tile { aspect-ratio:1/1.65; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { grid-template-columns:48px minmax(0,1fr) 44px; gap:8px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-favorite-club-brand,.customer-favorite-club-logo) { width:48px; height:60px; }
+}
+
+
+
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-favorite-club-card,.notification-panel,.customer-account-details) { background:var(--customer-surface) !important; border-color:var(--customer-line) !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-list { grid-template-columns:minmax(0,1fr); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions { display:flex !important; flex-wrap:nowrap; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions>:is(a,button) { width:auto !important; min-width:100px !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status { text-transform:none; letter-spacing:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-card:nth-child(3n+1) .customer-card-menu>div { left:0; right:auto; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-panel .notification-title-row h2 { padding:0 !important; margin:0 !important; color:#f5f2fa !important; font-size:24px !important; font-weight:600 !important; line-height:1.25 !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-panel .notification-title-row h2::before { display:none !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-title-row>div:first-child>span { display:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-panel .notification-toolbar { display:flex; justify-content:space-between; width:100%; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-row.read { opacity:1; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-row>em { text-transform:none; letter-spacing:0; font-weight:500; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-row-meta b { color:#b7a2ca; font-weight:500; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface .customer-followed-dancer-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface .customer-followed-dancer-card:nth-child(3n+1) .customer-card-menu>div { left:auto; right:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface .customer-followed-dancer-card:nth-child(4n+1) .customer-card-menu>div { left:0; right:auto; }
+@media (max-width:700px) {
+ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface .customer-followed-dancer-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface .customer-followed-dancer-card:nth-child(4n+1) .customer-card-menu>div { left:auto; right:0; }
+ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface .customer-followed-dancer-card:nth-child(3n+1) .customer-card-menu>div { left:0; right:auto; }
+ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions>:is(a,button) { min-width:0 !important; flex:1; }
+}
+@media (max-width:360px) {
+ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface .customer-followed-dancer-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-card:nth-child(3n+1) .customer-card-menu>div, body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface .customer-followed-dancer-card:nth-child(3n+1) .customer-card-menu>div { left:auto; right:0; }
+ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-card:nth-child(2n+1) .customer-card-menu>div, body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface .customer-followed-dancer-card:nth-child(2n+1) .customer-card-menu>div { left:0; right:auto; }
+}
+
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-date[data-working] { color:var(--customer-green); }

@@ -10,7 +10,7 @@ import { captureBrowserAuthSessionGuard } from "@/src/lib/dancr/browser-session"
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { DancerDashboardAvatar, DancerDashboardIcon } from "./DancerDashboardIdentity";
 import "./dancer-dashboard.css";
-import { CustomerDashboardAvatar, CustomerDashboardIcon } from "./CustomerDashboardIdentity";
+import { CustomerDashboardAvatar } from "./CustomerDashboardIdentity";
 import "./customer-dashboard.css";
 import "./venue-dashboard.css";
 import "./dashboard-polish.css";
@@ -22,6 +22,7 @@ import VenueAdminUtilities from "./VenueAdminUtilities";
 import "./dancer-profile-builder-polish.css";
 import "./dancer-onboarding.css";
 import "./dancer-premium.css";
+import "./customer-night.css";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
@@ -33,7 +34,7 @@ import { DASHBOARD_SESSION_KEY as SESSION_KEY, DashboardDataRequestError, dashbo
 import type { DashboardRole, CustomerDashboardSection, LoadState, CustomerSavedState } from "./dashboard-types";
 import { dashboardName, SupportInboxPanel, DashboardLoadingState, InfoPanel, DashboardSection, NotificationPanel, AccountControlsPanel, AccountSummaryPanel } from "./DashboardShared";
 import { DashboardStyles } from "./DashboardStyles";
-import { AgentDashboardShortcut, CustomerWelcomeCard, CustomerDashboardNav, CustomerPanel, CustomerPreferencesPanel } from "./CustomerDashboardPanels";
+import { AgentDashboardShortcut, CustomerWelcomeCard, CustomerPanel, CustomerPreferencesPanel } from "./CustomerDashboardPanels";
 import dynamic from "next/dynamic";
 const VenuePanel = dynamic(() => import("./VenueDashboardPanels").then(module => module.VenuePanel));
 
@@ -358,14 +359,11 @@ export default function DashboardClient({
   }, [analyticsPeriod, isLoading, refreshVenueDashboard, role, state.error, state.venueRequest, state.account?.accountState]);
 
   useEffect(() => {
-    if (isLoading || state.error) return;
-    const initialSectionId = role === "customer" && initialSection
-      ? initialSection === "offers" ? "customer-saved-deals" : "customer-followed-dancers"
-      : "";
+    if (isLoading || state.error || role === "customer") return;
     const hashSectionId = decodeURIComponent(window.location.hash.replace(/^#/, ""));
     const sectionId = role === "venue" && hashSectionId === "venue-working-now"
       ? "venue-dancer-roster"
-      : initialSectionId || hashSectionId;
+      : hashSectionId;
     if (!sectionId || initialSectionTargetRef.current === sectionId) return;
     const frame = window.requestAnimationFrame(() => {
       const section = document.getElementById(sectionId);
@@ -495,7 +493,7 @@ export default function DashboardClient({
   }
 
   return (
-    <main className={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : role === "dancer" ? "dancer-dashboard" : undefined}>
+    <main className={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : role === "dancer" ? "dancer-dashboard" : "customer-dashboard"}>
       {role === "venue" ? <VenueAdminUtilities /> : null}
       <DashboardStyles />
       <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
@@ -513,7 +511,8 @@ export default function DashboardClient({
               {dancerProfileIsLive ? <span className="dashboard-live-status"><i aria-hidden="true" /> Public</span> : null}
             </div>
             {dashboardDescription ? <p>{dashboardDescription}</p> : null}
-            {role === "customer" && !dashboardDescription ? <p className="customer-dashboard-intro">Your favorites, plans, and updates.</p> : null}
+            {role === "customer" && !dashboardDescription ? <p className="customer-dashboard-intro">Your night, privately organized.</p> : null}
+            {role === "customer" ? <Link className="customer-explore-link" href={dashboardCloseHref}>Explore MyDancr <span aria-hidden="true">↗</span></Link> : null}
             {role === "venue" || role === "dancer" ? <Link className="venue-public-site-link" href={dashboardCloseHref}>View public site <span aria-hidden="true">↗</span></Link> : null}
           </div>
           <DashboardCloseButton
@@ -543,11 +542,6 @@ export default function DashboardClient({
           {!dancerAccountPaused && !venueAccountPaused && state.agentAccess?.active ? <AgentDashboardShortcut /> : null}
           {role === "customer" ? (
             <>
-              <CustomerWelcomeCard
-                accountKey={String(state.account?.id || state.account?.email || "guest")}
-                show={showCustomerWelcome}
-              />
-              <CustomerDashboardNav saved={customerSaved} />
               {state.savedError ? (
                 <InfoPanel title="Saved activity">
                   <p role="alert">{state.savedError}</p>
@@ -555,39 +549,33 @@ export default function DashboardClient({
                 </InfoPanel>
               ) : null}
               <CustomerPanel
+                key={String(state.account?.id || state.account?.email || "guest")}
                 saved={customerSaved}
                 onSavedChange={updateSaved}
                 isLoading={customerSavedLoading && !state.saved}
                 accountSavedUnavailable={Boolean(state.savedError && !state.saved)}
-              />
-              <DashboardSection
-                count={customerAlertCount}
-                description="Your updates, notification preferences, and delivery options."
-                id="customer-alerts"
-                icon={<CustomerDashboardIcon section="customer-alerts" />}
-                toggleAffordance="chevron"
-                title="Alerts"
-              >
-                {isLoading ? <p role="status">Loading your alerts…</p> : <NotificationPanel saved={state.saved} customerMode panelId="customer-alerts-panel" onCountChange={setCustomerAlertCount} />}
-                {state.profile ? <CustomerPreferencesPanel profile={state.profile} onProfileChange={updateProfile} /> : (
-                  <p role="status">{state.profile === null ? "Notification preferences are unavailable right now." : "Loading your notification preferences…"}</p>
-                )}
-              </DashboardSection>
-              <DashboardSection
-                count={customerSupportCount}
-                badgeLabel={`${customerSupportCount} support ${customerSupportCount === 1 ? "conversation" : "conversations"}`}
-                description="Email, password, support messages, and account status."
-                id="customer-account"
-                icon={<CustomerDashboardIcon section="customer-account" />}
-                toggleAffordance="chevron"
-                title="Account"
-              >
-                {isLoading ? <p role="status">Loading your account…</p> : <div className="venue-dashboard-inner-grid customer-settings-grid">
-                  <CustomerAccountPanel account={state.account || {}} onAccountChange={updateAccountDetails} />
-                  <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" onCountChange={setCustomerSupportCount} />
-                  <AccountControlsPanel accountState={String(state.account?.accountState || "active")} />
+                initialSection={initialSection}
+                alertCount={customerAlertCount}
+                welcomeContent={<CustomerWelcomeCard accountKey={String(state.account?.id || state.account?.email || "guest")} show={showCustomerWelcome} />}
+                alertsContent={<div id="customer-alerts" tabIndex={-1}>
+                  <details className="customer-manage-alerts" id="customer-notification-preferences" tabIndex={-1}>
+                    <summary>Manage alerts <span>Preferences & delivery</span></summary>
+                    {state.profile ? <CustomerPreferencesPanel profile={state.profile} onProfileChange={updateProfile} /> : <p role="status">{state.profile === null ? "Notification preferences are unavailable right now." : "Loading your notification preferences…"}</p>}
+                  </details>
+                  {isLoading ? <p role="status">Loading your alerts…</p> : <NotificationPanel saved={state.saved} customerMode panelId="customer-alerts-panel" onCountChange={setCustomerAlertCount} />}
                 </div>}
-              </DashboardSection>
+                accountContent={<div id="customer-account" tabIndex={-1}>
+                  <div className="customer-view-heading"><h2>Account</h2><p>Your account and activity stay private.</p></div>
+                  {isLoading ? <p role="status">Loading your account…</p> : <div className="customer-account-stack">
+                    <CustomerAccountPanel account={state.account || {}} onAccountChange={updateAccountDetails} />
+                    <details className="customer-account-disclosure" id="customer-support-section">
+                      <summary>Help & support <span>{customerSupportCount ? `${customerSupportCount} conversations` : "Get in touch"}</span></summary>
+                      <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" onCountChange={setCustomerSupportCount} />
+                    </details>
+                    <details className="customer-account-disclosure"><summary>Account controls</summary><AccountControlsPanel accountState={String(state.account?.accountState || "active")} /></details>
+                  </div>}
+                </div>}
+              />
             </>
           ) : null}
           {role === "dancer" ? (

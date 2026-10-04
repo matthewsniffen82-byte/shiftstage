@@ -16,15 +16,10 @@ const [dashboard, customerService, favoritesRoute, venueFollowsRoute, directions
   readFile(new URL("../supabase/migrations/202608300009_customer_saved_club_deals.sql", import.meta.url), "utf8"),
 ]);
 
-test("customer dashboard leads with four clear activity areas before alerts and account", () => {
-  assert.match(
-    dashboard,
-    /<CustomerDashboardNav saved=\{customerSaved\} \/>[\s\S]*?<CustomerPanel[\s\S]*?id="customer-alerts"[\s\S]*?<NotificationPanel saved=\{state\.saved\} customerMode panelId="customer-alerts-panel" onCountChange=\{setCustomerAlertCount\} \/>[\s\S]*?id="customer-account"/,
-  );
-  assert.match(
-    dashboard,
-    /customer-followed-dancers", label: "Followed Dancers"[\s\S]*?customer-followed-clubs", label: "Favorite Clubs"[\s\S]*?customer-saved-deals", label: "Saved Club Deals"[\s\S]*?customer-going", label: "I’m Going"[\s\S]*?href="#customer-alerts"[\s\S]*?>Alerts[\s\S]*?href="#customer-account"[\s\S]*?>Account/,
-  );
+test("customer dashboard leads with My Night and four dedicated destinations", () => {
+  assert.match(dashboard, /<CustomerPanel[\s\S]*?alertsContent=[\s\S]*?accountContent=/);
+  assert.match(dashboard, /id: "night", label: "My Night"[\s\S]*?id: "saved", label: "Saved"[\s\S]*?id: "alerts", label: "Alerts"[\s\S]*?id: "account", label: "Account"/);
+  assert.match(dashboard, /Explore MyDancr/);
   assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
   assert.doesNotMatch(dashboard, /eyebrow="(?:Guest workspace|Your activity)"/);
   assert.match(dashboard, /const dashboardHeading = isLoading\s*\? resolvedDisplayName \|\| title[\s\S]*?: displayName/);
@@ -76,8 +71,8 @@ test("followed dancers and clubs are grouped by city without location-based dist
 });
 
 test("customer dashboard uses compact electric-violet hierarchy without duplicate saved-section headers", () => {
-  assert.match(dashboard, /count=\{saved\?\.follows\?\.length\}[\s\S]*?id="customer-followed-dancers"/);
-  assert.match(dashboard, /count=\{saved\?\.venueFollows\?\.length\}[\s\S]*?id="customer-followed-clubs"/);
+  assert.match(dashboard, /id="customer-followed-dancers" hidden=\{savedFilter !== "dancers"\}/);
+  assert.match(dashboard, /id="customer-followed-clubs" hidden=\{savedFilter !== "clubs"\}/);
   assert.doesNotMatch(dashboard, /<span>Your people<\/span>|<span>Your clubs<\/span>|className="customer-section-count"/);
   assert.match(dashboard, /function CustomerFollowedDancersPanel[\s\S]*?<div className="customer-saved-panel"/);
   assert.match(dashboard, /function CustomerFollowedClubsPanel[\s\S]*?<div className="customer-saved-panel"/);
@@ -99,9 +94,9 @@ test("followed dancer tiles keep the profile link separate from their unfollow b
   assert.match(card, /customer-followed-dancer-status is-\$\{statusTone\}[\s\S]*?customer-followed-dancer-time/);
   assert.match(card, /sizes="\(max-width: 620px\) 29vw, \(max-width: 1100px\) 30vw, 300px"/);
   assert.doesNotMatch(card, /customer-card-actions|Directions|Alerts on|Alerts off/);
-  assert.match(card, /<\/Link>\s*<button[\s\S]*?className="customer-dancer-unfollow"[\s\S]*?aria-label=\{`Unfollow \$\{dancerName\}`\}[\s\S]*?disabled=\{pending\}[\s\S]*?onClick=\{onUnfollow\}/);
+  assert.match(card, /<\/Link>\s*<details className="customer-card-menu customer-dancer-menu">[\s\S]*?<button[\s\S]*?className="customer-dancer-unfollow"[\s\S]*?aria-label=\{`Unfollow \$\{dancerName\}`\}[\s\S]*?disabled=\{pending\}[\s\S]*?onClick=\{onUnfollow\}/);
   assert.match(card, /unfollowing \? "Unfollowing…" : "Unfollow"/);
-  assert.match(dashboard, /description="Your followed dancers, grouped by city\."/);
+  assert.match(dashboard, /aria-label=\{`More options for \$\{dancerName\}`\}/);
 });
 
 test("fictional club direction controls navigate to the shared MyDancr destination", () => {
@@ -142,7 +137,7 @@ test("Club Deal wallet and alerts expose real status, expiry, history, and direc
   assert.match(dashboard, /No alerts yet[\s\S]*?Browse dancers/);
   assert.match(dashboard, /How admission passes work/);
   assert.match(dashboard, /Choose the exact deal[\s\S]*?Show your pass[\s\S]*?Wait for confirmation/);
-  assert.match(dashboard, /show the QR code to club staff/);
+  assert.match(dashboard, /QR code to club staff/);
 });
 
 test("new guest confirmation explains private account benefits once", () => {
@@ -150,12 +145,10 @@ test("new guest confirmation explains private account benefits once", () => {
   assert.match(dashboard, /mydancr:customer-welcome-dismissed:/);
   assert.match(dashboard, /Your private MyDancr account is ready/);
   assert.match(dashboard, /account or activity on a public profile/);
-  assert.match(dashboard, /Follow dancers and clubs/);
-  assert.match(dashboard, /Save favorite profiles and Club Deals/);
-  assert.match(dashboard, /Get Working Now and schedule alerts/);
-  assert.match(dashboard, /Use I&amp;apos;m Going|Use I\&apos;m Going/);
-  assert.match(dashboard, /Explore dancers/);
-  assert.match(dashboard, /View Club Deals/);
+  assert.match(dashboard, /Find your next favorite/);
+  assert.match(dashboard, /Explore a city/);
+  assert.match(dashboard, /homeDiscoveryHref\("dancers", city\)/);
+  assert.match(dashboard, /homeDiscoveryHref\("venues", city\)/);
   assert.match(dashboard, /url\.searchParams\.delete\("confirmed"\)/);
 });
 
@@ -192,7 +185,8 @@ test("Club Deals can be privately bookmarked without reserving or redeeming them
 test("customer dashboard keeps saved deals separate from cashier redemption activity", () => {
   assert.match(dashboard, /<h2>Saved Club Deals<\/h2>/);
   assert.match(dashboard, /Saved deals are private bookmarks\. Saving does not reserve, select, or redeem an offer\./);
-  assert.match(dashboard, /<details className="customer-deal-activity">[\s\S]*?Club Deal use &amp; history/);
+  assert.match(dashboard, /<CustomerPassWallet deals=\{saved\?\.dealRedemptions \|\| \[\]\}/);
+  assert.match(dashboard, /id="customer-passes" title="Admission passes"/);
   assert.match(dashboard, />View deal<\/Link>/);
   assert.match(dashboard, />\s*Remove\s*<\/button>/);
   assert.match(dashboard, /"\/api\/customer\/deal-saves"/);

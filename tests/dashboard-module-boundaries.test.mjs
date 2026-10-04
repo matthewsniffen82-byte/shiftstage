@@ -51,6 +51,7 @@ async function renderDashboard(role, initialState = {}, loading = true) {
       if (path.endsWith('/payout-copy')) return require('../src/lib/dancr/payout-copy.ts');
       if (path.endsWith('/profile-approval')) return require('../src/lib/dancr/profile-approval.ts');
       if (path.endsWith('/club-deal-presets')) return require('../src/lib/dancr/club-deal-presets.ts');
+      if (path === './customer-dashboard-view') return require('../app/dashboard/customer-dashboard-view.ts');
       if (path === './avatar-upload-state') return require('../app/dashboard/avatar-upload-state.ts');
       if (files.includes(path.slice(2))) return load(path.slice(2));
       return new Proxy(() => null, { get: (_target, key) => key === 'then' ? undefined : key === '__esModule' ? false : () => null });
@@ -63,7 +64,7 @@ async function renderDashboard(role, initialState = {}, loading = true) {
 }
 test('customer dashboard renders through real module imports before data arrives', async () => {
   const html = await renderDashboard('customer');
-  for (const text of ['Followed Dancers', 'Favorite Clubs', 'Saved Club Deals', 'Account']) assert.ok(html.includes(text), text);
+  for (const text of ['My Night', 'Saved', 'Alerts', 'Account']) assert.ok(html.includes(text), text);
 });
 test('session recovery still hides protected content through the new module graph', async () => {
   const html = await renderDashboard('customer', { error: 'Sign in again', signInRequired: true });
@@ -86,11 +87,13 @@ for (const scenario of ['active', 'cancelled', 'empty']) test('guest dashboard p
     account: { role: 'customer', displayName: 'Sample guest' },
     saved: { follows: [], venueFollows: [], dealSaves: [], goingSignals },
   }, false);
-  const firstSection = html.match(/<details[^>]+id="([^"]+)"[^>]*>/)?.[0] || '';
-  assert.match(firstSection, scenario === 'active' ? /id="customer-going"/ : /id="customer-followed-dancers"/);
-  assert.match(firstSection, /open=""/);
+  assert.match(html, /id="customer-view-night"[^>]*aria-label="My Night"/);
   assert.equal((html.match(/id="customer-going"/g) || []).length, 1);
-  assert.equal(html.includes('data-has-plans="true"'), scenario === 'active');
+  const night = html.slice(html.indexOf('id="customer-going"'), html.indexOf('id="customer-working-now"'));
+  assert.equal(night.includes('Sample dancer'), scenario === 'active');
+  assert.equal(night.includes('No plans yet'), scenario !== 'active');
+  assert.ok(html.indexOf('id="customer-passes"') < html.indexOf('id="customer-going"'));
+
 });
 for (const role of ['dancer', 'venue']) test(role + ' panels render after their dynamic modules resolve', async () => {
   const html = await renderDashboard(role, { account: { role, displayName: 'Module test' }, profile: { stageName: 'Module test', city: 'Las Vegas' } }, false);

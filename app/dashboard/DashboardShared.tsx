@@ -76,7 +76,9 @@ export function NotificationPanel({
   onCountChange?: (count: number) => void;
 } = {}) {
   const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
-  useEffect(() => { onCountChange?.(notifications.length); }, [notifications.length, onCountChange]);
+  const notificationCount = customerMode ? notifications.filter(item => !item.readAt).length : notifications.length;
+  useEffect(() => { onCountChange?.(notificationCount); }, [notificationCount, onCountChange]);
+  const [visibleAlerts, setVisibleAlerts] = useState(10);
   const [status, setStatus] = useState("");
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
@@ -234,16 +236,19 @@ export function NotificationPanel({
         </div>
       ) : null}
       <div className="notification-list">
-        {notifications.slice(0, customerMode ? 10 : 6).map((notification) => {
+        {notifications.slice(0, customerMode ? visibleAlerts : 6).map((notification) => {
           const notificationId = String(notification.id);
           const destination = pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
+          const payload = notification.payload && typeof notification.payload === "object" ? notification.payload as Record<string, unknown> : {};
+          const portrait = customerMode ? (payload.dancerId ? (saved?.follows || []).find(item => item.dancer?.id === payload.dancerId)?.dancer?.imageUrl : null)
+            || (payload.venueId ? (saved?.venueFollows || []).find(item => item.venue?.id === payload.venueId)?.venue?.logoImageUrl : null) : null;
           const content = (
             <>
               <span className="notification-row-meta">
                 <b>{notificationCategory(notification)}</b>
                 <time dateTime={String(notification.createdAt || "")}>{formatNotificationTimestamp(notification.createdAt)}</time>
               </span>
-              <strong style={{ display: "flex", alignItems: "center", gap: 8 }}><NotificationIcon notification={notification} /><span>{String(notification.title || "Notification")}</span></strong>
+              <strong style={{ display: "flex", alignItems: "center", gap: 8 }}>{portrait ? <img className="customer-notification-image" src={portrait} alt="" loading="lazy" /> : <NotificationIcon notification={notification} />}<span>{String(notification.title || "Notification")}</span></strong>
               <span>{String(notification.body || "")}</span>
               {destination ? <em>Open details →</em> : null}
             </>
@@ -276,6 +281,7 @@ export function NotificationPanel({
           </div>
         ) : null}
       </div>
+      {customerMode && notifications.length > visibleAlerts ? <button type="button" onClick={() => setVisibleAlerts(count => count + 10)}>Show more alerts</button> : null}
       {notifications.length && !dancerMode ? (
         <button className="notification-clear-button" type="button" onClick={clearNotifications}>
           Clear all

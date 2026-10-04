@@ -1,17 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { CUSTOMER_FOLLOW_ALERTS, customerNotificationSettings, type CustomerNotificationKey } from "@/src/lib/dancr/customer-notification-preferences";
 import { customerPushDeviceEnabled, customerPushSupportMessage, disableCustomerPush, enableCustomerPush, type CustomerNotificationDelivery } from "@/src/lib/dancr/customer-push";
-import { CustomerDashboardIcon, type CustomerDashboardSectionId } from "./CustomerDashboardIdentity";
+import { CustomerDashboardIcon } from "./CustomerDashboardIdentity";
 import { DEVICE_SAVED_DEALS_CHANGED_EVENT, removeDeviceSavedClubDeal } from "@/src/lib/dancr/customer-device-deals";
 import { readSession, requestCustomerProfileJson, requestDashboardJson } from "./dashboard-session";
 import type { CustomerDancerFollow, CustomerSavedState, SavedDancerSummary, SavedShiftSummary, SavedVenueSummary, CustomerVenueFollow, CustomerGoingSignal, LoadState, SavedImageSummary } from "./dashboard-types";
-import { openDashboardSection, customerDirectionsHref, DashboardSection, customerDancerHref, customerVenueHref, customerInitials } from "./DashboardShared";
+import { customerDirectionsHref, customerDancerHref, customerVenueHref, customerInitials } from "./DashboardShared";
+import { customerDashboardDestination, type CustomerView, type CustomerSavedFilter } from "./customer-dashboard-view";
 const customerDashboardCollator = new Intl.Collator("en", {
   numeric: true,
   sensitivity: "base",
@@ -130,16 +131,6 @@ export function CustomerWelcomeCard({ accountKey, show }: { accountKey: string; 
         <span className="eyebrow">Private guest account</span>
         <h2 id="customer-welcome-title">Your private MyDancr account is ready</h2>
         <p>Build your night without putting your account or activity on a public profile.</p>
-        <ul>
-          <li>Follow dancers and clubs</li>
-          <li>Save favorite profiles and Club Deals</li>
-          <li>Get Working Now and schedule alerts</li>
-          <li>Use I&apos;m Going to keep upcoming shifts together</li>
-        </ul>
-        <div className="customer-welcome-actions">
-          <Link href={homeDiscoveryHref("dancers")} onClick={dismissWelcome}>Explore dancers</Link>
-          <Link href={homeDiscoveryHref("venues")} onClick={dismissWelcome}>View Club Deals</Link>
-        </div>
       </div>
       <button type="button" onClick={dismissWelcome} aria-label="Dismiss guest account welcome">×</button>
     </section>
@@ -147,44 +138,69 @@ export function CustomerWelcomeCard({ accountKey, show }: { accountKey: string; 
 }
 
 
-export function CustomerDashboardNav({ saved }: { saved?: CustomerSavedState | null }) {
-  const now = useCustomerMinuteClock();
-  const goingCount = (saved?.goingSignals || []).filter((item) => (
-    item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now
-  )).length;
-  const links: Array<{ id: CustomerDashboardSectionId; label: string; count: number }> = [
-    { id: "customer-followed-dancers", label: "Followed Dancers", count: saved?.follows?.length || 0 },
-    { id: "customer-followed-clubs", label: "Favorite Clubs", count: saved?.venueFollows?.length || 0 },
-    { id: "customer-saved-deals", label: "Saved Club Deals", count: saved?.dealSaves?.length || 0 },
-    { id: "customer-going", label: "I’m Going", count: goingCount },
-  ];
-
-  return (
-    <nav className="customer-dashboard-nav" aria-label="Customer dashboard sections">
-      <div className="customer-dashboard-primary-links">
-        {links.map((link) => (
-          <a href={`#${link.id}`} key={link.id} data-has-plans={link.id === "customer-going" && goingCount > 0 ? true : undefined} onClick={(event) => openDashboardSection(event, link.id)}>
-            <span className="customer-shortcut-icon"><CustomerDashboardIcon section={link.id} /></span>
-            <span>{link.label}</span>
-            <strong>{link.count}</strong>
-          </a>
-        ))}
-      </div>
-      <div className="customer-dashboard-utility-links" aria-label="Customer dashboard utilities">
-        <a href="#customer-alerts" onClick={(event) => openDashboardSection(event, "customer-alerts")}><CustomerDashboardIcon section="customer-alerts" />Alerts</a>
-        <a href="#customer-account" onClick={(event) => openDashboardSection(event, "customer-account")}><CustomerDashboardIcon section="customer-account" />Account</a>
-      </div>
-    </nav>
-  );
+export function CustomerDashboardNav({ active, onNavigate, alertCount = 0 }: {
+  active: CustomerView;
+  onNavigate: (view: CustomerView) => void;
+  alertCount?: number;
+}) {
+  const links = [
+    { id: "night", label: "My Night", icon: "customer-going" },
+    { id: "saved", label: "Saved", icon: "customer-followed-clubs" },
+    { id: "alerts", label: "Alerts", icon: "customer-alerts" },
+    { id: "account", label: "Account", icon: "customer-account" },
+  ] as const;
+  return <nav className="customer-workspace-nav" aria-label="Customer dashboard">
+    {links.map(item => <button key={item.id} type="button" aria-current={active === item.id ? "page" : undefined}
+      aria-controls={`customer-view-${item.id}`} onClick={() => onNavigate(item.id)}>
+      <CustomerDashboardIcon section={item.icon} /><span>{item.label}</span>
+      {item.id === "alerts" && alertCount > 0 ? <span className="customer-nav-count" aria-label={`${alertCount} unread alerts`}>{alertCount > 99 ? "99+" : alertCount}</span> : null}
+    </button>)}
+  </nav>;
 }
 
+function CustomerSurface({ id, title, description, count, children }: { id: string; title: string; description?: string; count?: number; children: ReactNode }) {
+  return <section className="customer-surface" id={id} tabIndex={-1} aria-labelledby={`${id}-title`}>
+    <header className="customer-surface-heading"><div><h2 id={`${id}-title`}>{title}</h2>{description ? <p>{description}</p> : null}</div>{count !== undefined ? <span className="customer-count">{count}</span> : null}</header>
+    {children}
+  </section>;
+}
+
+function CustomerExplore() {
+  const [city, setCity] = useState("Las Vegas");
+  const [cities, setCities] = useState<Array<{ value: string; label: string }>>([]);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/public/cities", { signal: controller.signal }).then(response => response.ok ? response.json() : null).then(data => {
+      if (controller.signal.aborted || !Array.isArray(data?.cities)) return;
+      const available = data.cities.filter((item: { value?: unknown; label?: unknown }) => typeof item.value === "string" && typeof item.label === "string");
+      setCities(available);
+      if (available.length && !available.some((item: { value: string }) => item.value === "Las Vegas")) setCity(available[0].value);
+    }).catch(() => { /* Discovery links remain available if the city list cannot load. */ });
+    return () => controller.abort();
+  }, []);
+  return <div className="customer-explore">
+    <div><span className="eyebrow">Make it your night</span><h2>Find your next favorite.</h2><p>Follow dancers and clubs. Keep your plans and passes together, privately.</p></div>
+    {cities.length ? <label>Explore a city<select value={city} onChange={event => setCity(event.target.value)}>{cities.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label> : null}
+    <div className="customer-card-actions"><Link className="customer-primary" href={homeDiscoveryHref("dancers", city)}>Find dancers</Link><Link href={homeDiscoveryHref("venues", city)}>Explore clubs</Link></div>
+  </div>;
+}
 
 export function CustomerPanel({
   isLoading,
   accountSavedUnavailable,
   onSavedChange,
   saved,
+  initialSection,
+  alertsContent,
+  accountContent,
+  welcomeContent,
+  alertCount,
 }: {
+  initialSection?: string;
+  alertsContent?: ReactNode;
+  accountContent?: ReactNode;
+  welcomeContent?: ReactNode;
+  alertCount?: number;
   isLoading: boolean;
   accountSavedUnavailable: boolean;
   onSavedChange: (update: (saved: CustomerSavedState) => CustomerSavedState) => void;
@@ -194,6 +210,49 @@ export function CustomerPanel({
   const goingCount = (saved?.goingSignals || []).filter((item) => (
     item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now
   )).length;
+  const initial = customerDashboardDestination("", initialSection);
+  const [view, setView] = useState<CustomerView>(initial.view);
+  const [savedFilter, setSavedFilter] = useState<CustomerSavedFilter>(initial.filter);
+  const [city, setCity] = useState("");
+  const workspaceRef = useRef<HTMLDivElement>(null);
+  const navigationFrameRef = useRef(0);
+
+  function focusDestination(id: string, scroll = false) {
+    window.cancelAnimationFrame(navigationFrameRef.current);
+    navigationFrameRef.current = window.requestAnimationFrame(() => {
+      const target = document.getElementById(id);
+      if (!target || !workspaceRef.current?.contains(target)) return;
+      let parent: HTMLElement | null = target;
+      while (parent && parent !== workspaceRef.current) {
+        if (parent instanceof HTMLDetailsElement) parent.open = true;
+        parent = parent.parentElement;
+      }
+      if (scroll) target.scrollIntoView({ block: "start" });
+      target.focus({ preventScroll: true });
+    });
+  }
+  useEffect(() => {
+    const sync = () => {
+      const destination = customerDashboardDestination(window.location.hash, initialSection);
+      setView(destination.view);
+      setSavedFilter(destination.filter);
+      if (window.location.hash) focusDestination(window.location.hash.slice(1), true);
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => { window.removeEventListener("hashchange", sync); window.cancelAnimationFrame(navigationFrameRef.current); };
+  }, [initialSection, isLoading]);
+
+  function navigate(next: CustomerView) {
+    setView(next);
+    const savedId = savedFilter === "dancers" ? "customer-followed-dancers" : savedFilter === "clubs" ? "customer-followed-clubs" : "customer-saved-deals";
+    window.history.replaceState(null, "", `#${next === "saved" ? savedId : `customer-${next}`}`);
+    focusDestination(`customer-view-${next}`, true);
+  }
+  function chooseSaved(next: CustomerSavedFilter) {
+    setSavedFilter(next);
+    window.history.replaceState(null, "", `#${next === "dancers" ? "customer-followed-dancers" : next === "clubs" ? "customer-followed-clubs" : "customer-saved-deals"}`);
+  }
   const [pendingAction, setPendingAction] = useState("");
   const [actionStatus, setActionStatus] = useState("");
   const mountedRef = useRef(false);
@@ -373,82 +432,60 @@ export function CustomerPanel({
     }
   }
 
-  const goingSection = !accountSavedUnavailable ? <DashboardSection
-    count={goingCount}
-    defaultOpen={goingCount > 0}
-    description="Your plans and directions."
-    id="customer-going"
-    icon={<CustomerDashboardIcon section="customer-going" />}
-    toggleAffordance="chevron"
-    title="I’m Going"
-  >
-    <CustomerNightPanel
-      isLoading={isLoading}
-      onCancelGoing={cancelGoing}
-      onDirections={openDirections}
-      pendingAction={pendingAction}
-      signals={saved?.goingSignals || []}
-    />
-  </DashboardSection> : null;
-
-  return (
-    <>
-      {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
-      {goingCount > 0 ? goingSection : null}
+  const cities = Array.from(new Set([
+    ...(saved?.follows || []).map(customerFollowedDancerCity),
+    ...(saved?.venueFollows || []).map(customerFollowedVenueCity),
+    ...(saved?.dealSaves || []).map(item => item.venue.city || "City not listed"),
+  ])).sort(customerDashboardCollator.compare);
+  const selectedCity = cities.includes(city) ? city : "";
+  const filteredSaved = selectedCity ? {
+    ...saved,
+    follows: saved?.follows?.filter(item => customerFollowedDancerCity(item) === selectedCity),
+    venueFollows: saved?.venueFollows?.filter(item => customerFollowedVenueCity(item) === selectedCity),
+    dealSaves: saved?.dealSaves?.filter(item => (item.venue.city || "City not listed") === selectedCity),
+  } : saved;
+  const workingFollows = (saved?.follows || []).filter(item => item.dancer?.slug && item.dancer.nextShift?.status === "posted" && customerShiftLabel(item.dancer.nextShift) === "Working now");
+  const exploreFirst = !isLoading && !saved?.follows?.length && !saved?.goingSignals?.length && !saved?.dealRedemptions?.length;
+  return <div className="customer-workspace" ref={workspaceRef}>
+    <CustomerDashboardNav active={view} onNavigate={navigate} alertCount={alertCount} />
+    {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
+    <section id="customer-view-night" className="customer-view" hidden={view !== "night"} aria-label="My Night" tabIndex={-1}>
+      {welcomeContent}
+      <div className="customer-view-heading"><span className="eyebrow">Your private guest account</span><h2>My Night</h2><p>Your passes, plans, and people. Ready when you are.</p></div>
+      {isLoading ? <p className="customer-loading-state" role="status">Loading your night…</p> : null}
       {!accountSavedUnavailable ? <>
-      <DashboardSection
-        count={saved?.follows?.length}
-        defaultOpen={goingCount === 0}
-        description="Your followed dancers, grouped by city."
-        id="customer-followed-dancers"
-        icon={<CustomerDashboardIcon section="customer-followed-dancers" />}
-        toggleAffordance="chevron"
-        title="Followed Dancers"
-      >
-        <CustomerFollowedDancersPanel
-          isLoading={isLoading}
-          onUnfollowDancer={unfollowDancer}
-          pendingAction={pendingAction}
-          saved={saved}
-        />
-      </DashboardSection>
-      <DashboardSection
-        count={saved?.venueFollows?.length}
-        description="Your clubs, activity, and directions."
-        id="customer-followed-clubs"
-        icon={<CustomerDashboardIcon section="customer-followed-clubs" />}
-        toggleAffordance="chevron"
-        title="Favorite Clubs"
-      >
-        <CustomerFollowedClubsPanel
-          isLoading={isLoading}
-          onDirections={openDirections}
-          onVenueFollowChange={updateVenueFollow}
-          pendingAction={pendingAction}
-          saved={saved}
-        />
-      </DashboardSection>
-      </> : null}
-      <DashboardSection
-        count={saved?.dealSaves?.length}
-        description="Offers saved privately for later."
-        id="customer-saved-deals"
-        icon={<CustomerDashboardIcon section="customer-saved-deals" />}
-        toggleAffordance="chevron"
-        title="Saved Club Deals"
-      >
-        {isLoading && !saved?.dealSaves?.length ? <p className="customer-loading-state">Loading your saved deals…</p> : <CustomerDealPassPanel
-          deals={saved?.dealRedemptions || []}
-          onDirections={openDirections}
-          onRemoveSavedDeal={removeSavedDeal}
-          pendingAction={pendingAction}
-          savedDeals={saved?.dealSaves || []}
-          accountSavedUnavailable={accountSavedUnavailable}
-        />}
-      </DashboardSection>
-      {goingCount === 0 ? goingSection : null}
-    </>
-  );
+        {exploreFirst ? <CustomerExplore /> : null}
+        <CustomerPassWallet deals={saved?.dealRedemptions || []} isLoading={isLoading} />
+        <CustomerSurface id="customer-going" title="Your plans" description="Your I’m Going list. Plans are not reservations or confirmed bookings." count={goingCount}>
+          <CustomerNightPanel isLoading={isLoading} onCancelGoing={cancelGoing} onDirections={openDirections} pendingAction={pendingAction} signals={saved?.goingSignals || []} />
+        </CustomerSurface>
+        <CustomerSurface id="customer-working-now" title="Working Now" description="Dancers you follow who are checked in now." count={workingFollows.length}>
+          {workingFollows.length ? <div className="customer-saved-card-grid customer-followed-dancer-grid">{workingFollows.map(item => <FollowedDancerGridCard key={item.dancerId || item.dancer!.id} dancer={item.dancer!} onUnfollow={() => void unfollowDancer(String(item.dancerId || item.dancer!.id))} pending={Boolean(pendingAction)} unfollowing={pendingAction === `dancer-${item.dancerId || item.dancer!.id}`} />)}</div> : !isLoading ? <div className="customer-empty-state compact"><strong>{saved?.follows?.length ? "No followed dancers are working right now" : "Your favorites start here"}</strong><p>{saved?.follows?.length ? "Check Saved for their next posted shifts." : "Follow a dancer to see when they’re working."}</p><Link href={homeDiscoveryHref("dancers")}>Find dancers</Link></div> : null}
+        </CustomerSurface>
+        {!exploreFirst ? <CustomerExplore /> : null}
+      </> : <p className="customer-loading-state">Your night is unavailable. Use Try again above to reload your saved activity.</p>}
+    </section>
+    <section id="customer-view-saved" className="customer-view" hidden={view !== "saved"} aria-label="Saved" tabIndex={-1}>
+      <div className="customer-view-heading"><h2>Saved</h2><p>Your dancers, clubs, and offers. Just for you.</p></div>
+      <div className="customer-saved-toolbar">
+        <div className="customer-saved-filters" role="group" aria-label="Saved items">
+          {(["dancers", "clubs", "deals"] as const).map((filter, index) => <button type="button" key={filter} aria-pressed={savedFilter === filter} aria-controls={filter === "dancers" ? "customer-followed-dancers" : filter === "clubs" ? "customer-followed-clubs" : "customer-saved-deals"} onClick={() => chooseSaved(filter)}>{["Dancers", "Clubs", "Deals"][index]}<span>{[filteredSaved?.follows?.length, filteredSaved?.venueFollows?.length, filteredSaved?.dealSaves?.length][index] || 0}</span></button>)}
+        </div>
+        {cities.length > 1 ? <label className="customer-city-filter">City<select value={selectedCity} onChange={event => setCity(event.target.value)}><option value="">All cities</option>{cities.map(value => <option value={value} key={value}>{value}</option>)}</select></label> : null}
+      </div>
+      <div id="customer-followed-dancers" hidden={savedFilter !== "dancers"} tabIndex={-1}>
+        {!accountSavedUnavailable ? <CustomerFollowedDancersPanel isLoading={isLoading} onUnfollowDancer={unfollowDancer} pendingAction={pendingAction} saved={filteredSaved} /> : <p role="status">Your followed dancers could not be loaded. Try again above.</p>}
+      </div>
+      <div id="customer-followed-clubs" hidden={savedFilter !== "clubs"} tabIndex={-1}>
+        {!accountSavedUnavailable ? <CustomerFollowedClubsPanel isLoading={isLoading} onDirections={openDirections} onVenueFollowChange={updateVenueFollow} pendingAction={pendingAction} saved={filteredSaved} /> : <p role="status">Your favorite clubs could not be loaded. Try again above.</p>}
+      </div>
+      <div id="customer-saved-deals" hidden={savedFilter !== "deals"} tabIndex={-1}>
+        {isLoading && !saved?.dealSaves?.length ? <p className="customer-loading-state">Loading your saved deals…</p> : <CustomerDealPassPanel onDirections={openDirections} onRemoveSavedDeal={removeSavedDeal} pendingAction={pendingAction} savedDeals={filteredSaved?.dealSaves || []} accountSavedUnavailable={accountSavedUnavailable} />}
+      </div>
+    </section>
+    <section id="customer-view-alerts" className="customer-view" hidden={view !== "alerts"} aria-label="Alerts" tabIndex={-1}>{alertsContent}</section>
+    <section id="customer-view-account" className="customer-view" hidden={view !== "account"} aria-label="Account" tabIndex={-1}>{accountContent}</section>
+  </div>;
 }
 
 
@@ -470,59 +507,43 @@ function CustomerNightPanel({
     .filter((item) => item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now)
     .sort((left, right) => new Date(left.shift?.startsAt || 0).getTime() - new Date(right.shift?.startsAt || 0).getTime());
 
-  return (
-    <div className="customer-night-panel" tabIndex={-1}>
-      <div className="customer-night-list">
-        {plans.map((item) => {
-          const shift = item.shift!;
-          const dancer = shift.dancer;
-          const venue = shift.venue;
-          return (
-            <article className="customer-night-card" key={item.shiftId} data-public-dancer-id={dancer.id}>
-              <div className="customer-night-identity">
-                <div className="customer-night-portrait">
-                  <SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} sizes="112px" />
-                </div>
-                <div className="customer-night-copy">
-                  <h3>{dancer.stageName || "Dancer"}</h3>
-                  <p className="customer-night-venue">{venue.name || "Club"}</p>
-                  <p className="customer-night-location">{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</p>
-                  <div className="customer-night-date">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 11h16" /></svg>
-                    <span>{customerShiftLabel(shift)}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="customer-night-controls">
-                <div className="customer-card-actions customer-night-actions">
-                  {dancer.slug ? <Link href={customerDancerHref(dancer)}>Dancer profile</Link> : null}
-                  {venue.slug ? <Link href={customerVenueHref(venue)}>Club page</Link> : null}
-                  <CustomerDirectionsButton
-                    dancerId={dancer.id}
-                    onDirections={onDirections}
-                    pending={Boolean(pendingAction)}
-                    venue={venue}
-                  />
-                </div>
-                <button className="customer-night-cancel" type="button" disabled={Boolean(pendingAction)} aria-busy={pendingAction === `going-${item.shiftId}` || undefined} onClick={() => void onCancelGoing(item.shiftId)}>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17" /></svg>
-                  {pendingAction === `going-${item.shiftId}` ? "Cancelling…" : "Cancel Going"}
-                </button>
-              </div>
-            </article>
-          );
+  const groups = new Map<string, { label: string; venue: SavedVenueSummary; plans: typeof plans }>();
+  for (const item of plans) {
+    const shift = item.shift!;
+    const date = new Date(shift.startsAt);
+    let label: string;
+    try { label = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric", timeZone: shift.timezone || undefined }).format(date); }
+    catch { label = date.toLocaleDateString(); }
+    const key = `${label}:${shift.venue.id || shift.venue.slug || shift.venue.name}`;
+    const group = groups.get(key) || { label, venue: shift.venue, plans: [] };
+    group.plans.push(item);
+    groups.set(key, group);
+  }
+  return <div className="customer-night-panel" tabIndex={-1}>
+    <div className="customer-night-list">
+      {Array.from(groups.entries()).map(([key, group]) => <section className="customer-plan-group" key={key}>
+        <header><span>{group.label}</span><h3>{group.venue.name || "Club"}</h3><small>{[group.venue.city, group.venue.state].filter(Boolean).join(", ")}</small></header>
+        {group.plans.map(item => {
+          const shift = item.shift!, dancer = shift.dancer, venue = shift.venue;
+          const shiftLabel = customerShiftLabel(shift);
+          return <article className="customer-night-card" key={item.shiftId} data-public-dancer-id={dancer.id}>
+            <div className="customer-night-identity"><div className="customer-night-portrait"><SavedCardImage image={dancer} name={String(dancer.stageName || "Dancer")} sizes="72px" /></div>
+              <div className="customer-night-copy"><h3>{dancer.stageName || "Dancer"}</h3><p className="customer-night-date" data-working={shiftLabel === "Working now" || undefined}>{shiftLabel}</p></div>
+            </div>
+            <div className="customer-night-controls"><div className="customer-card-actions customer-night-actions">
+              {dancer.slug ? <Link href={customerDancerHref(dancer)}>View profile</Link> : null}
+              <CustomerDirectionsButton dancerId={dancer.id} onDirections={onDirections} pending={Boolean(pendingAction)} venue={venue} />
+            </div><details className="customer-card-menu"><summary aria-label={`Manage plan for ${dancer.stageName || "dancer"}`}>•••</summary><div>
+              {venue.slug ? <Link href={customerVenueHref(venue)}>Club page</Link> : null}
+              <button type="button" disabled={Boolean(pendingAction)} aria-busy={pendingAction === `going-${item.shiftId}` || undefined} onClick={() => void onCancelGoing(item.shiftId)}>{pendingAction === `going-${item.shiftId}` ? "Cancelling…" : "Cancel Going"}</button>
+            </div></details></div>
+          </article>;
         })}
-        {!plans.length && !isLoading ? (
-          <div className="customer-empty-state">
-            <strong>No plans yet</strong>
-            <p>Choose I’m Going on a dancer’s next shift and it will appear here with the venue and directions.</p>
-            <Link href={homeDiscoveryHref("dancers")}>Find dancers</Link>
-          </div>
-        ) : null}
-        {isLoading ? <div className="customer-loading-state">Loading your plans…</div> : null}
-      </div>
+      </section>)}
+      {!plans.length && !isLoading ? <div className="customer-empty-state"><strong>No plans yet</strong><p>Choose I’m Going on a dancer’s next shift to keep the date, club, and directions here.</p><Link href={homeDiscoveryHref("dancers")}>Find dancers</Link></div> : null}
+      {isLoading ? <div className="customer-loading-state">Loading your plans…</div> : null}
     </div>
-  );
+  </div>;
 }
 
 
@@ -646,9 +667,9 @@ function FollowedDancerGridCard({
   pending: boolean;
   unfollowing: boolean;
 }) {
-  const shift = dancer.nextShift;
+  const shift = dancer.nextShift?.status === "posted" && new Date(dancer.nextShift.endsAt).getTime() > Date.now() ? dancer.nextShift : null;
   const shiftLabel = shift ? customerShiftLabel(shift) : "";
-  const isWorkingNow = shiftLabel === "Working now";
+  const isWorkingNow = shift?.status === "posted" && shiftLabel === "Working now";
   const statusLabel = isWorkingNow ? "Working now" : "Not working now";
   const statusTone = isWorkingNow ? "working" : shift ? "upcoming" : "quiet";
   const dancerName = String(dancer.stageName || "Dancer");
@@ -672,7 +693,7 @@ function FollowedDancerGridCard({
         {shift && !isWorkingNow ? <small className="customer-followed-dancer-time">{shiftLabel}</small> : null}
       </span>
     </Link>
-    <button
+    <details className="customer-card-menu customer-dancer-menu"><summary aria-label={`More options for ${dancerName}`}>•••</summary><div><button
       className="customer-dancer-unfollow"
       type="button"
       aria-label={`Unfollow ${dancerName}`}
@@ -681,7 +702,7 @@ function FollowedDancerGridCard({
       onClick={onUnfollow}
     >
       {unfollowing ? "Unfollowing…" : "Unfollow"}
-    </button>
+    </button></div></details>
     </article>
   );
 }
@@ -712,7 +733,7 @@ function SavedVenueCard({
           <Link href={customerVenueHref(venue)}><strong>{venue.name}</strong></Link>
           <small>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</small>
         </div>
-        <button
+        <details className="customer-card-menu"><summary aria-label={`More options for ${venue.name || "club"}`}>•••</summary><div><button
           className="customer-club-favorite"
           type="button"
           aria-label={`Remove ${venue.name || "club"} from favorites`}
@@ -722,8 +743,8 @@ function SavedVenueCard({
           disabled={pending}
           onClick={onUnfollow}
         >
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg>
-        </button>
+          {removing ? "Removing…" : "Remove favorite"}
+        </button></div></details>
       </div>
       <div className="customer-saved-card-copy customer-favorite-club-copy">
         <div className="customer-club-activity" aria-label={`Dancers at ${venue.name || "this club"}`}>
@@ -816,27 +837,17 @@ function CustomerSavedEmpty({ cta, href, label }: { cta: string; href: string; l
 
 function CustomerDealPassPanel({
   accountSavedUnavailable,
-  deals,
   onDirections,
   onRemoveSavedDeal,
   pendingAction,
   savedDeals,
 }: {
   accountSavedUnavailable: boolean;
-  deals: NonNullable<NonNullable<LoadState["saved"]>["dealRedemptions"]>;
   onDirections: (venue: SavedVenueSummary) => void;
   onRemoveSavedDeal: (dealId: string) => void;
   pendingAction: string;
   savedDeals: NonNullable<NonNullable<LoadState["saved"]>["dealSaves"]>;
 }) {
-  const now = useCustomerMinuteClock();
-  const activeDeals = deals
-    .filter((item) => item.status === "generated" && new Date(item.expiresAt).getTime() > now)
-    .sort((left, right) => new Date(left.expiresAt).getTime() - new Date(right.expiresAt).getTime());
-  const pastDeals = deals
-    .filter((item) => !activeDeals.some((active) => active.id === item.id))
-    .sort((left, right) => new Date(right.generatedAt).getTime() - new Date(left.generatedAt).getTime());
-
   return (
     <article className="info-panel saved-deal-panel" tabIndex={-1}>
       <div className="saved-deal-head">
@@ -857,14 +868,14 @@ function CustomerDealPassPanel({
             <div className="customer-card-actions">
               {item.venue.slug ? <Link href={customerVenueHref(item.venue)}>View deal</Link> : null}
               <CustomerDirectionsButton onDirections={onDirections} pending={Boolean(pendingAction)} venue={item.venue} />
-              <button
+              <details className="customer-card-menu"><summary aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}>•••</summary><div><button
                 className="customer-text-action"
                 type="button"
                 disabled={Boolean(pendingAction)}
                 onClick={() => void onRemoveSavedDeal(item.dealId)}
               >
                 Remove
-              </button>
+              </button></div></details>
             </div>
           </article>
         ))}
@@ -877,63 +888,33 @@ function CustomerDealPassPanel({
           </div>
         ) : null}
       </div>
-      {deals.length ? (
-        <details className="customer-deal-activity">
-          <summary>
-            <span>Club Deal use &amp; history</span>
-            <strong>{activeDeals.length} active</strong>
-          </summary>
-          <div>
-            <section className="customer-nfc-guide" aria-label="How admission passes work">
-              <div><b>1</b><span><strong>Choose the exact deal</strong><small>Open an offer from a venue or a Working Now dancer and choose your arrival method.</small></span></div>
-              <div><b>2</b><span><strong>Show your pass</strong><small>Open your admission pass and show the QR code to club staff.</small></span></div>
-              <div><b>3</b><span><strong>Wait for confirmation</strong><small>Staff verifies your arrival method and scans the pass to confirm one admission.</small></span></div>
-            </section>
-            <div className="saved-deal-list">
-              {activeDeals.map((item) => (
-                <Link
-                  className="saved-deal-item"
-                  href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`}
-                  key={item.id}
-                >
-                  <span>
-                    <strong>{item.deal?.title || "Club Deal"}</strong>
-                    <small>{item.venue?.name || "Venue"} · {dealExpiryLabel(item.expiresAt, now)}</small>
-                  </span>
-                  <em>Open details</em>
-                </Link>
-              ))}
-              {!activeDeals.length ? (
-                <div className="customer-empty-state compact">
-                  <strong>No active Club Deals</strong>
-                  <p>Choose a Club Deal and generate your admission pass before arriving.</p>
-                </div>
-              ) : null}
-              {pastDeals.length ? (
-                <details className="past-deal-history">
-                  <summary>Past deals <span>{pastDeals.length}</span></summary>
-                  <div>
-                    {pastDeals.map((item) => {
-                      const expired = new Date(item.expiresAt).getTime() <= now;
-                      return (
-                        <Link className="saved-deal-item unavailable" href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`} key={item.id}>
-                          <span>
-                            <strong>{item.deal?.title || "Club Deal"}</strong>
-                            <small>{item.venue?.name || "Venue"} · {dealPassStatus(item.status, expired)}</small>
-                          </span>
-                          <em>View</em>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </details>
-              ) : null}
-            </div>
-          </div>
-        </details>
-      ) : null}
+
     </article>
   );
+}
+
+
+function CustomerPassWallet({ deals, isLoading }: { deals: NonNullable<CustomerSavedState["dealRedemptions"]>; isLoading: boolean }) {
+  const now = useCustomerMinuteClock();
+  const activeDeals = deals
+    .filter((item) => item.status === "generated" && new Date(item.expiresAt).getTime() > now)
+    .sort((left, right) => new Date(left.expiresAt).getTime() - new Date(right.expiresAt).getTime());
+  const pastDeals = deals
+    .filter((item) => !activeDeals.some((active) => active.id === item.id))
+    .sort((left, right) => new Date(right.generatedAt).getTime() - new Date(left.generatedAt).getTime());
+
+  return <CustomerSurface id="customer-passes" title="Admission passes" description="Open your pass when you arrive at the club." count={activeDeals.length}>
+    <div className="customer-pass-list">
+      {activeDeals.map(item => <Link className="customer-pass-card" href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`} key={item.id}>
+        <div className="customer-pass-icon"><CustomerDashboardIcon section="customer-saved-deals" /></div>
+        <div className="customer-pass-copy"><span className="eyebrow">Ready to show</span><h3>{item.deal?.title || "Admission pass"}</h3><p>{item.venue?.name || "Club"}</p><time dateTime={item.expiresAt}>{dealExpiryLabel(item.expiresAt, now)}</time></div>
+        <span className="customer-pass-cta">Show pass <span aria-hidden="true">↗</span></span>
+      </Link>)}
+      {!activeDeals.length && !isLoading ? <div className="customer-empty-state compact"><strong>No active passes</strong><p>Choose a Club Deal to generate an admission pass.</p><Link href={homeDiscoveryHref("venues")}>Explore Club Deals</Link></div> : null}
+    </div>
+    {activeDeals.length ? <details className="customer-pass-help"><summary>How admission passes work</summary><p>Choose the exact deal and arrival method. Show your pass and its QR code to club staff. Wait for confirmation: staff verifies your arrival method and scans the pass to confirm one admission.</p></details> : null}
+    {pastDeals.length ? <details className="past-deal-history"><summary>Past passes <span>{pastDeals.length}</span></summary><div>{pastDeals.map(item => <Link className="customer-past-pass" key={item.id} href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`}><span><strong>{item.deal?.title || "Club Deal"}</strong><small>{item.venue?.name || "Club"}</small></span><span>{dealPassStatus(item.status, new Date(item.expiresAt).getTime() <= now)}</span></Link>)}</div></details> : null}
+  </CustomerSurface>;
 }
 
 
@@ -975,7 +956,7 @@ function dealPassStatus(status: string, expired: boolean) {
 
 
 function useCustomerMinuteClock() {
-  const [now, setNow] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const update = () => setNow(Date.now());
     update();

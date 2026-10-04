@@ -534,5 +534,21 @@
   {
     "file": "DashboardStyles.tsx",
     "name": "DashboardStyles"
+  },
+  {
+    "name": "customerDashboardDestination",
+    "file": "customer-dashboard-view.ts"
+  },
+  {
+    "name": "CustomerSurface",
+    "file": "CustomerDashboardPanels.tsx"
+  },
+  {
+    "name": "CustomerExplore",
+    "file": "CustomerDashboardPanels.tsx"
+  },
+  {
+    "name": "CustomerPassWallet",
+    "file": "CustomerDashboardPanels.tsx"
   }
 ]
