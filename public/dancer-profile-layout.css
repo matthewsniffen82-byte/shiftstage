@@ -522,9 +522,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   min-width: 16px !important;
   flex: 0 0 16px !important;
 }
-/* Connect the profile to its existing tabs; keep every media tile unchanged. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .modal-body { padding-bottom: 8px !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-tonight-card { margin-bottom: 8px !important; }
+/* Restore the 6px raised above the details at the frame's bottom, preserving
+   the original card and portrait height while keeping the content higher. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .modal-body { padding-bottom: 14px !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > .profile-tonight-card { margin-bottom: 14px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-media, .profile-media-section) { margin-top: 8px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) > button.active::after {
   height: 1px !important;
