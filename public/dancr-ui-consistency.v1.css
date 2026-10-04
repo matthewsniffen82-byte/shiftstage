@@ -1939,11 +1939,11 @@ html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
   gap: 6px !important;
 }
-/* A uniform violet wash connects the portrait gutters to the hero at every
+/* A visible hero-violet fill connects the portrait gutters at every
  * scroll depth, independent of the number of profiles or the grid's height. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid.home-dancer-three-column:has(> .home-dancer-grid-card) {
-  background-color: color-mix(in srgb, var(--dancr-color-avatar-ring-violet) 20%, var(--dancr-color-background)) !important;
+  background-color: color-mix(in srgb, var(--dancr-color-beam-violet) 70%, var(--dancr-color-background)) !important;
   background-image: none !important;
 }
 /* Keep the full-width controls and participation note on the page foundation,
