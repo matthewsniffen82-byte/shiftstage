@@ -570,7 +570,7 @@ test("profile polish preserves the existing site color system", () => {
 test("profile identity and media controls form a compact balanced top section", () => {
   assert.match(
     liveApp,
-    /<div class="profile-modal-summary">[\s\S]*?<button class="close-btn" id="modalClose" type="button" aria-label="Back to previous view">/,
+    /<div class="profile-topbar"[^>]*>[\s\S]*?<button class="close-btn" id="modalClose" type="button" aria-label="Back to previous view">/,
   );
   assert.doesNotMatch(liveApp, /<div class="modal-top">\s*<button class="close-btn" id="modalClose"/);
   assert.match(

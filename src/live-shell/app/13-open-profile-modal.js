@@ -49,6 +49,10 @@
       savedScrollY = window.scrollY;
 
       modalName.textContent = profile.name;
+      profileModal.querySelector(".profile-options").open = false;
+      document.getElementById("modalHeaderShare").innerHTML = isPrivatePreview || isPending
+        ? ""
+        : profileHeaderShareMarkup(profile, city);
       modalGallery.dataset.profileMediaProfile = String(profile.id || "");
       const profileReportButton = document.getElementById("reportBtn");
       if (profileReportButton) {

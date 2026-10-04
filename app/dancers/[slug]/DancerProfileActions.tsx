@@ -324,6 +324,7 @@ export function DancerReportControl({
         type="button"
       >
         <ReportFlagIcon />
+        <span>{reportSubmitted ? "Profile reported" : "Report profile"}</span>
       </button>
       {reportSubmitted ? (
         <span className="profile-report-confirmation" role="status">Report submitted for review.</span>
@@ -349,12 +350,14 @@ export function DancerProfileActions({
   dancerId,
   shifts,
   shareControl,
+  shareInHeader = false,
   children,
   hasClubDeal = false,
 }: {
   dancerId: string;
   shifts: ShiftAction[];
   shareControl?: ReactNode;
+  shareInHeader?: boolean;
   children?: ReactNode;
   hasClubDeal?: boolean;
 }) {
@@ -633,7 +636,7 @@ export function DancerProfileActions({
             <span>{saved.following ? "Following" : "Follow"}</span>
           </span>
         </button>
-        {shareControl ? (
+        {shareInHeader ? null : shareControl ? (
           <div className="profile-action-share-slot">{shareControl}</div>
         ) : (
           <button aria-label="Share" className="profile-action-secondary profile-action-unavailable profile-action-icon-control profile-share-action" disabled type="button">

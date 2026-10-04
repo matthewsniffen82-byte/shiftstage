@@ -766,9 +766,12 @@
       return `
         <div class="modal-actions profile-actions-compact ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
           <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${escapeOptionValue(profile.id || profile.name)}" aria-pressed="${isFollowed}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
-          <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${escapeHtml(profile.name)}" data-share-city="${escapeHtml(city)}" aria-haspopup="dialog" aria-label="Share ${escapeHtml(profile.name)} profile">${profileActionButtonMarkup("share", "Share")}</button>
         </div>
       `;
+    }
+
+    function profileHeaderShareMarkup(profile, city) {
+      return `<button class="profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${escapeHtml(profile.name)}" data-share-city="${escapeHtml(city)}" aria-haspopup="dialog" aria-label="Share ${escapeHtml(profile.name)} profile">${profileActionButtonMarkup("share", "Share")}</button>`;
     }
 
     async function refreshProfileGoingState(profile) {
