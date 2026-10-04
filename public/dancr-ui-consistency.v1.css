@@ -1932,16 +1932,15 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   text-align: left;
 }
 
-/* Give the shared three-column portraits breathing room with clean edges
- * and the normal mobile paint flow. */
+/* Keep the shared three-column portraits compact with fine violet edges. */
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
-  gap: 6px !important;
+  gap: 2px !important;
 }
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory {
-  border: 1.5px solid rgba(167, 139, 250, .65) !important;
+  border: 1px solid rgba(167, 139, 250, .65) !important;
   border-radius: 8px !important;
   background-clip: padding-box !important;
 }
