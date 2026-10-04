@@ -92,7 +92,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   const metricsIndex = profilePage.indexOf('className="profile-header-metrics"');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
-  const scheduleIndex = profilePage.indexOf('className={`profile-tonight-card');
+  const scheduleIndex = profilePage.indexOf('className="profile-shift-card profile-working-card');
   const dealIndex = profilePage.indexOf('className="profile-tonight-deal"');
   const travelIndex = profilePage.indexOf('aria-label="Venue travel actions"');
   const socialIndex = profilePage.indexOf("socialContent={profile.socialLinks.length");
@@ -124,7 +124,8 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.doesNotMatch(profilePage, /hasPrimaryDeal=/);
   assert.doesNotMatch(profilePage, /import \{ VenueQrUnavailable \}|<VenueQrUnavailable/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
-  assert.match(profilePage, /aria-label="Tonight"[\s\S]*?className="profile-tonight-deal"/);
+  assert.match(profileActions, /aria-label="Tonight"[\s\S]*?className=\{`profile-tonight-card/);
+  assert.match(profilePage, /className="profile-tonight-deal"/);
 });
 
 test("working-now profiles show the club's active deal without granting demo commission attribution", () => {
@@ -189,10 +190,12 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   const followButtonIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
   const goingIndex = profileActions.indexOf('className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going');
   const shareIndex = profileActions.indexOf('{shareControl ?');
-  assert.ok(followButtonIndex > -1 && goingIndex > followButtonIndex && shareIndex > goingIndex);
+  const tonightIndex = profileActions.indexOf('className={`profile-tonight-card');
+  assert.ok(followButtonIndex > -1 && shareIndex > followButtonIndex && tonightIndex > shareIndex && goingIndex > tonightIndex);
   assert.doesNotMatch(profileActions, /requireCustomerAccount\("notify"\)|<span>Notify<\/span>|"Alerts On"/);
   assert.doesNotMatch(profileActions, /rideControl|directionsControl|Working Now only|Venue required/);
-  assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton/);
+  assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton/);
+  assert.doesNotMatch(profilePage, /<UberRideButton/);
   assert.doesNotMatch(profileActions, /profile-action-schedule|>Schedule</);
   assert.match(profileActions, /className="profile-header-report-action"/);
   assert.match(profileActions, /className="profile-header-report-action"/);
@@ -220,7 +223,7 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /live-actions profile-actions-compact\$\{hasLiveActions \? " has-live-shift" : hasScheduledActions \? " has-upcoming-shift" : " is-no-live-shift"\}/);
   assert.match(profileActions, /profile-action-going[\s\S]*?profile-action-unavailable/);
   assert.doesNotMatch(profileActions, /<small className="profile-action-requirement">No shift posted<\/small>/);
-  assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty" aria-label="Schedule status"[\s\S]*?className="profile-empty-state">No shift posted<[\s\S]*?className="profile-empty-copy">[\s\S]*?Follow \{profile\.stageName\} for updates/);
+  assert.match(profilePage, /className="profile-shift-card profile-schedule-empty is-empty has-working-alert" aria-label="Schedule status"[\s\S]*?className="profile-empty-state">Not working now<[\s\S]*?<DancerWorkingAlertHint stageName=\{profile\.stageName\}/);
   assert.doesNotMatch(profilePage, /profile-tonight-travel-actions is-no-schedule/);
   assert.match(profilePage, /\.live-actions\.is-no-live-shift \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
 });
@@ -242,15 +245,13 @@ test("the profile removes repeated galleries and hides empty ranking language", 
   assert.doesNotMatch(profilePage, /profile\.currentRank/);
 });
 
-test("the primary shift is not repeated and empty profile sections stay hidden", () => {
+test("the profile shows the current shift once without the retired upcoming list", () => {
   assert.match(
     profilePage,
-    /const upcomingShifts = profile\.upcomingShifts\.filter\([\s\S]*?shift\.id !== activeShift\?\.id/,
+    /const activeShift = profile\.upcomingShifts\.find\(\(shift\) => isActiveNow\(shift\)\)/,
   );
-  assert.match(profilePage, /upcomingShifts\.length \? \(/);
-  assert.match(profilePage, /className="profile-shift-card profile-upcoming-card is-upcoming"/);
-  assert.match(profilePage, /\{upcomingShifts\.map\(\(shift, index\) =>/);
-  assert.match(profilePage, /className="profile-upcoming-state"[\s\S]*?Upcoming · \{formatShiftDate/);
+  assert.equal([...profilePage.matchAll(/className="profile-working-destination"/g)].length, 1);
+  assert.doesNotMatch(profilePage, /className="profile-shift-card profile-upcoming-card|\{upcomingShifts\.map\(/);
   assert.doesNotMatch(profilePage, /<p className="muted">No posted shifts right now\.<\/p>/);
 });
 

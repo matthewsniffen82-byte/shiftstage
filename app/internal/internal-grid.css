@@ -8,16 +8,18 @@ body .ir-shell .ir-directory-grid {
 }
 body .ir-shell .ir-directory-grid .ir-dancer {
   position: relative;
+  box-sizing: border-box;
   display: block;
   width: 100%;
   min-width: 0;
   aspect-ratio: 9 / 16;
   margin: 0;
   padding: 0;
-  border: 0;
+  border: 2px solid rgba(167, 139, 250, .65);
   border-radius: 8px;
   background: #050507;
-  box-shadow: 0 0 0 1px rgba(160, 154, 175, .12);
+  background-clip: padding-box;
+  box-shadow: none;
   overflow: hidden;
 }
 body .ir-shell .ir-directory-grid .ir-profile-link,
