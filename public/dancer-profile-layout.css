@@ -517,11 +517,17 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-tonight-card { row-gap: 6px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-tonight-card.has-club-deal > .profile-venue-actions.profile-actions-compact { margin-top: 0 !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.schedule-live > .profile-schedule-primary, .profile-working-destination > .profile-live-state) {
+  display: grid !important;
+  grid-template-columns: 16px minmax(0, 1fr) !important;
   min-height: 14px !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   letter-spacing: 0 !important;
   text-transform: none !important;
+}
+/* Match the venue's icon column so both labels share one left edge. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.schedule-live > .profile-schedule-primary, .profile-working-destination > .profile-live-state)::before {
+  justify-self: center !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-shift-card :is(.profile-venue-name, .profile-working-copy strong) {
   font-weight: 600 !important;
@@ -529,8 +535,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-shift-card .profile-venue-destination,
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-working-destination { grid-template-columns: 16px minmax(0, 1fr) 12px !important; column-gap: 6px !important; }
 /* Bring the club text toward its live label while retaining the link hit area. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-shift-card.schedule-live .schedule-stack { margin-top: -6px !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-working-destination > .profile-live-state { margin-bottom: -2px !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-shift-card.schedule-live .schedule-stack { margin-top: -8px !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-working-destination > .profile-live-state { margin-bottom: -4px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-working-destination .profile-working-copy { gap: 6px !important; min-height: 36px !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .profile-shift-card :is(.venue-dot, .venue-dot svg, .profile-venue-pin) {
   width: 16px !important;
