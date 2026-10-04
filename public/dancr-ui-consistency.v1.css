@@ -1811,28 +1811,30 @@ html body.dancer-directory-active.dancr-button-system > .app > header
   outline-offset: 1px !important;
 }
 
-/* Every role's topbar utilities share quiet violet edges and neutral icons. */
+/* Header utilities match the city controls across all discovery tabs. */
 html body.dancr-button-system > .app > header .topbar
-  :is(.customer-quick-btn, #accountBtn.menu-btn, .utility-menu > .menu-btn) {
-  --discovery-header-edge: #59456f;
-  color: #c5c3cd !important;
-  border-color: #59456f !important;
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
+  --discovery-header-edge: #34343c;
+  color: #a78bfa !important;
+  border-color: #34343c !important;
   box-shadow: none !important;
 }
 html body.dancr-button-system > .app > header .topbar
-  :is(.customer-quick-btn, #accountBtn.menu-btn, .utility-menu > .menu-btn) :is([data-quick-icon], .action-icon, .account-icon, svg) {
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn) :is([data-quick-icon], .action-icon, .account-icon, svg) {
   color: inherit !important;
   filter: none !important;
 }
 html body.dancr-button-system > .app > header .topbar
-  :is(.customer-quick-btn, #accountBtn.menu-btn, .utility-menu > .menu-btn):is(.active, .is-open, [aria-expanded="true"], :active, :focus-visible) {
+  :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(.active, .is-open, [aria-expanded="true"], :focus-visible) {
   --discovery-header-edge: #a78bfa;
+  color: #c4b5fd !important;
   border-color: #a78bfa !important;
 }
 @media (hover: hover) {
   html body.dancr-button-system > .app > header .topbar
-    :is(.customer-quick-btn, #accountBtn.menu-btn, .utility-menu > .menu-btn):hover {
+    :is(.customer-quick-btn, #accountBtn.account-icon-btn):hover {
     --discovery-header-edge: #a78bfa;
+    color: #c4b5fd !important;
     border-color: #a78bfa !important;
   }
 }
