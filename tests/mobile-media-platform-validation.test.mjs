@@ -38,6 +38,7 @@ function liveShellDeviceClasses(userAgent, platform = "") {
     body: { classList: classList(bodyClasses) },
     documentElement: { classList: classList(rootClasses) },
     readyState: "complete",
+    getElementById: () => null,
   };
   const window = { location: { search: "" } };
   vm.runInNewContext(`${bootstrap}\n})();`, {

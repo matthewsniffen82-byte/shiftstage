@@ -60918,23 +60918,28 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           continue;
         }
         if (!row || row.cards.length === 3) {
-          row = { cards: [], photos: [], decoding: false, ready: false };
+          row = { cards: [], pendingCards: [], photos: [], decoding: false, ready: false };
           rows.push(row);
         }
         row.cards.push(card);
         const photos = [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
-        row.photos.push(...photos);
         // A new neighbor must not hide portraits that have already loaded.
         const revealed = grid.dancerGridRevealedPhotos.get(card);
         const staysVisible = revealed && revealed.length === photos.length && photos.every((photo, index) => (
           photo === revealed[index] && ["ready", "error"].includes(photo.dataset.imageState)
         ));
         if (!staysVisible) {
+          row.pendingCards.push(card);
+          row.photos.push(...photos);
           card.setAttribute("data-row-loading", "true");
           card.setAttribute("aria-busy", "true");
         }
       }
       if (!rows.length) return;
+      // Refreshes must not re-decode the entire loaded directory. Only new or
+      // replaced portraits participate in the loading gate for each row.
+      rows.forEach((row) => { row.ready = row.pendingCards.length === 0; });
+      if (rows.every((row) => row.ready)) return;
       const firstCard = rows[0].cards[0];
       const observer = new MutationObserver(check);
       grid.dancerGridRevealObserver = observer;
@@ -60953,7 +60958,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
             .then(() => {
               if (firstCard.parentNode !== grid || grid.dancerGridRevealObserver !== observer) return;
               // Reveal this row in one paint without waiting on other rows.
-              row.cards.forEach((card) => {
+              row.pendingCards.forEach((card) => {
                 card.removeAttribute("data-row-loading");
                 card.removeAttribute("aria-busy");
                 grid.dancerGridRevealedPhotos.set(card, [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")]);

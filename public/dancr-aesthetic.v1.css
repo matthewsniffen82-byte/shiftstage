@@ -10274,19 +10274,29 @@ body.dancr-button-system > .app main.stack > section.stack
 
 /* iOS Safari can evict filtered photo layers during momentum scrolling. The
  * compact directory uses native responsive images, so keep those tiles in the
- * ordinary paint flow and leave color correction to the source image. This is
- * intentionally limited to WebKit touch devices and does not alter full-size
- * profile cards or Android's luminance recovery above. */
+ * ordinary paint flow and leave color correction to the source image. Apply
+ * the same protection to profile, venue and table photo grids, without changing
+ * full-size media viewers or Android's luminance recovery above. */
 @supports (-webkit-touch-callout: none) {
-  body.dancr-button-system > .app main.stack > section.stack
+  html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-dancer-grid.home-dancer-three-column
     > .home-dancer-grid-card,
-  body.dancr-button-system > .app main.stack > section.stack
+  html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-dancer-grid.home-dancer-three-column
     .home-dancer-grid-link,
-  body.dancr-button-system > .app main.stack > section.stack
+  html body.dancr-button-system > .app main.stack > section.stack
     > #results.home-dancer-grid.home-dancer-three-column
-    img.home-dancer-grid-photo {
+    img.home-dancer-grid-photo,
+  html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid
+    :is(.home-dancer-grid-card, .home-dancer-grid-link, .home-dancer-grid-photo),
+  html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout #modalGallery
+    :is(.thumb, img.portrait),
+  html body.dancr-button-system .public-profile-shell.profile-split-layout .profile-media-grid
+    :is(.profile-media-grid-cell, .profile-media-grid-item, img),
+  html body.dancr-button-system .ir-shell .ir-directory-grid
+    :is(.ir-dancer, .ir-profile-link, .ir-main-photo) {
+    contain: none !important;
+    isolation: auto !important;
     animation: none !important;
     filter: none !important;
     -webkit-filter: none !important;

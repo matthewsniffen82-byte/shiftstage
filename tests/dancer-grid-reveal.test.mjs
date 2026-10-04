@@ -121,7 +121,8 @@ test("cached photos, initials-only cards and empty grids need no further load ev
 });
 
 test("a slow new neighbor never hides an already revealed portrait", async () => {
-  const existing = [card(), card()];
+  let existingDecodes = 0;
+  const existing = [card(photo("ready", () => { existingDecodes++; return Promise.resolve(); })), card()];
   const h = harness(existing);
   h.start();
   await flush();
@@ -136,6 +137,26 @@ test("a slow new neighbor never hides an already revealed portrait", async () =>
   h.update();
   await flush();
   assert.equal(loading(added), false);
+  assert.equal(existingDecodes, 1, "a newly loaded neighbor must not re-decode visible portraits");
+});
+
+test("background refreshes never re-decode already visible rows", async () => {
+  let decodes = 0;
+  const cards = Array.from({ length: 9 }, () => card(photo("ready", () => {
+    decodes++;
+    return Promise.resolve();
+  })));
+  const h = harness(cards);
+  h.start();
+  await flush();
+  assert.equal(decodes, 9);
+  for (let refresh = 0; refresh < 4; refresh++) {
+    h.start();
+    assert.ok(cards.every(item => !loading(item)));
+    await flush();
+  }
+  assert.equal(decodes, 9);
+  assert.ok(h.observers.every(observer => !observer.connected));
 });
 
 test("a replaced photo on a retained card waits for the new source to load", async () => {
