@@ -613,7 +613,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   max-height: none !important;
   margin: 0 !important;
   padding: 0 !important;
-  border: 2px solid rgba(167, 139, 250, .65) !important;
+  border: 1.5px solid rgba(167, 139, 250, .65) !important;
   background-clip: padding-box !important;
   box-shadow: none !important;
 }

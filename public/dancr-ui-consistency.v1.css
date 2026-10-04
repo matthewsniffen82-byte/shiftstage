@@ -1941,7 +1941,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid 
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory {
-  border: 2px solid rgba(167, 139, 250, .65) !important;
+  border: 1.5px solid rgba(167, 139, 250, .65) !important;
   border-radius: 8px !important;
   background-clip: padding-box !important;
 }
