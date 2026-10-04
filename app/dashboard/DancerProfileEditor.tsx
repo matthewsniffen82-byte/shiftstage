@@ -511,6 +511,7 @@ export function DancerOnboardingCommand({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
   const [ageVerification, setAgeVerification] = useState<DancerAgeVerification | null>(null);
+  const [reviewAgreement, setReviewAgreement] = useState(false);
   const mountedRef = useRef(false);
   const profileSubmissionSequenceRef = useRef(0);
   const profileSubmissionAbortRef = useRef<AbortController | null>(null);
@@ -541,7 +542,7 @@ export function DancerOnboardingCommand({
   const ageNotRequired = !ageVerified && ageVerification?.required === false;
   const ageAccessAllowed = ageVerified || ageNotRequired;
   const setupDetail = profileReady
-    ? "Identity, avatar, and at least one profile picture are approved. Other media can finish review separately."
+    ? "Your details, face photo, and main photo are ready. Other media can finish review separately."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
   const steps = useMemo(() => [
     {
@@ -634,6 +635,7 @@ export function DancerOnboardingCommand({
   }
 
   function continueToProfileAgreement() {
+    setReviewAgreement(true);
     setExpandedStepId("dancer-profile-media");
     window.localStorage.setItem(storageKey, "dancer-profile-media");
     window.requestAnimationFrame(() => {
@@ -792,11 +794,12 @@ export function DancerOnboardingCommand({
               >
                 {step.id === "dancer-profile-media" ? (
                   <>
-                    {profileMediaContent({
+                    <div hidden={reviewAgreement && profileReady && !submitted}>{profileMediaContent({
                       continueToAgreement: continueToProfileAgreement,
                       profileReady,
-                    })}
-                    <div className="dancer-onboarding-agreement" id="dancer-onboarding-agreement" tabIndex={-1}>
+                    })}</div>
+                    <div hidden={!reviewAgreement && !submitted} className="dancer-onboarding-agreement" id="dancer-onboarding-agreement" tabIndex={-1}>
+                      {reviewAgreement && !submitted ? <button type="button" disabled={isSubmitting} onClick={() => setReviewAgreement(false)}>← Back to profile</button> : null}
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Profile complete</strong>
@@ -849,8 +852,8 @@ function dancerProfileSetupBlocker({
   rejectedPhotos: DancerPhotoItem[];
 }) {
   if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
-  if (pendingAvatar) return "Your avatar is being moderated.";
-  if (!avatarUrl) return "Upload a clear face avatar.";
+  if (pendingAvatar) return "Your face photo is being reviewed.";
+  if (!avatarUrl) return "Add a clear face photo.";
   if (pendingPhotos.length) return `${pendingPhotos.length} profile ${pendingPhotos.length === 1 ? "picture is" : "pictures are"} still being moderated.`;
   if (rejectedPhotos.length) return "Replace the profile picture that did not pass moderation.";
   if (!approvedPhotos.length) return "Upload at least one profile picture that passes moderation.";

@@ -21,6 +21,7 @@ import "./venue-premium.css";
 import VenueAdminUtilities from "./VenueAdminUtilities";
 import "./dancer-profile-builder-polish.css";
 import "./dancer-onboarding.css";
+import "./dancer-premium.css";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
@@ -446,6 +447,28 @@ export default function DashboardClient({
     && state.profile?.is_public !== false
     && state.profile?.isPublic !== false;
 
+  const dancerAccountContent = <DashboardSection
+    description="Messages, notifications, and account settings."
+    defaultOpen={dancerAccountPaused || dancerProfileStatus === "approved"}
+    emphasis="utility"
+    id="dancer-account"
+    icon={<DancerDashboardIcon section="account" />}
+    title={effectiveDancerProfileStatus(state.profile, state.account?.accountState) === "approved" ? "Account & support" : "Help & Account"}
+    toggleAffordance="chevron"
+  >
+    <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
+      <CustomerAccountPanel account={state.account || {}} accountRole="dancer" onAccountChange={updateAccountDetails} />
+      <NotificationPanel dancerMode />
+      <DancerNotificationSettings />
+      <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
+      {dancerProfileStatus === "approved" ? <article className="info-panel dancer-agreement-panel">
+        <h2>Dancer Agreement</h2>
+        <DancerAgreementLink className="secondary-action">Read agreement</DancerAgreementLink>
+      </article> : null}
+      <AccountControlsPanel accountRole="dancer" accountState={String(state.account?.accountState || "active")} />
+    </div>
+  </DashboardSection>;
+
   if (role === "dancer" && isLoading && !state.error) {
     return <main className="dashboard-shell dashboard-shell-dancer" aria-busy="true">
       <DashboardStyles />
@@ -472,7 +495,7 @@ export default function DashboardClient({
   }
 
   return (
-    <main className={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : undefined}>
+    <main className={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : role === "dancer" ? "dancer-dashboard" : undefined}>
       {role === "venue" ? <VenueAdminUtilities /> : null}
       <DashboardStyles />
       <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
@@ -491,7 +514,7 @@ export default function DashboardClient({
             </div>
             {dashboardDescription ? <p>{dashboardDescription}</p> : null}
             {role === "customer" && !dashboardDescription ? <p className="customer-dashboard-intro">Your favorites, plans, and updates.</p> : null}
-            {role === "venue" ? <Link className="venue-public-site-link" href={dashboardCloseHref}>View public site <span aria-hidden="true">↗</span></Link> : null}
+            {role === "venue" || role === "dancer" ? <Link className="venue-public-site-link" href={dashboardCloseHref}>View public site <span aria-hidden="true">↗</span></Link> : null}
           </div>
           <DashboardCloseButton
             fallbackHref={dashboardCloseHref}
@@ -569,11 +592,13 @@ export default function DashboardClient({
           ) : null}
           {role === "dancer" ? (
             <>
-              {dancerAccountPaused ? (
+              {dancerAccountPaused ? (<>
                 <InfoPanel title="Account paused">
                   <p>Your dancer tools are unavailable while your account is paused. Manage your account or contact support below.</p>
                 </InfoPanel>
-              ) : <DancerPanel
+                {dancerAccountContent}
+              </>) : <DancerPanel
+                accountContent={dancerAccountContent}
                 accountState={state.account?.accountState}
                 analytics={state.analytics}
                 affiliations={state.affiliations || []}
@@ -581,27 +606,7 @@ export default function DashboardClient({
                 profile={state.profile}
                 onProfileChange={updateProfile}
               />}
-              <DashboardSection
-                description="Messages, notifications, and account settings."
-                defaultOpen={dancerAccountPaused}
-                emphasis="utility"
-                id="dancer-account"
-                icon={<DancerDashboardIcon section="account" />}
-                title={effectiveDancerProfileStatus(state.profile, state.account?.accountState) === "approved" ? "Account & support" : "Help & Account"}
-                toggleAffordance="chevron"
-              >
-                <div className="venue-dashboard-inner-grid venue-dashboard-account-grid">
-                  <CustomerAccountPanel account={state.account || {}} accountRole="dancer" onAccountChange={updateAccountDetails} />
-                  <NotificationPanel dancerMode />
-                  <DancerNotificationSettings />
-                  <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
-                  {dancerProfileStatus === "approved" ? <article className="info-panel dancer-agreement-panel">
-                    <h2>Dancer Agreement</h2>
-                    <DancerAgreementLink className="secondary-action">Read agreement</DancerAgreementLink>
-                  </article> : null}
-                  <AccountControlsPanel accountRole="dancer" accountState={String(state.account?.accountState || "active")} />
-                </div>
-              </DashboardSection>
+
             </>
           ) : null}
           {role === "venue" ? (

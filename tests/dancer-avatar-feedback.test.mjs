@@ -13,8 +13,9 @@ const code = ts.transpileModule(`${component}\nexport { DancerAvatarPanel };`, {
 }).outputText;
 
 // Drive the real component's event handlers and effects without a server or production uploads.
-function avatarHarness({ profile = {}, post = async () => ({ decision: "approved", moderationRecordId: "new" }), read = async () => ({ profile: { avatarPhotoUrl: "approved.jpg" } }) } = {}) {
-  const slots = [], revoked = [], posts = [];
+function avatarHarness({ profile = {}, compact = false, crop = async file => file, source = async () => ({ imageDataUrl: "data:image/jpeg;base64," + btoa("saved-photo") }), post = async () => ({ decision: "approved", moderationRecordId: "new" }), read = async () => ({ profile: { avatarPhotoUrl: "approved.jpg" } }) } = {}) {
+  const slots = [], revoked = [], posts = [], sourceRequests = [];
+  let accountId = "dancer-a";
   let cursor = 0, effects = [], dirty = true, tree, busy = false, blobId = 0;
   const exports = {};
   const reportBusy = value => { busy = value; };
@@ -36,17 +37,20 @@ function avatarHarness({ profile = {}, post = async () => ({ decision: "approved
         effects.push(() => { previous?.cleanup?.(); slots[index] = { deps, cleanup: effect() }; });
       }
     },
+    dancerPhotoItemsFromProfile: p => p.dancer_photos || [],
+    cropProfilePhoto: crop,
+    requestDashboardJson: (url, options) => { sourceRequests.push({ url, ...options }); return source(options); },
     AvatarUploadBusyContext: {}, AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, DashboardDataRequestError,
-    readSession: () => ({ accessToken: "fixture" }),
+    readSession: () => ({ accessToken: "fixture", account: { id: accountId, role: "dancer" } }),
     requestDancerAvatarJson: options => { posts.push(options); return post(options); },
     requestDancerProfileJson: options => read(options),
     URL: { createObjectURL: () => `blob:avatar-${++blobId}`, revokeObjectURL: url => revoked.push(url) },
-    FormData, AbortController, crypto: globalThis.crypto, window: { confirm: () => true },
+    File, atob, Uint8Array, DOMException, FormData, AbortController, crypto: globalThis.crypto, window: { confirm: () => true },
   });
   function render() {
     for (let count = 0; dirty && count < 20; count++) {
       dirty = false; cursor = 0; effects = [];
-      tree = exports.DancerAvatarPanel({ profile, onProfileChange: next => { profile = next; dirty = true; } });
+      tree = exports.DancerAvatarPanel({ compact, profile, onProfileChange: next => { profile = next; dirty = true; } });
       effects.forEach(effect => effect());
     }
     assert.equal(dirty, false, "background updates must settle without a render loop");
@@ -56,18 +60,20 @@ function avatarHarness({ profile = {}, post = async () => ({ decision: "approved
     return [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
   }
   function select(file = new File(["fixture"], "avatar.jpg", { type: "image/jpeg" })) {
-    nodes().find(node => node.props?.["aria-label"] === "Choose avatar from your photo library").props.onChange({ target: { files: file ? [file] : [], value: "" } });
+    nodes().find(node => node.props?.["aria-label"] === "Choose face photo from your photo library").props.onChange({ target: { files: file ? [file] : [], value: "" } });
     render();
   }
   render();
   return {
-    select, revoked, posts,
+    select, revoked, posts, sourceRequests,
+    button: label => nodes().find(node => node.type === "button" && node.props.children === label),
+    switchAccount: () => { accountId = "dancer-b"; },
     get busy() { return busy; },
     get badge() { return nodes().find(node => node.props?.className?.startsWith("dancer-avatar-state"))?.props.children; },
     get image() { return nodes().find(node => node.type === "img")?.props.src; },
     get approvedPreview() { return nodes().find(node => node.props?.["data-avatar-approved-preview"]); },
     get message() { return nodes().find(node => node.props?.role === "status")?.props.children; },
-    get retry() { return nodes().find(node => node.type === "button" && node.props.children === "Retry avatar upload"); },
+    get retry() { return nodes().find(node => node.type === "button" && node.props.children === "Retry face photo upload"); },
     updateProfile(next) { profile = next; dirty = true; render(); },
     async settle() { await new Promise(resolve => setImmediate(resolve)); render(); },
   };
@@ -188,4 +194,32 @@ test("the avatar request preserves a structured rejection while ordinary 422 err
     globalThis.fetch = async () => new Response(JSON.stringify({ ok: false, error: "Choose a clear face photo." }), { status: 422 });
     await assert.rejects(requestDancerAvatarJson({ method: "POST" }), error => error instanceof DashboardDataRequestError && error.status === 422);
   } finally { globalThis.window = previousWindow; globalThis.fetch = previousFetch; }
+});
+
+
+test("the shared face editor crops an owned main photo to a square and uses normal moderation", async () => {
+  const cropped = new File(["square face"], "face.jpg", { type: "image/jpeg" });
+  const ui = avatarHarness({ compact: true, profile: { dancer_photos: [{ id: "main-photo", status: "approved", isPrimary: true }] }, crop: async (file, signal, assertOwner, ratio) => {
+    assert.equal(ratio, 1); assert.equal(await file.text(), "saved-photo"); assertOwner(); return cropped;
+  } });
+  ui.button("Use main photo").props.onClick(); await ui.settle();
+  assert.equal(ui.sourceRequests[0].body.get("photoId"), "main-photo");
+  assert.equal(ui.sourceRequests[0].expectedRole, "dancer");
+  assert.equal(ui.posts.length, 1); assert.equal(await ui.posts[0].body.get("file").text(), "square face");
+  assert.equal(ui.badge, "Approved"); assert.equal(ui.busy, false);
+});
+
+test("canceling a reused face crop preserves the existing face photo", async () => {
+  const ui = avatarHarness({ compact: true, profile: { avatarPhotoUrl: "existing.jpg", dancer_photos: [{ id: "main", status: "approved", isPrimary: true }] }, crop: async () => null });
+  ui.button("Use main photo").props.onClick(); await ui.settle();
+  assert.equal(ui.posts.length, 0); assert.equal(ui.image, "existing.jpg"); assert.match(ui.message, /Crop canceled/);
+});
+
+test("reused face photo preparation rejects duplicate clicks and an account change", async () => {
+  let resolve;
+  const ui = avatarHarness({ compact: true, profile: { dancer_photos: [{ id: "main", status: "approved", isPrimary: true }] }, source: () => new Promise(done => { resolve = done; }) });
+  const button = ui.button("Use main photo"); button.props.onClick(); button.props.onClick();
+  assert.equal(ui.sourceRequests.length, 1);
+  ui.switchAccount(); resolve({ imageDataUrl: "data:image/jpeg;base64," + btoa("saved-photo") }); await ui.settle();
+  assert.equal(ui.posts.length, 0); assert.equal(ui.busy, false);
 });

@@ -30,7 +30,7 @@ test("stage name and city use the compact editor without changing persistence or
 test("avatar editor has one compact requirement and keeps the real upload workflow", () => {
   assert.match(dashboard, /avatar: "Upload avatar"/);
   assert.match(avatarEditor, /Use a clear solo face photo of yourself\./);
-  assert.match(avatarEditor, />Gallery<\/strong>/);
+  assert.match(avatarEditor, /"Change photo" : "Add face photo" : "Gallery"/);
   assert.match(avatarEditor, />Camera<\/strong>/);
   assert.doesNotMatch(avatarEditor, /Profile identity|<h2>Avatar<\/h2>/i);
   assert.match(avatarEditor, /void uploadAvatar\(nextFile\)/);
@@ -48,7 +48,7 @@ test("avatar upload and removal reject duplicate and stale work", () => {
   assert.match(avatarEditor, /const uploadIdentityRef = useRef<\{ signature: string; key: string \} \| null>\(null\);/);
   assert.match(avatarEditor, /uploadIdentityRef\.current\?\.signature === signature[\s\S]*?uploadIdentityRef\.current[\s\S]*?createAvatarUploadIdentity\(nextFile\)/);
   assert.match(avatarEditor, /key: `\$\{signature\}:avatar:\$\{crypto\.randomUUID\(\)\}`/);
-  assert.equal((avatarEditor.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.equal((avatarEditor.match(/signal: controller\.signal/g) || []).length, 3);
   assert.equal((avatarEditor.match(/refreshProfile\(controller\.signal\)/g) || []).length, 2);
   assert.equal((avatarEditor.match(/if \(!isCurrentAvatarAction\(requestId, controller\)\) return;/g) || []).length, 5);
   assert.match(avatarEditor, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);

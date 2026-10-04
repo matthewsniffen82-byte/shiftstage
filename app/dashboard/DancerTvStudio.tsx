@@ -60,7 +60,7 @@ type QueuedVideo = {
   error?: string;
 };
 
-export default function DancerTvStudio({ embedded = false, uploadOnly = false }: { embedded?: boolean; uploadOnly?: boolean }) {
+export default function DancerTvStudio({ embedded = false, uploadOnly = false, onBusyChange }: { embedded?: boolean; uploadOnly?: boolean; onBusyChange?: (busy: boolean) => void }) {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [queuedVideos, setQueuedVideos] = useState<QueuedVideo[]>([]);
   const [uploadingQueueItemId, setUploadingQueueItemId] = useState("");
@@ -459,6 +459,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false }:
   }
 
   const videoActionBusy = isSubmitting || Boolean(removingId) || Boolean(pinningId);
+  useEffect(() => { onBusyChange?.(videoActionBusy); return () => onBusyChange?.(false); }, [videoActionBusy, onBusyChange]);
 
   const content = (
     <>

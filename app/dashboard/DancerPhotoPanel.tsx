@@ -11,6 +11,7 @@ import type { LoadState, DancerPhotoItem, DancerPhotoQueueItem } from "./dashboa
 import { DANCER_PHOTOS_KEEP_OPEN_EVENT } from "./DashboardShared";
 export function DancerPhotoPanel({
   uploadOnly = false,
+  onBusyChange,
   deletedPhotoIds = [],
   deletedPhotoStoragePaths = [],
   onDeletedPhotoIdsChange,
@@ -19,6 +20,7 @@ export function DancerPhotoPanel({
   profile,
 }: {
   uploadOnly?: boolean;
+  onBusyChange?: (busy: boolean) => void;
   deletedPhotoIds?: string[];
   deletedPhotoStoragePaths?: string[];
   onDeletedPhotoIdsChange?: (deletedPhotoIds: string[]) => void;
@@ -392,12 +394,13 @@ export function DancerPhotoPanel({
   }
 
   const photoActionBusy = isUploading || Boolean(pinningPhotoId) || deletingPhotoIds.size > 0;
+  useEffect(() => { onBusyChange?.(photoActionBusy); return () => onBusyChange?.(false); }, [photoActionBusy, onBusyChange]);
   // The uploader owns its session history; closing the modal unmounts it.
   // The full manager already displays accepted photos in its saved library.
   const visibleQueuedPhotos = queuedPhotos.filter((item) => uploadOnly || item.stage !== "complete" || item.result?.status === "rejected");
 
   return (
-    <article aria-label="Profile photo manager" className="info-panel upload-panel">
+    <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
       <div className="dancer-photo-upload-form">
         <div className="photo-upload-heading">
           <span><strong>Add at least 1 solo photo of yourself. You can add more later.</strong></span>
@@ -475,7 +478,7 @@ export function DancerPhotoPanel({
           })}
         </div>
       ) : null}
-      <DancerInternalMainPhotoPicker key={String(profile?.id || "new-profile")} photos={photos} disabled={photoActionBusy} onProfileChange={onProfileChange} />
+      {!uploadOnly ? <DancerInternalMainPhotoPicker key={String(profile?.id || "new-profile")} photos={photos} disabled={photoActionBusy} onProfileChange={onProfileChange} /> : null}
       {!uploadOnly && photos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>

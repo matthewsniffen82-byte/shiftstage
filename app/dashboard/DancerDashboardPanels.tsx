@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
@@ -8,14 +8,16 @@ import { publishDancerVisibility } from "@/src/lib/dancr/publish-dancer-visibili
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
 import { readSession, requestDancerProfileJson, requestDancerProfileVisibilityJson } from "./dashboard-session";
-import type { LoadState, DancerPhotoItem, DancerProfileEditorSections, DancerIdentityDraft, DancerProfileEditorSaveRequest } from "./dashboard-types";
-import { persistedDancerStageName, saveDancerProfileEditor, DashboardSection, DANCER_PROFILE_EDITOR_SAVE_EVENT } from "./DashboardShared";
+import type { LoadState, DancerPhotoItem, DancerIdentityDraft, DancerProfileEditorSaveRequest } from "./dashboard-types";
+import { persistedDancerStageName, DashboardSection, DANCER_PROFILE_EDITOR_SAVE_EVENT } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, DancerPhotoPanel } from "./DancerPhotoPanel";
 import { DancerAvatarPanel } from "./DancerAvatarPanel";
 import { DancerMainPhotoPanel } from "./DancerMainPhotoPanel";
 import DancerAgeVerificationGate from "./DancerAgeVerificationGate";
 import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
-import { DancerProfilePreview, DancerOnboardingCommand, DancerOnboardingProfileMediaWorkspace } from "./DancerProfileEditor";
+import { DancerOnboardingCommand } from "./DancerProfileEditor";
+import DancerProfileWorkspace from "./DancerProfileWorkspace";
+import DancerDashboardWorkspace from "./DancerDashboardWorkspace";
 // Keep role-specific tools out of every customer's initial JavaScript. Editors
 // load when mounted; the visible role's core tools warm while its data loads.
 const DancerNfcPanel = dynamic(() => import("./DancerNfcPanel"));
@@ -26,6 +28,7 @@ const DancerShiftManager = dynamic(() => import("./DancerShiftManager"));
 
 
 export function DancerPanel({
+  accountContent,
   accountState,
   affiliations,
   analytics,
@@ -33,6 +36,7 @@ export function DancerPanel({
   onProfileChange,
   profile,
 }: {
+  accountContent?: ReactNode;
   accountState?: string;
   affiliations: Array<Record<string, unknown>>;
   analytics?: LoadState["analytics"];
@@ -45,12 +49,20 @@ export function DancerPanel({
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
   const isVenueApproved = Boolean(profile?.venue_approved_at || profile?.venueApprovedAt)
     || affiliations.some((item) => item.status === "active");
+  const [editorBusy, setEditorBusy] = useState(false);
+  const [mainBusy, setMainBusy] = useState(false);
+  const [photosBusy, setPhotosBusy] = useState(false);
+  const [videoBusy, setVideoBusy] = useState(false);
+  const [editorRequested, setEditorRequested] = useState(0);
+  const [previewRequested, setPreviewRequested] = useState(0);
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
   const [draftIdentity, setDraftIdentity] = useState(() => ({
     stageName: persistedDancerStageName(profile),
     city: String(profile?.city || ""),
   }));
+  const hasRejectedMedia = (profile?.avatar_review as Record<string, unknown> | undefined)?.decision === "rejected"
+    || dancerPhotoItemsFromProfile(profile).some(photo => photo.status === "rejected");
   const hasPendingAvatar = Boolean(profile?.pending_avatar_review);
   const hasPendingPhotos = dancerPhotoItemsFromProfile(profile).some((photo) => photo.status === "pending");
 
@@ -117,11 +129,12 @@ export function DancerPanel({
       unifiedSave
     />
   );
-  const avatarContent = <DancerAvatarPanel profile={profile} onProfileChange={onProfileChange} />;
-  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} profile={profile} onProfileChange={onProfileChange} />;
+  const avatarContent = <DancerAvatarPanel compact profile={profile} onProfileChange={onProfileChange} />;
+  const mainPhotoContent = <DancerMainPhotoPanel onBusyChange={setMainBusy} key={String(profile?.id || "new-profile")} profile={profile} onProfileChange={onProfileChange} />;
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly
+      onBusyChange={setPhotosBusy}
       deletedPhotoIds={deletedPhotoIds}
       deletedPhotoStoragePaths={deletedPhotoStoragePaths}
       onDeletedPhotoIdsChange={setDeletedPhotoIds}
@@ -130,135 +143,40 @@ export function DancerPanel({
       onProfileChange={onProfileChange}
     />
   );
-  const videoContent = <DancerTvStudio embedded uploadOnly />;
-  const profileEditorSections: DancerProfileEditorSections = {
-    identity: identityContent(),
-    stageName: identityContent("stageName"),
-    city: identityContent("city"),
-    avatar: avatarContent,
-    photos: <>{mainPhotoContent}{photoContent}</>,
-    videos: videoContent,
-  };
-  const profileMediaWorkspace = (
-    <div className="venue-dashboard-inner-grid dancer-onboarding-profile-workspace">
-      <article className="dancer-profile-editor-launch-card" aria-labelledby="dancer-profile-media-preview-heading">
-        <span>
-          <strong id="dancer-profile-media-preview-heading">Profile details</strong>
-          <small>Avatar, stage name, city, photos and videos.</small>
-        </span>
-        <DancerProfilePreview
-          buttonClassName="dancer-profile-editor-launch-button"
-          buttonLabel="Edit"
-          city={draftIdentity.city}
-          editorSections={profileEditorSections}
-          isApproved
-          isPublic={isPublic}
-          name={draftIdentity.stageName}
-          onClose={() => {
-            const section = document.getElementById("dancer-profile-media") as HTMLDetailsElement | null;
-            if (section) section.open = false;
-          }}
-          onEditorSave={saveDancerProfileEditor}
-          onProfileChange={onProfileChange}
-          profile={profile}
-          saveLabel="Save & return to dashboard"
-        />
-      </article>
-      {mainPhotoContent}
-      <details className="dancer-profile-share-tools">
-        <summary><span className="dancer-share-button-label"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" /></svg>Share profile</span></summary>
-        <DancerSharePanel profile={profile} />
-      </details>
-    </div>
-  );
-  const profileMediaSection = (
-    <DashboardSection
-      description="Edit your profile or share it."
-      emphasis="primary"
-      id="dancer-profile-media"
-      icon={<DancerDashboardIcon section="profile" />}
-      toggleAffordance="chevron"
-      title="Profile & media"
-    >
-      {profileMediaWorkspace}
+  const videoContent = <DancerTvStudio embedded uploadOnly onBusyChange={setVideoBusy} />;
+  const workspaceProps = { identityContent: identityContent(), avatarContent, mainPhotoContent, photoContent, videoContent,
+    draftIdentity, profile, onProfileChange, isPublic, editorRequested, previewRequested, uploadBusy: mainBusy || photosBusy || videoBusy, onBusyChange: setEditorBusy };
+  const preview = <button type="button" onClick={() => setPreviewRequested(value => value + 1)}>Preview profile</button>;
+  const accountTools = <>
+    <DashboardSection id="dancer-connected-clubs" title="Connected clubs" description="Your club access and check-in tags." icon={<DancerDashboardIcon section="schedule" />} toggleAffordance="chevron">
+      <DancerNfcPanel compactAuthorized initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />
     </DashboardSection>
-  );
+    <DashboardSection id="dancer-verification" title="Verification" description="Your age verification status." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerAgeVerificationGate><p>Your age verification requirements are complete.</p></DancerAgeVerificationGate></DashboardSection>
+    {accountContent}
+  </>;
+  return <>
+    <DancerActivationConfirmation affiliations={affiliations} isLive={isPublic} nfc={nfc} profile={profile} />
+    {!isApproved ? <>
+      <DancerOnboardingCommand effectiveStatus={effectiveStatus} isVenueApproved={isVenueApproved} onProfileChange={onProfileChange} profile={profile}
+        profileMediaContent={({ profileReady, continueToAgreement }) => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} onboarding profileReady={profileReady} onContinue={continueToAgreement} />}
+        venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />} />
+      {accountContent}
+    </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested} previewRequested={previewRequested}
+      overview={<>
+        <section className="dancer-daily-card" id="dancer-overview">
+          <header><div><span className="eyebrow">Your day at a glance</span><h2>Overview</h2></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{isPublic ? "Public" : "Incognito"}</span></header>
+          {hasPendingAvatar || hasPendingPhotos || hasRejectedMedia ? <div className="dancer-attention-note" role="status"><strong>{hasRejectedMedia ? "A recent upload needs attention" : "Media awaiting review"}</strong><p>{hasRejectedMedia ? "Review the photo feedback and choose another image if needed." : "Your approved photos stay visible while replacements are checked."}</p><button type="button" onClick={() => setEditorRequested(value => value + 1)}>Review profile</button></div> : null}
+          {!isPublic ? <div className="dancer-attention-note"><strong>Your profile is hidden</strong><p>Turn off incognito in Profile when you’re ready to be seen.</p></div> : null}
+          <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button>{preview}</div>
+        </section>
+        <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager /></section></DancerAgeVerificationGate>
+      </>}
+      profile={<><DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} /><DashboardSection id="dancer-visibility" title="Profile visibility" description="Control whether guests can see your profile." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /></DashboardSection><DashboardSection id="dancer-share" title="Share profile" description="Your public link and QR code." icon={<DancerDashboardIcon section="profile" />} toggleAffordance="chevron"><DancerSharePanel profile={profile} /></DashboardSection></>}
+      results={<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See how guests discover and engage with your profile.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} /></section></DancerAgeVerificationGate>}
+      account={accountTools}
+    />}
+  </>;
 
-  return (
-    <>
-      <DancerActivationConfirmation
-        affiliations={affiliations}
-        isLive={isPublic}
-        nfc={nfc}
-        profile={profile}
-      />
-      {!isApproved ? (
-        <DancerOnboardingCommand
-          effectiveStatus={effectiveStatus}
-          isVenueApproved={isVenueApproved}
-          onProfileChange={onProfileChange}
-          profile={profile}
-          profileMediaContent={({ profileReady }) => (
-            <DancerOnboardingProfileMediaWorkspace
-              avatarContent={avatarContent}
-              draftIdentity={draftIdentity}
-              identityContent={identityContent}
-              photoContent={photoContent}
-              mainPhotoContent={mainPhotoContent}
-              profile={profile}
-              profileReady={profileReady}
-              videoContent={videoContent}
-            />
-          )}
-          venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />}
-        />
-      ) : null}
-      {isApproved ? (
-        <DancerAgeVerificationGate>
-          <DashboardSection
-            defaultOpen
-            description="Your current club check-in."
-            emphasis="primary"
-            id="dancer-schedule"
-            icon={<DancerDashboardIcon section="schedule" />}
-            toggleAffordance="chevron"
-            title="Working Now"
-          >
-            <DancerShiftManager />
-          </DashboardSection>
-          <DashboardSection
-            description="Visibility and connected clubs."
-            emphasis="summary"
-            id="dancer-overview"
-            icon={<DancerDashboardIcon section="status" />}
-            toggleAffordance="chevron"
-            title="Profile status"
-          >
-            <div className="venue-dashboard-inner-grid dancer-overview-grid">
-              <DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} />
-              <DancerNfcPanel
-                compactAuthorized
-                initialAffiliations={affiliations}
-                initialNfcState={nfc || null}
-                onAuthorizationChange={refreshDancerProfile}
-              />
-            </div>
-          </DashboardSection>
-          <DashboardSection
-            description="Views, followers, and engagement."
-            emphasis="secondary"
-            id="dancer-performance"
-            icon={<DancerDashboardIcon section="performance" />}
-            toggleAffordance="chevron"
-            title="Analytics"
-          >
-            <DancerAnalyticsPanel initialAnalytics={analytics} />
-          </DashboardSection>
-        </DancerAgeVerificationGate>
-      ) : null}
-      {isApproved ? profileMediaSection : null}
-    </>
-  );
 }
 
 
@@ -304,13 +222,14 @@ function DancerActivationConfirmation({
 
   function openProfileManager(event: MouseEvent<HTMLAnchorElement>) {
     event.preventDefault();
-    const sectionId = "dancer-profile-media";
+    const sectionId = "dancer-profile";
     const url = new URL(window.location.href);
     url.searchParams.delete("nfc");
     url.hash = sectionId;
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
     setCompletionRequested(false);
-    const section = document.getElementById(sectionId);
+    window.dispatchEvent(new Event("hashchange"));
+    const section = document.getElementById("dancer-destination-profile");
     if (section instanceof HTMLDetailsElement) section.open = true;
     section?.scrollIntoView({ behavior: "smooth", block: "start" });
   }

@@ -12,6 +12,8 @@ const [dashboard, dancerStudio, dancerNfcPanel, dancerRoute, avatarRoute, venueR
   readFile(new URL("../app/api/dancer/dashboard/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/nfc/[token]/route.ts", import.meta.url), "utf8"),
 ]);
+const sharedWorkspace = await readFile(new URL("../app/dashboard/DancerProfileWorkspace.tsx", import.meta.url), "utf8");
+const dashboardWorkspace = await readFile(new URL("../app/dashboard/DancerDashboardWorkspace.tsx", import.meta.url), "utf8");
 const onboardingCommand = dashboard.match(/function DancerOnboardingCommand[\s\S]*?(?=\nfunction DancerOnboardingProfileMediaWorkspace)/)?.[0] || "";
 
 test("initial dancers use the canonical premium dashboard shell and loading state", () => {
@@ -57,8 +59,8 @@ test("initial onboarding nests every production workspace directly under its ste
   const checklist = panel.indexOf("<DancerOnboardingCommand");
 
   assert.ok(checklist >= 0, "setup checklist should render");
-  assert.match(panel, /profileMediaContent=\{\(\{ profileReady \}\) => \(/);
-  assert.match(panel, /<DancerOnboardingProfileMediaWorkspace/);
+  assert.match(panel, /profileMediaContent=\{\(\{ profileReady, continueToAgreement \}\) => <DancerProfileWorkspace/);
+  assert.match(panel, /<DancerProfileWorkspace/);
   assert.match(panel, /venueVerificationContent=\{<DancerNfcPanel/);
   assert.doesNotMatch(panel, /\{!isApproved \? profileMediaSection : null\}/);
   assert.doesNotMatch(panel, /id="dancer-nfc-authorization"/);
@@ -154,20 +156,16 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, /\.tv-video-source-cta \{ min-width: 60px; display: grid; place-items: center;/);
 });
 
-test("step one edits identity directly and keeps media in the setup dropdowns", () => {
-  assert.match(dashboard, /<DancerIdentityEditor[^>]*onClose=\{refreshDraftStatus\}>\s*\{identityContent\(\)\}\s*<\/DancerIdentityEditor>/);
-  assert.match(dashboard, /<summary>Avatar/);
-  assert.match(dashboard, /\{mainPhotoContent\}\s*<details[^>]*>\s*<summary>More photos/);
-  assert.match(dashboard, /<summary>Videos/);
-  assert.match(dashboard, /videos: videoContent/);
-  assert.doesNotMatch(dashboard, /socials: socialContent/);
-  assert.match(dashboard, /Profile details/);
-  assert.doesNotMatch(dashboard, /required items ready|Choose from your device or open your camera\. At least one approved photo is required\./);
-  assert.match(dashboard, /buttonLabel="Edit"/);
-  assert.doesNotMatch(dashboard, /Set up profile|Save & continue/);
-  assert.doesNotMatch(dashboard, /continueAfterSave/);
-  assert.match(dashboard, /continueToAgreement: continueToProfileAgreement/);
-  assert.match(dashboard, /document\.getElementById\("dancer-onboarding-agreement"\)\?\.scrollIntoView/);
+test("step one uses the shared inline editor and opens an explicit agreement review", () => {
+  assert.match(sharedWorkspace, /\{identityContent\}/);
+  assert.match(sharedWorkspace, /Your details/);
+  assert.match(sharedWorkspace, /Your photos/);
+  assert.match(sharedWorkspace, /More media/);
+  assert.doesNotMatch(sharedWorkspace, /DancerIdentityEditor|aria-modal/);
+  assert.match(dashboard, /onContinue=\{continueToAgreement\}/);
+  assert.match(onboardingCommand, /setReviewAgreement\(true\)/);
+  assert.match(onboardingCommand, /hidden=\{!reviewAgreement && !submitted\}/);
+  assert.match(onboardingCommand, /DancerProfileAgreementReview/);
 });
 
 test("profile setup editors use the compact shared modal shell without changing the save boundary", () => {
@@ -210,7 +208,7 @@ test("dancer onboarding no longer offers payout enrollment", () => {
 
 test("approved dancers retain analytics without commission promotions", () => {
   assert.doesNotMatch(dashboard, /function DancerNatsSignupCallout|function DancerPayoutPanel|Sign up for commission payouts/);
-  assert.match(dashboard, /title="Analytics"/);
+  assert.match(dashboard, /<h2>Results<\/h2>/);
   assert.match(dashboard, /<DancerAnalyticsPanel initialAnalytics=\{analytics\}/);
   assert.doesNotMatch(dashboard, /title="Club Deal activity"|title="Weekly results"/);
 });
@@ -234,7 +232,7 @@ test("the full profile editor retains accessible add targets that preserve the a
   assert.match(dashboard, /data-profile-editor-trigger="stageName" onClick=\{\(\) => openEditorSection\("stageName"\)\}/);
   assert.match(dashboard, /data-profile-editor-trigger="city" onClick=\{\(\) => openEditorSection\("city"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("avatar"\)\}/);
-  assert.match(dashboard, /photos: <>\{mainPhotoContent\}\{photoContent\}<\/>,[\s\S]*?videos: videoContent/);
+  assert.match(dashboard, /workspaceProps = \{ identityContent: identityContent\(\), avatarContent, mainPhotoContent, photoContent, videoContent/);
   assert.doesNotMatch(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);
   assert.doesNotMatch(dashboard, /SOCIAL_PLATFORMS\.map\(\(platform\) =>/);
   assert.doesNotMatch(dashboard, /className="social-links-control"[\s\S]*?<h2 id="dancer-profile-builder-social-heading">Social Links<\/h2>/);
@@ -262,17 +260,13 @@ test("onboarding and active profile editors share the compact uploader with the 
   assert.doesNotMatch(dashboard, /isOnboardingEditor|showDashboardMedia/);
 });
 
-test("approved dancers see their current check-in before collapsed profile tools", () => {
-  assert.doesNotMatch(dashboard, /\{isApproved \? \(\s*<DashboardSection\s+defaultOpen[\s\S]{0,500}?id="dancer-overview"/);
-  assert.match(dashboard, /description="Visibility and connected clubs\."\s+emphasis="summary"\s+id="dancer-overview"/);
-  assert.match(dashboard, /description="Edit your profile or share it\."\s+emphasis="primary"\s+id="dancer-profile-media"/);
-  assert.match(dashboard, /<DancerAgeVerificationGate>\s*<DashboardSection\s+defaultOpen\s+description="Your current club check-in\."\s+emphasis="primary"\s+id="dancer-schedule"/);
-  assert.match(dashboard, /description="Views, followers, and engagement\."\s+emphasis="secondary"\s+id="dancer-performance"/);
-  assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"|title="Share profile"/);
-  assert.doesNotMatch(dashboard, /eyebrow="Dancer workspace"/);
-  assert.match(dashboard, /\.dashboard-shell\.dashboard-shell-dancer \.venue-dashboard-section\.dashboard-section-primary \{[^}]*box-shadow: inset 3px 0 0/);
-  assert.match(dashboard, /\.dashboard-section-utility \.venue-dashboard-section-copy > span:last-child \{ color: rgba\(218,218,226,\.72\); font-size: 12px; \}/);
-  assert.match(dashboard, /\.dashboard-shell-dancer \{ padding-bottom: max\(40px, calc\(env\(safe-area-inset-bottom\) \+ 24px\)\)/);
+test("approved dancers get daily controls and four dedicated destinations", () => {
+  assert.match(dashboard, /overview=\{<>[\s\S]*?id="dancer-schedule"/);
+  assert.match(dashboard, /<DancerShiftManager/);
+  assert.match(dashboardWorkspace, /id: "overview"/);
+  assert.match(dashboardWorkspace, /id: "profile"/);
+  assert.match(dashboardWorkspace, /id: "results"/);
+  assert.match(dashboardWorkspace, /id: "account"/);
 });
 
 test("expanded profile status stays visible and uses compact non-repeating controls", () => {
@@ -346,7 +340,7 @@ test("a completed profile photo upload clears the native filename from onboardin
   assert.match(dashboard, /event\.target\.value = ""/);
   assert.match(dashboard, /if \(galleryPhotoInputRef\.current\) galleryPhotoInputRef\.current\.value = ""/);
   assert.match(dashboard, /if \(cameraPhotoInputRef\.current\) cameraPhotoInputRef\.current\.value = ""/);
-  assert.match(dashboard, /aria-label="Choose avatar from your photo library"/);
+  assert.match(dashboard, /aria-label="Choose face photo from your photo library"/);
   assert.match(dashboard, /aria-label="Take a new avatar photo"/);
   assert.match(dashboard, /capture="user"/);
   assert.match(dashboard, /dancer-avatar-source-grid/);
@@ -403,18 +397,13 @@ test("the full profile preview renders approved media and restores the dashboard
 });
 
 test("approved dancers retain the full profile editor and its media controls", () => {
-  const sections = dashboard.match(/const profileEditorSections: DancerProfileEditorSections = \{[\s\S]*?\n  \};/)?.[0] || "";
-  const workspace = dashboard.match(/const profileMediaWorkspace = \([\s\S]*?\n  \);/)?.[0] || "";
-  assert.match(workspace, /className="dancer-profile-editor-launch-card"/);
-  assert.match(workspace, /buttonClassName="dancer-profile-editor-launch-button"/);
-  assert.match(workspace, /buttonLabel="Edit"[\s\S]*editorSections=\{profileEditorSections\}[\s\S]*isApproved[\s\S]*isPublic=\{isPublic\}/);
-  assert.match(workspace, /saveLabel="Save & return to dashboard"/);
-  assert.match(workspace, /document\.getElementById\("dancer-profile-media"\)[\s\S]*?section\.open = false/);
-  assert.match(sections, /identity: identityContent[\s\S]*?avatar: avatarContent[\s\S]*?photos: <>\{mainPhotoContent\}\{photoContent\}<\/>[\s\S]*?videos: videoContent/);
-  assert.doesNotMatch(workspace, /showDashboardMedia|DancerProfileMediaUploads/);
-  assert.doesNotMatch(dashboard, /<VenueQrUnavailable|<DancerProfileActionsPreview|dancer-profile-builder-tonight|className="profile-overview"|className="profile-metrics"/);
-  assert.match(workspace, /<details className="dancer-profile-share-tools">[\s\S]*<DancerSharePanel profile=\{profile\} \/>/);
-  assert.doesNotMatch(sections, /share:/);
+  assert.match(dashboard, /profile=\{<><DancerProfileWorkspace[^>]*\{\.\.\.workspaceProps\}/);
+  assert.match(sharedWorkspace, /DancerProfileMediaUploads compact/);
+  assert.match(sharedWorkspace, /DancerSavedPhotoCrop photo=\{photo\} makeMain/);
+  assert.match(sharedWorkspace, /onMediaPinned/);
+  assert.match(sharedWorkspace, /onPhotoDeleted/);
+  assert.match(dashboard, /<DancerSharePanel profile=\{profile\}/);
+  assert.match(dashboard, /<DancerVisibilityPanel profile=\{profile\}/);
 });
 
 test("the mobile full-profile preview keeps the three-column media grid above navigation", () => {
@@ -425,9 +414,7 @@ test("the mobile full-profile preview keeps the three-column media grid above na
 });
 
 test("pre-approval tools remain hidden while help and account recovery stay available", () => {
-  assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-schedule"/);
-  assert.match(dashboard, /\{isApproved \? \([\s\S]*?id="dancer-performance"/);
-  assert.match(dashboard, /\{isApproved \? profileMediaSection : null\}/);
+  assert.match(dashboard, /!isApproved \? <>[\s\S]*?<DancerOnboardingCommand[\s\S]*?\{accountContent\}[\s\S]*?<DancerDashboardWorkspace/);
   assert.match(dashboard, /"Help & Account"/);
   assert.match(dashboard, /DashboardSignInRecovery/);
   assert.match(dashboard, /body: JSON\.stringify\(\{ mode: "login", role/);

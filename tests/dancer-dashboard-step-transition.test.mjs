@@ -41,10 +41,10 @@ test("dashboard activation finalizes before the post-tap profile snapshot loads"
 
 test("successful NFC activation confirms the live profile and preserves a real notification", () => {
   assert.match(dashboardClient, /params\.get\("nfc"\) === "complete"/);
-  assert.match(dashboardClient, /Your profile is live/);
+  assert.match(dashboardClient, /Your MyDancr profile is active/);
   assert.match(dashboardClient, /Approved through \$\{venueName\}/);
-  assert.match(dashboardClient, /View live profile/);
-  assert.match(dashboardClient, /Manage profile/);
+  assert.match(dashboardClient, /View my profile/);
+  assert.match(dashboardClient, /Go to dashboard/);
   assert.match(dashboardClient, /dashboard-live-status[^>]*><i aria-hidden="true" \/> Public<\/span>/);
   assert.match(dashboardClient, /url\.searchParams\.delete\("nfc"\)/);
   assert.match(profileLiveNotification, /after update of status, verification_status, is_public/);

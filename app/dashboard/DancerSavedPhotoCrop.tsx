@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import type { DancerPhotoItem } from "./dashboard-types";
 import { uploadMainProfilePhoto, type SavedPhotoCropSource } from "./main-profile-photo-upload";
 
-export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfileChange, onBusyChange }: {
+export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfileChange, onBusyChange, makeMain = false, mainPhotoId }: {
   photo: DancerPhotoItem;
+  makeMain?: boolean;
+  mainPhotoId?: string;
   disabled?: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   onBusyChange?: (busy: boolean) => void;
@@ -29,13 +31,14 @@ export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfil
     try {
       const result = await uploadMainProfilePhoto(selection.current.source, {
         signal: controller.signal, uploadKey: selection.current.uploadKey,
+        makeMain, replacementPhotoId: makeMain ? mainPhotoId : undefined,
         onUploadStart: () => setStatus("Saving and checking your crop…"),
       });
       if (controller.signal.aborted) return;
       selection.current = null;
       if (!result) { setStatus("Crop canceled. Your photo hasn’t changed."); return; }
       if (result.profile) onProfileChange?.(result.profile);
-      setStatus((result.decision === "approved" ? "Crop saved." : result.decision === "rejected"
+      setStatus((result.decision === "approved" ? makeMain ? "Main photo saved." : "Crop saved." : result.decision === "rejected"
         ? "This crop wasn’t approved. Your current photo hasn’t changed."
         : "Crop awaiting approval. Your current photo stays visible.") + (result.refreshFailed ? " Reload to see the latest photo." : ""));
     } catch (error) {

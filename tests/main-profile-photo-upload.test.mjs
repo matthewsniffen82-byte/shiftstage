@@ -7,7 +7,7 @@ import ts from "typescript";
 const code = ts.transpileModule(readFileSync("app/dashboard/main-profile-photo-upload.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-function fixture({ decision = "approved", canceled = false, refreshFails = false, cropWait = false, uploadFails = false, saved = false, isPrimary = true } = {}) {
+function fixture({ decision = "approved", canceled = false, refreshFails = false, cropWait = false, uploadFails = false, saved = false, isPrimary = true, makeMain = false } = {}) {
   let session = { account: { id: "dancer-a", role: "dancer" }, accessToken: "token-a" };
   const listeners = new Set(), requests = [], controller = new AbortController();
   const original = new File(["original"], "portrait.jpg", { type: "image/jpeg" });
@@ -35,7 +35,7 @@ function fixture({ decision = "approved", canceled = false, refreshFails = false
   };
   vm.runInNewContext(code, scope);
   return { requests, previews, cropFiles, listeners, controller, original, cropped,
-    start: (replacementPhotoId = "photo-a") => scope.exports.uploadMainProfilePhoto(saved ? source : original, { signal: controller.signal, uploadKey: "stable-key", replacementPhotoId }),
+    start: (replacementPhotoId = "photo-a") => scope.exports.uploadMainProfilePhoto(saved ? source : original, { signal: controller.signal, uploadKey: "stable-key", replacementPhotoId, makeMain }),
     confirm: () => confirm(),
     validate: () => validate(),
     change: (id, dispatch = true) => { session = { account: { id, role: "dancer" }, accessToken: "new-token" }; if (dispatch) listeners.forEach(fn => fn({ key: "session" })); },
@@ -119,5 +119,23 @@ test('a saved photo cannot be published after the dancer changes accounts while 
   const f = fixture({ saved: true, cropWait: true }), pending = f.start();
   const rejected = assert.rejects(pending, { name: 'AbortError' });
   await new Promise(resolve => setTimeout(resolve, 0)); f.change('dancer-b'); f.confirm(); await rejected;
+  assert.equal(f.requests.length, 0);
+});
+
+
+test("making a gallery image the main photo replaces only the previous main photo", async () => {
+  const f = fixture({ saved: true, isPrimary: false, makeMain: true });
+  await f.start("previous-main");
+  assert.deepEqual(f.previews, ["photo-a"]);
+  const body = f.requests[0].body;
+  assert.equal(body.get("isPrimary"), "true");
+  assert.equal(body.get("sortOrder"), "0");
+  assert.equal(body.get("replacementPhotoId"), "previous-main");
+  assert.notEqual(body.get("replacementPhotoId"), "photo-a", "gallery source must survive the copy");
+});
+
+test("canceling make-main never modifies either photo", async () => {
+  const f = fixture({ saved: true, isPrimary: false, makeMain: true, canceled: true });
+  await f.start("previous-main");
   assert.equal(f.requests.length, 0);
 });

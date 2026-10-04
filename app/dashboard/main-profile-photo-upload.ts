@@ -8,6 +8,7 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
   signal: AbortSignal;
   uploadKey: string;
   replacementPhotoId?: string;
+  makeMain?: boolean;
   onUploadStart?: () => void;
 }) {
   const owner = readSession()?.account?.id;
@@ -56,9 +57,9 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
     options.onUploadStart?.();
     const body = new FormData();
     body.set("file", cropped);
-    body.set("isPrimary", String(saved ? saved.isPrimary : true));
-    body.set("sortOrder", String(saved ? saved.sortOrder : 0));
-    const replacementPhotoId = saved?.id || options.replacementPhotoId;
+    body.set("isPrimary", String(options.makeMain || (saved ? saved.isPrimary : true)));
+    body.set("sortOrder", String(options.makeMain ? 0 : saved ? saved.sortOrder : 0));
+    const replacementPhotoId = options.makeMain ? options.replacementPhotoId : saved?.id || options.replacementPhotoId;
     body.set("replaceExisting", String(Boolean(replacementPhotoId)));
     if (replacementPhotoId) body.set("replacementPhotoId", replacementPhotoId);
     body.set("idempotencyKey", options.uploadKey);

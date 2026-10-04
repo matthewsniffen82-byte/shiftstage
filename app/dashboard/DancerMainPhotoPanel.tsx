@@ -7,7 +7,8 @@ import { uploadMainProfilePhoto } from "./main-profile-photo-upload";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import "../../public/dancer-main-photo.css";
 
-export function DancerMainPhotoPanel({ profile, onProfileChange }: {
+export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }: {
+  onBusyChange?: (busy: boolean) => void;
   profile?: LoadState["profile"];
   onProfileChange?: (profile: Record<string, unknown>) => void;
 }) {
@@ -24,6 +25,8 @@ export function DancerMainPhotoPanel({ profile, onProfileChange }: {
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => () => { action.current?.abort(); selection.current = null; }, []);
+
+  useEffect(() => { onBusyChange?.(busy || cropping); return () => onBusyChange?.(false); }, [busy, cropping, onBusyChange]);
 
   async function upload() {
     if (action.current || !selection.current) return;
@@ -65,13 +68,13 @@ export function DancerMainPhotoPanel({ profile, onProfileChange }: {
     void upload();
   }
 
-  return <section className="dancer-main-photo-panel" aria-label="Main profile photo">
+  return <section className="dancer-main-photo-panel" aria-label="Main profile photo" aria-busy={busy || cropping}>
     <div className="dancer-main-photo-preview">
       {displayed?.imageUrl ? <img src={displayed.imageUrl} alt="Current main profile photo" /> : <span>No main photo yet</span>}
     </div>
     <div className="dancer-main-photo-copy">
       <h3>Main photo</h3>
-      <p>Shown on your dancer card. You can change or crop it anytime.</p>
+      <p>Shown on your grid card and at the top of your profile.</p>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || pending || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
         <button type="button" disabled={busy || pending || cropping} onClick={() => input.current?.click()}>{busy ? "Updating photo…" : displayed ? "Change photo" : "Add photo"}</button>

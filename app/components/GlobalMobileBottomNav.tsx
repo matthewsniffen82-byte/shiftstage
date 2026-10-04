@@ -179,7 +179,7 @@ export function GlobalMobileBottomNav() {
   }, []);
 
   useEffect(() => {
-    if (pathname === "/dashboard/venue" || pathname.startsWith("/dashboard/venue/")) return;
+    if (pathname === "/dashboard/venue" || pathname.startsWith("/dashboard/venue/") || pathname === "/dashboard/dancer" || pathname.startsWith("/dashboard/dancer/")) return;
     const currentIndex = destinations.findIndex((destination) =>
       isActiveDestination(pathname, destination.id),
     );
@@ -352,7 +352,7 @@ export function GlobalMobileBottomNav() {
   }, [city, pathname]);
 
   if (pathname.startsWith("/internal")) return null;
-  if (pathname === "/dashboard/venue" || pathname.startsWith("/dashboard/venue/")) return null;
+  if (pathname === "/dashboard/venue" || pathname.startsWith("/dashboard/venue/") || pathname === "/dashboard/dancer" || pathname.startsWith("/dashboard/dancer/")) return null;
 
   return (
     <>

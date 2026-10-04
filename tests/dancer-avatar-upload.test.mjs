@@ -153,8 +153,7 @@ test("Step 1 mirrors Edit Profile flow and preserves its complete draft through 
     liveShell.match(/const form = event\.target\.closest\("\[data-setup-form='profile'\]"\)[\s\S]*?\n    \}\);/)?.[0] || "";
 
   assert.match(draftCapture, /data-setup-profile-editor/);
-  assert.match(draftCapture, /querySelectorAll\("\[data-setup-social\]"\)/);
-  assert.match(draftCapture, /saveDancerProfileDraft\(\{ stageName, city, socials \}\)/);
+  assert.match(draftCapture, /saveDancerProfileDraft\(\{ stageName, city \}\)/);
   assert.match(liveShell, /dirty: true,[\s\S]*?updatedAt: Date\.now\(\)/);
   assert.match(liveShell, /draft\.dirty === true \|\| !savedProfileSetup/);
   assert.match(
@@ -167,14 +166,13 @@ test("Step 1 mirrors Edit Profile flow and preserves its complete draft through 
 
   assert.match(setupMarkup, /id="setupProfileForm"/);
   assert.match(setupMarkup, /Profile avatar[\s\S]*?Stage name[\s\S]*?City/);
-  assert.match(setupMarkup, /Profile pictures[\s\S]*?approvedProfileVideoManagerMarkup\(\)[\s\S]*?Social links/);
-  assert.match(setupMarkup, /form="setupProfileForm" data-setup-social="instagram"/);
-  assert.match(setupMarkup, /profileIdentityBody\}\$\{photosBody\}\$\{profileSocialBody/);
+  assert.match(setupMarkup, /Profile pictures[\s\S]*?approvedProfileVideoManagerMarkup\(\)/);
+  assert.match(setupMarkup, /profileIdentityBody\}\$\{photosBody/);
 
   assert.match(profileSave, /Saving profile\.\.\./);
   assert.match(profileSave, /completeSetupStep\("profile", \{ keepOpen: true \}\);[\s\S]*?clearStoredDancerProfileDraft\(\)/);
   assert.match(profileSave, /Saved ✓/);
-  assert.match(profileSave, /Profile saved\. Your avatar, stage name, city, and social links are preserved\./);
+  assert.match(profileSave, /Profile saved\. Your avatar, stage name, and city are preserved\./);
   assert.match(profileSave, /Profile was not saved\./);
 });
 

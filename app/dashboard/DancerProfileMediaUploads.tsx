@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { requestDancerPhotosJson, requestDancerTvVideoJson, requestDancerMediaPin } from "./dashboard-session";
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
@@ -33,7 +33,13 @@ export default function DancerProfileMediaUploads({
   onVideoDeleted,
   onDeleteBusyChange,
   onMediaPinned,
+  compact = false,
+  disabled = false,
+  photoActions,
 }: {
+  compact?: boolean;
+  disabled?: boolean;
+  photoActions?: (id: string) => ReactNode;
   photos: UploadItem[];
   videos: UploadItem[];
   isApproved: boolean;
@@ -57,6 +63,7 @@ export default function DancerProfileMediaUploads({
   const previewItem = activePreview && (activePreview.kind === "photo" ? photos : videos).find((item) => item.id === activePreview.id);
   const deleteRequestRef = useRef<AbortController | null>(null);
   const isDeleting = Boolean(deletingPhotoId || deletingVideoId || pinningId);
+  const actionsDisabled = isDeleting || disabled;
 
   useEffect(() => () => {
     deleteRequestRef.current?.abort();
@@ -162,11 +169,12 @@ export default function DancerProfileMediaUploads({
   }
 
   return (
-    <section className="dancer-profile-media-uploads" aria-label="Add profile photos and videos">
+    <section className={`dancer-profile-media-uploads${compact ? " is-compact" : ""}`} aria-label="Add profile photos and videos">
       {(["photos", "videos"] as const).map((section) => {
         const isPhoto = section === "photos";
         const label = isPhoto ? "Photo" : "Video";
         const items = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos.filter((video) => !deletedVideoIds.has(video.id));
+        if (compact && !items.length && (isPhoto || (!isVideoLoading && !videoError))) return null;
         return (
           <div className="profile-upload-group" key={section}>
             <header>
@@ -174,20 +182,21 @@ export default function DancerProfileMediaUploads({
               <small>{isPhoto ? "At least 1 solo photo" : "Optional"}</small>
               <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
             </header>
-            <p>{isPhoto ? "You can add more photos later." : "You can add videos now or later."}</p>
-            <button className="profile-upload-entry" data-profile-editor-trigger={section} disabled={isDeleting} onClick={() => onOpen(section)} type="button">
+            {!compact ? <><p>{isPhoto ? "You can add more photos later." : "You can add videos now or later."}</p>
+            <button className="profile-upload-entry" data-profile-editor-trigger={section} disabled={actionsDisabled} onClick={() => onOpen(section)} type="button">
               <svg aria-hidden="true" viewBox="0 0 24 24">
                 {isPhoto ? <><rect x="3" y="4" width="18" height="16" rx="3" /><circle cx="8" cy="9" r="1.5" /><path d="m5 17 4-4 3 3 3-4 4 5" /></> : <><rect x="3" y="6" width="12" height="12" rx="2" /><path d="m15 10 6-3v10l-6-3" /></>}
               </svg>
               <span><strong>Add {label.toLowerCase()}</strong><small>Camera or phone files</small></span>
               <b aria-hidden="true">+</b>
             </button>
+            </> : null}
             {items.length ? (
               <ul className="profile-upload-items" aria-label={`Uploaded ${section}`}>
                 {items.map((item, index) => (
                   <li key={item.id}>
                     <div className="profile-upload-preview">
-                      <button aria-label={`${isPhoto ? "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus)}`} disabled={Boolean(deletingVideoId || pinningId)} onClick={() => setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` })} type="button">
+                      <button aria-label={`${isPhoto ? "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus)}`} disabled={Boolean(deletingVideoId || pinningId) || disabled} onClick={() => setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` })} type="button">
                         <span className="profile-upload-thumbnail">
                           {isPhoto
                             ? item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">▧</span>
@@ -196,12 +205,16 @@ export default function DancerProfileMediaUploads({
                         </span>
                       </button>
                       {isPhoto && item.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
-                      {onMediaPinned ? <DancerMediaPinButton available={item.status === "approved"} label={`${label.toLowerCase()} ${index + 1}`} pinned={item.isPinned} busy={pinningId === item.id} disabled={isDeleting} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)} /> : null}
+                      {compact ? <details className="dancer-thumbnail-menu" name="dancer-media-options"><summary aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}>•••</summary><div>{isPhoto ? photoActions?.(item.id) : null}
+                        {onMediaPinned ? <button type="button" disabled={actionsDisabled || item.status !== "approved"} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)}>{item.isPinned ? "Unpin" : "Pin"}</button> : null}
+                        <button type="button" disabled={actionsDisabled} onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}>Delete</button>
+                      </div></details> : <>
+                      {onMediaPinned ? <DancerMediaPinButton available={item.status === "approved"} label={`${label.toLowerCase()} ${index + 1}`} pinned={item.isPinned} busy={pinningId === item.id} disabled={actionsDisabled} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)} /> : null}
                       <button
                         aria-label={`${(isPhoto ? deletingPhotoId : deletingVideoId) === item.id ? "Deleting" : "Delete"} ${label.toLowerCase()} ${index + 1}`}
                         aria-busy={(isPhoto ? deletingPhotoId : deletingVideoId) === item.id}
                         className="profile-upload-delete"
-                        disabled={isDeleting}
+                        disabled={actionsDisabled}
                         onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}
                         type="button"
                       >
@@ -209,6 +222,7 @@ export default function DancerProfileMediaUploads({
                           <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 10v7M14 10v7" /></svg>
                         </span>
                       </button>
+                      </>}
                     </div>
                     <strong>{label} {index + 1}</strong>
                     <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status, item.moderationStatus)}</small>
