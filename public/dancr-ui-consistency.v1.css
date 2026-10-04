@@ -724,26 +724,12 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role=
   overflow: hidden !important;
 }
 
-/* Keep the venue detail hero's neutral upper halo. */
-html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .07),
-    inset 0 -1px 0 rgba(148, 163, 184, .06),
-    0 -9px 24px -8px rgba(203, 213, 225, .16),
-    0 16px 30px rgba(0, 0, 0, .62) !important;
-}
-
-/* A crisp muted-violet edge separates clubs while Free Entry keeps the emphasis. */
+/* Club cards and details share a muted-violet edge and soft surrounding shade. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide,
 html body.dancr-button-system #results.venue-card-grid > .venue.venue-card,
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
   border: 1px solid rgba(167, 139, 250, .35) !important;
-}
-
-html body.dancr-button-system > .app main.stack > section.stack
-  > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide,
-html body.dancr-button-system #results.venue-card-grid > .venue.venue-card {
   background-clip: padding-box !important;
   box-shadow:
     inset 0 1px 0 rgba(196, 181, 253, .035),
