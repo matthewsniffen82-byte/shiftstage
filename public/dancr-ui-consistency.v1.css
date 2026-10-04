@@ -2016,11 +2016,11 @@ html body.dancr-button-system > .app main.stack > section.stack
   stroke-width: 1.5 !important;
 }
 
-/* Keep the Clubs heading, roster disclaimer, and first card close together. */
-html body.dancr-button-system > .app main.stack > section.stack:has(> #results:is(.home-venue-discovery-feed, .venue-card-grid):not(.venue-profile-overlay)) {
+/* Keep the Clubs and TV headings, shared roster disclaimer, and first card close together. */
+html body.dancr-button-system > .app main.stack > section.stack:has(> #results:is(.home-venue-discovery-feed, .venue-card-grid, .home-tv-feed):not(.venue-profile-overlay)) {
   row-gap: 6px !important;
 }
-html body.dancr-button-system > .app main.stack > section.stack:has(> #results:is(.home-venue-discovery-feed, .venue-card-grid):not(.venue-profile-overlay))
+html body.dancr-button-system > .app main.stack > section.stack:has(> #results:is(.home-venue-discovery-feed, .venue-card-grid, .home-tv-feed):not(.venue-profile-overlay))
   > .content-head.discovery-section-head {
   margin-block: 0 !important;
   padding-block: 2px 4px !important;
@@ -2037,7 +2037,7 @@ html body.dancr-button-system > .app main.stack > section.stack > .venue-directo
   line-height: 1.5;
   text-align: left;
 }
-html body.dancr-button-system > .app main.stack > section.stack:has(> #results:is(.home-venue-discovery-feed, .venue-card-grid):not(.venue-profile-overlay))
+html body.dancr-button-system > .app main.stack > section.stack:has(> #results:is(.home-venue-discovery-feed, .venue-card-grid, .home-tv-feed):not(.venue-profile-overlay))
   > .venue-directory-roster-note {
   display: block;
 }
