@@ -37,16 +37,16 @@ test("standalone profile photos and videos expose a circular report action", () 
   );
 });
 
-test("live profiles keep reporting in the labeled profile options disclosure", () => {
-  assert.match(liveShell, /<details class="profile-options">\s*<summary aria-label="Profile options"[\s\S]*?class="profile-options-panel">\s*<button class="profile-header-report-action" id="reportBtn"[^>]*aria-haspopup="dialog"[^>]*><svg[\s\S]*?<span>Report profile<\/span>/);
+test("live profiles open reporting directly from a small flag beside close", () => {
+  assert.match(liveShell, /class="profile-modal-header-controls">\s*<button class="profile-header-report-action" id="reportBtn"[^>]*aria-haspopup="dialog"[^>]*><svg/);
   assert.doesNotMatch(liveShell, /profileHeaderOverflowToggle|profileHeaderOverflowMenu|profile-footer-report-action/);
   assert.match(liveShell, /\.profile-header-report-action svg \{[^}]*width: 14px;[^}]*height: 14px;/);
   assert.match(liveShell, /actionButton.id === "reportBtn"[\s\S]*?openContentReportDialog\(\{/);
   assert.match(liveShell, /prepareContentReportButton\([\s\S]*?"dancer_profile"/);
 });
 
-test("standalone profiles keep reporting in the labeled profile options disclosure", () => {
-  assert.match(profilePage, /<details className="profile-options">\s*<summary aria-label="Profile options"[\s\S]*?className="profile-options-panel">\s*<DancerReportControl dancerId=\{profile.id\} profileName=\{profile.stageName\} \/>/);
+test("standalone profiles expose an icon-only report action beside close", () => {
+  assert.match(profilePage, /className="profile-titlebar-controls">\s*<DancerReportControl dancerId=\{profile.id\} profileName=\{profile.stageName\} \/>\s*<ProfileCloseButton/);
   assert.match(profileActions, /className="profile-header-report-action"[\s\S]*?onClick=\{openReport\}[\s\S]*?<ReportFlagIcon \/>/);
   assert.doesNotMatch(profileActions, /profile-header-overflow|reportMenuOpen/);
   assert.match(profilePage, /\.profile-header-report-action \{[^}]*width: 44px;[^}]*min-height: 44px;[^}]*background: transparent !important;/);

@@ -42787,21 +42787,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     </section>
 
     <div class="modal-backdrop" id="profileBackdrop" aria-hidden="true">
-      <section class="profile-modal profile-split-layout profile-refined-layout" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
-        <div class="profile-topbar" aria-label="Profile controls">
-          <button class="close-btn" id="modalClose" type="button" aria-label="Back to previous view">
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
-          </button>
-          <div class="profile-topbar-utilities">
-            <span id="modalHeaderShare"></span>
-            <details class="profile-options">
-              <summary aria-label="Profile options" title="Profile options"><span aria-hidden="true">•••</span></summary>
-              <div class="profile-options-panel">
-                <button class="profile-header-report-action" id="reportBtn" type="button" aria-label="Report profile" title="Report profile" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg><span>Report profile</span></button>
-              </div>
-            </details>
-          </div>
-        </div>
+      <section class="profile-modal profile-split-layout" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="modalName">
         <aside class="profile-featured-column" aria-label="Featured profile photo">
           <div class="modal-image" id="modalImage" role="button" tabindex="0" aria-label="Open main profile photo">
             <span class="profile-modal-playback-feedback" id="modalVideoPlaybackFeedback" aria-hidden="true"></span>
@@ -42822,6 +42808,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           <span class="profile-featured-empty">No approved profile photos yet.</span>
         </aside>
         <div class="profile-modal-summary">
+          <div class="profile-modal-header-controls">
+            <button class="close-btn" id="modalClose" type="button" aria-label="Back to previous view">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
+            </button>
+            <button class="profile-header-report-action" id="reportBtn" type="button" aria-label="Report profile" title="Report profile" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></button>
+          </div>
           <div class="profile-modal-person">
             <div class="profile-modal-avatar-column">
               <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
@@ -42842,11 +42834,11 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
                   <span class="pill" id="modalCity">Las Vegas</span>
                 </div>
               </div>
+              <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
               <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
             </div>
           </div>
         </div>
-        <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
         <div class="modal-body" id="modalBody"></div>
         <section class="profile-modal-media" aria-label="Dancer profile content">
           <div class="profile-media-socials" id="modalMediaSocials" aria-label="External profiles" hidden></div>
@@ -54634,12 +54626,9 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       return `
         <div class="modal-actions profile-actions-compact ${isWorkingNow ? "is-working-now" : profile?.scheduled ? "is-upcoming-shift" : "is-no-live-shift"}" aria-label="Guest actions">
           <button class="action-btn follow-primary profile-action-icon-control ${isFollowed ? "is-following" : ""}" id="followBtn" data-profile="${escapeOptionValue(profile.id || profile.name)}" aria-pressed="${isFollowed}">${profileActionButtonMarkup(isFollowed ? "check" : "personPlus", isFollowed ? "Following" : "Follow")}</button>
+          <button class="action-btn secondary profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${escapeHtml(profile.name)}" data-share-city="${escapeHtml(city)}" aria-haspopup="dialog" aria-label="Share ${escapeHtml(profile.name)} profile">${profileActionButtonMarkup("share", "Share")}</button>
         </div>
       `;
-    }
-
-    function profileHeaderShareMarkup(profile, city) {
-      return `<button class="profile-share-action profile-action-icon-control" type="button" data-profile-share-menu="${escapeHtml(profile.name)}" data-share-city="${escapeHtml(city)}" aria-haspopup="dialog" aria-label="Share ${escapeHtml(profile.name)} profile">${profileActionButtonMarkup("share", "Share")}</button>`;
     }
 
     async function refreshProfileGoingState(profile) {
@@ -54816,10 +54805,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       savedScrollY = window.scrollY;
 
       modalName.textContent = profile.name;
-      profileModal.querySelector(".profile-options").open = false;
-      document.getElementById("modalHeaderShare").innerHTML = isPrivatePreview || isPending
-        ? ""
-        : profileHeaderShareMarkup(profile, city);
       modalGallery.dataset.profileMediaProfile = String(profile.id || "");
       const profileReportButton = document.getElementById("reportBtn");
       if (profileReportButton) {

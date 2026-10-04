@@ -116,30 +116,20 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
       metricsUnavailable={profile.metricsUnavailable}
       key={profile.id}
     >
-      <main className="public-profile-shell profile-split-layout profile-refined-layout" data-public-dancer-id={profile.id} data-public-profile-page>
+      <main className="public-profile-shell profile-split-layout" data-public-dancer-id={profile.id} data-public-profile-page>
         <ProfileViewTracker
           dancerId={profile.id}
           hasSchedule={Boolean(activeShift)}
         />
         <PublicProfileStyles />
 
-        <div className="profile-topbar" aria-label="Profile controls">
-          <ProfileCloseButton
-            fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
-          />
-          <div className="profile-topbar-utilities">
-            <div className="profile-action-share-slot">
-              <ProfileShareButton dancerId={profile.id} stageName={profile.stageName} />
-            </div>
-            <details className="profile-options">
-              <summary aria-label="Profile options" title="Profile options"><span aria-hidden="true">•••</span></summary>
-              <div className="profile-options-panel">
-                <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
-              </div>
-            </details>
-          </div>
-        </div>
         <header className="profile-titlebar">
+          <div className="profile-titlebar-controls">
+            <ProfileCloseButton
+              fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
+            />
+            <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />
+          </div>
           <div className="profile-titlebar-person">
             <div
               aria-label={`${profile.stageName} profile photo${activeShift ? ", working now" : ""}`}
@@ -179,20 +169,20 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
               </div>
             </div>
           </div>
+          <dl className="profile-header-metrics" aria-label="Profile activity">
+            <div>
+              <DancerFollowerMetric />
+            </div>
+            <div>
+              <dd><DancerGoingCount /></dd>
+              <dt>Going</dt>
+            </div>
+            <div>
+              <dd>{profile.metricsUnavailable ? "—" : new Intl.NumberFormat("en-US").format(profile.profileViewsToday || 0)}</dd>
+              <dt>Views today</dt>
+            </div>
+          </dl>
         </header>
-        <dl className="profile-header-metrics" aria-label="Profile activity">
-          <div>
-            <DancerFollowerMetric />
-          </div>
-          <div>
-            <dd><DancerGoingCount /></dd>
-            <dt>Going</dt>
-          </div>
-          <div>
-            <dd>{profile.metricsUnavailable ? "—" : new Intl.NumberFormat("en-US").format(profile.profileViewsToday || 0)}</dd>
-            <dt>Views today</dt>
-          </div>
-        </dl>
 
         {profile.metricsUnavailable || secondaryUnavailable ? (
           <p role="status">Some profile details are temporarily unavailable. Reload the page to try again.</p>
@@ -201,7 +191,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
         <DancerProfileActions
           dancerId={profile.id}
           hasClubDeal={Boolean(activeDeal)}
-          shareInHeader
+          shareControl={<ProfileShareButton dancerId={profile.id} stageName={profile.stageName} />}
           shifts={profile.upcomingShifts.map((shift) => ({
             id: shift.id,
             label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
