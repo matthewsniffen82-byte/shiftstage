@@ -737,6 +737,11 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role=
     0 8px 16px rgba(0, 0, 0, .32) !important;
 }
 
+/* Match the surrounding shade on the dancer profile's information frame. */
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .25) !important;
+}
+
 /* Scroll cards need only a quiet edge against the violet feed background.
  * Keep the existing border width and replace the surrounding violet glow
  * with a short neutral shadow so club details and offers stay prominent. */
