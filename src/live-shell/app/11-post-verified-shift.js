@@ -758,7 +758,7 @@
     function profileMediaCardControls(overlay) {
       if (!overlay.profileMediaCardControls) {
         overlay.profileMediaCardControls = [...overlay.querySelectorAll(
-          ".profile-photo-viewer-footer, .profile-photo-viewer-previous, .profile-photo-viewer-next, .profile-tv-viewer-footer, .profile-tv-viewer-previous, .profile-tv-viewer-next, .profile-tv-playback-feedback"
+          ".profile-photo-viewer-footer, .profile-tv-viewer-footer, .profile-media-control-tools, .profile-tv-playback-feedback"
         )];
       }
       return overlay.profileMediaCardControls;
@@ -857,14 +857,22 @@
         button?.addEventListener("click", (event) => {
           event.preventDefault();
           event.stopPropagation();
+          if (!button.closest(".profile-media-control-options")) closeProfileMediaOptions(profilePhotoViewer);
           handler(button);
         });
         return button;
       };
-      const previous = bind(".profile-photo-viewer-previous", () => scrollProfilePhotoViewerTo(index - 1));
-      const next = bind(".profile-photo-viewer-next", () => scrollProfilePhotoViewerTo(index + 1));
-      if (previous) previous.disabled = index <= 0;
-      if (next) next.disabled = index >= total - 1;
+      const follow = bind("[data-profile-photo-follow]", (button) => {
+        if (requireCustomerAccountForProfileAction(button)) void saveProfileFollow(button);
+      });
+      follow.dataset.profile = profilePhotoViewer.dataset.publicDancerId || profileName;
+      follow.innerHTML = actionIconMarkup("personPlus");
+      follow.setAttribute("aria-label", `Follow ${profileName}`);
+      const profile = findProfile(follow.dataset.profile);
+      if (profile) syncHomeFeedActionButtons(profile, profile.city || citySelect.value);
+      bind("[data-profile-media-fullscreen]", () => {
+        setProfilePhotoFullscreen(!profilePhotoViewer.classList.contains("is-media-fullscreen"), index);
+      });
       const like = bind(".profile-photo-viewer-like", () => void togglePublicMediaLike("photo", String(item.id || ""), status));
       preparePublicMediaLikeButton(like, "photo", String(item.id || ""), item.likeCount);
       bind(".profile-photo-viewer-share", () => void shareProfilePhoto(index, status));
@@ -876,6 +884,20 @@
         targetLabel: targetType === "profile_photo" ? `${profileName} profile photo ${index + 1}` : profileName,
         title: "Report photo", quickReasons: true
       }));
-      if (report) report.dataset.reportDefaultLabel = "Report this profile photo";
-      prepareContentReportButton(report, targetType, targetId, "Report this profile photo");
+      if (report) report.dataset.reportDefaultLabel = "Report photo";
+      prepareContentReportButton(report, targetType, targetId, "Report photo");
+    }
+
+    function closeProfileMediaOptions(overlay) {
+      overlay?.querySelectorAll(".profile-media-control-options[open]").forEach((menu) => { menu.open = false; });
+    }
+
+    function setProfilePhotoFullscreen(active, index = Number(profilePhotoViewer.dataset.profilePhotoIndex || 0)) {
+      profilePhotoViewer.classList.toggle("is-media-fullscreen", active);
+      profilePhotoViewer.querySelectorAll("[data-profile-media-fullscreen]").forEach((button) => {
+        button.setAttribute("aria-pressed", String(active));
+        button.setAttribute("aria-label", active ? "Exit full-screen media" : "View media full screen");
+      });
+      syncProfilePhotoViewerPosition(index);
+      scrollProfilePhotoViewerTo(index, { instant: true });
     }

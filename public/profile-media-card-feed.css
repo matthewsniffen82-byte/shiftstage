@@ -278,8 +278,8 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
 
 .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) {
   position: absolute !important;
-  right: 9px !important;
-  bottom: 18px !important;
+  right: calc(10px + env(safe-area-inset-right, 0px)) !important;
+  bottom: 144px !important;
   width: 46px !important;
   min-width: 46px !important;
   max-width: 46px !important;
@@ -377,4 +377,162 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   .profile-media-card-feed {
     --profile-media-card-gap: 12px;
   }
+  .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) {
+    right: calc(9px + env(safe-area-inset-right, 0px)) !important;
+  }
 }
+
+/* Profile pictures and videos use the TV action rail and overflow menu. */
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed
+  :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) > button {
+  display: grid !important;
+  place-items: center !important;
+  gap: 0 !important;
+  padding: 0 !important;
+  touch-action: manipulation;
+}
+body.dancr-button-system .profile-media-card-feed
+  :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) > button :is(svg, .action-icon) {
+  width: 19px !important;
+  height: 19px !important;
+  color: inherit !important;
+}
+.profile-media-card-feed :is(.profile-media-control-fullscreen, .profile-media-control-follow) svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed
+  :is(.profile-photo-viewer-like, .profile-tv-viewer-like, .profile-media-viewer-like) {
+  grid-template-rows: 19px 9px !important;
+  align-content: center !important;
+  padding: 3px 0 2px !important;
+}
+body.dancr-button-system .profile-media-card-feed :is([data-media-like-count], .profile-media-viewer-like > span) {
+  font-size: 9px !important;
+  line-height: 9px !important;
+}
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-control-follow[aria-pressed="true"] {
+  border-color: var(--dancr-color-avatar-ring-violet) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background-color: var(--dancr-color-brand-primary-deep) !important;
+  background-image: linear-gradient(145deg, var(--dancr-color-brand-primary-strong), transparent) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 0 12px var(--dancr-color-brand-primary-soft) !important;
+}
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed
+  :is(.profile-photo-viewer-like, .profile-tv-viewer-like, .profile-media-viewer-like)[aria-pressed="true"] svg {
+  color: #ff304f !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+.profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) > button:focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 3px !important;
+}
+.profile-media-card-feed .profile-media-control-follow-status {
+  position: absolute;
+  right: 56px;
+  bottom: 0;
+  width: min(220px, calc(100vw - 110px));
+  color: #fff;
+  font-size: 12px;
+  text-shadow: 0 1px 4px #000;
+  pointer-events: none;
+}
+.profile-media-card-feed .profile-media-control-tools {
+  position: absolute;
+  z-index: 9;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  right: calc(10px + env(safe-area-inset-right, 0px));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+.profile-media-card-feed .profile-media-control-options { position: relative; }
+html body.dancr-button-system .profile-media-card-feed .profile-media-control-overflow {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  min-width: 44px;
+  height: 46px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: #fff !important;
+  list-style: none;
+  cursor: pointer;
+  font-size: 18px;
+  letter-spacing: 2px;
+  text-shadow: 0 1px 5px #000;
+}
+.profile-media-card-feed .profile-media-control-overflow::-webkit-details-marker { display: none; }
+.profile-media-card-feed .profile-media-control-overflow::before,
+.profile-media-card-feed .profile-media-control-overflow::after { display: none !important; }
+.profile-media-card-feed .profile-media-control-overflow:focus-visible { outline: 2px solid #c4b5fd; outline-offset: -3px; }
+.profile-media-card-feed .profile-media-control-options-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 160px;
+  padding: 4px;
+  border: 1px solid #403747;
+  border-radius: 10px;
+  background: #161319;
+  box-shadow: 0 8px 24px #0008;
+}
+html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-control-options-panel button {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  max-height: none !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #f8fafc !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  line-height: 20px !important;
+  letter-spacing: 0 !important;
+  text-shadow: none !important;
+  backdrop-filter: none !important;
+}
+.profile-media-card-feed .profile-media-control-options-panel :is(svg, .action-icon) { width: 16px !important; height: 16px !important; stroke-width: 1.8; }
+html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-control-options-panel button:hover { background: #292331 !important; }
+.profile-media-card-feed .profile-media-control-options-panel button:focus-visible { outline: 2px solid #a78bfa; }
+.profile-media-card-feed .profile-media-control-options-panel button:disabled { opacity: .5; }
+.profile-media-card-feed .profile-media-control-collapse,
+.profile-media-card-feed .profile-media-control-fullscreen[aria-pressed="true"] .profile-media-control-expand { display: none; }
+.profile-media-card-feed .profile-media-control-fullscreen[aria-pressed="true"] .profile-media-control-collapse { display: block; }
+
+/* Expand fills the available viewer, retaining the custom controls and swiping. */
+.profile-media-card-feed.is-media-fullscreen {
+  --profile-media-card-height: 100%;
+  --profile-media-card-gap: 0px;
+}
+.profile-media-card-feed.is-media-fullscreen .profile-media-card-header { display: none; }
+.profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-image, .profile-tv-viewer-stage, .profile-media-viewer-stage) {
+  max-width: none !important;
+  padding: 0 !important;
+}
+.profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide) {
+  border-radius: 0 !important;
+}
+.profile-media-card-feed.is-media-fullscreen :is(.profile-tv-viewer-slide, .profile-media-viewer-slide) > :is(img, video) { object-fit: contain !important; }
+.profile-media-card-feed.is-media-fullscreen .profile-photo-viewer-slide-image { background-size: contain !important; }

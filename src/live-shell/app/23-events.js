@@ -78,15 +78,23 @@
       event.preventDefault();
       moveModalPhoto(event.key === "ArrowDown" ? 1 : -1, { syncViewer: true });
     });
-    profilePhotoViewerPrevious?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      moveModalPhoto(-1, { syncViewer: true });
+    profilePhotoViewer?.addEventListener("click", (event) => {
+      const selected = event.target.closest(".profile-media-control-options");
+      profilePhotoViewer.querySelectorAll(".profile-media-control-options[open]").forEach((menu) => { if (menu !== selected) menu.open = false; });
     });
-    profilePhotoViewerNext?.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      moveModalPhoto(1, { syncViewer: true });
+    profilePhotoViewer?.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      const options = profilePhotoViewer.querySelector(".profile-media-control-options[open]");
+      if (options) {
+        event.preventDefault();
+        event.stopPropagation();
+        options.open = false;
+        options.querySelector("summary").focus({ preventScroll: true });
+      } else if (profilePhotoViewer.classList.contains("is-media-fullscreen")) {
+        event.preventDefault();
+        event.stopPropagation();
+        setProfilePhotoFullscreen(false);
+      }
     });
 
     function confirmedFollowerCount(data, errorMessage) {

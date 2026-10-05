@@ -163,8 +163,14 @@
           <div class="profile-tv-viewer-shell">
             <div class="profile-tv-viewer-stage" id="profileTvViewerStage" aria-label="Dancer videos. Scroll up or down to change videos."></div>
             <span class="profile-tv-playback-feedback" id="profileTvPlaybackFeedback" aria-hidden="true"></span>
-            <button class="profile-tv-viewer-previous" type="button" data-previous-profile-tv aria-label="Previous dancer video">↑</button>
-            <button class="profile-tv-viewer-next" type="button" data-next-profile-tv aria-label="Next dancer video">↓</button>
+            <div class="profile-media-control-tools" role="group" aria-label="Video options">
+              <details class="profile-media-control-options">
+                <summary class="profile-media-control-overflow" aria-label="Video options" title="Video options"><span aria-hidden="true">•••</span></summary>
+                <div class="profile-media-control-options-panel">
+                  <button class="profile-tv-viewer-report" type="button" data-report-profile-tv aria-haspopup="dialog" aria-label="Report video">${actionIconMarkup("report")}<span>Report video</span></button>
+                </div>
+              </details>
+            </div>
             <div class="profile-tv-viewer-footer">
               <div class="profile-tv-viewer-copy">
                 <strong id="profileTvViewerName"></strong>
@@ -174,10 +180,11 @@
                 </div>
               </div>
               <div class="profile-tv-viewer-actions">
+                <button class="profile-tv-viewer-state-control" type="button" data-toggle-profile-tv-sound aria-label="Turn sound on">${profileTvSoundIcon(true)}</button>
+                <button class="profile-media-control-follow feed-card-action" type="button" data-profile-tv-follow data-feed-action="follow" data-icon-only-action="true" aria-label="Follow dancer" aria-pressed="false">${actionIconMarkup("personPlus")}</button>
                 <button class="profile-tv-viewer-like" type="button" data-like-profile-tv aria-label="Like this profile video" aria-pressed="false">${actionIconMarkup("heart")}<span data-media-like-count>0</span></button>
-                <button class="profile-tv-viewer-state-control" type="button" data-toggle-profile-tv-sound aria-label="Turn TV video sound off">${modalVideoSoundIcon(false)}</button>
                 <button class="profile-tv-viewer-share" type="button" data-share-profile-tv aria-label="Share this profile video">${actionIconMarkup("share")}</button>
-                <button class="profile-tv-viewer-report" type="button" data-report-profile-tv aria-label="Report this profile video">${actionIconMarkup("report")}</button>
+                <button class="profile-media-control-fullscreen" type="button" data-profile-tv-fullscreen aria-label="View videos full screen" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="profile-media-control-expand" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/><path class="profile-media-control-collapse" d="M8 8H3V3M16 8h5V3M21 21v-5h-5M3 21v-5h5"/></svg></button>
               </div>
               <p class="profile-tv-viewer-status" id="profileTvViewerStatus" aria-live="polite"></p>
             </div>
@@ -191,12 +198,22 @@
       overlay.addEventListener("click", (event) => {
         const target = event.target instanceof Element ? event.target : null;
         if (!target) return;
+        if (!target.closest(".profile-media-control-options")) overlay.querySelector(".profile-media-control-options").open = false;
         if (target === overlay) {
           closeProfileTvViewer();
           return;
         }
         if (target.closest("[data-toggle-profile-tv-sound]")) {
           toggleProfileTvSound();
+          return;
+        }
+        if (target.closest("[data-profile-tv-follow]")) {
+          const button = target.closest("[data-profile-tv-follow]");
+          if (requireCustomerAccountForProfileAction(button)) void saveProfileFollow(button);
+          return;
+        }
+        if (target.closest("[data-profile-tv-fullscreen]")) {
+          setProfileTvFullscreen(!overlay.classList.contains("is-media-fullscreen"));
           return;
         }
         if (target.closest("[data-like-profile-tv]")) {
@@ -217,16 +234,23 @@
           });
           return;
         }
-        if (target.closest("[data-previous-profile-tv]")) {
-          showRelativeProfileTvVideo(-1);
-          return;
-        }
-        if (target.closest("[data-next-profile-tv]")) {
-          showRelativeProfileTvVideo(1);
-          return;
-        }
         if (target.closest("[data-share-profile-tv]")) {
           void shareProfileTvVideo();
+        }
+      });
+
+      overlay.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        const options = overlay.querySelector(".profile-media-control-options[open]");
+        if (options) {
+          event.preventDefault();
+          event.stopPropagation();
+          options.open = false;
+          options.querySelector("summary").focus({ preventScroll: true });
+        } else if (overlay.classList.contains("is-media-fullscreen")) {
+          event.preventDefault();
+          event.stopPropagation();
+          setProfileTvFullscreen(false);
         }
       });
 
@@ -384,7 +408,10 @@
       const stage = document.getElementById("profileTvViewerStage");
       const currentIndex = Number(overlay.dataset.videoIndex || 0);
       if (currentIndex === nextIndex && options.scroll === false) return;
-      if (currentIndex !== nextIndex) clearProfileTvPlaybackFeedback();
+      if (currentIndex !== nextIndex) {
+        clearProfileTvPlaybackFeedback();
+        overlay.querySelector(".profile-media-control-options").open = false;
+      }
       const scheduleLabel = profileTvScheduleLabel(item);
       overlay.dataset.videoId = String(item.id || "");
       overlay.dataset.videoIndex = String(nextIndex);
@@ -402,14 +429,21 @@
       const reportButton = overlay.querySelector("[data-report-profile-tv]");
       if (reportButton) {
         reportButton.dataset.reportTargetLabel = `${overlay.dataset.profileName || "Dancer"} profile video ${nextIndex + 1}`;
-        reportButton.dataset.reportDefaultLabel = "Report this profile video";
+        reportButton.dataset.reportDefaultLabel = "Report video";
       }
       prepareContentReportButton(
         reportButton,
         "tv_video",
         String(item.id || ""),
-        "Report this profile video"
+        "Report video"
       );
+      const followButton = overlay.querySelector("[data-profile-tv-follow]");
+      followButton.dataset.profile = overlay.dataset.publicDancerId || overlay.dataset.profileName;
+      followButton.innerHTML = actionIconMarkup("personPlus");
+      followButton.setAttribute("aria-label", `Follow ${overlay.dataset.profileName}`);
+      followButton.setAttribute("aria-pressed", "false");
+      const profile = findProfile(followButton.dataset.profile);
+      if (profile) syncHomeFeedActionButtons(profile, profile.city || citySelect.value);
       const viewerVideos = [...overlay.querySelectorAll(".profile-tv-viewer-video")];
       syncProfileTvVideoLoading(overlay, nextIndex);
       viewerVideos.forEach((video, videoIndex) => {
@@ -429,8 +463,6 @@
         overlay.dataset.loadedVideoIndex = String(nextIndex);
         syncProfileTvVideoLoading(overlay, nextIndex);
       }
-      document.querySelector("[data-previous-profile-tv]").disabled = nextIndex <= 0;
-      document.querySelector("[data-next-profile-tv]").disabled = nextIndex >= videos.length - 1;
       document.body.classList.add("profile-tv-viewer-open");
       syncProfileTvSoundControl();
       if (video) void playProfileTvViewerVideo(video);
@@ -510,6 +542,10 @@
       const stage = document.getElementById("profileTvViewerStage");
       stage?.querySelectorAll("video").forEach(releaseDeferredVideoSource);
       clearProfileTvPlaybackFeedback();
+      overlay.classList.remove("is-media-fullscreen");
+      overlay.querySelector(".profile-media-control-options").open = false;
+      overlay.querySelector("[data-profile-tv-fullscreen]").setAttribute("aria-pressed", "false");
+      overlay.querySelector("[data-profile-tv-fullscreen]").setAttribute("aria-label", "View videos full screen");
       overlay.classList.remove("show");
       overlay.hidden = true;
       overlay.setAttribute("aria-hidden", "true");
@@ -527,14 +563,29 @@
       if (returnTarget?.isConnected) returnTarget.focus({ preventScroll: true });
     }
 
+    function setProfileTvFullscreen(active) {
+      const overlay = document.getElementById("profileTvViewer");
+      if (!overlay || overlay.hidden) return;
+      overlay.classList.toggle("is-media-fullscreen", active);
+      const button = overlay.querySelector("[data-profile-tv-fullscreen]");
+      button.setAttribute("aria-pressed", String(active));
+      button.setAttribute("aria-label", active ? "Exit full-screen videos" : "View videos full screen");
+      scrollProfileTvViewerTo(Number(overlay.dataset.videoIndex || 0), { instant: true });
+    }
+
+    function profileTvSoundIcon(muted) {
+      return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H3v6h4l4 4V5Z"/><path d="${muted ? "m16 9 5 5m0-5-5 5" : "M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"}"/></svg>`;
+    }
+
     function syncProfileTvSoundControl() {
       const video = activeProfileTvViewerVideo();
       const button = document.querySelector("[data-toggle-profile-tv-sound]");
       if (!button) return;
       const muted = Boolean(video?.muted);
       if (video) profileTvViewerMuted = muted;
-      button.innerHTML = modalVideoSoundIcon(muted);
-      button.setAttribute("aria-label", muted ? "Turn TV video sound on" : "Turn TV video sound off");
+      button.innerHTML = profileTvSoundIcon(muted);
+      button.setAttribute("aria-label", muted ? "Turn sound on" : "Mute video");
+      button.setAttribute("aria-pressed", String(!muted));
     }
 
     function toggleProfileTvSound() {

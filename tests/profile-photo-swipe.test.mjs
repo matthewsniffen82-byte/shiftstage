@@ -63,8 +63,8 @@ test("live profile grid photos open an accessible card collection without fullsc
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerName"/);
   assert.doesNotMatch(liveApp, /id="profilePhotoViewerPosition"/);
   assert.match(liveApp, /class="profile-photo-viewer-copy"/);
-  assert.match(liveApp, /id="profilePhotoViewerPrevious"[^>]*aria-label="Previous dancer photo"/);
-  assert.match(liveApp, /id="profilePhotoViewerNext"[^>]*aria-label="Next dancer photo"/);
+  assert.doesNotMatch(liveApp, /id="profilePhotoViewer(?:Previous|Next)"/);
+  assert.match(liveApp, /class="profile-media-control-overflow" aria-label="Photo options"/);
   assert.doesNotMatch(liveApp, /profilePhotoScheduleLabel|Swipe up or down · Photo/);
   assert.match(liveApp, /\.profile-photo-viewer-slide-image \{[^}]*background-size: cover !important;/);
   assert.match(liveApp, /\.profile-photo-viewer-footer \{[\s\S]*?background: transparent;/);
@@ -227,7 +227,7 @@ test("the standalone profile uses a vertical profile-scoped media card feed", ()
   );
   assert.match(
     publicPhotoCarousel,
-    /scrollViewerToIndex\(nextIndex\)[\s\S]*?className="profile-media-viewer-previous"[\s\S]*?className="profile-media-viewer-next"/,
+    /scrollViewerToIndex\(nextIndex\)[\s\S]*?className="profile-media-control-overflow"/,
   );
   assert.match(
     publicProfilePage,

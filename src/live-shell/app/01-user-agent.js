@@ -336,8 +336,6 @@
     const profilePhotoViewerLike = document.getElementById("profilePhotoViewerLike");
     const profilePhotoViewerShare = document.getElementById("profilePhotoViewerShare");
     const profilePhotoViewerReport = document.getElementById("profilePhotoViewerReport");
-    const profilePhotoViewerPrevious = document.getElementById("profilePhotoViewerPrevious");
-    const profilePhotoViewerNext = document.getElementById("profilePhotoViewerNext");
     const profilePhotoViewerStatus = document.getElementById("profilePhotoViewerStatus");
     if (profilePhotoViewer) document.body.appendChild(profilePhotoViewer);
     let profilePhotoViewerReturnTarget = null;

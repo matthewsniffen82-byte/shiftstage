@@ -36,9 +36,8 @@
       const activePhotoIndex = Math.min(Math.max(Number(requestedIndex) || 0, 0), totalPhotos - 1);
       const profileName = modalName.textContent.trim() || "Dancer";
       const activeItem = items[activePhotoIndex];
+      if (profilePhotoViewer.dataset.profilePhotoIndex !== String(activePhotoIndex)) closeProfileMediaOptions(profilePhotoViewer);
       profilePhotoViewer.dataset.profilePhotoIndex = String(activePhotoIndex);
-      profilePhotoViewerPrevious.disabled = activePhotoIndex <= 0;
-      profilePhotoViewerNext.disabled = activePhotoIndex >= totalPhotos - 1;
       profilePhotoViewer.setAttribute("aria-label", `${profileName} profile photos, photo ${activePhotoIndex + 1} of ${totalPhotos}`);
       preparePublicMediaLikeButton(
         profilePhotoViewerLike,
@@ -122,6 +121,12 @@
 
     function closeProfilePhotoViewer() {
       if (!profilePhotoViewer) return;
+      profilePhotoViewer.classList.remove("is-media-fullscreen");
+      closeProfileMediaOptions(profilePhotoViewer);
+      profilePhotoViewer.querySelectorAll("[data-profile-media-fullscreen]").forEach((button) => {
+        button.setAttribute("aria-pressed", "false");
+        button.setAttribute("aria-label", "View media full screen");
+      });
       profilePhotoViewer.hidden = true;
       profilePhotoViewer.style.removeProperty("z-index");
       window.cancelAnimationFrame(profilePhotoViewerScrollFrame);

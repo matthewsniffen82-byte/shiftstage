@@ -12,6 +12,7 @@ import {
 } from "react";
 import { flushSync, preload } from "react-dom";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
+import { DancerMediaFollowButton } from "./DancerProfileActions";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
 import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
@@ -143,6 +144,7 @@ export function DancerPhotoCarousel({
     photoMedia.length || !videoMedia.length ? "photo" : "video",
   );
   const [viewer, setViewer] = useState<MediaViewer | null>(null);
+  const [viewerFullscreen, setViewerFullscreen] = useState(false);
   const featuredPhotoIndex = Math.max(0, photoMedia.findIndex((photo) => photo.isPrimary));
   const featuredPhoto = photoMedia[featuredPhotoIndex];
   const [visibleCounts, setVisibleCounts] = useState<Record<MediaTab, number>>({
@@ -425,6 +427,12 @@ export function DancerPhotoCarousel({
           setReportError("");
           return;
         }
+        if (viewerFullscreen) {
+          const index = currentViewerScrollIndex();
+          setViewerFullscreen(false);
+          window.requestAnimationFrame(() => scrollViewerToIndex(index, { instant: true }));
+          return;
+        }
         window.cancelAnimationFrame(viewerOpeningFrame.current);
         viewerOpeningFrame.current = 0;
         viewerOpeningIndex.current = null;
@@ -447,7 +455,7 @@ export function DancerPhotoCarousel({
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [currentViewerScrollIndex, photoMedia.length, reportSaving, reportTarget, scrollViewerToIndex, videoMedia.length, viewerKind]);
+  }, [currentViewerScrollIndex, photoMedia.length, reportSaving, reportTarget, scrollViewerToIndex, videoMedia.length, viewerKind, viewerFullscreen]);
 
   function openViewer(
     kind: MediaTab,
@@ -465,6 +473,7 @@ export function DancerPhotoCarousel({
   }
 
   function closeViewer() {
+    setViewerFullscreen(false);
     window.cancelAnimationFrame(viewerOpeningFrame.current);
     viewerOpeningFrame.current = 0;
     viewerOpeningIndex.current = null;
@@ -642,16 +651,6 @@ export function DancerPhotoCarousel({
     }
   }
 
-  function showRelativeViewerItem(direction: -1 | 1, fromIndex = viewerIndex) {
-    const nextIndex = Math.min(
-      Math.max(fromIndex + direction, 0),
-      Math.max(0, viewerItems.length - 1),
-    );
-    if (nextIndex === fromIndex) return;
-    setShareStatus("");
-    scrollViewerToIndex(nextIndex);
-  }
-
   function handleViewerScroll() {
     if (viewerOpeningIndex.current !== null) {
       scrollViewerToIndex(viewerOpeningIndex.current, { instant: true });
@@ -661,6 +660,9 @@ export function DancerPhotoCarousel({
       Math.max(currentViewerScrollIndex(), 0),
       Math.max(0, viewerItems.length - 1),
     );
+    if (nextIndex !== viewerIndex) {
+      viewerFeed.current?.querySelectorAll<HTMLDetailsElement>(".profile-media-control-options[open]").forEach((menu) => { menu.open = false; });
+    }
     pendingViewerIndex.current = nextIndex;
     setViewer((current) => {
       if (!current || current.index === nextIndex) return current;
@@ -670,26 +672,31 @@ export function DancerPhotoCarousel({
   }
 
   function renderViewerControls(item: ProfileMedia, index: number) {
+    const target = activeMediaReportTarget(item, index);
     return (
       <>
-        <button
-          aria-label={`Previous ${item.kind}`}
-          className="profile-media-viewer-previous"
-          disabled={index <= 0}
-          onClick={() => showRelativeViewerItem(-1, index)}
-          type="button"
-        >
-          ↑
-        </button>
-        <button
-          aria-label={`Next ${item.kind}`}
-          className="profile-media-viewer-next"
-          disabled={index >= viewerItems.length - 1}
-          onClick={() => showRelativeViewerItem(1, index)}
-          type="button"
-        >
-          ↓
-        </button>
+        <div className="profile-media-control-tools" role="group" aria-label={`${item.kind === "video" ? "Video" : "Photo"} options`}>
+          <details className="profile-media-control-options" onKeyDown={(event) => {
+            if (event.key !== "Escape" || !event.currentTarget.open) return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.open = false;
+            event.currentTarget.querySelector("summary")?.focus();
+          }}>
+            <summary className="profile-media-control-overflow" aria-label={`${item.kind === "video" ? "Video" : "Photo"} options`}
+              onClick={(event) => {
+                const selected = event.currentTarget.parentElement;
+                viewerFeed.current?.querySelectorAll<HTMLDetailsElement>(".profile-media-control-options[open]").forEach((menu) => { if (menu !== selected) menu.open = false; });
+              }}><span aria-hidden="true">•••</span></summary>
+            <div className="profile-media-control-options-panel">
+              <button className="profile-media-viewer-report" type="button" aria-haspopup="dialog"
+                disabled={!target || reportSaving || reportedTargets.includes(target.key)}
+                onClick={() => openMediaReport(item, index)}>
+                <ReportIcon /><span>{target && reportedTargets.includes(target.key) ? "Media reported" : `Report ${item.kind}`}</span>
+              </button>
+            </div>
+          </details>
+        </div>
         <div className="profile-media-viewer-footer">
           <div className="profile-media-viewer-copy">
             <strong>{stageName}</strong>
@@ -708,11 +715,12 @@ export function DancerPhotoCarousel({
                 type="button"
               >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4 10v4h4l5 4V6L8 10H4Z" />
-                  {inlineMuted ? <path d="m17 9 4 6m0-6-4 6" /> : <path d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10" />}
+                  <path d="M11 5 7 9H3v6h4l4 4V5Z" />
+                  {inlineMuted ? <path d="m16 9 5 5m0-5-5 5" /> : <path d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12" />}
                 </svg>
               </button>
             ) : null}
+            <DancerMediaFollowButton stageName={stageName} />
             {(() => {
               const like = mediaLikeStateFor(item.kind, item.id);
               return (
@@ -740,20 +748,14 @@ export function DancerPhotoCarousel({
             >
               <ShareIcon />
             </button>
-            {(() => {
-              const target = activeMediaReportTarget(item, index);
-              return target ? (
-                <button
-                  aria-label={reportedTargets.includes(target.key) ? "Media reported" : `Report this profile ${item.kind}`}
-                  className="profile-media-viewer-report"
-                  disabled={reportSaving || reportedTargets.includes(target.key)}
-                  onClick={() => openMediaReport(item, index)}
-                  type="button"
-                >
-                  <ReportIcon />
-                </button>
-              ) : null;
-            })()}
+            <button className="profile-media-control-fullscreen" type="button"
+              aria-label={viewerFullscreen ? "Exit full-screen media" : "View media full screen"} aria-pressed={viewerFullscreen}
+              onClick={() => {
+                flushSync(() => { setViewerFullscreen(!viewerFullscreen); setViewer({ kind: item.kind, index }); });
+                scrollViewerToIndex(index, { instant: true });
+              }}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d={viewerFullscreen ? "M8 8H3V3M16 8h5V3M21 21v-5h-5M3 21v-5h5" : "M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"} /></svg>
+            </button>
             <span aria-live="polite" className="profile-media-viewer-share-status">
               {shareStatusIndex === index ? shareStatus : ""}
             </span>
@@ -942,9 +944,13 @@ export function DancerPhotoCarousel({
         <div
           aria-label={`${stageName} ${viewer.kind} viewer`}
           aria-modal="true"
-          className={`profile-media-viewer profile-media-card-feed is-${viewer.kind}`}
+          className={`profile-media-viewer profile-media-card-feed is-${viewer.kind}${viewerFullscreen ? " is-media-fullscreen" : ""}`}
           data-profile-media-heading={`${stageName} · ${viewer.kind === "photo" ? "Photos" : "Videos"}`}
           role="dialog"
+          onClick={(event) => {
+            if ((event.target as Element).closest(".profile-media-control-options")) return;
+            event.currentTarget.querySelectorAll<HTMLDetailsElement>(".profile-media-control-options[open]").forEach((menu) => { menu.open = false; });
+          }}
         >
           <div
             className="profile-media-viewer-stage"

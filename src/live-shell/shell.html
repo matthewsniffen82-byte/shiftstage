@@ -1709,8 +1709,16 @@
         <div class="profile-photo-viewer-shell">
           <div class="profile-photo-viewer-stage">
             <div class="profile-photo-viewer-image" id="profilePhotoViewerImage" role="group" tabindex="0" aria-label="Dancer photos. Scroll up or down to change photos."></div>
-            <button class="profile-photo-viewer-previous" id="profilePhotoViewerPrevious" type="button" aria-label="Previous dancer photo">↑</button>
-            <button class="profile-photo-viewer-next" id="profilePhotoViewerNext" type="button" aria-label="Next dancer photo">↓</button>
+          </div>
+          <div class="profile-media-control-tools" role="group" aria-label="Photo options">
+            <details class="profile-media-control-options">
+              <summary class="profile-media-control-overflow" aria-label="Photo options" title="Photo options"><span aria-hidden="true">•••</span></summary>
+              <div class="profile-media-control-options-panel">
+                <button class="profile-photo-viewer-report" id="profilePhotoViewerReport" type="button" aria-haspopup="dialog" aria-label="Report photo">
+                  <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></span><span>Report photo</span>
+                </button>
+              </div>
+            </details>
           </div>
           <div class="profile-photo-viewer-footer">
             <div class="profile-photo-viewer-copy">
@@ -1718,6 +1726,7 @@
               <div class="profile-media-viewer-meta"><span class="profile-media-position"></span></div>
             </div>
             <div class="profile-photo-viewer-actions">
+              <button class="profile-media-control-follow feed-card-action" type="button" data-profile-photo-follow data-feed-action="follow" data-icon-only-action="true" aria-label="Follow dancer" aria-pressed="false"></button>
               <button class="profile-photo-viewer-like" id="profilePhotoViewerLike" type="button" aria-label="Like this profile photo" aria-pressed="false">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.6c0 5.3-8.8 10.4-8.8 10.4S3.2 13.9 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path></svg>
                 <span data-media-like-count>0</span>
@@ -1725,9 +1734,7 @@
               <button class="profile-photo-viewer-share" id="profilePhotoViewerShare" type="button" aria-label="Share this profile photo">
                 <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4"></path></svg>
               </button>
-              <button class="profile-photo-viewer-report" id="profilePhotoViewerReport" type="button" aria-label="Report this profile photo">
-                <span class="action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg></span>
-              </button>
+              <button class="profile-media-control-fullscreen" type="button" data-profile-media-fullscreen aria-label="View media full screen" aria-pressed="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="profile-media-control-expand" d="M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"/><path class="profile-media-control-collapse" d="M8 8H3V3M16 8h5V3M21 21v-5h-5M3 21v-5h5"/></svg></button>
             </div>
             <p class="profile-photo-viewer-status" id="profilePhotoViewerStatus" aria-live="polite"></p>
           </div>

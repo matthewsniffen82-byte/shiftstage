@@ -10,6 +10,7 @@ import {
   useState,
   type PropsWithChildren,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -32,8 +33,12 @@ type SavedState = {
 };
 
 type AccountAction = "follow";
+type MediaFollowState = { following: boolean; disabled: boolean; status: string };
 
 type DancerFollowState = {
+  mediaFollowAction: RefObject<(() => void) | null>;
+  mediaFollowState: MediaFollowState;
+  setMediaFollowState: (state: MediaFollowState) => void;
   followedBy: string;
   setFollowedBy: (userId: string) => void;
   followerCount: number | null;
@@ -59,6 +64,8 @@ export function DancerFollowStateProvider({
   metricsUnavailable?: boolean;
 }>) {
   const [followedBy, setFollowedBy] = useState("");
+  const mediaFollowAction = useRef<(() => void) | null>(null);
+  const [mediaFollowState, setMediaFollowState] = useState<MediaFollowState>({ following: false, disabled: true, status: "" });
   const [followerCount, setFollowerCount] = useState<number | null>(metricsUnavailable ? null : Math.max(0, initialFollowerCount));
   const [notificationCount, setNotificationCount] = useState<number | null>(
     metricsUnavailable ? null : Math.max(0, initialNotificationCount),
@@ -75,6 +82,9 @@ export function DancerFollowStateProvider({
   }, []);
   const value = useMemo(
     () => ({
+      mediaFollowAction,
+      mediaFollowState,
+      setMediaFollowState,
       followedBy,
       setFollowedBy,
       followerCount,
@@ -85,6 +95,7 @@ export function DancerFollowStateProvider({
       setGoingCount: setConfirmedGoingCount,
     }),
     [
+      mediaFollowState,
       followedBy,
       followerCount,
       setConfirmedFollowerCount,
@@ -96,6 +107,19 @@ export function DancerFollowStateProvider({
   );
 
   return <DancerFollowStateContext.Provider value={value}>{children}</DancerFollowStateContext.Provider>;
+}
+
+export function DancerMediaFollowButton({ stageName }: { stageName: string }) {
+  const { mediaFollowAction, mediaFollowState } = useDancerFollowState();
+  const { following, disabled, status } = mediaFollowState;
+  const label = `${following ? "Following" : "Follow"} ${stageName}`;
+  return <>
+    <button className="profile-media-control-follow" type="button" aria-label={label} title={label}
+      aria-pressed={following} disabled={disabled} onClick={() => mediaFollowAction.current?.()}>
+      <DancerProfileActionPreviewIcon type={following ? "check" : "personPlus"} />
+    </button>
+    <span className="profile-media-control-follow-status" role="status">{status}</span>
+  </>;
 }
 
 export function DancerFollowerCount() {
@@ -360,6 +384,8 @@ export function DancerProfileActions({
   hasClubDeal?: boolean;
 }) {
   const {
+    mediaFollowAction,
+    setMediaFollowState,
     setFollowedBy,
     setFollowerCount,
     setNotificationCount,
@@ -389,6 +415,17 @@ export function DancerProfileActions({
   const hasLiveActions = Boolean(actionShift?.isActive);
   const hasScheduledActions = Boolean(actionShift);
   const isGoing = Boolean(actionShift && saved.goingShiftIds.includes(actionShift.id));
+
+  // Both profile follow buttons use the existing account gate and save handler.
+  useEffect(() => {
+    mediaFollowAction.current = () => {
+      if (requireCustomerAccount("follow")) void updateFollow();
+    };
+    return () => { mediaFollowAction.current = null; };
+  });
+  useEffect(() => {
+    setMediaFollowState({ following: saved.following, disabled: !savedLoaded || followSaving, status });
+  }, [followSaving, saved.following, savedLoaded, setMediaFollowState, status]);
 
   useEffect(() => {
     mountedRef.current = true;

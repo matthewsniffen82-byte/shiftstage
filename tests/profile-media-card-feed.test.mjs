@@ -42,7 +42,7 @@ test("both profile entry points share TV video sizing and screen-filling photo c
   assert.doesNotMatch(css, /is-profile-card-expanded/);
 });
 
-test("profile media has no expand controls or native fullscreen requests", () => {
+test("profile media opens at normal size and expands only from its control", () => {
   for (const name of ["openPhotoViewerFromElement", "openProfileTvViewer"]) {
     assert.doesNotMatch(functionSource(name), /request.*Fullscreen/);
     assert.match(functionSource(name), /renderProfile(?:Photo|Tv)ViewerSlides/);
@@ -52,6 +52,8 @@ test("profile media has no expand controls or native fullscreen requests", () =>
   assert.match(open, /settleViewerAtIndex\(index\)/);
   assert.doesNotMatch(carousel, /requestFullscreen|webkitRequestFullscreen|viewerExpanded|profile-media-card-expand/);
   assert.doesNotMatch(live, /requestProfile(?:Photo|Tv)ViewerFullscreen|profile-media-card-expand|prepareProfileMediaCardExpand/);
+  assert.match(carousel, /className="profile-media-control-fullscreen"/);
+  assert.match(css, /\.profile-media-card-feed\.is-media-fullscreen/);
   assert.match(carousel, /controls=\{false\}/);
   assert.match(carousel, /toggleViewerPlayback\(event\.currentTarget, index\)/);
   assert.match(carousel, /aria-label=\{inlineMuted \? "Turn sound on" : "Mute video"\}/);
@@ -185,7 +187,9 @@ test("one in-flow header scrolls away, with no header padding repeated on later 
 test("profile photos and videos use edge-to-edge fill with centered cropping", () => {
   assert.match(css, /\.profile-photo-viewer-slide-image \{[^}]*background-size: cover !important;[^}]*background-position: center !important;[^}]*background-repeat: no-repeat !important/);
   assert.match(css, /> :is\(img, video\) \{[^}]*object-fit: cover !important;[^}]*object-position: center !important/);
-  assert.doesNotMatch(css, /(?:object-fit|background-size): contain/);
+  const normalViewCss = css.split("/* Expand fills the available viewer")[0];
+  assert.doesNotMatch(normalViewCss, /(?:object-fit|background-size): contain/);
+  assert.match(css, /\.is-media-fullscreen[^}]*object-fit: contain !important/);
   assert.match(css, /background: #000 !important/);
 });
 

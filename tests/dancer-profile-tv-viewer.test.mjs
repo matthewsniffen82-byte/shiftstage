@@ -48,7 +48,7 @@ test("live profile viewer mirrors MyDancr TV with vertical profile-only video pa
   );
   assert.match(liveApp, /video\.setAttribute\("controlslist", "nofullscreen noremoteplayback nodownload"\)/);
   assert.match(liveApp, /video\.setAttribute\("disablepictureinpicture", ""\)/);
-  assert.match(liveApp, /data-toggle-profile-tv-sound aria-label="Turn TV video sound off">\$\{modalVideoSoundIcon\(false\)\}/);
+  assert.match(liveApp, /data-toggle-profile-tv-sound aria-label="Turn sound on">\$\{profileTvSoundIcon\(true\)\}/);
   assert.doesNotMatch(liveApp, /data-toggle-profile-tv-playback/);
   assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?profileTvViewerScrollTarget\([\s\S]*?renderProfileTvViewerItem\(target\.index, \{ scroll: false \}\)/);
   assert.match(liveApp, /function renderProfileTvViewerSlides[\s\S]*?profile-tv-viewer-slide[\s\S]*?stage\.appendChild\(slide\)/);
@@ -67,7 +67,7 @@ test("live profile sound and navigation controls are wired as top-level viewer a
 
   assert.match(
     soundControls,
-    /function syncProfileTvSoundControl\(\) \{[\s\S]*?button\.innerHTML = modalVideoSoundIcon\(muted\);[\s\S]*?button\.setAttribute\("aria-label", muted \? "Turn TV video sound on" : "Turn TV video sound off"\);[\s\S]*?\n    \}/,
+    /function syncProfileTvSoundControl\(\) \{[\s\S]*?button\.innerHTML = profileTvSoundIcon\(muted\);[\s\S]*?button\.setAttribute\("aria-label", muted \? "Turn sound on" : "Mute video"\);[\s\S]*?\n    \}/,
   );
   assert.match(
     soundControls,
@@ -138,7 +138,7 @@ test("dancer profile viewers reuse translucent TV glass with anonymous media lik
     liveApp,
     /\.profile-tv-viewer-actions button \{[^}]*background-color: rgba\(5,5,10,\.5\);[^}]*backdrop-filter: blur\(14px\) saturate\(1\.12\);/,
   );
-  assert.equal((liveViewerActions.match(/<button/g) || []).length, 4);
+  assert.equal((liveViewerActions.match(/<button/g) || []).length, 5);
   assert.doesNotMatch(liveViewerActions, /data-toggle-profile-tv-playback/);
   assert.match(liveViewerActions, /data-toggle-profile-tv-sound/);
   assert.match(liveViewerActions, /data-like-profile-tv/);
