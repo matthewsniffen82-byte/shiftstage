@@ -204,6 +204,7 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   border-radius: 50% !important;
   color: #fff !important;
 }
+.profile-media-card-feed [data-toggle-profile-tv-sound] svg,
 .profile-media-viewer-sound svg {
   display: block;
   width: 21px;
