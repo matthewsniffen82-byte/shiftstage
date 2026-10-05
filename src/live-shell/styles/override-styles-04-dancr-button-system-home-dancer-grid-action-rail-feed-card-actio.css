@@ -397,11 +397,11 @@
 
         /* Dancers is a dense, media-first three-column directory at every app
            width. Each card occupies one mathematically equal column while the
-           two-pixel gutter keeps the tiles visually connected. */
+           six-pixel gutter matches profile photos and videos. */
         #results.home-dancer-grid.home-dancer-three-column {
           grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
           align-items: start !important;
-          gap: 2px !important;
+          gap: 6px !important;
         }
         #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-heading,
         #results.home-dancer-grid.home-dancer-three-column > .dancer-directory-filters,
@@ -645,7 +645,7 @@
             margin-inline: 0 !important;
             padding-right: 0 !important;
             padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important;
-            gap: 2px !important;
+            gap: 6px !important;
             scroll-padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px));
           }
           #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy {

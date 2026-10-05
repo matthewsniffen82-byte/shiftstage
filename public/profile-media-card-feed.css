@@ -7,7 +7,7 @@
 
 .profile-media-card-feed {
   --profile-media-card-height: var(--dancr-scroll-card-height);
-  --profile-media-card-gap: 16px;
+  --profile-media-card-gap: 6px;
   --profile-media-card-header: calc(72px + env(safe-area-inset-top, 0px));
 }
 
@@ -377,7 +377,7 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   }
 
   .profile-media-card-feed {
-    --profile-media-card-gap: 12px;
+    --profile-media-card-gap: 6px;
   }
   .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) {
     right: calc(9px + env(safe-area-inset-right, 0px)) !important;

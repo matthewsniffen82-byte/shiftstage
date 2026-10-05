@@ -267,10 +267,10 @@ test("empty club discovery distinguishes an empty city from filtered results and
   );
 });
 
-test("Dancers uses extra-tall portrait tiles in a near-seamless three-column grid", () => {
+test("Dancers uses extra-tall portrait tiles with six-pixel gaps in a three-column grid", () => {
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 2px !important;/,
+    /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 6px !important;/,
   );
   assert.match(
     homeSource,
@@ -278,7 +278,7 @@ test("Dancers uses extra-tall portrait tiles in a near-seamless three-column gri
   );
   assert.match(
     homeSource,
-    /phone grid inherits the same content boundary[\s\S]*?trailing clearance only[\s\S]*?lifts the final row above the fixed discovery dock[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: 100% !important;[\s\S]*?margin-inline: 0 !important;[\s\S]*?padding-right: 0 !important;[\s\S]*?padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 2px !important;[\s\S]*?scroll-padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /phone grid inherits the same content boundary[\s\S]*?trailing clearance only[\s\S]*?lifts the final row above the fixed discovery dock[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: 100% !important;[\s\S]*?margin-inline: 0 !important;[\s\S]*?padding-right: 0 !important;[\s\S]*?padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 6px !important;[\s\S]*?scroll-padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     homeSource,
@@ -315,7 +315,7 @@ test("incomplete dancer rows start from the left edge of the three-card director
   );
 });
 
-test("Dancers reuses unchanged grid cards and starts every directory photo immediately", () => {
+test("Dancers reuses unchanged grid cards and prioritizes the opening four rows of photos", () => {
   const contentKey = homeSource.match(
     /function homeDancerGridContentKey\(city, markup\) \{[\s\S]*?(?=\n    function renderHomeDancerGrid)/,
   )?.[0] || "";
@@ -349,7 +349,7 @@ test("Dancers reuses unchanged grid cards and starts every directory photo immed
   );
   assert.match(
     homeSource,
-    /const imageLoading = "eager";[\s\S]*?const imageFetchPriority = imageIndex < 3 \? "high" : "auto";[\s\S]*?compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="\$\{imageLoading\}" fetchpriority="\$\{imageFetchPriority\}" decoding="async" draggable="false"/,
+    /const imageLoading = imageIndex < 12 \? "eager" : "lazy";[\s\S]*?const imageFetchPriority = imageIndex < 12 \? "high" : "auto";[\s\S]*?compactDirectory && nativePhotoAttrs[\s\S]*?<img class="home-dancer-grid-photo has-custom-photo" \$\{nativePhotoAttrs\} sizes="\(max-width: 720px\) calc\(\(100vw - 20px\) \/ 3\)[\s\S]*?loading="\$\{imageLoading\}" fetchpriority="\$\{imageFetchPriority\}" decoding="async" draggable="false"/,
   );
   assert.match(renderer, /let imageOffset = 0;[\s\S]*?startIndex|let imageOffset = 0;[\s\S]*?imageOffset \+= section\.profiles\.length/);
   assert.match(renderer, /renderStableMediaMarkup\(results, gridMarkup\);/);
@@ -713,7 +713,7 @@ test("Now grid cards keep production actions while Dancers directory cards link 
   );
   assert.match(
     homeSource,
-    /const photoMarkup = photoUrl[\s\S]*?home-dancer-grid-photo\$\{photoAttrs\.className\}[\s\S]*?aria-hidden="true"[\s\S]*?String\(profile\.name\)\.trim\(\)\.charAt\(0\)/,
+    /let photoMarkup = photoUrl[\s\S]*?home-dancer-grid-photo\$\{photoAttrs\.className\}[\s\S]*?aria-hidden="true"[\s\S]*?String\(profile\.name\)\.trim\(\)\.charAt\(0\)/,
   );
   assert.match(
     homeSource,
