@@ -813,7 +813,7 @@ test("the homepage hero keeps the exact supplied artwork borderless without an a
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?-webkit-box-shadow: 0 16px 34px rgba\(0, 0, 0, 0\.36\) !important;[\s\S]*?box-shadow: 0 16px 34px rgba\(0, 0, 0, 0\.36\) !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?-webkit-box-shadow: 0 6px 14px rgba\(0, 0, 0, 0\.14\) !important;[\s\S]*?box-shadow: 0 6px 14px rgba\(0, 0, 0, 0\.14\) !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
   );
   assert.match(
     aesthetic,

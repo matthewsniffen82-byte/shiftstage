@@ -899,8 +899,8 @@ body > .app main.stack > .hero.reference-hero {
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
-  -webkit-box-shadow: 0 16px 34px rgba(0, 0, 0, 0.36) !important;
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.36) !important;
+  -webkit-box-shadow: 0 6px 14px rgba(0, 0, 0, 0.14) !important;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.14) !important;
   filter: none !important;
   -webkit-filter: none !important;
 }
