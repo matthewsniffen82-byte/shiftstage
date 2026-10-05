@@ -806,22 +806,22 @@ test("verified check marks use a flat sapphire and white treatment without decor
   );
 });
 
-test("the homepage hero keeps the exact supplied artwork borderless without an ambient halo", () => {
+test("the homepage hero keeps its artwork geometry with only a short lower-edge blend", () => {
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::before,[\s\S]*?body > \.app main\.stack > \.hero\.reference-hero::after \{[\s\S]*?content: none !important;[\s\S]*?display: none !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important/,
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?-webkit-box-shadow: 0 6px 14px rgba\(0, 0, 0, 0\.14\) !important;[\s\S]*?box-shadow: 0 6px 14px rgba\(0, 0, 0, 0\.14\) !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
+    /body > \.app main\.stack > \.hero\.reference-hero \{[\s\S]*?overflow: visible !important;[\s\S]*?border: 0 !important;[\s\S]*?border-radius: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?-webkit-box-shadow: none !important;[\s\S]*?box-shadow: none !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important/,
   );
   assert.match(
     aesthetic,
     /body > \.app main\.stack > \.hero\.reference-hero > \.hero-art \{[\s\S]*?position: static !important;[\s\S]*?width: 100% !important;[\s\S]*?height: auto !important;[\s\S]*?object-fit: contain !important;[\s\S]*?clip-path: none !important;[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;[\s\S]*?mix-blend-mode: normal !important;[\s\S]*?opacity: 1 !important;[\s\S]*?transform: none !important/,
   );
-  assert.doesNotMatch(
+  assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after \{[^}]*(?:border|box-shadow):/,
+    /body > \.app main\.stack > \.hero\.reference-hero::after \{[^}]*inset: auto 0 0 !important;[^}]*height: 32px !important;[^}]*linear-gradient\(180deg, rgba\(13, 10, 19, 0\), #0d0a13\)[^}]*box-shadow: none !important;[^}]*filter: none !important;[^}]*pointer-events: none !important;/,
   );
 });
 
