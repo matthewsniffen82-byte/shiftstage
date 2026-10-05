@@ -622,8 +622,9 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-schedule.i
 .profile-media-card-feed .profile-media-club-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
 html body.dancr-button-system .profile-media-card-feed .profile-media-venue {
   min-width: 0;
+  min-height: 44px;
   display: inline-flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 7px;
   color: #fff !important;
   -webkit-text-fill-color: currentColor !important;
@@ -632,6 +633,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-venue {
   line-height: 1.25;
   text-decoration: none;
   overflow-wrap: anywhere;
+  cursor: pointer;
   pointer-events: auto;
 }
 .profile-media-card-feed .profile-media-venue :is(svg, .action-icon) { width: 17px !important; height: 17px !important; flex: 0 0 17px; }

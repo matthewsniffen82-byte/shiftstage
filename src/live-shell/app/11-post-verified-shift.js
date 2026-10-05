@@ -915,6 +915,10 @@
       if (!copy) return;
       copy.innerHTML = profileMediaIdentityMarkup(profile, profileName, index, total);
       copy.querySelector("[data-profile-media-back]")?.addEventListener("click", onBack);
+      copy.querySelector(".profile-media-venue")?.addEventListener("click", (event) => {
+        // Preserve native link navigation before the viewer cancels background clicks.
+        event.stopPropagation();
+      });
       const avatar = copy.querySelector(".profile-media-avatar img");
       avatar?.addEventListener("error", () => avatar.remove(), { once: true });
     }

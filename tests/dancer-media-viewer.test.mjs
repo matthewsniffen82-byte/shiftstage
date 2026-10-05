@@ -71,6 +71,7 @@ test("the profile editor yields its document-level keyboard handling while a med
   let closed = 0;
   for (const previewOpen of [true, false]) {
     const context = vm.createContext({
+      document: { querySelector: () => null },
       overlayRef: { current: { querySelector: selector => { assert.equal(selector, "dialog.dancer-media-viewer[open]"); return previewOpen ? {} : null; } } },
       activeEditorSectionRef: { current: null }, closePreview: () => { closed++; },
     });

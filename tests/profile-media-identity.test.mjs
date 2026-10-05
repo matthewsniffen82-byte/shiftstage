@@ -40,6 +40,7 @@ test("live photo and video identity uses verified current presence and preserves
   assert.match(html, /Working now/);
   assert.match(html, /https:\/\/example.com\/avatar.jpg/);
   assert.match(html, /profile-media-club-row[^]*?Echo House[^]*?Free Entry/);
+  assert.match(html, /<a class="profile-media-venue" href="\/venues\/echo-house" aria-label="Open Echo House club profile">/);
   assert.match(html, /5\/30/);
   assert.equal(encodedConfig.sourceType, "dancer_profile");
   assert.equal(encodedConfig.dancerId, "dancer-id");
@@ -58,6 +59,54 @@ test("live photo and video identity uses verified current presence and preserves
   assert.match(noOffer, /Working now[^]*?Echo House/);
   assert.doesNotMatch(noOffer, /profile-media-entry/);
   assert.match(context.profileMediaIdentityMarkup(null, '<Star "test">', 0, 1), /&lt;Star &quot;test&quot;/);
+});
+
+test("live venue links preserve native navigation through the photo viewer's click guards", () => {
+  const clickTarget = () => ({
+    listeners: {},
+    addEventListener(type, handler) { this.listeners[type] = handler; },
+  });
+  const venue = clickTarget();
+  const back = clickTarget();
+  const photoViewer = clickTarget();
+  const photoFeed = clickTarget();
+  let backCalls = 0;
+  let closeCalls = 0;
+  const context = vm.createContext({
+    profileMediaIdentityMarkup: () => "identity markup",
+    profilePhotoViewer: photoViewer,
+    profilePhotoViewerImage: photoFeed,
+    closeProfilePhotoViewer: () => { closeCalls += 1; },
+  });
+  const viewerGuards = live.match(/    profilePhotoViewer\?\.addEventListener\("click", \(event\) => \{\s*event\.preventDefault\(\);[^]*?(?=    document\.addEventListener\("click")/)?.[0];
+  assert.ok(viewerGuards, "load the actual photo viewer click guards");
+  vm.runInContext(functionSource("renderProfileMediaIdentity") + "\n" + viewerGuards, context);
+  const copy = {
+    querySelector: (selector) => selector === ".profile-media-venue" ? venue : selector === "[data-profile-media-back]" ? back : null,
+  };
+  context.renderProfileMediaIdentity(copy, profile, "Star", 0, 1, () => { backCalls += 1; });
+  assert.equal(copy.innerHTML, "identity markup");
+  assert.equal(typeof photoFeed.listeners.click, "function");
+  assert.equal(typeof photoViewer.listeners.click, "function");
+  for (const activation of [{ detail: 1 }, { detail: 0 }, { ctrlKey: true }, { metaKey: true }]) {
+    const event = {
+      ...activation, target: venue, defaultPrevented: false, propagationStopped: false,
+      preventDefault() { this.defaultPrevented = true; },
+      stopPropagation() { this.propagationStopped = true; },
+    };
+    for (const node of [venue, photoFeed, photoViewer]) {
+      node.listeners.click?.(event);
+      if (event.propagationStopped) break;
+    }
+    assert.equal(event.defaultPrevented, false, "tap, keyboard, and modified clicks retain native link behavior");
+    assert.equal(event.propagationStopped, true);
+  }
+  assert.equal(backCalls, 0);
+  assert.equal(closeCalls, 0);
+  back.listeners.click();
+  assert.equal(backCalls, 1, "profile back action stays independent");
+  assert.doesNotThrow(() => context.renderProfileMediaIdentity(null, profile, "Star", 0, 1, () => {}));
+  assert.doesNotThrow(() => context.renderProfileMediaIdentity({ querySelector: () => null }, null, "Star", 0, 1, () => {}));
 });
 
 function reactControlsContext() {
@@ -97,6 +146,7 @@ test("standalone pictures and videos render the same live identity and eligible 
     assert.match(html, /data-working-now="true"/);
     assert.match(html, /object-position:42% 36%/);
     assert.match(html, /Working now[^]*?Echo House[^]*?Free Entry/);
+    assert.match(html, /<a class="profile-media-venue" href="\/venues\/echo-house" aria-label="Open Echo House club profile">/);
     assert.match(html, /1\/2/);
     context.viewerStatus = "Not working now";
     assert.doesNotMatch(render(), /data-working-now="true"|Free Entry|Echo House/);
