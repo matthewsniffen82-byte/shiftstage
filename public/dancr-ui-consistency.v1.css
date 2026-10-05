@@ -2052,6 +2052,10 @@ html body.dancr-button-system > .app main.stack > section.stack:has(> #results:i
   margin-block: 0 !important;
   padding-block: 2px 4px !important;
 }
+html body.dancr-button-system > .app main.stack > section.stack
+  > .content-head.discovery-section-head.tv-section-head {
+  border-bottom: 0 !important;
+}
 html body.dancr-button-system > .app main.stack > section.stack > .venue-directory-roster-note {
   display: none;
   width: 100%;
