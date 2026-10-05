@@ -806,7 +806,7 @@ test("verified check marks use a flat sapphire and white treatment without decor
   );
 });
 
-test("the homepage hero keeps its artwork geometry with only a short lower-edge blend", () => {
+test("the homepage hero keeps its artwork geometry without a wash or lower-edge blend", () => {
   assert.match(
     aesthetic,
     /body > \.app main\.stack > \.hero\.reference-hero::before \{[\s\S]*?content: none !important;[\s\S]*?display: none !important/,
@@ -821,7 +821,7 @@ test("the homepage hero keeps its artwork geometry with only a short lower-edge 
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after \{[^}]*inset: auto 0 0 !important;[^}]*height: 32px !important;[^}]*linear-gradient\(180deg, rgba\(24, 16, 35, 0\), #181023\)[^}]*box-shadow: none !important;[^}]*filter: none !important;[^}]*pointer-events: none !important;/,
+    /body > \.app main\.stack > \.hero\.reference-hero::after \{\s*content: none !important;\s*display: none !important;\s*\}/,
   );
 });
 
