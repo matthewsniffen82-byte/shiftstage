@@ -359,7 +359,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className={`ir-notice${!staff && notice === REQUEST_SENT_NOTICE ? " ir-request-notice" : ""}`} role="status">{!staff && notice === REQUEST_SENT_NOTICE ? <><strong>Request sent to club staff.</strong><span>Staff acknowledgment does not guarantee dancer availability.</span></> : notice}</p> : null}
     {snapshot ? <>
-      {!operationsOnly ? <section aria-label={staff ? "Live internal roster" : "Available dancers"}>
+      {!operationsOnly ? <section className="ir-roster-section" aria-label={staff ? "Live internal roster" : "Available dancers"}>
         <div className="ir-section-title">
           <h2>On the floor</h2>
           <div className="ir-roster-controls">

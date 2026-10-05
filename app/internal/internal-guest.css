@@ -14,6 +14,18 @@ body .ir-guest .ir-header {
   border-radius: 14px;
   background: #08080b;
 }
+/* Venue identity, roster introduction and portraits share one content edge. */
+body .ir-guest > :is(.ir-header, .ir-roster-section) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin-inline: 0;
+}
+body .ir-guest > .ir-roster-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 8px;
+}
 body .ir-guest .ir-header > div { display: grid; grid-template-columns: minmax(0, 1fr) fit-content(42%); align-items: center; gap: 4px 10px; width: 100%; min-width: 0; }
 body .ir-guest .ir-brand { grid-column: 2; grid-row: 1; align-self: end; justify-self: center; width: fit-content; color: #f8fafc; font-size: 12px; line-height: 1.2; }
 body .ir-shell.ir-guest .ir-brand .mydancr-live-logo,
@@ -24,11 +36,11 @@ body .ir-guest h1 { margin: 0; font-size: clamp(24px, 4vw, 28px); line-height: 1
 body .ir-guest h2 { font-size: 20px; line-height: 1.3; letter-spacing: -.025em; }
 body .ir-guest p { color: #b8b5c2; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 body .ir-guest .ir-header p { grid-column: 2; grid-row: 2; align-self: start; justify-self: center; margin: 0; padding: 5px 9px; border: 1px solid #48444f; border-radius: 8px; color: #f8fafc; background: linear-gradient(#17131d, #17131d); font-size: 16px; font-weight: 700; line-height: 1.25; text-align: center; }
-body .ir-guest .ir-section-title { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin-bottom: 12px; }
+body .ir-guest .ir-section-title { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 0; }
 body .ir-guest .ir-section-title h2 { min-width: 0; margin: 0; }
-body .ir-guest .ir-roster-scope-note { margin: 0 0 12px; color: #b8b5c2; font-size: 13px; line-height: 1.5; text-align: left; }
+body .ir-guest .ir-roster-scope-note { margin: 0 0 4px; color: #b8b5c2; font-size: 13px; line-height: 1.5; text-align: left; }
 body .ir-guest .ir-live { padding: 0; color: var(--dancr-color-success, #34d399); font-size: 12px; line-height: 1.4; }
-body .ir-guest .ir-section-title .ir-live { padding: 3px 7px; border: 1px solid #254b3b; border-radius: 999px; background: #07110c; font-size: 11px; font-weight: 600; white-space: nowrap; }
+body .ir-guest .ir-section-title .ir-live { box-sizing: border-box; display: inline-flex; align-items: center; min-height: 30px; padding: 3px 7px; border: 1px solid #254b3b; border-radius: 999px; background: #07110c; font-size: 11px; font-weight: 600; white-space: nowrap; }
 
 /* Static placeholders avoid flashing invented venue/table labels on reload. */
 body .ir-guest .ir-loading-status { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
@@ -111,7 +123,7 @@ body.dancr-button-system .ir-shell.ir-guest button.ir-roster-refresh::before { i
 body.dancr-button-system .ir-shell.ir-guest button.ir-roster-refresh:disabled { opacity: 1 !important; }
 body .ir-guest .ir-roster-refresh svg { width: 16px; height: 16px; }
 body .ir-guest .ir-roster-refresh[aria-busy="true"] svg { animation: ir-roster-refresh-spin .8s linear infinite; }
-body .ir-guest .ir-refresh-message { margin: -4px 0 10px; color: #b8b5c2; font-size: 12px; }
+body .ir-guest .ir-refresh-message { margin: 0; color: #b8b5c2; font-size: 12px; }
 body .ir-guest .ir-refresh-message:not([data-error]) { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 @keyframes ir-roster-refresh-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
