@@ -707,6 +707,12 @@ html body.dancr-button-system > .app main.stack > section.stack
   }
 }
 
+/* Match the eight-pixel top gap above the dancer profile frame. */
+html body.dancr-button-system #results.venue-profile-overlay {
+  padding-top: max(8px, var(--dancr-viewport-top, 0px)) !important;
+  scroll-padding-top: max(8px, var(--dancr-viewport-top, 0px)) !important;
+}
+
 /* Base surface and shading for venue details and offer popups. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero,
 html body.dancr-button-system :is(#dealPassOverlay .deal-pass-sheet, .club-deal-dialog) {

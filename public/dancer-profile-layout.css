@@ -575,7 +575,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   box-sizing: border-box !important;
   border: 0 !important;
   border-radius: var(--profile-frame-radius) !important;
-  padding: 2px var(--profile-frame-inset) 0 !important;
+  padding: 8px var(--profile-frame-inset) 0 !important;
 }
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) {
   --profile-frame-row-end: 3;
