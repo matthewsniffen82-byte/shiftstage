@@ -7,8 +7,12 @@
 
 .profile-media-card-feed {
   --profile-media-card-height: var(--dancr-scroll-card-height);
-  --profile-media-card-gap: 6px;
+  --profile-media-card-gap: 10px;
   --profile-media-card-header: calc(72px + env(safe-area-inset-top, 0px));
+}
+
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .public-profile-shell .profile-media-viewer).profile-media-card-feed {
+  background: var(--discovery-backdrop, #1c122b) !important;
 }
 
 /* Match the photo viewer layer so the video header is not covered by page chrome. */
@@ -30,7 +34,7 @@
   display: flex;
   align-items: center;
   padding: env(safe-area-inset-top, 0px) 13px 0;
-  background: #000;
+  background: var(--discovery-backdrop, #1c122b);
 }
 
 .profile-media-card-feed .profile-media-card-heading {
@@ -377,7 +381,7 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   }
 
   .profile-media-card-feed {
-    --profile-media-card-gap: 6px;
+    --profile-media-card-gap: 10px;
   }
   .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) {
     right: calc(9px + env(safe-area-inset-right, 0px)) !important;
@@ -527,6 +531,9 @@ html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profil
 .profile-media-card-feed.is-media-fullscreen {
   --profile-media-card-height: 100%;
   --profile-media-card-gap: 0px;
+}
+body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .public-profile-shell .profile-media-viewer).profile-media-card-feed.is-media-fullscreen {
+  background: #000 !important;
 }
 .profile-media-card-feed.is-media-fullscreen .profile-media-card-header { display: none; }
 .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-image, .profile-tv-viewer-stage, .profile-media-viewer-stage) {

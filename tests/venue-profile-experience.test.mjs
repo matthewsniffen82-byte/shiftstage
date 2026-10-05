@@ -111,7 +111,7 @@ test("venue details reuse the production Dancers grid for dancers working now", 
   assert.match(liveApp, /\.venue-dancer-grid img\.home-dancer-grid-photo \{[\s\S]*?display: block !important;[\s\S]*?object-fit: cover;[\s\S]*?object-position: center top;/);
   assert.match(
     liveApp,
-    /\.venue-dancer-grid \{[^}]*width: 100% !important;[^}]*margin-inline: 0 !important;[^}]*padding-inline: 0 !important;[^}]*gap: 2px !important;/,
+    /\.venue-dancer-grid \{[^}]*width: 100% !important;[^}]*margin-inline: 0 !important;[^}]*padding-inline: 0 !important;[^}]*gap: 10px !important;/,
   );
   assert.match(
     liveApp,

@@ -1941,10 +1941,25 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   text-align: left;
 }
 
-/* Keep the shared three-column portraits compact with borderless photo edges. */
+/* The final grid rule must preserve the same ten-pixel gaps as profile media. */
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
-  gap: 1px !important;
+  gap: 10px !important;
+}
+
+/* Continue the discovery backdrop through venue details and dancer profiles.
+ * Only the page and gallery surfaces are colored; media and controls retain
+ * their own appearance. */
+html body.dancr-button-system #results.venue-profile-overlay,
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"],
+html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid,
+html body.dancr-button-system #profileBackdrop.modal-backdrop,
+html body.dancr-button-system #profileBackdrop.modal-backdrop.show {
+  background: var(--discovery-backdrop) !important;
+}
+
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
+  background: var(--discovery-backdrop) !important;
 }
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)

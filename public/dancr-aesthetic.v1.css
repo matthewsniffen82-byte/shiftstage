@@ -880,7 +880,7 @@ body.dancr-button-system > .app main.stack > section.stack > #results.venue-card
 }
 
 /* The compact dancer directory reads as one continuous discovery surface.
- * The grid itself supplies the six-pixel separator; repeated card edges and
+ * The grid itself supplies the ten-pixel separator; repeated card edges and
  * shadows would make the profile tiles look smaller and less scannable. */
 body.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
   border: 0 !important;
@@ -957,8 +957,11 @@ body > .app main.stack > .hero.reference-hero > .hero-art {
  * feed. Target the discovery shell explicitly so device-specific resets cannot
  * turn its gutters black. The solid color stays uniform at any feed length;
  * card media, profile overlays, and navigation keep their own surfaces. */
-html body.dancr-button-system > .app > main.stack:has(> section.stack > #results) {
+:root {
   --discovery-backdrop: #1c122b;
+}
+
+html body.dancr-button-system > .app > main.stack:has(> section.stack > #results) {
   background: var(--discovery-backdrop) !important;
 }
 

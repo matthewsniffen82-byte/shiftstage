@@ -267,10 +267,10 @@ test("empty club discovery distinguishes an empty city from filtered results and
   );
 });
 
-test("Dancers uses extra-tall portrait tiles with six-pixel gaps in a three-column grid", () => {
+test("Dancers uses extra-tall portrait tiles with ten-pixel gaps in a three-column grid", () => {
   assert.match(
     homeSource,
-    /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 6px !important;/,
+    /#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;[\s\S]*?gap: 10px !important;/,
   );
   assert.match(
     homeSource,
@@ -278,7 +278,7 @@ test("Dancers uses extra-tall portrait tiles with six-pixel gaps in a three-colu
   );
   assert.match(
     homeSource,
-    /phone grid inherits the same content boundary[\s\S]*?trailing clearance only[\s\S]*?lifts the final row above the fixed discovery dock[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: 100% !important;[\s\S]*?margin-inline: 0 !important;[\s\S]*?padding-right: 0 !important;[\s\S]*?padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 6px !important;[\s\S]*?scroll-padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\);/,
+    /phone grid inherits the same content boundary[\s\S]*?trailing clearance only[\s\S]*?lifts the final row above the fixed discovery dock[\s\S]*?@media \(max-width: 420px\) \{[\s\S]*?#results\.home-dancer-grid\.home-dancer-three-column \{[\s\S]*?width: 100% !important;[\s\S]*?margin-inline: 0 !important;[\s\S]*?padding-right: 0 !important;[\s\S]*?padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?gap: 10px !important;[\s\S]*?scroll-padding-bottom: calc\(68px \+ env\(safe-area-inset-bottom, 0px\)\);/,
   );
   assert.match(
     homeSource,

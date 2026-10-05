@@ -32,8 +32,8 @@ test("both profile entry points share TV video sizing and screen-filling photo c
   }
   assert.match(css, /--profile-media-card-height: var\(--dancr-scroll-card-height\)/);
   assert.match(live, /\.home-tv-feed-slide \{[^}]*height: var\(--dancr-scroll-card-height\);[^}]*min-height: var\(--dancr-scroll-card-height\);[^}]*max-height: var\(--dancr-scroll-card-height\)/);
-  assert.match(css, /--profile-media-card-gap: 6px/);
-  assert.match(css, /@media \(max-width: 720px\)[^]*?--profile-media-card-gap: 6px/);
+  assert.match(css, /--profile-media-card-gap: 10px/);
+  assert.match(css, /@media \(max-width: 720px\)[^]*?--profile-media-card-gap: 10px/);
   assert.match(css, /scroll-snap-type: none !important/);
   assert.match(css, /scroll-snap-align: none !important/);
   assert.match(css, /scroll-snap-stop: normal !important/);
@@ -60,7 +60,7 @@ test("profile media opens at normal size and expands only from its control", () 
 });
 
 test("card offsets keep the correct selection through gaps and thirty-item galleries", () => {
-  for (const [height, gap, inset] of [[520, 6, 72], [732, 6, 72], [760, 6, 92], [844, 0, 0]]) {
+  for (const [height, gap, inset] of [[520, 10, 72], [732, 10, 72], [760, 10, 92], [844, 0, 0]]) {
     const offsets = Array.from({ length: 30 }, (_, i) => inset + i * (height + gap));
     for (let index = 0; index < offsets.length; index += 1) {
       const top = offsets[index] - inset;
@@ -118,7 +118,7 @@ test("taller shared phone cards leave only a small neighboring-card peek", () =>
     const oldCard = Math.min(920, Math.max(520, viewport - 112));
     assert.equal(card - oldCard, 48, "grow the card without changing its width or gap");
     const neighborPeek = (viewport - card) / 2 - gap;
-    assert.ok(neighborPeek >= 22 && neighborPeek <= 28, "a centered card leaves just a sliver above and below");
+    assert.ok(neighborPeek >= 18 && neighborPeek <= 24, "a centered card leaves just a sliver above and below");
   }
   assert.match(live, /\.home-tv-feed-loading \{[^}]*height: var\(--dancr-scroll-card-height\);[^}]*min-height: var\(--dancr-scroll-card-height\);[^}]*max-height: var\(--dancr-scroll-card-height\)/);
   assert.match(fs.readFileSync("public/profile-photo-crop.js", "utf8"), /height:var\(--profile-media-card-height\)/);
