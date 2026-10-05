@@ -17,3 +17,20 @@ body .ir-shell.ir-staff.ir-embedded{min-height:0;padding:0;margin:16px 0;backgro
 body dialog.ir-profile-dialog.ir-full-profile-dialog{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#050507;overflow:hidden}.ir-full-profile-frame{display:block;width:100%;height:100%;border:0;background:#050507}
 /* Prepare the full-size viewer behind the roster; reveal only when it is ready. */
 body dialog.ir-full-profile-dialog:not([open]){display:block;visibility:hidden;pointer-events:none}
+
+/* A solid discovery surface keeps internal roster gutters violet at any length.
+ * The more specific staff selector also covers the embedded dashboard roster. */
+html body.dancr-button-system .internal-page-surface:has(.ir-shell),
+html body.dancr-button-system .ir-shell,
+html body.dancr-button-system .ir-shell:is(.ir-staff, .ir-guest) {
+  background: var(--discovery-backdrop, #1c122b) !important;
+}
+
+html body.dancr-button-system .ir-shell .ir-header {
+  background: var(--discovery-header-backdrop, linear-gradient(180deg, #120c1d, #1c122b)) !important;
+}
+
+html body.dancr-button-system .ir-profile-dialog,
+html body.dancr-button-system .ir-full-profile-frame {
+  background: var(--discovery-backdrop, #1c122b) !important;
+}

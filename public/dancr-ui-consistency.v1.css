@@ -1710,7 +1710,10 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   background: currentColor !important;
 }
 
-/* Shared discovery header: Dancers, TV, and Clubs use the same unshaded frame. */
+/* Carry the discovery violet through the frame and gently into the top nav. */
+html body.dancr-button-system > .app:has(> main.stack > section.stack > #results) {
+  background: var(--discovery-backdrop) !important;
+}
 html body.dancr-button-system > .app {
   border: 0 !important;
   border-radius: 0 !important;
@@ -1720,7 +1723,7 @@ html body.dancr-button-system > .app > header {
   padding-block: 4px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: transparent !important;
+  background: var(--discovery-header-backdrop) !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;

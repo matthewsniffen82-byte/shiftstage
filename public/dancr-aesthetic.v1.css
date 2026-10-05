@@ -956,9 +956,10 @@ body > .app main.stack > .hero.reference-hero > .hero-art {
 /* One smoked-violet surface connects the shared landing hero, controls, and
  * feed. Target the discovery shell explicitly so device-specific resets cannot
  * turn its gutters black. The solid color stays uniform at any feed length;
- * card media, profile overlays, and navigation keep their own surfaces. */
+ * card media and overlays keep their own surfaces. */
 :root {
   --discovery-backdrop: #1c122b;
+  --discovery-header-backdrop: linear-gradient(180deg, #120c1d, var(--discovery-backdrop));
 }
 
 html body.dancr-button-system > .app > main.stack:has(> section.stack > #results) {

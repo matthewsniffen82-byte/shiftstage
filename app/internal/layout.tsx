@@ -11,4 +11,4 @@ import "../dashboard/venue-operations.css";
 const wordmarkFont = Manrope({ weight: "800", subsets: ["latin"], display: "swap", variable: "--font-mydancr-wordmark" });
 
 export const metadata: Metadata = { title: "MyDancr • Internal", robots: { index: false, follow: false }, referrer: "no-referrer" };
-export default function InternalLayout({ children }: { children: ReactNode }) { return <div className={wordmarkFont.variable}>{children}</div>; }
+export default function InternalLayout({ children }: { children: ReactNode }) { return <div className={`internal-page-surface ${wordmarkFont.variable}`}>{children}</div>; }
