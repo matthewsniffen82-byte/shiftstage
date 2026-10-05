@@ -97,11 +97,11 @@ test("Android's final media layer outranks the coarse-pointer filter reset", () 
   );
   assert.match(
     androidMediaLayer,
-    /#profileBackdrop :is\([\s\S]*?\.profile-modal-avatar\.has-photo,[\s\S]*?\.profile-photo-viewer-slide-image/,
+    /#profileBackdrop \.modal-image\.has-custom-photo,[\s\S]*?#profileBackdrop \.profile-modal-avatar\.has-photo,[\s\S]*?#profileBackdrop \.profile-photo-viewer-slide-image/,
   );
   assert.match(
     androidMediaLayer,
-    /\.tv-shell \.tv-profile-photo-image[\s\S]*?filter: brightness\(1\.14\) contrast\(1\.03\) !important;[\s\S]*?-webkit-filter: brightness\(1\.14\) contrast\(1\.03\) !important;/,
+    /\.tv-shell \.tv-profile-photo-image[\s\S]*?filter: brightness\(1\.24\) contrast\(1\.03\) !important;[\s\S]*?-webkit-filter: brightness\(1\.24\) contrast\(1\.03\) !important;/,
   );
 });
 

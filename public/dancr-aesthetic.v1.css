@@ -8399,9 +8399,9 @@ body.dancr-button-system #dancerDashboard #setupChecklist .setup-step.open .step
 /* Android media luminance recovery must remain the final media layer. The
  * mobile paint-stability rules in the legacy shell intentionally disable
  * filters on coarse pointers; their more-specific selector previously won
- * over the shared dancer-photo lift on Android. These selectors outrank that
- * reset without changing image geometry, spacing, overlays, or non-Android
- * rendering. */
+ * over the shared dancer-photo lift on Android. Keep a modestly brighter
+ * exposure on Android still photos, including the split profile and internal
+ * grids. Target each photo once, preserving loading states and video colors. */
 html:is(
   .is-android,
   .android-rendering,
@@ -8432,26 +8432,23 @@ html:is(
   .android-rendering,
   .is-samsung-browser,
   .samsung-rendering
-) body.dancr-button-system #profileBackdrop :is(
-  .modal-image.has-custom-photo,
-  .profile-modal-avatar.has-photo,
-  .gallery .thumb .portrait.has-custom-photo,
-  .profile-photo-viewer-slide-image
-),
-html:is(
-  .is-android,
-  .android-rendering,
-  .is-samsung-browser,
-  .samsung-rendering
-) body :is(
+) body.dancr-button-system :is(
+  #profileBackdrop .modal-image.has-custom-photo,
+  #profileBackdrop .profile-modal-avatar.has-photo,
+  #profileBackdrop .gallery .thumb .portrait.has-custom-photo,
+  #profileBackdrop .profile-photo-viewer-slide-image,
   .public-profile-shell .profile-titlebar-avatar img,
+  .public-profile-shell .profile-featured-photo[data-image-state="ready"],
   .public-profile-shell .profile-media-grid-item img,
-  .public-profile-shell .profile-media-viewer-slide > img,
+  .public-profile-shell .profile-media-viewer-slide > img:not(.profile-media-video-poster),
+  .dancer-profile-preview-overlay .profile-featured-photo[data-image-state="ready"],
+  .dancer-profile-preview-overlay .profile-media-grid-item img[data-image-state="ready"],
+  .dancer-profile-preview-overlay .profile-media-viewer-slide > img[data-image-state="ready"]:not(.profile-media-video-poster),
+  .ir-shell .ir-directory-grid img.ir-main-photo,
   .tv-shell .tv-profile-photo-image
 ) {
-  filter: brightness(1.14) contrast(1.03) !important;
-  -webkit-filter: brightness(1.14) contrast(1.03) !important;
-  opacity: 1 !important;
+  filter: brightness(1.24) contrast(1.03) !important;
+  -webkit-filter: brightness(1.24) contrast(1.03) !important;
   mix-blend-mode: normal !important;
 }
 

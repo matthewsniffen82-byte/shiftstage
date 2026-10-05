@@ -104,7 +104,7 @@ test("Android and iPhone keep media sizing stable and resource windows bounded",
   );
   assert.match(
     aesthetic,
-    /Android media luminance recovery must remain the final media layer[\s\S]*?-webkit-filter: brightness\(1\.14\) contrast\(1\.03\) !important;/,
+    /Android media luminance recovery must remain the final media layer[\s\S]*?-webkit-filter: brightness\(1\.24\) contrast\(1\.03\) !important;/,
   );
 });
 
