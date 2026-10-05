@@ -120,6 +120,17 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   border-color: rgba(255, 255, 255, .4) !important;
 }
 
+/* On iPhone, match the back arrow's outline to the other media controls. */
+@supports (-webkit-touch-callout: none) {
+  body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-card-back {
+    border-color: rgba(255, 255, 255, .28) !important;
+  }
+
+  body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-card-back:is(:hover, :focus-visible) {
+    border-color: rgba(255, 255, 255, .42) !important;
+  }
+}
+
 .profile-media-card-feed .profile-media-card-back:focus-visible {
   outline: 2px solid #fff;
   outline-offset: 3px;
