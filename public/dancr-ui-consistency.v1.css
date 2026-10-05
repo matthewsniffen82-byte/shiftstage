@@ -1778,6 +1778,22 @@ html body.dancr-button-system > .app > header #brandHome.brand {
     font-size: 28px !important;
   }
 }
+/* The mobile guest menu uses the same surface as Login / Join. */
+@media (max-width: 720px) {
+  html body.dancr-button-system > .app > header #guestMenuBtn {
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    border-radius: 999px !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    background: rgba(12, 12, 17, 0.84) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.05),
+      0 8px 22px rgba(0, 0, 0, 0.28) !important;
+  }
+  html body.dancr-button-system > .app > header #guestMenuBtn[aria-expanded="true"] {
+    border-color: #a78bfa !important;
+  }
+}
+
 /* The 36px faces sit inside full 44px targets. */
 html body.dancr-button-system > .app > header
   :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
