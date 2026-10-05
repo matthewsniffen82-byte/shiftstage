@@ -71,7 +71,8 @@ test("venue pages, venue cards, dancer profiles, and TV expose real active Club 
 });
 
 test("venue and dancer cards consistently label Club Deal states while TV renders only an active action", () => {
-  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)/);
+  assert.match(liveApp, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?data-club-deal-state="available"[\s\S]*?freeEntryButtonLabel\(\)[\s\S]*?data-club-deal-state="unavailable"[\s\S]*?freeEntryButtonLabel\(\)/);
+  assert.match(liveApp, /function freeEntryButtonLabel\(\)[\s\S]*?free-entry-label">Free Entry<\/span>/);
   assert.match(liveApp, /function homeDancerGridQrMarkup\(profile\)[\s\S]*?data-card-qr-label[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)[\s\S]*?data-club-deal-state="available"[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)/);
   assert.match(liveApp, /function homeTvFeedDealState\(item\)[\s\S]*?key: "no-active-offer"[\s\S]*?key: "available-when-working"[\s\S]*?key: "not-available-now"/);
   assert.match(liveApp, /let deal = null;[\s\S]*?if \(dealState\.key === "available"\)/);

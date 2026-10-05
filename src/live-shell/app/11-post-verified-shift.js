@@ -850,8 +850,8 @@
       });
       const status = slide.querySelector(".profile-photo-viewer-status");
       if (status) status.textContent = "";
-      slide.querySelector(".profile-photo-viewer-copy strong").textContent = profileName;
-      slide.querySelector(".profile-media-position").textContent = `${index + 1}/${total}`;
+      const profile = findProfile(profilePhotoViewer.dataset.publicDancerId || profileName);
+      renderProfileMediaIdentity(slide.querySelector(".profile-photo-viewer-copy"), profile, profileName, index, total, closeProfilePhotoViewer);
       const bind = (selector, handler) => {
         const button = slide.querySelector(selector);
         button?.addEventListener("click", (event) => {
@@ -868,7 +868,6 @@
       follow.dataset.profile = profilePhotoViewer.dataset.publicDancerId || profileName;
       follow.innerHTML = actionIconMarkup("personPlus");
       follow.setAttribute("aria-label", `Follow ${profileName}`);
-      const profile = findProfile(follow.dataset.profile);
       if (profile) syncHomeFeedActionButtons(profile, profile.city || citySelect.value);
       bind("[data-profile-media-fullscreen]", () => {
         setProfilePhotoFullscreen(!profilePhotoViewer.classList.contains("is-media-fullscreen"), index);
@@ -890,6 +889,34 @@
 
     function closeProfileMediaOptions(overlay) {
       overlay?.querySelectorAll(".profile-media-control-options[open]").forEach((menu) => { menu.open = false; });
+    }
+
+    function profileMediaIdentityMarkup(profile, profileName, index, total) {
+      const city = profile ? profileDiscoveryCity(profile) : "";
+      const workingNow = Boolean(profile && !profile.internalRoster && isWorkingTonight(profile, city));
+      const avatar = profile ? publicAvatarPhotoUrl(profile) : "";
+      const avatarSources = profile ? publicAvatarPhotoSrcSet(profile) : "";
+      const position = avatarPhotoPosition(profile?.avatarPhotoFocalX ?? profile?.mainPhotoFocalX, profile?.avatarPhotoFocalY ?? profile?.mainPhotoFocalY);
+      const config = workingNow ? dancerProfileClubDealConfig(profile) : null;
+      const venue = workingNow && profile.venue ? `
+        <div class="profile-media-club-row">
+          <a class="profile-media-venue" href="${escapeHtml(venueExperienceHref({ slug: profile.venueSlug, name: profile.venue }, city))}" aria-label="Open ${escapeHtml(profile.venue)} club profile">${actionIconMarkup("pin")}<span>${escapeHtml(profile.venue)}</span></a>
+          ${config ? `<button class="profile-media-entry" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-live-qr="true" aria-label="View free entry for ${escapeHtml(profile.venue)}">${actionIconMarkup("qr")}<span>Free Entry</span></button>` : ""}
+        </div>` : "";
+      return `
+        <button class="profile-media-identity" type="button" data-profile-media-back aria-label="Back to ${escapeHtml(profileName)} profile">
+          <span class="profile-media-avatar" data-dancer-avatar ${workingNow ? 'data-working-now="true"' : ""} aria-hidden="true"><span data-dancer-avatar-border>${escapeHtml(profileName.charAt(0).toLocaleUpperCase())}${avatar ? `<img src="${escapeHtml(avatar)}" srcset="${escapeHtml(avatarSources)}" sizes="48px" width="48" height="48" alt="" loading="lazy" decoding="async" style="object-position:${escapeHtml(position)}">` : ""}</span></span>
+          <span class="profile-media-identity-text"><strong>${escapeHtml(profileName)}</strong><span class="profile-media-identity-meta">${city ? `<span>${escapeHtml(city)}</span>` : ""}<span class="profile-media-position">${index + 1}/${total}</span></span></span>
+        </button>
+        <div class="profile-media-context"><span class="profile-media-schedule${workingNow ? " is-now" : ""}">${workingNow ? "Working now" : "Not working now"}</span>${venue}</div>`;
+    }
+
+    function renderProfileMediaIdentity(copy, profile, profileName, index, total, onBack) {
+      if (!copy) return;
+      copy.innerHTML = profileMediaIdentityMarkup(profile, profileName, index, total);
+      copy.querySelector("[data-profile-media-back]")?.addEventListener("click", onBack);
+      const avatar = copy.querySelector(".profile-media-avatar img");
+      avatar?.addEventListener("error", () => avatar.remove(), { once: true });
     }
 
     function setProfilePhotoFullscreen(active, index = Number(profilePhotoViewer.dataset.profilePhotoIndex || 0)) {

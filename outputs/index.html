@@ -42872,10 +42872,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
             </details>
           </div>
           <div class="profile-photo-viewer-footer">
-            <div class="profile-photo-viewer-copy">
-              <strong></strong>
-              <div class="profile-media-viewer-meta"><span class="profile-media-position"></span></div>
-            </div>
+            <div class="profile-photo-viewer-copy"></div>
             <div class="profile-photo-viewer-actions">
               <button class="profile-media-control-follow feed-card-action" type="button" data-profile-photo-follow data-feed-action="follow" data-icon-only-action="true" aria-label="Follow dancer" aria-pressed="false"></button>
               <button class="profile-photo-viewer-like" id="profilePhotoViewerLike" type="button" aria-label="Like this profile photo" aria-pressed="false">
@@ -53863,8 +53860,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       });
       const status = slide.querySelector(".profile-photo-viewer-status");
       if (status) status.textContent = "";
-      slide.querySelector(".profile-photo-viewer-copy strong").textContent = profileName;
-      slide.querySelector(".profile-media-position").textContent = `${index + 1}/${total}`;
+      const profile = findProfile(profilePhotoViewer.dataset.publicDancerId || profileName);
+      renderProfileMediaIdentity(slide.querySelector(".profile-photo-viewer-copy"), profile, profileName, index, total, closeProfilePhotoViewer);
       const bind = (selector, handler) => {
         const button = slide.querySelector(selector);
         button?.addEventListener("click", (event) => {
@@ -53881,7 +53878,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       follow.dataset.profile = profilePhotoViewer.dataset.publicDancerId || profileName;
       follow.innerHTML = actionIconMarkup("personPlus");
       follow.setAttribute("aria-label", `Follow ${profileName}`);
-      const profile = findProfile(follow.dataset.profile);
       if (profile) syncHomeFeedActionButtons(profile, profile.city || citySelect.value);
       bind("[data-profile-media-fullscreen]", () => {
         setProfilePhotoFullscreen(!profilePhotoViewer.classList.contains("is-media-fullscreen"), index);
@@ -53903,6 +53899,34 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     function closeProfileMediaOptions(overlay) {
       overlay?.querySelectorAll(".profile-media-control-options[open]").forEach((menu) => { menu.open = false; });
+    }
+
+    function profileMediaIdentityMarkup(profile, profileName, index, total) {
+      const city = profile ? profileDiscoveryCity(profile) : "";
+      const workingNow = Boolean(profile && !profile.internalRoster && isWorkingTonight(profile, city));
+      const avatar = profile ? publicAvatarPhotoUrl(profile) : "";
+      const avatarSources = profile ? publicAvatarPhotoSrcSet(profile) : "";
+      const position = avatarPhotoPosition(profile?.avatarPhotoFocalX ?? profile?.mainPhotoFocalX, profile?.avatarPhotoFocalY ?? profile?.mainPhotoFocalY);
+      const config = workingNow ? dancerProfileClubDealConfig(profile) : null;
+      const venue = workingNow && profile.venue ? `
+        <div class="profile-media-club-row">
+          <a class="profile-media-venue" href="${escapeHtml(venueExperienceHref({ slug: profile.venueSlug, name: profile.venue }, city))}" aria-label="Open ${escapeHtml(profile.venue)} club profile">${actionIconMarkup("pin")}<span>${escapeHtml(profile.venue)}</span></a>
+          ${config ? `<button class="profile-media-entry" type="button" data-club-deal-cta="${encodeDealPass(config)}" data-feed-live-qr="true" aria-label="View free entry for ${escapeHtml(profile.venue)}">${actionIconMarkup("qr")}<span>Free Entry</span></button>` : ""}
+        </div>` : "";
+      return `
+        <button class="profile-media-identity" type="button" data-profile-media-back aria-label="Back to ${escapeHtml(profileName)} profile">
+          <span class="profile-media-avatar" data-dancer-avatar ${workingNow ? 'data-working-now="true"' : ""} aria-hidden="true"><span data-dancer-avatar-border>${escapeHtml(profileName.charAt(0).toLocaleUpperCase())}${avatar ? `<img src="${escapeHtml(avatar)}" srcset="${escapeHtml(avatarSources)}" sizes="48px" width="48" height="48" alt="" loading="lazy" decoding="async" style="object-position:${escapeHtml(position)}">` : ""}</span></span>
+          <span class="profile-media-identity-text"><strong>${escapeHtml(profileName)}</strong><span class="profile-media-identity-meta">${city ? `<span>${escapeHtml(city)}</span>` : ""}<span class="profile-media-position">${index + 1}/${total}</span></span></span>
+        </button>
+        <div class="profile-media-context"><span class="profile-media-schedule${workingNow ? " is-now" : ""}">${workingNow ? "Working now" : "Not working now"}</span>${venue}</div>`;
+    }
+
+    function renderProfileMediaIdentity(copy, profile, profileName, index, total, onBack) {
+      if (!copy) return;
+      copy.innerHTML = profileMediaIdentityMarkup(profile, profileName, index, total);
+      copy.querySelector("[data-profile-media-back]")?.addEventListener("click", onBack);
+      const avatar = copy.querySelector(".profile-media-avatar img");
+      avatar?.addEventListener("error", () => avatar.remove(), { once: true });
     }
 
     function setProfilePhotoFullscreen(active, index = Number(profilePhotoViewer.dataset.profilePhotoIndex || 0)) {
@@ -54989,13 +55013,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               </details>
             </div>
             <div class="profile-tv-viewer-footer">
-              <div class="profile-tv-viewer-copy">
-                <strong id="profileTvViewerName"></strong>
-                <div class="profile-media-viewer-meta">
-                  <span id="profileTvViewerSchedule"></span>
-                  <span class="profile-media-position" id="profileTvViewerPosition"></span>
-                </div>
-              </div>
+              <div class="profile-tv-viewer-copy"></div>
               <div class="profile-tv-viewer-actions">
                 <button class="profile-tv-viewer-state-control" type="button" data-toggle-profile-tv-sound aria-label="Turn sound on">${profileTvSoundIcon(true)}</button>
                 <button class="profile-media-control-follow feed-card-action" type="button" data-profile-tv-follow data-feed-action="follow" data-icon-only-action="true" aria-label="Follow dancer" aria-pressed="false">${actionIconMarkup("personPlus")}</button>
@@ -55229,13 +55247,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         clearProfileTvPlaybackFeedback();
         overlay.querySelector(".profile-media-control-options").open = false;
       }
-      const scheduleLabel = profileTvScheduleLabel(item);
       overlay.dataset.videoId = String(item.id || "");
       overlay.dataset.videoIndex = String(nextIndex);
       mountProfileMediaCardControls(overlay, stage?.querySelector(`[data-profile-tv-viewer-index="${nextIndex}"]`));
       if (currentIndex !== nextIndex) delete overlay.dataset.loadedVideoIndex;
-      document.getElementById("profileTvViewerSchedule").textContent = scheduleLabel;
-      document.getElementById("profileTvViewerPosition").textContent = `${nextIndex + 1}/${videos.length}`;
       document.getElementById("profileTvViewerStatus").textContent = "";
       preparePublicMediaLikeButton(
         overlay.querySelector("[data-like-profile-tv]"),
@@ -55260,6 +55275,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       followButton.setAttribute("aria-label", `Follow ${overlay.dataset.profileName}`);
       followButton.setAttribute("aria-pressed", "false");
       const profile = findProfile(followButton.dataset.profile);
+      renderProfileMediaIdentity(overlay.querySelector(".profile-tv-viewer-copy"), profile, overlay.dataset.profileName || "Dancer", nextIndex, videos.length, closeProfileTvViewer);
       if (profile) syncHomeFeedActionButtons(profile, profile.city || citySelect.value);
       const viewerVideos = [...overlay.querySelectorAll(".profile-tv-viewer-video")];
       syncProfileTvVideoLoading(overlay, nextIndex);
@@ -55335,7 +55351,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       overlay.dataset.profileName = String(profileName || "Dancer");
       overlay.dataset.profileMediaHeading = `${profileName || "Dancer"} · Videos`;
       overlay.setAttribute("aria-label", `${profileName || "Dancer"} MyDancr TV video`);
-      document.getElementById("profileTvViewerName").textContent = profileName || "MyDancr TV";
       renderProfileTvViewerSlides(overlay, overlay.profileTvVideos, profileName || "Dancer");
       void loadPublicMediaLikes(overlay.profileTvVideos.map((videoItem) => ({
         mediaType: "video",
@@ -66939,6 +66954,14 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     document.addEventListener("keydown", (event) => {
       const openTvViewer = document.getElementById("profileTvViewer");
+      const openClubDeals = document.getElementById("clubDealHubOverlay");
+      if (openClubDeals && !openClubDeals.hidden) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeClubDealHub();
+        }
+        return;
+      }
       if (event.key === "Escape" && contentReportPopover && !contentReportPopover.hidden) {
         event.preventDefault();
         closeContentReportDialog();

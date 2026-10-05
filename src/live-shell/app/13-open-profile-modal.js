@@ -172,13 +172,7 @@
               </details>
             </div>
             <div class="profile-tv-viewer-footer">
-              <div class="profile-tv-viewer-copy">
-                <strong id="profileTvViewerName"></strong>
-                <div class="profile-media-viewer-meta">
-                  <span id="profileTvViewerSchedule"></span>
-                  <span class="profile-media-position" id="profileTvViewerPosition"></span>
-                </div>
-              </div>
+              <div class="profile-tv-viewer-copy"></div>
               <div class="profile-tv-viewer-actions">
                 <button class="profile-tv-viewer-state-control" type="button" data-toggle-profile-tv-sound aria-label="Turn sound on">${profileTvSoundIcon(true)}</button>
                 <button class="profile-media-control-follow feed-card-action" type="button" data-profile-tv-follow data-feed-action="follow" data-icon-only-action="true" aria-label="Follow dancer" aria-pressed="false">${actionIconMarkup("personPlus")}</button>
@@ -412,13 +406,10 @@
         clearProfileTvPlaybackFeedback();
         overlay.querySelector(".profile-media-control-options").open = false;
       }
-      const scheduleLabel = profileTvScheduleLabel(item);
       overlay.dataset.videoId = String(item.id || "");
       overlay.dataset.videoIndex = String(nextIndex);
       mountProfileMediaCardControls(overlay, stage?.querySelector(`[data-profile-tv-viewer-index="${nextIndex}"]`));
       if (currentIndex !== nextIndex) delete overlay.dataset.loadedVideoIndex;
-      document.getElementById("profileTvViewerSchedule").textContent = scheduleLabel;
-      document.getElementById("profileTvViewerPosition").textContent = `${nextIndex + 1}/${videos.length}`;
       document.getElementById("profileTvViewerStatus").textContent = "";
       preparePublicMediaLikeButton(
         overlay.querySelector("[data-like-profile-tv]"),
@@ -443,6 +434,7 @@
       followButton.setAttribute("aria-label", `Follow ${overlay.dataset.profileName}`);
       followButton.setAttribute("aria-pressed", "false");
       const profile = findProfile(followButton.dataset.profile);
+      renderProfileMediaIdentity(overlay.querySelector(".profile-tv-viewer-copy"), profile, overlay.dataset.profileName || "Dancer", nextIndex, videos.length, closeProfileTvViewer);
       if (profile) syncHomeFeedActionButtons(profile, profile.city || citySelect.value);
       const viewerVideos = [...overlay.querySelectorAll(".profile-tv-viewer-video")];
       syncProfileTvVideoLoading(overlay, nextIndex);
@@ -518,7 +510,6 @@
       overlay.dataset.profileName = String(profileName || "Dancer");
       overlay.dataset.profileMediaHeading = `${profileName || "Dancer"} · Videos`;
       overlay.setAttribute("aria-label", `${profileName || "Dancer"} MyDancr TV video`);
-      document.getElementById("profileTvViewerName").textContent = profileName || "MyDancr TV";
       renderProfileTvViewerSlides(overlay, overlay.profileTvVideos, profileName || "Dancer");
       void loadPublicMediaLikes(overlay.profileTvVideos.map((videoItem) => ({
         mediaType: "video",

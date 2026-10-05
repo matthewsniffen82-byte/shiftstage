@@ -471,6 +471,14 @@
 
     document.addEventListener("keydown", (event) => {
       const openTvViewer = document.getElementById("profileTvViewer");
+      const openClubDeals = document.getElementById("clubDealHubOverlay");
+      if (openClubDeals && !openClubDeals.hidden) {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeClubDealHub();
+        }
+        return;
+      }
       if (event.key === "Escape" && contentReportPopover && !contentReportPopover.hidden) {
         event.preventDefault();
         closeContentReportDialog();

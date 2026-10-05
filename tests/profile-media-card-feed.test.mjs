@@ -257,7 +257,7 @@ test("video controls are preserved while photo controls stay attached to their o
   assert.doesNotMatch(functionSource("syncProfilePhotoViewerPosition"), /mountProfileMediaCardControls/);
   assert.match(functionSource("renderProfilePhotoViewerSlides"), /mountProfilePhotoCardControls\(slide, item, index, items\.length, profileName\)/);
   assert.match(functionSource("renderProfileTvViewerItem"), /mountProfileMediaCardControls/);
-  assert.match(carousel, /\{renderViewerControls\(item, index\)\}\s*<\/section>/);
+  assert.match(carousel, /\{renderViewerControls\(item, index, openDeal\)\}\s*<\/section>/);
   assert.doesNotMatch(carousel, /viewerControlsHost|createPortal/);
   assert.match(css, /position: absolute !important;[^]*?pointer-events: none/);
 });

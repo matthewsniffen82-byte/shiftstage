@@ -96,6 +96,8 @@ test("photo rail actions and reports target their own card after scrolling", () 
   const context = vm.createContext({
     profilePhotoViewer: { dataset: { publicDancerId: "dancer-id" } },
     profileMediaCardControls: () => [],
+    renderProfileMediaIdentity() {},
+    closeProfilePhotoViewer() {},
     closeProfileMediaOptions() {},
     modalGallery: { dataset: { profileMediaProfile: "dancer-id" } },
     actionIconMarkup: (icon) => icon,

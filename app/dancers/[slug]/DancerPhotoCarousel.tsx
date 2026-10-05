@@ -2,6 +2,8 @@
 
 import {
   type CSSProperties,
+  type ComponentProps,
+  type ReactNode,
   type SyntheticEvent,
   useCallback,
   useEffect,
@@ -12,6 +14,7 @@ import {
 } from "react";
 import { flushSync, preload } from "react-dom";
 import { MediaLikeButton } from "@/app/components/MediaLikeButton";
+import { ClubDealCard } from "@/app/components/ClubDealCard";
 import { DancerMediaFollowButton } from "./DancerProfileActions";
 import { PublicReportReasonDialog, type PublicReportReason } from "@/app/components/PublicReportReasonDialog";
 import { readBrowserAccessToken } from "@/src/lib/dancr/browser-session";
@@ -49,6 +52,10 @@ type DancerPhotoCarouselProps = {
   }>;
   stageName: string;
   viewerStatus?: string;
+  viewerCity?: string;
+  viewerAvatar?: { url: string; srcSet?: string | null; focalX?: number; focalY?: number };
+  viewerVenue?: { name: string; href: string } | null;
+  viewerDeal?: Pick<ComponentProps<typeof ClubDealCard>, "deal" | "deals" | "venueId" | "venueName" | "sourceType" | "dancerId" | "attributionToken" | "attributionTokens"> | null;
   prioritizeInitialPhotos?: boolean;
   featured?: boolean;
 };
@@ -110,6 +117,10 @@ export function DancerPhotoCarousel({
   videos = [],
   stageName,
   viewerStatus = "No shift posted",
+  viewerCity = "",
+  viewerAvatar,
+  viewerVenue,
+  viewerDeal,
   prioritizeInitialPhotos = false,
   featured = false,
 }: DancerPhotoCarouselProps) {
@@ -420,6 +431,7 @@ export function DancerPhotoCarousel({
     if (!viewerKind) return;
     const itemCount = viewerKind === "photo" ? photoMedia.length : videoMedia.length;
     const onKeyDown = (event: KeyboardEvent) => {
+      if (document.querySelector(".club-deal-dialog-backdrop")) return;
       if (event.key === "Escape") {
         event.preventDefault();
         if (reportTarget && !reportSaving) {
@@ -671,8 +683,10 @@ export function DancerPhotoCarousel({
     setShareStatus("");
   }
 
-  function renderViewerControls(item: ProfileMedia, index: number) {
+  function renderViewerControls(item: ProfileMedia, index: number, openDeal?: (trigger: HTMLElement | null) => void) {
     const target = activeMediaReportTarget(item, index);
+    const workingNow = viewerStatus === "Working Now";
+    const avatarUrl = viewerAvatar?.url || featuredPhoto?.imageUrl;
     return (
       <>
         <div className="profile-media-control-tools" role="group" aria-label={`${item.kind === "video" ? "Video" : "Photo"} options`}>
@@ -699,10 +713,21 @@ export function DancerPhotoCarousel({
         </div>
         <div className="profile-media-viewer-footer">
           <div className="profile-media-viewer-copy">
-            <strong>{stageName}</strong>
-            <div className="profile-media-viewer-meta">
-              {item.kind === "video" ? <span>{viewerStatus}</span> : null}
-              <span className="profile-media-position">{index + 1}/{viewerItems.length}</span>
+            <button className="profile-media-identity" type="button" onClick={closeViewer} aria-label={`Back to ${stageName} profile`}>
+              <span className="profile-media-avatar" data-dancer-avatar="" data-working-now={workingNow ? "true" : undefined} aria-hidden="true">
+                <span data-dancer-avatar-border="">{stageName.charAt(0).toLocaleUpperCase()}
+                  {avatarUrl ? <img src={avatarUrl} srcSet={viewerAvatar?.srcSet || undefined} sizes="48px" width={48} height={48} alt="" loading="lazy" decoding="async"
+                    style={{ objectPosition: imageFocalPointCss(viewerAvatar?.focalX, viewerAvatar?.focalY) }} onError={(event) => { event.currentTarget.hidden = true; }} /> : null}
+                </span>
+              </span>
+              <span className="profile-media-identity-text"><strong>{stageName}</strong><span className="profile-media-identity-meta">{viewerCity ? <span>{viewerCity}</span> : null}<span className="profile-media-position">{index + 1}/{viewerItems.length}</span></span></span>
+            </button>
+            <div className="profile-media-context">
+              <span className={`profile-media-schedule${workingNow ? " is-now" : ""}`}>{workingNow ? "Working now" : "Not working now"}</span>
+              {workingNow && viewerVenue ? <div className="profile-media-club-row">
+                <a className="profile-media-venue" href={viewerVenue.href} aria-label={`Open ${viewerVenue.name} club profile`}><VenuePinIcon /><span>{viewerVenue.name}</span></a>
+                {viewerDeal && openDeal ? <button className="profile-media-entry" type="button" onClick={(event) => openDeal(event.currentTarget)} aria-label={`View free entry for ${viewerVenue.name}`}><EntryQrIcon /><span>Free Entry</span></button> : null}
+              </div> : null}
             </div>
           </div>
           <div className="profile-media-viewer-actions">
@@ -941,6 +966,8 @@ export function DancerPhotoCarousel({
         ) : null}
       </div>
       {viewer && activeViewerItem ? (
+        <ProfileMediaDealHost deal={viewerStatus === "Working Now" ? viewerDeal : null}>
+          {(openDeal) => (
         <div
           aria-label={`${stageName} ${viewer.kind} viewer`}
           aria-modal="true"
@@ -1069,7 +1096,7 @@ export function DancerPhotoCarousel({
                     <PlaybackFeedbackIcon paused={playbackFeedback.paused} />
                   </span>
                 ) : null}
-                {renderViewerControls(item, index)}
+                {renderViewerControls(item, index, openDeal)}
               </section>
             ))}
           </div>
@@ -1084,10 +1111,19 @@ export function DancerPhotoCarousel({
             />
           ) : null}
         </div>
+          )}
+        </ProfileMediaDealHost>
       ) : null}
     </section>
     </>
   );
+}
+
+function ProfileMediaDealHost({ deal, children }: {
+  deal: DancerPhotoCarouselProps["viewerDeal"];
+  children: (openDeal?: (trigger: HTMLElement | null) => void) => ReactNode;
+}) {
+  return deal ? <ClubDealCard {...deal} renderTrigger={children} /> : children();
 }
 
 function ShareIcon() {
@@ -1099,6 +1135,14 @@ function ShareIcon() {
       <path d="m8.6 10.5 6.8-4M8.6 13.5l6.8 4" />
     </svg>
   );
+}
+
+function VenuePinIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>;
+}
+
+function EntryQrIcon() {
+  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="2.5" width="10" height="19" rx="2" /><path d="M7.4 18.5h2.2M15.5 8.2a4.4 4.4 0 0 1 0 7.6M18 5.5a7.5 7.5 0 0 1 0 13" /></svg>;
 }
 
 function ReportIcon() {

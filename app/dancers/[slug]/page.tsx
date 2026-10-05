@@ -297,6 +297,19 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
           }))}
           stageName={profile.stageName}
           viewerStatus={activeShift ? "Working Now" : "Not working now"}
+          viewerCity={profile.city}
+          viewerAvatar={{ url: avatarPhoto, srcSet: avatarPhotoSrcSet, focalX: avatarPhotoFocalX, focalY: avatarPhotoFocalY }}
+          viewerVenue={activeShift ? { name: activeShift.venueName, href: `/venues/${encodeURIComponent(activeShift.venueSlug)}` } : null}
+          viewerDeal={activeShift && activeDeal ? {
+            deal: toPublicClubDeal(activeDeal),
+            deals: activeDeals.map(toPublicClubDeal),
+            venueId: activeShift.venueId,
+            venueName: activeShift.venueName,
+            sourceType: dealSourceType,
+            dancerId: dancerAttributionEligible ? profile.id : null,
+            attributionToken: dealAttributionToken,
+            attributionTokens: dealAttributionTokens,
+          } : null}
         />
 
       </main>

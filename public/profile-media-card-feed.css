@@ -292,12 +292,14 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
 /* Keep identity and position readable without covering the photo or video. */
 .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) {
   position: absolute;
-  right: 70px;
-  bottom: max(22px, calc(env(safe-area-inset-bottom, 0px) + 14px));
-  left: max(16px, env(safe-area-inset-left, 0px));
+  right: 76px;
+  bottom: 0;
+  left: 0;
   min-width: 0;
   display: grid;
-  gap: 3px;
+  justify-items: start;
+  gap: 4px;
+  padding: 68px 0 14px 14px;
   color: #fff;
   text-shadow: 0 1px 3px #000, 0 2px 8px rgba(0, 0, 0, .92);
 }
@@ -536,3 +538,121 @@ html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profil
 }
 .profile-media-card-feed.is-media-fullscreen :is(.profile-tv-viewer-slide, .profile-media-viewer-slide) > :is(img, video) { object-fit: contain !important; }
 .profile-media-card-feed.is-media-fullscreen .profile-photo-viewer-slide-image { background-size: contain !important; }
+
+/* Match TV's identity, live status, club, and compact entry offer placement. */
+html body.dancr-button-system .profile-media-card-feed .profile-media-identity {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  display: grid !important;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 0 !important;
+  margin: 0;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: #fff !important;
+  background: none !important;
+  box-shadow: none !important;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  text-shadow: 0 3px 16px rgba(0, 0, 0, .88);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.profile-media-card-feed .profile-media-avatar {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 17px;
+  font-weight: 950;
+  text-shadow: none;
+}
+.profile-media-card-feed .profile-media-avatar img { object-fit: cover; }
+.profile-media-card-feed .profile-media-identity-text { min-width: 0; display: grid; gap: 2px; }
+html body.dancr-button-system .profile-media-card-feed .profile-media-identity strong {
+  color: #fff !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-size: clamp(20px, 5vw, 26px);
+  font-weight: 950;
+  line-height: 1.05;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+html body.dancr-button-system .profile-media-card-feed .profile-media-identity-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  color: #e4e4e7 !important;
+  font-size: 12px;
+  font-weight: 450;
+  line-height: 1.25;
+}
+html body.dancr-button-system .profile-media-card-feed :is(.profile-media-identity-meta, .profile-media-venue, .profile-media-entry) > span:not(.action-icon) { color: inherit !important; font: inherit !important; }
+.profile-media-card-feed .profile-media-context { width: 100%; min-width: 0; display: grid; row-gap: 2px; }
+html body.dancr-button-system .profile-media-card-feed .profile-media-schedule {
+  width: fit-content;
+  min-height: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #e4e4e7;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.15;
+}
+html body.dancr-button-system .profile-media-card-feed .profile-media-schedule.is-now { color: var(--dancr-color-avatar-ring-live, #34e3a4); }
+.profile-media-card-feed .profile-media-schedule.is-now::before { content: ""; flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.profile-media-card-feed .profile-media-club-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+html body.dancr-button-system .profile-media-card-feed .profile-media-venue {
+  min-width: 0;
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 7px;
+  color: #fff !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.25;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+}
+.profile-media-card-feed .profile-media-venue :is(svg, .action-icon) { width: 17px !important; height: 17px !important; flex: 0 0 17px; }
+.profile-media-card-feed :is(.profile-media-venue, .profile-media-entry) svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+html body.dancr-button-system .profile-media-card-feed .profile-media-entry {
+  width: auto !important;
+  min-width: 98px !important;
+  height: 44px !important;
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px !important;
+  border: 1px solid var(--dancr-color-brand-primary, #7c3aed) !important;
+  border-radius: 10px !important;
+  background: linear-gradient(135deg, #3500a8, #240072) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: currentColor !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
+  font-size: 11px !important;
+  font-weight: 650 !important;
+  line-height: 1.1;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.profile-media-card-feed .profile-media-entry :is(svg, .action-icon) { width: 16px !important; height: 16px !important; flex: 0 0 16px; }
+.profile-media-card-feed :is(.profile-media-identity, .profile-media-venue, .profile-media-entry):focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px; }
+.profile-media-card-feed .profile-media-entry:disabled { opacity: .5; cursor: wait; }
+@media (max-width: 720px) {
+  .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) { padding: 64px 0 32px 12px; }
+  html body.dancr-button-system .profile-media-card-feed .profile-media-identity strong { font-size: clamp(20px, 5.8vw, 26px); }
+}

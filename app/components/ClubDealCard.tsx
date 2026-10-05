@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { customerFacingDealDescription, customerFacingDealTerms, customerFacingDealTitle } from "@/src/lib/dancr/deal-copy";
 import { clubDealTransportationTerms, isAdmissionMethod, type AdmissionMethod } from "@/src/lib/dancr/club-deal-transportation";
@@ -30,6 +30,7 @@ type ClubDealCardProps = {
   ctaLabel?: string;
   stickyCta?: boolean;
   sectionId?: string;
+  renderTrigger?: (openDeal: (trigger: HTMLElement | null) => void) => ReactNode;
 };
 
 export function ClubDealCard({
@@ -48,6 +49,7 @@ export function ClubDealCard({
   ctaLabel,
   stickyCta = false,
   sectionId,
+  renderTrigger,
 }: ClubDealCardProps) {
   const [status, setStatus] = useState("");
   const [intentState, setIntentState] = useState<"preview" | "ready" | "expired" | "error">("preview");
@@ -173,7 +175,7 @@ export function ClubDealCard({
       return;
     }
     if (!dialogOpen && !dialogReturnContext.current) {
-      const scrollContainer = triggerButton?.closest<HTMLElement>("#results.venue-profile-overlay") || null;
+      const scrollContainer = triggerButton?.closest<HTMLElement>("#results.venue-profile-overlay, [data-profile-media-scroll-feed]") || null;
       dialogReturnContext.current = {
         windowScrollY: window.scrollY,
         scrollContainer,
@@ -442,7 +444,7 @@ export function ClubDealCard({
 
   return (
     <>
-      {presentation === "profileCompact" ? (
+      {renderTrigger ? renderTrigger(openDealDialog) : presentation === "profileCompact" ? (
         <div className="club-deal-profile-compact" data-club-deal-state="available">
           <span className="club-deal-profile-copy">
             <strong>{displayTitle}</strong>
