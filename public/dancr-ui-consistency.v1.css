@@ -1961,8 +1961,17 @@ html body.dancr-button-system #profileBackdrop.modal-backdrop.show {
   background: var(--discovery-backdrop) !important;
 }
 
+/* Venue cards match the dancer profile information card, inside violet gutters. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide,
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
-  background: var(--discovery-backdrop) !important;
+  background-color: #050509 !important;
+  background-image: none !important;
+}
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide .home-discovery-feed-copy,
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row {
+  background: transparent !important;
 }
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid.home-dancer-three-column, .venue-profile-overlay)
