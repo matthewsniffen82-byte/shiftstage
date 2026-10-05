@@ -486,7 +486,7 @@ test("Android and iPhone share the same near-black and charcoal content foundati
   assert.doesNotMatch(foundation, /is-android|is-samsung|-webkit-touch-callout/);
 });
 
-test("Android and Samsung Browser cannot reintroduce device-only glow or media filters", () => {
+test("Android and Samsung Browser reset legacy glow and media filters before scoped lifts", () => {
   const parityLayer = aesthetic.match(
     /Android and Samsung Browser are visual peers of iPhone[\s\S]*$/,
   )?.[0] || "";
@@ -502,7 +502,7 @@ test("Android and Samsung Browser cannot reintroduce device-only glow or media f
   );
   assert.match(
     parityLayer,
-    /Device rendering never color-corrects the supplied hero, video, or venue[\s\S]*?\.hero\.reference-hero,[\s\S]*?\.home-tv-feed-video,[\s\S]*?\.profile-media-grid-item video,[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/,
+    /Reset legacy media filters before the scoped photo and Android hero lifts[\s\S]*?\.hero\.reference-hero,[\s\S]*?\.home-tv-feed-video,[\s\S]*?\.profile-media-grid-item video,[\s\S]*?filter: none !important;[\s\S]*?-webkit-filter: none !important;/,
   );
   assert.match(
     parityLayer,
