@@ -921,7 +921,7 @@ body > .app main.stack > .hero.reference-hero::after {
   width: auto !important;
   height: 32px !important;
   border-radius: 0 !important;
-  background: linear-gradient(180deg, rgba(28, 18, 43, 0), #1c122b) !important;
+  background: linear-gradient(180deg, rgba(24, 16, 35, 0), #181023) !important;
   box-shadow: none !important;
   opacity: 1 !important;
   filter: none !important;
@@ -958,7 +958,7 @@ body > .app main.stack > .hero.reference-hero > .hero-art {
  * turn its gutters black. The solid color stays uniform at any feed length;
  * card media and overlays keep their own surfaces. */
 :root {
-  --discovery-backdrop: #1c122b;
+  --discovery-backdrop: #181023;
   --discovery-header-backdrop: linear-gradient(180deg, #120c1d, var(--discovery-backdrop));
 }
 
