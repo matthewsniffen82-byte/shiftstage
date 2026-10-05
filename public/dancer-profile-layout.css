@@ -571,6 +571,7 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
   --profile-frame-radius: 20px;
   --profile-frame-row-end: 4;
+  isolation: isolate;
   box-sizing: border-box !important;
   border: 0 !important;
   border-radius: var(--profile-frame-radius) !important;
@@ -578,6 +579,18 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) {
   --profile-frame-row-end: 3;
+}
+/* Restore the information card's original dark surface beneath its content,
+   while the surrounding page and media gutters keep the discovery violet. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)::after {
+  content: "";
+  grid-column: 1 / -1;
+  grid-row: 1 / var(--profile-frame-row-end);
+  align-self: stretch;
+  border-radius: var(--profile-frame-radius);
+  background: #050509;
+  pointer-events: none;
+  z-index: -1;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)::before {
   content: "";
