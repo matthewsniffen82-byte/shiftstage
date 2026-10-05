@@ -821,7 +821,7 @@ test("the homepage hero keeps its artwork geometry with only a short lower-edge 
   );
   assert.match(
     aesthetic,
-    /body > \.app main\.stack > \.hero\.reference-hero::after \{[^}]*inset: auto 0 0 !important;[^}]*height: 32px !important;[^}]*linear-gradient\(180deg, rgba\(13, 10, 19, 0\), #0d0a13\)[^}]*box-shadow: none !important;[^}]*filter: none !important;[^}]*pointer-events: none !important;/,
+    /body > \.app main\.stack > \.hero\.reference-hero::after \{[^}]*inset: auto 0 0 !important;[^}]*height: 32px !important;[^}]*linear-gradient\(180deg, rgba\(28, 18, 43, 0\), #1c122b\)[^}]*box-shadow: none !important;[^}]*filter: none !important;[^}]*pointer-events: none !important;/,
   );
 });
 

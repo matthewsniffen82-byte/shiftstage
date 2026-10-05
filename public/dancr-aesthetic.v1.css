@@ -921,7 +921,7 @@ body > .app main.stack > .hero.reference-hero::after {
   width: auto !important;
   height: 32px !important;
   border-radius: 0 !important;
-  background: linear-gradient(180deg, rgba(13, 10, 19, 0), #0d0a13) !important;
+  background: linear-gradient(180deg, rgba(28, 18, 43, 0), #1c122b) !important;
   box-shadow: none !important;
   opacity: 1 !important;
   filter: none !important;
@@ -958,7 +958,7 @@ body > .app main.stack > .hero.reference-hero > .hero-art {
  * turn its gutters black. The solid color stays uniform at any feed length;
  * card media, profile overlays, and navigation keep their own surfaces. */
 html body.dancr-button-system > .app > main.stack:has(> section.stack > #results) {
-  --discovery-backdrop: #0d0a13;
+  --discovery-backdrop: #1c122b;
   background: var(--discovery-backdrop) !important;
 }
 
