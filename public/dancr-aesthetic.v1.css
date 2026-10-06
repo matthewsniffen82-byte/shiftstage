@@ -952,8 +952,8 @@ body > .app main.stack > .hero.reference-hero > .hero-art {
 /* Balance the requested mobile contrast through surfaces, never media filters. */
 @supports (-webkit-touch-callout: none) {
   :root {
-    --discovery-backdrop: #0e0818;
-    --discovery-header-backdrop: linear-gradient(180deg, #0b0614, var(--discovery-backdrop));
+    --discovery-backdrop: #0c0616;
+    --discovery-header-backdrop: linear-gradient(180deg, #090412, var(--discovery-backdrop));
   }
 }
 
