@@ -5534,7 +5534,7 @@ body.dancr-button-system .public-profile-shell .profile-media-tabs button.active
 
 /* Production TV-card branding keeps the moving media as the visual hero.
  * Card framing, idle utilities, and playback controls stay neutral;
- * beam violet connects identity, selection, playback progress, and keyboard focus.
+ * beam violet connects identity, selection, and keyboard focus.
  * Verification stays neutral while schedule states retain their semantic
  * production colors. */
 body.dancr-button-system :is(
