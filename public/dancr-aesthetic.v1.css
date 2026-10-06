@@ -13462,6 +13462,11 @@ body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home
   background: linear-gradient(180deg, transparent, rgba(46, 22, 75, .24) 24%, rgba(38, 20, 62, .8) 56%, rgba(21, 11, 37, .92)) !important;
 }
 
+/* Grid taps open profiles without flashing an edge over the portrait. */
+body.dancr-button-system .home-dancer-grid-link {
+  -webkit-tap-highlight-color: transparent;
+}
+
 body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link::after {
   content: "";
   position: absolute;
@@ -13472,7 +13477,7 @@ body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link::after
   pointer-events: none;
 }
 
-body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:is(:active, :focus-visible)::after {
+body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:focus-visible::after {
   border-color: var(--dancr-color-avatar-ring-violet);
 }
 
