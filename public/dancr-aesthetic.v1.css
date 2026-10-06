@@ -949,11 +949,11 @@ body > .app main.stack > .hero.reference-hero > .hero-art {
   --discovery-header-backdrop: linear-gradient(180deg, #120c1d, var(--discovery-backdrop));
 }
 
-/* Balance the requested mobile contrast through surfaces, never media filters. */
+/* Match the iPhone surface to the near-black violet in the Android reference. */
 @supports (-webkit-touch-callout: none) {
   :root {
-    --discovery-backdrop: #0c0616;
-    --discovery-header-backdrop: linear-gradient(180deg, #090412, var(--discovery-backdrop));
+    --discovery-backdrop: #0a0013;
+    --discovery-header-backdrop: linear-gradient(180deg, #070010, var(--discovery-backdrop));
   }
 }
 
