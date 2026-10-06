@@ -582,6 +582,12 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) {
   --profile-frame-row-end: 3;
 }
+/* The full frame owns the glow; left-side sections stay flat against its surface. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  :is(.profile-modal-summary, .profile-titlebar, .modal-body, .modal-identity) {
+  background: transparent !important;
+  box-shadow: none !important;
+}
 /* Restore the information card's original dark surface beneath its content,
    while the surrounding page and media gutters keep the discovery violet. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)::after {
@@ -603,10 +609,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   justify-self: stretch;
   min-width: 0;
   min-height: 0;
-  border: 1px solid rgba(203, 213, 225, .2);
+  border: 1px solid rgba(167, 139, 250, .18);
   border-radius: var(--profile-frame-radius);
   background: transparent;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+  box-shadow: 0 0 10px rgba(124, 58, 237, .08);
   pointer-events: none;
   z-index: 2;
 }
