@@ -29,7 +29,7 @@ export const staticAssetVersions = {
   "/outputs/mydancr-logo.png": "4b6b66793bf7a63d",
   "/profile-media-owner-controls.css": "23f95b3a66febb0a",
   "/profile-actions-compact.css": "eeeba9e5abc125d8",
-  "/dancer-profile-layout.css": "f1b46367d5939d0c",
+  "/dancer-profile-layout.css": "cdec76451682336d",
   "/profile-media-card-feed.css": "9599ede3edb99b57",
   "/profile-photo-crop.css": "31341ca79743b0d4",
   "/profile-photo-crop.js": "b17ae56b4ff08aed",
