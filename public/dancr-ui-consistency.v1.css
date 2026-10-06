@@ -1952,6 +1952,20 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
     color: #f5f3f8 !important;
   }
 }
+/* Match iPhone status-button fills to the dark Android reference. */
+@supports (-webkit-touch-callout: none) {
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected] {
+    --discovery-control-face: #08070e;
+  }
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected="true"],
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty) {
+    --discovery-control-face: #08090e;
+  }
+}
+
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected]:active::before {
   transform: translateY(1px) !important;
