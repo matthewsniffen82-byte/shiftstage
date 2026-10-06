@@ -512,7 +512,7 @@
         deal = createHomeTvFeedActionButton(
           "home-tv-feed-deal-action is-available",
           dealState.label,
-          actionIconMarkup("qr")
+          freeEntryButtonLabel()
         );
         deal.dataset.cardActionSlot = "qr";
         deal.dataset.clubDealState = dealState.key;
@@ -521,7 +521,6 @@
         const offerCount = Array.isArray(item.deals) && item.deals.length ? item.deals.length : 1;
         deal.setAttribute("aria-label", `View free entry for ${venueName}`);
         deal.title = offerCount > 1 ? `${offerCount} Club Deals` : dealTitle;
-        deal.insertAdjacentHTML("beforeend", `<span class="home-tv-feed-deal-count">Free Entry</span>`);
         deal.dataset.clubDealCta = encodeDealPass({
           deal: item.deal,
           deals: item.deals,

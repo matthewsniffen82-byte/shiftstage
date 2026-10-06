@@ -13776,7 +13776,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, #results)
-  .free-entry-cta > .free-entry-cue {
+  .free-entry-cta > .free-entry-cue,
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-deal-action > .free-entry-cue {
   font-size: 20px !important;
   font-weight: 800 !important;
   line-height: .8 !important;
@@ -14597,7 +14598,7 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home
   color: #fff !important;
   box-shadow: var(--dancr-shadow-brand-control) !important;
 }
-html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-deal-count { width: auto; height: auto; font-size: 11px !important; font-weight: 650 !important; line-height: 1.1; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-deal-action > .free-entry-label { width: auto; height: auto; font-size: 11px !important; font-weight: 650 !important; line-height: 1.1; white-space: nowrap; }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-deal-action :is(.action-icon, svg) { width: 16px !important; height: 16px !important; flex-basis: 16px !important; }
 
 /* Android discovery: improve supporting copy contrast independently of the

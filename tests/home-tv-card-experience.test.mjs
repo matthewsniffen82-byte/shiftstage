@@ -123,7 +123,7 @@ test("TV cards show the verified deal beside the club with attribution intact", 
   const dealFactory = homeSource.match(/function createHomeTvFeedDealButton\(item\) \{[\s\S]*?(?=\n    function closeHomeTvFeedReportMenus)/)?.[0] || "";
   assert.match(dealFactory, /let deal = null;[\s\S]*?if \(dealState\.key === "available"\)/);
   assert.match(dealFactory, /deal\.dataset\.clubDealCta = encodeDealPass[\s\S]*?sourceType: "dancer_profile"[\s\S]*?attributionToken: item\.dealAttributionToken/);
-  assert.equal((dealFactory.match(/home-tv-feed-deal-count">Free Entry<\/span>/g) || []).length, 1);
+  assert.match(dealFactory, /createHomeTvFeedActionButton\([\s\S]*?freeEntryButtonLabel\(\)/);
   assert.match(homeSource, /clubRow\.appendChild\(venue\)[\s\S]*?createHomeTvFeedDealButton\(item\)[\s\S]*?if \(deal\) clubRow\.appendChild\(deal\)/);
   assert.match(aestheticSource, /\.home-tv-feed-club-row \.home-tv-feed-deal-action \{[\s\S]*?width: auto !important;[\s\S]*?height: 44px !important;[\s\S]*?display: flex !important;/);
   assert.doesNotMatch(fullTvFeedSource, /<TvClubDealUnavailable video=\{video\} \/>|function TvClubDealUnavailable/);
