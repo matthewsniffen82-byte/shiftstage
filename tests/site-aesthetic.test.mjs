@@ -238,18 +238,19 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   );
 });
 
-test("venue pins stay neutral while Upcoming keeps the cyan schedule signal", () => {
+test("media venue pins use violet while Upcoming keeps the cyan schedule signal", () => {
   const venuePinRules = aesthetic.match(
     /Venue pins always represent place, never schedule state[\s\S]*?(?=\.tv-shell \.tv-verified-mark)/,
   )?.[0] || "";
 
-  assert.ok(venuePinRules, "the shared neutral venue-pin rules must exist");
+  assert.ok(venuePinRules, "the shared venue-pin rules must exist");
   assert.match(venuePinRules, /#results\.home-dancer-grid \.home-dancer-grid-venue > \.venue-dot/);
   assert.match(venuePinRules, /#results\.venue-profile-overlay \.venue-dancer-grid \.home-dancer-grid-venue > \.venue-dot/);
   assert.match(venuePinRules, /#profileBackdrop \.profile-modal \.profile-venue-destination > \.venue-dot/);
   assert.match(venuePinRules, /\.home-tv-feed-venue svg/);
   assert.match(venuePinRules, /\.tv-shell \.tv-card-venue-line svg/);
   assert.match(venuePinRules, /color: var\(--dancr-color-text-muted\) !important;/);
+  assert.match(venuePinRules, /\.home-tv-feed-venue svg,\s*\.tv-shell \.tv-card-venue-line svg \{\s*color: var\(--dancr-color-avatar-ring-violet\) !important;/);
   assert.match(venuePinRules, /stroke: currentColor !important;/);
   assert.match(venuePinRules, /filter: none !important;/);
   assert.match(

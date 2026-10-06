@@ -649,7 +649,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-venue {
 }
 .profile-media-card-feed .profile-media-venue :is(svg, .action-icon) { width: 17px !important; height: 17px !important; flex: 0 0 17px; }
 html body.dancr-button-system .profile-media-card-feed .profile-media-venue :is(svg, .action-icon) {
-  color: var(--dancr-color-text-muted, #94a3b8) !important;
+  color: var(--dancr-color-avatar-ring-violet, #8b5cf6) !important;
 }
 .profile-media-card-feed :is(.profile-media-venue, .profile-media-entry) svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 html body.dancr-button-system .profile-media-card-feed .profile-media-entry {

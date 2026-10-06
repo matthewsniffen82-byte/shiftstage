@@ -5828,8 +5828,8 @@ body.dancr-button-system .home-tv-feed-meta {
   filter: none !important;
 }
 
-/* Venue pins always represent place, never schedule state. Keep them muted
- * across discovery, profiles, and TV so cyan belongs only to Upcoming. */
+/* Venue pins always represent place, never schedule state. Discovery and
+ * profile pins stay muted; media venue links use violet, not schedule cyan. */
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot,
 body.dancr-button-system > .app main.stack > section.stack
@@ -5841,10 +5841,15 @@ body.dancr-button-system > .app main.stack > section.stack
 body.dancr-button-system .dancer-card .card-venue-line > .venue-dot,
 body.dancr-button-system .dancer-card .card-venue-line > .venue-dot svg,
 body.dancr-button-system #profileBackdrop .profile-modal .profile-venue-destination > .venue-dot,
-body.dancr-button-system #profileBackdrop .profile-modal .profile-venue-destination > .venue-dot svg,
+body.dancr-button-system #profileBackdrop .profile-modal .profile-venue-destination > .venue-dot svg {
+  color: var(--dancr-color-text-muted) !important;
+  stroke: currentColor !important;
+  filter: none !important;
+}
+
 body.dancr-button-system .home-tv-feed-venue svg,
 .tv-shell .tv-card-venue-line svg {
-  color: var(--dancr-color-text-muted) !important;
+  color: var(--dancr-color-avatar-ring-violet) !important;
   stroke: currentColor !important;
   filter: none !important;
 }
