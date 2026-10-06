@@ -958,12 +958,8 @@ body > .app main.stack > .hero.reference-hero > .hero-art {
 }
 
 :root:is(.is-android, .android-rendering, .is-samsung-browser, .samsung-rendering) {
-  /* Samsung's forced dark mode flattens nearby CSS colors to the same black.
-   * Paint the intended subtle violet as an image, like the media-tab accent,
-   * instead of repeatedly increasing a color that the browser remaps. These
-   * tokens are complete background values shared by the discovery surfaces. */
-  --discovery-backdrop: #160e22 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cpath fill='%23160e22' d='M0 0h256v256H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
-  --discovery-header-backdrop: #160e22 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='64'%3E%3Cdefs%3E%3ClinearGradient id='v' x2='0' y2='1'%3E%3Cstop stop-color='%23100819'/%3E%3Cstop offset='1' stop-color='%23160e22'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath fill='url(%23v)' d='M0 0h2v64H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  --discovery-backdrop: #2c2437;
+  --discovery-header-backdrop: linear-gradient(180deg, #251f30, var(--discovery-backdrop));
 }
 
 html body.dancr-button-system > .app > main.stack:has(> section.stack > #results) {
