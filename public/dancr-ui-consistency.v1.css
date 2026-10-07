@@ -748,12 +748,14 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role=
   box-shadow: 0 6px 18px rgba(0, 0, 0, .25) !important;
 }
 
-/* Scroll cards need only a quiet edge against the violet feed background.
- * Keep the existing border width and replace the surrounding violet glow
- * with a short neutral shadow so club details and offers stay prominent. */
+/* Scroll cards and venue details share the same quiet violet outline. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide,
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
+  border-color: rgba(167, 139, 250, .16) !important;
+}
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide {
-  border-color: rgba(167, 139, 250, .16) !important;
   box-shadow: 0 4px 10px rgba(0, 0, 0, .24) !important;
 }
 
