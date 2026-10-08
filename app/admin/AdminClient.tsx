@@ -633,16 +633,16 @@ export default function AdminClient() {
       ) : null}
       <section className="dashboard-head admin-dashboard-head" aria-busy={isLoading || undefined}>
         <div className="dashboard-head-row">
+          <DashboardCloseButton
+            fallbackHref={homeDiscoveryHref("tonight")}
+            label="Back to MyDancr"
+          />
           <span className="admin-dashboard-identity" aria-hidden="true"><AdminDashboardIcon section="shield" /></span>
           <div className="dashboard-head-copy">
             <span className="eyebrow">Platform operations</span>
             <h1>Admin dashboard</h1>
             <p>{dashboardDescription}</p>
           </div>
-          <DashboardCloseButton
-            fallbackHref={homeDiscoveryHref("tonight")}
-            label="Back to MyDancr"
-          />
         </div>
         {!isLoading && !needsSignIn ? (
           <div className="admin-dashboard-session">

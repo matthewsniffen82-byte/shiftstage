@@ -480,8 +480,8 @@ export default function DashboardClient({
       <DashboardStyles />
       <section className="dashboard-head">
         <div className="dashboard-head-row">
-          <div className="dashboard-head-copy"><span className="eyebrow">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
           <DashboardCloseButton fallbackHref={dashboardCloseHref} label="Back to MyDancr" />
+          <div className="dashboard-head-copy"><span className="eyebrow">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
         </div>
       </section>
       <article className="info-panel">
@@ -499,6 +499,10 @@ export default function DashboardClient({
       <DashboardStyles />
       <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
         <div className="dashboard-head-row">
+          <DashboardCloseButton
+            fallbackHref={dashboardCloseHref}
+            label="Back to MyDancr"
+          />
           {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
           {role === "customer" ? <CustomerDashboardAvatar name={dashboardHeading} /> : null}
           {role === "venue" ? <span className="venue-dashboard-logo" aria-hidden="true">
@@ -516,10 +520,6 @@ export default function DashboardClient({
             {role === "customer" ? <Link className="customer-explore-link" href={dashboardCloseHref}>Explore MyDancr <span aria-hidden="true">↗</span></Link> : null}
             {role === "venue" || role === "dancer" ? <Link className="venue-public-site-link" href={dashboardCloseHref}>View public site <span aria-hidden="true">↗</span></Link> : null}
           </div>
-          <DashboardCloseButton
-            fallbackHref={dashboardCloseHref}
-            label="Back to MyDancr"
-          />
         </div>
         {state.error && (role === "venue" || role === "dancer") ? (
           <DashboardSignInRecovery role={role} onSignedIn={retryDashboard} />

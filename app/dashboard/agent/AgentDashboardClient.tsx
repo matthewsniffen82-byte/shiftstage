@@ -156,12 +156,12 @@ export default function AgentDashboardClient() {
   return (
     <main className="agent-dashboard">
       <header className="agent-head">
+        <DashboardCloseButton fallbackHref={homeDiscoveryHref("tonight")} label="Back to MyDancr" />
         <div>
           <span className="agent-eyebrow">Venue partnerships</span>
           <h1>{agent.displayName || "Sales agent dashboard"}</h1>
           <p>{agent.designation || "Sales Agent"} · verified club onboarding and commission settlement</p>
         </div>
-        <DashboardCloseButton fallbackHref={homeDiscoveryHref("tonight")} label="Back to MyDancr" />
       </header>
 
       {loading ? <section className="agent-card"><p>Loading your live club and commission ledger…</p></section> : null}

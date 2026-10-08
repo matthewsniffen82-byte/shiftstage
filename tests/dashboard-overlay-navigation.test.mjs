@@ -52,7 +52,7 @@ test("every account dashboard fully isolates the public shell and keeps its retu
   );
   assert.match(
     homeSource,
-    /<button class="dancr-home-back" id="dancerDashboardClose" type="button">\s*<span aria-hidden="true">←<\/span> Back to MyDancr/,
+    /<button class="dancr-home-back" id="dancerDashboardClose" type="button">\s*<span aria-hidden="true">‹<\/span> Back to MyDancr/,
   );
   assert.match(
     homeSource,

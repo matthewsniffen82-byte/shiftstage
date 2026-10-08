@@ -65,7 +65,7 @@ export function DashboardCloseButton({
       href={fallbackHref}
       onClick={closeDashboard}
     >
-      <span aria-hidden="true">←</span> Back to MyDancr
+      <span aria-hidden="true">‹</span> Back to MyDancr
     </a>
   );
 }

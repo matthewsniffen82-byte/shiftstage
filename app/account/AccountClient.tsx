@@ -476,12 +476,10 @@ export default function AccountClient() {
         </header>
       ) : (
         <nav className="top-nav" aria-label="Primary">
+          <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
           <Link className="brand" href="/">
             mydancr
           </Link>
-          <div className="nav-links">
-            <Link href="/" className="dancr-home-back"><span aria-hidden="true">←</span> Back to MyDancr</Link>
-          </div>
         </nav>
       )}
 

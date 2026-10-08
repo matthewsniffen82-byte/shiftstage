@@ -106,8 +106,8 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
 
   return <main className="vip-shell vip-dashboard-shell" id="vip-dashboard" data-global-navigation-swipe="ignore"><div className="vip-container">
     <header className="vip-dashboard-header">
+      <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
       <div className="vip-dashboard-identity"><span className="vip-identity-mark" aria-hidden="true"><VipIcon kind="overview" /></span><div><span className="vip-eyebrow">MYDANCR · PRIVATE ACCESS</span><h1>VIP lounge</h1><p>Your venues. Your next visit.</p></div></div>
-      <Link href="/" className="dancr-home-back"><span aria-hidden="true">←</span> Back to MyDancr</Link>
     </header>
     <div className="vip-venue-context"><div><span className="vip-eyebrow">YOUR VENUE</span>{venues.length > 1 ? <label className="vip-venue-select"><span className="vip-sr-only">Choose your VIP venue</span><select value={venue?.id || ""} disabled={disabled || loading} onChange={event => {
       setVenueId(event.target.value); setPage(0); setStatus("");
