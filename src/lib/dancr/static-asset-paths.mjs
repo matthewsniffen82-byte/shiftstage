@@ -3,6 +3,7 @@ export const staticAssetPaths = [
   "/dancer-main-photo.css",
   "/dancr-account-forms.v1.css",
   "/dancr-ui-consistency.v1.css",
+  "/dancr-auth.v1.css",
   "/dancr-aesthetic.v1.css",
   "/dancr-brand-tokens.v1.css",
   "/dancr-button-system.v1.css",

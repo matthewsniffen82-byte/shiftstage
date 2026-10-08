@@ -100,7 +100,7 @@ export default function VipClient({ token = "" }: { token?: string }) {
     </section> : !customer ? <section className="vip-panel"><h2>Use your invited guest account</h2><p>You’re signed in to a different account type. Sign out, then use the email that received your VIP invitation.</p></section>
     : token && invitation ? <section className="vip-panel vip-auth"><h2>Activate your VIP access</h2><p>Signed in as {session.account?.email}. This invitation is for {invitation.maskedEmail}.</p><form onSubmit={accept}><label>Your name<input value={name} onChange={event => setName(event.target.value)} maxLength={80} autoComplete="name" required disabled={busy} /></label><small>Your club will see this name with your requests.</small><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Activating…" : "Activate VIP access"}</button></form><small>Link expires {new Date(invitation.expiresAt).toLocaleDateString()}.</small></section>
     : null}
-    <footer className="vip-footer">Private invitations. Personal plans. <span>MyDancr VIP</span></footer>
+    <footer className="vip-footer">Private invitations. Personal plans. <Link href="/privacy">Privacy Policy</Link><span>MyDancr VIP</span></footer>
   </div></main>;
 }
 function message(error: unknown) { return error instanceof Error ? error.message : "Something went wrong. Please try again."; }

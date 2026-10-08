@@ -151,6 +151,7 @@ export default function ResetPasswordClient() {
           {completionWarning ? <p role="alert">{completionWarning}</p> : null}
           <a className="account-form-primary" href={destination}>Continue to your account</a>
         </> : null}
+        {phase !== "complete" && <a className="account-form-back" href="/account?mode=login">Back to sign in</a>}
       </section>
       <style>{`
         .reset-page{min-height:100dvh;box-sizing:border-box;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(circle at 50% 10%,#221143,transparent 60%),#050507;color:#f7f2ff;font-family:Arial,sans-serif}

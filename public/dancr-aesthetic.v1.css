@@ -2606,7 +2606,6 @@ body.dancr-button-system :is(
   #profileBackdrop .modal-actions .going-btn.is-primary-action:not(.is-unavailable),
   #approvedEditProfileDropdown [data-dancer-control-action="save-profile"],
   .public-profile-shell .live-actions .profile-action-primary:not(.profile-action-unavailable),
-  .account-shell button[type="submit"],
   .dashboard-shell button[type="submit"],
   .dmca-shell button[type="submit"],
   .counter-shell button[type="submit"],

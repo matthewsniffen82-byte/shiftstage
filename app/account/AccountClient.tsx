@@ -12,7 +12,6 @@ import {
   type BrowserAuthSession,
   type BrowserSessionRole,
 } from "@/src/lib/dancr/browser-session";
-import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
 
 type AuthRole = "customer" | "dancer";
@@ -478,13 +477,10 @@ export default function AccountClient() {
       ) : (
         <nav className="top-nav" aria-label="Primary">
           <Link className="brand" href="/">
-            Mydancr
+            mydancr
           </Link>
           <div className="nav-links">
-            <Link href={homeDiscoveryHref("tonight")}>Now</Link>
-            <Link href={homeDiscoveryHref("dancers")}>Dancers</Link>
-            <Link href={homeDiscoveryHref("venues")}>Venues</Link>
-            <Link href={homeDiscoveryHref("tv")}>MyDancr TV</Link>
+            <Link href="/">Back to MyDancr</Link>
           </div>
         </nav>
       )}
@@ -523,10 +519,10 @@ export default function AccountClient() {
             </>
           ) : (
             <>
-              <span className="eyebrow">Live account</span>
-              <h1>{role === "dancer" ? "Manage your dancer profile." : "Save your night out."}</h1>
+              <span className="eyebrow">MyDancr account</span>
+              <h1>{mode === "login" ? "Sign in to MyDancr" : role === "dancer" ? "Create dancer account" : "Create guest account"}</h1>
               <p>
-                Sign in with a secure Mydancr account to manage saved profiles, private alerts, Club Deals, and dashboard data.
+                {mode === "login" ? "Use your account email and password to continue." : "Create your account, then confirm your email to continue."}
               </p>
             </>
           )}
@@ -553,7 +549,7 @@ export default function AccountClient() {
                   Sign in
                 </button>
                 <button className={mode === "signup" ? "active" : ""} type="button" onClick={() => chooseMode("signup")}>
-                  Create
+                  Create account
                 </button>
               </div>
             </>
@@ -569,7 +565,7 @@ export default function AccountClient() {
             <>
               <section ref={customerBenefitsRef} className="signup-benefits" aria-label="Guest signup benefits">
                 <span className="eyebrow">Why join</span>
-                <h2>Create your private Mydancr dashboard</h2>
+                <h2>Your private MyDancr account</h2>
                 <button className="continue-signup" type="button" onClick={scrollCustomerFieldsToTop}>
                   Continue to create account
                   <span aria-hidden="true">↓</span>
