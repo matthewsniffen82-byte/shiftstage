@@ -160,6 +160,19 @@ test('duplicate approvals preserve the first verification timestamp so saved phy
   const verified_at='2026-01-01T00:00:00Z';const f=fixture({current:{...attempt,status:'verified',verified_at}});await f.reconcile();
   assert.equal(f.writes[0].mutation.verified_at,verified_at);
 });
+
+test('a completed live-style unified setup reconciles from review without creating a new session', async () => {
+  const kyc = { ...identification(), setup: { id: '00000000-0000-0000-0000-000000000000', versionId: ids.kycSetupVersionId } };
+  const f = fixture({ current: { ...attempt, status: 'in_review' }, kyc, setup: { ...identificationSetup(), id: ids.setupId } });
+  const result = await f.inspect();
+  assert.equal(result.decision.status, 'verified');
+  assert.equal(result.referenceFailure, null);
+  assert.equal(f.writes.length, 0);
+  await f.reconcile();
+  assert.equal(f.writes[0].mutation.status, 'verified');
+  assert.equal(f.writes[0].mutation.verification_url, null);
+  assert.ok(f.calls.filter(c => c.url && !c.url.endsWith('/connect/token')).every(c => c.options.method === 'GET'));
+});
 test('unknown sessions, mismatched results and unavailable provider responses never overwrite saved approvals',async()=>{
   const absent=fixture({current:null});await absent.reconcile();assert.equal(absent.calls.filter(x=>x.url).length,0);assert.equal(absent.writes.length,0);
   for(const options of [{idv:{...identity(),externalReferenceId:ids.kycId}},{kyc:{...identification(),applicationId:ids.kycId}},

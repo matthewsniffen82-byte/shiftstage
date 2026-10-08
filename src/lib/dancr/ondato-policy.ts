@@ -83,7 +83,15 @@ export function inspectOndatoDecision(identity: unknown, identification: unknown
   const reference = jsonObject(kyc.setup);
   if (!isOndatoId(reference.id) || !isOndatoId(reference.versionId)
     || !isOndatoId(setup.id) || !isOndatoId(setup.versionId) || !isOndatoId(setup.applicationId)) return { status: "in_review", reason: "identification_setup_reference_missing" };
-  assertOndatoReference(setup.id, reference.id, "kyc_setup");
+  // Unified IDV setups can return Guid.Empty as the KYC setup reference while
+  // the authenticated identification/setup endpoint returns the parent IDV ID.
+  // Accept that exact shape only when it is our configured IDV setup. The
+  // identification's non-empty version and application must still match below.
+  const unifiedSetup = reference.id === "00000000-0000-0000-0000-000000000000";
+  if (reference.versionId === "00000000-0000-0000-0000-000000000000") {
+    return { status: "in_review", reason: "identification_setup_reference_missing" };
+  }
+  assertOndatoReference(setup.id, unifiedSetup ? expected.setupId : reference.id, "kyc_setup");
   assertOndatoReference(setup.versionId, reference.versionId, "kyc_setup_version");
   assertOndatoReference(setup.applicationId, expected.applicationId, "kyc_setup_application");
   const face = jsonObject(setup.face);

@@ -47,6 +47,21 @@ test('setup application, KYC setup ID and exact version must match', () => {
   }
 });
 
+test('unified Ondato setup references require the configured parent setup and exact non-empty version', () => {
+  const empty = '00000000-0000-0000-0000-000000000000';
+  const kyc = { ...identification(), setup: { id: empty, versionId: ids.kycSetupVersionId } };
+  const setup = { ...identificationSetup(), id: ids.setupId };
+  assert.equal(evaluateOndatoDecision(identity(), kyc, setup, ids, now), 'verified');
+  for (const patch of [{ id: ids.kycSetupId }, { id: empty }, { applicationId: ids.sessionId }, { versionId: ids.kycId }]) {
+    assert.throws(() => evaluateOndatoDecision(identity(), kyc, { ...setup, ...patch }, ids, now), /MISMATCH/);
+  }
+  assert.equal(evaluateOndatoDecision(identity(), { ...kyc, setup: { id: empty, versionId: empty } },
+    { ...setup, versionId: empty }, ids, now), 'in_review');
+  assert.equal(evaluateOndatoDecision(identity(), { ...kyc, document: { type: 'Passport', dateOfBirth: '2010-01-01' } }, setup, ids, now), 'declined');
+  assert.equal(evaluateOndatoDecision(identity(), kyc, { ...setup, face: { enabled: true, activeLivenessEnabled: false } }, ids, now), 'in_review');
+  assert.equal(evaluateOndatoDecision(identity(), { ...kyc, rules: [] }, setup, ids, now), 'in_review');
+});
+
 test('active-only checks do not require a passive result, but never ignore a failed rule', () => {
   const kyc = identification();
   kyc.rules.push({ name: 'SuccessfulPassiveLivenessCheck', status: 'Unavailable' });
