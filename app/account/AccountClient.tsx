@@ -474,16 +474,18 @@ export default function AccountClient() {
           <Link className="brand nfc-brand" href="/" aria-label="MyDancr home">mydancr</Link>
           <Link className="nfc-back-link" href={nfcReturnHref}>Back to venue tap</Link>
         </header>
-      ) : (
-        <nav className="top-nav" aria-label="Primary">
-          <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
-          <Link className="brand" href="/">
-            mydancr
-          </Link>
-        </nav>
-      )}
+      ) : null}
 
-      <section className={`account-grid${isNfcAuth ? " nfc-account-grid" : ""}`}>
+      <section className={`account-grid${isNfcAuth ? " nfc-account-grid" : " account-entry-card"}`}>
+        {!isNfcAuth && (
+          <nav className="top-nav" aria-label="Primary">
+            <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
+            <Link className="brand" href="/">
+              mydancr
+            </Link>
+          </nav>
+        )}
+
         <div className="account-copy">
           {isNfcAuth ? (
             <>

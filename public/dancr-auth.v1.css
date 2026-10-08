@@ -6,7 +6,7 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-
   --dancr-auth-muted: #b8bac6;
   --dancr-form-border: #34343c;
 }
-body.dancr-button-system :is(#authPage .auth-choice-card, #dancerSignupPage .dancer-signup-card, .account-shell .account-panel, .vip-auth-shell .vip-panel, .reset-page .reset-card, #authPage .recovery-popover-surface, .account-shell .recovery-popover-surface) {
+body.dancr-button-system :is(#authPage .auth-choice-card, #dancerSignupPage .dancer-signup-card, .account-shell .account-entry-card, .account-shell .account-panel-nfc, .vip-auth-shell .vip-panel, .reset-page .reset-card, #authPage .recovery-popover-surface, .account-shell .recovery-popover-surface) {
   box-sizing: border-box;
   min-width: 0;
   padding: clamp(16px, 4vw, 20px) !important;
@@ -88,11 +88,15 @@ body.dancr-button-system .account-shell .account-panel .segmented button.active 
 
 /* Compact public entry, with full-size fields and quiet secondary actions. */
 body.dancr-button-system :is(#authPage, #dancerSignupPage) > .page-inner { width: min(100%, 500px); gap: 10px; }
-body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head { margin: 0; padding: 6px 2px; gap: 12px; border: 0 !important; background: transparent !important; }
+body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head {
+  position: static !important; top: auto !important; z-index: auto !important;
+  margin: 0; padding: 0 0 8px !important; gap: 12px;
+  border: 0 !important; border-radius: 0 !important; background: none !important;
+  box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
 body.dancr-button-system :is(#authPage, #dancerSignupPage) .page-head h2 { margin: 4px 0 0; line-height: 1.25; }
-/* Keep the header's top/content geometry intact so the close control never moves. */
+/* Keep the public entry card compact around its introduction and form. */
 body.dancr-button-system #authPage > .page-inner { gap: 8px; }
-body.dancr-button-system #authPage .page-head { padding-bottom: 2px; }
 body.dancr-button-system #authPage .auth-choice-card {
   gap: 12px; padding: 16px clamp(16px, 4vw, 20px) 12px !important;
   border-color: #292930 !important; background: #0c0c11 !important;
@@ -184,12 +188,14 @@ body.dancr-button-system #authPage .auth-vip-entry[hidden] { display: none !impo
 body.dancr-button-system #authPage .auth-vip-entry span { color: #ddc396; font-size: 10px; }
 body.dancr-button-system #authPage .auth-vip-entry:hover { text-decoration: underline; text-underline-offset: 3px; }
 body.dancr-button-system .vip-auth-shell .vip-container { max-width: 500px; }
-body.dancr-button-system .vip-auth-shell .vip-header { padding: 8px 0 10px; border: 0; }
+body.dancr-button-system .vip-auth-shell .vip-header { padding: 0 0 10px; border: 0; }
 body.dancr-button-system .vip-auth-shell .vip-hero { text-align: left; padding: 8px 2px 14px; }
 body.dancr-button-system .vip-auth-shell .vip-hero h1 { font-size: 22px; line-height: 1.2; font-weight: 650; letter-spacing: -.025em; margin: 6px 0; overflow-wrap: anywhere; }
 body.dancr-button-system .vip-auth-shell .vip-hero p { margin: 6px 0 0; }
 body.dancr-button-system .vip-auth-shell .vip-eyebrow { color: #ddc396; font-size: 10px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; }
 body.dancr-button-system .vip-auth-shell .vip-panel { padding: 20px; margin-bottom: 24px; }
+body.dancr-button-system .vip-auth-shell .vip-entry-content { margin: 0; min-width: 0; }
+body.dancr-button-system .vip-auth-shell .vip-entry-content > p { color: #c3c6d2; font-size: 13px; line-height: 1.6; margin: 10px 0 20px; }
 body.dancr-button-system .vip-auth-shell h2 { margin: 0; font-size: 22px; font-weight: 650; line-height: 1.3; letter-spacing: -.025em; }
 body.dancr-button-system .vip-auth-shell :is(.vip-hero p, .vip-panel > p) { color: #c3c6d2; font-size: 13px; line-height: 1.6; }
 body.dancr-button-system .vip-auth-shell .vip-panel > p { margin: 10px 0 20px; }
@@ -262,6 +268,11 @@ body.dancr-button-system .account-shell :is(.nav-links a, .nfc-back-link) {
 }
 body.dancr-button-system .account-shell .account-grid {
   max-width: 500px; grid-template-columns: minmax(0, 1fr); gap: 14px; align-items: start;
+}
+body.dancr-button-system .account-shell .account-entry-card > .top-nav { width: 100%; margin: 0; padding: 0; }
+body.dancr-button-system .account-shell .account-entry-card > .account-panel {
+  margin: 0; padding: 0 !important; border: 0 !important; border-radius: 0 !important;
+  background: none !important; box-shadow: none !important;
 }
 body.dancr-button-system .account-shell .account-copy { gap: 8px; }
 body.dancr-button-system .account-shell .account-copy p { font-size: 13px; color: #c3c6d2; }

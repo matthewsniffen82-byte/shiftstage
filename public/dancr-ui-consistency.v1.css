@@ -1,5 +1,5 @@
 /* Main account exits match the quiet, inline return link on Free Entry. */
-body.dancr-button-system :is(#authPage, #dancerSignupPage, #dancerDashboard, #venueDashboard, #adminDashboard, #customerDashboard, .dashboard-shell, .admin-shell, .agent-dashboard, .vip-shell, .account-shell) .dancr-home-back {
+body.dancr-button-system :is(#authPage, #dancerSignupPage, #dancerDashboard, #venueDashboard, #adminDashboard, #customerDashboard, .dashboard-shell, .admin-shell, .agent-dashboard, .vip-shell, .account-shell, .counter-shell) .dancr-home-back {
   box-sizing: border-box !important;
   display: inline-flex !important; align-items: center; justify-content: flex-start; align-self: start; justify-self: start; gap: 4px;
   grid-column: 1 / -1;
@@ -35,6 +35,13 @@ body.dancr-button-system :is(.vip-dashboard-header, .agent-head, .account-shell 
 }
 body.dancr-button-system .vip-header:has(> .dancr-home-back) {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px;
+}
+/* Dashboard introductions are part of the page, not a separate header card. */
+body.dancr-button-system :is(#customer-dashboard, #dancer-dashboard, #venue-dashboard, #dancerDashboard, #venueDashboard, #adminDashboard, #customerDashboard, .dashboard-shell, .admin-shell, .agent-dashboard, .vip-shell) :is(.dashboard-head, .agent-head, .vip-dashboard-header, .page-head):has(.dancr-home-back) {
+  position: static !important; top: auto !important; z-index: auto !important;
+  padding: 0 0 16px !important; border: 0 !important; border-radius: 0 !important;
+  background: none !important; box-shadow: none !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
 }
 
 /* Only server-confirmed actions opt in to the shared completion appearance. */
