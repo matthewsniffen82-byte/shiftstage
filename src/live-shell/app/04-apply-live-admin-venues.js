@@ -627,6 +627,14 @@
       return true;
     }
 
+    function openVipNotification(notification) {
+      const kind = notification?.payload?.kind;
+      if (kind !== "vip_request" && kind !== "vip_request_status") return false;
+      if (notification.id && !notification.readAt) markLiveNotificationRead(notification.id);
+      window.location.assign(kind === "vip_request" ? "/dashboard/venue#venue-vip" : "/vip");
+      return true;
+    }
+
     function handleNotificationCenterClick(event) {
       const button = event.target.closest("[data-notification-action]");
       if (button) {
@@ -655,6 +663,7 @@
       }
       const item = event.target.closest("[data-notification-id], [data-notification-index]");
       const notification = notificationFromNode(item);
+      if (openVipNotification(notification)) { event.preventDefault(); event.stopPropagation(); return true; }
       if (openPickupNotification(notification)) { event.preventDefault(); event.stopPropagation(); return true; }
       if (openDancerReviewIssue(notification)) {
         event.preventDefault();
@@ -669,6 +678,7 @@
       if (event.key !== "Enter" && event.key !== " ") return false;
       const item = event.target.closest("[data-notification-id], [data-notification-index]");
       const notification = notificationFromNode(item);
+      if (openVipNotification(notification)) { event.preventDefault(); return true; }
       if (openPickupNotification(notification)) { event.preventDefault(); return true; }
       if (!isActionableDancerReviewNotification(notification)) return false;
       event.preventDefault();

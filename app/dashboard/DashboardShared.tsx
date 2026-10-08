@@ -238,8 +238,9 @@ export function NotificationPanel({
       <div className="notification-list">
         {notifications.slice(0, customerMode ? visibleAlerts : 6).map((notification) => {
           const notificationId = String(notification.id);
-          const destination = pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
           const payload = notification.payload && typeof notification.payload === "object" ? notification.payload as Record<string, unknown> : {};
+          const vipDestination = payload.kind === "vip_request" ? "/dashboard/venue#venue-vip" : payload.kind === "vip_request_status" ? "/vip" : "";
+          const destination = vipDestination || pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
           const portrait = customerMode ? (payload.dancerId ? (saved?.follows || []).find(item => item.dancer?.id === payload.dancerId)?.dancer?.imageUrl : null)
             || (payload.venueId ? (saved?.venueFollows || []).find(item => item.venue?.id === payload.venueId)?.venue?.logoImageUrl : null) : null;
           const content = (
@@ -808,6 +809,7 @@ function notificationCategory(notification: Record<string, unknown>) {
     ? notification.payload as Record<string, unknown>
     : {};
   if (payload.kind === "followed_club_deal_published") return "Club Deal";
+  if (payload.kind === "vip_request" || payload.kind === "vip_request_status") return "VIP";
   if (payload.kind === "followed_club_roster_addition") return "Club";
   if (type.includes("shift")) return "Schedule";
   if (type.includes("support")) return "Support";

@@ -7,6 +7,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 const PickupDashboardPanel = dynamic(() => import("./PickupDashboardPanel"));
 const VenueGuestListPanel = dynamic(() => import("./VenueGuestListPanel"));
+const VenueVipPanel = dynamic(() => import("./VenueVipPanel"));
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
@@ -34,7 +35,7 @@ function notifyPublicVenuePublication() {
 
 
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
-  if (sectionId === "venue-pickups" || sectionId === "venue-guest-list") return "tonight";
+  if (sectionId === "venue-pickups" || sectionId === "venue-guest-list" || sectionId === "venue-vip") return "tonight";
   if (sectionId === "venue-overview") return "business";
   if (["venue-working-now", "venue-dancer-roster", "table-requests"].includes(sectionId)) return "roster";
   if (["venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
@@ -283,7 +284,7 @@ export function VenuePanel({
 
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
-          ["tonight", "Guests & pickups"],
+          ["tonight", "Guests, VIP & pickups"],
           ["roster", "Dancers & tables"],
           ["business", "Results"],
           ["venue", "Manage venue"],
@@ -327,6 +328,9 @@ export function VenuePanel({
         <section className="info-panel venue-dashboard-section" id="venue-guest-list" aria-labelledby="venue-guest-list-heading" tabIndex={-1}>
           <VenueGuestListPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
         </section>
+        {(venueRole === "owner" || venueRole === "manager") && <section className="info-panel venue-dashboard-section" id="venue-vip" aria-labelledby="venue-vip-heading" tabIndex={-1}>
+          <VenueVipPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
+        </section>}
         <hr className="venue-section-divider" />
         <section className="info-panel venue-dashboard-section" id="venue-pickups" aria-labelledby="venue-pickups-heading" tabIndex={-1}>
           <h2 className="venue-icon-heading" id="venue-pickups-heading"><VenueDashboardIcon section="pickups" />Pickup requests</h2>

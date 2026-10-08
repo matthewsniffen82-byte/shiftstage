@@ -566,6 +566,7 @@ export default function DashboardClient({
                 </div>}
                 accountContent={<div id="customer-account" tabIndex={-1}>
                   <div className="customer-view-heading"><h2>Account</h2><p>Your account and activity stay private.</p></div>
+                  <p><Link href="/vip">Open your VIP lounge →</Link></p>
                   {isLoading ? <p role="status">Loading your account…</p> : <div className="customer-account-stack">
                     <CustomerAccountPanel account={state.account || {}} onAccountChange={updateAccountDetails} />
                     <details className="customer-account-disclosure" id="customer-support-section">

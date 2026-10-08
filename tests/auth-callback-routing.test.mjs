@@ -52,7 +52,7 @@ test("confirmed guest accounts open their private customer dashboard", () => {
     callbackSource.match(/function liveAppCallbackPath[\s\S]*?function callbackHtml/)?.[0] || "";
 
   assert.match(liveAppPath, /role === "customer" && !isPasswordReset[\s\S]*?return "\/dashboard\/customer\?confirmed=1"/);
-  assert.match(liveAppSource, /saveAuthResume\("customer", "\/dashboard\/customer\?confirmed=1"\)/);
+  assert.match(liveAppSource, /saveAuthResume\("customer", pendingAccountAuthReturnTo \|\| "\/dashboard\/customer\?confirmed=1"\)/);
   assert.match(liveAppSource, /window\.location\.assign\("\/dashboard\/customer\?confirmed=1"\)/);
   assert.match(liveAppSource, /Your private guest dashboard is ready/);
 });

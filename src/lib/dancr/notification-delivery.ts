@@ -278,6 +278,8 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   if (!baseUrl) return "";
   if (payload.kind === "club_shuttle_request") return `${baseUrl}/dashboard/venue#venue-pickups`;
   if (payload.kind === "internal_table_request") return `${baseUrl}/dashboard/venue#table-requests`;
+  if (payload.kind === "vip_request") return `${baseUrl}/dashboard/venue#venue-vip`;
+  if (payload.kind === "vip_request_status") return `${baseUrl}/vip`;
   if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer#customer-alerts`;
 
   if (row.notification_type === "dmca_status" && payload.caseId) {

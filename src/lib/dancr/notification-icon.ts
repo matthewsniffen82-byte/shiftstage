@@ -4,6 +4,7 @@ export function notificationIconName(notification: { type?: unknown; notificatio
   const payload = notification.payload && typeof notification.payload === "object" && !Array.isArray(notification.payload)
     ? notification.payload as Record<string, unknown> : {};
   const kind = String(payload.kind || payload.event || "");
+  if (kind === "vip_request" || kind === "vip_request_status") return "calendar";
   if (kind === "club_shuttle_request" || kind === "club_pickup") return "car";
   if (["account_security", "password_changed", "email_changed", "account_access_changed"].includes(kind)) return "lock";
   if (kind.startsWith("venue_team_") || kind.startsWith("team_invitation_") || kind === "followed_club_roster_addition") return "personPlus";
