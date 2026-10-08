@@ -23,6 +23,7 @@ import "./dancer-profile-builder-polish.css";
 import "./dancer-onboarding.css";
 import "./dancer-premium.css";
 import "./customer-night.css";
+import "../components/dashboard-header.css";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
@@ -417,27 +418,28 @@ export default function DashboardClient({
 
   const title = useMemo(() => {
     if (role === "dancer") return "Dancer dashboard";
-    if (role === "venue") return "Venue dashboard";
-    return "Customer dashboard";
+    if (role === "venue") return "Club dashboard";
+    return "My Night";
   }, [role]);
 
   const accountDisplayName = String(state.account?.displayName || "").trim();
-  const profileDisplayName = String(dashboardName(state.profile, role) || "").trim();
-  const resolvedDisplayName = role === "dancer"
+  const profileDisplayName = String((role === "venue" ? state.profile?.name : dashboardName(state.profile, role)) || "").trim();
+  const resolvedDisplayName = role === "dancer" || role === "venue"
     ? profileDisplayName
     : accountDisplayName || profileDisplayName;
-  const displayName = resolvedDisplayName || (role === "dancer" ? "Complete your profile" : "Dancr");
+  const displayName = resolvedDisplayName || (role === "dancer" ? "Complete your profile" : role === "venue" ? "Your club" : "Guest");
   const dashboardCloseHref = homeDiscoveryHref(
     role === "venue" ? "venues" : role === "dancer" ? "dancers" : "tonight",
   );
   const dashboardEyebrow =
-    role === "customer" ? "Customer dashboard" : role === "venue" ? "Venue dashboard" : "Dancer dashboard";
+    role === "customer" ? "Guest" : role === "venue" ? "Club" : "Dancer";
   const dancerAccountPaused = role === "dancer" && state.account?.accountState === "disabled";
   const venueAccountPaused = role === "venue" && state.account?.accountState === "disabled";
-  const dashboardHeading = isLoading
+  const dashboardHeading = role === "customer" ? "My Night" : isLoading
     ? resolvedDisplayName || title
     : role === "dancer" && (state.error || dancerAccountPaused) ? profileDisplayName || title : displayName;
   const dashboardDescription = state.error || state.accountError || "";
+  const dashboardSubtitle = role === "customer" ? accountDisplayName : role === "venue" ? String(state.profile?.city || "").trim() : "";
   const dancerProfileStatus = role === "dancer"
     ? effectiveDancerProfileStatus(state.profile, state.account?.accountState)
     : "";
@@ -478,11 +480,11 @@ export default function DashboardClient({
   if (role === "venue" && state.venueRequest && !isLoading) {
     return <main className="dashboard-shell dashboard-shell-venue">
       <DashboardStyles />
-      <section className="dashboard-head">
-        <div className="dashboard-head-row">
+      <section className="dashboard-identity-header" data-account-kind="venue">
+        <div className="dashboard-identity-back-row">
           <DashboardCloseButton fallbackHref={dashboardCloseHref} label="Back to MyDancr" />
-          <div className="dashboard-head-copy"><span className="eyebrow">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
         </div>
+        <div className="dashboard-identity-copy"><span className="dashboard-identity-label">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
       </section>
       <article className="info-panel">
         <h2>{state.venueRequest.status === "rejected" ? "Request not approved" : "Waiting for approval"}</h2>
@@ -497,30 +499,33 @@ export default function DashboardClient({
     <main className={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : role === "dancer" ? "dancer-dashboard" : "customer-dashboard"}>
       {role === "venue" ? <VenueAdminUtilities /> : null}
       <DashboardStyles />
-      <section className={`dashboard-head dashboard-head-${role}`} aria-busy={isLoading || undefined}>
-        <div className="dashboard-head-row">
+      <section className="dashboard-identity-header" data-account-kind={role} aria-busy={isLoading || undefined}>
+        <div className="dashboard-identity-back-row">
           <DashboardCloseButton
             fallbackHref={dashboardCloseHref}
             label="Back to MyDancr"
           />
-          {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
-          {role === "customer" ? <CustomerDashboardAvatar name={dashboardHeading} /> : null}
-          {role === "venue" ? <span className="venue-dashboard-logo" aria-hidden="true">
-            <span>{dashboardHeading.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("")}</span>
-            {state.profile?.logoImageUrl ? <img key={String(state.profile.logoImageUrl)} src={String(state.profile.logoImageUrl)} srcSet={state.profile.logoImageSrcSet ? String(state.profile.logoImageSrcSet) : undefined} sizes="64px" alt="" onError={event => { event.currentTarget.style.display = "none"; }} /> : null}
-          </span> : null}
-          <div className="dashboard-head-copy">
-            <span className="eyebrow">{dashboardEyebrow}</span>
-            <div className="dashboard-head-title-row">
+        </div>
+        <div className="dashboard-identity-row">
+          <div className="dashboard-identity-avatar">
+            {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
+            {role === "customer" ? <CustomerDashboardAvatar name={accountDisplayName} /> : null}
+            {role === "venue" ? <span className="venue-dashboard-logo" aria-hidden="true">
+              <span>{dashboardHeading.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("")}</span>
+              {state.profile?.logoImageUrl ? <img key={String(state.profile.logoImageUrl)} src={String(state.profile.logoImageUrl)} srcSet={state.profile.logoImageSrcSet ? String(state.profile.logoImageSrcSet) : undefined} sizes="48px" alt="" onError={event => { event.currentTarget.style.display = "none"; }} /> : null}
+            </span> : null}
+          </div>
+          <div className="dashboard-identity-copy">
+            <span className="dashboard-identity-label">{dashboardEyebrow}</span>
+            <div className="dashboard-identity-title-row">
               <h1>{dashboardHeading}</h1>
-              {dancerProfileIsLive ? <span className="dashboard-live-status"><i aria-hidden="true" /> Public</span> : null}
+              {dancerProfileIsLive ? <span className="dashboard-identity-status is-live"><i aria-hidden="true" />Public</span> : null}
+              {!isLoading && !state.error && (dancerAccountPaused || venueAccountPaused) ? <span className="dashboard-identity-status">Paused</span> : null}
             </div>
-            {dashboardDescription ? <p>{dashboardDescription}</p> : null}
-            {role === "customer" && !dashboardDescription ? <p className="customer-dashboard-intro">Your night, privately organized.</p> : null}
-            {role === "customer" ? <Link className="customer-explore-link" href={dashboardCloseHref}>Explore MyDancr <span aria-hidden="true">↗</span></Link> : null}
-            {role === "venue" || role === "dancer" ? <Link className="venue-public-site-link" href={dashboardCloseHref}>View public site <span aria-hidden="true">↗</span></Link> : null}
+            {dashboardSubtitle ? <p className="dashboard-identity-subtitle">{dashboardSubtitle}</p> : null}
           </div>
         </div>
+        {dashboardDescription ? <p className="dashboard-identity-error">{dashboardDescription}</p> : null}
         {state.error && (role === "venue" || role === "dancer") ? (
           <DashboardSignInRecovery role={role} onSignedIn={retryDashboard} />
         ) : state.error || state.accountError ? (
@@ -549,7 +554,6 @@ export default function DashboardClient({
                   <button className="primary-link" type="button" onClick={retryDashboard}>Try again</button>
                 </InfoPanel>
               ) : null}
-              {state.account?.id ? <CustomerVipShortcut key={state.account.id} accountId={state.account.id} /> : null}
               <CustomerPanel
                 key={String(state.account?.id || state.account?.email || "guest")}
                 saved={customerSaved}
@@ -558,7 +562,10 @@ export default function DashboardClient({
                 accountSavedUnavailable={Boolean(state.savedError && !state.saved)}
                 initialSection={initialSection}
                 alertCount={customerAlertCount}
-                welcomeContent={<CustomerWelcomeCard accountKey={String(state.account?.id || state.account?.email || "guest")} show={showCustomerWelcome} />}
+                welcomeContent={<>
+                  {state.account?.id ? <CustomerVipShortcut key={state.account.id} accountId={state.account.id} /> : null}
+                  <CustomerWelcomeCard accountKey={String(state.account?.id || state.account?.email || "guest")} show={showCustomerWelcome} />
+                </>}
                 alertsContent={<div id="customer-alerts" tabIndex={-1}>
                   <details className="customer-manage-alerts" id="customer-notification-preferences" tabIndex={-1}>
                     <summary>Manage alerts <span>Preferences & delivery</span></summary>

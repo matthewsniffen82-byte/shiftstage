@@ -1,5 +1,7 @@
 "use client";
 
+import "../components/dashboard-header.css";
+
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
@@ -105,15 +107,21 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   }
 
   return <main className="vip-shell vip-dashboard-shell" id="vip-dashboard" data-global-navigation-swipe="ignore"><div className="vip-container">
-    <header className="vip-dashboard-header">
-      <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
-      <div className="vip-dashboard-identity"><span className="vip-identity-mark" aria-hidden="true"><VipIcon kind="overview" /></span><div><span className="vip-eyebrow">MYDANCR · PRIVATE ACCESS</span><h1>VIP lounge</h1><p>Your venues. Your next visit.</p></div></div>
+    <header className="dashboard-identity-header" data-account-kind="vip">
+      <div className="dashboard-identity-back-row">
+        <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
+        <button className="vip-refresh" type="button" disabled={disabled || loading} onClick={refresh}><VipIcon kind="refresh" /><span>{loading ? "Refreshing…" : "Refresh"}</span></button>
+      </div>
+      <div className="dashboard-identity-row">
+        <div className="dashboard-identity-avatar"><span className="vip-identity-mark" aria-hidden="true"><VipIcon kind="overview" /></span></div>
+        <div className="dashboard-identity-copy">
+          <span className="dashboard-identity-label">VIP · Private access</span><h1>VIP Lounge</h1>
+          {venues.length > 1 ? <label className="vip-venue-select"><span className="vip-sr-only">Choose your VIP venue</span><select value={venue?.id || ""} disabled={disabled || loading} onChange={event => {
+            setVenueId(event.target.value); setPage(0); setStatus("");
+          }}>{venues.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : <p className="dashboard-identity-subtitle">{venue?.name || (loading ? "Loading your access…" : "Private invitations")}</p>}
+        </div>
+      </div>
     </header>
-    <div className="vip-venue-context"><div><span className="vip-eyebrow">YOUR VENUE</span>{venues.length > 1 ? <label className="vip-venue-select"><span className="vip-sr-only">Choose your VIP venue</span><select value={venue?.id || ""} disabled={disabled || loading} onChange={event => {
-      setVenueId(event.target.value); setPage(0); setStatus("");
-    }}>{venues.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label> : <strong>{venue?.name || (loading ? "Loading your access…" : "Private invitations")}</strong>}</div>
-      <button className="vip-refresh" type="button" disabled={disabled || loading} onClick={refresh}><VipIcon kind="refresh" /><span>{loading ? "Refreshing…" : "Refresh"}</span></button>
-    </div>
     <nav className="vip-dashboard-nav" aria-label="VIP dashboard">
       {VIP_DESTINATIONS.map(item => <button type="button" key={item.id} aria-current={view === item.id ? "page" : undefined} aria-controls={`vip-panel-${item.id}`} disabled={disabled} onClick={() => navigate(item.id)}>
         <VipIcon kind={item.id} /><span>{item.label}</span>{item.id === "plan" && draft.selected.length > 0 && <span className="vip-draft-dot" aria-label="Unsubmitted visit draft" />}

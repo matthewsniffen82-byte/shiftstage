@@ -73,11 +73,11 @@ test("the routed venue dashboard is isolated, closable, and restores the origina
   assert.match(dashboardPage, /DashboardClient/);
   assert.match(dashboard, /dashboard-shell/);
   assert.match(dashboard, /<DashboardCloseButton/);
-  assert.match(dashboard, /label={`Close \$\{role\} dashboard and return to MyDancr`}/);
-  assert.match(dashboard, /Venue dashboard/);
-  assert.match(dashboard, /role === "venue" \? "Venue dashboard"/);
+  assert.match(dashboard, /label="Back to MyDancr"/);
+  assert.match(dashboard, /Club dashboard/);
+  assert.match(dashboard, /role === "venue" \? "Club"/);
   assert.match(dashboard, /Loading \{role\} dashboard/);
-  assert.match(dashboard, /\.dashboard-head h1 \{[^}]*?font-size: clamp\(21px, 5vw, 26px\)/);
+  assert.match(dashboard, /className="dashboard-identity-header" data-account-kind=\{role\}/);
   assert.doesNotMatch(dashboardPage, /Now[\s\S]*Dancers[\s\S]*Trending/);
 });
 
@@ -140,7 +140,8 @@ test("working-now actions are neutral when empty and emerald only for a live ros
 
 test("venue pickup requests have one inbox entry point and remain visible without expanding a section", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
-  const command = venuePanel.slice(venuePanel.indexOf('<section className="venue-command-panel"'), venuePanel.indexOf('<nav className="venue-workspace-tabs"'));
+  const command = venuePanel.match(/<section className="venue-command-panel"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(command);
   assert.doesNotMatch(command, /href="\/pickups"/);
   assert.match(venuePanel, /\["tonight", "Guests, VIP & pickups"\]/);
   const pickupSection = venuePanel.match(/<section\s+className="info-panel venue-dashboard-section"[\s\S]*?id="venue-pickups"[\s\S]*?<\/section>/)?.[0];

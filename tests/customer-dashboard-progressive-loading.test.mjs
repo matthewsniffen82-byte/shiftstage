@@ -41,7 +41,7 @@ test('customer dashboard renders its real sections before any authenticated requ
 
 test('an account timeout keeps the customer dashboard and retry available without suggesting sign-in', () => {
   const html = renderCustomerDashboard({ account: { displayName: 'Customer QA' }, accountError: "We couldn't refresh your account right now. Please try again." });
-  for (const text of ['Customer dashboard', 'Customer QA', 'My Night', 'Saved', 'Deals', 'Try again']) assert.ok(html.includes(text), text);
+  for (const text of ['Guest', 'Customer QA', 'My Night', 'Saved', 'Deals', 'Try again']) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /Guest dashboard|href="\/account\?role=customer"/);
 });
 

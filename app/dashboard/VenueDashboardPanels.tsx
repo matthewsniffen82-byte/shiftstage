@@ -270,19 +270,6 @@ export function VenuePanel({
     : "";
   return (
     <>
-      <section className="venue-command-panel" aria-label="Venue status">
-        <div className="venue-command-status">
-          <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isPausedForDeals ? "HIDDEN" : "PRIVATE DRAFT"}</span>
-          <div>
-            {!isPublished && <p>{isPausedForDeals ? "Your venue is hidden until it has an active Club Deal. Your dancer roster is saved." : isAwaitingVenueReview ? "Ready to review in Manage venue." : pageReviewStatus === "changes_requested" ? "Changes in progress. MyDancr will notify you when your page is ready." : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>}
-          </div>
-          <div className="venue-refresh-control">
-            <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
-            <button type="button" disabled={isRefreshing} onClick={onRefresh}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
-          </div>
-        </div>
-      </section>
-
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
           ["tonight", "Guests, VIP & pickups"],
@@ -307,6 +294,18 @@ export function VenuePanel({
           </button>
         ))}
       </nav>
+      <section className="venue-command-panel" aria-label="Venue status">
+        <div className="venue-command-status">
+          <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isPausedForDeals ? "HIDDEN" : "PRIVATE DRAFT"}</span>
+          <div>
+            {!isPublished && <p>{isPausedForDeals ? "Your venue is hidden until it has an active Club Deal. Your dancer roster is saved." : isAwaitingVenueReview ? "Ready to review in Manage venue." : pageReviewStatus === "changes_requested" ? "Changes in progress. MyDancr will notify you when your page is ready." : "MyDancr prepares the venue page. Your team reviews it and approves it to make it live."}</p>}
+          </div>
+          <div className="venue-refresh-control">
+            <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
+            <button type="button" disabled={isRefreshing} onClick={onRefresh}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
+          </div>
+        </div>
+      </section>
       <hr className="venue-section-divider" />
       {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
 

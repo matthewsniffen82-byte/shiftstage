@@ -19,18 +19,17 @@ const [dashboard, customerService, favoritesRoute, venueFollowsRoute, directions
 test("customer dashboard leads with My Night and four dedicated destinations", () => {
   assert.match(dashboard, /<CustomerPanel[\s\S]*?alertsContent=[\s\S]*?accountContent=/);
   assert.match(dashboard, /id: "night", label: "My Night"[\s\S]*?id: "saved", label: "Saved"[\s\S]*?id: "alerts", label: "Alerts"[\s\S]*?id: "account", label: "Account"/);
-  assert.match(dashboard, /Explore MyDancr/);
-  assert.match(dashboard, /role === "customer" \? "Customer dashboard"/);
+  assert.match(dashboard, /role === "customer" \? "Guest"/);
   assert.doesNotMatch(dashboard, /eyebrow="(?:Guest workspace|Your activity)"/);
-  assert.match(dashboard, /const dashboardHeading = isLoading\s*\? resolvedDisplayName \|\| title[\s\S]*?: displayName/);
+  assert.match(dashboard, /const dashboardHeading = role === "customer" \? "My Night"/);
   assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
-  assert.match(dashboard, /<DashboardCloseButton[\s\S]*?label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
+  assert.match(dashboard, /<DashboardCloseButton[\s\S]*?label="Back to MyDancr"/);
   assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" onCountChange=\{setCustomerSupportCount\} \/>/);
 });
 
 test("dancer dashboard header prefers the saved stage name and never the email-derived account name", () => {
-  assert.match(dashboard, /const profileDisplayName = String\(dashboardName\(state\.profile, role\) \|\| ""\)\.trim\(\)/);
-  assert.match(dashboard, /const resolvedDisplayName = role === "dancer"[\s\S]*?\? profileDisplayName[\s\S]*?: accountDisplayName \|\| profileDisplayName/);
+  assert.match(dashboard, /const profileDisplayName = String\(\(role === "venue" \? state\.profile\?\.name : dashboardName\(state\.profile, role\)\) \|\| ""\)\.trim\(\)/);
+  assert.match(dashboard, /const resolvedDisplayName = role === "dancer" \|\| role === "venue"[\s\S]*?\? profileDisplayName[\s\S]*?: accountDisplayName \|\| profileDisplayName/);
   assert.match(dashboard, /if \(role === "dancer"\) return persistedDancerStageName\(profile\)/);
   assert.match(dashboard, /function persistedDancerStageName[\s\S]*?identity_saved_at[\s\S]*?return ""/);
   assert.doesNotMatch(dashboard, /role === "dancer"[\s\S]{0,120}\? accountDisplayName/);

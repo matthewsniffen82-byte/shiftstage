@@ -1,0 +1,38 @@
+/* One compact identity layout for Guest, Dancer, Club and VIP dashboards. */
+body.dancr-button-system :is(.dashboard-shell, .vip-dashboard-shell) .dashboard-identity-header {
+  box-sizing: border-box; display: grid; gap: 8px; max-width: 1120px; min-width: 0;
+  margin: 0 auto 16px; padding: 0 0 16px; border: 0; border-bottom: 1px solid #382b43;
+  border-radius: 0; background: transparent; box-shadow: none; font-family: var(--font-ui, Inter, ui-sans-serif, system-ui, sans-serif);
+}
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-back-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-row { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 12px; min-width: 0; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar { width: 48px; height: 48px; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar > :is(.customer-dashboard-avatar, .dancer-dashboard-avatar, .venue-dashboard-logo, .vip-identity-mark) {
+  position: relative; display: grid; place-items: center; width: 48px !important; height: 48px !important;
+  min-width: 48px; flex: 0 0 48px !important; overflow: hidden;
+  border: 1px solid #614774 !important; border-radius: 14px !important;
+  color: #d7bdef; background: #1c1425 !important; box-shadow: none !important; font-size: 18px !important;
+}
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
+body.dancr-button-system .dashboard-identity-header .venue-dashboard-logo img { object-fit: contain; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-copy { display: grid; gap: 3px; min-width: 0; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-label { color: #bda5d6; font-size: 10px; font-weight: 600; letter-spacing: .12em; line-height: 1.5; text-transform: uppercase; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; }
+body.dancr-button-system .dashboard-identity-header h1 { min-width: 0; max-width: 100%; margin: 0; color: #f5f2fa; font-family: inherit; font-size: 28px !important; font-weight: 650 !important; line-height: 1.2 !important; letter-spacing: -.025em !important; white-space: normal; overflow-wrap: anywhere; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-subtitle { margin: 0; color: #b8b0c3; font-size: 13px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid #4a3c54; border-radius: 8px; color: #c6bccf; background: #19121f; font-size: 10px; font-weight: 600; line-height: 1.4; white-space: nowrap; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-status.is-live { color: #83d9ae; border-color: #2b5042; background: #11221b; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-status i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-error { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: #f2b7c1; overflow-wrap: anywhere; }
+body.dancr-button-system .dashboard-identity-header[data-account-kind="vip"] .dashboard-identity-label { color: #ddc396; }
+body.dancr-button-system .dashboard-identity-header[data-account-kind="vip"] .vip-identity-mark { color: #ddc396; border-color: #69543c !important; }
+body.dancr-button-system .dashboard-identity-header .vip-venue-select select { max-width: 100%; min-height: 44px; margin: 2px 0 0; padding: 7px 28px 7px 10px; font-size: 14px; }
+body.dancr-button-system .dashboard-identity-header .vip-refresh { min-height: 44px; }
+@media (max-width: 600px) {
+  body.dancr-button-system :is(.dashboard-shell, .vip-dashboard-shell) .dashboard-identity-header { gap: 6px; margin-bottom: 12px; padding-bottom: 12px; }
+  body.dancr-button-system .dashboard-identity-header .dashboard-identity-row { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; }
+  body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar { width: 44px; height: 44px; }
+  body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar > :is(.customer-dashboard-avatar, .dancer-dashboard-avatar, .venue-dashboard-logo, .vip-identity-mark) { width: 44px !important; height: 44px !important; min-width: 44px; flex-basis: 44px !important; border-radius: 12px !important; }
+  body.dancr-button-system .dashboard-identity-header h1 { font-size: 24px !important; }
+  body.dancr-button-system .dashboard-identity-header .dashboard-identity-subtitle { font-size: 12px; }
+}

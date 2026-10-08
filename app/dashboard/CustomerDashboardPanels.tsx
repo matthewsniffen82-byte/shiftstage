@@ -452,7 +452,6 @@ export function CustomerPanel({
     {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
     <section id="customer-view-night" className="customer-view" hidden={view !== "night"} aria-label="My Night" tabIndex={-1}>
       {welcomeContent}
-      <div className="customer-view-heading"><span className="eyebrow">Your private guest account</span><h2>My Night</h2><p>Your passes, plans, and people. Ready when you are.</p></div>
       {isLoading ? <p className="customer-loading-state" role="status">Loading your night…</p> : null}
       {!accountSavedUnavailable ? <>
         {exploreFirst ? <CustomerExplore /> : null}
