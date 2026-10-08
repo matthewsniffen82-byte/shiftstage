@@ -1003,13 +1003,21 @@ export function InfoPanel({ title, children }: { title: string; children: React.
 }
 
 
-export function Metric({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="metric">
+export function Metric({ label, value, href, onClick }: {
+  label: string;
+  value: string;
+  href?: string;
+  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
+}) {
+  const content = (
+    <>
       <span>{label}</span>
       <strong>{value}</strong>
-    </div>
+    </>
   );
+  return href
+    ? <a className="metric metric-link" href={href} onClick={onClick}>{content}</a>
+    : <div className="metric">{content}</div>;
 }
 
 

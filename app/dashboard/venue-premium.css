@@ -143,6 +143,8 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-metrics .metric:first-child strong { color: var(--venue-live) !important; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-value-supporting .metric strong { font-size: 24px !important; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .metric :is(span, small) { color: #b8b1c2 !important; line-height: 1.4; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-metrics .metric-link { color: inherit; text-decoration: none; cursor: pointer; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-tonight-metrics .metric-link:is(:hover, :focus-visible) { outline: 2px solid #b697ed !important; outline-offset: 3px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-value-analytics { display: grid; gap: 16px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-value-breakdown { margin: 0; }
 

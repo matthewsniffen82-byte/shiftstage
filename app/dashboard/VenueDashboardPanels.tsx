@@ -119,6 +119,7 @@ export function VenuePanel({
       if (!workspace) return;
       setActiveWorkspace(workspace);
       if (sectionId === "venue-working-now") setRosterWorkingOnly(true);
+      else if (sectionId === "venue-dancer-roster") setRosterWorkingOnly(false);
       // The inbox opens itself once its request data has loaded.
       if (sectionId === "table-requests") return;
       window.cancelAnimationFrame(frame);
@@ -130,7 +131,7 @@ export function VenuePanel({
         for (let parent = panel.parentElement; parent; parent = parent.parentElement) {
           if (parent instanceof HTMLDetailsElement) parent.open = true;
         }
-        if (sectionId === "venue-working-now") {
+        if (sectionId === "venue-working-now" || sectionId === "venue-dancer-roster") {
           const roster = panel.querySelector<HTMLDetailsElement>("details.venue-nfc-roster");
           if (roster) roster.open = true;
         }
@@ -224,6 +225,7 @@ export function VenuePanel({
     event.preventDefault();
     const targetSectionId = sectionId === "venue-working-now" ? "venue-dancer-roster" : sectionId;
     if (sectionId === "venue-working-now") setRosterWorkingOnly(true);
+    else if (sectionId === "venue-dancer-roster") setRosterWorkingOnly(false);
     setActiveWorkspace(venueWorkspaceForSection(sectionId) || activeWorkspace);
     window.history.replaceState(null, "", `#${sectionId}`);
     window.setTimeout(() => {
@@ -231,7 +233,7 @@ export function VenuePanel({
       if (!section) return;
       const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (section instanceof HTMLDetailsElement) section.open = true;
-      if (sectionId === "venue-working-now") {
+      if (sectionId === "venue-working-now" || sectionId === "venue-dancer-roster") {
         const roster = section.querySelector<HTMLDetailsElement>("details.venue-nfc-roster");
         if (roster) roster.open = true;
       }
@@ -320,9 +322,9 @@ export function VenuePanel({
         <section className="venue-shift-overview" aria-label="Tonight at a glance">
           <div className="venue-section-heading"><h2>Tonight at a glance</h2><a className="venue-text-link" href="#table-requests" onClick={event => openVenueSection(event, "table-requests")}>Table requests <span aria-hidden="true">→</span></a></div>
           <div className="venue-dashboard-metrics venue-tonight-metrics">
-            <Metric label="Working now" value={liveDataReady ? String(workingNow.length) : "—"} />
-            <Metric label="Live Club Deals" value={liveDataReady ? String(activeDealCount) : "—"} />
-            <Metric label="Affiliated dancers" value={liveDataReady ? String(nfcAuthorizedDancerCount) : "—"} />
+            <Metric label="Working now" value={liveDataReady ? String(workingNow.length) : "—"} href="#venue-working-now" onClick={event => openVenueSection(event, "venue-working-now")} />
+            <Metric label="Live Club Deals" value={liveDataReady ? String(activeDealCount) : "—"} href="#venue-club-deals" onClick={event => openVenueSection(event, "venue-club-deals")} />
+            <Metric label="Affiliated dancers" value={liveDataReady ? String(nfcAuthorizedDancerCount) : "—"} href="#venue-dancer-roster" onClick={event => openVenueSection(event, "venue-dancer-roster")} />
           </div>
         </section>
         <section className="info-panel venue-dashboard-section" id="venue-guest-list" aria-labelledby="venue-guest-list-heading" tabIndex={-1}>
@@ -344,9 +346,9 @@ export function VenuePanel({
       <section className="venue-roster-panel venue-dashboard-section" hidden={activeWorkspace !== "roster"} id="venue-workspace-roster" role="tabpanel" aria-labelledby="venue-workspace-roster-tab">
         {(activeWorkspace === "roster" || openedWorkspaces.includes("roster")) && (liveDataReady ? <>
         <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "roster"}>
-          <Metric label="Working now" value={String(workingNow.length)} />
-          <Metric label="Live Club Deals" value={String(activeDealCount)} />
-          <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} />
+          <Metric label="Working now" value={String(workingNow.length)} href="#venue-working-now" onClick={event => openVenueSection(event, "venue-working-now")} />
+          <Metric label="Live Club Deals" value={String(activeDealCount)} href="#venue-club-deals" onClick={event => openVenueSection(event, "venue-club-deals")} />
+          <Metric label="Verified roster" value={String(nfcAuthorizedDancerCount)} href="#venue-dancer-roster" onClick={event => openVenueSection(event, "venue-dancer-roster")} />
         </section>
         <hr className="venue-section-divider" />
 

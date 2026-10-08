@@ -87,7 +87,7 @@ export default function VenueNfcTagPanel({
   }, [initialAffiliations]);
 
   useEffect(() => {
-    if (workingOnly && rosterRef.current) rosterRef.current.open = true;
+    if (rosterRef.current && (workingOnly || window.location.hash === "#venue-dancer-roster")) rosterRef.current.open = true;
   }, [workingOnly]);
 
   const load = useCallback(({ silent = false }: VenueNfcLoadOptions = {}) => {
