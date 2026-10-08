@@ -45,7 +45,7 @@ test("successful NFC activation confirms the live profile and preserves a real n
   assert.match(dashboardClient, /Approved through \$\{venueName\}/);
   assert.match(dashboardClient, /View my profile/);
   assert.match(dashboardClient, /Go to dashboard/);
-  assert.match(dashboardClient, /dashboard-live-status[^>]*><i aria-hidden="true" \/> Public<\/span>/);
+  assert.match(dashboardClient, /className="dancer-activation-confirmation" role="status" aria-live="polite"/);
   assert.match(dashboardClient, /url\.searchParams\.delete\("nfc"\)/);
   assert.match(profileLiveNotification, /after update of status, verification_status, is_public/);
   assert.match(profileLiveNotification, /'Your profile is live'/);

@@ -15,9 +15,9 @@ const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArr
 
 function fixture({ ready = true, storedDraft } = {}) {
   const slots = [], effects = [], storage = new Map();
-  let cursor = 0, saveSucceeds = true;
+  let cursor = 0;
   const exports = {};
-  const Preview = ({ buttonLabel }) => React.createElement("button", null, buttonLabel);
+  const IdentityEditor = () => React.createElement("button", null, "Edit");
   const props = {
     profile: { id: "fixture", identity_saved_at: ready ? "2026-09-22" : null, stage_name: ready ? "Dancer" : "", city: ready ? "Las Vegas" : "", avatarPhotoUrl: ready ? "/avatar.jpg" : "", dancer_photos: ready ? [{ status: "approved" }] : [] },
     draftIdentity: { stageName: ready ? "Dancer" : "", city: ready ? "Las Vegas" : "" },
@@ -36,15 +36,14 @@ function fixture({ ready = true, storedDraft } = {}) {
     persistedDancerStageName: profile => profile.identity_saved_at ? profile.stage_name : "",
     dancerPhotoItemsFromProfile: profile => profile.dancer_photos,
     dancerStepOneStateLabel: state => state,
-    DancerProfilePreview: Preview,
-    saveDancerProfileEditor: async () => saveSucceeds,
+    DancerIdentityEditor: IdentityEditor,
     window: { localStorage: { getItem: key => storage.get(key) ?? null } },
   });
   const render = () => { cursor = 0; effects.length = 0; return exports.DancerOnboardingProfileMediaWorkspace(props); };
   const hydrate = () => { render(); effects.splice(0).forEach(effect => effect()); return render(); };
   const status = tree => renderToStaticMarkup(walk(tree).find(node => node.props.role === "status"));
-  const editor = tree => walk(tree).find(node => node.type === Preview).props;
-  return { props, render, hydrate, status, editor, storage, failSave() { saveSucceeds = false; } };
+  const editor = tree => walk(tree).find(node => node.type === IdentityEditor).props;
+  return { props, render, hydrate, status, editor, storage };
 }
 
 test("a persisted, complete profile shows saved beside the heading after checking for drafts", () => {
@@ -64,12 +63,10 @@ test("new and incomplete profiles are never labelled saved", () => {
   assert.match(f.status(f.render()), /Unsaved changes/);
 });
 
-test("edits remain unsaved after a failed save and clear only when persisted values match", async () => {
+// Failed saves are exercised through the real save callback in dancer-shared-workspace.test.mjs.
+test("edits remain unsaved until persisted values match", () => {
   const f = fixture(); f.hydrate();
   f.props.draftIdentity = { ...f.props.draftIdentity, stageName: "Updated dancer" };
-  assert.match(f.status(f.render()), /Unsaved changes/);
-  f.failSave();
-  assert.equal(await f.editor(f.render()).onEditorSave(), false);
   assert.match(f.status(f.render()), /Unsaved changes/);
   f.props.profile = { ...f.props.profile, stage_name: "Updated dancer" };
   assert.match(f.status(f.hydrate()), /Profile saved/);
@@ -90,5 +87,4 @@ test("retired social drafts cannot block onboarding or mark the profile unsaved"
   const f = fixture({ storedDraft: "social" });
   assert.match(f.status(f.hydrate()), /Profile saved/);
   assert.doesNotMatch(f.status(f.render()), /Unsaved changes/);
-  assert.equal(f.editor(f.render()).editorSections.socials, undefined);
 });
