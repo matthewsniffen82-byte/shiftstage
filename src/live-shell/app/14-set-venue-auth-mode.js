@@ -128,10 +128,10 @@
       createTab.classList.toggle("active", isCreate);
       signInTab.setAttribute("aria-selected", String(!isCreate));
       createTab.setAttribute("aria-selected", String(isCreate));
-      document.getElementById("authPageTitle").textContent = isCreate ? "Choose your account" : "Sign in to MyDancr";
+      document.getElementById("authPageTitle").textContent = isCreate ? "Choose your account" : "Sign in";
       document.getElementById("authRoleSubtitle").textContent = isCreate
         ? "Pick the account that matches how you use MyDancr."
-        : "Sign in with your guest, dancer, or club account.";
+        : "For guests, dancers, and clubs.";
       document.querySelector(".auth-selected-role").hidden = isCreate;
       document.getElementById("authOverview").hidden = !isCreate;
       document.getElementById("authForm").hidden = isCreate;

@@ -41459,8 +41459,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               <span aria-hidden="true">‹</span> Back to MyDancr
             </button>
             <div>
-              <span class="eyebrow">MyDancr account</span>
-              <h2 id="authPageTitle">Sign in to MyDancr</h2>
+              <h2 id="authPageTitle">Sign in</h2>
             </div>
           </div>
           <div class="auth-entry-tabs" role="tablist" aria-label="Account access">
@@ -41468,33 +41467,33 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
             <button class="auth-entry-tab" id="authCreateTab" type="button" role="tab" aria-selected="false">Create account</button>
           </div>
           <div class="auth-form-head auth-selected-role">
-            <span id="authRoleSubtitle">Sign in with your guest, dancer, or club account.</span>
+            <span id="authRoleSubtitle">For guests, dancers, and clubs.</span>
           </div>
           <div class="role-options auth-role-grid" id="authOverview" aria-label="Choose account type" hidden>
             <button class="role-option account-option auth-account-choice" id="customerSignupBtn" type="button">
               <span class="auth-account-choice-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle></svg>
               </span>
-              <span><strong>Guest</strong><small>Save dancers, clubs, Club Deals, and alerts privately.</small></span>
+              <span><strong>Guest</strong><small>Save favorites and Club Deals privately.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
             <button class="role-option account-option auth-account-choice" id="openDancerSignup" type="button">
               <span class="auth-account-choice-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="m12 2 1.35 4.15L17.5 7.5l-4.15 1.35L12 13l-1.35-4.15L6.5 7.5l4.15-1.35L12 2Z"></path><path d="m18 14 .75 2.25L21 17l-2.25.75L18 20l-.75-2.25L15 17l2.25-.75L18 14Z"></path><path d="m5 14 .55 1.45L7 16l-1.45.55L5 18l-.55-1.45L3 16l1.45-.55L5 14Z"></path></svg>
               </span>
-              <span><strong>Dancer</strong><small>Create a reviewed profile, then tap the dressing-room sticker to approve a venue.</small></span>
+              <span><strong>Dancer</strong><small>Build your verified profile.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
             <button class="role-option account-option auth-account-choice" id="venueSignupBtn" type="button">
               <span class="auth-account-choice-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24"><path d="M4 21V6l8-4 8 4v15"></path><path d="M2 21h20"></path><path d="M8 9h2M14 9h2M8 13h2M14 13h2M10 21v-4h4v4"></path></svg>
               </span>
-              <span><strong>Club</strong><small>Request approval to list your club, build its page, and publish it on MyDancr.</small></span>
+              <span><strong>Club</strong><small>Apply to list and manage your club.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
           </div>
           <form class="auth-form" id="authForm" data-auth-view="unified">
-            <div class="auth-form-head customer-form-head">
+            <div class="auth-form-head customer-form-head" hidden>
               <strong id="customerAuthModeLabel">Sign in</strong>
               <span id="customerAuthModeDescription">MyDancr opens the right dashboard automatically.</span>
             </div>
@@ -41512,10 +41511,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               </div>
             </div>
             <ul class="field-note" id="customerPasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
-              <li>At least 6 characters</li>
-              <li>At least 1 capital letter</li>
-              <li>At least 1 number</li>
-              <li>At least 1 special character (for example, ! @ # $)</li>
+              <li>6+ characters</li>
+              <li>1 uppercase letter</li>
+              <li>1 number</li>
+              <li>1 symbol (! @ # $)</li>
             </ul>
             <div class="auth-help-row">
               <button class="forgot-password-link" id="customerForgotPasswordBtn" type="button" aria-haspopup="dialog" aria-expanded="false">Forgot password?</button>
@@ -41539,7 +41538,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
-            <a class="auth-vip-entry" id="vipSignInLink" href="/vip">VIP sign in <span>Private access</span></a>
+            <a class="auth-vip-entry" id="vipSignInLink" href="/vip">VIP sign in</a>
           </form>
           <form class="auth-form" id="venueLoginForm" data-auth-view="venue" novalidate hidden>
             <div class="venue-auth-mode-copy">
@@ -56017,10 +56016,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       createTab.classList.toggle("active", isCreate);
       signInTab.setAttribute("aria-selected", String(!isCreate));
       createTab.setAttribute("aria-selected", String(isCreate));
-      document.getElementById("authPageTitle").textContent = isCreate ? "Choose your account" : "Sign in to MyDancr";
+      document.getElementById("authPageTitle").textContent = isCreate ? "Choose your account" : "Sign in";
       document.getElementById("authRoleSubtitle").textContent = isCreate
         ? "Pick the account that matches how you use MyDancr."
-        : "Sign in with your guest, dancer, or club account.";
+        : "For guests, dancers, and clubs.";
       document.querySelector(".auth-selected-role").hidden = isCreate;
       document.getElementById("authOverview").hidden = !isCreate;
       document.getElementById("authForm").hidden = isCreate;
