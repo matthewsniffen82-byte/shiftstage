@@ -23,7 +23,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, ...diagnostic }, { headers });
   } catch (error) {
     if (error instanceof OndatoUnavailableError) {
-      return NextResponse.json({ ok: false, stage: error.stage, providerStatus: error.providerStatus || null }, { status: 503, headers });
+      return NextResponse.json({ ok: false, stage: error.stage, providerStatus: error.providerStatus || null,
+        ...(error.referenceFailure ? { referenceFailure: error.referenceFailure } : {}) }, { status: 503, headers });
     }
     const status = error instanceof PublicApiError ? error.status : 503;
     return NextResponse.json({ ok: false, error: status === 400 ? "A valid session ID is required."

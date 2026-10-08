@@ -1,12 +1,13 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
-import { inspectOndatoDecision, jsonObject } from "./ondato-policy";
+import { assertOndatoReference, inspectOndatoDecision, jsonObject, OndatoReferenceMismatch } from "./ondato-policy";
 import { isOndatoId, ondatoHostedUrl } from "./ondato-url";
 
 type OndatoStage = "configuration" | "database" | "authentication" | "identity" | "identification" | "setup" | "webhooks" | "references";
 export class OndatoUnavailableError extends PublicApiError {
-  constructor(readonly stage: OndatoStage, readonly providerStatus?: number) {
+  constructor(readonly stage: OndatoStage, readonly providerStatus?: number,
+    readonly referenceFailure?: { reference: string; caseOnly: boolean; missing: boolean }) {
     super("UNAVAILABLE", "Age verification is temporarily unavailable. Please try again later.", 503);
     this.name = "OndatoUnavailableError";
   }
@@ -121,12 +122,17 @@ async function readOndatoSession(admin: SupabaseClient, sessionId: string, timeo
     .select("user_id, attempt_id, session_id, provider_integration_id, status, verified_at, checked_at").eq("session_id", sessionId).eq("provider", "ondato").maybeSingle();
   if (error) throw unavailable();
   if (!attempt) return;
-  if (attempt.provider_integration_id !== config.setupId) throw unavailable("references");
+  try { assertOndatoReference(attempt.provider_integration_id, config.setupId, "stored_setup"); }
+  catch (error) { throw referenceFailure(error); }
   const checkedAt = new Date().toISOString();
   const request = await providerClient(config, timeoutMs);
   const identity = await request("idvapi", `/v1/identity-verifications/${sessionId}`);
-  if (identity.id !== sessionId || identity.externalReferenceId !== attempt.attempt_id
-    || identity.applicationId !== config.applicationId || jsonObject(identity.setup).id !== config.setupId) throw unavailable("references");
+  try {
+    assertOndatoReference(identity.id, sessionId, "idv_session");
+    assertOndatoReference(identity.externalReferenceId, attempt.attempt_id, "idv_attempt");
+    assertOndatoReference(identity.applicationId, config.applicationId, "idv_application");
+    assertOndatoReference(jsonObject(identity.setup).id, config.setupId, "idv_setup");
+  } catch (error) { throw referenceFailure(error); }
   const kycStep = jsonObject(jsonObject(identity.step).kycIdentification);
   const kycId = kycStep.id;
   const identification = isOndatoId(kycId) ? await request("kycid", `/v1/identifications/${kycId}`) : null;
@@ -136,8 +142,13 @@ async function readOndatoSession(admin: SupabaseClient, sessionId: string, timeo
     ? await request("kycid", `/v1/identifications/${kycId}/setup`) : null;
   let decision;
   try { decision = inspectOndatoDecision(identity, identification, identificationSetup, { sessionId, attemptId: attempt.attempt_id, setupId: config.setupId, applicationId: config.applicationId }); }
-  catch { throw unavailable("references"); }
+  catch (error) { throw referenceFailure(error); }
   return { attempt, checkedAt, decision, request, config };
+}
+
+function referenceFailure(error: unknown) {
+  return new OndatoUnavailableError("references", undefined, error instanceof OndatoReferenceMismatch
+    ? { reference: error.reference, caseOnly: error.caseOnly, missing: error.missing } : undefined);
 }
 
 // Operator-only diagnostic: reads the exact same provider evidence as reconciliation,

@@ -5,6 +5,22 @@ type JsonObject = Record<string, unknown>;
 export type AgeVerificationStatus = "not_started" | "creating" | "pending" | "in_review" | "verified" | "declined" | "expired";
 export const jsonObject = (value: unknown): JsonObject => value !== null && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
 
+export class OndatoReferenceMismatch extends Error {
+  readonly reference: string;
+  readonly caseOnly: boolean;
+  readonly missing: boolean;
+  constructor(reference: string, actual: unknown, expected: string) {
+    super("ONDATO_DECISION_MISMATCH");
+    this.reference = reference;
+    this.caseOnly = typeof actual === "string" && actual.toLowerCase() === expected.toLowerCase();
+    this.missing = actual === null || actual === undefined || actual === "";
+  }
+}
+
+export function assertOndatoReference(actual: unknown, expected: string, reference: string) {
+  if (actual !== expected) throw new OndatoReferenceMismatch(reference, actual, expected);
+}
+
 export function verifyOndatoPayload(raw: string, headers: Headers, config: { webhookSecret: string; applicationId: string }, now = Date.now()): JsonObject | null {
   const signature = headers.get("ondato-signature")?.match(/^t=(\d{10}),\s*s=([a-f0-9]{64})$/i);
   if (!signature || !config.webhookSecret) return null;
@@ -42,18 +58,18 @@ export function inspectOndatoDecision(identity: unknown, identification: unknown
   sessionId: string; attemptId: string; setupId: string; applicationId: string;
 }, now = new Date()): { status: AgeVerificationStatus; reason: string } {
   const idv = jsonObject(identity);
-  if (idv.id !== expected.sessionId || idv.externalReferenceId !== expected.attemptId
-    || idv.applicationId !== expected.applicationId || jsonObject(idv.setup).id !== expected.setupId) {
-    throw new Error("ONDATO_DECISION_MISMATCH");
-  }
+  assertOndatoReference(idv.id, expected.sessionId, "idv_session");
+  assertOndatoReference(idv.externalReferenceId, expected.attemptId, "idv_attempt");
+  assertOndatoReference(idv.applicationId, expected.applicationId, "idv_application");
+  assertOndatoReference(jsonObject(idv.setup).id, expected.setupId, "idv_setup");
   if (idv.status === "Expired" || idv.status === "Aborted") return { status: "expired", reason: "session_ended" };
   const step = jsonObject(jsonObject(idv.step).kycIdentification);
   if (!isOndatoId(step.id)) return { status: idv.status === "Pending" || idv.status === "InProgress" ? "pending" : "in_review", reason: "identification_not_available" };
   const kyc = jsonObject(identification);
-  if (kyc.id !== step.id || kyc.identityVerificationId !== expected.sessionId
-    || kyc.applicationId !== expected.applicationId || kyc.externalReferenceId !== expected.attemptId) {
-    throw new Error("ONDATO_DECISION_MISMATCH");
-  }
+  assertOndatoReference(kyc.id, step.id, "kyc_identification");
+  assertOndatoReference(kyc.identityVerificationId, expected.sessionId, "kyc_session");
+  assertOndatoReference(kyc.applicationId, expected.applicationId, "kyc_application");
+  assertOndatoReference(kyc.externalReferenceId, expected.attemptId, "kyc_attempt");
   if (kyc.status === "Rejected") return { status: "declined", reason: "provider_rejected" };
   if (idv.status !== "Completed") return { status: "in_review", reason: "session_not_completed" };
   if (kyc.status !== "Approved") return { status: "in_review", reason: "identification_not_approved" };
@@ -67,9 +83,9 @@ export function inspectOndatoDecision(identity: unknown, identification: unknown
   const reference = jsonObject(kyc.setup);
   if (!isOndatoId(reference.id) || !isOndatoId(reference.versionId)
     || !isOndatoId(setup.id) || !isOndatoId(setup.versionId) || !isOndatoId(setup.applicationId)) return { status: "in_review", reason: "identification_setup_reference_missing" };
-  if (setup.id !== reference.id || setup.versionId !== reference.versionId || setup.applicationId !== expected.applicationId) {
-    throw new Error("ONDATO_DECISION_MISMATCH");
-  }
+  assertOndatoReference(setup.id, reference.id, "kyc_setup");
+  assertOndatoReference(setup.versionId, reference.versionId, "kyc_setup_version");
+  assertOndatoReference(setup.applicationId, expected.applicationId, "kyc_setup_application");
   const face = jsonObject(setup.face);
   // Ondato's hosted flow performs active liveness before KYC approval; its API
   // has no SuccessfulActiveLivenessCheck rule. Require the successful KYC step

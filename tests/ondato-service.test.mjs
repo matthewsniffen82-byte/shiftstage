@@ -81,6 +81,20 @@ test('provider failures retain only the failed operation and HTTP status for pri
   }
 });
 
+test('reference diagnostics identify the exact mismatch without disclosing reference values', async () => {
+  for (const [options, reference, missing] of [
+    [{ current: { ...attempt, provider_integration_id: ids.kycId } }, 'stored_setup', false],
+    [{ idv: { ...identity(), applicationId: ids.kycId } }, 'idv_application', false],
+    [{ kyc: { ...identification(), externalReferenceId: null } }, 'kyc_attempt', true],
+    [{ setup: { ...identificationSetup(), versionId: ids.sessionId } }, 'kyc_setup_version', false],
+  ]) {
+    const f = fixture(options);
+    await assert.rejects(f.inspect(), error => error.stage === 'references' && error.referenceFailure.reference === reference
+      && error.referenceFailure.missing === missing && !Object.values(ids).some(id => JSON.stringify(error).includes(id)));
+    assert.equal(f.writes.length, 0);
+  }
+});
+
 test('OAuth session creation sends only the opaque attempt and setup; all browser returns use the fixed callback',async()=>{
   const f=fixture();const result=await f.start();assert.equal(result.url,hosted);
   const requests=f.calls.filter(x=>x.url);assert.equal(requests.length,3);
