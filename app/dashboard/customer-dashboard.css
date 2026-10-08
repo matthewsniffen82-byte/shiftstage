@@ -108,3 +108,12 @@ body .dashboard-shell.dashboard-shell-customer .support-panel label { color: #d0
 @media (prefers-reduced-motion: reduce) {
   body .dashboard-shell.dashboard-shell-customer .venue-dashboard-section-toggle { transition: none; }
 }
+/* A quiet return path, shown only after active VIP membership is confirmed. */
+.customer-dashboard-grid > .customer-vip-shortcut {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  grid-column: 1 / -1; padding: 14px 18px; border: 1px solid #514335; border-radius: 16px;
+  background: #151019; color: #ddc396; text-decoration: none;
+}
+.customer-vip-shortcut small { display: block; margin-bottom: 3px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #ddc396; }
+.customer-vip-shortcut strong { color: #f5f2fa; font-size: 15px; font-weight: 650; }
+.customer-vip-shortcut:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }

@@ -20,7 +20,7 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-shell button, .vip-dashboard-shell .vip-link-action { background: #21172b !important; border: 1px solid #67467f !important; border-radius: 9px !important; color: #eadcf6 !important; box-shadow: none !important; font-weight: 600 !important; letter-spacing: 0 !important; backdrop-filter: none !important; }
 .vip-dashboard-shell button:not(:disabled):hover { border-color: #ae82d1 !important; color: #fff !important; }
 .vip-dashboard-shell .vip-panel { padding: 23px; background: linear-gradient(130deg, #16121d, #0f0d13); border-color: var(--vip-line); border-radius: 16px; box-shadow: 0 4px 14px #0003; }
-.vip-dashboard-shell .vip-primary, .vip-auth-shell .vip-primary { background: #8a55cf !important; color: #fff !important; border-color: #a77ce1 !important; box-shadow: inset 0 1px 0 #dec6ff35, 0 4px 14px #6932a52c !important; }
+.vip-dashboard-shell .vip-primary { background: #8a55cf !important; color: #fff !important; border-color: #a77ce1 !important; box-shadow: inset 0 1px 0 #dec6ff35, 0 4px 14px #6932a52c !important; }
 .vip-dashboard-shell .vip-primary { display: inline-flex; gap: 10px; align-items: center; justify-content: center; }
 .vip-dashboard-shell .vip-primary:not(:disabled):hover { background: #9b67dd !important; }
 .vip-dashboard-shell :is(button, input, select, textarea, a):focus-visible { outline-color: #c6a5fb; }
@@ -135,11 +135,6 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 36px; padding: 22px 0 0; border-top: 1px solid #34253d; }
 .vip-dashboard-footer > span { color: var(--vip-gold); font-size: 11px; }
 .vip-dashboard-footer small { font-size: 10px; text-align: right; }
-.vip-auth-shell .vip-container { max-width: 960px; }
-.vip-auth-shell .vip-hero { text-align: center; padding: 38px 0 27px; }
-.vip-auth-shell .vip-hero h1 { font-size: clamp(30px, 5vw, 44px); margin-top: 12px; }
-.vip-auth-shell .vip-hero p { font-size: 14px; }
-.vip-auth-shell .vip-auth { border-color: #604077; background: linear-gradient(130deg, #1b1324, #100d15); }
 
 @media (max-width: 880px) {
   .vip-plan-grid { grid-template-columns: minmax(0, 1fr); }

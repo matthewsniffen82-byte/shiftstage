@@ -387,6 +387,8 @@
       if (confirmInput) confirmInput.required = isSignup;
       document.getElementById("customerSignupNote").hidden = !isSignup;
       document.getElementById("customerBackToTypes").hidden = !isSignup;
+      const vipSignInLink = document.getElementById("vipSignInLink");
+      if (vipSignInLink) vipSignInLink.hidden = isSignup;
       const forgotButton = document.getElementById("customerForgotPasswordBtn");
       if (forgotButton) forgotButton.hidden = mode !== "login";
       const helpRow = forgotButton?.closest(".auth-help-row");

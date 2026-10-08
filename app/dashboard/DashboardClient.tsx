@@ -28,6 +28,7 @@ import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import { loadDancerDashboard } from "./dancer-dashboard-loader";
 import CustomerAccountPanel from "./CustomerAccountPanel";
+import CustomerVipShortcut from "./CustomerVipShortcut";
 import DancerNotificationSettings from "./DancerNotificationSettings";
 import { DEVICE_SAVED_DEALS_KEY, DEVICE_SAVED_DEALS_CHANGED_EVENT, mergeCustomerSavedClubDeals, readDeviceSavedClubDeals, type DeviceSavedClubDeal } from "@/src/lib/dancr/customer-device-deals";
 import { DASHBOARD_SESSION_KEY as SESSION_KEY, DashboardDataRequestError, dashboardLoadErrorMessage, persistDashboardSession, readSession, requestAccountJson, requestDashboardJson, requestOptionalDashboardJson, requestVenueDashboardJson, storedSessionAccount, storedSessionIsFresh, type DashboardSessionAccount } from "./dashboard-session";
@@ -548,6 +549,7 @@ export default function DashboardClient({
                   <button className="primary-link" type="button" onClick={retryDashboard}>Try again</button>
                 </InfoPanel>
               ) : null}
+              {state.account?.id ? <CustomerVipShortcut key={state.account.id} accountId={state.account.id} /> : null}
               <CustomerPanel
                 key={String(state.account?.id || state.account?.email || "guest")}
                 saved={customerSaved}
@@ -566,7 +568,6 @@ export default function DashboardClient({
                 </div>}
                 accountContent={<div id="customer-account" tabIndex={-1}>
                   <div className="customer-view-heading"><h2>Account</h2><p>Your account and activity stay private.</p></div>
-                  <p><Link href="/vip">Open your VIP lounge →</Link></p>
                   {isLoading ? <p role="status">Loading your account…</p> : <div className="customer-account-stack">
                     <CustomerAccountPanel account={state.account || {}} onAccountChange={updateAccountDetails} />
                     <details className="customer-account-disclosure" id="customer-support-section">

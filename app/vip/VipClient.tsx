@@ -65,9 +65,9 @@ export default function VipClient({ token = "" }: { token?: string }) {
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
       if (!unchanged()) throw new Error("Your sign-in changed in another window. Refresh to continue.");
       if (!data.session?.accessToken) {
-        setStatus(mode === "reset_password" ? data.message : "Check your email to confirm your account. Then return to this private link and sign in to activate VIP access."); setMode("login"); setPassword(""); return;
+        setStatus(mode === "reset_password" ? data.message : "Check your email to confirm your MyDancr guest account. Your confirmation link brings you back to activate VIP access."); setMode("login"); setPassword(""); return;
       }
-      if (data.account?.role !== "customer") throw new Error("Use a customer account with the invited email for VIP access.");
+      if (data.account?.role !== "customer") throw new Error("Use your MyDancr guest account with the invited email for VIP access.");
       if (!persistBrowserAuthSession({ ...data.session, account: data.account })) throw new Error("Unable to save your sign-in in this browser.");
       setSession(readSession()); setPassword("");
     });
@@ -86,19 +86,19 @@ export default function VipClient({ token = "" }: { token?: string }) {
   }
   return <main className="vip-shell vip-auth-shell" data-global-navigation-swipe="ignore"><div className="vip-container">
     <header className="vip-header"><Link href="/" className="vip-brand">mydanc<span>r</span></Link><div className="vip-actions">{session?.accessToken && <button type="button" disabled={busy} onClick={() => void signOut()}>Sign out</button>}<Link href="/">Back to MyDancr</Link></div></header>
-    <div className="vip-hero"><span className="vip-eyebrow">PRIVATE ACCESS · PERSONAL INVITATION</span><h1>Your VIP lounge.</h1><p>{invitation ? `You’re invited to ${invitation.venueName}.` : "Your private connection to the venues you love."}</p></div>
+    <div className="vip-hero"><span className="vip-eyebrow">Private access</span><h1>{invitation ? invitation.venueName : "Your VIP lounge."}</h1><p>{invitation ? "Your private VIP invitation." : "Your venues. Your next visit. One MyDancr sign-in."}</p></div>
     {status && <p className="vip-feedback" role="status">{status}</p>}{error && <p className="vip-feedback vip-error" role="alert">{error}</p>}
     {!ready ? <p role="status">Opening your lounge…</p> : token && !invitation ? <section className="vip-panel"><p role={inviteError ? "alert" : "status"}>{inviteError || "Checking your private invitation…"}</p><Link href="/vip">Go to VIP sign in</Link></section>
-    : !session?.accessToken ? <section className="vip-panel vip-auth"><span className="vip-eyebrow">{invitation ? "YOU’RE ON THE LIST" : "WELCOME BACK"}</span><h2>{mode === "signup" ? "Set up your VIP account" : mode === "reset_password" ? "Reset your password" : "VIP sign in"}</h2>
-      <p>{invitation ? `Use the invited email (${invitation.maskedEmail}). Already have a MyDancr customer account? Sign in with it.` : "Sign in with your invited customer email. VIP access is provided privately by your venue."}</p>
-      {invitation && <div className="vip-actions"><button type="button" aria-pressed={mode === "signup"} disabled={busy} onClick={() => setMode("signup")}>Create account</button><button type="button" aria-pressed={mode === "login"} disabled={busy} onClick={() => setMode("login")}>Sign in</button></div>}
+    : !session?.accessToken ? <section className="vip-panel vip-auth"><h2>{mode === "signup" ? "Activate your VIP access" : mode === "reset_password" ? "Reset your password" : "VIP sign in"}</h2>
+      <p>{invitation ? `Use the invited email (${invitation.maskedEmail}). Already have a MyDancr guest account? Choose Sign in and use your existing password.` : "Use your existing MyDancr guest email and password. VIP access is unlocked by a private club invitation."}</p>
+      {invitation && mode !== "reset_password" && <div className="vip-auth-tabs" role="group" aria-label="Account access"><button type="button" aria-pressed={mode === "login"} disabled={busy} onClick={() => setMode("login")}>Sign in</button><button type="button" aria-pressed={mode === "signup"} disabled={busy} onClick={() => setMode("signup")}>Create account</button></div>}
       <form onSubmit={authenticate}><label>Email<input type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} required maxLength={254} disabled={busy} /></label>
         {mode !== "reset_password" && <PasswordField label="Password" value={password} onChange={event => setPassword(event.target.value)} autoComplete={mode === "signup" ? "new-password" : "current-password"} required disabled={busy} />}
-        {mode === "signup" && <PasswordRequirements password={password} />}
-        <button className="vip-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account" : mode === "reset_password" ? "Send reset link" : "Enter VIP lounge"}</button>
+        {mode === "signup" && <><PasswordRequirements password={password} /><small>This creates your MyDancr guest account. Your invitation adds VIP access to it.</small></>}
+        <button className="vip-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account & continue" : mode === "reset_password" ? "Send reset link" : "Enter VIP lounge"}</button>
       </form><button className="vip-text-button" type="button" disabled={busy} onClick={() => setMode(mode === "reset_password" ? "login" : "reset_password")}>{mode === "reset_password" ? "Back to sign in" : "Forgot password?"}</button>
-    </section> : !customer ? <section className="vip-panel"><h2>Use your invited customer account</h2><p>You’re signed in to a different account type. Sign out, then use the email that received your VIP invitation.</p></section>
-    : token && invitation ? <section className="vip-panel vip-auth"><span className="vip-eyebrow">{invitation.venueName}</span><h2>Make yourself known.</h2><p>Signed in as {session.account?.email}. This invitation is for {invitation.maskedEmail}.</p><form onSubmit={accept}><label>Your name<input value={name} onChange={event => setName(event.target.value)} maxLength={80} autoComplete="name" required disabled={busy} /></label><small>Your venue will see this name with your requests.</small><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Activating…" : "Activate VIP access"}</button></form><small>Link expires {new Date(invitation.expiresAt).toLocaleDateString()}.</small></section>
+    </section> : !customer ? <section className="vip-panel"><h2>Use your invited guest account</h2><p>You’re signed in to a different account type. Sign out, then use the email that received your VIP invitation.</p></section>
+    : token && invitation ? <section className="vip-panel vip-auth"><h2>Activate your VIP access</h2><p>Signed in as {session.account?.email}. This invitation is for {invitation.maskedEmail}.</p><form onSubmit={accept}><label>Your name<input value={name} onChange={event => setName(event.target.value)} maxLength={80} autoComplete="name" required disabled={busy} /></label><small>Your club will see this name with your requests.</small><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Activating…" : "Activate VIP access"}</button></form><small>Link expires {new Date(invitation.expiresAt).toLocaleDateString()}.</small></section>
     : null}
     <footer className="vip-footer">Private invitations. Personal plans. <span>MyDancr VIP</span></footer>
   </div></main>;

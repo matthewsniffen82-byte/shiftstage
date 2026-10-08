@@ -20,6 +20,7 @@ test("the public auth surface has one sign-in and three concise signup paths", (
   assert.match(liveApp, /id="authSignInTab"[^>]*>Sign in<\/button>/);
   assert.match(liveApp, /id="authCreateTab"[^>]*>Create account<\/button>/);
   assert.match(liveApp, /id="authForm" data-auth-view="unified"/);
+  assert.match(liveApp, /id="vipSignInLink" href="\/vip">VIP sign in/);
   assert.doesNotMatch(liveApp, /id="dancerLoginForm"|id="venueLoginSubmit"/);
   assert.match(liveApp, /id="customerSignupBtn"[\s\S]*?<strong>Guest<\/strong>/);
   assert.match(liveApp, /id="customerSignupBtn"[\s\S]*?class="auth-account-choice-icon"/);
