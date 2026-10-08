@@ -85,7 +85,7 @@ export default function VipClient({ token = "" }: { token?: string }) {
     return <VipDashboard key={session.account?.id || session.account?.email} account={session.account || {}} onSignOut={signOut} signingOut={busy} accountError={error} />;
   }
   return <main className="vip-shell vip-auth-shell" data-global-navigation-swipe="ignore"><div className="vip-container">
-    <header className="vip-header"><Link href="/" className="vip-brand">mydanc<span>r</span></Link><div className="vip-actions">{session?.accessToken && <button type="button" disabled={busy} onClick={() => void signOut()}>Sign out</button>}<Link href="/">Back to MyDancr</Link></div></header>
+    <header className="vip-header"><Link href="/" className="vip-brand">mydanc<span>r</span></Link><div className="vip-actions">{session?.accessToken && <button type="button" disabled={busy} onClick={() => void signOut()}>Sign out</button>}<Link href="/" className="dancr-home-back"><span aria-hidden="true">←</span> Back to MyDancr</Link></div></header>
     <div className="vip-hero"><span className="vip-eyebrow">Private access</span><h1>{invitation ? invitation.venueName : "Your VIP lounge."}</h1><p>{invitation ? "Your private VIP invitation." : "Your venues. Your next visit. One MyDancr sign-in."}</p></div>
     {status && <p className="vip-feedback" role="status">{status}</p>}{error && <p className="vip-feedback vip-error" role="alert">{error}</p>}
     {!ready ? <p role="status">Opening your lounge…</p> : token && !invitation ? <section className="vip-panel"><p role={inviteError ? "alert" : "status"}>{inviteError || "Checking your private invitation…"}</p><Link href="/vip">Go to VIP sign in</Link></section>

@@ -641,7 +641,7 @@ export default function AdminClient() {
           </div>
           <DashboardCloseButton
             fallbackHref={homeDiscoveryHref("tonight")}
-            label="Close admin dashboard and return to MyDancr"
+            label="Back to MyDancr"
           />
         </div>
         {!isLoading && !needsSignIn ? (

@@ -481,7 +481,7 @@ export default function DashboardClient({
       <section className="dashboard-head">
         <div className="dashboard-head-row">
           <div className="dashboard-head-copy"><span className="eyebrow">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
-          <DashboardCloseButton fallbackHref={dashboardCloseHref} label="Close club request" />
+          <DashboardCloseButton fallbackHref={dashboardCloseHref} label="Back to MyDancr" />
         </div>
       </section>
       <article className="info-panel">
@@ -518,7 +518,7 @@ export default function DashboardClient({
           </div>
           <DashboardCloseButton
             fallbackHref={dashboardCloseHref}
-            label={`Close ${role} dashboard and return to MyDancr`}
+            label="Back to MyDancr"
           />
         </div>
         {state.error && (role === "venue" || role === "dancer") ? (

@@ -604,16 +604,6 @@
           letter-spacing: -.035em;
         }
 
-        #authPage #authClose {
-          width: 44px;
-          height: 44px;
-          flex: 0 0 44px;
-          border-color: rgba(203, 213, 225, .16) !important;
-          color: var(--dancr-color-text-secondary) !important;
-          background: rgba(255, 255, 255, .035) !important;
-          box-shadow: none !important;
-        }
-
         #authPage .auth-choice-card {
           width: 100%;
           margin-inline: auto;

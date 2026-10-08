@@ -33,7 +33,7 @@ test("dashboard close keeps a canonical discovery fallback for direct entry", ()
 
 test("customer, dancer, club, and admin dashboards share the fast close control", () => {
   assert.match(dashboard, /<DashboardCloseButton[\s\S]*?fallbackHref=\{dashboardCloseHref\}/);
-  assert.match(dashboard, /label=\{`Close \$\{role\} dashboard and return to MyDancr`\}/);
+  assert.match(dashboard, /label="Back to MyDancr"/);
   assert.match(admin, /<DashboardCloseButton[\s\S]*?fallbackHref=\{homeDiscoveryHref\("tonight"\)\}/);
-  assert.match(admin, /label="Close admin dashboard and return to MyDancr"/);
+  assert.match(admin, /label="Back to MyDancr"/);
 });

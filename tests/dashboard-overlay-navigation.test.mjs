@@ -7,7 +7,7 @@ const homeSource = await readFile(
   "utf8",
 );
 
-test("every account dashboard fully isolates the public shell and keeps its X as the exit to home", () => {
+test("every account dashboard fully isolates the public shell and keeps its return control as the exit to home", () => {
   assert.match(
     homeSource,
     /body\.account-surface-open \.app > header,\s*body\.account-surface-open \.app > main,\s*body\.account-surface-open #discoveryTabs \{\s*display: none !important;\s*\}/,
@@ -52,7 +52,7 @@ test("every account dashboard fully isolates the public shell and keeps its X as
   );
   assert.match(
     homeSource,
-    /<button class="close-btn" id="dancerDashboardClose" aria-label="Close dancer dashboard">/,
+    /<button class="dancr-home-back" id="dancerDashboardClose" type="button">\s*<span aria-hidden="true">←<\/span> Back to MyDancr/,
   );
   assert.match(
     homeSource,

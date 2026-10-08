@@ -61,14 +61,11 @@ export function DashboardCloseButton({
   return (
     <a
       aria-label={label}
-      className="dashboard-close"
+      className="dancr-home-back"
       href={fallbackHref}
       onClick={closeDashboard}
     >
-      <svg aria-hidden="true" viewBox="0 0 24 24">
-        <path d="M6 6l12 12" />
-        <path d="M18 6L6 18" />
-      </svg>
+      <span aria-hidden="true">←</span> Back to MyDancr
     </a>
   );
 }
