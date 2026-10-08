@@ -16,7 +16,10 @@ export default function VenueValueAnalytics({ report, periodStart, periodEnd, ti
   const completeBaseline = new Date(periodStart).getTime() * 2 - new Date(periodEnd).getTime() >= since.getTime();
   const rows = report.interactions.filter(row => row.event_type !== "card_impression" && (source === "all" || source === row.source));
   const dancerMetrics = ["dancer_profile", "club_page", "directions", "free_entry", "transport", "going", "claims", "admissions"];
-  const dancers = report.dancers.filter(row => dancerMetrics.some(key => row.metrics[key] > 0));
+  const dancerActivityTotal = (row: VenueValueReport["dancers"][number]) => dancerMetrics.reduce((total, key) => total + (row.metrics[key] || 0), 0);
+  const dancers = report.dancers
+    .filter(row => dancerMetrics.some(key => row.metrics[key] > 0))
+    .sort((left, right) => dancerActivityTotal(right) - dancerActivityTotal(left));
   const metric = (key: keyof VenueValueMetrics, label: string, newTracking = false) => <div className="metric" key={key}><span>{label}</span><strong>{number(report.current[key])}</strong>{key === "admissions" && <small>Confirmed pass uses</small>}<small>{newTracking && !completeBaseline ? "Partial tracking" : venueMetricChange(report.current[key], report.previous[key]).replace("New activity this period", "New activity").replace("No change vs prior period", "— No change").replace("vs prior period", "vs prior")}</small></div>;
 
   return <div className="venue-value-analytics">
@@ -51,7 +54,7 @@ export default function VenueValueAnalytics({ report, periodStart, periodEnd, ti
         <dt>Unique browsers</dt><dd>Tracked browsers, not an exact count of people.</dd>
         <dt>New followers</dt><dd>Follows added during this period that remain active.</dd>
         <dt>Customer actions</dt><dd>Button tracking began {formatDate(since)}. Earlier clicks are unavailable. Repeat clicks count as separate actions; each action is recorded once.</dd>
-        <dt>Dancer activity</dt><dd>Only activity tied to this venue is included. These counts break down the venue totals; they are not additional customers. Dancers with no activity this period are hidden.</dd>
+        <dt>Dancer activity</dt><dd>Only activity tied to this venue is included. These counts break down the venue totals; they are not additional customers. Dancers are ranked by total activity across the listed actions, highest first. Dancers with no activity this period are hidden.</dd>
         <dt>Video eligibility</dt><dd>Only videos with a confirmed tag for this venue are included. A dancer’s club affiliation alone does not include their other videos. Counts use the selected period, including activity on older videos.</dd>
         <dt>Video counting</dt><dd>Repeat video events are counted once per browser and day. After a video’s Club Page click, venue actions in that browser receive credit for 30 minutes, for this venue only. A new pass keeps its video credit through admission. Tracking began {formatDate(since)}.</dd>
         <dt>Cost per admission</dt><dd>Unavailable until subscription cost for the same reporting period is connected.</dd>

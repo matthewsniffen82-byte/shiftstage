@@ -48,13 +48,21 @@ test("compact analytics preserve outcome totals, source filtering and every acti
   const render = component("app/dashboard/VenueValueAnalytics.tsx", "default", "", { "@/src/lib/dancr/venue-analytics": { venueMetricChange: () => "No change vs prior period" } });
   const metrics = { claims: 8, pickups: 2, going: 4, directions: 6, visitors: 3, followers: 1, passengers: 7, impressions: 29, admissions: 2 };
   const props = { report: { trackingStartedAt: "2025-12-01", current: metrics, previous: metrics, videos: [], interactions: [{ event_type: "club_page", source: "venue_scroll_card", total: 29, visitors: 3 }, { event_type: "free_entry", source: "dancer_profile", total: 8, visitors: 1 }], dancers: [{ id: "active", name: "Active dancer", metrics: { claims: 1 } }, { id: "zero", name: "Zero dancer", metrics: {} }] }, periodStart: "2025-12-20", periodEnd: "2026-01-01", timezone: "UTC", totalFollowers: 14, conversion: 25 };
+  props.report.dancers.push(
+    { id: "profile", name: "Profile dancer", metrics: { dancer_profile: 4 } },
+    { id: "combined", name: "Combined dancer", metrics: { directions: 3, claims: 2 } },
+    { id: "tied", name: "Tied dancer", metrics: { dancer_profile: 4, free_entry: 1 } },
+    { id: "impressions", name: "Impressions only", metrics: { card_impression: 1000 } },
+  );
+  const originalOrder = props.report.dancers.map(row => row.id);
   let tree = render(props);
   const cards = tree.filter(node => node.props?.className === "metric");
   assert.equal(cards.length, 11);
   assert.deepEqual(cards.slice(0, 4).map(node => nodes(node).find(item => item.type === "strong").props.children), ["8", "2", "4", "6"]);
   const list = tree.find(node => node.props?.className === "venue-dancer-activity");
-  assert.equal(nodes(list).filter(node => node.type === "li").length, 1);
-  assert.equal(nodes(list).filter(node => node.type === "dd").length, 8);
+  assert.deepEqual(nodes(list).filter(node => node.type === "li").map(node => node.key), ["combined", "tied", "profile", "active"]);
+  assert.equal(nodes(list).filter(node => node.type === "dd").length, 32);
+  assert.deepEqual(props.report.dancers.map(row => row.id), originalOrder, "ranking must not mutate the report");
   assert.equal(tree.find(node => node.props?.className === "venue-value-methodology").props.open, undefined);
   tree.find(node => node.type === "select").props.onChange({ target: { value: "dancer_profile" } });
   tree = render(props);
