@@ -1,0 +1,6 @@
+.venue-customer-sharing { margin-top: 12px; padding-top: 10px; border-top: 1px solid #34343c; }
+.venue-customer-sharing summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+.venue-customer-sharing p { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.venue-customer-sharing .account-form label:has(input[type="checkbox"]) { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: start; gap: 8px; line-height: 1.5; }
+.venue-customer-sharing .account-form input[type="checkbox"] { width: 18px; height: 18px; min-height: 0; padding: 0; margin: 2px 0 0; }
+#venue-customers .notification-row { overflow-wrap: anywhere; }

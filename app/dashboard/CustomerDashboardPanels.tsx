@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import VenueCustomerSharing from "./VenueCustomerSharing";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { CUSTOMER_FOLLOW_ALERTS, customerNotificationSettings, type CustomerNotificationKey } from "@/src/lib/dancr/customer-notification-preferences";
@@ -637,6 +638,7 @@ function CustomerFollowedClubsPanel({
                 return (
                   <SavedVenueCard
                     key={venueId}
+                    venueId={venueId}
                     onDirections={onDirections}
                     onUnfollow={() => void onVenueFollowChange(venueId, false)}
                     pending={Boolean(pendingAction)}
@@ -709,12 +711,14 @@ function FollowedDancerGridCard({
 
 
 function SavedVenueCard({
+  venueId,
   onDirections,
   onUnfollow,
   pending,
   removing,
   venue,
 }: {
+  venueId: string;
   onDirections: (venue: SavedVenueSummary) => void;
   onUnfollow: () => void;
   pending: boolean;
@@ -757,6 +761,7 @@ function SavedVenueCard({
           <Link href={customerVenueHref(venue)}>Club page <span aria-hidden="true">↗</span></Link>
           <CustomerDirectionsButton onDirections={onDirections} pending={pending} venue={venue} />
         </div>
+        <VenueCustomerSharing venueId={venueId} venueName={venue.name || "this club"} disabled={pending} />
       </div>
     </article>
   );

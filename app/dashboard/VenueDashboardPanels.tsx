@@ -8,6 +8,7 @@ import dynamic from "next/dynamic";
 const PickupDashboardPanel = dynamic(() => import("./PickupDashboardPanel"));
 const VenueGuestListPanel = dynamic(() => import("./VenueGuestListPanel"));
 const VenueVipPanel = dynamic(() => import("./VenueVipPanel"));
+const VenueCustomersPanel = dynamic(() => import("./VenueCustomersPanel"));
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
@@ -36,7 +37,7 @@ function notifyPublicVenuePublication() {
 
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (sectionId === "venue-pickups" || sectionId === "venue-guest-list" || sectionId === "venue-vip") return "tonight";
-  if (sectionId === "venue-overview") return "business";
+  if (sectionId === "venue-overview" || sectionId === "venue-customers") return "business";
   if (["venue-working-now", "venue-dancer-roster", "table-requests"].includes(sectionId)) return "roster";
   if (["venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
@@ -396,6 +397,9 @@ export function VenuePanel({
             conversion={readOptionalNumber(analytics.claimToAdmissionPercent)}
           /> : <p role="status">{!liveDataReady ? refreshStatus || "Loading results…" : "Analytics are unavailable. Refresh to try again."}</p>}
         </section>
+        {venueAccess && ["owner", "manager"].includes(venueAccess.role || "") ? <VenueCustomersPanel
+          refreshKey={`${account?.id || ""}:${refreshedAt || ""}`} active={activeWorkspace === "business"}
+        /> : null}
         </>}
       </section>
 
