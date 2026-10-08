@@ -1,10 +1,17 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
-import { evaluateOndatoDecision, jsonObject } from "./ondato-policy";
+import { inspectOndatoDecision, jsonObject } from "./ondato-policy";
 import { isOndatoId, ondatoHostedUrl } from "./ondato-url";
 
-const unavailable = () => new PublicApiError("UNAVAILABLE", "Age verification is temporarily unavailable. Please try again later.", 503);
+type OndatoStage = "configuration" | "database" | "authentication" | "identity" | "identification" | "setup" | "webhooks" | "references";
+export class OndatoUnavailableError extends PublicApiError {
+  constructor(readonly stage: OndatoStage, readonly providerStatus?: number) {
+    super("UNAVAILABLE", "Age verification is temporarily unavailable. Please try again later.", 503);
+    this.name = "OndatoUnavailableError";
+  }
+}
+const unavailable = (stage: OndatoStage = "database", status?: number) => new OndatoUnavailableError(stage, status);
 export function ondatoConfig() {
   const clientId = process.env.ONDATO_CLIENT_ID?.trim();
   const clientSecret = process.env.ONDATO_CLIENT_SECRET?.trim();
@@ -24,10 +31,10 @@ export function ondatoConfig() {
   } catch { return null; }
 }
 
-async function readProviderJson(response: Response) {
-  if (!response.ok) throw unavailable();
+async function readProviderJson(response: Response, stage: OndatoStage) {
+  if (!response.ok) throw unavailable(stage, response.status);
   const raw = await response.text();
-  if (raw.length > 1_048_576) throw unavailable();
+  if (raw.length > 1_048_576) throw unavailable(stage);
   return jsonObject(JSON.parse(raw));
 }
 
@@ -38,9 +45,11 @@ async function providerClient(config: NonNullable<ReturnType<typeof ondatoConfig
       method: "POST", cache: "no-store", redirect: "error", signal,
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ grant_type: "client_credentials", client_id: config.clientId, client_secret: config.clientSecret }),
-    }));
-    if (typeof token.access_token !== "string" || !token.access_token || token.token_type !== "Bearer") throw unavailable();
+    }), "authentication");
+    if (typeof token.access_token !== "string" || !token.access_token || token.token_type !== "Bearer") throw unavailable("authentication");
     return async (service: "idvapi" | "kycid", path: string, method = "GET", body?: Record<string, unknown>) => {
+      const stage: OndatoStage = path.endsWith("/setup") ? "setup" : path.endsWith("/webhooks") ? "webhooks"
+        : service === "kycid" ? "identification" : "identity";
       try {
         const response = await fetch(`https://${service}.ondato.com${path}`, {
           method, cache: "no-store", redirect: "error", signal,
@@ -48,10 +57,10 @@ async function providerClient(config: NonNullable<ReturnType<typeof ondatoConfig
           ...(body ? { body: JSON.stringify(body) } : {}),
         });
         if (response.status === 204) return {};
-        return await readProviderJson(response);
-      } catch { throw unavailable(); }
+        return await readProviderJson(response, stage);
+      } catch (error) { throw error instanceof OndatoUnavailableError ? error : unavailable(stage); }
     };
-  } catch { throw unavailable(); }
+  } catch (error) { throw error instanceof OndatoUnavailableError ? error : unavailable("authentication"); }
 }
 
 export async function getDancerAgeVerification(admin: SupabaseClient, userId: string) {
@@ -75,7 +84,7 @@ export async function refreshDancerAgeVerification(admin: SupabaseClient, userId
 
 export async function startDancerAgeVerification(admin: SupabaseClient, userId: string) {
   const config = ondatoConfig();
-  if (!config) throw unavailable();
+  if (!config) throw unavailable("configuration");
   const { data: attempt, error } = await admin.rpc("reserve_dancer_age_verification", { p_user_id: userId, p_integration_id: config.setupId });
   if (error?.message?.includes("AGE_PROFILE_SETUP_REQUIRED")) throw new PublicApiError("FORBIDDEN", "Finish and submit your dancer profile before starting age verification.", 409);
   if (error?.message?.includes("AGE_VERIFICATION_RETRY_LIMIT")) throw new PublicApiError("FORBIDDEN", "You have reached today's verification limit. Please try again tomorrow or contact support.", 429);
@@ -105,20 +114,19 @@ export async function startDancerAgeVerification(admin: SupabaseClient, userId: 
   return { status: "pending", url };
 }
 
-export async function reconcileOndatoSession(admin: SupabaseClient, sessionId: string, timeoutMs = 18_000) {
-  if (!isOndatoId(sessionId)) return;
+async function readOndatoSession(admin: SupabaseClient, sessionId: string, timeoutMs: number) {
   const config = ondatoConfig();
-  if (!config) throw unavailable();
+  if (!config) throw unavailable("configuration");
   const { data: attempt, error } = await admin.from("dancer_age_verifications")
-    .select("user_id, attempt_id, session_id, provider_integration_id, status, verified_at").eq("session_id", sessionId).eq("provider", "ondato").maybeSingle();
+    .select("user_id, attempt_id, session_id, provider_integration_id, status, verified_at, checked_at").eq("session_id", sessionId).eq("provider", "ondato").maybeSingle();
   if (error) throw unavailable();
   if (!attempt) return;
-  if (attempt.provider_integration_id !== config.setupId) throw unavailable();
+  if (attempt.provider_integration_id !== config.setupId) throw unavailable("references");
   const checkedAt = new Date().toISOString();
   const request = await providerClient(config, timeoutMs);
   const identity = await request("idvapi", `/v1/identity-verifications/${sessionId}`);
   if (identity.id !== sessionId || identity.externalReferenceId !== attempt.attempt_id
-    || identity.applicationId !== config.applicationId || jsonObject(identity.setup).id !== config.setupId) throw unavailable();
+    || identity.applicationId !== config.applicationId || jsonObject(identity.setup).id !== config.setupId) throw unavailable("references");
   const kycStep = jsonObject(jsonObject(identity.step).kycIdentification);
   const kycId = kycStep.id;
   const identification = isOndatoId(kycId) ? await request("kycid", `/v1/identifications/${kycId}`) : null;
@@ -126,9 +134,35 @@ export async function reconcileOndatoSession(admin: SupabaseClient, sessionId: s
   // configuration. Rejections/expiry must still reconcile during setup outages.
   const identificationSetup = identification?.status === "Approved" && identity.status === "Completed" && kycStep.isSuccess === true
     ? await request("kycid", `/v1/identifications/${kycId}/setup`) : null;
-  let status;
-  try { status = evaluateOndatoDecision(identity, identification, identificationSetup, { sessionId, attemptId: attempt.attempt_id, setupId: config.setupId, applicationId: config.applicationId }); }
-  catch { throw unavailable(); }
+  let decision;
+  try { decision = inspectOndatoDecision(identity, identification, identificationSetup, { sessionId, attemptId: attempt.attempt_id, setupId: config.setupId, applicationId: config.applicationId }); }
+  catch { throw unavailable("references"); }
+  return { attempt, checkedAt, decision, request, config };
+}
+
+// Operator-only diagnostic: reads the exact same provider evidence as reconciliation,
+// but never creates a paid session, updates a status, or exposes identity data.
+export async function inspectOndatoSession(admin: SupabaseClient, sessionId: string) {
+  if (!isOndatoId(sessionId)) throw new PublicApiError("INVALID_REQUEST", "A valid session ID is required.", 400);
+  const result = await readOndatoSession(admin, sessionId, 25_000);
+  if (!result) throw new PublicApiError("NOT_FOUND", "Verification session not found.", 404);
+  const { attempt, decision, request, config } = result;
+  const setup = await request("idvapi", `/v1/identity-verifications/${sessionId}/setup`);
+  return {
+    configured: true,
+    storedStatus: attempt.status,
+    lastCheckedAt: attempt.checked_at || null,
+    decision,
+    setup: { matches: setup.id === config.setupId && setup.applicationId === config.applicationId,
+      live: setup.isLive === true, enabled: setup.isDisabled === false },
+  };
+}
+
+export async function reconcileOndatoSession(admin: SupabaseClient, sessionId: string, timeoutMs = 18_000) {
+  if (!isOndatoId(sessionId)) return;
+  const result = await readOndatoSession(admin, sessionId, timeoutMs);
+  if (!result) return;
+  const { attempt, checkedAt, decision: { status }, config } = result;
   const { error: saveError } = await admin.from("dancer_age_verifications").update({
     status, checked_at: checkedAt,
     verified_at: status === "verified" ? (attempt.status === "verified" && attempt.verified_at ? attempt.verified_at : checkedAt) : null,

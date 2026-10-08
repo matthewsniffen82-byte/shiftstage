@@ -11,7 +11,7 @@ const code = ts.transpileModule(readFileSync(new URL('../src/lib/dancr/ondato.ts
 const sessionId=ids.sessionId;
 const hosted='https://idv.ondato.com/?id='+sessionId;
 const attempt={user_id:'owner',attempt_id:ids.attemptId,provider:'ondato',provider_integration_id:ids.setupId,session_id:sessionId,status:'creating',reserved:true};
-function fixture({ reservation = attempt, current = attempt, idv = identity(), kyc = identification(), setup = identificationSetup(), setupError = false, created = { id: ids.sessionId }, saveError = null, env = {}, configured = true, providerError = false, token = { access_token: "server-only-access-token", token_type: "Bearer" }, reservationError = null } = {}) {
+function fixture({ reservation = attempt, current = attempt, idv = identity(), kyc = identification(), setup = identificationSetup(), idvSetup = { id: ids.setupId, applicationId: ids.applicationId, isLive: true, isDisabled: false }, setupError = false, httpError = null, created = { id: ids.sessionId }, saveError = null, env = {}, configured = true, providerError = false, token = { access_token: "server-only-access-token", token_type: "Bearer" }, reservationError = null } = {}) {
   const calls = [], writes = [];
   const admin = {
     async rpc(name, args) { calls.push({ rpc: name, args }); return { data: reservation, error: reservationError }; },
@@ -36,9 +36,10 @@ function fixture({ reservation = attempt, current = attempt, idv = identity(), k
     async fetch(url, options) {
       calls.push({ url, options });
       if (providerError) throw new Error('provider error containing sensitive information');
+      if (httpError && url.includes(httpError.match)) return new Response('private provider response', { status: httpError.status });
       if (setupError && url.endsWith('/setup')) return new Response('unavailable', { status: 503 });
       const payload = url.endsWith('/connect/token') ? token : options.method === 'POST' ? created
-        : url.includes('/setup-localisations') ? null : url.endsWith('/setup') ? setup : url.includes('kycid.') ? kyc : idv;
+        : url.includes('/setup-localisations') ? null : url.endsWith('/setup') ? url.includes('kycid.') ? setup : idvSetup : url.includes('kycid.') ? kyc : idv;
       return new Response(payload === null ? null : JSON.stringify(payload), { status: payload === null ? 204 : 200 });
     },
     require(name) {
@@ -50,8 +51,35 @@ function fixture({ reservation = attempt, current = attempt, idv = identity(), k
     },
   });
   return { calls, writes, start: () => exports.startDancerAgeVerification(admin, 'owner'),
-    reconcile: () => exports.reconcileOndatoSession(admin, sessionId), get: () => exports.getDancerAgeVerification(admin, 'owner'), config: exports.ondatoConfig };
+    reconcile: () => exports.reconcileOndatoSession(admin, sessionId), inspect: (id = sessionId) => exports.inspectOndatoSession(admin, id),
+    get: () => exports.getDancerAgeVerification(admin, 'owner'), config: exports.ondatoConfig };
 }
+
+test('operator diagnostics explain the current decision without changing state or exposing identity data', async () => {
+  const kyc = { ...identification(), secretDocumentField: 'do-not-disclose' };
+  const f = fixture({ current: { ...attempt, status: 'in_review', checked_at: '2026-01-01' }, kyc });
+  const result = await f.inspect();
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), { configured: true, storedStatus: 'in_review', lastCheckedAt: '2026-01-01',
+    decision: { status: 'verified', reason: 'verification_passed' }, setup: { matches: true, live: true, enabled: true } });
+  assert.equal(f.writes.length, 0);
+  assert.ok(f.calls.filter(c => c.url && !c.url.endsWith('/connect/token')).every(c => c.options.method === 'GET'));
+  assert.doesNotMatch(JSON.stringify(result), /1990|do-not-disclose|access-token|user_id|session_id/);
+  const missing = fixture({ setup: { ...identificationSetup(), face: { enabled: true, activeLivenessEnabled: false } } });
+  assert.equal((await missing.inspect()).decision.reason, 'active_liveness_not_enabled');
+  assert.equal(missing.writes.length, 0);
+  await assert.rejects(fixture().inspect('invalid'), error => error.status === 400);
+  await assert.rejects(fixture({ current: null }).inspect(), error => error.status === 404);
+});
+
+test('provider failures retain only the failed operation and HTTP status for private diagnostics', async () => {
+  for (const [match, status, stage] of [['connect/token', 401, 'authentication'], ['identity-verifications/', 403, 'identity'],
+    ['identifications/', 403, 'identification'], ['/setup', 403, 'setup']]) {
+    const f = fixture({ httpError: { match, status } });
+    await assert.rejects(f.inspect(), error => error.status === 503 && error.stage === stage && error.providerStatus === status
+      && !JSON.stringify(error).includes('private provider response'));
+    assert.equal(f.writes.length, 0);
+  }
+});
 
 test('OAuth session creation sends only the opaque attempt and setup; all browser returns use the fixed callback',async()=>{
   const f=fixture();const result=await f.start();assert.equal(result.url,hosted);

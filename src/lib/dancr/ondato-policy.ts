@@ -34,30 +34,39 @@ export function isAdultDateOfBirth(value: unknown, now = new Date()): boolean {
 export function evaluateOndatoDecision(identity: unknown, identification: unknown, identificationSetup: unknown, expected: {
   sessionId: string; attemptId: string; setupId: string; applicationId: string;
 }, now = new Date()): AgeVerificationStatus {
+  return inspectOndatoDecision(identity, identification, identificationSetup, expected, now).status;
+}
+
+// Fixed reason codes only: never return document data, biometric data or raw provider fields.
+export function inspectOndatoDecision(identity: unknown, identification: unknown, identificationSetup: unknown, expected: {
+  sessionId: string; attemptId: string; setupId: string; applicationId: string;
+}, now = new Date()): { status: AgeVerificationStatus; reason: string } {
   const idv = jsonObject(identity);
   if (idv.id !== expected.sessionId || idv.externalReferenceId !== expected.attemptId
     || idv.applicationId !== expected.applicationId || jsonObject(idv.setup).id !== expected.setupId) {
     throw new Error("ONDATO_DECISION_MISMATCH");
   }
-  if (idv.status === "Expired" || idv.status === "Aborted") return "expired";
+  if (idv.status === "Expired" || idv.status === "Aborted") return { status: "expired", reason: "session_ended" };
   const step = jsonObject(jsonObject(idv.step).kycIdentification);
-  if (!isOndatoId(step.id)) return idv.status === "Pending" || idv.status === "InProgress" ? "pending" : "in_review";
+  if (!isOndatoId(step.id)) return { status: idv.status === "Pending" || idv.status === "InProgress" ? "pending" : "in_review", reason: "identification_not_available" };
   const kyc = jsonObject(identification);
   if (kyc.id !== step.id || kyc.identityVerificationId !== expected.sessionId
     || kyc.applicationId !== expected.applicationId || kyc.externalReferenceId !== expected.attemptId) {
     throw new Error("ONDATO_DECISION_MISMATCH");
   }
-  if (kyc.status === "Rejected") return "declined";
-  if (idv.status !== "Completed" || kyc.status !== "Approved" || step.isSuccess !== true) return "in_review";
+  if (kyc.status === "Rejected") return { status: "declined", reason: "provider_rejected" };
+  if (idv.status !== "Completed") return { status: "in_review", reason: "session_not_completed" };
+  if (kyc.status !== "Approved") return { status: "in_review", reason: "identification_not_approved" };
+  if (step.isSuccess !== true) return { status: "in_review", reason: "identification_step_not_successful" };
   const document = jsonObject(kyc.document);
   if (!["Passport", "IdCard", "DriverLicense", "ResidencePermit"].includes(String(document.type))
     || typeof kyc.completedUtc !== "string" || !Number.isFinite(Date.parse(kyc.completedUtc))
-    || Date.parse(kyc.completedUtc) > now.getTime() + 300_000) return "in_review";
-  if (!isAdultDateOfBirth(document.dateOfBirth, now)) return "declined";
+    || Date.parse(kyc.completedUtc) > now.getTime() + 300_000) return { status: "in_review", reason: "document_or_completion_invalid" };
+  if (!isAdultDateOfBirth(document.dateOfBirth, now)) return { status: "declined", reason: "adult_document_check_failed" };
   const setup = jsonObject(identificationSetup);
   const reference = jsonObject(kyc.setup);
   if (!isOndatoId(reference.id) || !isOndatoId(reference.versionId)
-    || !isOndatoId(setup.id) || !isOndatoId(setup.versionId) || !isOndatoId(setup.applicationId)) return "in_review";
+    || !isOndatoId(setup.id) || !isOndatoId(setup.versionId) || !isOndatoId(setup.applicationId)) return { status: "in_review", reason: "identification_setup_reference_missing" };
   if (setup.id !== reference.id || setup.versionId !== reference.versionId || setup.applicationId !== expected.applicationId) {
     throw new Error("ONDATO_DECISION_MISMATCH");
   }
@@ -66,13 +75,15 @@ export function evaluateOndatoDecision(identity: unknown, identification: unknow
   // has no SuccessfulActiveLivenessCheck rule. Require the successful KYC step
   // AND its exact setup version with active liveness enabled. Enrollment IDs,
   // age estimates and a completed browser redirect are not success evidence.
-  if (setup.isDisabled !== false || jsonObject(setup.document).enabled !== true
-    || face.enabled !== true || face.activeLivenessEnabled !== true) return "in_review";
+  if (setup.isDisabled !== false) return { status: "in_review", reason: "identification_setup_disabled" };
+  if (jsonObject(setup.document).enabled !== true) return { status: "in_review", reason: "document_capture_not_enabled" };
+  if (face.enabled !== true) return { status: "in_review", reason: "face_capture_not_enabled" };
+  if (face.activeLivenessEnabled !== true) return { status: "in_review", reason: "active_liveness_not_enabled" };
   const rules = Array.isArray(kyc.rules) ? kyc.rules.map(jsonObject) : [];
   const requiredRules = ["SelfieHasFace", "DocumentHasFace", "SelfieAndDocumentFacesMatch"];
   // If Ondato also enables passive liveness, require its result as well.
   if (face.passiveLivenessEnabled === true) requiredRules.push("SuccessfulPassiveLivenessCheck");
-  if (rules.some(rule => rule.status === "Fail")
-    || !requiredRules.every(name => rules.some(rule => rule.name === name && rule.status === "Success"))) return "in_review";
-  return "verified";
+  if (rules.some(rule => rule.status === "Fail")) return { status: "in_review", reason: "provider_rule_failed" };
+  if (!requiredRules.every(name => rules.some(rule => rule.name === name && rule.status === "Success"))) return { status: "in_review", reason: "required_face_rule_not_successful" };
+  return { status: "verified", reason: "verification_passed" };
 }
