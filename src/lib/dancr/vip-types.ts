@@ -16,7 +16,8 @@ export type VipState = {
 };
 export type VenueVipState = {
   invitations: Array<{ id: string; email: string; expires_at: string }>;
-  members: Array<{ id: string; display_name: string }>;
+  members: Array<{ id: string; display_name: string; nickname: string }>;
+  memberCount: number; membersHasMore: boolean;
   requests: VipRequest[]; hasMore: boolean;
 };
 

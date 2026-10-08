@@ -17,7 +17,7 @@ function database({ failure = null } = {}) {
   const client = {
     from(table) {
       const call = { table, steps: [] }; calls.push(call);
-      let result = table === 'venue_vip_members' ? venues.map(v => ({ user_id: guest.id, active: true, display_name: v.guestName, venue: { ...v, is_active: true, owner: { role: 'venue', account_state: 'active' } } })) : [...rows];
+      let result = table === 'venue_vip_members' ? venues.map(v => ({ user_id: guest.id, active: true, display_name: v.guestName, nickname: 'Private manager nickname', venue: { ...v, is_active: true, owner: { role: 'venue', account_state: 'active' } } })) : [...rows];
       let options, range, limit;
       const chain = {
         select(columns, nextOptions = {}) { options = nextOptions; call.steps.push(['select', columns, options]); return chain; },
@@ -58,6 +58,8 @@ test('planner and account read only the data needed for that section and retain 
   for (const view of ['plan', 'account', '']) {
     const db = database(); const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view, venueId: venues[1].id }));
     assert.equal(result.selectedVenueId, venues[1].id);
+    assert.doesNotMatch(JSON.stringify(result), /Private manager nickname|nickname/);
+    assert.ok(!db.calls.filter(c => c.table === 'venue_vip_members').some(c => c.steps.some(step => step[0] === 'select' && /nickname|\*/.test(step[1]))));
     assert.equal(db.calls.some(c => c.table === 'venue_vip_requests'), view === '');
     assert.equal(db.calls.some(c => c.rpc === 'vip_eligible_dancers'), view !== 'account');
     if (view !== 'account') assert.equal(db.calls.find(c => c.rpc).args.p_venue, venues[1].id);

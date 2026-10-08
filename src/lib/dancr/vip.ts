@@ -17,10 +17,16 @@ export function vipTokenDigest(value: unknown) {
   return createHash("sha256").update(value).digest("hex");
 }
 export function newVipToken() { return `vip_${randomBytes(36).toString("base64url")}`; }
-export function vipPage(search: URLSearchParams) {
-  const page = Number(search.get("page") || 0);
+export function vipPage(search: URLSearchParams, key = "page") {
+  const page = Number(search.get(key) || 0);
   if (!Number.isInteger(page) || page < 0 || page > 1000) throw new PublicApiError("INVALID_REQUEST", "Invalid request page.", 400);
   return page;
+}
+export function vipNickname(value: unknown) {
+  if (typeof value !== "string" || value.trim().length > 80 || /\p{Cc}/u.test(value)) {
+    throw new PublicApiError("INVALID_REQUEST", "Use a nickname of 80 characters or fewer, without line breaks.", 400);
+  }
+  return value.trim();
 }
 export function vipError(error: unknown) {
   const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
@@ -106,15 +112,18 @@ export async function getVipState(client: SupabaseClient, userId: string, search
 
 export async function getVenueVipState(client: SupabaseClient, userId: string, search: URLSearchParams): Promise<VenueVipState> {
   const access = await requireVipManager(client, userId); const page = vipPage(search);
+  const memberPage = vipPage(search, "memberPage");
+  const memberSearch = vipNickname(search.get("memberSearch") || "");
   const [invitations, members, requests] = await Promise.all([
     client.from("venue_vip_invitations").select("id,email,expires_at").eq("venue_id", access.venueId)
       .is("accepted_at", null).is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
-    client.from("venue_vip_members").select("id,display_name").eq("venue_id", access.venueId).eq("active", true).order("display_name"),
+    client.rpc("vip_search_members", { p_actor: userId, p_venue: access.venueId, p_search: memberSearch, p_offset: memberPage * 50 }),
     client.from("venue_vip_requests").select(requestColumns).eq("venue_id", access.venueId)
       .order("created_at", { ascending: false }).order("id", { ascending: false }).range(page * 50, page * 50 + 50),
   ]);
   for (const result of [invitations, members, requests]) if (result.error) throw result.error;
-  return { invitations: invitations.data || [], members: members.data || [], requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50 };
+  return { invitations: invitations.data || [], members: members.data?.members || [], memberCount: members.data?.memberCount || 0,
+    membersHasMore: members.data?.membersHasMore || false, requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50 };
 }
 
 // PostgREST represents to-one relationships as objects; test fixtures and some

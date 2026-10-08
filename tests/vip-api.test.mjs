@@ -76,6 +76,25 @@ test("invitation tokens use high-entropy secrets and deterministic digests, and 
   assert.notEqual(service.vipTokenDigest(token), service.vipTokenDigest(other));
   for (const value of ["", "vip_short", null, "vip_" + "a".repeat(49)]) assert.throws(() => service.vipTokenDigest(value));
 });
+
+test("nickname writes use the authenticated venue, validate input and return no guest notifications", async () => {
+  const { route, calls } = fixture({ invitation: true });
+  const response = await route.POST(request({ action: "set_nickname", id: id(50), nickname: "  Friday regular  ", actorUserId: id(99), venueId: id(21) }));
+  assert.equal(response.status, 200);
+  const rpc = calls.find(call => call[0] === "rpc");
+  assert.equal(rpc[1], "vip_set_member_nickname");
+  assert.equal(rpc[2].p_actor, id(5)); assert.equal(rpc[2].p_venue, id(20)); assert.equal(rpc[2].p_member, id(50)); assert.equal(rpc[2].p_nickname, "Friday regular");
+  assert.equal(calls.some(call => call[0] === "email"), false);
+  assert.match(response.headers.get("cache-control"), /private.*no-store/);
+  assert.equal((await response.json()).session.accessToken, "rotated");
+  for (const nickname of [null, 123, "x".repeat(81), "two\nlines"]) {
+    assert.equal((await route.POST(request({ action: "set_nickname", id: id(50), nickname }))).status, 400);
+  }
+  assert.equal((await route.POST(request({ action: "set_nickname", id: "invalid", nickname: "Nick" }))).status, 400);
+  assert.equal((await route.POST(request({ action: "set_nickname", id: id(50), nickname: "" }))).status, 200);
+  const denied = fixture({ invitation: true, rpcError: { code: "42501" } });
+  assert.equal((await denied.route.POST(request({ action: "set_nickname", id: id(50), nickname: "Nick" }))).status, 403);
+});
 test("venue timezone dates and request displays do not use the guest device timezone", () => {
   assert.equal(vipTypes.vipLocalDate("America/Los_Angeles", new Date("2026-10-07T03:30:00Z")), "2026-10-06");
   assert.match(vipTypes.formatVipDate("2026-10-07T03:30:00Z", "America/Los_Angeles"), /Oct 6, 2026.*8:30 PM/);

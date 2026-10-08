@@ -3,7 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
-import { getVenueVipState, requireVipManager, newVipToken, VIP_HEADERS, vipError, vipTokenDigest } from "@/src/lib/dancr/vip";
+import { getVenueVipState, requireVipManager, newVipToken, VIP_HEADERS, vipError, vipTokenDigest, vipId, vipNickname } from "@/src/lib/dancr/vip";
 import { deliverNotificationRows, sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
 import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 
@@ -20,6 +20,13 @@ export async function POST(request: Request) {
     const { user, session } = await createRequestSupabaseContext(request, { role: "venue" });
     const admin = createAdminSupabaseClient(); const access = await requireVipManager(admin, user.id);
     const body = await readBoundedJsonObject(request, { maxBytes: 4096, invalidMessage: "Invalid VIP action.", tooLargeMessage: "VIP action is too large." });
+    if (body.action === "set_nickname") {
+      const { data, error } = await admin.rpc("vip_set_member_nickname", {
+        p_actor: user.id, p_venue: access.venueId, p_member: vipId(body.id), p_nickname: vipNickname(body.nickname),
+      });
+      if (error) throw error;
+      return NextResponse.json({ ok: true, member: data, session }, { headers: VIP_HEADERS });
+    }
     const token = body.action === "invite" ? newVipToken() : "";
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const { data, error } = await admin.rpc("vip_manage", { p_actor: user.id, p_venue: access.venueId, p_action: body.action,

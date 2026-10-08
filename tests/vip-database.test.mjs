@@ -23,6 +23,7 @@ async function fixture() {
       create table public.notifications(id uuid primary key default gen_random_uuid(),recipient_id uuid,notification_type text,channel text,title text,body text,payload jsonb,sent_at timestamptz);
       grant usage on schema public to anon,authenticated,service_role;`);
     await db.exec(migration);
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261008070000_venue_vip_nicknames.sql", import.meta.url), "utf8"));
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
       await db.query("insert into public.app_users values($1,$2,'active')", [id(n), role]);
       await db.query("insert into auth.users values($1,$2,now())", [id(n), `person${n}@example.test`]);
@@ -66,6 +67,8 @@ test("VIP tables and RPCs deny direct anonymous and authenticated access", async
       }
       await denies(db.query("select public.vip_eligible_dancers($1)", [id(20)]), "42501");
       await denies(db.query("select public.vip_accept_invitation($1,$2,'VIP')", [id(5), digest]), "42501");
+      await denies(db.query("select public.vip_set_member_nickname($1,$2,$3,'Nick')", [id(1), id(20), id(50)]), "42501");
+      await denies(db.query("select public.vip_search_members($1,$2,'',0)", [id(1), id(20)]), "42501");
     }
     const tables = await adminQuery(db, "select relrowsecurity from pg_class where relname in ('venue_vip_invitations','venue_vip_members','venue_vip_requests')");
     assert.equal(tables.rows.length, 3); assert.ok(tables.rows.every(table => table.relrowsecurity));
@@ -175,5 +178,52 @@ test("a notification failure rolls back the request; paused accounts and inactiv
     await adminQuery(db, "update public.venues set is_active=false");
     await denies(submit(db), "P0002");
     await denies(invite(db), "42501");
+  } finally { await db.close(); }
+});
+
+test("venue nicknames are editable, clearable and scoped without changing guest identities", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db);
+    const member = (await db.query("select id from venue_vip_members where venue_id=$1", [id(20)])).rows[0];
+    const save = (nickname, actor = 1, venue = 20) => db.query("select vip_set_member_nickname($1,$2,$3,$4) result", [id(actor), id(venue), member.id, nickname]);
+    await save("  Friday regular  ", 2);
+    const saved = (await db.query("select display_name,nickname from venue_vip_members where id=$1", [member.id])).rows[0];
+    assert.deepEqual(saved, { display_name: "Test VIP", nickname: "Friday regular" });
+    await denies(save("Other club", 4, 21), "P0002");
+    for (const actor of [3, 4, 5]) await denies(save("Denied", actor), "42501");
+    for (const nickname of [null, "x".repeat(81), "two\nlines"]) await denies(save(nickname), "22023");
+    await save(" ");
+    assert.equal((await db.query("select nickname from venue_vip_members where id=$1", [member.id])).rows[0].nickname, "");
+    await adminQuery(db, "update app_users set account_state='disabled' where id=$1", [id(2)]);
+    await denies(save("Inactive manager", 2), "42501");
+    await manage(db, "revoke_member", { id: member.id });
+    await denies(save("Revoked guest"), "P0002");
+  } finally { await db.close(); }
+});
+
+test("VIP search matches literal nicknames and names across all pages, only within the managed venue", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db);
+    await db.query("update venue_vip_members set nickname='Friday 100%_VIP' where venue_id=$1", [id(20)]);
+    await db.query("insert into venue_vip_members(venue_id,user_id,display_name,nickname) values($1,$2,'Other club identity','Friday elsewhere'),($3,$4,'Revoked VIP','Friday revoked')", [id(21), id(5), id(20), id(6)]);
+    await db.query("update venue_vip_members set active=false where user_id=$1", [id(6)]);
+    const search = async (text = "", offset = 0, actor = 1, venue = 20) => (await db.query("select vip_search_members($1,$2,$3,$4) result", [id(actor), id(venue), text, offset])).rows[0].result;
+    for (const text of [" friday ", "TEST vip", "100%_", "%", "_"]) {
+      const result = await search(text); assert.equal(result.memberCount, 1); assert.equal(result.members[0].display_name, "Test VIP");
+    }
+    assert.equal((await search("elsewhere")).memberCount, 0);
+    assert.equal((await search("revoked")).memberCount, 0);
+    assert.equal((await search("Friday", 0, 4, 21)).members[0].nickname, "Friday elsewhere");
+    for (const actor of [3, 4, 5]) await denies(search("", 0, actor), "42501");
+    for (const [query, offset] of [["x".repeat(81), 0], ["", -1], ["", 50001], ["\n", 0]]) await denies(search(query, offset), "22023");
+    await adminQuery(db, `insert into app_users(id,role,account_state) select ('97000000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'customer','active' from generate_series(100,159) n`);
+    await adminQuery(db, `insert into venue_vip_members(venue_id,user_id,display_name,nickname) select $1,id,'Guest '||id,'Regular '||id from app_users where id>= $2`, [id(20), id(100)]);
+    const first = await search("Regular"), second = await search("Regular", 50);
+    assert.equal(first.memberCount, 60); assert.equal(first.members.length, 50); assert.equal(first.membersHasMore, true);
+    assert.equal(second.members.length, 10); assert.equal(second.membersHasMore, false);
+    assert.equal(new Set([...first.members, ...second.members].map(member => member.id)).size, 60);
+    assert.equal((await search("159")).memberCount, 1, "search reaches a nickname beyond the first page");
   } finally { await db.close(); }
 });
