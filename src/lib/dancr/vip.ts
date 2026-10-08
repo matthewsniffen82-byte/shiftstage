@@ -56,6 +56,11 @@ export async function resolveVipInvitation(client: SupabaseClient, token: unknow
 }
 
 export async function getVipState(client: SupabaseClient, userId: string, search: URLSearchParams): Promise<VipState> {
+  const view = search.get("view");
+  const filter = search.get("status") || "all";
+  if ((view && !["overview", "plan", "requests", "account"].includes(view)) || !["all", "pending", "confirmed", "declined", "cancelled"].includes(filter)) {
+    throw new PublicApiError("INVALID_REQUEST", "Choose a valid dashboard section or request status.", 400);
+  }
   const { data: memberships, error } = await client.from("venue_vip_members")
     .select("venue_id,display_name,venue:venues!inner(id,name,timezone,is_active,owner:app_users!venues_owner_user_id_fkey(role,account_state))")
     .eq("user_id", userId).eq("active", true).order("created_at");
@@ -69,14 +74,34 @@ export async function getVipState(client: SupabaseClient, userId: string, search
   const selected = requested ? venues.find(v => v.id === requested) : venues[0];
   if (requested && !selected) throw new PublicApiError("FORBIDDEN", "You do not have VIP access to this venue.", 403);
   if (!selected) return { venues, selectedVenueId: "", dancers: [], requests: [], hasMore: false };
+  const base: VipState = { venues, selectedVenueId: selected.id, dancers: [], requests: [], hasMore: false };
+  if (view === "account") return base;
+  if (view === "overview") {
+    const now = new Date().toISOString();
+    const [pending, upcoming, nextVisit] = await Promise.all([
+      client.from("venue_vip_requests").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("venue_id", selected.id).eq("status", "pending"),
+      client.from("venue_vip_requests").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("venue_id", selected.id).eq("status", "confirmed").gt("starts_at", now),
+      client.from("venue_vip_requests").select(requestColumns).eq("user_id", userId).eq("venue_id", selected.id).eq("status", "confirmed").gt("starts_at", now)
+        .order("starts_at").order("id").limit(1),
+    ]);
+    for (const result of [pending, upcoming, nextVisit]) if (result.error) throw result.error;
+    return { ...base, summary: { pending: pending.count || 0, upcoming: upcoming.count || 0, nextVisit: nextVisit.data?.[0] || null } };
+  }
+  if (view === "plan") {
+    const { data, error } = await client.rpc("vip_eligible_dancers", { p_venue: selected.id });
+    if (error) throw error;
+    return { ...base, dancers: data || [] };
+  }
   const page = vipPage(search);
+  let requestQuery = client.from("venue_vip_requests").select(requestColumns, { count: "exact" }).eq("user_id", userId).eq("venue_id", selected.id);
+  if (filter !== "all") requestQuery = requestQuery.eq("status", filter);
   const [roster, requests] = await Promise.all([
-    client.rpc("vip_eligible_dancers", { p_venue: selected.id }),
-    client.from("venue_vip_requests").select(requestColumns).eq("user_id", userId).eq("venue_id", selected.id)
+    view === "requests" ? Promise.resolve({ data: [], error: null }) : client.rpc("vip_eligible_dancers", { p_venue: selected.id }),
+    requestQuery
       .order("created_at", { ascending: false }).order("id", { ascending: false }).range(page * 50, page * 50 + 50),
   ]);
   if (roster.error) throw roster.error; if (requests.error) throw requests.error;
-  return { venues, selectedVenueId: selected.id, dancers: roster.data || [], requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50 };
+  return { ...base, dancers: roster.data || [], requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
 }
 
 export async function getVenueVipState(client: SupabaseClient, userId: string, search: URLSearchParams): Promise<VenueVipState> {

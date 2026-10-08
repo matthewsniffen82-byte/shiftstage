@@ -7,7 +7,13 @@ export type VipRequest = {
   response_note: string; created_at: string;
 };
 export type VipInvitation = { venueName: string; maskedEmail: string; expiresAt: string };
-export type VipState = { venues: VipVenue[]; selectedVenueId: string; dancers: VipDancer[]; requests: VipRequest[]; hasMore: boolean };
+export type VipDashboardView = "overview" | "plan" | "requests" | "account";
+export type VipRequestFilter = "all" | VipRequest["status"];
+export type VipSummary = { pending: number; upcoming: number; nextVisit: VipRequest | null };
+export type VipState = {
+  venues: VipVenue[]; selectedVenueId: string; dancers: VipDancer[]; requests: VipRequest[]; hasMore: boolean;
+  summary?: VipSummary; requestCount?: number;
+};
 export type VenueVipState = {
   invitations: Array<{ id: string; email: string; expires_at: string }>;
   members: Array<{ id: string; display_name: string }>;
