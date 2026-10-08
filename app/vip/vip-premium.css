@@ -1,4 +1,4 @@
-/* Shared VIP surfaces; account entry uses the main login palette. */
+/* Shared professional dashboard surfaces; gold is reserved for VIP identity. */
 body.dancr-button-system:has(.vip-shell) { margin: 0; background: #070609; }
 body.dancr-button-system .vip-shell.vip-dashboard-shell,
 body.dancr-button-system .vip-shell.vip-auth-shell {
@@ -10,7 +10,6 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
   background: radial-gradient(ellipse 720px 260px at 28% 0, #39204b55, transparent), #070609;
   padding: 20px 22px calc(28px + env(safe-area-inset-bottom));
 }
-body.dancr-button-system .vip-shell.vip-auth-shell { --vip-gold: #c4b5fd; }
 .vip-dashboard-shell .vip-container { max-width: 1100px; }
 .vip-dashboard-shell [hidden] { display: none !important; }
 .vip-dashboard-shell h1, .vip-dashboard-shell h2, .vip-dashboard-shell h3 { color: #f5f2fa; font-weight: 650; letter-spacing: -.025em; }
