@@ -80,6 +80,21 @@ test('an existing signed-in guest activates an invitation without another accoun
   assert.equal(ui.calls.some(c => c.url === '/api/auth'), false); ui.close();
 });
 
+test('VIP password recovery asks only for email and uses the password-reset callback', async () => {
+  const ui = entryFixture({ token: 'private-invitation', auth: { message: 'Check your email for a reset link.' } }); await ui.settle();
+  ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.onChange({ target: { value: guest.email } });
+  ui.nodes().find(n => n.props?.className === 'vip-text-button').props.onClick(); await ui.settle();
+  assert.match(ui.html(), /send you a link to choose a new password/);
+  assert.doesNotMatch(ui.html(), /existing password|Create account/);
+  assert.equal(ui.nodes().some(n => n.type === 'password-field'), false);
+  ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  const body = JSON.parse(ui.calls.find(c => c.url === '/api/auth').options.body);
+  assert.equal(body.mode, 'reset_password'); assert.equal(body.role, 'customer'); assert.equal(body.email, guest.email);
+  const callback = new URL(body.emailRedirectTo);
+  assert.equal(callback.searchParams.get('type'), 'recovery'); assert.equal(callback.searchParams.get('return_to'), '/account/reset-password');
+  assert.match(ui.html(), /Check your email for a reset link/); ui.close();
+});
+
 test('the lounge shortcut requires confirmed access and disappears after revocation or a failed refresh', async () => {
   let result = { venues: [{ id: 'venue' }] }, fail = false;
   const ui = entryFixture({ shortcut: true, session: { accessToken: 'token', account: guest }, request: async () => { if (fail) throw new Error('Unavailable'); return result; } });
