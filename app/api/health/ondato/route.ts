@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { PublicApiError } from "@/src/lib/api-error-policy";
-import { authorizeCronRequest } from "@/src/lib/dancr/cron-auth";
+import { authorizeOndatoDiagnostics } from "@/src/lib/dancr/ondato-diagnostics-auth";
 import { inspectOndatoSession, OndatoUnavailableError } from "@/src/lib/dancr/ondato";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
@@ -9,10 +9,10 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 const headers = { "cache-control": "private, no-store, max-age=0", "x-robots-tag": "noindex" };
 
-// Manual operator probe, protected by the existing server-only maintenance secret.
+// Manual operator probe, protected by a separate server-only read capability.
 // This is deliberately not scheduled and cannot change verification or rollout state.
 export async function GET(request: Request) {
-  const unauthorized = authorizeCronRequest(request);
+  const unauthorized = authorizeOndatoDiagnostics(request);
   if (unauthorized) {
     for (const [name, value] of Object.entries(headers)) unauthorized.headers.set(name, value);
     return unauthorized;
