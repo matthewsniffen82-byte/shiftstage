@@ -181,9 +181,10 @@ body.dancr-button-system #authPage .auth-vip-entry[hidden] { display: none !impo
 body.dancr-button-system #authPage .auth-vip-entry span { color: #ddc396; font-size: 10px; }
 body.dancr-button-system #authPage .auth-vip-entry:hover { text-decoration: underline; text-underline-offset: 3px; }
 body.dancr-button-system .vip-auth-shell .vip-container { max-width: 500px; }
-body.dancr-button-system .vip-auth-shell .vip-header { padding: 8px 0 18px; border: 0; }
-body.dancr-button-system .vip-auth-shell .vip-hero { text-align: left; padding: 16px 2px 22px; }
-body.dancr-button-system .vip-auth-shell .vip-hero h1 { font-size: clamp(24px, 5.8vw, 32px); line-height: 1.2; font-weight: 650; letter-spacing: -.025em; margin: 10px 0 8px; overflow-wrap: anywhere; }
+body.dancr-button-system .vip-auth-shell .vip-header { padding: 8px 0 10px; border: 0; }
+body.dancr-button-system .vip-auth-shell .vip-hero { text-align: left; padding: 8px 2px 14px; }
+body.dancr-button-system .vip-auth-shell .vip-hero h1 { font-size: clamp(24px, 5.8vw, 32px); line-height: 1.2; font-weight: 650; letter-spacing: -.025em; margin: 6px 0; overflow-wrap: anywhere; }
+body.dancr-button-system .vip-auth-shell .vip-hero p { margin: 6px 0 0; }
 body.dancr-button-system .vip-auth-shell .vip-eyebrow { color: #ddc396; font-size: 10px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; }
 body.dancr-button-system .vip-auth-shell .vip-panel { padding: 20px; margin-bottom: 24px; }
 body.dancr-button-system .vip-auth-shell h2 { margin: 0; font-size: 22px; font-weight: 650; line-height: 1.3; letter-spacing: -.025em; }
@@ -207,7 +208,7 @@ body.dancr-button-system .vip-auth-shell .vip-primary {
 body.dancr-button-system .vip-auth-shell .vip-auth-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 0; margin-bottom: 20px; border-radius: 12px; background: #08080c; }
 body.dancr-button-system .vip-auth-shell .vip-auth-tabs button { min-height: 44px !important; padding: 8px; border: 1px solid transparent !important; border-radius: 11px !important; color: #d0d2dc !important; background: transparent !important; box-shadow: none !important; font-size: 14px; font-weight: 650; }
 body.dancr-button-system .vip-auth-shell .vip-auth-tabs button[aria-pressed=true] { border-color: #745696 !important; background: #160e24 !important; color: #fff !important; }
-body.dancr-button-system .vip-auth-shell .vip-text-button { min-height: 44px !important; padding: 4px 0 !important; margin-top: 8px; border: 0 !important; background: transparent !important; color: #b8bac6 !important; font-size: 12px; box-shadow: none !important; }
+body.dancr-button-system .vip-auth-shell .vip-text-button { min-height: 44px !important; padding: 4px 0 !important; margin-top: 8px; border: 0 !important; background: transparent !important; color: #b8bac6 !important; font-size: 12px !important; font-weight: 500 !important; box-shadow: none !important; }
 body.dancr-button-system .vip-auth-shell .vip-footer { margin-top: 12px; padding: 20px 0; border-color: #302737; }
 
 /* Only server-confirmed actions opt in to the shared completion appearance. */
