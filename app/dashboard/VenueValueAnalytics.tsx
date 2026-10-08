@@ -51,14 +51,13 @@ export default function VenueValueAnalytics({ report, periodStart, periodEnd, ti
       <summary>How counting works</summary>
       <dl>
         <dt>Planned visits</dt><dd>Saved “I’m Going” choices, not confirmed arrivals.</dd>
-        <dt>Unique browsers</dt><dd>Tracked browsers, not an exact count of people.</dd>
-        <dt>New followers</dt><dd>Follows added during this period that remain active.</dd>
-        <dt>Customer actions</dt><dd>Button tracking began {formatDate(since)}. Earlier clicks are unavailable. Repeat clicks count as separate actions; each action is recorded once.</dd>
-        <dt>Dancer activity</dt><dd>Only activity tied to this venue is included. These counts break down the venue totals; they are not additional customers. Dancers are ranked by total activity across the listed actions, highest first. Dancers with no activity this period are hidden.</dd>
-        <dt>Video eligibility</dt><dd>Only videos with a confirmed tag for this venue are included. A dancer’s club affiliation alone does not include their other videos. Counts use the selected period, including activity on older videos.</dd>
-        <dt>Video counting</dt><dd>Repeat video events are counted once per browser and day. After a video’s Club Page click, venue actions in that browser receive credit for 30 minutes, for this venue only. A new pass keeps its video credit through admission. Tracking began {formatDate(since)}.</dd>
-        <dt>Cost per admission</dt><dd>Unavailable until subscription cost for the same reporting period is connected.</dd>
-        <dt>Partial tracking</dt><dd>The comparison period begins before button tracking started; the full prior period is unavailable.</dd>
+        <dt>Audience</dt><dd>Unique browsers count browsers, not people. New followers are follows added this period that remain active.</dd>
+        <dt>Customer actions</dt><dd>Repeat clicks count separately; duplicate records of one click do not.</dd>
+        <dt>Dancer activity</dt><dd>Venue-only activity, ranked highest first by total listed actions. Dancers with no activity are hidden. Counts break down venue totals, not extra customers.</dd>
+        <dt>Video eligibility</dt><dd>Confirmed venue tags only, not dancer affiliation. Counts cover the selected period, including activity on older videos.</dd>
+        <dt>Video counting</dt><dd>Each video event type counts once per video, browser and UTC day. After a Club Page click, that video receives credit for same-venue actions in that browser for 30 minutes. New passes keep video credit through admission.</dd>
+        <dt>Tracking coverage</dt><dd>Button tracking began {formatDate(since)}; earlier clicks are unavailable. “Partial tracking” means the prior comparison period starts before tracking.</dd>
+        <dt>Cost per admission</dt><dd>Unavailable until subscription cost is linked for the same period.</dd>
       </dl>
     </details>
     <p className="venue-value-billing">Subscription billing. No per-guest fees.</p>
