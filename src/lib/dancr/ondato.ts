@@ -36,7 +36,8 @@ async function readProviderJson(response: Response, stage: OndatoStage) {
   if (!response.ok) throw unavailable(stage, response.status);
   const raw = await response.text();
   if (raw.length > 1_048_576) throw unavailable(stage);
-  return jsonObject(JSON.parse(raw));
+  const parsed: unknown = JSON.parse(raw);
+  return stage === "webhooks" && Array.isArray(parsed) ? { items: parsed } : jsonObject(parsed);
 }
 
 async function providerClient(config: NonNullable<ReturnType<typeof ondatoConfig>>, timeoutMs: number) {
@@ -140,10 +141,8 @@ async function readOndatoSession(admin: SupabaseClient, sessionId: string, timeo
   // configuration. Rejections/expiry must still reconcile during setup outages.
   const identificationSetup = identification?.status === "Approved" && identity.status === "Completed" && kycStep.isSuccess === true
     ? await request("kycid", `/v1/identifications/${kycId}/setup`) : null;
-  let decision;
-  try { decision = inspectOndatoDecision(identity, identification, identificationSetup, { sessionId, attemptId: attempt.attempt_id, setupId: config.setupId, applicationId: config.applicationId }); }
-  catch (error) { throw referenceFailure(error); }
-  return { attempt, checkedAt, decision, request, config };
+  const expected = { sessionId, attemptId: attempt.attempt_id, setupId: config.setupId, applicationId: config.applicationId };
+  return { attempt, checkedAt, identity, identification, identificationSetup, expected, request, config };
 }
 
 function referenceFailure(error: unknown) {
@@ -157,15 +156,50 @@ export async function inspectOndatoSession(admin: SupabaseClient, sessionId: str
   if (!isOndatoId(sessionId)) throw new PublicApiError("INVALID_REQUEST", "A valid session ID is required.", 400);
   const result = await readOndatoSession(admin, sessionId, 25_000);
   if (!result) throw new PublicApiError("NOT_FOUND", "Verification session not found.", 404);
-  const { attempt, decision, request, config } = result;
+  const { attempt, identity, identification, identificationSetup, expected, request, config } = result;
+  let decision = null;
+  let failure = null;
+  try { decision = inspectOndatoDecision(identity, identification, identificationSetup, expected); }
+  catch (error) {
+    if (!(error instanceof OndatoReferenceMismatch)) throw referenceFailure(error);
+    failure = { reference: error.reference, caseOnly: error.caseOnly, missing: error.missing };
+  }
   const setup = await request("idvapi", `/v1/identity-verifications/${sessionId}/setup`);
+  const kycSetup = jsonObject(identificationSetup);
+  const kycReference = jsonObject(identification?.setup);
+  const face = jsonObject(kycSetup.face);
+  const safeId = (id: unknown) => isOndatoId(id) ? id : null;
+  // Only setup UUIDs and fixed booleans/counters leave this private probe.
+  // Do not spread provider objects: they can contain documents or credentials.
+  let webhooks: { total: number; delivered: number; pending: number } | { unavailable: true };
+  try {
+    const history = await request("idvapi", `/v1/identity-verifications/${sessionId}/webhooks`);
+    if (!Array.isArray(history.items)) throw unavailable("webhooks");
+    const events = history.items.map(jsonObject);
+    webhooks = { total: events.length, delivered: events.filter(event => event.isDelivered === true).length,
+      pending: events.filter(event => event.isDelivered !== true).length };
+  } catch { webhooks = { unavailable: true }; }
   return {
     configured: true,
     storedStatus: attempt.status,
     lastCheckedAt: attempt.checked_at || null,
     decision,
+    referenceFailure: failure,
     setup: { matches: setup.id === config.setupId && setup.applicationId === config.applicationId,
       live: setup.isLive === true, enabled: setup.isDisabled === false },
+    identificationSetup: {
+      referenced: { id: safeId(kycReference.id), versionId: safeId(kycReference.versionId) },
+      retrieved: { id: safeId(kycSetup.id), versionId: safeId(kycSetup.versionId) },
+      idvStepSetupIds: Array.isArray(setup.steps) ? setup.steps.map(jsonObject).map(step => safeId(step.setupId)).filter(Boolean) : [],
+      applicationMatches: kycSetup.applicationId === config.applicationId,
+      enabled: kycSetup.isDisabled === false, documentEnabled: jsonObject(kycSetup.document).enabled === true,
+      faceEnabled: face.enabled === true, activeLivenessEnabled: face.activeLivenessEnabled === true,
+      passiveLivenessEnabled: face.passiveLivenessEnabled === true,
+      faceRulesSuccessful: ["SelfieHasFace", "DocumentHasFace", "SelfieAndDocumentFacesMatch"].every(name =>
+        Array.isArray(identification?.rules) && identification.rules.map(jsonObject).some(rule => rule.name === name && rule.status === "Success")),
+      failedRules: Array.isArray(identification?.rules) ? identification.rules.map(jsonObject).filter(rule => rule.status === "Fail").length : null,
+    },
+    webhooks,
   };
 }
 
@@ -173,7 +207,10 @@ export async function reconcileOndatoSession(admin: SupabaseClient, sessionId: s
   if (!isOndatoId(sessionId)) return;
   const result = await readOndatoSession(admin, sessionId, timeoutMs);
   if (!result) return;
-  const { attempt, checkedAt, decision: { status }, config } = result;
+  const { attempt, checkedAt, identity, identification, identificationSetup, expected, config } = result;
+  let status;
+  try { status = inspectOndatoDecision(identity, identification, identificationSetup, expected).status; }
+  catch (error) { throw referenceFailure(error); }
   const { error: saveError } = await admin.from("dancer_age_verifications").update({
     status, checked_at: checkedAt,
     verified_at: status === "verified" ? (attempt.status === "verified" && attempt.verified_at ? attempt.verified_at : checkedAt) : null,

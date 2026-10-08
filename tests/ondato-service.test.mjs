@@ -39,7 +39,8 @@ function fixture({ reservation = attempt, current = attempt, idv = identity(), k
       if (httpError && url.includes(httpError.match)) return new Response('private provider response', { status: httpError.status });
       if (setupError && url.endsWith('/setup')) return new Response('unavailable', { status: 503 });
       const payload = url.endsWith('/connect/token') ? token : options.method === 'POST' ? created
-        : url.includes('/setup-localisations') ? null : url.endsWith('/setup') ? url.includes('kycid.') ? setup : idvSetup : url.includes('kycid.') ? kyc : idv;
+        : url.includes('/setup-localisations') ? null : url.endsWith('/webhooks') ? [{ isDelivered: true, payload: 'private webhook payload' }]
+        : url.endsWith('/setup') ? url.includes('kycid.') ? setup : idvSetup : url.includes('kycid.') ? kyc : idv;
       return new Response(payload === null ? null : JSON.stringify(payload), { status: payload === null ? 204 : 200 });
     },
     require(name) {
@@ -59,11 +60,14 @@ test('operator diagnostics explain the current decision without changing state o
   const kyc = { ...identification(), secretDocumentField: 'do-not-disclose' };
   const f = fixture({ current: { ...attempt, status: 'in_review', checked_at: '2026-01-01' }, kyc });
   const result = await f.inspect();
-  assert.deepEqual(JSON.parse(JSON.stringify(result)), { configured: true, storedStatus: 'in_review', lastCheckedAt: '2026-01-01',
-    decision: { status: 'verified', reason: 'verification_passed' }, setup: { matches: true, live: true, enabled: true } });
+  assert.equal(result.storedStatus, 'in_review');
+  assert.deepEqual(JSON.parse(JSON.stringify(result.decision)), { status: 'verified', reason: 'verification_passed' });
+  assert.deepEqual(JSON.parse(JSON.stringify(result.setup)), { matches: true, live: true, enabled: true });
+  assert.deepEqual(JSON.parse(JSON.stringify(result.webhooks)), { total: 1, delivered: 1, pending: 0 });
+  assert.equal(result.identificationSetup.activeLivenessEnabled, true);
   assert.equal(f.writes.length, 0);
   assert.ok(f.calls.filter(c => c.url && !c.url.endsWith('/connect/token')).every(c => c.options.method === 'GET'));
-  assert.doesNotMatch(JSON.stringify(result), /1990|do-not-disclose|access-token|user_id|session_id/);
+  assert.doesNotMatch(JSON.stringify(result), /1990|do-not-disclose|access-token|user_id|session_id|private webhook payload/);
   const missing = fixture({ setup: { ...identificationSetup(), face: { enabled: true, activeLivenessEnabled: false } } });
   assert.equal((await missing.inspect()).decision.reason, 'active_liveness_not_enabled');
   assert.equal(missing.writes.length, 0);
@@ -81,7 +85,7 @@ test('provider failures retain only the failed operation and HTTP status for pri
   }
 });
 
-test('reference diagnostics identify the exact mismatch without disclosing reference values', async () => {
+test('reference diagnostics expose only setup UUIDs and safe failure flags, while reconciliation rejects mismatches', async () => {
   for (const [options, reference, missing] of [
     [{ current: { ...attempt, provider_integration_id: ids.kycId } }, 'stored_setup', false],
     [{ idv: { ...identity(), applicationId: ids.kycId } }, 'idv_application', false],
@@ -89,10 +93,25 @@ test('reference diagnostics identify the exact mismatch without disclosing refer
     [{ setup: { ...identificationSetup(), versionId: ids.sessionId } }, 'kyc_setup_version', false],
   ]) {
     const f = fixture(options);
-    await assert.rejects(f.inspect(), error => error.stage === 'references' && error.referenceFailure.reference === reference
-      && error.referenceFailure.missing === missing && !Object.values(ids).some(id => JSON.stringify(error).includes(id)));
+    if (reference.startsWith('kyc_')) {
+      const result = await f.inspect();
+      assert.equal(result.referenceFailure.reference, reference);
+      assert.equal(result.referenceFailure.missing, missing);
+      assert.equal(result.decision, null);
+      assert.equal(result.identificationSetup.applicationMatches, true);
+    } else {
+      await assert.rejects(f.inspect(), error => error.stage === 'references' && error.referenceFailure.reference === reference
+        && error.referenceFailure.missing === missing && !Object.values(ids).some(id => JSON.stringify(error).includes(id)));
+    }
+    await assert.rejects(f.reconcile(), error => error.stage === 'references');
     assert.equal(f.writes.length, 0);
   }
+  const malformed = await fixture({ setup: { ...identificationSetup(), id: 'private-provider-text' } }).inspect();
+  assert.equal(malformed.identificationSetup.retrieved.id, null);
+  assert.doesNotMatch(JSON.stringify(malformed), /private-provider-text/);
+  const webhookOutage = await fixture({ httpError: { match: '/webhooks', status: 403 } }).inspect();
+  assert.equal(webhookOutage.decision.status, 'verified');
+  assert.equal(webhookOutage.webhooks.unavailable, true);
 });
 
 test('OAuth session creation sends only the opaque attempt and setup; all browser returns use the fixed callback',async()=>{
