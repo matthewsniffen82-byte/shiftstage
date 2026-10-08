@@ -172,6 +172,45 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-tv-title { gap: 6px 10px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-tv-title > a { min-height: 44px; color: #c5c3cd; font-size: 12px; }
 
+/* Manage venue keeps its overview and settings close together beneath the tabs. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue:not([hidden]) {
+  gap: 10px;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue > .dashboard-group-heading {
+  margin: 4px 0 0 !important;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue > :is(.venue-workspace-summary, .venue-publication-panel, .venue-tv-panel) {
+  padding: 12px !important;
+  gap: 8px;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue .venue-workspace-summary {
+  gap: 6px;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue .venue-command-links {
+  margin-top: 0;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue .venue-publication-panel > div:first-child {
+  gap: 4px;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue :is(.venue-publication-panel h2, .venue-tv-title h2) {
+  margin: 0;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue .venue-dashboard-section[data-section-icon] > summary {
+  min-height: 64px !important;
+  padding: 10px 12px !important;
+  gap: 8px;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue .venue-dashboard-section-copy {
+  gap: 3px;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue .venue-dashboard-section-body {
+  padding: 12px !important;
+  gap: 10px !important;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-workspace-venue .venue-dashboard-section-body > .info-panel {
+  padding: 12px !important;
+}
+
 @media (max-width: 620px) {
   body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon] > summary { grid-template-columns: 30px minmax(0, 1fr) 16px; }
