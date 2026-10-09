@@ -22,6 +22,7 @@ import VenueAdminUtilities from "./VenueAdminUtilities";
 import "./dancer-profile-builder-polish.css";
 import "./dancer-onboarding.css";
 import "./dancer-premium.css";
+import "./dancer-profile-workspace.css";
 import "./customer-night.css";
 import "../components/dashboard-header.css";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
