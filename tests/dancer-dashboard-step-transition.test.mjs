@@ -11,7 +11,8 @@ const [dashboardClient, dashboardSession, nfcPanel, profileRoute, profileLiveNot
 ]);
 
 test("profile submission opens age verification and tap access waits for a confirmed age result", () => {
-  assert.match(dashboardClient, /const submitted = effectiveStatus === "pending_review" \|\| effectiveStatus === "approved"/);
+  assert.match(dashboardClient, /const previouslySubmitted = effectiveStatus === "pending_review" \|\| effectiveStatus === "approved"/);
+  assert.match(dashboardClient, /const submitted = previouslySubmitted && !agreementReviewRequired/);
   assert.match(dashboardClient, /confirmedStatus !== "pending_review" && confirmedStatus !== "approved"/);
   assert.match(dashboardClient, /onProfileChange\?\.\(data\.profile\)[\s\S]*?const nextStep = ageAccessAllowed \? "dancer-onboarding-nfc" : "dancer-onboarding-age"/);
   assert.match(dashboardClient, /locked: !submitted \|\| !ageAccessAllowed/);

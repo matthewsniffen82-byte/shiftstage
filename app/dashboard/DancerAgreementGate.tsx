@@ -1,126 +1,73 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { DANCER_AGREEMENT_VERSION, type DancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement-version";
-import DancerAgreementLink from "@/app/components/DancerAgreementLink";
 import { readSession, requestDashboardJson } from "./dashboard-session";
 import "./dancer-agreement-gate.css";
 
 export default function DancerAgreementGate({ children }: { children: ReactNode }) {
   const [agreement, setAgreement] = useState<DancerAgreementAccess | null>(null);
-  const [checked, setChecked] = useState(false);
-  const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [attempt, setAttempt] = useState(0);
-  const [profileSetupAllowed, setProfileSetupAllowed] = useState(false);
   const pathname = usePathname();
-  const requestRef = useRef<AbortController | null>(null);
-  const inFlightRef = useRef(false);
-
-  function accountGuard() {
-    const userId = readSession()?.account?.id;
-    return () => userId ? readSession()?.account?.id === userId : !readSession()?.accessToken;
-  }
+  const router = useRouter();
+  const isDashboard = pathname === "/dashboard/dancer";
 
   useEffect(() => {
+    // Agreement review belongs to the dashboard's existing profile setup step.
+    if (isDashboard) return;
     const controller = new AbortController();
-    requestRef.current = controller;
-    const guard = accountGuard();
-    inFlightRef.current = false;
-    setBusy(false);
+    const userId = readSession()?.account?.id;
+    const sameAccount = () => userId ? readSession()?.account?.id === userId : !readSession()?.accessToken;
     setAgreement(null);
-    setProfileSetupAllowed(false);
-    setChecked(false);
     setError("");
     void requestDashboardJson("/api/dancer/agreement", {
       cache: "no-store", signal: controller.signal, timeoutMs: 15000,
     }).then(data => {
-      if (!controller.signal.aborted && guard()) {
-        setAgreement(data.agreement);
-        setProfileSetupAllowed(data.profileSetupAllowed === true);
+      if (controller.signal.aborted || !sameAccount()) return;
+      if (data.agreement?.version !== DANCER_AGREEMENT_VERSION) {
+        throw new Error("Unable to check your agreement. Please try again.");
       }
+      setAgreement(data.agreement);
+      if (data.agreement.required && !data.agreement.accepted) router.replace("/dashboard/dancer");
     }).catch(failure => {
-      if (!controller.signal.aborted && guard()) setError(failure instanceof Error ? failure.message : "Unable to check your agreement. Please try again.");
+      if (!controller.signal.aborted && sameAccount()) setError(failure instanceof Error ? failure.message : "Unable to check your agreement. Please try again.");
     });
     const checkAccount = () => {
-      if (!guard()) {
-        requestRef.current?.abort();
+      if (!sameAccount()) {
+        controller.abort();
         setAgreement(null);
         setAttempt(value => value + 1);
       }
     };
-    const refreshAcceptance = () => {
-      void requestDashboardJson("/api/dancer/agreement", { cache: "no-store", signal: controller.signal, timeoutMs: 15000 })
-        .then(data => { if (!controller.signal.aborted && guard()) setAgreement(data.agreement); })
-        .catch(() => { /* A later navigation retries the authoritative check. */ });
-    };
     window.addEventListener("storage", checkAccount);
     window.addEventListener("pageshow", checkAccount);
     window.addEventListener("focus", checkAccount);
-    window.addEventListener("mydancr:dancer-agreement-saved", refreshAcceptance);
     return () => {
-      controller.abort(); requestRef.current?.abort();
+      controller.abort();
       window.removeEventListener("storage", checkAccount);
       window.removeEventListener("pageshow", checkAccount);
       window.removeEventListener("focus", checkAccount);
-      window.removeEventListener("mydancr:dancer-agreement-saved", refreshAcceptance);
     };
-  }, [attempt, pathname]);
+  }, [attempt, isDashboard, pathname, router]);
 
-  async function accept(event: FormEvent) {
-    event.preventDefault();
-    if (!checked || inFlightRef.current) return;
-    inFlightRef.current = true;
-    const controller = new AbortController();
-    requestRef.current = controller;
-    const guard = accountGuard();
-    setBusy(true);
-    setError("");
-    try {
-      const data = await requestDashboardJson("/api/dancer/agreement", {
-        method: "POST", signal: controller.signal, timeoutMs: 15000,
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ agreementAccepted: true, agreementVersion: DANCER_AGREEMENT_VERSION }),
-      });
-      if (!controller.signal.aborted && guard()) setAgreement(data.agreement);
-    } catch (failure) {
-      if (!controller.signal.aborted && guard()) setError(failure instanceof Error ? failure.message : "Unable to save your acceptance. Please try again.");
-    } finally {
-      inFlightRef.current = false;
-      if (!controller.signal.aborted && guard()) setBusy(false);
-    }
-  }
+  if (isDashboard || (agreement?.version === DANCER_AGREEMENT_VERSION
+    && (agreement.required === false || agreement.accepted === true))) return <>{children}</>;
 
-  if (agreement?.version === DANCER_AGREEMENT_VERSION && (agreement.required === false || agreement.accepted === true
-    || (profileSetupAllowed && pathname === "/dashboard/dancer"))) return <>{children}</>;
-
-  if (!agreement && !error) {
+  if (!error) {
     return <main className="dancer-agreement-gate" aria-busy="true">
       <span className="dancer-agreement-loading-status" role="status">Loading dancer dashboard</span>
     </main>;
   }
 
   return <main className="dancer-agreement-gate">
-    <nav><Link href="/">mydancr</Link><Link href="/account">Account settings</Link></nav>
-    <section aria-labelledby="agreement-heading" aria-busy={busy}>
-      <span className="dancer-agreement-eyebrow">Dancer account</span>
-      <h1 id="agreement-heading">{agreement ? "Review your Dancer Agreement" : "Unable to open your dashboard"}</h1>
-      {!agreement ? <p>Your agreement status could not be confirmed.</p> : <>
-        <p>Please read and accept the Dancer Agreement before continuing to your dancer dashboard, profile, videos, or club features.</p>
-        <p><DancerAgreementLink>Read the Dancer Agreement</DancerAgreementLink></p>
-        <form onSubmit={accept}>
-          <label className="dancer-agreement-check">
-            <input type="checkbox" required checked={checked} disabled={busy} onChange={event => setChecked(event.target.checked)} />
-            <span>I agree to the <DancerAgreementLink />.</span>
-          </label>
-          <button type="submit" disabled={!checked || busy}>{busy ? "Saving acceptance…" : "Accept and continue"}</button>
-        </form>
-      </>}
-      {error && <p role="alert">{error}</p>}
-      {error && !agreement && <button type="button" onClick={() => setAttempt(value => value + 1)}>Try again</button>}
-      <p className="dancer-agreement-note"><Link href="/">Back to MyDancr</Link>{" · "}<a href="mailto:support@mydancr.com">Contact support</a></p>
+    <section aria-labelledby="agreement-heading">
+      <h1 id="agreement-heading">Unable to open this dancer tool</h1>
+      <p role="alert">{error}</p>
+      <button type="button" onClick={() => setAttempt(value => value + 1)}>Try again</button>
+      <p className="dancer-agreement-note"><Link href="/dashboard/dancer">Back to dashboard</Link>{" · "}<a href="mailto:support@mydancr.com">Contact support</a></p>
     </section>
   </main>;
 }

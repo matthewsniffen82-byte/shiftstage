@@ -57,7 +57,7 @@ const approval = {};
 runInNewContext(compile(readFileSync(new URL("../src/lib/dancr/profile-approval.ts", import.meta.url), "utf8")), { exports: approval });
 const panelSource = dashboard.slice(dashboard.indexOf("function DancerPanel("), dashboard.indexOf("\nfunction DancerActivationConfirmation("));
 const panelCode = compile(panelSource + "\nexport { DancerPanel };");
-function sections(profile, accountState = "active") {
+function sections(profile, accountState = "active", agreement) {
   const exports = {};
   const components = Object.fromEntries([...panelSource.matchAll(/<([A-Z][A-Za-z0-9]*)/g)].map(match => [match[1], match[1]]));
   runInNewContext(panelCode, {
@@ -73,8 +73,10 @@ function sections(profile, accountState = "active") {
     formatCents: () => "$0", formatRankMove: () => "—",
     saveDancerProfileEditor() {},
   });
-  const tree = exports.DancerPanel({ profile, accountState, affiliations: [] });
-  return tree.props.children.flat(Infinity).filter(Boolean);
+  const tree = exports.DancerPanel({ profile, accountState, agreement, affiliations: [] });
+  const walk = node => Array.isArray(node) ? node.flatMap(walk)
+    : node?.props ? [node, ...Object.values(node.props).flatMap(walk)] : [];
+  return walk(tree);
 }
 
 for (const profile of [
@@ -90,9 +92,22 @@ for (const profile of [
 test("a fully approved dancer gets the full dashboard even while incognito", () => {
   const nodes = sections({ status: "approved", verification_status: "approved", venue_approved_at: "2026-09-07T12:00:00Z", is_public: false });
   assert.ok(!nodes.some(node => node.type === "DancerOnboardingCommand"));
-  for (const id of ["dancer-overview", "dancer-profile-media", "dancer-schedule", "dancer-performance"]) {
+  assert.ok(nodes.some(node => node.type === "DancerProfileWorkspace"));
+  for (const id of ["dancer-overview", "dancer-schedule", "dancer-performance"]) {
     assert.ok(nodes.some(node => node.props?.id === id), `${id} should be present`);
   }
+});
+
+test("an approved dancer reviews revised terms inside onboarding until acceptance is saved", () => {
+  const profile = { status: "approved", verification_status: "approved", venue_approved_at: "2026-09-07T12:00:00Z", is_public: false };
+  const nodes = sections(profile, "active", { required: true, accepted: false });
+  const onboarding = nodes.find(node => node.type === "DancerOnboardingCommand");
+  assert.ok(onboarding);
+  assert.equal(onboarding.props.agreementReviewRequired, true);
+  assert.equal(onboarding.props.profile, profile);
+  assert.equal(onboarding.props.isVenueApproved, true);
+  assert.ok(!nodes.some(node => node.type === "DancerDashboardWorkspace"));
+  assert.ok(!sections(profile, "active", { required: true, accepted: true }).some(node => node.type === "DancerOnboardingCommand"));
 });
 
 test("Contact targets messaging inside Help & Account and opens its collapsed ancestors after loading", () => {
@@ -100,7 +115,7 @@ test("Contact targets messaging inside Help & Account and opens its collapsed an
   assert.match(account, /<SupportInboxPanel[^>]*panelId="dancer-support"/);
   const inbox = dashboard.slice(dashboard.indexOf("function SupportInboxPanel("), dashboard.indexOf("\nfunction AccountControlsPanel("));
   assert.match(inbox, /id=\{panelId\} tabIndex=\{panelId \? -1 : undefined\}/);
-  const start = dashboard.indexOf('  useEffect(() => {\n    if (isLoading || state.error) return;');
+  const start = dashboard.indexOf('  useEffect(() => {\n    if (isLoading || state.error || role === "customer") return;');
   const end = dashboard.indexOf('\n\n  const updateProfile', start);
   assert.ok(start >= 0 && end > start);
   const effect = dashboard.slice(start, end);
@@ -126,7 +141,7 @@ test("Contact targets messaging inside Help & Account and opens its collapsed an
 });
 
 test("paused venue Contact waits for deferred messaging and navigates only once", () => {
-  const start = dashboard.indexOf('  useEffect(() => {\n    if (isLoading || state.error) return;');
+  const start = dashboard.indexOf('  useEffect(() => {\n    if (isLoading || state.error || role === "customer") return;');
   const end = dashboard.indexOf('\n\n  const updateProfile', start);
   const effect = dashboard.slice(start, end);
   class Details { open = false; parentElement = null; }

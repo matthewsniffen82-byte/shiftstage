@@ -57,6 +57,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       ok: true,
+      agreement,
       analytics,
       ...(requestedPeriod === null ? { deals } : {}),
       nfc: {

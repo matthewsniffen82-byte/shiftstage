@@ -28,6 +28,7 @@ const DancerShiftManager = dynamic(() => import("./DancerShiftManager"));
 
 
 export function DancerPanel({
+  agreement,
   accountContent,
   accountState,
   affiliations,
@@ -36,6 +37,7 @@ export function DancerPanel({
   onProfileChange,
   profile,
 }: {
+  agreement?: LoadState["agreement"];
   accountContent?: ReactNode;
   accountState?: string;
   affiliations: Array<Record<string, unknown>>;
@@ -46,6 +48,7 @@ export function DancerPanel({
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
   const isApproved = effectiveStatus === "approved";
+  const agreementReviewRequired = agreement?.required === true && !agreement.accepted;
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
   const isVenueApproved = Boolean(profile?.venue_approved_at || profile?.venueApprovedAt)
     || affiliations.some((item) => item.status === "active");
@@ -156,8 +159,8 @@ export function DancerPanel({
   </>;
   return <>
     <DancerActivationConfirmation affiliations={affiliations} isLive={isPublic} nfc={nfc} profile={profile} />
-    {!isApproved ? <>
-      <DancerOnboardingCommand effectiveStatus={effectiveStatus} isVenueApproved={isVenueApproved} onProfileChange={onProfileChange} profile={profile}
+    {!isApproved || agreementReviewRequired ? <>
+      <DancerOnboardingCommand agreementReviewRequired={agreementReviewRequired} effectiveStatus={effectiveStatus} isVenueApproved={isVenueApproved} onProfileChange={onProfileChange} profile={profile}
         profileMediaContent={({ profileReady, continueToAgreement }) => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} onboarding profileReady={profileReady} onContinue={continueToAgreement} />}
         venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />} />
       {accountContent}

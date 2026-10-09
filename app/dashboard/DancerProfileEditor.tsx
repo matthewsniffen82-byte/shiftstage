@@ -6,12 +6,13 @@ import dynamic from "next/dynamic";
 import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { DANCER_PROFILE_VIDEOS_CHANGED_EVENT } from "./dancer-profile-media-sync";
-import { readSession, requestDancerProfileJson, requestDancerTvVideosJson } from "./dashboard-session";
+import { readSession, requestDashboardJson, requestDancerProfileJson, requestDancerTvVideosJson } from "./dashboard-session";
 import type { DancerProfileBuilderRequirement, DancerProfileEditorSections, LoadState, DancerProfileEditorSectionId, DancerPreviewVideo, DancerPhotoItem, DancerStepOneItemState, DancerIdentityDraft } from "./dashboard-types";
 import { persistedDancerStageName, DANCER_PROFILE_EDITOR_SECTION_LABELS, DANCER_PHOTOS_KEEP_OPEN_EVENT, saveDancerProfileEditor, AvatarUploadBusyContext } from "./DashboardShared";
 import { relabelPhotoItems, dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerAgeVerificationGate";
 import DancerProfileAgreementReview, { type DancerProfileAgreementInput } from "./DancerProfileAgreementReview";
+import { DANCER_AGREEMENT_VERSION } from "@/src/lib/dancr/dancer-agreement-version";
 import DancerIdentityEditor from "./DancerIdentityEditor";
 const DancerProfileMediaUploads = dynamic(() => import("./DancerProfileMediaUploads"));
 
@@ -493,6 +494,7 @@ export function DancerProfilePreview({
 
 
 export function DancerOnboardingCommand({
+  agreementReviewRequired = false,
   effectiveStatus,
   isVenueApproved,
   onProfileChange,
@@ -500,6 +502,7 @@ export function DancerOnboardingCommand({
   profileMediaContent,
   venueVerificationContent,
 }: {
+  agreementReviewRequired?: boolean;
   effectiveStatus: string;
   isVenueApproved: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
@@ -511,7 +514,9 @@ export function DancerOnboardingCommand({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
   const [ageVerification, setAgeVerification] = useState<DancerAgeVerification | null>(null);
-  const [reviewAgreement, setReviewAgreement] = useState(false);
+  const previouslySubmitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
+  const renewingAgreement = previouslySubmitted && agreementReviewRequired;
+  const [reviewAgreement, setReviewAgreement] = useState(renewingAgreement);
   const mountedRef = useRef(false);
   const profileSubmissionSequenceRef = useRef(0);
   const profileSubmissionAbortRef = useRef<AbortController | null>(null);
@@ -537,7 +542,7 @@ export function DancerOnboardingCommand({
     && avatarUrl
     && approvedPhotos.length,
   );
-  const submitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
+  const submitted = previouslySubmitted && !agreementReviewRequired;
   const ageVerified = ageVerification?.status === "verified";
   const ageNotRequired = !ageVerified && ageVerification?.required === false;
   const ageAccessAllowed = ageVerified || ageNotRequired;
@@ -549,7 +554,7 @@ export function DancerOnboardingCommand({
       id: "dancer-profile-media",
       label: "Create profile",
       complete: submitted,
-      detail: submitted ? "Profile submitted. Continue with verification." : profileReady ? "Profile ready. Continue to the next step." : setupDetail,
+      detail: renewingAgreement ? "Review the updated Dancer Agreement." : submitted ? "Profile submitted. Continue with verification." : profileReady ? "Profile ready. Continue to the next step." : setupDetail,
       locked: false,
     },
     {
@@ -570,7 +575,7 @@ export function DancerOnboardingCommand({
       detail: isVenueApproved ? "Club confirmed." : submitted && ageAccessAllowed ? "Tap the club’s NFC tag when you arrive." : "Unlocks after profile setup and age verification.",
       locked: !submitted || !ageAccessAllowed,
     },
-  ], [ageAccessAllowed, ageNotRequired, ageVerified, isVenueApproved, profileReady, setupDetail, submitted]);
+  ], [ageAccessAllowed, ageNotRequired, ageVerified, isVenueApproved, profileReady, renewingAgreement, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete && !step.notRequired) || steps[steps.length - 1];
   const progressLabel = `${steps.filter((step) => step.complete).length} of ${steps.length} complete${ageNotRequired ? " · 1 not required" : ""}`;
   const visibleExpandedStepId = expandedStepId === null ? firstIncomplete.id : expandedStepId;
@@ -597,10 +602,13 @@ export function DancerOnboardingCommand({
   useEffect(() => {
     if (!profile?.id) return;
     window.localStorage.removeItem(storageKey);
-    if (new URLSearchParams(window.location.search).get("age-verification") === "returned") {
+    if (renewingAgreement) {
+      setReviewAgreement(true);
+      setExpandedStepId("dancer-profile-media");
+    } else if (new URLSearchParams(window.location.search).get("age-verification") === "returned") {
       setExpandedStepId("dancer-onboarding-age");
     }
-  }, [profile?.id, storageKey]);
+  }, [profile?.id, renewingAgreement, storageKey]);
 
   useEffect(() => {
     const keepPhotosOpen = () => {
@@ -668,7 +676,7 @@ export function DancerOnboardingCommand({
   }
 
   async function submitProfile(agreement: DancerProfileAgreementInput) {
-    if (!profileReady) return;
+    if (!profileReady && !renewingAgreement) return;
     const session = readSession();
     if (!session?.accessToken) {
       setStatus("Sign in again before submitting your profile.");
@@ -678,8 +686,22 @@ export function DancerOnboardingCommand({
     if (!action) return;
     const { requestId, controller } = action;
     setIsSubmitting(true);
-    setStatus("Submitting your profile…");
+    setStatus(renewingAgreement ? "Saving your agreement…" : "Submitting your profile…");
     try {
+      if (renewingAgreement) {
+        const data = await requestDashboardJson("/api/dancer/agreement", {
+          method: "POST", expectedRole: "dancer", timeoutMs: 15000,
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(agreement), signal: controller.signal,
+        });
+        if (!isCurrentProfileSubmissionAction(requestId, controller)) return;
+        if (data.agreement?.accepted !== true || data.agreement.version !== DANCER_AGREEMENT_VERSION) {
+          throw new Error("Your agreement acceptance was not confirmed. Please try again.");
+        }
+        setStatus("Agreement saved.");
+        window.dispatchEvent(new Event("mydancr:dancer-agreement-saved"));
+        return;
+      }
       const data = await requestDancerProfileJson({
         method: "PATCH",
         headers: { "content-type": "application/json" },
@@ -719,8 +741,8 @@ export function DancerOnboardingCommand({
       <div className="dancer-onboarding-command-head">
         <span>
           <span className="eyebrow">Step {steps.indexOf(firstIncomplete) + 1} of 3</span>
-          <h2 id="dancer-onboarding-heading">{firstIncomplete.id === "dancer-profile-media" ? "Create your profile" : firstIncomplete.id === "dancer-onboarding-age" ? "Verify you’re 18+" : "Confirm your club"}</h2>
-          <p>Three steps to get your profile ready.</p>
+          <h2 id="dancer-onboarding-heading">{renewingAgreement ? "Dancer Agreement" : firstIncomplete.id === "dancer-profile-media" ? "Create your profile" : firstIncomplete.id === "dancer-onboarding-age" ? "Verify you’re 18+" : "Confirm your club"}</h2>
+          <p>{renewingAgreement ? "Your saved profile and verification stay in place." : "Three steps to get your profile ready."}</p>
         </span>
         <div className="dancer-onboarding-progress">
           <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={steps.filter((step) => step.complete).length} aria-valuetext={progressLabel}>
@@ -794,22 +816,22 @@ export function DancerOnboardingCommand({
               >
                 {step.id === "dancer-profile-media" ? (
                   <>
-                    <div hidden={reviewAgreement && profileReady && !submitted}>{profileMediaContent({
+                    <div hidden={reviewAgreement && (profileReady || renewingAgreement) && !submitted}>{profileMediaContent({
                       continueToAgreement: continueToProfileAgreement,
                       profileReady,
                     })}</div>
                     <div hidden={!reviewAgreement && !submitted} className="dancer-onboarding-agreement" id="dancer-onboarding-agreement" tabIndex={-1}>
-                      {reviewAgreement && !submitted ? <button type="button" disabled={isSubmitting} onClick={() => setReviewAgreement(false)}>← Back to profile</button> : null}
+                      {reviewAgreement && !submitted && !renewingAgreement ? <button type="button" disabled={isSubmitting} onClick={() => setReviewAgreement(false)}>← Back to profile</button> : null}
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Profile complete</strong>
                           <span>Your saved photos remain editable. Complete verification and confirm your club to activate your profile.</span>
                         </div>
-                      ) : profileReady ? (
+                      ) : profileReady || renewingAgreement ? (
                         <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile} />
                       ) : null}
                       <p className="dancer-onboarding-announcement" id="dancer-onboarding-agreement-status" role="status" aria-live="polite">
-                        {status || (!profileReady && !submitted ? setupDetail : "")}
+                        {status || (!profileReady && !submitted && !renewingAgreement ? setupDetail : "")}
                       </p>
                     </div>
                   </>

@@ -119,6 +119,12 @@ export default function DashboardClient({
   }, [role]);
 
   useEffect(() => {
+    if (role !== "dancer") return;
+    window.addEventListener("mydancr:dancer-agreement-saved", retryDashboard);
+    return () => window.removeEventListener("mydancr:dancer-agreement-saved", retryDashboard);
+  }, [role, retryDashboard]);
+
+  useEffect(() => {
     let cancelled = false;
     const controller = new AbortController();
 
@@ -595,6 +601,7 @@ export default function DashboardClient({
                 </InfoPanel>
                 {dancerAccountContent}
               </>) : <DancerPanel
+                agreement={state.agreement}
                 accountContent={dancerAccountContent}
                 accountState={state.account?.accountState}
                 analytics={state.analytics}

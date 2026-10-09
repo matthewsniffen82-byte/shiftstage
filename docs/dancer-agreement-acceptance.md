@@ -1,15 +1,15 @@
 # Dancer Agreement acceptance
 
-The required checkbox uses agreement version `2026-09-22-v5`, published at `/dancer-agreement`. The original document, rendered text, hashes, and exact consent wording are retained through the document assets and `dancer_agreement_versions` snapshot. Migration `20260923020000_publish_dancer_agreement_v5.sql` archives this revision and makes it current without changing earlier snapshots or acceptance receipts.
+The current version is `2026-10-08-v3`, published at `/dancer-agreement`. The document and immutable database snapshot preserve the agreement presented to the dancer; previous versions and receipts remain intact.
 
-New dancer signup requires explicit acceptance of the current version. The server creates an email-bound, single-use intent; an Auth INSERT trigger saves the receipt for the new identity in the same transaction. Duplicate signup and later edits to user metadata cannot accept for an existing identity. Unused intents expire after one hour and are removed by subsequent signup requests.
+Dancer signup creates the account without accepting the Dancer Agreement. Acceptance stays inside the dashboard's existing **Create profile** onboarding step: the dancer opens the agreement popup, checks the checkbox, and selects **Continue**. The server validates the required profile media and records current-version acceptance before submitting the profile.
 
-Existing active dancers must accept through the authenticated `/api/dancer/agreement` endpoint before their dashboard renders. Dancer API requests and NFC requests requiring a dancer role also check acceptance on the server. Account management, support, and the acceptance endpoint remain accessible. Paused accounts retain their existing management restrictions and must accept after reactivation.
+Dancers with an already submitted or approved profile review a new version in that same onboarding step. Continue saves acceptance through `/api/dancer/agreement` without resubmitting or resetting their profile, age verification, or club affiliation. After a confirmed save, the dashboard reloads its authoritative state and resumes onboarding or the approved workspace.
 
-Receipts contain the authenticated user ID, agreement version, server timestamp, and signup/dashboard source. Retries preserve the first receipt. Browser roles cannot read or edit receipt tables; authenticated acceptance functions use `auth.uid()`. Service-role access to the version and acceptance tables is read-only. Account deletion removes the user's receipt through its Auth foreign key.
+There is no separate dashboard acceptance screen. Direct links to dancer tools return unaccepted dancers to onboarding. Protected dancer and NFC APIs still enforce acceptance on the server. Account management and support remain available, including for paused accounts.
 
-Migration `20260920032000_dancer_agreement_acceptance.sql` is additive and does not accept for existing users. Apply only this new migration and record its version and reviewed statements atomically in migration history before deploying the application. Vercel does not apply SQL.
+Receipts identify the authenticated user, agreement version, server timestamp, and acceptance source. Retries preserve the first receipt. Browser roles cannot directly edit receipt tables; authenticated acceptance uses `auth.uid()`.
 
-For a future agreement revision, publish the new document, add a new immutable database snapshot and switch the current version, and update the application constant and signup form together. Keep previous snapshots and receipts. Cached clients with an old version must reload and review the current agreement.
+For future revisions, publish the document and immutable database snapshot, switch the database's current version, and update the application version constant together. Deployment does not apply SQL automatically. Keep previous snapshots and receipts; stale-version submissions must review the current agreement.
 
-Focused validation covers the database grants and signup trigger, duplicate and forged requests, version checks, receipt retry behavior, server feature gates, and browser gate rendering. Mobile and desktop interaction checks cover failed saves, successful acceptance, reloads, and account changes.
+Focused unit and component checks cover onboarding submission, renewal without profile changes, failed saves, duplicate submissions, direct tool links, account changes, dashboard loading, and server access checks. Do not run E2E tests for this project.

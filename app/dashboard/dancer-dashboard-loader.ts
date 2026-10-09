@@ -33,6 +33,7 @@ export async function loadDancerDashboard(
     });
     return {
       profile: profile.profile,
+      agreement: secondary.agreement,
       analytics: secondary.analytics || null,
       deals: secondary.deals || null,
       finance: secondary.finance || null,

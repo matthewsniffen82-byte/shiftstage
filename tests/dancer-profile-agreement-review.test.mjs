@@ -150,7 +150,9 @@ test("loading the dashboard cannot finalize an old tap before agreement and requ
       "@/src/lib/security/safe-error-metadata": {},
     };
     vm.runInNewContext(compile(source), { exports, require: name => dependencies[name], URL });
-    assert.equal((await exports.GET(new Request("https://mydancr.test/api/dancer/dashboard"))).ok, true);
+    const result = await exports.GET(new Request("https://mydancr.test/api/dancer/dashboard"));
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.agreement, receipt(accepted));
     assert.equal(finalized, expected);
   }
 });

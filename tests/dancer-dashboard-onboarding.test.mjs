@@ -32,7 +32,7 @@ test("the setup command center exposes the profile, age verification, and NFC pr
   assert.match(dashboard, /Confirm club/);
   assert.match(dashboard, /DancerProfileAgreementReview/);
   assert.match(onboardingCommand, /label: "Verify 18\+"/);
-  assert.match(onboardingCommand, /status \|\| \(!profileReady && !submitted \? setupDetail : ""\)/);
+  assert.match(onboardingCommand, /status \|\| \(!profileReady && !submitted && !renewingAgreement \? setupDetail : ""\)/);
   assert.doesNotMatch(dashboard, /Submit profile for review|Submit completed profile|final approval/);
   assert.match(dashboard, /submitForReview: true/);
   assert.match(dashboard, /dancer-onboarding-nfc/);
@@ -48,7 +48,7 @@ test("onboarding transitions reject duplicate, conflicting, and stale actions", 
   assert.match(onboardingCommand, /const profileSubmissionAbortRef = useRef<AbortController \| null>\(null\);/);
   assert.match(onboardingCommand, /const profileSubmissionInFlightRef = useRef\(false\);/);
   assert.match(onboardingCommand, /if \(!mountedRef\.current \|\| profileSubmissionInFlightRef\.current\) return null;/);
-  assert.equal((onboardingCommand.match(/signal: controller\.signal/g) || []).length, 1);
+  assert.equal((onboardingCommand.match(/signal: controller\.signal/g) || []).length, 2);
   assert.match(onboardingCommand, /if \(!isCurrentProfileSubmissionAction\(requestId, controller\)\) return;/);
 });
 
@@ -71,7 +71,7 @@ test("initial onboarding nests every production workspace directly under its ste
   assert.match(dashboard, /id="dancer-onboarding-agreement"/);
   assert.doesNotMatch(onboardingCommand, /<DancerProfilePreview|dancer-onboarding-review-identity|dancer-onboarding-review-photos/);
   assert.match(onboardingCommand, /const nextAction = document\.querySelector<HTMLElement>\('#dancer-onboarding-agreement input\[type="checkbox"\]/);
-  assert.match(onboardingCommand, /profileReady \? \([\s\S]*?<DancerProfileAgreementReview[^>]*busy=\{isSubmitting\} onSubmit=\{submitProfile\}/);
+  assert.match(onboardingCommand, /profileReady \|\| renewingAgreement \? \([\s\S]*?<DancerProfileAgreementReview[^>]*busy=\{isSubmitting\} onSubmit=\{submitProfile\}/);
   assert.doesNotMatch(dashboard, /<article className="dancer-onboarding-preview" aria-label="Guest profile preview">/);
   assert.doesNotMatch(dashboard, /className="dancer-onboarding-preview-card"/);
   assert.doesNotMatch(dashboard, /step\.id === "dancer-onboarding-preview"/);
@@ -414,7 +414,7 @@ test("the mobile full-profile preview keeps the three-column media grid above na
 });
 
 test("pre-approval tools remain hidden while help and account recovery stay available", () => {
-  assert.match(dashboard, /!isApproved \? <>[\s\S]*?<DancerOnboardingCommand[\s\S]*?\{accountContent\}[\s\S]*?<DancerDashboardWorkspace/);
+  assert.match(dashboard, /!isApproved \|\| agreementReviewRequired \? <>[\s\S]*?<DancerOnboardingCommand[\s\S]*?\{accountContent\}[\s\S]*?<DancerDashboardWorkspace/);
   assert.match(dashboard, /"Help & Account"/);
   assert.match(dashboard, /DashboardSignInRecovery/);
   assert.match(dashboard, /body: JSON\.stringify\(\{ mode: "login", role/);

@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { type DashboardSessionAccount } from "./dashboard-session";
+import type { DancerAgreementAccess } from "@/src/lib/dancr/dancer-agreement-version";
 export type DashboardRole = "customer" | "dancer" | "venue";
 
 export type CustomerDashboardSection = "offers" | "saved";
@@ -114,6 +115,7 @@ export type CustomerVenueFollow = NonNullable<CustomerSavedState["venueFollows"]
 
 
 export type LoadState = {
+  agreement?: DancerAgreementAccess;
   venueRequest?: { id: string; venueName: string; status: string } | null;
   account?: DashboardSessionAccount | null;
   profile?: Record<string, unknown> | null;

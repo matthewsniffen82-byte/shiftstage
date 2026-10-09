@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { loadDancerDashboard } from "../app/dashboard/dancer-dashboard-loader.ts";
 import { DASHBOARD_SESSION_KEY } from "../app/dashboard/dashboard-session.ts";
+import { DANCER_AGREEMENT_VERSION } from "../src/lib/dancr/dancer-agreement-version.ts";
 
 const response = (data) => new Response(JSON.stringify({ ok: true, ...data }));
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
@@ -20,9 +21,10 @@ function setup(t, fresh = true, account) {
 test("the real dashboard opens before background reports, support and referral access finish", async t => {
   setup(t);
   const background = deferred(), ready = deferred(), updates = [];
+  const agreement = { required: true, accepted: false, version: DANCER_AGREEMENT_VERSION, acceptedAt: null };
   globalThis.fetch = async path => {
     if (path === "/api/account") return response({ account: { role: "dancer" } });
-    if (path === "/api/dancer/dashboard?period=7d") return response({ nfc: { activated: true }, finance: { connected: true } });
+    if (path === "/api/dancer/dashboard?period=7d") return response({ agreement, nfc: { activated: true }, finance: { connected: true } });
     if (path === "/api/dancer/profile") return response({ profile: { stage_name: "Stacy", status: "approved" } });
     await background.promise;
     return response({ threads: [{ id: "support-1" }], report: { rank: 2 }, events: [{ id: "event-1" }], reviews: [{ id: "review-1" }], access: { active: true } });
@@ -36,6 +38,7 @@ test("the real dashboard opens before background reports, support and referral a
   assert.equal(updates[0].data.profile.status, "approved");
   assert.equal(updates[0].data.nfc.activated, true);
   assert.equal(updates[0].data.finance.connected, true);
+  assert.deepEqual(updates[0].data.agreement, agreement);
   background.resolve();
   await loading;
   assert.equal(updates.length, 4);
