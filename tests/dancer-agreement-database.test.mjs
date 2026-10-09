@@ -9,6 +9,7 @@ let db;
 const id = n => `11111111-1111-4111-8111-${String(n).padStart(12, "0")}`;
 const migration = readFileSync(new URL("../supabase/migrations/20260920032000_dancer_agreement_acceptance.sql", import.meta.url), "utf8");
 const revision = readFileSync(new URL("../supabase/migrations/20260923020000_publish_dancer_agreement_v5.sql", import.meta.url), "utf8");
+const octoberRevision = readFileSync(new URL("../supabase/migrations/20261008200000_publish_revised_dancer_agreement.sql", import.meta.url), "utf8");
 before(async () => {
   db = new PGlite();
   await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
@@ -20,6 +21,7 @@ before(async () => {
     insert into public.app_users values('${id(1)}','dancer','active'),('${id(2)}','customer','active'),('${id(3)}','dancer','disabled');`);
   await db.exec(migration);
   await db.exec(revision);
+  await db.exec(octoberRevision);
 });
 after(async () => db?.close());
 async function asUser(n, fn) {

@@ -18,10 +18,12 @@ ROOT = Path(__file__).resolve().parents[1]
 NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 W = "{" + NS["w"] + "}"
 DOCUMENTS = [
-    ("dancer-agreement", "Dancer Agreement", "MyDancr_DancerAgreement.09.22.26v.5.docx"),
-    ("privacy", "Privacy Policy", "MyDancr_Privacy_Policy.Final.docx"),
+    ("user-terms", "Terms of Use", "MyDancr_User_Terms_Revised_2026-10-08_v2.docx"),
+    ("club-agreement", "Club Agreement", "MyDancr_Club_Agreement_Revised_2026-10-08_v2.docx"),
+    ("dancer-agreement", "Dancer Agreement", "MyDancr_Dancer_Agreement_Revised_2026-10-08.docx"),
+    ("privacy", "Privacy Policy", "MyDancr_Privacy_Policy_Revised_2026-10-08_v2.docx"),
     ("california-privacy", "Privacy Notice for California Residents", "MyDancr_Privacy_Policy_Cal_Amendment.09.06.26.docx"),
-    ("dmca", "Digital Millennium Copyright Act", "MyDancr_Digital Millennium Copyright Act.Final.docx"),
+    ("dmca", "Digital Millennium Copyright Act", "MyDancr_DMCA_Policy_Revised_2026-10-08.docx"),
 ]
 SUBHEADINGS = {
     "Infringement Notification", "Counter Notification",
@@ -121,11 +123,27 @@ def cookie_table(image_bytes):
 def convert(slug, title, filename):
     source = ROOT / "public" / "legal" / filename
     image_bytes = None
+    numbering = {}
+    list_counts = {}
     if source.suffix == ".doc":
         body = legacy_word_body(source)
     else:
         with ZipFile(source) as archive:
             body = ET.fromstring(archive.read("word/document.xml")).find("w:body", NS)
+            if "word/numbering.xml" in archive.namelist():
+                definitions = ET.fromstring(archive.read("word/numbering.xml"))
+                for num in definitions.findall("w:num", NS):
+                    abstract_id = num.find("w:abstractNumId", NS).get(W + "val")
+                    abstract = definitions.find(f'w:abstractNum[@w:abstractNumId="{abstract_id}"]', NS)
+                    for level in abstract.findall("w:lvl", NS):
+                        depth = level.get(W + "ilvl")
+                        override = num.find(f'w:lvlOverride[@w:ilvl="{depth}"]/w:startOverride', NS)
+                        start = override if override is not None else level.find("w:start", NS)
+                        numbering[(num.get(W + "numId"), depth)] = (
+                            int(start.get(W + "val", "1")) if start is not None else 1,
+                            level.find("w:numFmt", NS).get(W + "val"),
+                            level.find("w:lvlText", NS).get(W + "val"),
+                        )
             if slug == "privacy":
                 image_bytes = archive.read("word/media/image1.png")
     html, contents = [], []
@@ -160,8 +178,23 @@ def convert(slug, title, filename):
         if slug == "privacy" and block.find(".//w:drawing", NS) is not None:
             html.append(cookie_table(image_bytes))
         text = final_text(block).strip()
-        if not text or (index == 0 and text == title):
+        if not text or (index == 0 and text.casefold() == title.casefold()):
             continue
+        num = block.find("w:pPr/w:numPr", NS)
+        if num is not None:
+            key = (num.find("w:numId", NS).get(W + "val"), num.find("w:ilvl", NS).get(W + "val"))
+            start, format_name, template = numbering[key]
+            value = list_counts.get(key, start - 1) + 1
+            list_counts[key] = value
+            if format_name == "decimal":
+                label = str(value)
+            elif format_name == "lowerLetter" and value <= 26:
+                label = chr(96 + value)
+            elif format_name == "lowerRoman" and value <= 10:
+                label = ("i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x")[value - 1]
+            else:
+                raise ValueError(f"Inspect unsupported list numbering: {key}, {format_name}")
+            text = template.replace("%" + str(int(key[1]) + 1), label) + " " + text
         # Keep the owner-approved website values; source downloads stay untouched.
         if slug == "privacy" and text == "Last updated: September __, 2026":
             text = "Last updated: September 22, 2026"
@@ -181,10 +214,13 @@ def convert(slug, title, filename):
             html.append(f'<p class="legal-toc-entry"><a href="#privacy-topic-{number[1]}">{inline(text)}</a></p>')
         elif (number and len(text) < 120 and (slug == "california-privacy" or text.upper() == text)):
             html.append(heading(text, f"privacy-topic-{number[1]}" if slug == "privacy" else None))
-        elif text in SUBHEADINGS or (text.isupper() and len(text) < 100):
+        elif text in SUBHEADINGS or (slug not in {"club-agreement", "user-terms"} and text.isupper() and len(text) < 100):
             html.append(heading(text))
-        elif slug == "dancer-agreement" and re.match(r"^[A-Z][A-Z /,()&-]+\. ", text):
-            label, rest = text.split(". ", 1)
+        elif slug in {"dancer-agreement", "user-terms"} and (match := re.match(r"^((?:\d+\.\s*)?[A-Z][A-Z /,()&-]+)\. (.+)", text)):
+            label, rest = match.groups()
+            html.append(heading(label + ".") + f"<p>{inline(rest)}</p>")
+        elif slug == "club-agreement" and (match := re.match(r"^((?:\d+[A-Z]?\.\s*)?[A-Z][A-Za-z /,;&-]{1,70})\. (.+)", text)):
+            label, rest = match.groups()
             html.append(heading(label + ".") + f"<p>{inline(rest)}</p>")
         else:
             css = ' class="legal-bullet"' if text.startswith("•") else ""

@@ -6,7 +6,7 @@ import "./legal-hub.css";
 
 export const metadata: Metadata = {
   title: "Legal & Privacy | mydancr",
-  description: "Read MyDancr's privacy and copyright policies.",
+  description: "Read MyDancr's user terms, dancer and club agreements, privacy and copyright policies.",
 };
 
 export default function LegalPage() {
@@ -25,6 +25,17 @@ export default function LegalPage() {
       </header>
       <nav aria-label="Legal documents">
         <ul className="legal-hub-list">
+          {[
+            { href: "/terms", label: "Terms of Use" },
+            { href: "/dancer-agreement", label: "Dancer Agreement" },
+            { href: "/club-agreement", label: "Club Agreement" },
+          ].map(({ href, label }) => (
+            <li key={href}><Link className="legal-hub-row" href={href}>
+              <span className="legal-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5Z" /><path d="M14 3v5h5M9 12h6M9 16h6" /></svg></span>
+              <span className="legal-hub-copy"><strong>{label}</strong></span>
+              <svg className="legal-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+            </Link></li>
+          ))}
           <li><Link className="legal-hub-row" href={ACCESS_TERMS_HREF}>
             <span className="legal-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5Z" /><path d="M14 3v5h5M8 14l3 3 5-6" /></svg></span>
             <span className="legal-hub-copy"><strong>VIP &amp; Table Access Terms</strong></span><svg className="legal-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
