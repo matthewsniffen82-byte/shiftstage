@@ -47,7 +47,7 @@ export function clubDealTransportationTerms(terms: string | null | undefined) {
 
 export function guestListAdmissionTerms(terms: string | null | undefined) {
   const additional = normalizeClubTransportationTerms(terms).replaceAll(CLUB_TRANSPORTATION_TERMS, "").trim();
-  return ["Guest-list admission for one guest.", additional || "Capacity, age requirements, dress code, offer hours, and house rules apply."].join(" ");
+  return ["Guest-list registration for one guest. The venue determines any cover charge; registration alone does not guarantee free admission.", additional || "Capacity, age requirements, dress code, offer hours, and house rules apply."].join(" ");
 }
 
 export function normalizeShuttlePhone(value: unknown) {

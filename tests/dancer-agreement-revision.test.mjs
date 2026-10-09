@@ -8,7 +8,8 @@ import { DANCER_AGREEMENT_VERSION } from "../src/lib/dancr/dancer-agreement-vers
 const read = file => readFileSync(new URL(`../${file}`, import.meta.url), "utf8");
 const original = read("supabase/migrations/20260920032000_dancer_agreement_acceptance.sql");
 const previous = read("supabase/migrations/20260923020000_publish_dancer_agreement_v5.sql");
-const revision = read("supabase/migrations/20261008200000_publish_revised_dancer_agreement.sql");
+const october = read("supabase/migrations/20261008200000_publish_revised_dancer_agreement.sql");
+const revision = read("supabase/migrations/20261008211000_publish_aligned_dancer_agreement.sql");
 
 test("the October revision preserves both earlier agreements and receipts and requires new assent", async () => {
   const db = new PGlite();
@@ -24,11 +25,13 @@ test("the October revision preserves both earlier agreements and receipts and re
     await db.exec("set role authenticated; select public.accept_dancer_agreement('2026-09-17-v4',true); reset role;");
     await db.exec(previous);
     await db.exec("set role authenticated; select public.accept_dancer_agreement('2026-09-22-v5',true); reset role;");
+    await db.exec(october);
+    await db.exec("set role authenticated; select public.accept_dancer_agreement('2026-10-08',true); reset role;");
     const oldReceipts = (await db.query("select * from public.dancer_agreement_acceptances order by version")).rows;
     const oldSnapshots = (await db.query("select * from public.dancer_agreement_versions order by version")).rows;
     // Windows checkouts must archive the same text and hash as production.
     await db.exec(revision.replace(/\r?\n/g, "\r\n"));
-    assert.deepEqual((await db.query("select * from public.dancer_agreement_versions where version <> '2026-10-08' order by version")).rows, oldSnapshots.map(row => ({ ...row, is_current: false })));
+    assert.deepEqual((await db.query("select * from public.dancer_agreement_versions where version <> '2026-10-08-v3' order by version")).rows, oldSnapshots.map(row => ({ ...row, is_current: false })));
     assert.deepEqual((await db.query("select * from public.dancer_agreement_acceptances order by version")).rows, oldReceipts);
     const document = JSON.parse(read("src/content/legal/dancer-agreement.json"));
     const current = (await db.query("select * from public.dancer_agreement_versions where is_current")).rows;
@@ -46,9 +49,9 @@ test("the October revision preserves both earlier agreements and receipts and re
     assert.equal(accepted.accepted, true);
     assert.equal(accepted.version, DANCER_AGREEMENT_VERSION);
     await db.exec("reset role");
-    assert.equal((await db.query("select count(*)::int as count from public.dancer_agreement_acceptances")).rows[0].count, 3);
-    assert.deepEqual((await db.query("select * from public.dancer_agreement_acceptances where version <> '2026-10-08' order by version")).rows, oldReceipts);
-    await assert.rejects(db.exec(revision), /Expected v5/);
+    assert.equal((await db.query("select count(*)::int as count from public.dancer_agreement_acceptances")).rows[0].count, 4);
+    assert.deepEqual((await db.query("select * from public.dancer_agreement_acceptances where version <> '2026-10-08-v3' order by version")).rows, oldReceipts);
+    await assert.rejects(db.exec(revision), /Expected the October 8/);
     await db.exec("rollback");
     assert.equal((await db.query("select version from public.dancer_agreement_versions where is_current")).rows[0].version, DANCER_AGREEMENT_VERSION);
   } finally {

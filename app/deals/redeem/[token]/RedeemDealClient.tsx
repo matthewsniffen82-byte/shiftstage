@@ -118,7 +118,7 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
   return (
     <article className="scanner-card">
       <span className={`status-pill ${isRedeemed ? "success" : ""}`}>{isRedeemed ? "Already used" : isValid ? "Awaiting staff verification" : "Unavailable / expired"}</span>
-      <h1>{deal?.dealTitle || "Club Deal"}</h1>
+      <h1>{guestListPass ? "Guest list" : deal?.dealTitle || "Club Deal"}</h1>
       <p>{dealDescription || "Show this screen to club staff."}</p>
       {dealTerms ? <small>{dealTerms}</small> : null}
       <dl>

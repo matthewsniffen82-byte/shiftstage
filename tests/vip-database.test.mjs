@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
 import * as accessTerms from "../src/lib/dancr/access-terms.ts";
+import * as userTerms from "../src/lib/dancr/user-terms-version.ts";
 
 const id = n => `97000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const migration = readFileSync(new URL("../supabase/migrations/20261007180000_private_venue_vip.sql", import.meta.url), "utf8");
@@ -14,7 +15,7 @@ async function fixture() {
     // All VIP tables, constraints, grants and functions use the actual migration.
     await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
       create schema auth;
-      create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);
+      create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,raw_user_meta_data jsonb default '{}');
       create table public.app_users(id uuid primary key,role text,account_state text);
       create table public.venues(id uuid primary key,owner_user_id uuid,name text,is_active boolean,timezone text);
       create table public.venue_team_members(venue_id uuid,user_id uuid,role text,status text);
@@ -26,9 +27,10 @@ async function fixture() {
     await db.exec(migration);
     await db.exec(readFileSync(new URL("../supabase/migrations/20261008070000_venue_vip_nicknames.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261008190000_vip_access_terms_acceptance.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261008210000_user_terms_acceptance.sql", import.meta.url), "utf8"));
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
       await db.query("insert into public.app_users values($1,$2,'active')", [id(n), role]);
-      await db.query("insert into auth.users values($1,$2,now())", [id(n), `person${n}@example.test`]);
+      await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())", [id(n), `person${n}@example.test`]);
     }
     await db.query("insert into public.venues values($1,$2,'Private club',true,'America/Los_Angeles'),($3,$4,'Other club',true,'America/New_York')", [id(20), id(1), id(21), id(4)]);
     await db.query("insert into public.venue_team_members values($1,$2,'manager','active'),($1,$3,'staff','active')", [id(20), id(2), id(3)]);
@@ -57,6 +59,30 @@ async function adminQuery(db, sql, params = []) {
   try { return await db.query(sql, params); } finally { await db.exec("set role service_role"); }
 }
 const denies = (promise, code) => assert.rejects(promise, error => error.code === code);
+
+test("full User Terms and feature assent are atomic with VIP activation and retries preserve receipts", async () => {
+  const db=await fixture();
+  const activate=(version=userTerms.USER_TERMS_VERSION, accepted=true, actor=5)=>db.query(
+    "select public.vip_accept_invitation_with_user_terms($1,$2,'Jordan',$3,true,$4,$5)",
+    [id(actor),digest,accessTerms.ACCESS_TERMS_VERSION,version,accepted]);
+  try {
+    await invite(db);
+    for(const [version,accepted] of [[userTerms.USER_TERMS_VERSION,false],[userTerms.USER_TERMS_VERSION,null],["old",true]])
+      await denies(activate(version,accepted),"22023");
+    await assert.rejects(activate(userTerms.USER_TERMS_VERSION,true,6));
+    assert.equal((await adminQuery(db,"select count(*)::int n from public.venue_vip_members")).rows[0].n,0);
+    await db.exec("reset role;create function public.fail_terms_receipt() returns trigger language plpgsql as $$begin raise exception 'receipt unavailable';end$$;create trigger fail_terms_receipt before insert on public.user_terms_acceptances for each row execute function public.fail_terms_receipt();set role service_role");
+    await assert.rejects(activate(),/receipt unavailable/);
+    assert.equal((await adminQuery(db,"select count(*)::int n from public.venue_vip_members")).rows[0].n,0);
+    await db.exec("reset role;drop trigger fail_terms_receipt on public.user_terms_acceptances;drop function public.fail_terms_receipt();set role service_role");
+    await activate();
+    const receipts=(await db.query("select * from public.user_terms_acceptances")).rows;
+    assert.equal(receipts.length,1);assert.equal(receipts[0].consent_text,userTerms.VIP_USER_TERMS_CONSENT);
+    assert.equal(receipts[0].user_id,id(5));assert.equal(receipts[0].version,userTerms.USER_TERMS_VERSION);
+    assert.equal((await db.query("select consent_text from public.vip_access_acceptances")).rows[0].consent_text,userTerms.VIP_USER_TERMS_CONSENT);
+    await activate();assert.deepEqual((await db.query("select * from public.user_terms_acceptances")).rows,receipts);
+  } finally { await db.close(); }
+});
 
 test("VIP acceptance snapshots match the displayed terms, notice and affirmative text", async () => {
   const db = await fixture();

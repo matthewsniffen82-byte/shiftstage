@@ -32,6 +32,7 @@ import { createServerSupabaseClient } from "@/src/lib/supabase/server";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
+import { prepareUserTermsSignup } from "@/src/lib/dancr/user-terms";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -224,7 +225,8 @@ export async function POST(request: Request) {
         : submittedStageName || "Dancer";
     const metadata =
       role === "customer"
-        ? { role, display_name: displayName, city }
+        ? { role, display_name: displayName, city,
+            user_terms_intent: await prepareUserTermsSignup(createAdminSupabaseClient(), email, body) }
         : {
             role,
             display_name: displayName,

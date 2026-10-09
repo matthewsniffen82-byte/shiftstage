@@ -338,7 +338,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       </>}
     {deal ? <section className="club-entry-option club-guest-list-section" aria-labelledby="club-guest-list-heading">
       <h2 id="club-guest-list-heading"><button className="club-entry-toggle" type="button" aria-expanded={guestOpen} aria-controls="club-guest-list-panel" data-entry-option="guest_list" disabled={guestBusy || busy || (!complete && !!attemptedRequest.current)} onClick={toggleGuestList}>
-        <EntryIcon kind="guest" /><span className="club-entry-toggle-copy"><strong>Guest list</strong><small>{guestListJoined ? "Your details are with the club" : "Register for a free entry pass"}</small></span><EntryChevron />
+        <EntryIcon kind="guest" /><span className="club-entry-toggle-copy"><strong>Guest list</strong><small>{guestListJoined ? "Your details are with the club" : "Join the list. Cover may apply."}</small></span><EntryChevron />
       </button></h2>
       {guestListJoined ? <p role="status">You’re on the guest list. Your details are saved with {venue.name}.</p> : null}
       <div id="club-guest-list-panel" hidden={!guestOpen}>

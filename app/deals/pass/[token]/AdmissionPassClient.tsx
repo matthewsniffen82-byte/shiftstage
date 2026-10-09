@@ -39,7 +39,7 @@ export default function AdmissionPassClient({ token, initialRedemption, qrImage 
     <header className="admission-header">
       <span className="eyebrow">MyDancr admission</span>
       <p className="admission-venue">{pass.venue?.name}</p>
-      <h1>{customerFacingDealTitle(pass.deal?.dealTitle || "Free Entry")}</h1>
+      <h1>{guestListPass ? "Guest list" : customerFacingDealTitle(pass.deal?.dealTitle || "Free Entry")}</h1>
     </header>
     <strong className="admission-status" role="status">{status}</strong>
     {usable ? <>
@@ -52,7 +52,7 @@ export default function AdmissionPassClient({ token, initialRedemption, qrImage 
       <span>Expires {new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone: pass.venue?.timezone || "UTC" }).format(new Date(pass.expiresAt))}</span>
     </div>
     {admissionOfferHours(pass.deal) ? <small>Offer hours: {admissionOfferHours(pass.deal)} (venue local time)</small> : null}
-    <small>{guestListPass ? "Staff verifies guest-list admission. Venue rules apply." : "Staff verifies arrival. Venue rules apply."}</small>
+    <small>{guestListPass ? "Staff verifies guest-list registration. The venue determines any cover charge." : "Staff verifies arrival. Venue rules apply."}</small>
     <details className="admission-details">
       <summary>Entry details<span aria-hidden="true">⌄</span></summary>
       <p>{terms}</p>

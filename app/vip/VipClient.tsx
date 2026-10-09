@@ -9,6 +9,7 @@ import { readSession, requestDashboardJson, revokeDashboardSession, type StoredD
 import type { VipInvitation } from "@/src/lib/dancr/vip-types";
 import { ACCESS_TERMS_HREF, ACCESS_TERMS_VERSION, VIP_ACCESS_NOTICE } from "@/src/lib/dancr/access-terms";
 import dynamic from "next/dynamic";
+import { USER_TERMS_HREF, USER_TERMS_VERSION } from "@/src/lib/dancr/user-terms-version";
 import "./vip-premium.css";
 
 const VipDashboard = dynamic(() => import("./VipDashboard"), { loading: () => <main className="vip-shell vip-dashboard-shell"><div className="vip-container vip-loading" role="status">Opening your VIP lounge…</div></main> });
@@ -19,6 +20,7 @@ export default function VipClient({ token = "" }: { token?: string }) {
   const [invitation, setInvitation] = useState<VipInvitation | null>(null);
   const [inviteError, setInviteError] = useState("");
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [signupTermsAccepted, setSignupTermsAccepted] = useState(false);
   const [mode, setMode] = useState<"login" | "signup" | "reset_password">("login");
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [name, setName] = useState("");
   const [status, setStatus] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
@@ -56,12 +58,14 @@ export default function VipClient({ token = "" }: { token?: string }) {
   function authenticate(event: FormEvent) {
     event.preventDefault();
     void run(async () => {
+      if (mode === "signup" && !signupTermsAccepted) throw new Error("Please read and accept the User Terms.");
       const unchanged = captureBrowserAuthSessionGuard();
       const redirect = new URL("/auth/callback", window.location.origin);
       redirect.searchParams.set("return_to", mode === "reset_password" ? "/account/reset-password" : token ? `/vip/invite/${encodeURIComponent(token)}` : "/vip");
       if (mode === "reset_password") redirect.searchParams.set("type", "recovery");
       const response = await fetch("/api/auth", { method: "POST", headers: { "content-type": "application/json" }, signal: AbortSignal.timeout(25000),
-        body: JSON.stringify({ mode, role: "customer", email, password, emailRedirectTo: redirect.toString() }) });
+        body: JSON.stringify({ mode, role: "customer", email, password, emailRedirectTo: redirect.toString(),
+          ...(mode === "signup" ? { userTermsAccepted: signupTermsAccepted, userTermsVersion: USER_TERMS_VERSION } : {}) }) });
       const data = await response.json();
       if (!mounted.current) return;
       if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
@@ -80,7 +84,7 @@ export default function VipClient({ token = "" }: { token?: string }) {
   function accept(event: FormEvent) {
     event.preventDefault(); void run(async () => {
       if (!termsAccepted) throw new Error("Please read and accept the VIP & Table Access Terms to activate VIP access.");
-      await requestDashboardJson("/api/vip/invitation", { expectedRole: "customer", method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, name, termsAccepted, termsVersion: ACCESS_TERMS_VERSION }), timeoutMs: 20000 });
+      await requestDashboardJson("/api/vip/invitation", { expectedRole: "customer", method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, name, termsAccepted, termsVersion: ACCESS_TERMS_VERSION, userTermsAccepted: termsAccepted, userTermsVersion: USER_TERMS_VERSION }), timeoutMs: 20000 });
       if (mounted.current) window.location.assign("/vip");
     });
   }
@@ -99,12 +103,13 @@ export default function VipClient({ token = "" }: { token?: string }) {
       <form onSubmit={authenticate}><label>Email<input type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} required maxLength={254} disabled={busy} /></label>
         {mode !== "reset_password" && <PasswordField label="Password" value={password} onChange={event => setPassword(event.target.value)} autoComplete={mode === "signup" ? "new-password" : "current-password"} required disabled={busy} />}
         {mode === "signup" && <><PasswordRequirements password={password} /><small>This creates your MyDancr guest account. Your invitation adds VIP access to it.</small></>}
+        {mode === "signup" && <label className="vip-terms-consent"><input type="checkbox" checked={signupTermsAccepted} onChange={event => setSignupTermsAccepted(event.target.checked)} required disabled={busy} /><span>I agree to the <Link href={USER_TERMS_HREF} target="_blank" rel="noreferrer">User Terms</Link>. <Link href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link></span></label>}
         <button className="vip-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account & continue" : mode === "reset_password" ? "Send reset link" : "Sign in"}</button>
       </form><button className="vip-text-button" type="button" disabled={busy} onClick={() => setMode(mode === "reset_password" ? "login" : "reset_password")}>{mode === "reset_password" ? "Back to sign in" : "Forgot password?"}</button>
     </section> : !customer ? <section className="vip-entry-content"><h2>Use your invited guest account</h2><p>You’re signed in to a different account type. Sign out, then use the email that received your VIP invitation.</p></section>
     : token && invitation ? <section className="vip-entry-content vip-auth"><h2>Activate your VIP access</h2><p>Signed in as {session.account?.email}. This invitation is for {invitation.maskedEmail}.</p><form onSubmit={accept}><label>Your name<input value={name} onChange={event => setName(event.target.value)} maxLength={80} autoComplete="name" required disabled={busy} /></label>
       <small id="vip-access-notice">{VIP_ACCESS_NOTICE} <Link href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link></small>
-      <label className="vip-terms-consent"><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} required disabled={busy} aria-describedby="vip-access-notice" /><span>I’m 18 or older and agree to the <Link href={ACCESS_TERMS_HREF} target="_blank" rel="noreferrer">VIP &amp; Table Access Terms</Link>.</span></label>
+      <label className="vip-terms-consent"><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} required disabled={busy} aria-describedby="vip-access-notice" /><span>I’m 18 or older and agree to the <Link href={USER_TERMS_HREF} target="_blank" rel="noreferrer">User Terms</Link> and <Link href={ACCESS_TERMS_HREF} target="_blank" rel="noreferrer">VIP &amp; Table Access Terms</Link>.</span></label>
       <button type="submit" className="vip-primary" disabled={busy || !termsAccepted}>{busy ? "Activating…" : "Activate VIP access"}</button></form><small>Link expires {new Date(invitation.expiresAt).toLocaleDateString()}.</small></section>
     : null}
     </section>

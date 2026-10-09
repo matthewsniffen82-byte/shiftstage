@@ -814,6 +814,17 @@
           background: var(--dancr-color-brand-primary-soft) !important;
         }
 
+        .customer-terms-consent {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        .customer-terms-consent[hidden] { display: none; }
+        .customer-terms-consent input { width: 18px; height: 18px; min-height: 0; flex: 0 0 18px; margin-top: 2px; accent-color: var(--accent, #6427db); }
+        .customer-terms-consent a { color: #c9b3ff; text-decoration: underline; }
+
         .auth-signup-note {
           display: grid;
           grid-template-columns: auto minmax(0, 1fr);

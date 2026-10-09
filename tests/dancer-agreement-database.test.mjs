@@ -22,6 +22,7 @@ before(async () => {
   await db.exec(migration);
   await db.exec(revision);
   await db.exec(octoberRevision);
+  await db.exec(readFileSync(new URL("../supabase/migrations/20261008211000_publish_aligned_dancer_agreement.sql", import.meta.url), "utf8"));
 });
 after(async () => db?.close());
 async function asUser(n, fn) {

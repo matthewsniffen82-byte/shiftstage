@@ -45,8 +45,6 @@ def accepted_text(node):
 class LegalPublication(unittest.TestCase):
     def test_revised_documents_preserve_all_visible_clauses_in_order(self):
         for slug, title, filename in publisher.DOCUMENTS:
-            if slug == "california-privacy":
-                continue
             with self.subTest(document=slug):
                 source = ROOT / "public/legal" / filename
                 document = json.loads((ROOT / f"src/content/legal/{slug}.json").read_text(encoding="utf-8"))
@@ -88,6 +86,17 @@ class LegalPublication(unittest.TestCase):
         paragraph = ET.fromstring(f'<w:p xmlns:w="{W[1:-1]}"><w:del><w:r><w:t>Old text</w:t></w:r></w:del>'
                                  '<w:ins><w:r><w:t>Revised &amp; &lt;escaped&gt; text</w:t></w:r></w:ins></w:p>')
         self.assertEqual(publisher.inline(publisher.final_text(paragraph)), "Revised &amp; &lt;escaped&gt; text")
+
+    def test_california_categories_and_cookie_disclosures_match_the_product(self):
+        from lxml import html
+        ca = html.fromstring(json.loads((ROOT / "src/content/legal/california-privacy.json").read_text(encoding="utf-8"))["html"])
+        categories = {row.xpath("./td[1]/p/text()")[0]: row.xpath("./td[last()]/p/text()")[0] for row in ca.xpath("//tbody/tr")}
+        self.assertEqual(categories["D. Commercial information."], "YES")
+        self.assertEqual(categories["H. Sensory data."], "YES")
+        privacy = html.fromstring(json.loads((ROOT / "src/content/legal/privacy.json").read_text(encoding="utf-8"))["html"])
+        self.assertEqual(len(privacy.xpath("//table")), 1)
+        for cookie in ["mydancrAdmissionSession", "mydancr_nfc_account_v1", "mydancrVenueVideo"]:
+            self.assertIn(cookie, privacy.text_content())
 
 
 if __name__ == "__main__":

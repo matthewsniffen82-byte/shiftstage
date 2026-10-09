@@ -18,12 +18,12 @@ ROOT = Path(__file__).resolve().parents[1]
 NS = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
 W = "{" + NS["w"] + "}"
 DOCUMENTS = [
-    ("user-terms", "Terms of Use", "MyDancr_User_Terms_Revised_2026-10-08_v2.docx"),
-    ("club-agreement", "Club Agreement", "MyDancr_Club_Agreement_Revised_2026-10-08_v2.docx"),
-    ("dancer-agreement", "Dancer Agreement", "MyDancr_Dancer_Agreement_Revised_2026-10-08.docx"),
-    ("privacy", "Privacy Policy", "MyDancr_Privacy_Policy_Revised_2026-10-08_v2.docx"),
-    ("california-privacy", "Privacy Notice for California Residents", "MyDancr_Privacy_Policy_Cal_Amendment.09.06.26.docx"),
-    ("dmca", "Digital Millennium Copyright Act", "MyDancr_DMCA_Policy_Revised_2026-10-08.docx"),
+    ("user-terms", "Terms of Use", "MyDancr_User_Terms_Revised_2026-10-08_v3.docx"),
+    ("club-agreement", "Club Agreement", "MyDancr_Club_Agreement_Revised_2026-10-08_v3.docx"),
+    ("dancer-agreement", "Dancer Agreement", "MyDancr_Dancer_Agreement_Revised_2026-10-08_v3.docx"),
+    ("privacy", "Privacy Policy", "MyDancr_Privacy_Policy_Revised_2026-10-08_v3.docx"),
+    ("california-privacy", "Privacy Notice for California Residents", "MyDancr_California_Privacy_Revised_2026-10-08_v3.docx"),
+    ("dmca", "Digital Millennium Copyright Act", "MyDancr_DMCA_Policy_Revised_2026-10-08_v3.docx"),
 ]
 SUBHEADINGS = {
     "Infringement Notification", "Counter Notification",
@@ -168,14 +168,18 @@ def convert(slug, title, filename):
                         f"<p>{inline(final_text(p).strip())}</p>" for p in paragraphs if final_text(p).strip()
                     ) + f"</{tag}>")
                 rows.append("<tr>" + "".join(cells) + "</tr>")
-            html.append('<div class="legal-table-scroll" role="region" aria-label="Categories of personal information" tabindex="0" data-global-navigation-swipe="ignore"><table><thead>'
+            table_label = "Cookies used by MyDancr" if slug == "privacy" else "Categories of personal information"
+            html.append(f'<div class="legal-table-scroll" role="region" aria-label="{table_label}" tabindex="0" data-global-navigation-swipe="ignore"><table><thead>'
                         + rows[0] + "</thead><tbody>" + "".join(rows[1:]) + "</tbody></table></div>")
             continue
         if block.tag != W + "p":
             continue
         index = paragraph_index
         paragraph_index += 1
-        if slug == "privacy" and block.find(".//w:drawing", NS) is not None:
+        # Deleted legacy table pictures must not duplicate the revised native table.
+        if slug == "privacy" and any(
+            child.tag != W + "del" and child.find(".//w:drawing", NS) is not None for child in block
+        ):
             html.append(cookie_table(image_bytes))
         text = final_text(block).strip()
         if not text or (index == 0 and text.casefold() == title.casefold()):

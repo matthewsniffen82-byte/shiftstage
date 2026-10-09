@@ -386,6 +386,11 @@
       if (confirmField) confirmField.hidden = !isSignup;
       if (confirmInput) confirmInput.required = isSignup;
       document.getElementById("customerSignupNote").hidden = !isSignup;
+      document.getElementById("customerTermsField").hidden = !isSignup;
+      const termsInput = document.getElementById("customerTermsAccepted");
+      termsInput.checked = false;
+      termsInput.required = isSignup;
+      termsInput.disabled = !isSignup;
       document.getElementById("customerBackToTypes").hidden = !isSignup;
       const vipSignInLink = document.getElementById("vipSignInLink");
       if (vipSignInLink) vipSignInLink.hidden = isSignup;

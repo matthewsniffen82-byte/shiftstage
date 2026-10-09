@@ -27,6 +27,10 @@ const policy = compile(readFileSync(new URL("../src/lib/api-error-policy.ts", im
   "./dancr/payout-copy.ts": compile(readFileSync(new URL("../src/lib/dancr/payout-copy.ts", import.meta.url), "utf8")),
 });
 const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"));
+const userTermsVersion = compile(readFileSync(new URL("../src/lib/dancr/user-terms-version.ts", import.meta.url), "utf8"));
+const userTerms = compile(readFileSync(new URL("../src/lib/dancr/user-terms.ts", import.meta.url), "utf8"), {
+  "../api-error-policy": policy, "./user-terms-version": userTermsVersion,
+});
 const agreementVersion = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement-version.ts", import.meta.url), "utf8"));
 const dancerAgreement = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement.ts", import.meta.url), "utf8"), {
   "../api-error-policy": policy, "./dancer-agreement-version": agreementVersion,
@@ -55,6 +59,12 @@ function authFixture(providerError = null, { role = "customer", authSession = se
   const result = { data: { user: { id: account.id }, session: authSession }, error: providerError };
   return { calls, provisions, rateLimits, ...compile(authSource, {
     "@/src/lib/dancr/password-policy": passwordPolicy,
+    "@/src/lib/dancr/user-terms": {
+      prepareUserTermsSignup: async (_admin, _email, input) => {
+        userTerms.validateUserTermsAcceptance(input);
+        return "11111111-1111-4111-8111-111111111111";
+      },
+    },
     "@/src/lib/dancr/dancer-agreement": {
       ...dancerAgreement,
       prepareDancerAgreementSignup: async (_admin, _email, input) => {
@@ -82,6 +92,22 @@ function authFixture(providerError = null, { role = "customer", authSession = se
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
   }) };
 }
+
+test("guest signup refuses absent, unchecked, string and outdated acceptance before creating the identity", async () => {
+  for (const consent of [{}, {userTermsAccepted:false}, {userTermsAccepted:"true"}, {userTermsAccepted:true,userTermsVersion:"old"}]) {
+    const f=authFixture();
+    const response=await f.POST(jsonRequest("POST",{mode:"signup",role:"customer",email:"new@example.test",password:"Unique1!password",userTermsVersion:userTermsVersion.USER_TERMS_VERSION,...consent}));
+    assert.equal(response.status,400);assert.equal(f.calls.length,0);assert.equal(f.provisions.length,0);
+  }
+  const f=authFixture();
+  const response=await f.POST(jsonRequest("POST",{mode:"signup",role:"customer",email:"new@example.test",password:"Unique1!password",userTermsAccepted:true,userTermsVersion:userTermsVersion.USER_TERMS_VERSION}));
+  assert.equal(response.status,200);
+  assert.equal(f.calls[0].options.data.user_terms_intent,"11111111-1111-4111-8111-111111111111");
+});
+
+test("receipt preparation fails closed when storage is unavailable", async () => {
+  await assert.rejects(userTerms.prepareUserTermsSignup({rpc:async()=>({error:{message:"offline"},data:null})},"a@b.test",{userTermsAccepted:true,userTermsVersion:userTermsVersion.USER_TERMS_VERSION}), /couldn’t record/);
+});
 
 for (const agreementAccepted of [undefined, false, true, "true", 1]) test(`dancer signup defers agreement acceptance regardless of legacy input ${agreementAccepted}`, async () => {
   const f = authFixture(null, { role: "dancer" });
@@ -198,7 +224,7 @@ for (const stage of ["reconcileError", "provisionError"]) for (const cleanupFail
 
 for (const mode of ["login", "signup"]) test(`${mode} preserves exact password characters`, async () => {
   const f = authFixture();
-  const response = await f.POST(jsonRequest("POST", { mode, role: "customer", email: "customer@example.com", password: "  Exact1!password  " }));
+  const response = await f.POST(jsonRequest("POST", { mode, role: "customer", email: "customer@example.com", password: "  Exact1!password  ", userTermsAccepted: true, userTermsVersion: userTermsVersion.USER_TERMS_VERSION }));
   assert.equal(response.status, 200);
   assert.equal(f.calls[0].password, "  Exact1!password  ");
   assert.equal(f.calls.length, 1);
@@ -262,7 +288,7 @@ for (const role of ["dancer", "customer"]) {
   for (const reasons of [["pwned"], ["length"], ["characters"], []]) {
     test(`${role} signup explains weak passwords without exposing provider details (${reasons.join(",") || "unspecified"})`, async () => {
       const f = authFixture(new AuthWeakPasswordError("private-provider-details", 422, reasons), { role });
-      const response = await f.POST(jsonRequest("POST", { mode: "signup", role, email: "signup@example.com", password: "Test1!password" }));
+      const response = await f.POST(jsonRequest("POST", { mode: "signup", role, email: "signup@example.com", password: "Test1!password", userTermsAccepted: true, userTermsVersion: userTermsVersion.USER_TERMS_VERSION }));
       const body = await response.json();
       assert.equal(response.status, 400);
       assert.equal(body.ok, false);

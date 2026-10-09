@@ -11,6 +11,7 @@
       setCustomerAuthStatus(authMode === "signup" ? "Creating your private guest account…" : "Signing in securely…");
       try {
         if (authMode === "signup") {
+          if (!document.getElementById("customerTermsAccepted").checked) throw new Error("Please read and accept the User Terms.");
           const password = document.getElementById("customerPassword").value;
           const confirmPassword = document.getElementById("customerConfirmPassword").value;
           if (password !== confirmPassword) {
@@ -24,7 +25,11 @@
           password: document.getElementById("customerPassword").value,
           city: citySelect.value
         };
-        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", pendingAccountAuthReturnTo || "/dashboard/customer?confirmed=1");
+        if (authMode === "signup") {
+          payload.emailRedirectTo = saveAuthResume("customer", pendingAccountAuthReturnTo || "/dashboard/customer?confirmed=1");
+          payload.userTermsAccepted = document.getElementById("customerTermsAccepted").checked;
+          payload.userTermsVersion = document.getElementById("customerTermsAccepted").dataset.termsVersion;
+        }
         const result = await requestAuth(payload);
         if (authMode === "signup") {
           isCustomerLoggedIn = false;

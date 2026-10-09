@@ -40530,6 +40530,17 @@
           background: var(--dancr-color-brand-primary-soft) !important;
         }
 
+        .customer-terms-consent {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        .customer-terms-consent[hidden] { display: none; }
+        .customer-terms-consent input { width: 18px; height: 18px; min-height: 0; flex: 0 0 18px; margin-top: 2px; accent-color: var(--accent, #6427db); }
+        .customer-terms-consent a { color: #c9b3ff; text-decoration: underline; }
+
         .auth-signup-note {
           display: grid;
           grid-template-columns: auto minmax(0, 1fr);
@@ -41535,6 +41546,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               </span>
               <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link. <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></span>
             </div>
+            <label class="customer-terms-consent" id="customerTermsField" hidden><input id="customerTermsAccepted" type="checkbox" data-terms-version="2026-10-08-v3"><span>I agree to the <a href="/terms/user/2026-10-08-v3" target="_blank" rel="noopener">User Terms</a>.</span></label>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
@@ -56274,6 +56286,11 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       if (confirmField) confirmField.hidden = !isSignup;
       if (confirmInput) confirmInput.required = isSignup;
       document.getElementById("customerSignupNote").hidden = !isSignup;
+      document.getElementById("customerTermsField").hidden = !isSignup;
+      const termsInput = document.getElementById("customerTermsAccepted");
+      termsInput.checked = false;
+      termsInput.required = isSignup;
+      termsInput.disabled = !isSignup;
       document.getElementById("customerBackToTypes").hidden = !isSignup;
       const vipSignInLink = document.getElementById("vipSignInLink");
       if (vipSignInLink) vipSignInLink.hidden = isSignup;
@@ -65710,6 +65727,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       setCustomerAuthStatus(authMode === "signup" ? "Creating your private guest account…" : "Signing in securely…");
       try {
         if (authMode === "signup") {
+          if (!document.getElementById("customerTermsAccepted").checked) throw new Error("Please read and accept the User Terms.");
           const password = document.getElementById("customerPassword").value;
           const confirmPassword = document.getElementById("customerConfirmPassword").value;
           if (password !== confirmPassword) {
@@ -65723,7 +65741,11 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           password: document.getElementById("customerPassword").value,
           city: citySelect.value
         };
-        if (authMode === "signup") payload.emailRedirectTo = saveAuthResume("customer", pendingAccountAuthReturnTo || "/dashboard/customer?confirmed=1");
+        if (authMode === "signup") {
+          payload.emailRedirectTo = saveAuthResume("customer", pendingAccountAuthReturnTo || "/dashboard/customer?confirmed=1");
+          payload.userTermsAccepted = document.getElementById("customerTermsAccepted").checked;
+          payload.userTermsVersion = document.getElementById("customerTermsAccepted").dataset.termsVersion;
+        }
         const result = await requestAuth(payload);
         if (authMode === "signup") {
           isCustomerLoggedIn = false;

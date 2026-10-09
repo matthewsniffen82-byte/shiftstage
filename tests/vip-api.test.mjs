@@ -9,6 +9,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import * as vipTypes from "../src/lib/dancr/vip-types.ts";
 import * as preferences from "../src/lib/dancr/venue-notification-preferences.ts";
 import * as accessTerms from "../src/lib/dancr/access-terms.ts";
+import * as userTerms from "../src/lib/dancr/user-terms-version.ts";
 
 const require = createRequire(import.meta.url);
 const id = n => `97000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -22,11 +23,14 @@ function compile(file, dependencies = {}, globals = {}) {
   return exports;
 }
 const service = compile("src/lib/dancr/vip.ts", { "../api-error-policy": { PublicApiError } });
+const termsService = compile("src/lib/dancr/user-terms.ts", { "../api-error-policy": { PublicApiError }, "./user-terms-version": userTerms });
 function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false } = {}) {
   const calls = [];
   const dependencies = {
     "next/server": { NextResponse: Response },
     "@/src/lib/dancr/access-terms": accessTerms,
+    "@/src/lib/dancr/user-terms-version": userTerms,
+    "@/src/lib/dancr/user-terms": termsService,
     "@/src/lib/api-error-policy": { PublicApiError },
     "@/src/lib/api": { PublicApiError, apiError: error => Response.json({ ok: false, error: error.message }, { status: error.status || 500 }) },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: async (request, options) => { assert.ok(options.maxBytes <= 8192); return request.json(); } },
@@ -51,15 +55,17 @@ const input = { actorUserId: id(6), venueId: id(20), requestId: id(90), localSta
 
 test("VIP activation requires explicit current terms and binds the receipt to authenticated identity", async () => {
   const { route, calls } = fixture({ activation: true });
-  const body = { token: service.newVipToken(), name: "Jordan", actorUserId: id(99), termsAccepted: true, termsVersion: accessTerms.ACCESS_TERMS_VERSION };
-  for (const consent of [{ termsAccepted: false }, { termsAccepted: "true" }, { termsAccepted: null }, { termsVersion: "old" }, { termsVersion: null }]) {
+  const body = { token: service.newVipToken(), name: "Jordan", actorUserId: id(99), termsAccepted: true, termsVersion: accessTerms.ACCESS_TERMS_VERSION, userTermsAccepted: true, userTermsVersion: userTerms.USER_TERMS_VERSION };
+  for (const consent of [{ userTermsAccepted: false }, { userTermsAccepted: "true" }, { userTermsVersion: "old" }, { userTermsVersion: null }, { termsAccepted: false }, { termsAccepted: "true" }, { termsAccepted: null }, { termsVersion: "old" }, { termsVersion: null }]) {
     assert.equal((await route.PATCH(request({ ...body, ...consent }))).status, 400);
   }
   assert.equal(calls.some(c => c[0] === "rpc"), false);
   const response = await route.PATCH(request(body));
   assert.equal(response.status, 200);
   const rpc = calls.find(c => c[0] === "rpc");
-  assert.equal(rpc[1], "vip_accept_invitation_with_terms");
+  assert.equal(rpc[1], "vip_accept_invitation_with_user_terms");
+  assert.equal(rpc[2].p_user_terms_version, userTerms.USER_TERMS_VERSION);
+  assert.equal(rpc[2].p_user_terms_accepted, true);
   assert.equal(rpc[2].p_actor, id(5)); assert.equal(rpc[2].p_accepted, true); assert.equal(rpc[2].p_version, accessTerms.ACCESS_TERMS_VERSION);
   assert.match(response.headers.get("cache-control"), /private.*no-store/);
   const failed = fixture({ activation: true, rpcError: { code: "22023" } });

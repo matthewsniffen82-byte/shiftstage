@@ -3,6 +3,7 @@ import test from 'node:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { compileVip, guest } from './helpers/vip-dashboard-fixture.mjs';
 import * as accessTerms from '../src/lib/dancr/access-terms.ts';
+import * as userTerms from '../src/lib/dancr/user-terms-version.ts';
 
 // Focused component events with mocked responses; no browser or network.
 function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ venues: [] }), auth = {} } = {}) {
@@ -31,6 +32,7 @@ function entryFixture({ shortcut = false, token = '', session = null, request = 
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => 'vip-dashboard' },
     './dashboard-session': sessions, '@/app/dashboard/dashboard-session': sessions,
     '@/src/lib/dancr/access-terms': accessTerms,
+    '@/src/lib/dancr/user-terms-version': userTerms,
     '@/app/components/PasswordField': { PasswordField: 'password-field' }, '@/app/components/PasswordRequirements': { PasswordRequirements: 'password-requirements' },
     '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: 'session', captureBrowserAuthSessionGuard: () => () => true,
       persistBrowserAuthSession: value => { currentSession = value; return true; } },
@@ -66,8 +68,13 @@ test('VIP signup keeps the customer identity and returns email confirmation to t
   ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.onChange({ target: { value: guest.email } });
   ui.nodes().find(n => n.type === 'password-field').props.onChange({ target: { value: 'Existing1!' } }); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  assert.equal(ui.calls.some(c => c.url === '/api/auth'), false);
+  assert.match(ui.html(), /Please read and accept the User Terms/);
+  ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
+  ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
   const body = JSON.parse(ui.calls.find(c => c.url === '/api/auth').options.body);
   assert.equal(body.role, 'customer'); assert.equal(body.email, guest.email); assert.equal(body.mode, 'signup');
+  assert.equal(body.userTermsAccepted, true); assert.equal(body.userTermsVersion, userTerms.USER_TERMS_VERSION);
   assert.equal(new URL(body.emailRedirectTo).searchParams.get('return_to'), '/vip/invite/private-invitation');
   assert.match(ui.html(), /confirmation link brings you back/); ui.close();
 });
@@ -78,7 +85,7 @@ test('an existing signed-in guest activates an invitation without another accoun
   ui.nodes().find(n => n.type === 'input').props.onChange({ target: { value: 'Jordan' } }); ui.render();
   assert.equal(ui.nodes().find(n => n.props.type === 'checkbox').props.checked, false);
   const consentLabel = ui.nodes().find(n => n.props.className === 'vip-terms-consent');
-  assert.equal(renderToStaticMarkup(consentLabel).replace(/<[^>]*>/g, '').replace(/&amp;/g, '&'), accessTerms.VIP_ACCESS_CONSENT);
+  assert.equal(renderToStaticMarkup(consentLabel).replace(/<[^>]*>/g, '').replace(/&amp;/g, '&'), userTerms.VIP_USER_TERMS_CONSENT);
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
   assert.equal(ui.calls.some(c => c.options.method === 'PATCH'), false);
   assert.match(ui.html(), /Please read and accept/);
@@ -87,6 +94,8 @@ test('an existing signed-in guest activates an invitation without another accoun
   const acceptance = ui.calls.find(c => c.options.method === 'PATCH');
   assert.equal(JSON.parse(acceptance.options.body).termsAccepted, true);
   assert.equal(JSON.parse(acceptance.options.body).termsVersion, accessTerms.ACCESS_TERMS_VERSION);
+  assert.equal(JSON.parse(acceptance.options.body).userTermsAccepted, true);
+  assert.equal(JSON.parse(acceptance.options.body).userTermsVersion, userTerms.USER_TERMS_VERSION);
   assert.equal(JSON.parse(acceptance.options.body).name, 'Jordan'); assert.deepEqual(ui.navigations, ['/vip']);
   assert.equal(ui.calls.some(c => c.url === '/api/auth'), false); ui.close();
 });
