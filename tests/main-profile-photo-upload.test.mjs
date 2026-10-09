@@ -7,7 +7,7 @@ import ts from "typescript";
 const code = ts.transpileModule(readFileSync("app/dashboard/main-profile-photo-upload.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-function fixture({ decision = "approved", canceled = false, refreshFails = false, cropWait = false, uploadFails = false, saved = false, isPrimary = true, makeMain = false } = {}) {
+function fixture({ decision = "approved", canceled = false, refreshFails = false, cropWait = false, uploadFails = false, saved = false, isPrimary = true, makeMain = false, pendingReviewId, photoSlot, deleteFails = false, switchAfterUpload = false } = {}) {
   let session = { account: { id: "dancer-a", role: "dancer" }, accessToken: "token-a" };
   const listeners = new Set(), requests = [], controller = new AbortController();
   const original = new File(["original"], "portrait.jpg", { type: "image/jpeg" });
@@ -29,13 +29,19 @@ function fixture({ decision = "approved", canceled = false, refreshFails = false
     } : {
       DASHBOARD_SESSION_KEY: "session", readSession: () => session,
       requestDashboardJson: async (url, options) => { assert.equal(url, "/api/dancer/photos/preview"); previews.push(options.body.get("photoId")); return { imageDataUrl: "data:image/jpeg;base64," + btoa("saved-original") }; },
-      requestDancerPhotosJson: async options => { requests.push(options); if (uploadFails) throw new Error("Network unavailable"); return { decision }; },
+      requestDancerPhotosJson: async options => {
+        requests.push(options);
+        if (options.method === 'DELETE') { if (deleteFails) throw new Error('Review already approved'); return { photo: { deletedIds: [JSON.parse(options.body).photoId] } }; }
+        if (uploadFails) throw new Error("Network unavailable");
+        if (switchAfterUpload) session = { account: { id: 'dancer-b', role: 'dancer' }, accessToken: 'other' };
+        return { decision, moderationRecordId: 'new-review' };
+      },
       requestDancerProfileJson: async () => { if (refreshFails) throw new Error("Refresh failed"); return { profile: { id: "profile-a" } }; },
     },
   };
   vm.runInNewContext(code, scope);
   return { requests, previews, cropFiles, listeners, controller, original, cropped,
-    start: (replacementPhotoId = "photo-a") => scope.exports.uploadMainProfilePhoto(saved ? source : original, { signal: controller.signal, uploadKey: "stable-key", replacementPhotoId, makeMain }),
+    start: (replacementPhotoId = "photo-a") => scope.exports.uploadMainProfilePhoto(saved ? source : original, { signal: controller.signal, uploadKey: "stable-key", replacementPhotoId, makeMain, pendingReviewId, photoSlot }),
     confirm: () => confirm(),
     validate: () => validate(),
     change: (id, dispatch = true) => { session = { account: { id, role: "dancer" }, accessToken: "new-token" }; if (dispatch) listeners.forEach(fn => fn({ key: "session" })); },
@@ -138,4 +144,36 @@ test("canceling make-main never modifies either photo", async () => {
   const f = fixture({ saved: true, isPrimary: false, makeMain: true, canceled: true });
   await f.start("previous-main");
   assert.equal(f.requests.length, 0);
+});
+
+test('pending replacement retires only the old review after acknowledging the new upload', async () => {
+  const f = fixture({ decision: 'review', pendingReviewId: 'old-review' });
+  const result = await f.start();
+  assert.deepEqual(f.requests.map(request => request.method), ['POST', 'DELETE']);
+  assert.deepEqual(JSON.parse(f.requests[1].body), { photoId: 'old-review' });
+  assert.equal(f.requests[0].body.get('replacementPhotoId'), 'photo-a');
+  assert.equal(result.replacementWarning, '');
+});
+
+test('cancellation, rejection, failed upload, and changed account retain the old pending photo', async () => {
+  for (const options of [{ canceled: true }, { decision: 'rejected' }, { uploadFails: true }, { switchAfterUpload: true }]) {
+    const f = fixture({ ...options, pendingReviewId: 'old-review' });
+    if (options.uploadFails || options.switchAfterUpload) await assert.rejects(f.start()); else await f.start();
+    assert.equal(f.requests.some(request => request.method === 'DELETE'), false);
+  }
+});
+
+test('a concurrent review decision never triggers a duplicate upload or deletes the approved photo', async () => {
+  const f = fixture({ pendingReviewId: 'old-review', deleteFails: true });
+  const result = await f.start();
+  assert.equal(result.decision, 'approved'); assert.equal(result.profile.id, 'profile-a');
+  assert.match(result.replacementWarning, /previous upload could not be removed/);
+  assert.deepEqual(f.requests.map(request => request.method), ['POST', 'DELETE']);
+});
+
+test('replacing pending extra media preserves its gallery slot', async () => {
+  const f = fixture({ pendingReviewId: 'gallery-review', photoSlot: { isPrimary: false, sortOrder: 3 } });
+  await f.start('');
+  assert.equal(f.requests[0].body.get('isPrimary'), 'false');
+  assert.equal(f.requests[0].body.get('sortOrder'), '3');
 });

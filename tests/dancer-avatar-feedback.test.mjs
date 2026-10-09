@@ -98,7 +98,7 @@ test("confirmed approval survives a failed profile refresh without offering anot
   ui.select();
   await ui.settle();
   assert.equal(ui.badge, "Approved");
-  assert.match(ui.message, /Avatar approved and saved/);
+  assert.match(ui.message, /Reload the dashboard/);
   assert.equal(ui.retry, undefined);
   assert.equal(ui.posts.length, 1);
   assert.equal(ui.image, "blob:avatar-1");
@@ -136,7 +136,7 @@ test("background approval and rejection settle the current pending upload withou
   for (const decision of ["approved", "rejected"]) {
     const ui = avatarHarness({ post: async () => ({ decision: "review", moderationRecordId: "new" }), read: async () => ({ profile: { pending_avatar_review: { id: "new", previewUrl: "signed-1" } } }) });
     ui.select(); await ui.settle();
-    assert.equal(ui.badge, "Checking");
+    assert.equal(ui.badge, "Awaiting review");
     assert.equal(ui.retry, undefined);
     ui.updateProfile({ pending_avatar_review: { id: "new", previewUrl: "signed-2" } });
     assert.equal(ui.image, "blob:avatar-1");
@@ -152,7 +152,7 @@ test("reopened pending previews keep their source stable through refreshed signe
   const ui = avatarHarness({ profile: { pending_avatar_review: { id: "same", previewUrl: "signed-1" } } });
   ui.updateProfile({ pending_avatar_review: { id: "same", previewUrl: "signed-2" } });
   assert.equal(ui.image, "signed-1");
-  assert.equal(ui.badge, "Checking");
+  assert.equal(ui.badge, "Awaiting review");
   ui.updateProfile({ pending_avatar_review: { id: "different", previewUrl: "signed-3" } });
   assert.equal(ui.image, "signed-3");
 });

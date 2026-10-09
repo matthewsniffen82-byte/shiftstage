@@ -1,9 +1,12 @@
+import { mediaReviewLabel } from "../../src/lib/dancr/media-review-label.ts";
+
 export type AvatarUploadState = "checking" | "pending" | "approved" | "rejected" | "failed";
 
 export type AvatarUploadFeedback = {
   state: AvatarUploadState;
   message?: string;
   reviewId?: string;
+  moderationStatus?: string;
 };
 
 export const AVATAR_REJECTED_MESSAGE = "Avatar not approved. Choose a clear solo face photo of yourself.";
@@ -30,14 +33,14 @@ export function avatarUploadPresentation({
         : AVATAR_REJECTED_MESSAGE;
     } else if (pendingReview) {
       state = "pending";
-      message = "Your avatar is waiting for approval. You don’t need to upload it again.";
     } else if (avatarUrl && latestReview?.decision === "approved") {
       state = "approved";
-      message = "Avatar approved and saved.";
     }
   }
   if (!state) state = avatarUrl ? "approved" : undefined;
-  const label = state === "checking" || state === "pending" ? "Checking"
+  const reviewStatus = String(pendingReview?.status || upload?.moderationStatus || "pending_review");
+  const label = state === "checking" ? "Checking"
+    : state === "pending" ? mediaReviewLabel("pending", reviewStatus)
     : state === "rejected" ? "Not approved"
     : state === "failed" ? "Not uploaded"
     : state === "approved" ? "Approved" : "Required";

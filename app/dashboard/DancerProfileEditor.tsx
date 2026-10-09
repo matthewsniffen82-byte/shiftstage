@@ -507,7 +507,7 @@ export function DancerOnboardingCommand({
   isVenueApproved: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
-  profileMediaContent: (controls: { continueToAgreement: () => void; profileReady: boolean }) => ReactNode;
+  profileMediaContent: (controls: { continueToAgreement: () => void; profileReady: boolean; agreementComplete: boolean }) => ReactNode;
   venueVerificationContent: ReactNode;
 }) {
   const [status, setStatus] = useState("");
@@ -819,6 +819,7 @@ export function DancerOnboardingCommand({
                     <div hidden={reviewAgreement && (profileReady || renewingAgreement) && !submitted}>{profileMediaContent({
                       continueToAgreement: continueToProfileAgreement,
                       profileReady,
+                      agreementComplete: submitted,
                     })}</div>
                     <div hidden={!reviewAgreement && !submitted} className="dancer-onboarding-agreement" id="dancer-onboarding-agreement" tabIndex={-1}>
                       {reviewAgreement && !submitted && !renewingAgreement ? <button type="button" disabled={isSubmitting} onClick={() => setReviewAgreement(false)}>← Back to profile</button> : null}

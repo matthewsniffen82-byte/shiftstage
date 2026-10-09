@@ -61,14 +61,24 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-avatar-panel .photo-source-copy strong { font-size:14px; font-weight:550; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-avatar-upload-controls { display:grid; gap:8px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-avatar-panel p { margin:0; font-size:12px; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-panel { grid-column:auto !important; display:flex !important; flex-direction:column-reverse; gap:12px; padding:0 !important; margin:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-panel { grid-column:auto !important; display:flex !important; flex-direction:column; gap:12px; padding:0 !important; margin:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-copy { display:contents; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-copy h3 { order:5; font-size:16px !important; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-copy > p:not(.dancer-main-photo-status) { order:4; margin:0; font-size:13px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-copy h3 { order:1; font-size:16px !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-copy > p:not(.dancer-main-photo-status) { order:2; margin:0; font-size:13px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-preview { order:3; width:132px !important; max-width:100%; height:auto !important; aspect-ratio:3/4; overflow:hidden; border:1px solid #5b426d; border-radius:10px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-preview img { width:100%; height:100%; object-fit:cover; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-actions { order:2; display:flex; flex-wrap:wrap; gap:8px; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-status { order:1; margin:0; font-size:12px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-state { order:4; width:fit-content; max-width:100%; padding:4px 8px; border:1px solid #635474; border-radius:6px; color:#d8cce5; font-size:12px; font-weight:500; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-state[data-state='approved'] { color:#a7e7bc; border-color:#487657; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-actions { order:5; display:flex; flex-wrap:wrap; gap:8px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-copy > button { order:6; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-main-photo-status { order:7; margin:0; font-size:12px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-builder-checklist { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; list-style:none; margin:0; padding:0; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-builder-checklist li { display:grid; align-content:start; gap:4px; min-width:0; padding:10px; border:1px solid #45414f; border-radius:8px; background:#141319; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-builder-checklist strong { color:#f3eff8; font-size:12px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-builder-checklist li > span { color:#c5becf; font-size:12px; line-height:1.4; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-builder-checklist li[data-complete='true'] > span { color:#a7e7bc; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-photo-guidance { margin:0 0 16px; font-size:13px; line-height:1.5; color:#d0c9da; }
+@media(max-width:600px) { body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-builder-checklist { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-workspace-media > header { align-items:flex-start; flex-wrap:wrap; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-workspace-media > header > button:not(:disabled) { border-color:#5b5665 !important; background:#29282f !important; color:#fff !important; -webkit-text-fill-color:#fff !important; font-weight:650 !important; opacity:1 !important; cursor:pointer; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-workspace-media > header > button:hover:not(:disabled) { border-color:#77717f !important; background:#34323c !important; }

@@ -8,6 +8,8 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
   signal: AbortSignal;
   uploadKey: string;
   replacementPhotoId?: string;
+  pendingReviewId?: string;
+  photoSlot?: { isPrimary: boolean; sortOrder: number };
   makeMain?: boolean;
   onUploadStart?: () => void;
 }) {
@@ -57,8 +59,8 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
     options.onUploadStart?.();
     const body = new FormData();
     body.set("file", cropped);
-    body.set("isPrimary", String(options.makeMain || (saved ? saved.isPrimary : true)));
-    body.set("sortOrder", String(options.makeMain ? 0 : saved ? saved.sortOrder : 0));
+    body.set("isPrimary", String(options.makeMain ? true : saved?.isPrimary ?? options.photoSlot?.isPrimary ?? true));
+    body.set("sortOrder", String(options.makeMain ? 0 : saved?.sortOrder ?? options.photoSlot?.sortOrder ?? 0));
     const replacementPhotoId = options.makeMain ? options.replacementPhotoId : saved?.id || options.replacementPhotoId;
     body.set("replaceExisting", String(Boolean(replacementPhotoId)));
     if (replacementPhotoId) body.set("replacementPhotoId", replacementPhotoId);
@@ -72,14 +74,31 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
     if (!["approved", "review", "pending", "moderation_retry", "moderation_error", "rejected"].includes(decision)) {
       throw new Error("Unable to confirm your photo upload. Try again.");
     }
+    let replacementWarning = "";
+    // Keep the previous pending upload on cancellation, rejection, or an uncertain upload.
+    // Deleting its review ID is guarded server-side against an intervening approval.
+    if (options.pendingReviewId && options.pendingReviewId !== data.moderationRecordId && decision !== "rejected") {
+      try {
+        const removed = await requestDancerPhotosJson({
+          method: "DELETE", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ photoId: options.pendingReviewId }), signal: controller.signal,
+          fallbackMessage: "Unable to remove your previous pending photo.",
+        });
+        assertOwner();
+        if (!removed.photo?.deletedIds?.includes(options.pendingReviewId)) throw new Error("Removal not confirmed.");
+      } catch {
+        assertOwner();
+        replacementWarning = "Your new photo was uploaded, but the previous upload could not be removed. Check your photos before uploading again.";
+      }
+    }
     // Once moderation acknowledges the upload, a failed refresh must not offer a duplicate upload.
     try {
       const refreshed = await requestDancerProfileJson({ cache: "no-store", signal: controller.signal });
       assertOwner();
-      return { decision, profile: refreshed.profile || null, refreshFailed: !refreshed.profile };
+      return { decision, profile: refreshed.profile || null, refreshFailed: !refreshed.profile, replacementWarning };
     } catch {
       assertOwner();
-      return { decision, profile: null, refreshFailed: true };
+      return { decision, profile: null, refreshFailed: true, replacementWarning };
     }
   } finally {
     options.signal.removeEventListener("abort", cancel);

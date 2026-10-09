@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
+import { mediaReview } from './helpers/media-review-label.mjs';
 
 // Component event/effect tests; no browser, server, network, or production data.
 function harness(file, props, { valid = true, save = async () => true, hash = '' } = {}) {
@@ -28,6 +29,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     useCallback: fn => fn,
   };
   const modules = {
+    '@/src/lib/dancr/media-review-label': mediaReview,
     react: React,
     'react/jsx-runtime': { jsx, jsxs: jsx },
     './DashboardShared': { AvatarUploadBusyContext: { Provider: 'AvatarProvider' }, persistedDancerStageName: p => p?.stageName || '', saveDancerProfileEditor: async () => { saves++; return save(); } },
@@ -63,7 +65,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
   };
 }
 const editorFile = 'app/dashboard/DancerProfileWorkspace.tsx';
-const profile = { id: 'fixture', stageName: 'Star', city: 'Las Vegas', photos: [{ id: 'approved', status: 'approved', isPrimary: true, imageUrl: 'approved.jpg' }, { id: 'pending', status: 'pending', imageUrl: 'pending.jpg' }] };
+const profile = { id: 'fixture', stageName: 'Star', city: 'Las Vegas', avatarPhotoUrl: 'face.jpg', photos: [{ id: 'approved', status: 'approved', isPrimary: true, imageUrl: 'approved.jpg' }, { id: 'pending', status: 'pending', imageUrl: 'pending.jpg' }] };
 const props = { profile, draftIdentity: { stageName: 'Star', city: 'Las Vegas' }, identityContent: { type: 'IdentityForm' } };
 
 test('onboarding and live editing share the same explicit save; only onboarding continues', async () => {
@@ -138,4 +140,34 @@ test('editing details clears a previous saved confirmation', async () => {
   ui.update({ draftIdentity: { stageName: 'A new name', city: 'Las Vegas' } });
   assert.ok(!ui.nodes().some(n => n.props?.role === 'status' && n.props.children === 'Changes saved.'));
   assert.ok(ui.listeners.has('beforeunload'));
+});
+
+test('More media excludes the approved main and its pending replacement while preserving extra photos', () => {
+  const ui = harness(editorFile, { ...props, profile: { ...profile, photos: [...profile.photos, { id: 'pending-main', isPrimary: true, status: 'pending' }, { id: 'extra', status: 'approved' }] } });
+  const library = ui.nodes().find(node => node.type === './DancerProfileMediaUploads');
+  assert.deepEqual(Array.from(library.props.photos, photo => photo.id), ['pending', 'extra']);
+  assert.equal(library.props.photoActions('pending').props.photo.id, 'pending');
+  const fallback = harness(editorFile, { ...props, profile: { ...profile, photos: [{ id: 'legacy', status: 'approved' }] } });
+  assert.equal(fallback.nodes().find(node => node.type === './DancerProfileMediaUploads').props.photos.length, 0);
+});
+
+test('the checklist and next action distinguish required, saved, pending, and accepted steps', async () => {
+  const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, avatarPhotoUrl: '', pending_avatar_review: { status: 'pending_review' } } });
+  const checklist = () => ui.nodes().filter(node => node.type === 'li').map(node => node.props.children[1].props.children);
+  assert.deepEqual(checklist(), ['Saved', 'Awaiting review', 'Approved', 'Next']);
+  await ui.click('Save details');
+  assert.equal(ui.continuing, 0);
+  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Face photo: awaiting review/.test(node.props.children)));
+  ui.update({ profile, profileReady: true, agreementComplete: true });
+  assert.deepEqual(checklist(), ['Saved', 'Approved', 'Approved', 'Accepted']);
+  await ui.click('Continue'); assert.equal(ui.continuing, 1);
+  ui.update({ draftIdentity: { stageName: 'Draft', city: 'Las Vegas' } });
+  assert.equal(checklist()[0], 'Unsaved');
+});
+
+test('saving details never advances past a pending main photo', async () => {
+  const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, photos: [{ id: 'main-review', isPrimary: true, status: 'pending', moderationStatus: 'pending_review' }] } });
+  await ui.click('Save details');
+  assert.equal(ui.saves, 1); assert.equal(ui.continuing, 0);
+  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Main photo: awaiting review/.test(node.props.children)));
 });
