@@ -11,8 +11,7 @@ const edit = {
 };
 
 for (const [name, options, input, message] of [
-  ["missing profile", { profile: null }, videoInput, /Save your stage name and city/],
-  ["unsaved city", { profile: { ...profile, city: "" } }, videoInput, /Save your stage name and city/],
+  ["missing profile", { profile: null }, videoInput, /Unable to find your dancer profile/],
   ["unsupported format", {}, { ...videoInput, mimeType: "video/avi" }, /MP4, WebM, or MOV/],
   ["oversized file", {}, { ...videoInput, fileSize: 25 * 1024 * 1024 + 1 }, /25 MB/],
   ["invalid duration", {}, { ...videoInput, durationSeconds: 31 }, /between 1 and 30 seconds/],
@@ -41,6 +40,32 @@ test("saved draft details allow a valid cropped upload before profile publicatio
   assert.equal((await response.json()).ok, true);
   assert.deepEqual(h.calls, ["insert", "sign"]);
 });
+
+for (const [name, details] of [
+  ["stage name", { stage_name: "" }],
+  ["city", { city: "" }],
+  ["both details", { stage_name: "", city: "" }],
+  ["null details", { stage_name: null, city: null }],
+  ["blank details", { stage_name: "   ", city: "   " }],
+]) {
+  test(`a dancer can upload and retry a cropped video before saving ${name}`, async () => {
+    const draft = { ...profile, ...details };
+    const before = structuredClone(draft);
+    const h = videoUploadHarness({ profile: draft });
+    const response = await h.post({ ...videoInput, edit });
+    assert.equal(response.status, 201);
+    const body = await response.json();
+    assert.equal(body.ok, true);
+    assert.equal(h.rows.get(body.upload.videoId).dancer_id, dancerId);
+    assert.equal(h.rows.get(body.upload.videoId).status, "uploading");
+    h.options.storagePath = body.upload.path;
+    const retry = await h.post({ ...videoInput, edit });
+    assert.equal(retry.status, 201);
+    assert.equal((await retry.json()).upload.videoId, body.upload.videoId);
+    assert.equal(h.calls.filter(call => call === "insert").length, 1);
+    assert.deepEqual(draft, before);
+  });
+}
 
 for (const [changes, message] of [
   [{ status: "rejected" }, /profile needs changes/],

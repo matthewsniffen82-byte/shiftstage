@@ -797,7 +797,7 @@ export async function createMyDancrTvUpload(
     throw new PublicApiError("FORBIDDEN", "Your profile needs changes before you can upload videos. Review the feedback in your dashboard.", 403);
   }
   if (!isDancerMediaOnboardingEligible(dancer)) {
-    throw new PublicApiError("INVALID_REQUEST", "Save your stage name and city before uploading profile videos.", 400);
+    throw new PublicApiError("INVALID_REQUEST", "Unable to find your dancer profile. Refresh your dashboard and try again.", 400);
   }
 
   if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new PublicApiError("INVALID_REQUEST", "Upload an MP4, WebM, or MOV video.", 400);
@@ -1984,5 +1984,7 @@ function isDancerMediaOnboardingEligible(profile: any) {
   if (!profile || profile.disabled_at) return false;
   const status = String(profile.status || "").toLowerCase();
   if (status === "rejected" || status === "disabled") return false;
-  return Boolean(String(profile.stage_name || "").trim() && String(profile.city || "").trim());
+  // Media can be uploaded and reviewed while profile details are still a draft.
+  // Public visibility is enforced separately by the profile publication checks.
+  return true;
 }

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test, { before, beforeEach, after } from "node:test";
 import { serverJobRemainingMs, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../src/lib/server-job.ts";
+import { isPublicDancerProfileEligible } from "../src/lib/dancr/profile-approval.ts";
 import {
   createWorkerDatabase, seedWorker, patchWorker, workerSnapshot, videoWorkerHarness,
   workerDecision, captureWorker, workerInstant,
@@ -11,6 +12,25 @@ before(async () => { db = await createWorkerDatabase(); });
 beforeEach(async () => { await seedWorker(db); });
 after(async () => { await db?.close(); });
 const foreignWorker = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+
+const unfinishedProfile = { stage_name: "", city: null, status: "draft", verification_status: "pending", approved_at: null, is_public: false };
+for (const demo of [false, true]) test(`${demo ? "demo" : "AI"} video review completes before stage name and city are saved`, async () => {
+  await patchWorker(db, { status: "uploading" });
+  const h = videoWorkerHarness(db, { demo, profile: unfinishedProfile });
+  assert.equal((await h.submit(true)).status, "moderating");
+  assert.equal((await h.retry()).status, "approved");
+  assert.equal(h.providers.length, demo ? 0 : 1);
+  assert.equal(h.watermarks.length, 1);
+  assert.equal(isPublicDancerProfileEligible(unfinishedProfile), false);
+});
+
+test("human video review can approve media while the dancer details are still a private draft", async () => {
+  await patchWorker(db, { status: "submitted" });
+  const h = videoWorkerHarness(db, { profile: unfinishedProfile });
+  assert.equal((await h.review()).status, "approved");
+  assert.equal(h.watermarks.length, 1);
+  assert.equal(isPublicDancerProfileEligible(unfinishedProfile), false);
+});
 
 for (const demo of [false, true]) test(`${demo ? "demo" : "AI"} upload workers give encoding the video processing budget`, async () => {
   const h = videoWorkerHarness(db, { demo, beforeWatermarkReturns() {

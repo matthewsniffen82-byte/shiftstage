@@ -13,7 +13,7 @@ export const workerVideoId = slotId(100);
 export const workerUserId = slotId(1);
 export const workerVideoPath = `${workerUserId}/${workerUserId}/${workerVideoId}.mp4`;
 export const workerInstant = Date.parse("2026-09-12T12:00:00.000Z");
-const columns = new Set(slotSchema.columns.map(column => column.column_name));
+const columns = new Set([...slotSchema.columns.map(column => column.column_name), "upload_edit"]);
 const quote = value => '"' + value.replaceAll('"', '""') + '"';
 const source = process.env.VIDEO_WORKER_BASELINE === "1"
   ? execFileSync("git", ["show", "8e01369bda91831d0f3952062082b21f67899a0d:src/lib/dancr/tv.ts"], { encoding: "utf8", windowsHide: true })
@@ -26,7 +26,11 @@ assert.ok(ownershipSchema.startsWith("create table public.dmca_enforcement_state
 assert.ok(ownershipTrigger);
 export async function createWorkerDatabase() {
   const db = await createSlotDatabase();
-  try { await db.exec(ownershipSchema + ownershipTrigger); return db; }
+  try {
+    await db.exec(ownershipSchema + ownershipTrigger);
+    await db.exec("alter table public.mydancr_tv_videos add column upload_edit jsonb");
+    return db;
+  }
   catch (error) { await db.close(); throw error; }
 }
 export async function seedWorker(db, overrides = {}) {
@@ -74,7 +78,7 @@ export function videoWorkerHarness(db, options = {}) {
   }
   const profile = { id: workerUserId, stage_name: "Synthetic", city: "Las Vegas", status: "approved", verification_status: "approved",
     photo_review_status: "approved", approved_at: new Date(workerInstant - 86400000).toISOString(), disabled_at: null,
-    venue_approved_at: new Date(workerInstant - 86400000).toISOString(), is_public: true, avatar_storage_path: "synthetic-avatar" };
+    venue_approved_at: new Date(workerInstant - 86400000).toISOString(), is_public: true, avatar_storage_path: "synthetic-avatar", ...options.profile };
   const client = options.client || {
     from(table) {
       assert.equal(table, "mydancr_tv_videos");
@@ -172,6 +176,7 @@ export function videoWorkerHarness(db, options = {}) {
     submit: (deferModeration = false) => tv.submitMyDancrTvUpload(client, workerUserId, workerVideoId, { deferModeration }),
     retrySubmitted: () => tv.retrySubmittedMyDancrTvAutomatedModeration(client, slotId(2), workerVideoId),
     demoPending: () => tv.autoApprovePendingMyDancrTvDemoVideo(client, workerVideoId),
+    review: () => tv.reviewMyDancrTvVideo(client, slotId(2), workerVideoId, "approved", "Reviewed synthetic video"),
     finish(index, outcome = workerDecision()) { const job = pending[index]; assert.ok(job); if (outcome instanceof Error) job.reject(outcome); else job.resolve(outcome); },
     releaseAll() { released = true; for (const job of pending) job.resolve(workerDecision()); },
     async waitFor(predicate) {
