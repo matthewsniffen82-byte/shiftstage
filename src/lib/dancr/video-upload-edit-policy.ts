@@ -1,3 +1,5 @@
+import { PublicApiError } from "../api-error-policy.ts";
+
 export const VIDEO_UPLOAD_MAX_SECONDS = 30;
 export const VIDEO_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
 export const VIDEO_SOURCE_MAX_SECONDS = 600;
@@ -25,7 +27,7 @@ export function normalizeVideoUploadEdit(value: unknown): VideoUploadEdit {
     || ![crop.x, crop.y, crop.width, crop.height].every(n => Number.isSafeInteger(n) && n >= 0 && n % 2 === 0)
     || crop.width < 240 || crop.height < crop.width
     || crop.x + crop.width > source.width || crop.y + crop.height > source.height) {
-    throw new Error(`Choose a vertical or square crop and a clip between 1 and 30 seconds (${VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB maximum).`);
+    throw new PublicApiError("INVALID_REQUEST", `Choose a vertical or square crop and a clip between 1 and 30 seconds (${VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB maximum).`, 400);
   }
   // Store only validated fields, in a stable order, for exact upload retries.
   return {

@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 import { webcrypto } from "node:crypto";
 import vm from "node:vm";
 import ts from "typescript";
-import { resolveApiError } from "../../src/lib/api-error-policy.ts";
+import { PublicApiError, resolveApiError } from "../../src/lib/api-error-policy.ts";
 import { readBoundedJsonObject } from "../../src/lib/bounded-json-body.ts";
 import * as editPolicy from "../../src/lib/dancr/video-upload-edit-policy.ts";
 export const userId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -37,7 +37,7 @@ export function videoUploadHarness(options = {}) {
         then(resolve, reject) { return execute().then(resolve, reject); },
       };
       async function execute() {
-        if (table === "dancer_profiles") return { data: { id: dancerId, user_id: userId, stage_name: "Synthetic", city: "Las Vegas", status: "approved", avatar_storage_path: "synthetic-avatar" }, error: null };
+        if (table === "dancer_profiles") return { data: "profile" in options ? options.profile : { id: dancerId, user_id: userId, stage_name: "Synthetic", city: "Las Vegas", status: "approved", avatar_storage_path: "synthetic-avatar" }, error: options.profileError || null };
         assert.equal(table, "mydancr_tv_videos");
         if (mutation === "insert") {
           calls.push("insert");
@@ -53,7 +53,7 @@ export function videoUploadHarness(options = {}) {
           for (const row of selected) rows.delete(row.id);
           return { data: null, error: null };
         }
-        if (count) return { count: selected.length, error: null };
+        if (count) return { count: options.activeVideoCount ?? selected.length, error: null };
         return { data: selected[0] ? structuredClone(selected[0]) : null, error: null };
       }
       return q;
@@ -77,9 +77,9 @@ export function videoUploadHarness(options = {}) {
       };
     } },
   };
-  const tv = load("src/lib/dancr/tv.ts", name => name === "./video-upload-edit-policy.ts" ? editPolicy : ({ MAX_DANCER_PROFILE_VIDEOS: 50, DancerIdentityReferenceRequiredError: class extends Error {} }));
+  const tv = load("src/lib/dancr/tv.ts", name => name === "./video-upload-edit-policy.ts" ? editPolicy : ({ PublicApiError, MAX_DANCER_PROFILE_VIDEOS: 50, DancerIdentityReferenceRequiredError: class extends Error {} }));
   const run = (input = videoInput, actor = userId) => tv.createMyDancrTvUpload(client, actor, input);
-  async function post() {
+  async function post(input = videoInput) {
     const route = load("app/api/dancer/tv/videos/route.ts", name => {
       if (name === "next/server") return { NextResponse: { json: Response.json } };
       if (name === "@/src/lib/api") return { apiError(error, fallback, status) { const result = resolveApiError(error, fallback, status); return Response.json(result.body, { status: result.status }); } };
@@ -90,7 +90,7 @@ export function videoUploadHarness(options = {}) {
       if (name === "@/src/lib/supabase/request") return { createRequestSupabaseContext: async (_request, access) => { assert.equal(access.role, "dancer"); return { user: { id: userId } }; } };
       throw new Error("Unexpected dependency: " + name);
     });
-    return route.POST(new Request("https://www.mydancr.com/api/dancer/tv/videos", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(videoInput) }));
+    return route.POST(new Request("https://www.mydancr.com/api/dancer/tv/videos", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(input) }));
   }
   return { run, post, rows, calls, options };
 }

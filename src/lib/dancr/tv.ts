@@ -790,35 +790,41 @@ export async function createMyDancrTvUpload(
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw error;
+  if (dancer?.disabled_at || String(dancer?.status || "").toLowerCase() === "disabled") {
+    throw new PublicApiError("FORBIDDEN", "Your profile is disabled. Contact support before uploading videos.", 403);
+  }
+  if (String(dancer?.status || "").toLowerCase() === "rejected") {
+    throw new PublicApiError("FORBIDDEN", "Your profile needs changes before you can upload videos. Review the feedback in your dashboard.", 403);
+  }
   if (!isDancerMediaOnboardingEligible(dancer)) {
-    throw new Error("Save your stage name and city before uploading profile videos.");
+    throw new PublicApiError("INVALID_REQUEST", "Save your stage name and city before uploading profile videos.", 400);
   }
 
-  if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new Error("Upload an MP4, WebM, or MOV video.");
+  if (!MYDANCR_TV_MIME_TYPES.has(input.mimeType)) throw new PublicApiError("INVALID_REQUEST", "Upload an MP4, WebM, or MOV video.", 400);
   if (!Number.isSafeInteger(input.fileSize) || input.fileSize < 1 || input.fileSize > MYDANCR_TV_MAX_BYTES) {
-    throw new Error(`Video files must be ${MYDANCR_TV_MAX_BYTES / (1024 * 1024)} MB or smaller.`);
+    throw new PublicApiError("INVALID_REQUEST", `Video files must be ${MYDANCR_TV_MAX_BYTES / (1024 * 1024)} MB or smaller.`, 400);
   }
   const edit = input.edit == null ? null : normalizeVideoUploadEdit(input.edit);
   if (edit && (edit.source.mimeType !== input.mimeType || edit.source.fileSize !== input.fileSize
     || edit.source.durationSeconds !== input.durationSeconds || edit.source.width !== input.width || edit.source.height !== input.height)) {
-    throw new Error("The video selection does not match its crop.");
+    throw new PublicApiError("INVALID_REQUEST", "The video selection does not match its crop. Remove it and choose the video again.", 400);
   }
   const prepared = edit ? { ...editedVideoDimensions(edit), durationSeconds: Number((edit.endSeconds - edit.startSeconds).toFixed(3)) } : input;
   if (!Number.isFinite(prepared.durationSeconds) || prepared.durationSeconds < 1 || prepared.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
-    throw new Error("Videos must be between 1 and 30 seconds.");
+    throw new PublicApiError("INVALID_REQUEST", "Videos must be between 1 and 30 seconds.", 400);
   }
   if (!Number.isSafeInteger(prepared.width) || !Number.isSafeInteger(prepared.height)
     || prepared.width < 240 || prepared.height < prepared.width || prepared.height > 7680) {
-    throw new Error("Upload a vertical or square video at least 240 pixels wide.");
+    throw new PublicApiError("INVALID_REQUEST", "Upload a vertical or square video at least 240 pixels wide.", 400);
   }
   if (!input.consentConfirmed || !input.rightsConfirmed) {
-    throw new Error("Confirm consent and content rights before uploading.");
+    throw new PublicApiError("INVALID_REQUEST", "Confirm consent and content rights before uploading.", 400);
   }
 
   const distributionScope = input.distributionScope === "feed_only" ? "feed_only" : "profile_and_feed";
   const requestedVideoId = String(input.uploadId || "").trim();
   if (requestedVideoId && !MYDANCR_TV_VIDEO_ID_PATTERN.test(requestedVideoId)) {
-    throw new Error("Invalid video upload identity.");
+    throw new PublicApiError("INVALID_REQUEST", "Invalid video upload identity. Remove it and choose the video again.", 400);
   }
   if (requestedVideoId) {
     const { data: existing, error: existingError } = await admin
@@ -841,7 +847,7 @@ export async function createMyDancrTvUpload(
             alreadySubmitted: true,
           };
         }
-        throw new Error("This video upload is no longer active. Choose the video again.");
+        throw new PublicApiError("CONFLICT", "This video upload is no longer active. Choose the video again.", 409);
       }
 
       const uploadComplete = await myDancrTvUploadObjectExists(admin, existing);
@@ -881,7 +887,7 @@ export async function createMyDancrTvUpload(
       .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES]);
     if (countError) throw countError;
     if (Number(activeVideoCount || 0) >= MYDANCR_TV_PROFILE_VIDEO_LIMIT) {
-      throw new Error("Your profile video library is full. Remove a video before adding another.");
+      throw new PublicApiError("INVALID_REQUEST", "Your profile video library is full. Remove a video before adding another.", 400);
     }
   }
 
@@ -971,7 +977,7 @@ function assertMatchingMyDancrTvUpload(
     if (!input.edit || !existing.upload_edit || existing.dancer_id !== dancerId
       || existing.distribution_scope !== distributionScope
       || JSON.stringify(normalizeVideoUploadEdit(input.edit)) !== JSON.stringify(normalizeVideoUploadEdit(existing.upload_edit))) {
-      throw new Error("This video retry does not match the original upload.");
+      throw new PublicApiError("CONFLICT", "This video retry does not match the original upload. Remove it and choose the video again.", 409);
     }
     return;
   }
@@ -985,7 +991,7 @@ function assertMatchingMyDancrTvUpload(
     Number(existing.height) !== input.height ||
     existing.distribution_scope !== distributionScope
   ) {
-    throw new Error("This video retry does not match the original upload.");
+    throw new PublicApiError("CONFLICT", "This video retry does not match the original upload. Remove it and choose the video again.", 409);
   }
 }
 
