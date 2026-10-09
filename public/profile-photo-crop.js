@@ -43,7 +43,7 @@
       const dialog = document.createElement("dialog");
       dialog.className = "dancr-photo-crop";
       dialog.setAttribute("aria-label", "Crop profile photo");
-      dialog.innerHTML = '<h2>Fit your photo to the card</h2><p>Drag to position, then adjust zoom. Framing may vary slightly by screen.</p><div data-crop-frame hidden><canvas tabindex="0" role="img" aria-label="Photo crop preview. Use arrow keys to reposition the photo."></canvas></div><label data-crop-zoom hidden>Zoom<input type="range" min="1" max="3" step="0.01" value="1" aria-label="Photo zoom"></label><div data-crop-actions><button type="button" data-crop-cancel>Cancel</button><button type="button" data-crop-reset disabled>Reset</button><button type="button" data-crop-confirm disabled>Use photo</button><button type="button" data-crop-retry hidden>Retry</button></div><p data-crop-status role="status" aria-live="polite">Preparing your photo…</p>';
+      dialog.innerHTML = '<div data-crop-header><h2>Fit your photo to the card</h2><p>Drag to position, then adjust zoom. Framing may vary slightly by screen.</p></div><div data-crop-frame hidden><canvas tabindex="0" role="img" aria-label="Photo crop preview. Use arrow keys to reposition the photo."></canvas></div><div data-crop-controls><label data-crop-zoom hidden>Zoom<input type="range" min="1" max="3" step="0.01" value="1" aria-label="Photo zoom"></label><div data-crop-actions><button type="button" data-crop-cancel>Cancel</button><button type="button" data-crop-reset hidden disabled>Reset</button><button type="button" data-crop-confirm hidden disabled>Use photo</button><button type="button" data-crop-retry hidden>Retry</button></div><p data-crop-status role="status" aria-live="polite">Preparing your photo…</p></div>';
       const canvas = dialog.querySelector("canvas");
       const frame = dialog.querySelector("[data-crop-frame]");
       const range = dialog.querySelector("input");
@@ -52,6 +52,7 @@
       const reset = dialog.querySelector("[data-crop-reset]");
       const retry = dialog.querySelector("[data-crop-retry]");
       const status = dialog.querySelector("[data-crop-status]");
+      const viewport = window.visualViewport;
       const controller = new AbortController();
       let image = null, settled = false, saving = false, pointer = null;
       let zoom = 1, x = .5, y = .5;
@@ -62,6 +63,7 @@
         controller.abort();
         options.signal?.removeEventListener("abort", abort);
         window.removeEventListener("resize", draw);
+        viewport?.removeEventListener("resize", draw);
         window.removeEventListener("pagehide", abort);
         dialog.close();
         dialog.remove();
@@ -73,10 +75,22 @@
       function abort() { finish(null, new DOMException("Photo selection closed.", "AbortError")); }
       function draw() {
         if (!image || settled) return;
-        const previewWidth = Math.max(80, Math.min(400, document.documentElement.clientWidth - 64, Math.max(120, window.innerHeight - 270) * ratio));
+        // Measure the actual controls (including wrapped text and browser font
+        // sizing) before giving the remaining viewport space to the photo.
+        const styles = getComputedStyle(dialog);
+        const pixels = value => Number.parseFloat(value) || 0;
+        const viewportHeight = Math.min(window.innerHeight, viewport?.height ?? window.innerHeight);
+        const maxHeight = Math.min(pixels(styles.maxHeight) || viewportHeight - 24, viewportHeight - 24);
+        const chromeHeight = dialog.querySelector("[data-crop-header]").getBoundingClientRect().height
+          + dialog.querySelector("[data-crop-controls]").getBoundingClientRect().height
+          + pixels(styles.paddingTop) + pixels(styles.paddingBottom)
+          + pixels(styles.borderTopWidth) + pixels(styles.borderBottomWidth)
+          + pixels(getComputedStyle(frame).marginBottom);
+        const availableWidth = dialog.clientWidth - pixels(styles.paddingLeft) - pixels(styles.paddingRight);
+        const previewWidth = Math.max(1, Math.floor(Math.min(400, availableWidth, Math.max(1, maxHeight - chromeHeight - 2) * ratio)));
         dialog.style.setProperty("--crop-preview-width", `${previewWidth}px`);
         canvas.width = Math.round(previewWidth * 2);
-        canvas.height = Math.round(canvas.width / ratio);
+        canvas.height = Math.max(1, Math.round(canvas.width / ratio));
         const rect = cropRect(image.naturalWidth, image.naturalHeight, ratio, zoom, x, y);
         const ctx = canvas.getContext("2d");
         ctx.drawImage(image, rect.x, rect.y, rect.width, rect.height, 0, 0, canvas.width, canvas.height);
@@ -95,14 +109,20 @@
           image = nextImage;
           frame.hidden = false;
           dialog.querySelector("[data-crop-zoom]").hidden = false;
+          confirm.hidden = reset.hidden = false;
           confirm.disabled = reset.disabled = false;
           status.textContent = options.confirmLabel ? "Your current photo stays visible until the saved crop is approved." : "Your photo is added to your profile only after you choose Use photo.";
+          if (!dialog.open) dialog.showModal();
           draw();
           canvas.focus({ preventScroll: true });
         } catch (error) {
           if (settled) return;
           status.textContent = error instanceof Error ? error.message : "Unable to prepare this photo.";
           retry.hidden = false;
+          if (!dialog.open) {
+            try { dialog.showModal(); }
+            catch { finish(null, new Error("Unable to open the photo editor. Please try again.")); }
+          }
         }
       }
       canvas.addEventListener("pointerdown", (event) => {
@@ -162,10 +182,10 @@
       });
       options.signal?.addEventListener("abort", abort, { once: true });
       window.addEventListener("resize", draw);
+      viewport?.addEventListener("resize", draw);
       window.addEventListener("pagehide", abort, { once: true });
       document.body.append(dialog);
-      try { dialog.showModal(); void prepare(); }
-      catch { finish(null, new Error("Unable to open the photo editor. Please try again.")); }
+      void prepare();
     });
   }
   window.DancrPhotoCrop = { crop, cropRect, cardRatio };

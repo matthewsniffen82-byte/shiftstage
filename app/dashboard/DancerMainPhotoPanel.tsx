@@ -14,8 +14,9 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
 }) {
   const photos = dancerPhotoItemsFromProfile(profile);
   const main = photos.find(photo => photo.isPrimary && photo.status === "approved");
-  const displayed = main || photos.find(photo => photo.status === "approved");
-  const pending = photos.some(photo => photo.isPrimary && photo.status === "pending");
+  const pendingPhoto = photos.find(photo => photo.isPrimary && photo.status === "pending");
+  const displayed = pendingPhoto || main || photos.find(photo => photo.status === "approved");
+  const pending = Boolean(pendingPhoto);
   const [busy, setBusy] = useState(false);
   const [cropping, setCropping] = useState(false);
   const [status, setStatus] = useState("");
@@ -32,7 +33,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
     if (action.current || !selection.current) return;
     const controller = new AbortController();
     action.current = controller;
-    setBusy(true); setRetry(false); setStatus("Position and crop your main photo, then choose Use photo.");
+    setBusy(true); setRetry(false); setStatus("Preparing your photo…");
     try {
       const result = await uploadMainProfilePhoto(selection.current.file, {
         ...selection.current, signal: controller.signal,
@@ -44,7 +45,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
       if (result.profile) onProfileChange?.(result.profile);
       const message = result.decision === "approved" ? "Main profile photo approved and saved."
         : result.decision === "rejected" ? "This photo wasn’t approved. Choose another photo. Your current photo hasn’t changed."
-        : "Main photo uploaded and awaiting approval. Your current photo stays visible until approval.";
+        : result.profile ? "" : "Main photo uploaded and awaiting approval.";
       setStatus(message + (result.refreshFailed ? " Reload the dashboard to see its latest status." : ""));
     } catch (error) {
       if (controller.signal.aborted) return;
@@ -70,18 +71,18 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
 
   return <section className="dancer-main-photo-panel" aria-label="Main profile photo" aria-busy={busy || cropping}>
     <div className="dancer-main-photo-preview">
-      {displayed?.imageUrl ? <img src={displayed.imageUrl} alt="Current main profile photo" /> : <span>No main photo yet</span>}
+      {displayed?.imageUrl ? <img src={displayed.imageUrl} alt={pending ? "Main photo awaiting approval" : "Current main profile photo"} /> : <span>{pending ? "Main photo awaiting approval" : "No main photo yet"}</span>}
     </div>
     <div className="dancer-main-photo-copy">
       <h3>Main photo</h3>
       <p>Shown on your grid card and at the top of your profile.</p>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || pending || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
-        <button type="button" disabled={busy || pending || cropping} onClick={() => input.current?.click()}>{busy ? "Updating photo…" : displayed ? "Change photo" : "Add photo"}</button>
-        {displayed ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
+        <button type="button" disabled={busy || pending || cropping} onClick={() => input.current?.click()}>{busy ? "Updating photo…" : pending ? "Awaiting approval" : displayed ? "Change photo" : "Add photo"}</button>
+        {displayed?.status === "approved" ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
       </div>
       {retry ? <button type="button" disabled={busy} onClick={() => void upload()}>Retry main photo upload</button> : null}
-      <p className="dancer-main-photo-status" role="status" aria-live="polite">{status || (pending ? "Main photo awaiting approval. Your current photo stays visible." : "")}</p>
+      <p className="dancer-main-photo-status" role="status" aria-live="polite">{status || (pending ? "Main photo uploaded and awaiting approval." : "")}</p>
     </div>
   </section>;
 }

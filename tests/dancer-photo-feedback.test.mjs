@@ -294,12 +294,15 @@ test("a failed upload remains available for a deliberate retry", async () => {
   assert.equal(ui.reads.length, 0);
 });
 
-test("onboarding and photo management offer an Internal main photo independently of the avatar", () => {
+test("gallery uploads leave main photo selection to its dedicated panel, while photo management retains its picker", () => {
   for (const uploadOnly of [true, false]) {
     const ui = photoHarness({ uploadOnly, profile: { avatarPhotoUrl: "/avatar.jpg", dancer_photos: [approved()] } });
-    assert.equal(ui.mainPhotoPicker.props.photos.length, 1);
-    assert.equal(ui.mainPhotoPicker.props.photos[0].imageUrl, "/saved.jpg");
-    assert.equal(ui.mainPhotoPicker.props.disabled, false);
+    if (uploadOnly) assert.equal(ui.mainPhotoPicker, undefined);
+    else {
+      assert.equal(ui.mainPhotoPicker.props.photos.length, 1);
+      assert.equal(ui.mainPhotoPicker.props.photos[0].imageUrl, "/saved.jpg");
+      assert.equal(ui.mainPhotoPicker.props.disabled, false);
+    }
     assert.equal(ui.buttons.some(button => button.props.children === "Make main"), false);
   }
 });
