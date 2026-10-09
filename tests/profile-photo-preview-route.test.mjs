@@ -7,20 +7,22 @@ import sharp from "sharp";
 import { readBoundedFormData } from "../src/lib/bounded-form-data.ts";
 import { PublicApiError } from "../src/lib/api-error-policy.ts";
 import { MAX_DANCR_RAW_UPLOAD_BYTES, validateAndPrepareDancrImage } from "../src/lib/dancr/image-validation.ts";
+import { requestRoleFixture } from "./helpers/request-role-fixture.mjs";
 
 const code = ts.transpileModule(fs.readFileSync("app/api/dancer/photos/preview/route.ts", "utf8"), {
   compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS, esModuleInterop: true },
 }).outputText;
 class RateLimitError extends Error { retryAfterSeconds = 60; }
 
-function route({ signedIn = true, ownsProfile = true, limited = false, savedPhoto } = {}) {
+function route({ signedIn = true, ownsProfile = true, limited = false, savedPhoto, accountAccess } = {}) {
   const events = [], exports = {};
+  const actorId = accountAccess?.user.id ?? "signed-in-user";
   const client = { from(table) {
     assert.equal(table, "dancer_profiles");
     return { select(fields) {
       assert.equal(fields, "id");
       return { eq(column, value) {
-        assert.equal(column, "user_id"); assert.equal(value, "signed-in-user");
+        assert.equal(column, "user_id"); assert.equal(value, actorId);
         return { maybeSingle: async () => ({ data: ownsProfile ? { id: "own-profile" } : null, error: null }) };
       } };
     } };
@@ -38,21 +40,56 @@ function route({ signedIn = true, ownsProfile = true, limited = false, savedPhot
     } },
     "@/src/lib/dancr/public-request-rate-limit": {
       PublicRequestRateLimitError: RateLimitError,
-      enforcePublicRequestRateLimit: async (_admin, input) => { events.push("rate"); assert.equal(input.subject, "signed-in-user"); if (limited) throw new RateLimitError(); },
+      enforcePublicRequestRateLimit: async (_admin, input) => { events.push("rate"); assert.equal(input.subject, actorId); if (limited) throw new RateLimitError(); },
     },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => { assert.ok(signedIn); return client; } },
-    "@/src/lib/supabase/request": { createRequestSupabaseContext: async () => {
+    "@/src/lib/supabase/request": { createRequestSupabaseContext: async (request, access) => {
       events.push("auth"); if (!signedIn) throw Object.assign(new Error("Sign in required."), { status: 401 });
+      if (accountAccess) return accountAccess.createContext(request, access);
       return { client: { from() { assert.fail("The private profile identifier requires the owner-scoped server lookup"); } }, user: { id: "signed-in-user" }, session: { accessToken: "test-session-only" } };
     } },
   };
   vm.runInNewContext(code, { exports, Blob, Buffer, require: name => { assert.ok(name in modules, name); return modules[name]; } });
   return { post: exports.POST, events };
 }
-function request(file) {
+function request(file, refresh = false) {
   const body = new FormData();
   if (file) body.set("file", file);
-  return new Request("https://example.test/api/dancer/photos/preview", { method: "POST", body });
+  return new Request("https://example.test/api/dancer/photos/preview", {
+    method: "POST", body,
+    headers: { authorization: "Bearer test-access", ...(refresh ? { "x-dancr-refresh-token": "test-refresh" } : {}) },
+  });
+}
+
+for (const refresh of [false, true]) {
+  test(`private setup can prepare a photo before agreement acceptance or age verification, refresh=${refresh}`, async () => {
+    const input = await sharp({ create: { width: 80, height: 120, channels: 3, background: "#8351a2" } }).jpeg().toBuffer();
+    for (const status of ["draft", "rejected", "pending_review"]) {
+      const accountAccess = requestRoleFixture({ agreementAccepted: false, profile: { status, verification_status: "pending", is_public: false } });
+      const api = route({ accountAccess });
+      const response = await api.post(request(new Blob([input], { type: "image/jpeg" }), refresh));
+      assert.equal(response.status, 200, status);
+      assert.match((await response.json()).imageDataUrl, /^data:image\/jpeg;base64,/);
+      assert.equal(response.headers.get("cache-control"), "private, no-store");
+      assert.deepEqual(api.events, ["auth", "rate", "body", "decode"]);
+      assert.ok(!accountAccess.calls.some(call => call[0] === "rpc" && call[1] === "dancer_age_verification_access"));
+    }
+  });
+
+  test(`preview setup access still rejects ineligible accounts before reading bytes, refresh=${refresh}`, async () => {
+    for (const options of [
+      { profile: null },
+      { profile: { status: "approved", verification_status: "approved", is_public: true } },
+      { profile: { status: "draft", verification_status: "pending", is_public: true } },
+      { profile: { status: "pending_review", verification_status: "approved", is_public: false } },
+      { role: "customer" },
+      { state: "paused" },
+    ]) {
+      const api = route({ accountAccess: requestRoleFixture({ agreementAccepted: false, ...options }) });
+      assert.equal((await api.post(request(new Blob(["untrusted"]), refresh))).status, 403);
+      assert.deepEqual(api.events, ["auth"]);
+    }
+  });
 }
 
 test("preview refuses anonymous and unrelated accounts before reading upload bytes", async () => {
