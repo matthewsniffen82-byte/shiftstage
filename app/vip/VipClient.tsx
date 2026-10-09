@@ -7,6 +7,7 @@ import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { BROWSER_AUTH_SESSION_KEY, captureBrowserAuthSessionGuard, persistBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { readSession, requestDashboardJson, revokeDashboardSession, type StoredDashboardSession } from "@/app/dashboard/dashboard-session";
 import type { VipInvitation } from "@/src/lib/dancr/vip-types";
+import { ACCESS_TERMS_HREF, ACCESS_TERMS_VERSION, VIP_ACCESS_NOTICE } from "@/src/lib/dancr/access-terms";
 import dynamic from "next/dynamic";
 import "./vip-premium.css";
 
@@ -17,6 +18,7 @@ export default function VipClient({ token = "" }: { token?: string }) {
   const [ready, setReady] = useState(false);
   const [invitation, setInvitation] = useState<VipInvitation | null>(null);
   const [inviteError, setInviteError] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [mode, setMode] = useState<"login" | "signup" | "reset_password">("login");
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [name, setName] = useState("");
   const [status, setStatus] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
@@ -28,14 +30,14 @@ export default function VipClient({ token = "" }: { token?: string }) {
     setSession(readSession()); setReady(true);
     const changed = (event: StorageEvent) => {
       if (event.key !== BROWSER_AUTH_SESSION_KEY && event.key !== null) return;
-      setSession(readSession()); setPassword(""); setName(""); setStatus(""); setError("");
+      setSession(readSession()); setPassword(""); setName(""); setStatus(""); setError(""); setTermsAccepted(false);
     };
     window.addEventListener("storage", changed);
     return () => { mounted.current = false; window.removeEventListener("storage", changed); };
   }, []);
 
   useEffect(() => {
-    setInvitation(null); setInviteError("");
+    setInvitation(null); setInviteError(""); setTermsAccepted(false);
     if (!token) return;
     const controller = new AbortController();
     setMode("signup");
@@ -69,15 +71,16 @@ export default function VipClient({ token = "" }: { token?: string }) {
       }
       if (data.account?.role !== "customer") throw new Error("Use your MyDancr guest account with the invited email for VIP access.");
       if (!persistBrowserAuthSession({ ...data.session, account: data.account })) throw new Error("Unable to save your sign-in in this browser.");
-      setSession(readSession()); setPassword("");
+      setSession(readSession()); setPassword(""); setTermsAccepted(false);
     });
   }
   async function signOut() {
-    await run(async () => { await revokeDashboardSession(); if (mounted.current) { setSession(null); } });
+    await run(async () => { await revokeDashboardSession(); if (mounted.current) { setSession(null); setTermsAccepted(false); } });
   }
   function accept(event: FormEvent) {
     event.preventDefault(); void run(async () => {
-      await requestDashboardJson("/api/vip/invitation", { expectedRole: "customer", method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, name }), timeoutMs: 20000 });
+      if (!termsAccepted) throw new Error("Please read and accept the VIP & Table Access Terms to activate VIP access.");
+      await requestDashboardJson("/api/vip/invitation", { expectedRole: "customer", method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, name, termsAccepted, termsVersion: ACCESS_TERMS_VERSION }), timeoutMs: 20000 });
       if (mounted.current) window.location.assign("/vip");
     });
   }
@@ -99,7 +102,10 @@ export default function VipClient({ token = "" }: { token?: string }) {
         <button className="vip-primary" disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Create account & continue" : mode === "reset_password" ? "Send reset link" : "Sign in"}</button>
       </form><button className="vip-text-button" type="button" disabled={busy} onClick={() => setMode(mode === "reset_password" ? "login" : "reset_password")}>{mode === "reset_password" ? "Back to sign in" : "Forgot password?"}</button>
     </section> : !customer ? <section className="vip-entry-content"><h2>Use your invited guest account</h2><p>You’re signed in to a different account type. Sign out, then use the email that received your VIP invitation.</p></section>
-    : token && invitation ? <section className="vip-entry-content vip-auth"><h2>Activate your VIP access</h2><p>Signed in as {session.account?.email}. This invitation is for {invitation.maskedEmail}.</p><form onSubmit={accept}><label>Your name<input value={name} onChange={event => setName(event.target.value)} maxLength={80} autoComplete="name" required disabled={busy} /></label><small>Your club will see this name with your requests.</small><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Activating…" : "Activate VIP access"}</button></form><small>Link expires {new Date(invitation.expiresAt).toLocaleDateString()}.</small></section>
+    : token && invitation ? <section className="vip-entry-content vip-auth"><h2>Activate your VIP access</h2><p>Signed in as {session.account?.email}. This invitation is for {invitation.maskedEmail}.</p><form onSubmit={accept}><label>Your name<input value={name} onChange={event => setName(event.target.value)} maxLength={80} autoComplete="name" required disabled={busy} /></label>
+      <small id="vip-access-notice">{VIP_ACCESS_NOTICE} <Link href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link></small>
+      <label className="vip-terms-consent"><input type="checkbox" checked={termsAccepted} onChange={event => setTermsAccepted(event.target.checked)} required disabled={busy} aria-describedby="vip-access-notice" /><span>I’m 18 or older and agree to the <Link href={ACCESS_TERMS_HREF} target="_blank" rel="noreferrer">VIP &amp; Table Access Terms</Link>.</span></label>
+      <button type="submit" className="vip-primary" disabled={busy || !termsAccepted}>{busy ? "Activating…" : "Activate VIP access"}</button></form><small>Link expires {new Date(invitation.expiresAt).toLocaleDateString()}.</small></section>
     : null}
     </section>
     <footer className="vip-footer"><span>MyDancr VIP</span><Link href="/privacy">Privacy Policy</Link></footer>

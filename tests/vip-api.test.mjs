@@ -8,6 +8,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as vipTypes from "../src/lib/dancr/vip-types.ts";
 import * as preferences from "../src/lib/dancr/venue-notification-preferences.ts";
+import * as accessTerms from "../src/lib/dancr/access-terms.ts";
 
 const require = createRequire(import.meta.url);
 const id = n => `97000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
@@ -21,10 +22,12 @@ function compile(file, dependencies = {}, globals = {}) {
   return exports;
 }
 const service = compile("src/lib/dancr/vip.ts", { "../api-error-policy": { PublicApiError } });
-function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false } = {}) {
+function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false } = {}) {
   const calls = [];
   const dependencies = {
     "next/server": { NextResponse: Response },
+    "@/src/lib/dancr/access-terms": accessTerms,
+    "@/src/lib/api-error-policy": { PublicApiError },
     "@/src/lib/api": { PublicApiError, apiError: error => Response.json({ ok: false, error: error.message }, { status: error.status || 500 }) },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: async (request, options) => { assert.ok(options.maxBytes <= 8192); return request.json(); } },
     "@/src/lib/supabase/request": { createRequestSupabaseContext: async (_request, access) => {
@@ -41,10 +44,27 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
       sendTransactionalEmail: async message => { calls.push(["email", message]); return { delivered: false }; },
     },
   };
-  return { route: compile(invitation ? "app/api/venue/vip/route.ts" : "app/api/vip/route.ts", dependencies), calls };
+  return { route: compile(activation ? "app/api/vip/invitation/route.ts" : invitation ? "app/api/venue/vip/route.ts" : "app/api/vip/route.ts", dependencies), calls };
 }
 function request(body) { return new Request("https://example.test/api/vip", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); }
 const input = { actorUserId: id(6), venueId: id(20), requestId: id(90), localStart: "2027-01-15T21:30", dancerIds: [id(37)], notes: "Hello" };
+
+test("VIP activation requires explicit current terms and binds the receipt to authenticated identity", async () => {
+  const { route, calls } = fixture({ activation: true });
+  const body = { token: service.newVipToken(), name: "Jordan", actorUserId: id(99), termsAccepted: true, termsVersion: accessTerms.ACCESS_TERMS_VERSION };
+  for (const consent of [{ termsAccepted: false }, { termsAccepted: "true" }, { termsAccepted: null }, { termsVersion: "old" }, { termsVersion: null }]) {
+    assert.equal((await route.PATCH(request({ ...body, ...consent }))).status, 400);
+  }
+  assert.equal(calls.some(c => c[0] === "rpc"), false);
+  const response = await route.PATCH(request(body));
+  assert.equal(response.status, 200);
+  const rpc = calls.find(c => c[0] === "rpc");
+  assert.equal(rpc[1], "vip_accept_invitation_with_terms");
+  assert.equal(rpc[2].p_actor, id(5)); assert.equal(rpc[2].p_accepted, true); assert.equal(rpc[2].p_version, accessTerms.ACCESS_TERMS_VERSION);
+  assert.match(response.headers.get("cache-control"), /private.*no-store/);
+  const failed = fixture({ activation: true, rpcError: { code: "22023" } });
+  assert.equal((await failed.route.PATCH(request(body))).status, 400);
+});
 
 test("VIP submission uses authenticated identity, bounds selection, hides notification recipients and persists refreshed sessions", async () => {
   const { route, calls } = fixture({ deliveryFailure: true });

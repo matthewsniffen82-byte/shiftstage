@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import { PGlite } from "@electric-sql/pglite";
+import * as accessTerms from "../src/lib/dancr/access-terms.ts";
 
 const id = n => `97000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
 const migration = readFileSync(new URL("../supabase/migrations/20261007180000_private_venue_vip.sql", import.meta.url), "utf8");
@@ -24,6 +25,7 @@ async function fixture() {
       grant usage on schema public to anon,authenticated,service_role;`);
     await db.exec(migration);
     await db.exec(readFileSync(new URL("../supabase/migrations/20261008070000_venue_vip_nicknames.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261008190000_vip_access_terms_acceptance.sql", import.meta.url), "utf8"));
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
       await db.query("insert into public.app_users values($1,$2,'active')", [id(n), role]);
       await db.query("insert into auth.users values($1,$2,now())", [id(n), `person${n}@example.test`]);
@@ -44,7 +46,7 @@ async function manage(db, action, data, actor = 1, venue = 20) {
 }
 async function invite(db, email = "person5@example.test", token = digest) { return manage(db, "invite", { email, digest: token }); }
 async function accept(db, actor = 5, token = digest) {
-  return (await db.query("select public.vip_accept_invitation($1,$2,'Test VIP') venue", [id(actor), token])).rows[0].venue;
+  return (await db.query("select public.vip_accept_invitation_with_terms($1,$2,'Test VIP',$3,true) venue", [id(actor), token, accessTerms.ACCESS_TERMS_VERSION])).rows[0].venue;
 }
 async function submit(db, { actor = 5, venue = 20, request = 90, dancers = [37, 38], local = "2099-01-01T20:30", notes = "Window table please" } = {}) {
   if (local === "2099-01-01T20:30") local = (await db.query("select to_char((now()+interval '2 days') at time zone 'America/Los_Angeles','YYYY-MM-DD') || 'T20:30' value")).rows[0].value;
@@ -55,6 +57,51 @@ async function adminQuery(db, sql, params = []) {
   try { return await db.query(sql, params); } finally { await db.exec("set role service_role"); }
 }
 const denies = (promise, code) => assert.rejects(promise, error => error.code === code);
+
+test("VIP acceptance snapshots match the displayed terms, notice and affirmative text", async () => {
+  const db = await fixture();
+  try {
+    const snapshot = (await db.query("select * from public.vip_access_terms_versions")).rows[0];
+    assert.equal(snapshot.version, accessTerms.ACCESS_TERMS_VERSION);
+    assert.equal(snapshot.terms_href, accessTerms.ACCESS_TERMS_HREF);
+    assert.equal(snapshot.title, accessTerms.ACCESS_TERMS_TITLE);
+    assert.equal(snapshot.document_text, accessTerms.ACCESS_TERMS_PARAGRAPHS.join("\n\n"));
+    assert.equal(snapshot.notice_text, accessTerms.VIP_ACCESS_NOTICE);
+    assert.equal(snapshot.consent_text, accessTerms.VIP_ACCESS_CONSENT);
+    assert.equal(snapshot.privacy_href, "/privacy");
+    await invite(db);
+    for (const [version, accepted] of [[accessTerms.ACCESS_TERMS_VERSION, false], [accessTerms.ACCESS_TERMS_VERSION, null], ["old", true], [null, true]]) {
+      await denies(db.query("select public.vip_accept_invitation_with_terms($1,$2,'VIP',$3,$4)", [id(5), digest, version, accepted]), "22023");
+    }
+    assert.equal((await db.query("select count(*)::int n from public.venue_vip_members")).rows[0].n, 0);
+    assert.equal((await db.query("select count(*)::int n from public.vip_access_acceptances")).rows[0].n, 0);
+    await accept(db);
+    const receipt = (await db.query("select * from public.vip_access_acceptances")).rows[0];
+    assert.equal(receipt.user_id, id(5)); assert.equal(receipt.venue_id, id(20));
+    assert.equal(receipt.acceptance_source, "vip_activation_checkbox"); assert.ok(receipt.accepted_at);
+    await accept(db);
+    const retried = (await db.query("select * from public.vip_access_acceptances")).rows;
+    assert.equal(retried.length, 1); assert.deepEqual(retried[0], receipt);
+    await denies(db.query("delete from public.vip_access_acceptances"), "42501");
+    await denies(db.query("update public.vip_access_terms_versions set consent_text='changed'"), "42501");
+    for (const role of ["anon", "authenticated"]) {
+      await db.exec(`set role ${role}`);
+      for (const table of ["vip_access_terms_versions", "vip_access_acceptances"]) await denies(db.query(`select * from public.${table}`), "42501");
+      await denies(db.query("select public.vip_accept_invitation_with_terms($1,$2,'VIP',$3,true)", [id(5), digest, accessTerms.ACCESS_TERMS_VERSION]), "42501");
+    }
+  } finally { await db.close(); }
+});
+
+test("VIP activation rolls back if its acceptance cannot be saved", async () => {
+  const db = await fixture();
+  try {
+    await invite(db);
+    await adminQuery(db, "delete from public.vip_access_terms_versions");
+    await denies(accept(db), "23503");
+    assert.equal((await db.query("select count(*)::int n from public.venue_vip_members")).rows[0].n, 0);
+    assert.equal((await db.query("select accepted_at from public.venue_vip_invitations")).rows[0].accepted_at, null);
+  } finally { await db.close(); }
+});
 
 test("VIP tables and RPCs deny direct anonymous and authenticated access", async () => {
   const db = await fixture();

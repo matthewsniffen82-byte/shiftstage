@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { compileVip, guest } from './helpers/vip-dashboard-fixture.mjs';
+import * as accessTerms from '../src/lib/dancr/access-terms.ts';
 
 // Focused component events with mocked responses; no browser or network.
 function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ venues: [] }), auth = {} } = {}) {
@@ -29,6 +30,7 @@ function entryFixture({ shortcut = false, token = '', session = null, request = 
   const Component = compileVip(shortcut ? 'app/dashboard/CustomerVipShortcut.tsx' : 'app/vip/VipClient.tsx', {
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => 'vip-dashboard' },
     './dashboard-session': sessions, '@/app/dashboard/dashboard-session': sessions,
+    '@/src/lib/dancr/access-terms': accessTerms,
     '@/app/components/PasswordField': { PasswordField: 'password-field' }, '@/app/components/PasswordRequirements': { PasswordRequirements: 'password-requirements' },
     '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: 'session', captureBrowserAuthSessionGuard: () => () => true,
       persistBrowserAuthSession: value => { currentSession = value; return true; } },
@@ -74,10 +76,28 @@ test('an existing signed-in guest activates an invitation without another accoun
   const ui = entryFixture({ token: 'private-invitation', session: { accessToken: 'session-token', account: guest } }); await ui.settle();
   assert.equal(ui.nodes().some(n => n.type === 'password-field'), false);
   ui.nodes().find(n => n.type === 'input').props.onChange({ target: { value: 'Jordan' } }); ui.render();
+  assert.equal(ui.nodes().find(n => n.props.type === 'checkbox').props.checked, false);
+  const consentLabel = ui.nodes().find(n => n.props.className === 'vip-terms-consent');
+  assert.equal(renderToStaticMarkup(consentLabel).replace(/<[^>]*>/g, '').replace(/&amp;/g, '&'), accessTerms.VIP_ACCESS_CONSENT);
+  ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  assert.equal(ui.calls.some(c => c.options.method === 'PATCH'), false);
+  assert.match(ui.html(), /Please read and accept/);
+  ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
   const acceptance = ui.calls.find(c => c.options.method === 'PATCH');
+  assert.equal(JSON.parse(acceptance.options.body).termsAccepted, true);
+  assert.equal(JSON.parse(acceptance.options.body).termsVersion, accessTerms.ACCESS_TERMS_VERSION);
   assert.equal(JSON.parse(acceptance.options.body).name, 'Jordan'); assert.deepEqual(ui.navigations, ['/vip']);
   assert.equal(ui.calls.some(c => c.url === '/api/auth'), false); ui.close();
+});
+
+test('VIP acceptance resets when the signed-in account changes', async () => {
+  const ui = entryFixture({ token: 'private-invitation', session: { accessToken: 'session-token', account: guest } }); await ui.settle();
+  ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
+  ui.session({ accessToken: 'different-token', account: { ...guest, id: 'other-guest' } });
+  ui.event('storage', { key: 'session' }); await ui.settle();
+  assert.equal(ui.nodes().find(n => n.props.type === 'checkbox').props.checked, false);
+  ui.close();
 });
 
 test('VIP password recovery asks only for email and uses the password-reset callback', async () => {

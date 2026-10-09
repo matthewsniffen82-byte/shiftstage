@@ -1,4 +1,11 @@
 /* Table QR pages share the public directory's compact, neutral presentation. */
+body .ir-guest .ir-terms { margin: 0 0 12px; border: 1px solid #34343c; border-radius: 12px; background: #08080b; font-size: 13px; line-height: 1.5; }
+body .ir-guest .ir-terms summary { padding: 12px 14px; min-height: 44px; box-sizing: border-box; cursor: pointer; color: #e4e4e9; font-weight: 600; }
+body .ir-guest .ir-terms summary:focus-visible { outline: 2px solid #b899ec; outline-offset: 2px; border-radius: 12px; }
+body .ir-guest .ir-terms > div { padding: 0 14px 12px; color: #c7c7d0; }
+body .ir-guest .ir-terms p { margin: 0 0 10px; }
+body .ir-guest .ir-terms p:last-child { margin-bottom: 0; }
+body .ir-guest .ir-terms a { color: #d9c7fa; text-decoration: underline; text-underline-offset: 3px; }
 body .ir-shell.ir-guest {
   max-width: 1040px;
   padding: 14px clamp(12px, 3vw, 26px) max(24px, env(safe-area-inset-bottom, 0px));

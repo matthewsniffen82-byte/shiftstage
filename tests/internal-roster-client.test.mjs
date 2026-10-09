@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import * as accessTerms from "../src/lib/dancr/access-terms.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/internal/InternalRoster.tsx", import.meta.url), "utf8");
@@ -80,6 +81,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
       if (name === "../dashboard/VenueAdminUtilities") return { default: () => null };
       if (name === "./InternalRequestPushSettings") return { InternalRequestPushSettings: () => null };
       if (name === "./InternalFullProfile") return { InternalFullProfile: () => null };
+      if (name === "@/src/lib/dancr/access-terms") return accessTerms;
       if (name === "@/src/lib/dancr/browser-session") return {
         BROWSER_AUTH_SESSION_KEY: sessionKey,
         readBrowserAuthSession: () => session,
@@ -138,6 +140,22 @@ const refreshMessage = app => find(app.render(), node => node.props?.className =
 const textContent = tree => typeof tree === "string" || typeof tree === "number" ? String(tree)
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
 const requestStatusPanel = app => find(app.render(), node => node.props?.["aria-label"] === "Table request status");
+
+test("table QR opens the roster directly with collapsed terms and no consent gate", async t => {
+  const calls = [];
+  const app = harness(async (url, options) => { calls.push({ url, options }); return response({ ...roster, kind: "table", label: "Table 1" }); });
+  t.after(() => app.unmount()); await app.mount();
+  assert.ok(grid(app));
+  const tree = app.render();
+  const notice = find(tree, node => node.type === "details" && node.props.className === "ir-terms");
+  assert.ok(notice); assert.equal(notice.props.open, undefined);
+  assert.equal(find(notice, node => node.type === "summary").props.children, "View terms");
+  assert.ok(textContent(notice).includes(accessTerms.TABLE_REQUEST_NOTICE));
+  assert.equal(find(notice, node => node.type === "a").props.href, accessTerms.ACCESS_TERMS_HREF);
+  assert.equal(find(tree, node => node.props?.type === "checkbox"), undefined);
+  assert.doesNotMatch(textContent(tree), /Continue to roster|I agree/);
+  assert.ok(calls.every(call => call.options.method === "GET"), "opening never writes an acceptance");
+});
 
 test("a guest hard reload waits quietly for the real venue and table header", async t => {
   const pending = deferred();

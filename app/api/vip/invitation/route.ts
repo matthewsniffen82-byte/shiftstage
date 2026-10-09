@@ -4,6 +4,8 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { resolveVipInvitation, VIP_HEADERS, vipError, vipTokenDigest } from "@/src/lib/dancr/vip";
+import { ACCESS_TERMS_VERSION } from "@/src/lib/dancr/access-terms";
+import { PublicApiError } from "@/src/lib/api-error-policy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -19,8 +21,12 @@ export async function PATCH(request: Request) {
   try {
     const { user, session } = await createRequestSupabaseContext(request, { role: "customer" });
     const body = await readBody(request);
-    const { data, error } = await createAdminSupabaseClient().rpc("vip_accept_invitation", {
+    if (body.termsAccepted !== true || body.termsVersion !== ACCESS_TERMS_VERSION) {
+      throw new PublicApiError("INVALID_REQUEST", "Please refresh and accept the VIP & Table Access Terms to activate VIP access.", 400);
+    }
+    const { data, error } = await createAdminSupabaseClient().rpc("vip_accept_invitation_with_terms", {
       p_actor: user.id, p_digest: vipTokenDigest(body.token), p_name: typeof body.name === "string" ? body.name : "",
+      p_version: ACCESS_TERMS_VERSION, p_accepted: true,
     });
     if (error) throw error;
     return NextResponse.json({ ok: true, venueId: data, session }, { headers: VIP_HEADERS });

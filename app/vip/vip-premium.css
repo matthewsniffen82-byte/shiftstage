@@ -136,6 +136,9 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-footer > span { color: var(--vip-gold); font-size: 11px; }
 .vip-dashboard-footer small { font-size: 10px; text-align: right; }
 
+.vip-auth .vip-terms-consent { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; line-height: 1.5; font-weight: 400; }
+.vip-auth .vip-terms-consent input[type=checkbox] { width: 19px; height: 19px; min-height: 19px; flex: 0 0 19px; margin: 1px 0 0; padding: 0; accent-color: #dbc8a3; }
+.vip-auth .vip-terms-consent a, .vip-auth #vip-access-notice a { color: #e4d2af; text-decoration: underline; text-underline-offset: 3px; }
 @media (max-width: 880px) {
   .vip-plan-grid { grid-template-columns: minmax(0, 1fr); }
   .vip-dashboard-shell .vip-visit-panel { position: static; }
