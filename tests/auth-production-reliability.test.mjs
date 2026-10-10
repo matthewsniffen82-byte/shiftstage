@@ -52,12 +52,13 @@ const jsonRequest = (method, body, headers = {}) => new Request("https://mydancr
   }),
 });
 
-function authFixture(providerError = null, { role = "customer", authSession = session, adminClient = {}, reconcileNewPrivilegedAccount, provisionError } = {}) {
+function authFixture(providerError = null, { role = "customer", authSession = session, authUser = { id: account.id, identities: [{ id: "identity-one", provider: "email" }] }, adminClient = {}, reconcileNewPrivilegedAccount, provisionError } = {}) {
   const calls = [];
   const provisions = [];
   const rateLimits = [];
-  const result = { data: { user: { id: account.id }, session: authSession }, error: providerError };
-  return { calls, provisions, rateLimits, ...compile(authSource, {
+  const accountReads = [];
+  const result = { data: { user: authUser, session: authSession }, error: providerError };
+  return { calls, provisions, rateLimits, accountReads, ...compile(authSource, {
     "@/src/lib/dancr/password-policy": passwordPolicy,
     "@/src/lib/dancr/user-terms": {
       prepareUserTermsSignup: async (_admin, _email, input) => {
@@ -82,7 +83,7 @@ function authFixture(providerError = null, { role = "customer", authSession = se
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => adminClient },
     "@/src/lib/server-env": { getOptionalServerEnv: key => key === "DANCR_ADMIN_SIGNUP_CODE" ? "synthetic-admin-code" : "" },
     "@/src/lib/dancr/new-privileged-account": { reconcileNewPrivilegedAccount },
-    "@/src/lib/dancr/auth": { getAccountByUserId: async () => ({ ...account, role }) },
+    "@/src/lib/dancr/auth": { getAccountByUserId: async (_admin, id) => { accountReads.push(id); return { ...account, role }; } },
     "@/src/lib/dancr/account-profile-recovery": { recoverVerifiedPublicAccount: async (_admin, _user, existing) => existing },
     "@/src/lib/dancr/account-provisioning": { provisionAppAccount: async (_admin, input) => { provisions.push(input); if (provisionError) throw provisionError; } },
     "@/src/lib/dancr/nfc-browser-account": nfcBrowserAccount,
@@ -103,6 +104,35 @@ test("guest signup refuses absent, unchecked, string and outdated acceptance bef
   const response=await f.POST(jsonRequest("POST",{mode:"signup",role:"customer",email:"new@example.test",password:"Unique1!password",userTermsAccepted:true,userTermsVersion:userTermsVersion.USER_TERMS_VERSION}));
   assert.equal(response.status,200);
   assert.equal(f.calls[0].options.data.user_terms_intent,"11111111-1111-4111-8111-111111111111");
+});
+
+for (const role of ["customer", "dancer"]) test(`repeated ${role} signup never provisions the provider's obfuscated user`, async () => {
+  const f = authFixture(null, { role, authSession: null, authUser: { id: "obfuscated-not-a-real-user", identities: [] },
+    provisionError: { code: "23503", message: "private foreign key failure" } });
+  const rejected = authFixture(new AuthApiError("User already registered", 422, "user_already_exists"), { role });
+  const input = { mode: "signup", role, email: "existing@example.test", password: "Unique1!password", userTermsAccepted: true, userTermsVersion: userTermsVersion.USER_TERMS_VERSION };
+  const response = await f.POST(jsonRequest("POST", input));
+  const body = await response.json();
+  assert.equal(response.status, 400);
+  assert.equal(body.ok, false);
+  assert.equal(body.code, "SIGN_IN_REQUIRED");
+  assert.match(body.error, /signing in.*Forgot password/);
+  assert.doesNotMatch(JSON.stringify(body), /obfuscated-not-a-real-user|existing@example|Unique1|foreign key/);
+  assert.deepEqual(body, await (await rejected.POST(jsonRequest("POST", input))).json());
+  assert.equal(body.session, undefined); assert.equal(body.user, undefined); assert.equal(body.account, undefined);
+  assert.equal(f.provisions.length, 0); assert.equal(f.accountReads.length, 0);
+  assert.equal(f.calls.length, 1, "do not retry or sign in using the proposed new password");
+  assert.equal(f.rateLimits.length, 1);
+  assert.match(response.headers.get("cache-control"), /no-store/);
+});
+
+for (const role of ["customer", "dancer"]) test(`new unconfirmed ${role} with an email identity still reaches confirmation`, async () => {
+  const f = authFixture(null, { role, authSession: null });
+  const response = await f.POST(jsonRequest("POST", { mode: "signup", role, email: "new@example.test", password: "Unique1!password", userTermsAccepted: true, userTermsVersion: userTermsVersion.USER_TERMS_VERSION }));
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.requiresEmailConfirmation, true); assert.equal(body.session, null);
+  assert.equal(f.provisions.length, 1); assert.equal(f.provisions[0].userId, account.id);
 });
 
 test("receipt preparation fails closed when storage is unavailable", async () => {

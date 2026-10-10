@@ -85,8 +85,13 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
           ...(mode === "signup" ? { userTermsAccepted: signupTermsAccepted, userTermsVersion: USER_TERMS_VERSION } : {}) }) });
       const data = await response.json();
       if (!mounted.current) return;
-      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
       if (!unchanged()) throw new Error("Your sign-in changed in another window. Refresh to continue.");
+      if (mode === "signup" && data.code === "SIGN_IN_REQUIRED") {
+        chooseMode("login");
+        setStatus("Try signing in with your existing MyDancr guest account. Use Forgot password? if you need to reset it.");
+        return;
+      }
+      if (!response.ok || !data.ok) throw new Error(data.error || "Unable to sign in.");
       if (!data.session?.accessToken) {
         if (mode !== "signup" && mode !== "reset_password") throw new Error("Sign-in could not be completed. Please try again.");
         setEmailStep(mode); setResendSeconds(60); setPassword(""); return;

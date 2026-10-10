@@ -245,6 +245,12 @@ export async function POST(request: Request) {
     if (error) throw error;
     if (!data.user) throw new Error("Unable to create account.");
 
+    // Confirmed repeat signups can return an obfuscated user with no identities.
+    // That ID is not a new Auth user and must never reach account provisioning.
+    if (!data.session && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+      return signupSignInResponse();
+    }
+
     await provisionAppAccount(createAdminSupabaseClient(), {
       role,
       userId: data.user.id,
@@ -295,6 +301,9 @@ export async function POST(request: Request) {
           error: "Choose a stronger, unique password with a mix of letters, numbers, and symbols. Avoid common passwords or predictable number patterns.",
         }, { status: 400 });
       }
+      if (requestedMode === "signup" && error.code === "user_already_exists") {
+        return signupSignInResponse();
+      }
       const message = requestedMode === "login"
         ? "Email or password is incorrect."
         : "Unable to create this account. Check the information or sign in if you already have an account.";
@@ -303,6 +312,14 @@ export async function POST(request: Request) {
 
     return secureAuthResponse(apiError(error, "Unable to authenticate."));
   }
+}
+
+function signupSignInResponse() {
+  return authJson({
+    ok: false,
+    code: "SIGN_IN_REQUIRED",
+    error: "Unable to create this account. Try signing in with your existing password, or use Forgot password? to reset it.",
+  }, { status: 400 });
 }
 
 function authJson(body: unknown, init?: ResponseInit) {

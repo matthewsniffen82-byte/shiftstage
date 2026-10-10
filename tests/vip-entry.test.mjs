@@ -36,10 +36,10 @@ function entryFixture({ shortcut = false, token = '', session = null, request = 
     '@/src/lib/dancr/access-terms': accessTerms,
     '@/src/lib/dancr/user-terms-version': userTerms,
     '@/app/components/PasswordField': { PasswordField: 'password-field' }, '@/app/components/PasswordRequirements': { PasswordRequirements: 'password-requirements' },
-    '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: 'session', captureBrowserAuthSessionGuard: () => () => true,
+    '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: 'session', captureBrowserAuthSessionGuard: () => { const original = currentSession; return () => currentSession === original; },
       persistBrowserAuthSession: value => { currentSession = value; return true; } },
   }, { window, document, URL, AbortSignal,
-    fetch: async (url, options) => { calls.push({ url, options }); return { ok: true, json: async () => url === '/api/auth' ? { ok: true, ...auth } : { ok: true, invitation: { venueName: 'Velvet Room', maskedEmail: 'g•••@example.test', expiresAt: '2027-01-01' } } }; },
+    fetch: async (url, options) => { calls.push({ url, options }); return { ok: url !== '/api/auth' || auth.ok !== false, json: async () => url === '/api/auth' ? { ok: true, ...auth } : { ok: true, invitation: { venueName: 'Velvet Room', maskedEmail: 'g•••@example.test', expiresAt: '2027-01-01' } } }; },
   }).default;
   function render() {
     dirty = true;
@@ -82,6 +82,39 @@ test('VIP signup keeps the customer identity and returns email confirmation to t
   assert.equal(body.userTermsAccepted, true); assert.equal(body.userTermsVersion, userTerms.USER_TERMS_VERSION);
   assert.equal(new URL(body.emailRedirectTo).searchParams.get('return_to'), '/vip/invite/private-invitation');
   assert.match(ui.html(), /confirmation link brings you back/); ui.close();
+});
+
+test('repeat VIP signup opens sign-in with the email and invitation retained, and clears the proposed password', async () => {
+  const ui = entryFixture({ token: 'private-invitation', auth: { ok: false, code: 'SIGN_IN_REQUIRED', error: 'Unable to create this account.' } });
+  await ui.settle();
+  ui.nodes().find(n => n.props.children === 'I’m new · Create account').props.onClick(); ui.render();
+  ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.onChange({ target: { value: guest.email } });
+  ui.nodes().find(n => n.type === 'password-field').props.onChange({ target: { value: 'Proposed1!password' } });
+  ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
+  ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  assert.match(ui.html(), /Sign in to continue/); assert.match(ui.html(), /existing MyDancr guest account/);
+  assert.doesNotMatch(ui.html(), /Check your email|Unable to authenticate|Proposed1!password/);
+  assert.equal(ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.value, guest.email);
+  assert.equal(ui.nodes().find(n => n.type === 'password-field').props.value, '');
+  assert.equal(ui.calls.filter(c => c.url === '/api/auth').length, 1);
+  assert.equal(ui.navigations.length, 0);
+  assert.match(ui.html(), /You’re invited to Velvet Room/);
+  ui.nodes().find(n => n.props.className === 'vip-text-button').props.onClick(); ui.render();
+  ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  const reset = JSON.parse(ui.calls.filter(c => c.url === '/api/auth').at(-1).options.body);
+  assert.equal(reset.mode, 'reset_password'); assert.equal(reset.email, guest.email);
+  assert.equal(new URL(reset.emailRedirectTo).searchParams.get('vip_return_to'), '/vip/invite/private-invitation');
+  ui.close();
+});
+
+test('other VIP signup failures keep the signup form available for correction', async () => {
+  const ui = entryFixture({ token: 'private-invitation', auth: { ok: false, code: 'WEAK_PASSWORD', error: 'Choose a stronger password.' } }); await ui.settle();
+  ui.nodes().find(n => n.props.children === 'I’m new · Create account').props.onClick(); ui.render();
+  ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
+  ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  assert.match(ui.html(), /Create your guest account/); assert.match(ui.html(), /Choose a stronger password/);
+  assert.doesNotMatch(ui.html(), /Sign in to continue|Check your email/);
+  assert.equal(ui.calls.filter(c => c.url === '/api/auth').length, 1); ui.close();
 });
 
 test('an existing signed-in guest activates an invitation without another account or password', async () => {
