@@ -56,7 +56,7 @@ export function venueNotificationCategory(row: VenueNotification): VenueAlertKey
   if (["account_security", "password_changed", "email_changed", "account_access_changed"].includes(kind)) return null;
   if (kind === "club_shuttle_request" || kind === "club_pickup") return "pickupRequests";
   if (kind === "internal_table_request") return "tableRequests";
-  if (kind === "vip_request" || kind === "vip_nickname_changed") return "vipRequests";
+  if (kind === "vip_request" || kind === "vip_request_withdrawn" || kind === "vip_nickname_changed") return "vipRequests";
   if (kind.startsWith("venue_team_") || kind.startsWith("team_invitation_")) return "teamAccess";
   if (kind.startsWith("club_deal_") || kind.startsWith("venue_deal_")) return "clubDeals";
   if (kind.startsWith("venue_checkin_") || kind.startsWith("venue_checkout_")) return "dancerActivity";

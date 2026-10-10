@@ -45,6 +45,20 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ ok: true, nickname: data.nickname, changed: data.changed, session }, { headers: VIP_HEADERS });
   } catch (error) { return failure(error); }
 }
+export async function DELETE(request: Request) {
+  try {
+    const { user, session } = await createRequestSupabaseContext(request, { role: "customer" });
+    const body = await readBoundedJsonObject(request, { maxBytes: 1024, invalidMessage: "Invalid request.", tooLargeMessage: "Request is too large." });
+    const admin = createAdminSupabaseClient();
+    const { data, error } = await admin.rpc("vip_withdraw_request", {
+      p_actor: user.id, p_venue: vipId(body.venueId), p_request: vipId(body.requestId),
+    });
+    if (error?.code === "40001") throw new PublicApiError("CONFLICT", "This request has already been reviewed. Refresh to see its current status. Contact the venue to change a confirmed visit.", 409);
+    if (error) throw error;
+    try { await deliverNotificationRows(admin, data.notifications || []); } catch { console.warn("VIP_OPTIONAL_NOTIFICATION_DELIVERY_FAILED"); }
+    return NextResponse.json({ ok: true, request: data.request, session }, { headers: VIP_HEADERS });
+  } catch (error) { return failure(error); }
+}
 function failure(error: unknown) {
   const response = apiError(vipError(error), "Unable to load or submit the VIP request.");
   for (const [key, value] of Object.entries(VIP_HEADERS)) response.headers.set(key, value);

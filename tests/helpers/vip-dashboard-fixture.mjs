@@ -6,6 +6,8 @@ import { randomUUID } from 'node:crypto';
 import ts from 'typescript';
 import * as dashboard from '../../src/lib/dancr/vip-dashboard.ts';
 import * as types from '../../src/lib/dancr/vip-types.ts';
+import * as draftStorage from '../../src/lib/dancr/vip-draft-storage.ts';
+import * as calendar from '../../src/lib/dancr/vip-calendar.ts';
 
 const require = createRequire(import.meta.url);
 export function compileVip(file, dependencies = {}, globals = {}) {
@@ -30,8 +32,9 @@ export const state = (venueId = venues[0].id, changes = {}) => ({ venues, select
   summary: { pending: 2, upcoming: 0, nextVisit: null }, requestCount: 0, ...changes });
 
 // Component events with in-memory responses only: no browser journeys, server, or network.
-export function dashboardHarness({ hash = '', initialVenueId = '', request = async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id) } = {}) {
-  const slots = [], listeners = new Map(), calls = [], writes = [];
+export function dashboardHarness({ hash = '', initialVenueId = '', storage = new Map(), request = async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id) } = {}) {
+  const slots = [], listeners = new Map(), calls = [], writes = [], intervals = new Map();
+  let now = Date.now();
   let cursor = 0, dirty = true, effects = [], tree, currentAccount = guest;
   const react = {
     useState(initial) {
@@ -49,14 +52,18 @@ export function dashboardHarness({ hash = '', initialVenueId = '', request = asy
     },
   };
   const window = { location: { hash }, history: { replaceState: (_, __, value) => { writes.push(value); window.location.hash = value; } },
+    localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
+    setInterval: callback => { const id = intervals.size + 1; intervals.set(id, callback); return id; }, clearInterval: id => intervals.delete(id),
     addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name) };
-  const RequestCards = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types }).default;
+  const document = { visibilityState: 'visible', addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name) };
+  const RequestCards = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-calendar': calendar }).default;
   const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': dashboard }).default;
   const Component = compileVip('app/vip/VipDashboard.tsx', {
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => Planner },
     '@/app/dashboard/dashboard-session': { readSession: () => ({ account: currentAccount }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '@/src/lib/dancr/vip-dashboard': dashboard, './VipRequests': { __esModule: true, default: RequestCards },
-  }, { window }).default;
+    '@/src/lib/dancr/vip-draft-storage': draftStorage,
+  }, { window, document, Date: class extends Date { static now() { return now; } } }).default;
   const props = { initialVenueId, account: guest, signingOut: false, onSignOut: async () => {} };
   function render() {
     dirty = true;
@@ -67,8 +74,13 @@ export function dashboardHarness({ hash = '', initialVenueId = '', request = asy
   async function settle() { for (let i = 0; i < 6; i++) { await Promise.resolve(); render(); } return tree; }
   function navigate(view) { nodes().find(node => node.props?.['aria-controls'] === `vip-panel-${view}`).props.onClick(); render(); }
   render();
-  return { calls, writes, nodes, render, settle, navigate, tree: () => tree,
+  return { calls, writes, nodes, render, settle, navigate, storage, intervals, tree: () => tree,
     planner: () => nodes().find(node => node.type === Planner),
+    requests: () => nodes().find(node => node.type === RequestCards),
+    advance(ms) { now += ms; },
+    event(name) { listeners.get(name)?.(); render(); },
+    visible(value) { document.visibilityState = value ? 'visible' : 'hidden'; },
+    tick() { intervals.forEach(callback => callback()); render(); },
     session(account) { currentAccount = account; },
     hash(value) { window.location.hash = value; listeners.get('hashchange')?.(); render(); },
     unmount() { slots.forEach(slot => slot?.cleanup?.()); },

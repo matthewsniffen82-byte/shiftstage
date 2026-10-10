@@ -173,6 +173,14 @@
     }
 
     function saveAuthSession(session) {
+      if (!session || browserAccountIdentity(authSession) !== browserAccountIdentity(session)) {
+        try {
+          for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+            const key = localStorage.key(index) || "";
+            if (key.startsWith("mydancr:vip-draft:v1:")) localStorage.removeItem(key);
+          }
+        } catch (error) {}
+      }
       try {
         const pushAccount = localStorage.getItem("mydancr:push-account");
         if (pushAccount && pushAccount !== session?.account?.id) void clearCustomerPushDevice();

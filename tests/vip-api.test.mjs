@@ -59,6 +59,19 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
 function request(body) { return new Request("https://example.test/api/vip", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); }
 const input = { actorUserId: id(6), venueId: id(20), requestId: id(90), localStart: "2027-01-15T21:30", dancerIds: [id(37)] };
 
+test("VIP withdrawal uses authenticated identity, enforces pending conflicts and isolates delivery failures", async () => {
+  const { route, calls } = fixture({ deliveryFailure: true });
+  const response = await route.DELETE(request(input));
+  assert.equal(response.status, 200);
+  const result = await response.json(); assert.equal(result.session.accessToken, "rotated"); assert.equal(result.notifications, undefined);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.find(call => call[0] === "rpc").slice(1))), ["vip_withdraw_request", { p_actor: id(5), p_venue: id(20), p_request: id(90) }]);
+  assert.match(response.headers.get("cache-control"), /no-store/);
+  assert.equal((await fixture({ denied: true }).route.DELETE(request(input))).status, 403);
+  assert.equal((await fixture().route.DELETE(request({ ...input, requestId: "invalid" }))).status, 400);
+  const conflict = await fixture({ rpcError: { code: "40001" } }).route.DELETE(request(input));
+  assert.equal(conflict.status, 409); assert.match((await conflict.json()).error, /already been reviewed/);
+});
+
 test("VIP activation requires explicit current terms and binds the receipt to authenticated identity", async () => {
   const { route, calls } = fixture({ activation: true });
   const body = { token: service.newVipToken(), name: "Jordan", actorUserId: id(99), termsAccepted: true, termsVersion: accessTerms.ACCESS_TERMS_VERSION, userTermsAccepted: true, userTermsVersion: userTerms.USER_TERMS_VERSION };
@@ -178,6 +191,9 @@ test("venue timezone dates and request displays do not use the guest device time
   assert.match(vipTypes.formatVipDate("2026-10-07T03:30:00Z", "America/Los_Angeles"), /Oct 6, 2026.*8:30 PM/);
 });
 test("VIP notifications have their own enabled category and honor delivery preferences", () => {
+  const withdrawal = { notification_type: "support_message", payload: { kind: "vip_request_withdrawn" } };
+  assert.equal(preferences.venueNotificationCategory(withdrawal), "vipRequests");
+  assert.equal(preferences.venueNotificationEnabled(preferences.venueNotificationMetadataPatch({ vipRequests: false }), withdrawal), false);
   const notification = { notification_type: "support_message", payload: { kind: "vip_request" } };
   assert.equal(preferences.venueNotificationCategory(notification), "vipRequests");
   assert.equal(preferences.venueNotificationEnabled({}, notification), true);

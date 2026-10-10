@@ -29,6 +29,9 @@ async function fixture() {
     await db.exec(readFileSync(new URL("../supabase/migrations/20261008190000_vip_access_terms_acceptance.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261008210000_user_terms_acceptance.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261010093155_vip_shared_nicknames.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261010192345_vip_guest_withdrawal.sql", import.meta.url), "utf8"));
+    // Match production grants for the server-only SECURITY INVOKER withdrawal.
+    await db.exec("grant select on public.app_users,public.venues,public.venue_team_members to service_role; grant select,insert on public.notifications to service_role");
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
       await db.query("insert into public.app_users values($1,$2,'active')", [id(n), role]);
       await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())", [id(n), `person${n}@example.test`]);
@@ -60,6 +63,44 @@ async function adminQuery(db, sql, params = []) {
   try { return await db.query(sql, params); } finally { await db.exec("set role service_role"); }
 }
 const denies = (promise, code) => assert.rejects(promise, error => error.code === code);
+
+test("guest withdrawal is owner-only, pending-only, idempotent and not callable by browser roles", async () => {
+  const db = await fixture();
+  const withdraw = (actor = 5, venue = 20, request = 90) => db.query("select public.vip_withdraw_request($1,$2,$3) result", [id(actor), id(venue), id(request)]);
+  try {
+    await invite(db); await accept(db); await submit(db);
+    await denies(withdraw(6), "42501"); await denies(withdraw(5, 21), "42501");
+    await db.query("insert into venue_vip_members(venue_id,user_id,display_name) values($1,$2,'Other VIP')", [id(20), id(6)]);
+    await denies(withdraw(6), "P0002");
+    const result = (await withdraw()).rows[0].result;
+    assert.equal(result.request.status, "cancelled"); assert.equal(result.request.reviewed_by, id(5));
+    assert.deepEqual(result.notifications.map(row => row.recipient_id).sort(), [id(1), id(2)]);
+    assert.ok(result.notifications.every(row => row.payload.kind === "vip_request_withdrawn"));
+    assert.equal((await withdraw()).rows[0].result.notifications.length, 0);
+    await denies(manage(db, "request_status", { id: id(90), expectedStatus: "pending", status: "confirmed" }), "40001");
+    await submit(db, { request: 91 });
+    await manage(db, "request_status", { id: id(91), expectedStatus: "pending", status: "confirmed" });
+    await denies(withdraw(5, 20, 91), "40001");
+    for (const role of ["anon", "authenticated"]) { await db.exec(`set role ${role}`); await denies(withdraw(), "42501"); }
+  } finally { await db.close(); }
+});
+
+test("guest withdrawal rolls back when venue alerts fail and denies revoked or inactive access", async () => {
+  const db = await fixture();
+  const withdraw = () => db.query("select public.vip_withdraw_request($1,$2,$3)", [id(5), id(20), id(90)]);
+  try {
+    await invite(db); await accept(db); await submit(db);
+    await adminQuery(db, "alter table public.notifications add constraint withdrawal_delivery_failure check(title <> 'VIP request withdrawn')");
+    await denies(withdraw(), "23514");
+    assert.equal((await db.query("select status from venue_vip_requests where id=$1", [id(90)])).rows[0].status, "pending");
+    await adminQuery(db, "alter table public.notifications drop constraint withdrawal_delivery_failure");
+    await db.query("update venue_vip_members set active=false"); await denies(withdraw(), "42501");
+    await db.query("update venue_vip_members set active=true");
+    await adminQuery(db, "update app_users set account_state='paused' where id=$1", [id(5)]); await denies(withdraw(), "42501");
+    await adminQuery(db, "update app_users set account_state='active' where id=$1", [id(5)]);
+    await adminQuery(db, "update venues set is_active=false where id=$1", [id(20)]); await denies(withdraw(), "P0002");
+  } finally { await db.close(); }
+});
 
 test("full User Terms and feature assent are atomic with VIP activation and retries preserve receipts", async () => {
   const db=await fixture();

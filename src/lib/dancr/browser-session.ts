@@ -67,6 +67,9 @@ export function persistBrowserAuthSession(session: unknown) {
   if (typeof next.accessToken !== "string" || !next.accessToken) return false;
 
   try {
+    let previousAccountId: unknown;
+    try { previousAccountId = parseBrowserAuthSession(window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY))?.account?.id; } catch { /* Replace corrupt sessions on sign-in. */ }
+    if (previousAccountId !== next.account?.id) clearVipDrafts();
     const previousPushAccount = window.localStorage.getItem("mydancr:push-account");
     if (previousPushAccount && previousPushAccount !== next.account?.id) void clearCustomerPushDevice();
     window.localStorage.setItem(BROWSER_AUTH_SESSION_KEY, JSON.stringify(next));
@@ -120,12 +123,22 @@ export function clearBrowserAuthSession() {
 
   try {
     clearRetiredBrowserAccountCaches();
+    clearVipDrafts();
     void clearCustomerPushDevice();
     window.localStorage.removeItem(BROWSER_AUTH_SESSION_KEY);
     return true;
   } catch {
     return false;
   }
+}
+
+function clearVipDrafts() {
+  try {
+    for (let index = window.localStorage.length - 1; index >= 0; index -= 1) {
+      const key = window.localStorage.key(index) || "";
+      if (key.startsWith("mydancr:vip-draft:v1:")) window.localStorage.removeItem(key);
+    }
+  } catch { /* Draft storage is optional. */ }
 }
 
 function clearRetiredBrowserAccountCaches() {

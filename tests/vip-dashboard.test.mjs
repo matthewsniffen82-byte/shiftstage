@@ -226,7 +226,7 @@ test('late favorite responses are ignored after an account change and unmount ab
 
 test('profile links, selection checkboxes, and favorite buttons are independent card controls', async () => {
   let draft = helpers.emptyVipDraft(); const favorites = [];
-  const Planner = compileVip('app/vip/VipPlan.tsx', { react: { useState: initial => [initial, () => {}] },
+  const Planner = compileVip('app/vip/VipPlan.tsx', { react: { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }) },
     '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers }).default;
   const roster = dancers.map(dancer => ({ ...dancer, profileHref: `/dancers/${dancer.id}` }));
   const props = { venue: venues[0], dancers: roster, draft, onChange: next => { draft = next; }, onSubmit: async () => {},

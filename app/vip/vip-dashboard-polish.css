@@ -1,29 +1,33 @@
 /* Match the professional dashboards while retaining champagne VIP identity accents.
    Scope to the lounge so invitation forms and venue management keep their own styles. */
-body.dancr-button-system #vip-dashboard { --vip-line: #493957; --vip-muted: #b3adbe; }
+body.dancr-button-system #vip-dashboard {
+  --vip-line: #343139; --vip-muted: #bcb6c2;
+  background: radial-gradient(ellipse 780px 260px at 20% 0, #34233738, transparent), #0a090c;
+}
 body.dancr-button-system #vip-dashboard :is(h2, h3, p) { overflow-wrap: anywhere; }
 body.dancr-button-system #vip-dashboard h2 { font-size: 20px; line-height: 1.3; }
 body.dancr-button-system #vip-dashboard h3 { font-size: 16px; line-height: 1.3; }
 body.dancr-button-system #vip-dashboard p { font-size: 13px; line-height: 1.55; }
-body.dancr-button-system #vip-dashboard .vip-panel { padding: 16px; }
-body.dancr-button-system #vip-dashboard :is(.vip-destination, .vip-plan-grid, .vip-account-grid) { gap: 16px; }
+body.dancr-button-system #vip-dashboard .vip-panel { padding: 22px; background: #141216; border-color: var(--vip-line); box-shadow: none; }
+body.dancr-button-system #vip-dashboard :is(.vip-destination, .vip-plan-grid, .vip-account-grid) { gap: 24px; }
 body.dancr-button-system #vip-dashboard :is(.vip-welcome, .vip-section-heading, .vip-step-heading) { gap: 10px; }
 body.dancr-button-system #vip-dashboard .vip-step-heading { margin-bottom: 12px; }
-body.dancr-button-system #vip-dashboard .vip-summary-grid { gap: 10px; }
-body.dancr-button-system #vip-dashboard .vip-summary-card { padding: 14px; gap: 10px; border-radius: 12px !important; }
+body.dancr-button-system #vip-dashboard .vip-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--vip-line); }
+body.dancr-button-system #vip-dashboard .vip-summary-card { padding: 16px 10px; gap: 10px; border: 0 !important; border-radius: 0 !important; background: transparent !important; grid-column: auto; }
+body.dancr-button-system #vip-dashboard .vip-summary-card + .vip-summary-card { border-left: 1px solid var(--vip-line) !important; }
 body.dancr-button-system #vip-dashboard .vip-summary-card > span { min-width: 0; }
 body.dancr-button-system #vip-dashboard .vip-summary-card strong { font-size: 24px; }
 body.dancr-button-system #vip-dashboard .vip-summary-card small { margin-top: 4px; font-size: 11px; }
-body.dancr-button-system #vip-dashboard .vip-dashboard-nav { margin-bottom: 16px; border-radius: 16px; }
+body.dancr-button-system #vip-dashboard .vip-dashboard-nav { margin-bottom: 24px; border-radius: 16px; border-color: var(--vip-line); background: #121015; box-shadow: 0 6px 16px #0002; }
 body.dancr-button-system #vip-dashboard .vip-dashboard-nav button { min-height: 54px !important; gap: 6px; }
-body.dancr-button-system #vip-dashboard .vip-dashboard-nav button[aria-current=page] { background: #241a30 !important; border-color: #755397 !important; box-shadow: inset 0 -2px 0 #9966da !important; }
+body.dancr-button-system #vip-dashboard .vip-dashboard-nav button[aria-current=page] { background: #27212e !important; border-color: transparent !important; box-shadow: inset 0 -2px 0 #b594d1 !important; }
 
 /* Regular actions share the same neutral face, type scale, and 44px touch target. */
-body.dancr-button-system #vip-dashboard :is(.vip-primary, .vip-refresh, .vip-next-empty button, .vip-next-visit > button, .vip-actions button, .vip-empty-access button, .vip-pagination button, .vip-feedback button, .vip-roster-filters button, .vip-link-action, .vip-empty button) {
+body.dancr-button-system #vip-dashboard :is(.vip-primary, .vip-refresh, .vip-next-empty button, .vip-next-visit > button, .vip-actions button, .vip-empty-access button, .vip-pagination button, .vip-feedback button, .vip-roster-filters button, .vip-link-action, .vip-empty button, .vip-request-actions button) {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-width: 44px; min-height: 44px !important; max-width: 100%; padding: 8px 12px !important;
-  border: 1px solid #50435f !important; border-radius: 10px !important;
-  background: #1b1922 !important; color: #f5f2fa !important; box-shadow: none !important;
+  border: 1px solid #45404b !important; border-radius: 10px !important;
+  background: #1c191f !important; color: #f6f2ed !important; box-shadow: none !important;
   font-family: inherit !important; font-size: 13px !important; font-weight: 600 !important;
   line-height: 1.35; white-space: normal; text-align: center;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
@@ -34,7 +38,8 @@ body.dancr-button-system #vip-dashboard button.vip-primary {
 }
 body.dancr-button-system #vip-dashboard :is(.vip-primary, .vip-refresh, .vip-link-action)::before,
 body.dancr-button-system #vip-dashboard :is(.vip-primary, .vip-refresh, .vip-link-action)::after { content: none !important; }
-body.dancr-button-system #vip-dashboard .vip-roster-filters button[aria-pressed=true] { background: #302239 !important; border-color: #9470bc !important; color: #fff !important; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters button { padding: 6px 11px !important; border-color: transparent !important; border-radius: 24px !important; background: transparent !important; font-size: 12px !important; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters button[aria-pressed=true] { background: #302738 !important; border-color: #5d496e !important; color: #fff !important; }
 body.dancr-button-system #vip-dashboard :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #c9a4f4 !important; outline-offset: 3px; }
 body.dancr-button-system #vip-dashboard .vip-selected-chips button { min-width: 44px; min-height: 44px; }
 body.dancr-button-system #vip-dashboard .vip-dismiss { padding: 0 !important; border: 0 !important; background: transparent !important; color: inherit !important; font-size: 22px !important; }
@@ -67,9 +72,37 @@ body.dancr-button-system #vip-dashboard .vip-memberships { margin-top: 12px; }
 body.dancr-button-system #vip-dashboard .vip-memberships li { padding: 12px 0; gap: 8px; }
 body.dancr-button-system #vip-dashboard .vip-feedback { margin-bottom: 16px; padding: 12px; }
 body.dancr-button-system #vip-dashboard .vip-dashboard-footer { margin-top: 24px; padding-top: 16px; gap: 12px; }
+body.dancr-button-system #vip-dashboard .vip-venue-count { color: #aaa2b0; font-size: 11px; line-height: 1.5; }
+body.dancr-button-system #vip-dashboard .vip-updating { margin: -10px 0 14px; font-size: 12px; color: var(--vip-muted); }
+body.dancr-button-system #vip-dashboard .vip-next-visit { border-color: #574c3d; background: linear-gradient(135deg, #231e21, #141216 70%); padding: 24px; }
+body.dancr-button-system #vip-dashboard .vip-next-visit .vip-section-heading > svg { color: var(--vip-gold); }
+body.dancr-button-system #vip-dashboard .vip-request-featured { padding: 0; border: 0; border-radius: 0; background: transparent; }
+body.dancr-button-system #vip-dashboard .vip-request-featured > .vip-row > strong { font-size: 12px; color: var(--vip-muted); font-weight: 400; }
+body.dancr-button-system #vip-dashboard .vip-request-featured .vip-request-time { margin: 24px 0; }
+body.dancr-button-system #vip-dashboard .vip-request-featured time { display: grid; gap: 6px; }
+body.dancr-button-system #vip-dashboard .vip-request-featured time > span { font-size: clamp(21px, 4vw, 28px); font-weight: 600; color: #f6f2ed; line-height: 1.3; }
+body.dancr-button-system #vip-dashboard .vip-request-featured time > strong { font-size: clamp(30px, 5vw, 40px); color: var(--vip-gold); font-weight: 550; line-height: 1.2; }
+body.dancr-button-system #vip-dashboard .vip-request-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+body.dancr-button-system #vip-dashboard .vip-request-actions:empty { display: none; }
+body.dancr-button-system #vip-dashboard .vip-withdraw-confirm { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--vip-line); }
+body.dancr-button-system #vip-dashboard .vip-withdraw-confirm p { margin-bottom: 12px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel { scroll-margin-top: 100px; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters { gap: 3px; }
+/* Preserve the homepage-style three-column portrait grid at every viewport. */
+body.dancr-button-system #vip-dashboard .vip-dancers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body.dancr-button-system #vip-dashboard .vip-dancer-select,
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite { width: min(44px, calc(50% - 5px)) !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; top: 4px; background: #100c16d9 !important; }
+body.dancr-button-system #vip-dashboard .vip-mobile-continue { display: none; }
+@media (max-width: 880px) {
+  body.dancr-button-system #vip-dashboard:has(.vip-mobile-continue) { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
+  body.dancr-button-system #vip-dashboard .vip-mobile-continue { position: fixed; z-index: 6; bottom: calc(12px + env(safe-area-inset-bottom)); left: 14px; right: 14px; max-width: 580px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border: 1px solid #51445e; border-radius: 16px; background: #1b1622; box-shadow: 0 8px 30px #0008; font-size: 13px; color: #f6f2ed; }
+  body.dancr-button-system #vip-dashboard .vip-mobile-continue strong { color: var(--vip-gold); }
+}
 @media (max-width: 600px) {
+  body.dancr-button-system #vip-dashboard .vip-panel { padding: 18px; }
   body.dancr-button-system #vip-dashboard .vip-roster-panel { padding: 12px; }
   body.dancr-button-system #vip-dashboard .vip-summary-card { padding: 12px; gap: 8px; }
+  body.dancr-button-system #vip-dashboard .vip-summary-card > svg { display: none; }
   body.dancr-button-system #vip-dashboard .vip-dashboard-nav button { min-height: 56px !important; }
   body.dancr-button-system #vip-dashboard .vip-welcome { gap: 10px; }
   body.dancr-button-system #vip-dashboard .vip-explainer { gap: 8px; }
