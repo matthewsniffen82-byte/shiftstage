@@ -7,7 +7,7 @@ import * as accessTerms from '../src/lib/dancr/access-terms.ts';
 import * as userTerms from '../src/lib/dancr/user-terms-version.ts';
 
 // Focused component events with mocked responses; no browser or network.
-function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ passwordSetupComplete: true, venues: [], venueId: '97000000-0000-4000-8000-000000000020' }), auth = {} } = {}) {
+function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ passwordSetupComplete: true, venues: [], venueId: '97000000-0000-4000-8000-000000000020' }), auth = {}, confirmation = {} } = {}) {
   const slots = [], listeners = new Map(), calls = [], navigations = [], timers = new Map(); let timerId = 0;
   let cursor = 0, dirty = true, effects = [], tree, currentSession = session;
   const react = {
@@ -39,7 +39,7 @@ function entryFixture({ shortcut = false, token = '', session = null, request = 
     '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: 'session', captureBrowserAuthSessionGuard: () => { const original = currentSession; return () => currentSession === original; },
       persistBrowserAuthSession: value => { currentSession = value; return true; } },
   }, { window, document, URL, AbortSignal,
-    fetch: async (url, options) => { calls.push({ url, options }); return { ok: url !== '/api/auth' || auth.ok !== false, json: async () => url === '/api/auth' ? { ok: true, ...auth } : { ok: true, invitation: { venueName: 'Velvet Room', maskedEmail: 'g•••@example.test', expiresAt: '2027-01-01' } } }; },
+    fetch: async (url, options) => { calls.push({ url, options }); const result = url === '/api/auth' ? auth : url === '/api/vip/confirmation' ? confirmation : { invitation: { venueName: 'Velvet Room', maskedEmail: 'g•••@example.test', expiresAt: '2027-01-01' } }; return { ok: result.ok !== false, json: async () => ({ ok: true, ...result }) }; },
   }).default;
   function render() {
     dirty = true;
@@ -67,54 +67,48 @@ test('VIP entry uses existing guest sign-in; account creation is available only 
   assert.equal(invite.nodes().filter(n => n.type === 'button' && n.props['aria-pressed'] !== undefined).length, 2); invite.close();
 });
 
-test('VIP signup keeps the customer identity and returns email confirmation to the invitation', async () => {
+test('VIP signup verifies the invited email before collecting any password', async () => {
   const ui = entryFixture({ token: 'private-invitation' }); await ui.settle();
   ui.nodes().find(n => n.props.children === 'I’m new · Create account').props.onClick(); ui.render();
   ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.onChange({ target: { value: guest.email } });
-  ui.nodes().find(n => n.type === 'password-field').props.onChange({ target: { value: 'Existing1!' } }); ui.render();
+  assert.equal(ui.nodes().some(n => n.type === 'password-field'), false); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
-  assert.equal(ui.calls.some(c => c.url === '/api/auth'), false);
+  assert.equal(ui.calls.some(c => c.url === '/api/vip/confirmation' || c.url === '/api/auth'), false);
   assert.match(ui.html(), /Please read and accept the User Terms/);
   ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
-  const body = JSON.parse(ui.calls.find(c => c.url === '/api/auth').options.body);
-  assert.equal(body.role, 'customer'); assert.equal(body.email, guest.email); assert.equal(body.mode, 'signup');
+  const body = JSON.parse(ui.calls.find(c => c.url === '/api/vip/confirmation').options.body);
+  assert.equal(body.email, guest.email); assert.equal(body.action, 'start'); assert.equal(body.password, undefined);
   assert.equal(body.userTermsAccepted, true); assert.equal(body.userTermsVersion, userTerms.USER_TERMS_VERSION);
-  assert.equal(new URL(body.emailRedirectTo).searchParams.get('return_to'), '/vip/invite/private-invitation');
-  assert.match(ui.html(), /confirmation link brings you back/); ui.close();
+  assert.equal(body.token, 'private-invitation');
+  assert.equal(ui.calls.some(c => c.url === '/api/auth'), false);
+  assert.match(ui.html(), /verify your email, set your password/); ui.close();
 });
 
-test('repeat VIP signup opens sign-in with the email and invitation retained, and clears the proposed password', async () => {
-  const ui = entryFixture({ token: 'private-invitation', auth: { ok: false, code: 'SIGN_IN_REQUIRED', error: 'Unable to create this account.' } });
+test('a fresh invitation uses email verification instead of repeating password signup for an existing guest', async () => {
+  const ui = entryFixture({ token: 'private-invitation', auth: { ok: false, code: 'SIGN_IN_REQUIRED' } });
   await ui.settle();
   ui.nodes().find(n => n.props.children === 'I’m new · Create account').props.onClick(); ui.render();
   ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.onChange({ target: { value: guest.email } });
-  ui.nodes().find(n => n.type === 'password-field').props.onChange({ target: { value: 'Proposed1!password' } });
   ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
-  assert.match(ui.html(), /Sign in to continue/); assert.match(ui.html(), /Finish password setup/);
-  assert.doesNotMatch(ui.html(), /Check your email|Unable to authenticate|Proposed1!password/);
-  assert.equal(ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.value, guest.email);
-  assert.equal(ui.nodes().find(n => n.type === 'password-field').props.value, '');
-  assert.equal(ui.calls.filter(c => c.url === '/api/auth').length, 1);
+  assert.match(ui.html(), /Check your email/); assert.match(ui.html(), /already have a guest account/);
+  assert.doesNotMatch(ui.html(), /Sign in to continue|Unable to authenticate|Already chose a password/);
+  assert.equal(ui.calls.filter(c => c.url === '/api/auth').length, 0);
+  assert.equal(ui.calls.filter(c => c.url === '/api/vip/confirmation').length, 1);
   assert.equal(ui.navigations.length, 0);
   assert.match(ui.html(), /You’re invited to Velvet Room/);
-  ui.nodes().find(n => n.props.className === 'vip-text-button').props.onClick(); ui.render();
-  ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
-  const reset = JSON.parse(ui.calls.filter(c => c.url === '/api/auth').at(-1).options.body);
-  assert.equal(reset.mode, 'reset_password'); assert.equal(reset.email, guest.email);
-  assert.equal(new URL(reset.emailRedirectTo).searchParams.get('vip_return_to'), '/vip/invite/private-invitation');
   ui.close();
 });
 
-test('other VIP signup failures keep the signup form available for correction', async () => {
-  const ui = entryFixture({ token: 'private-invitation', auth: { ok: false, code: 'WEAK_PASSWORD', error: 'Choose a stronger password.' } }); await ui.settle();
+test('VIP email delivery failures keep the verification form available for retry', async () => {
+  const ui = entryFixture({ token: 'private-invitation', confirmation: { ok: false, error: 'Email delivery is temporarily unavailable.' } }); await ui.settle();
   ui.nodes().find(n => n.props.children === 'I’m new · Create account').props.onClick(); ui.render();
   ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
-  assert.match(ui.html(), /Create your guest account/); assert.match(ui.html(), /Choose a stronger password/);
+  assert.match(ui.html(), /Confirm your email/); assert.match(ui.html(), /Email delivery is temporarily unavailable/);
   assert.doesNotMatch(ui.html(), /Sign in to continue|Check your email/);
-  assert.equal(ui.calls.filter(c => c.url === '/api/auth').length, 1); ui.close();
+  assert.equal(ui.calls.filter(c => c.url === '/api/vip/confirmation').length, 1); ui.close();
 });
 
 test('unfinished verified guests resume password setup before VIP activation', async () => {
@@ -139,11 +133,10 @@ test('a signed-out guest can request and resend secure setup without a password 
   assert.match(ui.html(), /secure password setup link/);
   for (let i=0;i<60;i++) ui.tick();
   ui.nodes().find(n => n.props.children === 'Resend email').props.onClick(); await ui.settle();
-  const requests = ui.calls.filter(c => c.url === '/api/auth'); assert.equal(requests.length, 2);
+  const requests = ui.calls.filter(c => c.url === '/api/vip/confirmation'); assert.equal(requests.length, 2);
   for (const request of requests) {
-    const body = JSON.parse(request.options.body); assert.equal(body.mode, 'reset_password'); assert.equal(body.email, guest.email);
-    const callback = new URL(body.emailRedirectTo); assert.equal(callback.searchParams.get('vip_setup'), '1');
-    assert.equal(callback.searchParams.get('vip_return_to'), '/vip/invite/' + token);
+    const body = JSON.parse(request.options.body); assert.equal(body.action, 'resume'); assert.equal(body.email, guest.email);
+    assert.equal(body.token, token); assert.equal(body.password, undefined);
   }
   ui.close();
 });
@@ -213,22 +206,22 @@ test('a delayed VIP lookup cannot show a shortcut after the guest signs out or c
   assert.equal(ui.calls.length, 1); ui.close();
 });
 
-test('signup shows a dedicated confirmation step, clears the password, and throttles resends', async () => {
+test('signup shows a dedicated verification step and throttles repeated setup links', async () => {
   const token = 'vip_' + 'a'.repeat(48);
   const ui = entryFixture({ token }); await ui.settle();
   ui.nodes().find(n => n.props.children === 'I’m new · Create account').props.onClick(); ui.render();
   ui.nodes().find(n => n.props.type === 'email').props.onChange({ target: { value: guest.email } });
-  ui.nodes().find(n => n.type === 'password-field').props.onChange({ target: { value: 'Secret1!' } });
   ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
   assert.match(ui.html(), /Check your email/); assert.equal(ui.nodes().some(n => n.type === 'form'), false);
   const resend = () => ui.nodes().find(n => n.props.className === 'vip-primary');
   assert.equal(resend().props.disabled, true); resend().props.onClick(); await ui.settle();
-  assert.equal(ui.calls.some(c => c.url === '/api/vip/confirmation'), false);
+  assert.equal(ui.calls.filter(c => c.url === '/api/vip/confirmation').length, 1);
   for (let i = 0; i < 60; i++) ui.tick();
   assert.equal(resend().props.disabled, false); resend().props.onClick(); await ui.settle();
-  const body = JSON.parse(ui.calls.find(c => c.url === '/api/vip/confirmation').options.body);
-  assert.deepEqual(body, { token, email: guest.email }); assert.equal(resend().props.disabled, true);
-  ui.nodes().find(n => n.props.children === 'I’m ready to sign in').props.onClick(); ui.render();
+  const requests = ui.calls.filter(c => c.url === '/api/vip/confirmation'); assert.equal(requests.length, 2);
+  const body = JSON.parse(requests[1].options.body);
+  assert.deepEqual(body, { token, email: guest.email, action: 'start', userTermsAccepted: true, userTermsVersion: userTerms.USER_TERMS_VERSION }); assert.equal(resend().props.disabled, true);
+  ui.nodes().find(n => n.props.children === 'I already have a password').props.onClick(); ui.render();
   assert.equal(ui.nodes().find(n => n.type === 'password-field').props.value, ''); ui.close();
 });

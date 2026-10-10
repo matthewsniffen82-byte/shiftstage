@@ -71,6 +71,17 @@ test("password setup callbacks retain the invitation and setup step, including e
   const invalid = await callbackFixture('?type=recovery&vip_setup=1&vip_return_to=//evil.test', recoveryHash);
   assert.deepEqual(invalid.navigations, ['/account/reset-password']);
 });
+test("VIP signup and repeat magic links open verified password setup instead of signup or sign-in", async () => {
+  const destination = '/vip/invite/vip_' + 'e'.repeat(48);
+  const query = '?reset_target=account_password&vip_setup=1&role=customer&vip_return_to=' + encodeURIComponent(destination);
+  const expected = '/account/reset-password?return_to=' + encodeURIComponent(destination) + '&setup=1';
+  for (const type of ['signup', 'magiclink', 'email']) {
+    const result = await callbackFixture(query, recoveryHash.replace('recovery', type));
+    assert.deepEqual(result.navigations, [expected]);
+    assert.equal(JSON.parse(result.writes[0].value).accessToken, 'test-access');
+  }
+  assert.deepEqual((await callbackFixture(query, '')).navigations, [expected + '&error=expired']);
+});
 test("recovery takes precedence over dashboard return paths and signup flags", async () => {
   for (const query of ["?dancr_reset=1&role=dancer&return_to=/dashboard/dancer", "?type=recovery&return_to=/dashboard/customer", "?role=dancer&dancr_confirm=1"]) {
     assert.deepEqual((await callbackFixture(query, recoveryHash)).navigations, ["/account/reset-password"]);

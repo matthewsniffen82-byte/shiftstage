@@ -91,6 +91,8 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-email-step strong { overflow-wrap: anywhere; }
 .vip-email-mark { color: var(--vip-gold); font-size: 30px; line-height: 1; }
 .vip-email-step .vip-actions { gap: 8px; }
+.vip-auth-help { display: grid; gap: 6px; margin-top: 14px; }
+.vip-auth-shell .vip-auth-help .vip-text-button { display: block; margin: 0; padding: 10px 0; min-height: 44px; text-align: left; }
 .vip-dashboard-shell .vip-dancer strong { font-size: 13px; line-height: 1.35; }
 .vip-roster-note { padding-top: 17px; font-size: 11px !important; }
 .vip-dashboard-shell .vip-visit-panel { position: sticky; top: 96px; }
