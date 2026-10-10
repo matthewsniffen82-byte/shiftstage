@@ -33,6 +33,7 @@ import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
 import { prepareUserTermsSignup } from "@/src/lib/dancr/user-terms";
+import { recordPasswordSetup } from "@/src/lib/dancr/password-setup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -155,7 +156,9 @@ export async function POST(request: Request) {
       }
 
       const expectedRole = role === "admin" ? "admin" : null;
-      return authJson(await authResponse(data.user.id, expectedRole, data.session, false, data.user));
+      const result = await authResponse(data.user.id, expectedRole, data.session, false, data.user);
+      if (result.account.role === "customer") await recordPasswordSetup(createAdminSupabaseClient, data.user);
+      return authJson(result);
     }
 
     const passwordError = passwordValidationMessage(password);
@@ -260,6 +263,7 @@ export async function POST(request: Request) {
     });
 
     if (role === "customer") {
+      await recordPasswordSetup(createAdminSupabaseClient, data.user);
       return authJson(await authResponse(data.user.id, role, null, true));
     }
 

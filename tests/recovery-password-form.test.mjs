@@ -62,6 +62,15 @@ test("fragment-only recovery opens the password form instead of the dancer dashb
   assert.deepEqual(result.navigations, ["/account/reset-password"]);
   assert.equal(JSON.parse(result.writes[0].value).accessToken, "test-access");
 });
+test("password setup callbacks retain the invitation and setup step, including expired links", async () => {
+  const destination = '/vip/invite/vip_' + 'a'.repeat(48);
+  const query = '?type=recovery&vip_setup=1&vip_return_to=' + encodeURIComponent(destination);
+  const expected = '/account/reset-password?return_to=' + encodeURIComponent(destination) + '&setup=1';
+  assert.deepEqual((await callbackFixture(query, recoveryHash)).navigations, [expected]);
+  assert.deepEqual((await callbackFixture(query, '')).navigations, [expected + '&error=expired']);
+  const invalid = await callbackFixture('?type=recovery&vip_setup=1&vip_return_to=//evil.test', recoveryHash);
+  assert.deepEqual(invalid.navigations, ['/account/reset-password']);
+});
 test("recovery takes precedence over dashboard return paths and signup flags", async () => {
   for (const query of ["?dancr_reset=1&role=dancer&return_to=/dashboard/dancer", "?type=recovery&return_to=/dashboard/customer", "?role=dancer&dancr_confirm=1"]) {
     assert.deepEqual((await callbackFixture(query, recoveryHash)).navigations, ["/account/reset-password"]);
@@ -83,7 +92,7 @@ test("ordinary dancer confirmation retains its confirmation screen", async () =>
 
 const formSource = readFileSync(new URL("../app/account/reset-password/ResetPasswordClient.tsx", import.meta.url), "utf8");
 const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"), {});
-function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false, afterSessionRead, otherSessionsRevoked, role = "dancer" } = {}) {
+function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false, afterSessionRead, otherSessionsRevoked, role = "dancer", passwordSetupComplete = false, savedSetupComplete = true } = {}) {
   const states = [], effects = [], calls = [];
   let index = 0;
   const refs = [];
@@ -115,7 +124,7 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
       if (networkFailure) throw new Error("Network unavailable");
       if (hang) return new Promise((_resolve, reject) => options.signal.addEventListener("abort", () => reject(new Error("Aborted")), { once: true }));
       const status = options.method === "PATCH" ? (succeeds ? 200 : 400) : getStatus;
-      return { status, ok: status === 200, json: async () => ({ ok: status === 200, account: { role }, error: "Update rejected", otherSessionsRevoked }) };
+      return { status, ok: status === 200, json: async () => ({ ok: status === 200, account: { role }, error: "Update rejected", otherSessionsRevoked, passwordSetupComplete: options.method === "PATCH" ? savedSetupComplete : passwordSetupComplete }) };
     },
   }).default;
   const render = () => { index = 0; refIndex = 0; return component(); };
@@ -150,6 +159,48 @@ test("reset page verifies its session and waits for explicit password submission
   assert.equal(fixture.calls.length, 1);
   assert.notEqual(fixture.calls[0].method, "PATCH");
   assert.ok(fixture.find(fixture.render(), "form"));
+});
+test("verified guests can finish password setup without an old password and return to the same invitation", async () => {
+  const destination = '/vip/invite/vip_' + 'b'.repeat(48);
+  const fixture = await readyForm({ role: 'customer', search: '?setup=1&return_to=' + encodeURIComponent(destination) });
+  assert.equal(fixture.find(fixture.render(), 'h1').props.children, 'Set your password');
+  assert.match(JSON.stringify(fixture.render()), /No old password is needed/);
+  fixture.states[1] = fixture.states[2] = 'New1!test-password';
+  await fixture.find(fixture.render(), 'form').props.onSubmit({ preventDefault() {} });
+  assert.equal(fixture.states[0], 'complete');
+  assert.deepEqual(JSON.parse(fixture.calls[1].body), { password: 'New1!test-password' });
+  assert.equal(fixture.find(fixture.render(), 'a').props.href, destination);
+});
+test("reopened setup links let completed guests continue without setting another password", async () => {
+  const destination = '/vip/invite/vip_' + 'c'.repeat(48);
+  const fixture = await readyForm({ role: 'customer', passwordSetupComplete: true, search: '?setup=1&return_to=' + encodeURIComponent(destination) });
+  assert.equal(fixture.find(fixture.render(), 'h1').props.children, 'Password already set');
+  assert.equal(fixture.find(fixture.render(), 'form'), null);
+  assert.equal(fixture.find(fixture.render(), 'a').props.href, destination);
+  assert.equal(fixture.calls.length, 1);
+});
+test("a saved password with unconfirmed setup stays retryable instead of falsely reporting completion", async () => {
+  const fixture = await readyForm({ role: 'customer', savedSetupComplete: false, search: '?setup=1&return_to=/vip' });
+  fixture.states[1] = fixture.states[2] = 'New1!test-password';
+  await fixture.find(fixture.render(), 'form').props.onSubmit({ preventDefault() {} });
+  assert.equal(fixture.states[0], 'ready');
+  assert.match(fixture.states[3], /password was saved.*couldn’t confirm setup/);
+  assert.equal(fixture.states[1], 'New1!test-password');
+  assert.equal(fixture.states[4], false);
+});
+test("expired setup links keep their invitation without verifying an unrelated session", async () => {
+  const destination = '/vip/invite/vip_' + 'd'.repeat(48);
+  const fixture = await readyForm({ search: '?setup=1&error=expired&return_to=' + encodeURIComponent(destination) });
+  assert.equal(fixture.states[0], 'expired');
+  assert.equal(fixture.calls.length, 0);
+  assert.equal(fixture.find(fixture.render(), 'a').props.href, destination);
+  assert.match(JSON.stringify(fixture.render()), /Finish password setup/);
+});
+test("normal password resets still let completed guests replace a forgotten password", async () => {
+  const fixture = await readyForm({ role: 'customer', passwordSetupComplete: true, search: '?return_to=/vip' });
+  assert.equal(fixture.find(fixture.render(), 'h1').props.children, 'Reset your password');
+  assert.ok(fixture.find(fixture.render(), 'form'));
+  assert.equal(fixture.states[0], 'ready');
 });
 test("mismatched passwords cannot be submitted", async () => {
   const fixture = await readyForm();

@@ -85,7 +85,8 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-shell .vip-avatar { width: 37px; height: 43px; border-radius: 11px; color: #d6b9f2; background: linear-gradient(135deg, #433051, #251b30); border: 1px solid #5b406d; }
 .vip-dashboard-shell .vip-dancer .vip-avatar { width: 56px; height: 68px; overflow: hidden; flex: none; }
 .vip-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.vip-account-choice, .vip-email-step { display: grid; gap: 14px; }
+.vip-account-choice, .vip-email-step, .vip-password-setup { display: grid; gap: 14px; }
+.vip-password-setup .vip-primary { display: flex; align-items: center; justify-content: center; min-height: 48px; text-decoration: none; }
 .vip-account-choice .vip-primary, .vip-email-step > .vip-primary { width: 100%; min-height: 48px; }
 .vip-email-step strong { overflow-wrap: anywhere; }
 .vip-email-mark { color: var(--vip-gold); font-size: 30px; line-height: 1; }

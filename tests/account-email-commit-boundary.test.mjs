@@ -59,6 +59,7 @@ function fixture({ lookupError, providerError, providerThrows, rejectPostCommitR
     } },
     "@/src/lib/dancr/public-app-url": appUrl,
     "@/src/lib/dancr/password-policy": compile("src/lib/dancr/password-policy.ts"),
+    "@/src/lib/dancr/password-setup": {},
     "@/src/lib/dancr/account-profile-recovery": {},
     "@/src/lib/dancr/notification-delivery": {},
     "@/src/lib/supabase/admin": {},

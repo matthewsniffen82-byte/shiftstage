@@ -27,6 +27,9 @@ const policy = compile(readFileSync(new URL("../src/lib/api-error-policy.ts", im
   "./dancr/payout-copy.ts": compile(readFileSync(new URL("../src/lib/dancr/payout-copy.ts", import.meta.url), "utf8")),
 });
 const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"));
+const passwordSetup = compile(readFileSync(new URL("../src/lib/dancr/password-setup.ts", import.meta.url), "utf8"), {
+  "../security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
+});
 const userTermsVersion = compile(readFileSync(new URL("../src/lib/dancr/user-terms-version.ts", import.meta.url), "utf8"));
 const userTerms = compile(readFileSync(new URL("../src/lib/dancr/user-terms.ts", import.meta.url), "utf8"), {
   "../api-error-policy": policy, "./user-terms-version": userTermsVersion,
@@ -60,6 +63,7 @@ function authFixture(providerError = null, { role = "customer", authSession = se
   const result = { data: { user: authUser, session: authSession }, error: providerError };
   return { calls, provisions, rateLimits, accountReads, ...compile(authSource, {
     "@/src/lib/dancr/password-policy": passwordPolicy,
+    "@/src/lib/dancr/password-setup": passwordSetup,
     "@/src/lib/dancr/user-terms": {
       prepareUserTermsSignup: async (_admin, _email, input) => {
         userTerms.validateUserTermsAcceptance(input);
@@ -137,6 +141,19 @@ for (const role of ["customer", "dancer"]) test(`new unconfirmed ${role} with an
 
 test("receipt preparation fails closed when storage is unavailable", async () => {
   await assert.rejects(userTerms.prepareUserTermsSignup({rpc:async()=>({error:{message:"offline"},data:null})},"a@b.test",{userTermsAccepted:true,userTermsVersion:userTermsVersion.USER_TERMS_VERSION}), /couldn’t record/);
+});
+
+test("guest password signup and login record setup only after successful credentials", async () => {
+  for (const mode of ['signup', 'login']) for (const rejected of [false, true]) {
+    const records = [];
+    const adminClient = { auth: { admin: { updateUserById: async (id, input) => {
+      records.push({id,input}); return {data:{user:{id,app_metadata:input.app_metadata}},error:null};
+    } } } };
+    const f = authFixture(rejected ? new AuthApiError('Rejected',400,'invalid_credentials') : null,{adminClient});
+    const response = await f.POST(jsonRequest('POST',{mode,role:'customer',email:'guest@example.test',password:'Unique1!password',userTermsAccepted:true,userTermsVersion:userTermsVersion.USER_TERMS_VERSION}));
+    assert.equal(response.status,rejected?400:200); assert.equal(records.length,rejected?0:1);
+    if (!rejected) { assert.equal(records[0].id,account.id); assert.ok(records[0].input.app_metadata.mydancr_password_setup_completed_at); }
+  }
 });
 
 for (const agreementAccepted of [undefined, false, true, "true", 1]) test(`dancer signup defers agreement acceptance regardless of legacy input ${agreementAccepted}`, async () => {
@@ -406,7 +423,7 @@ test("dancer signup displays the password rejection and lets the user correct it
   assert.equal(cooldownCalls, 1);
 });
 
-function passwordFixture({ providerError = null, revokeFails = false, revokeThrows = false, emailThrows = false, lookupFails = false } = {}) {
+function passwordFixture({ providerError = null, revokeFails = false, revokeThrows = false, emailThrows = false, lookupFails = false, setupRecordFails = false } = {}) {
   const calls = [];
   const client = { auth: {
     updateUser: async payload => { calls.push({ update: payload }); return { error: providerError }; },
@@ -414,6 +431,8 @@ function passwordFixture({ providerError = null, revokeFails = false, revokeThro
   } };
   const route = compile(accountSource, {
     "@/src/lib/dancr/password-policy": passwordPolicy,
+    "@/src/lib/dancr/password-setup": passwordSetup,
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ auth: { admin: { updateUserById: async (id, input) => ({ data: { user: { id, app_metadata: input.app_metadata } }, error: setupRecordFails ? new Error('unavailable') : null }) } } }) },
     "@/src/lib/api": api,
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: r => r.json() },
     "@/src/lib/supabase/request": { createRequestSupabaseContext: async () => ({ client, user: { id: account.id, email: "customer@example.com" }, session: {} }) },
@@ -424,12 +443,13 @@ function passwordFixture({ providerError = null, revokeFails = false, revokeThro
   return { calls, ...route };
 }
 
-for (const options of [{}, { revokeFails: true }, { revokeThrows: true }, { emailThrows: true }]) test(`committed password update survives secondary failures ${JSON.stringify(options)}`, async () => {
+for (const options of [{}, { revokeFails: true }, { revokeThrows: true }, { emailThrows: true }, { setupRecordFails: true }]) test(`committed password update survives secondary failures ${JSON.stringify(options)}`, async () => {
   const f = passwordFixture(options);
   const response = await f.PATCH(jsonRequest("PATCH", { password: "  New1!password  " }));
   assert.equal(response.status, 200);
   const body = await response.json();
   assert.equal(body.ok, true);
+  assert.equal(body.passwordSetupComplete, !options.setupRecordFails);
   assert.equal(body.otherSessionsRevoked, !(options.revokeFails || options.revokeThrows));
   assert.equal(f.calls[0], "account");
   assert.equal(f.calls.filter(x => x.update).length, 1);

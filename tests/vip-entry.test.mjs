@@ -7,7 +7,7 @@ import * as accessTerms from '../src/lib/dancr/access-terms.ts';
 import * as userTerms from '../src/lib/dancr/user-terms-version.ts';
 
 // Focused component events with mocked responses; no browser or network.
-function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ venues: [], venueId: '97000000-0000-4000-8000-000000000020' }), auth = {} } = {}) {
+function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ passwordSetupComplete: true, venues: [], venueId: '97000000-0000-4000-8000-000000000020' }), auth = {} } = {}) {
   const slots = [], listeners = new Map(), calls = [], navigations = [], timers = new Map(); let timerId = 0;
   let cursor = 0, dirty = true, effects = [], tree, currentSession = session;
   const react = {
@@ -92,7 +92,7 @@ test('repeat VIP signup opens sign-in with the email and invitation retained, an
   ui.nodes().find(n => n.type === 'password-field').props.onChange({ target: { value: 'Proposed1!password' } });
   ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
-  assert.match(ui.html(), /Sign in to continue/); assert.match(ui.html(), /existing MyDancr guest account/);
+  assert.match(ui.html(), /Sign in to continue/); assert.match(ui.html(), /Finish password setup/);
   assert.doesNotMatch(ui.html(), /Check your email|Unable to authenticate|Proposed1!password/);
   assert.equal(ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.value, guest.email);
   assert.equal(ui.nodes().find(n => n.type === 'password-field').props.value, '');
@@ -115,6 +115,37 @@ test('other VIP signup failures keep the signup form available for correction', 
   assert.match(ui.html(), /Create your guest account/); assert.match(ui.html(), /Choose a stronger password/);
   assert.doesNotMatch(ui.html(), /Sign in to continue|Check your email/);
   assert.equal(ui.calls.filter(c => c.url === '/api/auth').length, 1); ui.close();
+});
+
+test('unfinished verified guests resume password setup before VIP activation', async () => {
+  const token = 'vip_' + 'a'.repeat(48);
+  const ui = entryFixture({ token, session: { accessToken: 'verified', account: guest }, request: async () => ({ passwordSetupComplete: false }) });
+  await ui.settle();
+  assert.match(ui.html(), /Set your password/); assert.doesNotMatch(ui.html(), /Activate your VIP access/);
+  const link = ui.nodes().find(n => n.props?.href?.startsWith('/account/reset-password'));
+  const destination = new URL(link.props.href, 'https://mydancr.test');
+  assert.equal(destination.searchParams.get('return_to'), '/vip/invite/' + token);
+  assert.equal(destination.searchParams.get('setup'), '1');
+  assert.equal(ui.calls.some(c => c.options.method === 'PATCH'), false); ui.close();
+});
+
+test('a signed-out guest can request and resend secure setup without a password or another signup', async () => {
+  const token = 'vip_' + 'b'.repeat(48);
+  const ui = entryFixture({ token }); await ui.settle();
+  ui.nodes().find(n => n.props.children === 'Already confirmed? Finish password setup').props.onClick(); ui.render();
+  assert.equal(ui.nodes().some(n => n.type === 'password-field'), false);
+  ui.nodes().find(n => n.props.type === 'email').props.onChange({target:{value:guest.email}}); ui.render();
+  ui.nodes().find(n => n.type === 'form').props.onSubmit({preventDefault(){}}); await ui.settle();
+  assert.match(ui.html(), /secure password setup link/);
+  for (let i=0;i<60;i++) ui.tick();
+  ui.nodes().find(n => n.props.children === 'Resend email').props.onClick(); await ui.settle();
+  const requests = ui.calls.filter(c => c.url === '/api/auth'); assert.equal(requests.length, 2);
+  for (const request of requests) {
+    const body = JSON.parse(request.options.body); assert.equal(body.mode, 'reset_password'); assert.equal(body.email, guest.email);
+    const callback = new URL(body.emailRedirectTo); assert.equal(callback.searchParams.get('vip_setup'), '1');
+    assert.equal(callback.searchParams.get('vip_return_to'), '/vip/invite/' + token);
+  }
+  ui.close();
 });
 
 test('an existing signed-in guest activates an invitation without another account or password', async () => {

@@ -21,6 +21,8 @@ export default function ResetPasswordClient() {
   const [attempt, setAttempt] = useState(0);
   const [completionWarning, setCompletionWarning] = useState("");
   const [vipReturn, setVipReturn] = useState("");
+  const [isSetup, setIsSetup] = useState(false);
+  const [alreadySetup, setAlreadySetup] = useState(false);
   const inFlight = useRef(false);
   const saveController = useRef<AbortController | null>(null);
   const verifiedAccount = useRef("");
@@ -30,7 +32,9 @@ export default function ResetPasswordClient() {
     let disposed = false;
     const session = readBrowserAuthSession();
     const returnTo = vipReturnPath(new URLSearchParams(window.location.search).get("return_to"));
+    const setup = Boolean(returnTo) && new URLSearchParams(window.location.search).get("setup") === "1";
     setVipReturn(returnTo);
+    setIsSetup(setup);
     if (new URLSearchParams(window.location.search).get("error") || !session?.accessToken) {
       setPhase("expired");
       return;
@@ -56,7 +60,11 @@ export default function ResetPasswordClient() {
       const verified = readBrowserAuthSession();
       verifiedAccount.current = String(verified?.account?.id || verified?.accessToken || "");
       const role = data.account?.role;
+      setIsSetup(setup && role === "customer");
       setDestination(role === "customer" && returnTo ? returnTo : role === "admin" ? "/admin" : ["dancer", "customer", "venue"].includes(role) ? `/dashboard/${role}` : "/account");
+      if (setup && role === "customer" && data.passwordSetupComplete === true) {
+        setAlreadySetup(true); setPhase("complete"); return;
+      }
       setPhase("ready");
     }).catch(() => {
       if (!disposed) setPhase("unavailable");
@@ -102,6 +110,10 @@ export default function ResetPasswordClient() {
       if (response.status === 401 || response.status === 403) { setPhase("expired"); return; }
       if (!response.ok || !data?.ok) throw new Error(data?.error || "Unable to update your password. Please try again.");
       persistRefreshedBrowserAuthSession(data.session, session);
+      if (isSetup && data.passwordSetupComplete !== true) {
+        setError("Your password was saved, but we couldn’t confirm setup. Tap Save password again to finish.");
+        return;
+      }
       setPassword("");
       setConfirmPassword("");
       setCompletionWarning(data.otherSessionsRevoked === false
@@ -132,26 +144,26 @@ export default function ResetPasswordClient() {
             {phase === "complete" ? <path d="m6 12 4 4 8-8" /> : <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" /></>}
           </svg>
         </span>
-        <h1>{phase === "complete" ? "Password updated" : "Reset your password"}</h1>
-        {phase === "loading" ? <p role="status">Checking your reset link…</p> : null}
+        <h1>{phase === "complete" ? alreadySetup ? "Password already set" : isSetup ? "Password saved" : "Password updated" : isSetup ? "Set your password" : "Reset your password"}</h1>
+        {phase === "loading" ? <p role="status">Checking your secure link…</p> : null}
         {phase === "unavailable" ? <>
           <p role="alert">We couldn&apos;t check your reset session right now. Please check your connection and try again.</p>
           <button className="account-form-primary" type="button" onClick={() => setAttempt(attempt + 1)}>Try again</button>
         </> : null}
         {phase === "expired" ? <>
-          <p role="alert">This reset link is unavailable or has expired. Request a new email using Forgot password.</p>
-          <a className="account-form-primary" href={vipReturn || "/account?mode=login"}>Request a new reset link</a>
+          <p role="alert">{isSetup ? "This setup link was already used or has expired. Return to your invitation and choose Finish password setup to request a fresh email." : "This reset link is unavailable or has expired. Request a new email using Forgot password."}</p>
+          <a className="account-form-primary" href={vipReturn || "/account?mode=login"}>{isSetup ? "Return to VIP invitation" : "Request a new reset link"}</a>
         </> : null}
         {phase === "ready" ? <form onSubmit={submit}>
-          <p>Choose a new password to finish resetting your account.</p>
-          <PasswordField label="New password" autoComplete="new-password" minLength={6} maxLength={1024} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={saving} />
+          <p>{isSetup ? "Your email is confirmed. Choose a password to finish setting up your guest account. No old password is needed." : "Choose a new password to finish resetting your account."}</p>
+          <PasswordField label={isSetup ? "Choose password" : "New password"} autoComplete="new-password" minLength={6} maxLength={1024} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={saving} />
           <PasswordRequirements password={password} />
           <PasswordField label="Confirm new password" autoComplete="new-password" minLength={6} maxLength={1024} required value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} disabled={saving} />
           {error ? <p className="reset-error" role="alert">{error}</p> : null}
-          <button className="account-form-primary" type="submit" aria-busy={saving} disabled={saving}>{saving ? "Updating password…" : "Update password"}</button>
+          <button className="account-form-primary" type="submit" aria-busy={saving} disabled={saving}>{saving ? "Saving password…" : isSetup ? "Save password" : "Update password"}</button>
         </form> : null}
         {phase === "complete" ? <>
-          <p className="account-form-confirmation" role="status">Your new password has been saved.</p>
+          <p className="account-form-confirmation" role="status">{alreadySetup ? "Your account already has a completed password setup. Continue to your VIP invitation." : "Your new password has been saved."}</p>
           {completionWarning ? <p role="alert">{completionWarning}</p> : null}
           <a className="account-form-primary" href={destination}>{vipReturn && destination === vipReturn ? "Continue to VIP access" : "Continue to your account"}</a>
         </> : null}

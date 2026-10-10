@@ -10,6 +10,7 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
+import { passwordSetupCompleted, recordPasswordSetup } from "@/src/lib/dancr/password-setup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,7 +29,9 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Account not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, account, session });
+    return NextResponse.json({ ok: true, account, session, passwordSetupComplete: passwordSetupCompleted(user) }, {
+      headers: { "cache-control": "private, no-store", "referrer-policy": "no-referrer" },
+    });
   } catch (error) {
     return apiError(error, "Unable to load account.");
   }
@@ -86,6 +89,9 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: false, error: "Unable to update password. Check the password and try again." }, { status: 400 });
       }
 
+      const passwordSetupComplete = account?.role === "customer"
+        ? await recordPasswordSetup(createAdminSupabaseClient, user) : undefined;
+
       let signOutError: unknown = null;
       try {
         ({ error: signOutError } = await client.auth.signOut({ scope: "others" }));
@@ -122,7 +128,7 @@ export async function PATCH(request: Request) {
       }
 
       return NextResponse.json({
-        ok: true, account, session,
+        ok: true, account, session, passwordSetupComplete,
         otherSessionsRevoked: !signOutError,
         message: signOutError
           ? "Password updated. We could not confirm that other sessions were signed out."

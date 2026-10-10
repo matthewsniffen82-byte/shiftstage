@@ -349,6 +349,7 @@ function callbackHtml(
           redirectUrl.pathname = "/account/reset-password";
           redirectUrl.search = "";
           if (vipRecoveryReturn) redirectUrl.searchParams.set("return_to", vipRecoveryReturn);
+          if (vipRecoveryReturn && queryParams.get("vip_setup") === "1") redirectUrl.searchParams.set("setup", "1");
           if (!session?.accessToken) {
             // The reset page rejects this link without clearing an unrelated account.
             redirectUrl.searchParams.set("error", "expired");

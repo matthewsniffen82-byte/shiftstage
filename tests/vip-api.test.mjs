@@ -23,10 +23,12 @@ function compile(file, dependencies = {}, globals = {}) {
   return exports;
 }
 const service = compile("src/lib/dancr/vip.ts", { "../api-error-policy": { PublicApiError } });
+const passwordSetup = compile("src/lib/dancr/password-setup.ts", { "../security/safe-error-metadata": { safeErrorMetadata: () => ({}) } });
 const termsService = compile("src/lib/dancr/user-terms.ts", { "../api-error-policy": { PublicApiError }, "./user-terms-version": userTerms });
-function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false, pendingInvitation = true } = {}) {
+function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false, pendingInvitation = true, passwordComplete = true } = {}) {
   const calls = [];
   const dependencies = {
+    "@/src/lib/dancr/password-setup": passwordSetup,
     "next/server": { NextResponse: Response },
     "@/src/lib/dancr/access-terms": accessTerms,
     "@/src/lib/dancr/user-terms-version": userTerms,
@@ -36,7 +38,7 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: async (request, options) => { assert.ok(options.maxBytes <= 8192); return request.json(); } },
     "@/src/lib/supabase/request": { createRequestSupabaseContext: async (_request, access) => {
       calls.push(["auth", access]); if (denied) throw new PublicApiError("FORBIDDEN", "denied", 403);
-      return { user: { id: id(5) }, session: { accessToken: "rotated" } };
+      return { user: { id: id(5), app_metadata: passwordComplete ? { mydancr_password_setup_completed_at: '2026-10-01T00:00:00Z' } : {} }, session: { accessToken: "rotated" } };
     } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from: table => {
       const steps = []; calls.push(["lookup", table, steps]);
@@ -73,6 +75,18 @@ test("VIP activation requires explicit current terms and binds the receipt to au
   assert.match(response.headers.get("cache-control"), /private.*no-store/);
   const failed = fixture({ activation: true, rpcError: { code: "22023" } });
   assert.equal((await failed.route.PATCH(request(body))).status, 400);
+});
+
+test("VIP activation cannot use a client claim to skip incomplete password setup", async () => {
+  const { route, calls } = fixture({ activation: true, passwordComplete: false });
+  const response = await route.PATCH(request({ token: service.newVipToken(), name: "Jordan",
+    termsAccepted: true, termsVersion: accessTerms.ACCESS_TERMS_VERSION,
+    userTermsAccepted: true, userTermsVersion: userTerms.USER_TERMS_VERSION,
+    passwordSetupComplete: true,
+  }));
+  assert.equal(response.status, 409);
+  assert.match((await response.json()).error, /Finish setting your password/);
+  assert.equal(calls.some(call => call[0] === "rpc"), false);
 });
 
 test("VIP submission uses authenticated identity, bounds selection, hides notification recipients and persists refreshed sessions", async () => {
