@@ -518,7 +518,7 @@ export default function DashboardClient({
             {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
             {role === "customer" ? <CustomerDashboardAvatar name={accountDisplayName} /> : null}
             {role === "venue" ? <span className="venue-dashboard-logo" aria-hidden="true">
-              <span>{dashboardHeading.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0]).join("")}</span>
+              {profileDisplayName ? <span>{profileDisplayName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => Array.from(part)[0]).join("").toLocaleUpperCase()}</span> : <VenueDashboardIcon section="venue" />}
               {state.profile?.logoImageUrl ? <img key={String(state.profile.logoImageUrl)} src={String(state.profile.logoImageUrl)} srcSet={state.profile.logoImageSrcSet ? String(state.profile.logoImageSrcSet) : undefined} sizes="48px" alt="" onError={event => { event.currentTarget.style.display = "none"; }} /> : null}
             </span> : null}
           </div>
