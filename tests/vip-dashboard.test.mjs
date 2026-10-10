@@ -237,7 +237,10 @@ test('profile links, selection checkboxes, and favorite buttons are independent 
   const card = cards[0], link = nodes(card).find(node => node.type === 'a');
   const checkbox = nodes(card).find(node => node.props?.type === 'checkbox');
   const favorite = nodes(card).find(node => node.type === 'button');
-  assert.equal(link.props.href, '/dancers/dancer-1'); assert.equal(link.props.target, '_blank');
+  const profileUrl = new URL(link.props.href, 'https://mydancr.test');
+  assert.equal(profileUrl.pathname, '/dancers/dancer-1');
+  assert.equal(profileUrl.searchParams.get('return_to'), '/vip?venueId=venue-1#vip-plan');
+  assert.equal(link.props.target, '_blank');
   assert.match(link.props.rel, /noopener/);
   assert.ok(nodes(link).some(node => node.props?.children === 'Open profile'));
   assert.equal(nodes(link).some(node => node.type === 'button' || node.type === 'input'), false);

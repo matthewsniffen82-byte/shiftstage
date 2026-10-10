@@ -9,6 +9,7 @@ import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
 import { getPublicMyDancrTvFeed } from "@/src/lib/dancr/tv";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
+import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
 import type { ShiftSummary } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import {
@@ -40,13 +41,16 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
   const client = createAdminSupabaseClient();
   const profile = await getDancerProfile(client, slug);
   if (!profile) notFound();
+  const queryParams = await searchParams;
+  const requestedReturn = safeLocalReturnPath(queryParams?.return_to);
+  const vipReturnHref = requestedReturn.split(/[?#]/)[0] === "/vip" ? requestedReturn : "";
   if (profile.slug !== slug) {
-    const sharedMedia = await searchParams;
     const query = new URLSearchParams();
     for (const key of ["media", "mediaIndex"]) {
-      const value = sharedMedia?.[key];
+      const value = queryParams?.[key];
       if (typeof value === "string") query.set(key, value);
     }
+    if (vipReturnHref) query.set("return_to", vipReturnHref);
     permanentRedirect(`/dancers/${profile.slug}${query.size ? `?${query}` : ""}`);
   }
 
@@ -127,6 +131,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
           <div className="profile-titlebar-controls">
             <ProfileCloseButton
               fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
+              vipReturnHref={vipReturnHref}
             />
             <details className="profile-options">
               <summary aria-label="Profile options" title="Profile options"><span aria-hidden="true">•••</span></summary>

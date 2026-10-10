@@ -112,7 +112,7 @@ test("the live dancer profile back control exits shared links and remains toucha
   assert.match(profileNavigationSource, /className="public-profile-close"/);
   assert.match(
     profileNavigationSource,
-    /profileType = "dancer"[\s\S]*?aria-label=\{profileType === "dancer" \? "Back to previous page or dancer discovery results" : `Close full \$\{profileType\} profile and return to the previous page or discovery results`\}/,
+    /profileType = "dancer"[\s\S]*?aria-label=\{vipReturnHref \? "Back to VIP dashboard" : profileType === "dancer" \? "Back to previous page or dancer discovery results" : `Close full \$\{profileType\} profile and return to the previous page or discovery results`\}/,
   );
   assert.match(profileNavigationSource, /window\.history\.back\(\)/);
   assert.match(profileNavigationSource, /window\.setTimeout\(navigateToFallback, 900\)/);

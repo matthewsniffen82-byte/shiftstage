@@ -27,7 +27,7 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
           const checked = draft.selected.includes(dancer.id);
           const profile = <><DancerPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><span className="vip-dancer-copy"><strong>{dancer.stage_name}</strong><small className={dancer.working_now ? "vip-working" : ""}>{dancer.working_now ? "● Working now" : "Affiliated · off shift"}</small><span className="vip-open-profile">{dancer.profileHref ? "Open profile" : "Profile unavailable"}</span></span></>;
           return <article className={`vip-dancer ${checked ? "is-selected" : ""}`} key={dancer.id}>
-            {dancer.profileHref ? <a className="vip-profile-link" href={dancer.profileHref} target="_blank" rel="noopener noreferrer" aria-label={`Open ${dancer.stage_name} profile (new tab)`}>{profile}</a> : <div className="vip-profile-link">{profile}</div>}
+            {dancer.profileHref ? <a className="vip-profile-link" href={`${dancer.profileHref}?return_to=${encodeURIComponent(`/vip?venueId=${encodeURIComponent(venue.id)}#vip-plan`)}`} target="_blank" rel="noopener noreferrer" aria-label={`Open ${dancer.stage_name} profile (new tab)`}>{profile}</a> : <div className="vip-profile-link">{profile}</div>}
             <label className="vip-dancer-select"><span className="vip-sr-only">Select {dancer.stage_name} for your visit</span><input type="checkbox" checked={checked} disabled={!checked && draft.selected.length >= 10} onChange={event => {
               if (!event.target.checked) remove(dancer.id);
               else if (!checked && draft.selected.length < 10) onChange({ ...draft, selected: [...draft.selected, dancer.id] });

@@ -5,9 +5,11 @@ import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 
 export function ProfileCloseButton({
   fallbackHref,
+  vipReturnHref = "",
   profileType = "dancer",
 }: {
   fallbackHref: string;
+  vipReturnHref?: string;
   profileType?: "dancer" | "venue";
 }) {
   function navigateToFallback() {
@@ -16,6 +18,11 @@ export function ProfileCloseButton({
   }
 
   function closeProfile() {
+    // VIP links open without a referrer, so their explicit return takes priority.
+    if (vipReturnHref) {
+      window.location.assign(new URL(vipReturnHref, window.location.origin).toString());
+      return;
+    }
     const referrer = document.referrer;
     if (referrer) {
       try {
@@ -43,7 +50,7 @@ export function ProfileCloseButton({
 
   return (
     <button
-      aria-label={profileType === "dancer" ? "Back to previous page or dancer discovery results" : `Close full ${profileType} profile and return to the previous page or discovery results`}
+      aria-label={vipReturnHref ? "Back to VIP dashboard" : profileType === "dancer" ? "Back to previous page or dancer discovery results" : `Close full ${profileType} profile and return to the previous page or discovery results`}
       className="public-profile-close"
       onClick={closeProfile}
       type="button"
