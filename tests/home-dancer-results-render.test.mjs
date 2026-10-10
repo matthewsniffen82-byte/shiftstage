@@ -155,7 +155,7 @@ test("ending a shift moves a dancer to the other tab and updates both counts", (
   assert.match(fixture.markup, /<article data-profile="Checked-in dancer"/);
 });
 
-test("earned ranking preserves status filtering and replaces the fixed demo priority", () => {
+test("pins Star first while preserving status filtering and everyone else's earned order", () => {
   const star = { id: "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2", name: "Star", now: false };
   const profiles = [
     { name: "A", now: true, mainPhotoUrl: "https://images.test/same.webp" },
@@ -178,7 +178,7 @@ test("earned ranking preserves status filtering and replaces the fixed demo prio
   profiles[2].discovery = { position: 3 };
   fixture.state.dancerDirectoryFilter = "now";
   fixture.state.render();
-  assert.deepEqual(names(), ["A", "B", "Star", "C"]);
+  assert.deepEqual(names(), ["Star", "A", "B", "C"]);
   assert.equal(names().length, 4);
   assert.match(fixture.markup, /Only participating MyDancr dancers are shown\./);
 });

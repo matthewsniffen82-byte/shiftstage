@@ -270,7 +270,8 @@
     }
 
     function demoDancerGridPriority(profile) {
-      // Keep the server's earned order stable while filtering the directory.
+      // Pin the original Star first, then preserve the server's earned order.
+      if (profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2") return -1;
       return Number.isInteger(profile.discovery?.position) ? profile.discovery.position : 5000;
     }
 

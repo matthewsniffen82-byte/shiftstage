@@ -24,7 +24,7 @@ function assertSpaced(profiles) {
   });
 }
 
-test("separates unranked demo photo copies without giving a fixed profile priority", () => {
+test("separates unranked demo photo copies while keeping the original Star first", () => {
   const profiles = Array.from({ length: 14 }, (_, photo) =>
     Array.from({ length: 8 }, (_, copy) => Object.freeze({
       id: `${photo}-${copy}`,
@@ -35,7 +35,7 @@ test("separates unranked demo photo copies without giving a fixed profile priori
   const input = Object.freeze(profiles);
   const before = [...input];
   const result = mix(input);
-  assert.notEqual(result[0], star);
+  assert.equal(result[0], star);
   assertSpaced(result);
   assert.equal(result.length, input.length);
   assert.equal(new Set(result).size, input.length);
