@@ -540,6 +540,7 @@ export default function DashboardClient({
             <button className="primary-link" type="button" onClick={retryDashboard}>Try again</button>
             {state.signInRequired ? <Link
               className="primary-link"
+              data-sign-in-action
               href={`/account?role=${role}`}
             >
               Sign in
@@ -743,7 +744,7 @@ function DashboardSignInRecovery({
 
   if (!isOpen) {
     return (
-      <button className="primary-link" type="button" onClick={() => setIsOpen(true)}>
+      <button className="primary-link" data-sign-in-action type="button" onClick={() => setIsOpen(true)}>
         Sign in
       </button>
     );
@@ -772,7 +773,7 @@ function DashboardSignInRecovery({
         required
         value={password}
       />
-      <button className="primary-link" disabled={isSubmitting} type="submit">
+      <button className="primary-link" data-sign-in-action disabled={isSubmitting} type="submit">
         {isSubmitting ? "Signing in..." : `Sign in to ${role} dashboard`}
       </button>
       {status ? <p className="venue-sign-in-status" role="status">{status}</p> : null}

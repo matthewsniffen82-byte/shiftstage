@@ -715,7 +715,7 @@ export default function AdminClient() {
               {isResettingPassword ? "Sending reset email..." : "Forgot password?"}
             </button>
           ) : null}
-          <button type="submit" disabled={authBusy}>
+          <button data-sign-in-action={mode === "login" || undefined} type="submit" disabled={authBusy}>
             {isSigningIn ? "Working..." : mode === "signup" ? "Create admin account" : "Sign in"}
           </button>
         </form>

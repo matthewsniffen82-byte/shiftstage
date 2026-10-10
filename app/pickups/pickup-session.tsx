@@ -35,6 +35,6 @@ export function PickupAccountGate({ children }: { children: (role: "venue" | "ad
   return <section className="pickup-card"><h1>Club pickup</h1>
     <p>Open a club page to request pickup. The club manager receives your contact details and contacts you directly to confirm your ride.</p>
     <Link className="pickup-primary" href="/?view=venues">Browse clubs</Link>
-    {!session.identity && <Link prefetch={false} className="pickup-button" href="/?venueAccess=1&return_to=%2Fpickups">Venue manager sign in</Link>}
+    {!session.identity && <Link prefetch={false} className="pickup-button" data-sign-in-action href="/?venueAccess=1&return_to=%2Fpickups">Venue manager sign in</Link>}
   </section>;
 }

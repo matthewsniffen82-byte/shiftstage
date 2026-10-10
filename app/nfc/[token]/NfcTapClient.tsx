@@ -293,7 +293,7 @@ export function NfcTapClient({ token }: { token: string }) {
         {!complete && state ? (
           dancerNeedsSignIn || browserAccountConflict ? (
             <>
-              <Link className="nfc-primary" href={`/account?role=dancer&mode=login&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
+              <Link className="nfc-primary" data-sign-in-action href={`/account?role=dancer&mode=login&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>
                 {state.browserAccountLinked || browserAccountConflict ? "Sign in to your original account" : "Sign in to use venue tap"}
               </Link>
               {!state.browserAccountLinked && !browserAccountConflict ? <Link className="nfc-secondary" href={`/account?role=dancer&mode=signup&venue_nfc=${encodeURIComponent(token)}&return_to=${encodeURIComponent(`/nfc/${token}`)}`}>

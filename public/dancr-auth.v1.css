@@ -1,4 +1,7 @@
 /* Shared MyDancr entry design. Role-specific fields and access rules stay with their forms. */
+:root {
+  --dancr-sign-in-purple: #29009b;
+}
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) {
   --dancr-form-height: 44px;
   --dancr-auth-card: #111018;
@@ -325,4 +328,28 @@ body.dancr-button-system :is(#authPage, .account-shell) .recovery-popover-surfac
 @media (max-width: 520px) {
   body.dancr-button-system .account-shell :is(.customer-benefit-grid, .login-recovery-grid) { grid-template-columns: minmax(0, 1fr); }
   body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) :is(.auth-card, .account-panel, .vip-panel, .reset-card) { min-width: 0; }
+}
+
+/* One opaque sign-in color on Safari, Android and desktop. The legacy IDs keep
+   old live-shell gradients from overriding the shared action style. */
+html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action]) {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: var(--dancr-sign-in-purple) !important;
+  border-color: #6136b6 !important;
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  text-shadow: none !important;
+  box-shadow: var(--dancr-shadow-brand-control) !important;
+}
+html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action]):focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 3px !important;
+}
+html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action])::before,
+html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action])::after {
+  content: none !important;
 }

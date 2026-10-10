@@ -43,7 +43,7 @@ export default function InternalFollowReturn() {
       <p role="alert">{error}</p>
       {destination ? <div className="ir-actions">
         <button type="button" onClick={() => void resume()}>Try again</button>
-        <a className="ir-secondary" href={signIn}>Sign in</a>
+        <a className="ir-secondary" data-sign-in-action href={signIn}>Sign in</a>
         <a href={destination}>Back to club profile</a>
       </div> : <button type="button" onClick={() => window.location.assign("/")}>Back to MyDancr</button>}
     </>}

@@ -149,6 +149,7 @@ export function RedeemDealClient({ token, initialRedemption }: RedeemDealClientP
       {!venueAccessToken ? (
         <Link
           className="venue-sign-in"
+          data-sign-in-action
           href={`/?venueAccess=1&venueMode=login&return_to=${encodeURIComponent(`/deals/redeem/${token}`)}`}
         >
           Club staff sign in to confirm

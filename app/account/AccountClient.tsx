@@ -675,7 +675,7 @@ export default function AccountClient() {
               <input value={city} onChange={(event) => setCity(event.target.value)} required />
             </label>
           ) : null}
-          <button className="submit" type="submit" disabled={isSubmitting}>
+          <button className="submit" data-sign-in-action={mode === "login" || undefined} type="submit" disabled={isSubmitting}>
             {isSubmitting ? (mode === "login" ? "Signing in..." : "Creating account...") : mode === "login" ? "Sign in" : "Create account"}
           </button>
           {status ? <p className="status" role="status" aria-live="polite" aria-atomic="true">{status}</p> : null}

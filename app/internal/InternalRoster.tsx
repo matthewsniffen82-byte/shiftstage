@@ -357,7 +357,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
       {!staff && snapshot?.venueLogoUrl ? <VenueBrandLogo key={snapshot.venueLogoUrl} url={snapshot.venueLogoUrl} name={snapshot.venueName} /> : <h1 className={staff ? undefined : "ir-venue-identity"}>{snapshot?.venueName || "Club roster"}</h1>}
       <p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p>
     </div>{staff ? <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a> : null}</header> : null}
-    {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot ? <p role="status">Loading the live roster…</p> : null}
+    {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" data-sign-in-action href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className={`ir-notice${!staff && notice === REQUEST_SENT_NOTICE ? " ir-request-notice" : ""}`} role="status">{!staff && notice === REQUEST_SENT_NOTICE ? <><strong>Request sent to club staff.</strong><span>Staff acknowledgment does not guarantee dancer availability.</span></> : notice}</p> : null}
     {snapshot ? <>
       {!staff ? <details className="ir-terms"><summary>View terms</summary><div>
