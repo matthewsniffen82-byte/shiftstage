@@ -26,7 +26,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
   const [resendSeconds, setResendSeconds] = useState(0);
   const [email, setEmail] = useState(""); const [password, setPassword] = useState(""); const [name, setName] = useState("");
   const [status, setStatus] = useState(""); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
-  const [setupCheck, setSetupCheck] = useState<"loading" | "ready" | "needed" | "error">("loading");
+  const [setupCheck, setSetupCheck] = useState<"loading" | "ready" | "needed" | "signin" | "error">("loading");
   const [setupAttempt, setSetupAttempt] = useState(0);
   const lock = useRef(false); const mounted = useRef(false);
   const customer = session?.account?.role === "customer";
@@ -59,10 +59,15 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
     const controller = new AbortController();
     const accountId = session?.account?.id;
     requestDashboardJson("/api/account", { expectedRole: "customer", cache: "no-store", timeoutMs: 20000, signal: controller.signal })
-      .then(data => { if (!controller.signal.aborted && readSession()?.account?.id === accountId) setSetupCheck(data.passwordSetupComplete === true ? "ready" : "needed"); })
+      .then(data => {
+        if (controller.signal.aborted || readSession()?.account?.id !== accountId) return;
+        const next = data.passwordSetupComplete !== true ? "needed" : data.passwordLoginComplete === true ? "ready" : "signin";
+        setSetupCheck(next);
+        if (next === "signin") { setEmail(readSession()?.account?.email || ""); setMode("login"); }
+      })
       .catch(() => { if (!controller.signal.aborted && readSession()?.account?.id === accountId) setSetupCheck("error"); });
     return () => controller.abort();
-  }, [customer, token, invitation, session?.account?.id, setupAttempt]);
+  }, [customer, token, invitation, session?.account?.id, session?.accessToken, setupAttempt]);
 
   useEffect(() => {
     if (!resendSeconds) return;
@@ -110,7 +115,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
       }
       if (data.account?.role !== "customer") throw new Error("Use your MyDancr guest account with the invited email for VIP access.");
       if (!persistBrowserAuthSession({ ...data.session, account: data.account })) throw new Error("Unable to save your sign-in in this browser.");
-      setSession(readSession()); setPassword(""); setTermsAccepted(false);
+      setSession(readSession()); setPassword(""); setTermsAccepted(false); setSetupAttempt(value => value + 1);
     });
   }
   function resendEmail() {
@@ -128,7 +133,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
         if (response.status === 429) setResendSeconds(Math.min(600, Math.max(60, Number(response.headers.get("retry-after")) || 60)));
         throw new Error(data.error || "Unable to send another email. Please try again.");
       }
-      setResendSeconds(60); setStatus(data.message || "Check your inbox for the newest confirmation email.");
+      setResendSeconds(60); setStatus(data.message || "Check your inbox for your setup email.");
     });
   }
   async function signOut() {
@@ -153,7 +158,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
     : !session?.accessToken && emailStep ? <section className="vip-entry-content vip-email-step" aria-labelledby="vip-email-heading">
       <span className="vip-email-mark" aria-hidden="true">✉</span><h2 id="vip-email-heading">Check your email</h2>
       <p>{emailStep === "signup" ? "If this email matches your invitation, a confirmation link is on the way to" : emailStep === "setup_password" ? "If this email has an account, a secure password setup link is on the way to" : "If you have a MyDancr account, a reset link is on the way to"} <strong>{email}</strong>.</p>
-      <small>{emailStep === "signup" ? "Open the newest link to verify your email, set your password, and continue to VIP access. If you already have a guest account, we’ll use it." : "After choosing a new password, you’ll return here to finish VIP access."} Check your spam folder too.</small>
+      <small>{token && emailStep !== "reset_password" ? "You can reopen this link during your invitation’s 7-day window until you’ve saved a password and signed in with it. Resending doesn’t extend the deadline." : "After choosing a new password, you’ll return here to finish VIP access."} Check your spam folder too.</small>
       <button type="button" className="vip-primary" disabled={busy || resendSeconds > 0} onClick={resendEmail}>{busy ? "Sending…" : resendSeconds ? `Resend email in ${resendSeconds}s` : "Resend email"}</button>
       <div className="vip-actions"><button type="button" disabled={busy} onClick={() => chooseMode("login")}>I already have a password</button><button type="button" disabled={busy} onClick={() => chooseMode(emailStep)}>Use a different email</button></div>
     </section>
@@ -175,8 +180,12 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
       {(mode === "signup" || mode === "login") && <button className="vip-text-button" type="button" disabled={busy} onClick={() => chooseMode("setup_password")}>Finish password setup</button>}
       </div>
     </section> : !customer ? <section className="vip-entry-content"><h2>Use your invited guest account</h2><p>You’re signed in to a different account type. Sign out, then use the email that received your VIP invitation.</p></section>
-    : token && invitation && setupCheck !== "ready" ? <section className="vip-entry-content vip-password-setup">
-      {setupCheck === "loading" ? <p role="status">Checking your account setup…</p> : setupCheck === "error" ? <><p role="alert">We couldn’t check your account setup. Please try again.</p><button className="vip-primary" onClick={() => setSetupAttempt(value => value + 1)}>Try again</button></> : <><h2>Set your password</h2><p>Your email is confirmed. Save a password to finish setting up your guest account and continue to VIP access.</p><Link className="vip-primary" href={vipPasswordSetupPath(`/vip/invite/${token}`)}>Set password &amp; continue</Link><small>Already have a password? Sign out above, then sign in with it.</small></>}
+    : token && invitation && setupCheck !== "ready" ? <section className="vip-entry-content vip-auth vip-password-setup">
+      {setupCheck === "loading" ? <p role="status">Checking your account setup…</p> : setupCheck === "error" ? <><p role="alert">We couldn’t check your account setup. Please try again.</p><button className="vip-primary" onClick={() => setSetupAttempt(value => value + 1)}>Try again</button></> : setupCheck === "signin" ? <><h2>Sign in to finish VIP setup</h2><p>Your password is saved. Sign in with it to continue.</p><form onSubmit={authenticate}>
+        <label>Email<input type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} required maxLength={254} disabled={busy} /></label>
+        <PasswordField label="Password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required disabled={busy} />
+        <button className="vip-primary" data-sign-in-action disabled={busy} type="submit">{busy ? "Signing in…" : "Sign in & continue"}</button>
+      </form><Link href={`/account/reset-password?return_to=${encodeURIComponent(`/vip/invite/${token}`)}`}>Change password</Link></> : <><h2>Set your password</h2><p>Your email is confirmed. Save a password to finish setting up your guest account and continue to VIP access.</p><Link className="vip-primary" href={vipPasswordSetupPath(`/vip/invite/${token}`)}>Set password &amp; continue</Link><small>Already have a password? Sign out above, then sign in with it.</small></>}
     </section>
     : token && invitation ? <section className="vip-entry-content vip-auth"><h2>Activate your VIP access</h2><p>Signed in as {session.account?.email}. This invitation is for {invitation.maskedEmail}.</p><form onSubmit={accept}><label>Your name<input value={name} onChange={event => setName(event.target.value)} maxLength={80} autoComplete="name" required disabled={busy} /></label>
       <small id="vip-access-notice">{VIP_ACCESS_NOTICE} <Link href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link></small>

@@ -25,7 +25,7 @@ function compile(file, dependencies = {}, globals = {}) {
 const service = compile("src/lib/dancr/vip.ts", { "../api-error-policy": { PublicApiError } });
 const passwordSetup = compile("src/lib/dancr/password-setup.ts", { "../security/safe-error-metadata": { safeErrorMetadata: () => ({}) } });
 const termsService = compile("src/lib/dancr/user-terms.ts", { "../api-error-policy": { PublicApiError }, "./user-terms-version": userTerms });
-function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false, pendingInvitation = true, passwordComplete = true } = {}) {
+function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false, pendingInvitation = true, passwordComplete = true, loginComplete = true } = {}) {
   const calls = [];
   const dependencies = {
     "@/src/lib/dancr/password-setup": passwordSetup,
@@ -38,7 +38,7 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: async (request, options) => { assert.ok(options.maxBytes <= 8192); return request.json(); } },
     "@/src/lib/supabase/request": { createRequestSupabaseContext: async (_request, access) => {
       calls.push(["auth", access]); if (denied) throw new PublicApiError("FORBIDDEN", "denied", 403);
-      return { user: { id: id(5), app_metadata: passwordComplete ? { mydancr_password_setup_completed_at: '2026-10-01T00:00:00Z' } : {} }, session: { accessToken: "rotated" } };
+      return { user: { id: id(5), app_metadata: passwordComplete ? { mydancr_password_setup_completed_at: '2026-10-01T00:00:00Z', ...(loginComplete ? { mydancr_password_login_at: '2026-10-01T00:00:00Z' } : {}) } : {} }, session: { accessToken: "rotated" } };
     } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from: table => {
       const steps = []; calls.push(["lookup", table, steps]);
@@ -97,6 +97,16 @@ test("VIP submission uses authenticated identity, bounds selection, hides notifi
   assert.equal(calls[0][1].role, "customer");
   assert.equal(calls[1][2].p_actor, id(5)); assert.equal(calls[1][2].p_venue, id(20)); assert.equal(calls[1][2].p_id, id(90));
   for (const dancerIds of [[], Array(11).fill(id(37)), ["invalid"]]) assert.equal((await route.POST(request({ ...input, dancerIds }))).status, 400);
+});
+
+test('VIP activation rejects a saved password without successful password authentication', async () => {
+  const { route, calls } = fixture({ activation: true, loginComplete: false });
+  const response = await route.PATCH(request({ token: service.newVipToken(), name: 'Jordan',
+    termsAccepted: true, termsVersion: accessTerms.ACCESS_TERMS_VERSION, userTermsAccepted: true, userTermsVersion: userTerms.USER_TERMS_VERSION,
+    passwordLoginComplete: true,
+  }));
+  assert.equal(response.status, 409); assert.match((await response.json()).error, /Sign in with your password/);
+  assert.equal(calls.some(call => call[0] === 'rpc'), false);
 });
 test("denied and failed VIP writes do not report success", async () => {
   const denied = fixture({ denied: true });

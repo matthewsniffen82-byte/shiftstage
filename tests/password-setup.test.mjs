@@ -2,11 +2,26 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { compileVip } from './helpers/vip-dashboard-fixture.mjs';
 
-const { passwordSetupCompleted, recordPasswordSetup } = compileVip('src/lib/dancr/password-setup.ts', {
+const { passwordSetupCompleted, passwordLoginCompleted, recordPasswordSetup } = compileVip('src/lib/dancr/password-setup.ts', {
   '../security/safe-error-metadata': { safeErrorMetadata: () => ({}) },
 }, { console: { warn() {} } });
 const stamp = '2026-10-01T00:00:00.000Z';
 const key = 'mydancr_password_setup_completed_at';
+const loginKey = 'mydancr_password_login_at';
+
+test('only successful password authentication completes both server-owned milestones', async () => {
+  for (const extra of [{}, { last_sign_in_at: stamp }, { app_metadata: { [key]: stamp } }, { app_metadata: { [loginKey]: stamp } }, { app_metadata: { [key]: stamp }, user_metadata: { [loginKey]: stamp } }]) {
+    assert.equal(passwordLoginCompleted({ id: 'guest', ...extra }), false);
+  }
+  const records = [];
+  const admin = { auth: { admin: { updateUserById: async (id, input) => { records.push(input); return { data: { user: { id, app_metadata: input.app_metadata } } }; } } } };
+  assert.equal(await recordPasswordSetup(admin, { id: 'guest', app_metadata: { [key]: stamp } }, { passwordLogin: true }), true);
+  assert.equal(records[0].app_metadata[key], stamp);
+  const completed = { id: 'guest', app_metadata: records[0].app_metadata };
+  assert.equal(passwordLoginCompleted(completed), true);
+  assert.equal(await recordPasswordSetup(admin, completed, { passwordLogin: true }), true); assert.equal(records.length, 1);
+  assert.equal(await recordPasswordSetup(admin, { id: 'guest', app_metadata: { [key]: 'invalid' } }, { passwordLogin: true }), true);
+});
 
 test('password setup is independent of email confirmation, login history and editable metadata', () => {
   for (const extra of [{}, { email_confirmed_at: stamp }, { last_sign_in_at: stamp }, { user_metadata: { [key]: stamp } }, { app_metadata: { [key]: 'invalid' } }]) {

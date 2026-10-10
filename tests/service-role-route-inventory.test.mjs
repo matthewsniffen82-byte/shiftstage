@@ -62,6 +62,24 @@ test("every service-role API route has an explicit reviewed trust boundary", () 
         || !source.includes("verifyOndatoPayload(raw, request.headers, config)");
     }
 
+    if (routePath === "app/api/health/ondato/route.ts") {
+      return !guardPrecedesServiceClient(source, "const unauthorized = authorizeOndatoDiagnostics(request)")
+        || !source.includes("return unauthorized;");
+    }
+
+    if (routePath === "app/api/vip/setup/route.ts") {
+      return !guardPrecedesServiceClient(source, "const claim = readVipSetupToken(body.link)")
+        || !source.includes("await enforcePublicRequestRateLimit(admin,")
+        || !source.includes("await redeemVipSetupLink(admin, claim)");
+    }
+
+    if (routePath === "app/api/vip/confirmation/route.ts") {
+      return !source.includes("await resolveVipInvitation(admin, body.token)")
+        || !source.includes('.eq("email", email).is("accepted_at", null).is("revoked_at", null)')
+        || !source.includes("await enforcePublicRequestRateLimit(admin,")
+        || !source.includes("await sendVipSetupLink(admin,");
+    }
+
     if (routePath.startsWith("app/api/public/") || publicServiceRoleRoutes.has(routePath)) {
       return false;
     }
@@ -74,7 +92,7 @@ test("every service-role API route has an explicit reviewed trust boundary", () 
         || !scope.includes('.eq("token", token).eq("active", true).eq("kind", "table")');
     }
 
-    return !/createRequestSupabaseContext\(request(?:, \{ (?:role: "(?:dancer|venue)"(?:, allow(?:AgeVerification|ProfileSetup): true)?|active: true) \})?\)/.test(source);
+    return !/createRequestSupabaseContext\(request(?:\s*,\s*\{\s*(?:role:\s*"(?:customer|dancer|venue)"(?:\s*,\s*allow(?:AgeVerification|ProfileSetup):\s*true)?|active:\s*true)\s*\})?\)/.test(source);
   });
 
   assert.deepEqual(unclassified, []);

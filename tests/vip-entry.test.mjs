@@ -7,7 +7,7 @@ import * as accessTerms from '../src/lib/dancr/access-terms.ts';
 import * as userTerms from '../src/lib/dancr/user-terms-version.ts';
 
 // Focused component events with mocked responses; no browser or network.
-function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ passwordSetupComplete: true, venues: [], venueId: '97000000-0000-4000-8000-000000000020' }), auth = {}, confirmation = {} } = {}) {
+function entryFixture({ shortcut = false, token = '', session = null, request = async () => ({ passwordSetupComplete: true, passwordLoginComplete: true, venues: [], venueId: '97000000-0000-4000-8000-000000000020' }), auth = {}, confirmation = {} } = {}) {
   const slots = [], listeners = new Map(), calls = [], navigations = [], timers = new Map(); let timerId = 0;
   let cursor = 0, dirty = true, effects = [], tree, currentSession = session;
   const react = {
@@ -82,7 +82,7 @@ test('VIP signup verifies the invited email before collecting any password', asy
   assert.equal(body.userTermsAccepted, true); assert.equal(body.userTermsVersion, userTerms.USER_TERMS_VERSION);
   assert.equal(body.token, 'private-invitation');
   assert.equal(ui.calls.some(c => c.url === '/api/auth'), false);
-  assert.match(ui.html(), /verify your email, set your password/); ui.close();
+  assert.match(ui.html(), /7-day window/); ui.close();
 });
 
 test('a fresh invitation uses email verification instead of repeating password signup for an existing guest', async () => {
@@ -92,7 +92,7 @@ test('a fresh invitation uses email verification instead of repeating password s
   ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.onChange({ target: { value: guest.email } });
   ui.nodes().find(n => n.props.type === 'checkbox').props.onChange({ target: { checked: true } }); ui.render();
   ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
-  assert.match(ui.html(), /Check your email/); assert.match(ui.html(), /already have a guest account/);
+  assert.match(ui.html(), /Check your email/); assert.match(ui.html(), /Resending doesn’t extend the deadline/);
   assert.doesNotMatch(ui.html(), /Sign in to continue|Unable to authenticate|Already chose a password/);
   assert.equal(ui.calls.filter(c => c.url === '/api/auth').length, 0);
   assert.equal(ui.calls.filter(c => c.url === '/api/vip/confirmation').length, 1);
@@ -139,6 +139,33 @@ test('a signed-out guest can request and resend secure setup without a password 
     assert.equal(body.token, token); assert.equal(body.password, undefined);
   }
   ui.close();
+});
+
+test('a saved password still requires successful password login before activating VIP', async () => {
+  let loggedIn = false;
+  const ui = entryFixture({ token: 'vip_' + 'a'.repeat(48), session: { accessToken: 'verified-email', account: guest },
+    request: async () => ({ passwordSetupComplete: true, passwordLoginComplete: loggedIn }),
+    auth: { account: guest, session: { accessToken: 'password-session', refreshToken: 'refresh' } },
+  });
+  await ui.settle();
+  assert.match(ui.html(), /Sign in to finish VIP setup/); assert.doesNotMatch(ui.html(), /Activate your VIP access/);
+  assert.equal(ui.nodes().find(n => n.props.type === 'email').props.value, guest.email);
+  ui.nodes().find(n => n.type === 'password-field').props.onChange({ target: { value: 'Example1!password' } }); ui.render();
+  loggedIn = true;
+  ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  const body = JSON.parse(ui.calls.find(c => c.url === '/api/auth').options.body);
+  assert.equal(body.mode, 'login'); assert.equal(body.email, guest.email);
+  assert.match(ui.html(), /Activate your VIP access/);
+  assert.equal(ui.calls.filter(c => c.url === '/api/account').length, 2); ui.close();
+});
+
+test('incorrect password keeps the setup link unfinished and the password sign-in form available', async () => {
+  const ui = entryFixture({ token: 'vip_' + 'a'.repeat(48), session: { accessToken: 'verified-email', account: guest },
+    request: async () => ({ passwordSetupComplete: true, passwordLoginComplete: false }), auth: { ok: false, error: 'Incorrect password' },
+  });
+  await ui.settle(); ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  assert.match(ui.html(), /Incorrect password/); assert.match(ui.html(), /Sign in to finish VIP setup/);
+  assert.doesNotMatch(ui.html(), /Activate your VIP access/); ui.close();
 });
 
 test('an existing signed-in guest activates an invitation without another account or password', async () => {

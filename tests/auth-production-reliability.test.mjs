@@ -152,7 +152,7 @@ test("guest password signup and login record setup only after successful credent
     const f = authFixture(rejected ? new AuthApiError('Rejected',400,'invalid_credentials') : null,{adminClient});
     const response = await f.POST(jsonRequest('POST',{mode,role:'customer',email:'guest@example.test',password:'Unique1!password',userTermsAccepted:true,userTermsVersion:userTermsVersion.USER_TERMS_VERSION}));
     assert.equal(response.status,rejected?400:200); assert.equal(records.length,rejected?0:1);
-    if (!rejected) { assert.equal(records[0].id,account.id); assert.ok(records[0].input.app_metadata.mydancr_password_setup_completed_at); }
+    if (!rejected) { assert.equal(records[0].id,account.id); assert.ok(records[0].input.app_metadata.mydancr_password_setup_completed_at); assert.equal(Boolean(records[0].input.app_metadata.mydancr_password_login_at), mode === 'login'); }
   }
 });
 

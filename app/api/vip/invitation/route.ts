@@ -8,7 +8,7 @@ import { ACCESS_TERMS_VERSION } from "@/src/lib/dancr/access-terms";
 import { PublicApiError } from "@/src/lib/api-error-policy";
 import { validateUserTermsAcceptance } from "@/src/lib/dancr/user-terms";
 import { USER_TERMS_VERSION } from "@/src/lib/dancr/user-terms-version";
-import { passwordSetupCompleted } from "@/src/lib/dancr/password-setup";
+import { passwordSetupCompleted, passwordLoginCompleted } from "@/src/lib/dancr/password-setup";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,6 +30,9 @@ export async function PATCH(request: Request) {
     validateUserTermsAcceptance(body);
     if (!passwordSetupCompleted(user)) {
       throw new PublicApiError("CONFLICT", "Finish setting your password, or sign in with your existing password, before activating VIP access.", 409);
+    }
+    if (!passwordLoginCompleted(user)) {
+      throw new PublicApiError("CONFLICT", "Sign in with your password to finish VIP setup.", 409);
     }
     const { data, error } = await createAdminSupabaseClient().rpc("vip_accept_invitation_with_user_terms", {
       p_actor: user.id, p_digest: vipTokenDigest(body.token), p_name: typeof body.name === "string" ? body.name : "",

@@ -21,6 +21,7 @@ function confirmationFixture({ matches = true, unavailable = false, throttled = 
     '@/src/lib/api': { PublicApiError, apiError: error => Response.json({ ok: false, error: error.message }, { status: error.status || 500 }) },
     '@/src/lib/bounded-json-body': { readBoundedJsonObject: async request => request.json() },
     '@/src/lib/dancr/user-terms': userTerms,
+    '@/src/lib/dancr/vip-setup-link': { sendVipSetupLink: async (_admin, input) => { sends.push({ ...input, method: 'setup' }); if (providerError) throw providerError; } },
     '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({ from: () => chain, rpc: async (name, input) => { terms.push({ name, input }); return termsUnavailable ? { error: new Error('offline') } : { data: '97000000-0000-4000-8000-000000000001' }; } }) },
     '@/src/lib/supabase/server': { createServerSupabaseClient: () => ({ auth: {
       resend: async input => { sends.push({ ...input, method: 'resend' }); return { error: providerError }; },
@@ -30,7 +31,7 @@ function confirmationFixture({ matches = true, unavailable = false, throttled = 
     '@/src/lib/dancr/public-request-rate-limit': { PublicRequestRateLimitError, enforcePublicRequestRateLimit: async (_client, input) => { limits.push(input); if (throttled) throw new PublicRequestRateLimitError(120); } },
     '@/src/lib/dancr/vip': { VIP_HEADERS: { 'cache-control': 'private, no-store', 'referrer-policy': 'no-referrer' }, vipError: error => error,
       vipTokenDigest: value => { assert.equal(value, token); return 'digest'; },
-      resolveVipInvitation: async () => { if (unavailable) throw new PublicApiError('NOT_FOUND', 'Expired', 404); } },
+      resolveVipInvitation: async () => { if (unavailable) throw new PublicApiError('NOT_FOUND', 'Expired', 404); return { expiresAt: '2026-10-17T00:00:00Z' }; } },
   }, { Response, Request, URL });
   return { sends, queries, limits, terms, post: (body = {}) => route.POST(new Request('https://mydancr.test/api/vip/confirmation', { method: 'POST', body: JSON.stringify({ token, email: 'Guest@Example.test', emailRedirectTo: 'https://evil.test', ...body }) })) };
 }
@@ -58,20 +59,16 @@ test('expired invitations and throttled confirmations cannot trigger another ema
 });
 
 const startSetup = { action: 'start', userTermsAccepted: true, userTermsVersion: USER_TERMS_VERSION };
-test('VIP email-first signup and repeated links use OTP identity reuse without setting a password', async () => {
+test('VIP email-first signup and repeated links use reusable setup without setting a password', async () => {
   const f = confirmationFixture();
   for (let i = 0; i < 2; i++) {
     const response = await f.post({ ...startSetup, password: 'Never1!use-this', role: 'admin' });
     assert.equal(response.status, 200);
-    const sent = f.sends[i]; assert.equal(sent.method, 'otp'); assert.equal(sent.email, 'guest@example.test');
-    assert.equal(sent.password, undefined); assert.equal(sent.options.shouldCreateUser, true);
-    assert.equal(sent.options.data.role, 'customer'); assert.ok(sent.options.data.user_terms_intent);
-    const redirect = new URL(sent.options.emailRedirectTo);
-    assert.equal(redirect.origin, 'https://mydancr.test');
-    assert.equal(redirect.searchParams.get('return_to'), '/account/reset-password');
-    assert.equal(redirect.searchParams.get('vip_return_to'), '/vip/invite/' + token);
-    assert.equal(redirect.searchParams.get('reset_target'), 'account_password');
-    assert.equal(redirect.searchParams.get('vip_setup'), '1');
+    const sent = f.sends[i]; assert.equal(sent.method, 'setup'); assert.equal(sent.email, 'guest@example.test');
+    assert.equal(sent.password, undefined); assert.equal(sent.invitation, token);
+    assert.equal(sent.metadata.role, 'customer'); assert.ok(sent.metadata.user_terms_intent);
+    assert.equal(sent.expiresAt, '2026-10-17T00:00:00Z'); assert.equal(sent.emailRedirectTo, undefined);
+    assert.equal((await response.json()).link, undefined);
   }
   assert.equal(f.sends.length, 2); assert.equal(f.limits.length, 2);
   assert.equal(f.terms[0].input.p_email, 'guest@example.test');
@@ -79,8 +76,8 @@ test('VIP email-first signup and repeated links use OTP identity reuse without s
 test('finish setup cannot create another guest or change existing metadata', async () => {
   const f = confirmationFixture();
   assert.equal((await f.post({ action: 'resume' })).status, 200);
-  assert.equal(f.sends[0].method, 'otp'); assert.equal(f.sends[0].options.shouldCreateUser, false);
-  assert.equal(f.sends[0].options.data, undefined); assert.equal(f.terms.length, 0);
+  assert.equal(f.sends[0].method, 'setup');
+  assert.equal(f.sends[0].metadata, undefined); assert.equal(f.terms.length, 0);
 });
 test('new guest setup requires current terms and a matching live invitation before contacting Auth', async () => {
   for (const userTermsAccepted of [false, 'true', undefined]) {

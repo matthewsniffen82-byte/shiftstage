@@ -126,7 +126,7 @@ function routes(c,identity){
  const api={PublicApiError,apiError(error,fallback){const value=resolveApiError(error,fallback);return Response.json(value.body,{status:value.status});}};
  const context={client:c,user:identity,session:{accessToken:'synthetic-access',refreshToken:'synthetic-refresh',expiresAt:2000000000}};
  const common={
-  '@/src/lib/dancr/password-setup':{passwordSetupCompleted:()=>false,recordPasswordSetup:async()=>true},
+  '@/src/lib/dancr/password-setup':{passwordSetupCompleted:()=>false,passwordLoginCompleted:()=>false,recordPasswordSetup:async()=>true},
   '@/src/lib/api':api,'@/src/lib/bounded-json-body':{readBoundedJsonObject:r=>r.json()},
   '@/src/lib/dancr/auth':auth,'@/src/lib/dancr/account-profile-recovery':recovery,
   '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>c},

@@ -157,7 +157,7 @@ export async function POST(request: Request) {
 
       const expectedRole = role === "admin" ? "admin" : null;
       const result = await authResponse(data.user.id, expectedRole, data.session, false, data.user);
-      if (result.account.role === "customer") await recordPasswordSetup(createAdminSupabaseClient, data.user);
+      if (result.account.role === "customer") await recordPasswordSetup(createAdminSupabaseClient, data.user, { passwordLogin: true });
       return authJson(result);
     }
 
