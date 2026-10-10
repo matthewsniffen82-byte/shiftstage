@@ -91,7 +91,8 @@ body.dancr-button-system #vip-dashboard .vip-roster-filters { gap: 3px; }
 /* Preserve the homepage-style three-column portrait grid at every viewport. */
 body.dancr-button-system #vip-dashboard .vip-dancers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 body.dancr-button-system #vip-dashboard .vip-dancer-select,
-body.dancr-button-system #vip-dashboard .vip-dancer-favorite { width: min(44px, calc(50% - 5px)) !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; top: 4px; background: #100c16d9 !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite { width: min(44px, calc(50% - 5px)) !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; top: 4px; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite svg { filter: drop-shadow(0 1px 2px #000b); }
 body.dancr-button-system #vip-dashboard .vip-mobile-continue { display: none; }
 @media (max-width: 880px) {
   body.dancr-button-system #vip-dashboard:has(.vip-mobile-continue) { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
