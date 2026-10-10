@@ -5,6 +5,7 @@ import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { PasswordField } from "@/app/components/PasswordField";
 import { vipReturnPath } from "@/src/lib/dancr/vip-entry";
+import VipPasswordSetup, { type VerifiedVipSetupAccount } from "./VipPasswordSetup";
 import {
   readBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
@@ -23,6 +24,7 @@ export default function ResetPasswordClient() {
   const [vipReturn, setVipReturn] = useState("");
   const [isSetup, setIsSetup] = useState(false);
   const [alreadySetup, setAlreadySetup] = useState(false);
+  const [vipSetupAccount, setVipSetupAccount] = useState<VerifiedVipSetupAccount | null>(null);
   const inFlight = useRef(false);
   const saveController = useRef<AbortController | null>(null);
   const verifiedAccount = useRef("");
@@ -40,6 +42,7 @@ export default function ResetPasswordClient() {
       return;
     }
     setPhase("loading");
+    setVipSetupAccount(null);
     const timeout = globalThis.setTimeout(() => controller.abort(), 15_000);
     void fetch("/api/account", {
       headers: sessionHeaders(session),
@@ -62,6 +65,13 @@ export default function ResetPasswordClient() {
       const role = data.account?.role;
       setIsSetup(setup && role === "customer");
       setDestination(role === "customer" && returnTo ? returnTo : role === "admin" ? "/admin" : ["dancer", "customer", "venue"].includes(role) ? `/dashboard/${role}` : "/account");
+      if (setup && role === "customer" && returnTo.startsWith("/vip/invite/")) {
+        if (!data.verifiedEmail || !data.account.id || data.account.accountState !== "active"
+          || data.account.id !== verified?.account?.id) throw new Error("Unable to verify your invited guest account.");
+        setVipSetupAccount({ id: data.account.id, email: data.verifiedEmail, displayName: data.account.displayName || "",
+          passwordSetupComplete: data.passwordSetupComplete === true, passwordLoginComplete: data.passwordLoginComplete === true });
+        setPhase("ready"); return;
+      }
       if (setup && role === "customer" && data.passwordSetupComplete === true) {
         setAlreadySetup(true); setPhase("complete"); return;
       }
@@ -144,7 +154,7 @@ export default function ResetPasswordClient() {
             {phase === "complete" ? <path d="m6 12 4 4 8-8" /> : <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" /></>}
           </svg>
         </span>
-        <h1>{phase === "complete" ? alreadySetup ? "Password already set" : isSetup ? "Password saved" : "Password updated" : isSetup ? "Set your password" : "Reset your password"}</h1>
+        <h1>{vipSetupAccount ? "Finish your VIP setup" : phase === "complete" ? alreadySetup ? "Password already set" : isSetup ? "Password saved" : "Password updated" : isSetup ? "Set your password" : "Reset your password"}</h1>
         {phase === "loading" ? <p role="status">Checking your secure link…</p> : null}
         {phase === "unavailable" ? <>
           <p role="alert">We couldn&apos;t check your reset session right now. Please check your connection and try again.</p>
@@ -154,7 +164,7 @@ export default function ResetPasswordClient() {
           <p role="alert">{isSetup ? "This setup link was already used or has expired. Return to your invitation and choose Finish password setup to request a fresh email." : "This reset link is unavailable or has expired. Request a new email using Forgot password."}</p>
           <a className="account-form-primary" href={vipReturn || "/account?mode=login"}>{isSetup ? "Return to VIP invitation" : "Request a new reset link"}</a>
         </> : null}
-        {phase === "ready" ? <form onSubmit={submit}>
+        {phase === "ready" && vipSetupAccount ? <VipPasswordSetup key={`${vipSetupAccount.id}:${vipReturn}`} account={vipSetupAccount} invitationPath={vipReturn} /> : phase === "ready" ? <form onSubmit={submit}>
           <p>{isSetup ? "Your email is confirmed. Choose a password to finish setting up your guest account. No old password is needed." : "Choose a new password to finish resetting your account."}</p>
           <PasswordField label={isSetup ? "Choose password" : "New password"} autoComplete="new-password" minLength={6} maxLength={1024} required value={password} onChange={(event) => setPassword(event.target.value)} disabled={saving} />
           <PasswordRequirements password={password} />
@@ -167,7 +177,7 @@ export default function ResetPasswordClient() {
           {completionWarning ? <p role="alert">{completionWarning}</p> : null}
           <a className="account-form-primary" href={destination}>{vipReturn && destination === vipReturn ? "Continue to VIP access" : "Continue to your account"}</a>
         </> : null}
-        {phase !== "complete" && <a className="account-form-back" href={vipReturn || "/account?mode=login"}>Back to sign in</a>}
+        {phase !== "complete" && <a className="account-form-back" href={vipReturn || "/account?mode=login"}>{vipSetupAccount ? "Back to invitation" : "Back to sign in"}</a>}
       </section>
       <style>{`
         .reset-page{min-height:100dvh;box-sizing:border-box;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(circle at 50% 10%,#221143,transparent 60%),#050507;color:#f7f2ff;font-family:Arial,sans-serif}
@@ -176,6 +186,8 @@ export default function ResetPasswordClient() {
         .reset-card form,.reset-card label{display:grid;gap:10px}.reset-card form{gap:18px}.reset-card input{box-sizing:border-box;width:100%;min-height:48px;border:1px solid #6b5b7f;border-radius:10px;padding:12px;background:#1c1529;color:#fff;font:inherit}
         .reset-card button,.reset-card a{box-sizing:border-box;min-height:48px;padding:14px;border:1px solid #a47bff;border-radius:12px;background:#6b2fd3;color:white;font:inherit;font-weight:700;text-align:center;text-decoration:none;cursor:pointer}.reset-card button:disabled{opacity:.65;cursor:wait}
         .reset-card small{color:#c5bfd3}.reset-error{color:#ffbac7}.reset-card :focus-visible{outline:3px solid #94e5ff;outline-offset:3px}
+        body.dancr-button-system .reset-card .vip-setup-consent{display:flex;align-items:flex-start;gap:10px;line-height:1.5}body.dancr-button-system .reset-card .vip-setup-consent input{width:22px;height:22px;min-height:22px;flex:none;padding:0;margin:2px 0 0;accent-color:#29009b}
+        body.dancr-button-system .reset-card .vip-setup-consent a,body.dancr-button-system .reset-card .vip-setup-notice a{display:inline;padding:0;min-height:0;border:0;border-radius:0;background:none;color:#e8d6b3;font-weight:inherit;text-decoration:underline}
       `}</style>
     </main>
   );

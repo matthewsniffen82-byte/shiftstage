@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Account not found." }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, account, session, passwordSetupComplete: passwordSetupCompleted(user), passwordLoginComplete: passwordLoginCompleted(user) }, {
+    return NextResponse.json({ ok: true, account, session, verifiedEmail: user.email_confirmed_at ? user.email || "" : "", passwordSetupComplete: passwordSetupCompleted(user), passwordLoginComplete: passwordLoginCompleted(user) }, {
       headers: { "cache-control": "private, no-store", "referrer-policy": "no-referrer" },
     });
   } catch (error) {

@@ -103,7 +103,7 @@ test("ordinary dancer confirmation retains its confirmation screen", async () =>
 
 const formSource = readFileSync(new URL("../app/account/reset-password/ResetPasswordClient.tsx", import.meta.url), "utf8");
 const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"), {});
-function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false, afterSessionRead, otherSessionsRevoked, role = "dancer", passwordSetupComplete = false, savedSetupComplete = true } = {}) {
+function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false, afterSessionRead, otherSessionsRevoked, role = "dancer", passwordSetupComplete = false, savedSetupComplete = true, verifiedEmail = 'confirmed@example.test' } = {}) {
   const states = [], effects = [], calls = [];
   let index = 0;
   const refs = [];
@@ -113,6 +113,7 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
     "@/app/components/PasswordRequirements": { PasswordRequirements: () => null },
     "@/app/components/PasswordField": { PasswordField: () => null },
     "@/src/lib/dancr/vip-entry": vipEntry,
+    "./VipPasswordSetup": { default: 'vip-password-setup' },
     react: {
       useState: (initial) => { const slot = index++; if (!(slot in states)) states[slot] = initial; return [states[slot], (value) => { states[slot] = value; }]; },
       useRef: (initial) => refs[refIndex++] ||= { current: initial },
@@ -135,7 +136,7 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
       if (networkFailure) throw new Error("Network unavailable");
       if (hang) return new Promise((_resolve, reject) => options.signal.addEventListener("abort", () => reject(new Error("Aborted")), { once: true }));
       const status = options.method === "PATCH" ? (succeeds ? 200 : 400) : getStatus;
-      return { status, ok: status === 200, json: async () => ({ ok: status === 200, account: { role }, error: "Update rejected", otherSessionsRevoked, passwordSetupComplete: options.method === "PATCH" ? savedSetupComplete : passwordSetupComplete }) };
+      return { status, ok: status === 200, json: async () => ({ ok: status === 200, account: { role, id: storedSession?.account?.id, accountState: 'active', displayName: 'Jordan' }, verifiedEmail, error: "Update rejected", otherSessionsRevoked, passwordSetupComplete: options.method === "PATCH" ? savedSetupComplete : passwordSetupComplete }) };
     },
   }).default;
   const render = () => { index = 0; refIndex = 0; return component(); };
@@ -171,24 +172,26 @@ test("reset page verifies its session and waits for explicit password submission
   assert.notEqual(fixture.calls[0].method, "PATCH");
   assert.ok(fixture.find(fixture.render(), "form"));
 });
-test("verified guests can finish password setup without an old password and return to the same invitation", async () => {
+test("verified VIP email and invitation pass directly into the combined password and activation form", async () => {
   const destination = '/vip/invite/vip_' + 'b'.repeat(48);
-  const fixture = await readyForm({ role: 'customer', search: '?setup=1&return_to=' + encodeURIComponent(destination) });
-  assert.equal(fixture.find(fixture.render(), 'h1').props.children, 'Set your password');
-  assert.match(JSON.stringify(fixture.render()), /No old password is needed/);
-  fixture.states[1] = fixture.states[2] = 'New1!test-password';
-  await fixture.find(fixture.render(), 'form').props.onSubmit({ preventDefault() {} });
-  assert.equal(fixture.states[0], 'complete');
-  assert.deepEqual(JSON.parse(fixture.calls[1].body), { password: 'New1!test-password' });
-  assert.equal(fixture.find(fixture.render(), 'a').props.href, destination);
-});
-test("reopened setup links let completed guests continue without setting another password", async () => {
-  const destination = '/vip/invite/vip_' + 'c'.repeat(48);
-  const fixture = await readyForm({ role: 'customer', passwordSetupComplete: true, search: '?setup=1&return_to=' + encodeURIComponent(destination) });
-  assert.equal(fixture.find(fixture.render(), 'h1').props.children, 'Password already set');
-  assert.equal(fixture.find(fixture.render(), 'form'), null);
-  assert.equal(fixture.find(fixture.render(), 'a').props.href, destination);
+  const fixture = await readyForm({ role: 'customer', storedSession: { ...session, account: { id: 'verified-guest', role: 'customer', email: 'stale@example.test' } }, search: '?setup=1&return_to=' + encodeURIComponent(destination) });
+  assert.equal(fixture.find(fixture.render(), 'h1').props.children, 'Finish your VIP setup');
+  const setup = fixture.find(fixture.render(), 'vip-password-setup');
+  assert.equal(setup.props.account.email, 'confirmed@example.test'); assert.equal(setup.props.account.id, 'verified-guest');
+  assert.equal(setup.props.account.passwordSetupComplete, false); assert.equal(setup.props.invitationPath, destination);
   assert.equal(fixture.calls.length, 1);
+});
+test("reopened setup links retain the saved password state without repeating email confirmation", async () => {
+  const destination = '/vip/invite/vip_' + 'c'.repeat(48);
+  const fixture = await readyForm({ role: 'customer', storedSession: { ...session, account: { id: 'verified-guest', role: 'customer' } }, passwordSetupComplete: true, search: '?setup=1&return_to=' + encodeURIComponent(destination) });
+  const setup = fixture.find(fixture.render(), 'vip-password-setup');
+  assert.equal(setup.props.account.passwordSetupComplete, true); assert.equal(setup.props.account.passwordLoginComplete, false);
+  assert.equal(fixture.calls.length, 1);
+});
+
+test('unconfirmed accounts cannot use a URL email or stored email to enter VIP setup', async () => {
+  const fixture = await readyForm({ role: 'customer', storedSession: { ...session, account: { id: 'verified-guest', role: 'customer', email: 'stored@example.test' } }, verifiedEmail: '', search: '?setup=1&return_to=' + encodeURIComponent('/vip/invite/vip_' + 'c'.repeat(48)) + '&email=forged@example.test' });
+  assert.equal(fixture.states[0], 'unavailable'); assert.equal(fixture.find(fixture.render(), 'vip-password-setup'), null);
 });
 test("a saved password with unconfirmed setup stays retryable instead of falsely reporting completion", async () => {
   const fixture = await readyForm({ role: 'customer', savedSetupComplete: false, search: '?setup=1&return_to=/vip' });

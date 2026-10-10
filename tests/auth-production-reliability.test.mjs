@@ -153,6 +153,31 @@ test("guest password signup and login record setup only after successful credent
     const response = await f.POST(jsonRequest('POST',{mode,role:'customer',email:'guest@example.test',password:'Unique1!password',userTermsAccepted:true,userTermsVersion:userTermsVersion.USER_TERMS_VERSION}));
     assert.equal(response.status,rejected?400:200); assert.equal(records.length,rejected?0:1);
     if (!rejected) { assert.equal(records[0].id,account.id); assert.ok(records[0].input.app_metadata.mydancr_password_setup_completed_at); assert.equal(Boolean(records[0].input.app_metadata.mydancr_password_login_at), mode === 'login'); }
+    const body = await response.json();
+    assert.equal(body.passwordLoginComplete, !rejected && mode === 'login' ? true : undefined);
+  }
+});
+
+test('successful credentials do not claim completed VIP setup if login recording is unavailable', async () => {
+  const f = authFixture(null, { adminClient: { auth: { admin: { updateUserById: async () => ({ error: new Error('unavailable') }) } } } });
+  const response = await f.POST(jsonRequest('POST', { mode: 'login', role: 'customer', email: 'guest@example.test', password: 'Unique1!password' }));
+  const body = await response.json(); assert.equal(response.status, 200); assert.equal(body.session.accessToken, 'access');
+  assert.equal(body.passwordLoginComplete, false);
+});
+
+test('password setup receives only the current authenticated and confirmed email', async () => {
+  for (const confirmed of [true, false]) {
+    const route = compile(accountSource, {
+      '@/src/lib/api': api,
+      '@/src/lib/dancr/password-setup': passwordSetup,
+      '@/src/lib/supabase/request': { createRequestSupabaseContext: async () => ({ client: {}, user: { id: account.id, email: 'verified@example.test', email_confirmed_at: confirmed ? '2026-10-01T00:00:00Z' : null }, session: {} }) },
+      '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },
+      '@/src/lib/dancr/auth': { getAccountByUserId: async () => ({ ...account, email: 'outdated@example.test' }) },
+      '@/src/lib/dancr/account-profile-recovery': { recoverVerifiedPublicAccount: async (_admin, _user, existing) => existing },
+    });
+    const response = await route.GET(new Request('https://mydancr.test/api/account?email=forged@example.test'));
+    assert.equal(response.status, 200); assert.equal((await response.json()).verifiedEmail, confirmed ? 'verified@example.test' : '');
+    assert.match(response.headers.get('cache-control'), /no-store/);
   }
 });
 
