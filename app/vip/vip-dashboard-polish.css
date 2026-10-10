@@ -1,0 +1,79 @@
+/* Match the professional dashboards while retaining champagne VIP identity accents.
+   Scope to the lounge so invitation forms and venue management keep their own styles. */
+body.dancr-button-system #vip-dashboard { --vip-line: #493957; --vip-muted: #b3adbe; }
+body.dancr-button-system #vip-dashboard :is(h2, h3, p) { overflow-wrap: anywhere; }
+body.dancr-button-system #vip-dashboard h2 { font-size: 20px; line-height: 1.3; }
+body.dancr-button-system #vip-dashboard h3 { font-size: 16px; line-height: 1.3; }
+body.dancr-button-system #vip-dashboard p { font-size: 13px; line-height: 1.55; }
+body.dancr-button-system #vip-dashboard .vip-panel { padding: 16px; }
+body.dancr-button-system #vip-dashboard :is(.vip-destination, .vip-plan-grid, .vip-account-grid) { gap: 16px; }
+body.dancr-button-system #vip-dashboard :is(.vip-welcome, .vip-section-heading, .vip-step-heading) { gap: 10px; }
+body.dancr-button-system #vip-dashboard .vip-step-heading { margin-bottom: 12px; }
+body.dancr-button-system #vip-dashboard .vip-summary-grid { gap: 10px; }
+body.dancr-button-system #vip-dashboard .vip-summary-card { padding: 14px; gap: 10px; border-radius: 12px !important; }
+body.dancr-button-system #vip-dashboard .vip-summary-card > span { min-width: 0; }
+body.dancr-button-system #vip-dashboard .vip-summary-card strong { font-size: 24px; }
+body.dancr-button-system #vip-dashboard .vip-summary-card small { margin-top: 4px; font-size: 11px; }
+body.dancr-button-system #vip-dashboard .vip-dashboard-nav { margin-bottom: 16px; border-radius: 16px; }
+body.dancr-button-system #vip-dashboard .vip-dashboard-nav button { min-height: 54px !important; gap: 6px; }
+body.dancr-button-system #vip-dashboard .vip-dashboard-nav button[aria-current=page] { background: #241a30 !important; border-color: #755397 !important; box-shadow: inset 0 -2px 0 #9966da !important; }
+
+/* Regular actions share the same neutral face, type scale, and 44px touch target. */
+body.dancr-button-system #vip-dashboard :is(.vip-primary, .vip-refresh, .vip-next-empty button, .vip-next-visit > button, .vip-actions button, .vip-empty-access button, .vip-pagination button, .vip-feedback button, .vip-roster-filters button, .vip-link-action, .vip-empty button) {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-width: 44px; min-height: 44px !important; max-width: 100%; padding: 8px 12px !important;
+  border: 1px solid #50435f !important; border-radius: 10px !important;
+  background: #1b1922 !important; color: #f5f2fa !important; box-shadow: none !important;
+  font-family: inherit !important; font-size: 13px !important; font-weight: 600 !important;
+  line-height: 1.35; white-space: normal; text-align: center;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+body.dancr-button-system #vip-dashboard button.vip-primary {
+  background: linear-gradient(110deg, #6b29cb, #4c16a2) !important;
+  border-color: #9d66e5 !important; color: #fff !important;
+}
+body.dancr-button-system #vip-dashboard :is(.vip-primary, .vip-refresh, .vip-link-action)::before,
+body.dancr-button-system #vip-dashboard :is(.vip-primary, .vip-refresh, .vip-link-action)::after { content: none !important; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters button[aria-pressed=true] { background: #302239 !important; border-color: #9470bc !important; color: #fff !important; }
+body.dancr-button-system #vip-dashboard :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #c9a4f4 !important; outline-offset: 3px; }
+body.dancr-button-system #vip-dashboard .vip-selected-chips button { min-width: 44px; min-height: 44px; }
+body.dancr-button-system #vip-dashboard .vip-dismiss { padding: 0 !important; border: 0 !important; background: transparent !important; color: inherit !important; font-size: 22px !important; }
+@media (hover: hover) {
+  body.dancr-button-system #vip-dashboard :is(button:not(:disabled, .vip-dancer-favorite), .vip-link-action):hover { border-color: #a67ada !important; }
+  body.dancr-button-system #vip-dashboard .vip-primary:not(:disabled):hover { background: linear-gradient(110deg, #7837d8, #5923af) !important; }
+}
+
+body.dancr-button-system #vip-dashboard form { gap: 12px; }
+body.dancr-button-system #vip-dashboard label { gap: 6px; }
+body.dancr-button-system #vip-dashboard :is(input:not([type=checkbox]), select, textarea) { min-height: 44px; border-radius: 10px; font-size: 16px; font-weight: 400; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters { gap: 6px; margin: 10px 0 12px; }
+body.dancr-button-system #vip-dashboard .vip-roster-note { padding-top: 12px; }
+body.dancr-button-system #vip-dashboard .vip-selected-summary { padding: 12px; }
+body.dancr-button-system #vip-dashboard .vip-selected-chips { margin-top: 8px; }
+body.dancr-button-system #vip-dashboard .vip-submit-area { gap: 8px; }
+body.dancr-button-system #vip-dashboard .vip-request-list { gap: 12px; }
+body.dancr-button-system #vip-dashboard .vip-request { padding: 16px; }
+body.dancr-button-system #vip-dashboard .vip-request > p { margin-top: 10px; }
+body.dancr-button-system #vip-dashboard .vip-request .vip-request-time { margin: 12px 0; font-size: 18px; }
+body.dancr-button-system #vip-dashboard .vip-note { margin: 10px 0; }
+body.dancr-button-system #vip-dashboard .vip-next-visit .vip-request-list { margin: 12px 0; }
+body.dancr-button-system #vip-dashboard .vip-next-empty { padding: 16px 0 0; gap: 12px; }
+body.dancr-button-system #vip-dashboard .vip-next-empty p { margin-bottom: 10px; }
+body.dancr-button-system #vip-dashboard .vip-empty-access { padding: 24px 16px; }
+body.dancr-button-system #vip-dashboard .vip-empty-access > svg { margin-bottom: 12px; }
+body.dancr-button-system #vip-dashboard .vip-empty-access p { margin: 8px auto 14px; }
+body.dancr-button-system #vip-dashboard .vip-account-details { gap: 12px; margin: 16px 0; }
+body.dancr-button-system #vip-dashboard .vip-memberships { margin-top: 12px; }
+body.dancr-button-system #vip-dashboard .vip-memberships li { padding: 12px 0; gap: 8px; }
+body.dancr-button-system #vip-dashboard .vip-feedback { margin-bottom: 16px; padding: 12px; }
+body.dancr-button-system #vip-dashboard .vip-dashboard-footer { margin-top: 24px; padding-top: 16px; gap: 12px; }
+@media (max-width: 600px) {
+  body.dancr-button-system #vip-dashboard .vip-roster-panel { padding: 12px; }
+  body.dancr-button-system #vip-dashboard .vip-summary-card { padding: 12px; gap: 8px; }
+  body.dancr-button-system #vip-dashboard .vip-dashboard-nav button { min-height: 56px !important; }
+  body.dancr-button-system #vip-dashboard .vip-welcome { gap: 10px; }
+  body.dancr-button-system #vip-dashboard .vip-explainer { gap: 8px; }
+  body.dancr-button-system #vip-dashboard .vip-request-toolbar { gap: 10px; flex-wrap: wrap; }
+  body.dancr-button-system #vip-dashboard .vip-request-toolbar label { flex: 1; min-width: 0; }
+  body.dancr-button-system #vip-dashboard .vip-request-toolbar > span { flex: none; }
+}
