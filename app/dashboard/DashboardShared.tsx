@@ -903,25 +903,9 @@ function alignOpenedDashboardSection(event: SyntheticEvent<HTMLDetailsElement>) 
 
 export function DashboardLoadingState({ role }: { role: DashboardRole }) {
   return (
-    <section className="venue-dashboard-loading" aria-busy="true" aria-label={`Loading ${role} dashboard`}>
-      <span className="dashboard-sr-only">Loading {role} dashboard</span>
-      <div className="venue-dashboard-loading-command">
-        <span className="venue-dashboard-loading-pill" />
-        <div className="venue-dashboard-loading-copy">
-          <span />
-          <span />
-          <span />
-        </div>
-      </div>
-      <div className="venue-dashboard-loading-actions">
-        <span />
-        <span />
-      </div>
-      <div className="venue-dashboard-loading-metrics">
-        <span />
-        <span />
-        <span />
-      </div>
+    <section className="venue-dashboard-loading" role="status" aria-label={`Loading ${role} dashboard`}>
+      <span className="venue-dashboard-loading-spinner" aria-hidden="true" />
+      <p>Opening your dashboard…</p>
     </section>
   );
 }

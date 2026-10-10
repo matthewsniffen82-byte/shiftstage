@@ -72,21 +72,11 @@ export function DashboardStyles() {
       .customer-welcome-card a:focus-visible, .customer-welcome-card > button:focus-visible { outline: 2px solid #a78bfa; outline-offset: 3px; }
       .venue-dashboard-grid { grid-template-columns: 1fr; }
       .dashboard-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-      .venue-dashboard-loading { display: grid; gap: var(--mydancr-dashboard-gap); }
-      .venue-dashboard-loading-command, .venue-dashboard-loading-actions, .venue-dashboard-loading-metrics { border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); }
-      .venue-dashboard-loading-command { min-height: 226px; display: grid; grid-template-columns: 112px minmax(0,1fr); align-items: start; gap: 18px; padding: 22px; }
-      .venue-dashboard-loading-pill, .venue-dashboard-loading-copy span, .venue-dashboard-loading-actions span, .venue-dashboard-loading-metrics span { display: block; background: linear-gradient(100deg, rgba(255,255,255,.055) 20%, rgba(139,92,246,.13) 45%, rgba(255,255,255,.055) 70%); background-size: 240% 100%; animation: venueDashboardLoadingPulse 1.25s ease-in-out infinite; }
-      .venue-dashboard-loading-pill { width: 86px; height: 42px; border-radius: 999px; }
-      .venue-dashboard-loading-copy { display: grid; gap: 13px; padding-top: 3px; }
-      .venue-dashboard-loading-copy span { height: 18px; border-radius: 7px; }
-      .venue-dashboard-loading-copy span:first-child { width: min(78%, 330px); height: 28px; }
-      .venue-dashboard-loading-copy span:last-child { width: min(62%, 260px); }
-      .venue-dashboard-loading-actions { min-height: 86px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; padding: 12px; }
-      .venue-dashboard-loading-actions span { border-radius: 12px; }
-      .venue-dashboard-loading-metrics { min-height: 74px; display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 1px; overflow: hidden; }
-      .venue-dashboard-loading-metrics span { border-radius: 0; }
-      @keyframes venueDashboardLoadingPulse { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
-      @media (prefers-reduced-motion: reduce) { .venue-dashboard-loading-pill, .venue-dashboard-loading-copy span, .venue-dashboard-loading-actions span, .venue-dashboard-loading-metrics span { animation: none; } }
+      .venue-dashboard-loading { display: flex; align-items: center; gap: 12px; max-width: 1120px; min-height: 64px; box-sizing: border-box; margin: 0 auto; padding: 16px 0; }
+      .venue-dashboard-loading p { margin: 0; color: #ded6e9; font-size: 15px; line-height: 1.5; }
+      .venue-dashboard-loading-spinner { display: block; flex: 0 0 20px; width: 20px; height: 20px; box-sizing: border-box; border: 2px solid rgba(182,151,237,.24); border-top-color: #b697ed; border-radius: 50%; animation: venueDashboardLoadingSpin .9s linear infinite; }
+      @keyframes venueDashboardLoadingSpin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) { .venue-dashboard-loading-spinner { animation: none; } }
       .venue-command-panel, .venue-publication-panel, .venue-workspace-tabs, .venue-workspace-summary, .venue-workspace-business-summary, .venue-dashboard-metrics { grid-column: 1 / -1; }
       .venue-command-panel { display: grid; gap: var(--mydancr-dashboard-gap); padding: 16px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 18px; background: var(--mydancr-dashboard-panel); }
       .venue-command-status { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 11px; padding: 0 2px; }

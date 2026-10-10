@@ -106,7 +106,9 @@ test("venue dashboard uses one state-aware four-destination workspace", () => {
     /\.dashboard-head h1 \{[\s\S]*?font-size: clamp\(21px, 5vw, 26px\);[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap;/,
   );
   assert.match(routedDashboards, /\.dashboard-shell \{[\s\S]*?-webkit-text-size-adjust: 100%; text-size-adjust: 100%;/);
-  assert.match(routedDashboards, /\.venue-dashboard-loading-command[\s\S]*?\.venue-dashboard-loading-actions[\s\S]*?\.venue-dashboard-loading-metrics/);
+  assert.match(routedDashboards, /className="venue-dashboard-loading" role="status"/);
+  assert.match(routedDashboards, /<p>Opening your dashboard…<\/p>/);
+  assert.doesNotMatch(routedDashboards, /venue-dashboard-loading-(?:command|actions|metrics)/);
   assert.match(liveApp, /#dancerDashboard \.dancer-live-heading strong \{[\s\S]*?font-size: 20px;/);
   assert.match(routedDashboards, /\.venue-command-status h2 \{[^}]*?font-size: 20px;/);
   assert.match(routedDashboards, /\.venue-command-status p, \.venue-command-primary p \{[^}]*?font-size: 12px;/);
