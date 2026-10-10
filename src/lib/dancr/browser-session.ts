@@ -16,6 +16,24 @@ export type BrowserAuthSession = {
 
 export const BROWSER_AUTH_SESSION_KEY = "dancrAuthSessionV1";
 
+// Navigation preference only. VIP APIs still verify current venue membership.
+// Save it after a successful VIP read, without replacing refreshed credentials.
+export function rememberVipDashboard(accountId: unknown, venueId: unknown) {
+  if (typeof window === "undefined" || typeof accountId !== "string" || !accountId) return false;
+  if (venueId !== "" && (typeof venueId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(venueId))) return false;
+  try {
+    const snapshot = window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY);
+    const current = parseBrowserAuthSession(snapshot);
+    if (!current?.accessToken || current.account?.role !== "customer" || current.account.id !== accountId) return false;
+    if (venueId) current.vipNavigation = { accountId, venueId };
+    else delete current.vipNavigation;
+    const next = JSON.stringify(current);
+    if (window.localStorage.getItem(BROWSER_AUTH_SESSION_KEY) !== snapshot) return false;
+    if (next !== snapshot) window.localStorage.setItem(BROWSER_AUTH_SESSION_KEY, next);
+    return true;
+  } catch { return false; }
+}
+
 // Orders asynchronous sign-in results; this is not an authorization check.
 export function captureBrowserAuthSessionGuard(): () => boolean {
   try {

@@ -45156,7 +45156,15 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     function refreshBrowserAccountView() {
       const session = loadAuthSession();
       const identity = browserAccountIdentity(session);
-      if (identity === visibleAuthAccountIdentity) return false;
+      if (identity === visibleAuthAccountIdentity) {
+        // A VIP visit in another tab or before Back can change navigation while
+        // the signed-in account remains the same. Refresh its menu immediately.
+        if (JSON.stringify(session?.vipNavigation) !== JSON.stringify(authSession?.vipNavigation)) {
+          authSession = session;
+          updateAccountHeader();
+        }
+        return false;
+      }
       visibleAuthAccountIdentity = identity;
       authSession = session;
       // Retire all cached private panels immediately while the new page loads.
@@ -56301,10 +56309,18 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       syncOverlayScrollLock();
     }
 
+    function vipDashboardHref() {
+      const preference = authSession?.vipNavigation;
+      if (!authSession?.accessToken || authSession.account?.role !== "customer" || !authSession.account.id
+        || preference?.accountId !== authSession.account.id || typeof preference.venueId !== "string"
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(preference.venueId)) return "";
+      return `/vip?venueId=${encodeURIComponent(preference.venueId)}`;
+    }
+
     function updateAccountHeader() {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
       const sessionRole = authSession?.account?.role;
-      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Guest";
+      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : vipDashboardHref() ? "VIP" : "Guest";
       dashboardBtn.hidden = !loggedIn;
       dashboardBtn.textContent = loggedIn ? `${role} dashboard` : "Dashboard";
       dashboardBtn.setAttribute("aria-label", loggedIn ? `Open ${role.toLowerCase()} dashboard` : "Open dashboard");
@@ -56497,6 +56513,11 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       if (!authSession?.accessToken) {
         openAuthRole(dashboardRole);
         return false;
+      }
+      const vipDestination = dashboardRole === "customer" && !section ? vipDashboardHref() : "";
+      if (vipDestination) {
+        window.location.assign(vipDestination);
+        return true;
       }
       const sectionHash = section && role === dashboardRole ? `#${encodeURIComponent(section)}` : "";
       window.location.assign(`/dashboard/${dashboardRole}${sectionHash}`);

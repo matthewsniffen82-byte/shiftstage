@@ -855,7 +855,15 @@
     function refreshBrowserAccountView() {
       const session = loadAuthSession();
       const identity = browserAccountIdentity(session);
-      if (identity === visibleAuthAccountIdentity) return false;
+      if (identity === visibleAuthAccountIdentity) {
+        // A VIP visit in another tab or before Back can change navigation while
+        // the signed-in account remains the same. Refresh its menu immediately.
+        if (JSON.stringify(session?.vipNavigation) !== JSON.stringify(authSession?.vipNavigation)) {
+          authSession = session;
+          updateAccountHeader();
+        }
+        return false;
+      }
       visibleAuthAccountIdentity = identity;
       authSession = session;
       // Retire all cached private panels immediately while the new page loads.

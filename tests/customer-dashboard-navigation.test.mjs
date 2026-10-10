@@ -22,7 +22,7 @@ function fixture({ signedIn = true, customerFlag = true } = {}) {
     customerDashboard: { classList: { add: value => legacy.push(value) } },
     profileReturnSurfaceElement: () => { throw new Error("Customer return must not resolve a legacy panel"); },
   });
-  for (const name of ["openUnifiedDashboard", "openDashboard", "activeSupportRole", "openContactAdmin", "restoreProfileReturnContext"]) {
+  for (const name of ["vipDashboardHref", "openUnifiedDashboard", "openDashboard", "activeSupportRole", "openContactAdmin", "restoreProfileReturnContext"]) {
     const source = home.match(new RegExp(`    function ${name}\\([\\s\\S]*?\\n    }`))?.[0];
     assert.ok(source, `${name} must exist`);
     vm.runInContext(source, context);

@@ -33,7 +33,7 @@ export const state = (venueId = venues[0].id, changes = {}) => ({ venues, select
 
 // Component events with in-memory responses only: no browser journeys, server, or network.
 export function dashboardHarness({ hash = '', initialVenueId = '', storage = new Map(), request = async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id) } = {}) {
-  const slots = [], listeners = new Map(), calls = [], writes = [], intervals = new Map();
+  const slots = [], listeners = new Map(), calls = [], writes = [], vipNavigation = [], intervals = new Map();
   let now = Date.now();
   let cursor = 0, dirty = true, effects = [], tree, currentAccount = guest;
   const react = {
@@ -63,6 +63,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
     '@/app/dashboard/dashboard-session': { readSession: () => ({ account: currentAccount }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '@/src/lib/dancr/vip-dashboard': dashboard, './VipRequests': { __esModule: true, default: RequestCards },
     '@/src/lib/dancr/vip-draft-storage': draftStorage,
+    '@/src/lib/dancr/browser-session': { rememberVipDashboard: (accountId, venueId) => vipNavigation.push({ accountId, venueId }) },
   }, { window, document, Date: class extends Date { static now() { return now; } } }).default;
   const props = { initialVenueId, account: guest, signingOut: false, onSignOut: async () => {} };
   function render() {
@@ -74,7 +75,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
   async function settle() { for (let i = 0; i < 6; i++) { await Promise.resolve(); render(); } return tree; }
   function navigate(view) { nodes().find(node => node.props?.['aria-controls'] === `vip-panel-${view}`).props.onClick(); render(); }
   render();
-  return { calls, writes, nodes, render, settle, navigate, storage, intervals, tree: () => tree,
+  return { calls, writes, vipNavigation, nodes, render, settle, navigate, storage, intervals, tree: () => tree,
     planner: () => nodes().find(node => node.type === Planner),
     requests: () => nodes().find(node => node.type === RequestCards),
     advance(ms) { now += ms; },

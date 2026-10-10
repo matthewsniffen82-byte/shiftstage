@@ -9,6 +9,7 @@ import { readSession, requestDashboardJson, type DashboardSessionAccount } from 
 import { emptyVipDraft, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
 import { type VipDancer, type VipDashboardView, type VipRequest, type VipRequestFilter, type VipState, type VipVenue } from "@/src/lib/dancr/vip-types";
 import { readVipWorkspace, saveVipWorkspace, vipDraftFingerprint } from "@/src/lib/dancr/vip-draft-storage";
+import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
 import VipRequests from "./VipRequests";
 import "./vip-premium.css";
 
@@ -100,6 +101,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     requestDashboardJson(`/api/vip?${query}`, { expectedRole: "customer", cache: "no-store", timeoutMs: 20000, signal: controller.signal })
       .then((result: VipState) => {
         if (controller.signal.aborted || !mounted.current || readSession()?.account?.id !== expectedAccount) return;
+        rememberVipDashboard(expectedAccount, result.venues.some(member => member.id === result.selectedVenueId) ? result.selectedVenueId : "");
         lastVenue.current = result.selectedVenueId;
         setVenues(result.venues);
         if (view === "plan" && result.selectedVenueId) {
@@ -110,7 +112,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       })
       .catch(failure => {
         if (controller.signal.aborted || !mounted.current || readSession()?.account?.id !== expectedAccount) return;
-        if (failure?.status === 401 || failure?.status === 403) { setResponse(null); setVenues([]); }
+        if (failure?.status === 401 || failure?.status === 403) { rememberVipDashboard(expectedAccount, ""); setResponse(null); setVenues([]); }
         setError(message(failure));
       })
       .finally(() => { if (!controller.signal.aborted && mounted.current) setLoading(false); });

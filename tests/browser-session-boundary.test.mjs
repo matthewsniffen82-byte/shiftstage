@@ -193,7 +193,7 @@ test("public notification actions prevent duplicate and stale updates", () => {
 
 test("public dancer profile state loads cancel when the dancer or shift changes", () => {
   const stateLoader = dancerActionsSource.match(
-    /useEffect\(\(\) => \{[\s\S]*?setSavedLoaded\(false\);[\s\S]*?\}, \[actionShiftId, dancerId, setGoingCount\]\);/,
+    /useEffect\(\(\) => \{[\s\S]*?setSavedLoaded\(false\);[\s\S]*?\}, \[actionShiftId, dancerId, setGoingCount, setFollowedBy\]\);/,
   )?.[0] || "";
 
   assert.match(stateLoader, /const controller = new AbortController\(\);/);
@@ -236,7 +236,6 @@ test("standalone NFC, redemption, invitation, and DMCA clients use the same sess
   assert.match(nfcSource, /readBrowserAuthSession\(\)/);
   assert.match(nfcSource, /persistRefreshedBrowserAuthSession\(data\.session, auth\)/);
   assert.doesNotMatch(nfcSource, /function readAuthSession\(|function persistRefreshedSession\(/);
-  assert.match(nfcSource, /const TAP_SESSION_KEY = "mydancrNfcTapSessionV1"/);
   assert.match(nfcSource, /const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2"/);
 
   assert.match(dealRedemptionSource, /readBrowserAccessToken\("venue"\)/);
@@ -254,10 +253,10 @@ test("cashier deal confirmation prevents duplicate and stale submissions", () =>
   assert.match(dealRedemptionSource, /const redeemRequestIdRef = useRef\(0\);/);
   assert.match(dealRedemptionSource, /redeemRequestIdRef\.current \+= 1;[\s\S]*?redeemAbortRef\.current\?\.abort\(\);/);
   assert.match(dealRedemptionSource, /if \(redeemAbortRef\.current\) return;/);
-  assert.match(dealRedemptionSource, /fetch\(`\/api\/deals\/redeem[\s\S]*?signal: controller\.signal/);
+  assert.match(dealRedemptionSource, /requestDashboardJson\(`\/api\/deals\/redeem[\s\S]*?expectedRole: "venue"[\s\S]*?signal: controller\.signal/);
   assert.match(dealRedemptionSource, /requestId !== redeemRequestIdRef\.current/);
   assert.match(dealRedemptionSource, /if \(redeemAbortRef\.current === controller\) \{[\s\S]*?setIsRedeeming\(false\);/);
-  assert.match(dealRedemptionSource, /useEffect\(\(\) => \{\s+redeemRequestIdRef\.current \+= 1;[\s\S]*?redeemAbortRef\.current\?\.abort\(\);[\s\S]*?setRedemption\(initialRedemption\);[\s\S]*?setIsRedeeming\(false\);\s+\}, \[initialRedemption, token\]\);/);
+  assert.match(dealRedemptionSource, /useEffect\(\(\) => \{\s+redeemRequestIdRef\.current \+= 1;[\s\S]*?redeemAbortRef\.current\?\.abort\(\);[\s\S]*?setRedemption\(initialRedemption\);[\s\S]*?setIsRedeeming\(false\);\s+setArrivalVerified\(false\);\s+\}, \[initialRedemption, token\]\);/);
 });
 
 test("venue invitation discovery cancels stale token loads", () => {

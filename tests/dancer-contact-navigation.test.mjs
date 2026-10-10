@@ -25,7 +25,7 @@ function contact({ session = true, loginFlag = true, cachedApproval = false, rol
     window: { location: { assign: url => destinations.push(url) } },
     openDancerDashboard: () => assert.fail("Contact must never open the legacy dancer dashboard"),
   };
-  const functions = ["activeSupportRole", "openUnifiedDashboard", "openContactAdmin"].map(name => {
+  const functions = ["vipDashboardHref", "activeSupportRole", "openUnifiedDashboard", "openContactAdmin"].map(name => {
     const source = home.match(new RegExp(`    function ${name}\\([\\s\\S]*?\\n    }`))?.[0];
     assert.ok(source, `${name} must exist`);
     return source;

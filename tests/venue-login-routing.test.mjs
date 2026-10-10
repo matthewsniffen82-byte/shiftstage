@@ -20,7 +20,7 @@ function homeFixture(role = 'venue') {
   });
   vm.runInContext(`let authSession = ${JSON.stringify({ accessToken: 'test', account: { role } })};
     let isCustomerLoggedIn = true, isDancerLoggedIn = false, isVenueLoggedIn = false, activeDashboardType = 'customer', pendingVenueAuthReturnTo = '';
-    ${['isVenueSession', 'restoreLoggedInSessionState', 'openUnifiedDashboard', 'startVenueDashboardSession', 'safeLocalReturnPath'].map(homeFunction).join('\n')}
+    ${['vipDashboardHref', 'isVenueSession', 'restoreLoggedInSessionState', 'openUnifiedDashboard', 'startVenueDashboardSession', 'safeLocalReturnPath'].map(homeFunction).join('\n')}
     ${home.includes('function accountLoginDestination(') ? homeFunction('accountLoginDestination') : ''}`, context);
   return { context, navigation };
 }

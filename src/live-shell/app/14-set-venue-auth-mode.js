@@ -277,10 +277,18 @@
       syncOverlayScrollLock();
     }
 
+    function vipDashboardHref() {
+      const preference = authSession?.vipNavigation;
+      if (!authSession?.accessToken || authSession.account?.role !== "customer" || !authSession.account.id
+        || preference?.accountId !== authSession.account.id || typeof preference.venueId !== "string"
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(preference.venueId)) return "";
+      return `/vip?venueId=${encodeURIComponent(preference.venueId)}`;
+    }
+
     function updateAccountHeader() {
       const loggedIn = isCustomerLoggedIn || isDancerLoggedIn || isVenueLoggedIn;
       const sessionRole = authSession?.account?.role;
-      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : "Guest";
+      const role = activeDashboardType === "dancer" ? "Dancer" : activeDashboardType === "venue" ? "Venue" : vipDashboardHref() ? "VIP" : "Guest";
       dashboardBtn.hidden = !loggedIn;
       dashboardBtn.textContent = loggedIn ? `${role} dashboard` : "Dashboard";
       dashboardBtn.setAttribute("aria-label", loggedIn ? `Open ${role.toLowerCase()} dashboard` : "Open dashboard");
@@ -473,6 +481,11 @@
       if (!authSession?.accessToken) {
         openAuthRole(dashboardRole);
         return false;
+      }
+      const vipDestination = dashboardRole === "customer" && !section ? vipDashboardHref() : "";
+      if (vipDestination) {
+        window.location.assign(vipDestination);
+        return true;
       }
       const sectionHash = section && role === dashboardRole ? `#${encodeURIComponent(section)}` : "";
       window.location.assign(`/dashboard/${dashboardRole}${sectionHash}`);
