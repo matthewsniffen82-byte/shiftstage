@@ -1,4 +1,5 @@
 import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
+import { discoveryContext, rankPublicGrid } from "@/src/lib/dancr/discovery-service";
 import { isAllMyDancrCities } from "@/src/lib/dancr/markets";
 import { NextResponse } from "next/server";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
@@ -60,6 +61,10 @@ export async function GET(request: Request) {
       discoveryPromise,
       venueDataPromise,
     ]);
+    const ranking = await discoveryContext(client, request);
+    const rankedDancers = ranking ? await rankPublicGrid(client,ranking,city,discovery.dancers) : discovery.dancers;
+    const tonightIds = new Set(discovery.tonightDancers.map(row=>row.id));
+    const rankedTonight = ranking ? rankedDancers.filter(row=>tonightIds.has(row.id)) : discovery.tonightDancers;
 
     const venues = venueRows.map((venue) => {
       const coverImage = responsivePublicImage(
@@ -125,13 +130,13 @@ export async function GET(request: Request) {
       {
         ok: true,
         city,
-        dancers: discovery.dancers.map(withActiveDeal),
-        tonightDancers: discovery.tonightDancers.map(withActiveDeal),
+        dancers: rankedDancers.map(withActiveDeal),
+        tonightDancers: rankedTonight.map(withActiveDeal),
         venues,
       },
       {
         headers: {
-          "cache-control": discovery.dancers.some(dancer => dancer.metricsUnavailable)
+          "cache-control": Boolean(ranking) || discovery.dancers.some(dancer => dancer.metricsUnavailable)
             || [...venuePopularityById.values()].some(venue => venue.metricsUnavailable)
             ? PRIVATE_NO_STORE_CACHE_CONTROL : PUBLIC_DYNAMIC_CACHE_CONTROL,
           "server-timing": `discovery;dur=${Date.now() - startedAt}`,

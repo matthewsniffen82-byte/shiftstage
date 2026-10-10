@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { DancerAnalyticsPeriod, DancerAudienceAnalytics, DancerEngagementMetric } from "@/src/lib/dancr/dancer-analytics-types";
 import { requestDashboardJson } from "./dashboard-session";
+import { DancerDiscoveryBoosts } from "./DancerDiscoveryBoosts";
 
 const number = (value: number) => new Intl.NumberFormat("en-US").format(value);
 
@@ -58,8 +59,9 @@ export function DancerAnalyticsPanel({ initialAnalytics }: { initialAnalytics?: 
             </button>
           ))}
         </div>
-        {current?.currentRank ? <span className="dancer-analytics-rank">City rank #{number(current.currentRank)}</span> : null}
+        {current?.currentRank ? <span className="dancer-analytics-rank">City activity rank #{number(current.currentRank)}</span> : null}
       </div>
+      <DancerDiscoveryBoosts />
       {loading ? <p role="status">Loading analytics…</p> : null}
       {error ? <div className="dancer-analytics-error" role="alert"><p>{error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Try again</button></div> : null}
       {current ? (

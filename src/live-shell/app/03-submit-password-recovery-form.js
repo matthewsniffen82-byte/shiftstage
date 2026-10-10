@@ -861,6 +861,7 @@
         scheduled: isTonight,
         trend: item.currentRank || null,
         trendRank: item.currentRank || null,
+        discovery: item.discovery || null,
         distance: formatLiveDistance(item.distanceMiles),
         mainPhotoUrl: item.primaryPhotoUrl || galleryPhotoUrls[0] || "",
         mainPhotoFocalX: item.primaryPhotoFocalX ?? 50,

@@ -45333,6 +45333,130 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       resetPasswordRecoveryFeedback();
       openRecoveryPopover(passwordRecoveryCard, sourceButton, "passwordRecoveryEmail");
     }
+    // A visit keeps order stable through background refreshes; the device ID retains only
+    // this visitor's preferences. The server hashes identity before storage.
+    const discoveryVisitId = crypto.randomUUID();
+    const discoveryBrowserId = (() => {
+      try {
+        let id = localStorage.getItem("mydancrDiscoveryViewerV1");
+        if (!/^[a-f0-9-]{36}$/i.test(id || "")) { id = crypto.randomUUID(); localStorage.setItem("mydancrDiscoveryViewerV1", id); }
+        return id;
+      } catch { return discoveryVisitId; }
+    })();
+    const discoveryEventChains = new Map();
+    const discoverySentEvents = new Set();
+    const discoveryEventRetryAfter = new Map();
+    const discoveryHiddenDancers = new Set();
+    let discoveryGridObserver = null;
+    const discoveryGridTimers = new Map();
+    function discoveryRequestHeaders() {
+      return { "x-discovery-session": discoveryBrowserId, "x-discovery-visit": discoveryVisitId,
+        ...(authSession?.accessToken ? { Authorization: `Bearer ${authSession.accessToken}` } : {}) };
+    }
+    function recordDiscoveryEvent(entityId, placement, event) {
+      if (!entityId || !placement?.session || window.location.protocol === "file:") return Promise.resolve(false);
+      const key = `${new Date().toISOString().slice(0,10)}:${placement.session}:${entityId}:${event}`;
+      if ((discoveryEventRetryAfter.get(key) || 0)>Date.now()) return Promise.resolve(false);
+      if (discoverySentEvents.has(key)) return discoveryEventChains.get(entityId) || Promise.resolve(true);
+      discoverySentEvents.add(key);
+      const chain = (discoveryEventChains.get(entityId) || Promise.resolve()).then(async () => {
+        try {
+          const response = await fetch("/api/public/discovery/events", { method:"POST", keepalive:true,
+            headers:{...discoveryRequestHeaders(),"Content-Type":"application/json"},
+            body:JSON.stringify({entityId,event,...placement}) });
+          if (!response.ok) {
+            discoverySentEvents.delete(key);
+            discoveryEventRetryAfter.set(key,Date.now()+(response.status===429?60000:5000));
+          }
+          return response.ok;
+        } catch { discoverySentEvents.delete(key); discoveryEventRetryAfter.set(key,Date.now()+5000); return false; }
+      });
+      discoveryEventChains.set(entityId,chain);
+      return chain;
+    }
+    function discoveryCardPlacement(card) {
+      return card?.dataset.discoverySession ? {session:card.dataset.discoverySession,position:Number(card.dataset.discoveryPosition),
+        displayPosition:Math.max(0,[...results.querySelectorAll("[data-discovery-session][data-public-dancer-id]")].indexOf(card))} : null;
+    }
+    function discoveryCardAttributes(profile) {
+      const placement = profile.discovery;
+      return placement?.session ? ` data-discovery-session="${escapeOptionValue(placement.session)}" data-discovery-position="${Number(placement.position)}"` : "";
+    }
+    function observeDiscoveryGrid() {
+      discoveryGridObserver?.disconnect();
+      discoveryGridTimers.forEach(timer=>clearTimeout(timer)); discoveryGridTimers.clear();
+      if (!("IntersectionObserver" in window)) return;
+      discoveryGridObserver = new IntersectionObserver(entries=>{
+        for (const entry of entries) {
+          const card = entry.target;
+          clearTimeout(discoveryGridTimers.get(card)); discoveryGridTimers.delete(card);
+          if (!entry.isIntersecting || entry.intersectionRatio < .5) continue;
+          discoveryGridTimers.set(card,setTimeout(()=>{
+            discoveryGridTimers.delete(card);
+            if (!card.isConnected || document.visibilityState!=="visible" || document.body.classList.contains("overlay-open")) return;
+            void recordDiscoveryEvent(card.dataset.publicDancerId,discoveryCardPlacement(card),"impression");
+          },1000));
+        }
+      },{threshold:[0,.5,1]});
+      results.querySelectorAll("[data-discovery-session][data-public-dancer-id]").forEach(card=>discoveryGridObserver.observe(card));
+    }
+    document.addEventListener("click",event=>{
+      const target = event.target instanceof Element ? event.target : null;
+      const card = target?.closest("[data-discovery-session][data-public-dancer-id]");
+      if (!card) return;
+      const action = target.closest(".home-dancer-grid-link,[data-grid-profile-action],.home-discovery-feed-open-profile") ? "profile_click"
+        : target.closest(".venue-directions-btn") ? "directions" : null;
+      if (action) {
+        void recordDiscoveryEvent(card.dataset.publicDancerId,discoveryCardPlacement(card),"impression");
+        void recordDiscoveryEvent(card.dataset.publicDancerId,discoveryCardPlacement(card),action);
+      }
+    },true);
+    function discoveryPlayedSeconds(ranges,start,end) {
+      if (!(end>start)) return ranges.reduce((sum,range)=>sum+range[1]-range[0],0);
+      ranges.push([start,end]); ranges.sort((a,b)=>a[0]-b[0]);
+      const merged=[];
+      for (const range of ranges) {
+        const previous=merged.at(-1);
+        if (previous && range[0]<=previous[1]) previous[1]=Math.max(previous[1],range[1]);
+        else merged.push([...range]);
+      }
+      ranges.splice(0,ranges.length,...merged);
+      return ranges.reduce((sum,range)=>sum+range[1]-range[0],0);
+    }
+    function trackDiscoveryVideo(item,video,slide) {
+      if (!item.discovery) return;
+      let last = 0, lastWall = 0, impressionWall = null;
+      const watched = [];
+      const reset = () => { last=video.currentTime; lastWall=performance.now(); };
+      video.addEventListener("playing",reset);
+      video.addEventListener("seeking",reset);
+      video.addEventListener("timeupdate",()=>{
+        const wall=performance.now(), delta=video.currentTime-last, elapsed=(wall-lastWall)/1000;
+        if (document.visibilityState==="visible" && slide.classList.contains("is-active") && !video.paused && !video.seeking
+          && !document.body.classList.contains("overlay-open") && delta>0 && delta<1.5 && elapsed>0 && elapsed<1.5) {
+          // Count distinct parts of the timeline actually played. Seeking and
+          // looping one fragment cannot manufacture a full-video completion.
+          const start = Math.max(last,video.currentTime-elapsed);
+          const played=discoveryPlayedSeconds(watched,start,video.currentTime);
+          if (impressionWall===null) impressionWall=wall;
+          void recordDiscoveryEvent(item.id,item.discovery,"impression");
+          const sinceImpression=(wall-impressionWall)/1000;
+          if (played>=Math.min(3,video.duration*.5) && sinceImpression>=Math.min(3,video.duration*.5)+.5) void recordDiscoveryEvent(item.id,item.discovery,"engaged");
+          if (video.duration>0 && played>=video.duration*.9 && sinceImpression>=video.duration*.9+.5) void recordDiscoveryEvent(item.id,item.discovery,"completed");
+        }
+        reset();
+      });
+    }
+    async function showLessDiscoveryDancer(item,button) {
+      button.disabled=true;
+      const saved=await recordDiscoveryEvent(item.id,item.discovery,"show_less");
+      if (!saved) { button.disabled=false; showToast("Unable to save that preference. Try again."); return; }
+      discoveryHiddenDancers.add(item.dancer.id);
+      homeTvFeedVideos=homeTvFeedVideos.filter(video=>video.dancer.id!==item.dancer.id);
+      homeTvFeedActiveVideoId="";
+      renderHomeTvFeed(homeTvFeedCity);
+      showToast("We’ll show less from this dancer for 30 days");
+    }
     function recordVenueInteraction({ venueId, dancerId = null, eventType, source }) {
       if (!venueId || window.location.protocol === "file:") return;
       try {
@@ -46262,6 +46386,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         scheduled: isTonight,
         trend: item.currentRank || null,
         trendRank: item.currentRank || null,
+        discovery: item.discovery || null,
         distance: formatLiveDistance(item.distanceMiles),
         mainPhotoUrl: item.primaryPhotoUrl || galleryPhotoUrls[0] || "",
         mainPhotoFocalX: item.primaryPhotoFocalX ?? 50,
@@ -48017,7 +48142,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         try {
           const response = await Promise.race([
             fetch(url, {
-              headers: { Accept: "application/json" },
+              headers: { Accept: "application/json", ...options.headers },
               cache: options.cache === "no-store" || attempt > 0 ? "no-store" : "default",
               signal: controller ? controller.signal : undefined
             }),
@@ -48160,6 +48285,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const query = params.toString();
       try {
         const discovery = await fetchJson(`/api/public/discovery?${query}`, {
+          headers: discoveryRequestHeaders(), cache: "no-store",
           timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
           retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
         });
@@ -49677,8 +49803,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     }
 
     function demoDancerGridPriority(profile) {
-      // Keep the original video-filled Star profile easy to open during demos.
-      return profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2" ? -1 : 0;
+      // Keep the server's earned order stable while filtering the directory.
+      return Number.isInteger(profile.discovery?.position) ? profile.discovery.position : 5000;
     }
 
     function dancerDirectoryGroups(profiles, city = selectedCity()) {
@@ -49692,7 +49818,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const notWorkingNow = profiles
         .filter((profile) => !isWorkingTonight(profile, city))
         .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || dailyRotationScore(a, city) - dailyRotationScore(b, city));
-      if (city === ALL_CITIES) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
+      if (city === ALL_CITIES && !profiles.some(profile => profile.discovery)) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
       return { workingNow, notWorkingNow };
     }
 
@@ -60987,7 +61113,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           ? "is-upcoming"
           : "is-open";
       return `
-        <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
+        <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}"${discoveryCardAttributes(profile)} class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
           <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
             ${photoMarkup}
             <span class="home-dancer-grid-copy">
@@ -61004,6 +61130,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     }
 
     function spreadDancerGridPhotos(profiles) {
+      if (profiles.some(profile => profile.discovery)) return profiles;
       const entries = profiles.map((profile) => {
         const path = publicProfilePhotoUrl(profile).split(/[?#]/)[0];
         return { profile, path, filename: path.slice(path.lastIndexOf("/") + 1) };
@@ -61724,6 +61851,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       }
       if (activeTab === "dancers") {
         renderHomeDancerGrid(city, items);
+        observeDiscoveryGrid();
         return;
       }
       renderStableMediaMarkup(results, items.map((item) => venueCard(item)).join(""));
@@ -61787,6 +61915,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     function trackHomeTvFeedEvent(videoId, eventType) {
       videoId = String(videoId || "").split("~")[0];
       if (!videoId || window.location.protocol === "file:") return Promise.resolve(false);
+      const action = { profile_click: "profile_click", follow: "follow", shift_click: "schedule", venue_click: "directions" }[eventType];
+      const rankedItem = action && homeTvFeedVideos.find(item => item.id === videoId);
+      if (rankedItem?.discovery) {
+        void recordDiscoveryEvent(videoId,rankedItem.discovery,"impression");
+        void recordDiscoveryEvent(videoId,rankedItem.discovery,action);
+      }
       const headers = { "Content-Type": "application/json", Accept: "application/json" };
       if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
       return fetch(`/api/public/tv/${encodeURIComponent(videoId)}/events`, {
@@ -62925,6 +63059,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           trackHomeTvFeedEvent(videoId, "completed");
         }
       });
+      trackDiscoveryVideo(item, video, slide);
       if (index === 0) attachDeferredVideoSource(video, "auto");
       if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
         slide.classList.remove("is-media-loading", "is-media-unavailable");
@@ -63244,6 +63379,14 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         });
       });
       panel.appendChild(overflow);
+      if (item.discovery) {
+        const showLess = document.createElement("button");
+        showLess.type = "button";
+        showLess.className = "home-tv-feed-report-action";
+        showLess.textContent = "Show less from this dancer";
+        showLess.addEventListener("click", () => void showLessDiscoveryDancer(item,showLess));
+        panel.appendChild(showLess);
+      }
       options.append(summary, panel);
       tools.append(options);
       return tools;
@@ -63560,8 +63703,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         do {
           const cursor = homeTvFeedNextCursor;
           const params = new URLSearchParams({ city, limit: "24", paging: "1", cursor });
+          if (homeTvFeedSelectedVideoId && cursor.startsWith("rank1:")) params.set("video",homeTvFeedSelectedVideoId);
           if (venueId) params.set("venue", venueId);
           const payload = await fetchJson(`/api/public/tv?${params}`, {
+            headers: discoveryRequestHeaders(), cache: "no-store",
             retries: PUBLIC_DISCOVERY_REQUEST_RETRIES, signal: controller.signal
           });
           if (controller.signal.aborted || requestId !== homeTvFeedRequest || activeTab !== "tv") return;
@@ -63569,7 +63714,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           if (payload.nextCursor === cursor) throw new Error("TV page did not advance.");
           const known = new Set(homeTvFeedVideos.map((item) => item.id));
           added = (Array.isArray(payload.videos) ? payload.videos : []).filter((item) => {
-            if (!item?.id || !item.videoUrl || !item.dancer?.stageName || known.has(item.id) ||
+            if (!item?.id || !item.videoUrl || !item.dancer?.stageName || known.has(item.id) || discoveryHiddenDancers.has(item.dancer.id) ||
                 (venueId && item.venue?.id !== venueId)) return false;
             known.add(item.id);
             return true;
@@ -63594,8 +63739,11 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         retryButton.type = "button";
         retryButton.className = "view-all";
         retryButton.dataset.tvPageRetry = "true";
-        retryButton.textContent = "Unable to load more videos. Tap to retry";
-        retryButton.addEventListener("click", () => void loadNextHomeTvFeedPage(true));
+        retryButton.textContent = error?.status === 409 ? "This feed has expired. Tap to refresh" : "Unable to load more videos. Tap to retry";
+        retryButton.addEventListener("click", () => {
+          if (error?.status === 409) void loadHomeTvFeed(city,venueId,homeTvFeedSelectedVideoId,{refresh:true});
+          else void loadNextHomeTvFeedPage(true);
+        });
         results.appendChild(retryButton);
       } finally {
         if (homeTvFeedPageAbort === controller) homeTvFeedPageAbort = null;
@@ -63758,6 +63906,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         const params = new URLSearchParams({ city, limit: "24" });
         params.set("paging", "1");
         entry.promise = fetchJson(`/api/public/tv?${params.toString()}`, {
+          headers: discoveryRequestHeaders(),
           retries: 0, cache: "no-store", signal: entry.controller.signal
         }).then((payload) => {
           if (!payload.ok) throw new Error("TV preload unavailable");
@@ -63880,6 +64029,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         if (options.refresh) params.set("refresh", String(Date.now()));
         const prepared = homeTvLandingPreload.takePayload(city, venueId, selectedVideoId, options, controller?.signal);
         const requestPayload = () => fetchJson(`/api/public/tv?${params.toString()}`, {
+          headers: discoveryRequestHeaders(),
           retries: PUBLIC_DISCOVERY_REQUEST_RETRIES,
           cache: options.refresh ? "no-store" : "default",
           signal: controller?.signal
@@ -63892,7 +64042,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           if (controller?.signal.aborted || requestId !== homeTvFeedRequest) return;
           if (params.get("cursor") === payload.nextCursor) throw new Error("TV page did not advance.");
           params.set("cursor", payload.nextCursor);
-          params.delete("video");
+          if (!payload.nextCursor.startsWith("rank1:")) params.delete("video");
           payload = await requestPayload();
         }
         if (!payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
@@ -63907,6 +64057,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               item?.id &&
               item?.videoUrl &&
               item?.dancer?.stageName &&
+              !discoveryHiddenDancers.has(item.dancer.id) &&
               (!venueId || item?.venue?.id === venueId)
             ))
           : [];
@@ -64944,6 +65095,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         if (following) window.dispatchEvent(new CustomEvent("mydancr:push-invitation", { detail: { moment: "customer-follow" } }));
         if (following && actionButton.dataset.homeTvVideoId) {
           trackHomeTvFeedEvent(actionButton.dataset.homeTvVideoId, "follow");
+        }
+        if (following && profile.discovery) {
+          void recordDiscoveryEvent(profile.id,profile.discovery,"impression");
+          void recordDiscoveryEvent(profile.id,profile.discovery,"follow");
         }
         recordLiveEvent("profile_action", {
           dancerName: profile.name,

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { discoveryContext, parseRankedCursor } from "@/src/lib/dancr/discovery-service";
+import { getRankedTvPage } from "@/src/lib/dancr/discovery-tv";
 import { apiError } from "@/src/lib/api";
 import { getPublicMyDancrTvFeed, parseTvFeedCursor, MYDANCR_TV_FILTERS } from "@/src/lib/dancr/tv";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
@@ -25,11 +27,18 @@ export async function GET(request: Request) {
     // destination readers retain their ordering and array response contract.
     const paging = url.searchParams.get("paging") === "1" && !dancerId && !preferredVenueId;
     const cursor = paging ? url.searchParams.get("cursor") || "" : "";
-    if (cursor && !parseTvFeedCursor(cursor)) {
+    if (cursor && !parseTvFeedCursor(cursor) && !parseRankedCursor(cursor)) {
       return NextResponse.json({ ok: false, error: "Invalid TV cursor." }, { status: 400 });
     }
     const limit = Math.min(MAX_DANCER_PROFILE_VIDEOS, Math.max(1, Number.parseInt(url.searchParams.get("limit") || "12", 10) || 12));
     const admin = createAdminSupabaseClient();
+    const ranking = !dancerId && !preferredVenueId ? await discoveryContext(admin, request) : null;
+    if (ranking) {
+      const feed = await getRankedTvPage(admin,ranking,{city,filter,venueId,selectedVideoId,cursor,limit});
+      return NextResponse.json({ok:true,city,filter,...feed,requiresAccount:filter === "following" && !ranking.userId},
+        {headers:{"Cache-Control":"private, no-store","Server-Timing":`tv;dur=${(performance.now()-started).toFixed(1)}`}});
+    }
+    if (parseRankedCursor(cursor)) return NextResponse.json({ok:false,error:"Refresh this feed to continue."},{status:400});
     const followingDancerIds = filter === "following"
       ? await followingIdsForRequest(admin, request)
       : [];

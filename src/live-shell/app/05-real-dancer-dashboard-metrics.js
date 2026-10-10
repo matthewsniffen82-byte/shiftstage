@@ -589,7 +589,7 @@
         try {
           const response = await Promise.race([
             fetch(url, {
-              headers: { Accept: "application/json" },
+              headers: { Accept: "application/json", ...options.headers },
               cache: options.cache === "no-store" || attempt > 0 ? "no-store" : "default",
               signal: controller ? controller.signal : undefined
             }),
@@ -732,6 +732,7 @@
       const query = params.toString();
       try {
         const discovery = await fetchJson(`/api/public/discovery?${query}`, {
+          headers: discoveryRequestHeaders(), cache: "no-store",
           timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
           retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
         });

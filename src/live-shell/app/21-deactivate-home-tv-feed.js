@@ -331,6 +331,7 @@
           trackHomeTvFeedEvent(videoId, "completed");
         }
       });
+      trackDiscoveryVideo(item, video, slide);
       if (index === 0) attachDeferredVideoSource(video, "auto");
       if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
         slide.classList.remove("is-media-loading", "is-media-unavailable");
@@ -650,6 +651,14 @@
         });
       });
       panel.appendChild(overflow);
+      if (item.discovery) {
+        const showLess = document.createElement("button");
+        showLess.type = "button";
+        showLess.className = "home-tv-feed-report-action";
+        showLess.textContent = "Show less from this dancer";
+        showLess.addEventListener("click", () => void showLessDiscoveryDancer(item,showLess));
+        panel.appendChild(showLess);
+      }
       options.append(summary, panel);
       tools.append(options);
       return tools;
@@ -966,8 +975,10 @@
         do {
           const cursor = homeTvFeedNextCursor;
           const params = new URLSearchParams({ city, limit: "24", paging: "1", cursor });
+          if (homeTvFeedSelectedVideoId && cursor.startsWith("rank1:")) params.set("video",homeTvFeedSelectedVideoId);
           if (venueId) params.set("venue", venueId);
           const payload = await fetchJson(`/api/public/tv?${params}`, {
+            headers: discoveryRequestHeaders(), cache: "no-store",
             retries: PUBLIC_DISCOVERY_REQUEST_RETRIES, signal: controller.signal
           });
           if (controller.signal.aborted || requestId !== homeTvFeedRequest || activeTab !== "tv") return;
@@ -975,7 +986,7 @@
           if (payload.nextCursor === cursor) throw new Error("TV page did not advance.");
           const known = new Set(homeTvFeedVideos.map((item) => item.id));
           added = (Array.isArray(payload.videos) ? payload.videos : []).filter((item) => {
-            if (!item?.id || !item.videoUrl || !item.dancer?.stageName || known.has(item.id) ||
+            if (!item?.id || !item.videoUrl || !item.dancer?.stageName || known.has(item.id) || discoveryHiddenDancers.has(item.dancer.id) ||
                 (venueId && item.venue?.id !== venueId)) return false;
             known.add(item.id);
             return true;
@@ -1000,8 +1011,11 @@
         retryButton.type = "button";
         retryButton.className = "view-all";
         retryButton.dataset.tvPageRetry = "true";
-        retryButton.textContent = "Unable to load more videos. Tap to retry";
-        retryButton.addEventListener("click", () => void loadNextHomeTvFeedPage(true));
+        retryButton.textContent = error?.status === 409 ? "This feed has expired. Tap to refresh" : "Unable to load more videos. Tap to retry";
+        retryButton.addEventListener("click", () => {
+          if (error?.status === 409) void loadHomeTvFeed(city,venueId,homeTvFeedSelectedVideoId,{refresh:true});
+          else void loadNextHomeTvFeedPage(true);
+        });
         results.appendChild(retryButton);
       } finally {
         if (homeTvFeedPageAbort === controller) homeTvFeedPageAbort = null;

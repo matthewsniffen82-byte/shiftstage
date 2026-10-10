@@ -133,6 +133,7 @@
       }
       if (activeTab === "dancers") {
         renderHomeDancerGrid(city, items);
+        observeDiscoveryGrid();
         return;
       }
       renderStableMediaMarkup(results, items.map((item) => venueCard(item)).join(""));
@@ -196,6 +197,12 @@
     function trackHomeTvFeedEvent(videoId, eventType) {
       videoId = String(videoId || "").split("~")[0];
       if (!videoId || window.location.protocol === "file:") return Promise.resolve(false);
+      const action = { profile_click: "profile_click", follow: "follow", shift_click: "schedule", venue_click: "directions" }[eventType];
+      const rankedItem = action && homeTvFeedVideos.find(item => item.id === videoId);
+      if (rankedItem?.discovery) {
+        void recordDiscoveryEvent(videoId,rankedItem.discovery,"impression");
+        void recordDiscoveryEvent(videoId,rankedItem.discovery,action);
+      }
       const headers = { "Content-Type": "application/json", Accept: "application/json" };
       if (authSession?.accessToken) headers.Authorization = `Bearer ${authSession.accessToken}`;
       return fetch(`/api/public/tv/${encodeURIComponent(videoId)}/events`, {

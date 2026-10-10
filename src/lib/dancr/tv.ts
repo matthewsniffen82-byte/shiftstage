@@ -85,6 +85,7 @@ const UUID_PATTERN =
 type AdminClient = SupabaseClient<any, any, any>;
 
 type FeedOptions = {
+  candidateVideoIds?: string[];
   city?: string;
   filter?: string;
   followingDancerIds?: string[];
@@ -96,6 +97,7 @@ type FeedOptions = {
 };
 
 export type MyDancrTvVideo = {
+  discovery?: { session: string; position: number };
   id: string;
   isPinned?: boolean;
   likeCount: number;
@@ -256,6 +258,7 @@ export async function getPublicMyDancrTvFeed(
     limit: queryLimit,
     cursor,
     paginated: Boolean(page),
+    videoIds: options.candidateVideoIds,
   });
   const preferredVenueQuery = preferredVenueId &&
     preferredVenueDancerIds.length &&
@@ -401,6 +404,7 @@ function publicTvRowsQuery(
     limit: number;
     cursor?: { publishedAt: string; id: string } | null;
     paginated?: boolean;
+    videoIds?: string[];
   },
 ) {
   let query = admin
@@ -413,6 +417,7 @@ function publicTvRowsQuery(
     .limit(options.limit);
 
   if (options.city) query = query.ilike("dancer_profiles.city", options.city);
+  if (options.videoIds) query = query.in("id", options.videoIds);
   if (options.paginated) {
     query = query.eq("dancer_profiles.status", "approved")
       .eq("dancer_profiles.verification_status", "approved")

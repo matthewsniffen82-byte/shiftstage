@@ -93,6 +93,8 @@ test('legacy readers keep their array contract and malformed cursors cannot reac
 test('HTTP pagination is opt-in, rejects malformed cursors, and leaves dancer readers unchanged', async () => {
   const calls = [], exports = {}, cursor = timestamp + '|' + uuid(1);
   const deps = {
+    '@/src/lib/dancr/discovery-service': { discoveryContext: async () => null, parseRankedCursor: () => null },
+    '@/src/lib/dancr/discovery-tv': {},
     'next/server': { NextResponse: { json: (body, init) => Response.json(body, init) } },
     '@/src/lib/api': { apiError: error => { throw error; } },
     '@/src/lib/dancr/tv': { MYDANCR_TV_FILTERS: new Set(['for-you']), parseTvFeedCursor: fixture(0).parseTvFeedCursor,

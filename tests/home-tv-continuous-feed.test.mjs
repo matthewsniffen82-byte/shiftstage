@@ -17,6 +17,7 @@ function fixture(count, cursor = null) {
     addEventListener() {}, remove() { slides = slides.filter(slide => slide !== this); },
   });
   const context = vm.createContext({ AbortController, URLSearchParams, Set, Math, console,
+    discoveryRequestHeaders: () => ({}), discoveryHiddenDancers: new Set(), homeTvFeedSelectedVideoId: '',
     activeTab: 'tv', homeTvFeedStatus: 'ready', homeTvFeedRequest: 1,
     homeTvFeedCity: 'Vegas', homeTvFeedVenueId: '', homeTvFeedActiveVideoId: '0',
     homeTvFeedNextCursor: cursor, homeTvFeedPageAbort: null, homeTvFeedPageError: false, homeTvFeedLoopStarted: false,

@@ -21,7 +21,8 @@ const service = compile("../src/lib/dancr/dancer-audience-analytics.ts", {
     dancerVideoDeliveryUrl: id => "/video?id=" + id,
   },
 });
-const { DancerAnalyticsPanel } = compile("../app/dashboard/DancerAnalyticsPanel.tsx", { "./dashboard-session": {} });
+const { DancerAnalyticsPanel } = compile("../app/dashboard/DancerAnalyticsPanel.tsx", { "./dashboard-session": {},
+  "./DancerDiscoveryBoosts": compile("../app/dashboard/DancerDiscoveryBoosts.tsx", {"./dashboard-session":{}}) });
 const now = new Date("2026-09-23T12:00:00Z");
 const daysAgo = days => new Date(now.getTime() - days * 86400000).toISOString();
 function fixture() {
@@ -143,7 +144,7 @@ test("analytics rendering contains four cards, two compact sections, real rank a
   result.socialLinkTaps = { value: 5, previous: 10 };
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
   assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 4);
-  for (const text of ["Profile views", "New followers", "Content likes", "Social link taps", "Your audience", "Top content", "City rank #4", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
+  for (const text of ["Profile views", "New followers", "Content likes", "Social link taps", "Your audience", "Top content", "City activity rank #4", "Your discovery boosts", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /Infinity|NaN|<details|Unranked/);
 });
 

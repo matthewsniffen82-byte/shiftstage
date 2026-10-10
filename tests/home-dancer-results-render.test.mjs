@@ -13,7 +13,7 @@ test("populated Dancers results render without the removed list-limit state", ()
   );
   assert.match(
     homeSource,
-    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*return;/,
+    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*observeDiscoveryGrid\(\);\s*return;/,
   );
 });
 
@@ -45,6 +45,7 @@ function directoryFixture(profiles) {
     window: { requestAnimationFrame() {} },
     homeTvLandingPreload: { sync() {} },
     revealDancerGridRows() {},
+    observeDiscoveryGrid() {},
     renderStableMediaMarkup: (container, content) => { container.innerHTML = content; },
     getItems: () => state.profiles,
     selectedVenueFilter: () => state.venueFilter, selectedHomeTvVenueFilter: () => null,
@@ -154,7 +155,7 @@ test("ending a shift moves a dancer to the other tab and updates both counts", (
   assert.match(fixture.markup, /<article data-profile="Checked-in dancer"/);
 });
 
-test("mixing photos preserves status filtering and pins Star only when she belongs in the results", () => {
+test("earned ranking preserves status filtering and replaces the fixed demo priority", () => {
   const star = { id: "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2", name: "Star", now: false };
   const profiles = [
     { name: "A", now: true, mainPhotoUrl: "https://images.test/same.webp" },
@@ -171,9 +172,13 @@ test("mixing photos preserves status filtering and pins Star only when she belon
   fixture.state.render();
   assert.deepEqual(names(), ["Star"]);
   star.now = true;
+  star.discovery = { position: 2 };
+  profiles[0].discovery = { position: 0 };
+  profiles[1].discovery = { position: 1 };
+  profiles[2].discovery = { position: 3 };
   fixture.state.dancerDirectoryFilter = "now";
   fixture.state.render();
-  assert.equal(names()[0], "Star");
+  assert.deepEqual(names(), ["A", "B", "Star", "C"]);
   assert.equal(names().length, 4);
   assert.match(fixture.markup, /Only participating MyDancr dancers are shown\./);
 });

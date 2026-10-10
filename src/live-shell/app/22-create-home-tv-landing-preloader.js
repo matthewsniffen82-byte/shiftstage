@@ -50,6 +50,7 @@
         const params = new URLSearchParams({ city, limit: "24" });
         params.set("paging", "1");
         entry.promise = fetchJson(`/api/public/tv?${params.toString()}`, {
+          headers: discoveryRequestHeaders(),
           retries: 0, cache: "no-store", signal: entry.controller.signal
         }).then((payload) => {
           if (!payload.ok) throw new Error("TV preload unavailable");
@@ -172,6 +173,7 @@
         if (options.refresh) params.set("refresh", String(Date.now()));
         const prepared = homeTvLandingPreload.takePayload(city, venueId, selectedVideoId, options, controller?.signal);
         const requestPayload = () => fetchJson(`/api/public/tv?${params.toString()}`, {
+          headers: discoveryRequestHeaders(),
           retries: PUBLIC_DISCOVERY_REQUEST_RETRIES,
           cache: options.refresh ? "no-store" : "default",
           signal: controller?.signal
@@ -184,7 +186,7 @@
           if (controller?.signal.aborted || requestId !== homeTvFeedRequest) return;
           if (params.get("cursor") === payload.nextCursor) throw new Error("TV page did not advance.");
           params.set("cursor", payload.nextCursor);
-          params.delete("video");
+          if (!payload.nextCursor.startsWith("rank1:")) params.delete("video");
           payload = await requestPayload();
         }
         if (!payload.ok) throw new Error(payload.error || "Unable to load MyDancr TV.");
@@ -199,6 +201,7 @@
               item?.id &&
               item?.videoUrl &&
               item?.dancer?.stageName &&
+              !discoveryHiddenDancers.has(item.dancer.id) &&
               (!venueId || item?.venue?.id === venueId)
             ))
           : [];

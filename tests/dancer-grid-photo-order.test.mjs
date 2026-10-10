@@ -24,7 +24,7 @@ function assertSpaced(profiles) {
   });
 }
 
-test("separates clustered demo photo copies while keeping the original Star first", () => {
+test("separates unranked demo photo copies without giving a fixed profile priority", () => {
   const profiles = Array.from({ length: 14 }, (_, photo) =>
     Array.from({ length: 8 }, (_, copy) => Object.freeze({
       id: `${photo}-${copy}`,
@@ -35,7 +35,7 @@ test("separates clustered demo photo copies while keeping the original Star firs
   const input = Object.freeze(profiles);
   const before = [...input];
   const result = mix(input);
-  assert.equal(result[0], star);
+  assert.notEqual(result[0], star);
   assertSpaced(result);
   assert.equal(result.length, input.length);
   assert.equal(new Set(result).size, input.length);
@@ -77,9 +77,13 @@ test("small filtered rosters retain everyone even when repeats cannot be avoided
     star,
   ];
   const result = mix(profiles);
-  assert.equal(result[0], star);
   assert.equal(result.length, profiles.length);
   assert.equal(new Set(result).size, profiles.length);
   assert.ok(result.every((profile) => profiles.includes(profile)));
-  assert.notEqual(result[2].photo, result[1].photo, "use another available photo before repeating");
+  assert.notEqual(result[0].photo, result[1].photo, "use another available photo before repeating");
+});
+
+test("photo spreading never changes earned discovery positions",()=>{
+  const profiles=[{id:'a',photo:'same',discovery:{position:1}},{id:'b',photo:'same',discovery:{position:2}},{id:'c',photo:'other',discovery:{position:3}}];
+  assert.deepEqual(mix(profiles),profiles);
 });

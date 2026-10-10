@@ -229,6 +229,10 @@
         if (following && actionButton.dataset.homeTvVideoId) {
           trackHomeTvFeedEvent(actionButton.dataset.homeTvVideoId, "follow");
         }
+        if (following && profile.discovery) {
+          void recordDiscoveryEvent(profile.id,profile.discovery,"impression");
+          void recordDiscoveryEvent(profile.id,profile.discovery,"follow");
+        }
         recordLiveEvent("profile_action", {
           dancerName: profile.name,
           city,

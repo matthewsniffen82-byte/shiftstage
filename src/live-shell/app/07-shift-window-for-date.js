@@ -270,8 +270,8 @@
     }
 
     function demoDancerGridPriority(profile) {
-      // Keep the original video-filled Star profile easy to open during demos.
-      return profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2" ? -1 : 0;
+      // Keep the server's earned order stable while filtering the directory.
+      return Number.isInteger(profile.discovery?.position) ? profile.discovery.position : 5000;
     }
 
     function dancerDirectoryGroups(profiles, city = selectedCity()) {
@@ -285,7 +285,7 @@
       const notWorkingNow = profiles
         .filter((profile) => !isWorkingTonight(profile, city))
         .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || dailyRotationScore(a, city) - dailyRotationScore(b, city));
-      if (city === ALL_CITIES) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
+      if (city === ALL_CITIES && !profiles.some(profile => profile.discovery)) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
       return { workingNow, notWorkingNow };
     }
 

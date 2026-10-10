@@ -351,7 +351,7 @@
           ? "is-upcoming"
           : "is-open";
       return `
-        <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
+        <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}"${discoveryCardAttributes(profile)} class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
           <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
             ${photoMarkup}
             <span class="home-dancer-grid-copy">
@@ -368,6 +368,7 @@
     }
 
     function spreadDancerGridPhotos(profiles) {
+      if (profiles.some(profile => profile.discovery)) return profiles;
       const entries = profiles.map((profile) => {
         const path = publicProfilePhotoUrl(profile).split(/[?#]/)[0];
         return { profile, path, filename: path.slice(path.lastIndexOf("/") + 1) };
