@@ -16,7 +16,9 @@ Freshness fades linearly over seven days. Dates are capped to a UTC day and one 
 
 Engagement uses a visitor's action rate per recorded impression, not lifetime counts. Each visitor/item/day contributes at most one impression and one action to scoring, even when several action types occur. Fourteen days of observations decay with a seven-day half-life. Placement cohorts (positions 1–3, 4–12, and later) and 50 prior exposures smooth sparse samples. Viewing quality also compares duration bands (up to 10, 20, and 30 seconds).
 
-One in five positions is available for exploration, prioritizing the least-exposed eligible candidates. TV uses six distinct dancers at the beginning when available, then avoids the previous three dancers where possible. An explicitly linked video stays first. Recently engaged-with videos receive 45% of their normal score for seven days. “Show less from this dancer” suppresses that dancer for 30 days across grid and TV, except an explicitly opened video. Explicit New and Following filters retain their meaning.
+One in five positions is available for exploration, prioritizing the least-exposed eligible candidates. TV uses six distinct dancers at the beginning when available, then avoids the previous three dancers where possible. An explicitly linked video stays first. Recently engaged-with videos receive 45% of their normal score for seven days. Explicit New and Following filters retain their meaning.
+
+The “Show less” control has been removed. The API rejects its retired event type, and previous hide preferences no longer affect grid or TV results. Snapshot scope version `discovery-v2` rebuilds older orders so they cannot retain those omissions. The original migration remains unchanged as historical schema; its legacy event value grants no behavior or client write access.
 
 The candidate pool is bounded to 800 dancers, 50 videos per dancer, and 5,000 videos per visit. Dancer sampling rotates with the visitor/visit seed. Videos are sampled in rounds by dancer to prevent upload volume from consuming the whole pool. Existing profile and curated venue readers keep their existing ordering contracts.
 

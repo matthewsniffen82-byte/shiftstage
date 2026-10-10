@@ -8,7 +8,7 @@ import { isPublicDancerProfileEligible } from "@/src/lib/dancr/profile-approval"
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const events = new Set(["impression","engaged","completed","profile_click","follow","schedule","directions","show_less"]);
+const events = new Set(["impression","engaged","completed","profile_click","follow","schedule","directions"]);
 export async function POST(request: Request) {
   try {
     const body = await readBoundedJsonObject(request,{maxBytes:2048,invalidMessage:"Invalid discovery event.",tooLargeMessage:"Discovery event is too large."});
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       if (!follow.data) throw invalid();
     }
     const day = new Date().toISOString().slice(0,10);
-    if (event !== "impression" && event !== "show_less") {
+    if (event !== "impression") {
       const seen = await admin.from("discovery_events").select("occurred_at").eq("viewer_hash",context.viewerHash)
         .eq("entity_id",entity).eq("surface",snapshot.surface).eq("event_type","impression").eq("occurred_on",day).maybeSingle();
       if (seen.error) throw seen.error;

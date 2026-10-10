@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { discoverySnapshot, hiddenDiscoveryDancers, type DiscoveryContext } from "./discovery-service";
+import { discoverySnapshot, type DiscoveryContext } from "./discovery-service";
 import { getPublicMyDancrTvFeed } from "./tv";
 
 export async function getRankedTvPage(admin: SupabaseClient, context: DiscoveryContext, options: {
@@ -11,7 +11,6 @@ export async function getRankedTvPage(admin: SupabaseClient, context: DiscoveryC
   }, options.cursor);
   const limit = Math.min(24, Math.max(1, options.limit));
   const ids = snapshot.ordered_ids.slice(offset, offset + limit);
-  const hidden = await hiddenDiscoveryDancers(admin,context);
   const videos = ids.length ? await getPublicMyDancrTvFeed(admin, {
     city: options.city, venueId: options.venueId, candidateVideoIds: ids, limit: ids.length,
   }) : [];
@@ -20,7 +19,7 @@ export async function getRankedTvPage(admin: SupabaseClient, context: DiscoveryC
   return {
     videos: ids.flatMap((id,index) => {
       const video = byId.get(id);
-      return video && (!hidden.has(video.dancer.id) || id === options.selectedVideoId)
+      return video
         ? [{ ...video, discovery: { session: snapshot.id, position: offset + index } }] : [];
     }),
     nextCursor: end < snapshot.ordered_ids.length ? `rank1:${snapshot.id}:${end}` : null,

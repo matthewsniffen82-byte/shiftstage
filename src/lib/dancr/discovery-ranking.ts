@@ -6,7 +6,7 @@ export type RankingCandidate = {
   id: string; dancerId: string; city: string; venueId: string | null;
   availableUntil: string | null; nextShiftAt: string | null; nextShiftEndsAt: string | null;
   freshAt: string | null; duration: number; buckets: RankingBucket[];
-  seenAt?: string | null; hidden?: boolean;
+  seenAt?: string | null;
 };
 export type RankingContext = {
   surface: RankingSurface; now: number; seed: string;
@@ -72,7 +72,7 @@ export function scoreDiscovery(candidates: readonly RankingCandidate[], context:
     });
     return mass ? sum / mass : .5;
   };
-  return candidates.filter(row => !row.hidden).map(row => {
+  return candidates.map(row => {
     const availability = availabilityBoost(row, context.now);
     const freshness = freshnessBoost(row.freshAt, context.now);
     const relevance = followed.has(row.dancerId) ? 1 : row.venueId && venues.has(row.venueId) ? .75 : 0;

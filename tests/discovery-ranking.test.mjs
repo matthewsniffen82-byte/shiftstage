@@ -50,8 +50,8 @@ test('new dancers enter exploration and first six videos come from different dan
  const linked=rankDiscovery(rows,{...context,selectedId:'established-1'});
  assert.equal(linked[0].id,'established-1'); assert.equal(new Set(linked.slice(0,6).map(row=>row.dancerId)).size,6);
 });
-test('preferences remove hidden dancers, reduce recent repeats, and keep seeded order reproducible',()=>{
- const rows=[candidate('seen',{seenAt:date(-day)}),candidate('unseen'),candidate('hidden',{hidden:true})];
+test('recent viewing reduces repeats and keeps seeded order reproducible',()=>{
+ const rows=[candidate('seen',{seenAt:date(-day)}),candidate('unseen')];
  const ranked=rankDiscovery(rows,context); assert.equal(ranked[0].id,'unseen'); assert.equal(ranked.length,2);
  assert.deepEqual(rankDiscovery([...rows].reverse(),context),ranked);
  assert.ok(scoreDiscovery([candidate('old',{seenAt:date(-8*day)})],context)[0].score>ranked[1].score);

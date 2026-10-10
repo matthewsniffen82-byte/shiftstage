@@ -651,14 +651,6 @@
         });
       });
       panel.appendChild(overflow);
-      if (item.discovery) {
-        const showLess = document.createElement("button");
-        showLess.type = "button";
-        showLess.className = "home-tv-feed-report-action";
-        showLess.textContent = "Show less from this dancer";
-        showLess.addEventListener("click", () => void showLessDiscoveryDancer(item,showLess));
-        panel.appendChild(showLess);
-      }
       options.append(summary, panel);
       tools.append(options);
       return tools;
@@ -986,7 +978,7 @@
           if (payload.nextCursor === cursor) throw new Error("TV page did not advance.");
           const known = new Set(homeTvFeedVideos.map((item) => item.id));
           added = (Array.isArray(payload.videos) ? payload.videos : []).filter((item) => {
-            if (!item?.id || !item.videoUrl || !item.dancer?.stageName || known.has(item.id) || discoveryHiddenDancers.has(item.dancer.id) ||
+            if (!item?.id || !item.videoUrl || !item.dancer?.stageName || known.has(item.id) ||
                 (venueId && item.venue?.id !== venueId)) return false;
             known.add(item.id);
             return true;

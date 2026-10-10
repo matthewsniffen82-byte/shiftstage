@@ -41,7 +41,8 @@ export function parseRankedCursor(value: string) {
 }
 
 export async function discoverySnapshot(admin: SupabaseClient, context: DiscoveryContext, scope: Scope, cursor = "") {
-  const scopeHash = createHash("sha256").update(JSON.stringify([scope.surface, scope.city.toLowerCase(), scope.venueId || "", scope.filter || "for-you", scope.selectedVideoId || ""])).digest("hex");
+  // Retire snapshots that may have omitted dancers using the removed hide control.
+  const scopeHash = createHash("sha256").update(JSON.stringify(["discovery-v2", scope.surface, scope.city.toLowerCase(), scope.venueId || "", scope.filter || "for-you", scope.selectedVideoId || ""])).digest("hex");
   const parsed = cursor ? parseRankedCursor(cursor) : null;
   if (cursor && !parsed) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery cursor.", 400);
   let query = admin.from("discovery_sessions").select("id,ordered_ids,expires_at")
@@ -61,21 +62,20 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
       p_selected_video: scope.selectedVideoId || null }),
     admin.from("discovery_events").select("entity_id,dancer_id,event_type,occurred_at")
       .eq("viewer_hash", context.viewerHash).gte("occurred_at", new Date(Date.now()-30*86400000).toISOString())
-      .in("event_type", ["completed","engaged","show_less"]).order("occurred_at", { ascending: false }).limit(5000),
+      .in("event_type", ["completed","engaged"]).order("occurred_at", { ascending: false }).limit(5000),
     context.userId ? admin.from("follows").select("dancer_id").eq("customer_id",context.userId).limit(1000) : Promise.resolve({ data: [], error: null }),
     context.userId ? admin.from("venue_follows").select("venue_id").eq("customer_id",context.userId).limit(1000) : Promise.resolve({ data: [], error: null }),
   ]);
   for (const result of [candidateResult,history,dancerFollows,venueFollows]) if (result.error) throw result.error;
   const candidates = readRankingCandidates(candidateResult.data);
-  const hidden = new Set((history.data || []).filter(row=>row.event_type === "show_less").map(row=>row.dancer_id));
   const watched = new Map<string,string>();
-  for (const row of history.data || []) if (row.event_type !== "show_less" && !watched.has(row.entity_id)) watched.set(row.entity_id,row.occurred_at);
+  for (const row of history.data || []) if (!watched.has(row.entity_id)) watched.set(row.entity_id,row.occurred_at);
   const followingDancers = (dancerFollows.data || []).map(row=>row.dancer_id);
   const now = Date.now();
   const eligible = candidates.filter(row => scope.filter !== "following" || followingDancers.includes(row.dancerId))
     .filter(row => scope.filter !== "tonight" || Date.parse(row.availableUntil || "") > now
       || (Date.parse(row.nextShiftEndsAt || "") > now && Date.parse(row.nextShiftAt || "") <= now + 86400000))
-    .map(row=>({ ...row, hidden: hidden.has(row.dancerId) && row.id !== scope.selectedVideoId, seenAt: watched.get(row.id) || null }));
+    .map(row=>({ ...row, seenAt: watched.get(row.id) || null }));
   const ranked = rankDiscovery(eligible, { surface: scope.surface, now, seed: context.visitId, selectedId: scope.selectedVideoId,
     followingDancers, followingVenues: (venueFollows.data || []).map(row=>row.venue_id) });
   let orderedIds = ranked.map(row=>row.id);
@@ -116,18 +116,10 @@ export function readRankingCandidates(value: unknown): RankingCandidate[] {
 
 export async function rankPublicGrid<T extends { id: string }>(admin: SupabaseClient, context: DiscoveryContext, city: string, rows: T[]) {
   const { snapshot } = await discoverySnapshot(admin,context,{surface:"grid",city,dancerIds:rows.map(row=>row.id)});
-  const hidden = await hiddenDiscoveryDancers(admin,context);
   const byId = new Map(rows.map(row=>[row.id,row]));
   const ordered = snapshot.ordered_ids.flatMap((id,position)=>{
-    const row=byId.get(id); return row && !hidden.has(id) ? [{...row,discovery:{session:snapshot.id,position}}] : [];
+    const row=byId.get(id); return row ? [{...row,discovery:{session:snapshot.id,position}}] : [];
   });
-  // New approvals enter on the next visit; never append excluded preferences.
+  // New approvals enter on the next visit to preserve the current ordering.
   return ordered;
-}
-
-export async function hiddenDiscoveryDancers(admin: SupabaseClient, context: DiscoveryContext) {
-  const result = await admin.from("discovery_events").select("dancer_id").eq("viewer_hash",context.viewerHash)
-    .eq("event_type","show_less").gte("occurred_at",new Date(Date.now()-30*86400000).toISOString()).limit(5000);
-  if (result.error) throw result.error;
-  return new Set<string>((result.data || []).map(row=>row.dancer_id));
 }

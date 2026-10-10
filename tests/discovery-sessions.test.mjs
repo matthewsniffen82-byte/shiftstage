@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {createHash} from 'node:crypto';
 import {fixture,row,id,compile} from './helpers/discovery-fixture.mjs';
 
 test('identity is hashed, invalid session headers reject, and expired login remains a guest',async()=>{
@@ -31,16 +32,18 @@ test('cursors cannot cross visitors, cities, filters or expiry; a fresh request 
  await assert.rejects(f.service.discoverySnapshot(f.admin,c,scope,cursor),/expired/);
  assert.notEqual((await f.service.discoverySnapshot(f.admin,c,scope)).snapshot.id,snapshot.id);
 });
-test('following scopes and Show less never append excluded profiles to a grid',async()=>{
+test('following scope is preserved and retired hide preferences cannot exclude grid profiles',async()=>{
  const f=fixture(),c=await f.service.discoveryContext(f.admin,f.request(id(50),id(51),'valid'));
  f.data.follows.push({customer_id:id(99),dancer_id:id(2)});
  assert.deepEqual(Array.from((await f.service.discoverySnapshot(f.admin,c,{surface:'tv',city:'Vegas',filter:'following'})).snapshot.ordered_ids),[id(2)]);
  const grid=await f.service.rankPublicGrid(f.admin,c,'Vegas',[{id:id(1)},{id:id(2)}]);assert.equal(grid.length,2);
  f.data.discovery_events.push({viewer_hash:c.viewerHash,dancer_id:id(1),entity_id:id(1),event_type:'show_less',occurred_at:new Date().toISOString()});
  const filtered=await f.service.rankPublicGrid(f.admin,c,'Vegas',[{id:id(1)},{id:id(2)},{id:id(3)}]);
- assert.deepEqual(Array.from(filtered,row=>row.id),[id(2)]);
+ assert.deepEqual(new Set(Array.from(filtered,row=>row.id)),new Set([id(1),id(2)]));
+ const nextVisit={...c,visitId:id(60)};
+ assert.deepEqual(new Set(Array.from(await f.service.rankPublicGrid(f.admin,nextVisit,'Vegas',[{id:id(1)},{id:id(2)}]),row=>row.id)),new Set([id(1),id(2)]));
 });
-test('ranked TV revalidates each page, keeps raw cursor advancement and applies new hide preferences',async()=>{
+test('ranked TV revalidates each page, keeps raw cursor advancement and ignores retired hide preferences',async()=>{
  const candidates=Array.from({length:8},(_,i)=>row(i+1)),f=fixture(candidates),c=await f.service.discoveryContext(f.admin,f.request());
  const tv=compile('src/lib/dancr/discovery-tv.ts',{'./discovery-service':f.service,'./tv':{getPublicMyDancrTvFeed:async(_,options)=>options.candidateVideoIds.slice(1).reverse().map(id=>({id,dancer:{id}}))}});
  const first=await tv.getRankedTvPage(f.admin,c,{city:'Vegas',filter:'for-you',limit:3});
@@ -49,7 +52,15 @@ test('ranked TV revalidates each page, keeps raw cursor advancement and applies 
  const next=await tv.getRankedTvPage(f.admin,c,{city:'Vegas',filter:'for-you',limit:3,cursor:first.nextCursor});
  assert.ok(next.nextCursor.endsWith(':6'));assert.ok(!next.videos.some(item=>first.videos.some(old=>old.id===item.id)));
  f.data.discovery_events.push({viewer_hash:c.viewerHash,dancer_id:next.videos[0].dancer.id,event_type:'show_less',occurred_at:new Date().toISOString()});
- assert.equal((await tv.getRankedTvPage(f.admin,c,{city:'Vegas',filter:'for-you',limit:3,cursor:first.nextCursor})).videos.length,1);
+ assert.equal((await tv.getRankedTvPage(f.admin,c,{city:'Vegas',filter:'for-you',limit:3,cursor:first.nextCursor})).videos.length,2);
+});
+test('old snapshots cannot keep dancers hidden after the control is removed',async()=>{
+ const f=fixture(),c=await f.service.discoveryContext(f.admin,f.request());
+ const scopeHash=createHash('sha256').update(JSON.stringify(['grid','vegas','','for-you',''])).digest('hex');
+ f.data.discovery_sessions.push({id:id(80),viewer_hash:c.viewerHash,visit_id:c.visitId,scope_hash:scopeHash,surface:'grid',ordered_ids:[id(2)],expires_at:new Date(Date.now()+3600000).toISOString()});
+ const grid=await f.service.rankPublicGrid(f.admin,c,'Vegas',[{id:id(1)},{id:id(2)}]);
+ assert.equal(grid.length,2);assert.notEqual(grid[0].discovery.session,id(80));
+ await assert.rejects(f.service.discoverySnapshot(f.admin,c,{surface:'grid',city:'Vegas'},`rank1:${id(80)}:1`),/expired/);
 });
 test('new snapshots are rate limited but an existing snapshot remains readable',async()=>{
  const f=fixture(),c=await f.service.discoveryContext(f.admin,f.request());

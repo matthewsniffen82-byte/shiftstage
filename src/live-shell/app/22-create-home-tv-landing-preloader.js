@@ -201,7 +201,6 @@
               item?.id &&
               item?.videoUrl &&
               item?.dancer?.stageName &&
-              !discoveryHiddenDancers.has(item.dancer.id) &&
               (!venueId || item?.venue?.id === venueId)
             ))
           : [];

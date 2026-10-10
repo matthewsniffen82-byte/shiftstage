@@ -11,7 +11,6 @@
     const discoveryEventChains = new Map();
     const discoverySentEvents = new Set();
     const discoveryEventRetryAfter = new Map();
-    const discoveryHiddenDancers = new Set();
     let discoveryGridObserver = null;
     const discoveryGridTimers = new Map();
     function discoveryRequestHeaders() {
@@ -111,14 +110,4 @@
         }
         reset();
       });
-    }
-    async function showLessDiscoveryDancer(item,button) {
-      button.disabled=true;
-      const saved=await recordDiscoveryEvent(item.id,item.discovery,"show_less");
-      if (!saved) { button.disabled=false; showToast("Unable to save that preference. Try again."); return; }
-      discoveryHiddenDancers.add(item.dancer.id);
-      homeTvFeedVideos=homeTvFeedVideos.filter(video=>video.dancer.id!==item.dancer.id);
-      homeTvFeedActiveVideoId="";
-      renderHomeTvFeed(homeTvFeedCity);
-      showToast("We’ll show less from this dancer for 30 days");
     }

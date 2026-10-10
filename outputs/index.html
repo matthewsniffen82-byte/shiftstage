@@ -45346,7 +45346,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     const discoveryEventChains = new Map();
     const discoverySentEvents = new Set();
     const discoveryEventRetryAfter = new Map();
-    const discoveryHiddenDancers = new Set();
     let discoveryGridObserver = null;
     const discoveryGridTimers = new Map();
     function discoveryRequestHeaders() {
@@ -45446,16 +45445,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         }
         reset();
       });
-    }
-    async function showLessDiscoveryDancer(item,button) {
-      button.disabled=true;
-      const saved=await recordDiscoveryEvent(item.id,item.discovery,"show_less");
-      if (!saved) { button.disabled=false; showToast("Unable to save that preference. Try again."); return; }
-      discoveryHiddenDancers.add(item.dancer.id);
-      homeTvFeedVideos=homeTvFeedVideos.filter(video=>video.dancer.id!==item.dancer.id);
-      homeTvFeedActiveVideoId="";
-      renderHomeTvFeed(homeTvFeedCity);
-      showToast("We’ll show less from this dancer for 30 days");
     }
     function recordVenueInteraction({ venueId, dancerId = null, eventType, source }) {
       if (!venueId || window.location.protocol === "file:") return;
@@ -63379,14 +63368,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         });
       });
       panel.appendChild(overflow);
-      if (item.discovery) {
-        const showLess = document.createElement("button");
-        showLess.type = "button";
-        showLess.className = "home-tv-feed-report-action";
-        showLess.textContent = "Show less from this dancer";
-        showLess.addEventListener("click", () => void showLessDiscoveryDancer(item,showLess));
-        panel.appendChild(showLess);
-      }
       options.append(summary, panel);
       tools.append(options);
       return tools;
@@ -63714,7 +63695,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           if (payload.nextCursor === cursor) throw new Error("TV page did not advance.");
           const known = new Set(homeTvFeedVideos.map((item) => item.id));
           added = (Array.isArray(payload.videos) ? payload.videos : []).filter((item) => {
-            if (!item?.id || !item.videoUrl || !item.dancer?.stageName || known.has(item.id) || discoveryHiddenDancers.has(item.dancer.id) ||
+            if (!item?.id || !item.videoUrl || !item.dancer?.stageName || known.has(item.id) ||
                 (venueId && item.venue?.id !== venueId)) return false;
             known.add(item.id);
             return true;
@@ -64057,7 +64038,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               item?.id &&
               item?.videoUrl &&
               item?.dancer?.stageName &&
-              !discoveryHiddenDancers.has(item.dancer.id) &&
               (!venueId || item?.venue?.id === venueId)
             ))
           : [];

@@ -38,10 +38,10 @@ test('self activity is excluded, hidden or expired videos reject, and grid event
  f.data.dancer_profiles[0].is_public=true;f.data.mydancr_tv_videos[0].expires_at=new Date(Date.now()-1).toISOString();assert.equal((await f.post()).status,400);
  const grid=await setup({surface:'grid'});assert.equal((await grid.post('engaged')).status,400);
 });
-test('follow activity requires a real account follow; Show less can be saved without watch time',async()=>{
+test('follow activity requires a real account follow; retired Show less events are rejected',async()=>{
  const f=await setup();await f.post();assert.equal((await f.post('follow')).status,400);
  f.data.follows.push({customer_id:id(99),dancer_id:id(1)});assert.equal((await f.post('follow')).status,200);
- const hide=await setup();assert.equal((await hide.post('show_less')).status,200);assert.equal(hide.data.discovery_events[0].event_type,'show_less');
+ const hide=await setup();assert.equal((await hide.post('show_less')).status,400);assert.equal(hide.data.discovery_events.length,0);
 });
 test('rate limits return 429 and do not write an event',async()=>{
  const f=await setup();f.block();const response=await f.post();assert.equal(response.status,429);assert.equal(response.headers.get('retry-after'),'60');assert.equal(f.data.discovery_events.length,0);

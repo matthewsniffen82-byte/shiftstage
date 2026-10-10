@@ -34,7 +34,7 @@ function fixture() {
   let serial = 0, now = 1000;
   const card = { loading: false, getBoundingClientRect: () => ({ top: 100, bottom: 300 }), hasAttribute() { return this.loading; } };
   const context = vm.createContext({
-    discoveryRequestHeaders: () => ({}), discoveryHiddenDancers: new Set(),
+    discoveryRequestHeaders: () => ({}),
     AbortController, URLSearchParams, HTMLVideoElement: Video, HTMLMediaElement: Video, Date: { now: () => now },
     activeTab: "dancers", citySelect: { value: "Vegas" }, userLocationOutsideMarkets: false,
     homeTvFeedStatus: "idle", homeTvFeedAbort: null, homeTvFeedRequest: 0,
