@@ -189,11 +189,15 @@ body.dancr-button-system :is(#authPage .auth-choice-card, .vip-auth-shell .vip-p
 }
 body.dancr-button-system #authPage .auth-vip-entry {
   display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px;
-  min-height: 44px; border-top: 1px solid #302737; padding-top: 0;
-  color: #d0c4df; font-size: 12px; font-weight: 500; text-decoration: none;
+  box-sizing: border-box; width: 100%; min-height: 45px; padding: 10px 16px;
+  border: 1px solid #e6c890; border-radius: 12px;
+  background: linear-gradient(#e6c890, #e6c890);
+  color: #21180e; -webkit-text-fill-color: #21180e;
+  font-size: 14px; font-weight: 700; line-height: 1.5; text-decoration: none;
 }
 body.dancr-button-system #authPage .auth-vip-entry[hidden] { display: none !important; }
-body.dancr-button-system #authPage .auth-vip-entry:hover { text-decoration: underline; text-underline-offset: 3px; }
+body.dancr-button-system #authPage .auth-vip-entry:hover { background: linear-gradient(#efd8af, #efd8af); border-color: #efd8af; }
+body.dancr-button-system #authPage .auth-vip-entry:focus-visible { outline: 2px solid #e6c890 !important; outline-offset: 3px !important; }
 body.dancr-button-system .vip-auth-shell .vip-container { max-width: 500px; }
 body.dancr-button-system .vip-auth-shell .vip-header { padding: 0 0 4px; border: 0; }
 body.dancr-button-system .vip-auth-shell .vip-hero { text-align: left; padding: 0; }
