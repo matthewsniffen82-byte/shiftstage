@@ -25,7 +25,7 @@ function compile(file, dependencies = {}, globals = {}) {
 const service = compile("src/lib/dancr/vip.ts", { "../api-error-policy": { PublicApiError } });
 const passwordSetup = compile("src/lib/dancr/password-setup.ts", { "../security/safe-error-metadata": { safeErrorMetadata: () => ({}) } });
 const termsService = compile("src/lib/dancr/user-terms.ts", { "../api-error-policy": { PublicApiError }, "./user-terms-version": userTerms });
-function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false, pendingInvitation = true, passwordComplete = true, loginComplete = true } = {}) {
+function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false, pendingInvitation = true, passwordComplete = true, loginComplete = true, notifications = [{ recipient_id: id(1) }] } = {}) {
   const calls = [];
   const dependencies = {
     "@/src/lib/dancr/password-setup": passwordSetup,
@@ -44,13 +44,13 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
       const steps = []; calls.push(["lookup", table, steps]);
       const chain = { select: () => chain, eq: (key, value) => { steps.push([key, value]); return chain; }, is: (key, value) => { steps.push([key, value]); return chain; }, gt: (key, value) => { steps.push([key, value]); return chain; }, maybeSingle: async () => ({ data: pendingInvitation ? { email: "invited@example.test", nickname: "Friday regular" } : null }) }; return chain;
     }, rpc: async (name, args) => {
-      calls.push(["rpc", name, args]); return { data: { id: id(91), request: { id: id(90) }, nickname: args.p_nickname, changed: true, notifications: [{ recipient_id: id(1) }] }, error: rpcError };
+      calls.push(["rpc", name, args]); return { data: { id: id(91), request: { id: id(90) }, nickname: args.p_nickname, changed: true, notifications }, error: rpcError };
     } }) },
     "@/src/lib/dancr/vip": { ...service, requireVipManager: async () => ({ venueId: id(20), venueName: "Private Club" }) },
     "@/src/lib/dancr/public-app-url": { publicAppUrl: () => "https://example.test" },
     "@/src/lib/dancr/vip-setup-link": { sendVipInvitationEmail: async (_admin, input) => { calls.push(["email", { to: input.email, ...input }]); return false; } },
     "@/src/lib/dancr/notification-delivery": {
-      deliverNotificationRows: async () => { if (deliveryFailure) throw new Error("delivery offline"); },
+      deliverNotificationRows: async (_admin, rows) => { calls.push(["delivery", rows]); if (deliveryFailure) throw new Error("delivery offline"); },
       sendTransactionalEmail: async message => { calls.push(["email", message]); return { delivered: false }; },
     },
   };
@@ -58,6 +58,16 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
 }
 function request(body) { return new Request("https://example.test/api/vip", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); }
 const input = { actorUserId: id(6), venueId: id(20), requestId: id(90), localStart: "2027-01-15T21:30", dancerIds: [id(37)] };
+
+test("VIP submission delivers both audience-specific alerts without returning recipient details to the guest", async () => {
+  const notifications = [{ recipient_id: id(1), payload: { kind: "vip_request" } }, { recipient_id: id(7), payload: { kind: "vip_dancer_request" } }];
+  const { route, calls } = fixture({ notifications });
+  const response = await route.POST(request(input));
+  assert.equal(response.status, 200);
+  assert.deepEqual(calls.find(call => call[0] === "delivery")[1], notifications);
+  const body = await response.json(); assert.equal(body.notifications, undefined);
+  assert.ok(!JSON.stringify(body).includes(id(7)));
+});
 
 test("VIP withdrawal uses authenticated identity, enforces pending conflicts and isolates delivery failures", async () => {
   const { route, calls } = fixture({ deliveryFailure: true });

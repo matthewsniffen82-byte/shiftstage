@@ -809,7 +809,7 @@ function notificationCategory(notification: Record<string, unknown>) {
     ? notification.payload as Record<string, unknown>
     : {};
   if (payload.kind === "followed_club_deal_published") return "Club Deal";
-  if (payload.kind === "vip_request" || payload.kind === "vip_request_status" || payload.kind === "vip_nickname_changed") return "VIP";
+  if (payload.kind === "vip_request" || payload.kind === "vip_request_status" || payload.kind === "vip_nickname_changed" || payload.kind === "vip_dancer_request") return "VIP";
   if (payload.kind === "followed_club_roster_addition") return "Club";
   if (type.includes("shift")) return "Schedule";
   if (type.includes("support")) return "Support";

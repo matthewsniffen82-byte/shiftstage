@@ -22,7 +22,9 @@ async function fixture() {
       create table public.dancer_profiles(id uuid primary key,user_id uuid,stage_name text,status text,verification_status text,disabled_at timestamptz);
       create table public.venue_dancer_affiliations(venue_id uuid,dancer_id uuid,status text,revoked_at timestamptz,reentry_blocked boolean default false);
       create table public.shifts(dancer_id uuid,venue_id uuid,status text,checked_in_at timestamptz,checked_out_at timestamptz,location_status text,location_verification_expires_at timestamptz);
-      create table public.notifications(id uuid primary key default gen_random_uuid(),recipient_id uuid,notification_type text,channel text,title text,body text,payload jsonb,sent_at timestamptz);
+      create type public.notification_type as enum ('support_message');
+      create type public.notification_channel as enum ('in_app','email','push');
+      create table public.notifications(id uuid primary key default gen_random_uuid(),recipient_id uuid,notification_type public.notification_type,channel public.notification_channel,title text,body text,payload jsonb,sent_at timestamptz);
       grant usage on schema public to anon,authenticated,service_role;`);
     await db.exec(migration);
     await db.exec(readFileSync(new URL("../supabase/migrations/20261008070000_venue_vip_nicknames.sql", import.meta.url), "utf8"));
@@ -30,8 +32,9 @@ async function fixture() {
     await db.exec(readFileSync(new URL("../supabase/migrations/20261008210000_user_terms_acceptance.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261010093155_vip_shared_nicknames.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261010192345_vip_guest_withdrawal.sql", import.meta.url), "utf8"));
-    // Match production grants for the server-only SECURITY INVOKER withdrawal.
-    await db.exec("grant select on public.app_users,public.venues,public.venue_team_members to service_role; grant select,insert on public.notifications to service_role");
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261010200606_vip_anonymous_dancer_requests.sql", import.meta.url), "utf8"));
+    // Match production grants for server-only SECURITY INVOKER request writes.
+    await db.exec("grant select on public.app_users,public.venues,public.venue_team_members,public.dancer_profiles to service_role; grant select,insert on public.notifications to service_role");
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
       await db.query("insert into public.app_users values($1,$2,'active')", [id(n), role]);
       await db.query("insert into auth.users(id,email,email_confirmed_at) values($1,$2,now())", [id(n), `person${n}@example.test`]);
@@ -181,6 +184,7 @@ test("VIP tables and RPCs deny direct anonymous and authenticated access", async
         await denies(db.query(`delete from public.${table}`), "42501");
       }
       await denies(db.query("select public.vip_eligible_dancers($1)", [id(20)]), "42501");
+      await denies(submit(db, { local: "2027-01-15T20:30" }), "42501");
       await denies(db.query("select public.vip_accept_invitation($1,$2,'VIP')", [id(5), digest]), "42501");
       await denies(db.query("select public.vip_set_member_nickname($1,$2,$3,'Nick')", [id(1), id(20), id(50)]), "42501");
       await denies(db.query("select public.vip_search_members($1,$2,'',0)", [id(1), id(20)]), "42501");
@@ -232,23 +236,68 @@ test("VIP roster includes off-shift affiliations and current workers, and submis
   } finally { await db.close(); }
 });
 
-test("requests save venue time and dancer snapshots with exactly one notification per active admin", async () => {
+test("requests notify managers by nickname and selected dancers anonymously, once per request", async () => {
   const db = await fixture();
   try {
     await invite(db); await accept(db);
+    await db.query("update venue_vip_members set nickname='Friday regular'");
     const result = await submit(db);
     assert.equal(result.request.status, "pending"); assert.equal(result.request.timezone, "America/Los_Angeles");
     assert.deepEqual(result.request.dancers.map(row => row.stageName), ["Dancer 7", "Dancer 8"]);
-    assert.deepEqual(result.notifications.map(row => row.recipient_id).sort(), [id(1), id(2)]);
-    for (const notification of result.notifications) {
+    assert.deepEqual(result.notifications.map(row => row.recipient_id).sort(), [id(1), id(2), id(7), id(8)]);
+    const managers = result.notifications.filter(row => row.payload.kind === "vip_request");
+    assert.equal(managers.length, 2);
+    for (const notification of managers) {
+      assert.match(notification.body, /^Friday regular requested/); assert.doesNotMatch(notification.body, /Test VIP/);
       assert.match(notification.body, /Dancer 7, Dancer 8/); assert.match(notification.body, /20:30.*America\/Los_Angeles/);
       assert.equal(notification.payload.url, "/dashboard/venue#venue-vip");
     }
+    const dancers = result.notifications.filter(row => row.payload.kind === "vip_dancer_request");
+    assert.equal(dancers.length, 2);
+    for (const notification of dancers) {
+      assert.match(notification.body, /^A VIP requested you at Private club on/);
+      assert.match(notification.body, /20:30.*America\/Los_Angeles/);
+      assert.match(notification.body, /Awaiting venue confirmation/);
+      assert.deepEqual(Object.keys(notification.payload).sort(), ["kind", "startsAt", "timezone", "url", "venueId", "venueName"]);
+      assert.equal(notification.payload.startsAt, result.request.starts_at);
+      assert.equal(notification.payload.timezone, result.request.timezone);
+      assert.equal(notification.payload.url, "/dashboard/dancer#dancer-account");
+      for (const privateValue of ["Test VIP", "Friday regular", "person5@example.test", "Window table please", id(5), id(90), "Dancer 7", "Dancer 8"]) {
+        assert.ok(!JSON.stringify(notification).includes(privateValue), privateValue);
+      }
+    }
     const repeated = await submit(db);
     assert.equal(repeated.request.id, result.request.id); assert.equal(repeated.notifications.length, 0);
-    assert.equal((await adminQuery(db, "select count(*) from public.notifications")).rows[0].count, 2);
+    assert.equal((await adminQuery(db, "select count(*) from public.notifications")).rows[0].count, 4);
     await adminQuery(db, "update public.dancer_profiles set stage_name='Changed' where id=$1", [id(37)]);
     assert.equal((await submit(db)).request.dancers[0].stageName, "Dancer 7");
+  } finally { await db.close(); }
+});
+
+test("unselected dancers and inactive managers receive no request alert", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db);
+    await adminQuery(db, "update app_users set account_state='paused' where id=$1", [id(2)]);
+    const result = await submit(db, { dancers: [37] });
+    assert.deepEqual(result.notifications.map(row => row.recipient_id).sort(), [id(1), id(7)]);
+    assert.match(result.notifications.find(row => row.recipient_id === id(1)).body, /^Test VIP requested/);
+    await adminQuery(db, "update app_users set account_state='paused' where id=$1", [id(7)]);
+    await denies(submit(db, { request: 91, dancers: [37] }), "40001");
+    assert.equal((await adminQuery(db, "select count(*)::int n from notifications")).rows[0].n, 2);
+  } finally { await db.close(); }
+});
+
+test("a dancer alert failure rolls back the request and its manager alerts", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db);
+    await adminQuery(db, "alter table notifications add constraint dancer_alert_failure check(payload->>'kind'<>'vip_dancer_request')");
+    await denies(submit(db), "23514");
+    assert.equal((await db.query("select count(*)::int n from venue_vip_requests")).rows[0].n, 0);
+    assert.equal((await adminQuery(db, "select count(*)::int n from notifications")).rows[0].n, 0);
+    await adminQuery(db, "alter table notifications drop constraint dancer_alert_failure");
+    assert.equal((await submit(db)).notifications.length, 4);
   } finally { await db.close(); }
 });
 
@@ -353,7 +402,7 @@ test("invitation nicknames survive activation and retries preserve the latest me
     await accept(db);
     assert.equal((await db.query("select nickname from venue_vip_members")).rows[0].nickname, "Friday regular");
     const result = (await submit(db)).notifications;
-    assert.ok(result.every(row => row.body.startsWith("Friday regular (Test VIP) requested")));
+    assert.ok(result.filter(row => row.payload.kind === "vip_request").every(row => row.body.startsWith("Friday regular requested")));
     await db.query("select vip_update_own_nickname($1,$2,'Jordan')", [id(5),id(20)]);
     await accept(db);
     await manage(db,"invite",{ email:"person5@example.test",digest:"b".repeat(64),nickname:"Stale invitation label" });
