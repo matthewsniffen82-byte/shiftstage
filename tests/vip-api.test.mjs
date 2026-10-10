@@ -48,6 +48,7 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
     } }) },
     "@/src/lib/dancr/vip": { ...service, requireVipManager: async () => ({ venueId: id(20), venueName: "Private Club" }) },
     "@/src/lib/dancr/public-app-url": { publicAppUrl: () => "https://example.test" },
+    "@/src/lib/dancr/vip-setup-link": { sendVipInvitationEmail: async (_admin, input) => { calls.push(["email", { to: input.email, ...input }]); return false; } },
     "@/src/lib/dancr/notification-delivery": {
       deliverNotificationRows: async () => { if (deliveryFailure) throw new Error("delivery offline"); },
       sendTransactionalEmail: async message => { calls.push(["email", message]); return { delivered: false }; },

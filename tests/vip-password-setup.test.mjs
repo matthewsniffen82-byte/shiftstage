@@ -59,6 +59,7 @@ test('confirmed email is populated and read-only; one submission saves, signs in
   const f = fixture();
   const email = f.nodes().find(n => n.props.type === 'email');
   assert.equal(email.props.value, account.email); assert.equal(email.props.readOnly, true); assert.equal(email.props.onChange, undefined);
+  assert.equal(f.nodes().find(n => n.props.type === 'submit').props.children, 'Create account');
   assert.equal(f.calls.length, 0); f.fill(); await f.submit();
   assert.deepEqual(f.calls.map(c => [c.url, c.method]), [['/api/account', 'PATCH'], ['/api/auth', 'POST'], ['/api/vip/invitation', 'PATCH']]);
   assert.deepEqual(JSON.parse(f.calls[0].body), { password });

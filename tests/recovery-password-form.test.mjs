@@ -175,7 +175,7 @@ test("reset page verifies its session and waits for explicit password submission
 test("verified VIP email and invitation pass directly into the combined password and activation form", async () => {
   const destination = '/vip/invite/vip_' + 'b'.repeat(48);
   const fixture = await readyForm({ role: 'customer', storedSession: { ...session, account: { id: 'verified-guest', role: 'customer', email: 'stale@example.test' } }, search: '?setup=1&return_to=' + encodeURIComponent(destination) });
-  assert.equal(fixture.find(fixture.render(), 'h1').props.children, 'Finish your VIP setup');
+  assert.equal(fixture.find(fixture.render(), 'h1').props.children, 'Create your VIP account');
   const setup = fixture.find(fixture.render(), 'vip-password-setup');
   assert.equal(setup.props.account.email, 'confirmed@example.test'); assert.equal(setup.props.account.id, 'verified-guest');
   assert.equal(setup.props.account.passwordSetupComplete, false); assert.equal(setup.props.invitationPath, destination);

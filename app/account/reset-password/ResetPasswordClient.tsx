@@ -154,7 +154,7 @@ export default function ResetPasswordClient() {
             {phase === "complete" ? <path d="m6 12 4 4 8-8" /> : <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" /></>}
           </svg>
         </span>
-        <h1>{vipSetupAccount ? "Finish your VIP setup" : phase === "complete" ? alreadySetup ? "Password already set" : isSetup ? "Password saved" : "Password updated" : isSetup ? "Set your password" : "Reset your password"}</h1>
+        <h1>{vipSetupAccount ? vipSetupAccount.passwordSetupComplete ? "Enter your VIP account" : "Create your VIP account" : phase === "complete" ? alreadySetup ? "Password already set" : isSetup ? "Password saved" : "Password updated" : isSetup ? "Set your password" : "Reset your password"}</h1>
         {phase === "loading" ? <p role="status">Checking your secure link…</p> : null}
         {phase === "unavailable" ? <>
           <p role="alert">We couldn&apos;t check your reset session right now. Please check your connection and try again.</p>

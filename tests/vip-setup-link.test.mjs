@@ -71,7 +71,7 @@ test('modified, malformed and plain invitation tokens cannot authorize a session
 
 test('the reusable credential is sent only to the invited inbox and never returned by send', async () => {
   const f = fixture();
-  assert.equal(await f.send(), undefined); assert.equal(f.emails.length, 1);
+  assert.equal(await f.send(), true); assert.equal(f.emails.length, 1);
   const email = f.emails[0]; assert.equal(email.to, f.user.email); assert.match(email.text, /7-day window/);
   assert.equal(email.subject, 'Confirm your email for MyDancr VIP');
   assert.match(email.html, />Confirm email<\/a>/);
@@ -85,7 +85,7 @@ test('the reusable credential is sent only to the invited inbox and never return
   assert.equal(f.calls.some(c => c[0] === 'generate'), false);
 });
 
-test('only consented start can create an identity; resume and non-guest accounts cannot', async () => {
+test('public start requires signup metadata to create an identity; resume and non-guest accounts cannot', async () => {
   const fresh = fixture({ missingProfile: true, account: null });
   await fresh.send(); assert.equal(fresh.emails.length, 0); assert.equal(fresh.calls.length, 0);
   await fresh.send({ role: 'customer', user_terms_intent: 'terms-intent' });

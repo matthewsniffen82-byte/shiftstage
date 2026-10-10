@@ -4,8 +4,9 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { getVenueVipState, requireVipManager, newVipToken, VIP_HEADERS, vipError, vipTokenDigest, vipId, vipNickname } from "@/src/lib/dancr/vip";
-import { deliverNotificationRows, sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
+import { deliverNotificationRows } from "@/src/lib/dancr/notification-delivery";
 import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
+import { sendVipInvitationEmail } from "@/src/lib/dancr/vip-setup-link";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -45,9 +46,9 @@ export async function POST(request: Request) {
       invitationUrl = `${publicAppUrl()}/vip/invite/${encodeURIComponent(token)}`;
       try {
         if (body.action !== "share_invitation") {
-          const delivery = await sendTransactionalEmail({ to: email, subject: `Your private VIP invitation to ${access.venueName}`,
-            text: `You have been invited to VIP access at ${access.venueName}.\n\nCreate an account or sign in with this email, then choose your dancers and request a visit:\n${invitationUrl}\n\nThis private invitation expires in 7 days. Requests are subject to venue confirmation and dancer availability.` });
-          emailDelivered = delivery.delivered;
+          // Only the invited inbox receives the signed confirmation credential.
+          // The manager's copy/share URL must never grant a guest session.
+          emailDelivered = await sendVipInvitationEmail(admin, { invitation: token, email, venueName: access.venueName });
         }
       } catch { console.warn("VIP_INVITATION_EMAIL_UNAVAILABLE"); }
     }

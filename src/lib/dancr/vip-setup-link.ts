@@ -42,34 +42,49 @@ export function readVipSetupToken(value: unknown, now = Date.now()): SetupClaim 
   return claim;
 }
 
-export async function sendVipSetupLink(admin: SupabaseClient, input: { invitation: string; email: string; expiresAt: string; metadata?: Record<string, unknown> }) {
+// The venue's first email is itself the confirmation email. Provision only an
+// unfinished identity; guest consent is collected on the password form and
+// recorded by VIP activation, never inferred from the manager sending an invite.
+export async function sendVipInvitationEmail(admin: SupabaseClient, input: { invitation: string; email: string; venueName: string }) {
+  const invitation = await resolveVipInvitation(admin, input.invitation);
+  return sendVipSetupLink(admin, { ...input, expiresAt: invitation.expiresAt,
+    metadata: { role: "customer", display_name: input.email.split("@")[0], city: "Las Vegas" } });
+}
+
+export async function sendVipSetupLink(admin: SupabaseClient, input: { invitation: string; email: string; expiresAt: string; metadata?: Record<string, unknown>; venueName?: string }) {
   const lookup = await admin.from("app_users").select("id,role,account_state").eq("email", input.email).maybeSingle();
   if (lookup.error) throw lookup.error;
-  if (lookup.data && (lookup.data.role !== "customer" || lookup.data.account_state !== "active")) return;
+  if (lookup.data && (lookup.data.role !== "customer" || lookup.data.account_state !== "active")) return false;
   let user: User | null;
   if (lookup.data) {
     const result = await admin.auth.admin.getUserById(lookup.data.id);
     if (result.error) throw result.error;
     user = result.data.user;
   } else {
-    if (!input.metadata) return; // Resume never creates an account.
+    if (!input.metadata) return false; // Resume never creates an account.
     const result = await admin.auth.admin.generateLink({ type: "magiclink", email: input.email, options: { data: input.metadata } });
     if (result.error) throw result.error;
     user = result.data.user;
   }
-  if (!user || user.email?.toLowerCase() !== input.email || ["admin", "venue", "dancer"].includes(user.user_metadata?.role)) return;
+  if (!user || user.email?.toLowerCase() !== input.email || ["admin", "venue", "dancer"].includes(user.user_metadata?.role)) return false;
   const account = await getAccountByUserId(admin, user.id);
-  if (account && (account.role !== "customer" || account.accountState !== "active")) return;
+  if (account && (account.role !== "customer" || account.accountState !== "active")) return false;
   const token = createVipSetupToken(input.invitation, user, input.expiresAt);
   const url = `${publicAppUrl()}/auth/vip-setup#link=${token}`;
-  const instructions = "Confirm your email to open your VIP account. Your email will already be filled in. Create your password, then choose Create password & enter VIP.";
+  const heading = input.venueName ? `You’re invited to ${input.venueName}` : "Confirm your email";
+  const instructions = "Confirm your email below. Your email will already be filled in. Choose your password, then click Create account to enter your VIP dashboard.";
   const validity = "You can reopen this link during your invitation’s 7-day window until you have saved a password and successfully signed in. Resending does not extend the deadline.";
   const expiry = `Expires: ${new Date(input.expiresAt).toUTCString()}. A revoked or replaced invitation stops working immediately.`;
   const privacy = "Keep this private link to yourself. If you did not request it, ignore this email.";
-  const delivery = await sendTransactionalEmail({ to: input.email, subject: "Confirm your email for MyDancr VIP",
-    text: `Confirm email:\n${url}\n\n${instructions}\n\n${validity}\n\n${expiry}\n\n${privacy}`,
-    html: `<h1>Confirm your email</h1><p>${instructions.replace(" & ", " &amp; ")}</p><p><a href="${url}" style="display:inline-block;padding:14px 24px;border-radius:12px;background:#29009b;color:#fff;font-weight:700;text-decoration:none">Confirm email</a></p><p>${validity}</p><p>${expiry}</p><p>${privacy}</p>` });
+  const delivery = await sendTransactionalEmail({ to: input.email, subject: input.venueName ? `Your private VIP invitation to ${input.venueName}` : "Confirm your email for MyDancr VIP",
+    text: `Confirm email:\n${url}\n\n${heading}\n\n${instructions}\n\n${validity}\n\n${expiry}\n\n${privacy}`,
+    html: `<h1>${escapeHtml(heading)}</h1><p>${instructions}</p><p><a href="${escapeHtml(url)}" style="display:inline-block;padding:14px 24px;border-radius:12px;background:#29009b;color:#fff;font-weight:700;text-decoration:none">Confirm email</a></p><p>${validity}</p><p>${expiry}</p><p>${privacy}</p>` });
   if (!delivery.delivered) throw new PublicApiError("UNAVAILABLE", "We couldn’t send your confirmation email. Please try again shortly.", 503);
+  return true;
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]!);
 }
 
 async function verifyLiveSetup(admin: SupabaseClient, claim: SetupClaim) {

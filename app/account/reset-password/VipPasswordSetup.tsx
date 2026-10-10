@@ -103,6 +103,6 @@ export default function VipPasswordSetup({ account, invitationPath }: { account:
     <label className="vip-setup-consent"><input type="checkbox" checked={consent} required disabled={busy} aria-describedby="vip-setup-notice" onChange={event => setConsent(event.target.checked)} /><span>I’m 18 or older and agree to the <a href={USER_TERMS_HREF} target="_blank" rel="noreferrer">User Terms</a> and <a href={ACCESS_TERMS_HREF} target="_blank" rel="noreferrer">VIP &amp; Table Access Terms</a>.</span></label>
     {error && <p className="reset-error" role="alert">{error}</p>}
     {progress && <p role="status">{progress}</p>}
-    <button type="submit" className="account-form-primary" data-sign-in-action aria-busy={busy} disabled={busy}>{busy ? "Please wait…" : signedIn ? "Enter VIP" : passwordSaved ? "Sign in & enter VIP" : "Create password & enter VIP"}</button>
+    <button type="submit" className="account-form-primary" data-sign-in-action aria-busy={busy} disabled={busy}>{busy ? "Please wait…" : signedIn ? "Enter VIP" : passwordSaved ? "Sign in & enter VIP" : "Create account"}</button>
   </form>;
 }
