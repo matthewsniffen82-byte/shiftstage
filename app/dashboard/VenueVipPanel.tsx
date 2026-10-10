@@ -64,13 +64,16 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
     event.preventDefault(); setError(""); setEditingMember(null); void load(page, searchInput.trim(), 0);
   }
   return <div className="venue-vip">
-    <div className="vip-row"><div><span className="vip-eyebrow">PRIVATE GUEST ACCESS</span><h2 id="venue-vip-heading">VIP invitations & requests</h2></div><button type="button" disabled={busy || loading} onClick={() => { setError(""); void load(page, memberSearch, memberPage); }}>{loading ? "Refreshing…" : "Refresh VIP"}</button></div>
-    <p>Invite a guest privately. They can request a date, time, and dancers from your working or affiliated roster. Your owner and managers receive each request.</p>
-    <form className="vip-invite-form" onSubmit={invite}><label>VIP email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send private invitation"}</button></form>
-    <small>Links expire after 7 days and can only be accepted by the invited email. Sending a new invitation replaces any unused link for that email.</small>
+    <div className="vip-row venue-vip-header"><div><span className="vip-eyebrow">PRIVATE GUEST ACCESS</span><h2 id="venue-vip-heading">VIP invitations & requests</h2></div><button type="button" aria-label="Refresh VIP access" disabled={busy || loading} onClick={() => { setError(""); void load(page, memberSearch, memberPage); }}>{loading ? "Refreshing…" : "Refresh"}</button></div>
+    <div className="venue-vip-invite">
+      <p>Invite guests to request a visit and dancers from your roster. Owners and managers review each request.</p>
+      <form className="vip-invite-form" onSubmit={invite}><label>VIP email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send invitation"}</button></form>
+      <small>Links expire in 7 days and only work for the invited email. Reinviting replaces that email’s unused link.</small>
+    </div>
     {status && <p className="vip-feedback" role="status">{status}</p>}{error && <p className="vip-feedback vip-error" role="alert">{error}</p>}
     {link && <div className="vip-link-result"><label>Private invitation link<input readOnly value={link} onFocus={event => event.target.select()} /></label><button type="button" onClick={() => { void navigator.clipboard.writeText(link).then(() => setStatus("Private link copied.")).catch(() => setStatus("Select and copy the link above.")); }}>Copy private link</button></div>}
     {!state ? <p role="status">{loading ? "Loading VIP access…" : "Refresh to load VIP access."}</p> : <>
+      <div className="venue-vip-access">
       <details><summary>Pending invitations ({state.invitations.length})</summary><ul className="vip-access-list">{state.invitations.map(invitation => <li key={invitation.id}><span>{invitation.email}<small>Expires {new Date(invitation.expires_at).toLocaleDateString()}</small></span><button type="button" disabled={busy} onClick={() => void action({ action: "revoke_invitation", id: invitation.id }, "Invitation revoked.")}>Revoke invitation</button></li>)}</ul>{!state.invitations.length && <p>No pending invitations.</p>}</details>
       <details><summary>Active VIPs{!memberSearch ? ` (${state.memberCount})` : ""}</summary>
         <form className="vip-member-search" role="search" aria-label="Search VIP accounts" onSubmit={searchMembers}>
@@ -97,10 +100,13 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
           {state.membersHasMore && <button type="button" disabled={busy || loading} onClick={() => { setEditingMember(null); void load(page, memberSearch, memberPage + 1); }}>More VIPs</button>}
         </div>
       </details>
-      <div className="vip-row"><h3>Visit requests</h3><button type="button" aria-pressed={pendingOnly} onClick={() => setPendingOnly(value => !value)}>{pendingOnly ? "Show all statuses" : "Show pending on this page"}</button></div>
-      <small>Confirm only after checking dancer availability. Dates and times are shown in the venue’s timezone.</small>
+      </div>
+      <div className="venue-vip-requests">
+      <div className="vip-row"><h3>Visit requests</h3><button type="button" aria-pressed={pendingOnly} onClick={() => setPendingOnly(value => !value)}>{pendingOnly ? "All statuses" : "Pending on this page"}</button></div>
+      <small>Check dancer availability before confirming. All times are local to your venue.</small>
       <VipRequests requests={state.requests.filter(request => !pendingOnly || request.status === "pending")} onReview={review} busy={busy} />
       <div className="vip-actions">{page > 0 && <button type="button" disabled={busy || loading} onClick={() => void load(page - 1, memberSearch, memberPage)}>Newer requests</button>}{state.hasMore && <button type="button" disabled={busy || loading} onClick={() => void load(page + 1, memberSearch, memberPage)}>Older requests</button>}</div>
+      </div>
     </>}
   </div>;
 }

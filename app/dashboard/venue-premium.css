@@ -192,6 +192,31 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-alert-controls > summary::after { content: "+"; font-size: 16px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-alert-controls[open] > summary::after { content: "−"; }
 
+/* Keep private guest access compact without shrinking its touch targets. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip { gap: 12px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(h2, h3, p) { margin: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-row { gap: 8px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-header h2 { font-size: 18px !important; margin-top: 3px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(.venue-vip-invite, .venue-vip-access, .venue-vip-requests) { display: grid; gap: 8px; min-width: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(.vip-invite-form, .vip-request-list, .vip-link-result) { margin: 0; gap: 8px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip label { gap: 5px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-access { align-items: start; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip details { min-width: 0; margin: 0; padding: 0 10px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip summary { min-height: 44px; align-content: center; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip details[open] { padding-bottom: 10px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-member-search { margin-top: 4px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-access-list { margin: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-access-list li { padding: 8px 0; gap: 8px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-actions:empty { display: none; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-requests { padding-top: 12px; border-top: 1px solid var(--vip-line); }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-empty { padding: 12px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-request { display: grid; align-content: start; gap: 10px; padding: 14px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-review { margin-top: 0; padding-top: 10px; gap: 8px; }
+@media (min-width: 680px) {
+  body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-access { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* Uniform neutral controls, with violet reserved for the next primary action. */
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(button, .primary-link, .dashboard-primary-action, .ir-actions a):not(.dashboard-close, [role="switch"], .ir-profile-link) { font-size: 13px !important; font-weight: 600 !important; border-radius: 10px !important; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-refresh-control button, .venue-utility)::before { inset-block: 0 !important; }
