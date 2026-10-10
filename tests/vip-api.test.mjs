@@ -24,7 +24,7 @@ function compile(file, dependencies = {}, globals = {}) {
 }
 const service = compile("src/lib/dancr/vip.ts", { "../api-error-policy": { PublicApiError } });
 const termsService = compile("src/lib/dancr/user-terms.ts", { "../api-error-policy": { PublicApiError }, "./user-terms-version": userTerms });
-function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false } = {}) {
+function fixture({ denied = false, rpcError = null, deliveryFailure = false, invitation = false, activation = false, pendingInvitation = true } = {}) {
   const calls = [];
   const dependencies = {
     "next/server": { NextResponse: Response },
@@ -38,8 +38,11 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
       calls.push(["auth", access]); if (denied) throw new PublicApiError("FORBIDDEN", "denied", 403);
       return { user: { id: id(5) }, session: { accessToken: "rotated" } };
     } },
-    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ rpc: async (name, args) => {
-      calls.push(["rpc", name, args]); return { data: { request: { id: id(90) }, notifications: [{ recipient_id: id(1) }] }, error: rpcError };
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from: table => {
+      const steps = []; calls.push(["lookup", table, steps]);
+      const chain = { select: () => chain, eq: (key, value) => { steps.push([key, value]); return chain; }, is: (key, value) => { steps.push([key, value]); return chain; }, gt: (key, value) => { steps.push([key, value]); return chain; }, maybeSingle: async () => ({ data: pendingInvitation ? { email: "invited@example.test" } : null }) }; return chain;
+    }, rpc: async (name, args) => {
+      calls.push(["rpc", name, args]); return { data: { id: id(91), request: { id: id(90) }, notifications: [{ recipient_id: id(1) }] }, error: rpcError };
     } }) },
     "@/src/lib/dancr/vip": { ...service, requireVipManager: async () => ({ venueId: id(20), venueName: "Private Club" }) },
     "@/src/lib/dancr/public-app-url": { publicAppUrl: () => "https://example.test" },
@@ -95,6 +98,22 @@ test("private invitation email uses the configured origin, reports failed delive
   const rpc = calls.find(call => call[0] === "rpc"); assert.equal(rpc[2].p_venue, id(20));
   assert.match(rpc[2].p_data.digest, /^[a-f0-9]{64}$/); assert.equal(rpc[2].p_data.token, undefined);
   assert.equal(calls.find(call => call[0] === "email")[1].to, "guest@example.test");
+});
+
+test("resending or sharing a pending invitation uses its authorized recipient and replaces the token", async () => {
+  for (const action of ['resend_invitation', 'share_invitation']) {
+    const { route, calls } = fixture({ invitation: true });
+    const response = await route.POST(request({ action, id: id(45), email: 'attacker@example.test', venueId: id(99) }));
+    const result = await response.json(); assert.equal(response.status, 200); assert.equal(result.invitationId, id(91));
+    const lookup = calls.find(c => c[0] === 'lookup');
+    assert.ok(lookup[2].some(([key, value]) => key === 'venue_id' && value === id(20)));
+    assert.ok(lookup[2].some(([key, value]) => key === 'accepted_at' && value === null));
+    const rpc = calls.find(c => c[0] === 'rpc'); assert.equal(rpc[2].p_action, 'invite'); assert.equal(rpc[2].p_data.email, 'invited@example.test');
+    assert.equal(calls.some(c => c[0] === 'email'), action === 'resend_invitation');
+  }
+  const absent = fixture({ invitation: true, pendingInvitation: false });
+  assert.equal((await absent.route.POST(request({ action: 'share_invitation', id: id(45) }))).status, 404);
+  assert.equal(absent.calls.some(c => c[0] === 'rpc' || c[0] === 'email'), false);
 });
 test("invitation tokens use high-entropy secrets and deterministic digests, and invalid tokens are rejected", () => {
   const token = service.newVipToken(); const other = service.newVipToken();

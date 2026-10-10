@@ -1,3 +1,4 @@
+import * as vipEntry from '../src/lib/dancr/vip-entry.ts';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -15,6 +16,7 @@ const savedSession = role => ({ accessToken: 'existing-access', refreshToken: 'e
 function callbackRoute({ providerError = null, freshRole = null } = {}) {
   const exports = {};
   const dependencies = {
+    "@/src/lib/dancr/vip-entry": vipEntry,
     '@/src/lib/security/root-content-security-policy.mjs': { createRootContentSecurityPolicy },
     '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: sessionKey },
     '@/src/lib/dancr/safe-return-path': { safeLocalReturnPath },
@@ -89,6 +91,22 @@ test('a provider rejecting an already-used token still preserves a valid browser
   await f.completion;
   assert.deepEqual(f.navigation, ['/dashboard/customer']);
   assert.equal(f.status, 200);
+});
+
+test('an already-confirmed guest opening the VIP email again still reaches their invitation', async () => {
+  const destination = '/vip/invite/vip_' + 'a'.repeat(48);
+  const f = await callbackFixture({ query: '?return_to=' + encodeURIComponent(destination) + '&error_code=otp_expired' });
+  await f.completion;
+  assert.deepEqual(f.navigation, [destination]);
+});
+
+test('an expired VIP confirmation keeps a signed-out guest on the invitation path', async () => {
+  const destination = '/vip/invite/vip_' + 'a'.repeat(48);
+  const f = await callbackFixture({ stored: null, query: '?return_to=' + encodeURIComponent(destination) + '&error_code=otp_expired' });
+  await f.completion;
+  assert.equal(f.node('confirmationError').hidden, false);
+  const errorPanel = f.html.match(/<main id="confirmationError"[\s\S]*?<\/main>/)[0];
+  assert.ok(errorPanel.includes(`href="${destination}"`));
 });
 
 test('a signed-out reused link shows current sign-in links and does not claim verification succeeded', async () => {

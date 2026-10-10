@@ -30,7 +30,7 @@ export const state = (venueId = venues[0].id, changes = {}) => ({ venues, select
   summary: { pending: 2, upcoming: 0, nextVisit: null }, requestCount: 0, ...changes });
 
 // Component events with in-memory responses only: no browser journeys, server, or network.
-export function dashboardHarness({ hash = '', request = async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id) } = {}) {
+export function dashboardHarness({ hash = '', initialVenueId = '', request = async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id) } = {}) {
   const slots = [], listeners = new Map(), calls = [], writes = [];
   let cursor = 0, dirty = true, effects = [], tree, currentAccount = guest;
   const react = {
@@ -57,7 +57,7 @@ export function dashboardHarness({ hash = '', request = async url => state(new U
     '@/app/dashboard/dashboard-session': { readSession: () => ({ account: currentAccount }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '@/src/lib/dancr/vip-dashboard': dashboard, './VipRequests': { __esModule: true, default: RequestCards },
   }, { window }).default;
-  const props = { account: guest, signingOut: false, onSignOut: async () => {} };
+  const props = { initialVenueId, account: guest, signingOut: false, onSignOut: async () => {} };
   function render() {
     dirty = true;
     for (let i = 0; dirty && i < 30; i++) { dirty = false; cursor = 0; effects = []; tree = Component(props); effects.forEach(cb => cb()); }

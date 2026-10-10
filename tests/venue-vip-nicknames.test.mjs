@@ -93,6 +93,40 @@ test('nickname saves do not update a different signed-in account after a delayed
   ui.unmount();
 });
 
+test('pending requests reset request pagination and remain selected while searching VIP members', async () => {
+  const ui = panelHarness(); await ui.settle();
+  ui.button('Older requests').props.onClick(); await ui.settle();
+  ui.button('Pending requests').props.onClick(); await ui.settle();
+  let params = new URL(ui.calls.at(-1).url, 'https://example.test').searchParams;
+  assert.equal(params.get('status'), 'pending'); assert.equal(params.get('page'), '0');
+  ui.input('search').props.onChange({ target: { value: 'Jordan' } }); ui.render();
+  ui.form('vip-member-search').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  params = new URL(ui.calls.at(-1).url, 'https://example.test').searchParams;
+  assert.equal(params.get('status'), 'pending'); assert.equal(params.get('memberSearch'), 'Jordan');
+  ui.button('All statuses').props.onClick(); await ui.settle();
+  assert.equal(new URL(ui.calls.at(-1).url, 'https://example.test').searchParams.get('status'), 'all'); ui.unmount();
+});
+
+test('pending invitation actions expose the replacement link and preserve the new invitation identity', async () => {
+  let invitation = { id: 'old-invitation', email: 'guest@example.test', expires_at: '2027-01-01' };
+  const ui = panelHarness(async (_url, options) => {
+    if (options.method === 'POST') {
+      const body = JSON.parse(options.body); assert.equal(body.id, invitation.id);
+      invitation = { ...invitation, id: 'new-invitation' };
+      return { invitationId: invitation.id, invitationUrl: 'https://example.test/vip/invite/new-link', emailDelivered: true };
+    }
+    return { ...initial, invitations: [invitation] };
+  });
+  await ui.settle(); ui.button('New share link').props.onClick(); await ui.settle();
+  assert.equal(JSON.parse(ui.calls.find(c => c.options.method === 'POST').options.body).action, 'share_invitation');
+  assert.match(ui.html(), /New private link ready to share/); assert.match(ui.html(), /vip\/invite\/new-link/);
+  assert.equal(ui.nodes().filter(n => n.type === 'button' && n.props.children === 'Share invitation').length, 2);
+  ui.button('Resend email').props.onClick(); await ui.settle();
+  const body = JSON.parse(ui.calls.filter(c => c.options.method === 'POST').at(-1).options.body);
+  assert.equal(body.id, 'new-invitation'); assert.equal(body.action, 'resend_invitation'); assert.match(ui.html(), /Invitation emailed/);
+  ui.unmount();
+});
+
 test('venue VIP reads forward bounded search to the authorized venue and propagate database failures', async () => {
   class PublicApiError extends Error { constructor(code, message, status) { super(message); this.code = code; this.status = status; } }
   const service = compileVip('src/lib/dancr/vip.ts', {

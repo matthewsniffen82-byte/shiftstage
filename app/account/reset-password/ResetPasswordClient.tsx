@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { PasswordField } from "@/app/components/PasswordField";
+import { vipReturnPath } from "@/src/lib/dancr/vip-entry";
 import {
   readBrowserAuthSession,
   persistRefreshedBrowserAuthSession,
@@ -19,6 +20,7 @@ export default function ResetPasswordClient() {
   const [destination, setDestination] = useState("/account");
   const [attempt, setAttempt] = useState(0);
   const [completionWarning, setCompletionWarning] = useState("");
+  const [vipReturn, setVipReturn] = useState("");
   const inFlight = useRef(false);
   const saveController = useRef<AbortController | null>(null);
   const verifiedAccount = useRef("");
@@ -27,6 +29,8 @@ export default function ResetPasswordClient() {
     const controller = new AbortController();
     let disposed = false;
     const session = readBrowserAuthSession();
+    const returnTo = vipReturnPath(new URLSearchParams(window.location.search).get("return_to"));
+    setVipReturn(returnTo);
     if (new URLSearchParams(window.location.search).get("error") || !session?.accessToken) {
       setPhase("expired");
       return;
@@ -52,7 +56,7 @@ export default function ResetPasswordClient() {
       const verified = readBrowserAuthSession();
       verifiedAccount.current = String(verified?.account?.id || verified?.accessToken || "");
       const role = data.account?.role;
-      setDestination(role === "admin" ? "/admin" : ["dancer", "customer", "venue"].includes(role) ? `/dashboard/${role}` : "/account");
+      setDestination(role === "customer" && returnTo ? returnTo : role === "admin" ? "/admin" : ["dancer", "customer", "venue"].includes(role) ? `/dashboard/${role}` : "/account");
       setPhase("ready");
     }).catch(() => {
       if (!disposed) setPhase("unavailable");
@@ -136,7 +140,7 @@ export default function ResetPasswordClient() {
         </> : null}
         {phase === "expired" ? <>
           <p role="alert">This reset link is unavailable or has expired. Request a new email using Forgot password.</p>
-          <a className="account-form-primary" href="/account?mode=login">Request a new reset link</a>
+          <a className="account-form-primary" href={vipReturn || "/account?mode=login"}>Request a new reset link</a>
         </> : null}
         {phase === "ready" ? <form onSubmit={submit}>
           <p>Choose a new password to finish resetting your account.</p>
@@ -149,9 +153,9 @@ export default function ResetPasswordClient() {
         {phase === "complete" ? <>
           <p className="account-form-confirmation" role="status">Your new password has been saved.</p>
           {completionWarning ? <p role="alert">{completionWarning}</p> : null}
-          <a className="account-form-primary" href={destination}>Continue to your account</a>
+          <a className="account-form-primary" href={destination}>{vipReturn && destination === vipReturn ? "Continue to VIP access" : "Continue to your account"}</a>
         </> : null}
-        {phase !== "complete" && <a className="account-form-back" href="/account?mode=login">Back to sign in</a>}
+        {phase !== "complete" && <a className="account-form-back" href={vipReturn || "/account?mode=login"}>Back to sign in</a>}
       </section>
       <style>{`
         .reset-page{min-height:100dvh;box-sizing:border-box;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(circle at 50% 10%,#221143,transparent 60%),#050507;color:#f7f2ff;font-family:Arial,sans-serif}

@@ -2,6 +2,7 @@ import { provisionAppAccount } from "@/src/lib/dancr/account-provisioning";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
 import { BROWSER_AUTH_SESSION_KEY } from "@/src/lib/dancr/browser-session";
 import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
+import { vipReturnPath } from "@/src/lib/dancr/vip-entry";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { createRootContentSecurityPolicy } from "@/src/lib/security/root-content-security-policy.mjs";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -36,7 +37,8 @@ export async function GET(request: Request) {
   const role = callbackRole(request, callbackSession);
   const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback(request);
 
-  const html = callbackHtml(callbackSession, redirectPath, showDancerConfirmation, isPasswordResetCallback(request), unavailable);
+  const html = callbackHtml(callbackSession, redirectPath, showDancerConfirmation, isPasswordResetCallback(request), unavailable,
+    vipReturnPath(new URL(request.url).searchParams.get("vip_return_to")));
   return new Response(html, {
     status: unavailable ? 503 : 200,
     headers: {
@@ -128,6 +130,7 @@ function callbackHtml(
   showDancerConfirmation: boolean,
   passwordReset: boolean,
   unavailable: boolean,
+  vipRecoveryReturn: string,
 ) {
   const sessionJson = JSON.stringify(callbackSession || null).replace(/</g, "\\u003c");
   const redirectJson = JSON.stringify(redirectPath).replace(/</g, "\\u003c");
@@ -169,14 +172,14 @@ function callbackHtml(
       <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></svg></span>
       <h1>Check your other inbox</h1>
       <p>Your email change still needs confirmation. Open the links sent to both your current and new email addresses. Your dashboard will keep showing your current email until both are confirmed.</p>
-      <a href="/?auth=login">Continue to sign in</a>
+      <a href="${escapeHtml(vipReturnPath(redirectPath) || vipRecoveryReturn || "/?auth=login")}">Continue to sign in</a>
     </main>
     <main id="confirmationError" class="dancr-status-card" hidden>
       <p class="eyebrow">MyDancr</p>
       <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 8v4m0 4h.01" /></svg></span>
       <h1>Confirmation link unavailable</h1>
       <p>This link is invalid, already used, or has expired. Try signing in if you already confirmed your email, or request a new email.</p>
-      <a href="/?auth=login">Continue to sign in</a>
+      <a href="${escapeHtml(vipReturnPath(redirectPath) || vipRecoveryReturn || "/?auth=login")}">Continue to sign in</a>
       ${redirectPath.startsWith("/dashboard/venue") ? '<a href="/venue/confirm-email">Request a new confirmation email</a>' : ""}
     </main>
     <main id="openingDancr" class="dancr-status-card">
@@ -191,12 +194,14 @@ function callbackHtml(
       <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 11a9 9 0 0 1 16 0M8 14a5 5 0 0 1 8 0M12 18h.01M4 4l16 16" /></svg></span>
       <h1>Unable to connect</h1>
       <p id="temporaryErrorMessage">We couldn't verify this link right now. Check your connection and try opening the email link again. If the link was already used, sign in or request a new email.</p>
-      <a href="/?auth=login">Go to sign in</a>
+      <a href="${escapeHtml(vipReturnPath(redirectPath) || vipRecoveryReturn || "/?auth=login")}">Go to sign in</a>
     </main>
     <script>
       const serverSession = ${sessionJson};
       const sessionStorageKey = ${sessionKeyJson};
       const redirectTo = ${redirectJson};
+      const vipEntryReturn = ${JSON.stringify(vipReturnPath(redirectPath))};
+      const vipRecoveryReturn = ${JSON.stringify(vipRecoveryReturn)};
       const showDancerConfirmation = ${dancerConfirmationJson};
       const fragmentParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
       const queryParams = new URLSearchParams(window.location.search);
@@ -320,7 +325,7 @@ function callbackHtml(
 
         if (resumedExistingSession) {
           const role = session.account.role;
-          const destination = role === "admin" ? "/admin"
+          const destination = role === "customer" && vipEntryReturn ? vipEntryReturn : role === "admin" ? "/admin"
             : ["customer", "dancer", "venue"].includes(role) ? "/dashboard/" + role : "/?auth=login";
           window.location.replace(destination);
           return;
@@ -343,6 +348,7 @@ function callbackHtml(
         if (isPasswordReset) {
           redirectUrl.pathname = "/account/reset-password";
           redirectUrl.search = "";
+          if (vipRecoveryReturn) redirectUrl.searchParams.set("return_to", vipRecoveryReturn);
           if (!session?.accessToken) {
             // The reset page rejects this link without clearing an unrelated account.
             redirectUrl.searchParams.set("error", "expired");

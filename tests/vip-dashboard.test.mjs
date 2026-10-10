@@ -20,6 +20,8 @@ function database({ failure = null } = {}) {
       let result = table === 'venue_vip_members' ? venues.map(v => ({ user_id: guest.id, active: true, display_name: v.guestName, nickname: 'Private manager nickname', venue: { ...v, is_active: true, owner: { role: 'venue', account_state: 'active' } } })) : [...rows];
       let options, range, limit;
       const chain = {
+        in(key, values) { result = result.filter(row => values.includes(row[key])); call.steps.push(["in", key, values]); return chain; },
+        is(key, value) { result = result.filter(row => row[key] === value); return chain; },
         select(columns, nextOptions = {}) { options = nextOptions; call.steps.push(['select', columns, options]); return chain; },
         eq(key, value) { result = result.filter(row => row[key] === value); call.steps.push(['eq', key, value]); return chain; },
         gt(key, value) { result = result.filter(row => row[key] > value); call.steps.push(['gt', key, value]); return chain; },
@@ -96,6 +98,13 @@ test('VIP sections retain independent venue drafts, support deep links, and rese
   switchVenue(venues[0].id); await ui.settle(); assert.deepEqual(ui.planner().props.draft, draft);
   assert.equal(ui.writes.at(-1), '#vip-plan'); ui.unmount();
 });
+
+test('activation opens the invited venue planner even when the guest has an older membership', async () => {
+  const ui = dashboardHarness({ hash: '#vip-plan', initialVenueId: venues[1].id }); await ui.settle();
+  assert.equal(ui.planner().props.venue.id, venues[1].id);
+  assert.ok(ui.calls.every(call => new URL(call.url, 'https://example.test').searchParams.get('venueId') === venues[1].id));
+  ui.unmount();
+});
 test('failed submissions preserve the draft and retry identity; successful retry opens pending requests and clears it', async () => {
   let attempts = 0;
   const ui = dashboardHarness({ request: async (_url, options) => {
@@ -140,10 +149,12 @@ test('switching venues after an uncertain submission preserves each venue’s re
 });
 test('planner labels current availability honestly, shows venue-local time, and prevents adding an eleventh dancer', () => {
   const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers }).default;
-  const roster = Array.from({ length: 11 }, (_, i) => ({ id: String(i), stage_name: `Dancer ${i}`, working_now: i === 0 }));
+  const roster = Array.from({ length: 11 }, (_, i) => ({ id: String(i), stage_name: `Dancer ${i}`, working_now: i === 0, photoUrl: i === 0 ? '/api/media/dancer-photo?path=approved.jpg' : null }));
   const html = renderToStaticMarkup(React.createElement(Planner, { venue: venues[0], dancers: roster, draft: { ...helpers.emptyVipDraft(), selected: roster.slice(0, 10).map(d => d.id) }, onChange() {}, onSubmit: async () => {}, busy: false }));
   assert.match(html, /America\/Los Angeles time/); assert.match(html, /Affiliated · off shift/);
   assert.match(html, /Availability for your visit is confirmed by the venue/);
   assert.equal((html.match(/type="checkbox" disabled=""/g) || []).length, 1);
   assert.match(html, /aria-label="Remove Dancer 0 from request"/);
+  assert.match(html, /src="\/api\/media\/dancer-photo\?path=approved.jpg"/);
+  assert.match(html, /loading="lazy"/); assert.equal((html.match(/<img /g) || []).length, 1);
 });

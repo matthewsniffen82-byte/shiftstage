@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { apiError } from "@/src/lib/api";
+import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -27,22 +27,32 @@ export async function POST(request: Request) {
       if (error) throw error;
       return NextResponse.json({ ok: true, member: data, session }, { headers: VIP_HEADERS });
     }
-    const token = body.action === "invite" ? newVipToken() : "";
-    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-    const { data, error } = await admin.rpc("vip_manage", { p_actor: user.id, p_venue: access.venueId, p_action: body.action,
+    const replacingInvitation = body.action === "resend_invitation" || body.action === "share_invitation";
+    const token = body.action === "invite" || replacingInvitation ? newVipToken() : "";
+    let email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    if (replacingInvitation) {
+      const previous = await admin.from("venue_vip_invitations").select("email").eq("id", vipId(body.id)).eq("venue_id", access.venueId)
+        .is("accepted_at", null).is("revoked_at", null).gt("expires_at", new Date().toISOString()).maybeSingle();
+      if (previous.error) throw previous.error;
+      if (!previous.data) throw new PublicApiError("NOT_FOUND", "This invitation is no longer pending. Refresh VIP access.", 404);
+      email = previous.data.email;
+    }
+    const { data, error } = await admin.rpc("vip_manage", { p_actor: user.id, p_venue: access.venueId, p_action: replacingInvitation ? "invite" : body.action,
       p_data: token ? { email, digest: vipTokenDigest(token) } : { id: body.id, status: body.status, expectedStatus: body.expectedStatus, note: body.note } });
     if (error) throw error;
     let invitationUrl = ""; let emailDelivered = false;
     if (token) {
       invitationUrl = `${publicAppUrl()}/vip/invite/${encodeURIComponent(token)}`;
       try {
-        const delivery = await sendTransactionalEmail({ to: email, subject: `Your private VIP invitation to ${access.venueName}`,
-          text: `You have been invited to VIP access at ${access.venueName}.\n\nCreate an account or sign in with this email, then choose your dancers and request a visit:\n${invitationUrl}\n\nThis private invitation expires in 7 days. Requests are subject to venue confirmation and dancer availability.` });
-        emailDelivered = delivery.delivered;
+        if (body.action !== "share_invitation") {
+          const delivery = await sendTransactionalEmail({ to: email, subject: `Your private VIP invitation to ${access.venueName}`,
+            text: `You have been invited to VIP access at ${access.venueName}.\n\nCreate an account or sign in with this email, then choose your dancers and request a visit:\n${invitationUrl}\n\nThis private invitation expires in 7 days. Requests are subject to venue confirmation and dancer availability.` });
+          emailDelivered = delivery.delivered;
+        }
       } catch { console.warn("VIP_INVITATION_EMAIL_UNAVAILABLE"); }
     }
     try { await deliverNotificationRows(admin, data.notifications || []); } catch { console.warn("VIP_OPTIONAL_NOTIFICATION_DELIVERY_FAILED"); }
-    return NextResponse.json({ ok: true, invitationUrl, emailDelivered, session }, { headers: VIP_HEADERS });
+    return NextResponse.json({ ok: true, invitationUrl, invitationId: token ? data.id : undefined, emailDelivered, session }, { headers: VIP_HEADERS });
   } catch (error) { return failure(error); }
 }
 function failure(error: unknown) {

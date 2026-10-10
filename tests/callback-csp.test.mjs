@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import * as vipEntry from "../src/lib/dancr/vip-entry.ts";
 import { createRootContentSecurityPolicy } from "../src/lib/security/root-content-security-policy.mjs";
 
 const source = readFileSync(new URL("../app/auth/callback/route.ts", import.meta.url), "utf8");
@@ -12,6 +13,7 @@ for (const mode of ["empty", "valid", "invalid", "outage"]) test(`${mode} callba
   const exports = {};
   const dependencies = Object.fromEntries([...source.matchAll(/from "([^"]+)"/g)].map(match => [match[1], {}]));
   Object.assign(dependencies, {
+    "@/src/lib/dancr/vip-entry": vipEntry,
     "@/src/lib/security/root-content-security-policy.mjs": { createRootContentSecurityPolicy },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
     "@/src/lib/dancr/safe-return-path": { safeLocalReturnPath: () => "" },

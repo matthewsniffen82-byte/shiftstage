@@ -1,3 +1,4 @@
+import * as vipEntry from '../src/lib/dancr/vip-entry.ts';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -25,6 +26,7 @@ async function callbackFixture(query, hash, valid = true, options = {}) {
   dependencies["@/src/lib/security/root-content-security-policy.mjs"] = { createRootContentSecurityPolicy };
   dependencies["@/src/lib/dancr/safe-return-path"] = { safeLocalReturnPath: (path) => path?.startsWith("/") && !path.startsWith("//") ? path : "" };
   dependencies["@/src/lib/dancr/browser-session"] = { BROWSER_AUTH_SESSION_KEY: "session" };
+  dependencies["@/src/lib/dancr/vip-entry"] = vipEntry;
   const callback = compile(callbackSource, dependencies);
   const response = await callback.GET(new Request(`https://mydancr.com/auth/callback${query}`));
   const html = await response.text();
@@ -44,6 +46,17 @@ async function callbackFixture(query, hash, valid = true, options = {}) {
 }
 
 const recoveryHash = "#access_token=test-access&refresh_token=test-refresh&type=recovery";
+test("VIP recovery carries the invitation through both query and fragment callbacks", async () => {
+  const destination = '/vip/invite/vip_' + 'a'.repeat(48);
+  for (const query of ['?type=recovery&', '?']) {
+    const result = await callbackFixture(query + 'vip_return_to=' + encodeURIComponent(destination), recoveryHash);
+    assert.deepEqual(result.navigations, ['/account/reset-password?return_to=' + encodeURIComponent(destination)]);
+  }
+  for (const destination of ['https://evil.test', '//evil.test', '/vip/invite/vip_short', '/admin', '/vip?return_to=//evil.test']) {
+    const result = await callbackFixture('?type=recovery&vip_return_to=' + encodeURIComponent(destination), recoveryHash);
+    assert.deepEqual(result.navigations, ['/account/reset-password']);
+  }
+});
 test("fragment-only recovery opens the password form instead of the dancer dashboard", async () => {
   const result = await callbackFixture("", recoveryHash);
   assert.deepEqual(result.navigations, ["/account/reset-password"]);
@@ -70,7 +83,7 @@ test("ordinary dancer confirmation retains its confirmation screen", async () =>
 
 const formSource = readFileSync(new URL("../app/account/reset-password/ResetPasswordClient.tsx", import.meta.url), "utf8");
 const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-policy.ts", import.meta.url), "utf8"), {});
-function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false, afterSessionRead, otherSessionsRevoked } = {}) {
+function formFixture({ succeeds = true, storedSession = session, search = "", getStatus = 200, networkFailure = false, hang = false, afterSessionRead, otherSessionsRevoked, role = "dancer" } = {}) {
   const states = [], effects = [], calls = [];
   let index = 0;
   const refs = [];
@@ -79,6 +92,7 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
     "@/src/lib/dancr/password-policy": passwordPolicy,
     "@/app/components/PasswordRequirements": { PasswordRequirements: () => null },
     "@/app/components/PasswordField": { PasswordField: () => null },
+    "@/src/lib/dancr/vip-entry": vipEntry,
     react: {
       useState: (initial) => { const slot = index++; if (!(slot in states)) states[slot] = initial; return [states[slot], (value) => { states[slot] = value; }]; },
       useRef: (initial) => refs[refIndex++] ||= { current: initial },
@@ -101,7 +115,7 @@ function formFixture({ succeeds = true, storedSession = session, search = "", ge
       if (networkFailure) throw new Error("Network unavailable");
       if (hang) return new Promise((_resolve, reject) => options.signal.addEventListener("abort", () => reject(new Error("Aborted")), { once: true }));
       const status = options.method === "PATCH" ? (succeeds ? 200 : 400) : getStatus;
-      return { status, ok: status === 200, json: async () => ({ ok: status === 200, account: { role: "dancer" }, error: "Update rejected", otherSessionsRevoked }) };
+      return { status, ok: status === 200, json: async () => ({ ok: status === 200, account: { role }, error: "Update rejected", otherSessionsRevoked }) };
     },
   }).default;
   const render = () => { index = 0; refIndex = 0; return component(); };
@@ -119,6 +133,17 @@ async function readyForm(options) {
   await new Promise((resolve) => setImmediate(resolve));
   return fixture;
 }
+
+test("a verified guest returns to the VIP invitation after reset; other roles keep their dashboard", async () => {
+  const destination = '/vip/invite/vip_' + 'a'.repeat(48);
+  for (const role of ['customer', 'dancer']) {
+    const fixture = await readyForm({ role, search: '?return_to=' + encodeURIComponent(destination) });
+    fixture.states[1] = fixture.states[2] = 'New1!test-password';
+    await fixture.find(fixture.render(), 'form').props.onSubmit({ preventDefault() {} });
+    const link = fixture.find(fixture.render(), 'a');
+    assert.equal(link.props.href, role === 'customer' ? destination : '/dashboard/dancer');
+  }
+});
 test("reset page verifies its session and waits for explicit password submission", async () => {
   const fixture = await readyForm();
   assert.equal(fixture.states[0], "ready");

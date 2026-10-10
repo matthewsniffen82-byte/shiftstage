@@ -3,7 +3,8 @@ import { createHash, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
 import { requireVenueAccess } from "./venue-access";
-import type { VipState, VenueVipState, VipInvitation } from "./vip-types";
+import type { VipState, VenueVipState, VipInvitation, VipDancer } from "./vip-types";
+import { dancerPhotoDeliveryUrl } from "./media-delivery-url";
 
 export const VIP_HEADERS = { "cache-control": "private, no-store, max-age=0", "referrer-policy": "no-referrer" };
 const requestColumns = "id,venue_id,guest_name,starts_at,timezone,dancers,notes,status,response_note,created_at";
@@ -96,7 +97,7 @@ export async function getVipState(client: SupabaseClient, userId: string, search
   if (view === "plan") {
     const { data, error } = await client.rpc("vip_eligible_dancers", { p_venue: selected.id });
     if (error) throw error;
-    return { ...base, dancers: data || [] };
+    return { ...base, dancers: await vipDancerPhotos(client, data || []) };
   }
   const page = vipPage(search);
   let requestQuery = client.from("venue_vip_requests").select(requestColumns, { count: "exact" }).eq("user_id", userId).eq("venue_id", selected.id);
@@ -112,18 +113,35 @@ export async function getVipState(client: SupabaseClient, userId: string, search
 
 export async function getVenueVipState(client: SupabaseClient, userId: string, search: URLSearchParams): Promise<VenueVipState> {
   const access = await requireVipManager(client, userId); const page = vipPage(search);
+  const status = search.get("status") || "all";
+  if (!["all", "pending"].includes(status)) throw new PublicApiError("INVALID_REQUEST", "Choose a valid request status.", 400);
   const memberPage = vipPage(search, "memberPage");
   const memberSearch = vipNickname(search.get("memberSearch") || "");
+  let requestQuery = client.from("venue_vip_requests").select(requestColumns, { count: "exact" }).eq("venue_id", access.venueId);
+  if (status === "pending") requestQuery = requestQuery.eq("status", "pending");
   const [invitations, members, requests] = await Promise.all([
     client.from("venue_vip_invitations").select("id,email,expires_at").eq("venue_id", access.venueId)
       .is("accepted_at", null).is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
     client.rpc("vip_search_members", { p_actor: userId, p_venue: access.venueId, p_search: memberSearch, p_offset: memberPage * 50 }),
-    client.from("venue_vip_requests").select(requestColumns).eq("venue_id", access.venueId)
+    requestQuery
       .order("created_at", { ascending: false }).order("id", { ascending: false }).range(page * 50, page * 50 + 50),
   ]);
   for (const result of [invitations, members, requests]) if (result.error) throw result.error;
   return { invitations: invitations.data || [], members: members.data?.members || [], memberCount: members.data?.memberCount || 0,
-    membersHasMore: members.data?.membersHasMore || false, requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50 };
+    membersHasMore: members.data?.membersHasMore || false, requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
+}
+
+async function vipDancerPhotos(client: SupabaseClient, dancers: VipDancer[]): Promise<VipDancer[]> {
+  if (!dancers.length) return [];
+  const { data, error } = await client.from("dancer_profiles").select("id,avatar_storage_path")
+    .in("id", dancers.map(dancer => dancer.id)).eq("status", "approved").eq("verification_status", "approved").is("disabled_at", null);
+  if (error) throw error;
+  const photos = new Map((data || []).map(row => [row.id, row.avatar_storage_path]));
+  return dancers.map(dancer => {
+    const path = photos.get(dancer.id);
+    // The existing photo endpoint checks current anonymous RLS on every image.
+    return { ...dancer, photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 160) : null };
+  });
 }
 
 // PostgREST represents to-one relationships as objects; test fixtures and some

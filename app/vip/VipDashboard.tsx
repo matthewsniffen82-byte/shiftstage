@@ -17,11 +17,11 @@ const requestFilters: Array<{ id: VipRequestFilter; label: string }> = [
   { id: "declined", label: "Declined" }, { id: "cancelled", label: "Cancelled" },
 ];
 
-export default function VipDashboard({ account, onSignOut, signingOut, accountError = "" }: {
-  account: DashboardSessionAccount; onSignOut: () => Promise<void>; signingOut: boolean; accountError?: string;
+export default function VipDashboard({ account, onSignOut, signingOut, accountError = "", initialVenueId = "" }: {
+  account: DashboardSessionAccount; onSignOut: () => Promise<void>; signingOut: boolean; accountError?: string; initialVenueId?: string;
 }) {
   const [view, setView] = useState<VipDashboardView>("overview");
-  const [venueId, setVenueId] = useState("");
+  const [venueId, setVenueId] = useState(initialVenueId);
   const [venues, setVenues] = useState<VipVenue[]>([]);
   const [filter, setFilter] = useState<VipRequestFilter>("all");
   const [page, setPage] = useState(0);

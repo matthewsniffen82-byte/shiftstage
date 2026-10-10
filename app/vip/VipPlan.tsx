@@ -23,7 +23,7 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, bus
         ] as const).map(([id, label]) => <button key={id} type="button" aria-pressed={filter === id} onClick={() => setFilter(id)} disabled={busy}>{label}</button>)}</div>
         <fieldset className="vip-dancers" disabled={busy}><legend className="vip-sr-only">Dancers to request</legend>{visible.map(dancer => <label className={`vip-dancer ${draft.selected.includes(dancer.id) ? "is-selected" : ""}`} key={dancer.id}>
           <input type="checkbox" checked={draft.selected.includes(dancer.id)} disabled={!draft.selected.includes(dancer.id) && draft.selected.length >= 10} onChange={event => event.target.checked ? onChange({ ...draft, selected: [...draft.selected, dancer.id] }) : remove(dancer.id)} />
-          <span className="vip-avatar" aria-hidden="true">{dancer.stage_name.slice(0, 2).toUpperCase()}</span><span><strong>{dancer.stage_name}</strong><small className={dancer.working_now ? "vip-working" : ""}>{dancer.working_now ? "● Working now" : "Affiliated · off shift"}</small></span>
+          <DancerPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><span><strong>{dancer.stage_name}</strong><small className={dancer.working_now ? "vip-working" : ""}>{dancer.working_now ? "● Working now" : "Affiliated · off shift"}</small></span>
         </label>)}</fieldset>
         {!visible.length && <div className="vip-empty"><p>{!dancers.length ? "No eligible dancers are available to request yet." : filter === "selected" && !draft.selected.length ? "Select dancers to build your request." : "No dancers match these filters."}</p>{dancers.length > 0 && <button type="button" onClick={() => { setSearch(""); setFilter("all"); }}>Show all dancers</button>}</div>}
         <small className="vip-roster-note">Working now describes current check-in status. Availability for your visit is confirmed by the venue.</small>
@@ -38,4 +38,12 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, bus
       </section>
     </div>
   </>;
+}
+
+function DancerPhoto({ dancer }: { dancer: VipDancer }) {
+  const [failed, setFailed] = useState(false);
+  return <span className="vip-avatar" aria-hidden="true">{dancer.photoUrl && !failed
+    // The photo endpoint rechecks public visibility; unavailable photos fall back to initials.
+    ? <img src={dancer.photoUrl} alt="" width={56} height={68} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+    : dancer.stage_name.slice(0, 2).toUpperCase()}</span>;
 }
