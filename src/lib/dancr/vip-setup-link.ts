@@ -62,9 +62,14 @@ export async function sendVipSetupLink(admin: SupabaseClient, input: { invitatio
   if (account && (account.role !== "customer" || account.accountState !== "active")) return;
   const token = createVipSetupToken(input.invitation, user, input.expiresAt);
   const url = `${publicAppUrl()}/auth/vip-setup#link=${token}`;
-  const delivery = await sendTransactionalEmail({ to: input.email, subject: "Finish your MyDancr VIP setup",
-    text: `Continue your VIP setup:\n${url}\n\nYou can reopen this link during your invitation’s 7-day window until you have saved a password and successfully signed in. Opening the email alone does not complete setup.\n\nExpires: ${new Date(input.expiresAt).toUTCString()}. A revoked or replaced invitation stops working immediately.\n\nKeep this private link to yourself. If you did not request it, ignore this email.` });
-  if (!delivery.delivered) throw new PublicApiError("UNAVAILABLE", "We couldn’t send your VIP setup email. Please try again shortly.", 503);
+  const instructions = "Confirm your email to open your VIP account. Your email will already be filled in. Create your password, then choose Create password & enter VIP.";
+  const validity = "You can reopen this link during your invitation’s 7-day window until you have saved a password and successfully signed in. Resending does not extend the deadline.";
+  const expiry = `Expires: ${new Date(input.expiresAt).toUTCString()}. A revoked or replaced invitation stops working immediately.`;
+  const privacy = "Keep this private link to yourself. If you did not request it, ignore this email.";
+  const delivery = await sendTransactionalEmail({ to: input.email, subject: "Confirm your email for MyDancr VIP",
+    text: `Confirm email:\n${url}\n\n${instructions}\n\n${validity}\n\n${expiry}\n\n${privacy}`,
+    html: `<h1>Confirm your email</h1><p>${instructions.replace(" & ", " &amp; ")}</p><p><a href="${url}" style="display:inline-block;padding:14px 24px;border-radius:12px;background:#29009b;color:#fff;font-weight:700;text-decoration:none">Confirm email</a></p><p>${validity}</p><p>${expiry}</p><p>${privacy}</p>` });
+  if (!delivery.delivered) throw new PublicApiError("UNAVAILABLE", "We couldn’t send your confirmation email. Please try again shortly.", 503);
 }
 
 async function verifyLiveSetup(admin: SupabaseClient, claim: SetupClaim) {

@@ -73,7 +73,12 @@ test('the reusable credential is sent only to the invited inbox and never return
   const f = fixture();
   assert.equal(await f.send(), undefined); assert.equal(f.emails.length, 1);
   const email = f.emails[0]; assert.equal(email.to, f.user.email); assert.match(email.text, /7-day window/);
+  assert.equal(email.subject, 'Confirm your email for MyDancr VIP');
+  assert.match(email.html, />Confirm email<\/a>/);
+  assert.match(email.text, /email will already be filled in/);
+  assert.doesNotMatch(email.text + email.html, /Send password setup link|Finish password setup/);
   const url = new URL(email.text.split('\n')[1]);
+  assert.equal(email.html.match(/href="([^"]+)"/)[1], url.href);
   assert.equal(url.origin, 'https://mydancr.test'); assert.equal(url.pathname, '/auth/vip-setup'); assert.equal(url.search, '');
   const token = new URLSearchParams(url.hash.slice(1)).get('link');
   assert.equal(f.service.readVipSetupToken(token).userId, userId);

@@ -161,7 +161,7 @@ export default function ResetPasswordClient() {
           <button className="account-form-primary" type="button" onClick={() => setAttempt(attempt + 1)}>Try again</button>
         </> : null}
         {phase === "expired" ? <>
-          <p role="alert">{isSetup ? "This setup link was already used or has expired. Return to your invitation and choose Finish password setup to request a fresh email." : "This reset link is unavailable or has expired. Request a new email using Forgot password."}</p>
+          <p role="alert">{isSetup ? "Open Confirm email in your VIP confirmation email to continue. If your invitation has expired, ask your venue for a new invitation." : "This reset link is unavailable or has expired. Request a new email using Forgot password."}</p>
           <a className="account-form-primary" href={vipReturn || "/account?mode=login"}>{isSetup ? "Return to VIP invitation" : "Request a new reset link"}</a>
         </> : null}
         {phase === "ready" && vipSetupAccount ? <VipPasswordSetup key={`${vipSetupAccount.id}:${vipReturn}`} account={vipSetupAccount} invitationPath={vipReturn} /> : phase === "ready" ? <form onSubmit={submit}>

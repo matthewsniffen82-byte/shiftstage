@@ -208,7 +208,8 @@ test("expired setup links keep their invitation without verifying an unrelated s
   assert.equal(fixture.states[0], 'expired');
   assert.equal(fixture.calls.length, 0);
   assert.equal(fixture.find(fixture.render(), 'a').props.href, destination);
-  assert.match(JSON.stringify(fixture.render()), /Finish password setup/);
+  assert.match(JSON.stringify(fixture.render()), /Open Confirm email in your VIP confirmation email/);
+  assert.doesNotMatch(JSON.stringify(fixture.render()), /Finish password setup|Send password setup link/);
 });
 test("normal password resets still let completed guests replace a forgotten password", async () => {
   const fixture = await readyForm({ role: 'customer', passwordSetupComplete: true, search: '?return_to=/vip' });

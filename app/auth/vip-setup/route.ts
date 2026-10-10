@@ -9,11 +9,11 @@ export const dynamic = "force-dynamic";
 export function GET() {
   const html = `<!doctype html><html lang="en"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="referrer" content="no-referrer"><title>VIP setup | MyDancr</title>
+    <meta name="referrer" content="no-referrer"><title>Confirm email | MyDancr VIP</title>
     <style>
       :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;background:#090510;color:#f7f2ff;font-family:system-ui,sans-serif}
       main{width:min(100%,460px);padding:32px 24px;border:1px solid #51445e;border-radius:24px;background:#100b19;display:grid;gap:20px;text-align:center}h1,p{margin:0}p{line-height:1.6}a{color:#e8d6b3}button{min-height:48px;border:1px solid #643ac2;border-radius:14px;background:#29009b;color:#fff;-webkit-text-fill-color:#fff;appearance:none;-webkit-appearance:none;font:700 16px system-ui;padding:12px 20px;cursor:pointer}button:focus-visible,a:focus-visible{outline:3px solid #e8d6b3;outline-offset:4px}[hidden]{display:none!important}
-    </style></head><body><main><h1>Opening your VIP setup</h1><p id="status" role="status">Checking your private link…</p><button id="retry" type="button" hidden>Try again</button><a href="/vip">Go to VIP sign in</a><noscript>Enable JavaScript to open your private link.</noscript></main>
+    </style></head><body><main><h1>Confirming your email</h1><p id="status" role="status">Checking your private link…</p><button id="retry" type="button" hidden>Try again</button><a href="/vip">Go to VIP sign in</a><noscript>Enable JavaScript to open your private link.</noscript></main>
     <script>(function(){
       var key=${JSON.stringify(BROWSER_AUTH_SESSION_KEY)};
       var link=new URLSearchParams(window.location.hash.slice(1)).get('link');
@@ -23,7 +23,7 @@ export function GET() {
         if(busy)return;
         busy=true;retry.hidden=true;status.textContent='Checking your private link…';
         try{
-          if(!link)throw new Error('Open the private setup link from your email.');
+          if(!link)throw new Error('Open Confirm email in your VIP confirmation email.');
           var previous=window.localStorage.getItem(key);
           var response=await fetch('/api/vip/setup',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({link:link}),cache:'no-store',signal:AbortSignal.timeout(25000)});
           var data=await response.json();
