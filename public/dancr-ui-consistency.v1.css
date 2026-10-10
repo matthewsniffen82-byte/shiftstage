@@ -593,6 +593,13 @@ html body.dancr-button-system #results.venue-profile-overlay {
   padding-top: calc(32px + var(--dancr-viewport-top, 0px)) !important;
   scroll-padding-top: calc(32px + var(--dancr-viewport-top, 0px)) !important;
 }
+@media (max-width: 759px) {
+  /* Match the compact dancer frame gap below the existing safe-area offset. */
+  html body.dancr-button-system #results.venue-profile-overlay {
+    padding-top: calc(8px + var(--dancr-viewport-top, 0px)) !important;
+    scroll-padding-top: calc(8px + var(--dancr-viewport-top, 0px)) !important;
+  }
+}
 
 /* Base surface and shading for venue details and offer popups. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero,

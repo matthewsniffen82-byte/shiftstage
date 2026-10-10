@@ -579,6 +579,13 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   padding: calc(32px + var(--dancr-viewport-top, 0px)) var(--profile-frame-inset) 0 !important;
   scroll-padding-top: calc(32px + var(--dancr-viewport-top, 0px));
 }
+@media (max-width: 759px) {
+  /* The overlay already clears the safe area; keep the extra frame gap compact. */
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
+    padding-top: calc(8px + var(--dancr-viewport-top, 0px)) !important;
+    scroll-padding-top: calc(8px + var(--dancr-viewport-top, 0px));
+  }
+}
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) {
   --profile-frame-row-end: 3;
 }
