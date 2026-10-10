@@ -8,7 +8,7 @@ export default function VipRequests({ requests, onReview, busy = false }: {
 }) {
   return <div className="vip-request-list">{requests.length ? requests.map(request =>
     <RequestCard key={request.id} request={request} onReview={onReview} busy={busy} />
-  ) : <p className="vip-empty">No requests yet. Your requests and venue responses will appear here.</p>}</div>;
+  ) : <p className="vip-empty">{onReview ? "No visit requests yet." : "No requests yet. Your requests and venue responses will appear here."}</p>}</div>;
 }
 function RequestCard({ request, onReview, busy }: { request: VipRequest; busy: boolean; onReview?: (request: VipRequest, status: string, note: string) => Promise<void> }) {
   const [note, setNote] = useState("");
@@ -21,6 +21,7 @@ function RequestCard({ request, onReview, busy }: { request: VipRequest; busy: b
     {request.status === "pending" && !onReview && <small>Awaiting venue review. Dancer availability is subject to confirmation.</small>}
     {onReview && ["pending", "confirmed"].includes(request.status) && <div className="vip-review">
       <label>Message to VIP (optional)<textarea maxLength={500} value={note} onChange={event => setNote(event.target.value)} disabled={busy} rows={2} /></label>
+      {request.status === "pending" && <small>Check dancer availability before confirming.</small>}
       <div className="vip-actions">{request.status === "pending" ? <>
         <button type="button" className="vip-primary" disabled={busy} onClick={() => void onReview(request, "confirmed", note)}>Confirm request</button>
         <button type="button" disabled={busy} onClick={() => void onReview(request, "declined", note)}>Decline</button>

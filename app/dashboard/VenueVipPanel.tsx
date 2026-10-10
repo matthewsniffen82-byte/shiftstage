@@ -64,11 +64,12 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
     event.preventDefault(); setError(""); setEditingMember(null); void load(page, searchInput.trim(), 0);
   }
   return <div className="venue-vip">
-    <div className="vip-row venue-vip-header"><div><span className="vip-eyebrow">PRIVATE GUEST ACCESS</span><h2 id="venue-vip-heading">VIP invitations & requests</h2></div><button type="button" aria-label="Refresh VIP access" disabled={busy || loading} onClick={() => { setError(""); void load(page, memberSearch, memberPage); }}>{loading ? "Refreshing…" : "Refresh"}</button></div>
+    <div className="vip-row venue-vip-header"><h2 id="venue-vip-heading">VIP access</h2><button type="button" aria-label="Refresh VIP access" disabled={busy || loading} onClick={() => { setError(""); void load(page, memberSearch, memberPage); }}>{loading ? "Refreshing…" : "Refresh"}</button></div>
     <div className="venue-vip-invite">
-      <p>Invite guests to request a visit and dancers from your roster. Owners and managers review each request.</p>
-      <form className="vip-invite-form" onSubmit={invite}><label>VIP email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send invitation"}</button></form>
-      <small>Links expire in 7 days and only work for the invited email. Reinviting replaces that email’s unused link.</small>
+      <p>Invite guests to request visits and dancers.</p>
+      <form className="vip-invite-form" onSubmit={invite}><label>Guest email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send invitation"}</button></form>
+      <small>Invitation valid for 7 days.</small>
+      <details><summary>How invitations work</summary><small>Only the invited email can use the link. Reinviting replaces that email’s unused link. Owners and managers review each visit request.</small></details>
     </div>
     {status && <p className="vip-feedback" role="status">{status}</p>}{error && <p className="vip-feedback vip-error" role="alert">{error}</p>}
     {link && <div className="vip-link-result"><label>Private invitation link<input readOnly value={link} onFocus={event => event.target.select()} /></label><button type="button" onClick={() => { void navigator.clipboard.writeText(link).then(() => setStatus("Private link copied.")).catch(() => setStatus("Select and copy the link above.")); }}>Copy private link</button></div>}
@@ -81,7 +82,6 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
           <button type="submit" disabled={busy || loading}>Search</button>
           {(searchInput || memberSearch) && <button type="button" disabled={busy || loading} onClick={() => { setSearchInput(""); setError(""); setEditingMember(null); void load(page, "", 0); }}>Clear search</button>}
         </form>
-        <small>Nicknames are only visible to your venue’s team. Leave a nickname blank to remove it.</small>
         {memberSearch && <p className="vip-member-results" role="status">{state.memberCount} {state.memberCount === 1 ? "VIP matches" : "VIPs match"} “{memberSearch}”</p>}
         <ul className="vip-access-list" aria-busy={loading || undefined}>{state.members.map(member => <li key={member.id}>
           <span><strong>{member.nickname || member.display_name}</strong>{member.nickname && <small>{member.display_name}</small>}</span>
@@ -91,6 +91,7 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
           </div>
           {editingMember?.id === member.id && <form className="vip-nickname-form" onSubmit={saveNickname}>
             <label>Venue nickname for {member.display_name}<input autoFocus type="text" maxLength={80} value={editingMember.nickname} onChange={event => setEditingMember({ id: member.id, nickname: event.target.value })} disabled={busy} /></label>
+            <small>Visible only to your venue’s team. Leave blank to remove.</small>
             <div className="vip-actions"><button type="submit" disabled={busy || loading}>Save nickname</button><button type="button" disabled={busy} onClick={() => setEditingMember(null)}>Cancel</button></div>
           </form>}
         </li>)}</ul>
@@ -103,7 +104,6 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
       </div>
       <div className="venue-vip-requests">
       <div className="vip-row"><h3>Visit requests</h3><button type="button" aria-pressed={pendingOnly} onClick={() => setPendingOnly(value => !value)}>{pendingOnly ? "All statuses" : "Pending on this page"}</button></div>
-      <small>Check dancer availability before confirming. All times are local to your venue.</small>
       <VipRequests requests={state.requests.filter(request => !pendingOnly || request.status === "pending")} onReview={review} busy={busy} />
       <div className="vip-actions">{page > 0 && <button type="button" disabled={busy || loading} onClick={() => void load(page - 1, memberSearch, memberPage)}>Newer requests</button>}{state.hasMore && <button type="button" disabled={busy || loading} onClick={() => void load(page + 1, memberSearch, memberPage)}>Older requests</button>}</div>
       </div>
