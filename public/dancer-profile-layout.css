@@ -588,6 +588,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   background: transparent !important;
   box-shadow: none !important;
 }
+/* The header's backdrop must follow the information frame's upper-left curve. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > :is(.profile-modal-summary, .profile-titlebar) {
+  border-top-left-radius: var(--profile-frame-radius) !important;
+}
 /* Restore the information card's original dark surface beneath its content,
    while the surrounding page and media gutters keep the discovery violet. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)::after {
