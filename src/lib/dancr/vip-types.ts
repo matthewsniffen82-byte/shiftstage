@@ -1,5 +1,5 @@
 export type VipVenue = { id: string; name: string; timezone: string; guestName: string };
-export type VipDancer = { id: string; stage_name: string; working_now: boolean; photoUrl?: string | null };
+export type VipDancer = { id: string; stage_name: string; working_now: boolean; photoUrl?: string | null; profileHref?: string | null; favorite?: boolean; previouslyRequested?: boolean };
 export type VipRequest = {
   id: string; venue_id: string; guest_name: string; starts_at: string; timezone: string;
   dancers: Array<{ id: string; stageName: string }>; notes: string;

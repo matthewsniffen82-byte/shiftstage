@@ -18,11 +18,12 @@ export async function POST(request: Request) {
   try {
     const { user, session } = await createRequestSupabaseContext(request, { role: "customer" });
     const body = await readBoundedJsonObject(request, { maxBytes: 8192, invalidMessage: "Invalid VIP request.", tooLargeMessage: "VIP request is too large." });
-    if (!Array.isArray(body.dancerIds) || body.dancerIds.length < 1 || body.dancerIds.length > 10 || typeof body.localStart !== "string" || typeof body.notes !== "string") {
+    if (body.notes !== undefined && body.notes !== "") throw new PublicApiError("INVALID_REQUEST", "VIP requests do not support guest notes.", 400);
+    if (!Array.isArray(body.dancerIds) || body.dancerIds.length < 1 || body.dancerIds.length > 10 || typeof body.localStart !== "string") {
       throw new PublicApiError("INVALID_REQUEST", "Choose dancers, a date, and a time.", 400);
     }
     const admin = createAdminSupabaseClient();
-    const { data, error } = await admin.rpc("vip_submit_request", { p_actor: user.id, p_venue: vipId(body.venueId), p_id: vipId(body.requestId), p_local_start: body.localStart, p_dancers: body.dancerIds.map(vipId), p_notes: body.notes });
+    const { data, error } = await admin.rpc("vip_submit_request", { p_actor: user.id, p_venue: vipId(body.venueId), p_id: vipId(body.requestId), p_local_start: body.localStart, p_dancers: body.dancerIds.map(vipId), p_notes: "" });
     if (error) throw error;
     // In-app alerts were committed atomically with the request. External delivery
     // is optional and must never turn a saved request into a failed submission.

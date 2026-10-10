@@ -57,7 +57,7 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
   return { route: compile(activation ? "app/api/vip/invitation/route.ts" : invitation ? "app/api/venue/vip/route.ts" : "app/api/vip/route.ts", dependencies), calls };
 }
 function request(body) { return new Request("https://example.test/api/vip", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); }
-const input = { actorUserId: id(6), venueId: id(20), requestId: id(90), localStart: "2027-01-15T21:30", dancerIds: [id(37)], notes: "Hello" };
+const input = { actorUserId: id(6), venueId: id(20), requestId: id(90), localStart: "2027-01-15T21:30", dancerIds: [id(37)] };
 
 test("VIP activation requires explicit current terms and binds the receipt to authenticated identity", async () => {
   const { route, calls } = fixture({ activation: true });
@@ -115,6 +115,14 @@ test("denied and failed VIP writes do not report success", async () => {
   const stale = fixture({ rpcError: { code: "40001" } });
   assert.equal((await stale.route.POST(request(input))).status, 409);
 });
+test('VIP guests cannot submit notes even through a direct API request', async () => {
+  const { route, calls } = fixture();
+  for (const notes of ['Please call me', ' ', {}, null]) assert.equal((await route.POST(request({ ...input, notes }))).status, 400);
+  assert.equal(calls.some(call => call[0] === 'rpc'), false);
+  for (const body of [input, { ...input, notes: '' }]) assert.equal((await route.POST(request(body))).status, 200);
+  assert.ok(calls.filter(call => call[0] === 'rpc').every(call => call[2].p_notes === ''));
+});
+
 test("private invitation email uses the configured origin, reports failed delivery, and never accepts caller venue scope", async () => {
   const { route, calls } = fixture({ invitation: true });
   const response = await route.POST(request({ action: "invite", venueId: id(21), email: "Guest@Example.test" }));

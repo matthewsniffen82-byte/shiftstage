@@ -77,13 +77,25 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-roster-filters { display: flex; flex-wrap: wrap; gap: 7px; margin: 13px 0 18px; }
 .vip-dashboard-shell .vip-roster-filters button { padding: 8px 11px; font-size: 11px; min-height: 44px; border-radius: 8px !important; background: #17121e !important; }
 .vip-dashboard-shell .vip-roster-filters button[aria-pressed=true] { border-color: #946ab8 !important; background: #2a1d38 !important; color: #e8d5ff !important; }
-.vip-dashboard-shell .vip-dancers { gap: 9px; max-height: 560px; padding: 2px; }
-.vip-dashboard-shell .vip-dancer { gap: 10px; padding: 17px 26px 17px 12px; border-color: #44354f; border-radius: 11px; background: #141018; min-height: 84px; }
-.vip-dashboard-shell .vip-dancer.is-selected { background: #2a1b38; border-color: #b082db; box-shadow: inset 0 0 0 1px #c999f222; }
-.vip-dashboard-shell .vip-dancer input { top: 10px; right: 9px; width: 15px !important; height: 15px !important; accent-color: #b484e1; }
-.vip-dashboard-shell .vip-dancer:has(input:focus-visible) { outline: 2px solid #c6a5fb; outline-offset: 1px; }
+.vip-roster-scroll { container-type: inline-size; min-width: 0; }
+.vip-dashboard-shell .vip-dancers { --vip-tile-height: clamp(150px, calc((100cqw - 22px) * 16 / 27), 320px); grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: var(--vip-tile-height); gap: 6px; max-height: calc(var(--vip-tile-height) * 3 + 16px); padding: 2px; overflow-y: auto; overscroll-behavior-y: contain; scrollbar-width: thin; scrollbar-color: #705786 #110d17; -webkit-overflow-scrolling: touch; }
+.vip-dashboard-shell .vip-dancer { display: block !important; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 8px; background: #141018; overflow: hidden; cursor: default; }
+.vip-dashboard-shell .vip-dancer.is-selected { outline: 2px solid #c6a5fb; outline-offset: -2px; }
+.vip-dashboard-shell .vip-dancer-select { position: absolute; z-index: 3; top: 3px; right: 3px; display: flex; align-items: center; justify-content: center; width: 32px; height: 36px; margin: 0; border-radius: 7px; background: #08060dcc; cursor: pointer; }
+.vip-dashboard-shell .vip-dancer-select input { position: static; width: 21px !important; height: 21px !important; min-height: 0; margin: 0; accent-color: #b484e1; cursor: pointer; }
+.vip-dashboard-shell .vip-dancer:has(:focus-visible) { outline: 2px solid #c6a5fb; outline-offset: -2px; }
+.vip-dashboard-shell .vip-profile-link { position: absolute; inset: 0; display: block; color: #fff; text-decoration: none; border-radius: inherit; overflow: hidden; }
+.vip-dashboard-shell .vip-dancer-copy { position: absolute; inset: auto 0 0; display: grid; gap: 3px; padding: 30px 6px 7px; background: linear-gradient(transparent, #08050bbc 32%, #08050bf2); pointer-events: none; }
+.vip-dashboard-shell .vip-dancer-copy strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: clamp(11px, 2.8cqw, 15px); line-height: 1.25; }
+.vip-dashboard-shell .vip-dancer-copy small { margin: 0; font-size: 9px; line-height: 1.3; color: #d4ccdf; }
+.vip-dashboard-shell .vip-open-profile { display: block; margin-top: 3px; color: #e5d1ae; font-size: 10px; line-height: 1.4; text-decoration: underline; text-underline-offset: 2px; }
+.vip-dashboard-shell .vip-dancer-favorite { position: absolute; z-index: 3; top: 3px; left: 3px; display: grid; place-items: center; width: 32px !important; min-width: 32px !important; height: 36px !important; min-height: 36px !important; margin: 0; padding: 6px !important; border: 0 !important; border-radius: 7px !important; background: #08060dcc !important; color: #eee3f6 !important; }
+.vip-dashboard-shell .vip-dancer-favorite svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; }
+.vip-dashboard-shell .vip-dancer-favorite[aria-pressed=true] { color: #f79bb7 !important; }
+.vip-dashboard-shell .vip-dancer-favorite[aria-pressed=true] svg { fill: currentColor; }
+.vip-dashboard-shell .vip-dancer-favorite::before, .vip-dashboard-shell .vip-dancer-favorite::after { display: none !important; }
 .vip-dashboard-shell .vip-avatar { width: 37px; height: 43px; border-radius: 11px; color: #d6b9f2; background: linear-gradient(135deg, #433051, #251b30); border: 1px solid #5b406d; }
-.vip-dashboard-shell .vip-dancer .vip-avatar { width: 56px; height: 68px; overflow: hidden; flex: none; }
+.vip-dashboard-shell .vip-dancer .vip-avatar { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; border: 0; border-radius: 0; font-size: 24px; }
 .vip-avatar img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .vip-account-choice, .vip-email-step, .vip-password-setup { display: grid; gap: 14px; }
 .vip-password-setup .vip-primary { display: flex; align-items: center; justify-content: center; min-height: 48px; text-decoration: none; }
@@ -93,7 +105,6 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-email-step .vip-actions { gap: 8px; }
 .vip-auth-help { display: grid; gap: 6px; margin-top: 14px; }
 .vip-auth-shell .vip-auth-help .vip-text-button { display: block; margin: 0; padding: 10px 0; min-height: 44px; text-align: left; }
-.vip-dashboard-shell .vip-dancer strong { font-size: 13px; line-height: 1.35; }
 .vip-roster-note { padding-top: 17px; font-size: 11px !important; }
 .vip-dashboard-shell .vip-visit-panel { position: sticky; top: 96px; }
 .vip-dashboard-shell .vip-date-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
@@ -152,7 +163,6 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 @media (max-width: 880px) {
   .vip-plan-grid { grid-template-columns: minmax(0, 1fr); }
   .vip-dashboard-shell .vip-visit-panel { position: static; }
-  .vip-dashboard-shell .vip-dancers { max-height: 400px; }
   .vip-summary-card > svg { width: 19px; height: 19px; }
   .vip-dashboard-shell .vip-summary-card { padding: 16px 12px; gap: 9px; }
 }
@@ -180,11 +190,7 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
   .vip-calendar-mark svg { width: 22px; height: 22px; }
   .vip-explainer { align-items: flex-start; flex-direction: column; gap: 11px; padding: 0 5px; }
   .vip-plan-heading { flex-direction: column; }
-  .vip-dashboard-shell .vip-dancers { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 390px; }
-  .vip-dashboard-shell .vip-dancer { flex-direction: column; align-items: flex-start; gap: 10px; min-height: 128px; padding: 14px 10px; }
-  .vip-dashboard-shell .vip-dancer small { font-size: 9px; }
-  .vip-dashboard-shell .vip-dancer strong { font-size: 13px; }
-  .vip-dashboard-shell .vip-dancer input { width: 17px !important; height: 17px !important; }
+  .vip-dashboard-shell .vip-roster-panel { padding: 12px; }
   .vip-dashboard-shell .vip-date-grid { grid-template-columns: minmax(0, 1fr); }
   .vip-dashboard-shell :is(input:not([type=checkbox]), select, textarea) { font-size: 16px; }
   .vip-account-grid { grid-template-columns: minmax(0, 1fr); }

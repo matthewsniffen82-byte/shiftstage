@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { readSession, requestDashboardJson, type DashboardSessionAccount } from "@/app/dashboard/dashboard-session";
 import { emptyVipDraft, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
-import { type VipDashboardView, type VipRequestFilter, type VipState, type VipVenue } from "@/src/lib/dancr/vip-types";
+import { type VipDancer, type VipDashboardView, type VipRequestFilter, type VipState, type VipVenue } from "@/src/lib/dancr/vip-types";
 import VipRequests from "./VipRequests";
 import "./vip-premium.css";
 
@@ -32,6 +32,8 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, VipDraft>>({});
+  const [favoritePending, setFavoritePending] = useState<string[]>([]);
+  const favoriteRequests = useRef(new Map<string, AbortController>());
   const lastVenue = useRef("");
   const mounted = useRef(false);
   const locked = useRef(false);
@@ -52,7 +54,8 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       setView(vipDestination(window.location.hash));
     };
     sync(); window.addEventListener("hashchange", sync);
-    return () => { mounted.current = false; submitAbort.current?.abort(); window.removeEventListener("hashchange", sync); };
+    const favorites = favoriteRequests.current;
+    return () => { mounted.current = false; submitAbort.current?.abort(); favorites.forEach(controller => controller.abort()); window.removeEventListener("hashchange", sync); };
   }, []);
   useEffect(() => {
     const controller = new AbortController();
@@ -85,13 +88,31 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     if (!venue || locked.current) return;
     setDrafts(previous => ({ ...previous, [venue.id]: next }));
   }
+  async function toggleFavorite(dancer: VipDancer) {
+    if (disabled || favoriteRequests.current.has(dancer.id)) return;
+    const controller = new AbortController(), expectedAccount = account.id;
+    favoriteRequests.current.set(dancer.id, controller);
+    setFavoritePending(previous => [...previous, dancer.id]); setError("");
+    try {
+      const result = await requestDashboardJson("/api/customer/favorites", { expectedRole: "customer", method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ dancerId: dancer.id, favorite: !dancer.favorite }), timeoutMs: 20000, signal: controller.signal });
+      if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
+      setResponse(previous => previous ? { ...previous, data: { ...previous.data,
+        dancers: previous.data.dancers.map(item => item.id === dancer.id ? { ...item, favorite: result.favorite === true } : item) } } : previous);
+    } catch (failure) {
+      if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
+    } finally {
+      favoriteRequests.current.delete(dancer.id);
+      if (mounted.current) setFavoritePending(previous => previous.filter(id => id !== dancer.id));
+    }
+  }
   async function submit() {
     if (!venue || locked.current) return;
     locked.current = true; setBusy(true); setError(""); setStatus("");
     const controller = new AbortController(); submitAbort.current = controller;
     const expectedAccount = account.id;
     try {
-      const input = { venueId: venue.id, localStart: `${draft.date}T${draft.time}`, dancerIds: [...draft.selected].sort(), notes: draft.notes };
+      const input = { venueId: venue.id, localStart: `${draft.date}T${draft.time}`, dancerIds: [...draft.selected].sort() };
       const fingerprint = JSON.stringify(input);
       if (pendingRequests.current[venue.id]?.fingerprint !== fingerprint) pendingRequests.current[venue.id] = { fingerprint, id: crypto.randomUUID() };
       await requestDashboardJson("/api/vip", { expectedRole: "customer", method: "POST", headers: { "content-type": "application/json" },
@@ -147,7 +168,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
           {data.summary?.nextVisit ? <><VipRequests requests={[data.summary.nextVisit]} /><button type="button" onClick={() => { setFilter("confirmed"); setPage(0); navigate("requests"); }}>View your requests →</button></> : <div className="vip-next-empty"><span className="vip-calendar-mark" aria-hidden="true"><VipIcon kind="requests" /></span><div><h3>Your next night starts here.</h3><p>Choose dancers and a time that works for you. Your venue will review availability and confirm your plans.</p><button type="button" onClick={() => navigate("plan")}>Start a request →</button></div></div>}
         </section>
         <div className="vip-explainer"><span><b>01</b> Choose your dancers</span><span><b>02</b> Set your date & time</span><span><b>03</b> Get venue confirmation</span></div>
-      </> : view === "plan" ? <VipPlan venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} busy={disabled} />
+      </> : view === "plan" ? <VipPlan key={venue.id} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} busy={disabled} />
       : <>
         <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>Track venue responses and review your plans.</p></div></div>
         <div className="vip-request-toolbar"><label>Status<select value={filter} onChange={event => { setFilter(event.target.value as VipRequestFilter); setPage(0); }} disabled={disabled}>{requestFilters.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><span>{data.requestCount ?? data.requests.length} {(data.requestCount ?? data.requests.length) === 1 ? "request" : "requests"}</span></div>

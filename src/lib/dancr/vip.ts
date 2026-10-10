@@ -97,7 +97,7 @@ export async function getVipState(client: SupabaseClient, userId: string, search
   if (view === "plan") {
     const { data, error } = await client.rpc("vip_eligible_dancers", { p_venue: selected.id });
     if (error) throw error;
-    return { ...base, dancers: await vipDancerPhotos(client, data || []) };
+    return { ...base, dancers: await vipDancerCards(client, data || [], userId, selected.id) };
   }
   const page = vipPage(search);
   let requestQuery = client.from("venue_vip_requests").select(requestColumns, { count: "exact" }).eq("user_id", userId).eq("venue_id", selected.id);
@@ -131,17 +131,42 @@ export async function getVenueVipState(client: SupabaseClient, userId: string, s
     membersHasMore: members.data?.membersHasMore || false, requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
 }
 
-async function vipDancerPhotos(client: SupabaseClient, dancers: VipDancer[]): Promise<VipDancer[]> {
+async function vipDancerCards(client: SupabaseClient, dancers: VipDancer[], userId: string, venueId: string): Promise<VipDancer[]> {
   if (!dancers.length) return [];
-  const { data, error } = await client.from("dancer_profiles").select("id,avatar_storage_path")
-    .in("id", dancers.map(dancer => dancer.id)).eq("status", "approved").eq("verification_status", "approved").is("disabled_at", null);
-  if (error) throw error;
-  const photos = new Map((data || []).map(row => [row.id, row.avatar_storage_path]));
+  const ids = dancers.map(dancer => dancer.id);
+  const [profiles, favorites, previous] = await Promise.all([
+    client.from("dancer_profiles").select("id,slug,avatar_storage_path")
+      .in("id", ids).eq("status", "approved").eq("verification_status", "approved").eq("is_public", true).is("disabled_at", null),
+    client.from("favorites").select("dancer_id").eq("customer_id", userId).in("dancer_id", ids),
+    previouslyRequestedDancers(client, userId, venueId, new Set(ids)),
+  ]);
+  if (profiles.error) throw profiles.error;
+  if (favorites.error) throw favorites.error;
+  const publicProfiles = new Map((profiles.data || []).map(row => [row.id, row]));
+  const saved = new Set((favorites.data || []).map(row => row.dancer_id));
   return dancers.map(dancer => {
-    const path = photos.get(dancer.id);
+    const profile = publicProfiles.get(dancer.id), path = profile?.avatar_storage_path;
     // The existing photo endpoint checks current anonymous RLS on every image.
-    return { ...dancer, photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 160) : null };
+    return { ...dancer, photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null,
+      profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
+      favorite: saved.has(dancer.id), previouslyRequested: previous.has(dancer.id) };
   });
+}
+
+async function previouslyRequestedDancers(client: SupabaseClient, userId: string, venueId: string, eligible: Set<string>) {
+  const found = new Set<string>();
+  // Read all history in bounded pages, including requests older than the first
+  // dashboard page. Only the current venue's requestable roster is returned.
+  for (let offset = 0; found.size < eligible.size; offset += 500) {
+    const { data, error } = await client.from("venue_vip_requests").select("id,dancers")
+      .eq("user_id", userId).eq("venue_id", venueId).order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + 499);
+    if (error) throw error;
+    for (const request of data || []) for (const dancer of Array.isArray(request.dancers) ? request.dancers : []) {
+      if (typeof dancer?.id === "string" && eligible.has(dancer.id)) found.add(dancer.id);
+    }
+    if (!data || data.length < 500) break;
+  }
+  return found;
 }
 
 // PostgREST represents to-one relationships as objects; test fixtures and some
