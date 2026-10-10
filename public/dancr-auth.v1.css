@@ -330,9 +330,10 @@ body.dancr-button-system :is(#authPage, .account-shell) .recovery-popover-surfac
   body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) :is(.auth-card, .account-panel, .vip-panel, .reset-card) { min-width: 0; }
 }
 
-/* One opaque sign-in color on Safari, Android and desktop. The legacy IDs keep
+/* One opaque entry color on Safari, Android and desktop, including VIP signup
+   and activation. The legacy IDs keep
    old live-shell gradients from overriding the shared action style. */
-html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action]) {
+html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action], .vip-auth-shell .vip-primary) {
   -webkit-appearance: none !important;
   appearance: none !important;
   background: var(--dancr-sign-in-purple) !important;
@@ -345,11 +346,11 @@ html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminL
   text-shadow: none !important;
   box-shadow: var(--dancr-shadow-brand-control) !important;
 }
-html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action]):focus-visible {
+html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action], .vip-auth-shell .vip-primary):focus-visible {
   outline: 2px solid #c4b5fd !important;
   outline-offset: 3px !important;
 }
-html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action])::before,
-html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action])::after {
+html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action], .vip-auth-shell .vip-primary)::before,
+html body.dancr-button-system :is(#authForm #authSubmit, #adminLoginForm #adminLoginBtn, [data-sign-in-action], .vip-auth-shell .vip-primary)::after {
   content: none !important;
 }
