@@ -1,5 +1,5 @@
 export const VENUE_NOTIFICATION_ALERTS = [
-  { key: "vipRequests", title: "VIP requests", description: "Private VIP visit requests with dancers, dates, and times." },
+  { key: "vipRequests", title: "VIP requests", description: "Private VIP visit requests and guest nickname changes." },
   { key: "tableRequests", title: "Table requests", description: "A table requests a specific dancer in MyDancr Internal." },
   { key: "dancerActivity", title: "Dancer activity", description: "Working Now and scheduled appearance updates." },
   { key: "rosterChanges", title: "Roster changes", description: "Dancer affiliations added or removed." },
@@ -56,7 +56,7 @@ export function venueNotificationCategory(row: VenueNotification): VenueAlertKey
   if (["account_security", "password_changed", "email_changed", "account_access_changed"].includes(kind)) return null;
   if (kind === "club_shuttle_request" || kind === "club_pickup") return "pickupRequests";
   if (kind === "internal_table_request") return "tableRequests";
-  if (kind === "vip_request") return "vipRequests";
+  if (kind === "vip_request" || kind === "vip_nickname_changed") return "vipRequests";
   if (kind.startsWith("venue_team_") || kind.startsWith("team_invitation_")) return "teamAccess";
   if (kind.startsWith("club_deal_") || kind.startsWith("venue_deal_")) return "clubDeals";
   if (kind.startsWith("venue_checkin_") || kind.startsWith("venue_checkout_")) return "dancerActivity";

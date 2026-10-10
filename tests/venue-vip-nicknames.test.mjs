@@ -38,7 +38,7 @@ function panelHarness(request = async () => initial) {
   render();
   return { calls, render, nodes, settle, html: () => renderToStaticMarkup(tree), session: id => { accountId = id; },
     button: text => nodes().find(node => node.type === 'button' && node.props.children === text),
-    input: type => nodes().find(node => node.type === 'input' && node.props.type === type),
+    input: type => nodes().findLast(node => node.type === 'input' && node.props.type === type),
     form: name => nodes().find(node => node.type === 'form' && node.props.className === name),
     unmount: () => slots.forEach(slot => slot?.cleanup?.()),
   };
@@ -147,4 +147,39 @@ test('venue VIP reads forward bounded search to the authorized venue and propaga
   }
   failure = new Error('database unavailable');
   await assert.rejects(service.getVenueVipState(client, 'owner', new URLSearchParams()), /database unavailable/);
+});
+
+test('venue invitations save a nickname and keep the draft when sending fails', async () => {
+  let fail=true,invitation;
+  const ui=panelHarness(async (_url,options)=>{
+    if(options.method==='POST'){
+      if(fail){fail=false;throw new Error('Invitation unavailable');}
+      const body=JSON.parse(options.body);assert.equal(body.nickname,'Friday regular');
+      invitation={id:'invite-1',email:body.email,nickname:body.nickname,expires_at:'2027-01-01'};
+      return {invitationId:invitation.id,invitationUrl:'https://example.test/invite',emailDelivered:true};
+    }
+    return {...initial,invitations:invitation?[invitation]:[]};
+  });
+  await ui.settle();ui.input('email').props.onChange({target:{value:'guest@example.test'}});
+  ui.input('text').props.onChange({target:{value:'Friday regular'}});ui.render();
+  ui.form('vip-invite-form').props.onSubmit({preventDefault(){}});await ui.settle();
+  assert.equal(ui.input('text').props.value,'Friday regular');assert.match(ui.html(),/Invitation unavailable/);
+  ui.form('vip-invite-form').props.onSubmit({preventDefault(){}});await ui.settle();
+  assert.equal(ui.input('text').props.value,'');assert.match(ui.html(),/Friday regular/);ui.unmount();
+});
+
+test('venue requests resolve current nicknames outside the member search page without exposing user IDs', async () => {
+  const service=compileVip('src/lib/dancr/vip.ts',{'./venue-access':{requireVenueAccess:async()=>({venueId:'managed-venue'})}});
+  const calls=[];let labelFailure=null;
+  const client={
+    from(table){const call={table,steps:[]};calls.push(call);
+      const chain={select:()=>chain,eq:(key,value)=>{call.steps.push([key,value]);return chain;},in:(key,value)=>{call.steps.push([key,value]);return chain;},is:()=>chain,gt:()=>chain,order:()=>chain,range:()=>chain,
+        then:(resolve,reject)=>Promise.resolve({data:table==='venue_vip_requests'?[{id:'request-1',user_id:'request-guest',guest_name:'Jordan'}]:table==='venue_vip_members'?[{user_id:'request-guest',nickname:'Latest nickname'}]:[],error:table==='venue_vip_members'?labelFailure:null}).then(resolve,reject)};return chain;},
+    rpc:async name=>({data:name==='vip_manager_access'?true:{members:[],memberCount:0}}),
+  };
+  const result=await service.getVenueVipState(client,'owner',new URLSearchParams({memberSearch:'unrelated',memberPage:'2'}));
+  assert.equal(result.requests[0].nickname,'Latest nickname');assert.equal(result.requests[0].user_id,undefined);
+  const lookup=calls.find(c=>c.table==='venue_vip_members');assert.ok(lookup.steps.some(([key,value])=>key==='venue_id'&&value==='managed-venue'));
+  assert.deepEqual(Array.from(lookup.steps.find(([key])=>key==='user_id')[1]),['request-guest']);
+  labelFailure=new Error('Nickname lookup unavailable');await assert.rejects(service.getVenueVipState(client,'owner',new URLSearchParams()),/Nickname lookup unavailable/);
 });

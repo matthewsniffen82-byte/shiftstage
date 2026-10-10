@@ -9,6 +9,7 @@ import "../vip/vip.css";
 export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | null }) {
   const [state, setState] = useState<VenueVipState | null>(null);
   const [page, setPage] = useState(0); const [email, setEmail] = useState("");
+  const [inviteNickname, setInviteNickname] = useState("");
   const [link, setLink] = useState(""); const [linkId, setLinkId] = useState(""); const [status, setStatus] = useState(""); const [error, setError] = useState("");
   const [busy, setBusy] = useState(false); const [loading, setLoading] = useState(false);
   const [pendingOnly, setPendingOnly] = useState(false);
@@ -41,7 +42,7 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
       const data = await requestDashboardJson("/api/venue/vip", { expectedRole: "venue", method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), timeoutMs: 30000 });
       if (!mounted.current || readSession()?.account?.id !== accountId) return false;
       if (invitationAction) {
-        if (body.action === "invite") setEmail("");
+        if (body.action === "invite") { setEmail(""); setInviteNickname(""); }
         setLink(data.invitationUrl); setLinkId(data.invitationId || "");
         setStatus(body.action === "share_invitation" ? "New private link ready to share. The previous link has been replaced." : data.emailDelivered ? "Invitation emailed. You can also copy the private link below." : "Invitation created. Email could not be sent; copy and share the private link below.");
       } else { setStatus(success); if (body.action === "revoke_invitation") setLink(""); }
@@ -60,7 +61,7 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
       else { await navigator.clipboard.writeText(link); setStatus("Private link copied."); }
     } catch (failure) { if (!(failure instanceof Error && failure.name === "AbortError")) setStatus("Select and copy the private link above."); }
   }
-  function invite(event: FormEvent) { event.preventDefault(); void action({ action: "invite", email }, ""); }
+  function invite(event: FormEvent) { event.preventDefault(); void action({ action: "invite", email, nickname: inviteNickname }, ""); }
   async function review(request: VipRequest, status: string, note: string) {
     await action({ action: "request_status", id: request.id, expectedStatus: request.status, status, note }, `Request ${status}. The VIP has been notified.`);
   }
@@ -76,15 +77,15 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
     <div className="vip-row venue-vip-header"><h2 id="venue-vip-heading">VIP access</h2><button type="button" aria-label="Refresh VIP access" disabled={busy || loading} onClick={() => { setError(""); void load(page, memberSearch, memberPage, pendingOnly); }}>{loading ? "Refreshing…" : "Refresh"}</button></div>
     <div className="venue-vip-invite">
       <p>Invite guests to request visits and dancers.</p>
-      <form className="vip-invite-form" onSubmit={invite}><label>Guest email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send invitation"}</button></form>
-      <small>Invitation valid for 7 days.</small>
+      <form className="vip-invite-form" onSubmit={invite}><label>Guest email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><label>VIP nickname (optional)<input type="text" maxLength={80} value={inviteNickname} onChange={event => setInviteNickname(event.target.value)} placeholder="How you know this guest" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send invitation"}</button></form>
+      <small>Invitation valid for 7 days. Nicknames are shared with the VIP. Your team is notified when they change theirs.</small>
       <details><summary>How invitations work</summary><small>Only the invited email can use the link. Reinviting replaces that email’s unused link. Resend email and New share link also replace the previous link. Owners and managers review each visit request.</small></details>
     </div>
     {status && <p className="vip-feedback" role="status">{status}</p>}{error && <p className="vip-feedback vip-error" role="alert">{error}</p>}
     {link && <div className="vip-link-result"><label>Private invitation link<input readOnly value={link} onFocus={event => event.target.select()} /></label><button type="button" onClick={() => { void navigator.clipboard.writeText(link).then(() => setStatus("Private link copied.")).catch(() => setStatus("Select and copy the link above.")); }}>Copy private link</button><button type="button" onClick={() => void shareLink()}>Share invitation</button></div>}
     {!state ? <p role="status">{loading ? "Loading VIP access…" : "Refresh to load VIP access."}</p> : <>
       <div className="venue-vip-access">
-      <details><summary>Pending invitations ({state.invitations.length})</summary><ul className="vip-access-list">{state.invitations.map(invitation => <li key={invitation.id}><span>{invitation.email}<small>Expires {new Date(invitation.expires_at).toLocaleDateString()}</small></span><div className="vip-actions"><button type="button" disabled={busy || loading} onClick={() => void action({ action: "resend_invitation", id: invitation.id }, "")}>Resend email</button>
+      <details><summary>Pending invitations ({state.invitations.length})</summary><ul className="vip-access-list">{state.invitations.map(invitation => <li key={invitation.id}><span>{invitation.nickname ? <><strong>{invitation.nickname}</strong><small>{invitation.email}</small></> : invitation.email}<small>Expires {new Date(invitation.expires_at).toLocaleDateString()}</small></span><div className="vip-actions"><button type="button" disabled={busy || loading} onClick={() => void action({ action: "resend_invitation", id: invitation.id }, "")}>Resend email</button>
         {link && linkId === invitation.id ? <button type="button" disabled={busy || loading} onClick={() => void shareLink()}>Share invitation</button> : <button type="button" disabled={busy || loading} onClick={() => void action({ action: "share_invitation", id: invitation.id }, "")}>New share link</button>}
         <button type="button" disabled={busy || loading} onClick={() => void action({ action: "revoke_invitation", id: invitation.id }, "Invitation revoked.")}>Revoke invitation</button></div></li>)}</ul>{!state.invitations.length && <p>No pending invitations.</p>}</details>
       <details><summary>Active VIPs{!memberSearch ? ` (${state.memberCount})` : ""}</summary>
@@ -102,7 +103,7 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
           </div>
           {editingMember?.id === member.id && <form className="vip-nickname-form" onSubmit={saveNickname}>
             <label>Venue nickname for {member.display_name}<input autoFocus type="text" maxLength={80} value={editingMember.nickname} onChange={event => setEditingMember({ id: member.id, nickname: event.target.value })} disabled={busy} /></label>
-            <small>Visible only to your venue’s team. Leave blank to remove.</small>
+            <small>Shared with this VIP and your venue’s team. The VIP can change it; your team will be notified. Leave blank to remove.</small>
             <div className="vip-actions"><button type="submit" disabled={busy || loading}>Save nickname</button><button type="button" disabled={busy} onClick={() => setEditingMember(null)}>Cancel</button></div>
           </form>}
         </li>)}</ul>

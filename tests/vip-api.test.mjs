@@ -42,9 +42,9 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
     } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ from: table => {
       const steps = []; calls.push(["lookup", table, steps]);
-      const chain = { select: () => chain, eq: (key, value) => { steps.push([key, value]); return chain; }, is: (key, value) => { steps.push([key, value]); return chain; }, gt: (key, value) => { steps.push([key, value]); return chain; }, maybeSingle: async () => ({ data: pendingInvitation ? { email: "invited@example.test" } : null }) }; return chain;
+      const chain = { select: () => chain, eq: (key, value) => { steps.push([key, value]); return chain; }, is: (key, value) => { steps.push([key, value]); return chain; }, gt: (key, value) => { steps.push([key, value]); return chain; }, maybeSingle: async () => ({ data: pendingInvitation ? { email: "invited@example.test", nickname: "Friday regular" } : null }) }; return chain;
     }, rpc: async (name, args) => {
-      calls.push(["rpc", name, args]); return { data: { id: id(91), request: { id: id(90) }, notifications: [{ recipient_id: id(1) }] }, error: rpcError };
+      calls.push(["rpc", name, args]); return { data: { id: id(91), request: { id: id(90) }, nickname: args.p_nickname, changed: true, notifications: [{ recipient_id: id(1) }] }, error: rpcError };
     } }) },
     "@/src/lib/dancr/vip": { ...service, requireVipManager: async () => ({ venueId: id(20), venueName: "Private Club" }) },
     "@/src/lib/dancr/public-app-url": { publicAppUrl: () => "https://example.test" },
@@ -141,7 +141,7 @@ test("resending or sharing a pending invitation uses its authorized recipient an
     const lookup = calls.find(c => c[0] === 'lookup');
     assert.ok(lookup[2].some(([key, value]) => key === 'venue_id' && value === id(20)));
     assert.ok(lookup[2].some(([key, value]) => key === 'accepted_at' && value === null));
-    const rpc = calls.find(c => c[0] === 'rpc'); assert.equal(rpc[2].p_action, 'invite'); assert.equal(rpc[2].p_data.email, 'invited@example.test');
+    const rpc = calls.find(c => c[0] === 'rpc'); assert.equal(rpc[2].p_action, 'invite'); assert.equal(rpc[2].p_data.email, 'invited@example.test'); assert.equal(rpc[2].p_data.nickname, 'Friday regular');
     assert.equal(calls.some(c => c[0] === 'email'), action === 'resend_invitation');
   }
   const absent = fixture({ invitation: true, pendingInvitation: false });
@@ -200,4 +200,35 @@ test("email confirmation preserves a private VIP return path", () => {
   const javascript = ts.transpileModule(body, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
   const run = new Function("request", "callbackSession", "safeLocalReturnPath", "isPasswordResetCallback", "callbackRole", "isLiveAppDestination", "liveAppCallbackPath", `${javascript}; return callbackRedirectPath(request, callbackSession);`);
   assert.equal(run(new Request("https://example.test/auth/callback?return_to=%2Fvip%2Finvite%2Fprivate-link"), { account: { role: "customer" } }, callback.safeLocalReturnPath, () => false, () => "customer", () => false, () => "/"), "/vip/invite/private-link");
+});
+
+test("VIP nickname API binds the actor to the session and isolates optional notification delivery failures", async () => {
+  const {route,calls}=fixture({deliveryFailure:true});
+  const response=await route.PATCH(request({venueId:id(20),nickname:"  Jordan  ",actorUserId:id(99),memberId:id(99)}));
+  assert.equal(response.status,200);assert.match(response.headers.get('cache-control'),/private.*no-store/);
+  const result=await response.json();assert.equal(result.nickname,'Jordan');assert.equal(result.changed,true);
+  assert.equal(result.session.accessToken,'rotated');assert.equal(result.notifications,undefined);
+  const rpc=calls.find(c=>c[0]==='rpc');assert.equal(rpc[1],'vip_update_own_nickname');
+  assert.equal(rpc[2].p_actor,id(5));assert.equal(rpc[2].p_venue,id(20));assert.equal(rpc[2].p_nickname,'Jordan');
+  for(const nickname of [null,17,'x'.repeat(81),'two\nlines']) assert.equal((await route.PATCH(request({venueId:id(20),nickname}))).status,400);
+  assert.equal((await route.PATCH(request({venueId:'invalid',nickname:'Nick'}))).status,400);
+  const denied=fixture({rpcError:{code:'42501'}});assert.equal((await denied.route.PATCH(request({venueId:id(20),nickname:'Nick'}))).status,403);
+  assert.equal((await route.PATCH(request({venueId:id(20),nickname:''}))).status,200);
+});
+
+test("venue invitation validates and saves a nickname before delivering the invitation", async () => {
+  const {route,calls}=fixture({invitation:true});
+  assert.equal((await route.POST(request({action:'invite',email:'guest@example.test',nickname:'  Friday regular  '}))).status,200);
+  assert.equal(calls.find(c=>c[0]==='rpc')[2].p_data.nickname,'Friday regular');
+  for(const nickname of [17,'x'.repeat(81),'two\nlines']) assert.equal((await route.POST(request({action:'invite',email:'guest@example.test',nickname}))).status,400);
+});
+
+test("venue request cards show the current nickname beside the original guest identity and escape both", () => {
+  const component=compile('app/vip/VipRequests.tsx',{'@/src/lib/dancr/vip-types':vipTypes}).default;
+  const record={id:id(90),guest_name:'Jordan',nickname:'<script>Friday VIP</script>',starts_at:'2026-10-07T03:30:00Z',timezone:'America/Los_Angeles',dancers:[],status:'pending',notes:'',response_note:''};
+  const html=renderToStaticMarkup(React.createElement(component,{requests:[record],onReview:async()=>{}}));
+  assert.match(html,/Friday VIP/);assert.match(html,/Guest: Jordan/);assert.doesNotMatch(html,/<script>/);
+  const notification={notification_type:'support_message',payload:{kind:'vip_nickname_changed'}};
+  assert.equal(preferences.venueNotificationCategory(notification),'vipRequests');
+  assert.equal(preferences.venueNotificationEnabled(preferences.venueNotificationMetadataPatch({vipRequests:false}),notification),false);
 });

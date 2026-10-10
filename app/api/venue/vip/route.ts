@@ -31,15 +31,16 @@ export async function POST(request: Request) {
     const replacingInvitation = body.action === "resend_invitation" || body.action === "share_invitation";
     const token = body.action === "invite" || replacingInvitation ? newVipToken() : "";
     let email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    let nickname = body.action === "invite" ? vipNickname(body.nickname ?? "") : "";
     if (replacingInvitation) {
-      const previous = await admin.from("venue_vip_invitations").select("email").eq("id", vipId(body.id)).eq("venue_id", access.venueId)
+      const previous = await admin.from("venue_vip_invitations").select("email,nickname").eq("id", vipId(body.id)).eq("venue_id", access.venueId)
         .is("accepted_at", null).is("revoked_at", null).gt("expires_at", new Date().toISOString()).maybeSingle();
       if (previous.error) throw previous.error;
       if (!previous.data) throw new PublicApiError("NOT_FOUND", "This invitation is no longer pending. Refresh VIP access.", 404);
-      email = previous.data.email;
+      email = previous.data.email; nickname = previous.data.nickname || "";
     }
     const { data, error } = await admin.rpc("vip_manage", { p_actor: user.id, p_venue: access.venueId, p_action: replacingInvitation ? "invite" : body.action,
-      p_data: token ? { email, digest: vipTokenDigest(token) } : { id: body.id, status: body.status, expectedStatus: body.expectedStatus, note: body.note } });
+      p_data: token ? { email, digest: vipTokenDigest(token), nickname } : { id: body.id, status: body.status, expectedStatus: body.expectedStatus, note: body.note } });
     if (error) throw error;
     let invitationUrl = ""; let emailDelivered = false;
     if (token) {

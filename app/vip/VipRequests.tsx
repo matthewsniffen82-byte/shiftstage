@@ -13,7 +13,8 @@ export default function VipRequests({ requests, onReview, busy = false }: {
 function RequestCard({ request, onReview, busy }: { request: VipRequest; busy: boolean; onReview?: (request: VipRequest, status: string, note: string) => Promise<void> }) {
   const [note, setNote] = useState("");
   return <article className="vip-request">
-    <div className="vip-row"><strong>{onReview ? request.guest_name : "Your visit"}</strong><span className={`vip-badge vip-status-${request.status}`}>{request.status}</span></div>
+    <div className="vip-row"><strong>{onReview ? request.nickname || request.guest_name : "Your visit"}</strong><span className={`vip-badge vip-status-${request.status}`}>{request.status}</span></div>
+    {onReview && request.nickname && <small>Guest: {request.guest_name}</small>}
     <p className="vip-request-time"><time dateTime={request.starts_at}>{formatVipDate(request.starts_at, request.timezone)}</time><small>{request.timezone.replaceAll("_", " ")}</small></p>
     <p><strong>Requested dancers</strong><br />{request.dancers.map(dancer => dancer.stageName).join(", ")}</p>
     {request.notes && <p className="vip-note">{request.notes}</p>}

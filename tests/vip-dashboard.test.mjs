@@ -17,7 +17,7 @@ function database({ failure = null } = {}) {
   const client = {
     from(table) {
       const call = { table, steps: [] }; calls.push(call);
-      let result = table === 'venue_vip_members' ? venues.map(v => ({ user_id: guest.id, active: true, display_name: v.guestName, nickname: 'Private manager nickname', venue: { ...v, is_active: true, owner: { role: 'venue', account_state: 'active' } } })) : [...rows];
+      let result = table === 'venue_vip_members' ? venues.map(v => ({ user_id: guest.id, active: true, display_name: v.guestName, nickname: 'Friday regular', venue: { ...v, is_active: true, owner: { role: 'venue', account_state: 'active' } } })) : [...rows];
       let options, range, limit;
       const chain = {
         in(key, values) { result = result.filter(row => values.includes(row[key])); call.steps.push(["in", key, values]); return chain; },
@@ -60,8 +60,8 @@ test('planner and account read only the data needed for that section and retain 
   for (const view of ['plan', 'account', '']) {
     const db = database(); const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view, venueId: venues[1].id }));
     assert.equal(result.selectedVenueId, venues[1].id);
-    assert.doesNotMatch(JSON.stringify(result), /Private manager nickname|nickname/);
-    assert.ok(!db.calls.filter(c => c.table === 'venue_vip_members').some(c => c.steps.some(step => step[0] === 'select' && /nickname|\*/.test(step[1]))));
+    assert.equal(result.venues[0].nickname, 'Friday regular');
+    assert.ok(db.calls.filter(c => c.table === 'venue_vip_members').some(c => c.steps.some(step => step[0] === 'select' && /nickname/.test(step[1]))));
     assert.equal(db.calls.some(c => c.table === 'venue_vip_requests'), view !== 'account');
     assert.equal(db.calls.some(c => c.rpc === 'vip_eligible_dancers'), view !== 'account');
     if (view !== 'account') assert.equal(db.calls.find(c => c.rpc).args.p_venue, venues[1].id);
@@ -245,4 +245,44 @@ test('profile links, selection checkboxes, and favorite buttons are independent 
   await favorite.props.onClick(); assert.deepEqual(favorites, ['dancer-1']); assert.equal(draft.selected.length, 0);
   checkbox.props.onChange({ target: { checked: true } }); assert.deepEqual(Array.from(draft.selected), ['dancer-1']);
   assert.equal(favorites.length, 1);
+});
+
+test('VIP nickname edits retain failed drafts, notify on success and stay scoped to each venue', async () => {
+  const saved = new Map(venues.map((venue,index) => [venue.id,index ? 'Other venue name' : 'Friday regular']));
+  let fail = true;
+  const ui = dashboardHarness({ hash:'#vip-account', request: async (url,options) => {
+    if(options.method === 'PATCH') {
+      if(fail) { fail=false; throw new Error('Nickname save unavailable'); }
+      const body=JSON.parse(options.body); saved.set(body.venueId,body.nickname.trim()); return {nickname:body.nickname.trim(),changed:true};
+    }
+    return state(new URL(url,'https://example.test').searchParams.get('venueId') || venues[0].id,{venues:venues.map(venue=>({...venue,nickname:saved.get(venue.id)}))});
+  }});
+  const input=()=>ui.nodes().find(n=>n.type==='input'&&n.props.type==='text');
+  const form=()=>ui.nodes().find(n=>n.type==='form'&&n.props.className==='vip-nickname-editor');
+  const html=()=>renderToStaticMarkup(ui.tree());
+  await ui.settle();assert.equal(input().props.value,'Friday regular');
+  input().props.onChange({target:{value:'  Jordan VIP  '}});ui.render();
+  form().props.onSubmit({preventDefault(){}});await ui.settle();
+  assert.match(html(),/Nickname save unavailable/);assert.equal(input().props.value,'  Jordan VIP  ');
+  form().props.onSubmit({preventDefault(){}});await ui.settle();
+  assert.match(html(),/The Velvet Room has been notified/);assert.equal(input().props.value,'Jordan VIP');
+  ui.nodes().find(n=>n.type==='select').props.onChange({target:{value:venues[1].id}});await ui.settle();
+  assert.equal(input().props.value,'Other venue name');
+  input().props.onChange({target:{value:''}});ui.render();form().props.onSubmit({preventDefault(){}});await ui.settle();
+  assert.equal(input().props.value,'');assert.equal(saved.get(venues[0].id),'Jordan VIP');
+  const writes=ui.calls.filter(call=>call.options.method==='PATCH');
+  assert.equal(JSON.parse(writes.at(-1).options.body).venueId,venues[1].id);ui.unmount();
+});
+
+test('VIP nickname saves ignore delayed responses after a session change and prevent duplicate submissions', async () => {
+  let resolve;
+  const ui=dashboardHarness({hash:'#vip-account',request:async (url,options)=>options.method==='PATCH'?new Promise(done=>{resolve=done;}):state()});
+  await ui.settle();
+  const form=()=>ui.nodes().find(n=>n.type==='form'&&n.props.className==='vip-nickname-editor');
+  ui.nodes().find(n=>n.type==='input').props.onChange({target:{value:'Different name'}});ui.render();
+  form().props.onSubmit({preventDefault(){}});ui.render();form().props.onSubmit({preventDefault(){}});
+  assert.equal(ui.calls.filter(call=>call.options.method==='PATCH').length,1);
+  assert.ok(ui.nodes().find(n=>n.type==='button'&&n.props.children==='Save nickname').props.disabled);
+  ui.session({...guest,id:'other-account'});resolve({nickname:'Different name',changed:true});await ui.settle();
+  assert.doesNotMatch(renderToStaticMarkup(ui.tree()),/has been notified/);ui.unmount();
 });

@@ -34,6 +34,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [drafts, setDrafts] = useState<Record<string, VipDraft>>({});
   const [favoritePending, setFavoritePending] = useState<string[]>([]);
   const favoriteRequests = useRef(new Map<string, AbortController>());
+  const [nicknameDrafts, setNicknameDrafts] = useState<Record<string, string>>({});
   const lastVenue = useRef("");
   const mounted = useRef(false);
   const locked = useRef(false);
@@ -106,6 +107,23 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       if (mounted.current) setFavoritePending(previous => previous.filter(id => id !== dancer.id));
     }
   }
+  async function saveNickname() {
+    if (!venue || !data || locked.current || signingOut) return;
+    locked.current = true; setBusy(true); setError(""); setStatus("");
+    const controller = new AbortController(); submitAbort.current = controller;
+    const expectedAccount = account.id, savedVenue = venue;
+    try {
+      const result = await requestDashboardJson("/api/vip", { expectedRole: "customer", method: "PATCH", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ venueId: savedVenue.id, nickname: nicknameDrafts[savedVenue.id] ?? savedVenue.nickname ?? "" }), timeoutMs: 30000, signal: controller.signal });
+      if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
+      setVenues(previous => previous.map(item => item.id === savedVenue.id ? { ...item, nickname: result.nickname } : item));
+      setNicknameDrafts(previous => { const next = { ...previous }; delete next[savedVenue.id]; return next; });
+      setStatus(result.changed ? `Nickname saved. ${savedVenue.name} has been notified.` : "Your nickname is already up to date.");
+      setRevision(value => value + 1);
+    } catch (failure) {
+      if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
+    } finally { locked.current = false; submitAbort.current = null; if (mounted.current) setBusy(false); }
+  }
   async function submit() {
     if (!venue || locked.current) return;
     locked.current = true; setBusy(true); setError(""); setStatus("");
@@ -154,6 +172,13 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     {VIP_DESTINATIONS.map(item => <section key={item.id} id={`vip-panel-${item.id}`} className="vip-destination" aria-label={item.label} hidden={view !== item.id}>
       {view === item.id && (view === "account" ? <div className="vip-account-grid">
         <section className="vip-panel"><div className="vip-section-heading"><VipIcon kind="account" /><div><h2>Your account</h2><p>One sign-in for your private VIP access.</p></div></div><dl className="vip-account-details"><div><dt>Guest name at this venue</dt><dd>{venue?.guestName || "—"}</dd></div><div><dt>Email</dt><dd>{account.email || "Your customer account"}</dd></div><div><dt>Access</dt><dd>By private venue invitation</dd></div></dl><div className="vip-actions"><Link className="vip-link-action" href="/dashboard/customer#customer-account">Account settings <span aria-hidden="true">↗</span></Link><button type="button" disabled={disabled} onClick={() => void onSignOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></section>
+        {venue && <section className="vip-panel"><h2>Your nickname at {venue.name}</h2><p>Your venue uses this nickname to recognize you on visit requests.</p>
+          <form className="vip-nickname-editor" onSubmit={event => { event.preventDefault(); void saveNickname(); }}>
+            <label>VIP nickname<input type="text" maxLength={80} value={nicknameDrafts[venue.id] ?? venue.nickname ?? ""} disabled={disabled || loading || !data} onChange={event => setNicknameDrafts(previous => ({ ...previous, [venue.id]: event.target.value }))} /></label>
+            <small>Shared with this venue’s team. Saving a change notifies them of your old and new nickname. Leave blank to use your guest name.</small>
+            <div className="vip-actions"><button type="submit" disabled={disabled || loading || !data}>Save nickname</button></div>
+          </form>
+        </section>}
         <section className="vip-panel"><h2>Your VIP venues</h2><p>Each invitation unlocks access to that venue’s dancers and visit requests.</p>{loading && !venues.length ? <p role="status">Loading venues…</p> : <ul className="vip-memberships">{venues.map(member => <li key={member.id}><div><strong>{member.name}</strong><small>{member.timezone.replaceAll("_", " ")}</small></div><span className="vip-badge">VIP access</span></li>)}</ul>}{!loading && !venues.length && <p>Open a private invitation from your venue to get started.</p>}</section>
       </div> : !data ? loading ? <VipLoading label={view === "plan" ? "Loading your venue’s dancers…" : view === "requests" ? "Loading your requests…" : "Opening your lounge…"} /> : <p className="vip-empty">This section couldn’t be loaded. Use Refresh to try again.</p>
       : !venue ? <section className="vip-panel vip-empty-access"><VipIcon kind="overview" /><h2>Your invitation opens the door.</h2><p>Ask your venue for a private VIP link. Open it to activate your access and start planning a visit.</p></section>

@@ -69,13 +69,13 @@ export async function getVipState(client: SupabaseClient, userId: string, search
     throw new PublicApiError("INVALID_REQUEST", "Choose a valid dashboard section or request status.", 400);
   }
   const { data: memberships, error } = await client.from("venue_vip_members")
-    .select("venue_id,display_name,venue:venues!inner(id,name,timezone,is_active,owner:app_users!venues_owner_user_id_fkey(role,account_state))")
+    .select("venue_id,display_name,nickname,venue:venues!inner(id,name,timezone,is_active,owner:app_users!venues_owner_user_id_fkey(role,account_state))")
     .eq("user_id", userId).eq("active", true).order("created_at");
   if (error) throw error;
   const venues = (memberships || []).flatMap(member => {
     const venue = first(member.venue); const owner = first(venue?.owner);
     return venue?.is_active && owner?.role === "venue" && owner.account_state === "active"
-      ? [{ id: venue.id as string, name: venue.name as string, timezone: venue.timezone as string, guestName: member.display_name as string }] : [];
+      ? [{ id: venue.id as string, name: venue.name as string, timezone: venue.timezone as string, guestName: member.display_name as string, nickname: member.nickname as string }] : [];
   });
   const requested = search.get("venueId");
   const selected = requested ? venues.find(v => v.id === requested) : venues[0];
@@ -117,18 +117,25 @@ export async function getVenueVipState(client: SupabaseClient, userId: string, s
   if (!["all", "pending"].includes(status)) throw new PublicApiError("INVALID_REQUEST", "Choose a valid request status.", 400);
   const memberPage = vipPage(search, "memberPage");
   const memberSearch = vipNickname(search.get("memberSearch") || "");
-  let requestQuery = client.from("venue_vip_requests").select(requestColumns, { count: "exact" }).eq("venue_id", access.venueId);
+  let requestQuery = client.from("venue_vip_requests").select(`${requestColumns},user_id`, { count: "exact" }).eq("venue_id", access.venueId);
   if (status === "pending") requestQuery = requestQuery.eq("status", "pending");
   const [invitations, members, requests] = await Promise.all([
-    client.from("venue_vip_invitations").select("id,email,expires_at").eq("venue_id", access.venueId)
+    client.from("venue_vip_invitations").select("id,email,nickname,expires_at").eq("venue_id", access.venueId)
       .is("accepted_at", null).is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
     client.rpc("vip_search_members", { p_actor: userId, p_venue: access.venueId, p_search: memberSearch, p_offset: memberPage * 50 }),
     requestQuery
       .order("created_at", { ascending: false }).order("id", { ascending: false }).range(page * 50, page * 50 + 50),
   ]);
   for (const result of [invitations, members, requests]) if (result.error) throw result.error;
+  const requestPage = requests.data?.slice(0, 50) || [];
+  const userIds = [...new Set(requestPage.map(request => request.user_id))];
+  const labels = userIds.length ? await client.from("venue_vip_members").select("user_id,nickname")
+    .eq("venue_id", access.venueId).in("user_id", userIds) : { data: [], error: null };
+  if (labels.error) throw labels.error;
+  const nicknames = new Map((labels.data || []).map(member => [member.user_id, member.nickname]));
+  const namedRequests = requestPage.map(({ user_id, ...request }) => ({ ...request, nickname: nicknames.get(user_id) || "" }));
   return { invitations: invitations.data || [], members: members.data?.members || [], memberCount: members.data?.memberCount || 0,
-    membersHasMore: members.data?.membersHasMore || false, requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
+    membersHasMore: members.data?.membersHasMore || false, requests: namedRequests, hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
 }
 
 async function vipDancerCards(client: SupabaseClient, dancers: VipDancer[], userId: string, venueId: string): Promise<VipDancer[]> {
