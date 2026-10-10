@@ -590,8 +590,8 @@ html body.dancr-button-system > .app main.stack > section.stack
 
 /* Match the dancer profile's top buffer in addition to any viewport offset. */
 html body.dancr-button-system #results.venue-profile-overlay {
-  padding-top: calc(20px + var(--dancr-viewport-top, 0px)) !important;
-  scroll-padding-top: calc(20px + var(--dancr-viewport-top, 0px)) !important;
+  padding-top: calc(32px + var(--dancr-viewport-top, 0px)) !important;
+  scroll-padding-top: calc(32px + var(--dancr-viewport-top, 0px)) !important;
 }
 
 /* Base surface and shading for venue details and offer popups. */
