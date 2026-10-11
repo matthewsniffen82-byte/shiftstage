@@ -199,3 +199,18 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
   .vip-loading > div { grid-template-columns: minmax(0, 1fr); }
   .vip-loading span { height: 80px; }
 }
+
+/* VIP credentials stay inside the private dashboard. */
+.vip-credentials-account-details-heading,.vip-credentials-credential-options,.vip-credentials-credential-form-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.vip-credentials-account-details-heading { justify-content:space-between; }
+.vip-credentials-account-email { display:grid; gap:6px; margin:18px 0; overflow-wrap:anywhere; }
+.vip-credentials-account-email>span { color:var(--vip-muted,#b5a9bd); }
+.vip-credentials-credential-option { display:flex; align-items:center; gap:8px; }
+.vip-credentials-credential-icon,.vip-credentials-credential-chevron { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.5; }
+.vip-credentials-credential-form { display:grid; gap:16px; margin-top:20px; }
+.vip-credentials-credential-field { display:grid; gap:8px; }
+.vip-credentials-password-control { display:flex; align-items:center; gap:8px; }
+.vip-credentials-password-control input { min-width:0; flex:1; }
+.vip-credentials-credential-feedback { margin-top:16px; }
+
+.vip-credentials-password-toggle svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.5; }

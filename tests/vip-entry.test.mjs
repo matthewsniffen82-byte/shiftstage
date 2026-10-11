@@ -56,9 +56,9 @@ function entryFixture({ shortcut = false, token = '', session = null, request = 
   };
 }
 
-test('VIP entry uses existing guest sign-in; account creation is available only from an invitation', async () => {
+test('VIP entry uses its own sign-in; account creation is available only from an invitation', async () => {
   const entry = entryFixture(); await entry.settle();
-  assert.match(entry.html(), /invited MyDancr guest account/);
+  assert.match(entry.html(), /invited VIP account/);
   assert.doesNotMatch(entry.html(), /Create account|Set up your VIP account/); entry.close();
   const invite = entryFixture({ token: 'private-invitation' }); await invite.settle();
   assert.match(invite.html(), /You’re invited to Velvet Room/); assert.match(invite.html(), /I have an account · Sign in/);

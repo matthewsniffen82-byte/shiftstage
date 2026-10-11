@@ -11,6 +11,7 @@ import { type VipDancer, type VipDashboardView, type VipRequest, type VipRequest
 import { readVipWorkspace, saveVipWorkspace, vipDraftFingerprint } from "@/src/lib/dancr/vip-draft-storage";
 import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
 import VipRequests from "./VipRequests";
+import VipAccountPanel from "./VipAccountPanel";
 import "./vip-premium.css";
 
 const VipPlan = dynamic(() => import("./VipPlan"), { loading: () => <VipLoading label="Opening your visit planner…" /> });
@@ -240,7 +241,8 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     {loading && data && <p className="vip-updating" role="status">Updating your lounge…</p>}
     {VIP_DESTINATIONS.map(item => <section key={item.id} id={`vip-panel-${item.id}`} className="vip-destination" aria-label={item.label} hidden={view !== item.id}>
       {view === item.id && (view === "account" ? <div className="vip-account-grid">
-        <section className="vip-panel"><div className="vip-section-heading"><VipIcon kind="account" /><div><h2>Your account</h2><p>One sign-in for your private VIP access.</p></div></div><dl className="vip-account-details"><div><dt>Guest name at this venue</dt><dd>{venue?.guestName || "—"}</dd></div><div><dt>Email</dt><dd>{account.email || "Your customer account"}</dd></div><div><dt>Access</dt><dd>By private venue invitation</dd></div></dl><div className="vip-actions"><Link className="vip-link-action" href="/dashboard/customer#customer-account">Account settings <span aria-hidden="true">↗</span></Link><button type="button" disabled={disabled} onClick={() => void onSignOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></section>
+        <section className="vip-panel"><div className="vip-section-heading"><VipIcon kind="account" /><div><h2>Your account</h2><p>One sign-in for your private VIP access.</p></div></div><dl className="vip-account-details"><div><dt>VIP name at this venue</dt><dd>{venue?.guestName || "—"}</dd></div><div><dt>Email</dt><dd>{account.email || "Your VIP account"}</dd></div><div><dt>Access</dt><dd>By private venue invitation</dd></div></dl><div className="vip-actions"><button type="button" disabled={disabled} onClick={() => void onSignOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></section>
+        <VipAccountPanel account={account} onAccountChange={() => refresh()} />
         {venue && <section className="vip-panel"><h2>Your nickname at {venue.name}</h2><p>Your venue uses this nickname to recognize you on visit requests.</p>
           <form className="vip-nickname-editor" onSubmit={event => { event.preventDefault(); void saveNickname(); }}>
             <label>VIP nickname<input type="text" maxLength={80} value={nicknameDrafts[venue.id] ?? venue.nickname ?? ""} disabled={disabled || loading || !data} onChange={event => setNicknameDrafts(previous => ({ ...previous, [venue.id]: event.target.value }))} /></label>

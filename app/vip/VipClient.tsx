@@ -112,7 +112,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
         if (mode !== "signup" && mode !== "reset_password") throw new Error("Sign-in could not be completed. Please try again.");
         setEmailStep(mode); setResendSeconds(60); setPassword(""); return;
       }
-      if (data.account?.role !== "customer") throw new Error("Use your MyDancr guest account with the invited email for VIP access.");
+      if (data.account?.role !== "customer") throw new Error("Use your VIP account with the invited email for VIP access.");
       if (!persistBrowserAuthSession({ ...data.session, account: data.account })) throw new Error("Unable to save your sign-in in this browser.");
       setSession(readSession()); setPassword(""); setTermsAccepted(false); setSetupAttempt(value => value + 1);
     });
@@ -162,22 +162,22 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
       <button type="button" className="vip-primary" disabled={busy || resendSeconds > 0} onClick={resendEmail}>{busy ? "Sending…" : resendSeconds ? `Resend email in ${resendSeconds}s` : "Resend email"}</button>
       <div className="vip-actions"><button type="button" disabled={busy} onClick={() => chooseMode("login")}>I already have a password</button><button type="button" disabled={busy} onClick={() => chooseMode(emailStep)}>Use a different email</button></div>
     </section>
-    : !session?.accessToken && invitation && mode === "choose" ? <section className="vip-entry-content vip-account-choice"><h2>Continue with your guest account</h2><p>Use the email invited by your venue: {invitation.maskedEmail}.</p>
+    : !session?.accessToken && invitation && mode === "choose" ? <section className="vip-entry-content vip-account-choice"><h2>Continue with your VIP account</h2><p>Use the email invited by your venue: {invitation.maskedEmail}.</p>
       <button type="button" className="vip-primary" onClick={() => chooseMode("login")}>I have an account · Sign in</button>
       <button type="button" className="vip-primary" onClick={() => chooseMode("signup")}>I’m new · Create account</button>
-      <small>Already signed up for MyDancr? Use the same guest account.</small>
+      <small>Already signed up for MyDancr? Use the same VIP sign-in.</small>
     </section>
     : !session?.accessToken ? <section className="vip-entry-content vip-auth">{invitation && <h2>{mode === "signup" ? "Confirm your email" : mode === "reset_password" ? "Reset your password" : "Sign in to continue"}</h2>}
-      <p>{mode === "reset_password" ? "Enter your MyDancr guest email. We’ll send you a link to choose a new password." : invitation ? `Use your invited email (${invitation.maskedEmail}).` : "Use your invited MyDancr guest account."}</p>
+      <p>{mode === "reset_password" ? "Enter your VIP email. We’ll send you a link to choose a new password." : invitation ? `Use your invited email (${invitation.maskedEmail}).` : "Use your invited VIP account."}</p>
       {invitation && (mode === "login" || mode === "signup") && <div className="vip-auth-tabs" role="group" aria-label="Account access"><button type="button" aria-pressed={mode === "login"} disabled={busy} onClick={() => chooseMode("login")}>Sign in</button><button type="button" aria-pressed={mode === "signup"} disabled={busy} onClick={() => chooseMode("signup")}>Create account</button></div>}
       <form onSubmit={authenticate}><label>Email<input type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} required maxLength={254} disabled={busy} /></label>
         {mode === "login" && <PasswordField label="Password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required disabled={busy} />}
-        {mode === "signup" && <small>Verify your email, then set your password. If you already have a guest account, we’ll use it.</small>}
+        {mode === "signup" && <small>Verify your email, then set your password. If you already have a VIP account, we’ll use it.</small>}
         {mode === "signup" && <label className="vip-terms-consent"><input type="checkbox" checked={signupTermsAccepted} onChange={event => setSignupTermsAccepted(event.target.checked)} required disabled={busy} /><span>I agree to the <Link href={USER_TERMS_HREF} target="_blank" rel="noreferrer">User Terms</Link>. <Link href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link></span></label>}
         <button className="vip-primary" data-sign-in-action={mode === "login" || undefined} disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Send confirmation link" : mode === "reset_password" ? "Send reset link" : "Sign in"}</button>
       </form><div className="vip-auth-help"><button className="vip-text-button" type="button" disabled={busy} onClick={() => chooseMode(mode === "reset_password" ? "login" : "reset_password")}>{mode === "reset_password" ? "Back to sign in" : "Forgot password?"}</button>
       </div>
-    </section> : !customer ? <section className="vip-entry-content"><h2>Use your invited guest account</h2><p>You’re signed in to a different account type. Sign out, then use the email that received your VIP invitation.</p></section>
+    </section> : !customer ? <section className="vip-entry-content"><h2>Use your invited VIP account</h2><p>You’re signed in to a different account type. Sign out, then use the email that received your VIP invitation.</p></section>
     : token && invitation && setupCheck !== "ready" ? <section className="vip-entry-content vip-auth vip-password-setup">
       {setupCheck === "error" ? <><p role="alert">We couldn’t check your account setup. Please try again.</p><button className="vip-primary" onClick={() => setSetupAttempt(value => value + 1)}>Try again</button></> : <p role="status">{setupCheck === "opening" ? "Opening your password form…" : "Checking your account setup…"}</p>}
     </section>

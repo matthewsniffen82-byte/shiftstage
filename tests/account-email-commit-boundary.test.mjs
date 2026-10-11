@@ -157,3 +157,12 @@ for (const payload of [
   assert.ok([400, 413].includes(result.status));
   assert.deepEqual(f.events, []);
 });
+
+test("VIP email confirmations return to VIP; arbitrary destinations and other roles stay scoped", async () => {
+  for (const [account, returnTo, expected] of [[originalAccount, '/vip', '/vip'], [originalAccount, 'https://attacker.invalid', '/dashboard/customer'], [{ ...originalAccount, role: 'dancer' }, '/vip', '/dashboard/dancer']]) {
+    const f = fixture({ account });
+    await f.patch({ email: 'new@example.invalid', returnTo });
+    const url = new URL(f.updates[0].options.emailRedirectTo);
+    assert.equal(url.searchParams.get('return_to'), expected);
+  }
+});

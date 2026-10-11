@@ -57,7 +57,8 @@ export async function PATCH(request: Request) {
       const account = await getAccountByUserId(client, user.id);
       const origin = publicAppUrl();
       const accountRole = account?.role === "dancer" ? "dancer" : "customer";
-      const emailRedirectTo = `${origin}/auth/callback?role=${accountRole}&return_to=${encodeURIComponent(`/dashboard/${accountRole}`)}`;
+      const returnTo = accountRole === "customer" && body.returnTo === "/vip" ? "/vip" : `/dashboard/${accountRole}`;
+      const emailRedirectTo = `${origin}/auth/callback?role=${accountRole}&return_to=${encodeURIComponent(returnTo)}`;
       const { error } = await client.auth.updateUser({ email }, { emailRedirectTo });
 
       if (error) {

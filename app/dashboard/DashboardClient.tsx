@@ -30,7 +30,6 @@ import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import { loadDancerDashboard } from "./dancer-dashboard-loader";
 import CustomerAccountPanel from "./CustomerAccountPanel";
-import CustomerVipShortcut from "./CustomerVipShortcut";
 import DancerNotificationSettings from "./DancerNotificationSettings";
 import { DEVICE_SAVED_DEALS_KEY, DEVICE_SAVED_DEALS_CHANGED_EVENT, mergeCustomerSavedClubDeals, readDeviceSavedClubDeals, type DeviceSavedClubDeal } from "@/src/lib/dancr/customer-device-deals";
 import { DASHBOARD_SESSION_KEY as SESSION_KEY, DashboardDataRequestError, dashboardLoadErrorMessage, persistDashboardSession, readSession, requestAccountJson, requestDashboardJson, requestOptionalDashboardJson, requestVenueDashboardJson, storedSessionAccount, storedSessionIsFresh, type DashboardSessionAccount } from "./dashboard-session";
@@ -571,7 +570,6 @@ export default function DashboardClient({
                 initialSection={initialSection}
                 alertCount={customerAlertCount}
                 welcomeContent={<>
-                  {state.account?.id ? <CustomerVipShortcut key={state.account.id} accountId={state.account.id} /> : null}
                   <CustomerWelcomeCard accountKey={String(state.account?.id || state.account?.email || "guest")} show={showCustomerWelcome} />
                 </>}
                 alertsContent={<div id="customer-alerts" tabIndex={-1}>
