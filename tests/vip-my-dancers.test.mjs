@@ -1,0 +1,162 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { compileVip, dashboardHarness, guest, venues, state } from './helpers/vip-dashboard-fixture.mjs';
+import { vipDestination } from '../src/lib/dancr/vip-dashboard.ts';
+
+class PublicApiError extends Error { constructor(code, message, status) { super(message); this.code = code; this.status = status; } }
+const service = compileVip('src/lib/dancr/vip.ts', {
+  '../api-error-policy': { PublicApiError }, './media-delivery-url': { dancerPhotoDeliveryUrl: path => `/photo/${path}` },
+});
+const cards = [
+  { id: 'aria', stage_name: 'Aria', working_now: true, favorite: true, following: false, previouslyRequested: true, canRequest: true, profileHref: '/dancers/aria' },
+  { id: 'nova', stage_name: 'Nova', working_now: false, favorite: false, following: true, previouslyRequested: false, canRequest: true, profileHref: '/dancers/nova' },
+  { id: 'past', stage_name: 'Past dancer', working_now: false, favorite: true, following: true, previouslyRequested: true, canRequest: false, profileHref: null },
+];
+function database({ failure, denied = false, large = false } = {}) {
+  const calls = [];
+  const tables = {
+    venue_vip_members: venues.map(v => ({ user_id: guest.id, active: !denied, display_name: v.guestName, venue: { ...v, is_active: true, owner: { role: 'venue', account_state: 'active' } } })),
+    favorites: [{ customer_id: guest.id, dancer_id: 'aria' }, { customer_id: guest.id, dancer_id: 'hidden' }, { customer_id: 'other', dancer_id: 'secret' }],
+    follows: [{ customer_id: guest.id, dancer_id: 'nova' }, { customer_id: 'other', dancer_id: 'secret' }],
+    venue_vip_requests: [
+      { id: 'request-3', user_id: guest.id, venue_id: venues[0].id, dancers: [{ id: 'aria', stageName: 'Old name' }, { id: 'past', stageName: 'Past dancer' }] },
+      { id: 'request-2', user_id: 'other', venue_id: venues[0].id, dancers: [{ id: 'secret', stageName: 'Secret dancer' }] },
+      { id: 'request-1', user_id: guest.id, venue_id: venues[1].id, dancers: [{ id: 'other-venue', stageName: 'Other venue dancer' }] },
+    ],
+    dancer_profiles: [
+      { id: 'aria', slug: 'aria', stage_name: 'Aria', status: 'approved', verification_status: 'approved', is_public: true, disabled_at: null, avatar_storage_path: 'aria/photo.jpg' },
+      { id: 'nova', slug: 'nova', stage_name: 'Nova', status: 'approved', verification_status: 'approved', is_public: true, disabled_at: null, avatar_storage_path: 'https://private.test/photo' },
+      { id: 'hidden', slug: 'secret-profile', stage_name: 'Private stage name', status: 'approved', verification_status: 'approved', is_public: false, disabled_at: null, avatar_storage_path: 'private/photo.jpg' },
+    ],
+  };
+  if (large) {
+    tables.favorites.push(...Array.from({ length: 501 }, (_, i) => ({ customer_id: guest.id, dancer_id: `saved-${String(i).padStart(3, '0')}` })));
+    tables.venue_vip_requests.unshift(...Array.from({ length: 501 }, (_, i) => ({ id: `z-${i}`, user_id: guest.id, venue_id: venues[0].id, dancers: [] })));
+  }
+  return { calls, client: {
+    from(table) {
+      let rows = [...tables[table]], range;
+      const steps = []; calls.push({ table, steps });
+      const query = {
+        select(columns) { steps.push(['select', columns]); return query; },
+        eq(key, value) { steps.push(['eq', key, value]); rows = rows.filter(row => row[key] === value); return query; },
+        is(key, value) { steps.push(['is', key, value]); rows = rows.filter(row => row[key] === value); return query; },
+        in(key, values) { steps.push(['in', key, values]); rows = rows.filter(row => values.includes(row[key])); return query; },
+        order(key, options) { rows.sort((a, b) => String(a[key]).localeCompare(String(b[key])) * (options?.ascending === false ? -1 : 1)); return query; },
+        range(start, end) { range = [start, end]; steps.push(['range', start, end]); return query; },
+        then(resolve, reject) { return Promise.resolve({ data: range ? rows.slice(range[0], range[1] + 1) : rows, error: failure === table ? new Error('read failed') : null }).then(resolve, reject); },
+      };
+      return query;
+    },
+    async rpc(name, args) { calls.push({ rpc: name, args }); return { data: cards.filter(d => d.canRequest).map(d => ({ id: d.id, stage_name: d.stage_name, working_now: d.working_now })), error: failure === 'roster' ? new Error('read failed') : null }; },
+  } };
+}
+
+test('My dancers joins only the authenticated guest’s collections and selected venue history, retaining unavailable dancers', async () => {
+  const db = database();
+  const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers' }));
+  const byId = new Map(result.dancers.map(d => [d.id, d]));
+  assert.deepEqual([...byId.keys()].sort(), ['aria', 'hidden', 'nova', 'past']);
+  assert.equal(byId.get('aria').favorite, true); assert.equal(byId.get('aria').following, false);
+  assert.equal(byId.get('aria').previouslyRequested, true); assert.equal(byId.get('aria').stage_name, 'Aria');
+  assert.equal(byId.get('aria').canRequest, true); assert.equal(byId.get('aria').photoUrl, '/photo/aria/photo.jpg');
+  assert.equal(byId.get('nova').following, true); assert.equal(byId.get('nova').favorite, false); assert.equal(byId.get('nova').photoUrl, null);
+  assert.equal(byId.get('hidden').stage_name, 'Unavailable dancer'); assert.equal(byId.get('hidden').profileHref, null); assert.equal(byId.get('hidden').photoUrl, null);
+  assert.equal(byId.get('past').previouslyRequested, true); assert.equal(byId.get('past').canRequest, false);
+  assert.equal(result.requests.length, 0);
+  for (const call of db.calls.filter(c => ['favorites', 'follows'].includes(c.table))) assert.ok(call.steps.some(s => s[0] === 'eq' && s[1] === 'customer_id' && s[2] === guest.id));
+  const other = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[1].id }));
+  assert.equal(other.dancers.find(d => d.id === 'aria').previouslyRequested, false);
+  assert.ok(other.dancers.some(d => d.id === 'other-venue' && d.previouslyRequested));
+  assert.ok(!other.dancers.some(d => d.id === 'past'));
+});
+
+test('collections and old request history paginate fully and profile lookups stay bounded', async () => {
+  const db = database({ large: true });
+  const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers' }));
+  assert.equal(result.dancers.filter(d => d.favorite).length, 503);
+  assert.ok(result.dancers.some(d => d.id === 'saved-500'));
+  assert.ok(result.dancers.some(d => d.id === 'past' && d.previouslyRequested));
+  for (const table of ['favorites', 'venue_vip_requests']) assert.ok(db.calls.some(c => c.table === table && c.steps.some(s => s[0] === 'range' && s[1] === 500)));
+  assert.ok(db.calls.filter(c => c.table === 'dancer_profiles').every(c => c.steps.find(s => s[0] === 'in')[2].length <= 200));
+});
+
+test('the My dancers API uses the authenticated customer and sends private no-store headers', async () => {
+  const db = database();
+  const route = compileVip('app/api/vip/route.ts', {
+    'next/server': { NextResponse: Response },
+    '@/src/lib/api': { apiError: error => Response.json({ error: error.message }, { status: error.status || 500 }), PublicApiError },
+    '@/src/lib/supabase/request': { createRequestSupabaseContext: async (_request, options) => {
+      assert.equal(options.role, 'customer'); return { user: { id: guest.id }, session: { accessToken: 'rotated' } };
+    } },
+    '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => db.client },
+    '@/src/lib/dancr/vip': service,
+  }, { URL });
+  const response = await route.GET(new Request('https://example.test/api/vip?view=dancers&userId=other'));
+  assert.equal(response.status, 200); assert.match(response.headers.get('cache-control'), /private.*no-store/);
+  const result = await response.json(); assert.equal(result.session.accessToken, 'rotated');
+  assert.ok(!result.dancers.some(d => d.id === 'secret'));
+});
+
+test('revoked or wrong-venue access cannot read private collections, and source failures do not look like empty lists', async () => {
+  const db = database({ denied: true });
+  assert.equal((await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers' }))).dancers.length, 0);
+  await assert.rejects(service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[0].id })), error => error.status === 403);
+  assert.ok(db.calls.every(c => c.table === 'venue_vip_members'));
+  for (const failure of ['favorites', 'follows', 'venue_vip_requests', 'dancer_profiles', 'roster']) {
+    await assert.rejects(service.getVipState(database({ failure }).client, guest.id, new URLSearchParams({ view: 'dancers' })), /read failed/);
+  }
+});
+
+test('My dancers opens directly and adds to the current venue draft without submitting or losing existing details', async () => {
+  assert.equal(vipDestination('#vip-dancers'), 'dancers');
+  const ui = dashboardHarness({ hash: '#vip-dancers', request: async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id, { dancers: cards }) });
+  await ui.settle(); assert.ok(ui.myDancers()); assert.match(ui.calls.at(-1).url, /view=dancers/);
+  ui.myDancers().props.onRequest(cards[2]); await ui.settle(); assert.ok(ui.myDancers(), 'unavailable dancers cannot start a request');
+  ui.navigate('plan'); await ui.settle(); ui.planner().props.onChange({ selected: ['nova'], date: '2027-02-15', time: '21:30' }); ui.render();
+  ui.navigate('dancers'); await ui.settle(); ui.myDancers().props.onRequest(cards[0]); await ui.settle();
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova', 'aria']);
+  assert.equal(ui.planner().props.draft.date, '2027-02-15'); assert.equal(ui.planner().props.draft.time, '21:30');
+  assert.ok(!ui.calls.some(c => c.options.method === 'POST'));
+  ui.navigate('dancers'); await ui.settle(); ui.myDancers().props.onRequest(cards[0]); await ui.settle();
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova', 'aria']);
+  ui.navigate('dancers'); await ui.settle(); ui.nodes().find(n => n.type === 'select').props.onChange({ target: { value: venues[1].id } }); await ui.settle();
+  ui.myDancers().props.onRequest(cards[1]); await ui.settle(); assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova']);
+  assert.equal(ui.planner().props.draft.date, ''); ui.unmount();
+});
+
+test('full drafts and changed accounts cannot add dancers, while saved hearts update inside My dancers', async () => {
+  const many = Array.from({ length: 11 }, (_, i) => ({ ...cards[0], id: `dancer-${i}` }));
+  const ui = dashboardHarness({ hash: '#vip-plan', request: async (url, options) => options.method === 'POST' ? { favorite: false } : state(venues[0].id, { dancers: many }) });
+  await ui.settle(); ui.planner().props.onChange({ selected: many.slice(0, 10).map(d => d.id), date: '', time: '' }); ui.render();
+  ui.navigate('dancers'); await ui.settle(); ui.myDancers().props.onRequest(many[10]); await ui.settle();
+  assert.ok(ui.myDancers()); assert.match(renderToStaticMarkup(ui.tree()), /already has 10 dancers/);
+  await ui.myDancers().props.onFavorite(many[0]); await ui.settle(); assert.equal(ui.myDancers().props.dancers[0].favorite, false);
+  ui.session({ id: 'other' }); ui.myDancers().props.onRequest(many[0]); await ui.settle(); assert.ok(ui.myDancers()); ui.unmount();
+});
+
+test('collection controls, search, venue eligibility, profiles, empty states, and request actions render independently', () => {
+  let cursor = 0; const values = [], requests = [], saves = [];
+  const Component = compileVip('app/vip/VipMyDancers.tsx', { react: { useState(initial) { const i = cursor++; if (!(i in values)) values[i] = initial; return [values[i], value => { values[i] = value; }]; } } }).default;
+  const props = { venue: venues[0], dancers: cards, busy: false, favoritePending: [], onRequest: d => requests.push(d.id), onFavorite: async d => saves.push(d.id), onBrowse() {}, onRequests() {} };
+  const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : [];
+  const render = () => { cursor = 0; return Component(props); };
+  let tree = render(); const html = () => renderToStaticMarkup(tree);
+  assert.match(html(), /Aria/); assert.doesNotMatch(html(), /Nova/); assert.match(html(), /Past dancer/);
+  const profile = nodes(tree).find(n => n.type === 'a');
+  assert.equal(new URL(profile.props.href, 'https://example.test').searchParams.get('return_to'), `/vip?venueId=${venues[0].id}#vip-dancers`);
+  const requestButtons = nodes(tree).filter(n => n.props?.className === 'vip-library-request');
+  requestButtons[0].props.onClick(); assert.deepEqual(requests, ['aria']); assert.equal(requestButtons[1].props.disabled, true);
+  nodes(tree).find(n => n.props?.className === 'vip-library-save').props.onClick(); assert.deepEqual(saves, ['aria']);
+  nodes(tree).find(n => n.type === 'button' && n.props.children?.[0] === 'Following').props.onClick(); tree = render();
+  assert.match(html(), /Nova/); assert.doesNotMatch(html(), /Aria/);
+  nodes(tree).find(n => n.type === 'select').props.onChange({ target: { value: 'venue' } }); tree = render();
+  assert.doesNotMatch(html(), /Past dancer/);
+  nodes(tree).find(n => n.type === 'input').props.onChange({ target: { value: 'missing' } }); tree = render(); assert.match(html(), /No dancers match/);
+  nodes(tree).find(n => n.props?.children === 'Clear filters').props.onClick(); tree = render(); assert.match(html(), /Nova/);
+  nodes(tree).find(n => n.type === 'button' && n.props.children?.[0] === 'Requested').props.onClick(); tree = render();
+  assert.match(html(), /View request status/); assert.match(html(), /Request again/); assert.doesNotMatch(html(), /Nova/);
+  props.dancers = []; tree = render(); assert.match(html(), /No requested dancers yet/);
+});

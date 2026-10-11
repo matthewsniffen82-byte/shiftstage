@@ -1,5 +1,5 @@
 export type VipVenue = { id: string; name: string; timezone: string; guestName: string; nickname?: string };
-export type VipDancer = { id: string; stage_name: string; working_now: boolean; photoUrl?: string | null; profileHref?: string | null; favorite?: boolean; previouslyRequested?: boolean };
+export type VipDancer = { id: string; stage_name: string; working_now: boolean; photoUrl?: string | null; profileHref?: string | null; favorite?: boolean; following?: boolean; previouslyRequested?: boolean; canRequest?: boolean };
 export type VipRequest = {
   id: string; venue_id: string; guest_name: string; nickname?: string; starts_at: string; timezone: string;
   dancers: Array<{ id: string; stageName: string }>; notes: string;
@@ -7,7 +7,7 @@ export type VipRequest = {
   response_note: string; created_at: string; updated_at?: string;
 };
 export type VipInvitation = { venueName: string; maskedEmail: string; expiresAt: string };
-export type VipDashboardView = "overview" | "plan" | "requests" | "account";
+export type VipDashboardView = "overview" | "dancers" | "plan" | "requests" | "account";
 export type VipRequestFilter = "all" | VipRequest["status"];
 export type VipSummary = { pending: number; upcoming: number; nextVisit: VipRequest | null };
 export type VipState = {

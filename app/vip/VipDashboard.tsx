@@ -11,6 +11,7 @@ import { type VipDancer, type VipDashboardView, type VipRequest, type VipRequest
 import { readVipWorkspace, saveVipWorkspace, vipDraftFingerprint } from "@/src/lib/dancr/vip-draft-storage";
 import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
 import VipRequests from "./VipRequests";
+import VipMyDancers from "./VipMyDancers";
 import VipAccountPanel from "./VipAccountPanel";
 import "./vip-premium.css";
 
@@ -152,6 +153,18 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     setStatus("Previous dancers added to your draft, up to 10. Review the current roster and choose a date and time.");
     navigate("plan");
   }
+  function requestDancer(dancer: VipDancer) {
+    if (!venue || locked.current || signingOut || loading || !dancer.canRequest || readSession()?.account?.id !== account.id) return;
+    const current = drafts[venue.id] || emptyVipDraft();
+    if (!current.selected.includes(dancer.id) && current.selected.length >= 10) {
+      setError("Your visit already has 10 dancers. Open Plan a visit to remove one before adding another.");
+      return;
+    }
+    setDrafts(previous => ({ ...previous, [venue.id]: { ...current, selected: [...new Set([...current.selected, dancer.id])] } }));
+    setEditing(null); setError("");
+    setStatus(`${dancer.stage_name} is in your visit draft. Choose a date and time, then send your request.`);
+    navigate("plan");
+  }
   async function withdrawRequest(request: VipRequest) {
     if (!venue || locked.current || signingOut) return false;
     locked.current = true; setBusy(true); setError(""); setStatus("");
@@ -288,6 +301,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         </section>
         <div className="vip-explainer"><span><b>01</b> Choose your dancers</span><span><b>02</b> Set your date & time</span><span><b>03</b> Get venue confirmation</span></div>
       </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} busy={disabled} />
+      : view === "dancers" ? <VipMyDancers key={venue.id} venue={venue} dancers={data.dancers} onRequest={requestDancer} onFavorite={toggleFavorite} favoritePending={favoritePending} onBrowse={() => navigate("plan")} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled || loading} />
       : <>
         <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>Track venue responses and review your plans.</p></div></div>
         <div className="vip-request-toolbar"><label>Status<select value={filter} onChange={event => { setFilter(event.target.value as VipRequestFilter); setPage(0); }} disabled={disabled}>{requestFilters.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><span>{data.requestCount ?? data.requests.length} {(data.requestCount ?? data.requests.length) === 1 ? "request" : "requests"}</span></div>
@@ -301,7 +315,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
 
 export function VipIcon({ kind }: { kind: string }) {
   return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {kind === "overview" ? <><path d="m3 7 4 11h10l4-11-6 4-3-7-3 7-6-4ZM7 21h10" /></> : kind === "plan" ? <><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 10h16m-8 3v5m-2.5-2.5h5" /></> : kind === "requests" ? <><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 10h16m-11 5 2 2 4-4" /></> : kind === "account" ? <><circle cx="12" cy="8" r="4" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></> : kind === "clock" ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></> : kind === "refresh" ? <><path d="M20 7v5h-5M4 17v-5h5" /><path d="M6 7a7 7 0 0 1 12-2l2 3M4 16l2 3a7 7 0 0 0 12-2" /></> : <><path d="M4 21V7l8-4 8 4v14M2 21h20M9 21v-5h6v5M8 9h1m6 0h1m-8 3h1m6 0h1" /></>}
+    {kind === "dancers" ? <><circle cx="9" cy="7" r="3" /><path d="M3 21v-3a6 6 0 0 1 12 0v3M16 4a3 3 0 0 1 0 6m3 11v-3a6 6 0 0 0-2-4.5" /></> : kind === "overview" ? <><path d="m3 7 4 11h10l4-11-6 4-3-7-3 7-6-4ZM7 21h10" /></> : kind === "plan" ? <><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 10h16m-8 3v5m-2.5-2.5h5" /></> : kind === "requests" ? <><rect x="4" y="5" width="16" height="16" rx="3" /><path d="M8 3v4m8-4v4M4 10h16m-11 5 2 2 4-4" /></> : kind === "account" ? <><circle cx="12" cy="8" r="4" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></> : kind === "clock" ? <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></> : kind === "refresh" ? <><path d="M20 7v5h-5M4 17v-5h5" /><path d="M6 7a7 7 0 0 1 12-2l2 3M4 16l2 3a7 7 0 0 0 12-2" /></> : <><path d="M4 21V7l8-4 8 4v14M2 21h20M9 21v-5h6v5M8 9h1m6 0h1m-8 3h1m6 0h1" /></>}
   </svg>;
 }
 function VipLoading({ label }: { label: string }) {

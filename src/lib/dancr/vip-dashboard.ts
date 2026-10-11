@@ -2,6 +2,7 @@ import type { VipDancer, VipDashboardView, VipRequest } from "./vip-types";
 
 export const VIP_DESTINATIONS: Array<{ id: VipDashboardView; label: string }> = [
   { id: "overview", label: "Overview" },
+  { id: "dancers", label: "My dancers" },
   { id: "plan", label: "Plan a visit" },
   { id: "requests", label: "Requests" },
   { id: "account", label: "Account" },

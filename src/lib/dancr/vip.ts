@@ -65,7 +65,7 @@ export async function resolveVipInvitation(client: SupabaseClient, token: unknow
 export async function getVipState(client: SupabaseClient, userId: string, search: URLSearchParams): Promise<VipState> {
   const view = search.get("view");
   const filter = search.get("status") || "all";
-  if ((view && !["overview", "plan", "requests", "account"].includes(view)) || !["all", "pending", "confirmed", "declined", "cancelled"].includes(filter)) {
+  if ((view && !["overview", "dancers", "plan", "requests", "account"].includes(view)) || !["all", "pending", "confirmed", "declined", "cancelled"].includes(filter)) {
     throw new PublicApiError("INVALID_REQUEST", "Choose a valid dashboard section or request status.", 400);
   }
   const { data: memberships, error } = await client.from("venue_vip_members")
@@ -83,6 +83,7 @@ export async function getVipState(client: SupabaseClient, userId: string, search
   if (!selected) return { venues, selectedVenueId: "", dancers: [], requests: [], hasMore: false };
   const base: VipState = { venues, selectedVenueId: selected.id, dancers: [], requests: [], hasMore: false };
   if (view === "account") return base;
+  if (view === "dancers") return { ...base, dancers: await vipMyDancers(client, userId, selected.id) };
   if (view === "overview") {
     const now = new Date().toISOString();
     const [pending, upcoming, nextVisit] = await Promise.all([
@@ -136,6 +137,60 @@ export async function getVenueVipState(client: SupabaseClient, userId: string, s
   const namedRequests = requestPage.map(({ user_id, ...request }) => ({ ...request, nickname: nicknames.get(user_id) || "" }));
   return { invitations: invitations.data || [], members: members.data?.members || [], memberCount: members.data?.memberCount || 0,
     membersHasMore: members.data?.membersHasMore || false, requests: namedRequests, hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
+}
+
+async function vipMyDancers(client: SupabaseClient, userId: string, venueId: string): Promise<VipDancer[]> {
+  // Membership is verified by getVipState before any private collection is read.
+  const [favorites, follows, history, roster] = await Promise.all([
+    savedDancerIds(client, "favorites", userId),
+    savedDancerIds(client, "follows", userId),
+    requestedDancerHistory(client, userId, venueId),
+    client.rpc("vip_eligible_dancers", { p_venue: venueId }),
+  ]);
+  if (roster.error) throw roster.error;
+  const eligible = new Map<string, VipDancer>((roster.data || []).map((dancer: VipDancer) => [dancer.id, dancer]));
+  const ids = [...new Set([...favorites, ...follows, ...history.keys()])];
+  const profiles = new Map<string, { slug: string; stage_name: string; avatar_storage_path: string | null }>();
+  // Bound URL size and avoid the database's default result limit.
+  for (let offset = 0; offset < ids.length; offset += 200) {
+    const { data, error } = await client.from("dancer_profiles").select("id,slug,stage_name,avatar_storage_path")
+      .in("id", ids.slice(offset, offset + 200)).eq("status", "approved").eq("verification_status", "approved")
+      .eq("is_public", true).is("disabled_at", null);
+    if (error) throw error;
+    for (const profile of data || []) profiles.set(profile.id, profile);
+  }
+  return ids.map(id => {
+    const profile = profiles.get(id), dancer = eligible.get(id), path = profile?.avatar_storage_path;
+    return { id, stage_name: profile?.stage_name || dancer?.stage_name || history.get(id) || "Unavailable dancer",
+      working_now: dancer?.working_now === true, canRequest: eligible.has(id),
+      favorite: favorites.has(id), following: follows.has(id), previouslyRequested: history.has(id),
+      profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
+      photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null };
+  });
+}
+
+async function savedDancerIds(client: SupabaseClient, table: "favorites" | "follows", userId: string) {
+  const ids = new Set<string>();
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await client.from(table).select("dancer_id").eq("customer_id", userId)
+      .order("dancer_id").range(offset, offset + 499);
+    if (error) throw error;
+    for (const row of data || []) ids.add(row.dancer_id);
+    if (!data || data.length < 500) return ids;
+  }
+}
+
+async function requestedDancerHistory(client: SupabaseClient, userId: string, venueId: string) {
+  const dancers = new Map<string, string>();
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await client.from("venue_vip_requests").select("id,dancers")
+      .eq("user_id", userId).eq("venue_id", venueId).order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + 499);
+    if (error) throw error;
+    for (const request of data || []) for (const dancer of Array.isArray(request.dancers) ? request.dancers : []) {
+      if (typeof dancer?.id === "string" && !dancers.has(dancer.id)) dancers.set(dancer.id, typeof dancer.stageName === "string" ? dancer.stageName : "Unavailable dancer");
+    }
+    if (!data || data.length < 500) return dancers;
+  }
 }
 
 async function vipDancerCards(client: SupabaseClient, dancers: VipDancer[], userId: string, venueId: string): Promise<VipDancer[]> {

@@ -68,6 +68,13 @@ test('explicit VIP return wins over unrelated same-site history', async () => {
   assert.equal(result.backs, 0);
 });
 
+test('My dancers profile returns reopen the same venue collection', async () => {
+  const result = navigation(await closeProps('/vip?venueId=venue-2#vip-dancers'));
+  assert.deepEqual(result.assigned, [`${origin}/vip?venueId=venue-2#vip-dancers`]);
+  assert.equal(result.backs, 0);
+  assert.equal(result.button.props['aria-label'], 'Back to VIP dashboard');
+});
+
 test('ordinary profiles retain browser back and the discovery fallback', async () => {
   const props = await closeProps(undefined);
   assert.equal(props.vipReturnHref, '');
