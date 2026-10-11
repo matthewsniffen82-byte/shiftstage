@@ -91,8 +91,9 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-shell .vip-open-profile { display: block; margin-top: 3px; color: #e5d1ae; font-size: 10px; line-height: 1.4; text-decoration: underline; text-underline-offset: 2px; }
 .vip-dashboard-shell .vip-dancer-favorite { position: absolute; z-index: 3; top: 3px; left: 3px; display: grid; place-items: center; width: 32px !important; min-width: 32px !important; height: 36px !important; min-height: 36px !important; margin: 0; padding: 6px !important; border: 0 !important; border-radius: 7px !important; background: #08060dcc !important; color: #eee3f6 !important; }
 .vip-dashboard-shell .vip-dancer-favorite svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; }
-.vip-dashboard-shell .vip-dancer-favorite[aria-pressed=true] { color: #f79bb7 !important; }
-.vip-dashboard-shell .vip-dancer-favorite[aria-pressed=true] svg { fill: currentColor; }
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-pressed=true],
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-pressed=true] svg { color: #ff304f !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-pressed=true] svg { fill: currentColor !important; }
 .vip-dashboard-shell .vip-dancer-favorite::before, .vip-dashboard-shell .vip-dancer-favorite::after { display: none !important; }
 .vip-dashboard-shell .vip-avatar { width: 37px; height: 43px; border-radius: 11px; color: #d6b9f2; background: linear-gradient(135deg, #433051, #251b30); border: 1px solid #5b406d; }
 .vip-dashboard-shell .vip-dancer .vip-avatar { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; border: 0; border-radius: 0; font-size: 24px; }
