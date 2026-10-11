@@ -83,7 +83,7 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-shell .vip-dancer.is-selected { outline: 2px solid #c6a5fb; outline-offset: -2px; }
 .vip-dashboard-shell .vip-dancer-select { position: absolute; z-index: 3; top: 3px; right: 3px; display: flex; align-items: center; justify-content: center; width: 32px; height: 36px; margin: 0; border-radius: 7px; background: #08060dcc; cursor: pointer; }
 .vip-dashboard-shell .vip-dancer-select input { position: absolute; inset: 0; width: 100% !important; height: 100% !important; min-height: 0; margin: 0; opacity: 0; cursor: pointer; }
-.vip-dashboard-shell .vip-dancer-select svg { width: 21px; height: 21px; flex: none; fill: #08060d66; stroke: #eee3f6; stroke-width: 1.7; filter: drop-shadow(0 1px 2px #000b); pointer-events: none; }
+.vip-dashboard-shell .vip-dancer-select svg { width: 21px; height: 21px; flex: none; fill: #17111f; stroke: #eee3f6; stroke-width: 1.7; filter: drop-shadow(0 1px 2px #000b); pointer-events: none; }
 .vip-dashboard-shell .vip-dancer-select input:checked + svg { fill: #8a55cf; stroke: #fff; }
 .vip-dashboard-shell .vip-dancer-select input:focus-visible + svg { outline: 2px solid #c9a4f4; outline-offset: 2px; border-radius: 3px; }
 .vip-dashboard-shell .vip-dancer-select input:disabled { cursor: default; }

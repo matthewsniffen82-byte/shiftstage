@@ -115,6 +115,15 @@ body.dancr-button-system #vip-dashboard .vip-mobile-continue { display: none; }
   body.dancr-button-system #vip-dashboard:has(.vip-mobile-continue) { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
   body.dancr-button-system #vip-dashboard .vip-mobile-continue { position: fixed; z-index: 6; bottom: calc(12px + env(safe-area-inset-bottom)); left: 14px; right: 14px; max-width: 580px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border: 1px solid #51445e; border-radius: 16px; background: #1b1622; box-shadow: 0 8px 30px #0008; font-size: 13px; color: #f6f2ed; }
   body.dancr-button-system #vip-dashboard .vip-mobile-continue strong { color: var(--vip-gold); }
+  /* Match the darker Android reference without recoloring its existing button. */
+  @supports (-webkit-touch-callout: none) {
+    body.dancr-button-system #vip-dashboard .vip-mobile-continue button.vip-primary {
+      background: linear-gradient(110deg, #3000a3, #210078) !important;
+      border-color: #513776 !important; color: #fff !important;
+      box-shadow: none !important; text-shadow: none !important;
+    }
+    body.dancr-button-system #vip-dashboard .vip-mobile-continue button.vip-primary:enabled { filter: none !important; }
+  }
 }
 @media (max-width: 600px) {
   body.dancr-button-system #vip-dashboard .dashboard-identity-label,
