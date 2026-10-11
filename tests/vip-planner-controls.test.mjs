@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import postcss from 'postcss';
-import { compileVip, venues, dancers } from './helpers/vip-dashboard-fixture.mjs';
+import { dancers } from './helpers/vip-dashboard-fixture.mjs';
 import * as helpers from '../src/lib/dancr/vip-dashboard.ts';
-import * as types from '../src/lib/dancr/vip-types.ts';
+import { plannerHarness } from './helpers/vip-planner-fixture.mjs';
 
 const styles = file => postcss.parse(readFileSync(new URL('../app/vip/' + file, import.meta.url), 'utf8'));
 const polish = styles('vip-dashboard-polish.css');
@@ -18,7 +18,7 @@ function rule(root, selector) {
 }
 const declarations = node => Object.fromEntries(node.nodes.filter(child => child.type === 'decl').map(child => [child.prop, child.value]));
 
-test('only the iPhone mobile Visit details button gets the darker reference purple', () => {
+test('only the iPhone mobile Plan a visit button gets the darker reference purple', () => {
   const selector = 'body.dancr-button-system #vip-dashboard .vip-mobile-continue button.vip-primary';
   const face = rule(polish, selector);
   assert.equal(face.parent.name, 'supports'); assert.equal(face.parent.params, '(-webkit-touch-callout: none)');
@@ -48,25 +48,14 @@ test('VIP add icons have an opaque dark fill over photos, with checked, focus an
   assert.match(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:focus-visible + svg')).outline, /^2px solid/);
 });
 
-test('Visit details keeps its selection count, disabled state and accessible scroll/focus action', () => {
-  const calls = [], target = { scrollIntoView: value => calls.push(['scroll', value]), focus: value => calls.push(['focus', value]) };
-  let reducedMotion = false;
-  const Planner = compileVip('app/vip/VipPlan.tsx', {
-    react: { useState: initial => [initial, () => {}], useRef: () => ({ current: target }) },
-    '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers,
-  }, { window: { matchMedia: () => ({ matches: reducedMotion }) } }).default;
-  const props = { venue: venues[0], dancers, draft: { ...helpers.emptyVipDraft(), selected: [dancers[0].id] },
-    onChange() {}, onSubmit: async () => {}, onFavorite: async () => {}, favoritePending: [], busy: false };
-  const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : [];
-  const dock = options => nodes(Planner({ ...props, ...options })).find(node => node.props?.className === 'vip-mobile-continue');
-  for (const motion of [false, true]) {
-    reducedMotion = motion;
-    const control = nodes(dock()).find(node => node.type === 'button');
-    assert.equal(control.props['aria-controls'], 'vip-visit-details'); assert.equal(control.props.disabled, false);
-    control.props.onClick();
-    assert.deepEqual(JSON.parse(JSON.stringify(calls.splice(0))), [['scroll', { block: 'start', behavior: motion ? 'auto' : 'smooth' }], ['focus', { preventScroll: true }]]);
-  }
-  assert.equal(nodes(dock({ busy: true })).find(node => node.type === 'button').props.disabled, true);
-  assert.equal(nodes(dock()).find(node => node.type === 'strong').props.children, 1);
-  assert.equal(dock({ draft: helpers.emptyVipDraft() }), undefined);
+test('Plan a visit shows its count and opens the details step with keyboard focus', () => {
+  const ui=plannerHarness({draft:{...helpers.emptyVipDraft(),selected:[dancers[0].id]}});
+  const dock=()=>ui.nodes().find(node=>node.props?.className==='vip-mobile-continue');
+  assert.equal(ui.nodes(dock()).find(node=>node.type==='strong').props.children,1);
+  assert.equal(ui.nodes(dock()).find(node=>node.type==='button').props.disabled,false);
+  ui.props.busy=true;ui.render();assert.equal(ui.nodes(dock()).find(node=>node.type==='button').props.disabled,true);
+  ui.props.busy=false;ui.render();ui.details();
+  assert.equal(ui.focused.at(-1),'vip-visit-details');assert.equal(dock(),undefined);
+  ui.back();assert.equal(ui.focused.at(-1),'vip-choose-dancers');assert.ok(dock());
+  ui.props.draft=helpers.emptyVipDraft();ui.render();assert.equal(dock(),undefined);
 });

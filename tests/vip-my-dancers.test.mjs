@@ -4,6 +4,7 @@ import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { compileVip, dashboardHarness, guest, venues, state } from './helpers/vip-dashboard-fixture.mjs';
 import { vipDestination } from '../src/lib/dancr/vip-dashboard.ts';
+import { plannerHarness } from './helpers/vip-planner-fixture.mjs';
 
 class PublicApiError extends Error { constructor(code, message, status) { super(message); this.code = code; this.status = status; } }
 const service = compileVip('src/lib/dancr/vip.ts', {
@@ -190,20 +191,22 @@ test('revoked or wrong-venue access cannot read private collections, and source 
   }
 });
 
-test('My dancers opens directly and adds to the current venue draft without submitting or losing existing details', async () => {
-  assert.equal(vipDestination('#vip-dancers'), 'dancers');
+test('My dancers combines both legacy destinations and preserves the current venue draft without submitting', async () => {
+  assert.equal(vipDestination('#vip-dancers'), 'plan');
+  assert.equal(vipDestination('#vip-plan'), 'plan');
   const ui = dashboardHarness({ hash: '#vip-dancers', request: async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id, { dancers: cards }) });
-  await ui.settle(); assert.ok(ui.myDancers()); assert.match(ui.calls.at(-1).url, /view=dancers/);
-  ui.myDancers().props.onRequest(cards[2]); await ui.settle(); assert.ok(ui.myDancers(), 'unavailable dancers cannot start a request');
-  ui.navigate('plan'); await ui.settle(); ui.planner().props.onChange({ selected: ['nova'], date: '2027-02-15', time: '21:30' }); ui.render();
-  ui.navigate('dancers'); await ui.settle(); ui.myDancers().props.onRequest(cards[0]); await ui.settle();
+  await ui.settle(); assert.ok(ui.planner()); assert.match(ui.calls.at(-1).url, /view=dancers/);
+  const nav=ui.nodes().find(node=>node.type==='nav'&&node.props['aria-label']==='VIP dashboard');
+  assert.deepEqual(ui.nodes(nav).filter(node=>node.type==='button').map(node=>ui.nodes(node).find(child=>child.type==='span').props.children),['Overview','My dancers','Requests','Account']);
+  ui.planner().props.onChange({ selected: ['nova','aria'], date: '2027-02-15', time: '21:30' }); ui.render();
+  ui.navigate('requests'); await ui.settle();ui.navigate('plan');await ui.settle();
   assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova', 'aria']);
   assert.equal(ui.planner().props.draft.date, '2027-02-15'); assert.equal(ui.planner().props.draft.time, '21:30');
   assert.ok(!ui.calls.some(c => c.options.method === 'POST'));
-  ui.navigate('dancers'); await ui.settle(); ui.myDancers().props.onRequest(cards[0]); await ui.settle();
+  ui.hash('#vip-dancers');await ui.settle();
   assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova', 'aria']);
-  ui.navigate('dancers'); await ui.settle(); ui.nodes().find(n => n.type === 'select').props.onChange({ target: { value: venues[1].id } }); await ui.settle();
-  ui.myDancers().props.onRequest(cards[1]); await ui.settle(); assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova']);
+  ui.nodes().find(n => n.type === 'select').props.onChange({ target: { value: venues[1].id } }); await ui.settle();
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected), []);
   assert.equal(ui.planner().props.draft.date, ''); ui.unmount();
 });
 
@@ -211,36 +214,57 @@ test('full drafts and changed accounts cannot add dancers, while saved hearts up
   const many = Array.from({ length: 11 }, (_, i) => ({ ...cards[0], id: `dancer-${i}` }));
   const ui = dashboardHarness({ hash: '#vip-plan', request: async (url, options) => options.method === 'POST' ? { favorite: false } : state(venues[0].id, { dancers: many }) });
   await ui.settle(); ui.planner().props.onChange({ selected: many.slice(0, 10).map(d => d.id), date: '', time: '' }); ui.render();
-  ui.navigate('dancers'); await ui.settle(); ui.myDancers().props.onRequest(many[10]); await ui.settle();
-  assert.ok(ui.myDancers()); assert.match(renderToStaticMarkup(ui.tree()), /already has 10 dancers/);
-  await ui.myDancers().props.onFavorite(many[0]); await ui.settle(); assert.equal(ui.myDancers().props.dancers[0].favorite, false);
-  ui.session({ id: 'other' }); ui.myDancers().props.onRequest(many[0]); await ui.settle(); assert.ok(ui.myDancers()); ui.unmount();
+  ui.planner().props.onChange({ ...ui.planner().props.draft, selected: many.map(d=>d.id) }); ui.render();
+  assert.equal(ui.planner().props.draft.selected.length,10);
+  await ui.planner().props.onFavorite(many[0]); await ui.settle(); assert.equal(ui.planner().props.dancers[0].favorite, false);
+  ui.session({ id: 'other' }); ui.planner().props.onChange({ selected: [],date:'',time:'' });ui.render();
+  assert.equal(ui.planner().props.draft.selected.length,10); ui.unmount();
 });
 
-test('collection controls, search, venue eligibility, profiles, empty states, and request actions render independently', () => {
-  let cursor = 0; const values = [], requests = [], saves = [];
-  const Component = compileVip('app/vip/VipMyDancers.tsx', { react: { useState(initial) { const i = cursor++; if (!(i in values)) values[i] = initial; return [values[i], value => { values[i] = value; }]; } } }).default;
-  const props = { venue: venues[0], dancers: cards, busy: false, favoritePending: [], onRequest: d => requests.push(d.id), onFavorite: async d => saves.push(d.id), onBrowse() {}, onRequests() {} };
-  const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : [];
-  const render = () => { cursor = 0; return Component(props); };
-  let tree = render(); const html = () => renderToStaticMarkup(tree);
-  assert.match(html(), /Aria/); assert.match(html(), /Nova/); assert.match(html(), /Past dancer/);
-  assert.match(html(), /Affiliated · off shift/); assert.match(html(), /Previously requested · unavailable/);
-  assert.match(html(), /aria-label="This club"/);
-  nodes(tree).find(n => n.type === 'button' && n.props.children?.[0] === 'Favorites').props.onClick(); tree = render();
-  assert.doesNotMatch(html(), /Nova/); assert.match(html(), /aria-label="Remove Aria from favorites"/); assert.doesNotMatch(html(), /saved dancers/);
-  const profile = nodes(tree).find(n => n.type === 'a');
-  assert.equal(new URL(profile.props.href, 'https://example.test').searchParams.get('return_to'), `/vip?venueId=${venues[0].id}#vip-dancers`);
-  const requestButtons = nodes(tree).filter(n => n.props?.className === 'vip-library-request');
-  requestButtons[0].props.onClick(); assert.deepEqual(requests, ['aria']); assert.equal(requestButtons[1].props.disabled, true);
-  nodes(tree).find(n => n.props?.className?.split(' ').includes('vip-library-save')).props.onClick(); assert.deepEqual(saves, ['aria']);
-  nodes(tree).find(n => n.type === 'button' && n.props.children?.[0] === 'Following').props.onClick(); tree = render();
-  assert.match(html(), /Nova/); assert.doesNotMatch(html(), /Aria/);
-  nodes(tree).find(n => n.props?.type === 'checkbox').props.onChange({ target: { checked: true } }); tree = render();
-  assert.doesNotMatch(html(), /Past dancer/);
-  nodes(tree).find(n => n.type === 'input').props.onChange({ target: { value: 'missing' } }); tree = render(); assert.match(html(), /No dancers match/);
-  nodes(tree).find(n => n.props?.children === 'Clear filters').props.onClick(); tree = render(); assert.match(html(), /Nova/);
-  nodes(tree).find(n => n.type === 'button' && n.props.children?.[0] === 'Requested').props.onClick(); tree = render();
-  assert.match(html(), /View request status/); assert.match(html(), /Request again/); assert.doesNotMatch(html(), /Nova/);
-  props.dancers = []; tree = render(); assert.match(html(), /No requested dancers yet/);
+test('reloading a draft drops dancers who remain in the library but are unavailable at this club', async () => {
+  let available=true;
+  const ui=dashboardHarness({hash:'#vip-plan',request:async()=>state(venues[0].id,{dancers:cards.map(dancer=>dancer.id==='aria'?{...dancer,canRequest:available}:dancer)})});
+  await ui.settle();ui.planner().props.onChange({selected:['aria','nova'],date:'2027-02-15',time:'21:30'});ui.render();
+  available=false;ui.navigate('overview');await ui.settle();ui.navigate('plan');await ui.settle();
+  assert.equal(ui.planner().props.dancers.some(dancer=>dancer.id==='aria'),true);
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected),['nova']);
+  assert.equal(ui.planner().props.draft.date,'2027-02-15');ui.unmount();
+});
+
+test('combined dancer filters preserve favorites, follows, request history and unavailable profiles', () => {
+  const saves=[];
+  const ui=plannerHarness({dancers:cards,onFavorite:async dancer=>saves.push(dancer.id),onRequests(){}});
+  const html=()=>renderToStaticMarkup(ui.tree());
+  assert.match(html(),/Aria/);assert.match(html(),/Nova/);assert.match(html(),/Previously requested · unavailable/);
+  ui.filter('Favorites');assert.doesNotMatch(html(),/Nova/);
+  const profile=ui.nodes().find(node=>node.type==='a');
+  assert.equal(new URL(profile.props.href,'https://example.test').searchParams.get('return_to'),`/vip?venueId=${venues[0].id}#vip-plan`);
+  ui.select('past');assert.equal(ui.props.draft.selected.length,0);
+  ui.nodes().find(node=>node.props?.className==='vip-dancer-favorite').props.onClick();assert.deepEqual(saves,['aria']);
+  ui.filter('Following');assert.match(html(),/Nova/);assert.doesNotMatch(html(),/Aria/);
+  ui.nodes().find(node=>node.props?.type==='checkbox').props.onChange({target:{checked:true}});ui.render();
+  assert.doesNotMatch(html(),/Past dancer/);
+  ui.search('missing');assert.match(html(),/No dancers match/);
+  ui.button('Show club dancers').props.onClick();ui.render();assert.match(html(),/Nova/);
+  ui.filter('Requested before');assert.match(html(),/View request status/);assert.doesNotMatch(html(),/Nova/);
+  ui.props.dancers=[];ui.render();assert.match(html(),/No dancers at this club yet/);
+});
+
+test('choosing dancers and moving between steps keeps filters and visit details without sending early', async () => {
+  let sent=0;
+  const ui=plannerHarness({dancers:cards,onSubmit:async()=>sent++});
+  ui.filter('Favorites');ui.search('aria');ui.select('aria');
+  assert.deepEqual(Array.from(ui.props.draft.selected),['aria']);
+  assert.equal(ui.nodes().find(node=>node.props?.id==='vip-visit-details').props.hidden,true);
+  ui.details();assert.equal(ui.nodes().find(node=>node.props?.id==='vip-choose-dancers').props.hidden,true);
+  assert.equal(ui.focused.at(-1),'vip-visit-details');
+  ui.nodes().find(node=>node.props?.type==='date').props.onChange({target:{value:'2027-02-15'}});ui.render();
+  ui.nodes().find(node=>node.props?.type==='time').props.onChange({target:{value:'21:30'}});ui.render();
+  ui.back();assert.equal(ui.focused.at(-1),'vip-choose-dancers');
+  assert.equal(ui.button('Favorites').props['aria-pressed'],true);
+  assert.equal(ui.nodes().find(node=>node.props?.type==='search').props.value,'aria');
+  assert.equal(ui.props.draft.date,'2027-02-15');assert.equal(ui.props.draft.time,'21:30');
+  ui.select('aria',false);assert.equal(ui.nodes().some(node=>node.props?.className==='vip-mobile-continue'),false);
+  ui.select('aria');ui.details();assert.equal(sent,0);
+  ui.nodes().find(node=>node.type==='form').props.onSubmit({preventDefault(){}});await Promise.resolve();assert.equal(sent,1);
 });

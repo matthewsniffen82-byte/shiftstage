@@ -2,13 +2,12 @@ import type { VipDancer, VipDashboardView, VipRequest } from "./vip-types";
 
 export const VIP_DESTINATIONS: Array<{ id: VipDashboardView; label: string }> = [
   { id: "overview", label: "Overview" },
-  { id: "dancers", label: "My dancers" },
-  { id: "plan", label: "Plan a visit" },
+  { id: "plan", label: "My dancers" },
   { id: "requests", label: "Requests" },
   { id: "account", label: "Account" },
 ];
 export type VipDraft = { selected: string[]; date: string; time: string };
-export type VipDancerFilter = "all" | "working" | "selected" | "favorites" | "previous";
+export type VipDancerFilter = "all" | "working" | "selected" | "favorites" | "following" | "previous";
 export const emptyVipDraft = (): VipDraft => ({ selected: [], date: "", time: "" });
 
 export function vipRequestDraft(request: VipRequest, timeZone = request.timezone): VipDraft {
@@ -19,20 +18,23 @@ export function vipRequestDraft(request: VipRequest, timeZone = request.timezone
 
 export function vipDestination(hash: string): VipDashboardView {
   const id = hash.replace(/^#vip-/, "");
+  if (id === "dancers") return "plan";
   return VIP_DESTINATIONS.find(destination => destination.id === id)?.id || "overview";
 }
 
 export function filterVipDancers(dancers: VipDancer[], search: string, filter: VipDancerFilter, selected: string[]) {
   const terms = search.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
   return dancers.filter(dancer => (filter !== "working" || dancer.working_now)
+    && (filter !== "all" || dancer.canRequest !== false || dancer.previouslyRequested)
     && (filter !== "selected" || selected.includes(dancer.id))
     && (filter !== "favorites" || dancer.favorite)
+    && (filter !== "following" || dancer.following)
     && (filter !== "previous" || dancer.previouslyRequested)
     && terms.every(term => dancer.stage_name.toLocaleLowerCase().includes(term)))
     .sort((a, b) => Number(b.working_now) - Number(a.working_now) || a.stage_name.localeCompare(b.stage_name, "en", { sensitivity: "base", numeric: true }));
 }
 
 export function reconcileVipDraft(draft: VipDraft, dancers: VipDancer[]) {
-  const ids = new Set(dancers.map(dancer => dancer.id));
+  const ids = new Set(dancers.filter(dancer => dancer.canRequest !== false).map(dancer => dancer.id));
   return { ...draft, selected: draft.selected.filter(id => ids.has(id)) };
 }
