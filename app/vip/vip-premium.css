@@ -152,10 +152,8 @@ body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-pressed=true] 
 .vip-dashboard-shell .vip-empty-access { text-align: center; padding: 40px 24px; }
 .vip-empty-access > svg { color: #bd96e6; width: 32px; height: 32px; margin-bottom: 18px; }
 .vip-empty-access p { max-width: 460px; margin: 12px auto 20px; }
-.vip-loading { min-height: 240px; padding: 22px 0; }
-.vip-loading p { color: var(--vip-muted); margin-bottom: 18px; }
-.vip-loading > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.vip-loading span { height: 110px; border-radius: 14px; border: 1px solid #413047; background: #17111e; }
+.vip-loading { padding: 22px 0; }
+.vip-loading p { color: var(--vip-muted); margin: 0; }
 .vip-dashboard-shell .vip-feedback { margin: 0 0 20px; font-size: 13px; }
 .vip-dashboard-shell .vip-feedback p { margin: 0 0 10px; color: inherit; }
 .vip-dashboard-shell .vip-dismiss { border: none !important; background: transparent !important; color: inherit !important; font-size: 22px; padding: 3px; min-width: 36px; min-height: 36px; }
@@ -202,8 +200,6 @@ body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-pressed=true] 
   .vip-account-grid { grid-template-columns: minmax(0, 1fr); }
   .vip-dashboard-shell .vip-request-list { grid-template-columns: minmax(0, 1fr); }
   .vip-section-heading > svg { width: 20px; height: 20px; }
-  .vip-loading > div { grid-template-columns: minmax(0, 1fr); }
-  .vip-loading span { height: 80px; }
 }
 
 /* VIP credentials stay inside the private dashboard. */

@@ -305,6 +305,6 @@ export function VipIcon({ kind }: { kind: string }) {
   </svg>;
 }
 function VipLoading({ label }: { label: string }) {
-  return <div className="vip-loading" role="status" aria-live="polite"><p>{label}</p><div aria-hidden="true"><span /><span /><span /></div></div>;
+  return <div className="vip-loading" role="status" aria-live="polite"><p>{label}</p></div>;
 }
 function message(error: unknown) { return error instanceof Error ? error.message : "Unable to load this section. Please try again."; }
