@@ -58,12 +58,12 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
   const document = { visibilityState: 'visible', addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name) };
   const RequestCards = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-calendar': calendar }).default;
   const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': dashboard }).default;
-  const MyDancers = compileVip('app/vip/VipMyDancers.tsx').default;
+  const { default: MyDancers, VipWorkingFavorites } = compileVip('app/vip/VipMyDancers.tsx');
   const Component = compileVip('app/vip/VipDashboard.tsx', {
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => Planner },
     '@/app/dashboard/dashboard-session': { readSession: () => ({ account: currentAccount }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '@/src/lib/dancr/vip-dashboard': dashboard, './VipRequests': { __esModule: true, default: RequestCards }, './VipAccountPanel': { __esModule: true, default: 'vip-account-settings' },
-    './VipMyDancers': { __esModule: true, default: MyDancers },
+    './VipMyDancers': { __esModule: true, default: MyDancers, VipWorkingFavorites },
     '@/src/lib/dancr/vip-draft-storage': draftStorage,
     '@/src/lib/dancr/browser-session': { rememberVipDashboard: (accountId, venueId) => vipNavigation.push({ accountId, venueId }) },
   }, { window, document, Date: class extends Date { static now() { return now; } } }).default;
@@ -80,6 +80,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
   return { calls, writes, vipNavigation, nodes, render, settle, navigate, storage, intervals, tree: () => tree,
     planner: () => nodes().find(node => node.type === Planner),
     myDancers: () => nodes().find(node => node.type === MyDancers),
+    workingFavorites: () => nodes().find(node => node.type === VipWorkingFavorites),
     requests: () => nodes().find(node => node.type === RequestCards),
     advance(ms) { now += ms; },
     event(name) { listeners.get(name)?.(); render(); },

@@ -4,12 +4,16 @@ body.dancr-button-system #vip-dashboard {
   --vip-line: #343139; --vip-muted: #bcb6c2;
   background: radial-gradient(ellipse 780px 260px at 20% 0, #34233738, transparent), #0a090c;
 }
-body.dancr-button-system #vip-dashboard :is(h2, h3, p) { overflow-wrap: anywhere; }
+body.dancr-button-system #vip-dashboard :is(h2, h3, p) { overflow-wrap: anywhere; letter-spacing: 0; }
+body.dancr-button-system #vip-dashboard .dashboard-identity-header h1 { letter-spacing: 0 !important; }
 body.dancr-button-system #vip-dashboard h2 { font-size: 20px; line-height: 1.3; }
 body.dancr-button-system #vip-dashboard h3 { font-size: 16px; line-height: 1.3; }
 body.dancr-button-system #vip-dashboard p { font-size: 13px; line-height: 1.55; }
 body.dancr-button-system #vip-dashboard .vip-panel { padding: 22px; background: #141216; border-color: var(--vip-line); box-shadow: none; }
 body.dancr-button-system #vip-dashboard :is(.vip-destination, .vip-plan-grid, .vip-account-grid) { gap: 24px; }
+body.dancr-button-system #vip-dashboard .vip-overview-content { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; gap: 24px; }
+body.dancr-button-system #vip-dashboard .vip-overview-visit { display: grid; min-width: 0; gap: 16px; }
+body.dancr-button-system #vip-dashboard .vip-overview-content .vip-working-list { grid-template-columns: minmax(0, 1fr); }
 body.dancr-button-system #vip-dashboard :is(.vip-welcome, .vip-section-heading, .vip-step-heading) { gap: 10px; }
 body.dancr-button-system #vip-dashboard .vip-step-heading { margin-bottom: 12px; }
 body.dancr-button-system #vip-dashboard .vip-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-block: 1px solid var(--vip-line); }
@@ -98,17 +102,25 @@ body.dancr-button-system #vip-dashboard .vip-dancer-favorite { left: 0; place-it
 body.dancr-button-system #vip-dashboard .vip-dancer-favorite svg { filter: drop-shadow(0 1px 2px #000b); }
 body.dancr-button-system #vip-dashboard .vip-mobile-continue { display: none; }
 @media (max-width: 880px) {
+  body.dancr-button-system #vip-dashboard .vip-overview-content { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   body.dancr-button-system #vip-dashboard:has(.vip-mobile-continue) { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
   body.dancr-button-system #vip-dashboard .vip-mobile-continue { position: fixed; z-index: 6; bottom: calc(12px + env(safe-area-inset-bottom)); left: 14px; right: 14px; max-width: 580px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border: 1px solid #51445e; border-radius: 16px; background: #1b1622; box-shadow: 0 8px 30px #0008; font-size: 13px; color: #f6f2ed; }
   body.dancr-button-system #vip-dashboard .vip-mobile-continue strong { color: var(--vip-gold); }
 }
 @media (max-width: 600px) {
+  body.dancr-button-system #vip-dashboard .dashboard-identity-label,
+  body.dancr-button-system #vip-dashboard .vip-venue-count { display: none; }
+  body.dancr-button-system #vip-dashboard .dashboard-identity-header { gap: 4px; padding-bottom: 10px; margin-bottom: 10px; }
+  body.dancr-button-system #vip-dashboard .vip-dashboard-nav { padding: 4px; margin-bottom: 16px; }
+  body.dancr-button-system #vip-dashboard .vip-destination { gap: 16px; }
   body.dancr-button-system #vip-dashboard .vip-panel { padding: 18px; }
   body.dancr-button-system #vip-dashboard .vip-roster-panel { padding: 12px; }
   body.dancr-button-system #vip-dashboard .vip-summary-card { padding: 12px; gap: 8px; }
   body.dancr-button-system #vip-dashboard .vip-summary-card > svg { display: none; }
   body.dancr-button-system #vip-dashboard .vip-dashboard-nav button { min-height: 56px !important; }
-  body.dancr-button-system #vip-dashboard .vip-welcome { gap: 10px; }
+  body.dancr-button-system #vip-dashboard .vip-welcome { flex-direction: row; align-items: center; gap: 10px; }
+  body.dancr-button-system #vip-dashboard .vip-welcome h2 { font-size: 18px; }
+  body.dancr-button-system #vip-dashboard .vip-welcome .vip-primary { width: auto; }
   body.dancr-button-system #vip-dashboard .vip-explainer { gap: 8px; }
   body.dancr-button-system #vip-dashboard .vip-request-toolbar { gap: 10px; flex-wrap: wrap; }
   body.dancr-button-system #vip-dashboard .vip-request-toolbar label { flex: 1; min-width: 0; }

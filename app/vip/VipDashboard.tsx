@@ -11,7 +11,7 @@ import { type VipDancer, type VipDashboardView, type VipRequest, type VipRequest
 import { readVipWorkspace, saveVipWorkspace, vipDraftFingerprint } from "@/src/lib/dancr/vip-draft-storage";
 import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
 import VipRequests from "./VipRequests";
-import VipMyDancers from "./VipMyDancers";
+import VipMyDancers, { VipWorkingFavorites } from "./VipMyDancers";
 import VipAccountPanel from "./VipAccountPanel";
 import "./vip-premium.css";
 
@@ -291,15 +291,18 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       </div> : !data ? loading ? <VipLoading label={view === "plan" ? "Loading your venue’s dancers…" : view === "requests" ? "Loading your requests…" : "Opening your lounge…"} /> : <p className="vip-empty">This section couldn’t be loaded. Use Refresh to try again.</p>
       : !venue ? <section className="vip-panel vip-empty-access"><VipIcon kind="overview" /><h2>Your invitation opens the door.</h2><p>Ask your venue for a private VIP link. Open it to activate your access and start planning a visit.</p></section>
       : view === "overview" ? <>
-        <div className="vip-welcome"><div><h2>Welcome, {venue.guestName}.</h2><p>Your private connection to {venue.name}.</p></div><button className="vip-primary" type="button" onClick={() => navigate("plan")}><VipIcon kind="plan" />Plan a visit</button></div>
+        <div className="vip-welcome"><h2>Welcome, {venue.guestName}.</h2><button className="vip-primary" type="button" onClick={() => navigate("plan")}><VipIcon kind="plan" />Plan a visit</button></div>
+        <div className="vip-overview-content"><div className="vip-overview-visit">
+        <section className="vip-panel vip-next-visit"><div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your next visit</h2><p>{venue.name}</p></div></div>
+          {data.summary?.nextVisit ? <><VipRequests requests={[data.summary.nextVisit]} venueName={venue.name} featured busy={disabled} /><button type="button" onClick={() => { setFilter("confirmed"); setPage(0); navigate("requests"); }}>View your requests →</button></> : <div className="vip-next-empty"><span className="vip-calendar-mark" aria-hidden="true"><VipIcon kind="requests" /></span><div><h3>Your next night starts here.</h3><p>Choose your dancers and a time. We’ll show your visit here once the venue confirms.</p><button type="button" onClick={() => navigate("plan")}>Start a request →</button></div></div>}
+        </section>
         <div className="vip-summary-grid">
           <button type="button" className="vip-summary-card" onClick={() => { setFilter("pending"); setPage(0); navigate("requests"); }}><VipIcon kind="clock" /><span><strong>{data.summary?.pending ?? "—"}</strong><small>Awaiting venue review</small></span><span aria-hidden="true">→</span></button>
           <button type="button" className="vip-summary-card" onClick={() => { setFilter("confirmed"); setPage(0); navigate("requests"); }}><VipIcon kind="requests" /><span><strong>{data.summary?.upcoming ?? "—"}</strong><small>Upcoming visits</small></span><span aria-hidden="true">→</span></button>
         </div>
-        <section className="vip-panel vip-next-visit"><div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your next visit</h2><p>{venue.name}</p></div></div>
-          {data.summary?.nextVisit ? <><VipRequests requests={[data.summary.nextVisit]} venueName={venue.name} featured busy={disabled} /><button type="button" onClick={() => { setFilter("confirmed"); setPage(0); navigate("requests"); }}>View your requests →</button></> : <div className="vip-next-empty"><span className="vip-calendar-mark" aria-hidden="true"><VipIcon kind="requests" /></span><div><h3>Your next night starts here.</h3><p>Choose your dancers and a time. We’ll show your visit here once the venue confirms.</p><button type="button" onClick={() => navigate("plan")}>Start a request →</button></div></div>}
-        </section>
-        <div className="vip-explainer"><span><b>01</b> Choose your dancers</span><span><b>02</b> Set your date & time</span><span><b>03</b> Get venue confirmation</span></div>
+        </div>
+        <VipWorkingFavorites dancers={data.dancers} onRequest={requestDancer} onBrowse={() => navigate("dancers")} busy={disabled || loading} />
+        </div>
       </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} busy={disabled} />
       : view === "dancers" ? <VipMyDancers key={venue.id} venue={venue} dancers={data.dancers} onRequest={requestDancer} onFavorite={toggleFavorite} favoritePending={favoritePending} onBrowse={() => navigate("plan")} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled || loading} />
       : <>

@@ -86,14 +86,15 @@ export async function getVipState(client: SupabaseClient, userId: string, search
   if (view === "dancers") return { ...base, dancers: await vipMyDancers(client, userId, selected.id) };
   if (view === "overview") {
     const now = new Date().toISOString();
-    const [pending, upcoming, nextVisit] = await Promise.all([
+    const [pending, upcoming, nextVisit, dancers] = await Promise.all([
       client.from("venue_vip_requests").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("venue_id", selected.id).eq("status", "pending"),
       client.from("venue_vip_requests").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("venue_id", selected.id).eq("status", "confirmed").gt("starts_at", now),
       client.from("venue_vip_requests").select(requestColumns).eq("user_id", userId).eq("venue_id", selected.id).eq("status", "confirmed").gt("starts_at", now)
         .order("starts_at").order("id").limit(1),
+      vipWorkingFavorites(client, userId, selected.id),
     ]);
     for (const result of [pending, upcoming, nextVisit]) if (result.error) throw result.error;
-    return { ...base, summary: { pending: pending.count || 0, upcoming: upcoming.count || 0, nextVisit: nextVisit.data?.[0] || null } };
+    return { ...base, dancers, summary: { pending: pending.count || 0, upcoming: upcoming.count || 0, nextVisit: nextVisit.data?.[0] || null } };
   }
   if (view === "plan") {
     const { data, error } = await client.rpc("vip_eligible_dancers", { p_venue: selected.id });
@@ -139,6 +140,26 @@ export async function getVenueVipState(client: SupabaseClient, userId: string, s
     membersHasMore: members.data?.membersHasMore || false, requests: namedRequests, hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
 }
 
+async function vipWorkingFavorites(client: SupabaseClient, userId: string, venueId: string): Promise<VipDancer[]> {
+  const favorites = await savedDancerIds(client, "favorites", userId);
+  if (!favorites.size) return [];
+  const { data: roster, error } = await client.rpc("vip_eligible_dancers", { p_venue: venueId });
+  if (error) throw error;
+  const dancers = (roster as VipDancer[] || []).filter(dancer => dancer.working_now && favorites.has(dancer.id))
+    .sort((a, b) => a.stage_name.localeCompare(b.stage_name, "en", { sensitivity: "base", numeric: true }) || a.id.localeCompare(b.id)).slice(0, 4);
+  if (!dancers.length) return [];
+  const { data: profiles, error: profileError } = await client.from("dancer_profiles").select("id,slug,avatar_storage_path")
+    .in("id", dancers.map(dancer => dancer.id)).eq("status", "approved").eq("verification_status", "approved").eq("is_public", true).is("disabled_at", null);
+  if (profileError) throw profileError;
+  const publicProfiles = new Map((profiles || []).map(profile => [profile.id, profile]));
+  return dancers.map(dancer => {
+    const profile = publicProfiles.get(dancer.id), path = profile?.avatar_storage_path;
+    return { ...dancer, favorite: true, canRequest: true,
+      profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
+      photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null };
+  });
+}
+
 async function vipMyDancers(client: SupabaseClient, userId: string, venueId: string): Promise<VipDancer[]> {
   // Membership is verified by getVipState before any private collection is read.
   const [favorites, follows, history, roster] = await Promise.all([
@@ -149,7 +170,7 @@ async function vipMyDancers(client: SupabaseClient, userId: string, venueId: str
   ]);
   if (roster.error) throw roster.error;
   const eligible = new Map<string, VipDancer>((roster.data || []).map((dancer: VipDancer) => [dancer.id, dancer]));
-  const ids = [...new Set([...favorites, ...follows, ...history.keys()])];
+  const ids = [...new Set([...eligible.keys(), ...history.keys(), ...favorites, ...follows])];
   const profiles = new Map<string, { slug: string; stage_name: string; avatar_storage_path: string | null }>();
   // Bound URL size and avoid the database's default result limit.
   for (let offset = 0; offset < ids.length; offset += 200) {

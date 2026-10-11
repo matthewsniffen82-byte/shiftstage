@@ -14,7 +14,7 @@ const cards = [
   { id: 'nova', stage_name: 'Nova', working_now: false, favorite: false, following: true, previouslyRequested: false, canRequest: true, profileHref: '/dancers/nova' },
   { id: 'past', stage_name: 'Past dancer', working_now: false, favorite: true, following: true, previouslyRequested: true, canRequest: false, profileHref: null },
 ];
-function database({ failure, denied = false, large = false } = {}) {
+function database({ failure, denied = false, large = false, roster = cards.filter(d => d.canRequest) } = {}) {
   const calls = [];
   const tables = {
     venue_vip_members: venues.map(v => ({ user_id: guest.id, active: !denied, display_name: v.guestName, venue: { ...v, is_active: true, owner: { role: 'venue', account_state: 'active' } } })),
@@ -35,26 +35,28 @@ function database({ failure, denied = false, large = false } = {}) {
     tables.favorites.push(...Array.from({ length: 501 }, (_, i) => ({ customer_id: guest.id, dancer_id: `saved-${String(i).padStart(3, '0')}` })));
     tables.venue_vip_requests.unshift(...Array.from({ length: 501 }, (_, i) => ({ id: `z-${i}`, user_id: guest.id, venue_id: venues[0].id, dancers: [] })));
   }
-  return { calls, client: {
+  return { calls, tables, client: {
     from(table) {
-      let rows = [...tables[table]], range;
+      let rows = [...tables[table]], range, limit;
       const steps = []; calls.push({ table, steps });
       const query = {
         select(columns) { steps.push(['select', columns]); return query; },
         eq(key, value) { steps.push(['eq', key, value]); rows = rows.filter(row => row[key] === value); return query; },
         is(key, value) { steps.push(['is', key, value]); rows = rows.filter(row => row[key] === value); return query; },
         in(key, values) { steps.push(['in', key, values]); rows = rows.filter(row => values.includes(row[key])); return query; },
+        gt(key, value) { steps.push(['gt', key, value]); rows = rows.filter(row => row[key] > value); return query; },
         order(key, options) { rows.sort((a, b) => String(a[key]).localeCompare(String(b[key])) * (options?.ascending === false ? -1 : 1)); return query; },
         range(start, end) { range = [start, end]; steps.push(['range', start, end]); return query; },
-        then(resolve, reject) { return Promise.resolve({ data: range ? rows.slice(range[0], range[1] + 1) : rows, error: failure === table ? new Error('read failed') : null }).then(resolve, reject); },
+        limit(value) { limit = value; return query; },
+        then(resolve, reject) { return Promise.resolve({ data: range ? rows.slice(range[0], range[1] + 1) : limit ? rows.slice(0, limit) : rows, count: rows.length, error: failure === table ? new Error('read failed') : null }).then(resolve, reject); },
       };
       return query;
     },
-    async rpc(name, args) { calls.push({ rpc: name, args }); return { data: cards.filter(d => d.canRequest).map(d => ({ id: d.id, stage_name: d.stage_name, working_now: d.working_now })), error: failure === 'roster' ? new Error('read failed') : null }; },
+    async rpc(name, args) { calls.push({ rpc: name, args }); return { data: roster.map(d => ({ id: d.id, stage_name: d.stage_name, working_now: d.working_now })), error: failure === 'roster' ? new Error('read failed') : null }; },
   } };
 }
 
-test('My dancers joins only the authenticated guest’s collections and selected venue history, retaining unavailable dancers', async () => {
+test('My dancers joins the club roster, guest collections, and selected venue history, retaining off-shift and unavailable dancers', async () => {
   const db = database();
   const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers' }));
   const byId = new Map(result.dancers.map(d => [d.id, d]));
@@ -71,6 +73,84 @@ test('My dancers joins only the authenticated guest’s collections and selected
   assert.equal(other.dancers.find(d => d.id === 'aria').previouslyRequested, false);
   assert.ok(other.dancers.some(d => d.id === 'other-venue' && d.previouslyRequested));
   assert.ok(!other.dancers.some(d => d.id === 'past'));
+});
+
+test('club dancers include unaffavorited off-shift affiliates and past requests but not another club history', async () => {
+  const db = database({ roster: [...cards.filter(d => d.canRequest), { id: 'affiliate', stage_name: 'Off-shift affiliate', working_now: false }] });
+  const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[0].id }));
+  const affiliated = result.dancers.find(d => d.id === 'affiliate');
+  assert.equal(affiliated.canRequest, true); assert.equal(affiliated.working_now, false);
+  assert.equal(affiliated.favorite, false); assert.equal(affiliated.following, false); assert.equal(affiliated.previouslyRequested, false);
+  assert.ok(result.dancers.some(d => d.id === 'past' && !d.canRequest && d.previouslyRequested));
+  assert.ok(!result.dancers.some(d => d.id === 'other-venue'));
+  assert.equal(db.calls.find(c => c.rpc).args.p_venue, venues[0].id);
+});
+
+test('overview favorites use only the guest favorites and the selected venue current roster', async () => {
+  const db = database({ roster: [...cards.filter(d => d.canRequest), { id: 'secret', stage_name: 'Other guest favorite', working_now: true }] });
+  const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview', venueId: venues[1].id }));
+  assert.deepEqual(Array.from(result.dancers, d => d.id), ['aria']);
+  assert.equal(result.dancers[0].canRequest, true);
+  assert.equal(result.dancers[0].photoUrl, '/photo/aria/photo.jpg');
+  assert.equal(result.dancers[0].profileHref, '/dancers/aria');
+  assert.equal(db.calls.find(c => c.rpc).args.p_venue, venues[1].id);
+  assert.ok(db.calls.filter(c => c.table === 'favorites').every(c => c.steps.some(s => s[0] === 'eq' && s[1] === 'customer_id' && s[2] === guest.id)));
+  assert.ok(!db.calls.some(c => c.table === 'follows' || c.steps?.some(s => s[0] === 'select' && s[1] === 'id,dancers')));
+  db.tables.favorites.push({ customer_id: guest.id, dancer_id: 'nova' });
+  assert.deepEqual(Array.from((await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview' }))).dancers, d => d.id), ['aria'], 'off-shift favorites are omitted');
+  db.tables.dancer_profiles[0].is_public = false;
+  const hidden = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview' }));
+  assert.equal(hidden.dancers[0].profileHref, null); assert.equal(hidden.dancers[0].photoUrl, null);
+});
+
+test('overview favorites remain bounded, paginate favorites, and skip roster reads for an empty collection', async () => {
+  const roster = Array.from({ length: 6 }, (_, i) => ({ id: `saved-${500 - i}`, stage_name: `Dancer ${i}`, working_now: true }));
+  const db = database({ large: true, roster });
+  const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview' }));
+  assert.deepEqual(Array.from(result.dancers, d => d.id), ['saved-500', 'saved-499', 'saved-498', 'saved-497']);
+  assert.ok(db.calls.some(c => c.table === 'favorites' && c.steps.some(s => s[0] === 'range' && s[1] === 500)));
+  assert.equal(db.calls.find(c => c.table === 'dancer_profiles').steps.find(s => s[0] === 'in')[2].length, 4);
+  const empty = database(); empty.tables.favorites = [];
+  assert.equal((await service.getVipState(empty.client, guest.id, new URLSearchParams({ view: 'overview' }))).dancers.length, 0);
+  assert.ok(!empty.calls.some(c => c.rpc || c.table === 'dancer_profiles'));
+});
+
+test('overview favorites respect revoked access and surface failed reads', async () => {
+  const denied = database({ denied: true });
+  await assert.rejects(service.getVipState(denied.client, guest.id, new URLSearchParams({ view: 'overview', venueId: venues[0].id })), e => e.status === 403);
+  assert.ok(denied.calls.every(c => c.table === 'venue_vip_members'));
+  for (const failure of ['favorites', 'roster', 'dancer_profiles']) {
+    await assert.rejects(service.getVipState(database({ failure }).client, guest.id, new URLSearchParams({ view: 'overview' })), /read failed/);
+  }
+});
+
+test('overview favorite requests preserve draft details and cannot act on stale accounts or refreshing data', async () => {
+  let resolveRefresh, refresh = false;
+  const ui = dashboardHarness({ request: async () => refresh ? new Promise(resolve => { resolveRefresh = resolve; }) : state(venues[0].id, { dancers: cards }) });
+  await ui.settle(); ui.navigate('plan'); await ui.settle();
+  ui.planner().props.onChange({ selected: ['nova'], date: '2027-02-15', time: '21:30' }); ui.render();
+  ui.navigate('overview'); await ui.settle();
+  ui.workingFavorites().props.onRequest(cards[0]); await ui.settle();
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova', 'aria']);
+  assert.equal(ui.planner().props.draft.date, '2027-02-15'); assert.equal(ui.planner().props.draft.time, '21:30');
+  assert.ok(!ui.calls.some(c => c.options.method === 'POST'));
+  ui.navigate('overview'); await ui.settle(); refresh = true; ui.advance(16000); ui.event('focus');
+  assert.equal(ui.workingFavorites().props.busy, true);
+  ui.workingFavorites().props.onRequest(cards[0]); assert.ok(ui.workingFavorites());
+  resolveRefresh(state(venues[0].id, { dancers: cards })); await ui.settle();
+  ui.session({ id: 'other' }); ui.workingFavorites().props.onRequest(cards[0]); assert.ok(ui.workingFavorites()); ui.unmount();
+});
+
+test('working favorites expose requests, disabled refresh state, and a useful empty state', () => {
+  const { VipWorkingFavorites } = compileVip('app/vip/VipMyDancers.tsx');
+  const requested = [];
+  const props = { dancers: cards, onRequest: dancer => requested.push(dancer.id), onBrowse() {}, busy: false };
+  const tree = VipWorkingFavorites(props);
+  const html = renderToStaticMarkup(tree);
+  assert.match(html, /Aria/); assert.doesNotMatch(html, /Nova|Past dancer/);
+  tree.props.children[1].props.children[0].props.children[2].props.onClick(); assert.deepEqual(requested, ['aria']);
+  assert.match(renderToStaticMarkup(React.createElement(VipWorkingFavorites, { ...props, busy: true })), /disabled="" aria-label="Request Aria"/);
+  assert.match(renderToStaticMarkup(React.createElement(VipWorkingFavorites, { ...props, dancers: [] })), /None of your favorites are working at this venue/);
 });
 
 test('collections and old request history paginate fully and profile lookups stay bounded', async () => {
@@ -144,7 +224,11 @@ test('collection controls, search, venue eligibility, profiles, empty states, an
   const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : [];
   const render = () => { cursor = 0; return Component(props); };
   let tree = render(); const html = () => renderToStaticMarkup(tree);
-  assert.match(html(), /Aria/); assert.doesNotMatch(html(), /Nova/); assert.match(html(), /Past dancer/);
+  assert.match(html(), /Aria/); assert.match(html(), /Nova/); assert.match(html(), /Past dancer/);
+  assert.match(html(), /Off shift · available to request/); assert.match(html(), /Previously requested · unavailable at this club/);
+  assert.match(html(), /aria-label="This club"/);
+  nodes(tree).find(n => n.type === 'button' && n.props.children?.[0] === 'Favorites').props.onClick(); tree = render();
+  assert.doesNotMatch(html(), /Nova/); assert.match(html(), /aria-label="Remove Aria from favorites"/); assert.doesNotMatch(html(), /saved dancers/);
   const profile = nodes(tree).find(n => n.type === 'a');
   assert.equal(new URL(profile.props.href, 'https://example.test').searchParams.get('return_to'), `/vip?venueId=${venues[0].id}#vip-dancers`);
   const requestButtons = nodes(tree).filter(n => n.props?.className === 'vip-library-request');
@@ -152,7 +236,7 @@ test('collection controls, search, venue eligibility, profiles, empty states, an
   nodes(tree).find(n => n.props?.className === 'vip-library-save').props.onClick(); assert.deepEqual(saves, ['aria']);
   nodes(tree).find(n => n.type === 'button' && n.props.children?.[0] === 'Following').props.onClick(); tree = render();
   assert.match(html(), /Nova/); assert.doesNotMatch(html(), /Aria/);
-  nodes(tree).find(n => n.type === 'select').props.onChange({ target: { value: 'venue' } }); tree = render();
+  nodes(tree).find(n => n.props?.type === 'checkbox').props.onChange({ target: { checked: true } }); tree = render();
   assert.doesNotMatch(html(), /Past dancer/);
   nodes(tree).find(n => n.type === 'input').props.onChange({ target: { value: 'missing' } }); tree = render(); assert.match(html(), /No dancers match/);
   nodes(tree).find(n => n.props?.children === 'Clear filters').props.onClick(); tree = render(); assert.match(html(), /Nova/);
