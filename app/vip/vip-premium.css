@@ -82,7 +82,12 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-dashboard-shell .vip-dancer { display: block !important; min-width: 0; min-height: 0; padding: 0; border: 0; border-radius: 8px; background: #141018; overflow: hidden; cursor: default; }
 .vip-dashboard-shell .vip-dancer.is-selected { outline: 2px solid #c6a5fb; outline-offset: -2px; }
 .vip-dashboard-shell .vip-dancer-select { position: absolute; z-index: 3; top: 3px; right: 3px; display: flex; align-items: center; justify-content: center; width: 32px; height: 36px; margin: 0; border-radius: 7px; background: #08060dcc; cursor: pointer; }
-.vip-dashboard-shell .vip-dancer-select input { position: static; width: 21px !important; height: 21px !important; min-height: 0; margin: 0; accent-color: #b484e1; cursor: pointer; }
+.vip-dashboard-shell .vip-dancer-select input { position: absolute; inset: 0; width: 100% !important; height: 100% !important; min-height: 0; margin: 0; opacity: 0; cursor: pointer; }
+.vip-dashboard-shell .vip-dancer-select svg { width: 21px; height: 21px; flex: none; fill: #08060d66; stroke: #eee3f6; stroke-width: 1.7; filter: drop-shadow(0 1px 2px #000b); pointer-events: none; }
+.vip-dashboard-shell .vip-dancer-select input:checked + svg { fill: #8a55cf; stroke: #fff; }
+.vip-dashboard-shell .vip-dancer-select input:focus-visible + svg { outline: 2px solid #c9a4f4; outline-offset: 2px; border-radius: 3px; }
+.vip-dashboard-shell .vip-dancer-select input:disabled { cursor: default; }
+.vip-dashboard-shell .vip-dancer-select input:disabled + svg { opacity: .5; }
 .vip-dashboard-shell .vip-dancer:has(:focus-visible) { outline: 2px solid #c6a5fb; outline-offset: -2px; }
 .vip-dashboard-shell .vip-profile-link { position: absolute; inset: 0; display: block; color: #fff; text-decoration: none; border-radius: inherit; overflow: hidden; }
 .vip-dashboard-shell .vip-dancer-copy { position: absolute; inset: auto 0 0; display: grid; gap: 3px; padding: 30px 6px 7px; background: linear-gradient(transparent, #08050bbc 32%, #08050bf2); pointer-events: none; }
