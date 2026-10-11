@@ -115,12 +115,12 @@ export default function VipAccountPanel({ account, onAccountChange }: {
       <div className="vip-credentials-credential-options">
         {(["email", "password"] as const).map(credential => (
           <div key={credential} className="vip-credentials-dropdown">
-            <button key={credential} ref={credential === "email" ? emailButton : passwordButton} type="button" className={`vip-credentials-credential-option${completedCredential === credential ? " is-complete" : ""}`} aria-expanded={editing === credential} aria-controls={editing === credential ? `vip-credentials-${credential}-form` : undefined} disabled={busy} onClick={() => openForm(credential)}>  
-              <svg className="vip-credentials-credential-icon" viewBox="0 0 24 24" aria-hidden="true">{credential === "email" ? <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></> : <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" /></>}</svg>  
+            <button key={credential} ref={credential === "email" ? emailButton : passwordButton} type="button" className={`vip-credentials-credential-option${completedCredential === credential ? " is-complete" : ""}`} aria-expanded={editing === credential} aria-controls={editing === credential ? `vip-credentials-${credential}-form` : undefined} disabled={busy} onClick={() => openForm(credential)}>
+              <svg className="vip-credentials-credential-icon" viewBox="0 0 24 24" aria-hidden="true">{credential === "email" ? <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></> : <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" /></>}</svg>
               <span>{completedCredential === credential ? credential === "email" ? "✓ Check your email" : "✓ Password updated" : `Change ${credential}`}</span>
-              <svg className="vip-credentials-credential-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d={editing === credential ? "m6 15 6-6 6 6" : "m6 9 6 6 6-6"} /></svg>  
-            </button>  
-            {editing === credential ? <CredentialForm key={`${credential}-form`} credential={credential} busy={busy} onSubmit={saveCredential} onCancel={() => { setFeedback(null); closeForm(credential); }} /> : null}  
+              <svg className="vip-credentials-credential-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d={editing === credential ? "m6 15 6-6 6 6" : "m6 9 6 6 6-6"} /></svg>
+            </button>
+            {editing === credential ? <CredentialForm key={`${credential}-form`} credential={credential} busy={busy} onSubmit={saveCredential} onCancel={() => { setFeedback(null); closeForm(credential); }} /> : null}
           </div>
         ))}
       </div>
