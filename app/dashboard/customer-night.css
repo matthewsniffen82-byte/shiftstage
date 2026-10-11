@@ -157,10 +157,10 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-tile:hover { border-color:#bb8be8; }
 }
 @media (max-width:700px) {
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer { padding:18px 12px 100px; }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav { position:fixed; top:auto; bottom:10px; bottom:max(10px,env(safe-area-inset-bottom)); left:12px; right:12px; width:auto; padding:5px; backdrop-filter:blur(16px); }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer { padding:18px 12px max(40px,env(safe-area-inset-bottom)); }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav { top:calc(var(--mydancr-demo-banner-height,0px) + max(8px,env(safe-area-inset-top,0px))); padding:5px; backdrop-filter:blur(16px); }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav button { min-height:58px !important; font-size:12px !important; gap:5px; }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-view,.customer-surface,#customer-alerts,#customer-account,#customer-followed-dancers,#customer-followed-clubs,#customer-saved-deals) { scroll-margin-top:90px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-view,.customer-surface,#customer-alerts,#customer-account,#customer-followed-dancers,#customer-followed-clubs,#customer-saved-deals) { scroll-margin-top:calc(var(--mydancr-demo-banner-height,0px) + max(8px,env(safe-area-inset-top,0px)) + 90px); }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface { padding:14px; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface-heading { margin-bottom:14px; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-surface-heading h2 { font-size:18px; }
