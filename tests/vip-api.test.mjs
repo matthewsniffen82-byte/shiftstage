@@ -99,6 +99,23 @@ test("VIP submission delivers both audience-specific alerts without returning re
   assert.ok(!JSON.stringify(body).includes(id(7)));
 });
 
+test("venue confirmation and cancellation deliver VIP and dancer notices without exposing recipients or failing on optional delivery", async () => {
+  for (const [expectedStatus, status] of [["pending", "confirmed"], ["confirmed", "cancelled"]]) {
+    const notifications = [
+      { recipient_id: id(5), payload: { kind: "vip_request_status" } },
+      { recipient_id: id(7), payload: { kind: "vip_dancer_request", status } },
+    ];
+    const { route, calls } = fixture({ invitation: true, notifications, deliveryFailure: true });
+    const response = await route.POST(request({ action: "request_status", id: input.requestId, expectedStatus, status }));
+    assert.equal(response.status, 200);
+    assert.deepEqual(calls.find(call => call[0] === "delivery")[1], notifications);
+    assert.equal(calls.find(call => call[0] === "rpc")[1], "vip_manage");
+    const result = await response.json();
+    assert.equal(result.notifications, undefined); assert.ok(!JSON.stringify(result).includes(id(7)));
+    assert.equal(result.session.accessToken, "rotated"); assert.match(response.headers.get("cache-control"), /no-store/);
+  }
+});
+
 test("VIP withdrawal uses authenticated identity, enforces pending conflicts and isolates delivery failures", async () => {
   const { route, calls } = fixture({ deliveryFailure: true });
   const response = await route.DELETE(request(input));

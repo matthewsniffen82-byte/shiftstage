@@ -34,6 +34,7 @@ async function fixture() {
     await db.exec(readFileSync(new URL("../supabase/migrations/20261010192345_vip_guest_withdrawal.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261010200606_vip_anonymous_dancer_requests.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261011084450_vip_pending_request_edits.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261011201618_vip_dancer_status_notifications.sql", import.meta.url), "utf8"));
     // Match production grants for server-only SECURITY INVOKER request writes.
     await db.exec("grant select on public.app_users,public.venues,public.venue_team_members,public.dancer_profiles to service_role; grant select,insert on public.notifications to service_role");
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
@@ -400,6 +401,89 @@ test("venue review is scoped, status transitions resist stale updates, and VIP g
     await denies(manage(db, "request_status", change), "40001");
     await denies(manage(db, "request_status", { ...change, expectedStatus: "confirmed", status: "declined" }), "22023");
     assert.equal((await manage(db, "request_status", { ...change, expectedStatus: "confirmed", status: "cancelled" })).request.status, "cancelled");
+  } finally { await db.close(); }
+});
+
+test("venue confirmation and cancellation notify selected dancers anonymously, including off-shift dancers, exactly once", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db);
+    await db.query("update venue_vip_members set nickname='Friday regular'");
+    const original = (await submit(db)).request;
+    const schedule = (await db.query("select to_char(starts_at at time zone timezone,'Mon DD, YYYY HH24:MI') value from venue_vip_requests where id=$1", [original.id])).rows[0].value;
+    for (const [expectedStatus, status] of [["pending", "confirmed"], ["confirmed", "cancelled"]]) {
+      if (status === "cancelled") {
+        await adminQuery(db, "update shifts set checked_out_at=now()");
+        await adminQuery(db, "update venue_dancer_affiliations set status='revoked',revoked_at=now()");
+      }
+      const change = { id: original.id, expectedStatus, status, note: "Private reply to the VIP" };
+      const result = await manage(db, "request_status", change, 2);
+      assert.deepEqual(result.notifications.map(n => n.recipient_id).sort(), [id(5), id(7), id(8)]);
+      const dancers = result.notifications.filter(n => n.payload.kind === "vip_dancer_request");
+      assert.equal(dancers.length, 2);
+      for (const notification of dancers) {
+        assert.equal(notification.title, "VIP visit " + status);
+        assert.equal(notification.channel, "in_app"); assert.ok(notification.sent_at);
+        assert.ok(notification.body.includes("Private club on " + schedule + " (America/Los_Angeles)"));
+        assert.ok(notification.body.includes("has been " + status + " by the venue."));
+        assert.deepEqual(notification.payload, {
+          kind: "vip_dancer_request", status, venueId: id(20), venueName: "Private club",
+          startsAt: result.request.starts_at, timezone: "America/Los_Angeles", url: "/dashboard/dancer#dancer-account",
+        });
+        assert.doesNotMatch(JSON.stringify(notification), /Test VIP|Friday regular|Window table|Private reply|guest_name|nickname|requestId|Dancer 7|Dancer 8/);
+        assert.ok(!JSON.stringify(notification).includes(id(5)));
+        assert.ok(!JSON.stringify(notification).includes(original.id));
+        const saved = (await db.query("select to_jsonb(n) value from notifications n where id=$1", [notification.id])).rows[0].value;
+        assert.deepEqual(saved, notification);
+      }
+      const count = (await db.query("select count(*)::int n from notifications")).rows[0].n;
+      await denies(manage(db, "request_status", change, 2), "40001");
+      assert.equal((await db.query("select count(*)::int n from notifications")).rows[0].n, count);
+    }
+  } finally { await db.close(); }
+});
+
+test("status notices follow the latest dancer selection and skip inactive accounts; declines still notify the VIP", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db);
+    const original = (await submit(db)).request;
+    const edited = (await edit(db, original, { dancers: [37] })).request;
+    const confirmed = await manage(db, "request_status", { id: original.id, expectedStatus: "pending", status: "confirmed" });
+    assert.deepEqual(confirmed.notifications.map(n => n.recipient_id).sort(), [id(5), id(7)]);
+    assert.equal(confirmed.notifications.find(n => n.recipient_id === id(7)).payload.startsAt, edited.starts_at);
+    await adminQuery(db, "update app_users set account_state='paused' where id=$1", [id(7)]);
+    const cancelled = await manage(db, "request_status", { id: original.id, expectedStatus: "confirmed", status: "cancelled" });
+    assert.deepEqual(cancelled.notifications.map(n => n.recipient_id), [id(5)]);
+    await submit(db, { request: 91, dancers: [38] });
+    const declined = await manage(db, "request_status", { id: id(91), expectedStatus: "pending", status: "declined" });
+    assert.deepEqual(declined.notifications.map(n => n.recipient_id), [id(5)]);
+    assert.equal(declined.notifications[0].payload.kind, "vip_request_status");
+  } finally { await db.close(); }
+});
+
+test("status updates and both audiences' notifications roll back together; browser roles cannot invoke reviews", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db); await submit(db);
+    await adminQuery(db, "alter table notifications add constraint status_delivery_failure check(payload->>'kind'<>'vip_dancer_request' or not (payload ? 'status'))");
+    for (const [expectedStatus, status] of [["pending", "confirmed"], ["confirmed", "cancelled"]]) {
+      const change = { id: id(90), expectedStatus, status };
+      const before = (await db.query("select to_jsonb(r) value from venue_vip_requests r where id=$1", [id(90)])).rows[0].value;
+      const count = (await db.query("select count(*)::int n from notifications")).rows[0].n;
+      await denies(manage(db, "request_status", change), "23514");
+      assert.deepEqual((await db.query("select to_jsonb(r) value from venue_vip_requests r where id=$1", [id(90)])).rows[0].value, before);
+      assert.equal((await db.query("select count(*)::int n from notifications")).rows[0].n, count);
+      if (status === "confirmed") {
+        await adminQuery(db, "alter table notifications drop constraint status_delivery_failure");
+        await manage(db, "request_status", change);
+        await adminQuery(db, "alter table notifications add constraint status_delivery_failure check(payload->>'kind'<>'vip_dancer_request' or not (payload ? 'status')) not valid");
+      }
+    }
+    for (const role of ["anon", "authenticated"]) {
+      await db.exec("set role " + role);
+      await denies(db.query("select public.vip_manage($1,$2,'request_status',$3)", [id(1), id(20), JSON.stringify({ id: id(90), expectedStatus: "confirmed", status: "cancelled" })]), "42501");
+    }
   } finally { await db.close(); }
 });
 

@@ -26,11 +26,14 @@ test('edited VIP request alerts honor venue preferences and link to the venue re
   assert.equal(pushes.length, 1); assert.equal(emails.length, 1);
 });
 
-test('anonymous VIP alerts reach the dancer inbox, email and push with a dancer dashboard destination', async () => {
+for (const status of ['pending', 'confirmed', 'cancelled']) {
+test('anonymous ' + status + ' VIP alerts reach the dancer inbox, email and push with a dancer dashboard destination', async () => {
   const push = [], emails = [];
   const row = { id: 'notice', recipient_id: 'dancer-user', notification_type: 'support_message',
-    title: 'New VIP request', body: 'A VIP requested you at Private club on Jan 15, 2027 20:30 (America/Los_Angeles). Awaiting venue confirmation.',
-    payload: { kind: 'vip_dancer_request', venueId: 'venue', venueName: 'Private club', startsAt: '2027-01-16T04:30:00Z', timezone: 'America/Los_Angeles', url: '/dashboard/dancer#dancer-account' } };
+    title: status === 'pending' ? 'New VIP request' : 'VIP visit ' + status,
+    body: status === 'pending' ? 'A VIP requested you at Private club on Jan 15, 2027 20:30 (America/Los_Angeles). Awaiting venue confirmation.'
+      : 'A VIP visit that includes you at Private club on Jan 15, 2027 20:30 (America/Los_Angeles) has been ' + status + ' by the venue.',
+    payload: { kind: 'vip_dancer_request', ...(status === 'pending' ? {} : { status }), venueId: 'venue', venueName: 'Private club', startsAt: '2027-01-16T04:30:00Z', timezone: 'America/Los_Angeles', url: '/dashboard/dancer#dancer-account' } };
   const client = { from(table) {
     const query = { select() { return query; }, in(key, ids) { assert.deepEqual([...ids], ['dancer-user']); return query; },
       eq(key, value) { assert.equal(value, table === 'app_users' ? 'active' : 'dancer-user'); return query; },
@@ -56,3 +59,4 @@ test('anonymous VIP alerts reach the dancer inbox, email and push with a dancer 
   assert.equal(notices.length, 1); assert.equal(notices[0].body, row.body);
   assert.equal(notices[0].icon, 'calendar'); assert.deepEqual(notices[0].payload, row.payload);
 });
+}
