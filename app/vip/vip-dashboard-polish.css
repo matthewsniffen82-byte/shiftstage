@@ -91,7 +91,10 @@ body.dancr-button-system #vip-dashboard .vip-roster-filters { gap: 3px; }
 /* Preserve the homepage-style three-column portrait grid at every viewport. */
 body.dancr-button-system #vip-dashboard .vip-dancers { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 body.dancr-button-system #vip-dashboard .vip-dancer-select,
-body.dancr-button-system #vip-dashboard .vip-dancer-favorite { width: min(44px, calc(50% - 5px)) !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; top: 4px; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite { width: min(44px, calc(50% - 5px)) !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; top: 0; box-sizing: border-box; padding: 5px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
+/* Keep generous tap areas while tucking the visible controls into the photo corners. */
+body.dancr-button-system #vip-dashboard .vip-dancer-select { right: 0; align-items: flex-start; justify-content: flex-end; }
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite { left: 0; place-items: start; }
 body.dancr-button-system #vip-dashboard .vip-dancer-favorite svg { filter: drop-shadow(0 1px 2px #000b); }
 body.dancr-button-system #vip-dashboard .vip-mobile-continue { display: none; }
 @media (max-width: 880px) {
