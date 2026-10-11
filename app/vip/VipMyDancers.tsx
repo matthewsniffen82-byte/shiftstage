@@ -40,16 +40,16 @@ export default function VipMyDancers({ venue, dancers, onRequest, onFavorite, fa
     </div>
     {collection === "previouslyRequested" && <p className="vip-library-history">Dancers from your requests at {venue.name}, including past and withdrawn requests. <button type="button" disabled={busy} onClick={onRequests}>View request status →</button></p>}
     <p className="vip-library-count" role="status">{visible.length} {visible.length === 1 ? "dancer" : "dancers"}</p>
-    <div id="vip-library-results" className="vip-library-grid" aria-label={active.label}>
-      {visible.map(dancer => <article className="vip-library-card" key={dancer.id}>
-        <div className="vip-library-identity"><LibraryPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><div><h3>{dancer.stage_name}</h3><small>{dancer.working_now ? "Working now at this club" : dancer.canRequest ? "Off shift · available to request" : dancer.previouslyRequested ? "Previously requested · unavailable at this club" : "Not currently requestable at this club"}</small></div></div>
-        <div className="vip-library-actions">
-          {dancer.profileHref ? <a href={`${dancer.profileHref}?return_to=${encodeURIComponent(`/vip?venueId=${encodeURIComponent(venue.id)}#vip-dancers`)}`} target="_blank" rel="noopener noreferrer" aria-label={`View ${dancer.stage_name} profile (new tab)`}>View profile <span aria-hidden="true">↗</span></a> : <small>Profile unavailable</small>}
-          <button className="vip-library-save" type="button" aria-pressed={dancer.favorite === true} aria-busy={favoritePending.includes(dancer.id)} aria-label={`${dancer.favorite ? "Remove" : "Add"} ${dancer.stage_name} ${dancer.favorite ? "from" : "to"} favorites`} title={dancer.favorite ? "Remove from favorites" : "Add to favorites"} disabled={busy || favoritePending.includes(dancer.id) || (!dancer.profileHref && !dancer.favorite)} onClick={() => void onFavorite(dancer)}><span aria-hidden="true">{dancer.favorite ? "♥" : "♡"}</span></button>
-        </div>
-        <button type="button" className="vip-library-request" disabled={busy || !dancer.canRequest} onClick={() => onRequest(dancer)}>{dancer.previouslyRequested ? "Request again" : "Request"}<span aria-hidden="true">→</span></button>
-      </article>)}
-    </div>
+    <div className="vip-roster-scroll"><div id="vip-library-results" className="vip-dancers vip-library-grid" aria-label={active.label}>
+      {visible.map(dancer => {
+        const profile = <><LibraryPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><span className="vip-dancer-copy"><strong>{dancer.stage_name}</strong><small className={dancer.working_now ? "vip-working" : ""}>{dancer.working_now ? "● Working now" : dancer.canRequest ? "Affiliated · off shift" : dancer.previouslyRequested ? "Previously requested · unavailable" : "Unavailable at this club"}</small><span className="vip-open-profile">{dancer.profileHref ? "Open profile" : "Profile unavailable"}</span></span></>;
+        return <article className="vip-dancer vip-library-card" key={dancer.id}>
+          {dancer.profileHref ? <a className="vip-profile-link" href={`${dancer.profileHref}?return_to=${encodeURIComponent(`/vip?venueId=${encodeURIComponent(venue.id)}#vip-dancers`)}`} target="_blank" rel="noopener noreferrer" aria-label={`View ${dancer.stage_name} profile (new tab)`}>{profile}</a> : <div className="vip-profile-link">{profile}</div>}
+          <button className="vip-dancer-favorite vip-library-save" type="button" aria-pressed={dancer.favorite === true} aria-busy={favoritePending.includes(dancer.id)} aria-label={`${dancer.favorite ? "Remove" : "Add"} ${dancer.stage_name} ${dancer.favorite ? "from" : "to"} favorites`} title={dancer.favorite ? "Remove from favorites" : "Add to favorites"} disabled={busy || favoritePending.includes(dancer.id) || (!dancer.profileHref && !dancer.favorite)} onClick={() => void onFavorite(dancer)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg></button>
+          <button type="button" className="vip-library-request" aria-label={`Add ${dancer.stage_name} to your visit`} title={dancer.canRequest ? `Add ${dancer.stage_name} to your visit` : "Unavailable to request at this club"} disabled={busy || !dancer.canRequest} onClick={() => onRequest(dancer)}><span className="vip-sr-only">{dancer.previouslyRequested ? "Request again" : "Request"}</span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" /><path d="M12 7v10M7 12h10" /></svg></button>
+        </article>;
+      })}
+    </div></div>
     {!visible.length && <div className="vip-panel vip-library-empty"><h3>{search || atVenue ? "No dancers match these filters." : collection === "club" ? "No dancers at this club yet." : `No ${active.label.toLowerCase()} dancers yet.`}</h3><p>{search || atVenue ? "Try another name or show all your dancers." : active.empty}</p>{search || atVenue ? <button type="button" onClick={() => { setSearch(""); setAtVenue(false); }}>Clear filters</button> : <button type="button" disabled={busy} onClick={onBrowse}>Browse dancers</button>}</div>}
   </div>;
 }

@@ -225,7 +225,7 @@ test('collection controls, search, venue eligibility, profiles, empty states, an
   const render = () => { cursor = 0; return Component(props); };
   let tree = render(); const html = () => renderToStaticMarkup(tree);
   assert.match(html(), /Aria/); assert.match(html(), /Nova/); assert.match(html(), /Past dancer/);
-  assert.match(html(), /Off shift · available to request/); assert.match(html(), /Previously requested · unavailable at this club/);
+  assert.match(html(), /Affiliated · off shift/); assert.match(html(), /Previously requested · unavailable/);
   assert.match(html(), /aria-label="This club"/);
   nodes(tree).find(n => n.type === 'button' && n.props.children?.[0] === 'Favorites').props.onClick(); tree = render();
   assert.doesNotMatch(html(), /Nova/); assert.match(html(), /aria-label="Remove Aria from favorites"/); assert.doesNotMatch(html(), /saved dancers/);
@@ -233,7 +233,7 @@ test('collection controls, search, venue eligibility, profiles, empty states, an
   assert.equal(new URL(profile.props.href, 'https://example.test').searchParams.get('return_to'), `/vip?venueId=${venues[0].id}#vip-dancers`);
   const requestButtons = nodes(tree).filter(n => n.props?.className === 'vip-library-request');
   requestButtons[0].props.onClick(); assert.deepEqual(requests, ['aria']); assert.equal(requestButtons[1].props.disabled, true);
-  nodes(tree).find(n => n.props?.className === 'vip-library-save').props.onClick(); assert.deepEqual(saves, ['aria']);
+  nodes(tree).find(n => n.props?.className?.split(' ').includes('vip-library-save')).props.onClick(); assert.deepEqual(saves, ['aria']);
   nodes(tree).find(n => n.type === 'button' && n.props.children?.[0] === 'Following').props.onClick(); tree = render();
   assert.match(html(), /Nova/); assert.doesNotMatch(html(), /Aria/);
   nodes(tree).find(n => n.props?.type === 'checkbox').props.onChange({ target: { checked: true } }); tree = render();
