@@ -292,6 +292,8 @@
       dashboardBtn.hidden = !loggedIn;
       dashboardBtn.textContent = loggedIn ? `${role} dashboard` : "Dashboard";
       dashboardBtn.setAttribute("aria-label", loggedIn ? `Open ${role.toLowerCase()} dashboard` : "Open dashboard");
+      const vipDashboardLink = document.getElementById("vipDashboardLink");
+      if (vipDashboardLink) vipDashboardLink.hidden = loggedIn && role === "VIP";
       adminBtn.hidden = loggedIn && sessionRole !== "admin";
       sessionMenuEnd.hidden = !loggedIn;
       accountBtn.hidden = false;
