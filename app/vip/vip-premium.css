@@ -107,17 +107,22 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 .vip-auth-shell .vip-auth-help .vip-text-button { display: block; margin: 0; padding: 10px 0; min-height: 44px; text-align: left; }
 .vip-roster-note { padding-top: 17px; font-size: 11px !important; }
 .vip-dashboard-shell .vip-visit-panel { position: sticky; top: 96px; }
-.vip-dashboard-shell .vip-date-grid { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); }
+.vip-visit-panel > form { grid-template-columns: minmax(0, 1fr); min-width: 0; }
+.vip-visit-panel > form > *, .vip-visit-panel .vip-step-heading > div { min-width: 0; max-width: 100%; }
+.vip-visit-panel .vip-step-heading > div { overflow-wrap: anywhere; }
+.vip-dashboard-shell .vip-date-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); }
+.vip-visit-panel .vip-date-grid input { max-width: 100%; }
 .vip-selected-summary { border: 1px solid #46334f; border-radius: 10px; padding: 14px; background: #151019; }
 .vip-selected-summary strong { font-size: 12px; color: #e2d3ef; }
 .vip-selected-summary p { font-size: 12px; }
 .vip-selected-chips { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 0; padding: 0; list-style: none; }
 .vip-selected-chips li { display: flex; align-items: center; gap: 5px; padding: 2px 3px 2px 9px; border: 1px solid #674b7c; border-radius: 8px; background: #281c34; color: #e2c9f5; font-size: 11px; max-width: 100%; }
-.vip-selected-chips li span { overflow-wrap: anywhere; }
+.vip-selected-chips li span { min-width: 0; overflow-wrap: anywhere; }
+.vip-selected-chips li button { flex-shrink: 0; }
 .vip-dashboard-shell .vip-selected-chips button { min-height: 36px; min-width: 36px; padding: 3px; background: transparent !important; border: none !important; color: #e2c9f5 !important; font-size: 20px; }
 .vip-dashboard-shell .vip-optional { font-size: 10px; font-weight: 400; color: var(--vip-muted); }
 .vip-submit-area { display: grid; gap: 10px; }
-.vip-dashboard-shell .vip-submit-area .vip-primary { width: 100%; justify-content: space-between; min-height: 48px; }
+.vip-dashboard-shell .vip-submit-area .vip-primary { width: 100%; min-width: 0; max-width: 100%; justify-content: space-between; min-height: 48px; white-space: normal; overflow-wrap: anywhere; }
 .vip-submit-area small { font-size: 11px; }
 .vip-request-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
 .vip-request-toolbar label { min-width: 180px; }
