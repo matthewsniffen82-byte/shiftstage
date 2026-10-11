@@ -63,7 +63,7 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
   }
   function invite(event: FormEvent) { event.preventDefault(); void action({ action: "invite", email, nickname: inviteNickname }, ""); }
   async function review(request: VipRequest, status: string, note: string) {
-    await action({ action: "request_status", id: request.id, expectedStatus: request.status, status, note }, `Request ${status}. The VIP has been notified.`);
+    await action({ action: "request_status", id: request.id, expectedStatus: request.status, expectedUpdatedAt: request.updated_at || request.created_at, status, note }, `Request ${status}. The VIP has been notified.`);
   }
   async function saveNickname(event: FormEvent) {
     event.preventDefault();

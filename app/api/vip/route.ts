@@ -31,6 +31,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, request: data.request, session }, { headers: VIP_HEADERS });
   } catch (error) { return failure(error); }
 }
+export async function PUT(request: Request) {
+  try {
+    const { user, session } = await createRequestSupabaseContext(request, { role: "customer" });
+    const body = await readBoundedJsonObject(request, { maxBytes: 8192, invalidMessage: "Invalid VIP request.", tooLargeMessage: "VIP request is too large." });
+    if (!Array.isArray(body.dancerIds) || body.dancerIds.length < 1 || body.dancerIds.length > 10 || typeof body.localStart !== "string"
+      || typeof body.expectedUpdatedAt !== "string" || !/^\d{4}-\d{2}-\d{2}T/.test(body.expectedUpdatedAt) || !Number.isFinite(Date.parse(body.expectedUpdatedAt))
+      || (body.notes !== undefined && body.notes !== "")) {
+      throw new PublicApiError("INVALID_REQUEST", "Choose dancers, a date, and a time. Reopen the request if it is out of date.", 400);
+    }
+    const admin = createAdminSupabaseClient();
+    const { data, error } = await admin.rpc("vip_edit_request", { p_actor: user.id, p_venue: vipId(body.venueId), p_request: vipId(body.requestId),
+      p_expected_updated_at: body.expectedUpdatedAt, p_local_start: body.localStart, p_dancers: body.dancerIds.map(vipId) });
+    if (error?.code === "40001") throw new PublicApiError("CONFLICT", "This request or the dancer roster has changed. Return to Requests, refresh, and reopen it. Confirmed visits must be changed through the venue.", 409);
+    if (error) throw error;
+    try { await deliverNotificationRows(admin, data.notifications || []); } catch { console.warn("VIP_OPTIONAL_NOTIFICATION_DELIVERY_FAILED"); }
+    return NextResponse.json({ ok: true, request: data.request, changed: data.changed, session }, { headers: VIP_HEADERS });
+  } catch (error) { return failure(error); }
+}
 export async function PATCH(request: Request) {
   try {
     const { user, session } = await createRequestSupabaseContext(request, { role: "customer" });

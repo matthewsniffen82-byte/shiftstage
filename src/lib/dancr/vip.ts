@@ -7,7 +7,7 @@ import type { VipState, VenueVipState, VipInvitation, VipDancer } from "./vip-ty
 import { dancerPhotoDeliveryUrl } from "./media-delivery-url";
 
 export const VIP_HEADERS = { "cache-control": "private, no-store, max-age=0", "referrer-policy": "no-referrer" };
-const requestColumns = "id,venue_id,guest_name,starts_at,timezone,dancers,notes,status,response_note,created_at";
+const requestColumns = "id,venue_id,guest_name,starts_at,timezone,dancers,notes,status,response_note,created_at,updated_at";
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export function vipId(value: unknown) {
   if (typeof value !== "string" || !uuidPattern.test(value)) throw new PublicApiError("INVALID_REQUEST", "Choose a valid venue or request.", 400);

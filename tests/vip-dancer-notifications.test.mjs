@@ -2,6 +2,29 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { compileVip } from './helpers/vip-dashboard-fixture.mjs';
 import { notificationIconName } from '../src/lib/dancr/notification-icon.ts';
+import * as venuePreferences from '../src/lib/dancr/venue-notification-preferences.ts';
+
+test('edited VIP request alerts honor venue preferences and link to the venue request inbox', async () => {
+  const pushes = [], emails = [];
+  const row = { recipient_id: 'venue-owner', notification_type: 'support_message', title: 'VIP request updated', body: 'A pending request changed.', payload: { kind: 'vip_request_updated' } };
+  let muted = false;
+  const client = { auth: { admin: { getUserById: async () => ({ data: { user: { user_metadata: venuePreferences.venueNotificationMetadataPatch({ vipRequests: !muted, emailEnabled: true, pushEnabled: true }) } } }) } },
+    from() { const query = { select() { return query; }, in() { return query; }, eq: async () => ({ data: [{ id: 'venue-owner', email: 'owner@example.test', role: 'venue' }] }) }; return query; } };
+  const delivery = compileVip('src/lib/dancr/notification-delivery.ts', {
+    './public-app-url': { publicAppUrl: () => 'https://example.test' },
+    './web-push-delivery': { deliverWebPush: async (_client, _recipient, message) => { pushes.push(message); return true; } },
+    './customer-notification-preferences': { followAlertKey: () => null },
+    './venue-notification-preferences': venuePreferences,
+  }, { process: { env: { RESEND_API_KEY: 'synthetic', EMAIL_FROM: 'alerts@example.test' } }, AbortSignal,
+    fetch: async (_url, init) => { emails.push(JSON.parse(init.body)); return new Response(null, { status: 202 }); } });
+  assert.deepEqual(JSON.parse(JSON.stringify(await delivery.deliverNotificationRows(client, [row]))), { push: 1, email: 1 });
+  assert.equal(pushes[0].url, 'https://example.test/dashboard/venue#venue-vip');
+  assert.match(emails[0].text, /https:\/\/example.test\/dashboard\/venue#venue-vip/);
+  assert.equal(notificationIconName(row), 'calendar');
+  muted = true;
+  assert.deepEqual(JSON.parse(JSON.stringify(await delivery.deliverNotificationRows(client, [row]))), { push: 0, email: 0 });
+  assert.equal(pushes.length, 1); assert.equal(emails.length, 1);
+});
 
 test('anonymous VIP alerts reach the dancer inbox, email and push with a dancer dashboard destination', async () => {
   const push = [], emails = [];

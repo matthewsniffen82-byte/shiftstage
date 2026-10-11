@@ -4,9 +4,10 @@ import { useRef, useState } from "react";
 import { filterVipDancers, type VipDraft, type VipDancerFilter } from "@/src/lib/dancr/vip-dashboard";
 import { vipLocalDate, type VipDancer, type VipVenue } from "@/src/lib/dancr/vip-types";
 
-export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onFavorite, favoritePending, busy }: {
+export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onFavorite, favoritePending, busy, editing = false, unavailableSelections = false, onCancelEdit }: {
   venue: VipVenue; dancers: VipDancer[]; draft: VipDraft; onChange: (draft: VipDraft) => void; onSubmit: () => Promise<void>; busy: boolean;
   onFavorite: (dancer: VipDancer) => Promise<void>; favoritePending: string[];
+  editing?: boolean; unavailableSelections?: boolean; onCancelEdit?: () => void;
 }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<VipDancerFilter>("all");
@@ -16,7 +17,9 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
   const working = dancers.filter(dancer => dancer.working_now).length;
   const remove = (id: string) => onChange({ ...draft, selected: draft.selected.filter(item => item !== id) });
   return <>
-    <div className="vip-plan-heading"><div><h2>Plan your visit</h2><p>Choose your dancers. Let {venue.name} take care of the details.</p></div><span className="vip-badge">{draft.selected.length} / 10 selected</span></div>
+    <div className="vip-plan-heading"><div><h2>{editing ? "Edit your request" : "Plan your visit"}</h2><p>{editing ? `Update your dancers, date, or time. ${venue.name} will be notified when you save.` : `Choose your dancers. Let ${venue.name} take care of the details.`}</p></div><span className="vip-badge">{draft.selected.length} / 10 selected</span></div>
+    {editing && <div className="vip-actions"><button type="button" disabled={busy} onClick={onCancelEdit}>Cancel editing</button></div>}
+    {editing && unavailableSelections && <p role="status">Some originally requested dancers are no longer available to request. Review your selection before saving.</p>}
     <div className="vip-plan-grid">
       <section className="vip-panel vip-roster-panel"><div className="vip-step-heading"><span>1</span><div><h3>Choose your dancers</h3><small>{dancers.length} on the roster · {working} working now</small></div></div>
         <label className="vip-search"><span className="vip-sr-only">Search dancers by stage name</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search stage names" disabled={busy} /></label>
@@ -42,7 +45,7 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
         <form onSubmit={event => { event.preventDefault(); void onSubmit(); }}>
           <div className="vip-date-grid"><label>Date<input type="date" required min={vipLocalDate(venue.timezone)} value={draft.date} onChange={event => onChange({ ...draft, date: event.target.value })} disabled={busy} /></label><label>Time<input type="time" required value={draft.time} onChange={event => onChange({ ...draft, time: event.target.value })} disabled={busy} /></label></div>
           <div className="vip-selected-summary"><div className="vip-row"><strong>Selected dancers</strong><small aria-live="polite">{selected.length} / 10</small></div>{selected.length ? <ul className="vip-selected-chips">{selected.map(dancer => <li key={dancer.id}><span>{dancer.stage_name}</span><button type="button" disabled={busy} aria-label={`Remove ${dancer.stage_name} from request`} onClick={() => remove(dancer.id)}>×</button></li>)}</ul> : <p>Choose dancers from your venue’s roster.</p>}</div>
-          <div className="vip-submit-area"><button type="submit" className="vip-primary" disabled={busy || !selected.length}>{busy ? "Sending request…" : "Send request to venue"}<span aria-hidden="true">→</span></button><small>Your venue reviews your request before confirming. Selected dancers are notified of the venue, date, and time without your name or nickname. Track your venue’s response in Requests.</small></div>
+          <div className="vip-submit-area"><button type="submit" className="vip-primary" disabled={busy || !selected.length}>{busy ? editing ? "Saving changes…" : "Sending request…" : editing ? "Save changes" : "Send request to venue"}<span aria-hidden="true">→</span></button><small>{editing ? "Your request stays pending until the venue confirms. Affected dancers receive anonymous schedule updates." : "Your venue reviews your request before confirming. Selected dancers are notified of the venue, date, and time without your name or nickname. Track your venue’s response in Requests."}</small></div>
         </form>
       </section>
     </div>

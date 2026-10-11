@@ -6,7 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { readSession, requestDashboardJson, type DashboardSessionAccount } from "@/app/dashboard/dashboard-session";
-import { emptyVipDraft, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
+import { emptyVipDraft, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, vipRequestDraft, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
 import { type VipDancer, type VipDashboardView, type VipRequest, type VipRequestFilter, type VipState, type VipVenue } from "@/src/lib/dancr/vip-types";
 import { readVipWorkspace, saveVipWorkspace, vipDraftFingerprint } from "@/src/lib/dancr/vip-draft-storage";
 import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
@@ -35,6 +35,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, VipDraft>>({});
+  const [editing, setEditing] = useState<{ accountId: string; request: VipRequest; draft: VipDraft } | null>(null);
   const [favoritePending, setFavoritePending] = useState<string[]>([]);
   const favoriteRequests = useRef(new Map<string, AbortController>());
   const [nicknameDrafts, setNicknameDrafts] = useState<Record<string, string>>({});
@@ -48,13 +49,16 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const requestKey = `${requestScope}|${revision}`;
   const data = response?.key === requestScope ? response.data : null;
   const venue = venues.find(item => item.id === (venueId || lastVenue.current));
-  const draft = venue ? drafts[venue.id] || emptyVipDraft() : emptyVipDraft();
+  const activeEdit = editing && editing.accountId === account.id && editing.request.venue_id === venue?.id ? editing : null;
+  const draft = activeEdit?.draft || (venue ? drafts[venue.id] || emptyVipDraft() : emptyVipDraft());
   const disabled = busy || signingOut;
   const viewRef = useRef(view);
   viewRef.current = view;
   const lastFetched = useRef(0);
   const refreshing = useRef(loading);
   refreshing.current = loading;
+
+  useEffect(() => { setEditing(previous => view !== "plan" || previous?.request.venue_id !== venue?.id || previous?.accountId !== account.id ? null : previous); }, [view, venue?.id, account.id]);
 
   useEffect(() => {
     try {
@@ -107,6 +111,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         setVenues(result.venues);
         if (view === "plan" && result.selectedVenueId) {
           setDrafts(previous => ({ ...previous, [result.selectedVenueId]: reconcileVipDraft(previous[result.selectedVenueId] || emptyVipDraft(), result.dancers) }));
+          setEditing(previous => previous?.request.venue_id === result.selectedVenueId ? { ...previous, draft: reconcileVipDraft(previous.draft, result.dancers) } : previous);
         }
         lastFetched.current = Date.now();
         setResponse({ key: requestScope, data: result });
@@ -128,7 +133,17 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   function refresh() { if (!locked.current) setRevision(value => value + 1); }
   function updateDraft(next: VipDraft) {
     if (!venue || locked.current) return;
+    if (activeEdit) { setEditing({ ...activeEdit, draft: next }); return; }
     setDrafts(previous => ({ ...previous, [venue.id]: next }));
+  }
+  function editRequest(request: VipRequest) {
+    if (!venue || locked.current || signingOut || request.status !== "pending" || request.venue_id !== venue.id) return;
+    setEditing({ accountId: String(account.id), request, draft: vipRequestDraft(request, venue.timezone) });
+    setStatus(""); setError(""); navigate("plan");
+  }
+  function cancelEditing() {
+    if (locked.current || signingOut) return;
+    setEditing(null); navigate("requests");
   }
   function repeatRequest(request: VipRequest) {
     if (!venue || locked.current || signingOut) return;
@@ -197,6 +212,15 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     const expectedAccount = account.id;
     try {
       const input = { venueId: venue.id, localStart: `${draft.date}T${draft.time}`, dancerIds: [...draft.selected].sort() };
+      if (activeEdit) {
+        const result = await requestDashboardJson("/api/vip", { expectedRole: "customer", method: "PUT", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ ...input, requestId: activeEdit.request.id, expectedUpdatedAt: activeEdit.request.updated_at || activeEdit.request.created_at }), timeoutMs: 30000, signal: controller.signal });
+        if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
+        setEditing(null); setStatus(result.changed === false ? "Your request is already up to date." : `Request updated. ${venue.name} has been notified.`);
+        setFilter("pending"); setPage(0); setView("requests"); setRevision(value => value + 1);
+        window.history.replaceState(null, "", "#vip-requests");
+        return;
+      }
       const fingerprint = vipDraftFingerprint(venue.id, draft);
       if (pendingRequests.current[venue.id]?.fingerprint !== fingerprint) pendingRequests.current[venue.id] = { fingerprint, id: crypto.randomUUID() };
       persistDrafts(drafts);
@@ -263,11 +287,11 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
           {data.summary?.nextVisit ? <><VipRequests requests={[data.summary.nextVisit]} venueName={venue.name} featured busy={disabled} /><button type="button" onClick={() => { setFilter("confirmed"); setPage(0); navigate("requests"); }}>View your requests →</button></> : <div className="vip-next-empty"><span className="vip-calendar-mark" aria-hidden="true"><VipIcon kind="requests" /></span><div><h3>Your next night starts here.</h3><p>Choose your dancers and a time. We’ll show your visit here once the venue confirms.</p><button type="button" onClick={() => navigate("plan")}>Start a request →</button></div></div>}
         </section>
         <div className="vip-explainer"><span><b>01</b> Choose your dancers</span><span><b>02</b> Set your date & time</span><span><b>03</b> Get venue confirmation</span></div>
-      </> : view === "plan" ? <VipPlan key={venue.id} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} busy={disabled} />
+      </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} busy={disabled} />
       : <>
         <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>Track venue responses and review your plans.</p></div></div>
         <div className="vip-request-toolbar"><label>Status<select value={filter} onChange={event => { setFilter(event.target.value as VipRequestFilter); setPage(0); }} disabled={disabled}>{requestFilters.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><span>{data.requestCount ?? data.requests.length} {(data.requestCount ?? data.requests.length) === 1 ? "request" : "requests"}</span></div>
-        {data.requests.length ? <VipRequests requests={data.requests} venueName={venue.name} onRepeat={repeatRequest} onWithdraw={withdrawRequest} busy={disabled} /> : <section className="vip-panel vip-empty-access"><VipIcon kind="requests" /><h3>{filter === "all" ? "Your plans will appear here." : `No ${filter} requests.`}</h3><p>{filter === "all" ? "Send your first request to start planning a visit." : "Choose another status to see more of your requests."}</p><button type="button" onClick={() => filter === "all" ? navigate("plan") : (setFilter("all"), setPage(0))}>{filter === "all" ? "Plan a visit" : "View all requests"}</button></section>}
+        {data.requests.length ? <VipRequests requests={data.requests} venueName={venue.name} onEdit={editRequest} onRepeat={repeatRequest} onWithdraw={withdrawRequest} busy={disabled} /> : <section className="vip-panel vip-empty-access"><VipIcon kind="requests" /><h3>{filter === "all" ? "Your plans will appear here." : `No ${filter} requests.`}</h3><p>{filter === "all" ? "Send your first request to start planning a visit." : "Choose another status to see more of your requests."}</p><button type="button" onClick={() => filter === "all" ? navigate("plan") : (setFilter("all"), setPage(0))}>{filter === "all" ? "Plan a visit" : "View all requests"}</button></section>}
         {(page > 0 || data.hasMore) && <nav className="vip-pagination" aria-label="Request pages"><button type="button" disabled={disabled || page === 0} onClick={() => setPage(value => value - 1)}>← Newer</button><span>Page {page + 1}</span><button type="button" disabled={disabled || !data.hasMore} onClick={() => setPage(value => value + 1)}>Older →</button></nav>}
       </>)}
     </section>)}

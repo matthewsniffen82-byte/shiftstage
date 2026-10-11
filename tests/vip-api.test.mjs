@@ -59,6 +59,36 @@ function fixture({ denied = false, rpcError = null, deliveryFailure = false, inv
 function request(body) { return new Request("https://example.test/api/vip", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); }
 const input = { actorUserId: id(6), venueId: id(20), requestId: id(90), localStart: "2027-01-15T21:30", dancerIds: [id(37)] };
 
+test("VIP edits bind the owner and version, deliver alerts without leaking recipients, and tolerate external delivery failures", async () => {
+  const { route, calls } = fixture({ deliveryFailure: true });
+  const body = { ...input, expectedUpdatedAt: '2026-10-01T12:00:00.123456Z' };
+  const response = await route.PUT(request(body));
+  assert.equal(response.status, 200);
+  assert.deepEqual(JSON.parse(JSON.stringify(calls.find(c => c[0] === 'rpc').slice(1))), ['vip_edit_request', {
+    p_actor: id(5), p_venue: input.venueId, p_request: input.requestId, p_expected_updated_at: body.expectedUpdatedAt,
+    p_local_start: input.localStart, p_dancers: input.dancerIds,
+  }]);
+  const result = await response.json(); assert.equal(result.session.accessToken, 'rotated'); assert.equal(result.notifications, undefined);
+  assert.ok(calls.some(c => c[0] === 'delivery')); assert.match(response.headers.get('cache-control'), /private.*no-store/);
+  const notification = { notification_type: 'support_message', payload: { kind: 'vip_request_updated' } };
+  assert.equal(preferences.venueNotificationCategory(notification), 'vipRequests');
+  assert.equal(preferences.venueNotificationEnabled(preferences.venueNotificationMetadataPatch({ vipRequests: false }), notification), false);
+});
+
+test("VIP edit validation and reviewed-request conflicts fail before reporting success", async () => {
+  const body = { ...input, expectedUpdatedAt: '2026-10-01T12:00:00Z' };
+  for (const invalid of [{ expectedUpdatedAt: null }, { expectedUpdatedAt: 'invalid' }, { dancerIds: [] }, { dancerIds: Array(11).fill(id(37)) }, { dancerIds: ['bad'] }, { requestId: 'bad' }, { notes: 'unsupported' }]) {
+    const { route, calls } = fixture(); assert.equal((await route.PUT(request({ ...body, ...invalid }))).status, 400);
+    assert.equal(calls.some(c => c[0] === 'rpc'), false);
+  }
+  assert.equal((await fixture({ denied: true }).route.PUT(request(body))).status, 403);
+  const conflict = await fixture({ rpcError: { code: '40001' } }).route.PUT(request(body));
+  assert.equal(conflict.status, 409); assert.match((await conflict.json()).error, /Return to Requests/);
+  const review = fixture({ invitation: true });
+  await review.route.POST(request({ action: 'request_status', id: input.requestId, expectedStatus: 'pending', expectedUpdatedAt: body.expectedUpdatedAt, status: 'confirmed' }));
+  assert.equal(review.calls.find(c => c[0] === 'rpc')[2].p_data.expectedUpdatedAt, body.expectedUpdatedAt);
+});
+
 test("VIP submission delivers both audience-specific alerts without returning recipient details to the guest", async () => {
   const notifications = [{ recipient_id: id(1), payload: { kind: "vip_request" } }, { recipient_id: id(7), payload: { kind: "vip_dancer_request" } }];
   const { route, calls } = fixture({ notifications });

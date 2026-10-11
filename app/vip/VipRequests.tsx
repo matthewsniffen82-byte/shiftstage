@@ -7,6 +7,7 @@ type RequestActions = {
   busy?: boolean; venueName?: string; featured?: boolean;
   onReview?: (request: VipRequest, status: string, note: string) => Promise<void>;
   onRepeat?: (request: VipRequest) => void;
+  onEdit?: (request: VipRequest) => void;
   onWithdraw?: (request: VipRequest) => Promise<boolean>;
 };
 export default function VipRequests({ requests, ...actions }: RequestActions & { requests: VipRequest[] }) {
@@ -14,7 +15,7 @@ export default function VipRequests({ requests, ...actions }: RequestActions & {
     <RequestCard key={request.id} request={request} {...actions} />
   ) : <p className="vip-empty">{actions.onReview ? "No visit requests yet." : "No requests yet. Your requests and venue responses will appear here."}</p>}</div>;
 }
-function RequestCard({ request, onReview, busy = false, venueName, featured, onRepeat, onWithdraw }: { request: VipRequest } & RequestActions) {
+function RequestCard({ request, onReview, busy = false, venueName, featured, onRepeat, onEdit, onWithdraw }: { request: VipRequest } & RequestActions) {
   const [note, setNote] = useState("");
   const [confirmWithdrawal, setConfirmWithdrawal] = useState(false);
   return <article className={`vip-request${featured ? " vip-request-featured" : ""}`}>
@@ -26,6 +27,7 @@ function RequestCard({ request, onReview, busy = false, venueName, featured, onR
     {request.response_note && <p className="vip-note"><strong>Venue response</strong><br />{request.response_note}</p>}
     {request.status === "pending" && !onReview && <small>Awaiting venue review. Dancer availability is subject to confirmation.</small>}
     {!onReview && <div className="vip-request-actions">
+      {request.status === "pending" && onEdit && <button type="button" disabled={busy} onClick={() => onEdit(request)}>Edit request</button>}
       {request.status === "confirmed" && venueName && <a className="vip-link-action" download={`mydancr-visit-${request.id}.ics`} href={`data:text/calendar;charset=utf-8,${encodeURIComponent(vipCalendar(request, venueName))}`}>Add to calendar <span aria-hidden="true">↗</span></a>}
       {onRepeat && <button type="button" disabled={busy} onClick={() => onRepeat(request)}>Request these dancers again</button>}
       {request.status === "pending" && onWithdraw && !confirmWithdrawal && <button type="button" disabled={busy} onClick={() => setConfirmWithdrawal(true)}>Withdraw request</button>}

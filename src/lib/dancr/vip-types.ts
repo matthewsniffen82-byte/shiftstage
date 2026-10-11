@@ -4,7 +4,7 @@ export type VipRequest = {
   id: string; venue_id: string; guest_name: string; nickname?: string; starts_at: string; timezone: string;
   dancers: Array<{ id: string; stageName: string }>; notes: string;
   status: "pending" | "confirmed" | "declined" | "cancelled";
-  response_note: string; created_at: string;
+  response_note: string; created_at: string; updated_at?: string;
 };
 export type VipInvitation = { venueName: string; maskedEmail: string; expiresAt: string };
 export type VipDashboardView = "overview" | "plan" | "requests" | "account";

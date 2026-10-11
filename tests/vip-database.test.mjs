@@ -33,6 +33,7 @@ async function fixture() {
     await db.exec(readFileSync(new URL("../supabase/migrations/20261010093155_vip_shared_nicknames.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261010192345_vip_guest_withdrawal.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261010200606_vip_anonymous_dancer_requests.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261011084450_vip_pending_request_edits.sql", import.meta.url), "utf8"));
     // Match production grants for server-only SECURITY INVOKER request writes.
     await db.exec("grant select on public.app_users,public.venues,public.venue_team_members,public.dancer_profiles to service_role; grant select,insert on public.notifications to service_role");
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
@@ -51,6 +52,10 @@ async function fixture() {
   } catch (error) { await db.close(); throw error; }
 }
 async function manage(db, action, data, actor = 1, venue = 20) {
+  if (action === "request_status" && data.expectedUpdatedAt === undefined) {
+    const row = (await db.query("select updated_at::text from public.venue_vip_requests where id=$1", [data.id])).rows[0];
+    data = { ...data, expectedUpdatedAt: row?.updated_at };
+  }
   return (await db.query("select public.vip_manage($1,$2,$3,$4) result", [id(actor), id(venue), action, JSON.stringify(data)])).rows[0].result;
 }
 async function invite(db, email = "person5@example.test", token = digest) { return manage(db, "invite", { email, digest: token }); }
@@ -66,6 +71,76 @@ async function adminQuery(db, sql, params = []) {
   try { return await db.query(sql, params); } finally { await db.exec("set role service_role"); }
 }
 const denies = (promise, code) => assert.rejects(promise, error => error.code === code);
+
+async function edit(db, request, { actor = 5, venue = 20, local, dancers = [37], version = request.updated_at } = {}) {
+  if (!local) local = (await db.query("select to_char((now()+interval '3 days') at time zone 'America/Los_Angeles','YYYY-MM-DD') || 'T21:00' value")).rows[0].value;
+  return (await db.query("select public.vip_edit_request($1,$2,$3,$4,$5,$6) result", [id(actor),id(venue),request.id,version,local,dancers.map(id)])).rows[0].result;
+}
+
+test("pending edits preserve request identity, notify the venue and affected dancers anonymously, and retry without duplicate alerts", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db); const original = (await submit(db)).request;
+    const result = await edit(db, original);
+    assert.equal(result.changed, true); assert.equal(result.request.id, original.id); assert.equal(result.request.status, 'pending');
+    assert.equal(result.request.created_at, original.created_at); assert.notEqual(result.request.updated_at, original.updated_at);
+    assert.equal(result.request.notes, original.notes); assert.deepEqual(result.request.dancers.map(d => d.id), [id(37)]);
+    const venue = result.notifications.filter(n => n.payload.kind === 'vip_request_updated');
+    assert.deepEqual(venue.map(n => n.recipient_id).sort(), [id(1),id(2)]);
+    assert.ok(venue.every(n => n.body.includes('Previously:') && n.body.includes('Now:')));
+    const dancer = result.notifications.filter(n => n.payload.kind === 'vip_dancer_request');
+    assert.deepEqual(dancer.map(n => n.recipient_id).sort(), [id(7),id(8)]);
+    assert.match(dancer.find(n => n.recipient_id === id(8)).body, /no longer includes you/);
+    for (const n of dancer) {
+      assert.doesNotMatch(JSON.stringify(n), /Test VIP|Window table|guest_name|nickname|requestId|Dancer 7|Dancer 8/);
+      assert.equal(n.payload.url, '/dashboard/dancer#dancer-account');
+    }
+    const retry = await edit(db, original);
+    assert.equal(retry.changed, false); assert.equal(retry.notifications.length, 0);
+    assert.equal((await db.query('select count(*)::int n from venue_vip_requests')).rows[0].n, 1);
+    const added = await edit(db, result.request, { dancers: [37,38] });
+    assert.deepEqual(added.notifications.filter(n => n.payload.kind === 'vip_dancer_request').map(n => n.recipient_id), [id(8)]);
+  } finally { await db.close(); }
+});
+
+test("edits reject nonowners, stale saves and reviews, reviewed requests, invalid times and ineligible dancers", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db); const original = (await submit(db)).request;
+    await denies(edit(db, original, { actor: 6 }), '42501');
+    await db.query("insert into venue_vip_members(venue_id,user_id,display_name) values($1,$2,'Other VIP')", [id(20),id(6)]);
+    await denies(edit(db, original, { actor: 6 }), 'P0002');
+    await denies(edit(db, original, { venue: 21 }), '42501');
+    for (const local of ['2000-01-01T20:00','2099-01-01T20:00','bad']) await denies(edit(db, original, { local }), '22023');
+    for (const dancers of [[],[37,37],Array(11).fill(37)]) await denies(edit(db, original, { dancers }), '22023');
+    await denies(edit(db, original, { dancers: [39] }), '40001');
+    await denies(edit(db, original, { version: null }), '22023');
+    const changed = (await edit(db, original)).request;
+    await denies(edit(db, original, { dancers: [38] }), '40001');
+    await denies(manage(db, 'request_status', { id: original.id, expectedStatus: 'pending', expectedUpdatedAt: original.updated_at, status: 'confirmed' }), '40001');
+    await denies(manage(db, 'request_status', { id: original.id, expectedStatus: 'pending', expectedUpdatedAt: null, status: 'confirmed' }), '40001');
+    await manage(db, 'request_status', { id: original.id, expectedStatus: 'pending', status: 'confirmed' });
+    await denies(edit(db, changed), '40001');
+    for (const role of ['anon','authenticated']) { await db.exec(`set role ${role}`); await denies(edit(db, original, { local: '2027-01-01T21:00' }), '42501'); }
+  } finally { await db.close(); }
+});
+
+test("edits and alerts roll back together, and revoked or inactive memberships cannot edit", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db); const original = (await submit(db)).request;
+    await adminQuery(db, "alter table notifications add constraint edit_delivery_failure check(title <> 'VIP request updated')");
+    await denies(edit(db, original), '23514');
+    const current = (await db.query('select to_jsonb(r) value from venue_vip_requests r where id=$1',[original.id])).rows[0].value;
+    assert.deepEqual(current, original);
+    await adminQuery(db, 'alter table notifications drop constraint edit_delivery_failure');
+    await db.query('update venue_vip_members set active=false'); await denies(edit(db, original), '42501');
+    await db.query('update venue_vip_members set active=true');
+    await adminQuery(db, "update app_users set account_state='paused' where id=$1", [id(5)]); await denies(edit(db, original), '42501');
+    await adminQuery(db, "update app_users set account_state='active' where id=$1", [id(5)]);
+    await adminQuery(db, 'update venues set is_active=false where id=$1', [id(20)]); await denies(edit(db, original), 'P0002');
+  } finally { await db.close(); }
+});
 
 test("guest withdrawal is owner-only, pending-only, idempotent and not callable by browser roles", async () => {
   const db = await fixture();

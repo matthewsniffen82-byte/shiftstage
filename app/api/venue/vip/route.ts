@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       email = previous.data.email; nickname = previous.data.nickname || "";
     }
     const { data, error } = await admin.rpc("vip_manage", { p_actor: user.id, p_venue: access.venueId, p_action: replacingInvitation ? "invite" : body.action,
-      p_data: token ? { email, digest: vipTokenDigest(token), nickname } : { id: body.id, status: body.status, expectedStatus: body.expectedStatus, note: body.note } });
+      p_data: token ? { email, digest: vipTokenDigest(token), nickname } : { id: body.id, status: body.status, expectedStatus: body.expectedStatus, expectedUpdatedAt: body.expectedUpdatedAt, note: body.note } });
     if (error) throw error;
     let invitationUrl = ""; let emailDelivered = false;
     if (token) {
