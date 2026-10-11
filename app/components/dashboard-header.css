@@ -1,10 +1,10 @@
 /* One compact identity layout for Guest, Dancer, Club and VIP dashboards. */
 body.dancr-button-system :is(.dashboard-shell, .vip-dashboard-shell) .dashboard-identity-header {
   box-sizing: border-box; display: grid; gap: 8px; max-width: 1120px; min-width: 0;
-  margin: 0 auto 16px; padding: 0 0 16px; border: 0; border-bottom: 1px solid #382b43;
+  margin: 0 auto 16px; padding: 0 0 16px; border: 0; border-bottom: 1px solid #343139;
   border-radius: 0; background: transparent; box-shadow: none; font-family: var(--font-ui, Inter, ui-sans-serif, system-ui, sans-serif);
 }
-body.dancr-button-system .dashboard-identity-header .dashboard-identity-back-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-back-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; min-height: 44px; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-row { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 12px; min-width: 0; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar { width: 48px; height: 48px; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar > :is(.customer-dashboard-avatar, .dancer-dashboard-avatar, .venue-dashboard-logo, .vip-identity-mark) {
@@ -19,7 +19,7 @@ body.dancr-button-system .dashboard-identity-header .venue-dashboard-logo > svg 
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-copy { display: grid; gap: 3px; min-width: 0; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-label { color: #bda5d6; font-size: 10px; font-weight: 600; letter-spacing: .12em; line-height: 1.5; text-transform: uppercase; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; min-width: 0; }
-body.dancr-button-system .dashboard-identity-header h1 { min-width: 0; max-width: 100%; margin: 0; color: #f5f2fa; font-family: inherit; font-size: 28px !important; font-weight: 650 !important; line-height: 1.2 !important; letter-spacing: -.025em !important; white-space: normal; overflow-wrap: anywhere; }
+body.dancr-button-system .dashboard-identity-header h1 { min-width: 0; max-width: 100%; margin: 0; color: #f5f2fa; font-family: inherit; font-size: 28px !important; font-weight: 650 !important; line-height: 1.2 !important; letter-spacing: 0 !important; white-space: normal; overflow-wrap: anywhere; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-subtitle { margin: 0; color: #b8b0c3; font-size: 13px; font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-status { display: inline-flex; align-items: center; gap: 5px; padding: 3px 7px; border: 1px solid #4a3c54; border-radius: 8px; color: #c6bccf; background: #19121f; font-size: 10px; font-weight: 600; line-height: 1.4; white-space: nowrap; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-status.is-live { color: #83d9ae; border-color: #2b5042; background: #11221b; }
@@ -30,10 +30,63 @@ body.dancr-button-system .dashboard-identity-header[data-account-kind="vip"] .vi
 body.dancr-button-system .dashboard-identity-header .vip-venue-select select { max-width: 100%; min-height: 44px; margin: 2px 0 0; padding: 7px 28px 7px 10px; font-size: 14px; }
 body.dancr-button-system .dashboard-identity-header .vip-refresh { min-height: 44px; }
 @media (max-width: 600px) {
-  body.dancr-button-system :is(.dashboard-shell, .vip-dashboard-shell) .dashboard-identity-header { gap: 6px; margin-bottom: 12px; padding-bottom: 12px; }
+  body.dancr-button-system :is(.dashboard-shell, .vip-dashboard-shell) .dashboard-identity-header { gap: 4px; margin-bottom: 10px; padding-bottom: 10px; }
+  body.dancr-button-system .dashboard-identity-header .dashboard-identity-label { display: none; }
   body.dancr-button-system .dashboard-identity-header .dashboard-identity-row { grid-template-columns: 44px minmax(0, 1fr); gap: 10px; }
   body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar { width: 44px; height: 44px; }
   body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar > :is(.customer-dashboard-avatar, .dancer-dashboard-avatar, .venue-dashboard-logo, .vip-identity-mark) { width: 44px !important; height: 44px !important; min-width: 44px; flex-basis: 44px !important; border-radius: 12px !important; }
   body.dancr-button-system .dashboard-identity-header h1 { font-size: 24px !important; }
   body.dancr-button-system .dashboard-identity-header .dashboard-identity-subtitle { font-size: 12px; }
+}
+
+/* Give the account dashboards the same navigation face and spacing as VIP.
+   Keep each workspace's labels, unread counts, and navigation semantics. */
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) {
+  --dashboard-nav-direction: row;
+  --dashboard-nav-height: 54px;
+  --dashboard-nav-padding: 10px 8px;
+  --dashboard-nav-font-size: 13px;
+  --dashboard-nav-icon-size: 22px;
+  --dashboard-nav-gap: 6px;
+  --dashboard-nav-inset: 6px;
+}
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) {
+  position: sticky; top: max(var(--mydancr-preview-banner-offset, 0px), var(--mydancr-demo-banner-height, 0px), env(safe-area-inset-top, 0px)); z-index: 40;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-self: start; min-width: 0;
+  gap: var(--dashboard-nav-gap); margin: 0; padding: var(--dashboard-nav-inset);
+  border: 1px solid #343139 !important; border-radius: 16px; background: #121015 !important;
+  box-shadow: 0 6px 16px #0002 !important; backdrop-filter: none; -webkit-backdrop-filter: none;
+}
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button[type="button"] {
+  position: relative; display: flex !important; flex-direction: var(--dashboard-nav-direction); align-items: center; justify-content: center;
+  min-width: 0; min-height: var(--dashboard-nav-height) !important; gap: 6px; margin: 0; padding: var(--dashboard-nav-padding) !important;
+  border: 1px solid transparent !important; border-radius: 10px !important; background: transparent !important; box-shadow: none !important;
+  color: #bfb6cb !important; font-family: inherit; font-size: var(--dashboard-nav-font-size) !important; font-weight: 600 !important;
+  line-height: 1.3; letter-spacing: 0 !important; text-align: center; white-space: normal; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+}
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button::before,
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button::after { content: none !important; }
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button:is([aria-current="page"], [aria-selected="true"]) {
+  color: #fff !important; border-color: transparent !important; background: #27212e !important; box-shadow: inset 0 -2px 0 #b594d1 !important;
+}
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button:focus-visible { outline: 2px solid #c9a4f4 !important; outline-offset: -2px; }
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) svg {
+  width: var(--dashboard-nav-icon-size); height: var(--dashboard-nav-icon-size); flex: 0 0 var(--dashboard-nav-icon-size); color: #bc99eb; stroke-width: 1.6;
+}
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button > :is(span:not(.customer-nav-count), strong) {
+  min-width: 0; color: inherit; font-size: inherit; font-weight: inherit; line-height: inherit; white-space: normal; overflow-wrap: normal;
+}
+@media (hover: hover) {
+  body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button:not(:disabled):hover { border-color: #a67ada !important; color: #fff !important; }
+}
+@media (max-width: 600px) {
+  body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) {
+    --dashboard-nav-direction: column;
+    --dashboard-nav-height: 56px;
+    --dashboard-nav-padding: 8px 2px;
+    --dashboard-nav-font-size: 11px;
+    --dashboard-nav-icon-size: 20px;
+    --dashboard-nav-gap: 3px;
+    --dashboard-nav-inset: 4px;
+  }
 }
