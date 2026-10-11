@@ -76,7 +76,7 @@ test("the routed venue dashboard is isolated, closable, and restores the origina
   assert.match(dashboard, /label="Back to MyDancr"/);
   assert.match(dashboard, /Club dashboard/);
   assert.match(dashboard, /role === "venue" \? "Club"/);
-  assert.match(dashboard, /Loading \{role\} dashboard/);
+  assert.match(dashboard, /aria-label=\{`Loading \$\{role\} dashboard`\}/);
   assert.match(dashboard, /className="dashboard-identity-header" data-account-kind=\{role\}/);
   assert.doesNotMatch(dashboardPage, /Now[\s\S]*Dancers[\s\S]*Trending/);
 });

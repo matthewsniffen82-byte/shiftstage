@@ -391,6 +391,7 @@ export function VenuePanel({
           </div>
           {analytics?.valueReport ? <VenueValueAnalytics
             report={analytics.valueReport as VenueValueReport}
+            period={analytics.period === "tonight" || analytics.period === "7d" || analytics.period === "30d" ? analytics.period : analyticsPeriod}
             periodStart={String(analytics.periodStart)}
             periodEnd={String(analytics.periodEnd)}
             timezone={String(profile?.timezone || "America/Los_Angeles")}

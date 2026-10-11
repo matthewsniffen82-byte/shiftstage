@@ -24,6 +24,8 @@ import {
 import { isActiveNfcPresence } from "./shift-presence";
 import { getVenueAccess, requireVenueAccess } from "./venue-access";
 import { getTonightWindow } from "./schedule";
+import { dancerPhotoDeliveryUrl } from "./media-delivery-url";
+import type { VenueValueReport } from "./venue-analytics";
 import type {
   ClubDeal,
   VenueDashboardAnalytics,
@@ -538,10 +540,31 @@ export async function getVenueDashboard(
     countVenueEvents(client, profile.id, "page_view", range.previousStart, range.start),
     getWorkingDancers(client, profile.id, now),
     getVenueDealsForAccount(client, userId),
-    client.rpc("get_venue_subscription_analytics", { p_venue_id: profile.id, p_since: range.start.toISOString(), p_until: range.end.toISOString() }),
+    client.rpc("get_venue_performance_analytics", {
+      p_venue_id: profile.id, p_since: range.start.toISOString(), p_until: range.end.toISOString(),
+      p_tonight_since: tonight.startsAt, p_tonight_until: tonight.endsAt,
+    }),
   ]);
 
   if (valueReport.error) throw valueReport.error;
+  const report = valueReport.data as VenueValueReport;
+  if (report.performance?.dancers.length) {
+    // Only approved public photos cross into this report; private profiles keep initials.
+    // Batch IDs so a busy venue cannot silently hit the API's default row limit.
+    const dancers = report.performance.dancers;
+    for (let offset = 0; offset < dancers.length; offset += 200) {
+      const batch = dancers.slice(offset, offset + 200);
+      const { data: photos, error } = await client.from("dancer_profiles").select("id,avatar_storage_path")
+        .in("id", batch.map(dancer => dancer.id)).eq("status", "approved").eq("verification_status", "approved")
+        .eq("is_public", true).is("disabled_at", null);
+      if (error) throw error;
+      const paths = new Map((photos || []).map(photo => [photo.id, photo.avatar_storage_path]));
+      for (const dancer of batch) {
+        const path = paths.get(dancer.id);
+        dancer.photoUrl = path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 160) : null;
+      }
+    }
+  }
   const admissionMetrics = { claims: valueReport.data.current.claims, redemptions: valueReport.data.current.admissions, cohortRedemptions: valueReport.data.current.cohortRedemptions, previousRedemptions: valueReport.data.previous.admissions };
   const directions = valueReport.data.current.directions;
   const previousDirections = valueReport.data.previous.directions;
