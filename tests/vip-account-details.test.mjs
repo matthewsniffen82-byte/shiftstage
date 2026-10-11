@@ -53,6 +53,30 @@ function fixture(role = 'customer') {
 }
 
 for (const role of ['customer']) describe(`VIP sign-in details`, () => {
+test('each credential form drops below its own button and closes when toggled or cancelled', () => {
+  const f = fixture(role);
+  const dropdown = credential => f.find(f.render(), node => node.props?.className === 'vip-credentials-dropdown' && node.key === credential);
+  const button = credential => f.find(dropdown(credential), node => node.type === 'button');
+  assert.equal(f.form(), null);
+  for (const credential of ['email', 'password']) {
+    f.open(credential);
+    const group = dropdown(credential);
+    assert.equal(group.props.children[0].type, 'button');
+    assert.equal(group.props.children[1].props.credential, credential);
+    assert.equal(button(credential).props['aria-expanded'], true);
+    assert.equal(button(credential).props['aria-controls'], `vip-credentials-${credential}-form`);
+    const other = credential === 'email' ? 'password' : 'email';
+    assert.equal(button(other).props['aria-expanded'], false);
+    assert.equal(dropdown(other).props.children[1], null);
+  }
+  f.open('password');
+  assert.equal(f.form(), null);
+  f.open('email');
+  f.form().props.onCancel();
+  assert.equal(f.form(), null);
+  assert.equal(f.requests.length, 0);
+});
+
 test('email change rejects the current address and only submits the normalized new email', async () => {
   const f = fixture(role);
   f.open('email');

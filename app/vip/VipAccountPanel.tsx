@@ -114,14 +114,16 @@ export default function VipAccountPanel({ account, onAccountChange }: {
       <div className="vip-credentials-account-email"><span>Email address</span><strong>{account.email || "Private"}</strong></div>
       <div className="vip-credentials-credential-options">
         {(["email", "password"] as const).map(credential => (
-          <button key={credential} ref={credential === "email" ? emailButton : passwordButton} type="button" className={`vip-credentials-credential-option${completedCredential === credential ? " is-complete" : ""}`} aria-expanded={editing === credential} aria-controls={editing === credential ? "vip-credentials-credential-form" : undefined} disabled={busy} onClick={() => openForm(credential)}>
-            <svg className="vip-credentials-credential-icon" viewBox="0 0 24 24" aria-hidden="true">{credential === "email" ? <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></> : <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" /></>}</svg>
-            <span>{completedCredential === credential ? credential === "email" ? "✓ Check your email" : "✓ Password updated" : `Change ${credential}`}</span>
-            <svg className="vip-credentials-credential-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d={editing === credential ? "m6 15 6-6 6 6" : "m9 6 6 6-6 6"} /></svg>
-          </button>
+          <div key={credential} className="vip-credentials-dropdown">
+            <button key={credential} ref={credential === "email" ? emailButton : passwordButton} type="button" className={`vip-credentials-credential-option${completedCredential === credential ? " is-complete" : ""}`} aria-expanded={editing === credential} aria-controls={editing === credential ? `vip-credentials-${credential}-form` : undefined} disabled={busy} onClick={() => openForm(credential)}>  
+              <svg className="vip-credentials-credential-icon" viewBox="0 0 24 24" aria-hidden="true">{credential === "email" ? <><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m4 7 8 6 8-6" /></> : <><rect x="5" y="10" width="14" height="11" rx="3" /><path d="M8 10V7a4 4 0 0 1 8 0v3m-4 5v2" /></>}</svg>  
+              <span>{completedCredential === credential ? credential === "email" ? "✓ Check your email" : "✓ Password updated" : `Change ${credential}`}</span>
+              <svg className="vip-credentials-credential-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d={editing === credential ? "m6 15 6-6 6 6" : "m6 9 6 6 6-6"} /></svg>  
+            </button>  
+            {editing === credential ? <CredentialForm key={`${credential}-form`} credential={credential} busy={busy} onSubmit={saveCredential} onCancel={() => { setFeedback(null); closeForm(credential); }} /> : null}  
+          </div>
         ))}
       </div>
-      {editing ? <CredentialForm key={editing} credential={editing} busy={busy} onSubmit={saveCredential} onCancel={() => { setFeedback(null); closeForm(editing); }} /> : null}
       {feedback ? <p className={`vip-credentials-credential-feedback${feedback.error ? " is-error" : ""}`} role={feedback.error ? "alert" : "status"}>{feedback.message}</p> : null}
       <style>{`
         .info-panel.vip-credentials-account-details { min-width: 0; gap: 16px; }
@@ -131,12 +133,13 @@ export default function VipAccountPanel({ account, onAccountChange }: {
         .vip-credentials-account-details .vip-credentials-account-email { display: grid; gap: 5px; }
         .vip-credentials-account-email > span { color: #aaa4b8; font-size: 12px; }
         .vip-credentials-account-email > strong { color: #f5f2fa; font-size: 16px; line-height: 1.4; overflow-wrap: anywhere; }
-        .vip-credentials-credential-options { display: grid; gap: 9px; }
+        .vip-credentials-account-details .vip-credentials-credential-options { display: grid; grid-template-columns: minmax(0, 1fr); gap: 9px; }
+        .vip-credentials-dropdown { display: grid; grid-template-columns: minmax(0, 1fr); min-width: 0; }
         body.dancr-button-system .vip-credentials-account-details button.vip-credentials-credential-option { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 11px !important; width: 100% !important; min-width: 0 !important; min-height: 54px !important; padding: 11px 13px !important; border: 1px solid rgba(179,125,255,.2) !important; border-radius: 12px !important; background: rgba(139,92,246,.06) !important; color: #f2ebfc !important; box-shadow: none !important; font-size: 14px !important; }
         .vip-credentials-credential-icon, .vip-credentials-credential-chevron { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .vip-credentials-credential-icon { color: #c6a5fb; }
         .vip-credentials-credential-chevron { margin-left: auto; width: 16px; }
-        .vip-credentials-credential-form { display: grid; gap: 14px; margin-top: 16px; padding-top: 18px; border-top: 1px solid rgba(179,125,255,.15); }
+        .vip-credentials-dropdown .vip-credentials-credential-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; margin-top: 8px; padding: 14px; border: 1px solid rgba(179,125,255,.15); border-radius: 12px; background: #0d0b12; }
         .vip-credentials-credential-form h3 { margin: 0; font-size: 17px; }
         .vip-credentials-credential-form > p { margin: 0; color: #aaa4b8; font-size: 13px; line-height: 1.5; }
         .vip-credentials-credential-form label { display: grid; gap: 8px; font-size: 13px; color: #e3ddea; }
@@ -165,7 +168,7 @@ function CredentialForm({ credential, busy, onSubmit, onCancel }: {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [password, setPassword] = useState("");
   useEffect(() => { input.current?.focus({ preventScroll: true }); }, []);
-  return <form id="vip-credentials-credential-form" className="vip-credentials-credential-form" aria-label={`Change ${credential}`} aria-busy={busy} onSubmit={onSubmit}>
+  return <form id={`vip-credentials-${credential}-form`} className="vip-credentials-credential-form" aria-label={`Change ${credential}`} aria-busy={busy} onSubmit={onSubmit}>
     <h3>Change {credential}</h3>
     <p>{credential === "email" ? "Confirm the links sent to both your current and new email addresses. Keep using your current email until both are confirmed." : "Changing your password signs out your other sessions."}</p>
     <div className="vip-credentials-credential-field">

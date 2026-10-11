@@ -206,7 +206,7 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 }
 
 /* VIP credentials stay inside the private dashboard. */
-.vip-credentials-account-details-heading,.vip-credentials-credential-options,.vip-credentials-credential-form-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
+.vip-credentials-account-details-heading,.vip-credentials-credential-form-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; }
 .vip-credentials-account-details-heading { justify-content:space-between; }
 .vip-credentials-account-email { display:grid; gap:6px; margin:18px 0; overflow-wrap:anywhere; }
 .vip-credentials-account-email>span { color:var(--vip-muted,#b5a9bd); }
