@@ -40,6 +40,11 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [favoritePending, setFavoritePending] = useState<string[]>([]);
   const favoriteRequests = useRef(new Map<string, AbortController>());
   const [nicknameDrafts, setNicknameDrafts] = useState<Record<string, string>>({});
+  const [nicknameEditing, setNicknameEditing] = useState("");
+  const [nicknameError, setNicknameError] = useState<{ venueId: string; message: string } | null>(null);
+  const nicknameInput = useRef<HTMLInputElement | null>(null);
+  const nicknameButton = useRef<HTMLButtonElement | null>(null);
+  const previousNicknameEditor = useRef("");
   const [draftsLoaded, setDraftsLoaded] = useState(false);
   const lastVenue = useRef("");
   const mounted = useRef(false);
@@ -58,6 +63,17 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const lastFetched = useRef(0);
   const refreshing = useRef(loading);
   refreshing.current = loading;
+  const nicknameValue = venue ? nicknameDrafts[venue.id] ?? venue.nickname ?? "" : "";
+  const nicknameVenueId = venue?.id || "";
+  const nicknameOpen = !!venue && nicknameEditing === venue.id;
+  const nicknameChanged = nicknameValue.trim() !== (venue?.nickname || "");
+  const currentNicknameError = nicknameError?.venueId === venue?.id ? nicknameError?.message : "";
+
+  useEffect(() => {
+    if (nicknameOpen) nicknameInput.current?.focus();
+    else if (nicknameVenueId && previousNicknameEditor.current === nicknameVenueId) nicknameButton.current?.focus();
+    previousNicknameEditor.current = nicknameOpen ? nicknameVenueId : "";
+  }, [nicknameOpen, nicknameVenueId, view]);
 
   useEffect(() => { setEditing(previous => view !== "plan" || previous?.request.venue_id !== venue?.id || previous?.accountId !== account.id ? null : previous); }, [view, venue?.id, account.id]);
 
@@ -201,9 +217,14 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       if (mounted.current) setFavoritePending(previous => previous.filter(id => id !== dancer.id));
     }
   }
+  function cancelNickname() {
+    if (!venue || locked.current || signingOut) return;
+    setNicknameDrafts(previous => { const next = { ...previous }; delete next[venue.id]; return next; });
+    setNicknameEditing(""); setNicknameError(null);
+  }
   async function saveNickname() {
-    if (!venue || !data || locked.current || signingOut) return;
-    locked.current = true; setBusy(true); setError(""); setStatus("");
+    if (!venue || !data || locked.current || signingOut || loading || !nicknameChanged) return;
+    locked.current = true; setBusy(true); setNicknameError(null); setStatus("");
     const controller = new AbortController(); submitAbort.current = controller;
     const expectedAccount = account.id, savedVenue = venue;
     try {
@@ -212,10 +233,11 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
       setVenues(previous => previous.map(item => item.id === savedVenue.id ? { ...item, nickname: result.nickname } : item));
       setNicknameDrafts(previous => { const next = { ...previous }; delete next[savedVenue.id]; return next; });
-      setStatus(result.changed ? `Nickname saved. ${savedVenue.name} has been notified.` : "Your nickname is already up to date.");
+      setNicknameEditing("");
+      setStatus(result.changed ? `Saved. ${savedVenue.name} has been notified and will know you as ${result.nickname || savedVenue.guestName}.` : "Your nickname is already up to date.");
       setRevision(value => value + 1);
     } catch (failure) {
-      if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
+      if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setNicknameError({ venueId: savedVenue.id, message: message(failure) });
     } finally { locked.current = false; submitAbort.current = null; if (mounted.current) setBusy(false); }
   }
   async function submit() {
@@ -250,6 +272,25 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     finally { locked.current = false; submitAbort.current = null; if (mounted.current) setBusy(false); }
   }
 
+  const nicknamePanel = venue && <section className="vip-panel vip-nickname-panel" aria-labelledby="vip-nickname-heading">
+    <div className="vip-nickname-summary">
+      <div><h2 id="vip-nickname-heading">{nicknameOpen || !venue.nickname ? "What should this club call you?" : `Your name at ${venue.name}`}</h2>
+        <p>{nicknameOpen ? `Choose the name ${venue.name} sees on your visit requests.` : venue.nickname ? <strong>{venue.nickname}</strong> : <>Currently using <strong>{venue.guestName}</strong>. A nickname is optional.</>}</p></div>
+      {!nicknameOpen && <div className="vip-actions"><button ref={nicknameButton} type="button" aria-expanded={false} aria-controls="vip-nickname-form" disabled={disabled || loading || !data} onClick={() => { setNicknameEditing(venue.id); setNicknameError(null); setStatus(""); }}>{venue.nickname ? "Edit nickname" : "Add nickname"}</button></div>}
+    </div>
+    {nicknameOpen && <form id="vip-nickname-form" className="vip-nickname-editor" onSubmit={event => { event.preventDefault(); void saveNickname(); }}>
+      <label htmlFor="vip-nickname-input">Nickname (optional)<input ref={nicknameInput} id="vip-nickname-input" type="text" autoComplete="nickname" maxLength={80} placeholder={venue.guestName} value={nicknameValue} disabled={disabled || loading || !data} aria-describedby={`vip-nickname-preview vip-nickname-help${currentNicknameError ? " vip-nickname-error" : ""}`} onChange={event => { setNicknameDrafts(previous => ({ ...previous, [venue.id]: event.target.value })); setNicknameError(null); }} /></label>
+      <p id="vip-nickname-preview">Club will see: <strong>{nicknameValue.trim() || venue.guestName}</strong></p>
+      <small id="vip-nickname-help">Only for {venue.name}. Saving a change notifies the club team.</small>
+      {currentNicknameError && <p id="vip-nickname-error" className="vip-error" role="alert">{currentNicknameError} Your draft is still here. Try saving again.</p>}
+      <div className="vip-actions">
+        <button className="vip-primary" type="submit" disabled={disabled || loading || !data || !nicknameChanged}>{busy ? "Saving…" : "Save nickname"}</button>
+        <button type="button" disabled={disabled} onClick={cancelNickname}>Cancel</button>
+        {nicknameValue.trim() && <button type="button" disabled={disabled || loading || !data} onClick={() => { setNicknameDrafts(previous => ({ ...previous, [venue.id]: "" })); setNicknameError(null); nicknameInput.current?.focus(); }}>Use guest name</button>}
+      </div>
+    </form>}
+  </section>;
+
   return <main className="vip-shell vip-dashboard-shell" id="vip-dashboard" data-global-navigation-swipe="ignore"><div className="vip-container">
     <header className="dashboard-identity-header" data-account-kind="vip">
       <div className="dashboard-identity-back-row">
@@ -278,20 +319,15 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     {loading && data && <p className="vip-updating" role="status">Updating your lounge…</p>}
     {VIP_DESTINATIONS.map(item => <section key={item.id} id={`vip-panel-${item.id}`} className="vip-destination" aria-label={item.label} hidden={view !== item.id}>
       {view === item.id && (view === "account" ? <div className="vip-account-grid">
+        {nicknamePanel}
         <section className="vip-panel"><div className="vip-section-heading"><VipIcon kind="account" /><div><h2>Your account</h2><p>One sign-in for your private VIP access.</p></div></div><dl className="vip-account-details"><div><dt>VIP name at this venue</dt><dd>{venue?.guestName || "—"}</dd></div><div><dt>Email</dt><dd>{account.email || "Your VIP account"}</dd></div><div><dt>Access</dt><dd>By private venue invitation</dd></div></dl><div className="vip-actions"><button type="button" disabled={disabled} onClick={() => void onSignOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></section>
         <VipAccountPanel account={account} onAccountChange={() => refresh()} />
-        {venue && <section className="vip-panel"><h2>Your nickname at {venue.name}</h2><p>Your venue uses this nickname to recognize you on visit requests.</p>
-          <form className="vip-nickname-editor" onSubmit={event => { event.preventDefault(); void saveNickname(); }}>
-            <label>VIP nickname<input type="text" maxLength={80} value={nicknameDrafts[venue.id] ?? venue.nickname ?? ""} disabled={disabled || loading || !data} onChange={event => setNicknameDrafts(previous => ({ ...previous, [venue.id]: event.target.value }))} /></label>
-            <small>Shared with this venue’s team. Saving a change notifies them of your old and new nickname. Leave blank to use your guest name.</small>
-            <div className="vip-actions"><button type="submit" disabled={disabled || loading || !data}>Save nickname</button></div>
-          </form>
-        </section>}
         <section className="vip-panel"><h2>Your VIP venues</h2><p>Each invitation unlocks access to that venue’s dancers and visit requests.</p>{loading && !venues.length ? <p role="status">Loading venues…</p> : <ul className="vip-memberships">{venues.map(member => <li key={member.id}><div><strong>{member.name}</strong><small>{member.timezone.replaceAll("_", " ")}</small></div><span className="vip-badge">VIP access</span></li>)}</ul>}{!loading && !venues.length && <p>Open a private invitation from your venue to get started.</p>}</section>
       </div> : !data ? loading ? <VipLoading label={view === "plan" ? "Loading your venue’s dancers…" : view === "requests" ? "Loading your requests…" : "Opening your lounge…"} /> : <p className="vip-empty">This section couldn’t be loaded. Use Refresh to try again.</p>
       : !venue ? <section className="vip-panel vip-empty-access"><VipIcon kind="overview" /><h2>Your invitation opens the door.</h2><p>Ask your venue for a private VIP link. Open it to activate your access and start planning a visit.</p></section>
       : view === "overview" ? <>
-        <div className="vip-welcome"><h2>Welcome, {venue.guestName}.</h2><button className="vip-primary" type="button" onClick={() => navigate("plan")}><VipIcon kind="plan" />Plan a visit</button></div>
+        <div className="vip-welcome"><h2>Welcome, {venue.nickname || venue.guestName}.</h2><button className="vip-primary" type="button" onClick={() => navigate("plan")}><VipIcon kind="plan" />Plan a visit</button></div>
+        {nicknamePanel}
         <div className="vip-overview-content"><div className="vip-overview-visit">
         <section className="vip-panel vip-next-visit"><div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your next visit</h2><p>{venue.name}</p></div></div>
           {data.summary?.nextVisit ? <><VipRequests requests={[data.summary.nextVisit]} venueName={venue.name} featured busy={disabled} /><button type="button" onClick={() => { setFilter("confirmed"); setPage(0); navigate("requests"); }}>View your requests →</button></> : <div className="vip-next-empty"><span className="vip-calendar-mark" aria-hidden="true"><VipIcon kind="requests" /></span><div><h3>Your next night starts here.</h3><p>Choose your dancers and a time. We’ll show your visit here once the venue confirms.</p><button type="button" onClick={() => navigate("plan")}>Start a request →</button></div></div>}

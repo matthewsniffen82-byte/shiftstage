@@ -250,6 +250,9 @@ test('profile links, selection checkboxes, and favorite buttons are independent 
   assert.equal(favorites.length, 1);
 });
 
+function nicknameButton(ui, label) { return ui.nodes().find(node => node.type === 'button' && node.props.children === label); }
+function openNickname(ui) { (nicknameButton(ui, 'Edit nickname') || nicknameButton(ui, 'Add nickname')).props.onClick(); ui.render(); }
+
 test('VIP nickname edits retain failed drafts, notify on success and stay scoped to each venue', async () => {
   const saved = new Map(venues.map((venue,index) => [venue.id,index ? 'Other venue name' : 'Friday regular']));
   let fail = true;
@@ -263,16 +266,22 @@ test('VIP nickname edits retain failed drafts, notify on success and stay scoped
   const input=()=>ui.nodes().find(n=>n.type==='input'&&n.props.type==='text');
   const form=()=>ui.nodes().find(n=>n.type==='form'&&n.props.className==='vip-nickname-editor');
   const html=()=>renderToStaticMarkup(ui.tree());
-  await ui.settle();assert.equal(input().props.value,'Friday regular');
+  await ui.settle();openNickname(ui);assert.equal(input().props.value,'Friday regular');
   input().props.onChange({target:{value:'  Jordan VIP  '}});ui.render();
   form().props.onSubmit({preventDefault(){}});await ui.settle();
   assert.match(html(),/Nickname save unavailable/);assert.equal(input().props.value,'  Jordan VIP  ');
+  assert.ok(ui.nodes(form()).some(node=>node.props?.role==='alert'));
   form().props.onSubmit({preventDefault(){}});await ui.settle();
-  assert.match(html(),/The Velvet Room has been notified/);assert.equal(input().props.value,'Jordan VIP');
+  assert.match(html(),/The Velvet Room has been notified/);assert.equal(input(),undefined);
+  openNickname(ui);assert.equal(input().props.value,'Jordan VIP');
   ui.nodes().find(n=>n.type==='select').props.onChange({target:{value:venues[1].id}});await ui.settle();
-  assert.equal(input().props.value,'Other venue name');
-  input().props.onChange({target:{value:''}});ui.render();form().props.onSubmit({preventDefault(){}});await ui.settle();
-  assert.equal(input().props.value,'');assert.equal(saved.get(venues[0].id),'Jordan VIP');
+  openNickname(ui);assert.equal(input().props.value,'Other venue name');
+  nicknameButton(ui,'Use guest name').props.onClick();ui.render();
+  assert.equal(input().props.value,'');assert.equal(saved.get(venues[1].id),'Other venue name');
+  assert.match(html(),/Club will see: <strong>Jordan<\/strong>/);
+  form().props.onSubmit({preventDefault(){}});await ui.settle();
+  assert.equal(saved.get(venues[1].id),'');assert.equal(saved.get(venues[0].id),'Jordan VIP');
+  assert.match(html(),/will know you as Jordan/);
   const writes=ui.calls.filter(call=>call.options.method==='PATCH');
   assert.equal(JSON.parse(writes.at(-1).options.body).venueId,venues[1].id);ui.unmount();
 });
@@ -280,12 +289,60 @@ test('VIP nickname edits retain failed drafts, notify on success and stay scoped
 test('VIP nickname saves ignore delayed responses after a session change and prevent duplicate submissions', async () => {
   let resolve;
   const ui=dashboardHarness({hash:'#vip-account',request:async (url,options)=>options.method==='PATCH'?new Promise(done=>{resolve=done;}):state()});
-  await ui.settle();
+  await ui.settle();openNickname(ui);
   const form=()=>ui.nodes().find(n=>n.type==='form'&&n.props.className==='vip-nickname-editor');
   ui.nodes().find(n=>n.type==='input').props.onChange({target:{value:'Different name'}});ui.render();
   form().props.onSubmit({preventDefault(){}});ui.render();form().props.onSubmit({preventDefault(){}});
   assert.equal(ui.calls.filter(call=>call.options.method==='PATCH').length,1);
-  assert.ok(ui.nodes().find(n=>n.type==='button'&&n.props.children==='Save nickname').props.disabled);
+  assert.ok(nicknameButton(ui,'Saving…').props.disabled);
   ui.session({...guest,id:'other-account'});resolve({nickname:'Different name',changed:true});await ui.settle();
   assert.doesNotMatch(renderToStaticMarkup(ui.tree()),/has been notified/);ui.unmount();
+});
+
+test('VIPs can add a nickname from Overview and see the saved name in their welcome', async () => {
+  let nickname='';
+  const ui=dashboardHarness({request:async (url,options)=>{
+    if(options.method==='PATCH') { nickname=JSON.parse(options.body).nickname.trim(); return {nickname,changed:true}; }
+    return state(venues[0].id,{venues:venues.map((venue,index)=>({...venue,nickname:index?'Other club name':nickname}))});
+  }});
+  await ui.settle();
+  assert.ok(nicknameButton(ui,'Add nickname'));
+  assert.match(renderToStaticMarkup(ui.tree()),/What should this club call you/);
+  openNickname(ui);
+  assert.equal(nicknameButton(ui,'Save nickname').props.disabled,true);
+  const input=ui.nodes().find(node=>node.props?.id==='vip-nickname-input');
+  assert.equal(input.props.placeholder,'Jordan');
+  input.props.onChange({target:{value:'  Friday regular  '}});ui.render();
+  assert.match(renderToStaticMarkup(ui.tree()),/Club will see: <strong>Friday regular<\/strong>/);
+  ui.nodes().find(node=>node.type==='form').props.onSubmit({preventDefault(){}});await ui.settle();
+  assert.match(renderToStaticMarkup(ui.tree()),/Welcome, Friday regular/);
+  assert.ok(nicknameButton(ui,'Edit nickname'));
+  assert.equal(ui.nodes().some(node=>node.type==='form'),false);
+  assert.equal(ui.calls.filter(call=>call.options.method==='PATCH').length,1);
+  ui.navigate('account');await ui.settle();openNickname(ui);
+  assert.equal(ui.nodes().find(node=>node.type==='input').props.value,'Friday regular');
+  ui.unmount();
+});
+
+test('VIP nickname cancellation discards only the current club draft and unchanged names never submit', async () => {
+  const ui=dashboardHarness({request:async url=>state(new URL(url,'https://example.test').searchParams.get('venueId')||venues[0].id,{venues:venues.map((venue,index)=>({...venue,nickname:index?'Other club name':'Friday regular'}))})});
+  const input=()=>ui.nodes().find(node=>node.props?.id==='vip-nickname-input');
+  const switchClub=async id=>{ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:id}});await ui.settle();};
+  await ui.settle();openNickname(ui);
+  input().props.onChange({target:{value:' Friday regular '}});ui.render();
+  assert.equal(nicknameButton(ui,'Save nickname').props.disabled,true);
+  ui.nodes().find(node=>node.type==='form').props.onSubmit({preventDefault(){}});await ui.settle();
+  assert.equal(ui.calls.some(call=>call.options.method==='PATCH'),false);
+  input().props.onChange({target:{value:'Unsaved first club name'}});ui.render();
+  await switchClub(venues[1].id);openNickname(ui);
+  assert.equal(input().props.value,'Other club name');
+  input().props.onChange({target:{value:'Discard this'}});ui.render();
+  nicknameButton(ui,'Cancel').props.onClick();ui.render();openNickname(ui);
+  assert.equal(input().props.value,'Other club name');
+  await switchClub(venues[0].id);openNickname(ui);
+  assert.equal(input().props.value,'Unsaved first club name');
+  nicknameButton(ui,'Cancel').props.onClick();ui.render();openNickname(ui);
+  assert.equal(input().props.value,'Friday regular');
+  assert.equal(ui.calls.some(call=>call.options.method==='PATCH'),false);
+  ui.unmount();
 });

@@ -72,6 +72,15 @@ body.dancr-button-system #vip-dashboard .vip-empty-access { padding: 24px 16px; 
 body.dancr-button-system #vip-dashboard .vip-empty-access > svg { margin-bottom: 12px; }
 body.dancr-button-system #vip-dashboard .vip-empty-access p { margin: 8px auto 14px; }
 body.dancr-button-system #vip-dashboard .vip-account-details { gap: 12px; margin: 16px 0; }
+body.dancr-button-system #vip-dashboard .vip-nickname-panel { padding: 16px; }
+body.dancr-button-system #vip-dashboard .vip-account-grid > .vip-nickname-panel { grid-column: 1 / -1; }
+body.dancr-button-system #vip-dashboard .vip-nickname-panel h2 { font-size: 16px; }
+body.dancr-button-system #vip-dashboard .vip-nickname-summary { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+body.dancr-button-system #vip-dashboard .vip-nickname-summary > div:first-child { flex: 1 1 220px; min-width: 0; }
+body.dancr-button-system #vip-dashboard .vip-nickname-panel .vip-actions { gap: 8px; margin: 0; }
+body.dancr-button-system #vip-dashboard .vip-nickname-editor { max-width: 560px; margin-top: 16px; padding-top: 0; border-top: 0; }
+body.dancr-button-system #vip-dashboard .vip-nickname-editor p { margin: 0; }
+body.dancr-button-system #vip-dashboard .vip-nickname-panel strong { color: #f6f2ed; overflow-wrap: anywhere; }
 body.dancr-button-system #vip-dashboard .vip-memberships { margin-top: 12px; }
 body.dancr-button-system #vip-dashboard .vip-memberships li { padding: 12px 0; gap: 8px; }
 body.dancr-button-system #vip-dashboard .vip-feedback { margin-bottom: 16px; padding: 12px; }
