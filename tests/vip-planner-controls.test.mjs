@@ -34,18 +34,42 @@ test('only the iPhone mobile Plan a visit button gets the darker reference purpl
 });
 
 test('VIP add icons have an opaque dark fill over photos, with checked, focus and disabled states preserved', () => {
-  for (const [root, selector] of [
-    [premium, '.vip-dashboard-shell .vip-dancer-select svg'],
-    [library, 'body.dancr-button-system #vip-dashboard .vip-library-request svg'],
-  ]) {
-    const icon = declarations(rule(root, selector));
-    assert.equal(icon.fill, '#17111f'); assert.equal(icon.width, '21px'); assert.equal(icon.height, '21px');
-    assert.equal(icon['stroke-width'], '1.7');
-  }
-  const selected = declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:checked + svg'));
-  assert.equal(selected.fill, '#8a55cf'); assert.equal(selected.stroke, '#fff');
-  assert.equal(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:disabled + svg')).opacity, '.5');
-  assert.match(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:focus-visible + svg')).outline, /^2px solid/);
+  const icon = declarations(rule(premium, '.vip-dashboard-shell .vip-selection-icon'));
+  assert.equal(icon.width, '21px'); assert.equal(icon.height, '21px');
+  const plus = decodeURIComponent(icon.background);
+  assert.match(plus, /fill='#17111f'/); assert.match(plus, /stroke='#eee3f6'/);
+  assert.match(plus, /M12 7v10M7 12h10/);
+  const selected = declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:checked + .vip-selection-icon'));
+  const check = decodeURIComponent(selected['background-image']);
+  assert.match(check, /fill='#8a55cf'/); assert.match(check, /stroke='#fff'/); assert.match(check, /m7 12 3 3 7-7/);
+  assert.equal(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:disabled + .vip-selection-icon')).opacity, '.5');
+  assert.match(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:focus-visible + .vip-selection-icon')).outline, /^2px solid/);
+  assert.equal(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input')).appearance, 'none');
+  assert.equal(declarations(rule(library, 'body.dancr-button-system #vip-dashboard .vip-library-request svg')).fill, '#17111f');
+  const ui=plannerHarness();
+  const selection=ui.nodes().find(node=>node.props?.className==='vip-dancer-select');
+  const input=ui.nodes(selection).find(node=>node.type==='input');
+  assert.equal(input.props.type,'checkbox');
+  assert.equal(ui.nodes(selection).find(node=>node.props?.className==='vip-selection-icon').props['aria-hidden'],'true');
+  ui.select(dancers[0].id);assert.deepEqual(Array.from(ui.props.draft.selected),[dancers[0].id]);
+  ui.select(dancers[0].id,false);assert.equal(ui.props.draft.selected.length,0);
+});
+
+test('VIP filter faces retain dark artwork and Android gets compact spacing with usable touch targets', () => {
+  const faces=[];
+  polish.walkRules('body.dancr-button-system #vip-dashboard .vip-roster-filters button', node=>{
+    if(declarations(node).background)faces.push(declarations(node));
+  });
+  assert.match(faces[0].background,/linear-gradient\(#1a171e, #1a171e\)/);
+  const selected=declarations(rule(polish,'body.dancr-button-system #vip-dashboard .vip-roster-filters button[aria-pressed=true]'));
+  assert.match(selected.background,/linear-gradient\(#30243e, #30243e\)/);
+  assert.match(declarations(rule(polish,'body.dancr-button-system #vip-dashboard .vip-filter-count')).background,/linear-gradient/);
+  const selector='html:is(.is-android, .android-rendering, .is-samsung-browser, .samsung-rendering) body.dancr-button-system #vip-dashboard .vip-roster-filters';
+  const compact=rule(polish,selector+' button');
+  assert.equal(compact.parent.params,'(max-width: 600px)');
+  assert.equal(declarations(compact)['min-height'],'70px');
+  assert.equal(declarations(compact).padding,'6px');
+  assert.equal(declarations(rule(polish,selector)).gap,'6px');
 });
 
 test('Plan a visit shows its count and opens the details step with keyboard focus', () => {

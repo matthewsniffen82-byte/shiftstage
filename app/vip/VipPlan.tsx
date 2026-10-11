@@ -55,7 +55,7 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
               if (busy) return;
               if (!event.target.checked) remove(dancer.id);
               else if (!unavailable && !checked && draft.selected.length < 10) onChange({ ...draft, selected: [...draft.selected, dancer.id] });
-            }} /><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3" /><path d={checked ? "m7 12 3 3 7-7" : "M12 7v10M7 12h10"} /></svg></label>
+            }} /><span className="vip-selection-icon" aria-hidden="true" /></label>
             <button type="button" className="vip-dancer-favorite" aria-pressed={favorite} aria-label={`${favorite ? "Remove" : "Save"} ${dancer.stage_name} ${favorite ? "from" : "to"} favorites`} disabled={busy || favoritePending.includes(dancer.id) || (!dancer.profileHref && !favorite)} onClick={() => void onFavorite(dancer)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg></button>
           </article>;
         })}</fieldset></div>
