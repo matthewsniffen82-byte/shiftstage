@@ -21,7 +21,7 @@ export function plannerHarness(options = {}) {
     for (const node of nodes()) if (node.props.ref) node.props.ref.current = { focus: () => focused.push(node.props.id) };
     effects.forEach(effect => effect()); return tree;
   }
-  function button(label) { return nodes().find(node => node.type === 'button' && [node.props.children].flat().includes(label)); }
+  function button(label) { return nodes().find(node => node.type === 'button' && [node.props.children].flat().some(child => child === label || child?.props?.children === label)); }
   function select(id, checked = true) { const card = nodes().find(node => node.type === 'article' && node.key === id); nodes(card).find(node => node.props?.type === 'checkbox').props.onChange({ target: { checked } }); render(); }
   render();
   return { props, render, nodes, button, select, focused, tree: () => tree,
