@@ -112,7 +112,10 @@ body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-pressed=true] 
 .vip-visit-panel > form > *, .vip-visit-panel .vip-step-heading > div { min-width: 0; max-width: 100%; }
 .vip-visit-panel .vip-step-heading > div { overflow-wrap: anywhere; }
 .vip-dashboard-shell .vip-date-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr)); }
-.vip-visit-panel .vip-date-grid input { max-width: 100%; }
+.vip-visit-panel .vip-date-grid label { grid-template-columns: minmax(0, 1fr); }
+/* Let phone date/time controls shrink to their grid cell instead of native picker sizing. */
+.vip-visit-panel .vip-date-grid input { display: block; -webkit-appearance: none; appearance: none; width: 100%; min-width: 0; max-width: 100%; }
+.vip-visit-panel .vip-date-grid input::-webkit-date-and-time-value { min-width: 0; min-height: 1.5em; text-align: left; }
 .vip-selected-summary { border: 1px solid #46334f; border-radius: 10px; padding: 14px; background: #151019; }
 .vip-selected-summary strong { font-size: 12px; color: #e2d3ef; }
 .vip-selected-summary p { font-size: 12px; }
