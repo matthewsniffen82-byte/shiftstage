@@ -1,0 +1,158 @@
+MYDANCR ARCHITECTURE AND STABILITY AUDIT
+October 6, 2026 (America/Los_Angeles)
+
+Audited revision: 93067962da94536a4723a3eae320ce9c284dd1ae
+Method: source review, isolated unit/component/database-fixture tests, static
+checks, dependency advisory lookup, and bounded read-only production checks.
+No E2E/browser journeys, production writes, source fixes, or deployments made.
+Untracked files in the primary checkout were excluded and left untouched.
+
+ASSESSMENT
+
+The selected runtime, authorization, database-boundary, and worker checks are
+largely healthy. This is not a clean release sign-off: seven existing regression
+tests fail, three dependency advisories need review/remediation, and a component
+probe confirms delayed customer request-status updates.
+
+FINDINGS IN RECOMMENDED FIX ORDER
+
+1. HIGH PRIORITY: update vulnerable dependencies through a reviewed patch.
+
+package.json:25 pins sharp 0.35.4. The current sharp advisory affects versions
+below 0.35.5 and describes an upstream librsvg memory vulnerability, with possible
+code execution under specific Linux runtime conditions. Sharp runs in server
+image-processing paths. Uploaded photos pass raster/HEIC signature validation
+before decoding; watermark SVGs are generated from application-owned geometry.
+This review did not demonstrate attacker-controlled SVG decoding or a working
+remote exploit against MyDancr. Upgrade to the patched release and verify upload,
+crop, watermark, and video-poster handling.
+
+The scan also flags source-map-js 1.2.1 through PostCSS, and braces 3.0.3 through
+the ESLint globbing chain. Their observed uses are asset generation/build tooling
+and linting; no customer-facing exploit path was established. Seven affected
+packages represent three root advisories, not seven independent vulnerabilities.
+Do not use npm audit fix --force to downgrade the Next.js lint stack blindly.
+
+Sources:
+https://github.com/advisories/GHSA-wq5f-xc86-pv6w
+https://github.com/advisories/GHSA-68fv-2mgg-jv7q
+https://github.com/advisories/GHSA-vfj7-8cjw-p6xm
+
+2. MEDIUM: an open customer table page can show Pending for twenty minutes.
+
+app/internal/InternalRoster.tsx:14, 188
+Guest polling uses the full-roster interval of 20 minutes. Staff requests poll
+every 10 seconds, but that faster interval does not update the guest's page.
+Manual refresh, focus, or returning to the visible page can update it sooner.
+A component probe using the existing component and synthetic clock confirmed:
+server status changed to acknowledged; UI remained Pending after 60 seconds;
+the scheduled refresh showed Request seen by staff at 1,200 seconds.
+
+Recommendation: keep slow roster refresh if desired, but provide a small,
+visibility-aware active-request status refresh with the existing authorization,
+cancellation, and stale-response protections. Seen must still not mean confirmed.
+
+3. MEDIUM, GROWTH RISK: discovery silently stops at 800 profiles.
+
+src/lib/dancr/public.ts:14-15, 109
+The city and All cities queries both stop at 800, ordered by stage name and ID.
+The discovery API supplies no next-page cursor or explicit truncation indicator.
+Consequently, records beyond that limit cannot appear in the current directory
+or its client-side filters. This audit did not establish that production has
+already crossed that limit.
+
+The response includes gallery arrays, and checked-in dancers also appear in
+tonightDancers (app/api/public/discovery/route.ts:128-129). The visible homepage
+refreshes discovery every 30 seconds. This is a scaling concern, not a measured
+capacity failure: no production load test was performed.
+
+Recommendation: bounded pagination, server-side filtering/counts, and a smaller
+card projection; fetch gallery details when a profile is opened. Preserve prompt
+visibility revocation rather than introducing broad stale public caching.
+
+4. MEDIUM: seven existing regression assertions are out of date.
+
+The extended selections produced these failures:
+- tests/internal-media-delivery.test.mjs:73 and 86 assume a 75 MiB ceiling;
+  the current media proxy ceiling is 100 MiB.
+- tests/public-data-exposure-security.test.mjs:48 expects a 200-profile limit;
+  current code uses 800.
+- tests/public-data-fetching-performance.test.mjs:46 expects the retired
+  upcoming-shift query; the route intentionally returns an empty compatibility
+  field and no longer performs that query.
+- tests/browser-session-boundary.test.mjs:194 matches an obsolete effect
+  dependency list; the current effect still aborts its pending requests.
+- tests/browser-session-boundary.test.mjs:224 expects a removed NFC session-key
+  constant; shared browser-session handling remains present.
+- tests/browser-session-boundary.test.mjs:251 expects direct fetch; redemption
+  now uses requestDashboardJson and still supplies the abort signal and checks
+  request identity before applying results.
+
+These failures did not demonstrate new privacy leaks or lost cancellation.
+They do mean the broader test selection is not green. Update tests to current
+contracts and favor behavioral coverage over exact source-text matching.
+
+ARCHITECTURE OBSERVATIONS
+
+The app is a Next.js application with 140 API routes, 42 page components, and
+226 tracked migrations. Public discovery uses an assembled legacy HTML/JS shell;
+dashboards and standalone pages use React. Shared server services provide session,
+role, data, and provider boundaries. This hybrid is workable but creates duplicate
+UI/session integration surfaces that require careful regression coverage.
+
+Styling is the largest maintainability concern: dancr-aesthetic.v1.css contains
+14,633 lines; tracked CSS across app/src/public has 15,445 !important declarations.
+The assembled shell is approximately 2.69 MB on disk, before production extraction
+and compression. These are source-size measurements, not network-transfer or
+render-time measurements. Consolidate styles per feature gradually, using visual
+baselines; an application rewrite is not warranted by these findings.
+
+The migration provenance guard passes. A verified schema baseline exists, but its
+current plan includes 44 forward migrations and reports replayReady=false pending
+forward validation. This does not mean those migrations are unapplied or broken.
+It means this audit cannot certify a fresh full-schema replay or backup restore.
+Do not blindly replay quarantined historical migrations against production.
+
+VALIDATION RESULTS
+
+- Focused stability suite: 343 passed, 0 failed (19 test files).
+- Extended architecture/security selection: 497 passed, 4 failed (22 files).
+- Customer-flow/session selection: 115 passed, 3 failed (10 files).
+- Total existing selected tests: 962; 955 passed, 7 failed.
+- Additional isolated status-latency probe: 1 passed, confirming finding 2.
+- Standalone TypeScript: passed, tsc --noEmit --incremental false.
+- Full ESLint: passed with zero warnings.
+- Runtime/FFmpeg checks: passed, Node 24.21.0 and pinned FFmpeg 8.1.2.
+- Generated homepage source check and migration provenance check: passed.
+- Read-only Supabase readiness: 63/63 passed.
+- Production /api/health and /api/health/supabase: HTTP 200, ok=true.
+- Production health reported the exact audited revision above.
+- Vercel status for that exact revision: success.
+- Dependency audit: 7 high, 0 critical; 3 root advisories described above.
+
+Selected coverage included session ordering, role/venue isolation, RLS fixtures,
+Storage protection, guest-list/admission transactions, Internal requests/media,
+worker deadlines and recovery, webhook idempotency, CORS, and realtime client
+construction. Fixture tests and readiness probes do not establish every current
+production RLS outcome or actual provider delivery.
+
+LIMITS AND EVIDENCE
+
+No full 681-file test suite, fresh production build, E2E test, real payment/push/
+email delivery, production stress test, browser-device visual check, or backup
+restore was run. Vercel's successful deployed build is separate from a fresh
+local build. No critical access-control defect was confirmed in the reviewed
+paths; that is not a guarantee about unreviewed paths.
+
+Local evidence is retained in the clean audit worktree:
+C:/Users/aix23/.codex/worktrees/free-entry-refinement/MyDancr-clean-2026-09-11/
+  .next-architecture-stability-20261006.log
+  .next-architecture-boundaries-20261006.log
+  .next-architecture-flows-20261006.log
+  .next-architecture-typecheck-20261006.log
+  .next-architecture-lint-20261006.log
+  .next-architecture-readiness-20261006.json
+  .next-dependency-audit-20261006.json
+  .next-architecture-audit-20261006/status-probe.mjs
+
+This report is an audit deliverable. It does not claim the findings were fixed.
