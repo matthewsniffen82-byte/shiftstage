@@ -6,7 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { readSession, requestDashboardJson, type DashboardSessionAccount } from "@/app/dashboard/dashboard-session";
-import { emptyVipDraft, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, vipRequestDraft, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
+import { emptyVipDraft, isVipFavorite, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, vipRequestDraft, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
 import { type VipDancer, type VipDashboardView, type VipRequest, type VipRequestFilter, type VipState, type VipVenue } from "@/src/lib/dancr/vip-types";
 import { readVipWorkspace, saveVipWorkspace, vipDraftFingerprint } from "@/src/lib/dancr/vip-draft-storage";
 import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
@@ -201,16 +201,26 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     } finally { locked.current = false; submitAbort.current = null; if (mounted.current) setBusy(false); }
   }
   async function toggleFavorite(dancer: VipDancer) {
-    if (disabled || favoriteRequests.current.has(dancer.id)) return;
+    if (disabled || favoriteRequests.current.has(dancer.id) || readSession()?.account?.id !== account.id) return;
     const controller = new AbortController(), expectedAccount = account.id;
     favoriteRequests.current.set(dancer.id, controller);
     setFavoritePending(previous => [...previous, dancer.id]); setError("");
     try {
-      const result = await requestDashboardJson("/api/customer/favorites", { expectedRole: "customer", method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ dancerId: dancer.id, favorite: !dancer.favorite }), timeoutMs: 20000, signal: controller.signal });
-      if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
-      setResponse(previous => previous ? { ...previous, data: { ...previous.data,
-        dancers: previous.data.dancers.map(item => item.id === dancer.id ? { ...item, favorite: result.favorite === true } : item) } } : previous);
+      const saving = !isVipFavorite(dancer);
+      const fields: Array<"favorite" | "following"> = saving ? ["favorite"] : [
+        ...(dancer.favorite ? ["favorite" as const] : []),
+        ...(dancer.following ? ["following" as const] : []),
+      ];
+      for (const field of fields) {
+        if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
+        const result = await requestDashboardJson(field === "favorite" ? "/api/customer/favorites" : "/api/customer/follows", {
+          expectedRole: "customer", method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ dancerId: dancer.id, [field]: saving }), timeoutMs: 20000, signal: controller.signal });
+        if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
+        // Keep each successful change so a partial removal can safely be retried.
+        setResponse(previous => previous ? { ...previous, data: { ...previous.data,
+          dancers: previous.data.dancers.map(item => item.id === dancer.id ? { ...item, [field]: result[field] === true } : item) } } : previous);
+      }
     } catch (failure) {
       if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
     } finally {

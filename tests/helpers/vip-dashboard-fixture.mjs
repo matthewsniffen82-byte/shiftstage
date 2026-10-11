@@ -58,7 +58,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
   const document = { visibilityState: 'visible', addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name) };
   const RequestCards = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-calendar': calendar }).default;
   const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': dashboard }).default;
-  const { VipWorkingFavorites } = compileVip('app/vip/VipMyDancers.tsx');
+  const { VipWorkingFavorites } = compileVip('app/vip/VipMyDancers.tsx', { '@/src/lib/dancr/vip-dashboard': dashboard });
   const Component = compileVip('app/vip/VipDashboard.tsx', {
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => Planner },
     '@/app/dashboard/dashboard-session': { readSession: () => ({ account: currentAccount }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },

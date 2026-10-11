@@ -224,6 +224,66 @@ test('late favorite responses are ignored after an account change and unmount ab
   resolveFavorite({ favorite: true }); await second;
 });
 
+test('combined favorites remove existing follows and both saved states, persist on reload, and save again with one heart', async () => {
+  for (const favorite of [false, true]) {
+    let saved = { ...dancers[0], favorite, following: true };
+    const ui = dashboardHarness({ hash: '#vip-plan', request: async (url, options) => {
+      if (options.method === 'POST') {
+        const input = JSON.parse(options.body); saved = { ...saved, ...input }; return input;
+      }
+      return state(venues[0].id, { dancers: [saved] });
+    } });
+    await ui.settle();
+    await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
+    assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), false);
+    const writes = ui.calls.filter(call => call.options.method === 'POST');
+    assert.deepEqual(writes.map(call => call.url), favorite ? ['/api/customer/favorites', '/api/customer/follows'] : ['/api/customer/follows']);
+    assert.deepEqual(JSON.parse(writes.at(-1).options.body), { dancerId: saved.id, following: false });
+    ui.navigate('requests'); await ui.settle(); ui.navigate('plan'); await ui.settle();
+    assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), false);
+    await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
+    assert.equal(ui.planner().props.dancers[0].favorite, true);
+    assert.equal(ui.planner().props.dancers[0].following, false);
+    assert.equal(ui.calls.at(-1).url, '/api/customer/favorites'); ui.unmount();
+  }
+});
+
+test('a partial combined favorite removal preserves the remaining saved state and retries only the failed write', async () => {
+  let fail = true;
+  const ui = dashboardHarness({ hash: '#vip-plan', request: async (url, options) => {
+    if (url === '/api/customer/favorites') return { favorite: false };
+    if (url === '/api/customer/follows') { if (fail) throw new Error('Could not remove dancer'); return { following: false }; }
+    return state(venues[0].id, { dancers: [{ ...dancers[0], favorite: true, following: true }] });
+  } });
+  await ui.settle();
+  await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
+  assert.equal(ui.planner().props.dancers[0].favorite, false);
+  assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), true);
+  assert.equal(ui.planner().props.favoritePending.length, 0);
+  assert.match(renderToStaticMarkup(ui.tree()), /Could not remove dancer/);
+  fail = false;
+  await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
+  assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), false);
+  assert.deepEqual(ui.calls.filter(call => call.options.method === 'POST').map(call => call.url),
+    ['/api/customer/favorites', '/api/customer/follows', '/api/customer/follows']);
+  ui.unmount();
+});
+
+test('combined favorite removals stop before a second write if the account changes or the dashboard unmounts', async () => {
+  for (const unmount of [false, true]) {
+    let resolveFavorite;
+    const ui = dashboardHarness({ hash: '#vip-plan', request: (url, options) => options.method === 'POST'
+      ? new Promise(resolve => { resolveFavorite = resolve; })
+      : Promise.resolve(state(venues[0].id, { dancers: [{ ...dancers[0], favorite: true, following: true }] })) });
+    await ui.settle();
+    const pending = ui.planner().props.onFavorite(ui.planner().props.dancers[0]);
+    if (unmount) ui.unmount(); else ui.session({ id: 'other-account' });
+    resolveFavorite({ favorite: false }); await pending;
+    assert.equal(ui.calls.filter(call => call.options.method === 'POST').length, 1);
+    if (!unmount) ui.unmount();
+  }
+});
+
 test('profile links, selection checkboxes, and favorite buttons are independent card controls', async () => {
   let draft = helpers.emptyVipDraft(); const favorites = [];
   const Planner = compileVip('app/vip/VipPlan.tsx', { react: { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} },

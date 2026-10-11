@@ -60,9 +60,12 @@ body.dancr-button-system #vip-dashboard .vip-dismiss { padding: 0 !important; bo
 body.dancr-button-system #vip-dashboard form { gap: 12px; }
 body.dancr-button-system #vip-dashboard label { gap: 6px; }
 body.dancr-button-system #vip-dashboard :is(input:not([type=checkbox]), select, textarea) { min-height: 44px; border-radius: 10px; font-size: 16px; font-weight: 400; }
-body.dancr-button-system #vip-dashboard .vip-roster-filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters button { grid-column: span 2; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters button:nth-child(n+4) { grid-column: span 3; }
 @media (min-width: 900px) {
-  body.dancr-button-system #vip-dashboard .vip-roster-filters { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  body.dancr-button-system #vip-dashboard .vip-roster-filters { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  body.dancr-button-system #vip-dashboard .vip-roster-filters button:nth-child(n) { grid-column: auto; }
 }
 body.dancr-button-system #vip-dashboard .vip-roster-note { padding-top: 12px; }
 body.dancr-button-system #vip-dashboard .vip-selected-summary { padding: 12px; }

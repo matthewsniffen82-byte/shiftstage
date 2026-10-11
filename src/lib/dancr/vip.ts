@@ -141,11 +141,13 @@ export async function getVenueVipState(client: SupabaseClient, userId: string, s
 }
 
 async function vipWorkingFavorites(client: SupabaseClient, userId: string, venueId: string): Promise<VipDancer[]> {
-  const favorites = await savedDancerIds(client, "favorites", userId);
-  if (!favorites.size) return [];
+  const [favorites, follows] = await Promise.all([
+    savedDancerIds(client, "favorites", userId), savedDancerIds(client, "follows", userId),
+  ]);
+  if (!favorites.size && !follows.size) return [];
   const { data: roster, error } = await client.rpc("vip_eligible_dancers", { p_venue: venueId });
   if (error) throw error;
-  const dancers = (roster as VipDancer[] || []).filter(dancer => dancer.working_now && favorites.has(dancer.id))
+  const dancers = (roster as VipDancer[] || []).filter(dancer => dancer.working_now && (favorites.has(dancer.id) || follows.has(dancer.id)))
     .sort((a, b) => a.stage_name.localeCompare(b.stage_name, "en", { sensitivity: "base", numeric: true }) || a.id.localeCompare(b.id)).slice(0, 4);
   if (!dancers.length) return [];
   const { data: profiles, error: profileError } = await client.from("dancer_profiles").select("id,slug,avatar_storage_path")
@@ -154,7 +156,7 @@ async function vipWorkingFavorites(client: SupabaseClient, userId: string, venue
   const publicProfiles = new Map((profiles || []).map(profile => [profile.id, profile]));
   return dancers.map(dancer => {
     const profile = publicProfiles.get(dancer.id), path = profile?.avatar_storage_path;
-    return { ...dancer, favorite: true, canRequest: true,
+    return { ...dancer, favorite: favorites.has(dancer.id), following: follows.has(dancer.id), canRequest: true,
       profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
       photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null };
   });

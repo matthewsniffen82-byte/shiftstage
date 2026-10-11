@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { isVipFavorite } from "@/src/lib/dancr/vip-dashboard";
 import type { VipDancer } from "@/src/lib/dancr/vip-types";
 import "./vip-my-dancers.css";
 
 export function VipWorkingFavorites({ dancers, onRequest, onBrowse, busy }: {
   dancers: VipDancer[]; onRequest: (dancer: VipDancer) => void; onBrowse: () => void; busy: boolean;
 }) {
-  const working = dancers.filter(dancer => dancer.favorite && dancer.working_now && dancer.canRequest).slice(0, 4);
+  const working = dancers.filter(dancer => isVipFavorite(dancer) && dancer.working_now && dancer.canRequest).slice(0, 4);
   return <section className="vip-working-favorites" aria-labelledby="vip-working-title">
     <div className="vip-library-heading"><h2 id="vip-working-title">Favorites working now</h2><button type="button" disabled={busy} onClick={onBrowse}>All club dancers <span aria-hidden="true">→</span></button></div>
     {working.length ? <ul className="vip-working-list">{working.map(dancer => <li key={dancer.id}>
