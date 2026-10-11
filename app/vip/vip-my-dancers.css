@@ -41,12 +41,24 @@ body.dancr-button-system #vip-dashboard .vip-working-list small { display: block
 body.dancr-button-system #vip-dashboard .vip-working-list button { min-height: 44px; padding: 8px 10px; font-size: 12px; border-color: #45404b !important; background: #1c191f !important; }
 body.dancr-button-system #vip-dashboard .vip-working-empty { padding: 12px 0; border-block: 1px solid var(--vip-line); }
 @media (max-width: 1000px) {
-  body.dancr-button-system #vip-dashboard .vip-library-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body.dancr-button-system #vip-dashboard .vip-library-card { padding: 10px; }
+  body.dancr-button-system #vip-dashboard .vip-library-identity { flex-direction: column; align-items: stretch; gap: 8px; }
+  body.dancr-button-system #vip-dashboard .vip-library-identity .vip-library-photo { width: 100%; height: auto; aspect-ratio: 4 / 5; }
+  body.dancr-button-system #vip-dashboard .vip-library-identity small { overflow-wrap: anywhere; }
+  body.dancr-button-system #vip-dashboard .vip-library-actions { flex-wrap: wrap; }
 }
 @media (max-width: 600px) {
   body.dancr-button-system #vip-dashboard .vip-library-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; }
   body.dancr-button-system #vip-dashboard .vip-library-filters button { flex-direction: column; padding: 6px 2px; gap: 3px; font-size: 12px; min-height: 56px !important; }
   body.dancr-button-system #vip-dashboard .vip-library-toolbar { gap: 8px; }
-  body.dancr-button-system #vip-dashboard .vip-library-grid,
+  body.dancr-button-system #vip-dashboard .vip-library-grid { gap: 6px; }
+  body.dancr-button-system #vip-dashboard .vip-library-card { padding: 6px; gap: 6px; }
+  body.dancr-button-system #vip-dashboard .vip-library-identity h3 { font-size: 13px; }
+  body.dancr-button-system #vip-dashboard .vip-library-identity small,
+  body.dancr-button-system #vip-dashboard .vip-library-actions small { font-size: 10px; line-height: 1.4; overflow-wrap: anywhere; }
+  body.dancr-button-system #vip-dashboard .vip-library-actions { flex-direction: column; gap: 0; text-align: center; }
+  body.dancr-button-system #vip-dashboard .vip-library-actions a { width: 100%; font-size: 11px; }
+  body.dancr-button-system #vip-dashboard .vip-library-request { min-width: 0; min-height: 44px; justify-content: center; padding: 8px 4px; font-size: 11px; white-space: normal; }
+  body.dancr-button-system #vip-dashboard .vip-library-request > span { display: none; }
   body.dancr-button-system #vip-dashboard .vip-working-list { grid-template-columns: minmax(0, 1fr); }
 }
