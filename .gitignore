@@ -9,7 +9,11 @@ supabase/.temp/
 .env.*.local
 .DS_Store
 Thumbs.db
-tmp/pdfs/
+# Generated scratch artifacts; keep untracked-file scans small.
+/tmp/
+/.qa/
+/.codex-remote-attachments/
+/.chart-data-*/
 .platform-tv-import-*.json
 /public/outputs/live-shell.css
 /public/outputs/dancr-aesthetic.css
