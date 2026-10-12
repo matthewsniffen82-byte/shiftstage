@@ -337,11 +337,10 @@ body.dancr-button-system .account-shell .account-panel .account-auth-tabs button
 }
 body.dancr-button-system #authPage .auth-entry-tab.active,
 body.dancr-button-system .account-shell .account-panel .account-auth-tabs button.active {
-  border-color: #b395da !important;
-  background: linear-gradient(#321b4d, #321b4d) !important;
+  border-color: #745696 !important;
+  background: linear-gradient(#160e24, #160e24) !important;
   color: #fff !important;
-  font-weight: 700 !important;
-  box-shadow: inset 0 -2px 0 #b395da !important;
+  box-shadow: none !important;
 }
 body.dancr-button-system #authPage .auth-entry-tab:focus-visible,
 body.dancr-button-system .account-shell .account-panel .account-auth-tabs button:focus-visible {

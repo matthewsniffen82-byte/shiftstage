@@ -42,12 +42,13 @@ for (const { group, button } of surfaces) {
     assert.equal(control['-webkit-backdrop-filter'].value, 'none');
   });
 
-  test(`${button} distinguishes the selected mode without changing its geometry`, () => {
+  test(`${button} preserves the original selected purple fill and geometry`, () => {
     const active = declarations(`${button}.active`);
-    assert.equal(active.background.value, 'linear-gradient(#321b4d, #321b4d)');
-    assert.equal(active['border-color'].value, '#b395da');
+    assert.equal(active.background.value, 'linear-gradient(#160e24, #160e24)');
+    assert.equal(active['border-color'].value, '#745696');
     assert.equal(active.color.value, '#fff');
-    assert.equal(active['box-shadow'].value, 'inset 0 -2px 0 #b395da');
+    assert.equal(active['box-shadow'].value, 'none');
+    assert.equal(active['font-weight'], undefined);
     for (const prop of ['width', 'height', 'padding', 'border-width']) assert.equal(active[prop], undefined);
     const focus = declarations(`${button}:focus-visible`);
     assert.equal(focus.outline.value, '2px solid #c4b5fd');
