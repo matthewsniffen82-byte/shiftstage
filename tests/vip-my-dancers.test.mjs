@@ -18,7 +18,6 @@ const cards = [
 function database({ failure, denied = false, large = false, roster = cards.filter(d => d.canRequest) } = {}) {
   const calls = [];
   const tables = {
-    venue_vip_working_alerts: [{ user_id: guest.id, venue_id: venues[0].id, dancer_id: 'aria' }, { user_id: 'other', venue_id: venues[0].id, dancer_id: 'secret' }],
     venue_vip_members: venues.map(v => ({ user_id: guest.id, active: !denied, display_name: v.guestName, venue: { ...v, is_active: true, owner: { role: 'venue', account_state: 'active' } } })),
     favorites: [{ customer_id: guest.id, dancer_id: 'aria' }, { customer_id: guest.id, dancer_id: 'hidden' }, { customer_id: 'other', dancer_id: 'secret' }],
     follows: [{ customer_id: guest.id, dancer_id: 'nova' }, { customer_id: 'other', dancer_id: 'secret' }],
@@ -64,7 +63,8 @@ test('My dancers joins the club roster, guest collections, and selected venue hi
   const byId = new Map(result.dancers.map(d => [d.id, d]));
   assert.deepEqual([...byId.keys()].sort(), ['aria', 'hidden', 'nova', 'past']);
   assert.equal(byId.get('aria').favorite, true); assert.equal(byId.get('aria').following, false);
-  assert.equal(byId.get('aria').workingAlertsEnabled, true);
+  assert.equal(byId.get('aria').workingAlertsEnabled, false);
+  assert.equal(byId.get('nova').workingAlertsEnabled, true, 'cached clients see Follow as their alert preference');
   assert.equal(byId.get('aria').previouslyRequested, true); assert.equal(byId.get('aria').stage_name, 'Aria');
   assert.equal(byId.get('aria').canRequest, true); assert.equal(byId.get('aria').photoUrl, '/photo/aria/photo.jpg');
   assert.equal(byId.get('nova').following, true); assert.equal(byId.get('nova').favorite, false); assert.equal(byId.get('nova').photoUrl, null);
@@ -75,6 +75,8 @@ test('My dancers joins the club roster, guest collections, and selected venue hi
   const other = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[1].id }));
   assert.equal(other.dancers.find(d => d.id === 'aria').previouslyRequested, false);
   assert.equal(other.dancers.find(d => d.id === 'aria').workingAlertsEnabled, false);
+  assert.equal(other.dancers.find(d => d.id === 'nova').following, true, 'the same Follow is shared across clubs');
+  assert.ok(!db.calls.some(c => c.table === 'venue_vip_working_alerts'));
   assert.ok(other.dancers.some(d => d.id === 'other-venue' && d.previouslyRequested));
   assert.ok(!other.dancers.some(d => d.id === 'past'));
 });
@@ -202,7 +204,7 @@ test('revoked or wrong-venue access cannot read private collections, and source 
   assert.equal((await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers' }))).dancers.length, 0);
   await assert.rejects(service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[0].id })), error => error.status === 403);
   assert.ok(db.calls.every(c => c.table === 'venue_vip_members'));
-  for (const failure of ['favorites', 'follows', 'venue_vip_working_alerts', 'venue_vip_requests', 'dancer_profiles', 'roster']) {
+  for (const failure of ['favorites', 'follows', 'venue_vip_requests', 'dancer_profiles', 'roster']) {
     await assert.rejects(service.getVipState(database({ failure }).client, guest.id, new URLSearchParams({ view: 'dancers' })), /read failed/);
   }
 });
@@ -253,7 +255,7 @@ test('combined dancer filters preserve favorites, follows, request history and u
   const html=()=>renderToStaticMarkup(ui.tree());
   assert.match(html(),/Aria/);assert.match(html(),/Nova/);assert.match(html(),/Previously requested · unavailable/);
   ui.filter('Favorites');assert.doesNotMatch(html(),/Nova/);assert.equal(ui.nodes().filter(node=>node.type==='article').length,2);
-  assert.equal(ui.button('Following'),undefined);
+  ui.filter('Following');assert.doesNotMatch(html(),/Open Aria profile/);assert.equal(ui.nodes().filter(node=>node.type==='article').length,2);
   ui.filter('This club');
   const followedHeart=ui.nodes().find(node=>node.props?.['aria-label']==='Save Nova to favorites');
   assert.equal(followedHeart.props['aria-pressed'],false);assert.equal(followedHeart.props.disabled,false);

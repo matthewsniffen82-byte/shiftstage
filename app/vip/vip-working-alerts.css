@@ -3,11 +3,6 @@ body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] button:n
 @media (min-width: 900px) {
   body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }
-#vip-dashboard .vip-working-alert-settings { min-width: 0; max-height: 480px; margin: 0; padding: 0; border: 0; overflow-y: auto; overscroll-behavior-y: contain; }
-#vip-dashboard .vip-working-alert-settings legend { margin-bottom: 12px; font-size: 15px; color: #e3d8ed; overflow-wrap: anywhere; }
-#vip-dashboard .vip-working-alert-option { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 48px; padding: 4px 0; border-bottom: 1px solid #38323f; }
-#vip-dashboard .vip-working-alert-option span { min-width: 0; overflow-wrap: anywhere; }
-#vip-dashboard .vip-working-alert-option input[type=checkbox] { width: 22px; height: 22px; margin: 11px; flex: 0 0 22px; }
 #vip-dashboard .vip-updates { margin-top: 24px; min-width: 0; }
 #vip-dashboard .vip-updates .notification-panel { padding: 20px 0; border: 0; border-top: 1px solid #483f52; background: transparent; box-shadow: none; }
 #vip-dashboard .vip-updates .notification-title-row,

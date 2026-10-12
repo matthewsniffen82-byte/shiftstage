@@ -4,7 +4,8 @@ import { readFileSync } from 'node:fs';
 import { PGlite } from '@electric-sql/pglite';
 
 const id = n => `96000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
-async function fixture() {
+const followingMigration = readFileSync(new URL('../supabase/migrations/20261012003656_vip_following_working_updates.sql', import.meta.url), 'utf8');
+async function fixture({ migrate = true } = {}) {
   const db = new PGlite();
   try {
     await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
@@ -17,6 +18,8 @@ async function fixture() {
       create table public.venue_dancer_affiliations(venue_id uuid,dancer_id uuid,status text,revoked_at timestamptz,reentry_blocked boolean default false);
       create table public.shifts(id uuid primary key,dancer_id uuid,venue_id uuid,status text,checked_in_at timestamptz,checked_out_at timestamptz,location_status text,location_verification_expires_at timestamptz);
       create table public.customer_profiles(user_id uuid primary key,notification_settings jsonb);
+      create table public.follows(customer_id uuid not null,dancer_id uuid not null,notifications_enabled boolean not null default true,created_at timestamptz not null default now(),primary key(customer_id,dancer_id));
+      create table public.favorites(customer_id uuid not null,dancer_id uuid not null,primary key(customer_id,dancer_id));
       create type public.notification_type as enum ('support_message','shift_updated');
       create type public.notification_channel as enum ('in_app','email','push');
       create table public.notifications(id uuid primary key default gen_random_uuid(),recipient_id uuid,notification_type public.notification_type,channel public.notification_channel,title text,body text,payload jsonb,sent_at timestamptz);
@@ -24,7 +27,9 @@ async function fixture() {
     for (const name of ['20261007180000_private_venue_vip.sql','20261012001400_vip_working_alerts.sql']) {
       await db.exec(readFileSync(new URL(`../supabase/migrations/${name}`, import.meta.url), 'utf8'));
     }
+    if (migrate) await db.exec(followingMigration);
     await db.exec('grant select on app_users,venues,dancer_profiles,customer_profiles to service_role; grant select,update on shifts to service_role; grant select,insert on notifications to service_role;');
+    await db.exec('grant select,insert,delete on follows to service_role;');
     for (const [n, role] of [[1,'venue'],[2,'customer'],[3,'customer'],[4,'dancer']]) await db.query("insert into app_users values($1,$2,'active')",[id(n),role]);
     await db.query("insert into venues values($1,$3,'Club A',true,'UTC'),($2,$3,'Club B',true,'UTC')",[id(10),id(11),id(1)]);
     await db.query("insert into dancer_profiles values($1,$2,'Aria','approved','approved',null,true)",[id(20),id(4)]);
@@ -40,9 +45,10 @@ async function checkIn(db, venue=10, shift=30) { await admin(db,"insert into shi
 async function emit(db, shift=30) { return (await db.query('select vip_emit_working_alerts($1) value',[id(shift)])).rows[0].value; }
 const denied = (promise,code) => assert.rejects(promise,error=>error.code===code);
 
-test('working alerts are explicit, club-specific, replay-safe, and independent of favorites or public follows',async()=>{
+test('profile Follow enables VIP working updates across active memberships; Unfollow leaves favorites intact',async()=>{
   const db=await fixture(); try {
-    assert.equal(await enable(db),true); assert.equal(await enable(db),true);
+    await admin(db,'insert into favorites values($1,$2)',[id(3),id(20)]);
+    await db.query('insert into follows(customer_id,dancer_id) values($1,$2)',[id(2),id(20)]);
     await checkIn(db); const first=await emit(db);
     assert.equal(first.notifications.length,1); assert.deepEqual(first.recipientIds,[id(2)]);
     assert.equal(first.notifications[0].payload.kind,'vip_dancer_working_now');
@@ -52,9 +58,31 @@ test('working alerts are explicit, club-specific, replay-safe, and independent o
     await admin(db,'delete from notifications');
     assert.equal(await enable(db,{enabled:false}),false); await enable(db);
     assert.equal((await emit(db)).notifications.length,0,'clearing inbox or toggling cannot duplicate the event');
-    await checkIn(db,11,31); assert.equal((await emit(db,31)).notifications.length,0);
-    await enable(db,{venue:11}); assert.equal((await emit(db,31)).notifications.length,0,'opting in does not replay an existing shift');
-    await checkIn(db,11,32); assert.equal((await emit(db,32)).notifications.length,1);
+    await checkIn(db,11,31); assert.equal((await emit(db,31)).notifications.length,1,'a profile Follow is shared with Club B');
+    await admin(db,'insert into favorites values($1,$2)',[id(2),id(20)]);
+    await db.query('delete from follows where customer_id=$1 and dancer_id=$2',[id(2),id(20)]);
+    await checkIn(db,10,32);assert.equal((await emit(db,32)).notifications.length,0,'favorites alone never subscribe');
+    assert.equal((await admin(db,'select * from favorites')).rows.length,2,'Unfollow does not remove favorites');
+    await enable(db);assert.equal((await emit(db,32)).notifications.length,0,'following now cannot replay a past check-in');
+    await checkIn(db,10,33);assert.equal((await emit(db,33)).notifications.length,1);
+  } finally {await db.close();}
+});
+
+test('legacy opt-ins migrate once, preserve existing Follow settings, and cannot resurrect an unfollow',async()=>{
+  const db=await fixture({migrate:false});try {
+    await enable(db);await enable(db,{venue:11});await enable(db,{actor:3});
+    await db.query("insert into follows(customer_id,dancer_id,notifications_enabled,created_at) values($1,$2,false,'2026-01-01T00:00:00Z')",[id(2),id(20)]);
+    await db.exec('reset role');await db.exec(followingMigration);await db.exec('set role service_role');
+    const follows=(await db.query('select * from follows order by customer_id')).rows;
+    assert.equal(follows.length,2);assert.equal(follows[0].notifications_enabled,false);
+    assert.equal(new Date(follows[0].created_at).toISOString(),'2026-01-01T00:00:00.000Z');
+    assert.equal((await db.query('select * from venue_vip_working_alerts')).rows.length,3,'legacy data is preserved');
+    await db.query('delete from follows');await checkIn(db);
+    assert.equal((await emit(db)).notifications.length,0,'legacy rows are not a second subscription');
+    await enable(db);await checkIn(db,10,31);
+    assert.deepEqual((await emit(db,31)).recipientIds,[id(2)],'cached clients write the same Follow');
+    await enable(db,{venue:11,enabled:false});await checkIn(db,10,32);
+    assert.equal((await emit(db,32)).notifications.length,0,'cached client Unfollow also stops all future updates');
   } finally {await db.close();}
 });
 

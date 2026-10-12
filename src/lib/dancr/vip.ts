@@ -164,16 +164,15 @@ async function vipWorkingFavorites(client: SupabaseClient, userId: string, venue
 
 async function vipMyDancers(client: SupabaseClient, userId: string, venueId: string): Promise<VipDancer[]> {
   // Membership is verified by getVipState before any private collection is read.
-  const [favorites, follows, history, roster, alerts] = await Promise.all([
+  const [favorites, follows, history, roster] = await Promise.all([
     savedDancerIds(client, "favorites", userId),
     savedDancerIds(client, "follows", userId),
     requestedDancerHistory(client, userId, venueId),
     client.rpc("vip_eligible_dancers", { p_venue: venueId }),
-    vipWorkingAlertIds(client, userId, venueId),
   ]);
   if (roster.error) throw roster.error;
   const eligible = new Map<string, VipDancer>((roster.data || []).map((dancer: VipDancer) => [dancer.id, dancer]));
-  const ids = [...new Set([...eligible.keys(), ...history.keys(), ...favorites, ...follows, ...alerts])];
+  const ids = [...new Set([...eligible.keys(), ...history.keys(), ...favorites, ...follows])];
   const profiles = new Map<string, { slug: string; stage_name: string; avatar_storage_path: string | null }>();
   // Bound URL size and avoid the database's default result limit.
   for (let offset = 0; offset < ids.length; offset += 200) {
@@ -188,21 +187,11 @@ async function vipMyDancers(client: SupabaseClient, userId: string, venueId: str
     return { id, stage_name: profile?.stage_name || dancer?.stage_name || history.get(id) || "Unavailable dancer",
       working_now: dancer?.working_now === true, canRequest: eligible.has(id),
       favorite: favorites.has(id), following: follows.has(id), previouslyRequested: history.has(id),
-      workingAlertsEnabled: alerts.has(id),
+      // Compatibility for cached VIP clients; Follow is the only subscription.
+      workingAlertsEnabled: follows.has(id),
       profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
       photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null };
   });
-}
-
-async function vipWorkingAlertIds(client: SupabaseClient, userId: string, venueId: string) {
-  const ids = new Set<string>();
-  for (let offset = 0; ; offset += 500) {
-    const { data, error } = await client.from("venue_vip_working_alerts").select("dancer_id")
-      .eq("user_id", userId).eq("venue_id", venueId).order("dancer_id").range(offset, offset + 499);
-    if (error) throw error;
-    for (const row of data || []) ids.add(row.dancer_id);
-    if (!data || data.length < 500) return ids;
-  }
 }
 
 async function savedDancerIds(client: SupabaseClient, table: "favorites" | "follows", userId: string) {

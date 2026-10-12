@@ -36,7 +36,7 @@ function fixture({ following = false, count = 2 } = {}) {
     enableProfileNotifications: () => { context.notifications = true; },
     disableProfileNotifications: () => { context.notifications = false; },
     profileActionButtonMarkup: (_icon, text) => text,
-    recordLiveEvent() {}, showToast: text => notices.push(text),
+    recordLiveEvent() {}, refreshOpenProfileWorkingAlert() {}, showToast: text => notices.push(text),
     postAuthenticatedJson: (path, body) => { requests.push({ path, body }); return response; },
   });
   vm.runInContext(section("    function firstRealMetric(", "    function shiftRecipientCounts(") +

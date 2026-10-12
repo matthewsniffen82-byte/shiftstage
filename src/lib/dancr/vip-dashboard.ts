@@ -7,7 +7,7 @@ export const VIP_DESTINATIONS: Array<{ id: VipDashboardView; label: string }> = 
   { id: "account", label: "Account" },
 ];
 export type VipDraft = { selected: string[]; date: string; time: string };
-export type VipDancerFilter = "all" | "working" | "selected" | "favorites" | "previous" | "alerts";
+export type VipDancerFilter = "all" | "working" | "selected" | "favorites" | "previous" | "following";
 export const emptyVipDraft = (): VipDraft => ({ selected: [], date: "", time: "" });
 
 export function isVipFavorite(dancer: VipDancer): boolean {
@@ -26,13 +26,13 @@ export function vipDestination(hash: string): VipDashboardView {
   return VIP_DESTINATIONS.find(destination => destination.id === id)?.id || "overview";
 }
 
-export function filterVipDancers(dancers: VipDancer[], search: string, filter: VipDancerFilter | null, selected: string[]) {
+export function filterVipDancers(dancers: VipDancer[], search: string, filter: VipDancerFilter, selected: string[]) {
   const terms = search.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
   return dancers.filter(dancer => (filter !== "working" || dancer.working_now)
     && (filter !== "all" || dancer.canRequest !== false || dancer.previouslyRequested)
     && (filter !== "selected" || selected.includes(dancer.id))
     && (filter !== "favorites" || isVipFavorite(dancer))
-    && (filter !== "alerts" || dancer.workingAlertsEnabled)
+    && (filter !== "following" || dancer.following === true)
     && (filter !== "previous" || dancer.previouslyRequested)
     && terms.every(term => dancer.stage_name.toLocaleLowerCase().includes(term)))
     .sort((a, b) => Number(b.working_now) - Number(a.working_now) || a.stage_name.localeCompare(b.stage_name, "en", { sensitivity: "base", numeric: true }));

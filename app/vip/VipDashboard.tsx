@@ -43,8 +43,6 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [optimisticFavorites, setOptimisticFavorites] = useState<Record<string, boolean>>({});
   const favoriteRequests = useRef(new Map<string, AbortController>());
   const confirmedFavorites = useRef({ revision: 0, values: new Map<string, { revision: number; favorite: boolean }>() });
-  const [alertPending, setAlertPending] = useState<string[]>([]);
-  const alertRequests = useRef(new Map<string, AbortController>());
   const [nicknameDrafts, setNicknameDrafts] = useState<Record<string, string>>({});
   const [nicknameEditing, setNicknameEditing] = useState("");
   const [nicknameError, setNicknameError] = useState<{ venueId: string; message: string } | null>(null);
@@ -111,18 +109,20 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     };
     sync(); window.addEventListener("hashchange", sync);
     const favorites = favoriteRequests.current;
-    const alerts = alertRequests.current;
-    return () => { mounted.current = false; submitAbort.current?.abort(); favorites.forEach(controller => controller.abort()); alerts.forEach(controller => controller.abort()); window.removeEventListener("hashchange", sync); };
+    return () => { mounted.current = false; submitAbort.current?.abort(); favorites.forEach(controller => controller.abort()); window.removeEventListener("hashchange", sync); };
   }, []);
   useEffect(() => {
-    const update = () => {
+    const update = (returning = false) => {
       if (document.visibilityState !== "visible" || refreshing.current || locked.current || signingOut
-        || favoriteRequests.current.size || alertRequests.current.size || readSession()?.account?.id !== account.id || Date.now() - lastFetched.current < 15000) return;
+        || favoriteRequests.current.size || readSession()?.account?.id !== account.id || (!returning && Date.now() - lastFetched.current < 15000)) return;
+      refreshing.current = true;
       setRevision(value => value + 1);
     };
-    window.addEventListener("focus", update); document.addEventListener("visibilitychange", update);
+    // Profiles open in another tab; returning must pick up even a quick Follow/Unfollow.
+    const returned = () => update(true);
+    window.addEventListener("focus", returned); document.addEventListener("visibilitychange", returned);
     const timer = window.setInterval(() => { if (["overview", "requests"].includes(viewRef.current)) update(); }, 60000);
-    return () => { window.removeEventListener("focus", update); document.removeEventListener("visibilitychange", update); window.clearInterval(timer); };
+    return () => { window.removeEventListener("focus", returned); document.removeEventListener("visibilitychange", returned); window.clearInterval(timer); };
   }, [account.id, signingOut]);
   useEffect(() => {
     const controller = new AbortController();
@@ -238,29 +238,6 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         setFavoritePending(previous => previous.filter(id => id !== dancer.id));
         setOptimisticFavorites(previous => { const next = { ...previous }; delete next[favoriteKey]; return next; });
       }
-    }
-  }
-  async function toggleWorkingAlert(dancer: VipDancer) {
-    if (!venue || !data || disabled || loading || readSession()?.account?.id !== account.id) return;
-    const key = `${venue.id}:${dancer.id}`;
-    if (alertRequests.current.has(key)) return;
-    const controller = new AbortController(), expectedAccount = account.id, savedVenue = venue.id;
-    alertRequests.current.set(key, controller);
-    setAlertPending(previous => [...previous, key]); setError("");
-    try {
-      const result = await requestDashboardJson("/api/vip/working-alerts", {
-        expectedRole: "customer", method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ venueId: savedVenue, dancerId: dancer.id, enabled: !dancer.workingAlertsEnabled }),
-        timeoutMs: 20000, signal: controller.signal,
-      });
-      if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
-      setResponse(previous => previous?.data.selectedVenueId === savedVenue ? { ...previous, data: { ...previous.data,
-        dancers: previous.data.dancers.map(item => item.id === dancer.id ? { ...item, workingAlertsEnabled: result.enabled === true } : item) } } : previous);
-    } catch (failure) {
-      if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
-    } finally {
-      alertRequests.current.delete(key);
-      if (mounted.current) setAlertPending(previous => previous.filter(id => id !== key));
     }
   }
   function cancelNickname() {
@@ -387,7 +364,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <VipWorkingFavorites dancers={data.dancers} onRequest={requestDancer} onBrowse={() => navigate("dancers")} busy={disabled || loading} />
         </div>
         <div className="vip-updates"><NotificationPanel key={account.id} customerMode vipMode panelId="vip-updates" refreshKey={revision} /></div>
-      </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && dancer.canRequest !== false))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} onWorkingAlert={toggleWorkingAlert} alertPending={alertPending.filter(key => key.startsWith(`${venue.id}:`)).map(key => key.slice(venue.id.length + 1))} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled} />
+      </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && dancer.canRequest !== false))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled} />
       : <>
         <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>Track venue responses and review your plans.</p></div></div>
         <div className="vip-request-toolbar"><label>Status<select value={filter} onChange={event => { setFilter(event.target.value as VipRequestFilter); setPage(0); }} disabled={disabled}>{requestFilters.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><span>{data.requestCount ?? data.requests.length} {(data.requestCount ?? data.requests.length) === 1 ? "request" : "requests"}</span></div>

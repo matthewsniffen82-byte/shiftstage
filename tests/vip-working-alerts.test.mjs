@@ -25,79 +25,69 @@ test('VIP inbox reuses read controls and opens working alerts in the correct clu
   assert.doesNotMatch(html,/Follow dancers and clubs/);
 });
 
-test('bells toggle independently, suppress duplicate clicks, persist on reload and retain visit drafts',async()=>{
-  let saved={...dancer},resolveSave;
-  const ui=dashboardHarness({hash:'#vip-plan',request:async(url,options)=>{
-    if(options.method==='POST') return new Promise(resolve=>{resolveSave=()=>{saved={...saved,workingAlertsEnabled:JSON.parse(options.body).enabled};resolve({enabled:saved.workingAlertsEnabled});};});
-    return state(venues[0].id,{dancers:[saved]});
-  }});
+test('returning from a profile immediately refreshes Follow and Unfollow without changing favorites or visit drafts',async()=>{
+  let saved={...dancer,following:false};
+  const ui=dashboardHarness({hash:'#vip-plan',request:async()=>state(venues[0].id,{dancers:[saved]})});
   await ui.settle();ui.planner().props.onChange({selected:['aria'],date:'2027-01-02',time:'21:00'});ui.render();
-  const pending=ui.planner().props.onWorkingAlert(ui.planner().props.dancers[0]);ui.render();
-  await ui.planner().props.onWorkingAlert(ui.planner().props.dancers[0]);
-  assert.equal(ui.calls.filter(c=>c.options.method==='POST').length,1);
-  assert.deepEqual(Array.from(ui.planner().props.alertPending),['aria']);
-  assert.deepEqual(JSON.parse(ui.calls.at(-1).options.body),{venueId:venues[0].id,dancerId:'aria',enabled:true});
-  resolveSave();await pending;await ui.settle();
-  assert.equal(ui.planner().props.dancers[0].workingAlertsEnabled,true);
-  assert.equal(ui.planner().props.dancers[0].favorite,true);assert.equal(ui.planner().props.dancers[0].following,true);
-  assert.deepEqual(Array.from(ui.planner().props.draft.selected),['aria']);
+  saved={...saved,following:true};ui.advance(1000);ui.event('focus');await ui.settle();
+  assert.equal(ui.planner().props.dancers[0].following,true);
+  assert.equal(ui.planner().props.dancers[0].favorite,true);
+  assert.deepEqual(JSON.parse(JSON.stringify(ui.planner().props.draft)),{selected:['aria'],date:'2027-01-02',time:'21:00'});
+  saved={...saved,following:false};ui.advance(1000);ui.event('visibilitychange');await ui.settle();
+  assert.equal(ui.planner().props.dancers[0].following,false);
+  assert.equal(ui.planner().props.dancers[0].favorite,true);
+  assert.ok(!ui.calls.some(c=>c.options.method==='POST'));
+  assert.equal(ui.planner().props.onWorkingAlert,undefined);
   ui.navigate('overview');await ui.settle();
-  assert.ok(ui.nodes().some(n=>n.type==='vip-notifications'&&n.props.vipMode));
-  ui.navigate('plan');await ui.settle();assert.equal(ui.planner().props.dancers[0].workingAlertsEnabled,true);
-  const off=ui.planner().props.onWorkingAlert(ui.planner().props.dancers[0]);resolveSave();await off;await ui.settle();
-  assert.equal(ui.planner().props.dancers[0].workingAlertsEnabled,false);ui.unmount();
+  assert.ok(ui.nodes().some(n=>n.type==='vip-notifications'&&n.props.vipMode));ui.unmount();
 });
 
-test('bell failures retain previous preferences and can be retried',async()=>{
-  let fail=true;
-  const ui=dashboardHarness({hash:'#vip-plan',request:async(url,options)=>{
-    if(options.method==='POST'){if(fail)throw new Error('Could not save alerts');return{enabled:true};}
+test('failed Following refresh retains the saved list and can be retried',async()=>{
+  let fail=false;
+  const ui=dashboardHarness({hash:'#vip-plan',request:async()=>{
+    if(fail)throw new Error('Could not load following');
     return state(venues[0].id,{dancers:[dancer]});
   }});
-  await ui.settle();await ui.planner().props.onWorkingAlert(dancer);await ui.settle();
-  assert.equal(ui.planner().props.dancers[0].workingAlertsEnabled,undefined);
-  assert.equal(ui.planner().props.alertPending.length,0);assert.match(renderToStaticMarkup(ui.tree()),/Could not save alerts/);
-  fail=false;await ui.planner().props.onWorkingAlert(dancer);await ui.settle();
-  assert.equal(ui.planner().props.dancers[0].workingAlertsEnabled,true);ui.unmount();
+  await ui.settle();fail=true;ui.event('focus');await ui.settle();
+  assert.equal(ui.planner().props.dancers[0].following,true);
+  assert.match(renderToStaticMarkup(ui.tree()),/Could not load following/);
+  fail=false;ui.event('focus');await ui.settle();
+  assert.doesNotMatch(renderToStaticMarkup(ui.tree()),/Could not load following/);ui.unmount();
 });
 
-test('late bell responses cannot change another club or account, and unmount aborts writes',async()=>{
+test('late Following refreshes cannot change another club or account, and unmount aborts reads',async()=>{
   for(const change of ['venue','account','unmount']){
-    let resolveSave;
-    const ui=dashboardHarness({hash:'#vip-plan',request:async(url,options)=>options.method==='POST'
-      ?new Promise(resolve=>{resolveSave=resolve;})
+    let resolveRead,pending=false;
+    const ui=dashboardHarness({hash:'#vip-plan',request:async url=>pending
+      ?new Promise(resolve=>{resolveRead=resolve;pending=false;})
       :state(new URL(url,'https://example.test').searchParams.get('venueId')||venues[0].id,{dancers:[dancer]})});
-    await ui.settle();const pending=ui.planner().props.onWorkingAlert(dancer);const write=ui.calls.at(-1);
+    await ui.settle();pending=true;ui.event('focus');const read=ui.calls.at(-1);
     if(change==='venue'){ui.nodes().find(n=>n.type==='select').props.onChange({target:{value:venues[1].id}});await ui.settle();}
     else if(change==='account')ui.session({id:'other'});
     else ui.unmount();
-    resolveSave({enabled:true});await pending;
-    if(change!=='unmount'){await ui.settle();assert.equal(ui.planner().props.dancers[0].workingAlertsEnabled,undefined);ui.unmount();}
-    if(change==='unmount')assert.equal(write.options.signal.aborted,true);
+    resolveRead(state(venues[0].id,{dancers:[{...dancer,following:false}]}));await ui.settle();
+    if(change!=='unmount'){assert.equal(ui.planner().props.dancers[0].following,true);ui.unmount();}
+    if(change==='unmount')assert.equal(read.options.signal.aborted,true);
   }
 });
 
-test('dancer photos have no bells and Notify me provides separate working-alert settings',()=>{
-  const changes=[];
-  const roster=[dancer,{...dancer,id:'past',canRequest:false,profileHref:null,favorite:false,workingAlertsEnabled:true}];
-  const ui=plannerHarness({dancers:roster,onWorkingAlert:async d=>changes.push(d.id)});
-  const options=()=>ui.nodes().filter(n=>n.props?.className==='vip-working-alert-option');
-  const checkbox=index=>ui.nodes(options()[index]).find(n=>n.type==='input');
-  assert.doesNotMatch(renderToStaticMarkup(ui.tree()),/vip-dancer-alert|data-notification-icon="bell"/);
-  assert.equal(options().length,0);
+test('Following shows followed dancers on or off shift, independently of Favorites, with no photo bells',()=>{
+  const roster=[dancer,{...dancer,id:'past',stage_name:'Past',canRequest:false,profileHref:null,favorite:false},
+    {...dancer,id:'favorite',stage_name:'Favorite only',following:false,working_now:true}];
+  const ui=plannerHarness({dancers:roster});
+  const cards=()=>ui.nodes().filter(n=>n.type==='article');
+  assert.doesNotMatch(renderToStaticMarkup(ui.tree()),/vip-dancer-alert|data-notification-icon="bell"|Notify me|Working alerts for/);
   assert.ok(ui.nodes().some(n=>n.props?.className==='vip-dancer-favorite'));
   assert.ok(ui.nodes().some(n=>n.props?.className==='vip-dancer-select'));
-  ui.filter('Notify me');assert.equal(ui.nodes().filter(n=>n.type==='article').length,0);
-  assert.equal(options().length,2);
-  assert.equal(checkbox(0).props.checked,false);assert.equal(checkbox(0).props.disabled,false);
-  checkbox(0).props.onChange();assert.deepEqual(changes,['aria']);
-  assert.equal(checkbox(1).props.checked,true);assert.equal(checkbox(1).props.disabled,false);
-  ui.props.alertPending=['past'];ui.render();assert.equal(checkbox(1).props.disabled,true);
-  ui.search('missing');assert.equal(options().length,0);ui.search('');
-  ui.props.busy=true;ui.render();checkbox(0).props.onChange();assert.deepEqual(changes,['aria']);
-  ui.props.busy=false;
-  ui.props.alertPending=[];ui.props.dancers=roster.map(d=>({...d,workingAlertsEnabled:false}));ui.filter('This club');
-  assert.equal(filterVipDancers(ui.props.dancers,'','alerts',[]).length,0);
+  ui.filter('Following');assert.equal(cards().length,2);
+  const profile=ui.nodes().find(n=>n.type==='a'&&n.props.className==='vip-profile-link');
+  assert.equal(profile.props.target,'_blank');assert.match(profile.props.href,/\/dancers\/aria\?return_to=/);
+  assert.match(renderToStaticMarkup(ui.tree()),/Affiliated · off shift|Unavailable at this club/);
+  ui.search('past');assert.equal(cards().length,1);ui.search('missing');assert.equal(cards().length,0);ui.search('');
+  ui.filter('Favorites');assert.equal(cards().length,2);
+  assert.deepEqual(filterVipDancers(roster,'','following',[]).map(d=>d.id),['aria','past']);
+  ui.props.dancers=roster.map(d=>({...d,following:false}));ui.filter('Following');
+  assert.equal(cards().length,0);assert.match(renderToStaticMarkup(ui.tree()),/No dancers followed yet/);
   assert.equal(isVipFavorite({...dancer,favorite:false,following:true}),false);
   assert.equal(followAlertKey('vip_dancer_working_now'),'workingNow');
   assert.equal(notificationIconName({payload:{kind:'vip_dancer_working_now'}}),'clock');
