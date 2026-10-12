@@ -606,7 +606,7 @@ function CustomerFollowedDancersPanel({
                 if (!dancer?.slug || !dancer.stageName) return (
                   <article className="customer-unavailable-follow" key={dancerId}>
                     <div><strong>Unavailable dancer</strong><p>Your follow is saved. This profile is currently unavailable.</p></div>
-                    <button type="button" disabled={Boolean(pendingAction)} onClick={() => void onUnfollowDancer(dancerId)}>
+                    <button data-follow-control="text" type="button" disabled={Boolean(pendingAction)} onClick={() => void onUnfollowDancer(dancerId)}>
                       {pendingAction === `dancer-${dancerId}` ? "Unfollowing…" : "Unfollow"}
                     </button>
                   </article>
@@ -724,6 +724,7 @@ function FollowedDancerGridCard({
     </Link>
     <details className="customer-card-menu customer-dancer-menu"><summary aria-label={`More options for ${dancerName}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
       className="customer-dancer-unfollow"
+      data-follow-control="menu"
       type="button"
       aria-label={`Unfollow ${dancerName}`}
       aria-busy={unfollowing || undefined}
@@ -765,8 +766,9 @@ function SavedVenueCard({
           <Link href={customerVenueHref(venue)}><strong>{venue.name}</strong></Link>
           <small>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</small>
         </div>
-        <details className="customer-card-menu"><summary aria-label={`More options for ${venue.name || "club"}`}>•••</summary><div><button
+        <details className="customer-card-menu"><summary aria-label={`More options for ${venue.name || "club"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
           className="customer-club-favorite"
+          data-follow-control="menu"
           type="button"
           aria-label={`Unfollow ${venue.name || "club"}`}
           title="Unfollow club"
@@ -775,6 +777,7 @@ function SavedVenueCard({
           disabled={pending}
           onClick={onUnfollow}
         >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="3" /><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 11h5" /></svg>
           {removing ? "Unfollowing…" : "Unfollow"}
         </button></div></details>
       </div>

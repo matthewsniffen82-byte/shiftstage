@@ -114,7 +114,7 @@ export function DancerMediaFollowButton({ stageName }: { stageName: string }) {
   const { following, disabled, busy, status } = mediaFollowState;
   const label = `${following ? "Following" : "Follow"} ${stageName}`;
   return <>
-    <button className="profile-media-control-follow" type="button" aria-label={label} title={label}
+    <button className="profile-media-control-follow" data-follow-control="icon" type="button" aria-label={label} title={label}
       aria-pressed={following} aria-busy={busy || undefined} disabled={disabled} onClick={() => mediaFollowAction.current?.()}>
       <DancerProfileActionPreviewIcon type={following ? "check" : "personPlus"} />
     </button>
@@ -221,7 +221,7 @@ function ReportFlagIcon() {
 export function DancerProfileActionsPreview({ onShare }: { onShare?: () => void }) {
   return (
     <div className="live-actions profile-actions-compact is-no-live-shift dancer-profile-preview-actions" aria-label="Guest actions">
-      <button className="profile-action-secondary profile-action-icon-control profile-action-preview-static" disabled type="button">
+      <button className="profile-action-secondary profile-action-icon-control profile-action-preview-static" data-follow-control="text" disabled type="button">
         <span className="profile-action-main"><DancerProfileActionPreviewIcon type="personPlus" /><span>Follow</span></span>
       </button>
       <button aria-disabled="true" className="profile-action-secondary profile-action-going profile-action-icon-control profile-action-unavailable profile-action-preview-static" disabled type="button">
@@ -671,6 +671,7 @@ export function DancerProfileActions({
     <>
       <div className={`live-actions profile-actions-compact${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving}>
         <button
+          data-follow-control="text"
           aria-pressed={saved.following}
           aria-busy={followSaving || undefined}
           className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
