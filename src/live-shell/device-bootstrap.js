@@ -16,7 +16,8 @@
 
       try {
         const initialParams = new URLSearchParams(window.location.search);
-        if (window.parent !== window && initialParams.has("internal_profile")) {
+        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");
+        if (internalProfileRequested) {
           root.classList.add("internal-profile-embed");
           const referrer = document.createElement("meta");
           referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);
@@ -25,6 +26,8 @@
           root.classList.add("venue-preview-bootstrap");
         } else if (initialParams.get("venue")) {
           root.classList.add("venue-profile-bootstrap");
+        } else if (initialParams.get("profile") && !internalProfileRequested) {
+          root.classList.add("dancer-profile-bootstrap");
         }
       } catch {
         // The normal application shell remains available when URL parsing is unavailable.

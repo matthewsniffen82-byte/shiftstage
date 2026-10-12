@@ -499,10 +499,8 @@
       const profile = approvedProfiles.find((item) => item.slug === profileSlug)
         || approvedProfiles.find((item) => slugify(item.name) === profileSlug);
       if (profile) {
-        setTimeout(() => {
-          openProfileModal(profileReferenceValue(profile));
-          openSharedProfileMedia(params);
-        }, 120);
+        openProfileModal(profileReferenceValue(profile));
+        openSharedProfileMedia(params);
       } else if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(profileSlug)) {
         // Previously assigned links resolve through the same public approval checks.
         const target = new URL(`/dancers/${profileSlug}`, window.location.origin);
@@ -510,6 +508,7 @@
           if (params.has(key)) target.searchParams.set(key, params.get(key));
         }
         window.location.replace(target.toString());
+        return true;
       }
     }
 
@@ -775,9 +774,17 @@
       void initialDiscoveryRequest.then(syncInternalProfilePublicMetrics, () => {});
     } else if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
       if (initialVenuePreviewRequest) void initialVenuePreviewRequest;
-      else void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl()).finally(() => {
-        document.documentElement.classList.remove("venue-profile-bootstrap");
+      else void initialDiscoveryRequest.catch(() => {}).then(async () => {
+        let redirecting = false;
+        try {
+          redirecting = await openSharedProfileFromUrl();
+        } catch (error) {
+          showToast(error.message || "Profile could not be loaded");
+        } finally {
+          document.documentElement.classList.remove("venue-profile-bootstrap");
+          if (!redirecting) document.documentElement.classList.remove("dancer-profile-bootstrap");
+        }
       });
     } else {
-      document.documentElement.classList.remove("venue-profile-bootstrap");
+      document.documentElement.classList.remove("venue-profile-bootstrap", "dancer-profile-bootstrap");
     }

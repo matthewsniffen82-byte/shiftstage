@@ -201,7 +201,7 @@ test("public feed is real, navigable, measurable, and preserves existing discove
     liveApp,
     /const initialDiscoveryRequest = loadLiveDiscovery\(citySelect\.value, \{\s*force: consumePublicDiscoveryRefreshRequest\(\)\s*\}\)/,
   );
-  assert.match(liveApp, /initialDiscoveryRequest\.finally\(\(\) => openSharedProfileFromUrl\(\)\)/);
+  assert.match(liveApp, /initialDiscoveryRequest\.catch\(\(\) => \{\}\)\.then\(async \(\) => \{[\s\S]*?await openSharedProfileFromUrl\(\)/);
   assert.match(liveApp, /const approvedProfiles = discoveryMarket\(city\)\.dancers\.filter\(isApprovedPublicProfile\);[\s\S]*?approvedProfiles\.find\(\(item\) => item\.slug === profileSlug\)[\s\S]*?\|\| approvedProfiles\.find\(\(item\) => slugify\(item\.name\) === profileSlug\)/);
   assert.match(liveApp, /const venueSlug = params\.get\("venue"\);[\s\S]*?activeTab = venueSlug \? "venues" : "dancers";[\s\S]*?resolveVenueByName\(venueSlug, city\)[\s\S]*?openVenueFromName\(venue\.slug \|\| venue\.name\)/);
   assert.doesNotMatch(liveApp, /class="verified-mark" aria-label="Verified">✓<\/span>/);
@@ -417,13 +417,13 @@ test("approved videos appear on full dancer and venue profiles", () => {
   assert.match(liveApp, /const videos = payload\.videos\.slice\(0, MAX_DANCER_PROFILE_VIDEOS\)/);
   assert.match(liveApp, /modalGallery\.profileTvVideos = videos/);
   assert.match(liveApp, /function profileVideoThumbMarkup[\s\S]*?profile-media-thumb is-video/);
-  assert.match(liveApp, /appendNextProfileMediaBatch\("video"/);
+  assert.match(profileTvLoader, /modalGallery\.profileVisibleVideoCount = Math\.min\(videos\.length,[\s\S]*?renderProfileMediaLibrary\(\)/);
   assert.match(liveApp, /function setModalVideo\(item, profileName, videos, index\)[\s\S]*?className = "modal-media-video-preview"/);
   assert.match(liveApp, /video\.autoplay = true[\s\S]*?preview\.appendChild\(video\)[\s\S]*?void video\.play\(\)\.catch/);
   assert.doesNotMatch(liveApp, /modal-media-video-play/);
   assert.match(liveApp, /id="profileTvViewer"[\s\S]*?role="dialog"[\s\S]*?id="profileTvViewerStage"[\s\S]*?Dancer videos\. Scroll up or down/);
   assert.match(liveApp, /video\.className = "profile-tv-viewer-video"[\s\S]*?video\.loop = true[\s\S]*?video\.playsInline = true[\s\S]*?video\.setAttribute\("controlslist", "nofullscreen noremoteplayback nodownload"\)/);
-  assert.match(liveApp, /data-previous-profile-tv[\s\S]*?data-next-profile-tv[\s\S]*?class="profile-tv-viewer-actions"/);
+  assert.match(liveApp, /class="profile-tv-viewer-actions"[\s\S]*?data-toggle-profile-tv-sound[\s\S]*?data-share-profile-tv/);
   assert.match(liveApp, /stage\.addEventListener\("scroll"[\s\S]*?profileTvViewerScrollTarget\([\s\S]*?renderProfileTvViewerItem\(target\.index, \{ scroll: false \}\)/);
   assert.match(liveApp, /function renderProfileTvViewerItem\(index, options = \{\}\)[\s\S]*?profileTvVideos[\s\S]*?scrollProfileTvViewerTo\(nextIndex, options\)/);
   assert.doesNotMatch(liveApp, /profile-tv-viewer-gallery|profileTvViewerGallery/);

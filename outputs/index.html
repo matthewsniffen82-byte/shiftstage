@@ -47,7 +47,8 @@
 
       try {
         const initialParams = new URLSearchParams(window.location.search);
-        if (window.parent !== window && initialParams.has("internal_profile")) {
+        const internalProfileRequested = window.parent !== window && initialParams.has("internal_profile");
+        if (internalProfileRequested) {
           root.classList.add("internal-profile-embed");
           const referrer = document.createElement("meta");
           referrer.name = "referrer"; referrer.content = "no-referrer"; document.head.append(referrer);
@@ -56,6 +57,8 @@
           root.classList.add("venue-preview-bootstrap");
         } else if (initialParams.get("venue")) {
           root.classList.add("venue-profile-bootstrap");
+        } else if (initialParams.get("profile") && !internalProfileRequested) {
+          root.classList.add("dancer-profile-bootstrap");
         }
       } catch {
         // The normal application shell remains available when URL parsing is unavailable.
@@ -157,11 +160,13 @@
         linear-gradient(180deg, #030304 0%, #060509 46%, #030304 100%);
     }
 
+    html.dancer-profile-bootstrap body > *,
     html.venue-profile-bootstrap body > *,
     html.venue-preview-bootstrap body > * {
       visibility: hidden !important;
     }
 
+    html.dancer-profile-bootstrap body::before,
     html.venue-profile-bootstrap body::before,
     html.venue-preview-bootstrap body::before {
       content: "Loading private venue preview";
@@ -183,6 +188,11 @@
       content: "Loading club profile";
     }
 
+    html.dancer-profile-bootstrap body::before {
+      content: "Loading dancer profile";
+    }
+
+    html.dancer-profile-bootstrap body::after,
     html.venue-profile-bootstrap body::after,
     html.venue-preview-bootstrap body::after {
       content: "";
@@ -204,6 +214,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
+      html.dancer-profile-bootstrap body::after,
       html.venue-profile-bootstrap body::after,
       html.venue-preview-bootstrap body::after { animation: none; }
     }
@@ -68159,10 +68170,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const profile = approvedProfiles.find((item) => item.slug === profileSlug)
         || approvedProfiles.find((item) => slugify(item.name) === profileSlug);
       if (profile) {
-        setTimeout(() => {
-          openProfileModal(profileReferenceValue(profile));
-          openSharedProfileMedia(params);
-        }, 120);
+        openProfileModal(profileReferenceValue(profile));
+        openSharedProfileMedia(params);
       } else if (/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(profileSlug)) {
         // Previously assigned links resolve through the same public approval checks.
         const target = new URL(`/dancers/${profileSlug}`, window.location.origin);
@@ -68170,6 +68179,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           if (params.has(key)) target.searchParams.set(key, params.get(key));
         }
         window.location.replace(target.toString());
+        return true;
       }
     }
 
@@ -68435,11 +68445,19 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       void initialDiscoveryRequest.then(syncInternalProfilePublicMetrics, () => {});
     } else if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
       if (initialVenuePreviewRequest) void initialVenuePreviewRequest;
-      else void initialDiscoveryRequest.finally(() => openSharedProfileFromUrl()).finally(() => {
-        document.documentElement.classList.remove("venue-profile-bootstrap");
+      else void initialDiscoveryRequest.catch(() => {}).then(async () => {
+        let redirecting = false;
+        try {
+          redirecting = await openSharedProfileFromUrl();
+        } catch (error) {
+          showToast(error.message || "Profile could not be loaded");
+        } finally {
+          document.documentElement.classList.remove("venue-profile-bootstrap");
+          if (!redirecting) document.documentElement.classList.remove("dancer-profile-bootstrap");
+        }
       });
     } else {
-      document.documentElement.classList.remove("venue-profile-bootstrap");
+      document.documentElement.classList.remove("venue-profile-bootstrap", "dancer-profile-bootstrap");
     }
   </script>
 </body>

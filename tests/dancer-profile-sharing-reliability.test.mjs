@@ -58,7 +58,7 @@ test('sharing uses the signed-in profile slug even when discovery has another da
 });
 
 test('QR loading hides a failed image and allows retry without losing the link', () => {
-  const image = { style: {} }, status = {}, retry = {};
+  const image = { style: {}, removeAttribute(name) { delete this[name]; } }, status = {}, retry = {};
   const overlay = { dataset: { qrUrl: 'https://www.mydancr.com/dancers/stacy' }, querySelector(selector) { return selector === '#profileQrImage' ? image : selector === '#profileQrLoadStatus' ? status : retry; } };
   const context = { qrCodeUrl: value => '/api/public/share-qr?url='+encodeURIComponent(value) };
   vm.runInNewContext(live.match(/function loadProfileQrImage\([\s\S]*?\n    \}/)[0]+';this.load=loadProfileQrImage;', context);
@@ -99,7 +99,7 @@ test('alias lookups still enforce all public profile approval and visibility fil
       assert.ok(window.some(actual => JSON.stringify(actual) === JSON.stringify(expected)));
     }
     const expression = window.find(([method]) => method === 'or')?.[1];
-    assert.match(expression, /shift_source\.eq\.scheduled,ends_at\.gte\./);
+    assert.match(expression, /checked_in_at\.not\.is\.null,location_status\.eq\.club_confirmed/);
     assert.match(expression, /location_verification_expires_at\.gt\./);
   }
 });
