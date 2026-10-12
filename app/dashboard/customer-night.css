@@ -92,6 +92,27 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status.is-working::before { content:""; width:4px; height:4px; flex:0 0 4px; border-radius:50%; background:currentColor; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status:is(.is-upcoming,.is-quiet) { color:#c2b9cd; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { position:absolute; top:7px; right:7px; }
+/* Unfollow is a compact menu row with one quiet frame and a full touch target. */
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu.customer-dancer-menu>div {
+  width:148px; min-width:0; max-width:calc(100vw - 24px); padding:4px;
+  border:1px solid #3d3d46; border-radius:11px;
+  background:linear-gradient(#08080c,#08080c); box-shadow:0 8px 24px #0008;
+}
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu .customer-dancer-unfollow {
+  -webkit-appearance:none !important; appearance:none !important;
+  justify-content:flex-start !important; gap:9px; min-height:44px !important; margin:0;
+  padding:10px !important; border:0 !important; border-radius:7px !important;
+  color:#f8fafc !important; background:transparent !important; box-shadow:none !important;
+  font-size:13px !important; font-weight:500 !important; letter-spacing:0; text-align:left;
+  white-space:nowrap; transform:none !important; filter:none !important;
+}
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu .customer-dancer-unfollow::before,
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu .customer-dancer-unfollow::after { content:none !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-unfollow>svg { width:18px; height:18px; flex:0 0 18px; color:#cbd5e1; }
+@media (hover:hover) {
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu .customer-dancer-unfollow:hover:not(:disabled) { background:linear-gradient(#1b1b22,#1b1b22) !important; }
+}
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu .customer-dancer-unfollow:active:not(:disabled) { background:linear-gradient(#25252d,#25252d) !important; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card { min-width:0; padding:16px; border:1px solid var(--customer-line); border-radius:16px; background:var(--customer-surface); overflow:visible; box-shadow:0 4px 14px #0003; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { display:grid; grid-template-columns:64px minmax(0,1fr) 44px; gap:12px; align-items:center; }

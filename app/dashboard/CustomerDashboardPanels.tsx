@@ -751,6 +751,7 @@ function FollowedDancerGridCard({
       disabled={pending}
       onClick={onUnfollow}
     >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="3" /><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 11h5" /></svg>
       {unfollowing ? "Unfollowing…" : "Unfollow"}
     </button></div></details>
     </article>
