@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import postcss from 'postcss';
+import sharp from 'sharp';
 import { dancers } from './helpers/vip-dashboard-fixture.mjs';
 import * as helpers from '../src/lib/dancr/vip-dashboard.ts';
 import { plannerHarness } from './helpers/vip-planner-fixture.mjs';
@@ -33,7 +34,7 @@ test('only the iPhone mobile Plan a visit button gets the darker reference purpl
   assert.match(declarations(rule(polish, 'body.dancr-button-system #vip-dashboard :is(button, a, input, select, textarea):focus-visible')).outline, /^2px solid/);
 });
 
-test('VIP selection images keep a white plus/check on a neutral dark face and preserve checkbox states', () => {
+test('VIP selection PNGs retain distinct neutral plus/check pixels and preserve checkbox states', async () => {
   const icon = declarations(rule(premium, '.vip-dashboard-shell .vip-selection-icon'));
   assert.equal(icon.width, '21px'); assert.equal(icon.height, '21px');
   assert.equal(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:disabled + .vip-selection-icon')).opacity, '.5');
@@ -47,18 +48,29 @@ test('VIP selection images keep a white plus/check on a neutral dark face and pr
   const artwork=()=>ui.nodes().find(node=>node.props?.className==='vip-selection-icon');
   assert.equal(artwork().type,'img'); assert.equal(artwork().props.alt,'');
   assert.equal(artwork().props['aria-hidden'],'true');
-  const plus=decodeURIComponent(artwork().props.src);
-  assert.match(plus,/^data:image\/svg\+xml,/);
-  assert.match(plus,/M12 7v10M7 12h10/);
+  const plus=artwork().props.src;
   ui.select(dancers[0].id);assert.deepEqual(Array.from(ui.props.draft.selected),[dancers[0].id]);
-  const check=decodeURIComponent(artwork().props.src);
-  assert.match(check,/m7 12 3 3 7-7/);
+  const check=artwork().props.src;
+  assert.notEqual(plus,check);
+  const pixel=(image,x,y)=>Array.from(image.data.subarray((Math.floor(y*3.5)*84+Math.floor(x*3.5))*4,(Math.floor(y*3.5)*84+Math.floor(x*3.5))*4+4));
+  const decoded=[];
   for(const image of [plus,check]) {
-    assert.match(image,/fill="#171717"/); assert.match(image,/stroke="#fff"/);
-    assert.doesNotMatch(image,/currentColor|#8a55cf|#ff304f/);
+    assert.match(image,/^data:image\/png;base64,/,'use raster artwork so SVG fills cannot be recolored separately');
+    const raster=await sharp(Buffer.from(image.split(',')[1],'base64')).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+    assert.equal(raster.info.width,84); assert.equal(raster.info.height,84);
+    assert.deepEqual(pixel(raster,6,6),[23,23,23,255],'opaque dark face');
+    for(let i=0;i<raster.data.length;i+=4) {
+      assert.equal(raster.data[i],raster.data[i+1],'neutral pixels, never pink');
+      assert.equal(raster.data[i],raster.data[i+2]);
+    }
+    decoded.push(raster);
   }
+  assert.ok(pixel(decoded[0],12,8)[0]>240,'white vertical plus arm');
+  assert.ok(pixel(decoded[1],12,8)[0]<30,'check is distinct from plus');
+  assert.ok(pixel(decoded[1],16,9)[0]>240,'white check stroke');
+  assert.ok(pixel(decoded[0],16,9)[0]<30,'plus is distinct from check');
   ui.select(dancers[0].id,false);assert.equal(ui.props.draft.selected.length,0);
-  assert.equal(decodeURIComponent(artwork().props.src),plus);
+  assert.equal(artwork().props.src,plus);
 });
 
 test('VIP filter faces retain dark artwork and Android gets compact spacing with usable touch targets', () => {
