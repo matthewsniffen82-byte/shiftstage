@@ -164,7 +164,7 @@ test('planner labels current availability honestly, shows venue-local time, and 
   assert.equal((html.match(/type="checkbox" disabled=""/g) || []).length, 1);
   assert.match(html, /aria-label="Remove Dancer 0 from request"/);
   assert.match(html, /src="\/api\/media\/dancer-photo\?path=approved.jpg"/);
-  assert.match(html, /loading="lazy"/); assert.equal((html.match(/<img /g) || []).length, 1);
+  assert.match(html, /loading="lazy"/); assert.equal((html.match(/class="vip-avatar"[^>]*><img /g) || []).length, 1);
 });
 
 test('VIP favorites save, survive section reloads, and remove without changing the visit draft', async () => {

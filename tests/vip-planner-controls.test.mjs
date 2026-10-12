@@ -33,15 +33,9 @@ test('only the iPhone mobile Plan a visit button gets the darker reference purpl
   assert.match(declarations(rule(polish, 'body.dancr-button-system #vip-dashboard :is(button, a, input, select, textarea):focus-visible')).outline, /^2px solid/);
 });
 
-test('VIP add icons have an opaque dark fill over photos, with checked, focus and disabled states preserved', () => {
+test('VIP selection images keep a white plus/check on a neutral dark face and preserve checkbox states', () => {
   const icon = declarations(rule(premium, '.vip-dashboard-shell .vip-selection-icon'));
   assert.equal(icon.width, '21px'); assert.equal(icon.height, '21px');
-  const plus = decodeURIComponent(icon.background);
-  assert.match(plus, /fill='#17111f'/); assert.match(plus, /stroke='#eee3f6'/);
-  assert.match(plus, /M12 7v10M7 12h10/);
-  const selected = declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:checked + .vip-selection-icon'));
-  const check = decodeURIComponent(selected['background-image']);
-  assert.match(check, /fill='#8a55cf'/); assert.match(check, /stroke='#fff'/); assert.match(check, /m7 12 3 3 7-7/);
   assert.equal(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:disabled + .vip-selection-icon')).opacity, '.5');
   assert.match(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input:focus-visible + .vip-selection-icon')).outline, /^2px solid/);
   assert.equal(declarations(rule(premium, '.vip-dashboard-shell .vip-dancer-select input')).appearance, 'none');
@@ -50,9 +44,21 @@ test('VIP add icons have an opaque dark fill over photos, with checked, focus an
   const selection=ui.nodes().find(node=>node.props?.className==='vip-dancer-select');
   const input=ui.nodes(selection).find(node=>node.type==='input');
   assert.equal(input.props.type,'checkbox');
-  assert.equal(ui.nodes(selection).find(node=>node.props?.className==='vip-selection-icon').props['aria-hidden'],'true');
+  const artwork=()=>ui.nodes().find(node=>node.props?.className==='vip-selection-icon');
+  assert.equal(artwork().type,'img'); assert.equal(artwork().props.alt,'');
+  assert.equal(artwork().props['aria-hidden'],'true');
+  const plus=decodeURIComponent(artwork().props.src);
+  assert.match(plus,/^data:image\/svg\+xml,/);
+  assert.match(plus,/M12 7v10M7 12h10/);
   ui.select(dancers[0].id);assert.deepEqual(Array.from(ui.props.draft.selected),[dancers[0].id]);
+  const check=decodeURIComponent(artwork().props.src);
+  assert.match(check,/m7 12 3 3 7-7/);
+  for(const image of [plus,check]) {
+    assert.match(image,/fill="#171717"/); assert.match(image,/stroke="#fff"/);
+    assert.doesNotMatch(image,/currentColor|#8a55cf|#ff304f/);
+  }
   ui.select(dancers[0].id,false);assert.equal(ui.props.draft.selected.length,0);
+  assert.equal(decodeURIComponent(artwork().props.src),plus);
 });
 
 test('VIP filter faces retain dark artwork and Android gets compact spacing with usable touch targets', () => {

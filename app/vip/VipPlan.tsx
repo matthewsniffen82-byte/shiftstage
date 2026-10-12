@@ -10,6 +10,10 @@ const dancerFilters: Array<{ id: VipDancerFilter; label: string }> = [
   { id: "working", label: "Working now" }, { id: "selected", label: "Selected" },
 ];
 
+// Keep the square and its white mark in one image for mobile browser dark mode.
+const selectionIcon = (path: string) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#171717" stroke="#fff" stroke-width="1.7"/><path d="${path}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`)}`;
+const selectionIcons = { add: selectionIcon("M12 7v10M7 12h10"), selected: selectionIcon("m7 12 3 3 7-7") };
+
 export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onFavorite, favoritePending, busy, editing = false, unavailableSelections = false, onCancelEdit, onRequests }: {
   venue: VipVenue; dancers: VipDancer[]; draft: VipDraft; onChange: (draft: VipDraft) => void; onSubmit: () => Promise<void>; busy: boolean;
   onFavorite: (dancer: VipDancer) => Promise<void>; favoritePending: string[];
@@ -55,7 +59,7 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
               if (busy) return;
               if (!event.target.checked) remove(dancer.id);
               else if (!unavailable && !checked && draft.selected.length < 10) onChange({ ...draft, selected: [...draft.selected, dancer.id] });
-            }} /><span className="vip-selection-icon" aria-hidden="true" /></label>
+            }} /><img className="vip-selection-icon" src={checked ? selectionIcons.selected : selectionIcons.add} width={21} height={21} alt="" aria-hidden="true" draggable={false} /></label>
             <button type="button" className="vip-dancer-favorite" aria-pressed={favorite} aria-label={`${favorite ? "Remove" : "Save"} ${dancer.stage_name} ${favorite ? "from" : "to"} favorites`} disabled={busy || favoritePending.includes(dancer.id) || (!dancer.profileHref && !favorite)} onClick={() => void onFavorite(dancer)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg></button>
           </article>;
         })}</fieldset></div>
