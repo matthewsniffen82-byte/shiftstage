@@ -124,11 +124,12 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-empty-state { display:grid; justify-items:start; gap:8px; padding:16px; border:1px dashed #65517477; border-radius:12px; background:#1d172233; text-align:left; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-empty-state strong { color:#e7deee; font-size:15px; font-weight:500; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-empty-state p { margin:0; max-width:56ch; color:var(--customer-muted); font-size:13px; line-height:1.6; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore { display:grid; gap:16px; padding:24px; border:1px solid #5a3b73; border-radius:16px; background:radial-gradient(ellipse at 100% 0,#702ab13b,transparent 75%),#15101d; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore .eyebrow { color:#c0a5db; font-size:10px; letter-spacing:.1em; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore h2 { margin:8px 0; font-size:24px; font-weight:600; letter-spacing:-.03em; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore p { margin:0; max-width:55ch; font-size:13px; line-height:1.6; color:var(--customer-muted); }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore label { max-width:320px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore { display:grid; gap:10px; min-width:0; padding:14px; border:1px solid var(--customer-line); border-radius:14px; background:var(--customer-surface); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore h2 { margin:0; font-size:20px; font-weight:600; line-height:1.25; letter-spacing:-.025em; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore label { grid-template-columns:auto minmax(0,1fr); align-items:center; gap:12px; min-width:0; max-width:none; font-weight:500; letter-spacing:0; text-transform:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore select { width:100%; height:44px; margin:0; border-color:#51425e; border-radius:9px; background:#1b1721; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore .customer-card-actions { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore .customer-card-actions>a { min-width:0; width:100%; margin:0 !important; padding:8px 10px !important; border-radius:9px !important; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-welcome-card,.customer-action-status) { border:1px solid #534162; border-radius:14px; background:#1a1322; padding:16px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-card { display:grid; grid-template-columns:30px minmax(0,1fr) 44px; align-items:start; gap:10px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-lock { width:28px; height:28px; padding:0; }
@@ -188,8 +189,6 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-city-filter { width:100%; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-title-row { align-items:flex-start; flex-direction:column; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.notification-panel,.customer-account-details) { padding:16px; }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore { padding:18px; }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore .customer-card-actions>* { flex:1; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-card { grid-template-columns:minmax(0,1fr) 44px; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-lock { display:none; }
 }
@@ -252,6 +251,4 @@ body.dancr-button-system #customer-dashboard .customer-add-update-link form { di
   body.dancr-button-system #customer-dashboard .customer-plans-content { padding:10px; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans-expand > button { width:100%; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer #customer-working-now { padding:0; border:0; box-shadow:none; background:transparent; }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore { padding:16px; gap:12px; }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore h2 { margin:0 0 8px; font-size:22px; }
 }

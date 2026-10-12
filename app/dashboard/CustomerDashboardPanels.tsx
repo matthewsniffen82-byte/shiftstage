@@ -183,8 +183,8 @@ function CustomerExplore() {
     return () => controller.abort();
   }, []);
   return <div className="customer-explore">
-    <div><h2>Plan your night.</h2><p>Follow dancers and clubs. Manage plans and passes.</p></div>
-    {cities.length ? <label>Choose a city<select value={city} onChange={event => {
+    <h2>Plan your night</h2>
+    {cities.length ? <label><span>City</span><select aria-label="Choose a city" value={city} onChange={event => {
       setCity(event.target.value);
       try { window.localStorage.setItem(CUSTOMER_DISCOVERY_CITY_KEY, event.target.value); } catch { /* Optional device preference. */ }
     }}>{cities.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label> : null}
