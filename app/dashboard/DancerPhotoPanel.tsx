@@ -425,7 +425,7 @@ export function DancerPhotoPanel({
             </span>
             <span className="photo-source-copy">
               <strong>Gallery</strong>
-              <small>Choose existing photo</small>
+              <small>Choose existing photos</small>
             </span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
           </label>
@@ -453,6 +453,7 @@ export function DancerPhotoPanel({
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </label>
         </div>
+        <p className="photo-upload-selection-hint">Select multiple photos at once from your gallery.</p>
         {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       {visibleQueuedPhotos.length ? (

@@ -383,6 +383,7 @@ export function DashboardStyles() {
       .check-row { min-height: 42px; display: flex !important; align-items: center; gap: 9px !important; padding-bottom: 10px; }
       .check-row input { width: 18px; height: 18px; }
       .dancer-photo-upload-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+      .dancer-photo-upload-form > .photo-upload-selection-hint { grid-column: 1 / -1; margin: 0; color: #c1bdcc; font-size: 12px; line-height: 1.4; }
       .photo-upload-heading { min-width: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
       .photo-upload-heading > span { min-width: 0; display: grid; gap: 3px; }
       .photo-upload-heading strong { color: #fff; font-size: 15px; }

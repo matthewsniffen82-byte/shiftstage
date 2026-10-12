@@ -592,6 +592,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             </button>
           </div>
           <small className="tv-upload-requirements">
+            Select multiple videos at once from your library.<br />
             Vertical or square · MP4, WebM, or MOV · Crop &amp; trim to 1–{VIDEO_UPLOAD_MAX_SECONDS} sec · {VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB max
           </small>
           {queuedVideos.length ? (
