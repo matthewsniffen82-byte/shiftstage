@@ -1018,6 +1018,7 @@
         button.setAttribute("aria-pressed", "false");
         button.setAttribute("aria-label", "Show password");
       });
+      updatePasswordRequirements();
     }
 
     function setVenueAuthStatus(message = "") {

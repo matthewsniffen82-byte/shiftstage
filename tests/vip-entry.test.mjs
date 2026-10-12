@@ -67,6 +67,19 @@ test('VIP entry uses its own sign-in; account creation is available only from an
   assert.equal(invite.nodes().filter(n => n.type === 'button' && n.props['aria-pressed'] !== undefined).length, 2); invite.close();
 });
 
+test('VIP login updates password requirements as typed and hides them on email-only recovery', async () => {
+  const ui = entryFixture(); await ui.settle();
+  const requirements = () => ui.nodes().find(node => node.type === 'password-requirements');
+  for (const value of ['', 'Ab1', 'Complete1!', '']) {
+    ui.nodes().find(node => node.type === 'password-field').props.onChange({ target: { value } });
+    ui.render();
+    assert.equal(requirements().props.password, value);
+  }
+  ui.nodes().find(node => node.props.children === 'Forgot password?').props.onClick(); ui.render();
+  assert.equal(requirements(), undefined);
+  ui.close();
+});
+
 test('VIP signup verifies the invited email before collecting any password', async () => {
   const ui = entryFixture({ token: 'private-invitation' }); await ui.settle();
   ui.nodes().find(n => n.props.children === 'I’m new · Create account').props.onClick(); ui.render();

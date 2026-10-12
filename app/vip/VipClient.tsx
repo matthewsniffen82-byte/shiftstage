@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { PasswordField } from "@/app/components/PasswordField";
+import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { BROWSER_AUTH_SESSION_KEY, captureBrowserAuthSessionGuard, persistBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { readSession, requestDashboardJson, revokeDashboardSession, type StoredDashboardSession } from "@/app/dashboard/dashboard-session";
 import type { VipInvitation } from "@/src/lib/dancr/vip-types";
@@ -171,7 +172,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
       <p>{mode === "reset_password" ? "Enter your VIP email. We’ll send you a link to choose a new password." : invitation ? `Use your invited email (${invitation.maskedEmail}).` : "Use your invited VIP account."}</p>
       {invitation && (mode === "login" || mode === "signup") && <div className="vip-auth-tabs" role="group" aria-label="Account access"><button type="button" aria-pressed={mode === "login"} disabled={busy} onClick={() => chooseMode("login")}>Sign in</button><button type="button" aria-pressed={mode === "signup"} disabled={busy} onClick={() => chooseMode("signup")}>Create account</button></div>}
       <form onSubmit={authenticate}><label>Email<input type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} required maxLength={254} disabled={busy} /></label>
-        {mode === "login" && <PasswordField label="Password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required disabled={busy} />}
+        {mode === "login" && <><PasswordField label="Password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" required disabled={busy} /><PasswordRequirements password={password} /></>}
         {mode === "signup" && <small>Verify your email, then set your password. If you already have a VIP account, we’ll use it.</small>}
         {mode === "signup" && <label className="vip-terms-consent"><input type="checkbox" checked={signupTermsAccepted} onChange={event => setSignupTermsAccepted(event.target.checked)} required disabled={busy} /><span>I agree to the <Link href={USER_TERMS_HREF} target="_blank" rel="noreferrer">User Terms</Link>. <Link href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</Link></span></label>}
         <button className="vip-primary" data-sign-in-action={mode === "login" || undefined} disabled={busy} type="submit">{busy ? "Please wait…" : mode === "signup" ? "Send confirmation link" : mode === "reset_password" ? "Send reset link" : "Sign in"}</button>

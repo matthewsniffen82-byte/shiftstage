@@ -19,6 +19,7 @@
       }
       const passwordRequirements = document.getElementById("venuePasswordRequirements");
       if (passwordRequirements) passwordRequirements.hidden = !signupReady;
+      updatePasswordRequirements();
       setVenueAuthStatus("");
 
       if (options.focus !== false) {
@@ -91,15 +92,16 @@
       }
     }
 
-    function updateDancerPasswordRequirements() {
-      const input = document.getElementById("dancerPassword");
-      const requirements = document.getElementById("dancerPasswordRequirements");
-      if (!input || !requirements) return;
-      const password = input.value;
-      const met = [password.length >= 6, /[A-Z]/.test(password), /[0-9]/.test(password), /[\p{P}\p{S}]/u.test(password)];
-      requirements.querySelectorAll("li").forEach((item, index) => {
-        item.classList.toggle("is-met", met[index]);
-        item.setAttribute("aria-label", `${item.textContent.trim()}: ${met[index] ? "met" : "not yet met"}`);
+    function updatePasswordRequirements() {
+      document.querySelectorAll("[data-password-requirements]").forEach((requirements) => {
+        const input = document.getElementById(requirements.dataset.passwordRequirements);
+        if (!input) return;
+        const password = input.value;
+        const met = [password.length >= 6, /[A-Z]/.test(password), /[0-9]/.test(password), /[\p{P}\p{S}]/u.test(password)];
+        requirements.querySelectorAll("li").forEach((item, index) => {
+          item.classList.toggle("is-met", met[index]);
+          item.setAttribute("aria-label", `${met[index] ? "Met" : "Not yet met"}: ${item.textContent.trim()}`);
+        });
       });
     }
 
@@ -108,7 +110,7 @@
         const input = document.getElementById(id);
         if (input) input.value = "";
       });
-      updateDancerPasswordRequirements();
+      updatePasswordRequirements();
       const dancerCity = document.getElementById("dancerCity");
       if (dancerCity) dancerCity.value = "";
       pendingDancerSignupCity = "";
@@ -390,7 +392,8 @@
         else passwordInput.removeAttribute("minlength");
       }
       const passwordRequirements = document.getElementById("customerPasswordRequirements");
-      if (passwordRequirements) passwordRequirements.hidden = !isSignup;
+      if (passwordRequirements) passwordRequirements.hidden = false;
+      updatePasswordRequirements();
       const confirmField = document.getElementById("customerConfirmPasswordField");
       const confirmInput = document.getElementById("customerConfirmPassword");
       if (confirmField) confirmField.hidden = !isSignup;
@@ -474,6 +477,7 @@
       openCustomerSignup();
       document.getElementById("customerPassword").value = "";
       document.getElementById("customerConfirmPassword").value = "";
+      updatePasswordRequirements();
     }
 
     function openUnifiedDashboard(role = activeDashboardType, section = "") {

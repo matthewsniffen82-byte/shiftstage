@@ -568,6 +568,7 @@
         const confirmInput = document.getElementById(`${role}AccountPasswordConfirm`);
         if (passwordInput) passwordInput.value = "";
         if (confirmInput) confirmInput.value = "";
+        updatePasswordRequirements();
       }
     }
 

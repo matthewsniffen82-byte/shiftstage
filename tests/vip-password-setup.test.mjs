@@ -75,6 +75,20 @@ test('confirmed email is populated and read-only; one submission saves, signs in
   assert.equal(JSON.stringify(f.writes).includes(password), false); f.close();
 });
 
+test('VIP creation and saved-password login both keep live requirements synchronized', () => {
+  for (const passwordSetupComplete of [false, true]) {
+    const f = fixture({ account: { passwordSetupComplete } });
+    for (const value of ['', 'Ab1', 'Complete1!', '']) {
+      f.nodes().find(node => node.type === 'password-field').props.onChange({ target: { value } }); f.render();
+      assert.equal(f.nodes().find(node => node.type === 'password-requirements').props.password, value);
+    }
+    f.close();
+  }
+  const complete = fixture({ account: { passwordSetupComplete: true, passwordLoginComplete: true } });
+  assert.equal(complete.nodes().some(node => node.type === 'password-requirements'), false);
+  complete.close();
+});
+
 test('unchecked terms, missing name and mismatched passwords stop before any request', async () => {
   const f = fixture(); f.fill(); f.consent(false); await f.submit(); assert.equal(f.calls.length, 0);
   f.consent(true); f.name(''); await f.submit(); assert.equal(f.calls.length, 0);

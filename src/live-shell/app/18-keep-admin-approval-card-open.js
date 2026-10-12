@@ -351,6 +351,7 @@
       void endAuthSession();
       document.getElementById("adminEmail").value = "";
       document.getElementById("adminPassword").value = "";
+      updatePasswordRequirements();
       document.getElementById("adminCode").value = "";
       lockAdminDashboard();
       updateAccountHeader();

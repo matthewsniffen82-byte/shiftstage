@@ -97,7 +97,8 @@ export default function VipPasswordSetup({ account, invitationPath }: { account:
     <label>Your name<input autoComplete="name" value={name} maxLength={80} required disabled={busy} onChange={event => setName(event.target.value)} /></label>
     {!signedIn && <>
       <PasswordField label={passwordSaved ? "Password" : "Create password"} autoComplete={passwordSaved ? "current-password" : "new-password"} minLength={passwordSaved ? 1 : 6} maxLength={1024} required value={password} disabled={busy} onChange={event => setPassword(event.target.value)} />
-      {!passwordSaved && <><PasswordRequirements password={password} /><PasswordField label="Confirm password" autoComplete="new-password" minLength={6} maxLength={1024} required value={confirm} disabled={busy} onChange={event => setConfirm(event.target.value)} /></>}
+      <PasswordRequirements password={password} />
+      {!passwordSaved && <PasswordField label="Confirm password" autoComplete="new-password" minLength={6} maxLength={1024} required value={confirm} disabled={busy} onChange={event => setConfirm(event.target.value)} />}
     </>}
     <small className="vip-setup-notice" id="vip-setup-notice">{VIP_ACCESS_NOTICE} <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a></small>
     <label className="vip-setup-consent"><input type="checkbox" checked={consent} required disabled={busy} aria-describedby="vip-setup-notice" onChange={event => setConsent(event.target.checked)} /><span>I’m 18 or older and agree to the <a href={USER_TERMS_HREF} target="_blank" rel="noreferrer">User Terms</a> and <a href={ACCESS_TERMS_HREF} target="_blank" rel="noreferrer">VIP &amp; Table Access Terms</a>.</span></label>

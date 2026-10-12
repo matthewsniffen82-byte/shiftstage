@@ -993,16 +993,18 @@
       });
     });
 
-    const dancerSignupPassword = document.getElementById("dancerPassword");
-    ["input", "change", "focus"].forEach((eventName) => {
-      dancerSignupPassword?.addEventListener(eventName, updateDancerPasswordRequirements);
+    document.querySelectorAll("[data-password-requirements]").forEach((requirements) => {
+      const input = document.getElementById(requirements.dataset.passwordRequirements);
+      ["input", "change", "focus"].forEach((eventName) => {
+        input?.addEventListener(eventName, updatePasswordRequirements);
+      });
+      input?.form?.addEventListener("reset", () => {
+        // Reset fires before the browser restores field values.
+        window.setTimeout(updatePasswordRequirements, 0);
+      });
     });
-    dancerSignupPassword?.form?.addEventListener("reset", () => {
-      // The reset event fires before the browser restores the input's value.
-      window.setTimeout(updateDancerPasswordRequirements, 0);
-    });
-    window.addEventListener("pageshow", updateDancerPasswordRequirements);
-    updateDancerPasswordRequirements();
+    window.addEventListener("pageshow", updatePasswordRequirements);
+    updatePasswordRequirements();
 
     document.querySelectorAll("[data-password-toggle]").forEach((button) => {
       button.addEventListener("click", () => {

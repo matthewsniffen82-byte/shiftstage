@@ -4182,11 +4182,11 @@
       box-shadow: inset 0 0 16px rgba(0,0,0,.28);
     }
 
-    #dancerPasswordRequirements li.is-met {
+    [data-password-requirements] li.is-met {
       color: #4ade80;
     }
 
-    #dancerPasswordRequirements li.is-met::marker {
+    [data-password-requirements] li.is-met::marker {
       content: "\2713  ";
     }
 
@@ -41516,13 +41516,13 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
             <div class="field">
               <label for="customerPassword">Password</label>
               <div class="password-wrap">
-                <input id="customerPassword" type="password" autocomplete="current-password" placeholder="Enter password" required>
+                <input id="customerPassword" type="password" autocomplete="current-password" placeholder="Enter password" aria-describedby="customerPasswordRequirements" required>
                 <button class="password-toggle" type="button" data-password-toggle="customerPassword" aria-label="Show password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
             </div>
-            <ul class="field-note" id="customerPasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
+            <ul class="field-note" id="customerPasswordRequirements" data-password-requirements="customerPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
               <li>6+ characters</li>
               <li>1 uppercase letter</li>
               <li>1 number</li>
@@ -41595,14 +41595,14 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               <div class="field">
                 <label for="venueLoginPassword">Password</label>
                 <div class="password-wrap">
-                  <input id="venueLoginPassword" type="password" autocomplete="current-password" required>
+                  <input id="venueLoginPassword" type="password" autocomplete="current-password" aria-describedby="venuePasswordRequirements" required>
                   <button class="password-toggle" type="button" data-password-toggle="venueLoginPassword" aria-label="Show password" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   </button>
                 </div>
               </div>
             </div>
-            <ul class="field-note" id="venuePasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
+            <ul class="field-note" id="venuePasswordRequirements" data-password-requirements="venueLoginPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
               <li>At least 6 characters</li>
               <li>At least 1 capital letter</li>
               <li>At least 1 number</li>
@@ -41704,7 +41704,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
                   </div>
                 </div>
               </div>
-              <p id="venueRequestPasswordHelp">Use at least 6 characters, including an uppercase letter, a number, and a special character.</p>
+              <ul class="field-note" id="venueRequestPasswordHelp" data-password-requirements="venueRequestPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+                <li>At least 6 characters</li>
+                <li>At least 1 capital letter</li>
+                <li>At least 1 number</li>
+                <li>At least 1 special character (for example, ! @ # $)</li>
+              </ul>
             </section>
             <label class="venue-request-honeypot" aria-hidden="true">
               Company fax
@@ -41821,7 +41826,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
-              <ul class="field-note" id="dancerPasswordRequirements" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+              <ul class="field-note" id="dancerPasswordRequirements" data-password-requirements="dancerPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
                 <li>At least 6 characters</li>
                 <li>At least 1 capital letter</li>
                 <li>At least 1 number</li>
@@ -42337,12 +42342,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
                 <div class="account-center-section">
                   <label for="dancerAccountPassword">New password</label>
                   <div class="password-wrap">
-                    <input id="dancerAccountPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" />
+                    <input id="dancerAccountPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" aria-describedby="dancerAccountPasswordRequirements" />
                     <button class="password-toggle" type="button" data-password-toggle="dancerAccountPassword" aria-label="Show password" aria-pressed="false">
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
                   </div>
-                  <ul class="field-note" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+                  <ul class="field-note" id="dancerAccountPasswordRequirements" data-password-requirements="dancerAccountPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
                     <li>At least 6 characters</li>
                     <li>At least 1 capital letter</li>
                     <li>At least 1 number</li>
@@ -42509,12 +42514,18 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           <div class="field">
             <label for="adminPassword">Password</label>
             <div class="password-wrap">
-              <input id="adminPassword" type="password" autocomplete="current-password">
+              <input id="adminPassword" type="password" autocomplete="current-password" aria-describedby="adminPasswordRequirements">
               <button class="password-toggle" type="button" data-password-toggle="adminPassword" aria-label="Show password" aria-pressed="false">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
               </button>
             </div>
           </div>
+          <ul class="field-note" id="adminPasswordRequirements" data-password-requirements="adminPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+            <li>At least 6 characters</li>
+            <li>At least 1 capital letter</li>
+            <li>At least 1 number</li>
+            <li>At least 1 special character (for example, ! @ # $)</li>
+          </ul>
           <div class="field" id="adminCodeField" hidden>
             <label for="adminCode">Admin code</label>
             <input id="adminCode" type="password" autocomplete="one-time-code">
@@ -42751,12 +42762,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               <div class="account-center-section">
                 <label for="customerAccountPassword">New password</label>
                 <div class="password-wrap">
-                  <input id="customerAccountPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" />
+                  <input id="customerAccountPassword" type="password" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" aria-describedby="customerAccountPasswordRequirements" />
                   <button class="password-toggle" type="button" data-password-toggle="customerAccountPassword" aria-label="Show password" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   </button>
                 </div>
-                <ul class="field-note" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
+                <ul class="field-note" id="customerAccountPasswordRequirements" data-password-requirements="customerAccountPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
                   <li>At least 6 characters</li>
                   <li>At least 1 capital letter</li>
                   <li>At least 1 number</li>
@@ -46099,6 +46110,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         const confirmInput = document.getElementById(`${role}AccountPasswordConfirm`);
         if (passwordInput) passwordInput.value = "";
         if (confirmInput) confirmInput.value = "";
+        updatePasswordRequirements();
       }
     }
 
@@ -56027,6 +56039,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         button.setAttribute("aria-pressed", "false");
         button.setAttribute("aria-label", "Show password");
       });
+      updatePasswordRequirements();
     }
 
     function setVenueAuthStatus(message = "") {
@@ -56070,6 +56083,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       }
       const passwordRequirements = document.getElementById("venuePasswordRequirements");
       if (passwordRequirements) passwordRequirements.hidden = !signupReady;
+      updatePasswordRequirements();
       setVenueAuthStatus("");
 
       if (options.focus !== false) {
@@ -56142,15 +56156,16 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       }
     }
 
-    function updateDancerPasswordRequirements() {
-      const input = document.getElementById("dancerPassword");
-      const requirements = document.getElementById("dancerPasswordRequirements");
-      if (!input || !requirements) return;
-      const password = input.value;
-      const met = [password.length >= 6, /[A-Z]/.test(password), /[0-9]/.test(password), /[\p{P}\p{S}]/u.test(password)];
-      requirements.querySelectorAll("li").forEach((item, index) => {
-        item.classList.toggle("is-met", met[index]);
-        item.setAttribute("aria-label", `${item.textContent.trim()}: ${met[index] ? "met" : "not yet met"}`);
+    function updatePasswordRequirements() {
+      document.querySelectorAll("[data-password-requirements]").forEach((requirements) => {
+        const input = document.getElementById(requirements.dataset.passwordRequirements);
+        if (!input) return;
+        const password = input.value;
+        const met = [password.length >= 6, /[A-Z]/.test(password), /[0-9]/.test(password), /[\p{P}\p{S}]/u.test(password)];
+        requirements.querySelectorAll("li").forEach((item, index) => {
+          item.classList.toggle("is-met", met[index]);
+          item.setAttribute("aria-label", `${met[index] ? "Met" : "Not yet met"}: ${item.textContent.trim()}`);
+        });
       });
     }
 
@@ -56159,7 +56174,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         const input = document.getElementById(id);
         if (input) input.value = "";
       });
-      updateDancerPasswordRequirements();
+      updatePasswordRequirements();
       const dancerCity = document.getElementById("dancerCity");
       if (dancerCity) dancerCity.value = "";
       pendingDancerSignupCity = "";
@@ -56441,7 +56456,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         else passwordInput.removeAttribute("minlength");
       }
       const passwordRequirements = document.getElementById("customerPasswordRequirements");
-      if (passwordRequirements) passwordRequirements.hidden = !isSignup;
+      if (passwordRequirements) passwordRequirements.hidden = false;
+      updatePasswordRequirements();
       const confirmField = document.getElementById("customerConfirmPasswordField");
       const confirmInput = document.getElementById("customerConfirmPassword");
       if (confirmField) confirmField.hidden = !isSignup;
@@ -56525,6 +56541,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       openCustomerSignup();
       document.getElementById("customerPassword").value = "";
       document.getElementById("customerConfirmPassword").value = "";
+      updatePasswordRequirements();
     }
 
     function openUnifiedDashboard(role = activeDashboardType, section = "") {
@@ -60176,6 +60193,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       void endAuthSession();
       document.getElementById("adminEmail").value = "";
       document.getElementById("adminPassword").value = "";
+      updatePasswordRequirements();
       document.getElementById("adminCode").value = "";
       lockAdminDashboard();
       updateAccountHeader();
@@ -65904,16 +65922,18 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       });
     });
 
-    const dancerSignupPassword = document.getElementById("dancerPassword");
-    ["input", "change", "focus"].forEach((eventName) => {
-      dancerSignupPassword?.addEventListener(eventName, updateDancerPasswordRequirements);
+    document.querySelectorAll("[data-password-requirements]").forEach((requirements) => {
+      const input = document.getElementById(requirements.dataset.passwordRequirements);
+      ["input", "change", "focus"].forEach((eventName) => {
+        input?.addEventListener(eventName, updatePasswordRequirements);
+      });
+      input?.form?.addEventListener("reset", () => {
+        // Reset fires before the browser restores field values.
+        window.setTimeout(updatePasswordRequirements, 0);
+      });
     });
-    dancerSignupPassword?.form?.addEventListener("reset", () => {
-      // The reset event fires before the browser restores the input's value.
-      window.setTimeout(updateDancerPasswordRequirements, 0);
-    });
-    window.addEventListener("pageshow", updateDancerPasswordRequirements);
-    updateDancerPasswordRequirements();
+    window.addEventListener("pageshow", updatePasswordRequirements);
+    updatePasswordRequirements();
 
     document.querySelectorAll("[data-password-toggle]").forEach((button) => {
       button.addEventListener("click", () => {
