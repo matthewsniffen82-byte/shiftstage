@@ -2224,10 +2224,13 @@ html body.dancr-button-system > .app main.stack > section.stack
   }
   body.dancr-button-system [data-follow-control="menu"] {
     --follow-control-face: transparent;
-    width: 100% !important; margin: 0 !important; border: 0 !important; border-radius: 7px !important;
+    width: 100% !important; margin: 0 !important; padding: 6px 8px !important; gap: 6px !important;
+    border: 0 !important; border-radius: 6px !important; font-size: 12px !important;
     justify-content: flex-start !important; text-align: left !important;
   }
-  body.dancr-button-system [data-follow-control="menu"] > svg { color: #cbd5e1 !important; }
+  body.dancr-button-system [data-follow-control="menu"] > svg {
+    width: 16px !important; height: 16px !important; min-width: 16px !important; flex: 0 0 16px !important; color: #cbd5e1 !important;
+  }
   @media (hover: hover) {
     body.dancr-button-system :where([data-follow-control], [data-venue-follow], [data-feed-action="follow"], #followBtn):hover:not(:disabled) {
       --follow-control-face: #1b1b22;
@@ -2247,8 +2250,8 @@ html body.dancr-button-system > .app main.stack > section.stack
   }
   /* Dancer and club menus share one frame, rather than a second button panel. */
   body.dancr-button-system .customer-card-menu:has([data-follow-control="menu"]) > div {
-    width: 148px !important; min-width: 0 !important; max-width: calc(100vw - 24px) !important; padding: 4px !important;
-    border: 1px solid #3d3d46 !important; border-radius: 11px !important;
+    width: max-content !important; min-width: 112px !important; max-width: calc(100vw - 24px) !important; padding: 1px !important;
+    border: 1px solid #3d3d46 !important; border-radius: 8px !important;
     background: linear-gradient(#08080c, #08080c) !important; box-shadow: 0 8px 24px #0008 !important;
   }
   /* Keep a 44px tap target around the smaller three-dot face. */
