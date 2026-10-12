@@ -1,0 +1,77 @@
+/* Keep upload actions above legacy button skins without changing compact menu faces. */
+@layer dancr-upload-actions {
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
+    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)) {
+    --upload-action-fill: linear-gradient(180deg, #414141, #2d2d2d);
+    --upload-action-edge: #777777;
+    --upload-action-shadow: inset 0 1px 0 #ffffff24, 0 2px 4px #00000066;
+    position: relative !important;
+    isolation: isolate !important;
+    border: 1px solid var(--upload-action-edge) !important;
+    border-radius: 8px !important;
+    background: var(--upload-action-fill) !important;
+    color: #fafafa !important;
+    -webkit-text-fill-color: currentColor !important;
+    box-shadow: var(--upload-action-shadow) !important;
+    color-scheme: only light !important;
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    opacity: 1 !important;
+    cursor: pointer !important;
+  }
+
+  /* A separate image face keeps the gray visible under mobile auto-darkening.
+     It sits behind the content and cannot intercept the native file input. */
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
+    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle))::before {
+    content: "" !important;
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    z-index: -1 !important;
+    border-radius: inherit !important;
+    background: var(--upload-action-fill) !important;
+    box-shadow: inset 0 1px 0 #ffffff1a !important;
+    pointer-events: none !important;
+  }
+
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
+    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle))
+    :is(.photo-source-copy strong, .tv-video-source-copy strong, .photo-source-icon, .tv-video-source-icon) {
+    color: inherit !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+
+  @media (hover: hover) {
+    body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
+      :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):hover:not(:disabled, [aria-disabled="true"], .is-disabled, :has(input:disabled)) {
+      --upload-action-fill: linear-gradient(180deg, #4c4c4c, #383838);
+      --upload-action-edge: #999999;
+    }
+  }
+
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
+    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):active:not(:disabled, [aria-disabled="true"], .is-disabled, :has(input:disabled)) {
+    --upload-action-fill: linear-gradient(180deg, #292929, #363636);
+    --upload-action-shadow: inset 0 2px 4px #00000066;
+  }
+
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
+    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):is(:focus-visible, :focus-within) {
+    outline: 2px solid #dddddd !important;
+    outline-offset: 3px !important;
+  }
+
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
+    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):is(:disabled, [aria-disabled="true"], .is-disabled, :has(input:disabled)) {
+    --upload-action-fill: linear-gradient(180deg, #242424, #1c1c1c);
+    --upload-action-edge: #4b4b4b;
+    --upload-action-shadow: none;
+    color: #b5b5b5 !important;
+    opacity: .65 !important;
+    cursor: not-allowed !important;
+  }
+}

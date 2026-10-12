@@ -24,6 +24,7 @@ import "./dancer-profile-builder-polish.css";
 import "./dancer-onboarding.css";
 import "./dancer-premium.css";
 import "./dancer-profile-workspace.css";
+import "./dancer-upload-actions.css";
 import "./customer-night.css";
 import "./saved-venue-cards.generated.css";
 import "../components/dashboard-header.css";
