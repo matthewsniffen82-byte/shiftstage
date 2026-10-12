@@ -89,6 +89,9 @@ test("Tonight shows live queues; older periods show trends and absent performanc
 });
 
 const dancer = (id, name, internal = {}, external = {}, vip = {}) => ({ id, name, internal, external, vip });
+const dancerResults = (overrides = {}) => ({ checkIns: 0, checkOuts: 0, lastCheckInAt: null, lastCheckOutAt: null,
+  profileConversions: 0, profileClaims: 0, profileCohortConversions: 0, profileConversionPercent: null,
+  tableArrived: 0, tableNoShows: 0, tableAttendanceUnrecorded: 0, showUpPercent: null, ...overrides });
 test("dancer results include attendance-only dancers and display null conversion and arrival rates honestly", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", { "@/src/lib/dancr/venue-analytics": analytics });
   const results = { checkIns: 1, checkOuts: 0, lastCheckInAt: null, lastCheckOutAt: null,
@@ -98,25 +101,68 @@ test("dancer results include attendance-only dancers and display null conversion
   let tree = render({ dancers, timezone: "UTC" });
   assert.equal(tree.filter(node => node.type === "li").length, 2);
   assert.ok(!tree.some(node => typeof node.props.children === "string" && /revenue|purchase|club sales/i.test(node.props.children)));
-  assert.ok(tree.some(node => node.type === "dd" && [node.props.children].flat().includes("—")));
+  assert.ok(tree.some(node => node.type === "dd" && [node.props.children].flat().includes("Not recorded")));
+  assert.ok(tree.some(node => node.type === "dd" && [node.props.children].flat().includes("No qualifying claims")));
   tree.find(node => node.type === "select").props.onChange({ target: { value: "checkIns" } });
   tree = render({ dancers }); assert.deepEqual(tree.filter(node => node.type === "li").map(node => node.key), ["b", "a"]);
 });
 test("dancer channels sort meaningful outcomes, search names and do not mutate incoming analytics", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", { "@/src/lib/dancr/venue-analytics": analytics });
-  const dancers = [dancer("a", "Aria", { requests: 3, completed: 2 }, { admissions: 1 }, { requests: 2 }),
-    dancer("b", "Bella", { requests: 1, completed: 1 }, { admissions: 4 }), dancer("c", "Celeste", {}, {}, { requests: 8 })];
+  const dancers = [{ ...dancer("a", "Aria", { requests: 3, completed: 2 }, { admissions: 1 }, { requests: 2 }), results: dancerResults({ tableArrived: 2, profileConversions: 1 }) },
+    { ...dancer("b", "Bella", { requests: 1, completed: 1 }, { admissions: 4 }), results: dancerResults({ tableArrived: 1, profileConversions: 4 }) }, dancer("c", "Celeste", {}, {}, { requests: 8 })];
   const originalOrder = dancers.map(row => row.id);
   const rows = tree => tree.filter(node => node.type === "li").map(node => node.key);
   const choose = label => render({ dancers }).find(node => node.type === "button" && node.props.children === label).props.onClick();
-  assert.deepEqual(rows(render({ dancers })), ["c", "a", "b"]);
+  assert.deepEqual(rows(render({ dancers })), ["a", "b", "c"]);
   choose("Internal"); assert.deepEqual(rows(render({ dancers })), ["a", "b"]);
   choose("External"); assert.deepEqual(rows(render({ dancers })), ["b", "a"]);
-  assert.equal(render({ dancers }).find(node => node.type === "select").props.value, "admissions");
+  assert.equal(render({ dancers }).find(node => node.type === "select").props.value, "conversions");
   choose("VIP"); assert.deepEqual(rows(render({ dancers })), ["c", "a"]);
   render({ dancers }).find(node => node.type === "input").props.onChange({ target: { value: "  ARI  " } });
   assert.deepEqual(rows(render({ dancers })), ["a"]);
   assert.deepEqual(dancers.map(row => row.id), originalOrder);
+});
+
+test("compact dancer rows distinguish verified results, unknown attendance and recorded zeroes", () => {
+  const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", { "@/src/lib/dancr/venue-analytics": analytics });
+  const dancers = [
+    dancer("legacy", "Legacy", { requests: 5, completed: 5 }),
+    { ...dancer("unknown", "Unknown", { requests: 2, checkedInHours: null }), results: dancerResults({ tableAttendanceUnrecorded: 2 }) },
+    { ...dancer("mixed", "Mixed", { requests: 6, checkedInHours: 2.5 }, { admissions: 9 }), results: dancerResults({ tableArrived: 2, tableNoShows: 1, tableAttendanceUnrecorded: 3, profileConversions: 2 }) },
+    { ...dancer("missed", "Missed", { requests: 2, checkedInHours: 4 }), results: dancerResults({ tableNoShows: 2, showUpPercent: 0 }) },
+    { ...dancer("zero", "Zero", { checkedInHours: 0 }), results: dancerResults({ checkIns: 1 }) },
+  ];
+  let tree = render({ dancers });
+  const rows = tree.filter(node => node.type === "li");
+  const values = Object.fromEntries(rows.map(row => [row.key, nodes(row).filter(node => node.type === "b").map(node => node.props.children)]));
+  assert.deepEqual(values.legacy, ["Not recorded", "Not recorded", "Not recorded"]);
+  assert.deepEqual(values.unknown, ["Not recorded", "Not recorded", "0"]);
+  assert.deepEqual(values.mixed, ["2.5 hr", "2", "2"]);
+  assert.deepEqual(values.missed, ["4 hr", "0", "0"]);
+  assert.deepEqual(values.zero, ["0 hr", "0", "0"]);
+  assert.equal(rows[0].key, "mixed", "completed requests do not substitute for confirmed arrivals");
+  const summary = nodes(rows[0]).find(node => node.type === "summary");
+  assert.deepEqual(nodes(summary).filter(node => node.type === "span" && typeof node.props.children === "string").map(node => node.props.children),
+    ["M", "Mixed", "Checked-in time", "Requests attended", "Redeemed profile passes"]);
+  const details = nodes(rows[0]);
+  assert.deepEqual(details.filter(node => node.type === "h4").map(node => node.props.children),
+    ["Check-ins & check-outs", "Internal · table requests", "External · pass results", "VIP · dancer selections", "Clicks & profile activity"]);
+  assert.equal(details.find(node => node.props.label === "Attendance not recorded").props.value, 3);
+  assert.equal(details.find(node => node.props.label === "Didn’t arrive at table").props.value, 1);
+  tree.find(node => node.type === "select").props.onChange({ target: { value: "hours" } });
+  tree = render({ dancers });
+  assert.deepEqual(tree.filter(node => node.type === "li").slice(0, 2).map(node => node.key), ["missed", "mixed"]);
+});
+
+test("venue attendance summary labels missing records and staff-confirmed missed table arrivals", () => {
+  const render = component("app/dashboard/VenueValueAnalytics.tsx", "default", "", valueDependencies);
+  const metrics = Object.fromEntries(["claims", "pickups", "going", "directions", "visitors", "followers", "passengers", "impressions", "admissions"].map(key => [key, 0]));
+  const tree = render({ report: { trackingStartedAt: "2025-12-01", current: metrics, previous: metrics, interactions: [], videos: [], dancers: [],
+    performance: { ...performance, resultsStartedAt: "2026-01-01", current: { ...performanceCounts, ...dancerResults({ tableNoShows: 2, tableAttendanceUnrecorded: 3 }) } } },
+    period: "7d", periodStart: "2026-01-01", periodEnd: "2026-01-02", timezone: "UTC", totalFollowers: 0, conversion: null });
+  const card = tree.find(node => node.props.className === "metric" && nodes(node).some(child => child.props.children === "Table attendance rate"));
+  assert.equal(nodes(card).find(node => node.type === "strong").props.children, "Not recorded");
+  assert.equal(nodes(card).find(node => node.type === "small").props.children.join(""), "2 didn’t arrive at table · 3 not recorded");
 });
 
 test("dancer disclosure preserves missing timing and rates, pagination and accessible selected channel", () => {

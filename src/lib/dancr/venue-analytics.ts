@@ -42,7 +42,7 @@ export type VenuePerformanceReport = {
   tonight: Record<"vipPending" | "vipConfirmed" | "tablePending" | "tableAcknowledged" | "guestListExpected", number>;
 };
 export type DancerPerformanceChannel = "all" | "internal" | "external" | "vip";
-export type DancerPerformanceSort = "requests" | "completed" | "admissions" | "conversions" | "checkIns" | "name";
+export type DancerPerformanceSort = "attended" | "hours" | "requests" | "completed" | "admissions" | "conversions" | "checkIns" | "name";
 const externalOutcomes = ["dancer_profile", "club_page", "directions", "claims", "admissions", "going", "free_entry", "transport"];
 
 /** Requests are an explicitly labelled workload, never a count of customers. */
@@ -53,6 +53,7 @@ export function dancerRequestCount(row: DancerPerformance, channel: DancerPerfor
 
 export function sortDancerPerformance(rows: DancerPerformance[], channel: DancerPerformanceChannel, sort: DancerPerformanceSort): DancerPerformance[] {
   const value = (row: DancerPerformance) => sort === "requests" ? dancerRequestCount(row, channel)
+    : sort === "attended" ? row.results?.tableArrived || 0 : sort === "hours" ? row.internal.checkedInHours || 0
     : sort === "completed" ? row.internal.completed || 0 : sort === "admissions" ? row.external.admissions || 0
     : sort === "conversions" ? row.results?.profileConversions || 0
     : sort === "checkIns" ? row.results?.checkIns || 0 : 0;

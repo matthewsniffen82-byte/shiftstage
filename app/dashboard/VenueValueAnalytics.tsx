@@ -37,7 +37,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
         <div className="metric"><span>Check-outs</span><strong>{number(performance.current.checkOuts || 0)}</strong><small>Recorded check-outs, excluding expired presence</small></div>
         <div className="metric"><span>Profile conversions</span><strong>{number(performance.current.profileConversions || 0)}</strong><small>Redeemed entry · once per profile pass</small></div>
         <div className="metric"><span>Arrived for table requests</span><strong>{number(performance.current.tableArrived || 0)}</strong><small>Confirmed by club staff</small></div>
-        <div className="metric"><span>Table request show-up rate</span><strong>{performance.current.showUpPercent == null ? "—" : `${performance.current.showUpPercent}%`}</strong><small>{number(performance.current.tableNoShows || 0)} no-shows · {number(performance.current.tableAttendanceUnrecorded || 0)} not recorded</small></div>
+        <div className="metric"><span>Table attendance rate</span><strong>{performance.current.showUpPercent == null ? "Not recorded" : `${performance.current.showUpPercent}%`}</strong><small>{number(performance.current.tableNoShows || 0)} didn’t arrive at table · {number(performance.current.tableAttendanceUnrecorded || 0)} not recorded</small></div>
       </div>
       <p className="venue-value-note">Check-in events and attendance confirmations tracked since {formatDate(performance.resultsStartedAt)}. Earlier periods may be incomplete.</p>
     </section>}

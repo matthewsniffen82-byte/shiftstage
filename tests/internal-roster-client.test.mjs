@@ -432,7 +432,7 @@ test('staff explicitly confirm arrival before completing and record no-shows sep
   t.after(()=>app.unmount());await app.mount();
   const button=label=>find(app.render(),node=>node.type==='button'&&node.props.children===label);
   assert.equal(button('Complete'),undefined);
-  button(outcome==='arrived'?'Mark arrived':'No-show').props.onClick();await flush();
+  button(outcome==='arrived'?'Mark arrived':'Didn’t arrive at table').props.onClick();await flush();
   assert.equal(writes[0].action,'request_attendance');assert.equal(writes[0].attendance,outcome);assert.equal(writes[0].expectedStatus,'acknowledged');
   if(outcome==='arrived') {assert.ok(button('Complete'));button('Complete').props.onClick();await flush();assert.equal(writes[1].action,'request_status');assert.equal(writes[1].status,'completed');}
   else assert.equal(find(app.render(),node=>node.props?.className==='ir-request'),undefined);
