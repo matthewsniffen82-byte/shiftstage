@@ -50,7 +50,8 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header h3 { margin:7px 0 4px; font-size:17px; font-weight:600; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header small { color:var(--customer-muted); font-size:12px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group+.customer-plan-group { border-top:1px solid #ffffff12; padding-top:16px; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-card { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; margin:0 0 8px; padding:12px; border:1px solid #4a3a5655; border-radius:12px; background:#1a161f; box-shadow:none; }
+/* The plan menu extends beyond the card; only its portrait should clip media. */
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-card { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:12px; margin:0 0 8px; padding:12px; border:1px solid #4a3a5655; border-radius:12px; background:#1a161f; overflow:visible; box-shadow:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-identity { display:flex; align-items:center; gap:12px; min-width:0; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-portrait { width:64px; height:76px; flex:0 0 64px; border-radius:9px; overflow:hidden; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-portrait .customer-saved-card-image { display:block; width:100%; height:100%; object-fit:cover; }
