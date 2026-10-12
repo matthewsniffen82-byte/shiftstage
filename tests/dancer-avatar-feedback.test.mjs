@@ -38,6 +38,7 @@ function avatarHarness({ profile = {}, compact = false, crop = async file => fil
       }
     },
     dancerPhotoItemsFromProfile: p => p.dancer_photos || [],
+    DancerPhotoControls: "PhotoControls",
     cropProfilePhoto: crop,
     requestDashboardJson: (url, options) => { sourceRequests.push({ url, ...options }); return source(options); },
     AvatarUploadBusyContext: {}, AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, DashboardDataRequestError,
@@ -57,7 +58,7 @@ function avatarHarness({ profile = {}, compact = false, crop = async file => fil
   }
   function nodes(node = tree) {
     if (!node || typeof node !== "object") return [];
-    return [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
+    return [node, ...[node.props?.primary, node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
   }
   function select(file = new File(["fixture"], "avatar.jpg", { type: "image/jpeg" })) {
     nodes().find(node => node.props?.["aria-label"] === "Choose face photo from your photo library").props.onChange({ target: { files: file ? [file] : [], value: "" } });

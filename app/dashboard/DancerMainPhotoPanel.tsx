@@ -5,6 +5,7 @@ import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 import type { LoadState } from "./dashboard-types";
 import { uploadMainProfilePhoto } from "./main-profile-photo-upload";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
+import DancerPhotoControls from "./DancerPhotoControls";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import "../../public/dancer-main-photo.css";
@@ -106,9 +107,14 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
       <strong className="dancer-main-photo-state" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? "Checking" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
-        <button type="button" disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating main photo…" : pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"}</button>
-        {displayed?.status === "approved" ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
-        {displayed ? <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{pending ? "Remove pending photo" : "Remove main photo"}</button> : null}
+        <DancerPhotoControls label="main photo" disabled={busy || cropping} primary={
+          <button type="button" aria-label={pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"} disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating…" : pending ? "Replace photo" : displayed ? "Change photo" : "Add photo"}</button>
+        }>
+          {displayed ? <>
+            {displayed.status === "approved" ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
+            <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{pending ? "Remove pending photo" : "Remove main photo"}</button>
+          </> : null}
+        </DancerPhotoControls>
       </div>
       {retry ? <button type="button" disabled={busy} onClick={() => void upload()}>Retry main photo upload</button> : null}
       <p className="dancer-main-photo-status" role="status" aria-live="polite">{status}</p>

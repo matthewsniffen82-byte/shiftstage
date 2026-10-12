@@ -39,6 +39,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
         requestDancerProfileJson: async () => ({ profile }),
       };
       if (name === "./DancerSavedPhotoCrop") return { default: "SavedCrop" };
+      if (name === "./DancerPhotoControls") return { default: "PhotoControls" };
       if (name === "./main-profile-photo-upload") return { uploadMainProfilePhoto: async (...args) => { uploads.push(args); return result; } };
       if (name.endsWith(".css")) return {};
       throw new Error(name);
@@ -48,7 +49,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
     cursor = 0;
     tree = exports.DancerMainPhotoPanel({ profile, onProfileChange: next => { profile = next; } });
   }
-  const nodes = (node = tree) => !node || typeof node !== "object" ? [] : [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
+  const nodes = (node = tree) => !node || typeof node !== "object" ? [] : [node, ...[node.props?.primary, node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
   render();
   return {
     uploads, deletes,
@@ -74,7 +75,8 @@ test("a first main upload appears in the main slot while awaiting approval, incl
   for (const view of [ui, fixture(profile)]) {
     assert.equal(view.image.props.src, pending.previewUrl);
     assert.equal(view.image.props.alt, "Main photo awaiting review");
-    assert.equal(view.button.props.children, "Replace main photo");
+    assert.equal(view.button.props.children, "Replace photo");
+    assert.equal(view.button.props['aria-label'], "Replace main photo");
     assert.equal(view.button.props.disabled, false);
     assert.equal(view.crop, undefined);
     assert.equal(view.badge, 'Awaiting review');

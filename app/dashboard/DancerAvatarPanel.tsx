@@ -7,6 +7,7 @@ import type { LoadState } from "./dashboard-types";
 import { AvatarUploadBusyContext } from "./DashboardShared";
 import { cropProfilePhoto } from "./profile-photo-crop";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
+import DancerPhotoControls from "./DancerPhotoControls";
 export function DancerAvatarPanel({
   compact = false,
   onProfileChange,
@@ -276,6 +277,7 @@ export function DancerAvatarPanel({
         <strong className={`dancer-avatar-state is-${presentation.state || "required"}`}>{presentation.label}</strong>
       </div>
       <div className="dancer-avatar-upload-controls">
+        <DancerPhotoControls label="face photo" disabled={isSaving || preparing} primary={
         <div className="photo-source-grid dancer-avatar-source-grid">
           <label className={`photo-source-action${isSaving ? " is-disabled" : ""}`}>
             <input
@@ -290,7 +292,7 @@ export function DancerAvatarPanel({
               }}
             />
             <span className="photo-source-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4zM7 15l3-3 2.5 2.5L15 12l3 3" /><circle cx="16.5" cy="9" r="1" /></svg></span>
-            <span className="photo-source-copy"><strong>{compact ? presentation.state === "pending" ? "Replace face photo" : avatarUrl ? "Change face photo" : "Add face photo" : "Gallery"}</strong><small>Choose a clear face photo</small></span>
+            <span className="photo-source-copy"><strong>{compact ? presentation.state === "pending" ? "Replace photo" : avatarUrl ? "Change photo" : "Add photo" : "Gallery"}</strong><small>Choose a clear face photo</small></span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
           </label>
           {!compact ? <label className={`photo-source-action${isSaving ? " is-disabled" : ""}`}>
@@ -310,11 +312,14 @@ export function DancerAvatarPanel({
             <span className="photo-source-copy"><strong>Camera</strong><small>Take a new face photo now</small></span>
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </label> : null}
-        </div>
-        {compact && mainPhoto ? <button type="button" disabled={isSaving || preparing} onClick={() => void reuseMainPhoto()}>{preparing ? "Preparing photo…" : "Use main as face photo"}</button> : null}
+        </div>}>
+          {(compact && mainPhoto) || avatarUrl ? <>
+            {compact && mainPhoto ? <button type="button" disabled={isSaving || preparing} onClick={() => void reuseMainPhoto()}>{preparing ? "Preparing photo…" : "Use main as face photo"}</button> : null}
+            {avatarUrl ? <button type="button" disabled={isSaving || preparing} onClick={() => void removeAvatar()}>Remove face photo</button> : null}
+          </> : null}
+        </DancerPhotoControls>
         {isSaving ? <progress aria-label="Avatar upload progress" max="100" value={uploadProgress} /> : null}
         {file && !isSaving && presentation.canRetry ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry face photo upload</button> : null}
-        {avatarUrl ? <button type="button" disabled={isSaving || preparing} onClick={() => void removeAvatar()}>Remove face photo</button> : null}
       </div>
       {statusMessage ? <p role="status" aria-live="polite">{compact ? statusMessage.replace(/\bAvatar\b/g, "Face photo").replace(/\bavatar\b/g, "face photo") : statusMessage}</p> : null}
     </article>
