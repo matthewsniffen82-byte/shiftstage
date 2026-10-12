@@ -22,9 +22,8 @@ function withStorage(run) {
 function shell(currentSession) {
   const navigations = [], signIns = [];
   const element = () => ({ hidden: false, textContent: '', classList: { toggle() {} }, setAttribute(key, value) { this[key] = value; }, removeAttribute(key) { delete this[key]; } });
-  const vipDashboardLink = element();
   const context = vm.createContext({ authSession: currentSession, activeDashboardType: currentSession?.account?.role || 'customer',
-    vipDashboardLink, document: { getElementById: id => id === 'vipDashboardLink' ? vipDashboardLink : null },
+    document: { getElementById: () => null },
     isCustomerLoggedIn: currentSession?.account?.role === 'customer', isDancerLoggedIn: currentSession?.account?.role === 'dancer', isVenueLoggedIn: currentSession?.account?.role === 'venue',
     dashboardBtn: element(), accountBtn: element(), adminBtn: element(), sessionMenuEnd: element(), guestMenuBtn: element(),
     accountIconMarkup: () => '', renderCustomerQuickActions() {}, closeUtilityMenu() {}, hideAccountTooltip() {},
@@ -39,11 +38,20 @@ function shell(currentSession) {
   return { context, navigations, signIns };
 }
 
+test('the public menu has no VIP dashboard shortcut while Login / Join retains VIP sign-in', () => {
+  assert.doesNotMatch(home, /vipDashboardLink/);
+  assert.match(home, /id="vipSignInLink" href="\/vip">VIP sign in<\/a>/);
+  const signedOut = shell(null); signedOut.context.updateAccountHeader();
+  assert.equal(signedOut.context.dashboardBtn.hidden, true);
+  assert.equal(signedOut.context.guestMenuBtn.hidden, false);
+  assert.equal(signedOut.context.accountBtn.innerHTML, 'Login / Join');
+});
+
 test('a verified VIP visit survives the main site, token refresh and Back with a VIP dashboard menu', () => withStorage(() => {
   persistBrowserAuthSession(session());
   const oldHome = shell(readBrowserAuthSession()); oldHome.context.updateAccountHeader();
   assert.equal(oldHome.context.dashboardBtn.textContent, 'Guest dashboard');
-  assert.equal(oldHome.context.vipDashboardLink.hidden, true);
+  assert.equal(oldHome.context.dashboardBtn.hidden, false);
   assert.equal(rememberVipDashboard(guest.id, venueId), true);
   const saved = readBrowserAuthSession();
   assert.equal(saved.account.role, 'customer');
@@ -52,7 +60,7 @@ test('a verified VIP visit survives the main site, token refresh and Back with a
   assert.deepEqual(readBrowserAuthSession().vipNavigation, saved.vipNavigation);
   assert.equal(oldHome.context.refreshBrowserAccountView(), false);
   assert.equal(oldHome.context.dashboardBtn.textContent, 'VIP dashboard');
-  assert.equal(oldHome.context.vipDashboardLink.hidden, true);
+  assert.equal(oldHome.context.dashboardBtn.hidden, false);
   assert.equal(oldHome.context.accountBtn.title, 'VIP account');
   oldHome.context.openDashboard();
   assert.deepEqual(oldHome.navigations, [`/vip?venueId=${venueId}`]);
@@ -71,12 +79,11 @@ test('revocation, logout, other accounts and other roles cannot reuse a VIP navi
   const home = shell(readBrowserAuthSession());
   rememberVipDashboard(guest.id, ''); home.context.refreshBrowserAccountView(); home.context.openDashboard();
   assert.equal(home.context.dashboardBtn.textContent, 'Guest dashboard'); assert.equal(home.navigations.at(-1), '/dashboard/customer');
-  assert.equal(home.context.vipDashboardLink.hidden, true);
   rememberVipDashboard(guest.id, venueId); clearBrowserAuthSession();
   assert.equal(readBrowserAuthSession(), null); assert.equal(rememberVipDashboard(guest.id, venueId), false);
   const signedOut = shell(null); signedOut.context.updateAccountHeader(); signedOut.context.openUnifiedDashboard('customer');
   assert.equal(signedOut.context.dashboardBtn.hidden, true);
-  assert.equal(signedOut.context.vipDashboardLink.hidden, false);
+  assert.equal(signedOut.context.accountBtn.innerHTML, 'Login / Join');
   assert.deepEqual(signedOut.signIns, ['customer']); assert.deepEqual(signedOut.navigations, []);
   for (const role of ['customer', 'dancer', 'venue']) {
     const current = { ...session(), account: { id: 'another-account', role }, vipNavigation: { accountId: guest.id, venueId } };
@@ -84,7 +91,6 @@ test('revocation, logout, other accounts and other roles cannot reuse a VIP navi
     const page = shell(readBrowserAuthSession()); page.context.updateAccountHeader(); page.context.openUnifiedDashboard(role);
     assert.equal(page.context.dashboardBtn.hidden, false);
     assert.equal(page.context.dashboardBtn.textContent, `${role === 'customer' ? 'Guest' : role === 'dancer' ? 'Dancer' : 'Venue'} dashboard`);
-    assert.equal(page.context.vipDashboardLink.hidden, true);
     assert.equal(page.navigations.at(-1), `/dashboard/${role}`);
     if (role !== 'customer') assert.equal(rememberVipDashboard('another-account', venueId), false);
   }

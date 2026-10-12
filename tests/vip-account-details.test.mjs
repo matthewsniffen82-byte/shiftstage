@@ -296,5 +296,6 @@ test('VIP credentials stay in the VIP dashboard with only notification preferenc
   assert.deepEqual([...dashboard.matchAll(/href="(\/dashboard\/customer[^"]*)"/g)].map(match => match[1]),
     ['/dashboard/customer#customer-alerts']);
   assert.doesNotMatch(guestDashboard, /CustomerVipShortcut/);
-  assert.match(shell, /id="vipDashboardLink" href="\/vip">VIP dashboard/);
+  assert.doesNotMatch(shell, /id="vipDashboardLink"/);
+  assert.match(shell, /id="vipSignInLink" href="\/vip">VIP sign in/);
 });

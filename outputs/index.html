@@ -32333,7 +32333,6 @@
             </button>
             <div class="utility-menu-panel" id="moreMenuPanel" hidden>
               <button class="utility-menu-item utility-menu-dashboard" id="dashboardBtn" type="button" hidden>Dashboard</button>
-              <a class="utility-menu-item" id="vipDashboardLink" href="/vip">VIP dashboard</a>
               <nav class="utility-menu-support" aria-label="Legal and support">
                 <span class="utility-menu-section-label">Support</span>
                 <button class="utility-menu-item" id="contactAdminBtn" type="button">Contact</button>
@@ -56392,9 +56391,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       dashboardBtn.hidden = !loggedIn;
       dashboardBtn.textContent = loggedIn ? `${role} dashboard` : "Dashboard";
       dashboardBtn.setAttribute("aria-label", loggedIn ? `Open ${role.toLowerCase()} dashboard` : "Open dashboard");
-      const vipDashboardLink = document.getElementById("vipDashboardLink");
-      // Signed-in accounts already have their own dashboard destination above.
-      if (vipDashboardLink) vipDashboardLink.hidden = loggedIn;
       adminBtn.hidden = loggedIn && sessionRole !== "admin";
       sessionMenuEnd.hidden = !loggedIn;
       accountBtn.hidden = false;
