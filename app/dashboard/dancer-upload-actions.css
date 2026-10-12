@@ -1,7 +1,8 @@
-/* Use an image-backed charcoal face for mobile browsers that recolor CSS backgrounds. */
+/* Keep these as solid background colors. Forced-dark image classification can
+   lighten monochrome SVGs and gradients even when their source color is dark. */
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
-  --profile-upload-face: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='64' viewBox='0 0 256 64' preserveAspectRatio='none'%3E%3Cpath fill='%23292930' d='M0 0h256v64H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat #292930;
-  --profile-upload-face-hover: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='64' viewBox='0 0 256 64' preserveAspectRatio='none'%3E%3Cpath fill='%2335353e' d='M0 0h256v64H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat #35353e;
+  --profile-upload-face: #292930;
+  --profile-upload-face-hover: #35353e;
 }
 /* Keep upload actions above legacy button skins without changing compact menu faces. */
 @layer dancr-upload-actions {
@@ -16,10 +17,11 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
     border: 1px solid var(--upload-action-edge) !important;
     border-radius: 8px !important;
     background: var(--upload-action-fill) !important;
+    background-image: none !important;
     color: var(--upload-action-ink) !important;
     -webkit-text-fill-color: currentColor !important;
     box-shadow: var(--upload-action-shadow) !important;
-    color-scheme: dark !important;
+    color-scheme: only dark !important;
     -webkit-appearance: none !important;
     appearance: none !important;
     filter: none !important;
@@ -29,18 +31,13 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
     cursor: pointer !important;
   }
 
-  /* Keep the charcoal face behind the label without intercepting file inputs. */
+  /* A single solid face also prevents legacy decorative layers from covering it. */
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
-    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle))::before {
-    content: "" !important;
-    display: block !important;
-    position: absolute !important;
-    inset: 0 !important;
-    z-index: -1 !important;
-    border-radius: inherit !important;
-    background: var(--upload-action-fill) !important;
-    box-shadow: none !important;
-    pointer-events: none !important;
+    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle))::before,
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
+    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle))::after {
+    content: none !important;
+    display: none !important;
   }
 
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
@@ -71,7 +68,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
 
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
     :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):is(:disabled, [aria-disabled="true"], .is-disabled, :has(input:disabled)) {
-    --upload-action-fill: linear-gradient(#202026, #202026);
+    --upload-action-fill: #202026;
     --upload-action-ink: #b5b5b5;
     --upload-action-edge: #45454f;
     --upload-action-shadow: none;

@@ -119,7 +119,7 @@ body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target {
     box-sizing:border-box !important; display:grid !important; place-items:center !important;
     min-width:0 !important; max-width:100% !important; margin:0 !important; padding:0 !important;
-    border:1px solid #57515f !important; background:linear-gradient(#15121b,#15121b) !important;
+    border:1px solid #57515f !important; background:#15121b !important;
     color:#f5f3ff !important; -webkit-text-fill-color:currentColor !important;
     box-shadow:none !important; transform:none !important; overflow:hidden !important;
     cursor:pointer; touch-action:manipulation;
@@ -128,7 +128,8 @@ body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target::after { content:none !important; }
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target[data-empty='true'] {
     background:var(--profile-upload-face,#292930) !important; border-color:#53535e !important;
-    color:#ffffff !important; color-scheme:dark;
+    background-image:none !important;
+    color:#ffffff !important; color-scheme:only dark !important;
   }
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target[data-empty='true'] > :is(span,b) {
     color:#ffffff !important; -webkit-text-fill-color:currentColor !important; opacity:1 !important;
