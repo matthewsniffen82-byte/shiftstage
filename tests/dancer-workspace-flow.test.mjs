@@ -74,7 +74,7 @@ test('preview receives approved photos only and retains unsaved identity',()=>{
   const preview=f.draw().find(n=>n.type==='./DancerProfilePreviewContent');assert.equal(preview.props.photos.length,3);assert.equal(preview.props.name,'New name');
 });
 
-test('setup and live editing group main photo and avatar before additional uploads',()=>{
+test('setup and live editing place avatar before main photo in the shared photo section',()=>{
   for (const onboarding of [true,false]) {
     const f=fixture({count:0,face:false,onboarding});
     const nodes=f.draw();
@@ -85,10 +85,10 @@ test('setup and live editing group main photo and avatar before additional uploa
     assert.equal(sections[0].props.id,'dancer-details-section');
     assert.equal(sections[1].props.id,'dancer-required-photos');
     const photoSlots=walk(sections[1]).filter(n=>n.props.role==='group');
-    assert.deepEqual(photoSlots.map(n=>n.props.id),['dancer-main-photo','dancer-face-photo']);
-    assert.deepEqual(photoSlots.map(n=>walk(n).find(child=>child.type==='h4').props.children),['Main photo','Avatar']);
-    assert.ok(React.Children.toArray(photoSlots[0].props.children).includes('Main'));
-    assert.ok(walk(photoSlots[1]).some(n=>n.type!=='h4'&&n.props.children==='Avatar'));
+    assert.deepEqual(photoSlots.map(n=>n.props.id),['dancer-face-photo','dancer-main-photo']);
+    assert.deepEqual(photoSlots.map(n=>walk(n).find(child=>child.type==='h4').props.children),['Avatar','Main photo']);
+    assert.ok(walk(photoSlots[0]).some(n=>n.type!=='h4'&&n.props.children==='Avatar'));
+    assert.ok(React.Children.toArray(photoSlots[1].props.children).includes('Main'));
     if(!onboarding) {
       const shortcuts=nodes.find(n=>n.props.className==='dancer-editor-shortcuts');
       const buttons=walk(shortcuts).filter(n=>n.type==='button');

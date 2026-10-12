@@ -153,15 +153,15 @@ export default function DancerProfileWorkspace({
       </section>
       <section className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-labelledby="dancer-profile-photos-title">
         <header><h3 id="dancer-profile-photos-title">Profile photos</h3></header>
-        <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
-          <h4 id="dancer-main-upload-title">Main photo</h4>
-          <p className="dancer-photo-guidance">Shown on your dancer card.</p>
-          {mainPhotoContent}
-        </div>
         <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">
           <h4 id="dancer-face-photo-title">Avatar</h4>
-          <p className="dancer-photo-guidance">Your profile circle.</p>
+          <p className="dancer-photo-guidance">Profile circle.</p>
           <AvatarUploadBusyContext.Provider value={setAvatarBusy}>{avatarContent}</AvatarUploadBusyContext.Provider>
+        </div>
+        <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
+          <h4 id="dancer-main-upload-title">Main photo</h4>
+          <p className="dancer-photo-guidance">Dancer card photo.</p>
+          {mainPhotoContent}
         </div>
       </section>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-labelledby="dancer-photos-title">
