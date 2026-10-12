@@ -1,7 +1,7 @@
 /* Compact profile editing, scoped away from dashboard navigation and media viewers. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace {
-  --profile-button-bg: #08080c;
-  --profile-button-border: #514d5b;
+  --profile-button-bg: #292929;
+  --profile-button-border: #555555;
   gap: 12px;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-edit {
@@ -36,11 +36,11 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-queue-actions button,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer > button,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-saved-photo-crop button {
-  min-width: 0; min-height: 44px !important; padding: 9px 12px !important;
-  border: 1px solid var(--profile-button-border) !important; border-radius: 10px !important;
-  background: var(--profile-button-bg) !important; color: #f5f3f8 !important;
+  min-width: 0; min-height: 36px !important; padding: 6px 10px !important;
+  border: 1px solid var(--profile-button-border) !important; border-radius: 8px !important;
+  background: var(--profile-button-bg) !important; color: #eeeeee !important;
   -webkit-text-fill-color: currentColor; box-shadow: inset 0 1px 0 #ffffff09 !important;
-  font-size: 13px !important; font-weight: 600 !important; letter-spacing: normal; line-height: 1.35;
+  font-size: 12px !important; font-weight: 600 !important; letter-spacing: normal; line-height: 1.35;
   transition: background-color 120ms ease, border-color 120ms ease;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-view > button,
@@ -49,27 +49,27 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-view > button[aria-pressed='true'],
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-add-media-choices > button[aria-pressed='true'] {
-  border-color: #726080 !important; background: #202027 !important; color: #fff !important;
+  border-color: #777777 !important; background: #363636 !important; color: #eeeeee !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-media > header > button:not(:disabled) {
   border-color: var(--profile-button-border) !important; background: var(--profile-button-bg) !important; white-space: nowrap;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer > button.dancer-workspace-save {
-  min-width: 152px; border-color: #9569d4 !important; background: var(--profile-button-bg) !important; color: #fff !important;
+  min-width: 0; width:fit-content; border-color: var(--profile-button-border) !important; background: var(--profile-button-bg) !important; color: #eeeeee !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer > button.dancer-workspace-save:hover:not(:disabled) {
-  background: #1b1b22 !important; border-color: #b38be8 !important;
+  background: #363636 !important; border-color: #777777 !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-view > button:hover:not(:disabled),
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-add-media-choices > button:hover:not(:disabled),
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-media > header > button:hover:not(:disabled),
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-source-action:hover:not(.is-disabled),
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-action:hover:not(:disabled) {
-  border-color: #777080 !important; background: #1b1b22 !important;
+  border-color: #777777 !important; background: #363636 !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-source-action:focus-within,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-action:focus-visible {
-  outline: 2px solid #c4b5fd !important; outline-offset: 3px;
+  outline: 2px solid #c4c4c4 !important; outline-offset: 3px;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-profile-identity-form {
   gap: 10px;
@@ -213,13 +213,13 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-main-photo-actions button,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-avatar-panel .photo-source-action {
-  padding: 8px !important; font-size: 12px !important;
+  padding: 6px 10px !important; font-size: 12px !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer {
   gap: 8px;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer > button {
-  min-height: 46px !important;
+  min-height: 36px !important;
 }
 }
 
@@ -347,7 +347,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   grid-column:1 / -1; grid-row:4;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-details-save {
-  width:100%; margin-top:8px;
+  width:fit-content; max-width:100%; justify-self:start; margin-top:8px;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-details-status {
   margin:6px 0 0; font-size:12px;
@@ -369,11 +369,11 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   padding:8px; font-size:12px;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] :is(.dancer-details-save, .dancer-avatar-panel .photo-source-action, .dancer-avatar-upload-controls > button, .dancer-main-photo-actions button, .dancer-workspace-media > header > button) {
-  min-height:44px !important; padding:8px 10px !important; border:1px solid #59466d !important;
-  background:linear-gradient(#08080c,#08080c) !important; color:#f5f3f8 !important; box-shadow:none !important;
+  min-height:36px !important; padding:6px 10px !important; border:1px solid var(--profile-button-border) !important;
+  border-radius:8px !important; background:var(--profile-button-bg) !important; color:#eeeeee !important; box-shadow:inset 0 1px 0 #ffffff0a !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] :is(.dancer-details-save, .dancer-avatar-panel .photo-source-action, .dancer-avatar-upload-controls > button, .dancer-main-photo-actions button, .dancer-workspace-media > header > button):hover:not(:disabled):not(.is-disabled) {
-  border-color:#826699 !important; background:linear-gradient(#1b1b22,#1b1b22) !important;
+  border-color:#777777 !important; background:#363636 !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-profile-media-uploads.is-compact {
   margin-top:0;
