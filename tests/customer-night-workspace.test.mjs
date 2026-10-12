@@ -92,12 +92,12 @@ test('new customers see one discovery section without a stack of empty cards', (
   assert.ok(component(ui,'CustomerDealPassPanel').props.accountSavedUnavailable);
 });
 
-test('the next outing leads, working dancers come next, and records remain available in disclosures', () => {
+test('the next outing leads, night planning precedes working dancers, and records remain available in disclosures', () => {
   const nextShift=shift();
   const ui=harness('CustomerPanel',{saved:{goingSignals:[{shiftId:nextShift.id,shift:nextShift}],follows:[{dancer:{id:'a',slug:'star',nextShift}}],dealRedemptions:[{id:'pass',status:'generated',generatedAt:new Date(Date.now()-120000).toISOString(),expiresAt:nextShift.endsAt,venue:nextShift.venue}]}});
   const index=match=>ui.nodes().findIndex(match);
-  assert.ok(index(n=>n.type?.name==='CustomerNextOuting') < index(n=>n.props?.id==='customer-working-now'));
-  assert.ok(index(n=>n.props?.id==='customer-working-now') < index(n=>n.type?.name==='CustomerExplore'));
+  assert.ok(index(n=>n.type?.name==='CustomerNextOuting') < index(n=>n.type?.name==='CustomerExplore'));
+  assert.ok(index(n=>n.type?.name==='CustomerExplore') < index(n=>n.props?.id==='customer-working-now'));
   assert.equal(byId(ui,'customer-pass-wallet').type,'details');
   assert.equal(byId(ui,'customer-plans-list').type,'details');
 });

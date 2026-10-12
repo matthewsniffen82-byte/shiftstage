@@ -475,6 +475,7 @@ export function CustomerPanel({
       {isLoading ? <p className="customer-loading-state" role="status">Loading your night…</p> : null}
       {!accountSavedUnavailable ? <>
         {night.outing ? <CustomerNextOuting outing={night.outing} onDirections={openDirections} pending={Boolean(pendingAction)} now={now} /> : null}
+        <CustomerExplore />
         {workingFollows.length ? <CustomerSurface id="customer-working-now" title="Working Now" description="Dancers you follow, checked in now." count={workingFollows.length}>
           <div className="customer-saved-card-grid customer-followed-dancer-grid">{workingFollows.map(item => <FollowedDancerGridCard key={item.dancerId || item.dancer!.id} dancer={item.dancer!} onUnfollow={() => void unfollowDancer(String(item.dancerId || item.dancer!.id))} pending={Boolean(pendingAction)} unfollowing={pendingAction === `dancer-${item.dancerId || item.dancer!.id}`} />)}</div>
         </CustomerSurface> : null}
@@ -489,7 +490,6 @@ export function CustomerPanel({
           </CustomerSurface>
         </details> : null}
         {welcomeContent}
-        <CustomerExplore />
       </> : <p className="customer-loading-state">Your night is unavailable. Use Try again above to reload your saved activity.</p>}
     </section>
     <section id="customer-view-saved" className="customer-view" hidden={view !== "saved"} aria-label="Saved" tabIndex={-1}>
