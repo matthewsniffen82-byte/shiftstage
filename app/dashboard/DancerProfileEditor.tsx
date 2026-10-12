@@ -550,7 +550,7 @@ export function DancerOnboardingCommand({
   const ageNotRequired = !ageVerified && ageVerification?.required === false;
   const ageAccessAllowed = ageVerified || ageNotRequired;
   const setupDetail = profileReady
-    ? "Your details, face photo, and three profile photos are ready. Videos are optional."
+    ? "Your details, face photo, and three profile photos are ready."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
   const steps = useMemo(() => [
     {
@@ -884,7 +884,7 @@ function dancerProfileSetupBlocker({
   if (approvedProfilePhotoCount(approvedPhotos) < MIN_DANCER_ONBOARDING_PHOTOS) {
     if (pendingPhotos.length) return `Awaiting review: ${approvedPhotos.length} of ${MIN_DANCER_ONBOARDING_PHOTOS} required profile photos approved. You can add photos while you wait.`;
     if (rejectedPhotos.length) return "Needs your action: replace photos that were not approved. Three approved profile photos are required.";
-    return `Add ${MIN_DANCER_ONBOARDING_PHOTOS - approvedPhotos.length} more profile ${MIN_DANCER_ONBOARDING_PHOTOS - approvedPhotos.length === 1 ? "photo" : "photos"}. Videos are optional.`;
+    return `Add ${MIN_DANCER_ONBOARDING_PHOTOS - approvedPhotos.length} more profile ${MIN_DANCER_ONBOARDING_PHOTOS - approvedPhotos.length === 1 ? "photo" : "photos"}.`;
   }
   return "Save the remaining profile changes.";
 }

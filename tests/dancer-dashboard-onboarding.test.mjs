@@ -128,7 +128,7 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(avatarRoute, /isAvatarFaceRequiredError/);
   assert.match(dashboard, /DancerPhotoPanel/);
   assert.match(dashboard, /DancerTvStudio embedded/);
-  assert.match(dancerStudio, /embedded \? \([\s\S]*?Optional · Add videos now or later\./);
+  assert.match(dancerStudio, /embedded \? \([\s\S]*?Add videos now or later\./);
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
   assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
   assert.match(dancerStudio, /Choose the crop and trim for each video/);

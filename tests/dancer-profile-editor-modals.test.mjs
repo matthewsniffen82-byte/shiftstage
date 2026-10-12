@@ -83,7 +83,7 @@ test("photo uploads, arrangement, and deletion reject duplicate and stale work",
 });
 
 test("video editor keeps both permission gates and hides the technical library capacity", () => {
-  assert.match(dancerStudio, /Optional · Add videos now or later\./);
+  assert.match(dancerStudio, /Add videos now or later\./);
   assert.match(dancerStudio, /Confirm permissions/);
   assert.match(dancerStudio, /I am the only person shown, and this video is of me\./);
   assert.match(dancerStudio, /I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains\./);

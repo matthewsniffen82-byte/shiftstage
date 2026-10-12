@@ -65,7 +65,7 @@ test('onboarding starts with the fields and a single Add action opens photo uplo
   const add=nodes.filter(n=>n.type==='button'&&n.props.children==='+ Add photos/videos');
   assert.equal(add.length,1);add[0].props.onClick();
   assert.ok(f.draw().find(n=>n.props.className==='dancer-add-media').props.children.includes('Photo uploader'));
-  assert.ok(f.draw().some(n=>n.type==='button'&&n.props.children==='Video · optional'));
+  assert.ok(f.draw().some(n=>n.type==='button'&&n.props.children==='Video'));
 });
 
 test('compact onboarding still shows failed saves and does not advance',async()=>{

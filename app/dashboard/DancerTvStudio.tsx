@@ -467,7 +467,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       <DancerTvStudioStyles />
       {embedded ? (
         <div className="tv-studio-embedded-head">
-          <p>Optional · Add videos now or later.</p>
+          <p>Add videos now or later.</p>
         </div>
       ) : (
         <div className="tv-studio-head">
