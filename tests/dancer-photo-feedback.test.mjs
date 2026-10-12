@@ -65,6 +65,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
     get labels() { return this.cards.map(card => nodes(card).find(node => node.type === "strong").props.children); },
     get statuses() { return this.cards.map(card => nodes(card).find(node => node.type === "small").props.children); },
     get notes() { return nodes().filter(node => node.type === "em").map(node => node.props.children); },
+    get reviewButtons() { return nodes().filter(node => node.type === "MediaRetryButton"); },
     get buttons() { return nodes().filter(node => node.type === "button"); },
     get replacements() { return nodes().filter(node => node.type === "input" && /^Replace photo/.test(node.props['aria-label'] || '')); },
     get progress() { return nodes().filter(node => node.type === "progress"); },
@@ -193,7 +194,8 @@ test("mixed batches clear approvals while keeping unresolved photos in selection
   releases[2]({ decision: "review", photo: { id: "review", reviewStatus: "pending" } }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Not approved", "Awaiting review"]);
   assert.deepEqual(ui.labels, ["Selected photo 2", "Selected photo 3"]);
-  assert.deepEqual(ui.notes, ["Choose a solo photo."]);
+  assert.equal(ui.notes[0], "Choose a solo photo.");
+  assert.match(ui.notes[1], /manual check before approval/);
   assert.equal(ui.progress.length, 0);
   assert.equal(ui.buttons.filter(button => button.props.children === "Remove").length, 2);
   assert.deepEqual(ui.revoked, []);
@@ -273,7 +275,8 @@ test("saved pending and rejected photos stay above the library with reasons afte
     rejected_photo_reviews: [{ id: 'denied', message: 'Only you can appear in a profile photo.' }],
   } });
   assert.deepEqual(ui.statuses, ['Checking', 'Not approved']);
-  assert.deepEqual(ui.notes, ['Only you can appear in a profile photo.']);
+  assert.match(ui.notes[0], /automatic check is still running/);
+  assert.equal(ui.notes[1], 'Only you can appear in a profile photo.');
   assert.equal(ui.replacements.length, 2);
   ui.close(); ui.reopen();
   assert.deepEqual(ui.statuses, ['Checking', 'Not approved']);
@@ -323,9 +326,29 @@ test("a real pending replacement stays checking until the server approves it", a
   const ui = photoHarness({ read: async () => ({ profile: { dancer_photos: [approved("old")], pending_photo_reviews: [pending()] } }) });
   ui.select(); await ui.settle();
   assert.deepEqual(ui.statuses, ["Checking", "Approved"]);
-  assert.deepEqual(ui.notes, []);
+  assert.equal(ui.notes.length, 1);
+  assert.match(ui.notes[0], /automatic check is still running/);
   ui.updateProfile({ dancer_photos: [approved("replacement")] });
   assert.deepEqual(ui.statuses, ["Approved"]);
+});
+
+test("saved manual-review reasons remain visible after reopening and clear on approval", () => {
+  const profile = { pending_photo_reviews: [{ ...pending(), status: "pending_review", reason_codes: ["person_count_uncertain"] }] };
+  const ui = photoHarness({ uploadOnly: true, profile });
+  assert.match(ui.notes[0], /couldn't confirm that you are the only person/);
+  ui.close(); ui.reopen();
+  assert.match(ui.notes[0], /couldn't confirm that you are the only person/);
+  ui.updateProfile({ dancer_photos: [approved()] });
+  assert.deepEqual(ui.notes, []);
+});
+
+test("initial and retried upload outcomes preserve their reasons when the library cannot supply one", async () => {
+  const ui = photoHarness({ uploadOnly: true, post: async () => ({ decision: "review", moderationRecordId: "review", reasonCodes: ["branding_or_logo_uncertain"] }), read: async () => { throw new Error("Refresh unavailable."); } });
+  ui.select(); await ui.settle();
+  assert.match(ui.notes[0], /Possible branding or a logo/);
+  ui.reviewButtons[0].props.onRetried({ result: { decision: "review", reasonCodes: ["person_count_uncertain"] } });
+  await ui.settle();
+  assert.match(ui.notes[0], /couldn't confirm that you are the only person/);
 });
 
 test("the dashboard keeps same-position pending uploads and the current approved photo distinct", () => {

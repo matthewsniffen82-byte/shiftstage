@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
-import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 import DancerVideoPreviews from "./DancerVideoPreviews";
@@ -43,6 +43,7 @@ type ManagedVideo = {
   status: string;
   reviewNotes?: string | null;
   moderationDecision?: "approved" | "review" | "rejected" | null;
+  moderationReasonCodes?: string[];
   moderationFrameCount?: number;
   submittedAt?: string | null;
   publishedAt?: string | null;
@@ -647,7 +648,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             <strong>Selected video {index + 1}</strong>
             <small>{item?.error ? "Upload failed" : video ? statusLabel(video.status) : item?.stage === "validating" ? "Preparing video" : item?.stage === "uploading" ? "Uploading securely" : item?.stage === "checking" || item?.stage === "submitted" ? "Checking" : "Waiting to upload"}</small>
             {item && !["failed", "submitted"].includes(item.stage) ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
-            {video?.reviewNotes ? <p>{video.reviewNotes}</p> : video?.status === "rejected" ? <p>This video wasn’t approved. Choose a different video.</p> : null}
+            {video ? <p>{mediaReviewExplanation("video", video.status, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes })}</p> : null}
             {item?.error ? <p>{item.error}</p> : null}
             {video && !item?.error ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={videoActionBusy} onBusyChange={setRetrying}
               onRetried={() => { void loadWorkspace({ silent: true }); }} /> : null}

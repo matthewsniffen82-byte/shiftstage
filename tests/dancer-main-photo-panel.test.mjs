@@ -9,7 +9,7 @@ const compile = path => ts.transpileModule(readFileSync(path, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const mapping = {};
-runInNewContext(compile("app/dashboard/DancerPhotoPanel.tsx"), { exports: mapping, require: () => ({}) });
+runInNewContext(compile("app/dashboard/DancerPhotoPanel.tsx"), { exports: mapping, require: name => name === '@/src/lib/dancr/media-review-label' ? mediaReview : {} });
 const code = compile("app/dashboard/DancerMainPhotoPanel.tsx");
 const main = { id: "main", imageUrl: "/main.jpg", is_primary: true, review_status: "approved" };
 const pending = { id: "review", previewUrl: "/private-review.jpg", is_primary: true, status: "pending_review" };

@@ -5,7 +5,7 @@ import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { enqueueDancerContentReviews } from "@/src/lib/dancr/content-reviews";
 import { saveDancerSocialLinks } from "@/src/lib/dancr/social-saves";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
-import { photoRejectionMessage } from "@/src/lib/dancr/image-moderation";
+import { mediaReviewExplanation } from "@/src/lib/dancr/media-review-label";
 import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
 import { acceptDancerProfileSubmissionAgreement, requireDancerAgreementAcceptance } from "@/src/lib/dancr/dancer-agreement";
 import {
@@ -247,7 +247,7 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
   const admin = createAdminSupabaseClient() as any;
   const { data, error } = await admin
     .from("image_moderation_records")
-    .select("id, image_id, final_storage_path, decision, status, upload_context, temporary_storage_path, created_at")
+    .select("id, image_id, final_storage_path, decision, status, reason_codes, review_notes, upload_context, temporary_storage_path, created_at")
     .eq("user_id", userId)
     .eq("decision", "review")
     .neq("upload_context", PROFILE_AVATAR_CONTEXT)
@@ -299,6 +299,7 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
       sort_order: slot.isPrimary ? 0 : slot.sortOrder,
       reviewStatus: "pending",
       review_status: "pending",
+      message: mediaReviewExplanation("photo", "pending", { moderationStatus: review.status, reasonCodes: review.reason_codes, message: review.review_notes }),
     };
     if (!storagePath) return { ...review, ...slotFields, previewUrl: "" };
     const bucket = review.status === "pending_review" ? MODERATION_REVIEW_BUCKET : MODERATION_TEMP_BUCKET;
@@ -348,7 +349,7 @@ async function loadPendingAvatarReview(userId: string) {
 async function loadRejectedPhotoReviews(userId: string) {
   const { data, error } = await createAdminSupabaseClient()
     .from("image_moderation_records")
-    .select("id, decision, status, upload_context, reason_codes, created_at")
+    .select("id, decision, status, upload_context, reason_codes, review_notes, created_at")
     .eq("user_id", userId)
     .eq("decision", "rejected")
     .eq("status", "rejected")
@@ -359,7 +360,7 @@ async function loadRejectedPhotoReviews(userId: string) {
   return (data || []).map(review => {
     const slot = profilePhotoSlotFromUploadContext(review.upload_context);
     return { id: review.id, status: "rejected", isPrimary: slot.isPrimary, sortOrder: slot.sortOrder,
-      message: photoRejectionMessage(review.reason_codes || []) };
+      message: mediaReviewExplanation("photo", "rejected", { reasonCodes: review.reason_codes, message: review.review_notes }) };
   });
 }
 

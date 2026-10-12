@@ -76,11 +76,27 @@ function harness(initial = [], { maxVideos = 50 } = {}) {
 test('saved unresolved videos show reasons and actions while only approvals enter the library', async () => {
   const ui = harness([video('live', 'approved'), video('checking', 'moderating'), video('denied', 'rejected', 'Only you may appear in the video.')]); await ui.settle();
   assert.deepEqual(ui.statuses, ['Checking', 'Not approved']);
-  assert.deepEqual(ui.notes, ['Only you may appear in the video.']);
+  assert.match(ui.notes[0], /automatic check is still running/);
+  assert.equal(ui.notes[1], 'Only you may appear in the video.');
   assert.deepEqual(Array.from(ui.library, item => item.id), ['live']);
   ui.rerender(); assert.deepEqual(ui.statuses, ['Checking', 'Not approved']);
   await ui.refresh([video('live', 'approved'), video('checking', 'approved'), video('denied', 'rejected', 'Only you may appear in the video.')]);
   assert.deepEqual(ui.statuses, ['Not approved']);
+});
+
+test('saved video reasons explain waiting review and replace legacy generic notes', async () => {
+  const ui = harness([
+    { ...video('uncertain', 'submitted', 'Automated safety review requested human review.'), moderationReasonCodes: ['person_count_uncertain'] },
+    { ...video('denied', 'rejected', 'This video did not meet MyDancr TV safety guidelines.'), moderationReasonCodes: ['policy_contact_or_payment_overlay'] },
+    video('no-reason', 'submitted'),
+  ]);
+  await ui.settle();
+  assert.match(ui.notes[0], /couldn't confirm that you are the only person/);
+  assert.match(ui.notes[1], /Remove phone numbers/);
+  assert.match(ui.notes[2], /specific reason wasn't provided/);
+  await ui.refresh([video('uncertain', 'approved'), video('denied', 'approved'), video('no-reason', 'approved')]);
+  assert.deepEqual(ui.notes, []);
+  assert.equal(ui.library.length, 3);
 });
 
 test('submitted video remains visible through refresh failure then moves into the approved library', async () => {

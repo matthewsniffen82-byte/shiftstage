@@ -14,31 +14,34 @@ const loader = route.slice(route.indexOf("async function loadPendingPhotoReviews
 
 test('saved rejection feedback is owner scoped and excludes avatar reviews and private storage', async () => {
   const calls = [], exports = {};
-  const query = new Proxy({ then: resolve => resolve({ data: [{ id: 'rejected-photo', upload_context: 'profile_gallery:2', reason_codes: ['multiple_people_detected'] }] }) }, {
+  const query = new Proxy({ then: resolve => resolve({ data: [
+    { id: 'rejected-photo', upload_context: 'profile_gallery:2', reason_codes: ['multiple_people_detected'] },
+    { id: 'manual-rejection', upload_context: 'profile_gallery:3', reason_codes: ['person_count_uncertain'], review_notes: 'Please replace the photo with one without the mirror reflection of another person.' },
+  ] }) }, {
     get: (target, key) => target[key] || ((...args) => { calls.push([key, ...args]); return query; }),
   });
-  const moderation = read('src/lib/dancr/image-moderation.ts');
-  const reasonHelper = moderation.slice(moderation.indexOf('export function photoRejectionMessage'), moderation.indexOf('function pendingModerationPhoto'));
   const source = route.slice(route.indexOf('async function loadRejectedPhotoReviews'), route.indexOf('function withPhotoUrls'));
-  const context = vm.createContext({ ...slot, exports, MAX_DANCER_PROFILE_PHOTOS: 30, createAdminSupabaseClient: () => ({ from: table => { calls.push(['from', table]); return query; } }) });
-  vm.runInContext(compile(reasonHelper + source), context);
+  const context = vm.createContext({ ...slot, ...mediaReview, exports, MAX_DANCER_PROFILE_PHOTOS: 30, createAdminSupabaseClient: () => ({ from: table => { calls.push(['from', table]); return query; } }) });
+  vm.runInContext(compile(source), context);
   const rows = await context.loadRejectedPhotoReviews('signed-in-owner');
   assert.ok(calls.some(call => call.join(':') === 'eq:user_id:signed-in-owner'));
   assert.ok(calls.some(call => call.join(':') === 'eq:decision:rejected'));
   assert.ok(calls.some(call => call.join(':') === 'eq:status:rejected'));
   assert.ok(calls.some(call => call.join(':') === `neq:upload_context:${slot.PROFILE_AVATAR_CONTEXT}`));
+  assert.ok(calls.some(call => call[0] === 'select' && call[1].includes('review_notes')));
   assert.equal(rows[0].id, 'rejected-photo');
-  assert.match(rows[0].message, /Only you can appear/);
+  assert.match(rows[0].message, /more than one person/);
   assert.equal(rows[0].status, 'rejected');
   assert.equal(rows[0].isPrimary, false);
   assert.ok(!('temporary_storage_path' in rows[0]));
+  assert.equal(rows[1].message, 'Please replace the photo with one without the mirror reflection of another person.');
 });
 
 async function pendingReviews(reviews, photos) {
-  const signed = [];
-  const query = new Proxy({ then: resolve => resolve({ data: reviews }) }, { get: (target, key) => target[key] || (() => query) });
+  const signed = [], calls = [];
+  const query = new Proxy({ then: resolve => resolve({ data: reviews }) }, { get: (target, key) => target[key] || ((...args) => { calls.push([key, ...args]); return query; }) });
   const context = vm.createContext({
-    ...slot, ACTIVE_IMAGE_MODERATION_STATUSES: [], MAX_DANCER_PROFILE_PHOTOS: 30,
+    ...slot, ...mediaReview, ACTIVE_IMAGE_MODERATION_STATUSES: [], MAX_DANCER_PROFILE_PHOTOS: 30,
     MODERATION_REVIEW_BUCKET: "review", MODERATION_TEMP_BUCKET: "temp",
     createAdminSupabaseClient: () => ({
       from: () => query,
@@ -46,8 +49,24 @@ async function pendingReviews(reviews, photos) {
     }),
   });
   vm.runInContext(compile(loader), context);
-  return { rows: await context.loadPendingPhotoReviews("owner", photos), signed };
+  return { rows: await context.loadPendingPhotoReviews("owner", photos), signed, calls };
 }
+
+test("pending reviews query saved reasons for the signed-in owner and return readable explanations", async () => {
+  const { rows, calls } = await pendingReviews([
+    { id: "uncertain", status: "pending_review", reason_codes: ["person_count_uncertain"], upload_context: "profile_gallery:1" },
+    { id: "delayed", status: "moderation_error", reason_codes: ["OPENAI_TIMEOUT"], upload_context: "profile_gallery:2" },
+    { id: "no-reason", status: "pending_review", reason_codes: [], upload_context: "profile_gallery:3" },
+  ], []);
+  assert.ok(calls.some(call => call[0] === "select" && call[1].includes("reason_codes")));
+  assert.ok(calls.some(call => call.join(":") === "eq:user_id:owner"));
+  assert.ok(calls.some(call => call.join(":") === "eq:decision:review"));
+  assert.ok(calls.some(call => call.join(":") === `neq:upload_context:${slot.PROFILE_AVATAR_CONTEXT}`));
+  assert.match(rows[0].message, /couldn't confirm that you are the only person/);
+  assert.match(rows[1].message, /Retry/);
+  assert.doesNotMatch(rows[1].message, /OPENAI|Diagnostic/);
+  assert.match(rows[2].message, /specific reason wasn't provided/);
+});
 
 test("a stale review linked to the same saved approval cannot downgrade it", async () => {
   for (const link of [{ image_id: "approved-photo" }, { final_storage_path: "approved.webp" }]) {

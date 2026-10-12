@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
-import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerInternalMainPhotoPicker from "./DancerInternalMainPhotoPicker";
@@ -117,15 +117,19 @@ export function DancerPhotoPanel({
   }
 
   function reviewRetried(id: string, data: { profile?: Record<string, unknown>; result: any }) {
+    const updateResult = (photo: DancerPhotoItem): DancerPhotoItem => ({
+      ...photo, id: String(data.result.photo?.id || id), status: normalizePhotoStatus(data.result.decision),
+      moderationStatus: data.result.decision,
+      note: mediaReviewExplanation("photo", normalizePhotoStatus(data.result.decision), { moderationStatus: data.result.decision, reasonCodes: data.result.reasonCodes, message: data.result.message }),
+    });
     if (data.profile) {
       confirmLibraryPhotos(data.profile);
       setPhotos(relabelPhotoItems(dancerPhotoItemsFromProfile(data.profile)));
       onProfileChange?.(data.profile);
+    } else {
+      setPhotos(current => current.map(photo => photo.id === id ? updateResult(photo) : photo));
     }
-    setQueuedPhotos(current => current.map(item => item.result?.id === id ? { ...item, result: {
-      ...item.result, id: String(data.result.photo?.id || id), status: normalizePhotoStatus(data.result.decision),
-      moderationStatus: data.result.decision, note: data.result.decision === "rejected" ? data.result.message : "",
-    } } : item));
+    setQueuedPhotos(current => current.map(item => item.result?.id === id ? { ...item, result: updateResult(item.result) } : item));
   }
 
   function confirmLibraryPhotos(nextProfile: Record<string, unknown>) {
@@ -293,7 +297,7 @@ export function DancerPhotoPanel({
             label: "Photo",
             status: uploadStatus,
             moderationStatus: String(data.decision || ""),
-            note: uploadStatus === "rejected" && typeof data.message === "string" ? data.message : photoStatusNote(uploadStatus),
+            note: mediaReviewExplanation("photo", uploadStatus, { moderationStatus: data.decision, reasonCodes: data.reasonCodes, message: data.message }),
             storagePath: String(data.photo?.storage_path || ""),
             isPrimary: Boolean(data.photo?.isPrimary || data.photo?.is_primary),
             sortOrder: Number(data.photo?.sortOrder ?? data.photo?.sort_order ?? uploadSortOrder),
@@ -459,7 +463,8 @@ export function DancerPhotoPanel({
   // Approved photos belong in the gallery. Keep unresolved uploads here and
   // use the refreshed library to retire reviews, even when approval changes IDs.
   const rejectedPhotos: DancerPhotoItem[] = (Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : []).map((review: Record<string, unknown>) => ({
-    id: String(review.id), label: "Photo", imageUrl: "", status: "rejected", note: String(review.message || "Choose another photo."),
+    id: String(review.id), label: "Photo", imageUrl: "", status: "rejected",
+    note: mediaReviewExplanation("photo", "rejected", { reasonCodes: review.reason_codes, message: review.message }),
   }));
   const reviewPhotos = [...photos.filter(photo => photo.status !== "approved"), ...rejectedPhotos].filter(photo => !retiredReviewIds.has(photo.id));
   const libraryIds = new Set([...confirmedPhotoIds, ...dancerPhotoItemsFromProfile(profile).filter(photo => photo.status === "approved").map(photo => photo.id)]);
@@ -633,7 +638,7 @@ export function dancerPhotoItemsFromProfile(
       label: "Photo",
       status: "pending",
       moderationStatus: String(review.status || ""),
-      note: photoStatusNote("pending"),
+      note: mediaReviewExplanation("photo", "pending", { moderationStatus: String(review.status || ""), reasonCodes: review.reason_codes, message: review.message }),
       storagePath: String(review.temporary_storage_path || review.storagePath || ""),
       isPrimary,
       sortOrder: Number(review.sort_order ?? review.sortOrder ?? (isPrimary ? 0 : 0)),
@@ -729,8 +734,7 @@ function photoStatusLabel(status: DancerPhotoItem["status"], moderationStatus?: 
 
 
 function photoStatusNote(status: DancerPhotoItem["status"]) {
-  if (status === "rejected") return "Choose another photo.";
-  return "";
+  return mediaReviewExplanation("photo", status);
 }
 
 
