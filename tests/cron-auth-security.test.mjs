@@ -2,13 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const workerRoutes = [
-  "video-moderation",
-  "shift-checkins",
-  "finance",
-  "image-moderation",
-  "dmca-restoration",
-];
+const workerRoutes = JSON.parse(await readFile(new URL("../vercel.json", import.meta.url), "utf8"))
+  .crons.map(({ path }) => path.replace("/api/cron/", ""));
 
 const [authSource, ...routes] = await Promise.all([
   readFile(new URL("../src/lib/dancr/cron-auth.ts", import.meta.url), "utf8"),

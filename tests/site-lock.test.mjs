@@ -169,7 +169,10 @@ test("only exact worker, health and webhook routes bypass the gate, retaining th
   }
   assert.equal((await f.middleware(new NextRequest(origin + "/api/stripe/webhook"))).status, 401);
   assert.equal((await f.middleware(new NextRequest(origin + "/api/public/performance"))).status, 401);
-  assert.equal((await f.middleware(new NextRequest(origin + "/api/cron/finance", { method: "POST" }))).status, 401);
+  for (const { path } of crons) {
+    assert.equal((await f.middleware(new NextRequest(origin + path, { method: "POST" }))).status, 401, path);
+    assert.equal((await f.middleware(new NextRequest(origin + path + "/extra"))).status, 401, path);
+  }
   assert.equal((await f.middleware(new NextRequest(origin + "/api/stripe/webhook/extra", { method: "POST" }))).status, 401);
 });
 

@@ -21,4 +21,6 @@ Apply `20261012225032_venue_hair_color_analytics.sql` before the app deployment.
 
 Apply `20261012231311_existing_main_photo_hair_colors.sql` to initialize existing photos and include current photo colors in the aggregate. Repeated initialization skips dancers with recorded history and creates no duplicate jobs. The existing four-per-minute worker drains this queue; a full site queue can take longer than a single new upload.
 
+The main-photo worker is included in the site lock's exact GET-only machine-route list. It retains the shared constant-time `CRON_SECRET` guard; browser password cookies are not required for the scheduler. `tests/site-lock.test.mjs` and `tests/cron-auth-security.test.mjs` check all configured cron paths against both boundaries.
+
 Focused checks: `tests/venue-hair-color-postgres.test.mjs`, `tests/hair-color-worker.test.mjs`, `tests/venue-performance-service.test.mjs`, and `tests/venue-admin-presentation.test.mjs`. PGlite and in-memory service/component fixtures cover actual SQL history/aggregation, lease recovery, unknown results, authorization, and UI channel selection. No E2E journeys.
