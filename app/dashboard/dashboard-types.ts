@@ -76,6 +76,7 @@ export type CustomerSavedState = {
     venue?: SavedVenueSummary | null;
   }>;
   goingSignals?: CustomerGoingSignal[];
+  planEntryDeals?: Record<string, string>;
   dealSaves?: Array<{
     dealId: string;
     deviceOnly?: boolean;

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getCustomerSavedClubDeals, getCustomerSavedItems } from "@/src/lib/dancr/customer";
 import { getCustomerDealRedemptions } from "@/src/lib/dancr/deals";
+import { getCustomerPlanEntryDeals } from "@/src/lib/dancr/customer-plan-entry";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -17,7 +18,8 @@ export async function GET(request: Request) {
       getCustomerDealRedemptions(admin, user.id),
       getCustomerSavedClubDeals(admin, user.id),
     ]);
-    const saved = { ...savedItems, dealRedemptions, dealSaves };
+    const planEntryDeals = await getCustomerPlanEntryDeals(admin, savedItems.goingSignals);
+    const saved = { ...savedItems, dealRedemptions, dealSaves, planEntryDeals };
 
     return NextResponse.json({ ok: true, saved, session });
   } catch (error) {

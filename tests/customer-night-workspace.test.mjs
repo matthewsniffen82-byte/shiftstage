@@ -162,6 +162,23 @@ test('plans group by venue-local date and club, excluding cancelled and expired 
   assert.equal(ui.nodes().find(n=>n.props?.['aria-controls']==='customer-plan-groups'),undefined,'one outing needs no Show all control');
 });
 
+test('plans show one Free Entry action per outing only for clubs with a verified offer', () => {
+  const otherClub = { id:'other', slug:'other-club', name:'Other Club' };
+  const signals = [shift(), shift({id:'same-outing'}), shift({id:'other-outing',venue:otherClub})].map(s=>({shiftId:s.id,shift:s}));
+  const entryDeals = { v:'free-deal' };
+  const panel = harness('CustomerPanel',{saved:{goingSignals:signals,planEntryDeals:entryDeals}});
+  assert.equal(component(panel,'CustomerNightPanel').props.entryDeals,entryDeals);
+  const ui = harness('CustomerNightPanel',{signals,entryDeals,isLoading:false,pendingAction:''});
+  ui.nodes().find(n=>n.props?.['aria-controls']==='customer-plan-groups').props.onClick(); ui.render();
+  const entryLinks = () => ui.nodes().filter(n=>n.type==='a' && n.props['aria-label']?.startsWith('Free Entry'));
+  assert.equal(entryLinks().length,1,'the same club action is not repeated for each dancer');
+  assert.equal(entryLinks()[0].props.href,'/deals/transportation/free-deal?sourceType=club_page');
+  assert.equal(entryLinks()[0].props['aria-label'],'Free Entry at Echo House');
+  assert.equal(ui.nodes().filter(n=>n.props?.className==='customer-night-card').length,3);
+  ui.update({entryDeals:{}});
+  assert.equal(entryLinks().length,0,'removed offers lose their action on refresh');
+});
+
 test('plans preview the next outing, expand without duplicates and retain cancellation and directions', () => {
   const upcoming = shift({id:'later',startsAt:new Date(Date.now()+86_400_000).toISOString(),endsAt:new Date(Date.now()+90_000_000).toISOString()});
   const next = shift({id:'next'}), sameOuting = shift({id:'same-outing'});

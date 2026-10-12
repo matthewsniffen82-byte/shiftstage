@@ -475,7 +475,7 @@ export function CustomerPanel({
         {night.plans.length ? <details className="customer-night-disclosure customer-plans" id="customer-plans-list" open={plansExpanded} onToggle={event => setPlansExpanded(event.currentTarget.open)}>
           <summary>Your plans <span>{night.plans.length}</span></summary>
           <div id="customer-going" className="customer-plans-content" tabIndex={-1}>
-            <CustomerNightPanel isLoading={isLoading} onCancelGoing={cancelGoing} onDirections={openDirections} pendingAction={pendingAction} signals={night.plans} />
+            <CustomerNightPanel entryDeals={saved?.planEntryDeals} isLoading={isLoading} onCancelGoing={cancelGoing} onDirections={openDirections} pendingAction={pendingAction} signals={night.plans} />
             <p className="customer-plans-note">I’m Going is a plan, not a confirmed booking.</p>
           </div>
         </details> : null}
@@ -515,12 +515,14 @@ export function CustomerPanel({
 
 
 function CustomerNightPanel({
+  entryDeals = {},
   isLoading,
   onCancelGoing,
   onDirections,
   pendingAction,
   signals,
 }: {
+  entryDeals?: Record<string, string>;
   isLoading: boolean;
   onCancelGoing: (shiftId: string) => void;
   onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
@@ -549,7 +551,10 @@ function CustomerNightPanel({
   return <div className="customer-night-panel" tabIndex={-1}>
     <div className="customer-night-list" id="customer-plan-groups">
       {(showAllPlans ? outings : outings.slice(0, 1)).map(([key, group]) => <section className="customer-plan-group" key={key}>
-        <header><span>{group.label}</span><h3>{group.venue.name || "Club"}</h3><small>{[group.venue.city, group.venue.state].filter(Boolean).join(", ")}</small></header>
+        <header>
+          <div className="customer-plan-location"><span>{group.label}</span><h3>{group.venue.name || "Club"}</h3><small>{[group.venue.city, group.venue.state].filter(Boolean).join(", ")}</small></div>
+          {group.venue.id && entryDeals[group.venue.id] ? <div className="customer-card-actions customer-plan-entry"><Link className="customer-primary" href={`/deals/transportation/${encodeURIComponent(entryDeals[group.venue.id])}?sourceType=club_page`} aria-label={`Free Entry at ${group.venue.name || "this club"}`}>Free Entry <span aria-hidden="true">›</span></Link></div> : null}
+        </header>
         {group.plans.map(item => {
           const shift = item.shift!, dancer = shift.dancer, venue = shift.venue;
           const shiftLabel = customerShiftLabel(shift);

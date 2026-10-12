@@ -47,8 +47,11 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-past-pass { display:flex; justify-content:space-between; align-items:center; gap:16px; min-height:64px; padding:12px 0; border-top:1px solid #ffffff0e; color:#c2b7cd; font-size:12px; text-decoration:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-past-pass strong { display:block; color:#e3dce9; font-weight:500; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-past-pass small { display:block; margin-top:5px; color:var(--customer-muted); }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header { padding:0 0 8px; line-height:1.4; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header>span { color:#c4a4e9; font-size:11px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 12px; padding:0 0 8px; line-height:1.4; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-location { flex:1 1 150px; min-width:0; overflow-wrap:anywhere; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-location>span { color:#c4a4e9; font-size:11px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-entry { flex:0 0 auto; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-entry a { gap:8px; white-space:nowrap; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header h3 { margin:3px 0 2px; font-size:15px; font-weight:600; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header small { color:var(--customer-muted); font-size:11px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group+.customer-plan-group { border-top:1px solid #ffffff12; padding-top:12px; }
