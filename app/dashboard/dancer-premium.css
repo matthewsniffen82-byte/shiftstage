@@ -124,11 +124,11 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-current { background:#ac83ee; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-complete { background:#52c995; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps { display:grid; gap:10px !important; padding:0 !important; margin:8px 0 0 !important; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > li { overflow:visible !important; padding:0 !important; border:1px solid #303039 !important; border-radius:14px !important; background:#0d0d12 !important; box-shadow:none; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-current { border-color:#80609f !important; box-shadow:inset 2px 0 #a77bdd; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > li { overflow:visible !important; padding:0 !important; border:1px solid #3b3b3f !important; border-radius:14px !important; background:#0d0d12 !important; box-shadow:none !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-current { border-color:#6f5a84 !important; box-shadow:none !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > li > button { width:100%; min-height:60px; border:0 !important; border-radius:14px !important; padding:12px !important; text-align:left; background:transparent !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > li > button[aria-expanded='true'] { background:#15131c !important; border-radius:14px 14px 0 0 !important; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-current > button { background:#21182e !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-current > button { background:#21182e !important; box-shadow:none !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-locked > button { opacity:1; cursor:not-allowed; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-panel { padding:14px !important; border-top:1px solid #303039; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-control { font-size:12px; }

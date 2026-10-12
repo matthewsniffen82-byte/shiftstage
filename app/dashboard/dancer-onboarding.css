@@ -13,8 +13,8 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onb
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-complete { border-color: #57cc96; background: #1b694b; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress-track > .is-not-required { color: #d0c9dc; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-progress b { color: #d0c9dc; font-size: 11px; text-align: left; font-weight: 500; white-space: normal; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > li { min-width: 0; border: 1px solid #302d37; background: #0c0b10; box-shadow: none; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-current { border-color: #b48af7; box-shadow: inset 2px 0 #b48af7; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > li { min-width: 0; border: 1px solid #3b3b3f; background: #0c0b10; box-shadow: none; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-current { border-color: #6f5a84; box-shadow: none; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > li > button { min-height: 64px; gap: 9px; padding: 10px !important; border: 0 !important; box-shadow: none !important; background: linear-gradient(#101015,#101015) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-steps > .is-current > button { background: linear-gradient(#281b3b,#281b3b) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-step-marker { background: #292630; color: #c6c1cf; border: 0; }
