@@ -1,0 +1,112 @@
+/* The guided builder shares the existing editor, uploaders, and photo dimensions. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] [hidden] {
+  display:none !important;
+}
+body.dancr-button-system #dancer-dashboard .dancer-builder-steps {
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px;
+  margin:0 0 20px; padding:0 0 12px; border-bottom:1px solid #302936;
+}
+body.dancr-button-system #dancer-dashboard .dancer-builder-heading {
+  display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; margin-bottom:16px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-builder-title {
+  margin:0; font-size:20px; line-height:1.3; scroll-margin-top:24px;
+}
+body.dancr-button-system #dancer-dashboard .dancer-builder-requirement {
+  color:#c7bfce; font-size:12px; line-height:1.4;
+}
+body.dancr-button-system #dancer-dashboard .dancer-builder-requirement[data-state='saved'] { color:#62d4a4; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit {
+  gap:12px !important;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit > .dancer-workspace-card {
+  margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important;
+}
+body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry { display:grid; gap:10px; }
+body.dancr-button-system #dancer-dashboard .dancer-builder-upload-types { display:flex; gap:8px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-footer {
+  position:static !important; display:flex; flex-direction:column; gap:6px; padding:12px 0 0 !important;
+  margin:12px 0 0 !important; border:0 !important; background:transparent !important; box-shadow:none !important;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-workspace-next-step {
+  flex-basis:auto; font-size:13px; color:#c7bfce;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-media-upload-rules:not([open]) > summary > span {
+  display:none;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-builder-video-uploader > .tv-studio-embedded {
+  padding:0 !important; margin:0 !important; border:0 !important; background:transparent !important;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-guided-upload-form {
+  padding:12px; border:1px solid #41364f; border-radius:12px; background:#100a18;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos {
+  margin-top:8px !important; padding-top:16px !important; border-top:1px solid #302936 !important;
+}
+body.dancr-button-system #dancer-dashboard .dancer-builder-card-preview {
+  display:grid; justify-items:start; gap:6px; margin:16px 0; color:#bdb5c9; font-size:12px;
+}
+body.dancr-button-system #dancer-dashboard .dancer-builder-preview-gallery-heading {
+  display:flex; align-items:center; justify-content:space-between; gap:8px; margin:16px 0 8px;
+}
+body.dancr-button-system #dancer-dashboard .dancer-builder-preview-gallery-heading h4 { margin:0; }
+
+/* Override shared button treatments only for these lightweight navigation/edit targets. */
+@layer dancr-profile-builder-controls {
+  body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button,
+  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-types > button,
+  body.dancr-button-system #dancer-dashboard .dancer-builder-back {
+    min-width:0 !important; min-height:44px !important; height:auto !important; margin:0 !important; padding:8px !important;
+    background:transparent !important; color:#c7bfce !important; -webkit-text-fill-color:currentColor !important;
+    border:1px solid transparent !important; box-shadow:none !important; font-size:12px !important;
+  }
+  body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button {
+    display:flex !important; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    white-space:normal !important; line-height:1.3 !important; border-radius:10px !important;
+  }
+  body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button[aria-current='step'],
+  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-types > button[aria-pressed='true'] {
+    background:linear-gradient(#20102f,#20102f) !important; border-color:#8b5cf6 !important; color:#f5f3ff !important;
+  }
+  body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button > span { color:#bda3f9; font-size:11px; }
+  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button {
+    width:100% !important; min-height:48px !important; border:1px solid #8b5cf6 !important;
+    background:linear-gradient(#20102f,#20102f) !important; color:#f5f3ff !important; -webkit-text-fill-color:currentColor !important; box-shadow:none !important;
+  }
+  body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main) {
+    position:relative; min-width:0 !important; margin:0 !important; padding:0 !important; overflow:hidden;
+    border:0 !important; background:transparent !important; color:#f5f3ff !important; -webkit-text-fill-color:currentColor !important;
+    box-shadow:none !important; transform:none !important;
+  }
+  body.dancr-button-system #dancer-dashboard button.dancer-preview-edit-avatar {
+    width:48px !important; height:48px !important; min-height:48px !important; flex:0 0 48px; border-radius:50% !important;
+  }
+  body.dancr-button-system #dancer-dashboard button.dancer-preview-edit-avatar img { width:100%; height:100%; object-fit:cover; }
+  body.dancr-button-system #dancer-dashboard button.dancer-preview-edit-identity {
+    display:grid !important; gap:4px; text-align:left !important; min-height:48px !important; white-space:normal !important;
+  }
+  body.dancr-button-system #dancer-dashboard .dancer-preview-edit-identity strong { font-size:24px; line-height:1.2; }
+  body.dancr-button-system #dancer-dashboard .dancer-preview-edit-identity span { color:#bdb5c9; font-size:14px; }
+  body.dancr-button-system #dancer-dashboard button.dancer-preview-edit-main {
+    display:block !important; width:calc((min(100vw,1440px) - 88px) / 3) !important; max-width:100%;
+    height:auto !important; min-height:0 !important; aspect-ratio:9 / 16; border-radius:8px !important;
+  }
+  body.dancr-button-system #dancer-dashboard .dancer-preview-edit-main img { display:block; width:100%; height:100%; object-fit:cover; object-position:center top; }
+  body.dancr-button-system #dancer-dashboard .dancer-preview-edit-main strong {
+    position:absolute; inset:auto 0 0; padding:30px 8px 8px; text-align:left; font-size:14px; background:linear-gradient(transparent,#09070dec);
+  }
+  body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-types,.dancer-builder-upload-entry) > button::before,
+  body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-types,.dancer-builder-upload-entry) > button::after,
+  body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main,.dancer-builder-back)::before,
+  body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main,.dancer-builder-back)::after { content:none !important; }
+  body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-types,.dancer-builder-upload-entry) > button:focus-visible,
+  body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main,.dancer-builder-back):focus-visible {
+    outline:2px solid #c4b5fd !important; outline-offset:3px !important;
+  }
+  @media (max-width:899px) {
+    body.dancr-button-system #dancer-dashboard button.dancer-preview-edit-main { width:calc((100vw - 56px) / 3) !important; }
+  }
+  @media (max-width:720px) {
+    body.dancr-button-system #dancer-dashboard button.dancer-preview-edit-main { width:calc((100vw - 44px) / 3) !important; }
+  }
+}

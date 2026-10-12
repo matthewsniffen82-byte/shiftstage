@@ -36,11 +36,13 @@ export default function DancerProfileMediaUploads({
   onMediaPinned,
   onProfileChange,
   compact = false,
+  expanded = false,
   mediaType,
   disabled = false,
   photoActions,
 }: {
   compact?: boolean;
+  expanded?: boolean;
   mediaType?: "photos" | "videos";
   disabled?: boolean;
   photoActions?: (id: string) => ReactNode;
@@ -182,8 +184,8 @@ export default function DancerProfileMediaUploads({
         const label = isPhoto ? "Photo" : "Video";
         const items = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos.filter((video) => !deletedVideoIds.has(video.id));
         if (compact && !items.length && (isPhoto || (!isVideoLoading && !videoError))) return null;
-        const Group = compact ? "details" : "div";
-        const Heading = compact ? "summary" : "header";
+        const Group = compact && !expanded ? "details" : "div";
+        const Heading = compact && !expanded ? "summary" : "header";
         return (
           <Group className="profile-upload-group" key={section}>
             <Heading>

@@ -562,7 +562,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       ) : null}
 
       {workspace && (!atVideoLimit || replacement) ? (
-        <DancerUploadDisclosure label="Add videos" defaultOpen={!uploadOnly} openRequested={Boolean(replacement)}>
+        <DancerUploadDisclosure kind="videos" label="Add videos" defaultOpen={!uploadOnly} openRequested={Boolean(replacement)}>
         <section className="tv-upload-form" aria-label="Add profile videos">
           <DancerMediaUploadRules kind="video" />
           {replacement ? <p className="tv-upload-permissions" role="status">Choose a replacement video.<button type="button" disabled={videoActionBusy} onClick={() => setReplacement(undefined)}>Cancel replacement</button></p> : null}

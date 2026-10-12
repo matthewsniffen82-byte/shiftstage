@@ -500,7 +500,7 @@ export function DancerPhotoPanel({
 
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
-      <DancerUploadDisclosure label="Add photos" defaultOpen={!uploadOnly || approvedPhotos.length < MIN_DANCER_ONBOARDING_PHOTOS}>
+      <DancerUploadDisclosure kind="photos" label="Add photos" defaultOpen={!uploadOnly || approvedPhotos.length < MIN_DANCER_ONBOARDING_PHOTOS}>
       <div className="dancer-photo-upload-form">
         <DancerMediaUploadRules kind="photo" />
         {!uploadOnly && !approvedPhotos.length ? <div className="photo-upload-heading">

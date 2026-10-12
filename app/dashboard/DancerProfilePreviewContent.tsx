@@ -5,9 +5,10 @@ import { DancerPhotoCarousel } from "@/app/dancers/[slug]/DancerPhotoCarousel";
 import { requestDancerInternalMainPhotoJson } from "./dashboard-session";
 import type { DancerPhotoItem, DancerPreviewVideo } from "./dashboard-types";
 
-export default function DancerProfilePreviewContent({ name, city, avatarUrl, photos, videos, isPublic, onboarding, slug }: {
+export default function DancerProfilePreviewContent({ name, city, avatarUrl, photos, videos, isPublic, onboarding, slug, onEdit }: {
   name: string; city: string; avatarUrl: string; photos: DancerPhotoItem[]; videos: DancerPreviewVideo[];
   isPublic: boolean; onboarding: boolean; slug: string;
+  onEdit?: (section: string) => void;
 }) {
   const [audience, setAudience] = useState<"public" | "club">("public");
   const [clubPhoto, setClubPhoto] = useState<{ id: string; source: string } | null>(null);
@@ -26,25 +27,36 @@ export default function DancerProfilePreviewContent({ name, city, avatarUrl, pho
   const main = photos.find(photo => photo.isPrimary) || photos[0];
   const club = clubPhoto?.source === photoIds ? photos.find(photo => photo.id === clubPhoto.id) : null;
   return <section className="dancer-workspace-preview" aria-label="Profile preview">
-    <div className="dancer-workspace-view" role="group" aria-label="Preview audience">
+    {!onboarding ? <div className="dancer-workspace-view" role="group" aria-label="Preview audience">
       <button type="button" aria-pressed={audience === "public"} onClick={() => setAudience("public")}>Public profile</button>
       <button type="button" aria-pressed={audience === "club"} onClick={() => setAudience("club")}>Club display</button>
-    </div>
-    <p className="dancer-preview-note">Draft preview · Approved media only. {onboarding ? "Your profile becomes available after setup." : isPublic ? "Your saved profile is public." : "Your public profile is hidden."}</p>
+    </div> : null}
+    <p className="dancer-preview-note">{onboarding ? "Tap your name, avatar, or dancer card to edit. Private until setup is complete." : `Draft preview · Approved media only. ${isPublic ? "Your saved profile is public." : "Your public profile is hidden."}`}</p>
     {audience === "public" ? <>
       <header className="dancer-preview-identity">
-        {avatarUrl ? <img src={avatarUrl} alt="Profile circle preview" /> : <span className="dancer-preview-avatar-placeholder" aria-label="Face photo missing" />}
-        <div><h2>{name || "Your stage name"}</h2><p>{city || "Your city"}</p></div>
+        {onEdit ? <button className="dancer-preview-edit-avatar" type="button" aria-label="Edit avatar" onClick={() => onEdit("dancer-face-photo")}>
+          {avatarUrl ? <img src={avatarUrl} alt="" /> : <span aria-hidden="true">+</span>}
+        </button> : avatarUrl ? <img src={avatarUrl} alt="Profile circle preview" /> : <span className="dancer-preview-avatar-placeholder" aria-label="Face photo missing" />}
+        {onEdit ? <button className="dancer-preview-edit-identity" type="button" aria-label="Edit name and city" onClick={() => onEdit("dancer-details-section")}>
+          <strong>{name || "Your stage name"}</strong><span>{city || "Your city"}</span>
+        </button> : <div><h2>{name || "Your stage name"}</h2><p>{city || "Your city"}</p></div>}
       </header>
-      <p className="dancer-preview-note">Guests also see current club activity when available. This preview shows your profile details and media.</p>
+      {onEdit ? <div className="dancer-builder-card-preview">
+        <button className="dancer-preview-edit-main" type="button" aria-label="Edit main photo" onClick={() => onEdit("dancer-main-photo")}>
+          {main?.imageUrl ? <img src={main.imageUrl} alt="Your dancer card" /> : <span>Add main photo</span>}
+          <strong>{name || "Your stage name"}</strong>
+        </button>
+        <span>Your dancer card</span>
+      </div> : <p className="dancer-preview-note">Guests also see current club activity when available. This preview shows your profile details and media.</p>}
+      {onEdit ? <div className="dancer-builder-preview-gallery-heading"><h4>Profile gallery</h4><button type="button" onClick={() => onEdit("dancer-profile-media-library")}>Edit photos/videos</button></div> : null}
       <div className="dancer-profile-preview-overlay dancer-profile-inline-preview"><DancerPhotoCarousel stageName={name || "Your profile"}
         photos={photos.map(photo => ({ id: photo.id, imageUrl: photo.imageUrl, isPinned: photo.isPinned, isPrimary: photo.isPrimary, sortOrder: photo.sortOrder }))}
         videos={videos.filter(video => video.status === "approved" && video.videoUrl).map(video => ({ ...video, publishedAt: video.createdAt }))} /></div>
       {!main ? <p>Add profile photos to see your gallery.</p> : null}
-      <details className="dancer-preview-card-example"><summary>See your discovery card</summary><div className="dancer-club-preview-card">
+      {!onboarding ? <details className="dancer-preview-card-example"><summary>See your discovery card</summary><div className="dancer-club-preview-card">
         {main?.imageUrl ? <img src={main.imageUrl} alt="Public discovery card preview" /> : <div className="dancer-preview-placeholder">Add a main photo</div>}
         <div><strong>{name || "Your stage name"}</strong><span>{city || "Your city"}</span></div>
-      </div></details>
+      </div></details> : null}
       {isPublic && slug ? <a href={`/dancers/${encodeURIComponent(slug)}`} target="_blank" rel="noopener noreferrer">Open saved public profile ↗</a> : null}
     </> : <>
       <p className="dancer-preview-note">Your club roster photo and stage name. Appearing at a club also depends on your check-in and channel choice.</p>

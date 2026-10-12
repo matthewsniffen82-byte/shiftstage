@@ -38,6 +38,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     './DancerPhotoPanel': { dancerPhotoItemsFromProfile: p => p?.photos || [], relabelPhotoItems: p => p },
     './useDancerProfileVideos': { useDancerProfileVideos: () => ({ uploadedVideos: [], setUploadedVideos() {}, isMediaLoading: false, mediaError: '' }) },
     './DancerDashboardIdentity': { DancerDashboardIcon: 'Icon' },
+    './DancerProfileUploadContext': { DancerProfileUploadContext: { Provider: 'UploadProvider' } },
     '@/app/dancers/[slug]/DancerPhotoCarousel': { DancerPhotoCarousel: 'Carousel' },
   };
   const exports = {};
@@ -72,12 +73,16 @@ const props = { profile, draftIdentity: { stageName: 'Star', city: 'Las Vegas' }
 const editingProps = { ...props, draftIdentity: { stageName: 'Draft', city: 'Las Vegas' } };
 const readyProfile = { ...profile, photos: [...profile.photos, { id: 'extra-one', status: 'approved' }, { id: 'extra-two', status: 'approved' }] };
 
-test('onboarding and live editing share the same explicit save; only onboarding continues', async () => {
+test('onboarding saves before preview; returning editors save without advancing onboarding', async () => {
   for (const onboarding of [true, false]) {
     const ui = harness(editorFile, { ...editingProps, profile: readyProfile, onboarding });
     await ui.click(onboarding ? 'Continue' : 'Save changes');
     assert.equal(ui.saves, 1);
-    assert.equal(ui.continuing, onboarding ? 1 : 0);
+    assert.equal(ui.continuing, 0);
+    if (onboarding) {
+      await ui.click('Continue to verification');
+      assert.equal(ui.continuing, 1);
+    }
   }
 });
 
@@ -160,7 +165,8 @@ test('pending face reviews prevent continuing, and only approved photos count to
   assert.equal(ui.continuing, 0);
   assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Face photo: awaiting review/.test(node.props.children)));
   ui.update({ profile: readyProfile });
-  await ui.click('Continue'); assert.equal(ui.continuing, 1);
+  await ui.click('Continue'); assert.equal(ui.continuing, 0);
+  await ui.click('Continue to verification'); assert.equal(ui.continuing, 1);
 });
 
 test('saving details never advances past a pending main photo', async () => {
@@ -168,4 +174,24 @@ test('saving details never advances past a pending main photo', async () => {
   await ui.click('Continue');
   assert.equal(ui.saves, 0); assert.equal(ui.continuing, 0);
   assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Main photo: awaiting review/.test(node.props.children)));
+});
+
+test('onboarding preview offers direct identity, avatar, and main-photo editing with the public gallery', () => {
+  const edited = [];
+  const ui = harness('app/dashboard/DancerProfilePreviewContent.tsx', {
+    name: 'Kay', city: 'Las Vegas', avatarUrl: '/face.jpg',
+    photos: [{ id: 'main', isPrimary: true, imageUrl: '/main.jpg' }],
+    videos: [{ id: 'approved-video', status: 'approved', videoUrl: '/approved.mp4' }, { id: 'pending-video', status: 'submitted', videoUrl: '/pending.mp4' }],
+    isPublic: false, onboarding: true, slug: 'kay', onEdit: area => edited.push(area),
+  });
+  for (const label of ['Edit name and city', 'Edit avatar', 'Edit main photo']) {
+    ui.nodes().find(n => n.props?.['aria-label'] === label).props.onClick();
+  }
+  ui.button('Edit photos/videos').props.onClick();
+  assert.deepEqual(edited, ['dancer-details-section', 'dancer-face-photo', 'dancer-main-photo', 'dancer-profile-media-library']);
+  const gallery = ui.nodes().find(n => n.type === 'Carousel');
+  assert.deepEqual(Array.from(gallery.props.photos, p => p.id), ['main']);
+  assert.deepEqual(Array.from(gallery.props.videos, p => p.id), ['approved-video']);
+  assert.equal(ui.button('Club display'), undefined);
+  assert.ok(!ui.nodes().some(n => n.props?.children === 'See your discovery card'));
 });

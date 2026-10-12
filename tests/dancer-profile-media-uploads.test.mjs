@@ -61,6 +61,14 @@ test("compact approved libraries collapse with counts while keeping their conten
   assert.doesNotMatch(html, /<details class="profile-upload-group" open/);
 });
 
+test("guided onboarding shows approved libraries immediately without nested expand controls", () => {
+  const html = render({ compact: true, expanded: true, photos: [{ id: "p", imageUrl: "/p.jpg", status: "approved" }], videos: [{ id: "v", videoUrl: "/v.mp4", status: "approved" }] });
+  assert.equal((html.match(/<div class="profile-upload-group">/g) || []).length, 2);
+  assert.match(html, /<header><strong>Photos<\/strong><span>1 added<\/span><\/header>/);
+  assert.match(html, /src="\/p.jpg"/);
+  assert.doesNotMatch(html, /<details class="profile-upload-group"/);
+});
+
 test("tapping a compact gallery photo opens its editing menu and retains View photo", () => {
   const tree = Uploads({ ...defaultProps, compact: true, photos: [{ id: "p", imageUrl: "/p.jpg", status: "approved" }] });
   const menu = { open: false };
