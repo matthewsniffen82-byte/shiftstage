@@ -34,19 +34,19 @@ export async function PATCH(request: Request, { params }: RouteProps) {
     }
     const { user } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
     const admin = createAdminSupabaseClient();
-    await enforceDancerMediaRequestRateLimit(admin, {
-      media: "video",
-      request,
-      userId: user.id,
-    });
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_TV_ACTION_BODY_BYTES,
       invalidMessage: "Invalid video action request.",
       tooLargeMessage: "Video action request is too large.",
     });
-    if (body?.action !== "submit" && body?.action !== "retry") {
+    if (body?.action !== "submit" && body?.action !== "retry" && body?.action !== "dismiss-rejected") {
       return NextResponse.json({ ok: false, error: "Invalid video action." }, { status: 400 });
     }
+    if (body.action === "dismiss-rejected") {
+      const video = await hideOwnMyDancrTvVideo(admin, user.id, id, true);
+      return NextResponse.json({ ok: true, dismissedId: video.id }, { headers: { "Cache-Control": "no-store" } });
+    }
+    await enforceDancerMediaRequestRateLimit(admin, { media: "video", request, userId: user.id });
     const video = body.action === "retry" ? await queueOwnMyDancrTvReviewRetry(admin, user.id, id) : await submitMyDancrTvUpload(
       admin,
       user.id,

@@ -410,6 +410,29 @@ test('pending deletion stops when approval wins after its initial read',async()=
   assert.deepEqual(removed,[]);
 });
 
+for (const status of ['moderating','pending_review','moderation_error','approved']) test('automatic photo cleanup preserves '+status+' reviews',async()=>{
+  const record=await review(101,{status,decision:status==='approved'?'approved':'review'});
+  const {client,removed}=applicationClient();
+  const {deleteOwnDancerPhoto}=applicationModule('../src/lib/dancr/dancer.ts','deleteOwnDancerPhoto',{PublicApiError,PROFILE_AVATAR_CONTEXT:'profile_avatar',safeErrorMetadata:()=>({})});
+  await assert.rejects(deleteOwnDancerPhoto(client,owner,record.recordId,client,undefined,true),e=>e.status===409);
+  assert.equal((await allReviews()).length,1);assert.deepEqual(removed,[]);
+});
+
+test('automatic photo cleanup cannot remove an approved library photo',async()=>{
+  const saved=await photo(200),{client,removed}=applicationClient();
+  const {deleteOwnDancerPhoto}=applicationModule('../src/lib/dancr/dancer.ts','deleteOwnDancerPhoto',{PublicApiError});
+  await assert.rejects(deleteOwnDancerPhoto(client,owner,saved.id,client,undefined,true),e=>e.status===409);
+  assert.equal((await allPhotos()).length,1);assert.deepEqual(removed,[]);
+});
+
+test('automatic photo cleanup cannot delete a rejection that was approved after its read',async()=>{
+  const record=await review(101,{status:'rejected',decision:'rejected'});
+  const {client,removed}=applicationClient({beforeDelete:()=>pg.query("update image_moderation_records set decision='approved',status='approved' where id=$1",[record.recordId])});
+  const {deleteOwnDancerPhoto}=applicationModule('../src/lib/dancr/dancer.ts','deleteOwnDancerPhoto',{PublicApiError,PROFILE_AVATAR_CONTEXT:'profile_avatar',safeErrorMetadata:()=>({})});
+  await assert.rejects(deleteOwnDancerPhoto(client,owner,record.recordId,client,undefined,true),e=>e.status===409);
+  assert.equal((await allReviews())[0].decision,'approved');assert.deepEqual(removed,[]);
+});
+
 test('approval cannot resurrect a cancelled pending record after an uncertain deletion response',async()=>{
   const record=await review(101),lost={code:'08006'};
   const {client,removed}=applicationClient({afterDelete:()=>{throw lost;}});

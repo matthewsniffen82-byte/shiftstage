@@ -59,9 +59,10 @@ function harness(initial = [], { maxVideos = 50 } = {}) {
   const ui = {
     calls, revoked,
     async settle() { for (let i = 0; i < 3; i++) { await new Promise(resolve => setImmediate(resolve)); render(); } },
-    get reviews() { return nodes().filter(node => /^tv-upload-queue-item/.test(node.props?.className || '')); },
-    get statuses() { return this.reviews.map(card => nodes(card).find(node => node.type === 'small').props.children); },
-    get notes() { return this.reviews.flatMap(card => nodes(card).filter(node => node.type === 'p').map(node => node.props.children)); },
+    get notices() { return nodes().filter(node => node.type === './DancerRejectedUploadNotice'); },
+    get reviews() { return nodes().filter(node => node.type === './DancerRejectedUploadNotice' || /^tv-upload-queue-item/.test(node.props?.className || '')); },
+    get statuses() { return this.reviews.map(card => card.type === './DancerRejectedUploadNotice' ? 'Not approved' : nodes(card).find(node => node.type === 'small').props.children); },
+    get notes() { return this.reviews.flatMap(card => card.type === './DancerRejectedUploadNotice' ? [card.props.message] : nodes(card).filter(node => node.type === 'p').map(node => node.props.children)); },
     get library() { return nodes().find(node => node.type === './DancerVideoPreviews')?.props.videos || []; },
     get sourceButtons() { return nodes().filter(node => node.type === 'button' && node.props.className?.includes('tv-video-source-action')); },
     setPermission(index, checked) { nodes().filter(node => node.type === 'input' && node.props.type === 'checkbox')[index].props.onChange({ target: { checked } }); render(); },
@@ -148,18 +149,21 @@ test('asynchronous video rejection keeps the same upload with the rejection reas
   await ui.refresh([video(id, 'rejected', 'Remove the contact overlay.')]);
   assert.deepEqual(ui.statuses, ['Not approved']); assert.deepEqual(ui.notes, ['Remove the contact overlay.']);
   assert.equal(ui.library.length, 0); assert.equal(ui.reviews.length, 1);
+  ui.notices[0].props.onDismiss(); await ui.settle();
+  assert.equal(ui.reviews.length, 0); assert.equal(ui.revoked.length, 1);
+  assert.equal(ui.library.length, 0);
 });
 
 test('replacement at the video limit preserves the original on picker and crop cancellation', async () => {
-  const ui = harness([video('denied', 'rejected', 'Choose a different video.')], { maxVideos: 1 }); await ui.settle();
+  const ui = harness([video('waiting', 'submitted')], { maxVideos: 1 }); await ui.settle();
   ui.click('Replace'); ui.permissions(); ui.select([]); await ui.settle();
   assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
   ui.cancelCrop(true); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Not approved']); assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
+  assert.deepEqual(ui.statuses, ['Awaiting review']); assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
 });
 
 test('failed replacement remains retryable and never puts an unapproved video in the library', async () => {
-  const ui = harness([video('denied', 'rejected')], { maxVideos: 1 }); await ui.settle();
+  const ui = harness([video('waiting', 'submitted')], { maxVideos: 1 }); await ui.settle();
   ui.click('Replace'); ui.permissions(); ui.setUploadError(true); ui.select(); await ui.settle();
   assert.deepEqual(ui.statuses, ['Upload failed']); assert.equal(ui.library.length, 0);
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);

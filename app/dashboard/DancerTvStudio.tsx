@@ -9,6 +9,7 @@ import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 import DancerVideoPreviews from "./DancerVideoPreviews";
+import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import {
   readDashboardAccessToken,
@@ -485,6 +486,19 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     }
   }
 
+  function dismissRejectedVideo(videoId: string) {
+    setWorkspace(current => current ? { ...current, videos: current.videos.filter(video => video.id !== videoId),
+      remainingVideoSlots: Math.min(current.maxVideos, current.remainingVideoSlots + 1) } : current);
+    setQueuedVideos(current => current.filter(item => {
+      if (item.uploadId !== videoId) return true;
+      queuedPreviewUrlsRef.current.delete(item.previewUrl);
+      URL.revokeObjectURL(item.previewUrl);
+      return false;
+    }));
+    setReplacement(current => current?.videoId === videoId ? undefined : current);
+    announceDancerProfileVideosChanged();
+  }
+
   const videoActionBusy = isSubmitting || retrying || Boolean(removingId) || Boolean(pinningId);
   useEffect(() => { onBusyChange?.(videoActionBusy); return () => onBusyChange?.(false); }, [videoActionBusy, onBusyChange]);
 
@@ -638,7 +652,9 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
       {reviews.length ? <div className="tv-upload-queue" aria-label="Videos awaiting approval">
         <strong>Video uploads · {reviews.length}</strong>
-        {reviews.map(({ item, video }, index) => <article className={`tv-upload-queue-item ${item && uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
+        {reviews.map(({ item, video }, index) => video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
+          label={item?.file.name || `Video ${index + 1}`} message={mediaReviewExplanation("video", video.status, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes })}
+          disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item ${item && uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
           {item?.previewUrl || video?.videoUrl ? <video className="tv-upload-preview" muted playsInline preload="metadata"
             src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
           <div>

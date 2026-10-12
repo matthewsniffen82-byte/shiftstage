@@ -23,7 +23,11 @@ function fixture(kind, { denied = false, limited = false } = {}) {
     '@/src/lib/dancr/media-request-rate-limit': { DancerMediaRateLimitError: RateLimitError,
       enforceDancerMediaRequestRateLimit: async (_admin, input) => { calls.push(['limit', input.userId]); if (limited) throw new RateLimitError(); } },
     '@/src/lib/dancr/image-moderation': { retryOwnDancerPhotoReview: retry },
-    '@/src/lib/dancr/tv': { queueOwnMyDancrTvReviewRetry: retry, retryMyDancrTvAutomatedModeration: async (_admin, id) => calls.push(['worker', id]) },
+    '@/src/lib/dancr/dancer': { deleteOwnDancerPhoto: async (_client, owner, mediaId, _admin, _after, rejectedOnly) => {
+      calls.push(['dismiss', owner, mediaId, rejectedOnly]); return { id: mediaId };
+    } },
+    '@/src/lib/dancr/tv': { queueOwnMyDancrTvReviewRetry: retry, retryMyDancrTvAutomatedModeration: async (_admin, id) => calls.push(['worker', id]),
+      hideOwnMyDancrTvVideo: async (_admin, owner, mediaId, rejectedOnly) => { calls.push(['dismiss', owner, mediaId, rejectedOnly]); return { id: mediaId }; } },
     '@/src/lib/server-job': { VIDEO_PROCESSING_ROUTE_TIMEOUT_MS: 270000, VIDEO_PROCESSING_JOB_TIMEOUT_MS: 240000, runWithServerJob: job => job() },
   };
   const path = kind === 'photo' ? 'app/api/dancer/photos/route.ts' : 'app/api/dancer/tv/videos/[id]/route.ts';
@@ -34,6 +38,20 @@ function fixture(kind, { denied = false, limited = false } = {}) {
   }), { params: Promise.resolve({ id }) }) };
 }
 for (const kind of ['photo', 'video']) {
+  test(`${kind} dismissal is owner scoped, rejection-only and does not start moderation`, async () => {
+    const h = fixture(kind, { limited: true });
+    const response = await h.run({ action: 'dismiss-rejected', photoId: id, userId: 'attacker' });
+    assert.equal(response.status, 200); assert.equal((await response.json()).dismissedId, id);
+    assert.deepEqual(h.calls.map(call => call[0]), ['auth', 'dismiss']);
+    assert.deepEqual(h.calls[1], ['dismiss', 'owner', id, true]);
+    assert.equal(h.calls[0][1].allowProfileSetup, true);
+    assert.equal(h.background.length, 0);
+  });
+  test(`${kind} dismissal requires a dancer session`, async () => {
+    const h = fixture(kind, { denied: true });
+    assert.equal((await h.run({ action: 'dismiss-rejected', photoId: id })).status, 401);
+    assert.ok(!h.calls.some(call => call[0] === 'dismiss'));
+  });
   test(`${kind} retry uses authenticated ownership and rate limiting`, async () => {
     const h = fixture(kind); const response = await h.run();
     assert.equal(response.status, 200); assert.equal((await response.json()).ok, true);

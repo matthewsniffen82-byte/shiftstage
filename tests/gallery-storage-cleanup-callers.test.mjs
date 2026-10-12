@@ -69,7 +69,7 @@ function harness(kind,outcome='retired'){
   safeErrorMetadata:()=>({code:'synthetic'}),...runtime.cleanup,...runtime.responsive,...runtime.watermark};
  const dancer=load('src/lib/dancr/dancer.ts',dependencies,'refreshOwnPhotoReviewStatus=async()=>{};');
  const administrator=load('src/lib/dancr/admin.ts',dependencies,'logAdminAction=async()=>{};');
- const run=(scheduleCleanup)=>kind==='owner'||kind==='pending'?dancer.deleteOwnDancerPhoto(client,owner,kind==='pending'?reviewId:photoId,client,scheduleCleanup)
+ const run=(scheduleCleanup,rejectedOnly=false)=>kind==='owner'||kind==='pending'?dancer.deleteOwnDancerPhoto(client,owner,kind==='pending'?reviewId:photoId,client,scheduleCleanup,rejectedOnly)
   :kind==='avatar'?dancer.deleteOwnDancerAvatar(client,owner,client)
   :kind==='admin-photo'?administrator.deleteAdminDancerPhoto(client,{dancerId:profile,targetId:photoId,adminId:owner})
   :administrator.deleteAdminDancerProfile(client,{dancerId:profile,adminId:owner});
@@ -97,6 +97,15 @@ for(const kind of ['owner','pending']) test(kind+' photo deletion confirms metad
  await jobs[0]();
  assert.equal(h.files.size,0);
  assert.equal(h.events.filter(e=>e.kind==='rpc'&&e.name==='claim_gallery_storage_retirement').length,1);
+});
+
+test('automatic rejected photo cleanup persists before its notice disappears and is idempotent',async()=>{
+ const h=harness('pending'),jobs=[];
+ Object.assign(h.rows.image_moderation_records[0],{decision:'rejected',status:'rejected'});
+ const result=await h.run(job=>jobs.push(job),true);
+ assert.ok(result.deletedIds.includes(reviewId));assert.equal(h.rows.image_moderation_records.length,0);
+ assert.equal(jobs.length,1);await jobs[0]();assert.equal(h.files.size,0);
+ assert.ok((await h.run(undefined,true)).deletedIds.includes(reviewId));
 });
 
 test('photo DELETE registers deferred cleanup with the response lifetime',()=>{

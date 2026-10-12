@@ -17,6 +17,7 @@ export async function deleteOwnDancerPhoto(
   photoId: string,
   adminClient: DancrClient = client,
   scheduleStorageCleanup?: (cleanup: () => Promise<void>) => void,
+  rejectedOnly = false,
 ) {
   const profile = await getOwnDancerProfile(adminClient, userId);
   const { data: photo, error: photoError } = await client
@@ -28,6 +29,9 @@ export async function deleteOwnDancerPhoto(
 
   if (photoError) throw photoError;
   if (photo) {
+    if (rejectedOnly && photo.review_status !== "rejected") {
+      throw new PublicApiError("CONFLICT", "This photo is no longer rejected. Refresh your profile.", 409);
+    }
     const photoIds = [String(photo.id)];
     const photoReviewStatusMayChange = String(photo.review_status || "").toLowerCase() === "pending";
 
@@ -38,12 +42,13 @@ export async function deleteOwnDancerPhoto(
     console.log("PHOTO_DELETE_BY_ID", {
       requestedCount: 1,
     });
-    const { data: deletedRows, error: deleteError } = await adminClient
+    let deleteQuery = adminClient
       .from("dancer_photos")
       .delete()
       .eq("dancer_id", profile.id)
-      .eq("id", photo.id)
-      .select("id");
+      .eq("id", photo.id);
+    if (rejectedOnly) deleteQuery = deleteQuery.eq("review_status", "rejected");
+    const { data: deletedRows, error: deleteError } = await deleteQuery.select("id");
     if (deleteError) throw deleteError;
     const deletedIds = (deletedRows || []).map((row: any) => row.id);
     console.log("PHOTO_DELETE_RESULT", {
@@ -105,7 +110,10 @@ export async function deleteOwnDancerPhoto(
     .maybeSingle();
 
   if (moderationError) throw moderationError;
-  if (!moderationRecord) throw new Error("Photo not found.");
+  if (!moderationRecord) {
+    if (rejectedOnly) return { id: photoId, deletedIds: [photoId] };
+    throw new Error("Photo not found.");
+  }
 
   console.log("PHOTO_DELETE_CLICKED", {
     kind: "moderation_record",
@@ -114,15 +122,16 @@ export async function deleteOwnDancerPhoto(
   console.log("PHOTO_DELETE_BY_ID", {
     requestedCount: 1,
   });
-  const { data: deletedModerationRows, error: deleteModerationError } = await (adminClient as any)
+  let deleteReviewQuery = (adminClient as any)
     .from("image_moderation_records")
     .delete()
     .eq("id", moderationRecord.id)
     .eq("user_id", userId)
     .is("image_id", null)
     .neq("decision", "approved")
-    .neq("upload_context", PROFILE_AVATAR_CONTEXT)
-    .select("id");
+    .neq("upload_context", PROFILE_AVATAR_CONTEXT);
+  if (rejectedOnly) deleteReviewQuery = deleteReviewQuery.eq("decision", "rejected").eq("status", "rejected");
+  const { data: deletedModerationRows, error: deleteModerationError } = await deleteReviewQuery.select("id");
   if (deleteModerationError) throw deleteModerationError;
   const deletedIds = (deletedModerationRows || []).map((row: any) => row.id);
   console.log("PHOTO_DELETE_RESULT", {

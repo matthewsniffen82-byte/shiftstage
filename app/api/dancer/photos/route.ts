@@ -71,13 +71,17 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   try {
-    const { user, session } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
+    const { client, user, session } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
     const body = await readBoundedJsonObject(request, { maxBytes: MAX_PHOTO_ACTION_BODY_BYTES,
       invalidMessage: "Invalid photo retry request.", tooLargeMessage: "Photo retry request is too large." });
-    if (body.action !== "retry" || typeof body.photoId !== "string" || !UUID_PATTERN.test(body.photoId)) {
+    if (!["retry", "dismiss-rejected"].includes(String(body.action)) || typeof body.photoId !== "string" || !UUID_PATTERN.test(body.photoId)) {
       return NextResponse.json({ ok: false, error: "Invalid photo retry request." }, { status: 400 });
     }
     const admin = createAdminSupabaseClient();
+    if (body.action === "dismiss-rejected") {
+      const photo = await deleteOwnDancerPhoto(client, user.id, body.photoId, admin, after, true);
+      return NextResponse.json({ ok: true, dismissedId: photo.id, session }, { headers: { "Cache-Control": "no-store" } });
+    }
     await enforceDancerMediaRequestRateLimit(admin, { media: "image", request, userId: user.id });
     const result = await retryOwnDancerPhotoReview(admin, user.id, body.photoId);
     return NextResponse.json({ ok: true, ...result, session }, { headers: { "Cache-Control": "no-store" } });

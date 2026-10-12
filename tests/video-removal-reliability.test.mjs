@@ -46,9 +46,30 @@ function harness(options={}){
   if(options.lostStorageReplyAt===stage)throw new Error('Synthetic lost storage acknowledgment');
   return {data:existed?[{name:paths[0]}]:[],error:null};
  }}}}};
- return {client,calls,files,run:(actor=owner,id=video)=>exports.hideOwnMyDancrTvVideo(client,actor,id)};
+ return {client,calls,files,run:(actor=owner,id=video,rejectedOnly=false)=>exports.hideOwnMyDancrTvVideo(client,actor,id,rejectedOnly)};
 }
 const state=async()=> (await db.query('select to_jsonb(v) row from public.mydancr_tv_videos v where id=$1',[video])).rows[0].row;
+
+test('automatic rejection cleanup hides the rejected video, frees its slot, and can retry cleanup',async()=>{
+ await db.query("update public.mydancr_tv_videos set status='rejected',moderation_decision='rejected' where id=$1",[video]);
+ const h=harness();await h.run(owner,video,true);assert.equal((await state()).status,'hidden');assert.equal(h.files.size,0);
+ await h.run(owner,video,true);assert.equal((await state()).status,'hidden');
+});
+for(const status of ['approved','submitted','moderating','uploading'])test('automatic cleanup never removes '+status+' videos',async()=>{
+ await db.query('update public.mydancr_tv_videos set status=$1 where id=$2',[status,video]);
+ const h=harness();await assert.rejects(h.run(owner,video,true),/no longer rejected/);
+ assert.equal((await state()).status,status);assert.equal(h.files.size,4);assert.equal(h.calls.length,1);
+});
+test('manual rejection cleanup can retry after hiding even when the original AI decision was review',async()=>{
+ await db.query("update public.mydancr_tv_videos set status='rejected',moderation_decision='review' where id=$1",[video]);
+ const h=harness({storageErrorAt:1});await assert.rejects(h.run(owner,video,true));assert.equal((await state()).status,'hidden');
+ await h.run(owner,video,true);assert.equal(h.files.size,0);
+});
+test('automatic cleanup loses safely to approval between read and write',async()=>{
+ await db.query("update public.mydancr_tv_videos set status='rejected',moderation_decision='rejected' where id=$1",[video]);
+ const h=harness({beforeUpdate:()=>db.query("update public.mydancr_tv_videos set status='approved' where id=$1",[video])});
+ await assert.rejects(h.run(owner,video,true));assert.equal((await state()).status,'approved');assert.equal(h.files.size,4);
+});
 test('actual owner removal confirms native hidden state before deleting the video, poster, archive and mobile copy',async()=>{
  const before=await importSnapshot(db),h=harness(),result=await h.run();
  assert.deepEqual(JSON.parse(JSON.stringify(result)),{id:video,status:'hidden'});assert.deepEqual(h.calls.map(c=>c.kind),['read','update','remove','remove','remove','remove']);assert.equal(h.files.size,0);assert.equal((await state()).venue_featured,false);

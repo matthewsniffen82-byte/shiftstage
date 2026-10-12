@@ -1,0 +1,27 @@
+.dancer-rejected-upload-notice {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid #70434f;
+  border-radius: 8px;
+  background: #211319;
+  color: #f4dce2;
+  overflow-wrap: anywhere;
+}
+
+.dancer-rejected-upload-notice strong {
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.dancer-rejected-upload-notice p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: inherit;
+}
+
+.dancer-rejected-upload-notice button {
+  justify-self: start;
+  min-height: 44px;
+}

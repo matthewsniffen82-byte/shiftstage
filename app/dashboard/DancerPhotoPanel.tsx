@@ -7,6 +7,7 @@ import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerInternalMainPhotoPicker from "./DancerInternalMainPhotoPicker";
+import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import { requestDancerMediaPin } from "./dashboard-session";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import type { LoadState, DancerPhotoItem, DancerPhotoQueueItem } from "./dashboard-types";
@@ -51,6 +52,7 @@ export function DancerPhotoPanel({
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
+  const dismissedRejectionsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     mountedRef.current = true;
@@ -165,6 +167,23 @@ export function DancerPhotoPanel({
       URL.revokeObjectURL(item.previewUrl);
       return false;
     }));
+  }
+
+  function dismissRejectedPhoto(id: string) {
+    dismissedRejectionsRef.current.add(id);
+    setRetiredReviewIds(current => new Set(current).add(id));
+    setPhotos(current => current.filter(photo => photo.id !== id));
+    setQueuedPhotos(current => current.filter(item => {
+      if (item.result?.id !== id) return true;
+      queuedPreviewUrlsRef.current.delete(item.previewUrl);
+      URL.revokeObjectURL(item.previewUrl);
+      return false;
+    }));
+    if (profile) onProfileChange?.({ ...profile,
+      rejected_photo_reviews: (Array.isArray(profile.rejected_photo_reviews) ? profile.rejected_photo_reviews : []).filter((review: Record<string, unknown>) => !dismissedRejectionsRef.current.has(String(review.id))),
+      dancer_photos: (Array.isArray(profile.dancer_photos) ? profile.dancer_photos : []).filter((photo: Record<string, unknown>) => !dismissedRejectionsRef.current.has(String(photo.id))),
+    });
+    setStatus(current => /not approved/.test(current) ? "" : current);
   }
 
   function beginPhotoAction() {
@@ -541,6 +560,9 @@ export function DancerPhotoPanel({
           {!uploadOnly ? <strong>Upload status · {reviews.length}</strong> : null}
           {reviews.map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
+            if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
+              label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
+              disabled={photoActionBusy} onDismiss={() => dismissRejectedPhoto(result.id)} />;
             return (
               <div className={`photo-review-card is-${result?.status || "pending"} ${item && uploadingQueueItemId === item.id && item.stage !== "complete" ? "is-uploading" : ""}`.trim()} key={item?.id || result?.id}>
                 <div className="photo-preview" style={{ backgroundImage: `url(${item?.previewUrl || result?.imageUrl || ""})` }} aria-label="Photo preview">{!item?.previewUrl && !result?.imageUrl ? <span>Photo</span> : null}</div>

@@ -1693,7 +1693,7 @@ const RETRYABLE_VIDEO_MODERATION_REASON_CODES = new Set([
   "public_watermark_processing_failed",
 ]);
 
-export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, videoId: string) {
+export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, videoId: string, rejectedOnly = false) {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
     .select("id, dancer_id, submitted_by, storage_path, storage_mime, status, updated_at, moderation_details, upload_edit")
@@ -1702,6 +1702,10 @@ export async function hideOwnMyDancrTvVideo(admin: AdminClient, userId: string, 
     .maybeSingle();
   if (error) throw error;
   if (!video) throw new Error("Video not found.");
+  // Hidden is an already completed removal whose file cleanup may need retrying.
+  if (rejectedOnly && video.status !== "rejected" && video.status !== "hidden") {
+    throw new Error("This video is no longer rejected. Refresh your videos.");
+  }
   if (video.id !== videoId || video.submitted_by !== userId
     || typeof video.dancer_id !== "string" || !MYDANCR_TV_VIDEO_ID_PATTERN.test(video.dancer_id)
     || typeof video.updated_at !== "string" || !Number.isFinite(Date.parse(video.updated_at))) {
