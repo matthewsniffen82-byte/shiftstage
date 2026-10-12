@@ -20,8 +20,16 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit {
   gap:8px !important;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] {
+/* Give the entire Create profile frame the public gallery's width plus an 8px
+   inset on each side. Its 1px border and 7px padding contain the media fully. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-profile-media {
   --builder-gallery-width:calc(min(100vw,var(--profile-shell-max-width,1180px)) - 2 * var(--dancer-discovery-content-gutter,12px));
+  --builder-frame-width:calc(var(--builder-gallery-width) + 16px);
+  box-sizing:border-box; width:var(--builder-frame-width); max-width:none; justify-self:center;
+  margin-inline:calc((100% - var(--builder-frame-width)) / 2); border-width:1px !important;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-profile-media-panel {
+  box-sizing:border-box; width:100%; min-width:0; padding:8px 7px !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit > .dancer-workspace-card {
   margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important;
@@ -77,13 +85,13 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .profile-upload-group { gap:6px; }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .profile-upload-group > header strong { font-size:16px; }
 
-/* Center the gallery across the panel's inset to reproduce the public profile's
-   actual responsive width, three columns, 10px gaps, and 9:16 crop. The strip
-   stays within the page gutters; fullscreen viewers keep their own sizing. */
+/* The enclosing frame now provides the public profile's actual gallery width.
+   Both media types fill it normally with three columns, 10px gaps, and 9:16
+   frames; no negative gallery margins or overflow beyond the builder border. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] :is(.profile-upload-items,.dancer-profile-inline-preview .profile-media-grid) {
   display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; gap:10px;
-  width:var(--builder-gallery-width); min-width:0; min-height:0; max-width:none; margin:0;
-  margin-inline:calc((100% - var(--builder-gallery-width)) / 2); padding:0; overflow:visible;
+  box-sizing:border-box; width:100%; min-width:0; min-height:0; max-width:100%; margin:0;
+  padding:0; overflow:visible;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] :is(.profile-upload-thumbnail,.dancer-profile-inline-preview .profile-media-grid-item) {
   box-sizing:border-box; display:block; width:100%; height:auto; min-height:0; max-height:none;
