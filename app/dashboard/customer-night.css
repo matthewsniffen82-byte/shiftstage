@@ -236,6 +236,59 @@ body.dancr-button-system #customer-dashboard .customer-plans > summary { min-hei
 body.dancr-button-system #customer-dashboard .customer-plans > summary::-webkit-details-marker { display:none; }
 body.dancr-button-system #customer-dashboard .customer-plans-content { min-width:0; padding:12px; border-top:1px solid var(--customer-line); }
 body.dancr-button-system #customer-dashboard .customer-plans-note { margin:10px 0 0; color:var(--customer-muted); font-size:11px; line-height:1.4; }
+/* Match the venue cards' utility faces only inside Your plans. */
+html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans
+  :is(.customer-night-actions > a,.customer-night-actions > button,.customer-card-menu > summary,.customer-card-menu > div > a,.customer-card-menu > div > button,.customer-plans-expand > button) {
+  --customer-plan-utility-face:#15151b; --customer-plan-utility-edge:#34343c;
+  position:relative; isolation:isolate; min-height:44px !important; margin:0 !important; padding:8px 10px !important;
+  border:1px solid var(--customer-plan-utility-edge) !important; border-radius:12px !important;
+  color:#f1f5f9 !important; background:linear-gradient(var(--customer-plan-utility-face),var(--customer-plan-utility-face)) !important;
+  font-size:11px !important; font-weight:700 !important; line-height:1.2 !important; letter-spacing:0; text-shadow:none !important;
+  color-scheme:only light; -webkit-appearance:none; appearance:none; box-shadow:none !important; filter:none !important;
+  -webkit-backdrop-filter:none !important; backdrop-filter:none !important;
+}
+html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans .customer-card-menu > div {
+  width:160px; min-width:0; max-width:calc(100vw - 24px); padding:4px; border:1px solid #34343c; border-radius:12px;
+  background:linear-gradient(#08080c,#08080c); box-shadow:0 8px 24px #0008;
+}
+@media (hover:hover) {
+  html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans
+    :is(.customer-night-actions > a,.customer-night-actions > button,.customer-card-menu > summary,.customer-card-menu > div > a,.customer-card-menu > div > button,.customer-plans-expand > button):not(:disabled):hover {
+    --customer-plan-utility-face:#231b2e; --customer-plan-utility-edge:#66586f;
+  }
+}
+/* The same foreground paint layer as venue utilities avoids Samsung's native gray button face. */
+html:is(.is-android,.android-rendering) body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans
+  :is(.customer-night-actions > a,.customer-night-actions > button,.customer-card-menu > summary,.customer-card-menu > div > a,.customer-card-menu > div > button,.customer-plans-expand > button) {
+  --customer-plan-utility-face:#050507;
+}
+html:is(.is-android,.android-rendering) body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans
+  :is(.customer-night-actions > a,.customer-night-actions > button,.customer-card-menu > summary,.customer-card-menu > div > a,.customer-card-menu > div > button,.customer-plans-expand > button)::before {
+  content:"" !important; position:absolute !important; inset:-1px !important; display:block !important;
+  border:1px solid var(--customer-plan-utility-edge) !important; border-radius:inherit !important;
+  background:linear-gradient(var(--customer-plan-utility-face),var(--customer-plan-utility-face)) !important;
+  box-shadow:none !important; opacity:1 !important; transform:none !important; filter:none !important; z-index:-1; pointer-events:none !important;
+}
+html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans .customer-plan-entry > .customer-primary {
+  position:relative; min-height:44px !important; padding:8px 11px !important; border-radius:13px !important;
+  border-color:var(--dancr-color-avatar-ring-violet) !important; color:var(--dancr-color-text-primary) !important;
+  background:linear-gradient(135deg,var(--dancr-color-brand-primary),var(--dancr-color-brand-primary-deep)) !important;
+  box-shadow:var(--dancr-shadow-brand-control) !important; font-size:12px !important; font-weight:650 !important; line-height:1.3 !important;
+}
+@supports (-webkit-touch-callout:none) {
+  html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans .customer-plan-entry > .customer-primary {
+    border-color:#5636a5 !important; background:linear-gradient(135deg,#240293,#1b0165) !important;
+  }
+}
+@media (max-width:720px) {
+  html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans .customer-plan-entry > .customer-primary {
+    height:38px !important; min-height:38px !important; padding-block:5px !important; overflow:visible !important;
+  }
+  html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans .customer-plan-entry > .customer-primary::after {
+    content:"" !important; position:absolute !important; inset:-4px -1px !important; border:0 !important;
+    background:none !important; box-shadow:none !important; pointer-events:auto;
+  }
+}
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans-expand { margin-top:8px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-disclosure > .customer-surface { border:0; border-top:1px solid var(--customer-line); border-radius:0 0 14px 14px; background:transparent; box-shadow:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-card { padding:8px 0; border:0; background:transparent; box-shadow:none; align-items:center; border-radius:0; }
