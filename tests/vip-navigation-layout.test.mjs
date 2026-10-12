@@ -48,18 +48,23 @@ test('height measurements degrade safely without ResizeObserver and ignore inact
   }
 });
 
-test('navigation and filters own measured refs while the dancer fieldset is no longer a nested keyboard scroller', async () => {
+test('navigation and the complete dancer header own measured refs while the roster uses document scrolling', async () => {
   const ui = dashboardHarness(); await ui.settle();
   assert.ok(ui.nodes().find(node => node.type === 'main').props.ref);
   assert.ok(ui.nodes().find(node => node.type === 'nav').props.ref); ui.unmount();
   const planner = plannerHarness();
-  assert.ok(planner.nodes().find(node => node.props?.className === 'vip-roster-filters').props.ref);
+  const header = planner.nodes().find(node => node.props?.className === 'vip-roster-header');
+  assert.ok(header.props.ref);
+  assert.ok(planner.nodes(header).some(node => node.type === 'h3' && node.props.children === 'Choose your dancers'));
+  assert.ok(planner.nodes(header).some(node => node.props?.type === 'search'));
+  assert.ok(planner.nodes(header).some(node => node.props?.className === 'vip-roster-filters'));
   const grid = planner.nodes().find(node => node.props?.className === 'vip-dancers');
+  assert.ok(!planner.nodes(header).includes(grid));
   assert.equal(grid.props.tabIndex, undefined);
   assert.ok(planner.nodes(grid).some(node => node.props?.className === 'vip-dancer-favorite'));
 });
 
-test('the opaque filter bar sits below the safe-area-aware navigation and the roster uses document scrolling', () => {
+test('the dancer box sticks from its heading below safe-area-aware navigation instead of from the filter buttons', () => {
   const root = postcss.parse(readFileSync(new URL('../app/vip/vip-working-alerts.css', import.meta.url), 'utf8'));
   const rules = [];
   root.walkRules(rule => rules.push(rule));
@@ -68,19 +73,21 @@ test('the opaque filter bar sits below the safe-area-aware navigation and the ro
   const prefix = 'body.dancr-button-system #vip-dashboard ';
   const nav = values(prefix + '.vip-dashboard-nav');
   const filters = values(prefix + '.vip-roster-filters[role=group]');
+  const header = values(prefix + '.vip-roster-header');
   assert.equal(nav.top, 'env(safe-area-inset-top, 0px)');
-  assert.equal(filters.position, 'sticky');
-  assert.equal(filters.top, 'calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height))');
-  assert.equal(filters['z-index'], '4');
-  assert.equal(filters['padding-block'], '4px'); assert.equal(filters['box-shadow'], 'none');
-  assert.equal(filters.background, 'linear-gradient(#3b254b, #3b254b) top / 100% 1px no-repeat, linear-gradient(#100b15, #100b15)');
+  assert.equal(filters.position, undefined);
+  assert.equal(header.position, 'sticky');
+  assert.equal(header.top, 'calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height))');
+  assert.equal(header['z-index'], '4');
+  assert.equal(header['padding-block'], '4px'); assert.equal(header['box-shadow'], 'none');
+  assert.equal(header.background, 'linear-gradient(#3b254b, #3b254b) top / 100% 1px no-repeat, linear-gradient(#100b15, #100b15)');
   assert.equal(filters['grid-template-columns'], 'repeat(3, minmax(0, 1fr))');
   const grid = values(prefix + '.vip-dancers');
   assert.equal(grid['max-height'], 'none'); assert.equal(grid.overflow, 'visible'); assert.equal(grid['overscroll-behavior-y'], 'auto');
   const tile = values(prefix + ':is(.vip-dancer, .vip-dancer a, .vip-dancer button, .vip-dancer input)');
-  assert.match(tile['scroll-margin-top'], /var\(--vip-nav-height\).*var\(--vip-filter-height\)/);
+  assert.match(tile['scroll-margin-top'], /var\(--vip-nav-height\).*var\(--vip-roster-header-height\)/);
   assert.match(tile['scroll-margin-bottom'], /120px.*safe-area-inset-bottom/);
   const short = rules.find(rule => rule.parent.params === '(max-height: 500px)' && rule.selector.includes('.vip-dashboard-nav'));
-  assert.ok(short.selector.includes('.vip-roster-filters'));
+  assert.ok(short.selector.includes('.vip-roster-header'));
   assert.ok(short.nodes.some(node => node.prop === 'position' && node.value === 'static'));
 });

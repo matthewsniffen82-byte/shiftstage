@@ -29,8 +29,8 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
   const [detailsOpen, setDetailsOpen] = useState(editing);
   const roster = useRef<HTMLElement | null>(null);
   const details = useRef<HTMLElement | null>(null);
-  const filters = useRef<HTMLDivElement | null>(null);
-  useVipElementHeight(filters, roster, "--vip-filter-height", !detailsOpen);
+  const rosterHeader = useRef<HTMLDivElement | null>(null);
+  useVipElementHeight(rosterHeader, roster, "--vip-roster-header-height", !detailsOpen);
   const scope = requestableOnly ? dancers.filter(dancer => dancer.canRequest !== false) : dancers;
   const filterResults = dancerFilters.map(item => ({ ...item, dancers: filterVipDancers(scope, search, item.id, draft.selected) }));
   const visible = filterResults.find(item => item.id === filter)!.dancers;
@@ -47,10 +47,13 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
     {editing && <div className="vip-actions"><button type="button" disabled={busy} onClick={onCancelEdit}>Cancel editing</button></div>}
     {editing && unavailableSelections && <p role="status">Some originally requested dancers are no longer available to request. Review your selection before saving.</p>}
     <div className="vip-plan-grid">
-      <section className="vip-panel vip-roster-panel" ref={roster} id="vip-choose-dancers" tabIndex={-1} hidden={detailsOpen} aria-label="Choose your dancers"><div className="vip-step-heading"><span>1</span><div><h3>Choose your dancers</h3><small>{dancers.filter(dancer => dancer.canRequest !== false).length} at this club · {working} working now</small></div></div>
-        <div className="vip-library-toolbar"><label className="vip-search"><span className="vip-sr-only">Search dancers by stage name</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search my dancers" disabled={busy} /></label>
-          <label className="vip-library-venue-filter"><input type="checkbox" checked={requestableOnly} disabled={busy} onChange={event => setRequestableOnly(event.target.checked)} />Requestable</label></div>
-        <div ref={filters} className="vip-roster-filters" role="group" aria-label="Dancer filters">{filterResults.map(({ id, label, dancers: matches }) => <button key={id} type="button" aria-label={`${label}, ${matches.length} ${matches.length === 1 ? "dancer" : "dancers"}`} aria-pressed={filter === id} onClick={() => setFilter(id)} disabled={busy}><span className="vip-filter-label">{label}</span><span className="vip-filter-count" aria-hidden="true">{matches.length}</span></button>)}</div>
+      <section className="vip-panel vip-roster-panel" ref={roster} id="vip-choose-dancers" tabIndex={-1} hidden={detailsOpen} aria-label="Choose your dancers">
+        <div ref={rosterHeader} className="vip-roster-header">
+          <div className="vip-step-heading"><span>1</span><div><h3>Choose your dancers</h3><small>{dancers.filter(dancer => dancer.canRequest !== false).length} at this club · {working} working now</small></div></div>
+          <div className="vip-library-toolbar"><label className="vip-search"><span className="vip-sr-only">Search dancers by stage name</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search my dancers" disabled={busy} /></label>
+            <label className="vip-library-venue-filter"><input type="checkbox" checked={requestableOnly} disabled={busy} onChange={event => setRequestableOnly(event.target.checked)} />Requestable</label></div>
+          <div className="vip-roster-filters" role="group" aria-label="Dancer filters">{filterResults.map(({ id, label, dancers: matches }) => <button key={id} type="button" aria-label={`${label}, ${matches.length} ${matches.length === 1 ? "dancer" : "dancers"}`} aria-pressed={filter === id} onClick={() => setFilter(id)} disabled={busy}><span className="vip-filter-label">{label}</span><span className="vip-filter-count" aria-hidden="true">{matches.length}</span></button>)}</div>
+        </div>
         {filter === "previous" && onRequests && <div className="vip-actions"><button type="button" disabled={busy} onClick={onRequests}>View request status →</button></div>}
         <p className="vip-library-count" role="status">{visible.length} {visible.length === 1 ? "dancer" : "dancers"}</p>
         <div className="vip-roster-scroll"><fieldset className="vip-dancers" disabled={busy}><legend className="vip-sr-only">Dancers to request</legend>{visible.map(dancer => {

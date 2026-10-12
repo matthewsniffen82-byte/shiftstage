@@ -1,8 +1,8 @@
 body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] button:nth-child(n) { grid-column: auto; }
-body.dancr-button-system #vip-dashboard { --vip-nav-height: 80px; --vip-filter-height: 180px; }
+body.dancr-button-system #vip-dashboard { --vip-nav-height: 80px; --vip-roster-header-height: 320px; }
 body.dancr-button-system #vip-dashboard .vip-dashboard-nav { top: env(safe-area-inset-top, 0px); }
-body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] {
+body.dancr-button-system #vip-dashboard .vip-roster-header {
   position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height)); z-index: 4;
   padding-block: 4px; box-shadow: none;
   /* Image-backed colors avoid Android recoloring the separator into a gray strip. */
@@ -10,7 +10,7 @@ body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] {
 }
 body.dancr-button-system #vip-dashboard .vip-dancers { max-height: none; overflow: visible; overscroll-behavior-y: auto; }
 body.dancr-button-system #vip-dashboard :is(.vip-dancer, .vip-dancer a, .vip-dancer button, .vip-dancer input) {
-  scroll-margin-top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height) + var(--vip-filter-height) + 24px);
+  scroll-margin-top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height) + var(--vip-roster-header-height) + 24px);
   scroll-margin-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
 }
 body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel) {
@@ -19,7 +19,7 @@ body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel)
 /* Short landscape windows and zoomed layouts need the space for content. */
 @media (max-height: 500px) {
   body.dancr-button-system #vip-dashboard .vip-dashboard-nav,
-  body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] { position: static; }
+  body.dancr-button-system #vip-dashboard .vip-roster-header { position: static; }
   body.dancr-button-system #vip-dashboard :is(.vip-dancer, .vip-dancer a, .vip-dancer button, .vip-dancer input, .vip-roster-panel, .vip-visit-panel) { scroll-margin-top: 16px; }
 }
 @media (min-width: 900px) {
