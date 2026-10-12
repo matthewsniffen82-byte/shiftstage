@@ -12,16 +12,17 @@ function between(start, end) {
   return source.slice(first, last);
 }
 const actions = ts.transpileModule([
-  between('  function beginCustomerAction(', '  function updateVenueFollow('),
-  between('  function unfollowDancer(', '  function cancelGoing('),
+  between('  function beginCustomerAction(', '  async function openDirections('),
 ].join('\n'), { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 
 function fixture() {
   const requests = [];
+  let optimisticChange = null;
   let saved = {
     follows: [{ dancerId: 'bella', dancer: { stageName: 'Bella' } }, { dancer: { id: 'ivy', stageName: 'Ivy' } }],
     venueFollows: [{ venueId: 'club' }],
     goingSignals: [{ shiftId: 'shift' }],
+    dealSaves: [{ dealId: 'deal' }, { dealId: 'device-deal', deviceOnly: true }],
   };
   const context = vm.createContext({
     AbortController,
@@ -29,19 +30,23 @@ function fixture() {
     actionAbortRef: { current: null }, actionInFlightRef: { current: false },
     setPendingAction: value => { context.pending = value; },
     setActionStatus: value => { context.status = value; },
+    setOptimisticSavedChange: value => { optimisticChange = typeof value === 'function' ? value() : value; },
     onSavedChange: update => { saved = update(saved); },
     requestDashboardJson: (path, options) => new Promise((resolve, reject) => { requests.push({ path, options, resolve, reject }); }),
+    removeDeviceSavedClubDeal() {}, DEVICE_SAVED_DEALS_CHANGED_EVENT: 'changed', Event,
+    window: { localStorage: {}, dispatchEvent() {} },
   });
+  Object.defineProperty(context, 'saved', { get: () => saved });
   vm.runInContext(actions, context);
-  return { context, requests, saved: () => saved };
+  return { context, requests, saved: () => context.mountedRef.current && optimisticChange ? optimisticChange(saved) : saved };
 }
 
-test('dashboard unfollow waits for persistence, removes only that dancer, and leaves other saved activity intact', async () => {
+test('dashboard unfollow removes that dancer immediately and leaves other saved activity intact', async () => {
   const { context, requests, saved } = fixture();
   const before = saved();
   const action = context.unfollowDancer('bella');
   assert.equal(context.pending, 'dancer-bella');
-  assert.equal(saved().follows.length, 2);
+  assert.equal(saved().follows.length, 1);
   assert.equal(requests[0].path, '/api/customer/follows');
   assert.equal(requests[0].options.expectedRole, 'customer');
   assert.deepEqual(JSON.parse(requests[0].options.body), { dancerId: 'bella', following: false, notificationsEnabled: false });
@@ -52,6 +57,27 @@ test('dashboard unfollow waits for persistence, removes only that dancer, and le
   assert.equal(saved().goingSignals, before.goingSignals);
   assert.equal(context.pending, '');
   assert.equal(context.status, 'Dancer unfollowed.');
+});
+
+for (const [method, id, field] of [['updateVenueFollow', 'club', 'venueFollows'], ['cancelGoing', 'shift', 'goingSignals'], ['removeSavedDeal', 'deal', 'dealSaves']]) {
+  test(`${method} hides the saved item immediately and restores it on failure without losing refresh updates`, async () => {
+    const { context, requests, saved } = fixture();
+    const count = saved()[field].length;
+    const pending = context[method](id, false);
+    assert.equal(saved()[field].length, count - 1);
+    context.onSavedChange(current => ({ ...current, newData: 'new refresh' }));
+    requests[0].reject(new Error('Failed')); await pending;
+    assert.equal(saved()[field].length, count);
+    assert.equal(saved().newData, 'new refresh');
+  });
+}
+
+test('device-only deal removal stays removed when its optimistic state is cleared', async () => {
+  const { context, requests, saved } = fixture();
+  await context.removeSavedDeal('device-deal');
+  assert.equal(requests.length, 0);
+  assert.equal(saved().dealSaves.length, 1);
+  assert.equal(saved().dealSaves[0].dealId, 'deal');
 });
 
 test('a failed unfollow keeps the dancer visible and releases the button for a retry', async () => {

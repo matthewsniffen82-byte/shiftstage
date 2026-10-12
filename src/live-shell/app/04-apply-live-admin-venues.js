@@ -291,7 +291,7 @@
 
     function renderNotificationCenters() {
       liveNotifications = visibleLiveNotifications();
-      const clearing = liveNotificationClearPending?.accountKey === notificationClearStorageKey();
+      const clearing = liveNotificationClearPending?.accountKey === notificationClearStorageKey() && liveNotificationClearPending.kind !== "read";
       document.querySelectorAll('[data-notification-action="clear-all"]').forEach((button) => {
         button.disabled = clearing || !liveNotifications.length;
         button.setAttribute("aria-busy", String(clearing));
@@ -565,25 +565,39 @@
 
     async function markLiveNotificationRead(notificationId) {
       if (!notificationId) return;
-      try {
-        const data = await patchAuthenticatedJson("/api/notifications", { notificationId });
-        const match = liveNotifications.find((item) => item.id === notificationId);
-        if (match) match.readAt = data.notification?.readAt || new Date().toISOString();
-        renderNotificationCenters();
-      } catch (error) {
-        showToast(error.message || "Could not update notification");
-      }
+      return saveLiveNotificationsRead(notificationId);
     }
 
     async function markAllLiveNotificationsRead() {
+      return saveLiveNotificationsRead();
+    }
+
+    async function saveLiveNotificationsRead(notificationId = null) {
+      if (!authSession?.accessToken) return;
+      const accountKey = notificationClearStorageKey();
+      if (liveNotificationClearPending?.accountKey === accountKey) return;
+      const requestVersion = ++liveNotificationsRequestVersion;
+      const previousNotifications = liveNotifications.slice();
+      const optimisticReadAt = new Date().toISOString();
+      // Share the clear action's lock so polling and other writes cannot undo this feedback.
+      liveNotificationClearPending = { accountKey, requestVersion, kind: "read" };
+      const markRead = (readAt) => previousNotifications.map((item) => !notificationId || item.id === notificationId
+        ? { ...item, readAt: item.readAt || readAt } : item);
+      liveNotifications = markRead(optimisticReadAt);
+      liveNotificationsState = "ready";
+      renderNotificationCenters();
       try {
-        const data = await patchAuthenticatedJson("/api/notifications", { all: true });
-        const readAt = data?.readAt || new Date().toISOString();
-        liveNotifications = liveNotifications.map((notification) => ({ ...notification, readAt: notification.readAt || readAt }));
-        renderNotificationCenters();
-        showToast("Notifications marked read");
+        const data = await patchAuthenticatedJson("/api/notifications", notificationId ? { notificationId } : { all: true });
+        if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
+        liveNotifications = markRead((notificationId ? data?.notification?.readAt : data?.readAt) || optimisticReadAt);
+        if (!notificationId) showToast("Notifications marked read");
       } catch (error) {
+        if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
+        liveNotifications = previousNotifications;
         showToast(error.message || "Could not update notifications");
+      } finally {
+        if (liveNotificationClearPending?.requestVersion === requestVersion) liveNotificationClearPending = null;
+        if (requestVersion === liveNotificationsRequestVersion && accountKey === notificationClearStorageKey()) renderNotificationCenters();
       }
     }
 

@@ -53,6 +53,7 @@ export default function VenueNotificationSettings({ onSaved }: { onSaved?: () =>
   async function save(key: VenueNotificationKey, next = !settings?.[key]) {
     const expectedUser = userId.current;
     if (!settings || pending.current || !expectedUser || readSession()?.account?.id !== expectedUser) return;
+    const previous = settings[key];
     const controller = new AbortController();
     saveAbort.current = controller;
     pending.current = true;
@@ -63,6 +64,7 @@ export default function VenueNotificationSettings({ onSaved }: { onSaved?: () =>
       if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedUser) throw new Error("Your session changed. Reopen notification preferences.");
     };
     let confirmed = false;
+    setSettings({ ...settings, [key]: next });
     try {
       if (key === "pushEnabled" && next) await enableCustomerPush(delivery, expectedUser, assertCurrent);
       assertCurrent();
@@ -82,7 +84,8 @@ export default function VenueNotificationSettings({ onSaved }: { onSaved?: () =>
       setStatus("Preferences saved.");
       onSaved?.();
     } catch (error) {
-      if (!confirmed && key === "pushEnabled" && next && readSession()?.account?.id === expectedUser) await disableCustomerPush();
+      if (!confirmed && mounted.current && !controller.signal.aborted) setSettings(current => current ? { ...current, [key]: previous } : current);
+      if (!confirmed && key === "pushEnabled" && next && readSession()?.account?.id === expectedUser) await disableCustomerPush().catch(() => {});
       if (mounted.current && !controller.signal.aborted) { setFailed(true); setStatus(error instanceof Error ? error.message : "Unable to save notification preferences."); }
     } finally {
       pending.current = false;

@@ -33,7 +33,7 @@ type SavedState = {
 };
 
 type AccountAction = "follow";
-type MediaFollowState = { following: boolean; disabled: boolean; status: string };
+type MediaFollowState = { following: boolean; disabled: boolean; busy?: boolean; status: string };
 
 type DancerFollowState = {
   mediaFollowAction: RefObject<(() => void) | null>;
@@ -111,11 +111,11 @@ export function DancerFollowStateProvider({
 
 export function DancerMediaFollowButton({ stageName }: { stageName: string }) {
   const { mediaFollowAction, mediaFollowState } = useDancerFollowState();
-  const { following, disabled, status } = mediaFollowState;
+  const { following, disabled, busy, status } = mediaFollowState;
   const label = `${following ? "Following" : "Follow"} ${stageName}`;
   return <>
     <button className="profile-media-control-follow" type="button" aria-label={label} title={label}
-      aria-pressed={following} disabled={disabled} onClick={() => mediaFollowAction.current?.()}>
+      aria-pressed={following} aria-busy={busy || undefined} disabled={disabled} onClick={() => mediaFollowAction.current?.()}>
       <DancerProfileActionPreviewIcon type={following ? "check" : "personPlus"} />
     </button>
     <span className="profile-media-control-follow-status" role="status">{status}</span>
@@ -424,7 +424,7 @@ export function DancerProfileActions({
     return () => { mediaFollowAction.current = null; };
   });
   useEffect(() => {
-    setMediaFollowState({ following: saved.following, disabled: !savedLoaded || followSaving, status });
+    setMediaFollowState({ following: saved.following, disabled: !savedLoaded || followSaving, busy: followSaving, status });
   }, [followSaving, saved.following, savedLoaded, setMediaFollowState, status]);
 
   useEffect(() => {
@@ -536,9 +536,11 @@ export function DancerProfileActions({
     followAbortRef.current = controller;
     followInFlightRef.current = true;
     const previousFollowing = saved.following;
+    const previousNotificationsEnabled = saved.notificationsEnabled;
     const followedAccountId = String(readBrowserAuthSession()?.account?.id || "");
     const requestedFollowing = !previousFollowing;
     setFollowSaving(true);
+    setSaved(current => ({ ...current, following: requestedFollowing, notificationsEnabled: requestedFollowing }));
 
     try {
       const data = await postAction("/api/customer/follows", {
@@ -562,8 +564,11 @@ export function DancerProfileActions({
       if (readBrowserAuthSession()?.account?.id !== followedAccountId) return;
       setFollowedBy(following ? followedAccountId : "");
       if (following) offerPushNotifications("customer-follow");
-    } catch {
-      // postAction displays the production API error beside the controls.
+    } catch (error) {
+      if (mountedRef.current && !controller.signal.aborted) {
+        setSaved(current => ({ ...current, following: previousFollowing, notificationsEnabled: previousNotificationsEnabled }));
+        setStatus(error instanceof Error ? error.message : "Unable to update follow status.");
+      }
     } finally {
       if (followAbortRef.current === controller) {
         followAbortRef.current = null;
@@ -581,6 +586,9 @@ export function DancerProfileActions({
     goingInFlightRef.current = true;
     const going = !saved.goingShiftIds.includes(shiftId);
     setGoingSaving(true);
+    setSaved(current => ({ ...current, goingShiftIds: going
+      ? Array.from(new Set([...current.goingShiftIds, shiftId]))
+      : current.goingShiftIds.filter(id => id !== shiftId) }));
     try {
       const data = await postGoingAction(shiftId, going, controller.signal);
       if (!mountedRef.current || controller.signal.aborted) return;
@@ -592,8 +600,13 @@ export function DancerProfileActions({
       }));
       setGoingCount(readConfirmedGoingCount(data));
       setStatus(data.going === true ? "You’re going." : "Removed.");
-    } catch {
-      // postGoingAction displays the production API error beside the controls.
+    } catch (error) {
+      if (mountedRef.current && !controller.signal.aborted) {
+        setSaved(current => ({ ...current, goingShiftIds: going
+          ? current.goingShiftIds.filter(id => id !== shiftId)
+          : Array.from(new Set([...current.goingShiftIds, shiftId])) }));
+        setStatus(error instanceof Error ? error.message : "Unable to update going status.");
+      }
     } finally {
       if (goingAbortRef.current === controller) {
         goingAbortRef.current = null;
@@ -659,6 +672,7 @@ export function DancerProfileActions({
       <div className={`live-actions profile-actions-compact${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving}>
         <button
           aria-pressed={saved.following}
+          aria-busy={followSaving || undefined}
           className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
           type="button"
           onClick={() => {
@@ -692,6 +706,7 @@ export function DancerProfileActions({
             aria-disabled={!actionShift ? "true" : undefined}
             aria-label={actionShift ? (isGoing ? "Remove this shift from your plans" : "Add this shift to your plans") : "I’m Going unavailable until a shift is posted"}
             aria-pressed={actionShift ? isGoing : undefined}
+            aria-busy={goingSaving || undefined}
             className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable" : ""}`}
             disabled={actionShift ? !savedLoaded || goingSaving : true}
             onClick={() => actionShift && updateGoing(actionShift.id)}

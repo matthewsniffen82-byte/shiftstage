@@ -70,7 +70,7 @@ for (const following of [false, true]) {
     const pending = f.context.saveProfileFollow(f.button);
     assert.equal(f.invitations.length, 0);
     assert.equal(f.metric.textContent, before);
-    assert.equal(f.button.innerHTML, following ? "Following" : "Follow");
+    assert.equal(f.button.innerHTML, following ? "Follow" : "Following", "Personal selection updates immediately; public counts wait for confirmation");
     f.resolve({ following: !following, notificationsEnabled: !following, followerCount: following ? 1 : 2, notificationCount: following ? 1 : 2 });
     await pending;
     assert.equal(f.metric.textContent, following ? "1" : "2");

@@ -55,8 +55,10 @@ export function ClubDealCard({
   const [intentState, setIntentState] = useState<"preview" | "ready" | "expired" | "error">("preview");
   const [admissionPassUrl, setAdmissionPassUrl] = useState("");
   const [intentExpiresAt, setIntentExpiresAt] = useState(0);
-  const [savedOnDevice, setSavedOnDevice] = useState(false);
+  const [confirmedSaved, setSavedOnDevice] = useState(false);
+  const [optimisticSaved, setOptimisticSaved] = useState<{ dealId: string; storageKey: string | null; saved: boolean } | null>(null);
   const [savePending, setSavePending] = useState(false);
+  const saveInFlight = useRef(false);
   const saveStateVersion = useRef(0);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [termsExpanded, setTermsExpanded] = useState(false);
@@ -71,6 +73,10 @@ export function ClubDealCard({
   const offerDeals = deals?.length ? deals : [deal];
   const [selectedDealId, setSelectedDealId] = useState(deal.id);
   const activeDeal = offerDeals.find((offer) => offer.id === selectedDealId) || offerDeals[0] || deal;
+  const activeDealIdRef = useRef(activeDeal.id);
+  activeDealIdRef.current = activeDeal.id;
+  const savedOnDevice = optimisticSaved?.dealId === activeDeal.id && optimisticSaved.storageKey === currentSavedDealsStorageKey()
+    ? optimisticSaved.saved : confirmedSaved;
   const displayDescription = customerFacingDealDescription(activeDeal.dealDescription);
   const displayTerms = customerFacingDealTerms(clubDealTransportationTerms(activeDeal.dealTerms));
   const displayTitle = customerFacingDealTitle(activeDeal.dealTitle);
@@ -197,11 +203,13 @@ export function ClubDealCard({
   }
 
   async function saveForLater() {
-    if (savePending) return;
+    if (saveInFlight.current) return;
+    saveInFlight.current = true;
     saveStateVersion.current += 1;
     setSavePending(true);
     const hasCustomerAccount = hasSignedInCustomerDealAccount();
     const storageKey = currentSavedDealsStorageKey();
+    setOptimisticSaved({ dealId: activeDeal.id, storageKey, saved: true });
     try {
       let savedToAccount = false;
       if (hasCustomerAccount) {
@@ -245,6 +253,7 @@ export function ClubDealCard({
       } catch {
         // The private account remains the source of truth when device storage is blocked.
       }
+      if (activeDealIdRef.current !== activeDeal.id) return;
       if (!savedToAccount && !savedOnThisDevice) {
         setSavedOnDevice(false);
         setStatus("Browser storage blocked saving this deal. Allow site storage and try again.");
@@ -259,16 +268,21 @@ export function ClubDealCard({
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to save this Club Deal.");
     } finally {
+      saveStateVersion.current += 1;
+      saveInFlight.current = false;
+      setOptimisticSaved(null);
       setSavePending(false);
     }
   }
 
   async function removeSavedDeal() {
-    if (savePending) return;
+    if (saveInFlight.current) return;
+    saveInFlight.current = true;
     saveStateVersion.current += 1;
     setSavePending(true);
     const hasCustomerAccount = hasSignedInCustomerDealAccount();
     const storageKey = currentSavedDealsStorageKey();
+    setOptimisticSaved({ dealId: activeDeal.id, storageKey, saved: false });
     try {
       let removedFromAccount = false;
       if (hasCustomerAccount) {
@@ -294,6 +308,7 @@ export function ClubDealCard({
       } catch {
         // The private account remains the source of truth when device storage is blocked.
       }
+      if (activeDealIdRef.current !== activeDeal.id) return;
       if (!removedFromAccount && !removedFromDevice) {
         setSavedOnDevice(true);
         setStatus("Browser storage blocked removing this deal. Allow site storage and try again.");
@@ -306,6 +321,9 @@ export function ClubDealCard({
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to remove this saved Club Deal.");
     } finally {
+      saveStateVersion.current += 1;
+      saveInFlight.current = false;
+      setOptimisticSaved(null);
       setSavePending(false);
     }
   }
@@ -425,7 +443,7 @@ export function ClubDealCard({
             disabled={savePending}
             onClick={() => void (savedOnDevice ? removeSavedDeal() : saveForLater())}
           >
-            {savePending ? (savedOnDevice ? "Removing…" : "Saving…") : savedOnDevice ? "Saved ✓" : "Save"}
+            {savedOnDevice ? "Saved ✓" : "Save"}
           </button>
           <button type="button" onClick={() => void shareDeal()}>Share</button>
         </div>
@@ -536,7 +554,9 @@ export function ClubDealCard({
                       className={offer.id === activeDeal.id ? "active" : ""}
                       key={offer.id}
                       type="button"
+                      disabled={savePending}
                       onClick={() => {
+                        if (saveInFlight.current) return;
                         setSelectedDealId(offer.id);
                       }}
                     >

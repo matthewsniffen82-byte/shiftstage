@@ -32,11 +32,13 @@ export default function DancerNotificationSettings() {
   async function save(key: DancerNotificationKey) {
     if (!settings || pending.current || readSession()?.account?.id !== userId.current) return;
     const next = !settings[key];
+    const previous = settings[key];
     const controller = new AbortController();
     saveAbort.current = controller;
     pending.current = true;
     setSaving(key);
     setStatus("");
+    setSettings({ ...settings, [key]: next });
     try {
       const data = await requestDashboardJson("/api/dancer/notification-settings", {
         method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ settings: { [key]: next } }),
@@ -47,7 +49,10 @@ export default function DancerNotificationSettings() {
       setSettings(data.settings);
       setStatus("Preferences saved.");
     } catch (error) {
-      if (mounted.current && !controller.signal.aborted) setStatus(error instanceof Error ? error.message : "Unable to save notification settings.");
+      if (mounted.current && !controller.signal.aborted) {
+        setSettings(current => current ? { ...current, [key]: previous } : current);
+        setStatus(error instanceof Error ? error.message : "Unable to save notification settings.");
+      }
     } finally {
       pending.current = false;
       if (mounted.current) setSaving(null);

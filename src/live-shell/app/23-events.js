@@ -118,12 +118,12 @@
       };
     }
 
-    function syncHomeFeedActionButtons(profile, city) {
+    function syncHomeFeedActionButtons(profile, city, feedback = null) {
       document.querySelectorAll(".feed-card-action[data-profile]").forEach((button) => {
         if (button.dataset.profile !== profile.name && button.dataset.profile !== profile.id) return;
         const action = button.dataset.feedAction;
         if (action === "follow") {
-          const active = isFollowingProfile(city, profile.name);
+          const active = feedback ? feedback.following : isFollowingProfile(city, profile.name);
           button.classList.toggle("is-active", active);
           button.setAttribute("aria-pressed", String(active));
           if (button.dataset.iconOnlyAction === "true") {
@@ -137,7 +137,7 @@
           return;
         }
         if (action === "notify") {
-          const active = isNotificationOn(city, profile.name);
+          const active = feedback ? feedback.notificationsEnabled : isNotificationOn(city, profile.name);
           button.classList.toggle("is-active", active);
           button.setAttribute("aria-pressed", String(active));
           button.innerHTML = actionButtonLabel(active ? "check" : "bell", active ? "Notifications On" : "Notify");
@@ -152,11 +152,12 @@
       });
     }
 
-    function syncOpenProfileFollowButton() {
+    function syncOpenProfileFollowButton(feedback = null) {
       void refreshOpenProfileWorkingAlert();
       const followButton = document.getElementById("followBtn");
       if (!followButton) return;
-      const following = isFollowingProfile(selectedCity(), followButton.dataset.profile);
+      const following = feedback && (followButton.dataset.profile === feedback.profile.name || followButton.dataset.profile === feedback.profile.id)
+        ? feedback.following : isFollowingProfile(selectedCity(), followButton.dataset.profile);
       followButton.innerHTML = profileActionButtonMarkup(following ? "check" : "personPlus", following ? "Following" : "Follow");
       followButton.classList.toggle("is-following", following);
       followButton.setAttribute("aria-pressed", String(following));
@@ -199,6 +200,8 @@
       });
     }
 
+    const pendingProfileFollows = new Set();
+
     async function saveProfileFollow(actionButton) {
       if (actionButton.disabled) return;
       const profileName = actionButton.dataset.profile;
@@ -210,11 +213,15 @@
       }
 
       city = profile.city || city;
+      if (pendingProfileFollows.has(profile.id)) return;
+      pendingProfileFollows.add(profile.id);
       const snapshot = profileFollowSnapshot(profile, city);
       const requestedFollowing = !snapshot.following;
       actionButton.disabled = true;
       actionButton.setAttribute("aria-busy", "true");
       customerSavedStateVersion += 1;
+      syncOpenProfileFollowButton({ profile, following: requestedFollowing });
+      syncHomeFeedActionButtons(profile, city, { following: requestedFollowing, notificationsEnabled: requestedFollowing });
       // Saved follows may still be loading, so this may already be followed.
       // Only the successful write can confirm a change to the public count.
       try {
@@ -243,6 +250,7 @@
       } catch (error) {
         showToast(error.message || "Could not save follow");
       } finally {
+        pendingProfileFollows.delete(profile.id);
         customerSavedStateVersion += 1;
         actionButton.disabled = false;
         actionButton.removeAttribute("aria-busy");
@@ -262,12 +270,16 @@
       }
 
       const followButton = document.getElementById("followBtn");
+      if (pendingProfileFollows.has(profile.id)) return;
+      pendingProfileFollows.add(profile.id);
       const snapshot = profileFollowSnapshot(profile, city);
       const requestedNotifications = !snapshot.notificationsEnabled;
       actionButton.disabled = true;
       actionButton.setAttribute("aria-busy", "true");
       if (followButton) followButton.disabled = true;
       customerSavedStateVersion += 1;
+      syncOpenProfileFollowButton({ profile, following: true });
+      syncHomeFeedActionButtons(profile, city, { following: true, notificationsEnabled: requestedNotifications });
       try {
         const data = await postAuthenticatedJson("/api/customer/follows", {
           dancerId: profile.id,
@@ -285,6 +297,7 @@
       } catch (error) {
         showToast(error.message || "Could not save notifications");
       } finally {
+        pendingProfileFollows.delete(profile.id);
         customerSavedStateVersion += 1;
         actionButton.disabled = false;
         actionButton.removeAttribute("aria-busy");

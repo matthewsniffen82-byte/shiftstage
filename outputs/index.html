@@ -46850,7 +46850,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     function renderNotificationCenters() {
       liveNotifications = visibleLiveNotifications();
-      const clearing = liveNotificationClearPending?.accountKey === notificationClearStorageKey();
+      const clearing = liveNotificationClearPending?.accountKey === notificationClearStorageKey() && liveNotificationClearPending.kind !== "read";
       document.querySelectorAll('[data-notification-action="clear-all"]').forEach((button) => {
         button.disabled = clearing || !liveNotifications.length;
         button.setAttribute("aria-busy", String(clearing));
@@ -47124,25 +47124,39 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     async function markLiveNotificationRead(notificationId) {
       if (!notificationId) return;
-      try {
-        const data = await patchAuthenticatedJson("/api/notifications", { notificationId });
-        const match = liveNotifications.find((item) => item.id === notificationId);
-        if (match) match.readAt = data.notification?.readAt || new Date().toISOString();
-        renderNotificationCenters();
-      } catch (error) {
-        showToast(error.message || "Could not update notification");
-      }
+      return saveLiveNotificationsRead(notificationId);
     }
 
     async function markAllLiveNotificationsRead() {
+      return saveLiveNotificationsRead();
+    }
+
+    async function saveLiveNotificationsRead(notificationId = null) {
+      if (!authSession?.accessToken) return;
+      const accountKey = notificationClearStorageKey();
+      if (liveNotificationClearPending?.accountKey === accountKey) return;
+      const requestVersion = ++liveNotificationsRequestVersion;
+      const previousNotifications = liveNotifications.slice();
+      const optimisticReadAt = new Date().toISOString();
+      // Share the clear action's lock so polling and other writes cannot undo this feedback.
+      liveNotificationClearPending = { accountKey, requestVersion, kind: "read" };
+      const markRead = (readAt) => previousNotifications.map((item) => !notificationId || item.id === notificationId
+        ? { ...item, readAt: item.readAt || readAt } : item);
+      liveNotifications = markRead(optimisticReadAt);
+      liveNotificationsState = "ready";
+      renderNotificationCenters();
       try {
-        const data = await patchAuthenticatedJson("/api/notifications", { all: true });
-        const readAt = data?.readAt || new Date().toISOString();
-        liveNotifications = liveNotifications.map((notification) => ({ ...notification, readAt: notification.readAt || readAt }));
-        renderNotificationCenters();
-        showToast("Notifications marked read");
+        const data = await patchAuthenticatedJson("/api/notifications", notificationId ? { notificationId } : { all: true });
+        if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
+        liveNotifications = markRead((notificationId ? data?.notification?.readAt : data?.readAt) || optimisticReadAt);
+        if (!notificationId) showToast("Notifications marked read");
       } catch (error) {
+        if (requestVersion !== liveNotificationsRequestVersion || accountKey !== notificationClearStorageKey()) return;
+        liveNotifications = previousNotifications;
         showToast(error.message || "Could not update notifications");
+      } finally {
+        if (liveNotificationClearPending?.requestVersion === requestVersion) liveNotificationClearPending = null;
+        if (requestVersion === liveNotificationsRequestVersion && accountKey === notificationClearStorageKey()) renderNotificationCenters();
       }
     }
 
@@ -50775,6 +50789,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         }
       });
       bindDealPassAction(saveButton, async (button) => {
+        if (button.disabled) return;
         const pass = currentPass();
         if (!pass) {
           showToast("Club Deal unavailable");
@@ -50784,10 +50799,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         button.setAttribute("aria-busy", "true");
         const feedback = document.getElementById("dealPassHow");
         feedback.hidden = true;
+        const isSaved = savedDealPasses.some((item) => item.id === pass.id);
+        button.setAttribute("aria-pressed", String(!isSaved));
+        button.classList.toggle("is-saved", !isSaved);
+        button.textContent = isSaved ? "Save" : "Saved ✓";
         try {
-          const isSaved = savedDealPasses.some((item) => item.id === pass.id);
           if (isSaved) {
-            button.textContent = "Removing…";
             const removed = await removeSavedDealPass(pass);
             if (currentPass()?.id !== pass.id) return;
             button.textContent = removed ? "Save" : "Try removing again";
@@ -50796,7 +50813,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
             button.title = removed ? "Save this deal" : "Remove saved deal";
             return;
           }
-          button.textContent = "Saving…";
           const persisted = await saveDealPassForLater(pass);
           if (currentPass()?.id !== pass.id) return;
           button.textContent = persisted ? "Saved ✓" : "Try saving again";
@@ -50813,7 +50829,9 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           feedback.hidden = false;
         } catch (error) {
           if (currentPass()?.id !== pass.id) return;
-          button.textContent = "Try saving again";
+          button.textContent = isSaved ? "Try removing again" : "Try saving again";
+          button.setAttribute("aria-pressed", String(isSaved));
+          button.classList.toggle("is-saved", isSaved);
           showToast(error?.message || "Could not update this saved deal.");
         } finally {
           if (currentPass()?.id === pass.id) {
@@ -64399,8 +64417,20 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           return;
         }
         const willFollow = !(followedVenuesByCity[city] || []).includes(venueName);
+        const showFollowFeedback = (following) => {
+          const icon = following ? "check" : "personPlus";
+          const label = following ? "Following" : "Follow";
+          const profileControl = followVenueButton.classList.contains("profile-action-icon-control");
+          followVenueButton.classList.toggle(profileControl ? "is-following" : "is-active", following);
+          followVenueButton.setAttribute("aria-pressed", String(following));
+          followVenueButton.setAttribute("aria-label", `${following ? "Unfollow" : "Follow"} ${venueName}`);
+          followVenueButton.title = label;
+          followVenueButton.innerHTML = profileControl ? `<span class="profile-action-main">${actionButtonLabel(icon, label)}</span>`
+            : followVenueButton.classList.contains("venue-card-follow") ? actionIconMarkup(icon) : actionButtonLabel(icon, label);
+        };
         followVenueButton.disabled = true;
         followVenueButton.setAttribute("aria-busy", "true");
+        showFollowFeedback(willFollow);
         customerSavedStateVersion += 1;
         try {
           // Refresh an expired access token before committing the follow.
@@ -64424,6 +64454,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
         } catch (error) {
+          showFollowFeedback(!willFollow);
           followVenueButton.disabled = false;
           if (/sign in required|sign-in expired/i.test(error.message || "")) {
             openAuthRole("customer");
@@ -64998,12 +65029,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       };
     }
 
-    function syncHomeFeedActionButtons(profile, city) {
+    function syncHomeFeedActionButtons(profile, city, feedback = null) {
       document.querySelectorAll(".feed-card-action[data-profile]").forEach((button) => {
         if (button.dataset.profile !== profile.name && button.dataset.profile !== profile.id) return;
         const action = button.dataset.feedAction;
         if (action === "follow") {
-          const active = isFollowingProfile(city, profile.name);
+          const active = feedback ? feedback.following : isFollowingProfile(city, profile.name);
           button.classList.toggle("is-active", active);
           button.setAttribute("aria-pressed", String(active));
           if (button.dataset.iconOnlyAction === "true") {
@@ -65017,7 +65048,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           return;
         }
         if (action === "notify") {
-          const active = isNotificationOn(city, profile.name);
+          const active = feedback ? feedback.notificationsEnabled : isNotificationOn(city, profile.name);
           button.classList.toggle("is-active", active);
           button.setAttribute("aria-pressed", String(active));
           button.innerHTML = actionButtonLabel(active ? "check" : "bell", active ? "Notifications On" : "Notify");
@@ -65032,11 +65063,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       });
     }
 
-    function syncOpenProfileFollowButton() {
+    function syncOpenProfileFollowButton(feedback = null) {
       void refreshOpenProfileWorkingAlert();
       const followButton = document.getElementById("followBtn");
       if (!followButton) return;
-      const following = isFollowingProfile(selectedCity(), followButton.dataset.profile);
+      const following = feedback && (followButton.dataset.profile === feedback.profile.name || followButton.dataset.profile === feedback.profile.id)
+        ? feedback.following : isFollowingProfile(selectedCity(), followButton.dataset.profile);
       followButton.innerHTML = profileActionButtonMarkup(following ? "check" : "personPlus", following ? "Following" : "Follow");
       followButton.classList.toggle("is-following", following);
       followButton.setAttribute("aria-pressed", String(following));
@@ -65079,6 +65111,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       });
     }
 
+    const pendingProfileFollows = new Set();
+
     async function saveProfileFollow(actionButton) {
       if (actionButton.disabled) return;
       const profileName = actionButton.dataset.profile;
@@ -65090,11 +65124,15 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       }
 
       city = profile.city || city;
+      if (pendingProfileFollows.has(profile.id)) return;
+      pendingProfileFollows.add(profile.id);
       const snapshot = profileFollowSnapshot(profile, city);
       const requestedFollowing = !snapshot.following;
       actionButton.disabled = true;
       actionButton.setAttribute("aria-busy", "true");
       customerSavedStateVersion += 1;
+      syncOpenProfileFollowButton({ profile, following: requestedFollowing });
+      syncHomeFeedActionButtons(profile, city, { following: requestedFollowing, notificationsEnabled: requestedFollowing });
       // Saved follows may still be loading, so this may already be followed.
       // Only the successful write can confirm a change to the public count.
       try {
@@ -65123,6 +65161,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       } catch (error) {
         showToast(error.message || "Could not save follow");
       } finally {
+        pendingProfileFollows.delete(profile.id);
         customerSavedStateVersion += 1;
         actionButton.disabled = false;
         actionButton.removeAttribute("aria-busy");
@@ -65142,12 +65181,16 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       }
 
       const followButton = document.getElementById("followBtn");
+      if (pendingProfileFollows.has(profile.id)) return;
+      pendingProfileFollows.add(profile.id);
       const snapshot = profileFollowSnapshot(profile, city);
       const requestedNotifications = !snapshot.notificationsEnabled;
       actionButton.disabled = true;
       actionButton.setAttribute("aria-busy", "true");
       if (followButton) followButton.disabled = true;
       customerSavedStateVersion += 1;
+      syncOpenProfileFollowButton({ profile, following: true });
+      syncHomeFeedActionButtons(profile, city, { following: true, notificationsEnabled: requestedNotifications });
       try {
         const data = await postAuthenticatedJson("/api/customer/follows", {
           dancerId: profile.id,
@@ -65165,6 +65208,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       } catch (error) {
         showToast(error.message || "Could not save notifications");
       } finally {
+        pendingProfileFollows.delete(profile.id);
         customerSavedStateVersion += 1;
         actionButton.disabled = false;
         actionButton.removeAttribute("aria-busy");

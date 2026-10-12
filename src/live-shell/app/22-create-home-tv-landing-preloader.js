@@ -529,8 +529,20 @@
           return;
         }
         const willFollow = !(followedVenuesByCity[city] || []).includes(venueName);
+        const showFollowFeedback = (following) => {
+          const icon = following ? "check" : "personPlus";
+          const label = following ? "Following" : "Follow";
+          const profileControl = followVenueButton.classList.contains("profile-action-icon-control");
+          followVenueButton.classList.toggle(profileControl ? "is-following" : "is-active", following);
+          followVenueButton.setAttribute("aria-pressed", String(following));
+          followVenueButton.setAttribute("aria-label", `${following ? "Unfollow" : "Follow"} ${venueName}`);
+          followVenueButton.title = label;
+          followVenueButton.innerHTML = profileControl ? `<span class="profile-action-main">${actionButtonLabel(icon, label)}</span>`
+            : followVenueButton.classList.contains("venue-card-follow") ? actionIconMarkup(icon) : actionButtonLabel(icon, label);
+        };
         followVenueButton.disabled = true;
         followVenueButton.setAttribute("aria-busy", "true");
+        showFollowFeedback(willFollow);
         customerSavedStateVersion += 1;
         try {
           // Refresh an expired access token before committing the follow.
@@ -554,6 +566,7 @@
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
         } catch (error) {
+          showFollowFeedback(!willFollow);
           followVenueButton.disabled = false;
           if (/sign in required|sign-in expired/i.test(error.message || "")) {
             openAuthRole("customer");

@@ -261,6 +261,7 @@
         }
       });
       bindDealPassAction(saveButton, async (button) => {
+        if (button.disabled) return;
         const pass = currentPass();
         if (!pass) {
           showToast("Club Deal unavailable");
@@ -270,10 +271,12 @@
         button.setAttribute("aria-busy", "true");
         const feedback = document.getElementById("dealPassHow");
         feedback.hidden = true;
+        const isSaved = savedDealPasses.some((item) => item.id === pass.id);
+        button.setAttribute("aria-pressed", String(!isSaved));
+        button.classList.toggle("is-saved", !isSaved);
+        button.textContent = isSaved ? "Save" : "Saved ✓";
         try {
-          const isSaved = savedDealPasses.some((item) => item.id === pass.id);
           if (isSaved) {
-            button.textContent = "Removing…";
             const removed = await removeSavedDealPass(pass);
             if (currentPass()?.id !== pass.id) return;
             button.textContent = removed ? "Save" : "Try removing again";
@@ -282,7 +285,6 @@
             button.title = removed ? "Save this deal" : "Remove saved deal";
             return;
           }
-          button.textContent = "Saving…";
           const persisted = await saveDealPassForLater(pass);
           if (currentPass()?.id !== pass.id) return;
           button.textContent = persisted ? "Saved ✓" : "Try saving again";
@@ -299,7 +301,9 @@
           feedback.hidden = false;
         } catch (error) {
           if (currentPass()?.id !== pass.id) return;
-          button.textContent = "Try saving again";
+          button.textContent = isSaved ? "Try removing again" : "Try saving again";
+          button.setAttribute("aria-pressed", String(isSaved));
+          button.classList.toggle("is-saved", isSaved);
           showToast(error?.message || "Could not update this saved deal.");
         } finally {
           if (currentPass()?.id === pass.id) {

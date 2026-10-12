@@ -638,6 +638,16 @@
   }
 }
 
+/* Keep a newly selected state legible while its save is pending. */
+body.dancr-button-system :is(
+  .profile-action-icon-control, .profile-media-control-follow, .feed-card-action,
+  .venue-card-follow, #followBtn, .deal-pass-action,
+  .club-deal-share-actions button, .dancer-notification-switch, .venue-notification-switch
+)[aria-busy="true"] {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .dancr-button-system :where(
     button,

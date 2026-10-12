@@ -77,7 +77,9 @@ export function NotificationPanel({
   preferencesHref?: string;
   onCountChange?: (count: number) => void;
 } = {}) {
-  const [notifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
+  const [confirmedNotifications, setNotifications] = useState<Array<Record<string, unknown>>>([]);
+  const [optimisticNotifications, setOptimisticNotifications] = useState<((items: Array<Record<string, unknown>>) => Array<Record<string, unknown>>) | null>(null);
+  const notifications = optimisticNotifications ? optimisticNotifications(confirmedNotifications) : confirmedNotifications;
   const notificationCount = customerMode ? notifications.filter(item => !item.readAt).length : notifications.length;
   useEffect(() => { onCountChange?.(notificationCount); }, [notificationCount, onCountChange]);
   const [visibleAlerts, setVisibleAlerts] = useState(10);
@@ -148,12 +150,15 @@ export function NotificationPanel({
   function finishNotificationAction(requestId: number) {
     if (requestId !== actionSequenceRef.current) return;
     actionInFlightRef.current = false;
+    if (mountedRef.current) setOptimisticNotifications(null);
     if (mountedRef.current && loadQueuedRef.current) void loadNotifications();
   }
 
   async function markAllRead() {
     const requestId = beginNotificationAction();
     if (requestId === null) return;
+    const readAt = new Date().toISOString();
+    setOptimisticNotifications(() => (items: Array<Record<string, unknown>>) => items.map(item => ({ ...item, readAt: item.readAt || readAt })));
     try {
       const data = await requestDashboardJson("/api/notifications", {
         method: "PATCH",
@@ -174,6 +179,8 @@ export function NotificationPanel({
   async function markRead(notificationId: string) {
     const requestId = beginNotificationAction();
     if (requestId === null) return;
+    const readAt = new Date().toISOString();
+    setOptimisticNotifications(() => (items: Array<Record<string, unknown>>) => items.map(item => String(item.id) === notificationId ? { ...item, readAt: item.readAt || readAt } : item));
     try {
       const data = await requestDashboardJson("/api/notifications", {
         method: "PATCH",
@@ -195,6 +202,7 @@ export function NotificationPanel({
   async function clearNotifications() {
     const requestId = beginNotificationAction();
     if (requestId === null) return;
+    setOptimisticNotifications(() => () => []);
     try {
       const data = await requestDashboardJson("/api/notifications", {
         method: "DELETE",

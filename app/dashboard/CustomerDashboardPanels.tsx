@@ -190,7 +190,7 @@ export function CustomerPanel({
   isLoading,
   accountSavedUnavailable,
   onSavedChange,
-  saved,
+  saved: confirmedSaved,
   initialSection,
   alertsContent,
   accountContent,
@@ -207,6 +207,8 @@ export function CustomerPanel({
   onSavedChange: (update: (saved: CustomerSavedState) => CustomerSavedState) => void;
   saved?: LoadState["saved"];
 }) {
+  const [optimisticSavedChange, setOptimisticSavedChange] = useState<((current: CustomerSavedState) => CustomerSavedState) | null>(null);
+  const saved = confirmedSaved && optimisticSavedChange ? optimisticSavedChange(confirmedSaved) : confirmedSaved;
   const now = useCustomerMinuteClock();
   const goingCount = (saved?.goingSignals || []).filter((item) => (
     item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now
@@ -292,7 +294,10 @@ export function CustomerPanel({
     if (requestId !== actionSequenceRef.current) return;
     actionAbortRef.current = null;
     actionInFlightRef.current = false;
-    if (mountedRef.current) setPendingAction("");
+    if (mountedRef.current) {
+      setPendingAction("");
+      setOptimisticSavedChange(null);
+    }
   }
 
   async function runCustomerAction(
@@ -305,6 +310,7 @@ export function CustomerPanel({
     const action = beginCustomerAction(actionKey);
     if (!action) return;
     const { requestId, controller } = action;
+    setOptimisticSavedChange(() => apply);
     try {
       await requestDashboardJson(path, {
         method: "POST",
@@ -371,6 +377,10 @@ export function CustomerPanel({
     const action = beginCustomerAction(`deal-${dealId}`);
     if (!action) return;
     const { requestId, controller } = action;
+    setOptimisticSavedChange(() => (current: CustomerSavedState) => ({
+      ...current,
+      dealSaves: (current.dealSaves || []).filter((item) => item.dealId !== dealId),
+    }));
     try {
       if (!bookmark.deviceOnly) {
         const result = await requestDashboardJson("/api/customer/deal-saves", {
@@ -397,6 +407,10 @@ export function CustomerPanel({
           ? "Browser storage blocked removing this deal. Allow site storage and try again."
           : "Removed from your account, but the device copy could not be removed. Allow site storage and try again.");
       }
+      if (bookmark.deviceOnly) onSavedChange((current) => ({
+        ...current,
+        dealSaves: (current.dealSaves || []).filter((item) => item.dealId !== dealId),
+      }));
       window.dispatchEvent(new Event(DEVICE_SAVED_DEALS_CHANGED_EVENT));
       setActionStatus("Club Deal removed from your saved list.");
     } catch (error) {

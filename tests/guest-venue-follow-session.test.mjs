@@ -52,7 +52,7 @@ for(const following of [true,false])test(`venue ${following?'follow':'unfollow'}
 });
 
 for(const succeeds of [true,false])test(`venue save ${succeeds?'refreshes credentials before saving':'does not claim success for an expired sign-in'}`,async()=>{
- const calls=[],notices=[],saved=[];const button={dataset:{venueFollow:'Test Club'},disabled:false,setAttribute(){},removeAttribute(){}};
+ const calls=[],notices=[],saved=[];const button={dataset:{venueFollow:'Test Club'},disabled:false,setAttribute(){},removeAttribute(){},classList:{contains:()=>false,toggle(){}}};
  const context=createDiscoveryContext({
   event:{target:{closest:()=>button},preventDefault(){},stopPropagation(){}},
   requireCustomerAccountForProfileAction:()=>true,citySelect:{value:'Test City'},markets:{'Test City':{venues:[{name:'Test Club',id:'club-id'}]}},followedVenuesByCity:{'Test City':saved},

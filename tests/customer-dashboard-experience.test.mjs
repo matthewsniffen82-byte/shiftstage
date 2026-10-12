@@ -132,7 +132,7 @@ test("Club Deal wallet and alerts expose real status, expiry, history, and direc
   assert.match(dashboard, /href=\{`\/deals\/pass\/\$\{encodeURIComponent\(item\.redemptionToken\)\}`\}/);
   assert.match(dashboard, /function customerNotificationHref/);
   assert.match(dashboard, /formatNotificationTimestamp\(notification\.createdAt\)/);
-  assert.match(dashboard, /destination \? \([\s\S]*?<Link[\s\S]*?onClick=\{\(\) => void markRead\(notificationId\)\}/);
+  assert.match(dashboard, /destination \? \([\s\S]*?<DestinationLink[\s\S]*?onClick=\{\(\) => void markRead\(notificationId\)\}/);
   assert.match(dashboard, /No alerts yet[\s\S]*?Browse dancers/);
   assert.match(dashboard, /How admission passes work/);
   assert.match(dashboard, /Choose the exact deal[\s\S]*?Show your pass[\s\S]*?Wait for confirmation/);
