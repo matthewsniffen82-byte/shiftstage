@@ -558,6 +558,7 @@
   border: 1px solid transparent !important;
   border-radius: 10px !important;
   color: var(--dancr-color-text-primary) !important;
+  -webkit-text-fill-color: currentColor !important;
   background: transparent !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
@@ -573,8 +574,8 @@
   border-color: var(--dancr-color-white-medium) !important;
 }
 
-.dancr-button-system .utility-menu-panel .utility-menu-logout {
-  color: var(--dancr-color-text-secondary) !important;
+.dancr-button-system .utility-menu-panel :is(.utility-menu-support, .utility-menu-session-end) {
+  border-top-color: var(--dancr-color-white-soft) !important;
 }
 
 .dancr-button-system .utility-menu-panel .utility-menu-item:hover {
