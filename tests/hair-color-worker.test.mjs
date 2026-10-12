@@ -103,14 +103,24 @@ test('venue report switches channels, distinguishes missing and empty data, and 
   const module=load('app/dashboard/VenueHairColorAnalytics.tsx',{
     'react/jsx-runtime':require('react/jsx-runtime'),'react':{useState:()=>[selected,v=>{selected=v;}]},'@/src/lib/dancr/hair-color':hair,
   });
-  const props={timezone:'UTC',report:{trackingStartedAt:'2026-10-12',internal:[{color:'brown',dancers:2,metrics:{requests:8}}],external:[{color:'blonde',dancers:1,metrics:{claims:3}}]}};
+  const props={timezone:'UTC',report:{trackingStartedAt:'2026-10-12',internal:[{color:'brown',dancers:2,metrics:{requests:8}}],external:[{color:'blonde',dancers:1,metrics:{claims:3}}],currentPhotos:{internal:[{color:'brown',state:'ready',dancers:2},{color:'unknown',state:'scanning',dancers:1}],external:[{color:'blonde',state:'ready',dancers:1}]}}};
   let tree=nodes(module.default(props));
   assert.ok(tree.some(n=>n.props.children==='AI estimates'));
-  assert.ok(tree.some(n=>n.type==='h4'&&n.props.children==='Brown'));
+  assert.ok(tree.some(n=>n.type==='h4'&&n.props.children==='Brown hair'));
+  assert.ok(tree.some(n=>n.type==='strong'&&n.props.children==='Brown hair'));
+  assert.ok(tree.some(n=>n.props.children==='Current photo colors'));
+  assert.ok(tree.some(n=>n.props.role==='status'&&n.props.children.includes('Scanning')));
   const buttons=tree.filter(n=>n.type==='button');assert.equal(buttons[0].props['aria-pressed'],true);
   buttons[1].props.onClick();tree=nodes(module.default(props));
-  assert.ok(tree.some(n=>n.type==='h4'&&n.props.children==='Blonde'));
-  assert.ok(!tree.some(n=>n.type==='h4'&&n.props.children==='Brown'));
+  assert.ok(tree.some(n=>n.type==='h4'&&n.props.children==='Blonde hair'));
+  assert.ok(!tree.some(n=>n.type==='h4'&&n.props.children==='Brown hair'));
+  assert.ok(!tree.some(n=>n.props.role==='status'));
   assert.ok(nodes(module.default({timezone:'UTC'})).some(n=>n.props.role==='status'));
   assert.ok(nodes(module.default({...props,report:{...props.report,external:[]}})).some(n=>n.props.className==='venue-value-empty'));
+});
+
+test('photo scan states have meaningful labels instead of calling every outcome Unknown',()=>{
+  for(const [state,color,expected] of [['scanning','unknown','Scanning photos'],['no_photo','unknown','No main photo'],['unavailable','unknown','Scan unavailable'],['ready','unknown','Color unclear'],['ready','blonde','Blonde hair']]) {
+    assert.equal(hair.currentPhotoHairColorLabel({state,color,dancers:1}),expected);
+  }
 });

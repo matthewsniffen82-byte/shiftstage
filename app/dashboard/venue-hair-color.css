@@ -14,3 +14,12 @@
 .venue-hair-color-groups dl > div { display: flex; justify-content: space-between; gap: .75rem; }
 .venue-hair-color-groups dt { color: #b6afc0; }
 .venue-hair-color-groups dd { margin: 0; color: #fff; font-variant-numeric: tabular-nums; }
+.venue-hair-color-current { margin-block: 1rem; }
+.venue-hair-color-current h4 { margin: 0; color: #fff; }
+.venue-hair-color-current p { margin: .4rem 0 .7rem; color: #b6afc0; font-size: .9rem; }
+.venue-hair-color-current ul { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+.venue-hair-color-current li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .35rem .75rem; border: 1px solid #51415e; border-radius: 10px; padding: .65rem .75rem; background: #1b1126; }
+.venue-hair-color-current li strong { color: #f3ebff; }
+.venue-hair-color-current li span { color: #c4bbce; }
+.venue-hair-color-method { margin-top: .85rem; }
+.venue-hair-color-method > summary { cursor: pointer; color: #c4bbce; }

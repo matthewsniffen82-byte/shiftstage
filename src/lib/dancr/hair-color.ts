@@ -19,8 +19,20 @@ export function parseHairColorEstimate(value: unknown): { color: HairColor; conf
 }
 
 export type HairColorMetrics = { color: HairColor; dancers: number; metrics: Record<string, number> };
+export type CurrentPhotoHairColor = {
+  color: HairColor;
+  state: "ready" | "scanning" | "unavailable" | "no_photo";
+  dancers: number;
+};
+export function currentPhotoHairColorLabel(photo: CurrentPhotoHairColor) {
+  if (photo.state === "scanning") return "Scanning photos";
+  if (photo.state === "unavailable") return "Scan unavailable";
+  if (photo.state === "no_photo") return "No main photo";
+  return photo.color === "unknown" ? "Color unclear" : `${HAIR_COLOR_LABELS[photo.color]} hair`;
+}
 export type VenueHairColorReport = {
   trackingStartedAt: string;
   internal: HairColorMetrics[];
   external: HairColorMetrics[];
+  currentPhotos?: { internal: CurrentPhotoHairColor[]; external: CurrentPhotoHairColor[] };
 };

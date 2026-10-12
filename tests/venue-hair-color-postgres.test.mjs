@@ -4,11 +4,12 @@ import { after, afterEach, before, beforeEach, test } from 'node:test';
 import { PGlite } from '@electric-sql/pglite';
 
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+const existingPhotosMigration = readFileSync(new URL('../supabase/migrations/20261012231311_existing_main_photo_hair_colors.sql', import.meta.url), 'utf8');
 let db;
 before(async () => {
   db = new PGlite();
   await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
-    create table dancer_profiles(id uuid primary key);
+    create table dancer_profiles(id uuid primary key,disabled_at timestamptz);
     create table dancer_photos(id uuid primary key,dancer_id uuid references dancer_profiles(id) on delete cascade,storage_path text,is_primary boolean,sort_order int,review_status text);
     create table dancer_internal_main_photos(dancer_id uuid primary key references dancer_profiles(id) on delete cascade,photo_id uuid references dancer_photos(id) on delete cascade);
     create table internal_roster_requests(venue_id uuid,dancer_id uuid,created_at timestamptz,status text);
@@ -17,8 +18,9 @@ before(async () => {
     create table going_signals(shift_id uuid,created_at timestamptz);
     create table qr_redemptions(venue_id uuid,dancer_id uuid,admission_pass_version int,status text,generated_at timestamptz,redeemed_at timestamptz);
     grant usage on schema public to service_role; grant all on all tables in schema public to service_role;`);
-  await db.query('insert into dancer_profiles values($1),($2)', [id(1),id(2)]);
+  await db.query('insert into dancer_profiles(id) values($1),($2)', [id(1),id(2)]);
   await db.exec(readFileSync(new URL('../supabase/migrations/20261012225032_venue_hair_color_analytics.sql', import.meta.url), 'utf8'));
+  await db.exec(existingPhotosMigration);
 });
 after(async () => db?.close());
 beforeEach(async () => db.exec('begin'));
@@ -120,6 +122,41 @@ test('unclassified activity is preserved without API row limits', async () => {
   const r = await report();
   assert.equal(r.internal[0].color,'unknown'); assert.equal(r.internal[0].metrics.requests,1005);
   assert.equal((await report(12)).internal.length,0);
+});
+
+test('existing main photos are queued once, with recent venue activity first and no invented past colors', async () => {
+  await db.exec('alter table dancer_photos disable trigger capture_dancer_photo_hair_color');
+  await photo(100); await photo(200,true,'approved',2);
+  await db.exec('alter table dancer_photos enable trigger capture_dancer_photo_hair_color');
+  await db.query("insert into internal_roster_requests values($1,$2,now()-interval '1 hour','completed')",[id(10),id(2)]);
+  const setup = existingPhotosMigration.replace(/^begin;/,'').replace(/commit;\s*$/,'');
+  await db.exec(setup);
+  const jobs = (await db.query('select * from dancer_photo_hair_analysis order by next_attempt_at,created_at')).rows;
+  assert.equal(jobs.length,2); assert.equal(jobs[0].dancer_id,id(2));
+  assert.equal((await db.query('select count(*)::int n from dancer_hair_color_periods')).rows[0].n,4);
+  await db.exec(setup);
+  assert.equal((await db.query('select count(*)::int n from dancer_photo_hair_analysis')).rows[0].n,2);
+  await db.exec("update dancer_photo_hair_analysis set status='complete',color='blonde',confidence=.95");
+  const r = (await db.query("select get_venue_hair_color_analytics($1,now()-interval '1 day',now()) report",[id(10)])).rows[0].report;
+  assert.equal(r.internal[0].color,'unknown'); assert.equal(r.internal[0].metrics.completed,1);
+  assert.deepEqual(r.currentPhotos.internal,[{color:'blonde',state:'ready',dancers:1}]);
+  assert.deepEqual(r.currentPhotos.external,[]);
+});
+
+test('current photo colors distinguish scanning, failure, unclear color and missing photos by channel and venue', async () => {
+  await photo(100); await photo(101,false);
+  await db.query('insert into dancer_internal_main_photos values($1,$2)',[id(1),id(101)]);
+  await db.query("insert into internal_roster_requests values($1,$2,'2026-10-03','pending'),($1,$3,'2026-10-03','pending')",[id(10),id(1),id(2)]);
+  await db.query("insert into venue_interactions values($1,$2,'2026-10-03','dancer_profile')",[id(10),id(1)]);
+  await db.query("update dancer_photo_hair_analysis set status='complete',color='brown',confidence=.92 where photo_id=$1",[id(100)]);
+  let r=await report();
+  assert.deepEqual(r.currentPhotos.external,[{color:'brown',state:'ready',dancers:1}]);
+  assert.deepEqual(r.currentPhotos.internal.map(row=>row.state).sort(),['no_photo','scanning']);
+  await db.query("update dancer_photo_hair_analysis set status='failed' where photo_id=$1",[id(101)]);
+  r=await report();assert.ok(r.currentPhotos.internal.some(row=>row.state==='unavailable'));
+  await db.query("update dancer_photo_hair_analysis set status='complete',color='unknown',confidence=.5 where photo_id=$1",[id(101)]);
+  r=await report();assert.ok(r.currentPhotos.internal.some(row=>row.state==='ready'&&row.color==='unknown'));
+  assert.deepEqual((await report(11)).currentPhotos,{internal:[],external:[]});
 });
 
 test('private analysis, history and aggregate functions deny public roles; input ranges are bounded', async () => {
