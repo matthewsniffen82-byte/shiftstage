@@ -7,6 +7,8 @@ export type CustomerDashboardSection = "offers" | "saved";
 
 
 export type SavedImageSummary = {
+  imageFocalX?: number | null;
+  imageFocalY?: number | null;
   imageUrl?: string | null;
   imageSrcSet?: string | null;
   imageWidth?: number | null;
@@ -23,11 +25,15 @@ export type SavedVenueSummary = SavedImageSummary & {
   address?: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  opensAt?: string | null;
+  closesAt?: string | null;
+  timezone?: string | null;
+  hoursLabel?: string | null;
   logoImageUrl?: string | null;
   logoImageSrcSet?: string | null;
   logoImageWidth?: number | null;
   logoImageHeight?: number | null;
-  activity?: { workingNowCount: number; upcomingDancerCount: number } | null;
+  activity?: { workingNowCount: number; upcomingDancerCount: number; workingDancers?: SavedDancerSummary[] } | null;
 };
 
 

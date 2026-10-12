@@ -5,6 +5,7 @@ import test from 'node:test';
 import ts from 'typescript';
 import { customerDashboardDestination } from '../app/dashboard/customer-dashboard-view.ts';
 import * as customerNight from '../src/lib/dancr/customer-night.ts';
+import { venueOperatingStatus } from '../src/lib/dancr/venue-operating-status.ts';
 
 // Focused component events and rendering. No browser, app server, or network.
 function harness(name = 'CustomerPanel', props = {}, hash = '') {
@@ -33,7 +34,7 @@ function harness(name = 'CustomerPanel', props = {}, hash = '') {
     require: path => path === 'react' ? react : path === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : path === './customer-dashboard-view' ? { customerDashboardDestination }
       : path === 'next/link' ? { default: 'a' } : path.endsWith('/navigation') ? { homeDiscoveryHref: (view, city = 'Las Vegas') => `/?view=${view}&city=${city}` }
       : path === './DashboardShared' ? { customerDancerHref: d => `/dancers/${d.slug}`, customerVenueHref: v => `/venues/${v.slug}`, customerInitials: () => 'A' }
-      : path === '@/src/lib/dancr/customer-night' ? customerNight : {},
+      : path === '@/src/lib/dancr/customer-night' ? customerNight : path.endsWith('/venue-operating-status') ? { venueOperatingStatus } : {},
   });
   function render() {
     for (let i = 0; dirty && i < 30; i++) { dirty = false; cursor = 0; effects = []; tree = exports[name](props); effects.forEach(cb => cb()); }
@@ -183,19 +184,44 @@ test('saved club entry links use that club’s current offer while keeping club 
   const venue = {id:'club',slug:'echo',name:'Echo House',city:'Las Vegas',activity:{workingNowCount:96}};
   const other = {id:'other',slug:'other',name:'Other Club',city:'Las Vegas'};
   const saved = {venueFollows:[{venueId:'club',venue},{venueId:'other',venue:other}],clubEntryDeals:{club:'free/entry'},dealSaves:[]};
-  const clubs = harness('CustomerFollowedClubsPanel',{saved,pendingAction:''});
+  const directions = [], unfollows = [];
+  const clubs = harness('CustomerFollowedClubsPanel',{saved,pendingAction:'',onDirections: v => directions.push(v),onVenueFollowChange:(...args)=>unfollows.push(args)});
   const cards = clubs.nodes().filter(n=>n.type?.name==='SavedVenueCard');
   assert.equal(cards[0].props.entryDealId,'free/entry');
   assert.equal(cards[1].props.entryDealId,undefined,'another club cannot inherit the first club’s offer');
   const ui = harness('SavedVenueCard',cards[0].props);
-  const entry = () => ui.nodes().find(n=>n.type==='a' && n.props.className==='free-entry-cta');
+  const entry = () => ui.nodes().find(n=>n.type==='a' && n.props.className?.includes('free-entry-cta'));
   assert.equal(entry().props.href,'/deals/transportation/free%2Fentry?sourceType=club_page');
   assert.equal(entry().props['aria-label'],'Free Entry at Echo House');
   assert.ok(ui.nodes().some(n=>n.type==='a' && n.props.href==='/venues/echo'));
-  assert.equal(component(ui,'CustomerDirectionsButton').props.venue,venue);
+  const directionButton = () => ui.nodes().find(n=>n.type==='button' && n.props['aria-label']==='Directions to Echo House');
+  directionButton().props.onClick();
+  assert.equal(directions[0],venue);
+  const unfollow = () => ui.nodes().find(n=>n.type==='button' && n.props['aria-label']==='Unfollow Echo House');
+  unfollow().props.onClick();
+  assert.deepEqual(unfollows,[['club',false]]);
+  ui.update({pending:true,removing:true});
+  assert.equal(unfollow().props.disabled,true);
+  assert.equal(unfollow().props['aria-busy'],true);
   ui.update({entryDealId:undefined});
   assert.equal(entry(),undefined,'an unavailable offer disappears on refresh');
-  assert.ok(component(ui,'CustomerDirectionsButton'));
+  assert.ok(directionButton());
+  assert.ok(ui.nodes().find(n=>n.type==='button' && n.props.className?.includes('is-unavailable')).props.disabled);
+});
+
+test('saved venue scroll cards show five linked live dancers, total count, and honest empty states', () => {
+  const dancers=Array.from({length:8},(_,i)=>({id:String(i),slug:`dancer-${i}`,stageName:`Dancer ${i}`,imageUrl:`/image-${i}.webp`}));
+  const venue={slug:'echo',name:'Echo House',activity:{workingNowCount:96,workingDancers:dancers}};
+  const ui=harness('SavedVenueCard',{venue});
+  const avatars=()=>ui.nodes().filter(n=>n.props?.className?.includes('venue-lineup-profile'));
+  assert.equal(avatars().length,5);
+  assert.equal(avatars()[0].props.href,'/dancers/dancer-0');
+  assert.ok(ui.nodes().some(n=>n.props?.['aria-label']==='96 dancers working now'));
+  ui.update({venue:{...venue,activity:{workingNowCount:0}}});
+  assert.equal(avatars().length,0);
+  assert.ok(ui.nodes().some(n=>n.props?.children==='No dancers listed now'));
+  ui.update({venue:{...venue,activity:null}});
+  assert.ok(ui.nodes().some(n=>n.props?.children==='Dancer counts unavailable'));
 });
 
 test('plans preview the next outing, expand without duplicates and retain cancellation and directions', () => {

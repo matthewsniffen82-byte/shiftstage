@@ -10,11 +10,16 @@ type ActivityShift = {
   status: string;
   shift_source: string;
   ends_at: string;
+  starts_at?: string;
   checked_in_at?: string | null;
   checked_out_at?: string | null;
   location_status?: string | null;
   location_verification_expires_at?: string | null;
   dancer_profiles?: {
+    slug?: string;
+    stage_name?: string;
+    avatar_storage_path?: string | null;
+    dancer_photos?: { storage_path: string; is_primary?: boolean; review_status?: string; sort_order?: number }[];
     status?: string;
     verification_status?: string;
     disabled_at?: string | null;
@@ -22,7 +27,8 @@ type ActivityShift = {
   } | null;
 };
 
-export type SavedVenueActivity = { workingNowCount: number; upcomingDancerCount: number };
+type LineupDancer = { id: string; slug: string; stageName: string; imageUrl: string | null; imageSrcSet: string | null; imageFocalX: number; imageFocalY: number };
+export type SavedVenueActivity = { workingNowCount: number; upcomingDancerCount: number; workingDancers?: LineupDancer[] };
 
 export function countSavedVenueDancers(venueIds: string[], shifts: ActivityShift[], now = Date.now()) {
   const groups = new Map(venueIds.map(id => [id, { now: new Set<string>(), upcoming: new Set<string>() }]));
@@ -40,7 +46,12 @@ export function countSavedVenueDancers(venueIds: string[], shifts: ActivityShift
   }]));
 }
 
-export async function getSavedVenueActivity(client: SupabaseClient, venueIds: string[], now = new Date()) {
+export async function getSavedVenueActivity(
+  client: SupabaseClient,
+  venueIds: string[],
+  now = new Date(),
+  imageForPath: (path: string | null | undefined) => Pick<LineupDancer, "imageUrl" | "imageSrcSet" | "imageFocalX" | "imageFocalY"> | null = () => null,
+) {
   if (!venueIds.length) return new Map<string, SavedVenueActivity>();
   const shifts: ActivityShift[] = [];
   const pageSize = 500;
@@ -49,7 +60,7 @@ export async function getSavedVenueActivity(client: SupabaseClient, venueIds: st
   try {
     for (let offset = 0; ; offset += pageSize) {
       const { data, error } = await client.from("shifts")
-        .select("id, dancer_id, venue_id, status, shift_source, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles!inner(status, verification_status, disabled_at, is_public)")
+        .select("id, dancer_id, venue_id, status, shift_source, starts_at, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles!inner(slug, stage_name, avatar_storage_path, status, verification_status, disabled_at, is_public, dancer_photos(storage_path, is_primary, review_status, sort_order))")
         .in("venue_id", venueIds)
         .eq("status", "posted")
         .eq("dancer_profiles.status", "approved")
@@ -65,7 +76,20 @@ export async function getSavedVenueActivity(client: SupabaseClient, venueIds: st
       shifts.push(...(data || []) as unknown as ActivityShift[]);
       if (!data || data.length < pageSize) break;
     }
-    return countSavedVenueDancers(venueIds, shifts, now.getTime());
+    const activity = countSavedVenueDancers(venueIds, shifts, now.getTime());
+    for (const shift of shifts.sort((a, b) => Date.parse(a.starts_at || "") - Date.parse(b.starts_at || ""))) {
+      const group = activity.get(shift.venue_id);
+      const dancer = shift.dancer_profiles;
+      if (!group || !dancer?.slug || shift.status !== "posted" || shift.checked_out_at || !isActiveNfcPresence(shift, now.getTime())) continue;
+      if (dancer.status !== "approved" || dancer.verification_status !== "approved" || !isPublicDancerProfileEligible(dancer)) continue;
+      const lineup = group.workingDancers ||= [];
+      if (lineup.length >= 5 || lineup.some(item => item.id === shift.dancer_id)) continue;
+      const primary = (dancer.dancer_photos || []).filter(photo => photo.review_status === "approved")
+        .sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || (a.sort_order || 0) - (b.sort_order || 0))[0];
+      const image = imageForPath(dancer.avatar_storage_path || primary?.storage_path);
+      lineup.push({ id: shift.dancer_id, slug: dancer.slug, stageName: dancer.stage_name || "Dancer", imageUrl: image?.imageUrl || null, imageSrcSet: image?.imageSrcSet || null, imageFocalX: image?.imageFocalX ?? 50, imageFocalY: image?.imageFocalY ?? 50 });
+    }
+    return activity;
   } catch (error) {
     // Activity is optional: a failed count must not hide saved clubs or turn
     // unknown activity into a misleading zero.

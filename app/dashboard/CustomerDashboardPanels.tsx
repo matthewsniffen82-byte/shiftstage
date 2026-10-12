@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
+import { venueOperatingStatus } from "@/src/lib/dancr/venue-operating-status";
 import { CUSTOMER_FOLLOW_ALERTS, customerNotificationSettings, type CustomerNotificationKey } from "@/src/lib/dancr/customer-notification-preferences";
 import { customerPushDeviceEnabled, customerPushSupportMessage, disableCustomerPush, enableCustomerPush, type CustomerNotificationDelivery } from "@/src/lib/dancr/customer-push";
 import { CustomerDashboardIcon } from "./CustomerDashboardIdentity";
@@ -661,7 +662,7 @@ function CustomerFollowedClubsPanel({
               <h3>{group.city}</h3>
               <span>{group.follows.length} {group.follows.length === 1 ? "club" : "clubs"}</span>
             </div>
-            <div className="customer-saved-card-grid customer-favorite-club-grid">
+            <div className="home-discovery-feed home-venue-discovery-feed" data-venue-scroll-feed>
               {group.follows.map((item) => {
                 const venue = item.venue;
                 const venueId = String(item.venueId || venue?.id || "");
@@ -757,46 +758,42 @@ function SavedVenueCard({
   removing: boolean;
   venue: SavedVenueSummary;
 }) {
+  const status = venueOperatingStatus(venue);
+  const count = venue.activity?.workingNowCount;
+  const dancers = venue.activity?.workingDancers || [];
+  const entryClass = "feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr venue-card-primary-action venue-card-deals-action free-entry-cta";
   return (
-    <article className="customer-saved-card customer-favorite-club-card">
-      <div className="customer-favorite-club-header">
-        <div className="customer-favorite-club-brand">
-          <Link className="customer-favorite-club-logo" href={customerVenueHref(venue)} aria-label={`Open ${venue.name || "club"} page`}>
-            <SavedVenueLogo venue={venue} />
-          </Link>
-        </div>
-        <div className="customer-favorite-club-identity">
-          <Link href={customerVenueHref(venue)}><strong>{venue.name}</strong></Link>
-          <small>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</small>
-        </div>
-        <details className="customer-card-menu" data-compact-menu name="customer-card-options"><summary aria-label={`More options for ${venue.name || "club"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
-          className="customer-club-favorite"
-          type="button"
-          aria-label={`Unfollow ${venue.name || "club"}`}
-          title="Unfollow club"
-          aria-pressed="true"
-          aria-busy={removing || undefined}
-          disabled={pending}
-          onClick={onUnfollow}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="3" /><path d="M3 20v-2a6 6 0 0 1 12 0v2M17 11h5" /></svg>
-          {removing ? "Unfollowing…" : "Unfollow"}
-        </button></div></details>
+    <article className={`venue home-discovery-feed-slide home-venue-discovery-slide${count ? " has-live-lineup" : ""}`} aria-label={venue.name || "Club"}>
+      <div className={`home-venue-discovery-art is-venue-logo-artwork has-venue-logo ${venue.imageUrl ? "has-custom-photo has-venue-cover" : "is-venue-artwork"}`} data-venue-visual-source={venue.imageUrl ? "venue_cover" : "artwork"} style={venue.imageUrl ? { "--custom-photo": `url("${venue.imageUrl}")` } as CSSProperties : undefined}>
+        <SavedVenueLogo venue={venue} />
       </div>
-      <div className="customer-saved-card-copy customer-favorite-club-copy">
-        <div className="customer-favorite-club-status">
-          <div className="customer-club-activity" aria-label={`Dancers at ${venue.name || "this club"}`}>
-            <Link className={`customer-club-activity-stat is-now${venue.activity?.workingNowCount ? " has-dancers" : ""}`} href={`${customerVenueHref(venue)}#venue-working-now`}>
-              <i aria-hidden="true" /><strong>{venue.activity?.workingNowCount ?? "—"}</strong><span>Now</span>
-            </Link>
-          </div>
-          {entryDealId ? <div className="customer-card-actions customer-favorite-club-entry"><Link className="free-entry-cta" href={`/deals/transportation/${encodeURIComponent(entryDealId)}?sourceType=club_page`} aria-label={`Free Entry at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></Link></div> : null}
-        </div>
-        {!venue.activity ? <small className="customer-club-activity-unavailable">Dancer counts unavailable. Open the club page for updates.</small> : null}
-        <div className="customer-card-actions customer-favorite-club-actions">
-          <Link href={customerVenueHref(venue)}>Club page <span aria-hidden="true">↗</span></Link>
-          <CustomerDirectionsButton onDirections={onDirections} pending={pending} venue={venue} />
-        </div>
+      <div className="home-discovery-feed-shade" aria-hidden="true" />
+      <div className="home-discovery-feed-copy">
+        <h3 className="home-venue-discovery-name">{venue.name}</h3>
+        <span className="home-venue-discovery-location"><VenueCardIcon icon="pin" /><span>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</span></span>
+        <span className="home-venue-discovery-meta">
+          <span className={`home-venue-discovery-operating-status is-${status.state}`}>{status.label}</span>
+          {venue.hoursLabel ? <span className="home-venue-discovery-hours" aria-label="Opening hours"><VenueCardIcon icon="clock" /><span>{venue.hoursLabel}</span></span> : null}
+        </span>
+      </div>
+      <div className="home-venue-discovery-lineup-slot">
+        {count ? <span className="home-venue-discovery-lineup" role="group" aria-label={`${count} dancers working now`}>
+          <span className="home-venue-discovery-lineup-avatars">{dancers.slice(0, 5).map(dancer => <Link key={dancer.id} className="home-venue-discovery-lineup-avatar venue-lineup-profile" href={customerDancerHref(dancer)} data-dancer-avatar data-working-now="true" aria-label={`Open ${dancer.stageName}, working now`}>
+            <span data-dancer-avatar-border aria-hidden="true">
+              {dancer.imageUrl ? <img className="venue-lineup-avatar-photo" src={dancer.imageUrl} srcSet={dancer.imageSrcSet || undefined} sizes="32px" width={64} height={64} style={{ objectPosition: `${dancer.imageFocalX ?? 50}% ${dancer.imageFocalY ?? 50}%` }} alt="" loading="lazy" decoding="async" data-image-state="loading" onLoad={event => { event.currentTarget.dataset.imageState = "ready"; }} onError={event => { event.currentTarget.dataset.imageState = "error"; }} /> : null}
+              <span className="venue-lineup-avatar-initial">{customerInitials(dancer.stageName || "Dancer")}</span>
+            </span><span data-working-now-indicator aria-hidden="true">NOW</span>
+          </Link>)}</span>
+          <Link className="home-venue-discovery-lineup-label" href={`${customerVenueHref(venue)}#venue-working-now`}><strong>{count}</strong><span>NOW</span></Link>
+        </span> : <span className="home-venue-discovery-lineup is-empty"><span className="venue-lineup-empty-text">{count === 0 ? "No dancers listed now" : "Dancer counts unavailable"}</span></span>}
+      </div>
+      <div className="home-venue-discovery-context-actions venue-card-primary-actions" aria-label={`${venue.name} primary actions`}>
+        {entryDealId ? <Link className={`${entryClass} is-available`} href={`/deals/transportation/${encodeURIComponent(entryDealId)}?sourceType=club_page`} aria-label={`Free Entry at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></Link> : <button className={`${entryClass} is-unavailable`} type="button" disabled title="Free Entry is currently unavailable" aria-label={`Free Entry unavailable at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></button>}
+      </div>
+      <div className="home-dancer-grid-action-rail home-venue-discovery-action-rail venue-card-secondary-actions" aria-label={`${venue.name} secondary actions`}>
+        <Link className="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" href={customerVenueHref(venue)} aria-label={`Open ${venue.name}'s full club profile`}><span className="action-icon" data-action-icon="clubProfile" aria-hidden="true"><VenueCardIcon icon="club" /></span><span>Club Page</span></Link>
+        <button className="home-discovery-feed-directions venue-directions-btn venue-card-secondary-action venue-card-directions-action" type="button" disabled={pending} onClick={() => onDirections(venue)} aria-label={`Directions to ${venue.name}`}><span className="action-icon" data-action-icon="pin" aria-hidden="true"><VenueCardIcon icon="pin" /></span><span>Directions</span></button>
+        <button className="feed-card-action venue-card-secondary-action venue-card-favorite-action is-active" type="button" data-venue-follow={venue.id} aria-label={`Unfollow ${venue.name || "club"}`} aria-pressed="true" aria-busy={removing || undefined} disabled={pending} onClick={onUnfollow}><span className="action-icon" data-action-icon="check" aria-hidden="true"><VenueCardIcon icon="check" /></span><span>{removing ? "Unfollowing…" : "Following"}</span></button>
       </div>
     </article>
   );
@@ -804,12 +801,17 @@ function SavedVenueCard({
 
 
 function SavedVenueLogo({ venue }: { venue: SavedVenueSummary }) {
-  const logoUrl = venue.logoImageUrl || verifiedVenueLogoUrl(venue.slug);
+  const original = venue.logoImageUrl || verifiedVenueLogoUrl(venue.slug);
+  const logoUrl = original?.replace(/(\/venue-logos\/fictional\/)([a-z-]+\.svg)(?=\?|$)/i, "$1marks/$2");
   const [failedUrl, setFailedUrl] = useState("");
   if (!logoUrl || failedUrl === logoUrl) {
-    return <svg className="customer-club-logo-fallback" viewBox="0 0 64 64" aria-hidden="true"><path d="M12 54V22L32 10l20 12v32M8 54h48M23 54V40h18v14M23 25h18M23 32h18" /></svg>;
+    return <span className="home-venue-discovery-monogram">{customerInitials(venue.name || "Club")}</span>;
   }
-  return <img src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="(max-width: 360px) 96px, 112px" width={venue.logoImageWidth || undefined} height={venue.logoImageHeight || undefined} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} />;
+  return <span className="home-venue-discovery-logo-shell"><img className="home-venue-discovery-logo" src={logoUrl} srcSet={logoUrl === original ? venue.logoImageSrcSet || undefined : undefined} sizes="(max-width: 720px) 82vw, 620px" width={venue.logoImageWidth || 340} height={venue.logoImageHeight || 380} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} /></span>;
+}
+
+function VenueCardIcon({ icon }: { icon: "club" | "pin" | "clock" | "check" }) {
+  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon === "club" ? <path d="M5 20V9l7-4 7 4v11M9 20v-6h6v6" /> : icon === "check" ? <path d="m5 12 4.2 4.2L19 6.5" /> : icon === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>}</svg>;
 }
 
 

@@ -93,3 +93,16 @@ test('an empty favorites list needs no activity request, while a successful empt
   assert.equal(calls.length, 0);
   assert.deepEqual((await getSavedVenueActivity(client, ['echo'], now)).get('echo'), { workingNowCount: 0, upcomingDancerCount: 0 });
 });
+
+test('saved club lineup keeps five distinct public check-ins and approved images without limiting the total', async () => {
+  const publicProfile = id => ({...approved,slug:id,stage_name:id,dancer_photos:[{storage_path:'rejected',is_primary:true,review_status:'rejected'},{storage_path:`${id}-approved`,review_status:'approved'}]});
+  const live = Array.from({length:7},(_,i)=>shift(`live-${i}`,{...checkedIn,starts_at:`2026-09-07T${String(12+i).padStart(2,'0')}:00:00Z`,dancer_profiles:publicProfile(`live-${i}`)}));
+  const {client}=clientFixture([{data:[live[0],...live,shift('scheduled',{dancer_profiles:publicProfile('scheduled')}),shift('private',{...checkedIn,dancer_profiles:{...publicProfile('private'),is_public:false}})],error:null}]);
+  const paths=[];
+  const activity=await getSavedVenueActivity(client,['echo'],now,path=>{paths.push(path);return {imageUrl:`/approved/${path}`,imageSrcSet:null,imageFocalX:40,imageFocalY:60};});
+  assert.equal(activity.get('echo').workingNowCount,7);
+  assert.equal(activity.get('echo').workingDancers.length,5);
+  assert.deepEqual(activity.get('echo').workingDancers.map(d=>d.id),live.slice(0,5).map(s=>s.dancer_id));
+  assert.deepEqual(paths,live.slice(0,5).map(s=>`${s.dancer_id}-approved`));
+  assert.ok(activity.get('echo').workingDancers.every(d=>!('avatar_storage_path' in d) && d.imageFocalX===40));
+});
