@@ -195,8 +195,8 @@ export default function DancerProfileWorkspace({
     }
   }
 
-  const requiredPhotos = <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-labelledby="dancer-profile-photos-title">
-    <header><h3 id="dancer-profile-photos-title">{onboarding ? "Choose your look" : "Profile photos"}</h3></header>
+  const requiredPhotos = <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label={onboarding ? "Avatar and main photo" : undefined} aria-labelledby={onboarding ? undefined : "dancer-profile-photos-title"}>
+    {!onboarding ? <header><h3 id="dancer-profile-photos-title">Profile photos</h3></header> : null}
     <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">
       <h4 id="dancer-face-photo-title">Avatar</h4>
       <p className="dancer-photo-guidance">{onboarding ? "Tap to choose or crop." : "Tap to edit your profile circle."}</p>

@@ -31,8 +31,9 @@ export default function DancerProfilePreviewContent({ name, city, avatarUrl, pho
       <button type="button" aria-pressed={audience === "public"} onClick={() => setAudience("public")}>Public profile</button>
       <button type="button" aria-pressed={audience === "club"} onClick={() => setAudience("club")}>Club display</button>
     </div> : null}
-    <p className="dancer-preview-note">{onboarding ? "Tap your name, avatar, or dancer card to edit. Private until setup is complete." : `Draft preview · Approved media only. ${isPublic ? "Your saved profile is public." : "Your public profile is hidden."}`}</p>
+    <p className="dancer-preview-note">{onboarding ? "Tap to edit. Private until setup is complete." : `Draft preview · Approved media only. ${isPublic ? "Your saved profile is public." : "Your public profile is hidden."}`}</p>
     {audience === "public" ? <>
+      <div className={onEdit ? "dancer-builder-preview-summary" : undefined}>
       <header className="dancer-preview-identity">
         {onEdit ? <button className="dancer-preview-edit-avatar" type="button" aria-label="Edit avatar" onClick={() => onEdit("dancer-face-photo")}>
           {avatarUrl ? <img src={avatarUrl} alt="" /> : <span aria-hidden="true">+</span>}
@@ -48,6 +49,7 @@ export default function DancerProfilePreviewContent({ name, city, avatarUrl, pho
         </button>
         <span>Your dancer card</span>
       </div> : <p className="dancer-preview-note">Guests also see current club activity when available. This preview shows your profile details and media.</p>}
+      </div>
       {onEdit ? <div className="dancer-builder-preview-gallery-heading"><h4>Profile gallery</h4><button type="button" onClick={() => onEdit("dancer-profile-media-library")}>Edit photos/videos</button></div> : null}
       <div className="dancer-profile-preview-overlay dancer-profile-inline-preview"><DancerPhotoCarousel stageName={name || "Your profile"}
         photos={photos.map(photo => ({ id: photo.id, imageUrl: photo.imageUrl, isPinned: photo.isPinned, isPrimary: photo.isPrimary, sortOrder: photo.sortOrder }))}
