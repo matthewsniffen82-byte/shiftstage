@@ -4,6 +4,7 @@ import path from "node:path";
 import { LIVE_SHELL_SHA256 } from "../../src/generated/live-shell-version";
 import { LIVE_SHELL_SCRIPT_SHA256 } from "../../src/generated/live-shell-script-version.mjs";
 import { extractLiveShellAppScript } from "../../src/lib/dancr/live-shell-script.mjs";
+import { createLiveShellVersionMismatchScript } from "../../src/lib/dancr/live-shell-recovery.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,13 +12,24 @@ export const revalidate = 0;
 
 export async function GET(request: Request) {
   const production = process.env.NODE_ENV === "production";
+  const scriptVersion = production ? LIVE_SHELL_SCRIPT_SHA256 : LIVE_SHELL_SHA256;
+  const requestedVersion = new URL(request.url).searchParams.get("v");
+  if (production && requestedVersion !== scriptVersion) {
+    // Never run a new application against an old cached document's markup.
+    return new Response(createLiveShellVersionMismatchScript(), {
+      headers: {
+        "content-type": "application/javascript; charset=utf-8",
+        "cache-control": "no-store, max-age=0",
+        "x-dancr-live-shell-build-version": LIVE_SHELL_SHA256,
+        "x-dancr-live-shell-script-version": scriptVersion,
+      },
+    });
+  }
   const script = production
     ? await readFile(path.join(process.cwd(), "outputs", "live-shell-app.js"), "utf8")
     : extractLiveShellAppScript(
         (await readFile(path.join(process.cwd(), "outputs", "index.html"), "utf8")).replace(/\r\n?/g, "\n"),
       );
-  const scriptVersion = production ? LIVE_SHELL_SCRIPT_SHA256 : LIVE_SHELL_SHA256;
-  const requestedVersion = new URL(request.url).searchParams.get("v");
   // Function responses need s-maxage to opt into Vercel's shared CDN cache.
   // Only an exact production content hash is safe to retain for a year.
   const cacheControl = production && requestedVersion === scriptVersion

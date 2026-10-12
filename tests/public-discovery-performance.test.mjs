@@ -14,10 +14,10 @@ const [homeSource, rootRouteSource, discoveryRouteSource, publicCacheSource, pub
   readFile(new URL("../public/outputs/dancr-hero.webp", import.meta.url)),
 ]);
 
-test("the production home shell keeps bounded browser and edge cache lifetimes", () => {
+test("the production home shell always serves a fresh page document", () => {
   assert.match(rootRouteSource, /export const dynamic = "force-dynamic"/);
   assert.match(rootRouteSource, /export const revalidate = 0/);
-  assert.match(rootRouteSource, /max-age=30, s-maxage=60, stale-while-revalidate=300/);
+  assert.match(rootRouteSource, /"cache-control": "no-store, max-age=0"/);
   assert.doesNotMatch(rootRouteSource, /s-maxage=31536000/);
   assert.doesNotMatch(rootRouteSource, /no-store, no-cache/);
 });

@@ -11,6 +11,7 @@ import { splitLiveShellScript } from "../scripts/lib/split-live-shell-script.mjs
 import { LIVE_SHELL_FEATURE_VERSIONS } from "../src/generated/live-shell-feature-versions.mjs";
 import { externalizeLiveShellAppScript, extractLiveShellAppScript } from "../src/lib/dancr/live-shell-script.mjs";
 import { LIVE_SHELL_SCRIPT_SHA256 } from "../src/generated/live-shell-script-version.mjs";
+import { createLiveShellVersionMismatchScript } from "../src/lib/dancr/live-shell-recovery.mjs";
 
 const [html, delivered, routeSource, nextConfig, featureRouteSource] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
@@ -108,6 +109,7 @@ function scriptRoute(mode, feature = false) {
     "../../src/generated/live-shell-script-version.mjs": { LIVE_SHELL_SCRIPT_SHA256 },
     "../../src/generated/live-shell-feature-versions.mjs": { LIVE_SHELL_FEATURE_VERSIONS },
     "../../src/lib/dancr/live-shell-script.mjs": { extractLiveShellAppScript },
+    "../../src/lib/dancr/live-shell-recovery.mjs": { createLiveShellVersionMismatchScript },
   };
   const code = ts.transpileModule(feature ? featureRouteSource : routeSource, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
@@ -123,10 +125,10 @@ test("production serves built bytes and only their exact version is immutable", 
   const get = scriptRoute("production");
   for (const version of [LIVE_SHELL_SCRIPT_SHA256, sourceVersion, "old-version", ""]) {
     const response = await get(new Request(`https://www.mydancr.com/live-shell.js?v=${version}`));
-    assert.equal(await response.text(), delivered);
+    assert.equal(await response.text(), version === LIVE_SHELL_SCRIPT_SHA256 ? delivered : createLiveShellVersionMismatchScript());
     assert.equal(response.headers.get("x-dancr-live-shell-script-version"), LIVE_SHELL_SCRIPT_SHA256);
     assert.equal(response.headers.get("cache-control"), version === LIVE_SHELL_SCRIPT_SHA256
-      ? "public, max-age=31536000, s-maxage=31536000, immutable" : "public, max-age=0, must-revalidate");
+      ? "public, max-age=31536000, s-maxage=31536000, immutable" : "no-store, max-age=0");
     assert.equal(response.headers.get("set-cookie"), null);
     assert.equal(response.headers.get("vercel-cdn-cache-control"), null, "preserve middleware cache restrictions");
   }

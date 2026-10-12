@@ -14,7 +14,7 @@ test("concurrent origin requests share one production artifact render with indep
   for (const response of responses) {
     assert.deepEqual([...response.headers], [...fresh.headers]);
     assert.match(response.headers.get("content-security-policy"), /'sha256-/);
-    assert.equal(response.headers.get("cache-control"), "public, max-age=30, s-maxage=3600, stale-while-revalidate=300");
+    assert.equal(response.headers.get("cache-control"), "no-store, max-age=0");
     assert.equal(response.headers.get("cdn-cache-control"), null, "do not override the site-lock middleware's no-store policy");
     assert.equal(response.headers.get("vercel-cdn-cache-control"), null);
   }

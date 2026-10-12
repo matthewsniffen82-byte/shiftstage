@@ -70,5 +70,5 @@ test("installed sessions update without reloading the page during launch", () =>
   assert.match(serviceWorkerSource, /caches\.delete\(cacheName\)/);
   assert.match(serviceWorkerSource, /if \(isPublicNavigation\) return;\s*event\.respondWith\(fetch\(event\.request, \{ cache: "no-store" \}\)\)/);
   assert.match(liveRouteSource, /export const dynamic = "force-dynamic"/);
-  assert.match(liveRouteSource, /public, max-age=30, s-maxage=60, stale-while-revalidate=300/);
+  assert.match(liveRouteSource, /"cache-control": "no-store, max-age=0"/);
 });

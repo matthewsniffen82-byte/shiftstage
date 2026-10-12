@@ -63,13 +63,13 @@ test("public TV clients reuse cached payloads without sending account credential
   assert.match(source.tvClient, /cache: nextFilter === "following" \? "no-store" : "default"/);
   assert.match(source.liveShell, /fetchJson\(`\/api\/public\/tv\?\$\{params\.toString\(\)\}`, \{\s*retries: PUBLIC_DISCOVERY_REQUEST_RETRIES/);
   const publicFetch = source.liveShell.slice(source.liveShell.indexOf("async function fetchJson("), source.liveShell.indexOf("function dancerSignupCityOptionsMarkup("));
-  assert.match(publicFetch, /headers: \{ Accept: "application\/json" \},\s*cache: options\.cache === "no-store" \|\| attempt > 0 \? "no-store" : "default"/);
+  assert.match(publicFetch, /headers: \{ Accept: "application\/json", \.\.\.options\.headers \},\s*cache: options\.cache === "no-store" \|\| attempt > 0 \? "no-store" : "default"/);
   assert.doesNotMatch(publicFetch, /authorization|authenticatedRequestHeaders/i);
   assert.match(source.liveShell, /fetch\(`\/api\/public\/tv\/count\?\$\{countParams\.toString\(\)\}`, \{ cache: "default" \}\)/);
 });
 
-test("the shell and versioned static assets can be reused by browser back navigation", () => {
-  assert.match(source.rootRoute, /public, max-age=30, s-maxage=3600, stale-while-revalidate=300/);
+test("page documents stay fresh while versioned static assets remain reusable", () => {
+  assert.match(source.rootRoute, /"cache-control": "no-store, max-age=0"/);
   assert.match(source.staticAssetCache, /public, max-age=31536000, immutable/);
   assert.match(source.staticAssetPaths, /"\/outputs\/dancr-hero\.webp"/);
   assert.match(source.staticAssetCache, /"\/venue-logos\/:path\*"/);

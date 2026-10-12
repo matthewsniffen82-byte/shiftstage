@@ -11,11 +11,11 @@ import {
 import { externalizeLiveShellAppScript } from "../src/lib/dancr/live-shell-script.mjs";
 import { versionStaticAssetReferences, versionedStaticAssetUrl } from "../src/lib/dancr/static-asset-cache.mjs";
 import { externalizeLiveShellStyles } from "../src/lib/dancr/live-shell-styles.mjs";
+import { createLiveShellRecoveryScript } from "../src/lib/dancr/live-shell-recovery.mjs";
 
 export const runtime = "nodejs";
 // The live shell is a checked-in production artifact. Rendering this route at
-// request time prevents Vercel's build cache from reusing an older shell while
-// still allowing this deployment-only response to be reused at the edge.
+// request time prevents Vercel's build cache from reusing an older shell.
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -74,21 +74,23 @@ async function renderLiveShell() {
     ? withAdminAuthEntry.replace('</head>', `<script defer src="/mydancr-performance.js" data-release="${release}"></script></head>`)
     : withAdminAuthEntry;
   const withVersionedAssets = versionStaticAssetReferences(withPerformance);
-  const contentSecurityPolicy = createRootContentSecurityPolicy(withVersionedAssets);
+  const shellRelease = createHash("sha256").update(withVersionedAssets).digest("hex");
+  const withRecovery = withVersionedAssets.replace("<head>",
+    `<head><script>${createLiveShellRecoveryScript(shellRelease)}</script>`);
+  const contentSecurityPolicy = createRootContentSecurityPolicy(withRecovery);
 
   return {
-    html: withVersionedAssets,
+    html: withRecovery,
     headers: {
       "content-type": "text/html; charset=utf-8",
-      // Vercel invalidates this deployment's CDN entries on a new deployment.
-      // Keep browser reuse short; live data still comes from uncached APIs.
-      // Do not add a CDN-specific header here: the site-lock middleware's
-      // no-store headers must retain priority while password access is enabled.
-      "cache-control": "public, max-age=30, s-maxage=3600, stale-while-revalidate=300",
+      // Page documents must not outlive their deployment's CSS and scripts.
+      // Content-addressed assets retain their independent long-lived caching.
+      "cache-control": "no-store, max-age=0",
       "content-security-policy": contentSecurityPolicy,
       "x-dancr-live-shell-version": liveShellSha256,
       "x-dancr-live-shell-build-version": LIVE_SHELL_SHA256,
       "x-dancr-live-shell-script-version": scriptVersion,
+      "x-dancr-shell-release": shellRelease,
     },
   };
 }
