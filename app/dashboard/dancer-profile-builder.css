@@ -96,6 +96,38 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboar
   margin:0 0 6px;
 }
 
+/* Approved media forms an uninterrupted gallery, with its label in the menu. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .profile-upload-items > li[data-review-status='approved'] {
+  gap:0;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .profile-upload-items > li[data-review-status='approved'] > :is(strong,small) {
+  display:none;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu {
+  position:absolute; inset:2px 2px auto; z-index:5; width:auto; height:44px; margin:0;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu[open] { z-index:8; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu > div {
+  position:absolute; top:44px; right:0; margin:0;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .profile-upload-menu-caption {
+  display:block; margin:0; padding:6px 8px; color:#c9c3d2; font-size:11px; line-height:1.4;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-main-photo-panel {
+  position:relative;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-main-photo-actions .dancer-photo-controls-row {
+  position:absolute; top:2px; left:calc(var(--profile-main-photo-width) - 46px); z-index:5;
+}
+@layer dancr-follow-controls {
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu > summary {
+    margin-left:auto !important;
+  }
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu > div {
+    width:100% !important;
+  }
+}
+
 /* Override shared button treatments only for these lightweight navigation/edit targets. */
 @layer dancr-profile-builder-controls {
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] :is(.photo-source-action,.tv-video-source-action) {

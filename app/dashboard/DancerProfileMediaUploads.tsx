@@ -205,7 +205,7 @@ export default function DancerProfileMediaUploads({
             {items.length ? (
               <ul className="profile-upload-items" aria-label={`Uploaded ${section}`}>
                 {items.map((item, index) => (
-                  <li key={item.id}>
+                  <li key={item.id} data-review-status={item.status}>
                     <div className="profile-upload-preview">
                       <button aria-label={`${isPhoto ? compact ? "Edit" : "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus)}`} disabled={Boolean(deletingVideoId || pinningId) || disabled} onClick={event => {
                         if (compact && isPhoto) {
@@ -221,7 +221,9 @@ export default function DancerProfileMediaUploads({
                         </span>
                       </button>
                       {isPhoto && item.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
-                      {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}>•••</summary><div>{isPhoto ? photoActions?.(item.id) : null}
+                      {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}>•••</summary><div>
+                        <p className="profile-upload-menu-caption">{label} {index + 1} · {profileUploadStatus(item.status, item.moderationStatus)}</p>
+                        {isPhoto ? photoActions?.(item.id) : null}
                         {isPhoto ? <button type="button" disabled={actionsDisabled} onClick={() => setActivePreview({ kind: "photo", id: item.id, label: `${label} ${index + 1}` })}>View photo</button> : null}
                         {onMediaPinned ? <button type="button" disabled={actionsDisabled || item.status !== "approved"} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)}>{item.isPinned ? "Unpin" : "Pin"}</button> : null}
                         <button type="button" disabled={actionsDisabled} onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}>Delete</button>
@@ -279,6 +281,7 @@ export default function DancerProfileMediaUploads({
         .profile-upload-items { min-width:0; display:flex; gap:10px; overflow-x:auto; margin:0; padding:2px 0 8px; list-style:none; }
         .profile-upload-items > li { flex:0 0 112px; min-width:0; display:grid; align-content:start; gap:4px; }
         .profile-upload-preview { position:relative; min-width:0; }
+        .profile-upload-menu-caption { display:none; }
         .dancer-profile-media-uploads .profile-upload-items button { width:100%; min-height:44px; display:grid; gap:4px; padding:0; border:0; border-radius:8px; background:transparent; color:#fff; text-align:left; font:inherit; cursor:pointer; }
         .profile-upload-thumbnail { position:relative; width:100%; height:auto; aspect-ratio:3 / 4; display:grid; place-items:center; overflow:hidden; border:1px solid #40384b; border-radius:8px; background:#15101d; color:#c9c3d2; }
         .profile-upload-thumbnail img { width:100%; height:100%; display:block; object-fit:cover; }

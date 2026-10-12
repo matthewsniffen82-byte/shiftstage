@@ -119,7 +119,7 @@ test("uploaded previews retain pending and rejected items without presenting the
     photos: [{ id: "approved", imageUrl: "/approved.jpg", status: "approved" }, { id: "pending", status: "pending" }, { id: "rejected", status: "rejected" }],
     videos: [{ id: "checking", status: "moderating" }],
   });
-  assert.equal((html.match(/<li>/g) || []).length, 4);
+  assert.equal((html.match(/<li\b/g) || []).length, 4);
   assert.match(html, /3 added/);
   assert.match(html, /1 added/);
   assert.match(html, /Approved/);
@@ -376,7 +376,7 @@ test("loading and a failed video request are distinguishable from an empty video
 
 test("large saved libraries remain accessible and thumbnails do not start video downloads", () => {
   const html = render({ videos: Array.from({ length: 50 }, (_, index) => ({ id: `v-${index}`, imageUrl: `/poster-${index}.jpg`, status: "approved" })) });
-  assert.equal((html.match(/<li>/g) || []).length, 50);
+  assert.equal((html.match(/<li\b/g) || []).length, 50);
   assert.match(html, /Play video 50: Approved/);
   assert.match(html, /loading="lazy"/);
   assert.doesNotMatch(html, /<video/);
