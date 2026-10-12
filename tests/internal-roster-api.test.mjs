@@ -93,6 +93,17 @@ test('cancelled requests leave the staff inbox and guest buttons while replaceme
  assert.equal((await (await f.get(['link',id(3)])).json()).dancers[0].requestId,id(13));
 });
 test('staff roster requires a real signed-in venue session',async()=>{assert.equal((await fixture().get()).status,401);assert.equal((await fixture({staff:false}).get([], '', 'staff')).status,403);});
+test('staff keep a departed dancer’s request and can record arrival only through their own venue identity',async()=>{
+ const saved={id:id(12),venue_id:id(2),link_id:id(1),dancer_id:id(5),status:'acknowledged',attendance:null,created_at:new Date().toISOString()};
+ const f=fixture({members:false,requests:[saved]});
+ const response=await f.get(['requests'],'','staff'); const data=await response.json();
+ assert.equal(data.requests.length,1); assert.equal(data.requests[0].dancerName,'Aster'); assert.doesNotMatch(JSON.stringify(data),/PRIVATE/);
+ const body={action:'request_attendance',id:id(12),expectedStatus:'acknowledged',attendance:'arrived',actor:id(999),venueId:id(999)};
+ assert.equal((await f.post(body)).status,200);
+ const call=f.calls.find(c=>c.name==='record_internal_request_attendance'); assert.equal(call.args.p_actor,id(4)); assert.equal(call.args.p_venue,id(2));
+ assert.equal((await f.post({...body,expectedStatus:'pending'})).status,400);
+ assert.equal((await f.post(body,['link',id(3)],'')).status,400);
+});
 test('a valid club capability exposes only opted-in photo card metadata',async()=>{const response=await fixture().get(['link',id(3)]);assert.equal(response.status,200);const body=await response.json();assert.equal(body.venueLogoUrl,'/venue-logos/fictional/echo-house.svg');assert.deepEqual(Object.keys(body.dancers[0]).sort(),['id','stageName','workingUntil','avatarRevision','mainPhotoId','mainPhotoRevision','requestStatus','requestId'].sort());assert.doesNotMatch(JSON.stringify(body),/PRIVATE|storage_path|user_id/);assert.match(response.headers.get('cache-control'),/no-store/);});
 test('internal-only profile opens through the roster with full approved customer content',async()=>{const response=await fixture().get(['profile',id(5)],'?token='+id(3));assert.equal(response.status,200);const body=await response.json();assert.equal(body.profile.stage_name,'Aster');assert.equal(body.profile.photos.length,2);assert.equal(body.profile.socialLinks[0].url,'https://instagram.com/aster');assert.doesNotMatch(JSON.stringify(body),/PRIVATE|real_name|email|storage_path|is_public/);});
 test('revoked, guessed, and absent capabilities cannot read full profiles',async()=>{assert.equal((await fixture({active:false}).get(['profile',id(5)],'?token='+id(3))).status,404);assert.equal((await fixture().get(['profile',id(5)],'?token='+id(999))).status,404);assert.equal((await fixture().get(['profile',id(5)])).status,401);});

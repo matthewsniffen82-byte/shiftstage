@@ -1,6 +1,19 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+/** Staff-only inbox. Keep a request actionable after its dancer checks out. */
+export async function internalOpenRequests(client: SupabaseClient, venueId: string) {
+  const { data, error } = await client.from("internal_roster_requests")
+    .select("id,link_id,dancer_id,status,created_at,attendance,attendance_recorded_at").eq("venue_id", venueId)
+    .in("status", ["pending", "acknowledged"]).gte("created_at", new Date(Date.now() - 6 * 3600000).toISOString()).order("created_at").limit(200);
+  if (error) throw error;
+  if (!data?.length) return [];
+  const profiles = await client.from("dancer_profiles").select("id,stage_name").in("id", [...new Set(data.map(row => row.dancer_id))]);
+  if (profiles.error) throw profiles.error;
+  const names = new Map((profiles.data || []).map(row => [row.id, row.stage_name]));
+  return data.map(row => ({ ...row, dancerName: names.get(row.dancer_id) || "Dancer" }));
+}
+
 /** Call only after the dancer and venue have passed Internal roster authorization. */
 export async function internalRequestsTonight(client: SupabaseClient, venueId: string, dancerId: string) {
   const { data: shift, error } = await client.from("shifts")

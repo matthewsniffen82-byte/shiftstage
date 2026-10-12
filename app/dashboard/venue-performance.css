@@ -1,4 +1,7 @@
 .venue-performance { margin-top: 18px; border-top: 1px solid #35313e; padding-top: 12px; }
+.venue-dancer-results { margin-block: 16px; }
+.venue-dancer-results h3 { font-size: 16px; margin-bottom: 10px; }
+.venue-performance-detail dd.venue-result-time { font-size: 13px; line-height: 1.5; }
 .venue-performance h3, .venue-result-outcomes h3 { margin: 6px 0; font-size: 16px; }
 .venue-performance-channels { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin: 12px 0; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-performance-channels button { --venue-control-face: #19151f; --venue-control-edge: #534768; min-height: 44px !important; border-radius: 10px !important; font-size: 13px !important; }

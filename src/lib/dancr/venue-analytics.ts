@@ -24,16 +24,24 @@ export type DancerPerformance = {
   internal: Record<string, number | null>;
   external: Record<string, number>;
   vip: Record<string, number>;
+  results?: DancerResults;
+};
+export type DancerResults = {
+  checkIns: number; checkOuts: number;
+  lastCheckInAt: string | null; lastCheckOutAt: string | null;
+  tableArrived: number; tableNoShows: number; tableAttendanceUnrecorded: number; showUpPercent: number | null;
+  profileConversions: number; profileClaims: number; profileCohortConversions: number; profileConversionPercent: number | null;
 };
 export type VenuePerformanceReport = {
   trackingStartedAt: string;
-  current: VenuePerformanceCounts;
-  previous: VenuePerformanceCounts;
+  resultsStartedAt?: string;
+  current: VenuePerformanceCounts & Partial<DancerResults>;
+  previous: VenuePerformanceCounts & Partial<DancerResults>;
   dancers: DancerPerformance[];
   tonight: Record<"vipPending" | "vipConfirmed" | "tablePending" | "tableAcknowledged" | "guestListExpected", number>;
 };
 export type DancerPerformanceChannel = "all" | "internal" | "external" | "vip";
-export type DancerPerformanceSort = "requests" | "completed" | "admissions" | "name";
+export type DancerPerformanceSort = "requests" | "completed" | "admissions" | "conversions" | "checkIns" | "name";
 const externalOutcomes = ["dancer_profile", "club_page", "directions", "claims", "admissions", "going", "free_entry", "transport"];
 
 /** Requests are an explicitly labelled workload, never a count of customers. */
@@ -44,10 +52,12 @@ export function dancerRequestCount(row: DancerPerformance, channel: DancerPerfor
 
 export function sortDancerPerformance(rows: DancerPerformance[], channel: DancerPerformanceChannel, sort: DancerPerformanceSort): DancerPerformance[] {
   const value = (row: DancerPerformance) => sort === "requests" ? dancerRequestCount(row, channel)
-    : sort === "completed" ? row.internal.completed || 0 : sort === "admissions" ? row.external.admissions || 0 : 0;
+    : sort === "completed" ? row.internal.completed || 0 : sort === "admissions" ? row.external.admissions || 0
+    : sort === "conversions" ? row.results?.profileConversions || 0
+    : sort === "checkIns" ? row.results?.checkIns || 0 : 0;
   const hasActivity = (row: DancerPerformance, selected: Exclude<DancerPerformanceChannel, "all">) => selected === "internal"
-    ? (row.internal.requests || 0) > 0 || (row.internal.checkedInHours || 0) > 0
-    : selected === "external" ? externalOutcomes.some(key => row.external[key] > 0) : row.vip.requests > 0;
+    ? (row.internal.requests || 0) > 0 || (row.internal.checkedInHours || 0) > 0 || (row.results?.checkIns || 0) > 0 || (row.results?.checkOuts || 0) > 0
+    : selected === "external" ? externalOutcomes.some(key => row.external[key] > 0) || (row.results?.profileConversions || 0) > 0 : row.vip.requests > 0;
   return rows.filter(row => channel === "all" ? hasActivity(row, "internal") || hasActivity(row, "external") || hasActivity(row, "vip") : hasActivity(row, channel))
     .sort((a, b) => value(b) - value(a) || a.name.localeCompare(b.name, "en", { sensitivity: "base", numeric: true }) || a.id.localeCompare(b.id));
 }

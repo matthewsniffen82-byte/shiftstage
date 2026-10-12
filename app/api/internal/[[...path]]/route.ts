@@ -4,7 +4,7 @@ import { deliverInternalCancellationPush } from "@/src/lib/dancr/internal-reques
 import { deliverInternalRequestPush } from "@/src/lib/dancr/internal-request-push";
 import { internalMainPhotos } from "@/src/lib/dancr/internal-main-photo";
 import { serveInternalMedia } from "@/src/lib/dancr/internal-media-delivery";
-import { internalRequestsTonight, internalTableRequestStates } from "@/src/lib/dancr/internal-request-activity";
+import { internalOpenRequests, internalRequestsTonight, internalTableRequestStates } from "@/src/lib/dancr/internal-request-activity";
 import { createHash } from "node:crypto";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
@@ -40,13 +40,7 @@ export async function GET(request: Request, context: Context) {
       || (path[0] === "requests" && (path.length !== 1 || token !== undefined))) return json({ ok: false, error: "Not found." }, 404);
     const scope = await internalScope(admin, request, token);
     if (path[0] === "requests") {
-      const [result, members] = await Promise.all([
-        admin.from("internal_roster_requests").select("id,link_id,dancer_id,status,created_at").eq("venue_id", scope.venueId)
-          .in("status", ["pending", "acknowledged"]).gte("created_at", new Date(Date.now() - 6 * 3600000).toISOString()).order("created_at").limit(200),
-        internalMembers(admin, scope.venueId),
-      ]);
-      if (result.error) throw result.error;
-      return json({ ok: true, requests: (result.data || []).filter(item => members.some(member => member.id === item.dancer_id)), session: scope.session });
+      return json({ ok: true, requests: await internalOpenRequests(admin, scope.venueId), session: scope.session });
     }
     // Staff see their approved affiliated dancers; table links remain internal-shift-only.
     const members = scope.link ? await internalMembers(admin, scope.venueId) : await venueRosterMembers(admin, scope.venueId);
@@ -128,14 +122,12 @@ export async function GET(request: Request, context: Context) {
       }
       return json({ ok: true, venueName: scope.venueName, venueLogoUrl: scope.venueLogoUrl, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id)?.status || null, requestId: tableRequests.get(dancer.id)?.id || null })), receipt });
     }
-    const results = await Promise.all([
+    const [linksResult, requests] = await Promise.all([
       admin.from("internal_roster_links").select("id,kind,label,token,active").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),
-      admin.from("internal_roster_requests").select("id,link_id,dancer_id,status,created_at").eq("venue_id", scope.venueId).in("status", ["pending", "acknowledged"]).gte("created_at", new Date(Date.now() - 6 * 3600000).toISOString()).order("created_at").limit(200),
+      internalOpenRequests(admin, scope.venueId),
     ]);
-    for (const result of results) if (result.error) throw result.error;
-    const links = results[0].data || [];
-    const internal = await internalMembers(admin, scope.venueId);
-    const requests = (results[1].data || []).filter(item => internal.some(d => d.id === item.dancer_id));
+    if (linksResult.error) throw linksResult.error;
+    const links = linksResult.data || [];
     return json({ ok: true, venueName: scope.venueName, dancers, links, requests, role: scope.role, session: scope.session });
   } catch (error) {
     const resolved = resolveApiError(internalError(error), "Unable to load the club roster.");
@@ -172,6 +164,15 @@ export async function POST(request: Request, context: Context) {
     }
     if (path.length) return json({ ok: false, error: "Not found." }, 404);
     const scope = await internalScope(admin, request);
+    if (body.action === "request_attendance") {
+      if (!isInternalUuid(body.id) || !["arrived", "no_show"].includes(String(body.attendance)) || body.expectedStatus !== "acknowledged") {
+        throw new PublicApiError("INVALID_REQUEST", "Mark the request seen before recording attendance.", 400);
+      }
+      const { data, error } = await admin.rpc("record_internal_request_attendance", { p_actor: scope.userId, p_venue: scope.venueId,
+        p_request: body.id, p_expected_status: body.expectedStatus, p_attendance: body.attendance });
+      if (error) throw error;
+      return json({ ok: true, result: data, session: scope.session });
+    }
     const { data, error } = await admin.rpc("internal_roster_manage", { p_actor: scope.userId, p_venue: scope.venueId, p_action: body.action, p_data: body });
     if (error) throw error;
     return json({ ok: true, result: data, session: scope.session });

@@ -29,6 +29,17 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
       {outcomeMetric("vipRequests", "VIP requests received")}{outcomeMetric("tableRequests", "Table requests received")}
 
     </div>
+    {performance?.resultsStartedAt && <section className="venue-dancer-results" aria-label="Dancer attendance and results">
+      <h3>Dancer attendance &amp; results</h3>
+      <div className="venue-value-metrics">
+        <div className="metric"><span>Check-ins</span><strong>{number(performance.current.checkIns || 0)}</strong><small>Verified check-in events</small></div>
+        <div className="metric"><span>Check-outs</span><strong>{number(performance.current.checkOuts || 0)}</strong><small>Recorded check-outs, excluding expired presence</small></div>
+        <div className="metric"><span>Profile conversions</span><strong>{number(performance.current.profileConversions || 0)}</strong><small>Redeemed entry · once per profile pass</small></div>
+        <div className="metric"><span>Arrived for table requests</span><strong>{number(performance.current.tableArrived || 0)}</strong><small>Confirmed by club staff</small></div>
+        <div className="metric"><span>Table request show-up rate</span><strong>{performance.current.showUpPercent == null ? "—" : `${performance.current.showUpPercent}%`}</strong><small>{number(performance.current.tableNoShows || 0)} no-shows · {number(performance.current.tableAttendanceUnrecorded || 0)} not recorded</small></div>
+      </div>
+      <p className="venue-value-note">Check-in events and attendance confirmations tracked since {formatDate(performance.resultsStartedAt)}. Earlier periods may be incomplete.</p>
+    </section>}
     <details className="venue-supporting-disclosure"><summary>Passes, rides &amp; audience growth</summary><div className="venue-value-metrics">{metric("claims", "Passes claimed")}{metric("pickups", "Pickup requests")}{metric("passengers", "Requested passengers")}{metric("followers", "New venue followers")}</div></details>
     {performance ? <>
       {period === "tonight" && <section className="venue-tonight-results" aria-label="Tonight’s live queues"><h3>Tonight’s live queues</h3><dl className="venue-outcome-counts">
@@ -48,7 +59,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
         <p className="venue-value-note">Current status of requests received in this period. Completed means marked complete by staff.</p>
         <p className="venue-value-note">Median time to acknowledge: <strong>{performanceMinutes(performance.current.tableResponseMinutes)}</strong> · {number(performance.current.tableResponseSamples)} recorded responses.<br />Median time to complete: <strong>{performanceMinutes(performance.current.tableCompletionMinutes)}</strong> · {number(performance.current.tableCompletionSamples)} recorded completions.</p>
       </details>
-      <VenueDancerPerformance dancers={performance.dancers} />
+      <VenueDancerPerformance dancers={performance.dancers} timezone={timezone} />
     </> : <p role="status">Dancer performance and request outcomes are unavailable. Refresh to try again.</p>}
     <details className="venue-supporting-disclosure"><summary>Audience &amp; conversion <span>Supporting metrics</span></summary><div className="venue-value-supporting">
       {metric("visitors", "Unique browsers")}{metric("impressions", "Venue-card impressions", true)}

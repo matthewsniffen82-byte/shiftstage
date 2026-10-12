@@ -60,9 +60,9 @@ test("results prioritize outcomes and preserve click source filtering inside sup
   let tree = render(props);
   const cards = tree.filter(node => node.props?.className === "metric");
   assert.equal(cards.length, 14);
-  assert.deepEqual(cards.slice(0, 8).map(node => nodes(node).find(item => item.type === "strong").props.children), ["5", "8", "2", "4", "8", "2", "7", "1"]);
+  assert.deepEqual(cards.slice(0, 8).map(node => nodes(node).find(item => item.type === "strong").props.children), ["2", "5", "4", "8", "8", "2", "7", "1"]);
   assert.equal(tree.find(node => node.type === "DancerPerformance").props.dancers, performance.dancers);
-  assert.equal(tree.filter(node => node.props.className === "venue-supporting-disclosure").length, 3);
+  assert.equal(tree.filter(node => node.props.className === "venue-supporting-disclosure").length, 4);
   assert.equal(tree.find(node => node.props?.className === "venue-value-methodology").props.open, undefined);
   tree.find(node => node.type === "select").props.onChange({ target: { value: "dancer_profile" } });
   tree = render(props);
@@ -89,6 +89,19 @@ test("Tonight shows live queues; older periods show trends and absent performanc
 });
 
 const dancer = (id, name, internal = {}, external = {}, vip = {}) => ({ id, name, internal, external, vip });
+test("dancer results include attendance-only dancers and display null conversion and arrival rates honestly", () => {
+  const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", { "@/src/lib/dancr/venue-analytics": analytics });
+  const results = { checkIns: 1, checkOuts: 0, lastCheckInAt: null, lastCheckOutAt: null,
+    profileConversions: 0, profileClaims: 0, profileCohortConversions: 0, profileConversionPercent: null,
+    tableArrived: 0, tableNoShows: 0, tableAttendanceUnrecorded: 0, showUpPercent: null };
+  const dancers = [{ ...dancer("a", "Aria"), results }, { ...dancer("b", "Bella"), results: { ...results, checkIns: 3 } }];
+  let tree = render({ dancers, timezone: "UTC" });
+  assert.equal(tree.filter(node => node.type === "li").length, 2);
+  assert.ok(!tree.some(node => typeof node.props.children === "string" && /revenue|purchase|club sales/i.test(node.props.children)));
+  assert.ok(tree.some(node => node.type === "dd" && [node.props.children].flat().includes("—")));
+  tree.find(node => node.type === "select").props.onChange({ target: { value: "checkIns" } });
+  tree = render({ dancers }); assert.deepEqual(tree.filter(node => node.type === "li").map(node => node.key), ["b", "a"]);
+});
 test("dancer channels sort meaningful outcomes, search names and do not mutate incoming analytics", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", { "@/src/lib/dancr/venue-analytics": analytics });
   const dancers = [dancer("a", "Aria", { requests: 3, completed: 2 }, { admissions: 1 }, { requests: 2 }),

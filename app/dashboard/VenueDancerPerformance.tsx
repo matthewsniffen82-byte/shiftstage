@@ -22,7 +22,7 @@ function Timing({ label, value, samples }: { label: string; value: number | null
   return <div><dt>{label}</dt><dd>{performanceMinutes(value)}<small>{counts(samples)} recorded responses</small></dd></div>;
 }
 
-export default function VenueDancerPerformance({ dancers }: { dancers: DancerPerformance[] }) {
+export default function VenueDancerPerformance({ dancers, timezone = "America/Los_Angeles" }: { dancers: DancerPerformance[]; timezone?: string }) {
   const [channel, setChannel] = useState<DancerPerformanceChannel>("all");
   const [sort, setSort] = useState<DancerPerformanceSort>("requests");
   const [search, setSearch] = useState("");
@@ -44,6 +44,8 @@ export default function VenueDancerPerformance({ dancers }: { dancers: DancerPer
         {channel !== "external" && <option value="requests">{channel === "all" ? "Table + VIP requests" : "Requests"}</option>}
         {(channel === "all" || channel === "internal") && <option value="completed">Completed table requests</option>}
         {(channel === "all" || channel === "external") && <option value="admissions">Verified pass admissions</option>}
+        {(channel === "all" || channel === "external") && <option value="conversions">Profile conversions</option>}
+        {(channel === "all" || channel === "internal") && <option value="checkIns">Check-ins</option>}
         <option value="name">Name</option>
       </select></label>
     </div>
@@ -55,13 +57,22 @@ export default function VenueDancerPerformance({ dancers }: { dancers: DancerPer
           : row.name.slice(0, 1).toUpperCase()}</span>
         <span className="venue-performance-name">{row.name}</span>
         <span className="venue-performance-highlights">
+          {row.results && channel === "all" && <span><b>{counts(row.results.profileConversions)}</b> conversions</span>}
           {(channel === "all" || channel === "internal") && <span><b>{counts(row.internal.requests)}</b> table · <b>{counts(row.internal.completed)}</b> completed</span>}
           {(channel === "all" || channel === "vip") && <span><b>{counts(row.vip.requests)}</b> VIP · <b>{counts(row.vip.confirmed)}</b> confirmed</span>}
           {(channel === "all" || channel === "external") && <span><b>{counts(row.external.claims)}</b> passes · <b>{counts(row.external.admissions)}</b> admitted</span>}
         </span>
         <span className="venue-performance-expand" aria-hidden="true" />
       </summary>
+      {row.results && <div className="venue-performance-detail"><h4>Check-ins &amp; check-outs</h4><dl>
+        <Count label="Check-ins" value={row.results.checkIns} /><Count label="Check-outs" value={row.results.checkOuts} />
+        <div><dt>Last check-in this period</dt><dd className="venue-result-time">{row.results.lastCheckInAt ? new Date(row.results.lastCheckInAt).toLocaleString(undefined, { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Not recorded"}</dd></div>
+        <div><dt>Last check-out this period</dt><dd className="venue-result-time">{row.results.lastCheckOutAt ? new Date(row.results.lastCheckOutAt).toLocaleString(undefined, { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Not recorded"}</dd></div>
+      </dl></div>}
       {(channel === "all" || channel === "internal") && <div className="venue-performance-detail"><h4>Internal · table requests</h4><dl>
+        {row.results && <><Count label="Arrived at table" value={row.results.tableArrived} /><Count label="No-shows" value={row.results.tableNoShows} />
+          <Count label="Attendance not recorded" value={row.results.tableAttendanceUnrecorded} />
+          <div><dt>Show-up rate</dt><dd>{row.results.showUpPercent == null ? "—" : `${row.results.showUpPercent}%`}<small>Arrived ÷ requests with attendance recorded</small></dd></div></>}
         {(["requests", "pending", "acknowledged", "completed", "cancelled"] as const).map((key, i) => <Count key={key} label={["Received", "Pending", "Acknowledged", "Completed", "Cancelled"][i]} value={row.internal[key]} />)}
         <div><dt>Recorded checked-in hours</dt><dd>{(row.internal.checkedInHours || 0).toFixed(1)}</dd></div>
         <div><dt>Requests per recorded hour</dt><dd>{row.internal.requestsPerHour == null ? "Not yet available" : row.internal.requestsPerHour.toFixed(1)}<small>{counts(row.internal.requestsDuringHours)} requests during recorded hours</small></dd></div>
@@ -69,8 +80,10 @@ export default function VenueDancerPerformance({ dancers }: { dancers: DancerPer
         <div><dt>Median time to complete</dt><dd>{performanceMinutes(row.internal.completionMinutes)}<small>{counts(row.internal.completionSamples)} recorded completions</small></dd></div>
       </dl></div>}
       {(channel === "all" || channel === "external") && <div className="venue-performance-detail"><h4>External · venue-attributed activity</h4><dl>
+        {row.results && <><Count label="Profile conversions" value={row.results.profileConversions} />
+          <div><dt>Profile pass conversion rate</dt><dd>{row.results.profileConversionPercent == null ? "—" : `${row.results.profileConversionPercent}%`}<small>{counts(row.results.profileCohortConversions)} of {counts(row.results.profileClaims)} passes claimed this period</small></dd></div></>}
         {externalMetrics.map(([key, label]) => <Count key={key} label={label} value={row.external[key]} />)}
-      </dl></div>}
+      </dl><p className="venue-value-note">A profile pass converts when staff redeem it for entry. Each pass counts once; repeat visits may use separate passes.</p></div>}
       {(channel === "all" || channel === "vip") && <div className="venue-performance-detail"><h4>VIP · dancer selections</h4><dl>
         {(["requests", "pending", "confirmed", "declined", "cancelled", "repeatRequesters"] as const).map((key, i) => <Count key={key} label={["Selected in requests", "Pending", "Confirmed", "Declined", "Cancelled", "Repeat VIP requesters"][i]} value={row.vip[key]} />)}
       </dl><p className="venue-value-note">Confirmed requests do not verify arrival. Repeat requesters have an earlier request for this dancer at this club.</p></div>}
