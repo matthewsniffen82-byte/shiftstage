@@ -296,16 +296,17 @@ body.dancr-button-system .account-shell .account-panel .segmented button {
 body.dancr-button-system .account-shell .account-panel .segmented button.active {
   border-color: #745696 !important; background: #160e24 !important; color: #fff !important;
 }
-/* Both auth modes retain an opaque face and outline on Android and iPhone. */
+/* Auth buttons keep their own outline without an enclosing box on any device. */
 body.dancr-button-system #authPage .auth-entry-tabs,
 body.dancr-button-system .account-shell .account-panel .account-auth-tabs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 4px !important;
-  padding: 4px !important;
-  border: 1px solid #51435d !important;
-  border-radius: 12px !important;
-  background: linear-gradient(#08080c, #08080c) !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 body.dancr-button-system #authPage .auth-entry-tab,
 body.dancr-button-system .account-shell .account-panel .account-auth-tabs button {

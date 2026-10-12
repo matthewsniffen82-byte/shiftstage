@@ -21,12 +21,15 @@ function declarations(selector) {
 }
 
 for (const { group, button } of surfaces) {
-  test(`${group} keeps both modes framed and equally sized on mobile`, () => {
+  test(`${group} keeps both modes equally sized without an enclosing box`, () => {
     const frame = declarations(group);
     assert.equal(frame['grid-template-columns'].value, 'repeat(2, minmax(0, 1fr))');
-    assert.equal(frame.border.value, '1px solid #51435d');
+    assert.equal(frame.border.value, '0');
     assert.equal(frame.border.important, true);
-    assert.equal(frame.padding.value, '4px');
+    assert.equal(frame.padding.value, '0');
+    assert.equal(frame['border-radius'].value, '0');
+    assert.equal(frame.background.value, 'transparent');
+    assert.equal(frame['box-shadow'].value, 'none');
     const control = declarations(button);
     assert.equal(control.border.value, '1px solid #6b5c78');
     assert.equal(control.border.important, true);
