@@ -101,7 +101,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
   }
 
   return <section className="dancer-main-photo-panel" aria-label="Main profile photo" aria-busy={busy || cropping}>
-    <button className="dancer-main-photo-preview dancer-photo-edit-target" type="button" disabled={busy || cropping}
+    <button className="dancer-main-photo-preview dancer-photo-edit-target" data-empty={!displayed} type="button" disabled={busy || cropping}
       aria-label={displayed ? "Edit main photo" : "Add main photo"} onClick={() => displayed ? setEditRequested(value => value + 1) : input.current?.click()}>
       {displayed?.imageUrl ? <img src={displayed.imageUrl} alt={pending ? "Main photo awaiting review" : "Current main profile photo"} /> : <span>{pending ? "Main photo awaiting review" : "+ Add photo"}</span>}
     </button>
@@ -111,7 +111,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
       <strong className="dancer-main-photo-state" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? "Checking" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
-        <DancerPhotoControls label="main photo" compact openRequested={editRequested} disabled={busy || cropping} primary={
+        <DancerPhotoControls label="main photo" compact hidden={!displayed} openRequested={editRequested} disabled={busy || cropping} primary={
           <button type="button" aria-label={pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"} disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating…" : pending ? "Replace" : displayed ? "Change" : "Add"}</button>
         }>
           {photos.some(photo => photo.status === "approved" && photo.id !== displayed?.id) ? <details className="dancer-saved-photo-picker">

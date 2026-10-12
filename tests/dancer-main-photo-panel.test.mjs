@@ -154,7 +154,11 @@ test('empty main target opens upload and an existing photo opens the compact edi
   const empty = fixture();let opened = 0;
   empty.connectInput(() => opened++);empty.tapPhoto();
   assert.equal(opened, 1);
+  assert.equal(empty.target.props['data-empty'], true);
+  assert.equal(empty.controls.props.hidden, true);
   const saved = fixture({ dancer_photos: [main] });saved.tapPhoto();
+  assert.equal(saved.target.props['data-empty'], false);
+  assert.equal(saved.controls.props.hidden, false);
   assert.equal(saved.controls.props.compact, true);
   assert.equal(saved.controls.props.openRequested, 1);
 });
@@ -174,6 +178,8 @@ test('removing the main photo leaves its slot empty even with an approved galler
   assert.deepEqual(ui.deletes, [{ photoId: 'main' }]);
   for (const view of [ui, fixture({ dancer_photos: [gallery] })]) {
     assert.equal(view.target.props['aria-label'], 'Add main photo');
+    assert.equal(view.target.props['data-empty'], true);
+    assert.equal(view.controls.props.hidden, true);
     assert.equal(view.badge, 'Required');
     assert.equal(view.choices.length, 1);
     assert.equal(view.uploads.length, 0);

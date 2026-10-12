@@ -269,9 +269,9 @@ export function DancerAvatarPanel({
     <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={isSaving || preparing} data-avatar-state={presentation.state || "required"}>
       {!compact ? <p className="dancer-profile-editor-intro">Use a clear solo face photo of yourself.</p> : null}
       <div className="dancer-avatar-editor" aria-label="Face photo preview">
-        <button className="dancer-avatar-preview dancer-photo-edit-target" type="button" disabled={isSaving || preparing}
+        <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!visibleAvatar} type="button" disabled={isSaving || preparing}
           aria-label={visibleAvatar ? "Edit face photo" : "Add face photo"}
-          onClick={() => visibleAvatar || approvedPhotos.length ? setEditRequested(value => value + 1) : libraryInput.current?.click()}>
+          onClick={() => visibleAvatar ? setEditRequested(value => value + 1) : libraryInput.current?.click()}>
           {visibleAvatar ? <img src={visibleAvatar} alt="Selected face photo preview" /> : <b aria-hidden="true">+</b>}
           {previewUrl && presentation.state === "approved" && latestAvatarReview?.id === uploadFeedback?.reviewId && avatarUrl ? (
             <img
@@ -287,7 +287,7 @@ export function DancerAvatarPanel({
         <strong className={`dancer-avatar-state is-${presentation.state || "required"}`}>{presentation.label}</strong>
       </div>
       <div className="dancer-avatar-upload-controls">
-        <DancerPhotoControls label="face photo" compact={compact} openRequested={editRequested} disabled={isSaving || preparing} primary={
+        <DancerPhotoControls label="face photo" compact={compact} hidden={compact && !visibleAvatar} openRequested={editRequested} disabled={isSaving || preparing} primary={
         <div className="photo-source-grid dancer-avatar-source-grid">
           <label className={`photo-source-action${isSaving ? " is-disabled" : ""}`}>
             <input

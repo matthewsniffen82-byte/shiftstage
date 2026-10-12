@@ -126,6 +126,15 @@ body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-
   }
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target::before,
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target::after { content:none !important; }
+  body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target[data-empty='true'] {
+    background:var(--profile-upload-face,#3c3c46) !important; border-color:#73737f !important;
+    color:#fafafa !important; color-scheme:dark;
+  }
+  @media (hover:hover) {
+    body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target[data-empty='true']:hover:not(:disabled) {
+      background:var(--profile-upload-face-hover,#4a4a55) !important;
+    }
+  }
   body.dancr-button-system #dancer-dashboard button.dancer-avatar-preview.dancer-photo-edit-target {
     width:48px !important; height:48px !important; min-height:48px !important; border-radius:50% !important;
   }

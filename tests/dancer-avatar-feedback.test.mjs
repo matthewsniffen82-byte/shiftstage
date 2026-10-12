@@ -69,6 +69,8 @@ function avatarHarness({ profile = {}, compact = false, crop = async file => fil
   render();
   return {
     select, revoked, posts, sourceRequests,
+    connectInput(click) { nodes().find(node => node.props?.['aria-label'] === 'Choose face photo from your photo library').props.ref.current = { click }; },
+    get controls() { return nodes().find(node => node.type === 'PhotoControls'); },
     button: label => nodes().find(node => node.type === "button" && node.props.children === label),
     buttonByLabel: label => nodes().find(node => node.type === "button" && node.props["aria-label"] === label),
     switchAccount: () => { accountId = "dancer-b"; },
@@ -82,6 +84,26 @@ function avatarHarness({ profile = {}, compact = false, crop = async file => fil
     async settle() { await new Promise(resolve => setImmediate(resolve)); render(); },
   };
 }
+
+test('an empty avatar opens the file picker directly even when approved gallery photos exist', async () => {
+  const profile = { dancer_photos: [{ id: 'gallery', status: 'approved' }] };
+  const ui = avatarHarness({ compact: true, profile });
+  let opened = 0;
+  ui.connectInput(() => opened++);
+  const target = ui.buttonByLabel('Add face photo');
+  assert.equal(target.props['data-empty'], true);
+  assert.equal(ui.controls.props.hidden, true);
+  target.props.onClick(); await ui.settle();
+  assert.equal(opened, 1);
+  assert.equal(ui.controls.props.openRequested, 0);
+  ui.updateProfile({ ...profile, avatarPhotoUrl: 'chosen.jpg' });
+  assert.equal(ui.controls.props.hidden, false);
+  const filled = ui.buttonByLabel('Edit face photo');
+  assert.equal(filled.props['data-empty'], false);
+  filled.props.onClick(); await ui.settle();
+  assert.equal(opened, 1);
+  assert.equal(ui.controls.props.openRequested, 1);
+});
 
 test("a no-face rejection is explicit and cannot retry the rejected file", async () => {
   const ui = avatarHarness({ post: async () => { throw new DashboardDataRequestError("Choose a clear face photo.", 422); } });

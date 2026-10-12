@@ -219,7 +219,7 @@ export default function DancerProfileWorkspace({
       </nav>
       <header className="dancer-builder-heading">
         <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : step === "media" ? "Build your profile" : "Your profile preview"}</h3>
-        {step === "media" ? <span className="dancer-builder-requirement" data-state={galleryReady ? "saved" : "required"} role="status">{galleryReady ? "Photos ready" : `${approvedCount} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos approved`}</span> : null}
+        {step === "media" ? <span className="dancer-builder-requirement" data-state={photosReady ? "saved" : "required"} role="status">{!faceReady ? "Add avatar" : !mainPhoto ? "Add main photo" : galleryReady ? "Photos ready" : `${approvedCount} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos approved`}</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-workspace-heading">

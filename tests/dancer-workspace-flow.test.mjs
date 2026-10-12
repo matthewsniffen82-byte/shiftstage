@@ -81,6 +81,16 @@ test('the single requirement indicator becomes Photos ready, even with extra pho
   }
 });
 
+test('an approved gallery does not label missing avatar or main photo as ready',()=>{
+  for (const missing of ['avatar', 'main']) {
+    const f=fixture({count:5,face:missing!=='avatar'});
+    if (missing==='main') f.props.profile.dancer_photos.forEach(photo=>{photo.isPrimary=false;});
+    const indicator=f.draw().find(n=>n.props.className==='dancer-builder-requirement');
+    assert.equal(indicator.props.children,missing==='avatar'?'Add avatar':'Add main photo');
+    assert.equal(indicator.props['data-state'],'required');
+  }
+});
+
 test('pending videos do not block preview or required verification handoff',async()=>{
   const f=fixture();await f.click();assert.equal(f.step(),'preview');await f.click('Continue to verification');
   assert.equal(f.calls.filter(c=>c==='agreement').length,1);

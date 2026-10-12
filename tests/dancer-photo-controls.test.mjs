@@ -10,15 +10,16 @@ const code = ts.transpileModule(readFileSync('app/dashboard/DancerPhotoControls.
 
 function fixture({ disabled = false, options = true, compact = false } = {}) {
   let expanded = false, focused = false;
-  let previousRequest;
+  const effectDeps = [];
+  let effectIndex = 0;
   const exports = {}, primary = { type: 'button', props: { children: 'Change photo' } };
   const children = options ? { type: 'CropControl', props: {} } : null;
   runInNewContext(code, { exports, require: name => {
-    if (name === 'react') return { useEffect: (effect, [request]) => { if (request !== previousRequest) { previousRequest = request; effect(); } }, useId: () => 'photo-options', useRef: () => ({ current: { focus: () => { focused = true; } } }), useState: () => [expanded, next => { expanded = typeof next === 'function' ? next(expanded) : next; }] };
+    if (name === 'react') return { useEffect: (effect, deps) => { const index = effectIndex++; if (!effectDeps[index] || deps.some((dep, i) => !Object.is(dep, effectDeps[index][i]))) { effectDeps[index] = deps; effect(); } }, useId: () => 'photo-options', useRef: () => ({ current: { focus: () => { focused = true; } } }), useState: () => [expanded, next => { expanded = typeof next === 'function' ? next(expanded) : next; }] };
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
     return {};
   } });
-  const render = (openRequested = 0) => exports.default({ label: 'main photo', primary, children, disabled, compact, openRequested });
+  const render = (openRequested = 0, hidden = false) => { effectIndex = 0; return exports.default({ label: 'main photo', primary, children, disabled, compact, hidden, openRequested }); };
   return { render, children, primary, get focused() { return focused; } };
 }
 
@@ -64,4 +65,19 @@ test('tapping a photo reveals its change and crop actions in the compact menu', 
   assert.deepEqual(Array.from(panel.props.children.props.children), [f.primary, f.children]);
   f.render(1);
   assert.equal(f.render(1).props.children[1].props.hidden, false);
+});
+
+test('removing a photo hides and closes its menu while preserving mounted upload controls', () => {
+  const f = fixture({ compact: true });
+  f.render(1);
+  assert.equal(f.render(1).props.children[1].props.hidden, false);
+  const hidden = f.render(1, true);
+  assert.equal(hidden.props.hidden, true);
+  assert.deepEqual(Array.from(hidden.props.children[1].props.children.props.children), [f.primary, f.children]);
+  assert.equal(f.render(1, true).props.children[1].props.hidden, true);
+  const restored = f.render(1, false);
+  assert.equal(restored.props.hidden, false);
+  assert.equal(restored.props.children[1].props.hidden, true);
+  f.render(2);
+  assert.equal(f.render(2).props.children[1].props.hidden, false);
 });

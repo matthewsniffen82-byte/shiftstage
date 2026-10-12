@@ -3,19 +3,21 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import "./dancer-photo-controls.css";
 
-export default function DancerPhotoControls({ label, primary, children, disabled = false, compact = false, openRequested = 0 }: {
+export default function DancerPhotoControls({ label, primary, children, disabled = false, compact = false, hidden = false, openRequested = 0 }: {
   label: string;
   primary: ReactNode;
   children?: ReactNode;
   disabled?: boolean;
   compact?: boolean;
+  hidden?: boolean;
   openRequested?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
   const optionsId = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (openRequested) setExpanded(true); }, [openRequested]);
-  return <div className="dancer-photo-controls" onKeyDown={event => {
+  useEffect(() => { if (hidden) setExpanded(false); }, [hidden]);
+  return <div className="dancer-photo-controls" hidden={hidden} onKeyDown={event => {
     if (event.key !== "Escape" || !expanded) return;
     event.preventDefault();
     event.stopPropagation();

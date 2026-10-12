@@ -2,6 +2,9 @@
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-photo-controls {
   display:grid; gap:6px; width:fit-content; max-width:100%; min-width:0;
 }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-photo-controls[hidden] {
+  display:none !important;
+}
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-photo-controls-row {
   display:flex; align-items:center; gap:4px; min-width:0;
 }

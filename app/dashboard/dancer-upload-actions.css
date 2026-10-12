@@ -1,8 +1,13 @@
+/* Use an image-backed charcoal face for mobile browsers that recolor CSS backgrounds. */
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
+  --profile-upload-face: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='64' viewBox='0 0 256 64' preserveAspectRatio='none'%3E%3Cpath fill='%233c3c46' d='M0 0h256v64H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat #3c3c46;
+  --profile-upload-face-hover: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='64' viewBox='0 0 256 64' preserveAspectRatio='none'%3E%3Cpath fill='%234a4a55' d='M0 0h256v64H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat #4a4a55;
+}
 /* Keep upload actions above legacy button skins without changing compact menu faces. */
 @layer dancr-upload-actions {
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
     :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)) {
-    --upload-action-fill: linear-gradient(#303038, #303038);
+    --upload-action-fill: var(--profile-upload-face);
     --upload-action-edge: #53535e;
     --upload-action-shadow: none;
     position: relative !important;
@@ -47,14 +52,14 @@
   @media (hover: hover) {
     body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
       :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):hover:not(:disabled, [aria-disabled="true"], .is-disabled, :has(input:disabled)) {
-      --upload-action-fill: linear-gradient(#3c3c46, #3c3c46);
+      --upload-action-fill: var(--profile-upload-face-hover);
       --upload-action-edge: #73737f;
     }
   }
 
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
     :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):active:not(:disabled, [aria-disabled="true"], .is-disabled, :has(input:disabled)) {
-    --upload-action-fill: linear-gradient(#27272f, #27272f);
+    --upload-action-fill: var(--profile-upload-face);
   }
 
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
