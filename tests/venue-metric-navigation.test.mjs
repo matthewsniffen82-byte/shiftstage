@@ -15,6 +15,7 @@ function compile(source, imports = {}, globals = {}) {
   } }).outputText, { exports, require: name => name === "react/jsx-runtime" ? require(name) : imports[name] || fallback, ...globals });
   return exports;
 }
+const Tonight = compile(read("app/dashboard/VenueTonightOverview.tsx")).default;
 const shared = read("app/dashboard/DashboardShared.tsx");
 const { Metric } = compile(shared.slice(shared.indexOf("export function Metric("), shared.indexOf("export function formatVenueReviewHours(")));
 
@@ -56,6 +57,7 @@ function fixture({ hash = "", ready = true, reducedMotion = false } = {}) {
     history: { replaceState: (_state, _title, url) => { window.location.hash = url.startsWith("#") ? url : ""; } },
     addEventListener: (name, callback) => listeners.set(name, callback), removeEventListener: name => listeners.delete(name),
     setTimeout: callback => timers.push(callback), requestAnimationFrame: callback => timers.push(callback), cancelAnimationFrame() {},
+    dispatchEvent: event => listeners.get(event.type)?.(),
     matchMedia: () => ({ matches: reducedMotion }),
   };
   const props = {
@@ -65,9 +67,11 @@ function fixture({ hash = "", ready = true, reducedMotion = false } = {}) {
     refreshedAt: ready ? "2026-10-07T12:00:00Z" : null, analyticsPeriod: "tonight", isRefreshing: false, refreshStatus: "",
   };
   const { VenuePanel } = compile(read("app/dashboard/VenueDashboardPanels.tsx"), {
+    "./useVenueOperations": { useVenueOperations: () => ({ operations: { tablePending: 2, vipPending: 3, ridesOpen: 1, guestExpected: 4, admitted: 1 }, error: "" }) },
+    "./VenueTonightOverview": { default: Tonight },
     react, "next/dynamic": { default: loader => loader.toString().match(/\.\/(\w+)/)[1] },
     "./DashboardShared": { ...fallback, Metric, formatVenueReviewHours: () => "", formatDashboardDate: () => "" },
-  }, { window, HTMLDetailsElement: Details, document: { getElementById: id => {
+  }, { window, HashChangeEvent: class { constructor(type) { this.type=type; } }, HTMLDetailsElement: Details, document: { getElementById: id => {
     if (id === "venue-dancer-roster" && props.refreshedAt) return rosterSection;
     return id === "venue-club-deals" ? deals : null;
   } } });
@@ -81,8 +85,9 @@ function fixture({ hash = "", ready = true, reducedMotion = false } = {}) {
   function click(label) {
     const active = nodes().find(node => node.props?.role === "tabpanel" && !node.props.hidden);
     const metric = nodes(active).find(node => node.type === Metric && node.props.label === label);
-    assert.ok(metric, label);
-    const link = Metric(metric.props);
+    const overview = nodes(active).find(node => node.type === Tonight);
+    const link = metric ? Metric(metric.props) : nodes(Tonight(overview.props)).find(node => node.type === "a" && [node.props.children].flat().some(child => child?.props?.children === label));
+    assert.ok(link, label);
     assert.equal(link.type, "a"); assert.match(link.props.href, /^#venue-/);
     let prevented = false;
     link.props.onClick({ preventDefault() { prevented = true; } });
@@ -106,17 +111,17 @@ test("venue metric cards navigate to expanded sections and reset the roster filt
   ui.click("Verified roster");
   assert.equal(ui.workingOnly(), false); assert.equal(ui.roster.open, true);
   assert.equal(ui.window.location.hash, "#venue-dancer-roster");
-  ui.click("Live Club Deals");
+  ui.hash("#venue-club-deals");
   assert.equal(ui.active(), "venue-workspace-venue"); assert.equal(ui.deals.open, true); assert.equal(ui.deals.focused, true);
   assert.equal(ui.window.location.hash, "#venue-club-deals");
 });
 
 test("tonight shortcuts work before live data arrives and honor reduced motion", () => {
   const ui = fixture({ ready: false, reducedMotion: true });
-  ui.click("Affiliated dancers"); assert.equal(ui.active(), "venue-workspace-roster");
-  ui.ready(); assert.equal(ui.workingOnly(), false); assert.equal(ui.roster.open, true);
+  ui.click("Working now"); assert.equal(ui.active(), "venue-workspace-roster");
+  ui.ready(); assert.equal(ui.workingOnly(), true); assert.equal(ui.roster.open, true);
   const deals = fixture({ reducedMotion: true });
-  deals.click("Live Club Deals"); assert.equal(deals.deals.scrolled.behavior, "auto");
+  deals.click("Working now"); assert.equal(deals.rosterSection.scrolled.behavior, "auto");
 });
 
 test("roster hash navigation switches from working-now to the complete roster", () => {

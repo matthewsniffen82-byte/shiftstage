@@ -4,6 +4,7 @@ import { PublicApiError } from "@/src/lib/api-error-policy";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { getVenueAccess } from "@/src/lib/dancr/venue-access";
+import { getTonightWindow } from "@/src/lib/dancr/schedule";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,18 +17,22 @@ export async function GET(request: Request) {
     const admin = createAdminSupabaseClient();
     const access = await getVenueAccess(admin, context.user.id);
     if (!access?.permissions.includes("view_deals")) throw new PublicApiError("FORBIDDEN", "Venue access is required.", 403);
-    const offset = Number(new URL(request.url).searchParams.get("offset") || 0);
+    const params = new URL(request.url).searchParams;
+    const search = (params.get("search") || "").trim(), status = params.get("status") || "all", period = params.get("period") || "active";
+    const offset = Number(params.get("offset") || 0);
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100000) throw new PublicApiError("INVALID_REQUEST", "Invalid guest-list page.", 400);
-    const { data, error } = await admin.from("venue_guest_list_entries")
-      .select("pass_id, guest_name, phone, email, created_at, qr_redemptions!inner(status, expires_at, arrival_method, redeemed_at)")
-      .eq("venue_id", access.venueId).gt("qr_redemptions.expires_at", new Date().toISOString())
-      .in("qr_redemptions.status", ["generated", "redeemed"])
-      .order("created_at", { ascending: false }).order("pass_id").range(offset, offset + 50);
+    if (search.length > 100 || !["all", "generated", "redeemed"].includes(status) || !["active", "today"].includes(period)) throw new PublicApiError("INVALID_REQUEST", "Invalid guest filters.", 400);
+    let since: string | null = null;
+    if (period === "today") {
+      const venue = await admin.from("venues").select("timezone").eq("id", access.venueId).single();
+      if (venue.error) throw venue.error;
+      since = getTonightWindow(venue.data.timezone).startsAt;
+    }
+    const { data, error } = await admin.rpc("search_venue_guests", { p_venue: access.venueId, p_search: search, p_status: status, p_since: since, p_offset: offset });
     if (error) throw error;
-    const entries = (data || []).slice(0, 50).map(row => {
-      const pass = Array.isArray(row.qr_redemptions) ? row.qr_redemptions[0] : row.qr_redemptions;
-      return { id: row.pass_id, name: row.guest_name, phone: row.phone, email: row.email, createdAt: row.created_at,
-        expiresAt: pass.expires_at, arrivalMethod: pass.arrival_method, status: pass.status, redeemedAt: pass.redeemed_at || null };
+    const entries = (data || []).slice(0, 50).map((row: Record<string, string>) => {
+      return { id: row.id, name: row.name, phone: row.phone, email: row.email, createdAt: row.created_at,
+        expiresAt: row.expires_at, arrivalMethod: row.arrival_method, status: row.status, redeemedAt: row.redeemed_at || null };
     });
     return NextResponse.json({ ok: true, entries, hasMore: (data?.length || 0) > 50, session: context.session || null },
       { headers: { "cache-control": "private, no-store, max-age=0" } });

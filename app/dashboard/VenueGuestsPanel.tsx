@@ -3,6 +3,7 @@
 import { useEffect, useState, type KeyboardEvent } from "react";
 import dynamic from "next/dynamic";
 import "./venue-guests.css";
+import type { VenueOperations } from "@/src/lib/dancr/venue-operations";
 
 const VenueGuestListPanel = dynamic(() => import("./VenueGuestListPanel"));
 const PickupDashboardPanel = dynamic(() => import("./PickupDashboardPanel"));
@@ -18,14 +19,15 @@ const readTab = (): GuestTab => {
   return tabs.find(([id]) => id === hash)?.[0] || "venue-guest-list";
 };
 
-export default function VenueGuestsPanel({ venueId, role, refreshKey, active, timezone }: {
-  venueId: string; role: string; refreshKey?: string | null; active: boolean; timezone: string;
+export default function VenueGuestsPanel({ venueId, role, refreshKey, active, timezone, operations }: {
+  venueId: string; role: string; refreshKey?: string | null; active: boolean; timezone: string; operations?: VenueOperations | null;
 }) {
   const [selected, setSelected] = useState<GuestTab>(readTab);
   const [opened, setOpened] = useState<GuestTab[]>([]);
   const canManage = role === "owner" || role === "manager";
   const selectedTab = canManage ? selected : "venue-guest-list";
   const visibleTabs = canManage ? tabs : tabs.slice(0, 1);
+  const counts: Record<string, number | undefined> = { "venue-guest-list": operations?.guestExpected, "venue-pickups": operations?.ridesOpen, "venue-vip": operations?.vipPending };
   useEffect(() => {
     if (active) setOpened(previous => previous.includes(selectedTab) ? previous : [...previous, selectedTab]);
   }, [active, selectedTab]);
@@ -62,7 +64,7 @@ export default function VenueGuestsPanel({ venueId, role, refreshKey, active, ti
     <div className="venue-guests-tabs" role="tablist" aria-label="Guest information">
       {visibleTabs.map(([id, label]) => <button type="button" role="tab" key={id} id={`${id}-tab`} aria-controls={id}
         aria-selected={selectedTab === id} tabIndex={selectedTab === id ? 0 : -1}
-        onClick={() => select(id)} onKeyDown={event => moveFocus(event, id)}>{label}</button>)}
+        onClick={() => select(id)} onKeyDown={event => moveFocus(event, id)}>{label}{counts[id] != null && <span className="venue-tab-count" aria-label={`${counts[id]} ${id === "venue-pickups" ? "open in the last 48 hours" : id === "venue-vip" ? "pending" : "awaiting admission"}`}>{counts[id]}</span>}</button>)}
     </div>
     {visibleTabs.map(([id]) => <section key={id} id={id} className="info-panel venue-guest-tab-panel" role="tabpanel"
       aria-labelledby={`${id}-tab`} hidden={selectedTab !== id} tabIndex={-1}>

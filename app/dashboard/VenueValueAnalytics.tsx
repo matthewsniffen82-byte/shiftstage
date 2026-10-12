@@ -25,10 +25,11 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
     <p className="venue-value-dates">{dateRange}</p>
     <p className="venue-value-note">{period === "tonight" ? "Tonight’s results so far. Live queues below include requests made earlier." : "Compared with the preceding period of the same length."} Requests and passes can overlap; these are not added into a customer total.</p>
     <div className="venue-value-metrics">
-      {outcomeMetric("guestList", "Guest-list signups")}{metric("claims", "Passes claimed")}{metric("admissions", "Verified pass admissions")}
+      {metric("admissions", "Verified pass admissions")}{outcomeMetric("guestList", "Guest-list signups")}
       {outcomeMetric("vipRequests", "VIP requests received")}{outcomeMetric("tableRequests", "Table requests received")}
-      {metric("pickups", "Pickup requests")}{metric("passengers", "Requested passengers")}{metric("followers", "New venue followers")}
+
     </div>
+    <details className="venue-supporting-disclosure"><summary>Passes, rides &amp; audience growth</summary><div className="venue-value-metrics">{metric("claims", "Passes claimed")}{metric("pickups", "Pickup requests")}{metric("passengers", "Requested passengers")}{metric("followers", "New venue followers")}</div></details>
     {performance ? <>
       {period === "tonight" && <section className="venue-tonight-results" aria-label="Tonight’s live queues"><h3>Tonight’s live queues</h3><dl className="venue-outcome-counts">
         <div><dt>VIP requests awaiting response</dt><dd>{number(performance.tonight.vipPending)}</dd><small>Scheduled for tonight</small></div>
@@ -37,16 +38,16 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
         <div><dt>Table requests acknowledged</dt><dd>{number(performance.tonight.tableAcknowledged)}</dd><small>Current six-hour queue</small></div>
         <div><dt>Guest-list passes awaiting admission</dt><dd>{number(performance.tonight.guestListExpected)}</dd><small>Currently valid, unused passes</small></div>
       </dl></section>}
-      <section className="venue-result-outcomes" aria-label="VIP request outcomes"><h3>VIP requests</h3>
+      <details className="venue-result-outcomes venue-supporting-disclosure"><summary>VIP request outcomes</summary>
         {outcomes([["vipPending", "Pending"], ["vipConfirmed", "Confirmed"], ["vipDeclined", "Declined"], ["vipCancelled", "Cancelled"]])}
         <p className="venue-value-note">Current status of requests received in this period. Confirmed does not mean arrived.</p>
         <p className="venue-value-note">Median time to respond: <strong>{performanceMinutes(performance.current.vipResponseMinutes)}</strong> · {number(performance.current.vipResponseSamples)} recorded responses.</p>
-      </section>
-      <section className="venue-result-outcomes" aria-label="Table request outcomes"><h3>Internal table requests</h3>
+      </details>
+      <details className="venue-result-outcomes venue-supporting-disclosure"><summary>Table request outcomes</summary>
         {outcomes([["tablePending", "Pending"], ["tableAcknowledged", "Acknowledged"], ["tableCompleted", "Completed"], ["tableCancelled", "Cancelled"]])}
         <p className="venue-value-note">Current status of requests received in this period. Completed means marked complete by staff.</p>
         <p className="venue-value-note">Median time to acknowledge: <strong>{performanceMinutes(performance.current.tableResponseMinutes)}</strong> · {number(performance.current.tableResponseSamples)} recorded responses.<br />Median time to complete: <strong>{performanceMinutes(performance.current.tableCompletionMinutes)}</strong> · {number(performance.current.tableCompletionSamples)} recorded completions.</p>
-      </section>
+      </details>
       <VenueDancerPerformance dancers={performance.dancers} />
     </> : <p role="status">Dancer performance and request outcomes are unavailable. Refresh to try again.</p>}
     <details className="venue-supporting-disclosure"><summary>Audience &amp; conversion <span>Supporting metrics</span></summary><div className="venue-value-supporting">

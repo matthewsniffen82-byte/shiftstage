@@ -22,9 +22,13 @@ export async function listPhonePickupRequests(client: SupabaseClient, search: UR
   if (!allowed.size) return empty;
 
   let query = createAdminSupabaseClient().from("club_shuttle_requests")
-    .select("id,venue_id,created_at,notification_rows").in("venue_id", [...allowed.keys()])
+    .select("id,venue_id,created_at,notification_rows,staff_status,staff_status_version,staff_updated_at").in("venue_id", [...allowed.keys()])
     .order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + 30);
   if (from) query = query.gte("created_at", from + "T00:00:00Z");
+  const queue = search.get("rideQueue") || "all";
+  if (!["all", "open", "completed", "cancelled"].includes(queue)) throw new PublicApiError("INVALID_REQUEST", "Invalid ride queue.", 400);
+  if (queue === "open") query = query.in("staff_status", ["received", "contacted", "arranged"]).gte("created_at", new Date(Date.now() - 48 * 3600000).toISOString());
+  else if (queue !== "all") query = query.eq("staff_status", queue);
   if (to) query = query.lt("created_at", new Date(Date.parse(to) + 86400000).toISOString());
   const { data, error } = await query;
   if (error) throw new PublicApiError("UNAVAILABLE", "Unable to load phone pickup requests. Please retry.", 503);
@@ -36,7 +40,8 @@ export async function listPhonePickupRequests(client: SupabaseClient, search: UR
     if (!venue || !details) throw new PublicApiError("UNAVAILABLE", "Unable to read a phone pickup request. Please retry.", 503);
     // Return one guest record per receipt, without notification recipients or hashes.
     return { id: row.id, venue_id: row.venue_id, venue_name: venue.name, requested_at: row.created_at,
-      name: details.name, location: details.location, phone: details.phone, email: details.email, party_size: details.partySize };
+      name: details.name, location: details.location, phone: details.phone, email: details.email, party_size: details.partySize,
+      staff_status: row.staff_status, staff_status_version: row.staff_status_version, staff_updated_at: row.staff_updated_at };
   });
   return { phoneRequests, hasMorePhoneRequests: (data?.length || 0) > 30 };
 }

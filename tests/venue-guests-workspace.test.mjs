@@ -4,6 +4,7 @@ import vm from "node:vm";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import ts from "typescript";
+import { RIDE_STATUSES } from "../src/lib/dancr/venue-operations.ts";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const require = createRequire(import.meta.url);
@@ -51,6 +52,8 @@ function fixture(component, props, request = async () => ({}), hash = "") {
     react, "react/jsx-runtime": require("react/jsx-runtime"),
     "next/dynamic": { default: loader => loader.toString().match(/\.\/(\w+)/)[1] },
     "next/link": { default: "a" }, "./venue-guests.css": {}, "./venue-customers.css": {},
+    "./VenuePassScanner": { default: () => null },
+    "@/src/lib/dancr/venue-operations": { RIDE_STATUSES, notifyVenueOperationsChanged() {} },
     "./VenueDashboardIdentity": { VenueDashboardIcon: () => null },
     "./dashboard-session": { requestDashboardJson: send }, "../pickups/pickup-session": { requestPickupJson: send },
     "@/src/lib/dancr/club-deal-transportation": { clubArrivalLabel: () => "Driving" },
@@ -71,7 +74,7 @@ function fixture(component, props, request = async () => ({}), hash = "") {
   async function settle() { await new Promise(resolve => setImmediate(resolve)); render(); flushFrames(); }
   render(); flushFrames();
   return { render, nodes, settle, calls, focused, intervals, window, html: () => renderToStaticMarkup(tree),
-    button: label => nodes().find(node => node.type === "button" && node.props.children === label),
+    button: label => nodes().find(node => node.type === "button" && [node.props.children].flat().some(child => child === label)),
     pane: id => nodes().find(node => node.props?.role === "tabpanel" && node.props.id === id),
     hash(value) { window.location.hash = value; listeners.get("hashchange")?.(); render(); flushFrames(); },
     tick() { [...intervals.values()].forEach(run => run()); },
@@ -133,7 +136,7 @@ test("ride details are scoped to the current venue, paginate without duplication
   });
   await ui.settle();
   assert.match(ui.html(), /Hotel lobby|tel:\+17025550123/); assert.doesNotMatch(ui.html(), /Foreign guest/);
-  assert.match(ui.html(), /Request received/); assert.match(ui.html(), /completed pickups are not recorded here/);
+  assert.match(ui.html(), /Received/); assert.match(ui.html(), /Statuses are recorded by your team/);
   ui.button("Load older requests").props.onClick(); await ui.settle();
   assert.equal(ui.nodes().filter(node => node.type === "article").length, 2);
   assert.match(ui.calls.at(-1).url, /phoneOffset=1/);
@@ -175,4 +178,60 @@ test("shared contacts show sharing purpose separately from email and text subscr
   assert.match(ui.html(), /Current guest-list visit/); assert.match(ui.html(), /Email updates/); assert.match(ui.html(), /Text updates/);
   assert.equal((ui.html().match(/No active opt-in recorded/g) || []).length, 2);
   assert.match(ui.html(), /mailto:guest%40example.test/); assert.ok(ui.calls.every(call => !call.options.method)); ui.close();
+});
+
+test("guest searches and status filters restart pagination and reach the server", async () => {
+  const ui = fixture("VenueGuestListPanel", guestProps, async () => ({ entries: [], hasMore: false }));
+  await ui.settle();
+  ui.nodes().find(n => n.type === "input").props.onChange({ target: { value: "María" } }); ui.render();
+  ui.nodes().find(n => n.type === "form").props.onSubmit({ preventDefault() {} }); await ui.settle();
+  let params = new URL(ui.calls.at(-1).url, "https://example.test").searchParams;
+  assert.equal(params.get("search"), "María"); assert.equal(params.get("offset"), "0");
+  ui.nodes().find(n => n.type === "select" && n.props.value === "all").props.onChange({ target: { value: "generated" } }); await ui.settle();
+  params = new URL(ui.calls.at(-1).url, "https://example.test").searchParams;
+  assert.equal(params.get("status"), "generated"); assert.equal(params.get("search"), "María");
+  ui.close();
+});
+
+test("ride status saves persist the expected version, avoid duplicate writes and remove completed open requests", async () => {
+  let finish;
+  const ui = fixture("PickupDashboardPanel", guestProps, async (_url, options) => {
+    if (options.method === "POST") return new Promise(resolve => { finish = resolve; });
+    return { phoneRequests: [{ ...ride, staff_status: "received", staff_status_version: 2 }], hasMorePhoneRequests: false };
+  });
+  await ui.settle();
+  const selector = () => ui.nodes().find(n => n.type === "select" && n.props["aria-label"] === "Ride status for Ride Guest");
+  selector().props.onChange({ target: { value: "completed" } }); ui.render();
+  selector().props.onChange({ target: { value: "cancelled" } }); ui.tick(); await ui.settle();
+  const writes = ui.calls.filter(c => c.options.method === "POST"); assert.equal(writes.length, 1);
+  assert.deepEqual(JSON.parse(writes[0].options.body), { id: "ride-1", status: "completed", version: 2 });
+  finish({ ride: { id: "ride-1", staff_status: "completed", staff_status_version: 3 } }); await ui.settle();
+  assert.equal(ui.nodes().filter(n => n.type === "article").length, 0); ui.close();
+});
+
+test("failed ride updates retain the recorded status and allow a refresh", async () => {
+  const ui = fixture("PickupDashboardPanel", guestProps, async (_url, options) => {
+    if (options.method === "POST") throw new Error("Another staff member updated this ride. Refresh before trying again.");
+    return { phoneRequests: [{ ...ride, staff_status: "contacted", staff_status_version: 1 }], hasMorePhoneRequests: false };
+  });
+  await ui.settle();
+  const selector = () => ui.nodes().find(n => n.type === "select" && n.props["aria-label"]);
+  selector().props.onChange({ target: { value: "arranged" } }); await ui.settle();
+  assert.equal(selector().props.value, "contacted"); assert.match(ui.html(), /Another staff member/);
+  assert.equal(ui.button("Refresh").props.disabled, false); ui.close();
+});
+
+test("ride updates clear private guest details when access is lost", async () => {
+  for (const status of [401, 403]) {
+    const ui = fixture("PickupDashboardPanel", guestProps, async (_url, options) => {
+      if (options.method === "POST") throw Object.assign(new Error("Access removed"), { status });
+      return { phoneRequests: [ride], hasMorePhoneRequests: true };
+    });
+    await ui.settle();
+    ui.nodes().find(n => n.type === "select" && n.props["aria-label"]).props.onChange({ target: { value: "arranged" } });
+    await ui.settle();
+    assert.doesNotMatch(ui.html(), /Ride Guest|Hotel lobby|ride@example/);
+    assert.match(ui.html(), /Access removed/);
+    assert.equal(ui.button("Load older requests"), undefined); ui.close();
+  }
 });

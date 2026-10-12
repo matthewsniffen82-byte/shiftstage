@@ -11,10 +11,12 @@ const source=ts.transpileModule(readFileSync(new URL('../app/api/venue/guest-lis
 function fixture({access=true,authenticated=true,permissions=['view_deals'],rows=[],error=null}={}){
  const calls=[],exports={},query={};
  const browserClient={from(){assert.fail('Private venue ownership must not be read through the browser client');}};
- const adminClient={from(table){calls.push(['from',table]);assert.equal(table,'venue_guest_list_entries');return query;}};
+ const adminClient={from(table){calls.push(['from',table]);assert.equal(table,'venues');return query;},rpc:async(name,args)=>{calls.push(['rpc',name,args]);return {data:rows,error};}};
+ query.single=async()=>({data:{timezone:'UTC'}});
  for(const method of ['select','eq','gt','in','order'])query[method]=(...args)=>{calls.push([method,...args]);return query;};
  query.range=async(...args)=>{calls.push(['range',...args]);return {data:rows,error};};
  const imports={
+  '@/src/lib/dancr/schedule':{getTonightWindow:()=>({startsAt:'2026-10-12T00:01:00Z'})},
   'next/server':{NextResponse},'@/src/lib/api-error-policy':{PublicApiError},
   '@/src/lib/api':{apiError(error,fallback){const r=resolveApiError(error,fallback);return NextResponse.json(r.body,{status:r.status});}},
   '@/src/lib/supabase/request':{async createRequestSupabaseContext(_request,options){assert.equal(options.role,'venue');if(!authenticated)throw new PublicApiError('UNAUTHORIZED','Sign in.',401);return {client:browserClient,user:{id:'staff'},session:{accessToken:'renewed'}};}},
@@ -25,11 +27,11 @@ function fixture({access=true,authenticated=true,permissions=['view_deals'],rows
  return {calls,get:(search='')=>exports.GET(new Request('https://mydancr.com/api/venue/guest-list'+search))};
 }
 test('guest list is limited to the authenticated venue and never returns pass tokens',async()=>{
- const row={pass_id:'entry',guest_name:'Guest',phone:'+17025550123',email:null,created_at:'2026-09-30',redemption_token:'private',qr_redemptions:{expires_at:'2026-10-01',arrival_method:'self_drive',status:'generated',redemption_token:'private'}};
+ const row={id:'entry',name:'Guest',phone:'+17025550123',email:null,created_at:'2026-09-30',redemption_token:'private',expires_at:'2026-10-01',arrival_method:'self_drive',status:'generated'};
  const f=fixture({rows:Array(51).fill(row)}),r=await f.get('?venueId=forged&offset=50'),body=await r.json();
  assert.equal(r.status,200);assert.match(r.headers.get('cache-control'),/private, no-store/);
- assert.ok(f.calls.some(c=>c[0]==='eq'&&c[1]==='venue_id'&&c[2]==='authorized-venue'));
- assert.ok(f.calls.some(c=>c[0]==='range'&&c[1]===50&&c[2]===100));
+ assert.equal(f.calls.find(c=>c[0]==='rpc')[2].p_venue,'authorized-venue');
+ assert.equal(f.calls.find(c=>c[0]==='rpc')[2].p_offset,50);
  assert.equal(body.entries.length,50);assert.equal(body.hasMore,true);assert.doesNotMatch(JSON.stringify(body),/redemption_token|private/);
 });
 test('anonymous, revoked and invalid paging requests cannot read guest contact details',async()=>{
@@ -40,11 +42,11 @@ test('anonymous, revoked and invalid paging requests cannot read guest contact d
 });
 
 test('guest admission timestamps come from the redeemed pass and remain unavailable when missing',async()=>{
- const rows=['2026-10-11T22:12:00Z',null].map((redeemed_at,index)=>({pass_id:String(index),guest_name:'Guest',phone:'+17025550123',email:null,created_at:'2026-10-11T21:00:00Z',qr_redemptions:[{expires_at:'2026-10-12T12:00:00Z',arrival_method:'self_drive',status:'redeemed',redeemed_at}]}));
+ const rows=['2026-10-11T22:12:00Z',null].map((redeemed_at,index)=>({id:String(index),name:'Guest',phone:'+17025550123',email:null,created_at:'2026-10-11T21:00:00Z',expires_at:'2026-10-12T12:00:00Z',arrival_method:'self_drive',status:'redeemed',redeemed_at}));
  const f=fixture({rows}),body=await (await f.get()).json();
- assert.equal(body.entries[0].redeemedAt,rows[0].qr_redemptions[0].redeemed_at);
+ assert.equal(body.entries[0].redeemedAt,rows[0].redeemed_at);
  assert.equal(body.entries[1].redeemedAt,null);
- assert.match(f.calls.find(call=>call[0]==='select')[1],/redeemed_at/);
+ assert.equal(body.entries[0].status,'redeemed');
 });
 
 test('an authorized empty guest list succeeds while database failures remain errors',async()=>{

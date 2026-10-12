@@ -386,10 +386,10 @@ export default function VenueNfcTagPanel({
             <div className="venue-roster-actions">
               {affiliation?.canViewProfile && affiliation.dancerId ? <VenueRosterProfileButton dancerId={affiliation.dancerId} stageName={dancer?.stageName || "Dancer"} /> : null}
               {canManageRoster && affiliation ? (
-                <button className="venue-nfc-remove-access" type="button" disabled={isSaving}
+                <details className="venue-roster-menu" name="venue-roster-options"><summary aria-label={`More options for ${dancer?.stageName || "dancer"}`}>•••</summary><div><button className="venue-nfc-remove-access" type="button" disabled={isSaving}
                   aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} affiliation from Internal and External`} onClick={() => removeAccess(affiliation)}>
                   Remove access
-                </button>
+                </button></div></details>
               ) : null}
             </div>
           </div>

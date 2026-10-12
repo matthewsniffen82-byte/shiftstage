@@ -2,10 +2,12 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { VenueCustomer } from "./venue-customers";
 
-export async function listVenueUpdateSubscribers(admin: SupabaseClient, venueId: string, channel: "email" | "text", offset: number): Promise<VenueCustomer[]> {
-  const { data, error } = await admin.from("venue_update_subscriptions").select("id,name,channel,destination,consented_at")
+export async function listVenueUpdateSubscribers(admin: SupabaseClient, venueId: string, channel: "email" | "text", offset: number, search = ""): Promise<VenueCustomer[]> {
+  let query = admin.from("venue_update_subscriptions").select("id,name,channel,destination,consented_at")
     .eq("venue_id", venueId).eq("channel", channel).is("withdrawn_at", null)
     .order("consented_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + 50);
+  if (search) query = query.ilike("name", `%${search.replace(/[\\%_]/g, value => `\\${value}`)}%`);
+  const { data, error } = await query;
   if (error) throw error;
   return (data || []).map(row => ({ id: `updates:${row.id}`, name: row.name, email: channel === "email" ? row.destination : null,
     phone: channel === "text" ? row.destination : null, city: "", joined_at: row.consented_at, is_follower: false, is_guest: false,

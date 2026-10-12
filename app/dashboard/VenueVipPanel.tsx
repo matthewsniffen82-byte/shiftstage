@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { readSession, requestDashboardJson } from "./dashboard-session";
 import type { VenueVipState, VipRequest } from "@/src/lib/dancr/vip-types";
+import { notifyVenueOperationsChanged } from "@/src/lib/dancr/venue-operations";
 import VipRequests from "../vip/VipRequests";
 import "../vip/vip.css";
 
@@ -12,12 +13,12 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
   const [inviteNickname, setInviteNickname] = useState("");
   const [link, setLink] = useState(""); const [linkId, setLinkId] = useState(""); const [status, setStatus] = useState(""); const [error, setError] = useState("");
   const [busy, setBusy] = useState(false); const [loading, setLoading] = useState(false);
-  const [pendingOnly, setPendingOnly] = useState(false);
+  const [pendingOnly, setPendingOnly] = useState(true);
   const [searchInput, setSearchInput] = useState(""); const [memberSearch, setMemberSearch] = useState("");
   const [memberPage, setMemberPage] = useState(0);
   const [editingMember, setEditingMember] = useState<{ id: string; nickname: string } | null>(null);
   const mounted = useRef(false); const lock = useRef(false); const sequence = useRef(0);
-  const view = useRef({ page: 0, search: "", memberPage: 0, pendingOnly: false });
+  const view = useRef({ page: 0, search: "", memberPage: 0, pendingOnly: true });
   const load = useCallback(async (nextPage = 0, nextSearch = "", nextMemberPage = 0, nextPendingOnly = false) => {
     const current = ++sequence.current; const accountId = readSession()?.account?.id;
     setLoading(true);
@@ -53,6 +54,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
       if (body.action === "set_nickname") {
         setState(current => current ? { ...current, members: current.members.map(member => member.id === body.id ? { ...member, nickname: String(body.nickname).trim() } : member) } : current);
       }
+      notifyVenueOperationsChanged();
       await load(page, memberSearch, memberPage, pendingOnly);
       return true;
     } catch (failure) { if (mounted.current && readSession()?.account?.id === accountId) setError(failure instanceof Error ? failure.message : "Unable to update VIP access."); return false; }
@@ -79,13 +81,23 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
   }
   return <div className="venue-vip">
     <div className="vip-row venue-vip-header"><h2 id="venue-vip-heading">VIP access</h2><button type="button" aria-label="Refresh VIP access" disabled={busy || loading} onClick={() => { setError(""); void load(page, memberSearch, memberPage, pendingOnly); }}>{loading ? "Refreshing…" : "Refresh"}</button></div>
+    {status && <p className="vip-feedback" role="status">{status}</p>}{error && <p className="vip-feedback vip-error" role="alert">{error}</p>}
+    {!state && <p role="status">{loading ? "Loading VIP requests…" : "Refresh to load VIP requests."}</p>}
+    {state && <>
+      <div className="venue-vip-requests">
+      <div className="vip-row"><h3>Visit requests{state.requestCount !== undefined ? ` (${state.requestCount})` : ""}</h3><button type="button" disabled={busy || loading} aria-pressed={pendingOnly} onClick={() => { setError(""); void load(0, memberSearch, memberPage, !pendingOnly); }}>{pendingOnly ? "All statuses" : "Pending requests"}</button></div>
+      <VipRequests requests={state.requests} onReview={review} busy={busy || loading} />
+      <div className="vip-actions">{page > 0 && <button type="button" disabled={busy || loading} onClick={() => void load(page - 1, memberSearch, memberPage, pendingOnly)}>Newer requests</button>}{state.hasMore && <button type="button" disabled={busy || loading} onClick={() => void load(page + 1, memberSearch, memberPage, pendingOnly)}>Older requests</button>}</div>
+      </div>
+    </>}
+    <details className="venue-vip-management"><summary>Invite &amp; manage VIPs</summary>
     <div className="venue-vip-invite">
       <p>Invite guests to request visits and dancers.</p>
       <form className="vip-invite-form" onSubmit={invite}><label>Guest email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><label>Private nickname (optional)<input type="text" maxLength={80} value={inviteNickname} onChange={event => setInviteNickname(event.target.value)} placeholder="How you know this guest" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send invitation"}</button></form>
       <small>Invitation valid for 7 days. Nicknames are private to your venue&apos;s owners and managers.</small>
       <details><summary>How invitations work</summary><small>Only the invited email can use the link. Reinviting replaces that email’s unused link. Resend email and New share link also replace the previous link. Owners and managers review each visit request.</small></details>
     </div>
-    {status && <p className="vip-feedback" role="status">{status}</p>}{error && <p className="vip-feedback vip-error" role="alert">{error}</p>}
+
     {link && <div className="vip-link-result"><label>Private invitation link<input readOnly value={link} onFocus={event => event.target.select()} /></label><button type="button" onClick={() => { void navigator.clipboard.writeText(link).then(() => setStatus("Private link copied.")).catch(() => setStatus("Select and copy the link above.")); }}>Copy private link</button><button type="button" onClick={() => void shareLink()}>Share invitation</button></div>}
     {!state ? <p role="status">{loading ? "Loading VIP access…" : "Refresh to load VIP access."}</p> : <>
       <div className="venue-vip-access">
@@ -118,11 +130,8 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
         </div>
       </details>
       </div>
-      <div className="venue-vip-requests">
-      <div className="vip-row"><h3>Visit requests{state.requestCount !== undefined ? ` (${state.requestCount})` : ""}</h3><button type="button" disabled={busy || loading} aria-pressed={pendingOnly} onClick={() => { setError(""); void load(0, memberSearch, memberPage, !pendingOnly); }}>{pendingOnly ? "All statuses" : "Pending requests"}</button></div>
-      <VipRequests requests={state.requests} onReview={review} busy={busy || loading} />
-      <div className="vip-actions">{page > 0 && <button type="button" disabled={busy || loading} onClick={() => void load(page - 1, memberSearch, memberPage, pendingOnly)}>Newer requests</button>}{state.hasMore && <button type="button" disabled={busy || loading} onClick={() => void load(page + 1, memberSearch, memberPage, pendingOnly)}>Older requests</button>}</div>
-      </div>
+
     </>}
+    </details>
   </div>;
 }

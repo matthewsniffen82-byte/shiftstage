@@ -24,6 +24,7 @@ function panelHarness(request = async () => initial, props = {}) {
     },
   };
   const Component = compileVip('app/dashboard/VenueVipPanel.tsx', {
+    '@/src/lib/dancr/venue-operations': { notifyVenueOperationsChanged() {} },
     react,
     './dashboard-session': { readSession: () => ({ account: { id: accountId } }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '../vip/VipRequests': { __esModule: true, default: () => null },
@@ -113,6 +114,8 @@ test('nickname saves do not update a different signed-in account after a delayed
 
 test('pending requests reset request pagination and remain selected while searching VIP members', async () => {
   const ui = panelHarness(); await ui.settle();
+  assert.equal(new URL(ui.calls.at(-1).url, 'https://example.test').searchParams.get('status'), 'pending');
+  ui.button('All statuses').props.onClick(); await ui.settle();
   ui.button('Older requests').props.onClick(); await ui.settle();
   ui.button('Pending requests').props.onClick(); await ui.settle();
   let params = new URL(ui.calls.at(-1).url, 'https://example.test').searchParams;

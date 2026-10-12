@@ -6,6 +6,7 @@ import "./venue-customers.css";
 
 export default function VenueCustomersPanel({ refreshKey, active, timezone }: { refreshKey: string; active: boolean; timezone?: string }) {
   const [source, setSource] = useState("all");
+  const [input, setInput] = useState(""), [search, setSearch] = useState("");
   const [entries, setEntries] = useState<VenueCustomer[]>([]);
   const [busy, setBusy] = useState(false), [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(""), [hasMore, setHasMore] = useState(false);
@@ -16,7 +17,7 @@ export default function VenueCustomersPanel({ refreshKey, active, timezone }: { 
     setBusy(true); setError("");
     if (!offset) { setEntries([]); setLoaded(false); setHasMore(false); }
     try {
-      const data = await requestDashboardJson(`/api/venue/customers?source=${source}&offset=${offset}`, {
+      const data = await requestDashboardJson(`/api/venue/customers?${new URLSearchParams({ source, offset: String(offset), search })}`, {
         expectedRole: "venue", signal: request.signal, cache: "no-store", timeoutMs: 15000, fallbackMessage: "Unable to load customers.",
       });
       if (request.signal.aborted) return;
@@ -32,16 +33,17 @@ export default function VenueCustomersPanel({ refreshKey, active, timezone }: { 
     setEntries([]); setLoaded(false); setHasMore(false); setError("");
     if (active) void load();
     return () => controller.current?.abort();
-  }, [refreshKey, source, active]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [refreshKey, source, active, search]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     function refresh() { if (active && document.visibilityState === "visible") void load(); }
     document.addEventListener("visibilitychange", refresh);
     return () => document.removeEventListener("visibilitychange", refresh);
-  }, [source, active]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [source, active, search]); // eslint-disable-line react-hooks/exhaustive-deps
   return <div className="venue-contacts">
     <header className="venue-section-heading"><h2 id="venue-customers-heading">Contacts</h2>
       <button className="venue-utility" type="button" disabled={busy} onClick={() => void load()}>{busy ? "Loading…" : "Refresh"}</button></header>
-    <p>Shared contacts and guests with active passes. Email and text update lists include only guests who chose that channel for this club. Visit and ride details alone do not subscribe anyone.</p>
+    <p>Search shared contacts. Email and text badges show active subscriptions to this club.</p>
+    <form className="venue-search-form" role="search" onSubmit={event => { event.preventDefault(); setSearch(input.trim()); }}><label>Find a contact<input type="search" maxLength={100} value={input} onChange={event => setInput(event.target.value)} placeholder="Search names" /></label><button type="submit">Search</button>{(input || search) && <button type="button" onClick={() => { setInput(""); setSearch(""); }}>Clear</button>}</form>
     <div className="venue-analytics-period" role="group" aria-label="Contact source">
       {[["all", "Shared contacts"], ["followers", "Shared followers"], ["guests", "Guest list"], ["email_updates", "Email updates"], ["text_updates", "Text updates"]].map(([value, label]) =>
         <button key={value} type="button" aria-pressed={source === value} onClick={() => setSource(value)}>{label}</button>)}
@@ -50,6 +52,8 @@ export default function VenueCustomersPanel({ refreshKey, active, timezone }: { 
     {loaded && !entries.length ? <p className="venue-value-empty">{source.endsWith("_updates") ? "No guests have opted in to this type of update yet." : "No contacts have shared details in this group yet. Private followers are counted in Results."}</p> : null}
     <div className="notification-list">{entries.map(entry => <article className="notification-row venue-guest-record" key={entry.id}>
       <strong>{entry.name}</strong><span>{entry.is_updates ? "Club update subscriber" : entry.is_follower && entry.is_guest ? "Follower · Guest list" : entry.is_follower ? "Follower" : "Guest list"}</span>
+      <div className="venue-contact-badges">{entry.email_updates_at && <span>Email updates ✓</span>}{entry.text_updates_at && <span>Text updates ✓</span>}{!entry.email_updates_at && !entry.text_updates_at && <span>{entry.is_guest && !entry.is_follower ? "Visit details only" : "No update subscriptions"}</span>}</div>
+      <details><summary>Contact &amp; sharing details</summary>
       <dl>
         <div><dt>Email</dt><dd>{entry.email ? <a href={`mailto:${encodeURIComponent(entry.email)}`}>{entry.email}</a> : "Not shared"}</dd></div>
         <div><dt>Phone</dt><dd>{entry.phone ? <a href={`tel:${entry.phone}`}>{entry.phone}</a> : "Not shared"}</dd></div>
@@ -59,6 +63,7 @@ export default function VenueCustomersPanel({ refreshKey, active, timezone }: { 
         {(!entry.is_updates || entry.phone) && <div><dt>Text updates</dt><dd>{entry.text_updates_at ? <>Opted in · <time dateTime={entry.text_updates_at}>{new Date(entry.text_updates_at).toLocaleDateString(undefined, { timeZone: timezone })}</time></> : "No active opt-in recorded"}</dd></div>}
       </dl>
       <small>Latest shared activity <time dateTime={entry.joined_at}>{new Date(entry.joined_at).toLocaleString(undefined, { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time>{timezone ? ` (${timezone.replaceAll("_", " ")})` : ""}</small>
+      </details>
     </article>)}</div>
     {hasMore ? <button type="button" disabled={busy} onClick={() => void load(entries.length)}>Load more contacts</button> : null}
   </div>;

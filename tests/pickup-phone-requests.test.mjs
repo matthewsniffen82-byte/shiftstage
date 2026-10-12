@@ -61,7 +61,7 @@ test('phone receipts use current database owner/manager authorization, including
       assert.equal(result.phoneRequests[0].phone, '+17025550123');
       assert.equal(result.phoneRequests[0].venue_name, 'Test Club');
       assert.equal(result.hasMorePhoneRequests, false);
-      assert.deepEqual(Object.keys(result.phoneRequests[0]).sort(), ['email','id','location','name','party_size','phone','requested_at','venue_id','venue_name']);
+      assert.deepEqual(Object.keys(result.phoneRequests[0]).sort(), ['email','id','location','name','party_size','phone','requested_at','staff_status','staff_status_version','staff_updated_at','venue_id','venue_name']);
       assert.equal((await f.run('venueId=' + id(11))).phoneRequests.length, 0);
     }
     await asUser(4); assert.equal((await f.run()).phoneRequests[0].id, id(21));
