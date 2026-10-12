@@ -13,7 +13,7 @@ export const staticAssetVersions = {
   "/dancer-content-visibility.js": "b7149c5aff9b8a13",
   "/mydancr-push-device.js": "2afea69e86199ee1",
   "/mydancr-push-invitations.js": "46f886a1ba09c128",
-  "/mydancr-push-invitations.css": "08800760580e4e42",
+  "/mydancr-push-invitations.css": "acadc655cc12092d",
   "/mydancr-performance.js": "210984b837afd43a",
   "/mydancr-icon.svg": "fbd77744e2c75e0f",
   "/mydancr-icon-180.png": "f89b03300b7d9472",

@@ -1,9 +1,12 @@
-.mydancr-push-invitation{position:fixed;z-index:2147483000;right:20px;bottom:calc(86px + env(safe-area-inset-bottom,0px));box-sizing:border-box;width:min(370px,calc(100vw - 32px));max-height:calc(100dvh - 140px);overflow:auto;padding:20px;border:1px solid #574370;border-radius:18px;background:#17121f;color:#fff;box-shadow:0 12px 48px #0008;font:14px/1.5 Arial,sans-serif;text-align:left}
-.mydancr-push-invitation h2{margin:0 0 8px;color:#fff;font-size:19px;line-height:1.25}
-.mydancr-push-invitation p{margin:0 0 14px;color:#ded6e8}
-.mydancr-push-invitation-actions{display:flex;flex-wrap:wrap;gap:8px}
-.mydancr-push-invitation button{min-height:44px;padding:10px 14px;border:1px solid #655777;border-radius:10px;background:transparent;color:#fff;font:inherit;cursor:pointer}
+.mydancr-push-invitation{position:fixed;z-index:2147483000;right:16px;bottom:calc(86px + env(safe-area-inset-bottom,0px));box-sizing:border-box;width:min(360px,calc(100vw - 24px));max-height:calc(100dvh - 140px);overflow:auto;padding:12px 14px;border:1px solid #574370;border-radius:14px;background:#17121f;color:#fff;box-shadow:0 8px 28px #0008;font:400 13px/1.4 Arial,sans-serif;text-align:left;overflow-wrap:anywhere}
+.mydancr-push-invitation h2{margin:0 0 5px;color:#fff;font-size:16px;font-weight:650;line-height:1.25}
+.mydancr-push-invitation p{margin:0 0 10px;color:#ded6e8;font-size:13px;font-weight:400;line-height:1.4}
+.mydancr-push-invitation-actions{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:stretch}
+.mydancr-push-invitation button{min-width:0;min-height:44px;padding:8px 10px;border:1px solid #655777;border-radius:10px;background:transparent;color:#fff;font:inherit;white-space:normal;cursor:pointer}
+/* Keep the shared button skin from making small invitations bulky or heavy. */
+body.dancr-button-system .mydancr-push-invitation button{min-height:44px!important;padding:8px 10px!important;border-radius:10px!important;font-size:13px!important;font-weight:600!important;line-height:1.3!important;letter-spacing:0!important}
+.mydancr-push-invitation button[hidden]{display:none!important}
 .mydancr-push-invitation button:first-child{background:#7135ba;border-color:#9158d1;font-weight:700}
 .mydancr-push-invitation button:disabled{opacity:.6;cursor:default}
 .mydancr-push-invitation button:focus-visible{outline:3px solid #d7b9ff;outline-offset:3px}
-@media(max-width:480px){.mydancr-push-invitation{right:16px;padding:16px}}
+@media(max-width:480px){.mydancr-push-invitation{right:12px}}
