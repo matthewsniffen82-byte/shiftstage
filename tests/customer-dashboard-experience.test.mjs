@@ -142,10 +142,10 @@ test("Club Deal wallet and alerts expose real status, expiry, history, and direc
 test("new guest confirmation explains private account benefits once", () => {
   assert.match(customerPage, /showCustomerWelcome=\{params\.confirmed === "1"\}/);
   assert.match(dashboard, /mydancr:customer-welcome-dismissed:/);
-  assert.match(dashboard, /Your private MyDancr account is ready/);
-  assert.match(dashboard, /account or activity on a public profile/);
-  assert.match(dashboard, /Find your next favorite/);
-  assert.match(dashboard, /Explore a city/);
+  assert.match(dashboard, /Your account is ready/);
+  assert.match(dashboard, /Your account and activity aren’t public/);
+  assert.match(dashboard, /Plan your night/);
+  assert.match(dashboard, /Choose a city/);
   assert.match(dashboard, /homeDiscoveryHref\("dancers", city\)/);
   assert.match(dashboard, /homeDiscoveryHref\("venues", city\)/);
   assert.match(dashboard, /url\.searchParams\.delete\("confirmed"\)/);

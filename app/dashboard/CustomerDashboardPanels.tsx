@@ -129,9 +129,8 @@ export function CustomerWelcomeCard({ accountKey, show }: { accountKey: string; 
         <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
       </div>
       <div className="customer-welcome-copy">
-        <span className="eyebrow">Private guest account</span>
-        <h2 id="customer-welcome-title">Your private MyDancr account is ready</h2>
-        <p>Build your night without putting your account or activity on a public profile.</p>
+        <h2 id="customer-welcome-title">Your account is ready</h2>
+        <p>Your account and activity aren’t public.</p>
       </div>
       <button type="button" onClick={dismissWelcome} aria-label="Dismiss guest account welcome">×</button>
     </section>
@@ -180,8 +179,8 @@ function CustomerExplore() {
     return () => controller.abort();
   }, []);
   return <div className="customer-explore">
-    <div><span className="eyebrow">Make it your night</span><h2>Find your next favorite.</h2><p>Follow dancers and clubs. Keep your plans and passes together, privately.</p></div>
-    {cities.length ? <label>Explore a city<select value={city} onChange={event => setCity(event.target.value)}>{cities.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label> : null}
+    <div><h2>Plan your night.</h2><p>Follow dancers and clubs. Manage plans and passes.</p></div>
+    {cities.length ? <label>Choose a city<select value={city} onChange={event => setCity(event.target.value)}>{cities.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label> : null}
     <div className="customer-card-actions"><Link className="customer-primary" href={homeDiscoveryHref("dancers", city)}>Find dancers</Link><Link href={homeDiscoveryHref("venues", city)}>Explore clubs</Link></div>
   </div>;
 }
@@ -921,14 +920,14 @@ function CustomerPassWallet({ deals, isLoading }: { deals: NonNullable<CustomerS
     .filter((item) => !activeDeals.some((active) => active.id === item.id))
     .sort((left, right) => new Date(right.generatedAt).getTime() - new Date(left.generatedAt).getTime());
 
-  return <CustomerSurface id="customer-passes" title="Admission passes" description="Open your pass when you arrive at the club." count={activeDeals.length}>
+  return <CustomerSurface id="customer-passes" title="Admission passes" description="Show your pass at the door." count={activeDeals.length}>
     <div className="customer-pass-list">
       {activeDeals.map(item => <Link className="customer-pass-card" href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`} key={item.id}>
         <div className="customer-pass-icon"><CustomerDashboardIcon section="customer-saved-deals" /></div>
         <div className="customer-pass-copy"><span className="eyebrow">Ready to show</span><h3>{item.deal?.title || "Admission pass"}</h3><p>{item.venue?.name || "Club"}</p><time dateTime={item.expiresAt}>{dealExpiryLabel(item.expiresAt, now)}</time></div>
         <span className="customer-pass-cta">Show pass <span aria-hidden="true">↗</span></span>
       </Link>)}
-      {!activeDeals.length && !isLoading ? <div className="customer-empty-state compact"><strong>No active passes</strong><p>Choose a Club Deal to generate an admission pass.</p><Link href={homeDiscoveryHref("venues")}>Explore Club Deals</Link></div> : null}
+      {!activeDeals.length && !isLoading ? <div className="customer-empty-state compact"><strong>No active passes</strong><p>Choose a Club Deal to get a pass.</p><Link href={homeDiscoveryHref("venues")}>Browse Club Deals</Link></div> : null}
     </div>
     {activeDeals.length ? <details className="customer-pass-help"><summary>How admission passes work</summary><p>Choose the exact deal and arrival method. Show your pass and its QR code to club staff. Wait for confirmation: staff verifies your arrival method and scans the pass to confirm one admission.</p></details> : null}
     {pastDeals.length ? <details className="past-deal-history"><summary>Past passes <span>{pastDeals.length}</span></summary><div>{pastDeals.map(item => <Link className="customer-past-pass" key={item.id} href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`}><span><strong>{item.deal?.title || "Club Deal"}</strong><small>{item.venue?.name || "Club"}</small></span><span>{dealPassStatus(item.status, new Date(item.expiresAt).getTime() <= now)}</span></Link>)}</div></details> : null}
