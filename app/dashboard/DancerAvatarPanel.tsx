@@ -22,7 +22,7 @@ export function DancerAvatarPanel({
   const [preparing, setPreparing] = useState(false);
   const preparation = useRef<AbortController | null>(null);
   const approvedPhotos = dancerPhotoItemsFromProfile(profile).filter(photo => photo.status === "approved");
-  const mainPhoto = approvedPhotos.find(photo => photo.isPrimary) || approvedPhotos[0];
+  const mainPhoto = approvedPhotos.find(photo => photo.isPrimary);
   const [editRequested, setEditRequested] = useState(0);
   const libraryInput = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -243,12 +243,15 @@ export function DancerAvatarPanel({
         signal: controller.signal,
       });
       if (!isCurrentAvatarAction(requestId, controller)) return;
-      const refreshedProfile = await refreshProfile(controller.signal);
-      if (!isCurrentAvatarAction(requestId, controller)) return;
-      onProfileChange?.(refreshedProfile);
+      pendingPreviewRef.current = { id: "", url: "" };
+      uploadIdentityRef.current = null;
       setUploadFeedback(null);
       setFile(null);
       setPreviewUrl("");
+      onProfileChange?.({ ...profile, avatarPhotoUrl: "", pending_avatar_review: null, avatar_review: null });
+      const refreshedProfile = await refreshProfile(controller.signal);
+      if (!isCurrentAvatarAction(requestId, controller)) return;
+      onProfileChange?.(refreshedProfile);
       setStatus("Avatar removed.");
     } catch (error) {
       if (isCurrentAvatarAction(requestId, controller)) {

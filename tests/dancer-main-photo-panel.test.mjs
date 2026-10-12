@@ -166,3 +166,16 @@ test('main photo choices use approved uploaded photos and keep pending photos ou
   assert.ok(ui.choices[0].props.thumbnail);
   assert.equal(ui.uploads.length, 0);
 });
+
+test('removing the main photo leaves its slot empty even with an approved gallery, including after reload', async () => {
+  const gallery = { ...main, id: 'gallery', imageUrl: '/gallery.jpg', is_primary: false };
+  const ui = fixture({ dancer_photos: [main, gallery] });
+  await ui.remove();
+  assert.deepEqual(ui.deletes, [{ photoId: 'main' }]);
+  for (const view of [ui, fixture({ dancer_photos: [gallery] })]) {
+    assert.equal(view.target.props['aria-label'], 'Add main photo');
+    assert.equal(view.badge, 'Required');
+    assert.equal(view.choices.length, 1);
+    assert.equal(view.uploads.length, 0);
+  }
+});

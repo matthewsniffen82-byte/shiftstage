@@ -162,3 +162,14 @@ test('incoming media links override saved preview progress and open the requeste
   assert.equal(fixture({savedStep:'preview',hash:'#dancer-details-section'}).step(),'details');
   assert.equal(fixture({savedStep:'preview',hash:'#dancer-profile-media'}).step(),'preview');
 });
+
+test('a removed main photo cannot be replaced implicitly by enough approved gallery photos',async()=>{
+  const f=fixture({count:4});
+  f.props.profile.dancer_photos=f.props.profile.dancer_photos.filter(photo=>!photo.isPrimary);
+  await f.click();
+  assert.equal(f.step(),'media');
+  assert.match(f.message(),/Add your main photo/);
+  assert.equal(f.stepButton('preview').props.disabled,true);
+  assert.ok(f.calls.includes('#dancer-main-photo'));
+  assert.ok(!f.calls.includes('agreement'));
+});

@@ -543,6 +543,7 @@ export function DancerOnboardingCommand({
     persistedStageName
     && persistedCity
     && avatarUrl
+    && approvedPhotos.some(photo => photo.isPrimary)
     && galleryReady,
   );
   const submitted = previouslySubmitted && !agreementReviewRequired && (effectiveStatus === "approved" || profileReady);
@@ -881,6 +882,7 @@ function dancerProfileSetupBlocker({
   if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
   if (!avatarUrl && pendingAvatar) return "Awaiting review: your face photo. Your progress is saved.";
   if (!avatarUrl) return "Add a clear face photo.";
+  if (!approvedPhotos.some(photo => photo.isPrimary)) return "Choose your main photo.";
   if (approvedProfilePhotoCount(approvedPhotos) < MIN_DANCER_ONBOARDING_PHOTOS) {
     if (pendingPhotos.length) return `Awaiting review: ${approvedPhotos.length} of ${MIN_DANCER_ONBOARDING_PHOTOS} required profile photos approved. You can add photos while you wait.`;
     if (rejectedPhotos.length) return "Needs your action: replace photos that were not approved. Three approved profile photos are required.";

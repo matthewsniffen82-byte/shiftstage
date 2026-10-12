@@ -87,7 +87,7 @@ test("fresh database photos replace stale editor photos", () => {
   assert.equal(stalePhotos.some((photo) => photo.id === "DELETED"), true);
   assert.equal(visiblePhotos.some((photo) => photo.id === "DELETED"), false);
   assert.match(dancerSource, /photoReviewStatusMayChange/);
-  assert.match(dancerSource, /ensureDancerPrimaryPhoto\(adminClient, profile\.id, userId\)/);
+  assert.doesNotMatch(dancerSource, /ensureDancerPrimaryPhoto/);
 });
 
 test("save refresh preserves previews only for photos confirmed by the server", () => {
@@ -163,7 +163,7 @@ test("saved profiles keep every active photo moderation state in the editor", ()
   assert.doesNotMatch(mobileAppSource, /approved-photo-slot-status/);
 });
 
-test("combined Step 1 can be submitted with one approved photo while extra photos remain in review", () => {
+test("profile setup requires three approved photos while extra photos may remain in review", () => {
   const uploadHelper = mobileAppSource.match(/async function uploadSetupPhotoFile[\s\S]*?\r?\n    }\r?\n\r?\n    async function cropApprovedProfilePhoto/)?.[0] || "";
   const setupSubmit = mobileAppSource.match(/async function submitSetupPhotos[\s\S]*?\r?\n    }\r?\n\r?\n    async function submitDancerProfileForReview/)?.[0] || "";
   const profileHydration = mobileAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\r?\n    }\r?\n\r?\n    function setDancerSetupField/)?.[0] || "";
@@ -184,8 +184,8 @@ test("combined Step 1 can be submitted with one approved photo while extra photo
   assert.doesNotMatch(profileHydration, /photos: statusApproved \|\| photos\.length > 0 \|\| submittedPhotos\.length > 0/);
   assert.match(mobileAppSource, /Pending human review/);
   assert.match(mobileAppSource, /Approved automatically/);
-  assert.match(mobileAppSource, /Step 2 stays locked until at least one profile photo is approved/);
-  assert.match(mobileAppSource, /you can continue to Step 2 while the additional review finishes/);
+  assert.match(mobileAppSource, /Continue once at least three profile photos are approved/);
+  assert.match(mobileAppSource, /Your three required profile photos are approved\. You can continue while additional media is reviewed/);
   assert.match(mobileAppSource, /\.submitted-photo-slot\.is-pending/);
 });
 
@@ -271,9 +271,9 @@ test("confirmed profile saves stay visible on the save button until another edit
   assert.match(mobileAppSource, /setApprovedProfileSaveFeedback\(successMessage, \{ saved: true, toast: false \}\)/);
   assert.doesNotMatch(mobileAppSource, /setApprovedProfileSaveFeedback\.savedTimer/);
 
-  assert.match(dashboardSource, /setSaveStatus\("saved"\)/);
-  assert.match(dashboardSource, /setStageName\(event\.target\.value\);\s*setSaveStatus\("idle"\)/);
-  assert.match(dashboardSource, /setCity\(event\.target\.value\);\s*setSaveStatus\("idle"\)/);
+  assert.match(dashboardSource, /setSaveStatus\(draftDirtyRef\.current \? "idle" : "saved"\)/);
+  assert.match(dashboardSource, /setStageName\(event\.target\.value\);\s*if \(!actionInFlightRef\.current\) setSaveStatus\("idle"\)/);
+  assert.match(dashboardSource, /setCity\(event\.target\.value\);\s*if \(!actionInFlightRef\.current\) setSaveStatus\("idle"\)/);
   assert.doesNotMatch(dashboardSource, /setBio\(|\[bio, setBio\]/);
   assert.doesNotMatch(dashboardSource, /savedResetTimerRef/);
 });

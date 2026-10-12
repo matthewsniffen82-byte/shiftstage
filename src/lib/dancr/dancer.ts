@@ -7,7 +7,6 @@ import { tryRetireGalleryStorageFiles } from "./gallery-storage-retirement";
 import type { ApprovalReview, DancerDashboardAnalytics, DancerWeeklyReport, SocialPlatform } from "./types";
 import { PublicApiError } from "../api-error-policy";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
-import { ensureDancerPrimaryPhoto } from "./primary-photo";
 
 type DancrClient = SupabaseClient;
 
@@ -74,8 +73,8 @@ export async function deleteOwnDancerPhoto(
       else await cleanup();
     }
 
-    // A concurrent request may have promoted this photo after our initial read.
-    await ensureDancerPrimaryPhoto(adminClient, profile.id, userId);
+    // Leave a removed main photo empty. Only an explicit upload or selection
+    // should assign another photo to that slot.
 
     if (photoReviewStatusMayChange) {
       await refreshOwnPhotoReviewStatus(adminClient, userId, profile.id).catch((error: any) => {

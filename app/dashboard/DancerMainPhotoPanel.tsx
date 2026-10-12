@@ -20,7 +20,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
   const photos = dancerPhotoItemsFromProfile(profile);
   const main = photos.find(photo => photo.isPrimary && photo.status === "approved");
   const pendingPhoto = photos.find(photo => photo.isPrimary && photo.status === "pending");
-  const displayed = pendingPhoto || main || photos.find(photo => photo.status === "approved");
+  const displayed = pendingPhoto || main;
   const pending = Boolean(pendingPhoto);
   const pendingReviewId = (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).some((review: Record<string, unknown>) => review.id === pendingPhoto?.id) ? pendingPhoto?.id : undefined;
   const [busy, setBusy] = useState(false);

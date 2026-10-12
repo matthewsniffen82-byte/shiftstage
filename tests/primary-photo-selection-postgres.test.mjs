@@ -198,13 +198,13 @@ test('application gateway preserves a committed selection after response loss wi
  assert.equal(await gateway()(applicationClient().client,profile,owner),selected);assert.deepEqual(await photos(),before);
 });
 for(const kind of ['dancer','admin']){
- test(kind+' deletion uses native primary selection even when the earlier photo read was non-primary',async()=>{
+ test(kind+' deletion '+(kind==='dancer'?'leaves the main slot empty':'selects an approved fallback')+' even when the earlier photo read was non-primary',async()=>{
   const deleted=await photo(100),next=await photo(101);
   const {client,calls}=applicationClient({beforeDelete:()=>pg.query('update public.dancer_photos set is_primary=true where id=$1',[deleted])});
   await remove(kind,client,deleted);
-  assert.deepEqual(calls.map(call=>call.operation),['delete','rpc']);
-  assert.deepEqual(calls[1].args,{p_dancer_id:profile,p_actor_user_id:kind==='dancer'?owner:admin});
-  assert.deepEqual((await photos()).map(row=>[row.id,row.is_primary]),[[next,true]]);
+  assert.deepEqual(calls.map(call=>call.operation),kind==='dancer'?['delete']:['delete','rpc']);
+  if(kind==='admin')assert.deepEqual(calls[1].args,{p_dancer_id:profile,p_actor_user_id:admin});
+  assert.deepEqual((await photos()).map(row=>[row.id,row.is_primary]),[[next,kind==='admin']]);
  });
  test(kind+' deletion keeps a primary established by a different upload',async()=>{
   const deleted=await photo(100),published=await photo(101,{primary:true,sort:3});

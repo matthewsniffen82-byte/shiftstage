@@ -242,3 +242,21 @@ test("reused face photo preparation rejects duplicate clicks and an account chan
   ui.switchAccount(); resolve({ imageDataUrl: "data:image/jpeg;base64," + btoa("saved-photo") }); await ui.settle();
   assert.equal(ui.posts.length, 0); assert.equal(ui.busy, false);
 });
+
+test("removing an avatar clears it without using a main or gallery photo, even if refresh fails", async () => {
+  const gallery = [{ id: "main", imageUrl: "main.jpg", status: "approved", isPrimary: true }];
+  for (const refreshFails of [false, true]) {
+    const emptyProfile = { avatarPhotoUrl: "", dancer_photos: gallery };
+    const ui = avatarHarness({ compact: true,
+      profile: { ...emptyProfile, avatarPhotoUrl: "face.jpg", pending_avatar_review: { id: "pending", previewUrl: "pending.jpg" } },
+      read: async () => { if (refreshFails) throw new Error("Refresh unavailable"); return { profile: emptyProfile }; },
+    });
+    ui.button("Remove face photo").props.onClick(); await ui.settle();
+    assert.equal(ui.posts.length, 1);
+    assert.equal(ui.posts[0].method, "DELETE");
+    assert.equal(ui.image, undefined);
+    assert.equal(ui.badge, "Required");
+    assert.equal(ui.sourceRequests.length, 0);
+    assert.equal(avatarHarness({ profile: emptyProfile }).image, undefined);
+  }
+});

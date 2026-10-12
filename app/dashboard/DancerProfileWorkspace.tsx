@@ -70,7 +70,7 @@ export default function DancerProfileWorkspace({
   const photos = relabelPhotoItems(sourcePhotos);
   const approvedPhotos = photos.filter(photo => photo.status === "approved");
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
-  const mainPhoto = primaryPhoto || sourcePhotos.find(photo => photo.status === "approved");
+  const mainPhoto = primaryPhoto;
   const pendingMain = photos.find(photo => photo.isPrimary && photo.status === "pending");
   const additionalPhotos = approvedPhotos.filter(photo => photo.id !== mainPhoto?.id);
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
@@ -81,7 +81,7 @@ export default function DancerProfileWorkspace({
   const faceReady = Boolean(profile?.avatarPhotoUrl);
   const approvedCount = approvedProfilePhotoCount(photos);
   const galleryReady = approvedCount >= MIN_DANCER_ONBOARDING_PHOTOS;
-  const photosReady = faceReady && galleryReady;
+  const photosReady = faceReady && Boolean(mainPhoto) && galleryReady;
   const faceState = faceReady ? "Approved" : pendingFace ? mediaReviewLabel("pending", String(pendingFace.status || "pending_review")) : "Required";
   const mainState = mainPhoto ? "Approved" : pendingMain ? mediaReviewLabel(pendingMain.status, pendingMain.moderationStatus) : "Required";
   const photoBlocker = !faceReady

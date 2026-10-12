@@ -24,7 +24,7 @@ export default function DancerProfilePreviewContent({ name, city, avatarUrl, pho
       .catch(() => { if (!controller.signal.aborted) setError("Unable to load your club photo."); });
     return () => controller.abort();
   }, [audience, photoIds, retry]);
-  const main = photos.find(photo => photo.isPrimary) || photos[0];
+  const main = photos.find(photo => photo.isPrimary);
   const club = clubPhoto?.source === photoIds ? photos.find(photo => photo.id === clubPhoto.id) : null;
   return <section className="dancer-workspace-preview" aria-label="Profile preview">
     {!onboarding ? <div className="dancer-workspace-view" role="group" aria-label="Preview audience">
@@ -54,7 +54,7 @@ export default function DancerProfilePreviewContent({ name, city, avatarUrl, pho
       <div className="dancer-profile-preview-overlay dancer-profile-inline-preview"><DancerPhotoCarousel stageName={name || "Your profile"}
         photos={photos.map(photo => ({ id: photo.id, imageUrl: photo.imageUrl, isPinned: photo.isPinned, isPrimary: photo.isPrimary, sortOrder: photo.sortOrder }))}
         videos={videos.filter(video => video.status === "approved" && video.videoUrl).map(video => ({ ...video, publishedAt: video.createdAt }))} /></div>
-      {!main ? <p>Add profile photos to see your gallery.</p> : null}
+      {!photos.length ? <p>Add profile photos to see your gallery.</p> : null}
       {!onboarding ? <details className="dancer-preview-card-example"><summary>See your discovery card</summary><div className="dancer-club-preview-card">
         {main?.imageUrl ? <img src={main.imageUrl} alt="Public discovery card preview" /> : <div className="dancer-preview-placeholder">Add a main photo</div>}
         <div><strong>{name || "Your stage name"}</strong><span>{city || "Your city"}</span></div>

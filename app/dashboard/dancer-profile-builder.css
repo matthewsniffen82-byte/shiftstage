@@ -164,6 +164,12 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboar
     width:100% !important; min-height:44px !important; padding:8px 10px !important; border:1px solid #8b5cf6 !important;
     background:linear-gradient(#20102f,#20102f) !important; color:#f5f3ff !important; -webkit-text-fill-color:currentColor !important; box-shadow:none !important;
   }
+  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button[aria-expanded='true'] {
+    background:transparent !important; border-color:#45454f !important; color:#d4d4dc !important;
+  }
+  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button[aria-expanded='true']:hover:not(:disabled) {
+    background:linear-gradient(#202026,#202026) !important; border-color:#73737f !important;
+  }
   body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main) {
     position:relative; min-width:0 !important; margin:0 !important; padding:0 !important; overflow:hidden;
     border:0 !important; background:transparent !important; color:#f5f3ff !important; -webkit-text-fill-color:currentColor !important;

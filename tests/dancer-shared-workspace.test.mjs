@@ -155,8 +155,8 @@ test('the library contains approved extra photos only', () => {
   const ui = harness(editorFile, { ...props, profile: { ...profile, photos: [...profile.photos, { id: 'pending-main', isPrimary: true, status: 'pending' }, { id: 'extra', status: 'approved' }] } });
   const library = ui.nodes().find(node => node.type === './DancerProfileMediaUploads');
   assert.deepEqual(Array.from(library.props.photos, photo => photo.id), ['extra']);
-  const fallback = harness(editorFile, { ...props, profile: { ...profile, photos: [{ id: 'legacy', status: 'approved' }] } });
-  assert.equal(fallback.nodes().find(node => node.type === './DancerProfileMediaUploads').props.photos.length, 0);
+  const emptyMain = harness(editorFile, { ...props, profile: { ...profile, photos: [{ id: 'gallery', status: 'approved' }] } });
+  assert.equal(emptyMain.nodes().find(node => node.type === './DancerProfileMediaUploads').props.photos.length, 1);
 });
 
 test('pending face reviews prevent continuing, and only approved photos count toward setup', async () => {
@@ -194,4 +194,15 @@ test('onboarding preview offers direct identity, avatar, and main-photo editing 
   assert.deepEqual(Array.from(gallery.props.videos, p => p.id), ['approved-video']);
   assert.equal(ui.button('Club display'), undefined);
   assert.ok(!ui.nodes().some(n => n.props?.children === 'See your discovery card'));
+});
+
+test('preview leaves the avatar and main photo empty without hiding approved gallery photos', () => {
+  const ui = harness('app/dashboard/DancerProfilePreviewContent.tsx', {
+    name: 'Kay', city: 'Las Vegas', avatarUrl: '',
+    photos: [{ id: 'gallery', isPrimary: false, imageUrl: '/gallery.jpg' }],
+    videos: [], isPublic: false, onboarding: true, slug: 'kay', onEdit() {},
+  });
+  assert.ok(!ui.nodes().some(node => node.type === 'img'));
+  assert.ok(ui.nodes().some(node => node.props?.children === 'Add main photo'));
+  assert.equal(ui.nodes().find(node => node.type === 'Carousel').props.photos.length, 1);
 });
