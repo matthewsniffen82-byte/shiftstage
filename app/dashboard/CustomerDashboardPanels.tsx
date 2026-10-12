@@ -188,7 +188,7 @@ function CustomerExplore() {
       setCity(event.target.value);
       try { window.localStorage.setItem(CUSTOMER_DISCOVERY_CITY_KEY, event.target.value); } catch { /* Optional device preference. */ }
     }}>{cities.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label> : null}
-    <div className="customer-card-actions"><Link className="customer-primary" href={homeDiscoveryHref("dancers", city)}>Find dancers</Link><Link href={homeDiscoveryHref("venues", city)}>Explore clubs</Link></div>
+    <div className="customer-card-actions"><Link href={homeDiscoveryHref("dancers", city)}>Find dancers</Link><Link href={homeDiscoveryHref("venues", city)}>Explore clubs</Link></div>
   </div>;
 }
 
@@ -567,7 +567,7 @@ function CustomerNightPanel({
               <CustomerDirectionsButton dancerId={dancer.id} onDirections={onDirections} pending={Boolean(pendingAction)} venue={venue} />
             </div><details className="customer-card-menu" data-compact-menu><summary aria-label={`Manage plan for ${dancer.stageName || "dancer"}`}>•••</summary><div>
               {venue.slug ? <Link href={customerVenueHref(venue)}>Club page</Link> : null}
-              <button type="button" disabled={Boolean(pendingAction)} aria-busy={pendingAction === `going-${item.shiftId}` || undefined} onClick={() => void onCancelGoing(item.shiftId)}>{pendingAction === `going-${item.shiftId}` ? "Cancelling…" : "Cancel Going"}</button>
+              <button className="customer-plan-cancel" type="button" disabled={Boolean(pendingAction)} aria-busy={pendingAction === `going-${item.shiftId}` || undefined} onClick={() => void onCancelGoing(item.shiftId)}>{pendingAction === `going-${item.shiftId}` ? "Cancelling…" : "Cancel Going"}</button>
             </div></details></div>
           </article>;
         })}

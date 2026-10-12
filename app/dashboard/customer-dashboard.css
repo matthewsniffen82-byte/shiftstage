@@ -78,7 +78,7 @@ body .dashboard-shell.dashboard-shell-customer .notification-row { padding: 13px
 body .dashboard-shell.dashboard-shell-customer .notification-row-meta { font-size: 10px; font-weight: 500; }
 body .dashboard-shell.dashboard-shell-customer .customer-empty-state { border: 1px dashed #c4a3f333; border-radius: 12px; background: #b794e608; }
 body.dancr-button-system .dashboard-shell.dashboard-shell-customer :is(.customer-card-actions a, .customer-card-actions button, .customer-dancer-unfollow, .account-action-button, .support-panel button, .customer-credential-option, .customer-empty-state a) { font-family: inherit !important; font-weight: 550 !important; }
-body.dancr-button-system .dashboard-shell.dashboard-shell-customer :is(.customer-card-actions a, .customer-card-actions button, .customer-dancer-unfollow) { border-color: #c5a4f535 !important; color: #e1d9eb !important; background: #282131 !important; box-shadow: inset 0 1px 0 #ffffff06 !important; }
+body.dancr-button-system .dashboard-shell.dashboard-shell-customer :is(.customer-card-actions a, .customer-card-actions button, .customer-dancer-unfollow) { border-color: var(--customer-line) !important; color: #f1f5f9 !important; background: linear-gradient(var(--customer-control), var(--customer-control)) !important; box-shadow: none !important; }
 body .dashboard-shell.dashboard-shell-customer :is(.customer-account-email > strong, .support-thread strong) { font-weight: 550; }
 body .dashboard-shell.dashboard-shell-customer .support-panel :is(input, textarea) { border-color: #c5a4f538; background: #0d0b12; }
 body .dashboard-shell.dashboard-shell-customer .support-panel label { color: #d0c7dd; font-weight: 500; }
@@ -118,7 +118,7 @@ body .dashboard-shell.dashboard-shell-customer .support-panel label { color: #d0
 .customer-vip-shortcut strong { display: block; color: #f5f2fa; font-size: 15px; font-weight: 650; line-height: 1.3; }
 .customer-vip-shortcut:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
 
-/* Compact guest controls keep purple selections defined without bulky spacing. */
+/* Compact guest controls use a subtle violet tint only for selected states. */
 html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-workspace-nav, .customer-saved-filters) {
   gap: 3px; padding: 3px; border-radius: 12px;
 }
@@ -134,11 +134,11 @@ html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-
   border-radius: 8px !important; font-size: 12px !important;
 }
 html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-workspace-nav button[aria-current], .customer-saved-filters button[aria-pressed="true"]) {
-  border: 1px solid #8c68aa !important;
-  background: linear-gradient(155deg, #62417e 0%, #472e5d 48%, #30213e 100%) !important;
+  border: 1px solid var(--customer-selected-line) !important;
+  background: linear-gradient(var(--customer-selected), var(--customer-selected)) !important;
   color: #fff !important;
-  box-shadow: inset 0 1px 0 #ffffff29, 0 1px 3px #0004 !important;
-  text-shadow: 0 1px 1px #160c2255 !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
   filter: none !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
 }
@@ -150,10 +150,42 @@ html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-
 }
 html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-actions > button[aria-label="Directions"] {
   min-height: 44px !important; padding: 7px 10px !important; border-radius: 8px !important; font-size: 12px !important;
-  border-color: #745b8a !important;
-  background: linear-gradient(155deg, #493652, #30243c) !important;
-  box-shadow: inset 0 1px 0 #ffffff1f, 0 2px 5px #0004 !important;
-  color: #f8f2fc !important;
+  border-color: var(--customer-line) !important;
+  background: linear-gradient(var(--customer-control), var(--customer-control)) !important;
+  box-shadow: none !important;
+  color: #f1f5f9 !important;
   filter: none !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+
+/* Account and alert utilities share the same quiet fill as discovery actions. */
+html body.dancr-button-system #customer-dashboard :is(#customer-view-account, #customer-view-alerts)
+  :is(.account-action-button, .support-panel button, .customer-credential-option, .customer-credential-form-actions button, .customer-push-device-button, .customer-privacy-content button) {
+  border-color: var(--customer-line) !important; color: #f1f5f9 !important;
+  background: linear-gradient(var(--customer-control), var(--customer-control)) !important;
+  box-shadow: none !important; text-shadow: none !important; filter: none !important;
+}
+html body.dancr-button-system #customer-dashboard :is(#customer-view-account, #customer-view-alerts)
+  :is(.customer-credential-option[aria-expanded="true"], .customer-credential-option.is-complete, .support-send-button.is-sent, button[data-action-state="success"]) {
+  border-color: var(--customer-selected-line) !important; color: #d6c0f2 !important;
+  background: linear-gradient(var(--customer-control), var(--customer-control)) !important;
+}
+html body.dancr-button-system #customer-dashboard :is(#customer-view-account, #customer-view-alerts) p[data-action-state="success"] { color: #d6c0f2 !important; }
+html body.dancr-button-system #customer-dashboard #customer-view-account .account-controls-panel button.danger-button {
+  color: var(--customer-danger) !important; border-color: #70434c !important;
+  background: linear-gradient(var(--customer-control), var(--customer-control)) !important;
+}
+html body.dancr-button-system #customer-dashboard #customer-view-alerts .customer-switch-track { border-color: #555560; background: var(--customer-control); }
+html body.dancr-button-system #customer-dashboard #customer-view-alerts .customer-notification-switch[aria-checked="true"] .customer-switch-track { border-color: var(--customer-selected-line); background: var(--customer-selected); }
+
+/* Match the plan buttons' Android paint treatment without changing compact menu faces. */
+html body.dancr-button-system #customer-dashboard
+  :is(.customer-card-actions > button:not([data-follow-control]), .account-action-button, .support-panel button, .customer-credential-option, .customer-credential-form-actions button, .customer-push-device-button, .customer-privacy-content button) {
+  position: relative; isolation: isolate; color-scheme: only light; -webkit-appearance: none; appearance: none;
+}
+html:is(.is-android, .android-rendering) body.dancr-button-system #customer-dashboard
+  :is(.customer-card-actions > button:not([data-follow-control]), .account-action-button, .support-panel button, .customer-credential-option, .customer-credential-form-actions button, .customer-push-device-button, .customer-privacy-content button)::before {
+  content: "" !important; position: absolute !important; inset: 0 !important; display: block !important;
+  border: 0 !important; border-radius: inherit !important; background: linear-gradient(var(--customer-control), var(--customer-control)) !important;
+  box-shadow: none !important; opacity: 1 !important; transform: none !important; filter: none !important; z-index: -1; pointer-events: none !important;
 }

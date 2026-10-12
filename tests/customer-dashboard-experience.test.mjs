@@ -93,7 +93,7 @@ test("followed dancer tiles keep the profile link separate from their unfollow b
   assert.match(card, /customer-followed-dancer-status is-\$\{statusTone\}[\s\S]*?customer-followed-dancer-time/);
   assert.match(card, /sizes="\(max-width: 620px\) 29vw, \(max-width: 1100px\) 30vw, 300px"/);
   assert.doesNotMatch(card, /customer-card-actions|Directions|Alerts on|Alerts off/);
-  assert.match(card, /<\/Link>\s*<details className="customer-card-menu customer-dancer-menu">[\s\S]*?<button[\s\S]*?className="customer-dancer-unfollow"[\s\S]*?aria-label=\{`Unfollow \$\{dancerName\}`\}[\s\S]*?disabled=\{pending\}[\s\S]*?onClick=\{onUnfollow\}/);
+  assert.match(card, /<\/Link>\s*<details className="customer-card-menu customer-dancer-menu"[^>]*>[\s\S]*?<button[\s\S]*?className="customer-dancer-unfollow"[\s\S]*?aria-label=\{`Unfollow \$\{dancerName\}`\}[\s\S]*?disabled=\{pending\}[\s\S]*?onClick=\{onUnfollow\}/);
   assert.match(card, /unfollowing \? "Unfollowing…" : "Unfollow"/);
   assert.match(dashboard, /aria-label=\{`More options for \$\{dancerName\}`\}/);
 });
