@@ -1,0 +1,106 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test, { before, after, beforeEach, afterEach } from 'node:test';
+import { PGlite } from '@electric-sql/pglite';
+
+const id = n => `97000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+let db;
+before(async () => {
+  db = new PGlite();
+  await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
+    create table app_users(id uuid primary key,role text,account_state text);
+    create table dancer_profiles(id uuid primary key,user_id uuid);
+    create table venues(id uuid primary key,name text,timezone text,owner_user_id uuid,is_active boolean);
+    create table internal_roster_requests(id uuid primary key default gen_random_uuid(),venue_id uuid,dancer_id uuid,created_at timestamptz,status text);
+    create table venue_vip_requests(id uuid primary key default gen_random_uuid(),venue_id uuid,user_id uuid,created_at timestamptz,status text,dancers jsonb);
+    create table qr_redemptions(venue_id uuid,dancer_id uuid,admission_pass_version int,generated_at timestamptz,redeemed_at timestamptz,status text);
+    create table follows(customer_id uuid,dancer_id uuid,notifications_enabled boolean default true,primary key(customer_id,dancer_id));
+    create table customer_profiles(user_id uuid,notification_settings jsonb);
+    create table venue_vip_members(user_id uuid,venue_id uuid,active boolean);
+    create table venue_dancer_affiliations(dancer_id uuid,venue_id uuid,status text,revoked_at timestamptz,reentry_blocked boolean);
+    create table venue_dancer_work_sessions(id uuid primary key default gen_random_uuid(),shift_id uuid,venue_id uuid,dancer_id uuid,started_at timestamptz,expires_at timestamptz,closed_at timestamptz);
+    create table venue_performance_tracking(singleton boolean,started_at timestamptz);
+    insert into venue_performance_tracking values(true,'2026-10-09T00:00:00Z');
+    grant usage on schema public to anon,authenticated,service_role;
+    grant select on all tables in schema public to service_role;`);
+  await db.exec(readFileSync(new URL('../supabase/migrations/20261012005230_dancer_performance_results.sql', import.meta.url), 'utf8'));
+});
+after(async () => db?.close());
+beforeEach(async () => {
+  await db.exec('begin');
+  await db.query("insert into app_users values($1,'venue','active'),($2,'dancer','active')", [id(1),id(2)]);
+  await db.query('insert into dancer_profiles values($1,$2),($3,$2)', [id(10),id(2),id(11)]);
+  await db.query("insert into venues values($1,'Club A','UTC',$3,true),($2,'Club B','America/Los_Angeles',$3,true)", [id(20),id(21),id(1)]);
+  await db.query("insert into venue_dancer_affiliations values($1,$2,'active',null,false),($1,$3,'active',null,false)", [id(10),id(20),id(21)]);
+});
+afterEach(async () => db.exec('rollback'));
+const report = async (dancer=10, since='2026-10-05T00:00:00Z', until='2026-10-12T00:00:00Z') =>
+  (await db.query('select get_dancer_performance_analytics($1,$2,$3) value',[id(dancer),since,until])).rows[0].value;
+async function vip(user, date, {venue=20,dancer=10,status='pending',duplicate=false}={}) {
+  const choice={id:id(dancer),stage_name:'Private selection'};
+  await db.query('insert into venue_vip_requests(venue_id,user_id,created_at,status,dancers) values($1,$2,$3,$4,$5)', [id(venue),id(user),date,status,JSON.stringify(duplicate?[choice,choice]:[choice])]);
+}
+
+test('request counts have disjoint periods, no API row cap, correct statuses and dancer/club isolation',async()=>{
+  await db.query("insert into internal_roster_requests(venue_id,dancer_id,created_at,status) select $1,$2,'2026-10-06','completed' from generate_series(1,1005)",[id(20),id(10)]);
+  await db.query("insert into internal_roster_requests(venue_id,dancer_id,created_at,status) values($1,$3,'2026-10-05','pending'),($2,$3,'2026-10-07','acknowledged'),($1,$3,'2026-10-04','cancelled'),($1,$3,'2026-10-12','pending'),($1,$4,'2026-10-06','pending')",[id(20),id(21),id(10),id(11)]);
+  await vip(30,'2026-10-06',{status:'confirmed',duplicate:true});
+  await vip(31,'2026-10-07',{status:'cancelled',venue:21});
+  await vip(32,'2026-10-08',{dancer:11});
+  const r=await report();
+  assert.equal(r.current.tableRequests,1007); assert.equal(r.previous.tableRequests,1);
+  assert.equal(r.current.tableCompleted,1005); assert.equal(r.current.tableAcknowledged,1);
+  assert.equal(r.current.vipRequests,2); assert.equal(r.current.vipConfirmed,1); assert.equal(r.current.vipCancelled,1);
+  assert.equal(r.clubs.find(c=>c.id===id(20)).current.tableRequests,1006);
+  assert.equal(r.clubs.find(c=>c.id===id(21)).current.tableRequests,1);
+  assert.doesNotMatch(JSON.stringify(r),/Private selection|user_id|customer_id/);
+});
+
+test('repeat VIPs count unique returning requesters at the same club without counting selections twice',async()=>{
+  await vip(30,'2026-09-01'); await vip(30,'2026-10-06'); await vip(30,'2026-10-07');
+  await vip(30,'2026-09-02',{venue:21}); await vip(30,'2026-10-08',{venue:21});
+  await vip(31,'2026-09-01',{venue:21}); await vip(31,'2026-10-06');
+  await vip(32,'2026-09-01',{dancer:11}); await vip(32,'2026-10-06');
+  const r=await report(); assert.equal(r.current.repeatVips,1);
+  assert.equal(r.clubs.find(c=>c.id===id(20)).current.repeatVips,1);
+  assert.equal(r.clubs.find(c=>c.id===id(21)).current.repeatVips,1);
+});
+
+test('working alerts follow the shared Follow model, honor global mutes and deduplicate active VIP memberships',async()=>{
+  for(const user of [30,31,32,33,34]) {
+    await db.query("insert into app_users values($1,'customer',$2)",[id(user),user===34?'paused':'active']);
+    await db.query('insert into follows values($1,$2,false)',[id(user),id(10)]);
+  }
+  await db.query(`insert into customer_profiles values($1,'{"workingNow":false}'),($2,'{"followAlertsEnabled":false}')`,[id(32),id(33)]);
+  await db.query('insert into venue_vip_members values($1,$3,true),($1,$4,true),($2,$3,false)',[id(30),id(31),id(20),id(21)]);
+  let r=await report(); assert.equal(r.alerts.total,2); assert.equal(r.alerts.vip,1);
+  assert.equal(r.clubs[0].vipSubscribers,1); assert.equal(r.clubs[1].vipSubscribers,1);
+  await db.query('delete from follows where customer_id=$1',[id(30)]);
+  r=await report(); assert.equal(r.alerts.total,1); assert.equal(r.alerts.vip,0);
+});
+
+test('recorded shift intervals merge overlaps, clip to the period and exclude requests outside recorded time',async()=>{
+  await db.query("insert into venue_dancer_work_sessions(shift_id,venue_id,dancer_id,started_at,expires_at,closed_at) values($1,$2,$3,'2026-10-04T23:00Z','2026-10-05T02:00Z',null),($1,$2,$3,'2026-10-05T01:00Z','2026-10-05T04:00Z','2026-10-05T03:00Z'),($4,$2,$5,'2026-10-05T00:00Z','2026-10-05T06:00Z',null)",[id(50),id(20),id(10),id(51),id(11)]);
+  await db.query("insert into internal_roster_requests(venue_id,dancer_id,created_at,status) values($1,$2,'2026-10-05T01:30Z','pending'),($1,$2,'2026-10-05T03:00Z','pending'),($3,$2,'2026-10-05T01:30Z','pending')",[id(20),id(10),id(21)]);
+  const r=await report(); assert.equal(r.shifts.length,1); assert.equal(r.shifts[0].hours,3); assert.equal(r.shifts[0].requests,1);
+  assert.equal(new Date(r.shifts[0].startedAt).toISOString(),'2026-10-05T00:00:00.000Z'); assert.ok(r.workTrackingStartedAt);
+});
+
+test('attributed admissions require redeemed admission passes and use redemption time independently from claim time',async()=>{
+  await db.query("insert into qr_redemptions values($1,$2,1,'2026-09-01','2026-10-06','redeemed'),($1,$2,1,'2026-10-06',null,'generated'),($1,$2,0,'2026-10-06','2026-10-06','redeemed'),($1,$3,1,'2026-10-06','2026-10-06','redeemed')",[id(20),id(10),id(11)]);
+  const r=await report(); assert.deepEqual(r.external,{claims:1,admissions:1});
+});
+
+test('empty periods have real zeros; invalid windows and unprivileged RPC calls fail',async()=>{
+  const r=await report(); assert.equal(r.current.tableRequests,0); assert.equal(r.current.vipRequests,0); assert.equal(r.alerts.total,0); assert.deepEqual(r.shifts,[]);
+  for(const since of ['2026-10-12','2026-01-01']) {
+    await db.exec('savepoint invalid_window');
+    await assert.rejects(report(10,since,'2026-10-01'),e=>e.code==='22023');
+    await db.exec('rollback to savepoint invalid_window');
+  }
+  for(const role of ['anon','authenticated']) {
+    await db.exec('savepoint permission_check'); await db.exec(`set local role ${role}`);
+    await assert.rejects(report(),e=>e.code==='42501'); await db.exec('rollback to savepoint permission_check');
+  }
+  await db.exec('set local role service_role'); assert.equal((await report()).current.tableRequests,0);
+});

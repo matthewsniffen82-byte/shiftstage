@@ -22,6 +22,7 @@ const service = compile("../src/lib/dancr/dancer-audience-analytics.ts", {
   },
 });
 const { DancerAnalyticsPanel } = compile("../app/dashboard/DancerAnalyticsPanel.tsx", { "./dashboard-session": {},
+  "./dancer-results.css": {},
   "./DancerDiscoveryBoosts": compile("../app/dashboard/DancerDiscoveryBoosts.tsx", {"./dashboard-session":{}}) });
 const now = new Date("2026-09-23T12:00:00Z");
 const daysAgo = days => new Date(now.getTime() - days * 86400000).toISOString();
@@ -49,7 +50,14 @@ function fixture() {
 }
 function database(rows, failTable) {
   const calls = [];
-  return { calls, from(table) {
+  return { calls, async rpc(name, params) {
+    calls.push({ table: name, params, fields: "" });
+    assert.equal(name, "get_dancer_performance_analytics"); assert.equal(params.p_dancer_id, "mine");
+    if (failTable === name) return { error: new Error("performance unavailable") };
+    const counts = Object.fromEntries(["tableRequests","tablePending","tableAcknowledged","tableCompleted","tableCancelled","vipRequests","vipPending","vipConfirmed","vipDeclined","vipCancelled","repeatVips"].map(key=>[key,0]));
+    return { data: { current: counts, previous: { ...counts }, external: { claims: 0, admissions: 0 },
+      alerts: { total: rows.follows?.length ? 1 : 0, vip: 0 }, clubs: [], shifts: [], workTrackingStartedAt: null } };
+  }, from(table) {
     const call = { table, filters: [], fields: "", options: {}, offset: 0, end: 999, single: false };
     calls.push(call);
     const query = {
@@ -117,6 +125,7 @@ test("a new account does not compare against time before the profile existed", a
   const result = await service.getOwnDancerAudienceAnalytics(database(rows), "owner", "7d", now);
   assert.equal(result.profileViews.previous, null);
   assert.equal(result.socialLinkTaps.previous, null);
+  assert.equal(result.performance.previous, null);
 });
 
 test("missing ownership fails before reading activity, and query failures are not shown as zero", async () => {
@@ -124,6 +133,7 @@ test("missing ownership fails before reading activity, and query failures are no
   await assert.rejects(service.getOwnDancerAudienceAnalytics(db, "unknown", "7d", now), /profile not found/);
   assert.equal(db.calls.length, 1);
   await assert.rejects(service.getOwnDancerAudienceAnalytics(database(fixture(), "media_likes"), "owner", "7d", now), /database unavailable/);
+  await assert.rejects(service.getOwnDancerAudienceAnalytics(database(fixture(), "get_dancer_performance_analytics"), "owner", "7d", now), /performance unavailable/);
 });
 
 test("empty activity returns real zeroes with no invented rank or top content", async () => {
@@ -134,16 +144,18 @@ test("empty activity returns real zeroes with no invented rank or top content", 
   assert.equal(result.topContent.length, 0);
   assert.equal(result.profileViews.value, 0);
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
-  assert.match(html, /Your activity will appear here/);
+  assert.match(html, /Your results will appear here/);
   assert.doesNotMatch(html, /Unranked|City rank|Club Deal|Cashier|Weekly results|milestones/);
 });
 
-test("analytics rendering contains four cards, two compact sections, real rank and safe comparisons", async () => {
+test("results lead with four demand cards and retain audience growth, content and safe comparisons", async () => {
   const result = await service.getOwnDancerAudienceAnalytics(database(fixture()), "owner", "7d", now);
   result.profileViews = { value: 12, previous: 0 };
   result.socialLinkTaps = { value: 5, previous: 10 };
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
-  assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 4);
+  assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 8);
+  for (const text of ["Table requests", "VIP requests", "Repeat VIPs", "Working alerts", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
+  assert.ok(html.indexOf("Table requests") < html.indexOf("Profile views"));
   for (const text of ["Profile views", "New followers", "Content likes", "Social link taps", "Your audience", "Top content", "City activity rank #4", "Your discovery boosts", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /Infinity|NaN|<details|Unranked/);
 });

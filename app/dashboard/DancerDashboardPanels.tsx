@@ -175,7 +175,7 @@ export function DancerPanel({
         <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager /></section></DancerAgeVerificationGate>
       </>}
       profile={<><DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} /><DashboardSection id="dancer-visibility" title="Profile visibility" description="Control whether guests can see your profile." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /></DashboardSection><DashboardSection id="dancer-share" title="Share profile" description="Your public link and QR code." icon={<DancerDashboardIcon section="profile" />} toggleAffordance="chevron"><DancerSharePanel profile={profile} /></DashboardSection></>}
-      results={<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See how guests discover and engage with your profile.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} /></section></DancerAgeVerificationGate>}
+      results={<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} /></section></DancerAgeVerificationGate>}
       account={accountTools}
     />}
   </>;

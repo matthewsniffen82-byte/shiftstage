@@ -9,7 +9,7 @@ const loader = readFileSync(new URL("../app/dashboard/dancer-dashboard-loader.ts
 const route = readFileSync(new URL("../app/api/dancer/dashboard/route.ts", import.meta.url), "utf8");
 
 test("dancer analytics replace the retired deal and weekly panels", () => {
-  assert.match(panels, /title="Analytics"/);
+  assert.match(panels, /id="dancer-performance"/);
   assert.match(panels, /<DancerAnalyticsPanel initialAnalytics=\{analytics\} \/>/);
   assert.doesNotMatch(panels, /Club Deal activity|Cashier opens|Redeemed deals|Weekly results|Unranked|No ranking milestones/);
   assert.match(route, /requestedPeriod === null \? getDancerDealMetrics\(client, user.id, admin\) : Promise.resolve\(null\)/);
@@ -17,7 +17,9 @@ test("dancer analytics replace the retired deal and weekly panels", () => {
   assert.doesNotMatch(loader, /\/api\/dancer\/(weekly-report|ranking-events)/);
 });
 
-test("analytics offer four engagement cards and two compact detail sections", () => {
+test("analytics put requests first while retaining audience and content detail", () => {
+  for (const label of ["Table requests", "VIP requests", "Repeat VIPs"]) assert.ok(analytics.includes('label="' + label + '"'));
+  assert.match(analytics, /Working alerts/);
   for (const label of ["Profile views", "New followers", "Content likes", "Social link taps"]) assert.ok(analytics.includes('label="' + label + '"'));
   assert.match(analytics, /Your audience/);
   assert.match(analytics, /Top content/);

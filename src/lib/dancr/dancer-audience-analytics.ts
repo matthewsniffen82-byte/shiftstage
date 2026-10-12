@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { dancerPhotoDeliveryUrl, dancerVideoDeliveryUrl } from "./media-delivery-url.ts";
-import type { DancerAnalyticsPeriod, DancerAudienceAnalytics, DancerTopContent } from "./dancer-analytics-types.ts";
+import type { DancerAnalyticsPeriod, DancerAudienceAnalytics, DancerTopContent, DancerPerformanceAnalytics } from "./dancer-analytics-types.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PAGE_SIZE = 1000;
@@ -31,10 +31,9 @@ export async function getOwnDancerAudienceAnalytics(
   const previousStart = new Date(now.getTime() - duration * 2).toISOString();
   const canCompare = new Date(profile.created_at).getTime() <= Date.parse(previousStart);
 
-  const count = async (table: string, dateColumn?: string, from?: string, to?: string, subscribers = false) => {
+  const count = async (table: string, dateColumn?: string, from?: string, to?: string) => {
     let query = admin.from(table).select("*", { count: "exact", head: true }).eq("dancer_id", dancerId);
     if (dateColumn && from && to) query = query.gte(dateColumn, from).lt(dateColumn, to);
-    if (subscribers) query = query.eq("notifications_enabled", true);
     const result = await query;
     if (result.error) throw result.error;
     return result.count || 0;
@@ -47,18 +46,27 @@ export async function getOwnDancerAudienceAnalytics(
     return { value, previous };
   };
 
-  const [profileViews, socialLinkTaps, followers, totalFollowers, workingNowSubscribers, photoLikes, videoLikes, videoViews, ranking] = await Promise.all([
+  const [profileViews, socialLinkTaps, followers, totalFollowers, photoLikes, videoLikes, videoViews, ranking, performanceResult] = await Promise.all([
     comparedCount("profile_views", "viewed_at"),
     comparedCount("social_clicks", "clicked_at"),
     count("follows", "created_at", start, end),
     count("follows"),
-    count("follows", undefined, undefined, undefined, true),
     groupedMediaActivity(admin, dancerId, "photo", "likes", start, end),
     groupedMediaActivity(admin, dancerId, "video", "likes", start, end),
     groupedMediaActivity(admin, dancerId, "video", "views", start, end),
     admin.from("trending_scores").select("rank").eq("dancer_id", dancerId).maybeSingle(),
+    admin.rpc("get_dancer_performance_analytics", { p_dancer_id: dancerId, p_since: start, p_until: end }),
   ]);
   if (ranking.error) throw ranking.error;
+  if (performanceResult.error) throw performanceResult.error;
+  const performance = performanceResult.data as DancerPerformanceAnalytics | null;
+  if (!performance?.current || !performance.alerts || !Array.isArray(performance.clubs) || !Array.isArray(performance.shifts)) {
+    throw new Error("Dancer performance could not be loaded.");
+  }
+  if (!canCompare) {
+    performance.previous = null;
+    performance.clubs = performance.clubs.map(club => ({ ...club, previous: null }));
+  }
 
   const candidates = [
     ...[...photoLikes].map(([id, likes]) => ({ id, kind: "photo" as const, likes, views: null })),
@@ -96,9 +104,9 @@ export async function getOwnDancerAudienceAnalytics(
     // but the current rows cannot reconstruct a reliable historical comparison.
     newFollowers: { value: followers, previous: null },
     contentLikes: { value: [...photoLikes.values(), ...videoLikes.values()].reduce((sum, value) => sum + value, 0), previous: null },
-    audience: { totalFollowers, workingNowSubscribers },
+    audience: { totalFollowers, workingNowSubscribers: performance.alerts.total },
     currentRank: Number(ranking.data?.rank) > 0 ? Number(ranking.data?.rank) : null,
-    topContent,
+    topContent, performance,
   };
 }
 
