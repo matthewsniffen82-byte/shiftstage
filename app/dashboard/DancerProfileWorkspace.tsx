@@ -11,6 +11,7 @@ import DancerInternalMainPhotoPicker from "./DancerInternalMainPhotoPicker";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import type { DancerIdentityDraft, LoadState } from "./dashboard-types";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import "./dancer-profile-photos.css";
 
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
@@ -137,9 +138,8 @@ export default function DancerProfileWorkspace({
     </header> : null}
     {!onboarding && view === "edit" ? <nav className="dancer-editor-shortcuts" aria-label="Profile sections">
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-details-section")}>Details</button>
-      <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-face-photo")}>Avatar</button>
-      <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-main-photo")}>Main photo</button>
-      <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-profile-media-library")}>Photos</button>
+      <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-required-photos")}>Profile photos</button>
+      <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-profile-media-library")}>Photo uploads</button>
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-profile-video-library")}>Videos</button>
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-visibility-sharing")}>Visibility & sharing</button>
     </nav> : null}
@@ -151,16 +151,17 @@ export default function DancerProfileWorkspace({
         {onboarding && detailsStatus ? <p className="dancer-details-status" role="status" aria-live="polite">{detailsStatus}</p> : null}
         {!onboarding ? <p className="dancer-save-hint">{dirty ? "Unsaved details are kept on this device. Save to update your profile." : "Details update when you save. Photo and video uploads save separately."}</p> : null}
       </section>
-      <section className="dancer-workspace-card dancer-face-photo" id="dancer-face-photo" aria-labelledby="dancer-face-photo-title">
-        <header><h3 id="dancer-face-photo-title">Avatar upload</h3></header>
-        <p className="dancer-photo-guidance">Your profile circle. Use a clear face photo.</p>
-        <AvatarUploadBusyContext.Provider value={setAvatarBusy}>{avatarContent}</AvatarUploadBusyContext.Provider>
-      </section>
-      <section className="dancer-workspace-card dancer-workspace-main-photo" id="dancer-required-photos" aria-labelledby="dancer-main-upload-title">
-        <header><h3 id="dancer-main-upload-title">Main photo upload</h3></header>
-        <p className="dancer-photo-guidance">Shown on your card and at the top of your profile.</p>
-        <div className="dancer-workspace-photos">
-          <div id="dancer-main-photo">{mainPhotoContent}</div>
+      <section className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-labelledby="dancer-profile-photos-title">
+        <header><h3 id="dancer-profile-photos-title">Profile photos</h3></header>
+        <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
+          <h4 id="dancer-main-upload-title">Main photo</h4>
+          <p className="dancer-photo-guidance">Shown on your dancer card and at the top of your profile.</p>
+          {mainPhotoContent}
+        </div>
+        <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">
+          <h4 id="dancer-face-photo-title">Avatar</h4>
+          <p className="dancer-photo-guidance">Your profile circle. Use a clear face photo.</p>
+          <AvatarUploadBusyContext.Provider value={setAvatarBusy}>{avatarContent}</AvatarUploadBusyContext.Provider>
         </div>
       </section>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-labelledby="dancer-photos-title">

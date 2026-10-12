@@ -56,18 +56,29 @@ test('preview receives approved photos only and retains unsaved identity',()=>{
   const preview=f.draw().find(n=>n.type==='./DancerProfilePreviewContent');assert.equal(preview.props.photos.length,3);assert.equal(preview.props.name,'New name');
 });
 
-test('setup and live editing show five separate sections in upload order',()=>{
+test('setup and live editing group main photo and avatar before additional uploads',()=>{
   for (const onboarding of [true,false]) {
     const f=fixture({count:0,face:false,onboarding});
     const nodes=f.draw();
     const sections=React.Children.toArray(nodes.find(n=>n.type==='fieldset').props.children);
     assert.deepEqual(sections.map(section=>walk(section).find(n=>n.type==='h3').props.children),[
-      'Your details','Avatar upload','Main photo upload','Photo uploads','Video uploads',
+      'Your details','Profile photos','Photo uploads','Video uploads',
     ]);
     assert.equal(sections[0].props.id,'dancer-details-section');
-    assert.ok(walk(sections[1]).some(n=>n.props.children==='Avatar'));
-    assert.ok(walk(sections[2]).some(n=>n.props.children==='Main'));
-    for (const [index,mediaType,content] of [[3,'photos','Photo uploader'],[4,'videos','Video uploader']]) {
+    assert.equal(sections[1].props.id,'dancer-required-photos');
+    const photoSlots=walk(sections[1]).filter(n=>n.props.role==='group');
+    assert.deepEqual(photoSlots.map(n=>n.props.id),['dancer-main-photo','dancer-face-photo']);
+    assert.deepEqual(photoSlots.map(n=>walk(n).find(child=>child.type==='h4').props.children),['Main photo','Avatar']);
+    assert.ok(React.Children.toArray(photoSlots[0].props.children).includes('Main'));
+    assert.ok(walk(photoSlots[1]).some(n=>n.type!=='h4'&&n.props.children==='Avatar'));
+    if(!onboarding) {
+      const shortcuts=nodes.find(n=>n.props.className==='dancer-editor-shortcuts');
+      const buttons=walk(shortcuts).filter(n=>n.type==='button');
+      assert.deepEqual(buttons.map(n=>n.props.children),['Details','Profile photos','Photo uploads','Videos','Visibility & sharing']);
+      buttons[1].props.onClick();
+      assert.equal(f.calls.at(-1),'#dancer-required-photos');
+    }
+    for (const [index,mediaType,content] of [[2,'photos','Photo uploader'],[3,'videos','Video uploader']]) {
       assert.equal(walk(sections[index]).find(n=>n.props.className==='dancer-section-uploader').props.children,content);
       const library=walk(sections[index]).find(n=>n.type==='./DancerProfileMediaUploads');
       assert.equal(library.props.mediaType,mediaType);
