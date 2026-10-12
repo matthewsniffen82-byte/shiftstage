@@ -1,6 +1,6 @@
 [
   {
-    "name": "PickupDashboardPanel",
+    "name": "VenueGuestsPanel",
     "file": "VenueDashboardPanels.tsx"
   },
   {

@@ -111,8 +111,7 @@ function renderWorkspace(workspace, { opened = [], ready = true } = {}) {
 
 test("opening guests mounts neither hidden roster nor management tools", () => {
   const { mounted, html } = renderWorkspace("tonight", { ready: false });
-  assert.ok(mounted.includes("VenueGuestListPanel"));
-  assert.ok(mounted.includes("PickupDashboardPanel"));
+  assert.ok(mounted.includes("VenueGuestsPanel"));
   for (const name of ["VenueNfcTagPanel", "VenueTeamPanel", "VenueTvPanel", "NotificationPanel", "SupportInboxPanel"]) assert.ok(!mounted.includes(name), name);
   assert.match(html, />LIVE</);
   assert.doesNotMatch(html, /HIDDEN|0 working now|Analytics are unavailable/);
@@ -124,12 +123,12 @@ test("a linked roster waits for live data rather than displaying empty results",
   assert.ok(!loading.mounted.includes("VenueNfcTagPanel"));
   const ready = renderWorkspace("roster");
   assert.ok(ready.mounted.includes("VenueNfcTagPanel"));
-  assert.ok(!ready.mounted.includes("VenueGuestListPanel"));
+  assert.ok(!ready.mounted.includes("VenueGuestsPanel"));
 });
 
 test("returning to guests preserves tools and drafts in a previously opened tab", () => {
   const { mounted } = renderWorkspace("tonight", { opened: ["roster"] });
-  assert.ok(mounted.includes("VenueGuestListPanel"));
+  assert.ok(mounted.includes("VenueGuestsPanel"));
   assert.ok(mounted.includes("VenueNfcTagPanel"));
   assert.ok(!mounted.includes("VenueTeamPanel"));
 });
@@ -138,5 +137,5 @@ test("results show a loading state until analytics arrive", () => {
   const { html, mounted } = renderWorkspace("business", { ready: false });
   assert.match(html, /Loading results/);
   assert.doesNotMatch(html, /Analytics are unavailable/);
-  assert.ok(!mounted.includes("PickupDashboardPanel"));
+  assert.ok(!mounted.includes("VenueGuestsPanel"));
 });

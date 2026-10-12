@@ -39,6 +39,14 @@ test('anonymous, revoked and invalid paging requests cannot read guest contact d
  }
 });
 
+test('guest admission timestamps come from the redeemed pass and remain unavailable when missing',async()=>{
+ const rows=['2026-10-11T22:12:00Z',null].map((redeemed_at,index)=>({pass_id:String(index),guest_name:'Guest',phone:'+17025550123',email:null,created_at:'2026-10-11T21:00:00Z',qr_redemptions:[{expires_at:'2026-10-12T12:00:00Z',arrival_method:'self_drive',status:'redeemed',redeemed_at}]}));
+ const f=fixture({rows}),body=await (await f.get()).json();
+ assert.equal(body.entries[0].redeemedAt,rows[0].qr_redemptions[0].redeemed_at);
+ assert.equal(body.entries[1].redeemedAt,null);
+ assert.match(f.calls.find(call=>call[0]==='select')[1],/redeemed_at/);
+});
+
 test('an authorized empty guest list succeeds while database failures remain errors',async()=>{
  const empty=await fixture().get();assert.equal(empty.status,200);
  const body=await empty.json();assert.deepEqual(body.entries,[]);assert.equal(body.hasMore,false);assert.equal(body.session.accessToken,'renewed');

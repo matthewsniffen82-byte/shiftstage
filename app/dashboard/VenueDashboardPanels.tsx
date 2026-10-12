@@ -5,10 +5,7 @@ import VenueNotificationSettings from "./VenueNotificationSettings";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-const PickupDashboardPanel = dynamic(() => import("./PickupDashboardPanel"));
-const VenueGuestListPanel = dynamic(() => import("./VenueGuestListPanel"));
-const VenueVipPanel = dynamic(() => import("./VenueVipPanel"));
-const VenueCustomersPanel = dynamic(() => import("./VenueCustomersPanel"));
+const VenueGuestsPanel = dynamic(() => import("./VenueGuestsPanel"));
 import { CLUB_DEAL_OFFER_PRESETS } from "@/src/lib/dancr/club-deal-presets";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import { type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
@@ -36,8 +33,8 @@ function notifyPublicVenuePublication() {
 
 
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
-  if (sectionId === "venue-pickups" || sectionId === "venue-guest-list" || sectionId === "venue-vip") return "tonight";
-  if (sectionId === "venue-overview" || sectionId === "venue-customers") return "business";
+  if (["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"].includes(sectionId)) return "tonight";
+  if (sectionId === "venue-overview") return "business";
   if (["venue-working-now", "venue-dancer-roster", "table-requests"].includes(sectionId)) return "roster";
   if (["venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
@@ -274,7 +271,7 @@ export function VenuePanel({
     <>
       <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
         {([
-          ["tonight", "Guests, VIP & pickups"],
+          ["tonight", "Guests"],
           ["roster", "Dancers & tables"],
           ["business", "Results"],
           ["venue", "Manage venue"],
@@ -327,19 +324,8 @@ export function VenuePanel({
             <Metric label="Affiliated dancers" value={liveDataReady ? String(nfcAuthorizedDancerCount) : "—"} href="#venue-dancer-roster" onClick={event => openVenueSection(event, "venue-dancer-roster")} />
           </div>
         </section>
-        <section className="info-panel venue-dashboard-section" id="venue-guest-list" aria-labelledby="venue-guest-list-heading" tabIndex={-1}>
-          <VenueGuestListPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
-        </section>
-        {(venueRole === "owner" || venueRole === "manager") && <section className="info-panel venue-dashboard-section" id="venue-vip" aria-labelledby="venue-vip-heading" tabIndex={-1}>
-          <VenueVipPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
-        </section>}
-        <hr className="venue-section-divider" />
-        <section className="info-panel venue-dashboard-section" id="venue-pickups" aria-labelledby="venue-pickups-heading" tabIndex={-1}>
-          <h2 className="venue-icon-heading" id="venue-pickups-heading"><VenueDashboardIcon section="pickups" />Pickup requests</h2>
-          {(venueRole === "owner" || venueRole === "manager")
-            ? <PickupDashboardPanel key={`${account?.id}:${connectedVenueId}`} refreshKey={refreshedAt} />
-            : <p>Pickup requests are available to your venue owner and managers.</p>}
-        </section>
+        <VenueGuestsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} role={venueRole}
+          refreshKey={refreshedAt} active={activeWorkspace === "tonight"} timezone={String(profile?.timezone || "America/Los_Angeles")} />
         </>}
       </section>
 
@@ -399,9 +385,7 @@ export function VenuePanel({
             conversion={readOptionalNumber(analytics.claimToAdmissionPercent)}
           /> : <p role="status">{!liveDataReady ? refreshStatus || "Loading results…" : "Analytics are unavailable. Refresh to try again."}</p>}
         </section>
-        {venueAccess && ["owner", "manager"].includes(venueAccess.role || "") ? <VenueCustomersPanel
-          refreshKey={`${account?.id || ""}:${refreshedAt || ""}`} active={activeWorkspace === "business"}
-        /> : null}
+        {(venueRole === "owner" || venueRole === "manager") && <a className="venue-text-link" href="#venue-customers">View shared contacts in Guests →</a>}
         </>}
       </section>
 

@@ -1,43 +1,76 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { PhonePickupRequest } from "@/src/lib/dancr/pickup-domain";
 import { requestPickupJson } from "../pickups/pickup-session";
+import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 
-export default function PickupDashboardPanel({ refreshKey }: { refreshKey?: string | null }) {
-  const [requests, setRequests] = useState<PhonePickupRequest[]>([]), [error, setError] = useState(""), [loaded, setLoaded] = useState(false);
+export default function PickupDashboardPanel({ refreshKey, venueId, active = true, timezone }: {
+  refreshKey?: string | null; venueId?: string; active?: boolean; timezone?: string;
+}) {
+  const [requests, setRequests] = useState<PhonePickupRequest[]>([]);
+  const [error, setError] = useState(""), [loaded, setLoaded] = useState(false);
+  const [busy, setBusy] = useState(false), [hasMore, setHasMore] = useState(false);
+  const controller = useRef<AbortController | null>(null);
+  const pending = useRef(false), olderPages = useRef(false);
+  const load = useCallback(async (offset = 0, silent = false) => {
+    if (!venueId) return;
+    controller.current?.abort();
+    const request = new AbortController(); controller.current = request;
+    pending.current = true; setBusy(true); setError("");
+    if (!offset) {
+      olderPages.current = false;
+      if (!silent) { setRequests([]); setLoaded(false); setHasMore(false); }
+    }
+    try {
+      const params = new URLSearchParams({ venueId, phoneOffset: String(offset) });
+      const data = await requestPickupJson(`/api/pickups?${params}`, { signal: request.signal, cache: "no-store" });
+      if (request.signal.aborted) return;
+      const entries: PhonePickupRequest[] = data.phoneRequests.filter((entry: PhonePickupRequest) => entry.venue_id === venueId);
+      setRequests(previous => offset ? [...new Map([...previous, ...entries].map(entry => [entry.id, entry])).values()] : entries);
+      setHasMore(data.hasMorePhoneRequests); setLoaded(true); olderPages.current = offset > 0;
+    } catch (reason) {
+      if (request.signal.aborted) return;
+      setRequests([]); setLoaded(false); setHasMore(false); olderPages.current = false;
+      setError(reason instanceof Error ? reason.message : "Unable to load ride requests.");
+    } finally { if (!request.signal.aborted) { pending.current = false; setBusy(false); } }
+  }, [venueId]);
   useEffect(() => {
-    let pending = false;
-    const controller = new AbortController();
-    const refresh = async () => {
-      if (pending || document.visibilityState !== "visible") return;
-      pending = true;
-      try {
-        const data = await requestPickupJson("/api/pickups", { signal: controller.signal });
-        if (!controller.signal.aborted) { setRequests(data.phoneRequests.slice(0, 6)); setError(""); setLoaded(true); }
-      } catch { if (!controller.signal.aborted) { setRequests([]); setError("Unable to load pickup requests. Open the pickup inbox to retry."); } }
-      finally { pending = false; }
+    if (!active || !venueId) return;
+    void load();
+    const refresh = () => {
+      if (document.visibilityState === "visible" && !pending.current && !olderPages.current) void load(0, true);
     };
-    void refresh(); const timer = window.setInterval(() => void refresh(), 30000);
+    const timer = window.setInterval(refresh, 30000);
     window.addEventListener("focus", refresh); window.addEventListener("online", refresh);
     document.addEventListener("visibilitychange", refresh);
     return () => {
-      controller.abort(); window.clearInterval(timer);
+      controller.current?.abort(); pending.current = false; window.clearInterval(timer);
       window.removeEventListener("focus", refresh); window.removeEventListener("online", refresh);
       document.removeEventListener("visibilitychange", refresh);
     };
-  }, [refreshKey]);
-  const requestRow = (request: PhonePickupRequest, index: number) => <Link className={`notification-row venue-pickup-row${index === 0 ? " is-latest" : ""}`} key={request.id} href="/pickups">
-    <span className="venue-pickup-row-heading"><strong>{request.name}</strong>{index === 0 ? <small>Latest</small> : null}</span>
-    <span>{request.venue_name}</span>
-    <span>{request.party_size} {request.party_size === 1 ? "guest" : "guests"} · {request.location}</span>
-    <time dateTime={request.requested_at}>{new Date(request.requested_at).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time>
-  </Link>;
-  return <div className="venue-pickup-preview"><p>Contact guests and arrange their ride.</p>
-    {error && <p role="alert">{error}</p>}{!loaded && !error && <p role="status">Loading pickup requests…</p>}
-    {loaded && !error && !requests.length && <p className="venue-value-empty">No pickup requests yet.</p>}
-    <div className="notification-list">{requests.slice(0, 3).map(requestRow)}</div>
-    {requests.length > 3 && <details><summary>Earlier requests</summary><div className="notification-list">{requests.slice(3).map((request, index) => requestRow(request, index + 3))}</div></details>}
+  }, [active, venueId, refreshKey, load]);
+  return <div className="venue-pickup-preview">
+    <header className="venue-section-heading"><h2 className="venue-icon-heading"><VenueDashboardIcon section="pickups" />Ride requests</h2>
+      <button className="venue-utility" type="button" disabled={busy || !venueId} onClick={() => void load()}>{busy ? "Loading…" : "Refresh"}</button></header>
+    <p>Contact guests to arrange pickup. These are submitted requests; completed pickups are not recorded here.</p>
+    {timezone && <p className="venue-value-note">Times shown in {timezone.replaceAll("_", " ")}.</p>}
+    {error && <p role="alert">{error}</p>}
+    {!loaded && !error && <p role="status">{venueId ? "Loading ride requests…" : "Loading venue…"}</p>}
+    {loaded && !error && !requests.length && <p className="venue-value-empty">No ride requests yet.</p>}
+    <div className="notification-list">{requests.map(request => <article className="notification-row venue-guest-record" key={request.id}>
+      <strong>{request.name}</strong><span className="venue-guest-status">Request received</span>
+      <dl>
+        <div><dt>Pickup location</dt><dd>{request.location}</dd></div>
+        <div><dt>Passengers requested</dt><dd>{request.party_size}</dd></div>
+        <div><dt>Phone</dt><dd><a href={`tel:${request.phone}`}>{request.phone}</a></dd></div>
+        <div><dt>Email</dt><dd>{request.email ? <a href={`mailto:${encodeURIComponent(request.email)}`}>{request.email}</a> : "Not provided"}</dd></div>
+        <div><dt>Requested</dt><dd><time dateTime={request.requested_at}>{new Date(request.requested_at).toLocaleString(undefined, { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></dd></div>
+      </dl>
+      <small>Details shared to arrange this ride.</small>
+    </article>)}</div>
+    {olderPages.current && <p className="venue-value-note">Reviewing older requests. Refresh to return to the latest requests.</p>}
+    {hasMore && <button type="button" disabled={busy} onClick={() => void load(requests.length)}>Load older requests</button>}
     <Link className="primary-link dashboard-primary-action" href="/pickups">Open pickup inbox →</Link>
   </div>;
 }

@@ -104,20 +104,20 @@ test("venue dashboard prioritizes pickups and results while preserving managemen
   assert.match(rosterWorkspace, /aria-label="Dancers & tables"/);
   assert.match(rosterWorkspace, /<VenueNfcTagPanel/);
   assert.doesNotMatch(rosterWorkspace, /VenueDealReadOnlyPanel/);
-  assert.ok(venuePanel.indexOf('id="venue-pickups"') < venuePanel.indexOf('id="venue-overview"'));
+  assert.ok(venuePanel.indexOf('<VenueGuestsPanel') < venuePanel.indexOf('id="venue-overview"'));
   assert.ok(venuePanel.indexOf('id="venue-overview"') < venuePanel.indexOf('title="Current Club Deals"'));
 });
 
 test("venue owners navigate one simplified state-aware workspace without losing any controls", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
-  assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Guests, VIP & pickups"[\s\S]*?\["roster", "Dancers & tables"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Manage venue"/);
+  assert.match(venuePanel, /role="tablist"[\s\S]*?\["tonight", "Guests"[\s\S]*?\["roster", "Dancers & tables"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Manage venue"/);
   assert.match(venuePanel, /aria-controls=\{`venue-workspace-\$\{workspace\}`\}/);
   assert.match(venuePanel, /tabIndex=\{activeWorkspace === workspace \? 0 : -1\}/);
   assert.doesNotMatch(venuePanel, /venue-workspace-tab-status/);
   assert.match(venuePanel, /function moveVenueWorkspaceFocus[\s\S]*?"ArrowLeft"[\s\S]*?"ArrowRight"[\s\S]*?"Home"[\s\S]*?"End"/);
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
-  assert.match(dashboard, /sectionId === "venue-pickups" \|\| sectionId === "venue-guest-list" \|\| sectionId === "venue-vip"\) return "tonight"/);
-  assert.match(dashboard, /sectionId === "venue-overview" \|\| sectionId === "venue-customers"\) return "business"/);
+  assert.match(dashboard, /\["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"\]\.includes\(sectionId\)\) return "tonight"/);
+  assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
   assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "table-requests"\]\.includes\(sectionId\)\) return "roster"/);
   assert.match(dashboard, /"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "roster"\}[\s\S]*?aria-label="Dancers & tables"/);
@@ -138,18 +138,15 @@ test("working-now actions are neutral when empty and emerald only for a live ros
   assert.doesNotMatch(venuePanel, /className="is-primary"/);
 });
 
-test("venue pickup requests have one inbox entry point and remain visible without expanding a section", () => {
+test("venue pickup requests have one Guests entry point without a collapsed section", () => {
   const venuePanel = dashboard.match(/function VenuePanel\([\s\S]*?(?=\nfunction dealTypeLabel)/)?.[0] || "";
   const command = venuePanel.match(/<section className="venue-command-panel"[\s\S]*?<\/section>/)?.[0];
   assert.ok(command);
   assert.doesNotMatch(command, /href="\/pickups"/);
-  assert.match(venuePanel, /\["tonight", "Guests, VIP & pickups"\]/);
-  const pickupSection = venuePanel.match(/<section\s+className="info-panel venue-dashboard-section"[\s\S]*?id="venue-pickups"[\s\S]*?<\/section>/)?.[0];
-  assert.ok(pickupSection, "pickup content must not be hidden inside a collapsed details element");
-  assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?id="venue-workspace-tonight"[\s\S]*?id="venue-pickups"/);
-  assert.match(pickupSection, /venueRole === "owner" \|\| venueRole === "manager"/);
-  assert.match(pickupSection, /<PickupDashboardPanel[^>]+refreshKey=\{refreshedAt\}/);
-  assert.ok(venuePanel.indexOf('id="venue-pickups"') < venuePanel.indexOf('id="venue-club-deals"'));
+  assert.match(venuePanel, /\["tonight", "Guests"\]/);
+  assert.match(venuePanel, /hidden=\{activeWorkspace !== "tonight"\}[\s\S]*?id="venue-workspace-tonight"[\s\S]*?<VenueGuestsPanel/);
+  assert.match(venuePanel, /<VenueGuestsPanel[^>]+role=\{venueRole\}[\s\S]*?refreshKey=\{refreshedAt\}/);
+  assert.ok(venuePanel.indexOf('<VenueGuestsPanel') < venuePanel.indexOf('id="venue-club-deals"'));
 });
 
 test("venue Club Deals are read-only and venue write routes enforce the contract boundary", () => {

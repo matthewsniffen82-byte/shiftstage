@@ -7,7 +7,7 @@ const member = { id: 'member-1', display_name: 'Jordan Guest', nickname: 'Friday
 const initial = { invitations: [], members: [member], memberCount: 51, membersHasMore: true, requests: [], hasMore: true };
 
 // Focused component events with in-memory data only; no browser or network.
-function panelHarness(request = async () => initial) {
+function panelHarness(request = async () => initial, props = {}) {
   const slots = [], calls = []; let cursor = 0, dirty = true, effects = [], tree, accountId = 'owner-1';
   const react = {
     useState(initial) { const i = cursor++; slots[i] ||= { value: initial }; return [slots[i].value, next => {
@@ -28,9 +28,10 @@ function panelHarness(request = async () => initial) {
     './dashboard-session': { readSession: () => ({ account: { id: accountId } }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '../vip/VipRequests': { __esModule: true, default: () => null },
   }).default;
-  function render() {
+  function render(next = {}) {
+    props = { ...props, ...next };
     dirty = true;
-    for (let i = 0; dirty && i < 30; i++) { dirty = false; cursor = 0; effects = []; tree = Component({}); effects.forEach(effect => effect()); }
+    for (let i = 0; dirty && i < 30; i++) { dirty = false; cursor = 0; effects = []; tree = Component(props); effects.forEach(effect => effect()); }
     assert.equal(dirty, false); return tree;
   }
   function nodes(node = tree) { return node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))] : []; }
@@ -63,6 +64,20 @@ test('venue nickname editing retains failed drafts, saves changes and allows cle
   ui.button('Edit nickname').props.onClick(); ui.render(); ui.input('text').props.onChange({ target: { value: '' } }); ui.render();
   await ui.form('vip-nickname-form').props.onSubmit({ preventDefault() {} }); await ui.settle();
   assert.ok(ui.button('Add nickname')); assert.match(ui.html(), /Nickname removed/); assert.doesNotMatch(ui.html(), /Weekend VIP/);
+  ui.unmount();
+});
+
+test('VIP tab activation preserves invitation drafts and the current member page', async () => {
+  const ui = panelHarness(undefined, { active: false }); await ui.settle();
+  assert.equal(ui.calls.length, 0);
+  ui.render({ active: true }); await ui.settle();
+  ui.input('email').props.onChange({ target: { value: 'draft@example.test' } }); ui.render();
+  ui.button('More VIPs').props.onClick(); await ui.settle();
+  const count = ui.calls.length;
+  ui.render({ active: false, refreshKey: 'new-revision' }); await ui.settle(); assert.equal(ui.calls.length, count);
+  ui.render({ active: true }); await ui.settle();
+  assert.equal(ui.input('email').props.value, 'draft@example.test');
+  assert.equal(new URL(ui.calls.at(-1).url, 'https://example.test').searchParams.get('memberPage'), '1');
   ui.unmount();
 });
 

@@ -6,7 +6,7 @@ import type { VenueVipState, VipRequest } from "@/src/lib/dancr/vip-types";
 import VipRequests from "../vip/VipRequests";
 import "../vip/vip.css";
 
-export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | null }) {
+export default function VenueVipPanel({ refreshKey, active = true }: { refreshKey?: string | null; active?: boolean }) {
   const [state, setState] = useState<VenueVipState | null>(null);
   const [page, setPage] = useState(0); const [email, setEmail] = useState("");
   const [inviteNickname, setInviteNickname] = useState("");
@@ -17,6 +17,7 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
   const [memberPage, setMemberPage] = useState(0);
   const [editingMember, setEditingMember] = useState<{ id: string; nickname: string } | null>(null);
   const mounted = useRef(false); const lock = useRef(false); const sequence = useRef(0);
+  const view = useRef({ page: 0, search: "", memberPage: 0, pendingOnly: false });
   const load = useCallback(async (nextPage = 0, nextSearch = "", nextMemberPage = 0, nextPendingOnly = false) => {
     const current = ++sequence.current; const accountId = readSession()?.account?.id;
     setLoading(true);
@@ -24,13 +25,16 @@ export default function VenueVipPanel({ refreshKey }: { refreshKey?: string | nu
       const params = new URLSearchParams({ page: String(nextPage), memberSearch: nextSearch, memberPage: String(nextMemberPage), status: nextPendingOnly ? "pending" : "all" });
       const data = await requestDashboardJson(`/api/venue/vip?${params}`, { expectedRole: "venue", cache: "no-store", timeoutMs: 20000 });
       if (mounted.current && sequence.current === current && readSession()?.account?.id === accountId) {
+        view.current = { page: nextPage, search: nextSearch, memberPage: nextMemberPage, pendingOnly: nextPendingOnly };
         setState(data); setPage(nextPage); setMemberSearch(nextSearch); setMemberPage(nextMemberPage); setPendingOnly(nextPendingOnly);
       }
     } catch (failure) { if (mounted.current && sequence.current === current && readSession()?.account?.id === accountId) setError(failure instanceof Error ? failure.message : "Unable to load VIP access."); }
     finally { if (mounted.current && sequence.current === current) setLoading(false); }
   }, []);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; sequence.current += 1; }; }, []);
-  useEffect(() => { if (!lock.current) void load(); }, [load, refreshKey]);
+  useEffect(() => {
+    if (active && !lock.current) void load(view.current.page, view.current.search, view.current.memberPage, view.current.pendingOnly);
+  }, [load, refreshKey, active]);
 
   async function action(body: Record<string, unknown>, success: string) {
     if (lock.current) return false;

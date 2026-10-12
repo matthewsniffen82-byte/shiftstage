@@ -17,4 +17,5 @@ export function normalizeGuestListDetails(value: unknown): GuestListDetails | nu
 export type VenueGuestListEntry = {
   id: string; name: string; phone: string; email: string | null;
   createdAt: string; expiresAt: string; arrivalMethod: string; status: string;
+  redeemedAt?: string | null;
 };

@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     const offset = Number(new URL(request.url).searchParams.get("offset") || 0);
     if (!Number.isSafeInteger(offset) || offset < 0 || offset > 100000) throw new PublicApiError("INVALID_REQUEST", "Invalid guest-list page.", 400);
     const { data, error } = await admin.from("venue_guest_list_entries")
-      .select("pass_id, guest_name, phone, email, created_at, qr_redemptions!inner(status, expires_at, arrival_method)")
+      .select("pass_id, guest_name, phone, email, created_at, qr_redemptions!inner(status, expires_at, arrival_method, redeemed_at)")
       .eq("venue_id", access.venueId).gt("qr_redemptions.expires_at", new Date().toISOString())
       .in("qr_redemptions.status", ["generated", "redeemed"])
       .order("created_at", { ascending: false }).order("pass_id").range(offset, offset + 50);
@@ -27,7 +27,7 @@ export async function GET(request: Request) {
     const entries = (data || []).slice(0, 50).map(row => {
       const pass = Array.isArray(row.qr_redemptions) ? row.qr_redemptions[0] : row.qr_redemptions;
       return { id: row.pass_id, name: row.guest_name, phone: row.phone, email: row.email, createdAt: row.created_at,
-        expiresAt: pass.expires_at, arrivalMethod: pass.arrival_method, status: pass.status };
+        expiresAt: pass.expires_at, arrivalMethod: pass.arrival_method, status: pass.status, redeemedAt: pass.redeemed_at || null };
     });
     return NextResponse.json({ ok: true, entries, hasMore: (data?.length || 0) > 50, session: context.session || null },
       { headers: { "cache-control": "private, no-store, max-age=0" } });
