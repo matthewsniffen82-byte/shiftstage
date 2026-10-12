@@ -53,6 +53,19 @@ test("an empty profile offers exactly one photo control and one video control wi
   assert.match(html, /after review and completion of your profile setup/);
 });
 
+test("separate upload sections render only their own media and loading feedback", () => {
+  const media = { photos: [{ id: "photo", imageUrl: "/photo.jpg", status: "approved" }], videos: [{ id: "video", videoUrl: "/video.mp4", status: "approved" }], compact: true };
+  const photos = render({ ...media, mediaType: "photos", isVideoLoading: true, videoError: "Video error" });
+  assert.match(photos, /aria-label="Uploaded photos"/);
+  assert.match(photos, /Photo 1/);
+  assert.doesNotMatch(photos, /Video 1|Video error|Loading/);
+  const videos = render({ ...media, mediaType: "videos" });
+  assert.match(videos, /aria-label="Uploaded videos"/);
+  assert.match(videos, /Video 1/);
+  assert.doesNotMatch(videos, /Photo 1|photo\.jpg/);
+  assert.match(render({ mediaType: "videos", compact: true, isVideoLoading: true }), /Loading/);
+});
+
 test("Add buttons open upload controls while thumbnails preview only the selected media", () => {
   const opened = [];
   const states = [];

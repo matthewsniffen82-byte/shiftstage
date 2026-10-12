@@ -36,10 +36,12 @@ export default function DancerProfileMediaUploads({
   onMediaPinned,
   onProfileChange,
   compact = false,
+  mediaType,
   disabled = false,
   photoActions,
 }: {
   compact?: boolean;
+  mediaType?: "photos" | "videos";
   disabled?: boolean;
   photoActions?: (id: string) => ReactNode;
   photos: UploadItem[];
@@ -173,8 +175,9 @@ export default function DancerProfileMediaUploads({
   }
 
   return (
-    <section className={`dancer-profile-media-uploads${compact ? " is-compact" : ""}`} aria-label="Add profile photos and videos">
+    <section className={`dancer-profile-media-uploads${compact ? " is-compact" : ""}`} aria-label={mediaType === "photos" ? "Uploaded photos" : mediaType === "videos" ? "Uploaded videos" : "Add profile photos and videos"}>
       {(["photos", "videos"] as const).map((section) => {
+        if (mediaType && section !== mediaType) return null;
         const isPhoto = section === "photos";
         const label = isPhoto ? "Photo" : "Video";
         const items = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos.filter((video) => !deletedVideoIds.has(video.id));

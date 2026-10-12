@@ -159,8 +159,10 @@ test("profile and media workspace uses production avatar face centering and mode
 test("step one uses the shared inline editor and opens an explicit agreement review", () => {
   assert.match(sharedWorkspace, /\{identityContent\}/);
   assert.match(sharedWorkspace, /Your details/);
-  assert.match(sharedWorkspace, /Photos & videos/);
-  assert.match(sharedWorkspace, /Profile gallery/);
+  assert.match(sharedWorkspace, /Avatar upload/);
+  assert.match(sharedWorkspace, /Main photo upload/);
+  assert.match(sharedWorkspace, /Photo uploads/);
+  assert.match(sharedWorkspace, /Video uploads/);
   assert.doesNotMatch(sharedWorkspace, /DancerIdentityEditor|aria-modal/);
   assert.match(dashboard, /onContinue=\{continueToAgreement\}/);
   assert.match(onboardingCommand, /setReviewAgreement\(true\)/);

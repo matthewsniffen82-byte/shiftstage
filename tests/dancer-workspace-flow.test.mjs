@@ -56,16 +56,39 @@ test('preview receives approved photos only and retains unsaved identity',()=>{
   const preview=f.draw().find(n=>n.type==='./DancerProfilePreviewContent');assert.equal(preview.props.photos.length,3);assert.equal(preview.props.name,'New name');
 });
 
-test('onboarding starts with the fields and a single Add action opens photo uploads',()=>{
-  const f=fixture({count:0,face:false});
-  const nodes=f.draw();
-  assert.ok(!nodes.some(n=>['dancer-workspace-heading','dancer-builder-checklist','dancer-editor-shortcuts'].includes(n.props.className)));
-  assert.equal(nodes.find(n=>n.type==='fieldset').props.children[0].props.id,'dancer-details-section');
-  assert.equal(nodes.find(n=>n.type==='footer').props.children[0].props.hidden,true);
-  const add=nodes.filter(n=>n.type==='button'&&n.props.children==='+ Add photos/videos');
-  assert.equal(add.length,1);add[0].props.onClick();
-  assert.ok(f.draw().find(n=>n.props.className==='dancer-add-media').props.children.includes('Photo uploader'));
-  assert.ok(f.draw().some(n=>n.type==='button'&&n.props.children==='Video'));
+test('setup and live editing show five separate sections in upload order',()=>{
+  for (const onboarding of [true,false]) {
+    const f=fixture({count:0,face:false,onboarding});
+    const nodes=f.draw();
+    const sections=React.Children.toArray(nodes.find(n=>n.type==='fieldset').props.children);
+    assert.deepEqual(sections.map(section=>walk(section).find(n=>n.type==='h3').props.children),[
+      'Your details','Avatar upload','Main photo upload','Photo uploads','Video uploads',
+    ]);
+    assert.equal(sections[0].props.id,'dancer-details-section');
+    assert.ok(walk(sections[1]).some(n=>n.props.children==='Avatar'));
+    assert.ok(walk(sections[2]).some(n=>n.props.children==='Main'));
+    for (const [index,mediaType,content] of [[3,'photos','Photo uploader'],[4,'videos','Video uploader']]) {
+      assert.equal(walk(sections[index]).find(n=>n.props.className==='dancer-section-uploader').props.children,content);
+      const library=walk(sections[index]).find(n=>n.type==='./DancerProfileMediaUploads');
+      assert.equal(library.props.mediaType,mediaType);
+      assert.equal(library.props[mediaType==='photos'?'videos':'photos'].length,0);
+      library.props.onOpen(mediaType);
+      assert.equal(f.calls.at(-1),`#${sections[index].props.id}`);
+    }
+    assert.ok(!nodes.some(n=>n.props.className==='dancer-add-media-choices'));
+    if(onboarding) assert.equal(nodes.find(n=>n.type==='footer').props.children[0].props.hidden,true);
+  }
+});
+
+test('both upload sections stay mounted while previewing and returning to edit',()=>{
+  const f=fixture();
+  f.draw().find(n=>n.type==='button'&&n.props.children==='Preview').props.onClick();
+  for(const preview of [true,false]) {
+    const nodes=f.draw();
+    assert.equal(nodes.find(n=>n.type==='fieldset').props.hidden,preview);
+    assert.deepEqual(nodes.filter(n=>n.props.className==='dancer-section-uploader').map(n=>n.props.children),['Photo uploader','Video uploader']);
+    if(preview) nodes.find(n=>n.type==='button'&&n.props.children==='Back to editing').props.onClick();
+  }
 });
 
 test('compact onboarding still shows failed saves and does not advance',async()=>{
