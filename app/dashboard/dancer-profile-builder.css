@@ -40,7 +40,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-guided-upload-form {
   padding:12px; border:1px solid #41364f; border-radius:12px; background:#100a18;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-builder-upload-entry {
   margin-top:8px !important; padding-top:16px !important; border-top:1px solid #302936 !important;
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-card-preview {

@@ -242,13 +242,14 @@ export default function DancerProfileWorkspace({
         {!onboarding ? <header><h3 id="dancer-details-title">Your details</h3></header> : null}
         {identityContent}
       </section>
-      {!onboarding ? requiredPhotos : <section hidden={step !== "media"} className="dancer-builder-upload-entry" aria-label="Add profile media">
+      {requiredPhotos}
+      {onboarding ? <section hidden={step !== "media"} className="dancer-builder-upload-entry" aria-label="Add profile media">
         <button type="button" aria-expanded={uploadKind !== null} aria-controls="dancer-builder-upload-types" disabled={busy} onClick={() => setUploadKind(uploadKind ? null : "photos")}>{uploadKind ? "Close uploads" : "+ Add photos/videos"}</button>
         <div id="dancer-builder-upload-types" hidden={!uploadKind} className="dancer-builder-upload-types" role="group" aria-label="Upload type">
           <button type="button" aria-pressed={uploadKind === "photos"} disabled={busy} onClick={() => setUploadKind("photos")}>Photos</button>
           <button type="button" aria-pressed={uploadKind === "videos"} disabled={busy} onClick={() => setUploadKind("videos")}>Videos</button>
         </div>
-      </section>}
+      </section> : null}
       <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label={onboarding ? "Photo uploads and library" : undefined} aria-labelledby={onboarding ? undefined : "dancer-photos-title"}>
         {!onboarding ? <><header><h3 id="dancer-photos-title">Photo uploads</h3><span data-state={galleryReady ? "saved" : "required"}>{approvedCount} approved</span></header>
         <p className="dancer-photo-guidance">Add more photos if you like. Only you in each photo.</p></> : null}
@@ -296,7 +297,6 @@ export default function DancerProfileWorkspace({
           onMediaPinned={(_kind, id, pinned) => setUploadedVideos(current => current.map(video => video.id === id ? { ...video, isPinned: pinned } : video))}
         />
       </section>
-      {onboarding ? requiredPhotos : null}
       {visibilityContent}
     </fieldset>
     </DancerProfileUploadContext.Provider>
