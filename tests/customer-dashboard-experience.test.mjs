@@ -36,7 +36,7 @@ test("dancer dashboard header prefers the saved stage name and never the email-d
 });
 
 test("I’m Going and followed profile sections use live customer records and production actions", () => {
-  assert.match(dashboard, /signals=\{saved\?\.goingSignals \|\| \[\]\}/);
+  assert.match(dashboard, /signals=\{night\.plans\}/);
   assert.match(dashboard, /item\.shift\?\.status === "posted"/);
   assert.match(dashboard, /customerShiftLabel\(shift\)/);
   assert.match(dashboard, /"Cancelling…" : "Cancel Going"/);
@@ -47,7 +47,7 @@ test("I’m Going and followed profile sections use live customer records and pr
   assert.match(dashboard, /customerDancerHref\(dancer\)/);
   assert.match(dashboard, /customerVenueHref\(venue\)/);
   assert.match(dashboard, /No plans yet[\s\S]*?Find dancers/);
-  assert.match(dashboard, /function CustomerNightPanel[\s\S]*?<div className="customer-night-panel"[\s\S]*?<div className="customer-night-list">/);
+  assert.match(dashboard, /function CustomerNightPanel[\s\S]*?<div className="customer-night-panel"[\s\S]*?<div className="customer-night-list" id="customer-plan-groups">/);
   assert.doesNotMatch(dashboard, /Plans you confirmed|Dancer shifts you chose|info-panel customer-night-panel/);
   assert.match(dashboard, /No followed dancers yet[\s\S]*?You’re not following any clubs yet/);
   for (const id of ["customer-followed-dancers", "customer-followed-clubs", "customer-saved-deals", "customer-going"]) {

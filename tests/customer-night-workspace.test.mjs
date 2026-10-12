@@ -92,14 +92,35 @@ test('new customers see one discovery section without a stack of empty cards', (
   assert.ok(component(ui,'CustomerDealPassPanel').props.accountSavedUnavailable);
 });
 
-test('the next outing leads, night planning precedes working dancers, and records remain available in disclosures', () => {
+test('one expanded plans section leads, night planning precedes working dancers, and passes stay separate', () => {
   const nextShift=shift();
   const ui=harness('CustomerPanel',{saved:{goingSignals:[{shiftId:nextShift.id,shift:nextShift}],follows:[{dancer:{id:'a',slug:'star',nextShift}}],dealRedemptions:[{id:'pass',status:'generated',generatedAt:new Date(Date.now()-120000).toISOString(),expiresAt:nextShift.endsAt,venue:nextShift.venue}]}});
   const index=match=>ui.nodes().findIndex(match);
-  assert.ok(index(n=>n.type?.name==='CustomerNextOuting') < index(n=>n.type?.name==='CustomerExplore'));
+  assert.ok(index(n=>n.props?.id==='customer-plans-list') < index(n=>n.type?.name==='CustomerExplore'));
   assert.ok(index(n=>n.type?.name==='CustomerExplore') < index(n=>n.props?.id==='customer-working-now'));
   assert.equal(byId(ui,'customer-pass-wallet').type,'details');
   assert.equal(byId(ui,'customer-plans-list').type,'details');
+  assert.equal(byId(ui,'customer-plans-list').props.open,true);
+  assert.equal(ui.nodes().filter(n=>n.type?.name==='CustomerNightPanel').length,1);
+  assert.equal(component(ui,'CustomerNextOuting'),undefined);
+  assert.equal(component(ui,'CustomerNightPanel').props.signals.length,1);
+  const header=byId(ui,'customer-plans-list').props.children[0];
+  assert.equal(header.props.children[0],'Your plans ');
+  assert.equal(header.props.children[1].props.children,1);
+  byId(ui,'customer-plans-list').props.onToggle({currentTarget:{open:false}}); ui.render();
+  assert.equal(byId(ui,'customer-plans-list').props.open,false);
+  ui.update({isLoading:true});
+  assert.equal(byId(ui,'customer-plans-list').props.open,false,'refreshing does not reopen collapsed plans');
+  byId(ui,'customer-plans-list').props.onToggle({currentTarget:{open:true}}); ui.render();
+  assert.equal(byId(ui,'customer-plans-list').props.open,true);
+});
+
+test('passes remain available without creating an empty or duplicate plans section', () => {
+  const nextShift=shift();
+  const ui=harness('CustomerPanel',{saved:{dealRedemptions:[{id:'pass',status:'generated',generatedAt:new Date(Date.now()-120000).toISOString(),expiresAt:nextShift.endsAt,venue:nextShift.venue}]}});
+  assert.equal(byId(ui,'customer-plans-list'),undefined);
+  assert.equal(component(ui,'CustomerNextOuting'),undefined);
+  assert.equal(component(ui,'CustomerPassWallet').props.deals.length,1);
 });
 
 test('Working Now requires a posted, current, checked-in shift, not just a scheduled shift', () => {
@@ -134,6 +155,31 @@ test('plans group by venue-local date and club, excluding cancelled and expired 
   const ui = harness('CustomerNightPanel',{ signals:[shift(),shift({id:'second'}),shift({id:'cancelled',status:'cancelled'}),shift({id:'expired',endsAt:new Date(Date.now()-1000).toISOString()})].map(s=>({shiftId:s.id,shift:s})),isLoading:false,pendingAction:'' });
   assert.equal(ui.nodes().filter(n=>n.props?.className==='customer-plan-group').length,1);
   assert.equal(ui.nodes().filter(n=>n.props?.className==='customer-night-card').length,2);
+  assert.equal(ui.nodes().find(n=>n.props?.['aria-controls']==='customer-plan-groups'),undefined,'one outing needs no Show all control');
+});
+
+test('plans preview the next outing, expand without duplicates and retain cancellation and directions', () => {
+  const upcoming = shift({id:'later',startsAt:new Date(Date.now()+86_400_000).toISOString(),endsAt:new Date(Date.now()+90_000_000).toISOString()});
+  const next = shift({id:'next'}), sameOuting = shift({id:'same-outing'});
+  const signals = [upcoming,next,sameOuting].map(shift=>({shiftId:shift.id,shift}));
+  const cancelled=[];
+  const ui=harness('CustomerNightPanel',{signals,isLoading:false,pendingAction:'',onCancelGoing:id=>cancelled.push(id)});
+  const cards=()=>ui.nodes().filter(n=>n.props?.className==='customer-night-card');
+  const toggle=()=>ui.nodes().find(n=>n.props?.['aria-controls']==='customer-plan-groups');
+  assert.equal(cards().length,2,'the earliest outing includes all dancers at that club on that date');
+  assert.equal(toggle().props.children,'Show all plans'); assert.equal(toggle().props['aria-expanded'],false);
+  toggle().props.onClick(); ui.render();
+  assert.equal(cards().length,3); assert.equal(ui.nodes().filter(n=>n.props?.className==='customer-plan-group').length,2);
+  assert.equal(toggle().props.children,'Show fewer plans'); assert.equal(toggle().props['aria-expanded'],true);
+  assert.equal(ui.nodes().filter(n=>n.type?.name==='CustomerDirectionsButton').length,3);
+  ui.nodes().find(n=>n.type==='button'&&n.props.children==='Cancel Going').props.onClick();
+  assert.deepEqual(cancelled,['next']);
+  toggle().props.onClick(); ui.render(); assert.equal(cards().length,2);
+  ui.update({signals:[signals[0]],pendingAction:'going-later'});
+  assert.equal(cards().length,1,'the remaining outing takes the first spot after earlier plans are removed');
+  assert.equal(toggle(),undefined);
+  assert.equal(ui.nodes().find(n=>n.type==='button'&&n.props.children==='Cancelling…').props.disabled,true);
+  assert.deepEqual(signals.map(item=>item.shiftId),['later','next','same-outing'],'rendering does not reorder saved data');
 });
 
 test('unfollow stays outside the card link and both controls retain independent actions', () => {

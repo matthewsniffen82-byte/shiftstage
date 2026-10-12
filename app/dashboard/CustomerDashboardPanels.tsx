@@ -216,9 +216,7 @@ export function CustomerPanel({
   const [optimisticSavedChange, setOptimisticSavedChange] = useState<((current: CustomerSavedState) => CustomerSavedState) | null>(null);
   const saved = confirmedSaved && optimisticSavedChange ? optimisticSavedChange(confirmedSaved) : confirmedSaved;
   const now = useCustomerMinuteClock();
-  const goingCount = (saved?.goingSignals || []).filter((item) => (
-    item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now
-  )).length;
+  const [plansExpanded, setPlansExpanded] = useState(true);
   const initial = customerDashboardDestination("", initialSection);
   const [view, setView] = useState<CustomerView>(initial.view);
   const [savedFilter, setSavedFilter] = useState<CustomerSavedFilter>(initial.filter);
@@ -474,7 +472,13 @@ export function CustomerPanel({
     <section id="customer-view-night" className="customer-view" hidden={view !== "night"} aria-label="My Night" tabIndex={-1}>
       {isLoading ? <p className="customer-loading-state" role="status">Loading your night…</p> : null}
       {!accountSavedUnavailable ? <>
-        {night.outing ? <CustomerNextOuting outing={night.outing} onDirections={openDirections} pending={Boolean(pendingAction)} now={now} /> : null}
+        {night.plans.length ? <details className="customer-night-disclosure customer-plans" id="customer-plans-list" open={plansExpanded} onToggle={event => setPlansExpanded(event.currentTarget.open)}>
+          <summary>Your plans <span>{night.plans.length}</span></summary>
+          <div id="customer-going" className="customer-plans-content" tabIndex={-1}>
+            <CustomerNightPanel isLoading={isLoading} onCancelGoing={cancelGoing} onDirections={openDirections} pendingAction={pendingAction} signals={night.plans} />
+            <p className="customer-plans-note">I’m Going is a plan, not a confirmed booking.</p>
+          </div>
+        </details> : null}
         <CustomerExplore />
         {workingFollows.length ? <CustomerSurface id="customer-working-now" title="Working Now" description="Dancers you follow, checked in now." count={workingFollows.length}>
           <div className="customer-saved-card-grid customer-followed-dancer-grid">{workingFollows.map(item => <FollowedDancerGridCard key={item.dancerId || item.dancer!.id} dancer={item.dancer!} onUnfollow={() => void unfollowDancer(String(item.dancerId || item.dancer!.id))} pending={Boolean(pendingAction)} unfollowing={pendingAction === `dancer-${item.dancerId || item.dancer!.id}`} />)}</div>
@@ -482,12 +486,6 @@ export function CustomerPanel({
         {saved?.dealRedemptions?.length ? <details className="customer-night-disclosure" id="customer-pass-wallet">
           <summary>Admission passes <span>{night.passes.length} active · {saved.dealRedemptions.length} total</span></summary>
           <CustomerPassWallet deals={saved.dealRedemptions} isLoading={isLoading} />
-        </details> : null}
-        {goingCount ? <details className="customer-night-disclosure" id="customer-plans-list">
-          <summary>Your plans <span>{goingCount}</span></summary>
-          <CustomerSurface id="customer-going" title="Your plans" description="Your I’m Going list. Plans are not reservations or confirmed bookings." count={goingCount}>
-            <CustomerNightPanel isLoading={isLoading} onCancelGoing={cancelGoing} onDirections={openDirections} pendingAction={pendingAction} signals={saved?.goingSignals || []} />
-          </CustomerSurface>
         </details> : null}
         {welcomeContent}
       </> : <p className="customer-loading-state">Your night is unavailable. Use Try again above to reload your saved activity.</p>}
@@ -516,28 +514,6 @@ export function CustomerPanel({
 }
 
 
-function CustomerNextOuting({ outing, onDirections, pending, now }: {
-  outing: NonNullable<ReturnType<typeof customerNightSummary>["outing"]>;
-  onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
-  pending: boolean; now: number;
-}) {
-  return <section className="customer-next-outing" aria-labelledby="customer-next-outing-title">
-    <span className="eyebrow">{outing.pass ? "Your admission pass" : "Your next outing"}</span>
-    <h2 id="customer-next-outing-title">{outing.venue?.name || "Your club"}</h2>
-    {outing.date ? <p className="customer-outing-date">{outing.date}</p> : null}
-    {outing.pass ? <p>{outing.pass.deal?.title || "Admission pass"} · {dealExpiryLabel(outing.pass.expiresAt, now)}</p> : null}
-    {outing.plans.length ? <ul className="customer-outing-dancers">{outing.plans.map(item => <li key={item.shiftId}>
-      {item.shift.dancer.slug ? <Link href={customerDancerHref(item.shift.dancer)}>{item.shift.dancer.stageName}</Link> : item.shift.dancer.stageName}
-      <span>{customerShiftLabel(item.shift)}</span>
-    </li>)}</ul> : null}
-    {outing.plans.length ? <small>I’m Going is a plan, not a confirmed booking.</small> : null}
-    <div className="customer-card-actions">
-      {outing.pass ? <Link className="customer-primary" href={`/deals/pass/${encodeURIComponent(outing.pass.redemptionToken)}`}>Show pass</Link> : <a className="customer-primary" href="#customer-going">View plans</a>}
-      {outing.venue ? <CustomerDirectionsButton venue={outing.venue} pending={pending} onDirections={onDirections} /> : null}
-    </div>
-  </section>;
-}
-
 function CustomerNightPanel({
   isLoading,
   onCancelGoing,
@@ -552,6 +528,7 @@ function CustomerNightPanel({
   signals: CustomerGoingSignal[];
 }) {
   const now = useCustomerMinuteClock();
+  const [showAllPlans, setShowAllPlans] = useState(false);
   const plans = signals
     .filter((item) => item.shift?.status === "posted" && new Date(item.shift.endsAt).getTime() > now)
     .sort((left, right) => new Date(left.shift?.startsAt || 0).getTime() - new Date(right.shift?.startsAt || 0).getTime());
@@ -568,9 +545,10 @@ function CustomerNightPanel({
     group.plans.push(item);
     groups.set(key, group);
   }
+  const outings = Array.from(groups.entries());
   return <div className="customer-night-panel" tabIndex={-1}>
-    <div className="customer-night-list">
-      {Array.from(groups.entries()).map(([key, group]) => <section className="customer-plan-group" key={key}>
+    <div className="customer-night-list" id="customer-plan-groups">
+      {(showAllPlans ? outings : outings.slice(0, 1)).map(([key, group]) => <section className="customer-plan-group" key={key}>
         <header><span>{group.label}</span><h3>{group.venue.name || "Club"}</h3><small>{[group.venue.city, group.venue.state].filter(Boolean).join(", ")}</small></header>
         {group.plans.map(item => {
           const shift = item.shift!, dancer = shift.dancer, venue = shift.venue;
@@ -592,6 +570,7 @@ function CustomerNightPanel({
       {!plans.length && !isLoading ? <div className="customer-empty-state"><strong>No plans yet</strong><p>Choose I’m Going on a dancer’s next shift to keep the date, club, and directions here.</p><Link href={homeDiscoveryHref("dancers")}>Find dancers</Link></div> : null}
       {isLoading ? <div className="customer-loading-state">Loading your plans…</div> : null}
     </div>
+    {outings.length > 1 ? <div className="customer-card-actions customer-plans-expand"><button type="button" aria-expanded={showAllPlans} aria-controls="customer-plan-groups" onClick={() => setShowAllPlans(value => !value)}>{showAllPlans ? "Show fewer plans" : "Show all plans"}</button></div> : null}
   </div>;
 }
 

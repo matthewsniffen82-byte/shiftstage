@@ -236,21 +236,17 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-date[data-working] { color:var(--customer-green); }
 
-/* Prioritize the next outing; keep secondary records and privacy controls compact. */
-body.dancr-button-system #customer-dashboard .customer-next-outing { padding:22px; border:1px solid #9360c9; border-radius:16px; background:linear-gradient(135deg,#281737,#15101e); display:grid; gap:12px; }
-body.dancr-button-system #customer-dashboard .customer-next-outing h2 { margin:0; font-size:26px; line-height:1.2; }
-body.dancr-button-system #customer-dashboard .customer-next-outing p { margin:0; color:var(--customer-muted); font-size:14px; }
-body.dancr-button-system #customer-dashboard .customer-next-outing .customer-outing-date { color:#eee3fc; }
-body.dancr-button-system #customer-dashboard .customer-next-outing small { color:var(--customer-muted); font-size:12px; }
-body.dancr-button-system #customer-dashboard .customer-outing-dancers { display:grid; gap:8px; list-style:none; margin:0; padding:0; }
-body.dancr-button-system #customer-dashboard .customer-outing-dancers li { display:flex; justify-content:space-between; flex-wrap:wrap; gap:6px 16px; padding:8px 0; border-top:1px solid #aa84c92b; }
-body.dancr-button-system #customer-dashboard .customer-outing-dancers a { color:#f4e9ff; }
-body.dancr-button-system #customer-dashboard .customer-outing-dancers span { color:var(--customer-muted); font-size:12px; }
+/* One expandable plans section keeps the next outing and its actions together. */
 body.dancr-button-system #customer-dashboard .customer-night-disclosure { border:1px solid var(--customer-line); border-radius:14px; background:var(--customer-surface); }
 body.dancr-button-system #customer-dashboard .customer-night-disclosure > summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:52px; padding:12px 16px; font-size:14px; }
 body.dancr-button-system #customer-dashboard .customer-night-disclosure > summary::after { content:"+"; color:#c9a7ff; font-size:20px; }
 body.dancr-button-system #customer-dashboard .customer-night-disclosure[open] > summary::after { content:"−"; }
 body.dancr-button-system #customer-dashboard .customer-night-disclosure > summary span { margin-left:auto; color:var(--customer-muted); font-size:12px; }
+body.dancr-button-system #customer-dashboard .customer-plans > summary { list-style:none; font-weight:600; }
+body.dancr-button-system #customer-dashboard .customer-plans > summary::-webkit-details-marker { display:none; }
+body.dancr-button-system #customer-dashboard .customer-plans-content { min-width:0; padding:16px; border-top:1px solid var(--customer-line); }
+body.dancr-button-system #customer-dashboard .customer-plans-note { margin:14px 0 0; color:var(--customer-muted); font-size:12px; line-height:1.5; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans-expand { margin-top:12px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-disclosure > .customer-surface { border:0; border-top:1px solid var(--customer-line); border-radius:0 0 14px 14px; background:transparent; box-shadow:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-card { padding:8px 0; border:0; background:transparent; box-shadow:none; align-items:center; border-radius:0; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-welcome-copy h2 { font-size:14px; margin-bottom:3px; }
@@ -268,9 +264,8 @@ body.dancr-button-system #customer-dashboard .customer-add-update-link > summary
 body.dancr-button-system #customer-dashboard .customer-add-update-link form { display:grid; gap:10px; margin-top:12px; }
 @media(max-width:700px) {
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-view { gap:16px; }
-  body.dancr-button-system #customer-dashboard .customer-next-outing { padding:16px; gap:10px; }
-  body.dancr-button-system #customer-dashboard .customer-next-outing h2 { font-size:22px; }
-  body.dancr-button-system #customer-dashboard .customer-next-outing .customer-card-actions > * { flex:1; }
+  body.dancr-button-system #customer-dashboard .customer-plans-content { padding:12px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans-expand > button { width:100%; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer #customer-working-now { padding:0; border:0; box-shadow:none; background:transparent; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore { padding:16px; gap:12px; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-explore h2 { margin:0 0 8px; font-size:22px; }
