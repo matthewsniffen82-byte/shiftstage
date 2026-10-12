@@ -51,7 +51,7 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-location { flex:1 1 150px; min-width:0; overflow-wrap:anywhere; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-location>span { color:#c4a4e9; font-size:11px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-entry { flex:0 0 auto; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-entry a { gap:8px; white-space:nowrap; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-entry a { white-space:nowrap; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header h3 { margin:3px 0 2px; font-size:15px; font-weight:600; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group>header small { color:var(--customer-muted); font-size:11px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plan-group+.customer-plan-group { border-top:1px solid #ffffff12; padding-top:12px; }
@@ -67,7 +67,6 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-controls { display:flex; align-items:center; gap:8px; margin:0; padding:0; border:0; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-actions { display:flex !important; align-items:center; flex-wrap:wrap; gap:8px; margin:0; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-card-actions a,.customer-card-actions button,.customer-empty-state a,.customer-card-menu button,.customer-card-menu a,.notification-panel button,.account-action-button) { display:inline-flex !important; align-items:center; justify-content:center; min-height:44px !important; padding:10px 14px !important; border:1px solid var(--customer-line) !important; border-radius:10px !important; color:#f1f5f9 !important; background:linear-gradient(var(--customer-control),var(--customer-control)) !important; line-height:1.3; font-family:inherit !important; font-size:13px !important; font-weight:500 !important; text-decoration:none; box-shadow:none !important; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-primary { background:#6822c7 !important; border-color:#aa72f5 !important; color:#fff !important; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu { position:relative; flex:0 0 auto; border:0; background:transparent; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu>summary { display:grid; place-items:center; min-width:44px; min-height:44px; width:44px; padding:0; border:1px solid var(--customer-line); border-radius:10px; background:linear-gradient(var(--customer-control),var(--customer-control)); color:#f1f5f9; list-style:none; font-size:14px; line-height:1; letter-spacing:2px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu>summary::-webkit-details-marker { display:none; }
@@ -274,26 +273,6 @@ html:is(.is-android,.android-rendering) body.dancr-button-system main#customer-d
   border:1px solid var(--customer-plan-utility-edge) !important; border-radius:inherit !important;
   background:linear-gradient(var(--customer-plan-utility-face),var(--customer-plan-utility-face)) !important;
   box-shadow:none !important; opacity:1 !important; transform:none !important; filter:none !important; z-index:-1; pointer-events:none !important;
-}
-html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans .customer-plan-entry > .customer-primary {
-  position:relative; min-height:44px !important; padding:8px 11px !important; border-radius:13px !important;
-  border-color:var(--dancr-color-avatar-ring-violet) !important; color:var(--dancr-color-text-primary) !important;
-  background:linear-gradient(135deg,var(--dancr-color-brand-primary),var(--dancr-color-brand-primary-deep)) !important;
-  box-shadow:var(--dancr-shadow-brand-control) !important; font-size:12px !important; font-weight:650 !important; line-height:1.3 !important;
-}
-@supports (-webkit-touch-callout:none) {
-  html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans .customer-plan-entry > .customer-primary {
-    border-color:#5636a5 !important; background:linear-gradient(135deg,#240293,#1b0165) !important;
-  }
-}
-@media (max-width:720px) {
-  html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans .customer-plan-entry > .customer-primary {
-    height:38px !important; min-height:38px !important; padding-block:5px !important; overflow:visible !important;
-  }
-  html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans .customer-plan-entry > .customer-primary::after {
-    content:"" !important; position:absolute !important; inset:-4px -1px !important; border:0 !important;
-    background:none !important; box-shadow:none !important; pointer-events:auto;
-  }
 }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-plans-expand { margin-top:8px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-disclosure > .customer-surface { border:0; border-top:1px solid var(--customer-line); border-radius:0 0 14px 14px; background:transparent; box-shadow:none; }

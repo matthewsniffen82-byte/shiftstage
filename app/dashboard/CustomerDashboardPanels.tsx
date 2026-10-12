@@ -553,7 +553,7 @@ function CustomerNightPanel({
       {(showAllPlans ? outings : outings.slice(0, 1)).map(([key, group]) => <section className="customer-plan-group" key={key}>
         <header>
           <div className="customer-plan-location"><span>{group.label}</span><h3>{group.venue.name || "Club"}</h3><small>{[group.venue.city, group.venue.state].filter(Boolean).join(", ")}</small></div>
-          {group.venue.id && entryDeals[group.venue.id] ? <div className="customer-card-actions customer-plan-entry"><Link className="customer-primary" href={`/deals/transportation/${encodeURIComponent(entryDeals[group.venue.id])}?sourceType=club_page`} aria-label={`Free Entry at ${group.venue.name || "this club"}`}>Free Entry <span aria-hidden="true">›</span></Link></div> : null}
+          {group.venue.id && entryDeals[group.venue.id] ? <div className="customer-card-actions customer-plan-entry"><Link className="free-entry-cta" href={`/deals/transportation/${encodeURIComponent(entryDeals[group.venue.id])}?sourceType=club_page`} aria-label={`Free Entry at ${group.venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></Link></div> : null}
         </header>
         {group.plans.map(item => {
           const shift = item.shift!, dancer = shift.dancer, venue = shift.venue;
