@@ -30,7 +30,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-d
 
 /* Keep every regular action at a comfortable 44px; switches and media keep their own geometry.
    A separate button face also stays black under automatic browser darkening. */
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, .primary-link, .dashboard-primary-action, .venue-command-links a, .venue-publication-actions a, .venue-contract-preview, .venue-team-invite-link a, .ir-actions a):not(.dashboard-close, [role="switch"], .ir-profile-link) {
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, .primary-link, .dashboard-primary-action, .venue-command-links a, .venue-publication-actions a, .venue-contract-preview, .venue-team-invite-link a, .ir-actions a):not(.dashboard-close, [role="switch"], .ir-profile-link, .dancr-password-toggle) {
   box-sizing: border-box;
   position: relative;
   isolation: isolate;
@@ -57,7 +57,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, 
   text-decoration: none;
   text-shadow: none !important;
 }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, .primary-link, .dashboard-primary-action, .venue-command-links a, .venue-publication-actions a, .venue-contract-preview, .venue-team-invite-link a, .ir-actions a):not(.dashboard-close, [role="switch"], .ir-profile-link)::before {
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, .primary-link, .dashboard-primary-action, .venue-command-links a, .venue-publication-actions a, .venue-contract-preview, .venue-team-invite-link a, .ir-actions a):not(.dashboard-close, [role="switch"], .ir-profile-link, .dancr-password-toggle)::before {
   content: "";
   position: absolute;
   inset: 0;

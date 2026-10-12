@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { PasswordField } from "@/app/components/PasswordField";
-import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import DancerAgreementLink from "@/app/components/DancerAgreementLink";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { captureBrowserAuthSessionGuard } from "@/src/lib/dancr/browser-session";
@@ -680,7 +679,10 @@ function DashboardSignInRecovery({
   role: "dancer" | "venue";
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => {
+    const account = storedSessionAccount(readSession());
+    return account?.role === role ? account.email || "" : "";
+  });
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -755,11 +757,12 @@ function DashboardSignInRecovery({
 
   return (
     <form className="venue-sign-in-recovery dashboard-sign-in-recovery" onSubmit={signIn}>
-      <p>Sign in here to reopen the dashboard without leaving this page.</p>
+      <p>Sign in with your registered {role === "venue" ? "club" : "dancer"} account email.</p>
       <label>
         {role === "venue" ? "Venue" : "Dancer"} account email
         <input
           autoComplete="email"
+          autoCapitalize="none"
           disabled={isSubmitting}
           inputMode="email"
           onChange={(event) => setEmail(event.target.value)}
@@ -776,11 +779,10 @@ function DashboardSignInRecovery({
         required
         value={password}
       />
-      <PasswordRequirements password={password} />
+      {status ? <p className="venue-sign-in-status" role="status">{status}</p> : null}
       <button className="primary-link" data-sign-in-action disabled={isSubmitting} type="submit">
         {isSubmitting ? "Signing in..." : `Sign in to ${role} dashboard`}
       </button>
-      {status ? <p className="venue-sign-in-status" role="status">{status}</p> : null}
     </form>
   );
 }

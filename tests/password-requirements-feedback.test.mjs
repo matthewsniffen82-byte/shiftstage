@@ -136,7 +136,7 @@ test('React checklist shows the same live green checks, accessible states, and r
 test('all React account password surfaces bind the shared checklist to the live password value', () => {
   for (const file of [
     'app/account/AccountClient.tsx', 'app/admin/AdminClient.tsx', 'app/venue-team/invite/[token]/VenueTeamInviteClient.tsx',
-    'app/vip/VipClient.tsx', 'app/dashboard/DashboardClient.tsx', 'app/account/reset-password/VipPasswordSetup.tsx',
+    'app/vip/VipClient.tsx', 'app/account/reset-password/VipPasswordSetup.tsx',
     'app/account/reset-password/ResetPasswordClient.tsx', 'app/vip/VipAccountPanel.tsx', 'app/dashboard/CustomerAccountPanel.tsx',
   ]) {
     const source = read(file);
