@@ -3,20 +3,23 @@
 import { useEffect, useRef, useState } from "react";
 import { filterVipDancers, isVipFavorite, type VipDraft, type VipDancerFilter } from "@/src/lib/dancr/vip-dashboard";
 import { vipLocalDate, type VipDancer, type VipVenue } from "@/src/lib/dancr/vip-types";
+import NotificationIcon from "@/app/components/NotificationIcon";
 
 const dancerFilters: Array<{ id: VipDancerFilter; label: string }> = [
   { id: "all", label: "This club" }, { id: "favorites", label: "Favorites" },
   { id: "previous", label: "Requested before" },
   { id: "working", label: "Working now" }, { id: "selected", label: "Selected" },
+  { id: "alerts", label: "Notify me" },
 ];
 
 // Keep the square and its white mark in one image for mobile browser dark mode.
 const selectionIcon = (path: string) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#171717" stroke="#fff" stroke-width="1.7"/><path d="${path}" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`)}`;
 const selectionIcons = { add: selectionIcon("M12 7v10M7 12h10"), selected: selectionIcon("m7 12 3 3 7-7") };
 
-export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onFavorite, favoritePending, busy, editing = false, unavailableSelections = false, onCancelEdit, onRequests }: {
+export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onFavorite, favoritePending, onWorkingAlert, alertPending = [], busy, editing = false, unavailableSelections = false, onCancelEdit, onRequests }: {
   venue: VipVenue; dancers: VipDancer[]; draft: VipDraft; onChange: (draft: VipDraft) => void; onSubmit: () => Promise<void>; busy: boolean;
   onFavorite: (dancer: VipDancer) => Promise<void>; favoritePending: string[];
+  onWorkingAlert?: (dancer: VipDancer) => Promise<void>; alertPending?: string[];
   editing?: boolean; unavailableSelections?: boolean; onCancelEdit?: () => void;
   onRequests?: () => void;
 }) {
@@ -61,6 +64,11 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
               else if (!unavailable && !checked && draft.selected.length < 10) onChange({ ...draft, selected: [...draft.selected, dancer.id] });
             }} /><img className="vip-selection-icon" src={checked ? selectionIcons.selected : selectionIcons.add} width={21} height={21} alt="" aria-hidden="true" draggable={false} /></label>
             <button type="button" className="vip-dancer-favorite" aria-pressed={favorite} aria-label={`${favorite ? "Remove" : "Save"} ${dancer.stage_name} ${favorite ? "from" : "to"} favorites`} disabled={busy || favoritePending.includes(dancer.id) || (!dancer.profileHref && !favorite)} onClick={() => void onFavorite(dancer)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg></button>
+            {onWorkingAlert && <button type="button" className="vip-dancer-alert" aria-pressed={dancer.workingAlertsEnabled === true}
+              aria-label={`${dancer.workingAlertsEnabled ? "Turn off" : "Notify me:"} ${dancer.stage_name} working at ${venue.name}${dancer.workingAlertsEnabled ? " alerts" : ""}`}
+              title={dancer.workingAlertsEnabled ? `Turn off working alerts at ${venue.name}` : `Notify me when working at ${venue.name}`}
+              disabled={busy || alertPending.includes(dancer.id) || (!dancer.workingAlertsEnabled && (unavailable || !dancer.profileHref))}
+              onClick={() => void onWorkingAlert(dancer)}><NotificationIcon notification={{ icon: "bell" }} /></button>}
           </article>;
         })}</fieldset></div>
         {!visible.length && <div className="vip-empty"><p>{!dancers.length ? "No dancers at this club yet." : search || requestableOnly ? "No dancers match these filters." : filter === "favorites" ? "Save dancers with the heart to see your favorites here." : filter === "previous" ? "Dancers you’ve requested at this venue will appear here." : filter === "selected" && !draft.selected.length ? "Select dancers to build your request." : "No dancers match these filters."}</p>{dancers.length > 0 && <button type="button" onClick={() => { setSearch(""); setFilter("all"); setRequestableOnly(false); }}>Show club dancers</button>}</div>}

@@ -1,0 +1,32 @@
+#vip-dashboard .vip-dancers { --vip-tile-height: clamp(190px, calc((100cqw - 22px) * 16 / 27), 320px); }
+body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] button:nth-child(n) { grid-column: auto; }
+@media (min-width: 900px) {
+  body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+}
+body.dancr-button-system #vip-dashboard .vip-dancer-alert {
+  position: absolute; z-index: 3; left: 0; top: 44px;
+  display: grid !important; place-items: center;
+  width: min(44px, calc(50% - 5px)) !important; min-width: 0 !important;
+  height: 44px !important; min-height: 44px !important;
+  margin: 0 !important; padding: 5px !important; border: 0 !important;
+  border-radius: 6px !important; background: #100b17e8 !important;
+  box-shadow: none !important;
+}
+body.dancr-button-system #vip-dashboard .vip-dancer-alert::before,
+body.dancr-button-system #vip-dashboard .vip-dancer-alert::after { display: none !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-alert[aria-pressed=true] { background: #304b40 !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-alert[aria-pressed=true] svg { color: #b0f1d1 !important; fill: #b0f1d133; }
+body.dancr-button-system #vip-dashboard .vip-dancer-alert:focus-visible { outline: 2px solid #d0b1f3; outline-offset: -2px; }
+body.dancr-button-system #vip-dashboard .vip-dancer-alert:disabled { opacity: .45; }
+#vip-dashboard .vip-updates { margin-top: 24px; min-width: 0; }
+#vip-dashboard .vip-updates .notification-panel { padding: 20px 0; border: 0; border-top: 1px solid #483f52; background: transparent; box-shadow: none; }
+#vip-dashboard .vip-updates .notification-title-row,
+#vip-dashboard .vip-updates .notification-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+#vip-dashboard .vip-updates h2 { margin: 0; font-size: 22px; }
+#vip-dashboard .vip-updates .notification-list { display: grid; gap: 0; margin-top: 16px; }
+#vip-dashboard .vip-updates .notification-row { display: grid; gap: 8px; padding: 16px 0; border: 0; border-bottom: 1px solid #38323f; border-radius: 0; background: transparent; color: #f5effa; text-decoration: none; overflow-wrap: anywhere; }
+#vip-dashboard .vip-updates .notification-row.read { opacity: .7; }
+#vip-dashboard .vip-updates .notification-row-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #bab0c5; }
+#vip-dashboard .vip-updates .notification-row strong { min-width: 0; font-size: 15px; }
+#vip-dashboard .vip-updates .notification-row em { font-size: 13px; color: #c9a5ef; }

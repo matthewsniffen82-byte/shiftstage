@@ -13,7 +13,9 @@ import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
 import VipRequests from "./VipRequests";
 import { VipWorkingFavorites } from "./VipMyDancers";
 import VipAccountPanel from "./VipAccountPanel";
+import { NotificationPanel } from "@/app/dashboard/DashboardShared";
 import "./vip-premium.css";
+import "./vip-working-alerts.css";
 
 const VipPlan = dynamic(() => import("./VipPlan"), { loading: () => <VipLoading label="Opening your visit planner…" /> });
 const requestFilters: Array<{ id: VipRequestFilter; label: string }> = [
@@ -39,6 +41,8 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [editing, setEditing] = useState<{ accountId: string; request: VipRequest; draft: VipDraft } | null>(null);
   const [favoritePending, setFavoritePending] = useState<string[]>([]);
   const favoriteRequests = useRef(new Map<string, AbortController>());
+  const [alertPending, setAlertPending] = useState<string[]>([]);
+  const alertRequests = useRef(new Map<string, AbortController>());
   const [nicknameDrafts, setNicknameDrafts] = useState<Record<string, string>>({});
   const [nicknameEditing, setNicknameEditing] = useState("");
   const [nicknameError, setNicknameError] = useState<{ venueId: string; message: string } | null>(null);
@@ -102,12 +106,13 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     };
     sync(); window.addEventListener("hashchange", sync);
     const favorites = favoriteRequests.current;
-    return () => { mounted.current = false; submitAbort.current?.abort(); favorites.forEach(controller => controller.abort()); window.removeEventListener("hashchange", sync); };
+    const alerts = alertRequests.current;
+    return () => { mounted.current = false; submitAbort.current?.abort(); favorites.forEach(controller => controller.abort()); alerts.forEach(controller => controller.abort()); window.removeEventListener("hashchange", sync); };
   }, []);
   useEffect(() => {
     const update = () => {
       if (document.visibilityState !== "visible" || refreshing.current || locked.current || signingOut
-        || favoriteRequests.current.size || readSession()?.account?.id !== account.id || Date.now() - lastFetched.current < 15000) return;
+        || favoriteRequests.current.size || alertRequests.current.size || readSession()?.account?.id !== account.id || Date.now() - lastFetched.current < 15000) return;
       setRevision(value => value + 1);
     };
     window.addEventListener("focus", update); document.addEventListener("visibilitychange", update);
@@ -207,25 +212,40 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     setFavoritePending(previous => [...previous, dancer.id]); setError("");
     try {
       const saving = !isVipFavorite(dancer);
-      const fields: Array<"favorite" | "following"> = saving ? ["favorite"] : [
-        ...(dancer.favorite ? ["favorite" as const] : []),
-        ...(dancer.following ? ["following" as const] : []),
-      ];
-      for (const field of fields) {
-        if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
-        const result = await requestDashboardJson(field === "favorite" ? "/api/customer/favorites" : "/api/customer/follows", {
+      const result = await requestDashboardJson("/api/customer/favorites", {
           expectedRole: "customer", method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ dancerId: dancer.id, [field]: saving }), timeoutMs: 20000, signal: controller.signal });
-        if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
-        // Keep each successful change so a partial removal can safely be retried.
-        setResponse(previous => previous ? { ...previous, data: { ...previous.data,
-          dancers: previous.data.dancers.map(item => item.id === dancer.id ? { ...item, [field]: result[field] === true } : item) } } : previous);
-      }
+          body: JSON.stringify({ dancerId: dancer.id, favorite: saving }), timeoutMs: 20000, signal: controller.signal });
+      if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
+      setResponse(previous => previous ? { ...previous, data: { ...previous.data,
+        dancers: previous.data.dancers.map(item => item.id === dancer.id ? { ...item, favorite: result.favorite === true } : item) } } : previous);
     } catch (failure) {
       if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
     } finally {
       favoriteRequests.current.delete(dancer.id);
       if (mounted.current) setFavoritePending(previous => previous.filter(id => id !== dancer.id));
+    }
+  }
+  async function toggleWorkingAlert(dancer: VipDancer) {
+    if (!venue || !data || disabled || loading || readSession()?.account?.id !== account.id) return;
+    const key = `${venue.id}:${dancer.id}`;
+    if (alertRequests.current.has(key)) return;
+    const controller = new AbortController(), expectedAccount = account.id, savedVenue = venue.id;
+    alertRequests.current.set(key, controller);
+    setAlertPending(previous => [...previous, key]); setError("");
+    try {
+      const result = await requestDashboardJson("/api/vip/working-alerts", {
+        expectedRole: "customer", method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ venueId: savedVenue, dancerId: dancer.id, enabled: !dancer.workingAlertsEnabled }),
+        timeoutMs: 20000, signal: controller.signal,
+      });
+      if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
+      setResponse(previous => previous?.data.selectedVenueId === savedVenue ? { ...previous, data: { ...previous.data,
+        dancers: previous.data.dancers.map(item => item.id === dancer.id ? { ...item, workingAlertsEnabled: result.enabled === true } : item) } } : previous);
+    } catch (failure) {
+      if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
+    } finally {
+      alertRequests.current.delete(key);
+      if (mounted.current) setAlertPending(previous => previous.filter(id => id !== key));
     }
   }
   function cancelNickname() {
@@ -333,6 +353,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         {nicknamePanel}
         <section className="vip-panel"><div className="vip-section-heading"><VipIcon kind="account" /><div><h2>Your account</h2><p>One sign-in for your private VIP access.</p></div></div><dl className="vip-account-details"><div><dt>VIP name at this venue</dt><dd>{venue?.guestName || "—"}</dd></div><div><dt>Email</dt><dd>{account.email || "Your VIP account"}</dd></div><div><dt>Access</dt><dd>By private venue invitation</dd></div></dl><div className="vip-actions"><button type="button" disabled={disabled} onClick={() => void onSignOut()}>{signingOut ? "Signing out…" : "Sign out"}</button></div></section>
         <VipAccountPanel account={account} onAccountChange={() => refresh()} />
+        <div className="vip-actions"><Link href="/dashboard/customer#customer-alerts">Notification settings</Link></div>
         <section className="vip-panel"><h2>Your VIP venues</h2><p>Each invitation unlocks access to that venue’s dancers and visit requests.</p>{loading && !venues.length ? <p role="status">Loading venues…</p> : <ul className="vip-memberships">{venues.map(member => <li key={member.id}><div><strong>{member.name}</strong><small>{member.timezone.replaceAll("_", " ")}</small></div><span className="vip-badge">VIP access</span></li>)}</ul>}{!loading && !venues.length && <p>Open a private invitation from your venue to get started.</p>}</section>
       </div> : !data ? loading ? <VipLoading label={view === "plan" ? "Loading your venue’s dancers…" : view === "requests" ? "Loading your requests…" : "Opening your lounge…"} /> : <p className="vip-empty">This section couldn’t be loaded. Use Refresh to try again.</p>
       : !venue ? <section className="vip-panel vip-empty-access"><VipIcon kind="overview" /><h2>Your invitation opens the door.</h2><p>Ask your venue for a private VIP link. Open it to activate your access and start planning a visit.</p></section>
@@ -350,7 +371,8 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         </div>
         <VipWorkingFavorites dancers={data.dancers} onRequest={requestDancer} onBrowse={() => navigate("dancers")} busy={disabled || loading} />
         </div>
-      </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && dancer.canRequest !== false))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled} />
+        <div className="vip-updates"><NotificationPanel key={account.id} customerMode vipMode panelId="vip-updates" refreshKey={revision} /></div>
+      </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && dancer.canRequest !== false))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} onWorkingAlert={toggleWorkingAlert} alertPending={alertPending.filter(key => key.startsWith(`${venue.id}:`)).map(key => key.slice(venue.id.length + 1))} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled} />
       : <>
         <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>Track venue responses and review your plans.</p></div></div>
         <div className="vip-request-toolbar"><label>Status<select value={filter} onChange={event => { setFilter(event.target.value as VipRequestFilter); setPage(0); }} disabled={disabled}>{requestFilters.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select></label><span>{data.requestCount ?? data.requests.length} {(data.requestCount ?? data.requests.length) === 1 ? "request" : "requests"}</span></div>

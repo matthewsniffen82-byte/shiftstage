@@ -224,9 +224,9 @@ test('late favorite responses are ignored after an account change and unmount ab
   resolveFavorite({ favorite: true }); await second;
 });
 
-test('combined favorites remove existing follows and both saved states, persist on reload, and save again with one heart', async () => {
+test('VIP hearts toggle only favorites and preserve public follows and working alert preferences', async () => {
   for (const favorite of [false, true]) {
-    let saved = { ...dancers[0], favorite, following: true };
+    let saved = { ...dancers[0], favorite, following: true, workingAlertsEnabled: true };
     const ui = dashboardHarness({ hash: '#vip-plan', request: async (url, options) => {
       if (options.method === 'POST') {
         const input = JSON.parse(options.body); saved = { ...saved, ...input }; return input;
@@ -235,29 +235,29 @@ test('combined favorites remove existing follows and both saved states, persist 
     } });
     await ui.settle();
     await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
-    assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), false);
+    assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), !favorite);
     const writes = ui.calls.filter(call => call.options.method === 'POST');
-    assert.deepEqual(writes.map(call => call.url), favorite ? ['/api/customer/favorites', '/api/customer/follows'] : ['/api/customer/follows']);
-    assert.deepEqual(JSON.parse(writes.at(-1).options.body), { dancerId: saved.id, following: false });
+    assert.deepEqual(writes.map(call => call.url), ['/api/customer/favorites']);
+    assert.deepEqual(JSON.parse(writes.at(-1).options.body), { dancerId: saved.id, favorite: !favorite });
     ui.navigate('requests'); await ui.settle(); ui.navigate('plan'); await ui.settle();
-    assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), false);
+    assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), !favorite);
     await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
-    assert.equal(ui.planner().props.dancers[0].favorite, true);
-    assert.equal(ui.planner().props.dancers[0].following, false);
+    assert.equal(ui.planner().props.dancers[0].favorite, favorite);
+    assert.equal(ui.planner().props.dancers[0].following, true);
+    assert.equal(ui.planner().props.dancers[0].workingAlertsEnabled, true);
     assert.equal(ui.calls.at(-1).url, '/api/customer/favorites'); ui.unmount();
   }
 });
 
-test('a partial combined favorite removal preserves the remaining saved state and retries only the failed write', async () => {
+test('failed favorite removals preserve all saved preferences and retry only the favorite write', async () => {
   let fail = true;
   const ui = dashboardHarness({ hash: '#vip-plan', request: async (url, options) => {
-    if (url === '/api/customer/favorites') return { favorite: false };
-    if (url === '/api/customer/follows') { if (fail) throw new Error('Could not remove dancer'); return { following: false }; }
+    if (url === '/api/customer/favorites') { if (fail) throw new Error('Could not remove dancer'); return { favorite: false }; }
     return state(venues[0].id, { dancers: [{ ...dancers[0], favorite: true, following: true }] });
   } });
   await ui.settle();
   await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
-  assert.equal(ui.planner().props.dancers[0].favorite, false);
+  assert.equal(ui.planner().props.dancers[0].favorite, true);
   assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), true);
   assert.equal(ui.planner().props.favoritePending.length, 0);
   assert.match(renderToStaticMarkup(ui.tree()), /Could not remove dancer/);
@@ -265,7 +265,8 @@ test('a partial combined favorite removal preserves the remaining saved state an
   await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
   assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), false);
   assert.deepEqual(ui.calls.filter(call => call.options.method === 'POST').map(call => call.url),
-    ['/api/customer/favorites', '/api/customer/follows', '/api/customer/follows']);
+    ['/api/customer/favorites', '/api/customer/favorites']);
+  assert.equal(ui.planner().props.dancers[0].following, true);
   ui.unmount();
 });
 

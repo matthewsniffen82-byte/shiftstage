@@ -281,6 +281,7 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   if (payload.kind === "vip_request" || payload.kind === "vip_request_updated" || payload.kind === "vip_nickname_changed") return `${baseUrl}/dashboard/venue#venue-vip`;
   if (payload.kind === "vip_request_status") return `${baseUrl}/vip`;
   if (payload.kind === "vip_dancer_request") return `${baseUrl}/dashboard/dancer#dancer-account`;
+  if (payload.kind === "vip_dancer_working_now") return `${baseUrl}/vip?venueId=${encodeURIComponent(String(payload.venueId || ""))}#vip-plan`;
   if (followAlertKey(payload.kind)) return `${baseUrl}/dashboard/customer#customer-alerts`;
 
   if (row.notification_type === "dmca_status" && payload.caseId) {

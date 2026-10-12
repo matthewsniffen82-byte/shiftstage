@@ -18,6 +18,7 @@ const cards = [
 function database({ failure, denied = false, large = false, roster = cards.filter(d => d.canRequest) } = {}) {
   const calls = [];
   const tables = {
+    venue_vip_working_alerts: [{ user_id: guest.id, venue_id: venues[0].id, dancer_id: 'aria' }, { user_id: 'other', venue_id: venues[0].id, dancer_id: 'secret' }],
     venue_vip_members: venues.map(v => ({ user_id: guest.id, active: !denied, display_name: v.guestName, venue: { ...v, is_active: true, owner: { role: 'venue', account_state: 'active' } } })),
     favorites: [{ customer_id: guest.id, dancer_id: 'aria' }, { customer_id: guest.id, dancer_id: 'hidden' }, { customer_id: 'other', dancer_id: 'secret' }],
     follows: [{ customer_id: guest.id, dancer_id: 'nova' }, { customer_id: 'other', dancer_id: 'secret' }],
@@ -63,6 +64,7 @@ test('My dancers joins the club roster, guest collections, and selected venue hi
   const byId = new Map(result.dancers.map(d => [d.id, d]));
   assert.deepEqual([...byId.keys()].sort(), ['aria', 'hidden', 'nova', 'past']);
   assert.equal(byId.get('aria').favorite, true); assert.equal(byId.get('aria').following, false);
+  assert.equal(byId.get('aria').workingAlertsEnabled, true);
   assert.equal(byId.get('aria').previouslyRequested, true); assert.equal(byId.get('aria').stage_name, 'Aria');
   assert.equal(byId.get('aria').canRequest, true); assert.equal(byId.get('aria').photoUrl, '/photo/aria/photo.jpg');
   assert.equal(byId.get('nova').following, true); assert.equal(byId.get('nova').favorite, false); assert.equal(byId.get('nova').photoUrl, null);
@@ -72,6 +74,7 @@ test('My dancers joins the club roster, guest collections, and selected venue hi
   for (const call of db.calls.filter(c => ['favorites', 'follows'].includes(c.table))) assert.ok(call.steps.some(s => s[0] === 'eq' && s[1] === 'customer_id' && s[2] === guest.id));
   const other = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[1].id }));
   assert.equal(other.dancers.find(d => d.id === 'aria').previouslyRequested, false);
+  assert.equal(other.dancers.find(d => d.id === 'aria').workingAlertsEnabled, false);
   assert.ok(other.dancers.some(d => d.id === 'other-venue' && d.previouslyRequested));
   assert.ok(!other.dancers.some(d => d.id === 'past'));
 });
@@ -125,16 +128,16 @@ test('overview favorites respect revoked access and surface failed reads', async
   }
 });
 
-test('overview combines the guests followed and favorited working dancers without duplicates', async () => {
+test('overview only shows favorites without turning public follows into favorites', async () => {
   const db = database({ roster: [...cards.filter(d => d.canRequest).map(d => ({ ...d, working_now: true })),
     { id: 'secret', stage_name: 'Another guests dancer', working_now: true }] });
   db.tables.follows.push({ customer_id: guest.id, dancer_id: 'aria' });
   const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview' }));
-  assert.deepEqual(Array.from(result.dancers, d => d.id), ['aria', 'nova']);
-  assert.equal(result.dancers[1].favorite, false); assert.equal(result.dancers[1].following, true);
+  assert.deepEqual(Array.from(result.dancers, d => d.id), ['aria']);
+  assert.equal(result.dancers[0].favorite, true); assert.equal(result.dancers[0].following, true);
   db.tables.favorites = [];
   const followedOnly = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview' }));
-  assert.deepEqual(Array.from(followedOnly.dancers, d => d.id), ['aria', 'nova']);
+  assert.deepEqual(Array.from(followedOnly.dancers, d => d.id), []);
 });
 
 test('overview favorite requests preserve draft details and cannot act on stale accounts or refreshing data', async () => {
@@ -164,7 +167,7 @@ test('working favorites expose requests, disabled refresh state, and a useful em
   tree.props.children[1].props.children[0].props.children[2].props.onClick(); assert.deepEqual(requested, ['aria']);
   assert.match(renderToStaticMarkup(React.createElement(VipWorkingFavorites, { ...props, busy: true })), /disabled="" aria-label="Request Aria"/);
   assert.match(renderToStaticMarkup(React.createElement(VipWorkingFavorites, { ...props, dancers: [] })), /None of your favorites are working at this venue/);
-  assert.match(renderToStaticMarkup(React.createElement(VipWorkingFavorites, { ...props, dancers: [{ ...cards[1], working_now: true }] })), /Request Nova/);
+  assert.doesNotMatch(renderToStaticMarkup(React.createElement(VipWorkingFavorites, { ...props, dancers: [{ ...cards[1], working_now: true }] })), /Request Nova/);
 });
 
 test('collections and old request history paginate fully and profile lookups stay bounded', async () => {
@@ -199,7 +202,7 @@ test('revoked or wrong-venue access cannot read private collections, and source 
   assert.equal((await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers' }))).dancers.length, 0);
   await assert.rejects(service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[0].id })), error => error.status === 403);
   assert.ok(db.calls.every(c => c.table === 'venue_vip_members'));
-  for (const failure of ['favorites', 'follows', 'venue_vip_requests', 'dancer_profiles', 'roster']) {
+  for (const failure of ['favorites', 'follows', 'venue_vip_working_alerts', 'venue_vip_requests', 'dancer_profiles', 'roster']) {
     await assert.rejects(service.getVipState(database({ failure }).client, guest.id, new URLSearchParams({ view: 'dancers' })), /read failed/);
   }
 });
@@ -249,10 +252,11 @@ test('combined dancer filters preserve favorites, follows, request history and u
   const ui=plannerHarness({dancers:cards,onFavorite:async dancer=>saves.push(dancer.id),onRequests(){}});
   const html=()=>renderToStaticMarkup(ui.tree());
   assert.match(html(),/Aria/);assert.match(html(),/Nova/);assert.match(html(),/Previously requested · unavailable/);
-  ui.filter('Favorites');assert.match(html(),/Nova/);assert.equal(ui.nodes().filter(node=>node.type==='article').length,3);
+  ui.filter('Favorites');assert.doesNotMatch(html(),/Nova/);assert.equal(ui.nodes().filter(node=>node.type==='article').length,2);
   assert.equal(ui.button('Following'),undefined);
-  const followedHeart=ui.nodes().find(node=>node.props?.['aria-label']==='Remove Nova from favorites');
-  assert.equal(followedHeart.props['aria-pressed'],true);assert.equal(followedHeart.props.disabled,false);
+  ui.filter('This club');
+  const followedHeart=ui.nodes().find(node=>node.props?.['aria-label']==='Save Nova to favorites');
+  assert.equal(followedHeart.props['aria-pressed'],false);assert.equal(followedHeart.props.disabled,false);
   const profile=ui.nodes().find(node=>node.type==='a');
   assert.equal(new URL(profile.props.href,'https://example.test').searchParams.get('return_to'),`/vip?venueId=${venues[0].id}#vip-plan`);
   ui.select('past');assert.equal(ui.props.draft.selected.length,0);

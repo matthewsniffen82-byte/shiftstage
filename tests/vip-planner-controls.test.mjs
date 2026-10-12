@@ -100,18 +100,18 @@ test('every dancer filter counts its matching results and updates with search, e
   const labels=['This club','Favorites','Requested before','Working now','Selected'];
   const ui=plannerHarness({dancers:roster});
   const counts=()=>labels.map(label=>ui.nodes(ui.button(label)).find(node=>node.props?.className==='vip-filter-count').props.children);
-  assert.deepEqual(counts(),[3,4,2,1,0]);
+  assert.deepEqual(counts(),[3,3,2,1,0]);
   for(const label of labels){
     const count=ui.nodes(ui.button(label)).find(node=>node.props?.className==='vip-filter-count').props.children;
     assert.equal(ui.button(label).props['aria-label'],`${label}, ${count} ${count===1?'dancer':'dancers'}`);
     ui.filter(label);assert.equal(ui.nodes().filter(node=>node.type==='article').length,count);
   }
-  ui.filter('This club');ui.select('aria');assert.deepEqual(counts(),[3,4,2,1,1]);
+  ui.filter('This club');ui.select('aria');assert.deepEqual(counts(),[3,3,2,1,1]);
   ui.search(' aria ');assert.deepEqual(counts(),[1,1,1,1,1]);
   ui.search('');ui.nodes().find(node=>node.props?.type==='checkbox').props.onChange({target:{checked:true}});ui.render();
-  assert.deepEqual(counts(),[2,2,1,1,1]);
+  assert.deepEqual(counts(),[2,1,1,1,1]);
   ui.props.dancers=roster.map(dancer=>({...dancer,favorite:false}));ui.render();
-  assert.deepEqual(counts(),[2,2,1,1,1]);
+  assert.deepEqual(counts(),[2,0,1,1,1]);
   ui.props.dancers=roster.map(dancer=>({...dancer,favorite:false,following:false}));ui.render();
   assert.deepEqual(counts(),[2,0,1,1,1]);
   assert.equal(ui.button('Favorites').props.disabled,false,'empty collections remain available');

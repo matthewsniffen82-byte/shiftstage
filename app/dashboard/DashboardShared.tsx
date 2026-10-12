@@ -61,6 +61,7 @@ export function AccountSummaryPanel({
 export function NotificationPanel({
   saved,
   customerMode = false,
+  vipMode = false,
   dancerMode = false,
   panelId,
   refreshKey = 0,
@@ -69,6 +70,7 @@ export function NotificationPanel({
 }: {
   saved?: LoadState["saved"];
   customerMode?: boolean;
+  vipMode?: boolean;
   dancerMode?: boolean;
   panelId?: string;
   refreshKey?: number;
@@ -214,7 +216,7 @@ export function NotificationPanel({
     <article className="info-panel notification-panel" id={panelId ?? (customerMode ? "customer-alerts" : undefined)} tabIndex={customerMode ? -1 : undefined}>
       <div className="notification-title-row">
         <div>
-          {customerMode ? <span>Updates that matter</span> : null}
+          {customerMode && !vipMode ? <span>Updates that matter</span> : null}
           <h2>{customerMode ? "Alerts" : "Notifications"}</h2>
           {!customerMode && !dancerMode && (preferencesHref ? <a className="notification-settings-button" href={preferencesHref} onClick={event => openDashboardSection(event, preferencesHref.slice(1))}>Notification preferences</a> : <button type="button" data-push-settings>Notification settings</button>)}
         </div>
@@ -239,8 +241,10 @@ export function NotificationPanel({
         {notifications.slice(0, customerMode ? visibleAlerts : 6).map((notification) => {
           const notificationId = String(notification.id);
           const payload = notification.payload && typeof notification.payload === "object" ? notification.payload as Record<string, unknown> : {};
-          const vipDestination = (payload.kind === "vip_request" || payload.kind === "vip_nickname_changed") ? "/dashboard/venue#venue-vip" : payload.kind === "vip_request_status" ? "/vip" : "";
+          const vipDestination = payload.kind === "vip_dancer_working_now" ? `/vip?venueId=${encodeURIComponent(String(payload.venueId || ""))}#vip-plan` : (payload.kind === "vip_request" || payload.kind === "vip_nickname_changed") ? "/dashboard/venue#venue-vip" : payload.kind === "vip_request_status" ? "/vip" : "";
           const destination = vipDestination || pickupNotificationHref(notification.payload) || (customerMode ? customerNotificationHref(notification, saved) : "");
+          // Reload VIP links so another club's alert initializes the correct workspace.
+          const DestinationLink = payload.kind === "vip_dancer_working_now" ? "a" : Link;
           const portrait = customerMode ? (payload.dancerId ? (saved?.follows || []).find(item => item.dancer?.id === payload.dancerId)?.dancer?.imageUrl : null)
             || (payload.venueId ? (saved?.venueFollows || []).find(item => item.venue?.id === payload.venueId)?.venue?.logoImageUrl : null) : null;
           const content = (
@@ -255,14 +259,14 @@ export function NotificationPanel({
             </>
           );
           return destination ? (
-            <Link
+            <DestinationLink
               className={notification.readAt ? "notification-row read" : "notification-row"}
               href={destination}
               key={notificationId}
               onClick={() => void markRead(notificationId)}
             >
               {content}
-            </Link>
+            </DestinationLink>
           ) : (
             <button
               className={notification.readAt ? "notification-row read" : "notification-row"}
@@ -277,8 +281,8 @@ export function NotificationPanel({
         {!notifications.length ? (
           <div className="customer-empty-state compact">
             <strong>{customerMode ? "No alerts yet" : "No notifications yet"}</strong>
-            <p>{customerMode ? "Follow dancers and clubs to receive schedule and venue updates here." : "Account and profile updates will appear here."}</p>
-            {customerMode ? <Link href={homeDiscoveryHref("dancers")}>Browse dancers</Link> : null}
+            <p>{vipMode ? "No new VIP updates." : customerMode ? "Follow dancers and clubs to receive schedule and venue updates here." : "Account and profile updates will appear here."}</p>
+            {customerMode && !vipMode ? <Link href={homeDiscoveryHref("dancers")}>Browse dancers</Link> : null}
           </div>
         ) : null}
       </div>

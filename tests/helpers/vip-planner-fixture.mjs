@@ -14,6 +14,7 @@ export function plannerHarness(options = {}) {
       useRef(initial) { const index = cursor++; return slots[index] ||= { current: initial }; },
       useEffect(effect, deps) { const index = cursor++; if (!slots[index] || deps.some((value, i) => value !== slots[index][i])) { slots[index] = deps; effects.push(effect); } },
     }, '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers,
+    '@/app/components/NotificationIcon': { __esModule: true, default: 'svg' },
   }).default;
   const nodes = (node = tree) => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))] : [];
   function render() {

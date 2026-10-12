@@ -57,13 +57,15 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
     addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name) };
   const document = { visibilityState: 'visible', addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name) };
   const RequestCards = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-calendar': calendar }).default;
-  const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': dashboard }).default;
+  const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': dashboard,
+    '@/app/components/NotificationIcon': { __esModule: true, default: 'svg' } }).default;
   const { VipWorkingFavorites } = compileVip('app/vip/VipMyDancers.tsx', { '@/src/lib/dancr/vip-dashboard': dashboard });
   const Component = compileVip('app/vip/VipDashboard.tsx', {
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => Planner },
     '@/app/dashboard/dashboard-session': { readSession: () => ({ account: currentAccount }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '@/src/lib/dancr/vip-dashboard': dashboard, './VipRequests': { __esModule: true, default: RequestCards }, './VipAccountPanel': { __esModule: true, default: 'vip-account-settings' },
     './VipMyDancers': { __esModule: true, VipWorkingFavorites },
+    '@/app/dashboard/DashboardShared': { NotificationPanel: 'vip-notifications' },
     '@/src/lib/dancr/vip-draft-storage': draftStorage,
     '@/src/lib/dancr/browser-session': { rememberVipDashboard: (accountId, venueId) => vipNavigation.push({ accountId, venueId }) },
   }, { window, document, Date: class extends Date { static now() { return now; } } }).default;

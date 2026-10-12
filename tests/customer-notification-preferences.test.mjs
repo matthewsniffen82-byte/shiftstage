@@ -185,6 +185,17 @@ test("customer choices do not suppress transactional email or other account role
   assert.equal((await f.sendTransactionalEmail({ to: "customer@example.com", subject: "Password changed", text: "Test" })).delivered, true);
 });
 
+test("VIP working alerts honor channel opt-ins and master/category mutes, with club-specific links", async () => {
+  const vipRow = { ...row("vip_dancer_working_now"), payload: { kind: "vip_dancer_working_now", venueId: "club-one" } };
+  for (const settings of [{}, { emailEnabled: true, pushEnabled: true, workingNow: false }, { emailEnabled: true, pushEnabled: true, followAlertsEnabled: false }]) {
+    const f = deliveryFixture(settings);
+    assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [vipRow])), { email: 0, push: 0 });
+  }
+  const f = deliveryFixture({ emailEnabled: true, pushEnabled: true });
+  assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [vipRow])), { email: 1, push: 1 });
+  assert.equal(f.requests[0].body.url, "https://mydancr.com/vip?venueId=club-one#vip-plan");
+});
+
 for (const [key, method] of [
   ["workingNow", "broadcastFollowedDancerWorkingNow"],
   ["upcomingShifts", "broadcastFollowedDancerUpcomingShift"],

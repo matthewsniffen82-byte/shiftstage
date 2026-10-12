@@ -39,10 +39,22 @@ export async function broadcastFollowedDancerWorkingNow(
   client: DancrClient,
   input: FollowNotificationInput,
 ) {
-  if (!await isDancerExternallyListed(client, input.dancerId)) return 0;
-  if (!await isVenueListed(client, input.venueId)) return 0;
+  // VIP alerts do not require a public club deal or a public Follow subscription.
+  // Keep each audience's optional delivery failure from suppressing the other.
+  const vipRecipients = new Set<string>();
+  let vipCount = 0;
+  try {
+    const { data, error } = await client.rpc("vip_emit_working_alerts", { p_shift: input.eventId });
+    if (error) throw error;
+    for (const id of data?.recipientIds || []) vipRecipients.add(id);
+    const notices: NotificationDeliveryRow[] = data?.notifications || [];
+    vipCount = notices.length;
+    try { await deliverNotificationRows(client, notices); } catch { console.warn("VIP_WORKING_ALERT_DELIVERY_FAILED"); }
+  } catch { console.warn("VIP_WORKING_ALERT_FAILED"); }
+  if (!await isDancerExternallyListed(client, input.dancerId)) return vipCount;
+  if (!await isVenueListed(client, input.venueId)) return vipCount;
   const recipientIds = await followedCustomerIds(client, "follows", "dancer_id", input.dancerId || "", "workingNow");
-  return persistAndDeliver(client, recipientIds, input, {
+  return vipCount + await persistAndDeliver(client, recipientIds.filter(id => !vipRecipients.has(id)), input, {
     notificationType: "shift_updated",
     title: `${input.stageName} is Working Now`,
     body: `${input.stageName} is Working Now at ${input.venueName}.`,

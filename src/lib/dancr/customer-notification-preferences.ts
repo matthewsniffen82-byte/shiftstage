@@ -48,6 +48,7 @@ export function customerFollowAlertEnabled(settings: unknown, key: CustomerAlert
 
 export function followAlertKey(kind: unknown): CustomerAlertKey | null {
   switch (kind) {
+    case "vip_dancer_working_now":
     case "followed_dancer_working_now": return "workingNow";
     case "followed_dancer_upcoming_shift": return "upcomingShifts";
     case "followed_club_deal_published": return "clubDeals";
