@@ -179,7 +179,7 @@ export default function DancerProfileMediaUploads({
           <div className="profile-upload-group" key={section}>
             <header>
               <strong>{isPhoto ? "Photos" : "Videos"}</strong>
-              <small>{isPhoto ? "Only you in each photo" : "Optional · add now or later"}</small>
+              {!compact ? <small>{isPhoto ? "Only you in each photo" : "Optional · add now or later"}</small> : null}
               <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
             </header>
             {!compact ? <><p>{isPhoto ? "You can add more photos later." : "You can add videos now or later."}</p>
@@ -237,11 +237,11 @@ export default function DancerProfileMediaUploads({
           </div>
         );
       })}
-      <p className="profile-upload-visibility" role="status" aria-live="polite">
+      {!compact || isApproved ? <p className="profile-upload-visibility" role="status" aria-live="polite">
         {isApproved
           ? isPublic ? "Approved uploads appear on your profile." : "Uploads stay saved. Turn off incognito to show approved media on your profile."
           : "Uploaded photos and videos will appear on your profile after review and completion of your profile setup."}
-      </p>
+      </p> : null}
       {activePreview && previewItem ? <DancerMediaViewer key={`${activePreview.kind}:${activePreview.id}`} kind={activePreview.kind} label={activePreview.label} imageUrl={previewItem.imageUrl} videoUrl={previewItem.videoUrl} onClose={() => setActivePreview(null)} /> : null}
       <style>{`
         .dancer-profile-media-uploads { width:min(100%,760px); min-width:0; display:grid; gap:16px; margin:12px auto 0; }

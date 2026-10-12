@@ -12,14 +12,14 @@ const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../app/dashboard/DancerProfileWorkspace.tsx', import.meta.url), 'utf8');
 const code = ts.transpileModule(source, {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
-function fixture({count=3, pending=0, face=true, draft=false, busy=false, onboarding=true}={}) {
+function fixture({count=3, pending=0, face=true, draft=false, busy=false, onboarding=true, saveResult=true}={}) {
   const slots=[], calls=[], exports={}; let cursor=0;
   const hooks={...React, useState(initial){const i=cursor++;if(!(i in slots))slots[i]=typeof initial==='function'?initial():initial;return [slots[i],v=>{slots[i]=typeof v==='function'?v(slots[i]):v;}];},useRef(initial){const i=cursor++;return slots[i]||=( {current:initial});},useEffect(){},useCallback:fn=>fn};
   const photos=[...Array.from({length:count},(_,i)=>({id:`p${i}`,imageUrl:`/${i}.jpg`,status:'approved',isPrimary:i===0})), ...Array.from({length:pending},(_,i)=>({id:`pending${i}`,status:'pending'}))];
   const props={identityContent:'Identity',avatarContent:'Avatar',mainPhotoContent:'Main',photoContent:'Photo uploader',videoContent:'Video uploader',draftIdentity:{stageName:draft?'New name':'Dancer',city:'Las Vegas'},profile:{id:'owner',stage_name:'Dancer',city:'Las Vegas',avatarPhotoUrl:face?'/face.jpg':'',dancer_photos:photos},onboarding,uploadBusy:busy,onContinue:()=>calls.push('agreement')};
   vm.runInNewContext(code,{exports,AbortController,Error,window:{requestAnimationFrame:fn=>fn()},require:name=>{
     if(name==='react')return hooks;
-    if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');return true;}};
+    if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');return saveResult;}};
     if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:[{id:'optional',status:'submitted'}],setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,approvedProfilePhotoCount};
@@ -54,4 +54,23 @@ test('returning dancers do not need to re-complete onboarding to save details',a
 test('preview receives approved photos only and retains unsaved identity',()=>{
   const f=fixture({count:3,pending:2,draft:true});f.draw().find(n=>n.type==='button'&&n.props.children==='Preview').props.onClick();
   const preview=f.draw().find(n=>n.type==='./DancerProfilePreviewContent');assert.equal(preview.props.photos.length,3);assert.equal(preview.props.name,'New name');
+});
+
+test('onboarding starts with the fields and a single Add action opens photo uploads',()=>{
+  const f=fixture({count:0,face:false});
+  const nodes=f.draw();
+  assert.ok(!nodes.some(n=>['dancer-workspace-heading','dancer-builder-checklist','dancer-editor-shortcuts'].includes(n.props.className)));
+  assert.equal(nodes.find(n=>n.type==='fieldset').props.children[0].props.id,'dancer-details-section');
+  assert.equal(nodes.find(n=>n.type==='footer').props.children[0].props.hidden,true);
+  const add=nodes.filter(n=>n.type==='button'&&n.props.children==='+ Add');
+  assert.equal(add.length,1);add[0].props.onClick();
+  assert.ok(f.draw().find(n=>n.props.className==='dancer-add-media').props.children.includes('Photo uploader'));
+  assert.ok(f.draw().some(n=>n.type==='button'&&n.props.children==='Video · optional'));
+});
+
+test('compact onboarding still shows failed saves and does not advance',async()=>{
+  const f=fixture({draft:true,saveResult:false});f.footer().props.onClick();await new Promise(resolve=>setImmediate(resolve));
+  const status=f.draw().find(n=>n.type==='footer').props.children[0];
+  assert.equal(status.props.hidden,false);assert.match(status.props.children,/Check your details/);
+  assert.deepEqual(f.calls,['save']);
 });

@@ -745,7 +745,7 @@ export function DancerOnboardingCommand({
         <span>
           <span className="eyebrow">Step {steps.indexOf(firstIncomplete) + 1} of 3</span>
           <h2 id="dancer-onboarding-heading">{renewingAgreement ? "Dancer Agreement" : firstIncomplete.id === "dancer-profile-media" ? "Create your profile" : firstIncomplete.id === "dancer-onboarding-age" ? "Verify you’re 18+" : "Confirm your club"}</h2>
-          <p>{renewingAgreement ? "Your saved profile and verification stay in place." : "Three steps to get your profile ready."}</p>
+          {renewingAgreement ? <p>Your saved profile and verification stay in place.</p> : null}
         </span>
         <div className="dancer-onboarding-progress">
           <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={completedSteps} aria-valuetext={progressLabel}>
@@ -791,7 +791,7 @@ export function DancerOnboardingCommand({
                   <span className="dancer-onboarding-step-title">
                     <strong>{step.label}</strong>
                   </span>
-                  <small>{step.detail}</small>
+                  {step.notRequired ? <small>Not required</small> : !open && !step.locked ? <small>{step.detail}</small> : null}
                 </span>
                 <span className={`dancer-onboarding-step-control is-${controlTone}`} aria-hidden="true">
                   {controlTone === "locked" ? (

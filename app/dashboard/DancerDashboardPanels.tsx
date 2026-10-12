@@ -699,7 +699,7 @@ function DancerSetupPanel({
             </option>
             {cityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
-          <small>{cityOptionsStatus === "error" ? "The live city list could not be loaded. Try again before saving." : "Choose from active MyDancr venue markets."}</small>
+          {cityOptionsStatus === "error" ? <small>The live city list could not be loaded. Try again before saving.</small> : !unifiedSave ? <small>Choose from active MyDancr venue markets.</small> : null}
         </label> : null}
         {unifiedSave ? null : (
           <div className="dancer-profile-form-actions">
