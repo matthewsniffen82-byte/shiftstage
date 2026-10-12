@@ -22,7 +22,7 @@ function harness(kind = 'photo', response) {
     useCallback(fn, deps) { const i = cursor++; if (changed(slots[i]?.deps, deps)) slots[i] = { fn, deps }; return slots[i].fn; },
   };
   const request = async (...args) => { calls.push(args); return response ? response(...args) : { dismissedId: props.id }; };
-  vm.runInNewContext(code, { exports, AbortController, document,
+  vm.runInNewContext(code, { exports, AbortController, document, performance: { now: () => now },
     IntersectionObserver: class { constructor(fn) { observer = fn; } observe() {} disconnect() {} },
     window: { setTimeout: (fn, delay) => { const key = {}; timers.set(key, { fn, at: now + delay }); return key; }, clearTimeout: key => timers.delete(key) },
     require: name => name === 'react' ? hooks : name === 'react/jsx-runtime' ? { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
@@ -35,7 +35,7 @@ function harness(kind = 'photo', response) {
     visible(value) { observer([{ isIntersecting: value }]); render(); },
     tabVisible(value) { document.visibilityState = value ? 'visible' : 'hidden'; events.get('visibilitychange')(); render(); },
     busy(value) { props.disabled = value; dirty = true; render(); },
-    hover(value) { tree.props[value ? 'onMouseEnter' : 'onMouseLeave'](); render(); },
+    hover(value) { tree.props[value ? 'onMouseEnter' : 'onMouseLeave']?.(); render(); },
     async advance(ms) { now += ms; for (const [id, timer] of [...timers]) if (timer.at <= now) { timers.delete(id); timer.fn(); } await this.settle(); },
     async settle() { await new Promise(resolve => setImmediate(resolve)); render(); },
     retry() { nodes(tree).find(node => node.type === 'button').props.onClick(); render(); },
@@ -44,7 +44,7 @@ function harness(kind = 'photo', response) {
   render(); return ui;
 }
 
-for (const kind of ['photo', 'video']) test(`${kind} shows the reason, then clears only the rejected ID after ten visible seconds`, async () => {
+for (const kind of ['photo', 'video']) test(`${kind} shows the reason, then clears only the rejected ID ten seconds after appearing`, async () => {
   const ui = harness(kind);
   assert.equal(ui.tree.props.role, 'status');
   assert.equal(ui.tree.props.children[1].props.children, 'Remove the contact overlay.');
@@ -58,12 +58,24 @@ for (const kind of ['photo', 'video']) test(`${kind} shows the reason, then clea
   assert.deepEqual(ui.calls.at(-1), ['dismissed']);
 });
 
-test('background tabs, busy uploads and pointer reading pause the notice', async () => {
+test('background tabs and busy uploads preserve elapsed reading time instead of restarting it', async () => {
   const ui = harness(); ui.visible(true); await ui.advance(5_000); ui.tabVisible(false);
   await ui.advance(20_000); assert.equal(ui.calls.length, 0);
   ui.tabVisible(true); ui.busy(true); await ui.advance(20_000); assert.equal(ui.calls.length, 0);
-  ui.busy(false); ui.hover(true); await ui.advance(20_000); assert.equal(ui.calls.length, 0);
-  ui.hover(false); await ui.advance(10_000); assert.equal(ui.tree, null);
+  ui.busy(false); await ui.advance(4_999); assert.equal(ui.calls.length, 0);
+  await ui.advance(1); assert.equal(ui.tree, null);
+});
+
+test('scrolling away after seeing a reason does not leave the rejection stored indefinitely', async () => {
+  const ui = harness(); ui.visible(true); await ui.advance(4_000);
+  ui.visible(false); await ui.advance(5_999); assert.equal(ui.calls.length, 0);
+  await ui.advance(1); assert.equal(ui.tree, null);
+});
+
+test('synthetic mobile hover does not prevent the rejection notice from clearing', async () => {
+  const ui = harness(); ui.visible(true); ui.hover(true);
+  await ui.advance(10_000); assert.equal(ui.tree, null);
+  assert.equal(ui.calls.filter(call => call[0] === 'dismissed').length, 1);
 });
 
 for (const failure of ['network', 'unconfirmed']) test(`${failure} keeps the reason and offers one explicit retry without a request loop`, async () => {

@@ -14,24 +14,24 @@ export default function DancerRejectedUploadNotice({ id, kind, label, message, d
   disabled?: boolean;
   onDismiss: () => void;
 }) {
-  const [visible, setVisible] = useState(false);
-  const [paused, setPaused] = useState(false);
+  const [hasBeenVisible, setHasBeenVisible] = useState(false);
+  const [pageVisible, setPageVisible] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [removed, setRemoved] = useState(false);
   const [error, setError] = useState("");
   const notice = useRef<HTMLDivElement>(null);
   const request = useRef<AbortController | null>(null);
+  const remainingMs = useRef(REJECTION_NOTICE_MS);
   const dismissCallback = useRef(onDismiss);
   useEffect(() => { dismissCallback.current = onDismiss; }, [onDismiss]);
   useEffect(() => () => { request.current?.abort(); }, []);
 
   useEffect(() => {
-    let inView = typeof IntersectionObserver === "undefined";
-    const updateVisibility = () => setVisible(inView && document.visibilityState === "visible");
+    const updateVisibility = () => setPageVisible(document.visibilityState === "visible");
+    if (typeof IntersectionObserver === "undefined") setHasBeenVisible(true);
     const observer = typeof IntersectionObserver === "undefined" ? null : new IntersectionObserver(entries => {
-      inView = entries.some(entry => entry.isIntersecting);
-      updateVisibility();
-    }, { threshold: 0.5 });
+      if (entries.some(entry => entry.isIntersecting)) setHasBeenVisible(true);
+    }, { threshold: 0 });
     if (notice.current) observer?.observe(notice.current);
     document.addEventListener("visibilitychange", updateVisibility);
     updateVisibility();
@@ -61,15 +61,19 @@ export default function DancerRejectedUploadNotice({ id, kind, label, message, d
   }, [id, kind]);
 
   useEffect(() => {
-    if (!visible || paused || disabled || removing || removed || error) return;
-    const timer = window.setTimeout(() => void dismiss(), REJECTION_NOTICE_MS);
-    return () => window.clearTimeout(timer);
-  }, [visible, paused, disabled, removing, removed, error, dismiss]);
+    if (!hasBeenVisible || !pageVisible || disabled || removing || removed || error) return;
+    // Once shown, scrolling or a phone's synthetic hover must not restart cleanup.
+    // Preserve elapsed time when the tab is hidden or another upload is busy.
+    const startedAt = performance.now();
+    const timer = window.setTimeout(() => void dismiss(), remainingMs.current);
+    return () => {
+      window.clearTimeout(timer);
+      remainingMs.current = Math.max(0, remainingMs.current - (performance.now() - startedAt));
+    };
+  }, [hasBeenVisible, pageVisible, disabled, removing, removed, error, dismiss]);
 
   if (removed) return null;
-  return <div ref={notice} className="dancer-rejected-upload-notice" role="status" aria-live="polite"
-    onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}
-    onFocus={() => setPaused(true)} onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false); }}>
+  return <div ref={notice} className="dancer-rejected-upload-notice" role="status" aria-live="polite">
     <strong>{label}: Not approved</strong>
     <p>{message}</p>
     {error ? <><p>{error}</p><button type="button" disabled={disabled || removing} onClick={() => void dismiss()}>Retry removal</button></> : null}
