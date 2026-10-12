@@ -137,8 +137,8 @@ function reactCardFixture() {
     deviceSavedDealsStorageKey,
     hasSignedInCustomerDealAccount: () => true,
     setCustomerDealSavedInAccount: async () => false,
-    savePending: false, saveStateVersion: { current: 0 },
-    setSavePending() {}, setSavedOnDevice() {}, setStatus: text => notices.push(text),
+    saveInFlight: { current: false }, saveStateVersion: { current: 0 }, activeDealIdRef: { current: 'react-offer' },
+    setSavePending() {}, setSavedOnDevice() {}, setOptimisticSaved() {}, setStatus: text => notices.push(text),
     activeDeal: { id: 'react-offer', dealTitle: 'React offer' }, venueId: 'club', venueName: 'Club',
     displayDescription: '', displayTerms: '', sourceType: 'club_page',
   });

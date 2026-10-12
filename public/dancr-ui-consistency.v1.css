@@ -1989,6 +1989,116 @@ html body.dancr-button-system > .app main.stack > section.stack
   stroke-width: 1.5 !important;
 }
 
+/* Header inboxes use one compact surface for alerts and saved admission passes. */
+html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) {
+  box-sizing: border-box;
+  gap: 10px !important;
+  padding: 12px !important;
+  border: 1px solid #382f46 !important;
+  border-radius: 16px !important;
+  background: linear-gradient(#100c17, #100c17) !important;
+  box-shadow: 0 16px 40px #0008 !important;
+  color: #f5f2fa !important;
+}
+html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) h3 {
+  margin: 0;
+  color: #f5f2fa !important;
+  font: 650 15px/1.35 var(--font-ui) !important;
+  letter-spacing: -.015em !important;
+}
+html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-list { gap: 8px; }
+html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-item {
+  --inbox-row-face: #15101d;
+  --inbox-row-edge: #32283f;
+  position: relative !important;
+  isolation: isolate;
+  display: grid !important;
+  box-sizing: border-box !important;
+  min-width: 0;
+  min-height: 64px !important;
+  height: auto !important;
+  padding: 10px 12px !important;
+  gap: 4px !important;
+  border: 0 !important;
+  border-radius: 12px !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: #f5f2fa !important;
+  text-align: left !important;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  transform: none !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+/* Paint the face separately so Android does not substitute a gray native button. */
+html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-item::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: -1;
+  display: block !important;
+  border: 1px solid var(--inbox-row-edge) !important;
+  border-radius: inherit !important;
+  background: linear-gradient(var(--inbox-row-face), var(--inbox-row-face)) !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: none !important;
+}
+html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-item::after { content: none !important; }
+html body.dancr-button-system header #customerDealsQuickPanel .customer-quick-item { grid-template-columns: 32px minmax(0, 1fr) !important; column-gap: 12px !important; }
+html body.dancr-button-system header #customerDealsQuickPanel .customer-quick-deal-copy { grid-column: 2; grid-row: 1; gap: 4px; }
+html body.dancr-button-system header #customerDealsQuickPanel .customer-quick-deal-copy > strong,
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-title {
+  color: #f5f2fa !important;
+  font: 650 14px/1.35 var(--font-ui) !important;
+  letter-spacing: 0 !important;
+}
+html body.dancr-button-system header #customerDealsQuickPanel .customer-quick-deal-copy > span {
+  color: #bdb5c9 !important;
+  font: 400 12px/1.4 var(--font-ui) !important;
+}
+html body.dancr-button-system header #customerDealsQuickPanel .saved-deal-nfc-symbol {
+  grid-column: 1;
+  grid-row: 1;
+  border: 1px solid #4a365f;
+  border-radius: 10px;
+  background: linear-gradient(#22152f, #22152f);
+  color: #c4a3f1 !important;
+}
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-title { align-items: center; gap: 12px; }
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-title > .action-icon {
+  box-sizing: border-box;
+  flex: 0 0 32px;
+  width: 32px !important;
+  height: 32px !important;
+  border: 1px solid #4a365f;
+  border-radius: 10px;
+  background: linear-gradient(#22152f, #22152f);
+  color: #c4a3f1 !important;
+}
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-date {
+  padding-inline-start: 44px;
+  color: #bdb5c9 !important;
+  font: 400 11px/1.4 var(--font-ui) !important;
+}
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-unread { margin-top: 0; background: #c4a3f1; }
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-quick-item:has(.customer-notification-unread) { --inbox-row-edge: #5a4075; }
+html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-empty {
+  padding: 16px 12px;
+  border: 1px dashed #382f46;
+  border-radius: 12px;
+  background: linear-gradient(#15101d, #15101d);
+  color: #bdb5c9;
+  font: 400 13px/1.5 var(--font-ui);
+}
+html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) button:focus-visible { outline: 2px solid #c4a3f1 !important; outline-offset: 2px !important; }
+@media (hover: hover) {
+  html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-item:hover { --inbox-row-face: #20152c; --inbox-row-edge: #72518e; }
+}
+
 /* Keep the Clubs and TV headings, shared roster disclaimer, and first card close together. */
 html body.dancr-button-system > .app main.stack > section.stack:has(> #results:is(.home-venue-discovery-feed, .venue-card-grid, .home-tv-feed):not(.venue-profile-overlay)) {
   row-gap: 6px !important;
