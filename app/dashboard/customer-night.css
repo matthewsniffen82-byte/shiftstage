@@ -103,20 +103,22 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary::before { inset:3px 3px auto auto; width:30px; height:24px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary>svg { position:absolute; top:5px; right:8px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card { min-width:0; padding:16px; border:1px solid var(--customer-line); border-radius:16px; background:var(--customer-surface); overflow:visible; box-shadow:0 4px 14px #0003; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { display:grid; grid-template-columns:64px minmax(0,1fr) 44px; gap:12px; align-items:center; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-favorite-club-brand,.customer-favorite-club-logo) { width:64px; height:70px; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-logo img { width:100%; height:100%; object-fit:contain; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card { min-width:0; padding:12px; border:1px solid var(--customer-line); border-radius:14px !important; background:var(--customer-surface); overflow:visible; box-shadow:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { display:grid; grid-template-columns:112px minmax(0,1fr) 44px; gap:10px; align-items:center; padding:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-favorite-club-brand,.customer-favorite-club-logo) { width:112px; height:64px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-logo img { width:100%; height:100%; max-height:none; object-fit:contain; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-identity { min-width:0; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-identity strong { font-size:17px; font-weight:600; line-height:1.3; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-identity small { color:var(--customer-muted); font-size:12px; line-height:1.5; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-copy { margin-top:12px; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity { margin:0 0 12px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-copy { margin-top:6px; padding:0; gap:6px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity { margin:0; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now { display:inline-flex; gap:6px; align-items:center; min-height:36px; color:var(--customer-green); border:0; background:transparent; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now i { width:6px; height:6px; border-radius:50%; background:currentColor; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now:not(.has-dancers) { color:var(--customer-muted); }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now:not(.has-dancers) i { display:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-actions { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card .venue-customer-sharing { margin-top:2px; padding-top:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card .venue-customer-sharing>summary { min-height:44px; padding:0; font-size:12px; font-weight:500; line-height:1.4; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-panel { padding:0; border:0; background:transparent; box-shadow:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-head { display:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-privacy-note { margin:0 0 16px; color:var(--customer-muted); font-size:13px; line-height:1.5; }
@@ -187,6 +189,7 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions { flex:1; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions>* { flex:1; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-grid { grid-template-columns:minmax(0,1fr); }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card { padding:10px; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary { border-color:#ffffff12; background:#0e0914b3; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-toolbar { align-items:stretch; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-city-filter { width:100%; }
@@ -198,8 +201,8 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 @media (max-width:360px) {
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .dashboard-head-row { grid-template-columns:38px minmax(0,1fr) 44px; gap:9px; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dashboard-avatar { width:38px; height:38px; font-size:16px; }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { grid-template-columns:48px minmax(0,1fr) 44px; gap:8px; }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-favorite-club-brand,.customer-favorite-club-logo) { width:48px; height:60px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { grid-template-columns:96px minmax(0,1fr) 44px; gap:8px; }
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-favorite-club-brand,.customer-favorite-club-logo) { width:96px; height:60px; }
 }
 
 

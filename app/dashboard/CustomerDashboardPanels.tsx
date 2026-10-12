@@ -810,7 +810,7 @@ function SavedVenueLogo({ venue }: { venue: SavedVenueSummary }) {
   if (!logoUrl || failedUrl === logoUrl) {
     return <svg className="customer-club-logo-fallback" viewBox="0 0 64 64" aria-hidden="true"><path d="M12 54V22L32 10l20 12v32M8 54h48M23 54V40h18v14M23 25h18M23 32h18" /></svg>;
   }
-  return <img src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="(max-width: 380px) 104px, 124px" width={venue.logoImageWidth || undefined} height={venue.logoImageHeight || undefined} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} />;
+  return <img src={logoUrl} srcSet={venue.logoImageSrcSet || undefined} sizes="(max-width: 360px) 96px, 112px" width={venue.logoImageWidth || undefined} height={venue.logoImageHeight || undefined} alt={`${venue.name || "Club"} logo`} loading="lazy" decoding="async" onError={() => setFailedUrl(logoUrl)} />;
 }
 
 
