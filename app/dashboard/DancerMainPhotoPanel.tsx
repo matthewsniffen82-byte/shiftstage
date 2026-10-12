@@ -6,6 +6,7 @@ import type { LoadState } from "./dashboard-types";
 import { uploadMainProfilePhoto } from "./main-profile-photo-upload";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerPhotoControls from "./DancerPhotoControls";
+import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import "../../public/dancer-main-photo.css";
@@ -117,6 +118,8 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
         </DancerPhotoControls>
       </div>
       {retry ? <button type="button" disabled={busy} onClick={() => void upload()}>Retry main photo upload</button> : null}
+      {pendingPhoto ? <DancerMediaRetryButton id={pendingPhoto.id} kind="photo" status={pendingPhoto.status} moderationStatus={pendingPhoto.moderationStatus}
+        disabled={busy || cropping} onBusyChange={setBusy} onRetried={({ profile }) => { if (profile) onProfileChange?.(profile); }} /> : null}
       <p className="dancer-main-photo-status" role="status" aria-live="polite">{status}</p>
     </div>
   </section>;

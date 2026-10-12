@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   hideOwnMyDancrTvVideo,
+  queueOwnMyDancrTvReviewRetry,
   retryMyDancrTvAutomatedModeration,
   submitMyDancrTvUpload,
 } from "@/src/lib/dancr/tv";
@@ -43,10 +44,10 @@ export async function PATCH(request: Request, { params }: RouteProps) {
       invalidMessage: "Invalid video action request.",
       tooLargeMessage: "Video action request is too large.",
     });
-    if (body?.action !== "submit") {
+    if (body?.action !== "submit" && body?.action !== "retry") {
       return NextResponse.json({ ok: false, error: "Invalid video action." }, { status: 400 });
     }
-    const video = await submitMyDancrTvUpload(
+    const video = body.action === "retry" ? await queueOwnMyDancrTvReviewRetry(admin, user.id, id) : await submitMyDancrTvUpload(
       admin,
       user.id,
       id,

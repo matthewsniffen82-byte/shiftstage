@@ -39,6 +39,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
         requestDancerProfileJson: async () => ({ profile }),
       };
       if (name === "./DancerSavedPhotoCrop") return { default: "SavedCrop" };
+      if (name === "./DancerMediaRetryButton") return { default: "MediaRetry" };
       if (name === "./DancerPhotoControls") return { default: "PhotoControls" };
       if (name === "./main-profile-photo-upload") return { uploadMainProfilePhoto: async (...args) => { uploads.push(args); return result; } };
       if (name.endsWith(".css")) return {};

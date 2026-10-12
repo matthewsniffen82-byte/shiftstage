@@ -4,7 +4,7 @@ import { serverJobRemainingMs, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../src/li
 import { isPublicDancerProfileEligible } from "../src/lib/dancr/profile-approval.ts";
 import {
   createWorkerDatabase, seedWorker, patchWorker, workerSnapshot, videoWorkerHarness,
-  workerDecision, captureWorker, workerInstant,
+  workerDecision, captureWorker, workerInstant, workerUserId,
 } from "./helpers/video-worker-database.mjs";
 
 let db;
@@ -14,6 +14,28 @@ after(async () => { await db?.close(); });
 const foreignWorker = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 
 const unfinishedProfile = { stage_name: "", city: null, status: "draft", verification_status: "pending", approved_at: null, is_public: false };
+test("owner retry queues a pending video and only the claimed worker publishes it", async () => {
+  await patchWorker(db, { status: "submitted", moderation_started_at: new Date(workerInstant - 600000).toISOString(), reviewed_by: null, reviewed_at: null });
+  const h = videoWorkerHarness(db);
+  assert.equal((await h.retryOwn()).status, "moderating");
+  assert.equal(h.providers.length, 0);
+  await assert.rejects(h.retryOwn(), /wait before retrying/);
+  assert.equal((await h.retry()).status, "approved");
+  assert.equal(h.providers.length, 1);
+});
+for (const status of ["approved", "rejected", "hidden", "expired", "uploading"]) test(`owner cannot restart ${status} video review`, async () => {
+  await patchWorker(db, { status }); const h = videoWorkerHarness(db);
+  const before = await workerSnapshot(db);
+  await assert.rejects(h.retryOwn(), /no longer waiting/);
+  assert.deepEqual(await workerSnapshot(db), before);
+});
+test("owner video retry rejects foreign ownership and concurrent human review", async () => {
+  await patchWorker(db, { status: "submitted", moderation_started_at: new Date(workerInstant - 600000).toISOString() });
+  const h = videoWorkerHarness(db);
+  await assert.rejects(h.retryOwn(foreignWorker), /not found/);
+  await patchWorker(db, { reviewed_by: workerUserId });
+  await assert.rejects(h.retryOwn(), /no longer waiting/);
+});
 for (const demo of [false, true]) test(`${demo ? "demo" : "AI"} video review completes before stage name and city are saved`, async () => {
   await patchWorker(db, { status: "uploading" });
   const h = videoWorkerHarness(db, { demo, profile: unfinishedProfile });

@@ -1,6 +1,6 @@
 import "server-only";
 import { withOpenAIRequestDeadline as withTimeout } from "../openai-request.ts";
-import { assertServerJobActive, runWithServerJob, withServerJobFetch } from "../server-job.ts";
+import { assertServerJobActive, MODERATION_WORKER_STALE_MS, runWithServerJob, withServerJobFetch } from "../server-job.ts";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "crypto";
@@ -322,14 +322,60 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   });
 }
 
-export async function processImageModerationRetryRecord(admin: DancrClient, record: any): Promise<ModeratedPhotoResult> {
+export async function retryOwnDancerPhotoReview(admin: DancrClient, userId: string, recordId: string) {
+  return runWithServerJob(async () => {
+    const { data: record, error } = await admin.from("image_moderation_records").select("*")
+      .eq("id", recordId).eq("user_id", userId).maybeSingle();
+    if (error) throw error;
+    if (!record) throw new PublicApiError("NOT_FOUND", "Photo review not found.", 404);
+    if (record.decision !== "review" || record.review_decision !== null
+      || !["pending_review", "moderation_error", "moderation_retry", "error", "moderating"].includes(record.status)) {
+      throw new PublicApiError("CONFLICT", "This photo is no longer waiting for review. Refresh its status.", 409);
+    }
+    const version = galleryReviewVersion(record.updated_at);
+    const waitMs = record.status === "moderating" ? MODERATION_WORKER_STALE_MS : 60_000;
+    if (Date.parse(version) > Date.now() - waitMs) {
+      throw new PublicApiError("CONFLICT", "This photo was checked recently or is still processing. Please wait before retrying.", 409);
+    }
+    const attempt = record.attempt_count + 1;
+    if (!Number.isSafeInteger(record.attempt_count) || record.attempt_count < 0 || attempt > 2_147_483_647
+      || !record.temporary_storage_path) throw new Error("Photo retry record is incomplete.");
+    const oldPath = record.temporary_storage_path;
+    const fromReview = record.status === "pending_review";
+    const path = fromReview ? oldPath.replace(/[^/]+$/, `retry-${randomUUID()}${/\.(?:jpe?g|png|webp)$/i.exec(oldPath)?.[0] || ".jpg"}`) : oldPath;
+    // Copy privately before claiming; preserve the original on any uncertain write.
+    if (fromReview) await copyPrivateModerationObject(admin, MODERATION_REVIEW_BUCKET, oldPath, MODERATION_TEMP_BUCKET, path);
+    const now = new Date().toISOString();
+    const { data: claimed, error: claimError } = await admin.from("image_moderation_records").update({
+      status: "moderating", temporary_storage_path: path, attempt_count: attempt,
+      locked_at: now, updated_at: now, next_attempt_at: null,
+    }).eq("id", recordId).eq("user_id", userId).eq("updated_at", version)
+      .eq("status", record.status).eq("decision", "review").is("review_decision", null)
+      .eq("attempt_count", record.attempt_count).eq("temporary_storage_path", oldPath).select("*").maybeSingle();
+    if (claimError) throw claimError;
+    if (!claimed) {
+      if (fromReview) await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, path);
+      throw new PublicApiError("CONFLICT", "This photo's review changed. Refresh its status.", 409);
+    }
+    if (claimed.id !== recordId || claimed.user_id !== userId || claimed.status !== "moderating"
+      || claimed.temporary_storage_path !== path || claimed.attempt_count !== attempt
+      || claimed.decision !== "review" || claimed.review_decision !== null || claimed.upload_context !== record.upload_context
+      || Date.parse(galleryReviewVersion(claimed.updated_at)) <= Date.parse(version)
+      || Date.parse(claimed.locked_at) !== Date.parse(now)) throw new Error("Photo retry could not be confirmed.");
+    if (fromReview) await safeRemoveObject(admin, MODERATION_REVIEW_BUCKET, oldPath);
+    return processImageModerationRetryRecord(admin, claimed, { manualRetry: true });
+  });
+}
+
+export async function processImageModerationRetryRecord(admin: DancrClient, record: any, options: { manualRetry?: boolean } = {}): Promise<ModeratedPhotoResult> {
   return runWithServerJob(async () => {
   const tempPath = String(record?.temporary_storage_path || "");
   if (!record?.id || !record?.user_id || !tempPath) {
     throw new Error("retry_record_incomplete");
   }
   const attemptCount = record.attempt_count;
-  if (!Number.isSafeInteger(attemptCount) || attemptCount < 1 || attemptCount > 4
+  if (!Number.isSafeInteger(attemptCount) || attemptCount < 1 || attemptCount > 2_147_483_647
+    || (!options.manualRetry && attemptCount > 4)
     || record.status !== "moderating" || record.decision !== "review"
     || !Number.isFinite(Date.parse(record.locked_at))) throw new Error("retry_record_not_claimed");
   const expectedUpdatedAt = galleryReviewVersion(record.updated_at);
@@ -395,7 +441,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
 
     if (evaluation.decision === "review") {
       const reviewPath = tempPath.replace(`${record.user_id}/${profile.id}/`, `${record.user_id}/${profile.id}/review-`);
-      await copyPrivateModerationObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, "image/jpeg");
+      await copyPrivateModerationObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, downloadedImage.contentType);
       await updateModerationRecord(admin, record.id, {
         decision: "review",
         status: "pending_review",
@@ -954,10 +1000,10 @@ async function uploadPrivateObject(client: DancrClient, bucket: string, path: st
   requireStorageUploadReceipt(data, bucket, path);
 }
 
-async function copyPrivateModerationObject(client: DancrClient, fromBucket: string, fromPath: string, toBucket: string, toPath: string, contentType: string) {
+async function copyPrivateModerationObject(client: DancrClient, fromBucket: string, fromPath: string, toBucket: string, toPath: string, contentType?: string) {
   const { data, error } = await client.storage.from(fromBucket).download(fromPath);
   if (error || !data) throw error || new Error("Unable to read private moderation object.");
-  const { data: uploaded, error: uploadError } = await client.storage.from(toBucket).upload(toPath, data, { contentType, upsert: false });
+  const { data: uploaded, error: uploadError } = await client.storage.from(toBucket).upload(toPath, data, { contentType: contentType || data.type, upsert: false });
   if (uploadError) throw uploadError;
   requireStorageUploadReceipt(uploaded, toBucket, toPath);
   // Retain the source until the record points to the copy with a confirmed versioned write.

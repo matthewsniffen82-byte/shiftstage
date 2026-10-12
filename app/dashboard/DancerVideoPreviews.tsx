@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaPinButton from "./DancerMediaPinButton";
+import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 
 type PreviewVideo = {
@@ -68,6 +69,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
             </div>
             <strong>Video {index + 1}</strong>
             <small className={video.status === "approved" ? "is-ready" : ""}>{videoPreviewStatus(video.status)}</small>
+            <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={disabled} />
           </li>
         ))}
       </ul>

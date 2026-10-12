@@ -6,6 +6,7 @@ import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync"
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaViewer from "./DancerMediaViewer";
+import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 
 type UploadItem = {
@@ -33,6 +34,7 @@ export default function DancerProfileMediaUploads({
   onVideoDeleted,
   onDeleteBusyChange,
   onMediaPinned,
+  onProfileChange,
   compact = false,
   disabled = false,
   photoActions,
@@ -51,6 +53,7 @@ export default function DancerProfileMediaUploads({
   onVideoDeleted: (videoId: string) => void;
   onDeleteBusyChange?: (busy: boolean) => void;
   onMediaPinned?: (mediaType: "photo" | "video", mediaId: string, pinned: boolean) => void;
+  onProfileChange?: (profile: Record<string, unknown>) => void;
 }) {
   const [deletingPhotoId, setDeletingPhotoId] = useState("");
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<Set<string>>(() => new Set());
@@ -59,11 +62,12 @@ export default function DancerProfileMediaUploads({
   const [deletedVideoIds, setDeletedVideoIds] = useState<Set<string>>(() => new Set());
   const [videoStatus, setVideoStatus] = useState("");
   const [pinningId, setPinningId] = useState("");
+  const [retrying, setRetrying] = useState(false);
   const [activePreview, setActivePreview] = useState<{ kind: "photo" | "video"; id: string; label: string } | null>(null);
   const previewItem = activePreview && (activePreview.kind === "photo" ? photos : videos).find((item) => item.id === activePreview.id);
   const deleteRequestRef = useRef<AbortController | null>(null);
   const isDeleting = Boolean(deletingPhotoId || deletingVideoId || pinningId);
-  const actionsDisabled = isDeleting || disabled;
+  const actionsDisabled = isDeleting || retrying || disabled;
 
   useEffect(() => () => {
     deleteRequestRef.current?.abort();
@@ -226,6 +230,9 @@ export default function DancerProfileMediaUploads({
                     </div>
                     <strong>{label} {index + 1}</strong>
                     <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status, item.moderationStatus)}</small>
+                    <DancerMediaRetryButton key={item.id} id={item.id} kind={isPhoto ? "photo" : "video"} status={item.status} moderationStatus={item.moderationStatus}
+                      disabled={actionsDisabled} onBusyChange={busy => { setRetrying(busy); onDeleteBusyChange?.(busy); }}
+                      onRetried={({ profile }) => { if (profile) onProfileChange?.(profile); }} />
                     {["rejected", "denied", "failed", "uploading"].includes(item.status) ? <button className="dancer-upload-replace" type="button" disabled={actionsDisabled} onClick={() => onOpen(section)}>Upload replacement</button> : null}
                   </li>
                 ))}

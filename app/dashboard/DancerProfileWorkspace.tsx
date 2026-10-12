@@ -174,6 +174,7 @@ export default function DancerProfileWorkspace({
           {addMedia === "photos" ? photoContent : addMedia === "videos" ? videoContent : <p>Choose the type of media to add.</p>}
         </div> : null}
         <DancerProfileMediaUploads compact photos={additionalPhotos} videos={uploadedVideos.map(video => ({ ...video, imageUrl: video.posterUrl }))}
+          onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={isMediaLoading} videoError={mediaError}
           disabled={cropBusy || saving || avatarBusy}
           onOpen={section => openEditorArea("dancer-profile-media-library", section)} onDeleteBusyChange={setMediaBusy}

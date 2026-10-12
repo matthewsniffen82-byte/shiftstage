@@ -39,6 +39,7 @@ function avatarHarness({ profile = {}, compact = false, crop = async file => fil
     },
     dancerPhotoItemsFromProfile: p => p.dancer_photos || [],
     DancerPhotoControls: "PhotoControls",
+    DancerMediaRetryButton: "MediaRetryButton",
     cropProfilePhoto: crop,
     requestDashboardJson: (url, options) => { sourceRequests.push({ url, ...options }); return source(options); },
     AvatarUploadBusyContext: {}, AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, DashboardDataRequestError,

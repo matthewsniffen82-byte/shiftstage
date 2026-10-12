@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
+import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerInternalMainPhotoPicker from "./DancerInternalMainPhotoPicker";
 import { requestDancerMediaPin } from "./dashboard-session";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
@@ -36,6 +37,7 @@ export function DancerPhotoPanel({
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [pinningPhotoId, setPinningPhotoId] = useState("");
+  const [retrying, setRetrying] = useState(false);
   const [deletingPhotoIds, setDeletingPhotoIds] = useState<Set<string>>(() => new Set());
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
@@ -109,6 +111,17 @@ export function DancerPhotoPanel({
 
   function updateQueuedPhoto(id: string, changes: Partial<DancerPhotoQueueItem>) {
     setQueuedPhotos((current) => current.map((item) => item.id === id ? { ...item, ...changes } : item));
+  }
+
+  function reviewRetried(id: string, data: { profile?: Record<string, unknown>; result: any }) {
+    if (data.profile) {
+      setPhotos(relabelPhotoItems(dancerPhotoItemsFromProfile(data.profile)));
+      onProfileChange?.(data.profile);
+    }
+    setQueuedPhotos(current => current.map(item => item.result?.id === id ? { ...item, result: {
+      ...item.result, id: String(data.result.photo?.id || id), status: normalizePhotoStatus(data.result.decision),
+      moderationStatus: data.result.decision, note: data.result.decision === "rejected" ? data.result.message : "",
+    } } : item));
   }
 
   function removeQueuedPhoto(id: string) {
@@ -393,7 +406,7 @@ export function DancerPhotoPanel({
     }
   }
 
-  const photoActionBusy = isUploading || Boolean(pinningPhotoId) || deletingPhotoIds.size > 0;
+  const photoActionBusy = isUploading || retrying || Boolean(pinningPhotoId) || deletingPhotoIds.size > 0;
   useEffect(() => { onBusyChange?.(photoActionBusy); return () => onBusyChange?.(false); }, [photoActionBusy, onBusyChange]);
   // Approved photos belong in the gallery. Keep unresolved uploads here and
   // use the refreshed library to retire reviews, even when approval changes IDs.
@@ -473,6 +486,8 @@ export function DancerPhotoPanel({
                   <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error ? "Upload failed" : "Waiting to upload"}</small>
                   {item.stage !== "failed" && item.stage !== "complete" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
                   {result?.note ? <em>{result.note}</em> : null}
+                  {result ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
+                    disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(result.id, data)} /> : null}
                   {item.error ? <em>{item.error}</em> : null}
                   {!result ? <span className="photo-queue-actions">
                     {item.error ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
@@ -512,6 +527,8 @@ export function DancerPhotoPanel({
               </div>
               <strong>{photo.label}</strong>
               <small>{photoStatusLabel(photo.status, photo.moderationStatus)}</small>
+              <DancerMediaRetryButton id={photo.id} kind="photo" status={photo.status} moderationStatus={photo.moderationStatus}
+                disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(photo.id, data)} />
             </div>
           );
         })}

@@ -7,12 +7,14 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import { mediaReview } from "./helpers/media-review-label.mjs";
+import { loadMediaRetryComponent } from "./helpers/media-retry-component.mjs";
 
 const source = readFileSync(new URL("../app/dashboard/DancerProfileMediaUploads.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const requireTest = createRequire(import.meta.url);
+const retryButton = loadMediaRetryComponent();
 const thumbnail = {};
 const pinButton = {};
 const viewer = {};
@@ -28,7 +30,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/Dan
 const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
 function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false, announce = () => {} } = {}) {
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
   return exports;
 }
 const exports = loadUploads();

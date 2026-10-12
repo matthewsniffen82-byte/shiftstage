@@ -1243,6 +1243,36 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
   return finalizeMyDancrTvAutomatedModeration(admin, claimed);
 }
 
+export async function queueOwnMyDancrTvReviewRetry(admin: AdminClient, userId: string, videoId: string) {
+  const { data: video, error } = await admin.from("mydancr_tv_videos")
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, reviewed_by, reviewed_at, ${VIDEO_WORKER_FIELDS}`)
+    .eq("id", videoId).eq("submitted_by", userId).maybeSingle();
+  if (error) throw error;
+  if (!video) throw new PublicApiError("NOT_FOUND", "Video not found.", 404);
+  if (!["submitted", "moderating"].includes(video.status) || video.reviewed_by !== null || video.reviewed_at !== null) {
+    throw new PublicApiError("CONFLICT", "This video is no longer waiting for automated review. Refresh its status.", 409);
+  }
+  const previous = videoWorkerState(video);
+  const waitMs = video.status === "moderating" ? VIDEO_WORKER_STALE_AFTER_MS : 60_000;
+  if (previous.startedAt && Date.parse(previous.startedAt) > Date.now() - waitMs) {
+    throw new PublicApiError("CONFLICT", "This video was checked recently or is still processing. Please wait before retrying.", 409);
+  }
+  const now = new Date().toISOString();
+  const update = admin.from("mydancr_tv_videos").update({
+    status: "moderating", moderation_attempt_count: 0, moderation_started_at: now,
+    moderation_details: {}, moderation_decision: null, moderation_completed_at: null,
+    moderation_reason_codes: [], review_notes: "Automated safety review restarted.",
+  });
+  const { data: queued, error: claimError } = await matchVideoWorkerSnapshot(update, video, video.status)
+    .is("reviewed_by", null).is("reviewed_at", null)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, ${VIDEO_WORKER_FIELDS}`)
+    .maybeSingle();
+  if (claimError) throw claimError;
+  if (!queued) throw videoWorkerConflict();
+  assertVideoWorkerClaim(queued, video, null, 0, now);
+  return queued;
+}
+
 export async function retrySubmittedMyDancrTvAutomatedModeration(
   admin: AdminClient,
   adminId: string,

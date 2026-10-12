@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -652,6 +653,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
               ) : <div className="tv-video-unavailable">Video unavailable</div>}
               <div>
                 <span className={`tv-video-status status-${video.status}`}>{statusLabel(video.status)}</span>
+                <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={videoActionBusy}
+                  onRetried={() => { void loadWorkspace({ silent: true }); }} />
                 {video.status === "approved" ? (
                   <p>{!workspace.profileEligible
                     ? "Uploaded. Will appear on your profile after setup and approval."

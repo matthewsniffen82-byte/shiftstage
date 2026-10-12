@@ -3,7 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { readBoundedFormData } from "@/src/lib/bounded-form-data";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
-import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
+import { moderateAndStoreDancerPhoto, retryOwnDancerPhotoReview } from "@/src/lib/dancr/image-moderation";
 import { MAX_DANCR_RAW_UPLOAD_BYTES } from "@/src/lib/dancr/image-validation";
 import {
   DancerMediaRateLimitError,
@@ -14,6 +14,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 const MAX_PHOTO_ACTION_BODY_BYTES = 2_048;
 const MAX_PHOTO_UPLOAD_BODY_BYTES = MAX_DANCR_RAW_UPLOAD_BYTES + 64 * 1024;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -65,6 +66,27 @@ export async function POST(request: Request) {
       return apiError(error, "Unable to upload dancer photo.", 503);
     }
     return apiError(error, "Unable to upload dancer photo.");
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    const { user, session } = await createRequestSupabaseContext(request, { role: "dancer", allowProfileSetup: true });
+    const body = await readBoundedJsonObject(request, { maxBytes: MAX_PHOTO_ACTION_BODY_BYTES,
+      invalidMessage: "Invalid photo retry request.", tooLargeMessage: "Photo retry request is too large." });
+    if (body.action !== "retry" || typeof body.photoId !== "string" || !UUID_PATTERN.test(body.photoId)) {
+      return NextResponse.json({ ok: false, error: "Invalid photo retry request." }, { status: 400 });
+    }
+    const admin = createAdminSupabaseClient();
+    await enforceDancerMediaRequestRateLimit(admin, { media: "image", request, userId: user.id });
+    const result = await retryOwnDancerPhotoReview(admin, user.id, body.photoId);
+    return NextResponse.json({ ok: true, ...result, session }, { headers: { "Cache-Control": "no-store" } });
+  } catch (error) {
+    if (error instanceof DancerMediaRateLimitError) {
+      return NextResponse.json({ ok: false, error: "Too many review requests. Please wait before retrying." },
+        { status: 429, headers: { "retry-after": String(error.retryAfterSeconds) } });
+    }
+    return apiError(error, "Unable to retry photo review.");
   }
 }
 

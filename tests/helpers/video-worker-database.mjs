@@ -173,6 +173,7 @@ export function videoWorkerHarness(db, options = {}) {
   return { calls, providers, watermarks, client,
     advance(milliseconds) { instant += milliseconds; },
     retry: () => tv.retryMyDancrTvAutomatedModeration(client, workerVideoId),
+    retryOwn: (userId = workerUserId) => tv.queueOwnMyDancrTvReviewRetry(client, userId, workerVideoId),
     submit: (deferModeration = false) => tv.submitMyDancrTvUpload(client, workerUserId, workerVideoId, { deferModeration }),
     retrySubmitted: () => tv.retrySubmittedMyDancrTvAutomatedModeration(client, slotId(2), workerVideoId),
     demoPending: () => tv.autoApprovePendingMyDancrTvDemoVideo(client, workerVideoId),

@@ -7,6 +7,7 @@ import type { LoadState } from "./dashboard-types";
 import { AvatarUploadBusyContext } from "./DashboardShared";
 import { cropProfilePhoto } from "./profile-photo-crop";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
+import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerPhotoControls from "./DancerPhotoControls";
 export function DancerAvatarPanel({
   compact = false,
@@ -320,6 +321,8 @@ export function DancerAvatarPanel({
         </DancerPhotoControls>
         {isSaving ? <progress aria-label="Avatar upload progress" max="100" value={uploadProgress} /> : null}
         {file && !isSaving && presentation.canRetry ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry face photo upload</button> : null}
+        {pendingId ? <DancerMediaRetryButton id={pendingId} kind="photo" status="pending" moderationStatus={String(pendingAvatar?.status || "")}
+          disabled={isSaving || preparing} onBusyChange={setPreparing} onRetried={({ profile }) => { if (profile) { setUploadFeedback(null); onProfileChange?.(profile); } }} /> : null}
       </div>
       {statusMessage ? <p role="status" aria-live="polite">{compact ? statusMessage.replace(/\bAvatar\b/g, "Face photo").replace(/\bavatar\b/g, "face photo") : statusMessage}</p> : null}
     </article>
