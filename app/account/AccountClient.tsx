@@ -544,7 +544,7 @@ export default function AccountClient() {
                 </div>
               )}
 
-              <div className="segmented" aria-label="Auth mode">
+              <div className="segmented account-auth-tabs" aria-label="Auth mode">
                 <button className={mode === "login" ? "active" : ""} type="button" onClick={() => chooseMode("login")}>
                   Sign in
                 </button>

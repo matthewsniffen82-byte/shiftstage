@@ -105,9 +105,6 @@ body.dancr-button-system #authPage .auth-choice-card {
   gap: 10px; padding: 12px clamp(16px, 4vw, 20px) 8px !important;
   border-color: #292930 !important; background: #0c0c11 !important;
 }
-body.dancr-button-system #authPage .auth-entry-tabs { padding: 0; border: 0; border-radius: 12px; background: #08080c; }
-body.dancr-button-system #authPage .auth-entry-tab { padding-block: 8px; color: #d0d2dc !important; }
-body.dancr-button-system #authPage .auth-entry-tab.active { color: #fff !important; background: linear-gradient(#160e24, #160e24) !important; border-color: #745696 !important; box-shadow: none !important; }
 body.dancr-button-system #authPage .auth-selected-role span { color: #c3c6d2; line-height: 1.5; }
 body.dancr-button-system #authPage .auth-choice-card > .auth-form { gap: 10px; }
 body.dancr-button-system #authPage .auth-choice-card > .auth-form .field > label { color: #d5d9e3 !important; }
@@ -298,6 +295,58 @@ body.dancr-button-system .account-shell .account-panel .segmented button {
 }
 body.dancr-button-system .account-shell .account-panel .segmented button.active {
   border-color: #745696 !important; background: #160e24 !important; color: #fff !important;
+}
+/* Both auth modes retain an opaque face and outline on Android and iPhone. */
+body.dancr-button-system #authPage .auth-entry-tabs,
+body.dancr-button-system .account-shell .account-panel .account-auth-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px !important;
+  padding: 4px !important;
+  border: 1px solid #51435d !important;
+  border-radius: 12px !important;
+  background: linear-gradient(#08080c, #08080c) !important;
+}
+body.dancr-button-system #authPage .auth-entry-tab,
+body.dancr-button-system .account-shell .account-panel .account-auth-tabs button {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px !important;
+  padding: 8px 10px !important;
+  border: 1px solid #6b5c78 !important;
+  border-radius: 8px !important;
+  background: linear-gradient(#1a1620, #1a1620) !important;
+  color: #e3dce9 !important;
+  -webkit-text-fill-color: currentColor !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  line-height: 1.4;
+  letter-spacing: 0 !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+body.dancr-button-system #authPage .auth-entry-tab.active,
+body.dancr-button-system .account-shell .account-panel .account-auth-tabs button.active {
+  border-color: #b395da !important;
+  background: linear-gradient(#321b4d, #321b4d) !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  box-shadow: inset 0 -2px 0 #b395da !important;
+}
+body.dancr-button-system #authPage .auth-entry-tab:focus-visible,
+body.dancr-button-system .account-shell .account-panel .account-auth-tabs button:focus-visible {
+  outline: 2px solid #c4b5fd !important;
+  outline-offset: 2px !important;
 }
 body.dancr-button-system .account-shell :is(.signup-benefits, .dancer-signup-note) {
   padding: 12px; border: 1px solid #34343c; border-radius: 12px; background: #08080c;
