@@ -118,12 +118,26 @@ body .dashboard-shell.dashboard-shell-customer .support-panel label { color: #d0
 .customer-vip-shortcut strong { display: block; color: #f5f2fa; font-size: 15px; font-weight: 650; line-height: 1.3; }
 .customer-vip-shortcut:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
 
-/* Purple selections have a defined edge and restrained depth on every screen. */
+/* Compact guest controls keep purple selections defined without bulky spacing. */
+html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-workspace-nav, .customer-saved-filters) {
+  gap: 3px; padding: 3px; border-radius: 12px;
+}
+html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav button {
+  min-height: 52px !important; gap: 4px; padding: 6px 4px !important;
+  border-radius: 8px !important; font-size: 12px !important;
+}
+html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-workspace-nav svg {
+  width: 20px; height: 20px;
+}
+html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-filters button {
+  min-height: 44px !important; gap: 5px; padding: 6px 8px !important;
+  border-radius: 8px !important; font-size: 12px !important;
+}
 html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-workspace-nav button[aria-current], .customer-saved-filters button[aria-pressed="true"]) {
   border: 1px solid #8c68aa !important;
   background: linear-gradient(155deg, #62417e 0%, #472e5d 48%, #30213e 100%) !important;
   color: #fff !important;
-  box-shadow: inset 0 1px 0 #ffffff29, inset 0 -1px 0 #160c2266, 0 3px 7px #0005 !important;
+  box-shadow: inset 0 1px 0 #ffffff29, 0 1px 3px #0004 !important;
   text-shadow: 0 1px 1px #160c2255 !important;
   filter: none !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
@@ -135,6 +149,7 @@ html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-
   color: #dec8ed;
 }
 html body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-actions > button[aria-label="Directions"] {
+  min-height: 44px !important; padding: 7px 10px !important; border-radius: 8px !important; font-size: 12px !important;
   border-color: #745b8a !important;
   background: linear-gradient(155deg, #493652, #30243c) !important;
   box-shadow: inset 0 1px 0 #ffffff1f, 0 2px 5px #0004 !important;
