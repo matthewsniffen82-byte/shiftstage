@@ -12,6 +12,28 @@ vm.runInNewContext(compile(read("src/lib/dancr/photo-slot.ts")), { exports: slot
 const route = read("app/api/dancer/profile/route.ts");
 const loader = route.slice(route.indexOf("async function loadPendingPhotoReviews"), route.indexOf("async function loadLatestAvatarReview"));
 
+test('saved rejection feedback is owner scoped and excludes avatar reviews and private storage', async () => {
+  const calls = [], exports = {};
+  const query = new Proxy({ then: resolve => resolve({ data: [{ id: 'rejected-photo', upload_context: 'profile_gallery:2', reason_codes: ['multiple_people_detected'] }] }) }, {
+    get: (target, key) => target[key] || ((...args) => { calls.push([key, ...args]); return query; }),
+  });
+  const moderation = read('src/lib/dancr/image-moderation.ts');
+  const reasonHelper = moderation.slice(moderation.indexOf('export function photoRejectionMessage'), moderation.indexOf('function pendingModerationPhoto'));
+  const source = route.slice(route.indexOf('async function loadRejectedPhotoReviews'), route.indexOf('function withPhotoUrls'));
+  const context = vm.createContext({ ...slot, exports, MAX_DANCER_PROFILE_PHOTOS: 30, createAdminSupabaseClient: () => ({ from: table => { calls.push(['from', table]); return query; } }) });
+  vm.runInContext(compile(reasonHelper + source), context);
+  const rows = await context.loadRejectedPhotoReviews('signed-in-owner');
+  assert.ok(calls.some(call => call.join(':') === 'eq:user_id:signed-in-owner'));
+  assert.ok(calls.some(call => call.join(':') === 'eq:decision:rejected'));
+  assert.ok(calls.some(call => call.join(':') === 'eq:status:rejected'));
+  assert.ok(calls.some(call => call.join(':') === `neq:upload_context:${slot.PROFILE_AVATAR_CONTEXT}`));
+  assert.equal(rows[0].id, 'rejected-photo');
+  assert.match(rows[0].message, /Only you can appear/);
+  assert.equal(rows[0].status, 'rejected');
+  assert.equal(rows[0].isPrimary, false);
+  assert.ok(!('temporary_storage_path' in rows[0]));
+});
+
 async function pendingReviews(reviews, photos) {
   const signed = [];
   const query = new Proxy({ then: resolve => resolve({ data: reviews }) }, { get: (target, key) => target[key] || (() => query) });

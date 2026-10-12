@@ -5,6 +5,7 @@ import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { enqueueDancerContentReviews } from "@/src/lib/dancr/content-reviews";
 import { saveDancerSocialLinks } from "@/src/lib/dancr/social-saves";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "@/src/lib/dancr/image-moderation-status";
+import { photoRejectionMessage } from "@/src/lib/dancr/image-moderation";
 import { transitionDancerPublication } from "@/src/lib/dancr/profile-publication";
 import { acceptDancerProfileSubmissionAgreement, requireDancerAgreementAcceptance } from "@/src/lib/dancr/dancer-agreement";
 import {
@@ -220,10 +221,11 @@ export async function GET(request: Request) {
     }
 
     const profileWithPhotos = withoutDancerBio(withPhotoUrls(client, data));
-    const [pendingPhotoReviews, pendingAvatarReview, latestAvatarReview] = await Promise.all([
+    const [pendingPhotoReviews, pendingAvatarReview, latestAvatarReview, rejectedPhotoReviews] = await Promise.all([
       loadPendingPhotoReviews(user.id, profileWithPhotos.dancer_photos),
       loadPendingAvatarReview(user.id),
       loadLatestAvatarReview(user.id),
+      loadRejectedPhotoReviews(user.id),
     ]);
 
     return withProfileSaveVersion(NextResponse.json({
@@ -231,6 +233,7 @@ export async function GET(request: Request) {
       profile: {
         ...profileWithPhotos,
         pending_photo_reviews: pendingPhotoReviews,
+        rejected_photo_reviews: rejectedPhotoReviews,
         pending_avatar_review: pendingAvatarReview,
         avatar_review: latestAvatarReview,
       },
@@ -340,6 +343,24 @@ async function loadPendingAvatarReview(userId: string) {
     ...data,
     previewUrl: signedError ? "" : String(signed?.signedUrl || ""),
   };
+}
+
+async function loadRejectedPhotoReviews(userId: string) {
+  const { data, error } = await createAdminSupabaseClient()
+    .from("image_moderation_records")
+    .select("id, decision, status, upload_context, reason_codes, created_at")
+    .eq("user_id", userId)
+    .eq("decision", "rejected")
+    .eq("status", "rejected")
+    .neq("upload_context", PROFILE_AVATAR_CONTEXT)
+    .order("created_at", { ascending: false })
+    .limit(MAX_DANCER_PROFILE_PHOTOS);
+  if (error) throw error;
+  return (data || []).map(review => {
+    const slot = profilePhotoSlotFromUploadContext(review.upload_context);
+    return { id: review.id, status: "rejected", isPrimary: slot.isPrimary, sortOrder: slot.sortOrder,
+      message: photoRejectionMessage(review.reason_codes || []) };
+  });
 }
 
 function withPhotoUrls(client: any, profile: any) {
@@ -648,6 +669,7 @@ export async function PATCH(request: Request) {
         ? {
             ...refreshedProfileWithPhotos,
             pending_photo_reviews: refreshedPendingPhotoReviews,
+            rejected_photo_reviews: await loadRejectedPhotoReviews(user.id),
           }
         : null,
     }));

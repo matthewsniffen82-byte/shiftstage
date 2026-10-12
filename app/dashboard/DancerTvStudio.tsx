@@ -56,9 +56,10 @@ type QueuedVideo = {
   file: File;
   previewUrl: string;
   source: "library" | "camera";
-  stage: "queued" | "validating" | "uploading" | "checking" | "failed";
+  stage: "queued" | "validating" | "uploading" | "checking" | "submitted" | "failed";
   progress: number;
   error?: string;
+  replaces?: { videoId?: string; queueId?: string };
 };
 
 export default function DancerTvStudio({ embedded = false, uploadOnly = false, onBusyChange }: { embedded?: boolean; uploadOnly?: boolean; onBusyChange?: (busy: boolean) => void }) {
@@ -72,6 +73,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [removingId, setRemovingId] = useState("");
   const [pinningId, setPinningId] = useState("");
+  const [retrying, setRetrying] = useState(false);
+  const [replacement, setReplacement] = useState<QueuedVideo["replaces"]>();
   const libraryInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const consentInputRef = useRef<HTMLInputElement>(null);
@@ -90,7 +93,17 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
   const hasProcessingVideos = workspace?.videos.some((video) => (
     video.status === "uploading" || video.status === "moderating"
   )) || false;
-  const hasReviewVideos = workspace?.videos.some((video) => video.status === "submitted") || false;
+  const hasReviewVideos = queuedVideos.some(item => item.stage === "submitted" && !workspace?.videos.some(video => video.id === item.uploadId))
+    || workspace?.videos.some((video) => video.status === "submitted") || false;
+
+  useEffect(() => {
+    setQueuedVideos(current => current.filter(item => {
+      if (item.stage !== "submitted" || !workspace?.videos.some(video => video.id === item.uploadId && ["approved", "removed", "hidden", "expired"].includes(video.status))) return true;
+      queuedPreviewUrlsRef.current.delete(item.previewUrl);
+      URL.revokeObjectURL(item.previewUrl);
+      return false;
+    }));
+  }, [workspace]);
 
   const loadWorkspace = useCallback(async ({ silent = false }: { silent?: boolean } = {}) => {
     if (!mountedRef.current || actionInFlightRef.current) return false;
@@ -218,7 +231,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       return;
     }
 
-    const availableSlots = Math.max(0, maxVideos - currentVideoCount - queuedVideos.length);
+    const availableSlots = replacement ? 1 : Math.max(0, maxVideos - currentVideoCount - queuedVideos.filter(item => !workspace?.videos.some(video => video.id === item.uploadId)).length);
     const selectedFiles = files.slice(0, availableSlots);
     if (!selectedFiles.length) {
       setStatus("Your profile video library is full. Remove a video before adding another.");
@@ -236,6 +249,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         file,
         previewUrl,
         source,
+        replaces: replacement,
         stage: validType ? "queued" : "failed",
         progress: 0,
         error: validType ? undefined : "Choose an MP4, WebM, or MOV video.",
@@ -243,6 +257,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     });
     const omitted = files.length - selectedFiles.length;
     setQueuedVideos((current) => [...current, ...additions]);
+    setReplacement(undefined);
     setStatus(`${additions.length} ${additions.length === 1 ? "video" : "videos"} selected. Choose the crop and trim for each video${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
     const uploadable = additions.filter((item) => !item.error);
     if (uploadable.length) void uploadVideoBatch(uploadable);
@@ -289,7 +304,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
   async function uploadVideoBatch(batch: QueuedVideo[]) {
     if (!readDashboardAccessToken("dancer")) return setStatus("Sign in as a dancer to upload.");
-    if (atVideoLimit) return setStatus("Your profile video library is full. Remove a video before adding another.");
+    if (atVideoLimit && !batch.every(item => item.replaces || workspace?.videos.some(video => video.id === item.uploadId))) return setStatus("Your profile video library is full. Remove a video before adding another.");
     if (!batch.length) return setStatus("Choose MP4, WebM, or MOV videos, or record a new video first.");
     if (!consentConfirmed || !rightsConfirmed) {
       return setStatus("Confirm consent and content rights for every queued video before submitting.");
@@ -300,23 +315,36 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
     setIsSubmitting(true);
     const failedItems: QueuedVideo[] = [];
+    const cancelledIds = new Set<string>();
     let submittedCount = 0;
     try {
       for (let index = 0; index < batch.length; index += 1) {
         if (!isCurrentVideoAction(requestId, controller)) return;
-        const item = batch[index];
+        let item = batch[index];
         setUploadingQueueItemId(item.id);
         updateQueuedVideo(item.id, { stage: "validating", progress: 10, error: undefined });
         setStatus(`Preparing video ${index + 1} of ${batch.length}...`);
         try {
           const edit = await cropProfileVideo(item.file, controller.signal);
           if (!edit) {
+            cancelledIds.add(item.id);
             queuedPreviewUrlsRef.current.delete(item.previewUrl);
             URL.revokeObjectURL(item.previewUrl);
             continue;
           }
           const metadata = { ...edit.source, duration: edit.source.durationSeconds };
           if (!isCurrentVideoAction(requestId, controller)) return;
+          if (item.replaces) {
+            const { videoId, queueId } = item.replaces;
+            if (videoId) {
+              await requestDancerTvVideoJson(videoId, { method: "DELETE", signal: controller.signal, fallbackMessage: "Unable to replace this video. Try again." });
+              if (!isCurrentVideoAction(requestId, controller)) return;
+              setWorkspace(current => current ? { ...current, videos: current.videos.filter(video => video.id !== videoId) } : current);
+            }
+            setQueuedVideos(current => current.filter(queued => queued.id !== queueId));
+            item = { ...item, replaces: undefined };
+            updateQueuedVideo(item.id, { replaces: undefined });
+          }
           updateQueuedVideo(item.id, { stage: "uploading", progress: 30 });
           const data = await requestDancerTvVideosJson({
             method: "POST",
@@ -367,8 +395,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           }
 
           submittedCount += 1;
-          queuedPreviewUrlsRef.current.delete(item.previewUrl);
-          URL.revokeObjectURL(item.previewUrl);
+          updateQueuedVideo(item.id, { stage: "submitted", progress: 100, uploadId: preparedVideoId });
         } catch (error) {
           if (!isCurrentVideoAction(requestId, controller)) return;
           failedItems.push({
@@ -381,14 +408,10 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       }
 
       if (!isCurrentVideoAction(requestId, controller)) return;
-      const processedIds = new Set(batch.map((item) => item.id));
-      setQueuedVideos((current) => [
-        ...current.filter((item) => !processedIds.has(item.id)),
-        ...failedItems,
-      ]);
+      setQueuedVideos(current => current.filter(item => !cancelledIds.has(item.id)).map(item => failedItems.find(failed => failed.id === item.id) || item));
       if (libraryInputRef.current) libraryInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
-      if (submittedCount) {
+      if (submittedCount || failedItems.length) {
         await refreshWorkspaceForAction(requestId, controller);
         if (!isCurrentVideoAction(requestId, controller)) return;
         announceDancerProfileVideosChanged();
@@ -428,6 +451,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           remainingVideoSlots: Math.min(current.maxVideos, current.remainingVideoSlots + 1),
         }
         : current);
+      setQueuedVideos(current => current.filter(item => item.uploadId !== videoId));
       announceDancerProfileVideosChanged();
       setStatus(embedded ? "Video deleted." : data.message || "Video removed from MyDancr TV.");
     } catch (error) {
@@ -459,8 +483,16 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     }
   }
 
-  const videoActionBusy = isSubmitting || Boolean(removingId) || Boolean(pinningId);
+  const videoActionBusy = isSubmitting || retrying || Boolean(removingId) || Boolean(pinningId);
   useEffect(() => { onBusyChange?.(videoActionBusy); return () => onBusyChange?.(false); }, [videoActionBusy, onBusyChange]);
+
+  const approvedVideos = workspace?.videos.filter(video => video.status === "approved") || [];
+  const reviewVideos = workspace?.videos.filter(video => !["approved", "hidden", "removed", "expired"].includes(video.status)) || [];
+  const visibleQueue = queuedVideos.filter(item => !workspace?.videos.some(video => video.id === item.uploadId && ["approved", "hidden", "removed", "expired"].includes(video.status)));
+  const reviews: { item?: QueuedVideo; video?: ManagedVideo }[] = [
+    ...visibleQueue.map(item => ({ item, video: reviewVideos.find(video => video.id === item.uploadId) })),
+    ...reviewVideos.filter(video => !visibleQueue.some(item => item.uploadId === video.id)).map(video => ({ video })),
+  ];
 
   const content = (
     <>
@@ -509,15 +541,16 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         </div>
       ) : null}
 
-      {workspace && atVideoLimit ? (
+      {workspace && atVideoLimit && !replacement ? (
         <div className="tv-studio-limit" role="status">
           <strong>Your profile video library is full</strong>
           <p>{uploadOnly ? "Close this box and delete a video from your profile editor before adding another." : "Remove a video below before uploading another."}</p>
         </div>
       ) : null}
 
-      {workspace && !atVideoLimit ? (
+      {workspace && (!atVideoLimit || replacement) ? (
         <section className="tv-upload-form" aria-label="Add profile videos">
+          {replacement ? <p className="tv-upload-permissions" role="status">Choose a replacement video.<button type="button" disabled={videoActionBusy} onClick={() => setReplacement(undefined)}>Cancel replacement</button></p> : null}
           <div className="tv-upload-permissions">
             <strong>Confirm permissions</strong>
             <small>Check both boxes to choose or record a video.</small>
@@ -596,32 +629,6 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             Select multiple videos at once from your library.<br />
             Vertical or square · MP4, WebM, or MOV · Crop &amp; trim to 1–{VIDEO_UPLOAD_MAX_SECONDS} sec · {VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB max
           </small>
-          {queuedVideos.length ? (
-            <div className="tv-upload-queue" aria-label="Video upload progress">
-              {queuedVideos.map((item, index) => (
-                <article className={`tv-upload-queue-item ${uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item.id}>
-                  <video
-                    className="tv-upload-preview"
-                    muted
-                    playsInline
-                    preload="auto"
-                    src={item.previewUrl}
-                    onLoadedMetadata={(event) => primeVideoPreviewFrame(event.currentTarget)}
-                  />
-                  <div>
-                    <strong>Selected video {index + 1}</strong>
-                    <small>{item.stage === "validating" ? "Validating video" : item.stage === "uploading" ? "Uploading securely" : item.stage === "checking" ? "Running automatic review" : item.error ? "Upload failed" : "Waiting to upload"}</small>
-                    {item.stage !== "failed" ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
-                    {item.error ? <p>{item.error}</p> : null}
-                    <span className="tv-queue-actions">
-                      {item.error ? <button disabled={videoActionBusy} onClick={() => void uploadVideoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
-                      <button disabled={videoActionBusy} onClick={() => void removeQueuedVideo(item)} type="button">Remove</button>
-                    </span>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : null}
           {!embedded ? (
             <div className="tv-schedule-context-note">
               <strong>Venue context is automatic</strong>
@@ -631,15 +638,37 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         </section>
       ) : null}
 
+      {reviews.length ? <div className="tv-upload-queue" aria-label="Videos awaiting approval">
+        <strong>Video uploads · {reviews.length}</strong>
+        {reviews.map(({ item, video }, index) => <article className={`tv-upload-queue-item ${item && uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
+          {item?.previewUrl || video?.videoUrl ? <video className="tv-upload-preview" muted playsInline preload="metadata"
+            src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
+          <div>
+            <strong>Selected video {index + 1}</strong>
+            <small>{item?.error ? "Upload failed" : video ? statusLabel(video.status) : item?.stage === "validating" ? "Preparing video" : item?.stage === "uploading" ? "Uploading securely" : item?.stage === "checking" || item?.stage === "submitted" ? "Checking" : "Waiting to upload"}</small>
+            {item && !["failed", "submitted"].includes(item.stage) ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
+            {video?.reviewNotes ? <p>{video.reviewNotes}</p> : video?.status === "rejected" ? <p>This video wasn’t approved. Choose a different video.</p> : null}
+            {item?.error ? <p>{item.error}</p> : null}
+            {video && !item?.error ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={videoActionBusy} onBusyChange={setRetrying}
+              onRetried={() => { void loadWorkspace({ silent: true }); }} /> : null}
+            <span className="tv-queue-actions">
+              {item?.error ? <button disabled={videoActionBusy} onClick={() => void uploadVideoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+              <button type="button" disabled={videoActionBusy} onClick={() => { setReplacement({ videoId: video?.id, queueId: item?.id }); }}>Replace</button>
+              <button disabled={videoActionBusy} onClick={() => video ? void removeVideo(video.id) : item && void removeQueuedVideo(item)} type="button">Remove</button>
+            </span>
+          </div>
+        </article>)}
+      </div> : null}
+
       {status ? <div className="tv-studio-status" role="status" aria-live="polite">{status}</div> : null}
 
-      {!uploadOnly && (isLoading || currentVideoCount) ? <section className="tv-video-manager">
+      {!uploadOnly && (isLoading || approvedVideos.length) ? <section className="tv-video-manager">
         <div className="tv-manager-title">
           <h3>My videos</h3>
-          <span>{isLoading ? "…" : `${currentVideoCount} ${currentVideoCount === 1 ? "video" : "videos"}`}</span>
+          <span>{isLoading ? "…" : `${approvedVideos.length} ${approvedVideos.length === 1 ? "video" : "videos"}`}</span>
         </div>
-        {embedded ? <DancerVideoPreviews videos={workspace?.videos || []} removingId={removingId} disabled={videoActionBusy} onRemove={(videoId) => void removeVideo(videoId)} pinningId={pinningId} onPin={(video) => void pinVideo(video)} /> : <div className="tv-managed-grid">
-          {workspace?.videos.map((video) => (
+        {embedded ? <DancerVideoPreviews videos={approvedVideos} removingId={removingId} disabled={videoActionBusy} onRemove={(videoId) => void removeVideo(videoId)} pinningId={pinningId} onPin={(video) => void pinVideo(video)} /> : <div className="tv-managed-grid">
+          {approvedVideos.map((video) => (
             <article className="tv-managed-video" key={video.id}>
               <DancerMediaPinButton available={video.status === "approved"} label="this video" pinned={video.isPinned} busy={pinningId === video.id} disabled={videoActionBusy} onClick={() => void pinVideo(video)} />
               {video.videoUrl ? (
@@ -656,9 +685,9 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
                 <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={videoActionBusy}
                   onRetried={() => { void loadWorkspace({ silent: true }); }} />
                 {video.status === "approved" ? (
-                  <p>{!workspace.profileEligible
+                  <p>{!workspace?.profileEligible
                     ? "Uploaded. Will appear on your profile after setup and approval."
-                    : workspace.profileVisible
+                    : workspace?.profileVisible
                       ? "Uploaded. Added to your profile."
                       : "Uploaded and saved. Hidden while incognito is on."}</p>
                 ) : null}
@@ -677,7 +706,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
                     <div><dt>Going</dt><dd>{video.metrics.going || 0}</dd></div>
                   </dl>
                 ) : null}
-                {video.status === "approved" && workspace.profileEligible ? <Link href={`/tv/${video.id}`}>Open live video</Link> : null}
+                {video.status === "approved" && workspace?.profileEligible ? <Link href={`/tv/${video.id}`}>Open live video</Link> : null}
                 <button type="button" disabled={videoActionBusy} onClick={() => removeVideo(video.id)}>
                   {removingId === video.id ? "Removing…" : "Remove video"}
                 </button>

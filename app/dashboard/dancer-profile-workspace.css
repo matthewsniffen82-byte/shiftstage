@@ -113,6 +113,24 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-add-media > p {
   margin: 0 0 8px; font-size: 12px; line-height: 1.45;
 }
+.media-review-replace {
+  position: relative; display: inline-flex !important; align-items: center; justify-content: center;
+  min-height: 44px; padding: 8px 12px; border: 1px solid #514d59; border-radius: 8px;
+  color: #fff; background: #27252c; font-size: 13px; font-weight: 600; cursor: pointer; overflow: hidden;
+}
+.media-review-replace input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.media-review-replace:focus-within { outline: 2px solid #fff; outline-offset: 2px; }
+.media-review-replace:has(input:disabled) { opacity: .55; cursor: wait; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-upload-queue { display: grid; gap: 8px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-review-card {
+  grid-template-columns: 68px minmax(0, 1fr); align-items: start; gap: 10px; padding: 8px; background: #17131b;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-review-card .photo-preview {
+  display: grid; place-items: center; width: 68px; aspect-ratio: 3 / 4; border-radius: 8px; color: #c9c3d2; font-size: 12px;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace :is(.photo-review-card, .tv-upload-queue-item) :is(strong, small, em, p) {
+  overflow-wrap: anywhere; line-height: 1.45; text-transform: none; letter-spacing: normal;
+}
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-add-media-choices {
   gap: 4px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #ffffff12;
 }

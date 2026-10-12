@@ -50,7 +50,7 @@ export default function DancerProfileWorkspace({
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
   const mainPhoto = primaryPhoto || sourcePhotos.find(photo => photo.status === "approved");
   const pendingMain = photos.find(photo => photo.isPrimary && photo.status === "pending");
-  const additionalPhotos = photos.filter(photo => photo.id !== mainPhoto?.id && photo.id !== pendingMain?.id);
+  const additionalPhotos = approvedPhotos.filter(photo => photo.id !== mainPhoto?.id);
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
   const dirty = draftIdentity.stageName.trim() !== persistedDancerStageName(profile)
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
@@ -199,7 +199,7 @@ export default function DancerProfileWorkspace({
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-labelledby="dancer-videos-title">
         <header><h3 id="dancer-videos-title">Video uploads</h3></header>
         <div className="dancer-section-uploader">{videoContent}</div>
-        <DancerProfileMediaUploads compact mediaType="videos" photos={[]} videos={uploadedVideos.map(video => ({ ...video, imageUrl: video.posterUrl }))}
+        <DancerProfileMediaUploads compact mediaType="videos" photos={[]} videos={uploadedVideos.filter(video => video.status === "approved").map(video => ({ ...video, imageUrl: video.posterUrl }))}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={isMediaLoading} videoError={mediaError}
           disabled={cropBusy || saving || avatarBusy}

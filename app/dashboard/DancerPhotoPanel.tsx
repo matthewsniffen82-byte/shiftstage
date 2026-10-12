@@ -38,6 +38,8 @@ export function DancerPhotoPanel({
   const [isUploading, setIsUploading] = useState(false);
   const [pinningPhotoId, setPinningPhotoId] = useState("");
   const [retrying, setRetrying] = useState(false);
+  const [retiredReviewIds, setRetiredReviewIds] = useState<Set<string>>(() => new Set());
+  const [confirmedPhotoIds, setConfirmedPhotoIds] = useState<Set<string>>(() => new Set());
   const [deletingPhotoIds, setDeletingPhotoIds] = useState<Set<string>>(() => new Set());
   const deletedPhotoIdsRef = useRef<string[]>(deletedPhotoIds);
   const deletedPhotoStoragePathsRef = useRef<string[]>(deletedPhotoStoragePaths);
@@ -76,11 +78,11 @@ export function DancerPhotoPanel({
     queuedPreviewUrlsRef.current.clear();
   }, []);
 
-  function queuePhotos(files: File[], source: DancerPhotoQueueItem["source"]) {
+  function queuePhotos(files: File[], source: DancerPhotoQueueItem["source"], replaces?: DancerPhotoQueueItem["replaces"]) {
     if (actionInFlightRef.current) return;
     window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
     const waitingCount = queuedPhotos.filter((item) => item.stage !== "complete").length;
-    const availableProfileSlots = Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - waitingCount);
+    const availableProfileSlots = replaces ? 1 : Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - waitingCount);
     const selectedFiles = files.slice(0, availableProfileSlots);
     if (!selectedFiles.length) {
       setStatus("Your profile picture library is full. Delete or replace a picture first.");
@@ -97,6 +99,7 @@ export function DancerPhotoPanel({
         file: nextFile,
         previewUrl,
         source,
+        replaces,
         stage: validType && validSize ? "queued" : "failed",
         progress: 0,
         error: !validType ? "Choose a JPEG, PNG, WebP, HEIC, or HEIF image." : !nextFile.size ? "That photo is empty. Choose another photo." : !validSize ? "Photos must be 25 MB or smaller." : undefined,
@@ -115,6 +118,7 @@ export function DancerPhotoPanel({
 
   function reviewRetried(id: string, data: { profile?: Record<string, unknown>; result: any }) {
     if (data.profile) {
+      confirmLibraryPhotos(data.profile);
       setPhotos(relabelPhotoItems(dancerPhotoItemsFromProfile(data.profile)));
       onProfileChange?.(data.profile);
     }
@@ -122,6 +126,30 @@ export function DancerPhotoPanel({
       ...item.result, id: String(data.result.photo?.id || id), status: normalizePhotoStatus(data.result.decision),
       moderationStatus: data.result.decision, note: data.result.decision === "rejected" ? data.result.message : "",
     } } : item));
+  }
+
+  function confirmLibraryPhotos(nextProfile: Record<string, unknown>) {
+    const approved = dancerPhotoItemsFromProfile(nextProfile).filter(photo => photo.status === "approved");
+    setConfirmedPhotoIds(current => new Set([...current, ...approved.map(photo => photo.id)]));
+  }
+
+  async function refreshPhotoLibrary() {
+    const action = beginPhotoAction();
+    if (!action) return;
+    const { requestId, controller } = action;
+    setRetrying(true);
+    try {
+      const data = await requestDancerProfileJson({ cache: "no-store", signal: controller.signal, fallbackMessage: "Unable to refresh your library. Try again." });
+      if (!isCurrentPhotoAction(requestId, controller) || !data.profile) return;
+      confirmLibraryPhotos(data.profile);
+      setPhotos(relabelPhotoItems(dancerPhotoItemsFromProfile(data.profile)));
+      onProfileChange?.(data.profile);
+      setStatus("");
+    } catch (error) {
+      if (isCurrentPhotoAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to refresh your library. Try again.");
+    } finally {
+      if (finishPhotoAction(requestId)) setRetrying(false);
+    }
   }
 
   function removeQueuedPhoto(id: string) {
@@ -186,7 +214,7 @@ export function DancerPhotoPanel({
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
     if (!batch.length) return setStatus("Choose profile photos or take a new photo first.");
-    if (photos.length + batch.length > MAX_DANCER_PROFILE_PHOTOS) {
+    if (photos.length + batch.filter(item => !item.replaces).length > MAX_DANCER_PROFILE_PHOTOS) {
       return setStatus("Your profile picture library is full. Delete or replace a picture before adding more.");
     }
     const action = beginPhotoAction();
@@ -205,12 +233,29 @@ export function DancerPhotoPanel({
     try {
       for (let index = 0; index < batch.length; index += 1) {
         if (!isCurrentPhotoAction(requestId, controller)) return;
-        const item = batch[index];
+        let item = batch[index];
         let uploadSortOrder = item.uploadSortOrder;
         setUploadingQueueItemId(item.id);
         updateQueuedPhoto(item.id, { stage: "uploading", progress: 5, error: undefined });
         setStatus(`Uploading photo ${index + 1} of ${batch.length}...`);
         try {
+          if (!item.file.type.startsWith("image/") || !item.file.size || item.file.size > 25 * 1024 * 1024) {
+            throw new Error("Choose a photo between 1 byte and 25 MB.");
+          }
+          if (item.replaces) {
+            const { photoId, queueId } = item.replaces;
+            if (photoId) {
+              await requestDancerPhotosJson({ method: "DELETE", headers: { "content-type": "application/json" },
+                body: JSON.stringify({ photoId }), signal: controller.signal, fallbackMessage: "Unable to replace this photo. Try again." });
+              if (!isCurrentPhotoAction(requestId, controller)) return;
+              workingPhotos = workingPhotos.filter(photo => photo.id !== photoId);
+              setPhotos(workingPhotos);
+              setRetiredReviewIds(current => new Set(current).add(photoId));
+            }
+            setQueuedPhotos(current => current.filter(queued => queued.id !== queueId));
+            item = { ...item, replaces: undefined };
+            updateQueuedPhoto(item.id, { replaces: undefined });
+          }
           if (workingPhotos.length >= MAX_DANCER_PROFILE_PHOTOS) {
             throw new Error("No profile photo slot is available for this photo.");
           }
@@ -275,7 +320,7 @@ export function DancerPhotoPanel({
         }
       }
 
-      if (acceptedCount) {
+      if (acceptedCount || rejectedCount) {
         const refreshData = await requestDancerProfileJson({
           cache: "no-store",
           fallbackMessage: "Unable to refresh uploaded photos.",
@@ -283,6 +328,7 @@ export function DancerPhotoPanel({
         });
         if (!isCurrentPhotoAction(requestId, controller)) return;
         if (refreshData.profile) {
+          confirmLibraryPhotos(refreshData.profile);
           const refreshedPhotos = preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(refreshData.profile), workingPhotos);
           // The server identifies which reviews remain pending. A published
           // photo can have a different ID and position from its review record.
@@ -370,6 +416,8 @@ export function DancerPhotoPanel({
       if (!isCurrentPhotoAction(requestId, controller)) return;
 
       setPhotos((current) => relabelPhotoItems(current.filter((item) => item.id !== photo.id)));
+      setQueuedPhotos(current => current.filter(item => item.result?.id !== photo.id));
+      setRetiredReviewIds(current => new Set(current).add(photo.id));
       deletedPhotoIdsRef.current = deletedPhotoIdsRef.current.filter((id) => id !== photo.id);
       deletedPhotoStoragePathsRef.current = [];
       onDeletedPhotoIdsChange?.(deletedPhotoIdsRef.current);
@@ -410,11 +458,19 @@ export function DancerPhotoPanel({
   useEffect(() => { onBusyChange?.(photoActionBusy); return () => onBusyChange?.(false); }, [photoActionBusy, onBusyChange]);
   // Approved photos belong in the gallery. Keep unresolved uploads here and
   // use the refreshed library to retire reviews, even when approval changes IDs.
-  const visibleQueuedPhotos = queuedPhotos.filter((item) => {
-    if (item.stage !== "complete" || item.result?.status === "rejected") return true;
-    if (!uploadOnly || item.result?.status !== "pending") return false;
-    return photos.some((photo) => photo.id === item.result?.id && photo.status === "pending");
-  });
+  const rejectedPhotos: DancerPhotoItem[] = (Array.isArray(profile?.rejected_photo_reviews) ? profile.rejected_photo_reviews : []).map((review: Record<string, unknown>) => ({
+    id: String(review.id), label: "Photo", imageUrl: "", status: "rejected", note: String(review.message || "Choose another photo."),
+  }));
+  const reviewPhotos = [...photos.filter(photo => photo.status !== "approved"), ...rejectedPhotos].filter(photo => !retiredReviewIds.has(photo.id));
+  const libraryIds = new Set([...confirmedPhotoIds, ...dancerPhotoItemsFromProfile(profile).filter(photo => photo.status === "approved").map(photo => photo.id)]);
+  const visibleQueuedPhotos = queuedPhotos.filter(item => item.stage !== "complete" || item.result?.status === "rejected"
+    || (uploadOnly && item.result?.status === "approved" && !libraryIds.has(item.result.id))
+    || reviewPhotos.some(photo => photo.id === item.result?.id));
+  const reviews: { item?: DancerPhotoQueueItem; result?: DancerPhotoItem }[] = [
+    ...visibleQueuedPhotos.map(item => ({ item, result: reviewPhotos.find(photo => photo.id === item.result?.id) || item.result })),
+    ...reviewPhotos.filter(photo => !visibleQueuedPhotos.some(item => item.result?.id === photo.id)).map(result => ({ result })),
+  ];
+  const approvedPhotos = photos.filter(photo => photo.status === "approved");
 
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
@@ -473,26 +529,30 @@ export function DancerPhotoPanel({
         <p className="photo-upload-selection-hint">Select multiple photos at once from your gallery.</p>
         {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
-      {visibleQueuedPhotos.length ? (
-        <div className="photo-upload-queue" aria-label="Photos from this upload session">
-          {visibleQueuedPhotos.map((item) => {
-            const selectionNumber = queuedPhotos.indexOf(item) + 1;
-            const result = item.result && (photos.find((photo) => photo.id === item.result?.id) || item.result);
+      {reviews.length ? (
+        <div className="photo-upload-queue" aria-label="Photos awaiting approval">
+          <strong>Photo uploads · {reviews.length}</strong>
+          {reviews.map(({ item, result }, index) => {
+            const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
             return (
-              <div className={`photo-review-card is-${result?.status || "pending"} ${uploadingQueueItemId === item.id && item.stage !== "complete" ? "is-uploading" : ""}`.trim()} key={item.id}>
-                <div className="photo-preview" style={{ backgroundImage: `url(${item.previewUrl})` }} />
+              <div className={`photo-review-card is-${result?.status || "pending"} ${item && uploadingQueueItemId === item.id && item.stage !== "complete" ? "is-uploading" : ""}`.trim()} key={item?.id || result?.id}>
+                <div className="photo-preview" style={{ backgroundImage: `url(${item?.previewUrl || result?.imageUrl || ""})` }} aria-label="Photo preview">{!item?.previewUrl && !result?.imageUrl ? <span>Photo</span> : null}</div>
                 <span>
                   <strong>{`Selected photo ${selectionNumber}`}</strong>
-                  <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error ? "Upload failed" : "Waiting to upload"}</small>
-                  {item.stage !== "failed" && item.stage !== "complete" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
+                  <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "uploading" ? "Uploading" : item?.stage === "checking" ? "Checking" : item?.error ? "Upload failed" : "Waiting to upload"}</small>
+                  {item && item.stage !== "failed" && item.stage !== "complete" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
                   {result?.note ? <em>{result.note}</em> : null}
                   {result ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
                     disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(result.id, data)} /> : null}
-                  {item.error ? <em>{item.error}</em> : null}
-                  {!result ? <span className="photo-queue-actions">
-                    {item.error ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
-                    <button className="photo-delete-button" disabled={photoActionBusy} onClick={() => removeQueuedPhoto(item.id)} type="button">Remove</button>
-                  </span> : null}
+                  {item?.error ? <em>{item.error}</em> : null}
+                  {result?.status === "approved" ? <span className="photo-queue-actions"><em>Approved. Updating your library.</em><button type="button" disabled={photoActionBusy} onClick={() => void refreshPhotoLibrary()}>Refresh library</button></span> : <span className="photo-queue-actions">
+                    {item?.error ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+                    <label className="media-review-replace">Replace<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" disabled={photoActionBusy} aria-label={`Replace photo ${selectionNumber}`} onChange={event => {
+                      const file = event.target.files?.[0]; event.target.value = "";
+                      if (file) queuePhotos([file], "gallery", { photoId: result?.id, queueId: item?.id });
+                    }} /></label>
+                    <button className="photo-delete-button" disabled={photoActionBusy} onClick={() => result ? void deletePhoto(result) : item && removeQueuedPhoto(item.id)} type="button">Remove</button>
+                  </span>}
                 </span>
               </div>
             );
@@ -500,14 +560,14 @@ export function DancerPhotoPanel({
         </div>
       ) : null}
       {!uploadOnly ? <DancerInternalMainPhotoPicker key={String(profile?.id || "new-profile")} photos={photos} disabled={photoActionBusy} onProfileChange={onProfileChange} /> : null}
-      {!uploadOnly && photos.length ? (
+      {!uploadOnly && approvedPhotos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>
-          <span>{photos.length} {photos.length === 1 ? "photo" : "photos"}</span>
+          <span>{approvedPhotos.length} {approvedPhotos.length === 1 ? "photo" : "photos"}</span>
         </div>
       ) : null}
       {!uploadOnly ? <div className="photo-review-list compact-photo-previews" aria-label="Uploaded photos">
-        {photos.map((photo) => {
+        {approvedPhotos.map((photo) => {
           return (
             <div className={`photo-saved-preview is-${photo.status}`} key={photo.id}>
               <div className="photo-saved-frame">

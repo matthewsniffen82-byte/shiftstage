@@ -215,6 +215,7 @@ export type DancerPhotoQueueItem = {
   stage: "queued" | "uploading" | "checking" | "failed" | "complete";
   progress: number;
   uploadSortOrder?: number;
+  replaces?: { photoId?: string; queueId?: string };
   error?: string;
   result?: DancerPhotoItem;
 };
