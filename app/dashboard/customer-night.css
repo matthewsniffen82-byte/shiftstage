@@ -116,8 +116,6 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now:not(.has-dancers) { color:var(--customer-muted); }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-club-activity-stat.is-now:not(.has-dancers) i { display:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-actions { display:grid !important; grid-template-columns:repeat(2,minmax(0,1fr)); }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card .venue-customer-sharing { margin-top:2px; padding-top:0; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card .venue-customer-sharing>summary { min-height:44px; padding:0; font-size:12px; font-weight:500; line-height:1.4; }
 /* The absolute-positioned Remove menu must extend beyond the final saved card. */
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-panel { padding:0; border:0; background:transparent; box-shadow:none; overflow:visible; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-head { display:none; }
