@@ -816,13 +816,36 @@
 
         .customer-terms-consent {
           display: flex;
-          align-items: flex-start;
+          align-items: center;
+          min-height: 44px;
           gap: 10px;
           font-size: 14px;
           line-height: 1.5;
+          cursor: pointer;
         }
         .customer-terms-consent[hidden] { display: none; }
-        .customer-terms-consent input { width: 18px; height: 18px; min-height: 0; flex: 0 0 18px; margin-top: 2px; accent-color: var(--accent, #6427db); }
+        /* Keep the native check square despite the mobile text-input minimum. */
+        #authPage .customer-terms-consent input[type="checkbox"] {
+          appearance: auto;
+          box-sizing: border-box;
+          width: 22px;
+          height: 22px;
+          min-height: 22px !important;
+          max-height: 22px;
+          max-width: 22px !important;
+          flex: 0 0 22px;
+          margin: 0;
+          padding: 0;
+          border: 0;
+          border-radius: 4px;
+          background: transparent !important;
+          box-shadow: none !important;
+          accent-color: #7c3aed;
+          cursor: pointer;
+        }
+        #authPage .customer-terms-consent input[type="checkbox"]:focus:not(:focus-visible) {
+          outline: none !important;
+        }
         .customer-terms-consent a { color: #c9b3ff; text-decoration: underline; }
 
         .auth-signup-note {
