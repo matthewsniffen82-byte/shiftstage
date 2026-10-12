@@ -1,0 +1,27 @@
+.admin-guest-operations { margin: 0 0 24px; padding: 24px; border: 1px solid #44394e; border-radius: 20px; background: #110e18; min-width: 0; }
+.admin-guest-operations > header, .admin-guest-filters, .admin-guest-record-heading, .admin-guest-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.admin-guest-operations h2 { margin: 4px 0 16px; }
+.admin-guest-operations label { display: grid; gap: 7px; min-width: 0; font-size: 13px; color: #d5ccdf; }
+.admin-guest-operations :is(select,input) { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; color: #fff; background: #1b1624; border: 1px solid #655572; border-radius: 9px; font: inherit; }
+.admin-guest-venue { max-width: 520px; }
+.admin-guest-operations > nav { display: flex; flex-wrap: wrap; gap: 7px; margin: 18px 0; }
+body.dancr-button-system .admin-guest-operations > nav button[aria-pressed="true"] { border-color: #b49cdd !important; background: #38244f !important; color: #fff !important; }
+.admin-guest-operations button { min-height: 44px; }
+.admin-guest-help { color: #c5bacf; line-height: 1.55; }
+.admin-guest-error { color: #ffa5b5; }
+.admin-guest-records { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 16px; }
+.admin-guest-records > article { padding: 18px; border: 1px solid #3c3448; border-radius: 14px; background: #191320; overflow-wrap: anywhere; min-width: 0; }
+.admin-guest-record-heading > span { border: 1px solid #5a4c6e; padding: 4px 9px; border-radius: 20px; font-size: 12px; color: #ddd1ee; }
+.admin-guest-records dl { display: grid; gap: 10px; margin: 14px 0; }
+.admin-guest-records dl > div { display: grid; grid-template-columns: minmax(85px,.65fr) minmax(0,1.35fr); gap: 10px; }
+.admin-guest-records dt { color: #b9acc6; font-size: 12px; }
+.admin-guest-records dd { margin: 0; font-size: 13px; }
+.admin-guest-actions, .admin-guest-confirm > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-guest-confirm { display: grid; gap: 12px; padding: 16px 0 0; margin-top: 14px; border-top: 1px solid #5e4d70; }
+.admin-guest-invite { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 12px; padding: 18px 0; }
+.admin-guest-pagination { margin-top: 18px; font-size: 13px; }
+.admin-guest-operations .venue-value-metrics { display: grid; grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); gap: 10px; }
+.admin-guest-operations .venue-value-metrics .metric { display: grid; gap: 5px; padding: 14px; border: 1px solid #43364f; border-radius: 12px; }
+.admin-guest-operations .venue-value-metrics strong { font-size: 24px; }
+.admin-guest-operations .venue-value-metrics small { color: #baabc8; }
+@media (max-width: 760px) { .admin-guest-records, .admin-guest-invite { grid-template-columns: 1fr; } .admin-guest-operations { padding: 16px; } }

@@ -30,6 +30,7 @@ export type AdminOperationsCenter = {
     total: number;
   };
   counts: { clubs: number | null; dancers: number | null; tapStickers: number | null };
+  guests?: { pendingVip: number | null; activeVip: number | null; guestList24h: number | null; rides24h: number | null; emailUpdates: number | null; textUpdates: number | null };
   live: {
     checkedInDancers: Array<Record<string, unknown>>;
     activeVenueCount: number;
@@ -114,6 +115,12 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("All clubs", () => db.from("venues").select("id", { count: "exact", head: true })),
     safeCount("All dancers", () => db.from("dancer_profiles").select("id", { count: "exact", head: true })),
     safeCount("Tap sticker inventory", () => db.from("nfc_tags").select("id", { count: "exact", head: true })),
+    safeCount("Pending VIP visits", () => db.from("venue_vip_requests").select("id", { count: "exact", head: true }).eq("status", "pending")),
+    safeCount("Active VIP members", () => db.from("venue_vip_members").select("id", { count: "exact", head: true }).eq("active", true)),
+    safeCount("Guest-list signups (24h)", () => db.from("venue_guest_list_entries").select("pass_id", { count: "exact", head: true }).gte("created_at", dayAgo)),
+    safeCount("Ride requests (24h)", () => db.from("club_shuttle_requests").select("id", { count: "exact", head: true }).gte("created_at", dayAgo)),
+    safeCount("Email update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "email").is("withdrawn_at", null)),
+    safeCount("Text update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "text").is("withdrawn_at", null)),
   ]);
 
   const [
@@ -122,6 +129,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     checkedInDancers, activeVenueCount, qrGeneratedToday, qrRedeemedToday, suspiciousQrToday,
     missedCheckIns, totalAccounts, activeDancers, newAccounts7d, profileViews7d,
     profileViews30d, directionRequests7d, newFollows7d, publishedVideos30d, activity, accounts, clubRequests, allClubs, allDancers, tapStickers,
+    pendingVip, activeVip, guestList24h, rides24h, emailUpdates, textUpdates,
   ] = results;
 
   const overdue = count(overdueProfiles) + count(overdueSupport) + count(overdueReports) + count(overdueVideos);
@@ -140,6 +148,11 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
 
   return {
     checkedAt,
+    guests: {
+      pendingVip: pendingVip.warning ? null : count(pendingVip), activeVip: activeVip.warning ? null : count(activeVip),
+      guestList24h: guestList24h.warning ? null : count(guestList24h), rides24h: rides24h.warning ? null : count(rides24h),
+      emailUpdates: emailUpdates.warning ? null : count(emailUpdates), textUpdates: textUpdates.warning ? null : count(textUpdates),
+    },
     attention: {
       ...attentionCounts,
       overdue,

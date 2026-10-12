@@ -24,6 +24,7 @@ import AdminPilotAnalytics from "./AdminPilotAnalytics";
 import AdminSalesAgentPanel from "./AdminSalesAgentPanel";
 import AdminVenueSubscriptions from "./AdminVenueSubscriptions";
 import AdminTvPanel from "./AdminTvPanel";
+import AdminGuestOperations from "./AdminGuestOperations";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
 import { adminWorkspaceCounts, adminCountLabel } from "./admin-workspace-counts";
@@ -883,8 +884,9 @@ export default function AdminClient() {
               <WorkspaceHeader
                 eyebrow="Venue operations"
                 title="Clubs"
-                description="Manage club accounts, signup requests, dancer affiliations, published deals, and MyDancr tap sticker inventory."
+                description="Manage VIP access and visits, guest lists, ride requests, club updates, results, club accounts, published deals, and tap stickers."
               />
+              <AdminGuestOperations venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
               <section className="admin-grid">
                 {clubRequestPanel}
                 <Panel title="Club accounts" badge={`${adminCountLabel(state.operations?.counts?.clubs)} managed`} defaultOpen>
@@ -1398,6 +1400,18 @@ function OperationsOverview({
       </div>
 
       <div className="operations-layout">
+        <Panel title="VIP & guest operations" badge="Club controls" defaultOpen>
+          <div className="operations-metric-grid">
+            <Metric label="Pending VIP visits" value={adminCountLabel(operations.guests?.pendingVip ?? null)} />
+            <Metric label="Active VIP access" value={adminCountLabel(operations.guests?.activeVip ?? null)} />
+            <Metric label="Guest-list signups / 24h" value={adminCountLabel(operations.guests?.guestList24h ?? null)} />
+            <Metric label="Ride requests / 24h" value={adminCountLabel(operations.guests?.rides24h ?? null)} />
+            <Metric label="Email update opt-ins" value={adminCountLabel(operations.guests?.emailUpdates ?? null)} />
+            <Metric label="Text update opt-ins" value={adminCountLabel(operations.guests?.textUpdates ?? null)} />
+          </div>
+          <p>Review visits, manage VIP access, see guest and ride details, withdraw update subscriptions, and compare club results.</p>
+          <button type="button" onClick={() => onOpenWorkspace("clubs")}>Open guest operations →</button>
+        </Panel>
         <Panel title="Live operations" badge={`${operations.live.checkedInDancers.length} checked in`}>
           <div className="operations-metric-grid">
             <Metric label="Operating venues" value={String(operations.live.activeVenueCount)} />
