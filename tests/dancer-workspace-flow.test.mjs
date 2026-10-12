@@ -62,7 +62,7 @@ test('onboarding starts with the fields and a single Add action opens photo uplo
   assert.ok(!nodes.some(n=>['dancer-workspace-heading','dancer-builder-checklist','dancer-editor-shortcuts'].includes(n.props.className)));
   assert.equal(nodes.find(n=>n.type==='fieldset').props.children[0].props.id,'dancer-details-section');
   assert.equal(nodes.find(n=>n.type==='footer').props.children[0].props.hidden,true);
-  const add=nodes.filter(n=>n.type==='button'&&n.props.children==='+ Add photos');
+  const add=nodes.filter(n=>n.type==='button'&&n.props.children==='+ Add photos/videos');
   assert.equal(add.length,1);add[0].props.onClick();
   assert.ok(f.draw().find(n=>n.props.className==='dancer-add-media').props.children.includes('Photo uploader'));
   assert.ok(f.draw().some(n=>n.type==='button'&&n.props.children==='Video · optional'));

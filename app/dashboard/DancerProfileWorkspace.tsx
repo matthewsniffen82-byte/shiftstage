@@ -163,7 +163,7 @@ export default function DancerProfileWorkspace({
         </div>
       </section>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-labelledby="dancer-media-title">
-        <header><div><h3 id="dancer-media-title">{onboarding ? "Additional photos" : "Profile gallery"}</h3>{!onboarding ? <p>Add more photos or optional videos anytime.</p> : null}</div><button type="button" disabled={busy} aria-expanded={addMedia !== null} onClick={() => { if (!hasActiveUpload()) setAddMedia(addMedia ? null : onboarding ? "photos" : "choose"); }}>{onboarding ? addMedia ? "Close uploads" : "+ Add photos" : "+ Add media"}</button></header>
+        <header><div><h3 id="dancer-media-title">{onboarding ? "Additional photos" : "Profile gallery"}</h3>{!onboarding ? <p>Add more photos or optional videos anytime.</p> : null}</div><button type="button" disabled={busy} aria-expanded={addMedia !== null} onClick={() => { if (!hasActiveUpload()) setAddMedia(addMedia ? null : onboarding ? "photos" : "choose"); }}>{onboarding ? addMedia ? "Close uploads" : "+ Add photos/videos" : "+ Add media"}</button></header>
         {addMedia ? <div className="dancer-add-media">
           {!onboarding ? <p>Photos must show only you, with no other people in the background.</p> : null}
           <div className="dancer-add-media-choices">
