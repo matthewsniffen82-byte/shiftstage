@@ -1,0 +1,66 @@
+body.dancr-button-system:has(.venue-confirm-page) {
+  margin: 0;
+  background: var(--dancr-color-background);
+}
+.venue-confirm-page {
+  box-sizing: border-box;
+  min-height: 100svh;
+  display: grid;
+  align-items: start;
+  justify-items: center;
+  padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  color: var(--dancr-color-text-primary);
+  background: var(--dancr-color-background);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+body.dancr-button-system .venue-confirm-card.account-form-surface {
+  box-sizing: border-box;
+  display: grid;
+  gap: 16px;
+  width: min(100%, 500px);
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid #403447;
+  border-radius: 24px;
+  background: #111018;
+  text-align: left;
+}
+body.dancr-button-system .venue-confirm-card :is(h1, p) {
+  margin: 0;
+  letter-spacing: 0 !important;
+}
+body.dancr-button-system .venue-confirm-card .venue-confirm-brand {
+  color: #c4b5fd;
+  font-size: 12px;
+  font-weight: 600;
+}
+.venue-confirm-copy strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--dancr-color-text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+body.dancr-button-system .venue-confirm-card form { gap: 12px; }
+body.dancr-button-system .venue-confirm-card .account-form-primary {
+  box-sizing: border-box;
+  min-height: 48px !important;
+  white-space: normal;
+  cursor: pointer;
+}
+body.dancr-button-system .venue-confirm-card .account-form-primary:disabled {
+  opacity: .6;
+  cursor: default;
+}
+body.dancr-button-system .venue-confirm-card .account-form-back {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  text-align: center;
+  line-height: 1.5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
