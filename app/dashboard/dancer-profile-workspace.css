@@ -247,3 +247,44 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   transition: none !important;
 }
 }
+
+/* Daily actions and the editor use the same compact mobile controls. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts {
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:14px 0;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts > div {
+  display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid #3c3049; border-radius:12px; background:#15101c;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts dt { color:#c8bfd1; font-size:12px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts dd { margin:0; font-size:24px; font-weight:700; color:#fff; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-overview-actions { display:flex; flex-wrap:wrap; gap:8px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-overview-actions > a {
+  display:inline-flex; align-items:center; min-height:44px; padding:8px 12px; border:1px solid #564065; border-radius:10px; color:#eee4fa; background:#19131f; font-size:13px; box-sizing:border-box;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-attention-note { display:grid; gap:8px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-attention-note h3 { margin:0; font-size:15px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-editor-shortcuts { display:flex; gap:6px; flex-wrap:wrap; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-editor-shortcuts button {
+  min-height:44px !important; padding:8px 12px !important; border:1px solid #44354f !important; border-radius:10px !important; background:#17121d !important; color:#e5dced !important; font-size:12px !important;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-save-hint { color:#bfb4cb; font-size:12px; line-height:1.5; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace [id] { scroll-margin-top:20px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-preview-identity { display:flex; align-items:center; gap:14px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-preview-identity > img,
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-preview-avatar-placeholder { width:68px; height:68px; border-radius:50%; object-fit:cover; background:#211928; border:1px solid #655075; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-preview-identity h2 { margin:0 0 5px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-preview-identity p { margin:0; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-club-preview-card { position:relative; width:min(100%,240px); aspect-ratio:3 / 4; border-radius:14px; overflow:hidden; background:#17121e; border:1px solid #493454; margin:12px auto; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-club-preview-card > img { width:100%; height:100%; object-fit:cover; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-club-preview-card > div:last-child { display:grid; gap:5px; position:absolute; bottom:0; left:0; right:0; padding:40px 14px 14px; background:linear-gradient(transparent,#09070dec); color:#fff; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-club-preview-card span { font-size:12px; color:#d5c8de; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-preview-card-example summary { min-height:44px; cursor:pointer; color:#decbef; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer {
+  position:sticky; bottom:calc(10px + env(safe-area-inset-bottom, 0px)); z-index:3; padding:12px; border:1px solid #614879; border-radius:12px; background:#17111f; box-shadow:0 5px 24px #0008;
+}
+@media (max-width:600px) {
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-daily-card { padding:14px; }
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer { gap:6px; }
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-workspace-footer > span { font-size:11px; }
+}

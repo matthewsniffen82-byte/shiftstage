@@ -150,6 +150,11 @@ export function DancerPanel({
   const workspaceProps = { identityContent: identityContent(), avatarContent, mainPhotoContent, photoContent, videoContent,
     draftIdentity, profile, onProfileChange, isPublic, editorRequested, previewRequested, uploadBusy: mainBusy || photosBusy || videoBusy, onBusyChange: setEditorBusy };
   const preview = <button type="button" onClick={() => setPreviewRequested(value => value + 1)}>Preview profile</button>;
+  const visibilityAndSharing = <section className="dancer-workspace-card" id="dancer-visibility-sharing" aria-label="Visibility and sharing">
+    <h3>Visibility & sharing</h3>
+    <DashboardSection id="dancer-visibility" title="Profile visibility" description="Choose whether your public profile is visible." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /></DashboardSection>
+    <DashboardSection id="dancer-share" title="Share profile" description="Copy your public profile link." icon={<DancerDashboardIcon section="profile" />} toggleAffordance="chevron"><DancerSharePanel profile={profile} /></DashboardSection>
+  </section>;
   const accountTools = <>
     <DashboardSection id="dancer-connected-clubs" title="Connected clubs" description="Your club access and check-in tags." icon={<DancerDashboardIcon section="schedule" />} toggleAffordance="chevron">
       <DancerNfcPanel compactAuthorized initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />
@@ -166,15 +171,20 @@ export function DancerPanel({
       {accountContent}
     </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested} previewRequested={previewRequested}
       overview={<>
-        <section className="dancer-daily-card" id="dancer-overview">
-          <header><div><span className="eyebrow">Your day at a glance</span><h2>Overview</h2></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{isPublic ? "Public" : "Incognito"}</span></header>
-          {hasPendingAvatar || hasPendingPhotos || hasRejectedMedia ? <div className="dancer-attention-note" role="status"><strong>{hasRejectedMedia ? "A recent upload needs attention" : "Media awaiting review"}</strong><p>{hasRejectedMedia ? "Review the photo feedback and choose another image if needed." : "Your approved photos stay visible while replacements are checked."}</p><button type="button" onClick={() => setEditorRequested(value => value + 1)}>Review profile</button></div> : null}
-          {!isPublic ? <div className="dancer-attention-note"><strong>Your profile is hidden</strong><p>Turn off incognito in Profile when you’re ready to be seen.</p></div> : null}
-          <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button>{preview}</div>
-        </section>
         <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager /></section></DancerAgeVerificationGate>
+        <section className="dancer-daily-card" id="dancer-overview">
+          <header><div><h2>Your profile</h2><p>Public visibility is separate from your club check-in.</p></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{isPublic ? "Public" : "Hidden"}</span></header>
+          {hasPendingAvatar || hasPendingPhotos || hasRejectedMedia || !isPublic ? <section className="dancer-attention-note" aria-label="Profile attention">
+            <h3>{hasRejectedMedia ? "Needs attention" : hasPendingAvatar || hasPendingPhotos ? "Awaiting review" : "Profile visibility"}</h3>
+            {hasRejectedMedia ? <p>A photo needs replacement. <a href="#dancer-photos-title">Review photos</a></p> : null}
+            {hasPendingAvatar || hasPendingPhotos ? <p>New photos are being checked. Approved photos stay in place. <a href="#dancer-photos-title">View review status</a></p> : null}
+            {!isPublic ? <p>Your public profile is hidden. <a href="#dancer-visibility">Manage visibility</a></p> : null}
+          </section> : null}
+          <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button>{preview}<a href="#dancer-share">Share profile</a>{isPublic && profile?.slug ? <Link href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer">View public profile</Link> : null}</div>
+        </section>
+        <DancerAgeVerificationGate><DancerAnalyticsPanel compact initialAnalytics={analytics} /></DancerAgeVerificationGate>
       </>}
-      profile={<><DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} /><DashboardSection id="dancer-visibility" title="Profile visibility" description="Control whether guests can see your profile." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /></DashboardSection><DashboardSection id="dancer-share" title="Share profile" description="Your public link and QR code." icon={<DancerDashboardIcon section="profile" />} toggleAffordance="chevron"><DancerSharePanel profile={profile} /></DashboardSection></>}
+      profile={<DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} visibilityContent={visibilityAndSharing} />}
       results={<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} /></section></DancerAgeVerificationGate>}
       account={accountTools}
     />}

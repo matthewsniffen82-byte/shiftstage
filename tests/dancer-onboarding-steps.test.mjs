@@ -202,7 +202,7 @@ test("background dashboard refreshes do not replace Step 1 while the dancer is t
   );
 });
 
-test("one approved profile photo unlocks submission while optional media reviews continue separately", () => {
+test("three approved profile photos unlock submission while optional media reviews continue separately", () => {
   const profileHydrator =
     liveAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
   const photoEligibility =
@@ -213,13 +213,13 @@ test("one approved profile photo unlocks submission while optional media reviews
     profileRouteSource.match(/async function submitProfileForReview[\s\S]*?\n}/)?.[0] || "";
 
   assert.match(profileHydrator, /photos: dancerProfileMediaModerationComplete\(profile\)/);
-  assert.match(liveAppSource, /return categories\.includes\("approved"\);/);
+  assert.match(liveAppSource, /return approvedIds\.size >= 3;/);
   assert.doesNotMatch(liveAppSource, /categories\.every\(\(category\) => category === "approved"\)/);
   assert.doesNotMatch(liveAppSource, /function dancerProfileVideoModerationComplete\(\)/);
   assert.doesNotMatch(liveSubmit, /dancerProfileVideoModerationComplete/);
   assert.match(liveSubmit, /Other media can finish review separately/);
-  assert.match(serverSubmit, /photos\.some\(\(photo: any\) => photo\.review_status === "approved"\)/);
-  assert.match(serverSubmit, /At least one profile picture must pass moderation before submitting your profile/);
+  assert.match(serverSubmit, /approvedProfilePhotoCount\(photos\) < MIN_DANCER_ONBOARDING_PHOTOS/);
+  assert.match(serverSubmit, /profile photos must be approved before completing setup/);
   assert.doesNotMatch(serverSubmit, /mydancr_tv_videos/);
   assert.doesNotMatch(serverSubmit, /Every uploaded profile picture/);
   assert.doesNotMatch(serverSubmit, /Wait for every uploaded video/);

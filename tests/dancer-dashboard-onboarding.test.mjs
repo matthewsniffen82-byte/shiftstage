@@ -59,7 +59,7 @@ test("initial onboarding nests every production workspace directly under its ste
   const checklist = panel.indexOf("<DancerOnboardingCommand");
 
   assert.ok(checklist >= 0, "setup checklist should render");
-  assert.match(panel, /profileMediaContent=\{\(\{ profileReady, continueToAgreement \}\) => <DancerProfileWorkspace/);
+  assert.match(panel, /profileMediaContent=\{\(\{ profileReady, agreementComplete, continueToAgreement \}\) => <DancerProfileWorkspace/);
   assert.match(panel, /<DancerProfileWorkspace/);
   assert.match(panel, /venueVerificationContent=\{<DancerNfcPanel/);
   assert.doesNotMatch(panel, /\{!isApproved \? profileMediaSection : null\}/);
@@ -159,8 +159,8 @@ test("profile and media workspace uses production avatar face centering and mode
 test("step one uses the shared inline editor and opens an explicit agreement review", () => {
   assert.match(sharedWorkspace, /\{identityContent\}/);
   assert.match(sharedWorkspace, /Your details/);
-  assert.match(sharedWorkspace, /Your photos/);
-  assert.match(sharedWorkspace, /More media/);
+  assert.match(sharedWorkspace, /Photos & videos/);
+  assert.match(sharedWorkspace, /Profile gallery/);
   assert.doesNotMatch(sharedWorkspace, /DancerIdentityEditor|aria-modal/);
   assert.match(dashboard, /onContinue=\{continueToAgreement\}/);
   assert.match(onboardingCommand, /setReviewAgreement\(true\)/);
@@ -273,9 +273,9 @@ test("expanded profile status stays visible and uses compact non-repeating contr
   assert.match(dashboard, /onToggle=\{alignOpenedDashboardSection\}/);
   assert.match(dashboard, /scroll-margin-top: calc\(var\(--mydancr-preview-banner-offset, 0px\) \+ 12px\)/);
   assert.match(dashboard, /section\.scrollIntoView\(\{ behavior: reduceMotion \? "auto" : "smooth", block: "start" \}\)/);
-  const overview = dashboard.match(/id="dancer-overview"[\s\S]*?<\/DashboardSection>/)?.[0] || "";
+  const overview = dashboard.slice(dashboard.indexOf('id="dancer-overview"'), dashboard.indexOf('profile={<DancerProfileWorkspace'));
   assert.doesNotMatch(overview, /<Metric/);
-  assert.match(overview, /<DancerVisibilityPanel/);
+  assert.match(overview, /href="#dancer-visibility"/);
   assert.doesNotMatch(dashboard, /<InfoPanel title="Profile">/);
   assert.match(dashboard, /<DancerNfcPanel\s+compactAuthorized/);
 });
@@ -313,8 +313,8 @@ test("step one shows clear save, photo-count, and automatic-check states", () =>
   assert.match(dashboard, /if \(status === "rejected"\) return "Choose another photo\."/);
 });
 
-test("one approved profile photo completes the requirement without hiding extra moderation states", () => {
-  assert.match(dashboard, /const profileReady = Boolean\([\s\S]*?&& approvedPhotos\.length,\s*\);/);
+test("three approved profile photos complete the requirement without hiding extra moderation states", () => {
+  assert.match(dashboard, /const profileReady = Boolean\([\s\S]*?&& galleryReady,\s*\);/);
   assert.doesNotMatch(dashboard, /&& !pendingPhotos\.length/);
   assert.match(dashboard, /className=\{`photo-saved-preview is-\$\{photo\.status\}`\}/);
   assert.match(dashboard, /photoStatusLabel\(photo\.status, photo\.moderationStatus\)/);
@@ -397,7 +397,7 @@ test("the full profile preview renders approved media and restores the dashboard
 });
 
 test("approved dancers retain the full profile editor and its media controls", () => {
-  assert.match(dashboard, /profile=\{<><DancerProfileWorkspace[^>]*\{\.\.\.workspaceProps\}/);
+  assert.match(dashboard, /profile=\{<DancerProfileWorkspace[^>]*\{\.\.\.workspaceProps\}/);
   assert.match(sharedWorkspace, /DancerProfileMediaUploads compact/);
   assert.match(sharedWorkspace, /DancerSavedPhotoCrop photo=\{photo\} makeMain/);
   assert.match(sharedWorkspace, /onMediaPinned/);

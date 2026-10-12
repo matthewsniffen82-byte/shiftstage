@@ -13,6 +13,7 @@ import { relabelPhotoItems, dancerPhotoItemsFromProfile } from "./DancerPhotoPan
 import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerAgeVerificationGate";
 import DancerProfileAgreementReview, { type DancerProfileAgreementInput } from "./DancerProfileAgreementReview";
 import { DANCER_AGREEMENT_VERSION } from "@/src/lib/dancr/dancer-agreement-version";
+import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "@/src/lib/dancr/media-limits";
 import DancerIdentityEditor from "./DancerIdentityEditor";
 const DancerProfileMediaUploads = dynamic(() => import("./DancerProfileMediaUploads"));
 
@@ -514,6 +515,7 @@ export function DancerOnboardingCommand({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
   const [ageVerification, setAgeVerification] = useState<DancerAgeVerification | null>(null);
+  const galleryReady = approvedProfilePhotoCount(dancerPhotoItemsFromProfile(profile)) >= MIN_DANCER_ONBOARDING_PHOTOS;
   const previouslySubmitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
   const renewingAgreement = previouslySubmitted && agreementReviewRequired;
   const [reviewAgreement, setReviewAgreement] = useState(renewingAgreement);
@@ -540,14 +542,14 @@ export function DancerOnboardingCommand({
     persistedStageName
     && persistedCity
     && avatarUrl
-    && approvedPhotos.length,
+    && galleryReady,
   );
-  const submitted = previouslySubmitted && !agreementReviewRequired;
+  const submitted = previouslySubmitted && !agreementReviewRequired && (effectiveStatus === "approved" || profileReady);
   const ageVerified = ageVerification?.status === "verified";
   const ageNotRequired = !ageVerified && ageVerification?.required === false;
   const ageAccessAllowed = ageVerified || ageNotRequired;
   const setupDetail = profileReady
-    ? "Your details, face photo, and main photo are ready. Other media can finish review separately."
+    ? "Your details, face photo, and three profile photos are ready. Videos are optional."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
   const steps = useMemo(() => [
     {
@@ -572,12 +574,13 @@ export function DancerOnboardingCommand({
       id: "dancer-onboarding-nfc",
       label: "Confirm club",
       complete: isVenueApproved,
-      detail: isVenueApproved ? "Club confirmed." : submitted && ageAccessAllowed ? "Tap the club’s NFC tag when you arrive." : "Unlocks after profile setup and age verification.",
+      detail: isVenueApproved ? "Club confirmed." : submitted && ageAccessAllowed ? "Ready for your first club visit. Tap the dressing-room sticker when you arrive." : "Unlocks after profile setup and age verification.",
       locked: !submitted || !ageAccessAllowed,
     },
   ], [ageAccessAllowed, ageNotRequired, ageVerified, isVenueApproved, profileReady, renewingAgreement, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete && !step.notRequired) || steps[steps.length - 1];
-  const progressLabel = `${steps.filter((step) => step.complete).length} of ${steps.length} complete${ageNotRequired ? " · 1 not required" : ""}`;
+  const completedSteps = steps.filter((step) => step.complete || step.notRequired).length;
+  const progressLabel = `${completedSteps} of ${steps.length} complete${ageNotRequired ? " · Age check not required" : ""}`;
   const visibleExpandedStepId = expandedStepId === null ? firstIncomplete.id : expandedStepId;
   const previousCurrentStep = useRef(firstIncomplete.id);
   useEffect(() => {
@@ -745,7 +748,7 @@ export function DancerOnboardingCommand({
           <p>{renewingAgreement ? "Your saved profile and verification stay in place." : "Three steps to get your profile ready."}</p>
         </span>
         <div className="dancer-onboarding-progress">
-          <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={steps.filter((step) => step.complete).length} aria-valuetext={progressLabel}>
+          <div className="dancer-onboarding-progress-track" role="progressbar" aria-label="Profile setup progress" aria-valuemin={0} aria-valuemax={steps.length} aria-valuenow={completedSteps} aria-valuetext={progressLabel}>
             {steps.map((step) => <span className={step.complete ? "is-complete" : step.notRequired ? "is-not-required" : step.id === firstIncomplete.id ? "is-current" : ""} key={step.id}>{step.complete ? "✓" : step.notRequired ? "–" : ""}</span>)}
           </div>
           <b>{progressLabel}</b>
@@ -875,11 +878,13 @@ function dancerProfileSetupBlocker({
   rejectedPhotos: DancerPhotoItem[];
 }) {
   if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
-  if (pendingAvatar) return "Your face photo is being reviewed.";
+  if (!avatarUrl && pendingAvatar) return "Awaiting review: your face photo. Your progress is saved.";
   if (!avatarUrl) return "Add a clear face photo.";
-  if (pendingPhotos.length) return `${pendingPhotos.length} profile ${pendingPhotos.length === 1 ? "picture is" : "pictures are"} still being moderated.`;
-  if (rejectedPhotos.length) return "Replace the profile picture that did not pass moderation.";
-  if (!approvedPhotos.length) return "Upload at least one profile picture that passes moderation.";
+  if (approvedProfilePhotoCount(approvedPhotos) < MIN_DANCER_ONBOARDING_PHOTOS) {
+    if (pendingPhotos.length) return `Awaiting review: ${approvedPhotos.length} of ${MIN_DANCER_ONBOARDING_PHOTOS} required profile photos approved. You can add photos while you wait.`;
+    if (rejectedPhotos.length) return "Needs your action: replace photos that were not approved. Three approved profile photos are required.";
+    return `Add ${MIN_DANCER_ONBOARDING_PHOTOS - approvedPhotos.length} more profile ${MIN_DANCER_ONBOARDING_PHOTOS - approvedPhotos.length === 1 ? "photo" : "photos"}. Videos are optional.`;
+  }
   return "Save the remaining profile changes.";
 }
 

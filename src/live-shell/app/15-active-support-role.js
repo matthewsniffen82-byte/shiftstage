@@ -959,10 +959,10 @@
       const rows = Array.isArray(profile?.dancer_photos) ? profile.dancer_photos : [];
       const pendingReviews = Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : [];
       const submittedPhotos = Array.isArray(profile?.submittedPhotos) ? profile.submittedPhotos : [];
-      const categories = [...rows, ...pendingReviews, ...submittedPhotos]
-        .map((photo) => dancerSetupPhotoModerationCategory(photo))
-        .filter(Boolean);
-      return categories.includes("approved");
+      const approvedIds = new Set([...rows, ...pendingReviews, ...submittedPhotos]
+        .filter((photo) => photo.id && dancerSetupPhotoModerationCategory(photo) === "approved")
+        .map((photo) => String(photo.id)));
+      return approvedIds.size >= 3;
     }
 
     function dancerSubmittedPhotosFromProfile(profile) {

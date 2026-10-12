@@ -69,10 +69,10 @@
       if (rejectedCount) outcomes.push(`${rejectedCount} fully rejected`);
       if (failedCount) outcomes.push(`${failedCount} could not be processed`);
       if (!canContinue) {
-        return `${outcomes.join(" · ")}. Step 2 stays locked until at least one profile photo is approved.`;
+        return `${outcomes.join(" · ")}. Continue once at least three profile photos are approved.`;
       }
       return reviewCount
-        ? `${outcomes.join(" · ")}. Your required profile photo is approved, so you can continue to Step 2 while the additional review finishes.`
+        ? `${outcomes.join(" · ")}. Your three required profile photos are approved. You can continue while additional media is reviewed.`
         : `${outcomes.join(" · ")}. The required profile-photo check passed. You can continue to Step 2.`;
     }
 
@@ -219,7 +219,7 @@
       const avatarSaved = Boolean(setupProfile?.avatarStoragePath || setupProfile?.avatar_storage_path);
       if (!dancerSetup.profile || !dancerSetup.photos || !avatarSaved) {
         activeSetupStep = "profile";
-        profileSubmitNotice = "Complete your identity, approved avatar, and at least one approved profile picture before submitting. Other media can finish review separately.";
+        profileSubmitNotice = "Complete your details, approved face photo, and at least three approved profile photos before submitting. Other media can finish review separately. Videos are optional.";
         profileSubmitNoticeTone = "error";
         renderDancerSetup();
         showToast("Complete the required profile items first");

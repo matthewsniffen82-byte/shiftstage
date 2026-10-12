@@ -12,7 +12,7 @@ const destinations = [
 type Destination = typeof destinations[number]["id"];
 
 export function dancerDashboardDestination(hash: string): Destination {
-  if (/profile|media|share|visibility/.test(hash)) return "profile";
+  if (/profile|media|photos|details|share|visibility/.test(hash)) return "profile";
   if (/performance|results/.test(hash)) return "results";
   if (/account|support|notification|connected|verification|nfc/.test(hash)) return "account";
   return "overview";
@@ -46,6 +46,7 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
       window.requestAnimationFrame(() => {
         const target = document.getElementById(targetId);
         if (target instanceof HTMLDetailsElement) target.open = true;
+        if (target && targetId !== `dancer-${activeRef.current}`) target.scrollIntoView({ block: "start", behavior: "smooth" });
       });
     };
     sync();

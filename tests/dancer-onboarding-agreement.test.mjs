@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import React from "react";
 import { DANCER_AGREEMENT_VERSION } from "../src/lib/dancr/dancer-agreement-version.ts";
+import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "../src/lib/dancr/media-limits.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/dashboard/DancerProfileEditor.tsx", import.meta.url), "utf8");
@@ -24,12 +25,12 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
     useMemo: fn => fn(), useEffect: fn => effects.push(fn),
   };
   vm.runInNewContext(code, {
-    ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION,
+    ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION, MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount,
     require: name => require(name),
     window: { location: { search: "" }, localStorage: { removeItem() {}, setItem() {} }, addEventListener() {}, removeEventListener() {}, dispatchEvent: event => events.push(event.type), requestAnimationFrame: fn => fn() },
     document: { getElementById: () => null, querySelector: () => null },
     persistedDancerStageName: p => p.stage_name,
-    dancerPhotoItemsFromProfile: () => ready ? [{ status: "approved" }] : [],
+    dancerPhotoItemsFromProfile: () => ready ? [1,2,3].map(id => ({ id: String(id), status: "approved" })) : [],
     DANCER_PHOTOS_KEEP_OPEN_EVENT: "keep-open",
     DancerProfileAgreementReview: "AgreementReview", DancerAgeVerificationGate: "AgeVerification",
     readSession: () => ({ accessToken: "fixture" }),

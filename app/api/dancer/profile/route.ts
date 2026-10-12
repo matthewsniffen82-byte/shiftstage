@@ -13,7 +13,7 @@ import {
   profilePhotoSlotKey,
 } from "@/src/lib/dancr/photo-slot";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
-import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
+import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "@/src/lib/dancr/media-limits";
 import { validateProfilePhotoDeletionInput } from "@/src/lib/dancr/profile-photo-input";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerSignupCityInputError, requireDancerSignupCity } from "@/src/lib/dancr/signup-cities";
@@ -180,7 +180,7 @@ function safeProfileSaveError(stage: ProfileSaveStage, error: any) {
   if (message.startsWith("PUBLIC_PROFILE_STATE_CHANGED")) return "Profile visibility or approval changed unexpectedly, so the save was stopped.";
   if (message === "Save stage name and city before publishing your profile.") return message;
   if (message === "Upload an avatar that passes moderation before submitting your profile.") return message;
-  if (message === "At least one profile picture must pass moderation before submitting your profile.") return message;
+  if (message === `At least ${MIN_DANCER_ONBOARDING_PHOTOS} profile photos must be approved before completing setup.`) return message;
   if (message === "Sign in required." || message === "Dancer profile not found.") return message;
 
   const stageMessages: Record<ProfileSaveStage, string> = {
@@ -790,8 +790,8 @@ async function submitProfileForReview(
     throw new Error("Upload an avatar that passes moderation before submitting your profile.");
   }
   const photos = photosResult.data || [];
-  if (!photos.some((photo: any) => photo.review_status === "approved")) {
-    throw new Error("At least one profile picture must pass moderation before submitting your profile.");
+  if (approvedProfilePhotoCount(photos) < MIN_DANCER_ONBOARDING_PHOTOS) {
+    throw new ProfileInputError(`At least ${MIN_DANCER_ONBOARDING_PHOTOS} profile photos must be approved before completing setup.`);
   }
 
   await acceptDancerProfileSubmissionAgreement(client, input);

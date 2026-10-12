@@ -16,7 +16,7 @@ function readAnalytics(value: unknown): DancerAudienceAnalytics | null {
     && data.performance?.current && data.performance.alerts && Array.isArray(data.performance.clubs) && Array.isArray(data.performance.shifts) ? data : null;
 }
 
-export function DancerAnalyticsPanel({ initialAnalytics }: { initialAnalytics?: Record<string, unknown> | null }) {
+export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { initialAnalytics?: Record<string, unknown> | null; compact?: boolean }) {
   const initial = readAnalytics(initialAnalytics);
   const [period, setPeriod] = useState<DancerAnalyticsPeriod>("7d");
   const [analytics, setAnalytics] = useState(initial);
@@ -59,6 +59,19 @@ export function DancerAnalyticsPanel({ initialAnalytics }: { initialAnalytics?: 
   });
   const hasActivity = current && ([current.profileViews, current.newFollowers, current.contentLikes, current.socialLinkTaps].some(metric => metric.value > 0)
     || performance!.current.tableRequests > 0 || performance!.current.vipRequests > 0 || performance!.alerts.total > 0);
+
+  if (compact) return <section className="dancer-daily-card dancer-activity-summary" aria-label="Recent activity" aria-busy={loading}>
+    <header><div><h2>Recent activity</h2><p>Last 7 days · all clubs</p></div><a href="#dancer-results">View results</a></header>
+    {loading ? <p role="status">Loading activity…</p> : error ? <p role="alert">{error} <button type="button" onClick={() => setRetry(value => value + 1)}>Retry</button></p> : current && performance ? <>
+      <dl className="dancer-activity-counts">
+        <div><dt>Table requests</dt><dd>{number(performance.current.tableRequests)}</dd></div>
+        <div><dt>VIP requests</dt><dd>{number(performance.current.vipRequests)}</dd></div>
+        <div><dt>Repeat VIPs</dt><dd>{number(performance.current.repeatVips)}</dd></div>
+        <div><dt>New followers</dt><dd>{number(current.newFollowers.value)}</dd></div>
+      </dl>
+      <p className="dancer-results-note">Requests show interest; they do not confirm a visit.</p>
+    </> : null}
+  </section>;
 
   return <div className="dancer-analytics" aria-busy={loading}>
     <div className="dancer-analytics-toolbar">

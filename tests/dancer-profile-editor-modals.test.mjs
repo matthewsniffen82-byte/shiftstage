@@ -141,7 +141,7 @@ test("approved videos refresh into the builder and video cards render a visible 
 
 
 test("saving onboarding identity stays separate from the profile completion requirements", () => {
-  assert.match(dashboard, /const profileReady = Boolean\(\s*persistedStageName\s*&& persistedCity\s*&& avatarUrl\s*&& approvedPhotos\.length,\s*\)/);
+  assert.match(dashboard, /const profileReady = Boolean\(\s*persistedStageName\s*&& persistedCity\s*&& avatarUrl\s*&& galleryReady,\s*\)/);
   const workspace = dashboard.match(/function DancerOnboardingProfileMediaWorkspace[\s\S]*?(?=\nfunction |$)/)?.[0] || "";
   assert.match(workspace, /<DancerIdentityEditor[^>]*>\s*\{identityContent\(\)\}\s*<\/DancerIdentityEditor>/);
   assert.doesNotMatch(workspace, /DancerProfilePreview|builderRequirements|continueAfterSave/);

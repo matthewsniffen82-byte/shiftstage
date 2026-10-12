@@ -179,7 +179,7 @@ export default function DancerProfileMediaUploads({
           <div className="profile-upload-group" key={section}>
             <header>
               <strong>{isPhoto ? "Photos" : "Videos"}</strong>
-              <small>{isPhoto ? "At least 1 solo photo" : "Optional"}</small>
+              <small>{isPhoto ? "Only you in each photo" : "Optional · add now or later"}</small>
               <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
             </header>
             {!compact ? <><p>{isPhoto ? "You can add more photos later." : "You can add videos now or later."}</p>
@@ -226,6 +226,7 @@ export default function DancerProfileMediaUploads({
                     </div>
                     <strong>{label} {index + 1}</strong>
                     <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status, item.moderationStatus)}</small>
+                    {["rejected", "denied", "failed", "uploading"].includes(item.status) ? <button className="dancer-upload-replace" type="button" disabled={actionsDisabled} onClick={() => onOpen(section)}>Upload replacement</button> : null}
                   </li>
                 ))}
               </ul>
