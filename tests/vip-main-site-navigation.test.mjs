@@ -43,7 +43,7 @@ test('a verified VIP visit survives the main site, token refresh and Back with a
   persistBrowserAuthSession(session());
   const oldHome = shell(readBrowserAuthSession()); oldHome.context.updateAccountHeader();
   assert.equal(oldHome.context.dashboardBtn.textContent, 'Guest dashboard');
-  assert.equal(oldHome.context.vipDashboardLink.hidden, false);
+  assert.equal(oldHome.context.vipDashboardLink.hidden, true);
   assert.equal(rememberVipDashboard(guest.id, venueId), true);
   const saved = readBrowserAuthSession();
   assert.equal(saved.account.role, 'customer');
@@ -71,7 +71,7 @@ test('revocation, logout, other accounts and other roles cannot reuse a VIP navi
   const home = shell(readBrowserAuthSession());
   rememberVipDashboard(guest.id, ''); home.context.refreshBrowserAccountView(); home.context.openDashboard();
   assert.equal(home.context.dashboardBtn.textContent, 'Guest dashboard'); assert.equal(home.navigations.at(-1), '/dashboard/customer');
-  assert.equal(home.context.vipDashboardLink.hidden, false);
+  assert.equal(home.context.vipDashboardLink.hidden, true);
   rememberVipDashboard(guest.id, venueId); clearBrowserAuthSession();
   assert.equal(readBrowserAuthSession(), null); assert.equal(rememberVipDashboard(guest.id, venueId), false);
   const signedOut = shell(null); signedOut.context.updateAccountHeader(); signedOut.context.openUnifiedDashboard('customer');
@@ -81,7 +81,10 @@ test('revocation, logout, other accounts and other roles cannot reuse a VIP navi
   for (const role of ['customer', 'dancer', 'venue']) {
     const current = { ...session(), account: { id: 'another-account', role }, vipNavigation: { accountId: guest.id, venueId } };
     persistBrowserAuthSession(current); assert.equal(rememberVipDashboard(guest.id, venueId), false);
-    const page = shell(readBrowserAuthSession()); page.context.openUnifiedDashboard(role);
+    const page = shell(readBrowserAuthSession()); page.context.updateAccountHeader(); page.context.openUnifiedDashboard(role);
+    assert.equal(page.context.dashboardBtn.hidden, false);
+    assert.equal(page.context.dashboardBtn.textContent, `${role === 'customer' ? 'Guest' : role === 'dancer' ? 'Dancer' : 'Venue'} dashboard`);
+    assert.equal(page.context.vipDashboardLink.hidden, true);
     assert.equal(page.navigations.at(-1), `/dashboard/${role}`);
     if (role !== 'customer') assert.equal(rememberVipDashboard('another-account', venueId), false);
   }
