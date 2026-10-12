@@ -52,7 +52,7 @@ function deviceBookmark(value: unknown) {
       terms: text(item.terms),
       offerType: text(item.offerType),
       // Device storage cannot verify current availability. The UI labels the
-      // device copy and opens the venue for up-to-date offer details.
+      // device copy; the Free Entry page verifies current offer availability.
       isActive: false,
     },
   };

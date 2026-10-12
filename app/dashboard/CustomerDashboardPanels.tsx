@@ -920,7 +920,7 @@ function CustomerDealPassPanel({
               <small>{item.venue.name || "Club"} · {item.deviceOnly ? "Saved on this device" : savedClubDealAvailability(item.deal)}</small>
             </span>
             <div className="customer-card-actions">
-              {item.venue.slug ? <Link href={customerVenueHref(item.venue)}>View deal</Link> : null}
+              <Link href={`/deals/transportation/${encodeURIComponent(item.dealId)}`}>View deal</Link>
               <CustomerDirectionsButton onDirections={onDirections} pending={Boolean(pendingAction)} venue={item.venue} />
               <details className="customer-card-menu"><summary aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}>•••</summary><div><button
                 className="customer-text-action"

@@ -186,7 +186,7 @@ test("customer dashboard keeps saved deals separate from cashier redemption acti
   assert.match(dashboard, /Saved deals are private bookmarks\. Saving does not reserve, select, or redeem an offer\./);
   assert.match(dashboard, /<CustomerPassWallet deals=\{saved\.dealRedemptions\}/);
   assert.match(dashboard, /id="customer-passes" title="Admission passes"/);
-  assert.match(dashboard, />View deal<\/Link>/);
+  assert.ok(dashboard.includes('<Link href={`/deals/transportation/${encodeURIComponent(item.dealId)}`}>View deal</Link>'));
   assert.match(dashboard, />\s*Remove\s*<\/button>/);
   assert.match(dashboard, /"\/api\/customer\/deal-saves"/);
   assert.match(dashboard, /CustomerDirectionsButton/);
