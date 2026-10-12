@@ -18,6 +18,6 @@ export async function GET(request: Request) {
     const { data, error } = await admin.rpc("get_venue_operations", { p_venue: access.venueId, p_since: window.startsAt, p_until: window.endsAt });
     if (error) throw error;
     const operations = access.role === "staff" ? { ...data, vipPending: null, ridesOpen: null, teamReady: null } : data;
-    return NextResponse.json({ operations, session }, { headers: { "cache-control": "private, no-store" } });
+    return NextResponse.json({ ok: true, operations, session }, { headers: { "cache-control": "private, no-store" } });
   } catch (error) { return apiError(error, "Unable to load tonight’s queues."); }
 }

@@ -19,6 +19,6 @@ export async function POST(request: Request) {
     const { data, error } = await admin.rpc("set_venue_ride_status", { p_actor: user.id, p_venue: access.venueId, p_request: pickupUuid(body.id), p_status: body.status, p_version: body.version });
     if (error?.code === "40001") throw new PublicApiError("CONFLICT", "Another staff member updated this ride. Refresh before trying again.", 409);
     if (error) throw error;
-    return NextResponse.json({ ride: data, session }, { headers: { "cache-control": "private, no-store" } });
+    return NextResponse.json({ ok: true, ride: data, session }, { headers: { "cache-control": "private, no-store" } });
   } catch (error) { return apiError(error, "Unable to update this ride."); }
 }
