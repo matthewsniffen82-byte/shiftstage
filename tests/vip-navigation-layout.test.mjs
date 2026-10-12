@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import postcss from 'postcss';
+import { compileVip, dashboardHarness } from './helpers/vip-dashboard-fixture.mjs';
+import { plannerHarness } from './helpers/vip-planner-fixture.mjs';
+
+function measurement({ observer = true, active = true, mounted = true } = {}) {
+  let height = 74.25, cleanup, resize, observed, disconnected = false;
+  const values = new Map(), events = new Map();
+  const element = { getBoundingClientRect: () => ({ height }) };
+  const surface = { style: { setProperty: (key, value) => values.set(key, value), removeProperty: key => values.delete(key) } };
+  const window = {
+    addEventListener: (name, callback) => events.set(name, callback),
+    removeEventListener: name => events.delete(name),
+    ...(observer ? { ResizeObserver: class {
+      constructor(callback) { resize = callback; }
+      observe(target) { observed = target; }
+      disconnect() { disconnected = true; }
+    } } : {}),
+  };
+  const { useVipElementHeight } = compileVip('app/vip/useVipElementHeight.ts', {
+    react: { useEffect: callback => { cleanup = callback(); } },
+  }, { window });
+  useVipElementHeight({ current: mounted ? element : null }, { current: surface }, '--vip-nav-height', active);
+  return { values, events, element, observed, disconnected: () => disconnected,
+    resize: next => { height = next; resize?.(); }, orientation: next => { height = next; events.get('resize')?.(); },
+    cleanup: () => cleanup?.() };
+}
+
+test('sticky offsets track actual control height including wrapped labels, zoom and orientation changes', () => {
+  const ui = measurement();
+  assert.equal(ui.observed, ui.element);
+  assert.equal(ui.values.get('--vip-nav-height'), '75px');
+  ui.resize(112.5); assert.equal(ui.values.get('--vip-nav-height'), '113px');
+  ui.orientation(66); assert.equal(ui.values.get('--vip-nav-height'), '66px');
+  ui.resize(0); assert.equal(ui.values.get('--vip-nav-height'), '66px', 'hidden controls must not erase the last useful size');
+  ui.cleanup(); assert.equal(ui.disconnected(), true); assert.equal(ui.events.size, 0); assert.equal(ui.values.size, 0);
+});
+
+test('height measurements degrade safely without ResizeObserver and ignore inactive or unmounted controls', () => {
+  const ui = measurement({ observer: false });
+  ui.orientation(120); assert.equal(ui.values.get('--vip-nav-height'), '120px');
+  ui.cleanup(); assert.equal(ui.events.size, 0);
+  for (const options of [{ active: false }, { mounted: false }]) {
+    const inactive = measurement(options);
+    assert.equal(inactive.values.size, 0); assert.equal(inactive.events.size, 0); assert.equal(inactive.observed, undefined);
+  }
+});
+
+test('navigation and filters own measured refs while the dancer fieldset is no longer a nested keyboard scroller', async () => {
+  const ui = dashboardHarness(); await ui.settle();
+  assert.ok(ui.nodes().find(node => node.type === 'main').props.ref);
+  assert.ok(ui.nodes().find(node => node.type === 'nav').props.ref); ui.unmount();
+  const planner = plannerHarness();
+  assert.ok(planner.nodes().find(node => node.props?.className === 'vip-roster-filters').props.ref);
+  const grid = planner.nodes().find(node => node.props?.className === 'vip-dancers');
+  assert.equal(grid.props.tabIndex, undefined);
+  assert.ok(planner.nodes(grid).some(node => node.props?.className === 'vip-dancer-favorite'));
+});
+
+test('the opaque filter bar sits below the safe-area-aware navigation and the roster uses document scrolling', () => {
+  const root = postcss.parse(readFileSync(new URL('../app/vip/vip-working-alerts.css', import.meta.url), 'utf8'));
+  const rules = [];
+  root.walkRules(rule => rules.push(rule));
+  const values = selector => Object.fromEntries(rules.filter(rule => rule.selector === selector && rule.parent.type === 'root')
+    .flatMap(rule => rule.nodes.filter(node => node.type === 'decl').map(node => [node.prop, node.value])));
+  const prefix = 'body.dancr-button-system #vip-dashboard ';
+  const nav = values(prefix + '.vip-dashboard-nav');
+  const filters = values(prefix + '.vip-roster-filters[role=group]');
+  assert.equal(nav.top, 'env(safe-area-inset-top, 0px)');
+  assert.equal(filters.position, 'sticky');
+  assert.equal(filters.top, 'calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height) + 8px)');
+  assert.equal(filters['z-index'], '4'); assert.equal(filters.background, 'linear-gradient(#141216, #141216)');
+  assert.equal(filters['grid-template-columns'], 'repeat(3, minmax(0, 1fr))');
+  const grid = values(prefix + '.vip-dancers');
+  assert.equal(grid['max-height'], 'none'); assert.equal(grid.overflow, 'visible'); assert.equal(grid['overscroll-behavior-y'], 'auto');
+  const tile = values(prefix + ':is(.vip-dancer, .vip-dancer a, .vip-dancer button, .vip-dancer input)');
+  assert.match(tile['scroll-margin-top'], /var\(--vip-nav-height\).*var\(--vip-filter-height\)/);
+  assert.match(tile['scroll-margin-bottom'], /120px.*safe-area-inset-bottom/);
+  const short = rules.find(rule => rule.parent.params === '(max-height: 500px)' && rule.selector.includes('.vip-dashboard-nav'));
+  assert.ok(short.selector.includes('.vip-roster-filters'));
+  assert.ok(short.nodes.some(node => node.prop === 'position' && node.value === 'static'));
+});

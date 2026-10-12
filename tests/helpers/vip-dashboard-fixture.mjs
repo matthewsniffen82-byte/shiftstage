@@ -15,7 +15,9 @@ export function compileVip(file, dependencies = {}, globals = {}) {
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
   }).outputText, { exports, Date, Intl, Error, URLSearchParams, AbortController, crypto: { randomUUID }, console,
-    require: name => dependencies[name] ?? (['node:crypto', 'react', 'react/jsx-runtime'].includes(name) ? require(name) : {}), ...globals });
+    require: name => dependencies[name] ?? (name === './useVipElementHeight'
+      ? compileVip('app/vip/useVipElementHeight.ts', { react: dependencies.react ?? require('react') }, globals)
+      : ['node:crypto', 'react', 'react/jsx-runtime'].includes(name) ? require(name) : {}), ...globals });
   return exports;
 }
 export const guest = { id: 'guest-1', role: 'customer', email: 'guest@example.test' };

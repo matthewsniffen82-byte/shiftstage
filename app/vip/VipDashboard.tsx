@@ -14,6 +14,7 @@ import VipRequests from "./VipRequests";
 import { VipWorkingFavorites } from "./VipMyDancers";
 import VipAccountPanel from "./VipAccountPanel";
 import { NotificationPanel } from "@/app/dashboard/DashboardShared";
+import { useVipElementHeight } from "./useVipElementHeight";
 import "./vip-premium.css";
 import "./vip-working-alerts.css";
 
@@ -47,6 +48,9 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [nicknameEditing, setNicknameEditing] = useState("");
   const [nicknameError, setNicknameError] = useState<{ venueId: string; message: string } | null>(null);
   const nicknameInput = useRef<HTMLInputElement | null>(null);
+  const dashboardSurface = useRef<HTMLElement | null>(null);
+  const navigation = useRef<HTMLElement | null>(null);
+  useVipElementHeight(navigation, dashboardSurface, "--vip-nav-height");
   const nicknameButton = useRef<HTMLButtonElement | null>(null);
   const previousNicknameEditor = useRef("");
   const [draftsLoaded, setDraftsLoaded] = useState(false);
@@ -314,7 +318,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     </form>}
   </section>;
 
-  return <main className="vip-shell vip-dashboard-shell" id="vip-dashboard" data-global-navigation-swipe="ignore"><div className="vip-container">
+  return <main ref={dashboardSurface} className="vip-shell vip-dashboard-shell" id="vip-dashboard" data-global-navigation-swipe="ignore"><div className="vip-container">
     <header className="dashboard-identity-header" data-account-kind="vip">
       <div className="dashboard-identity-back-row">
         <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
@@ -331,7 +335,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         </div>
       </div>
     </header>
-    <nav className="vip-dashboard-nav" aria-label="VIP dashboard">
+    <nav ref={navigation} className="vip-dashboard-nav" aria-label="VIP dashboard">
       {VIP_DESTINATIONS.map(item => <button type="button" key={item.id} aria-current={view === item.id ? "page" : undefined} aria-controls={`vip-panel-${item.id}`} disabled={disabled} onClick={() => navigate(item.id)}>
         <VipIcon kind={item.id === "plan" ? "dancers" : item.id} /><span>{item.label}</span>{item.id === "plan" && draft.selected.length > 0 && <span className="vip-draft-dot" aria-label="Unsubmitted visit draft" />}
       </button>)}

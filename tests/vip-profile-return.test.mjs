@@ -44,7 +44,7 @@ function navigation(props, { referrer = '', historyLength = 1 } = {}) {
 
 test('profiles opened from each VIP venue return to that venue planner without referrer or history', async () => {
   const Planner = compileVip('app/vip/VipPlan.tsx', {
-    react: { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }) },
+    react: { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} },
     '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': dashboard,
   }).default;
   for (const venue of venues) {
