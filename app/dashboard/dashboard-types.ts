@@ -77,6 +77,7 @@ export type CustomerSavedState = {
   }>;
   goingSignals?: CustomerGoingSignal[];
   planEntryDeals?: Record<string, string>;
+  clubEntryDeals?: Record<string, string>;
   dealSaves?: Array<{
     dealId: string;
     deviceOnly?: boolean;

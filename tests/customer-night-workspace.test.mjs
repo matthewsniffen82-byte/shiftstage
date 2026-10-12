@@ -27,7 +27,7 @@ function harness(name = 'CustomerPanel', props = {}, hash = '') {
     addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name),
     setInterval: () => 1, clearInterval() {}, cancelAnimationFrame: id => frames.delete(id), requestAnimationFrame: cb => { frames.set(++sequence, cb); return sequence; } };
   const exports = {};
-  const source = fs.readFileSync('app/dashboard/CustomerDashboardPanels.tsx', 'utf8') + '\nexport { CustomerPassWallet, CustomerNightPanel, FollowedDancerGridCard };';
+  const source = fs.readFileSync('app/dashboard/CustomerDashboardPanels.tsx', 'utf8') + '\nexport { CustomerPassWallet, CustomerNightPanel, FollowedDancerGridCard, CustomerFollowedClubsPanel, SavedVenueCard };';
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
     exports, window, Date, Intl, AbortController, HTMLDetailsElement: class {}, document: { getElementById: () => null },
     require: path => path === 'react' ? react : path === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : path === './customer-dashboard-view' ? { customerDashboardDestination }
@@ -177,6 +177,25 @@ test('plans show one Free Entry action per outing only for clubs with a verified
   assert.equal(ui.nodes().filter(n=>n.props?.className==='customer-night-card').length,3);
   ui.update({entryDeals:{}});
   assert.equal(entryLinks().length,0,'removed offers lose their action on refresh');
+});
+
+test('saved club entry links use that club’s current offer while keeping club and directions actions', () => {
+  const venue = {id:'club',slug:'echo',name:'Echo House',city:'Las Vegas',activity:{workingNowCount:96}};
+  const other = {id:'other',slug:'other',name:'Other Club',city:'Las Vegas'};
+  const saved = {venueFollows:[{venueId:'club',venue},{venueId:'other',venue:other}],clubEntryDeals:{club:'free/entry'},dealSaves:[]};
+  const clubs = harness('CustomerFollowedClubsPanel',{saved,pendingAction:''});
+  const cards = clubs.nodes().filter(n=>n.type?.name==='SavedVenueCard');
+  assert.equal(cards[0].props.entryDealId,'free/entry');
+  assert.equal(cards[1].props.entryDealId,undefined,'another club cannot inherit the first club’s offer');
+  const ui = harness('SavedVenueCard',cards[0].props);
+  const entry = () => ui.nodes().find(n=>n.type==='a' && n.props.className==='free-entry-cta');
+  assert.equal(entry().props.href,'/deals/transportation/free%2Fentry?sourceType=club_page');
+  assert.equal(entry().props['aria-label'],'Free Entry at Echo House');
+  assert.ok(ui.nodes().some(n=>n.type==='a' && n.props.href==='/venues/echo'));
+  assert.equal(component(ui,'CustomerDirectionsButton').props.venue,venue);
+  ui.update({entryDealId:undefined});
+  assert.equal(entry(),undefined,'an unavailable offer disappears on refresh');
+  assert.ok(component(ui,'CustomerDirectionsButton'));
 });
 
 test('plans preview the next outing, expand without duplicates and retain cancellation and directions', () => {

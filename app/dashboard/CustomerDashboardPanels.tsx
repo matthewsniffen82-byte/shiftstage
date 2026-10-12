@@ -669,6 +669,7 @@ function CustomerFollowedClubsPanel({
                 return (
                   <SavedVenueCard
                     key={venueId}
+                    entryDealId={saved?.clubEntryDeals?.[venueId]}
                     onDirections={onDirections}
                     onUnfollow={() => void onVenueFollowChange(venueId, false)}
                     pending={Boolean(pendingAction)}
@@ -742,12 +743,14 @@ function FollowedDancerGridCard({
 
 
 function SavedVenueCard({
+  entryDealId,
   onDirections,
   onUnfollow,
   pending,
   removing,
   venue,
 }: {
+  entryDealId?: string;
   onDirections: (venue: SavedVenueSummary) => void;
   onUnfollow: () => void;
   pending: boolean;
@@ -781,10 +784,13 @@ function SavedVenueCard({
         </button></div></details>
       </div>
       <div className="customer-saved-card-copy customer-favorite-club-copy">
-        <div className="customer-club-activity" aria-label={`Dancers at ${venue.name || "this club"}`}>
-          <Link className={`customer-club-activity-stat is-now${venue.activity?.workingNowCount ? " has-dancers" : ""}`} href={`${customerVenueHref(venue)}#venue-working-now`}>
-            <i aria-hidden="true" /><strong>{venue.activity?.workingNowCount ?? "—"}</strong><span>Now</span>
-          </Link>
+        <div className="customer-favorite-club-status">
+          <div className="customer-club-activity" aria-label={`Dancers at ${venue.name || "this club"}`}>
+            <Link className={`customer-club-activity-stat is-now${venue.activity?.workingNowCount ? " has-dancers" : ""}`} href={`${customerVenueHref(venue)}#venue-working-now`}>
+              <i aria-hidden="true" /><strong>{venue.activity?.workingNowCount ?? "—"}</strong><span>Now</span>
+            </Link>
+          </div>
+          {entryDealId ? <div className="customer-card-actions customer-favorite-club-entry"><Link className="free-entry-cta" href={`/deals/transportation/${encodeURIComponent(entryDealId)}?sourceType=club_page`} aria-label={`Free Entry at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></Link></div> : null}
         </div>
         {!venue.activity ? <small className="customer-club-activity-unavailable">Dancer counts unavailable. Open the club page for updates.</small> : null}
         <div className="customer-card-actions customer-favorite-club-actions">

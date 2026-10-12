@@ -15,7 +15,7 @@ function load(path, imports, extra = {}) {
 }
 const deals = load('../src/lib/dancr/deals.ts', { './deal-policy':{isLiquorRelatedClubDeal} });
 const warnings = [];
-const { getCustomerPlanEntryDeals } = load('../src/lib/dancr/customer-plan-entry.ts', {
+const { getCustomerClubEntryDeals, getCustomerPlanEntryDeals } = load('../src/lib/dancr/customer-plan-entry.ts', {
   './deals':deals, './deal-copy':{customerFacingDealTitle},
 }, { console:{warn:message=>warnings.push(message)} });
 const now = Date.parse('2026-10-11T18:00:00Z');
@@ -76,10 +76,25 @@ test('an optional offer lookup failure leaves plans available without stale entr
   assert.equal(warnings.at(-1),'CUSTOMER_PLAN_ENTRY_DEALS_UNAVAILABLE');
 });
 
-test('saved activity exposes entry IDs only for the authenticated customer’s visible plans', async () => {
-  const client = fixture([offer('free','club'),offer('unrelated','another-club')]);
+test('saved clubs get current free entry without saving a deal or making plans', async () => {
+  const client = fixture([
+    offer('free','club'), offer('inactive','inactive-club',{is_active:false}),
+    offer('paid','paid-club',{deal_title:'Half-off admission'}), offer('hidden','hidden-club'),
+  ]);
+  const clubs = [{venue:{id:'club'}},{venue:{id:'club'}},{venue:{id:'inactive-club'}},{venue:{id:'paid-club'}},{venueId:'hidden-club',venue:null}];
+  assert.deepEqual(copy(await getCustomerClubEntryDeals(client,clubs)),{club:'free'});
+  assert.equal(client.calls.length,1,'lookup batches clubs instead of querying each card');
+  assert.deepEqual(copy(client.calls[0].methods.find(([method])=>method==='in')[2]),['club','inactive-club','paid-club']);
+  assert.deepEqual(copy(await getCustomerClubEntryDeals(fixture([],{code:'unavailable'}),clubs)),{});
+  const empty = fixture([]);
+  assert.deepEqual(copy(await getCustomerClubEntryDeals(empty,[{venue:null},{venue:{}}])),{});
+  assert.equal(empty.calls.length,0);
+});
+
+test('saved activity exposes entry IDs only for the authenticated customer’s visible plans and clubs', async () => {
+  const client = fixture([offer('free','club'),offer('saved-free','saved-club'),offer('unrelated','another-club')]);
   const requestClient = {}, session = {accessToken:'synthetic-session'};
-  const savedItems = {goingSignals:[plan('club')],follows:[]};
+  const savedItems = {goingSignals:[plan('club')],follows:[],venueFollows:[{venue:{id:'saved-club'}}]};
   const { GET } = load('../app/api/customer/saved/route.ts', {
     'next/server':{NextResponse:{json:value=>value}},
     '@/src/lib/api':{apiError:error=>{throw error;}},
@@ -92,10 +107,12 @@ test('saved activity exposes entry IDs only for the authenticated customer’s v
       getCustomerSavedClubDeals:async()=>[],
     },
     '@/src/lib/dancr/deals':{getCustomerDealRedemptions:async()=>[]},
-    '@/src/lib/dancr/customer-plan-entry':{getCustomerPlanEntryDeals:(publicClient,plans)=>getCustomerPlanEntryDeals(publicClient,plans,now)},
+    '@/src/lib/dancr/customer-plan-entry':{getCustomerPlanEntryDeals:(publicClient,plans)=>getCustomerPlanEntryDeals(publicClient,plans,now),getCustomerClubEntryDeals},
   });
   const response = await GET({});
   assert.equal(response.session,session);
   assert.equal(response.saved.goingSignals,savedItems.goingSignals);
   assert.deepEqual(copy(response.saved.planEntryDeals),{club:'free'});
+  assert.deepEqual(copy(response.saved.clubEntryDeals),{'saved-club':'saved-free'});
+  assert.deepEqual(copy(response.saved.dealSaves),[],'entry does not depend on bookmarked offers');
 });
