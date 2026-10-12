@@ -127,12 +127,15 @@ body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target::before,
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target::after { content:none !important; }
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target[data-empty='true'] {
-    background:var(--profile-upload-face,#3c3c46) !important; border-color:#73737f !important;
-    color:#fafafa !important; color-scheme:dark;
+    background:var(--profile-upload-face,#292930) !important; border-color:#53535e !important;
+    color:#ffffff !important; color-scheme:dark;
+  }
+  body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target[data-empty='true'] > :is(span,b) {
+    color:#ffffff !important; -webkit-text-fill-color:currentColor !important; opacity:1 !important;
   }
   @media (hover:hover) {
     body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target[data-empty='true']:hover:not(:disabled) {
-      background:var(--profile-upload-face-hover,#4a4a55) !important;
+      background:var(--profile-upload-face-hover,#35353e) !important;
     }
   }
   body.dancr-button-system #dancer-dashboard button.dancer-avatar-preview.dancer-photo-edit-target {

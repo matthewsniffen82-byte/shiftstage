@@ -1,13 +1,14 @@
 /* Use an image-backed charcoal face for mobile browsers that recolor CSS backgrounds. */
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
-  --profile-upload-face: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='64' viewBox='0 0 256 64' preserveAspectRatio='none'%3E%3Cpath fill='%233c3c46' d='M0 0h256v64H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat #3c3c46;
-  --profile-upload-face-hover: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='64' viewBox='0 0 256 64' preserveAspectRatio='none'%3E%3Cpath fill='%234a4a55' d='M0 0h256v64H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat #4a4a55;
+  --profile-upload-face: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='64' viewBox='0 0 256 64' preserveAspectRatio='none'%3E%3Cpath fill='%23292930' d='M0 0h256v64H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat #292930;
+  --profile-upload-face-hover: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='64' viewBox='0 0 256 64' preserveAspectRatio='none'%3E%3Cpath fill='%2335353e' d='M0 0h256v64H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat #35353e;
 }
 /* Keep upload actions above legacy button skins without changing compact menu faces. */
 @layer dancr-upload-actions {
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
     :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)) {
     --upload-action-fill: var(--profile-upload-face);
+    --upload-action-ink: #ffffff;
     --upload-action-edge: #53535e;
     --upload-action-shadow: none;
     position: relative !important;
@@ -15,7 +16,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
     border: 1px solid var(--upload-action-edge) !important;
     border-radius: 8px !important;
     background: var(--upload-action-fill) !important;
-    color: #fafafa !important;
+    color: var(--upload-action-ink) !important;
     -webkit-text-fill-color: currentColor !important;
     box-shadow: var(--upload-action-shadow) !important;
     color-scheme: dark !important;
@@ -45,7 +46,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
     :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle))
     :is(.photo-source-copy strong, .tv-video-source-copy strong, .photo-source-icon, .tv-video-source-icon) {
-    color: inherit !important;
+    color: var(--upload-action-ink) !important;
     -webkit-text-fill-color: currentColor !important;
   }
 
@@ -71,9 +72,10 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
     :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):is(:disabled, [aria-disabled="true"], .is-disabled, :has(input:disabled)) {
     --upload-action-fill: linear-gradient(#202026, #202026);
+    --upload-action-ink: #b5b5b5;
     --upload-action-edge: #45454f;
     --upload-action-shadow: none;
-    color: #b5b5b5 !important;
+    color: var(--upload-action-ink) !important;
     opacity: .65 !important;
     cursor: not-allowed !important;
   }
