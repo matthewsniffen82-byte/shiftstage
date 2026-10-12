@@ -171,28 +171,25 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-section-uploader > :is(article,section) {
   padding-top: 0 !important;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-studio-embedded-head {
-  margin-bottom: 8px;
-}
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-studio-embedded-head p {
-  margin: 0; font-size: 12px;
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .info-panel.tv-studio-embedded {
+  gap: 10px; padding: 12px !important; border-color: #49434f; border-radius: 8px;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-upload-form {
   grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 0; border: 0; border-radius: 0; background: transparent;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-upload-form .tv-check {
-  min-height: 44px; gap: 8px; padding: 8px; border: 1px solid #ffffff0d; border-radius: 8px; background: #ffffff03;
-  color: #d2cdd9 !important; font-size: 13px !important; font-weight: 400 !important; letter-spacing: normal !important; line-height: 1.45 !important;
+  min-height: 44px; gap: 9px; padding: 2px 0; border: 0; border-radius: 0; background: transparent;
+  color: #e8e5ef !important; font-size: 13px !important; font-weight: 400 !important; letter-spacing: 0 !important; line-height: 1.45 !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-check input {
-  width: 18px; height: 18px; margin: 2px 0 0; accent-color: #a78bfa;
+  width: 20px; height: 20px; margin: 1px 0 0; accent-color: #a78bfa;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-upload-permissions {
-  gap: 2px;
+  display: flex; gap: 4px 12px;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-upload-form small,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-upload-requirements {
-  font-size: 11px; font-weight: 400; letter-spacing: normal; line-height: 1.45;
+  color: #c1bdcc !important; font-size: 11px; font-weight: 400; letter-spacing: 0; line-height: 1.45;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-grid,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-source-grid:not(.dancer-avatar-source-grid) {
@@ -202,6 +199,19 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-source-grid:not(.dancer-avatar-source-grid) .photo-source-action {
   min-height: 36px !important; grid-template-columns: 18px minmax(0, 1fr) !important; gap: 6px !important; text-align: left;
 }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-upload-form .tv-video-source-action {
+  min-height: 44px !important; border-color: #706579 !important; background: linear-gradient(#121016,#121016) !important;
+  white-space: normal; overflow-wrap: anywhere;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:not(:disabled) {
+  border-color: #a78bfa !important; background: linear-gradient(#6d28d9,#6d28d9) !important; color: #fff !important;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:hover:not(:disabled) {
+  background: linear-gradient(#7c3aed,#7c3aed) !important;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-action[aria-disabled="true"] {
+  border-color: #49434f !important; color: #bdb7c8 !important; opacity: 1 !important;
+}
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-icon,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-source-grid:not(.dancer-avatar-source-grid) .photo-source-icon {
   width: 18px; height: 18px; background: transparent; color: #c4c4c4;
@@ -209,6 +219,9 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-icon svg,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-source-icon svg {
   width: 18px; height: 18px;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-action .tv-video-source-icon {
+  color: inherit;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-copy strong,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .photo-source-copy strong {

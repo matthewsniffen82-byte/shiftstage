@@ -6,6 +6,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
+import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -498,11 +499,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
   const content = (
     <>
       <DancerTvStudioStyles />
-      {embedded ? (
-        <div className="tv-studio-embedded-head">
-          <p>Add videos now or later.</p>
-        </div>
-      ) : (
+      {!embedded ? (
         <div className="tv-studio-head">
           <div>
             <span>Creator tools</span>
@@ -526,7 +523,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           </div>
           <Link href={homeDiscoveryHref("tv")}>Watch MyDancr TV</Link>
         </div>
-      )}
+      ) : null}
 
       {isLoading ? <p className="tv-studio-status">Loading your real videos…</p> : null}
       {!embedded && !isLoading && workspace && !workspace.profileEligible ? (
@@ -551,10 +548,11 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
       {workspace && (!atVideoLimit || replacement) ? (
         <section className="tv-upload-form" aria-label="Add profile videos">
+          <DancerMediaUploadRules kind="video" />
           {replacement ? <p className="tv-upload-permissions" role="status">Choose a replacement video.<button type="button" disabled={videoActionBusy} onClick={() => setReplacement(undefined)}>Cancel replacement</button></p> : null}
           <div className="tv-upload-permissions">
             <strong>Confirm permissions</strong>
-            <small>Check both boxes to choose or record a video.</small>
+            <small>Both required</small>
           </div>
           <label className="tv-check">
             <input ref={consentInputRef} checked={consentConfirmed} disabled={videoActionBusy} type="checkbox" onChange={(event) => setConsentConfirmed(event.target.checked)} />
@@ -581,7 +579,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             <button
               aria-disabled={!videoPermissionsConfirmed || videoActionBusy}
               aria-label="Choose profile videos from your library"
-              className={`tv-video-source-action${!videoPermissionsConfirmed ? " is-awaiting-permissions" : ""}`}
+              className={`tv-video-source-action tv-video-source-library${!videoPermissionsConfirmed ? " is-awaiting-permissions" : ""}`}
               disabled={videoActionBusy}
               type="button"
               onClick={() => openVideoSource(libraryInputRef.current)}
@@ -627,8 +625,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             </button>
           </div>
           <small className="tv-upload-requirements">
-            Select multiple videos at once from your library.<br />
-            Vertical or square · MP4, WebM, or MOV · Crop &amp; trim to 1–{VIDEO_UPLOAD_MAX_SECONDS} sec · {VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB max
+            Vertical or square · MP4, WebM, MOV · 1–{VIDEO_UPLOAD_MAX_SECONDS} sec · {VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB max
           </small>
           {!embedded ? (
             <div className="tv-schedule-context-note">
@@ -734,11 +731,6 @@ function DancerTvStudioStyles() {
       .tv-studio-page { min-height: 100vh; padding: 28px clamp(14px, 4vw, 54px) 60px; background: radial-gradient(circle at 10% 0%, rgba(139,92,246,.22), transparent 26rem), #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
       .tv-studio-page > * { max-width: 920px; margin-left: auto; margin-right: auto; }
       .tv-studio-embedded { grid-column: 1 / -1; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow: hidden; }
-      .tv-studio-embedded-head { display: flex; align-items: start; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
-      .tv-studio-embedded-head > div { display: grid; gap: 7px; }
-      .tv-studio-embedded-head h2 { margin: 0; font-size: 23px; line-height: 1.1; }
-      .tv-studio-embedded-head p { margin: 0; max-width: 64ch; color: #b9accd; line-height: 1.5; }
-      .tv-studio-embedded-head > strong { min-width: 44px; min-height: 32px; display: grid; place-items: center; border: 1px solid rgba(34,199,255,.25); border-radius: 999px; color: #7eeaff; background: rgba(34,199,255,.08); font-size: 12px; white-space: nowrap; }
       .tv-studio-head { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
       .tv-studio-head > div { display: grid; gap: 7px; }
       .tv-studio-head span { color: #7eeaff; font-size: 11px; font-weight: 950; letter-spacing: .16em; text-transform: uppercase; }
@@ -748,26 +740,28 @@ function DancerTvStudioStyles() {
       .tv-studio-head p { margin: 0; max-width: 58ch; color: #b9accd; line-height: 1.5; }
       .tv-studio-head .tv-profile-connection { color: #e2d9ef; font-weight: 800; }
       .tv-studio-head > a, .tv-managed-video a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(34,199,255,.38); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font-weight: 900; text-decoration: none; white-space: nowrap; }
-      .tv-upload-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; padding: 18px; border: 1px solid rgba(139,92,246,.3); border-radius: 12px; background: rgba(11,11,16,.84); }
-      .tv-upload-form > label { min-width: 0; display: grid; align-content: start; gap: 7px; color: #ddd4ed; font-size: 13px; font-weight: 850; }
+      .tv-upload-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 14px; border: 1px solid #49434f; border-radius: 8px; background: #0b0b10; }
+      .tv-upload-form > label { min-width: 0; display: grid; align-content: start; gap: 9px; color: #e8e5ef; font-size: 13px; font-weight: 400; line-height: 1.45; }
       .tv-upload-permissions, .tv-video-source-grid, .tv-upload-requirements, .tv-upload-queue { min-width: 0; max-width: 100%; grid-column: 1 / -1; }
-      .tv-upload-permissions { display: grid; gap: 4px; }
+      .tv-upload-permissions { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
       .tv-upload-permissions strong { color: #fff; font-size: 14px; }
       .tv-video-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 10px; }
-      .tv-video-source-action { position: relative; min-width: 0; min-height: 74px; height: 100%; display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 9px; overflow: hidden; padding: 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 12px; color: #f8f5fb; background: linear-gradient(145deg,rgba(124,58,237,.13),rgba(34,199,255,.055)); box-sizing: border-box; cursor: pointer; appearance: none; -webkit-tap-highlight-color: transparent; text-align: left; font: inherit; }
-      .tv-video-source-action:hover { border-color: rgba(126,234,255,.42); background: linear-gradient(145deg,rgba(124,58,237,.2),rgba(34,199,255,.09)); }
+      .tv-video-source-action { position: relative; min-width: 0; min-height: 44px; height: 100%; display: grid; grid-template-columns: 20px minmax(0,1fr); align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid #706579; border-radius: 8px; color: #f8f5fb; background: linear-gradient(#121016,#121016); box-sizing: border-box; cursor: pointer; appearance: none; -webkit-tap-highlight-color: transparent; text-align: left; font: inherit; }
+      .tv-video-source-action:hover { border-color: #a99db5; background: linear-gradient(#201a28,#201a28); }
+      .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:not(:disabled) { border-color: #a78bfa; color: #fff; background: linear-gradient(#6d28d9,#6d28d9); }
+      .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:hover:not(:disabled) { background: linear-gradient(#7c3aed,#7c3aed); }
       .tv-video-source-action:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
-      .tv-video-source-action.is-awaiting-permissions { opacity: .72; }
+      .tv-video-source-action.is-awaiting-permissions { color: #bdb7c8; border-color: #49434f; opacity: 1; }
       .tv-video-source-action:disabled { opacity: .5; cursor: progress; }
       .tv-video-source-input { position: fixed; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); opacity: 0; pointer-events: none; }
-      .tv-video-source-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 10px; color: #8beafa; background: rgba(34,199,255,.09); }
-      .tv-video-source-icon svg { width: 23px; height: 23px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+      .tv-video-source-icon { width: 20px; height: 20px; display: grid; place-items: center; color: inherit; background: transparent; }
+      .tv-video-source-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
       .tv-video-source-copy { min-width: 0; display: grid; gap: 2px; }
-      .tv-video-source-copy strong { color: #fff; font-size: 13px; }
+      .tv-video-source-copy strong { color: inherit; font-size: 13px; }
       .tv-video-source-copy small { color: #aaa2b4; font-size: 10px; line-height: 1.3; }
-      .tv-video-source-cta { min-width: 60px; display: grid; place-items: center; padding: 5px 7px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #b8effa; background: rgba(34,199,255,.07); box-sizing: border-box; font-size: 9px; font-weight: 950; text-transform: uppercase; }
-      .tv-upload-form small { color: #9f94b3; font-size: 11px; font-weight: 700; }
-      .tv-upload-requirements { display: block; }
+      .tv-video-source-cta { display: none; }
+      .tv-upload-form small { color: #c1bdcc; font-size: 11px; font-weight: 400; }
+      .tv-upload-requirements { display: block; padding-top: 8px; border-top: 1px solid #34313d; line-height: 1.45; overflow-wrap: anywhere; }
       .tv-upload-queue { display: grid; gap: 10px; }
       .tv-upload-queue-item { min-width: 0; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 10px; border: 1px solid rgba(251,191,36,.38); border-radius: 10px; background: rgba(251,191,36,.07); }
       .tv-upload-queue-item.is-uploading { border-color: rgba(34,211,238,.58); box-shadow: inset 3px 0 0 rgba(34,211,238,.8); }
@@ -778,8 +772,8 @@ function DancerTvStudioStyles() {
       .tv-upload-queue-item button { width: fit-content; min-height: 36px; padding: 0 12px; border: 1px solid rgba(239,68,68,.36); border-radius: 8px; color: #fecaca; background: rgba(239,68,68,.12); font-weight: 850; cursor: pointer; }
       .tv-queue-actions { display: flex; flex-wrap: wrap; gap: 7px; }
       .tv-queue-actions button:first-child:not(:last-child) { border-color: rgba(34,211,238,.36); color: #b5f1ff; background: rgba(34,211,238,.1); }
-      .tv-check { grid-column: 1 / -1; grid-template-columns: 20px minmax(0, 1fr) !important; align-items: start; }
-      .tv-check input { width: 18px; height: 18px; }
+      .tv-check { grid-column: 1 / -1; grid-template-columns: 20px minmax(0, 1fr) !important; align-items: start; min-height: 44px; padding: 2px 0; border: 0; border-radius: 0; background: transparent; box-sizing: border-box; cursor: pointer; }
+      .tv-check input { width: 20px; height: 20px; margin: 1px 0 0; accent-color: #a78bfa; }
       .tv-schedule-context-note { grid-column: 1 / -1; display: grid; gap: 4px; padding: 12px; border: 1px solid rgba(34,199,255,.22); border-radius: 8px; background: rgba(34,199,255,.07); }
       .tv-schedule-context-note span { color: #a9dce8; font-size: 12px; line-height: 1.45; }
       .tv-studio-status, .tv-studio-lock, .tv-studio-incognito, .tv-studio-limit { margin-top: 12px; padding: 12px 14px; border: 1px solid rgba(34,199,255,.24); border-radius: 8px; background: rgba(34,199,255,.07); color: #b5f1ff; line-height: 1.5; }
@@ -812,7 +806,6 @@ function DancerTvStudioStyles() {
       @media (max-width: 680px) {
         .tv-studio-page { padding: 18px 10px 50px; }
         .tv-studio-head { align-items: start; flex-direction: column; }
-        .tv-studio-embedded-head { gap: 10px; }
         .tv-upload-form { grid-template-columns: 1fr; padding: 12px; }
         .tv-upload-form > * { grid-column: auto !important; }
         .tv-video-source-grid { grid-template-columns: 1fr; }

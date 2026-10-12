@@ -57,10 +57,10 @@ test("avatar upload and removal reject duplicate and stale work", () => {
 test("photo editor shows actual media only and does not advertise capacity", () => {
   assert.match(photoEditor, /Add at least 1 solo photo of yourself\. You can add more later\./);
   assert.match(photoEditor, /Your photos/);
-  assert.match(photoEditor, /photos\.map\(\(photo\)/);
+  assert.match(photoEditor, /approvedPhotos\.map\(\(photo\)/);
   assert.doesNotMatch(photoEditor, /<h2>Photos<\/h2>|No profile photos uploaded yet|0\/50|\/\{MAX_DANCER_PROFILE_PHOTOS\}|up to 50|maximum 50/i);
   assert.match(photoEditor, /MAX_DANCER_PROFILE_PHOTOS - photos\.length/);
-  assert.match(photoEditor, /photos\.length \+ batch\.length > MAX_DANCER_PROFILE_PHOTOS/);
+  assert.match(photoEditor, /photos\.length \+ batch\.filter\(item => !item\.replaces\)\.length > MAX_DANCER_PROFILE_PHOTOS/);
   assert.match(photoEditor, /requestDancerPhotosJson/);
 });
 
@@ -77,19 +77,19 @@ test("photo uploads, arrangement, and deletion reject duplicate and stale work",
   assert.doesNotMatch(photoEditor, /Date\.now\(\)/);
   assert.match(photoEditor, /persistQueuedPhotoDeletions\(controller\.signal\)/);
   assert.match(photoEditor, /if \(signal\.aborted \|\| !mountedRef\.current\) return;/);
-  assert.equal((photoEditor.match(/signal: controller\.signal/g) || []).length, 5);
-  assert.equal((photoEditor.match(/finishPhotoAction\(requestId\)/g) || []).length, 3);
+  assert.equal((photoEditor.match(/signal: controller\.signal/g) || []).length, 7);
+  assert.equal((photoEditor.match(/finishPhotoAction\(requestId\)/g) || []).length, 4);
   assert.match(photoEditor, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
 });
 
 test("video editor keeps both permission gates and hides the technical library capacity", () => {
-  assert.match(dancerStudio, /Add videos now or later\./);
+  assert.doesNotMatch(dancerStudio, /Add videos now or later\./);
   assert.match(dancerStudio, /Confirm permissions/);
   assert.match(dancerStudio, /I am the only person shown, and this video is of me\./);
   assert.match(dancerStudio, /I own this video or have permission to publish every visual, recording, song, beat, and other audio it contains\./);
   assert.match(dancerStudio, /checked=\{consentConfirmed\}/);
   assert.match(dancerStudio, /checked=\{rightsConfirmed\}/);
-  assert.match(dancerStudio, /Vertical or square · MP4, WebM, or MOV/);
+  assert.match(dancerStudio, /Vertical or square · MP4, WebM, MOV/);
   assert.match(dancerStudio, /VIDEO_UPLOAD_MAX_SECONDS/);
   assert.match(dancerStudio, /VIDEO_UPLOAD_MAX_BYTES \/ \(1024 \* 1024\)/);
   assert.doesNotMatch(dancerStudio, /0\/50|\{currentVideoCount\}\/\{maxVideos\}|up to 50|maximum 50/i);
@@ -108,8 +108,9 @@ test("video uploads, retries, and removal reject duplicate and stale work", () =
   assert.match(videoUpload, /uploadId: item\.uploadId/);
   assert.match(videoUpload, /!data\.upload\.alreadySubmitted && !data\.upload\.uploadComplete/);
   assert.match(videoUpload, /if \(!data\.upload\.alreadySubmitted\)/);
-  assert.doesNotMatch(videoUpload, /method: "DELETE"/);
-  assert.equal((videoUpload.match(/signal: controller\.signal/g) || []).length, 2);
+  assert.match(videoUpload, /if \(item\.replaces\) \{[\s\S]*?if \(videoId\) \{[\s\S]*?method: "DELETE", signal: controller\.signal/);
+  assert.equal((videoUpload.match(/method: "DELETE"/g) || []).length, 1);
+  assert.equal((videoUpload.match(/signal: controller\.signal/g) || []).length, 3);
   assert.match(dancerStudio, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
 });
 
@@ -133,7 +134,7 @@ test("approved videos refresh into the builder and video cards render a visible 
   assert.match(dashboard, /controller\.signal\.aborted \|\| requestId !== requestSequence/);
   assert.match(dashboard, /requestController\?\.abort\(\);[\s\S]*?requestController = null;[\s\S]*?removeEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);
   assert.match(dashboard, /requestId === requestSequence\) setIsMediaLoading\(false\)/);
-  assert.match(dancerStudio, /onLoadedMetadata=\{\(event\) => primeVideoPreviewFrame\(event\.currentTarget\)\}/);
+  assert.match(dancerStudio, /onLoadedMetadata=\{event => primeVideoPreviewFrame\(event\.currentTarget\)\}/);
   assert.match(dashboard, /imageUrl: video\.posterUrl, status: video\.status/);
   assert.doesNotMatch(dashboard, /primeVideoPreviewFrame/);
   assert.match(mediaSync, /video\.currentTime = Math\.min\(0\.15, Math\.max\(0\.05, video\.duration \/ 100\)\)/);

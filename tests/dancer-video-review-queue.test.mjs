@@ -63,6 +63,13 @@ function harness(initial = [], { maxVideos = 50 } = {}) {
     get statuses() { return this.reviews.map(card => nodes(card).find(node => node.type === 'small').props.children); },
     get notes() { return this.reviews.flatMap(card => nodes(card).filter(node => node.type === 'p').map(node => node.props.children)); },
     get library() { return nodes().find(node => node.type === './DancerVideoPreviews')?.props.videos || []; },
+    get sourceButtons() { return nodes().filter(node => node.type === 'button' && node.props.className?.includes('tv-video-source-action')); },
+    setPermission(index, checked) { nodes().filter(node => node.type === 'input' && node.props.type === 'checkbox')[index].props.onChange({ target: { checked } }); render(); },
+    openSource(index) {
+      nodes().filter(node => node.type === 'input' && node.props.type === 'file').forEach((node, i) => { node.props.ref.current = { click: () => calls.push(['picker', i]) }; });
+      nodes().filter(node => node.type === 'input' && node.props.type === 'checkbox').forEach((node, i) => { node.props.ref.current = { focus: () => calls.push(['permission-focus', i]) }; });
+      this.sourceButtons[index].props.onClick(); render();
+    },
     click(label) { const button = nodes().find(node => node.type === 'button' && node.props.children === label); assert.ok(button, label); assert.ok(!button.props.disabled); button.props.onClick(); render(); },
     permissions() { nodes().filter(node => node.type === 'input' && node.props.type === 'checkbox').forEach(node => node.props.onChange({ target: { checked: true } })); render(); },
     select(files = [file()]) { nodes().find(node => node.type === 'input' && node.props.multiple).props.onChange({ target: { files, value: '' } }); render(); },
@@ -72,6 +79,31 @@ function harness(initial = [], { maxVideos = 50 } = {}) {
   };
   render(); return ui;
 }
+
+test('both video sources stay gated until both permissions are checked and re-lock when unchecked', async () => {
+  const ui = harness(); await ui.settle();
+  assert.match(ui.sourceButtons[0].props.className, /tv-video-source-library/);
+  assert.doesNotMatch(ui.sourceButtons[1].props.className, /tv-video-source-library/);
+  const locked = () => ui.sourceButtons.forEach(button => {
+    assert.equal(button.props['aria-disabled'], true);
+    assert.match(button.props.className, /is-awaiting-permissions/);
+  });
+  locked(); ui.openSource(0); ui.openSource(1);
+  assert.equal(ui.calls.filter(call => call[0] === 'picker').length, 0);
+  assert.ok(ui.calls.some(call => call[0] === 'permission-focus' && call[1] === 0));
+  ui.setPermission(0, true); locked(); ui.openSource(0);
+  assert.equal(ui.calls.filter(call => call[0] === 'picker').length, 0);
+  assert.ok(ui.calls.some(call => call[0] === 'permission-focus' && call[1] === 1));
+  ui.setPermission(1, true);
+  ui.sourceButtons.forEach(button => {
+    assert.equal(button.props['aria-disabled'], false);
+    assert.doesNotMatch(button.props.className, /is-awaiting-permissions/);
+  });
+  ui.openSource(0); ui.openSource(1);
+  assert.deepEqual(ui.calls.filter(call => call[0] === 'picker'), [['picker', 0], ['picker', 1]]);
+  ui.setPermission(0, false); locked(); ui.openSource(0);
+  assert.equal(ui.calls.filter(call => call[0] === 'picker').length, 2);
+});
 
 test('saved unresolved videos show reasons and actions while only approvals enter the library', async () => {
   const ui = harness([video('live', 'approved'), video('checking', 'moderating'), video('denied', 'rejected', 'Only you may appear in the video.')]); await ui.settle();

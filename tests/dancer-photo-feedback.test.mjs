@@ -21,7 +21,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
+    exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, DancerMediaUploadRules: "MediaUploadRules", DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     cropProfilePhoto: (...args) => { crops.push(args); throw new Error("Uploads must not open the manual crop editor."); },
     require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }),

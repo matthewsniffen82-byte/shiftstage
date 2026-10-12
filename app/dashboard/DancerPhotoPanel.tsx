@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
+import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
@@ -480,6 +481,7 @@ export function DancerPhotoPanel({
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
       <div className="dancer-photo-upload-form">
+        <DancerMediaUploadRules kind="photo" />
         {!uploadOnly && !approvedPhotos.length ? <div className="photo-upload-heading">
           <span><strong>Add at least 1 solo photo of yourself. You can add more later.</strong></span>
         </div> : null}

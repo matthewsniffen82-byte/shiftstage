@@ -128,7 +128,7 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(avatarRoute, /isAvatarFaceRequiredError/);
   assert.match(dashboard, /DancerPhotoPanel/);
   assert.match(dashboard, /DancerTvStudio embedded/);
-  assert.match(dancerStudio, /embedded \? \([\s\S]*?Add videos now or later\./);
+  assert.doesNotMatch(dancerStudio, /Add videos now or later\./);
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
   assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
   assert.match(dancerStudio, /Choose the crop and trim for each video/);
@@ -141,7 +141,7 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dancerStudio, />Record video<\/strong>/);
   assert.match(dancerStudio, />Confirm permissions<\/strong>/);
   assert.doesNotMatch(dancerStudio, /Confirm permissions once, then choose videos|Every selected video uploads automatically/);
-  assert.match(dancerStudio, /\.tv-video-source-action \{ position: relative; min-width: 0; min-height: 74px;/);
+  assert.match(dancerStudio, /\.tv-video-source-action \{ position: relative; min-width: 0; min-height: 44px;/);
   assert.match(dancerStudio, /function openVideoSource\(input: HTMLInputElement \| null\)[\s\S]*?Check both permission boxes first\.[\s\S]*?input\?\.click\(\)/);
   assert.match(dancerStudio, /<button[\s\S]*?aria-label="Choose profile videos from your library"[\s\S]*?onClick=\{\(\) => openVideoSource\(libraryInputRef\.current\)\}/);
   assert.match(dancerStudio, /<button[\s\S]*?aria-label="Record a new profile video"[\s\S]*?onClick=\{\(\) => openVideoSource\(cameraInputRef\.current\)\}/);
@@ -153,14 +153,14 @@ test("profile and media workspace uses production avatar face centering and mode
   assert.match(dashboard, /\.photo-source-cta \{ min-width: 60px; display: grid; place-items: center;/);
   assert.match(dancerStudio, /\.tv-video-source-grid \{[^}]*grid-auto-rows: 1fr;/);
   assert.match(dancerStudio, /\.tv-video-source-action \{[^}]*height: 100%;[^}]*box-sizing: border-box;/);
-  assert.match(dancerStudio, /\.tv-video-source-cta \{ min-width: 60px; display: grid; place-items: center;/);
+  assert.match(dancerStudio, /\.tv-video-source-cta \{ display: none;/);
 });
 
 test("step one uses the shared inline editor and opens an explicit agreement review", () => {
   assert.match(sharedWorkspace, /\{identityContent\}/);
   assert.match(sharedWorkspace, /Your details/);
-  assert.match(sharedWorkspace, /Avatar upload/);
-  assert.match(sharedWorkspace, /Main photo upload/);
+  assert.match(sharedWorkspace, /id="dancer-face-photo-title">Avatar</);
+  assert.match(sharedWorkspace, /id="dancer-main-upload-title">Main photo</);
   assert.match(sharedWorkspace, /Photo uploads/);
   assert.match(sharedWorkspace, /Video uploads/);
   assert.doesNotMatch(sharedWorkspace, /DancerIdentityEditor|aria-modal/);
@@ -312,7 +312,7 @@ test("step one shows clear save, photo-count, and automatic-check states", () =>
   assert.match(dashboard, /photoStatusLabel\(photo\.status, photo\.moderationStatus\)/);
   assert.match(dashboard, /const profileIsSaved = Boolean\(persistedStageName && persistedCity\) && hasStoredDraft === false && !hasUnsavedChanges/);
   assert.doesNotMatch(dashboard, /We are checking this photo\. This page updates automatically/);
-  assert.match(dashboard, /if \(status === "rejected"\) return "Choose another photo\."/);
+  assert.match(dashboard, /return mediaReviewExplanation\("photo", status\)/);
 });
 
 test("three approved profile photos complete the requirement without hiding extra moderation states", () => {

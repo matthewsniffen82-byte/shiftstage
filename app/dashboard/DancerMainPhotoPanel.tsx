@@ -7,6 +7,7 @@ import { uploadMainProfilePhoto } from "./main-profile-photo-upload";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerPhotoControls from "./DancerPhotoControls";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
+import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import "../../public/dancer-main-photo.css";
@@ -122,5 +123,6 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
         disabled={busy || cropping} onBusyChange={setBusy} onRetried={({ profile }) => { if (profile) onProfileChange?.(profile); }} /> : null}
       <p className="dancer-main-photo-status" role="status" aria-live="polite">{status}</p>
     </div>
+    <DancerMediaUploadRules kind="photo" />
   </section>;
 }

@@ -67,6 +67,7 @@ test("saved video previews use lazy posters without downloading full videos or s
 });
 
 test("the dashboard video manager shows compact previews while the separate TV studio retains its metrics", () => {
+  const uploadRules = compile("DancerMediaUploadRules.tsx", name => name.endsWith('.css') ? {} : requireTest(name));
   const hooks = { ...React, useCallback: fn => fn, useEffect() {}, useRef: initial => ({ current: initial }), useState: initial => [initial === null ? { videos, profileEligible: false, maxVideos: 50 } : initial === true ? false : initial, () => {}] };
   const Studio = compile("DancerTvStudio.tsx", name => {
     if (name === "@/src/lib/dancr/media-review-label") return mediaReview;
@@ -74,6 +75,7 @@ test("the dashboard video manager shows compact previews while the separate TV s
     if (name === "./DancerVideoPreviews") return { default: previews.default };
     if (name === "./DancerMediaPinButton") return pinButton;
     if (name === "./DancerMediaRetryButton") return retryButton;
+    if (name === "./DancerMediaUploadRules") return uploadRules;
     if (name === "next/link") return { default: ({ children, href }) => React.createElement("a", { href }, children) };
     if (name === "@/src/lib/dancr/navigation") return { homeDiscoveryHref: () => "/tv" };
     if (name === "@/src/lib/dancr/media-limits") return { MAX_DANCER_PROFILE_VIDEOS: 50 };

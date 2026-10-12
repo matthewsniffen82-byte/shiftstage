@@ -9,6 +9,7 @@ import { cropProfilePhoto } from "./profile-photo-crop";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerPhotoControls from "./DancerPhotoControls";
+import DancerMediaUploadRules from "./DancerMediaUploadRules";
 export function DancerAvatarPanel({
   compact = false,
   onProfileChange,
@@ -324,6 +325,7 @@ export function DancerAvatarPanel({
         {pendingId ? <DancerMediaRetryButton id={pendingId} kind="photo" status="pending" moderationStatus={String(pendingAvatar?.status || "")}
           disabled={isSaving || preparing} onBusyChange={setPreparing} onRetried={({ profile }) => { if (profile) { setUploadFeedback(null); onProfileChange?.(profile); } }} /> : null}
       </div>
+      <DancerMediaUploadRules kind="photo" facePhoto />
       {statusMessage ? <p role="status" aria-live="polite">{compact ? statusMessage.replace(/\bAvatar\b/g, "Face photo").replace(/\bavatar\b/g, "face photo") : statusMessage}</p> : null}
     </article>
   );
