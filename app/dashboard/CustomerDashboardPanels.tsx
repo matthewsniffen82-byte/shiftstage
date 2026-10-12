@@ -472,6 +472,9 @@ export function CustomerPanel({
     <section id="customer-view-night" className="customer-view" hidden={view !== "night"} aria-label="My Night" tabIndex={-1}>
       {isLoading ? <p className="customer-loading-state" role="status">Loading your night…</p> : null}
       {!accountSavedUnavailable ? <>
+        {saved?.dealRedemptions?.length ? <div id="customer-pass-wallet">
+          <CustomerPassWallet deals={saved.dealRedemptions} isLoading={isLoading} />
+        </div> : null}
         {night.plans.length ? <details className="customer-night-disclosure customer-plans" id="customer-plans-list" open={plansExpanded} onToggle={event => setPlansExpanded(event.currentTarget.open)}>
           <summary>Your plans <span>{night.plans.length}</span></summary>
           <div id="customer-going" className="customer-plans-content" tabIndex={-1}>
@@ -483,10 +486,6 @@ export function CustomerPanel({
         {workingFollows.length ? <CustomerSurface id="customer-working-now" title="Working Now" description="Dancers you follow, checked in now." count={workingFollows.length}>
           <div className="customer-saved-card-grid customer-followed-dancer-grid">{workingFollows.map(item => <FollowedDancerGridCard key={item.dancerId || item.dancer!.id} dancer={item.dancer!} onUnfollow={() => void unfollowDancer(String(item.dancerId || item.dancer!.id))} pending={Boolean(pendingAction)} unfollowing={pendingAction === `dancer-${item.dancerId || item.dancer!.id}`} />)}</div>
         </CustomerSurface> : null}
-        {saved?.dealRedemptions?.length ? <details className="customer-night-disclosure" id="customer-pass-wallet">
-          <summary>Admission passes <span>{night.passes.length} active · {saved.dealRedemptions.length} total</span></summary>
-          <CustomerPassWallet deals={saved.dealRedemptions} isLoading={isLoading} />
-        </details> : null}
         {welcomeContent}
       </> : <p className="customer-loading-state">Your night is unavailable. Use Try again above to reload your saved activity.</p>}
     </section>
@@ -953,16 +952,16 @@ function CustomerPassWallet({ deals, isLoading }: { deals: NonNullable<CustomerS
     .filter((item) => !activeDeals.some((active) => active.id === item.id))
     .sort((left, right) => new Date(right.generatedAt).getTime() - new Date(left.generatedAt).getTime());
 
-  return <CustomerSurface id="customer-passes" title="Admission passes" description="Show your pass at the door." count={activeDeals.length}>
+  return <CustomerSurface id="customer-passes" title="My QR passes" description="Your saved admission QR codes." count={activeDeals.length}>
     <div className="customer-pass-list">
       {activeDeals.map(item => <Link className="customer-pass-card" href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`} key={item.id}>
         <div className="customer-pass-icon"><CustomerDashboardIcon section="customer-saved-deals" /></div>
-        <div className="customer-pass-copy"><span className="eyebrow">Ready to show</span><h3>{item.deal?.title || "Admission pass"}</h3><p>{item.venue?.name || "Club"}</p><time dateTime={item.expiresAt}>{dealExpiryLabel(item.expiresAt, now)}</time></div>
-        <span className="customer-pass-cta">Show pass <span aria-hidden="true">↗</span></span>
+        <div className="customer-pass-copy"><span className="eyebrow">Ready to show</span><h3>{item.venue?.name || "Club"}</h3><p>{item.deal?.title || "Admission pass"}</p><time dateTime={item.expiresAt}>{dealExpiryLabel(item.expiresAt, now)}</time></div>
+        <span className="customer-pass-cta">Show QR <span aria-hidden="true">↗</span></span>
       </Link>)}
       {!activeDeals.length && !isLoading ? <div className="customer-empty-state compact"><strong>No active passes</strong><p>Choose a Club Deal to get a pass.</p><Link href={homeDiscoveryHref("venues")}>Browse Club Deals</Link></div> : null}
     </div>
-    {activeDeals.length ? <details className="customer-pass-help"><summary>How admission passes work</summary><p>Choose the exact deal and arrival method. Show your pass and its QR code to club staff. Wait for confirmation: staff verifies your arrival method and scans the pass to confirm one admission.</p></details> : null}
+    {activeDeals.length ? <details className="customer-pass-help"><summary>Using your QR pass</summary><p>Tap Show QR to open your pass. Choose Save to phone to keep an image for the door. Club staff verifies your arrival method and scans the QR to confirm one admission.</p></details> : null}
     {pastDeals.length ? <details className="past-deal-history"><summary>Past passes <span>{pastDeals.length}</span></summary><div>{pastDeals.map(item => <Link className="customer-past-pass" key={item.id} href={`/deals/pass/${encodeURIComponent(item.redemptionToken)}`}><span><strong>{item.deal?.title || "Club Deal"}</strong><small>{item.venue?.name || "Club"}</small></span><span>{dealPassStatus(item.status, new Date(item.expiresAt).getTime() <= now)}</span></Link>)}</div></details> : null}
   </CustomerSurface>;
 }

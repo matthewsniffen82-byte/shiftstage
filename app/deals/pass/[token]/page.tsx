@@ -4,7 +4,6 @@ import AdmissionPassClient from "./AdmissionPassClient";
 import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import { notFound } from "next/navigation";
 import { getRedemptionForScanner } from "@/src/lib/dancr/deals";
-import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const metadata = { robots: { index: false, follow: false }, referrer: "no-referrer" as const };
@@ -31,7 +30,7 @@ export default async function ClubDealPassPage({ params }: PageProps) {
       <DealPassStyles />
       <nav>
         <Link href="/">Mydancr</Link>
-        <Link href={homeDiscoveryHref("venues")}>Clubs</Link>
+        <Link href="/dashboard#customer-passes">My QR passes</Link>
       </nav>
       <AdmissionPassClient token={token} initialRedemption={redemption} qrImage={qrImage} />
     </main>
@@ -65,9 +64,13 @@ function DealPassStyles() {
       .admission-details[open] summary > span { transform: rotate(180deg); }
       .deal-pass-page .admission-details p { margin: 0; padding-bottom: 12px; color: #bfc0cc; font-size: 12px; line-height: 1.6; }
       .deal-pass-page :is(a,button,summary):focus-visible { outline: 2px solid #b99aea; outline-offset: 3px; }
-      .deal-pass-page .admission-actions { width: 100%; display: grid; grid-template-columns: minmax(0,1fr); gap: 8px; }
+      .deal-pass-page .admission-actions { width: 100%; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+      .deal-pass-page .admission-actions > :is(a,small) { grid-column: 1 / -1; }
+      .deal-pass-page .admission-actions > a { order: 1; }
+      .deal-pass-page .admission-actions > small { order: 2; }
       body .deal-pass-page .deal-pass-card .deal-pass-continue { box-sizing: border-box; min-height: 48px; display: flex; align-items: center; justify-content: center; width: 100%; margin: 0; padding: 12px; border: 1px solid #9465d1 !important; border-radius: 10px !important; background: linear-gradient(115deg,#6833c7,#5022a3) !important; color: #fff !important; font: inherit; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; }
       body .deal-pass-page .deal-pass-card .deal-pass-continue.is-secondary { border-color: #403747 !important; background: #18131e !important; color: #d2c9df !important; }
+      body .deal-pass-page .deal-pass-card .deal-pass-continue:disabled { cursor: default; opacity: .6; }
       @media(max-width:480px) { .deal-pass-page { padding-inline: 12px; } body .deal-pass-page .deal-pass-card { padding: 20px 16px; } }
     `}</style>
   );

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { admissionOfferHours, clubArrivalLabel, clubDealTransportationTerms, guestListAdmissionTerms } from "@/src/lib/dancr/club-deal-transportation";
 import { customerFacingDealTerms, customerFacingDealTitle } from "@/src/lib/dancr/deal-copy";
+import AdmissionPassSaveButton from "./AdmissionPassSaveButton";
 
 export default function AdmissionPassClient({ token, initialRedemption, qrImage }: { token: string; initialRedemption: any; qrImage: string }) {
   const [pass, setPass] = useState(initialRedemption);
@@ -58,7 +59,11 @@ export default function AdmissionPassClient({ token, initialRedemption, qrImage 
       <p>{terms}</p>
     </details>
     <div className="admission-actions">
-      {usable ? <button className="deal-pass-continue" onClick={async () => {
+      {usable ? <AdmissionPassSaveButton key={token} qrImage={qrImage} venueName={pass.venue?.name || "Club"}
+        title={guestListPass ? "Guest list" : customerFacingDealTitle(pass.deal?.dealTitle || "Free Entry")}
+        arrivalLabel={clubArrivalLabel(pass.arrivalMethod)} expiresAt={pass.expiresAt}
+        timezone={pass.venue?.timezone || "UTC"} offerHours={admissionOfferHours(pass.deal) || ""} /> : null}
+      {usable ? <button className="deal-pass-continue is-secondary" onClick={async () => {
       try { await navigator.clipboard.writeText(window.location.href); setMessage("Pass link copied. Keep it private."); }
       catch { setMessage("Bookmark this page to keep your pass."); }
     }}>Copy pass link</button> : null}

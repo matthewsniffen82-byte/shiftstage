@@ -15,6 +15,7 @@ function render(file, method, scanner = false) {
     "react/jsx-runtime":jsx,
     react:{useState(value){return [scanner && stateIndex++ === 3 ? "staff-token" : value,()=>{}];},useEffect(){},useRef(value){return {current:value};}},
     "next/link":{default:"a"},
+    "./AdmissionPassSaveButton":{default:()=>null},
     "@/src/lib/dancr/club-deal-transportation":transportation,
     "@/src/lib/dancr/deal-copy":copy,
     "@/src/lib/dancr/browser-session":{readBrowserAccessToken:()=>"staff-token"},

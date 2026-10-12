@@ -99,7 +99,8 @@ test('plans start collapsed, preserve the chosen state during refresh and keep p
   const index=match=>ui.nodes().findIndex(match);
   assert.ok(index(n=>n.props?.id==='customer-plans-list') < index(n=>n.type?.name==='CustomerExplore'));
   assert.ok(index(n=>n.type?.name==='CustomerExplore') < index(n=>n.props?.id==='customer-working-now'));
-  assert.equal(byId(ui,'customer-pass-wallet').type,'details');
+  assert.equal(byId(ui,'customer-pass-wallet').type,'div','QR passes are visible without expanding a disclosure');
+  assert.ok(index(n=>n.props?.id==='customer-pass-wallet') < index(n=>n.props?.id==='customer-plans-list'));
   assert.equal(byId(ui,'customer-plans-list').type,'details');
   assert.equal(byId(ui,'customer-plans-list').props.open,false);
   assert.equal(ui.nodes().filter(n=>n.type?.name==='CustomerNightPanel').length,1);
@@ -151,8 +152,11 @@ test('wallet promotes only unexpired generated passes; redeemed, voided and expi
   const deals = ['generated','redeemed','voided','expired'].map((status,i) => ({id:String(i),status,expiresAt:future,generatedAt:past,redemptionToken:`token-${i}`,deal:{title:status}}));
   deals.push({...deals[0],id:'old',expiresAt:past,redemptionToken:'old-token'});
   const ui = harness('CustomerPassWallet',{deals,isLoading:false});
+  assert.equal(component(ui,'CustomerSurface').props.title,'My QR passes');
   const active = ui.nodes().filter(n => n.props?.className === 'customer-pass-card');
   assert.equal(active.length,1); assert.equal(active[0].props.href,'/deals/pass/token-0');
+  assert.equal(ui.nodes().find(n=>n.props?.className==='customer-pass-cta').props.children[0],'Show QR ');
+  assert.equal(ui.nodes().find(n=>n.props?.className==='past-deal-history').props.open,undefined,'past passes start collapsed');
   assert.equal(ui.nodes().filter(n=>n.props?.className==='customer-past-pass').length,4);
 });
 

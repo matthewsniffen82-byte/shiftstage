@@ -4,7 +4,7 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer [hidden] { display:none !important; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,a,summary,input,select,textarea):focus-visible { outline:2px solid #c9a7ff !important; outline-offset:3px; }
 /* Navigation focuses these containers for reading order; keep focus rings on their controls. */
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-view,#customer-followed-dancers,#customer-followed-clubs,#customer-saved-deals,.customer-saved-panel,.saved-deal-panel)[tabindex="-1"]:focus { outline:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-view,#customer-passes,#customer-followed-dancers,#customer-followed-clubs,#customer-saved-deals,.customer-saved-panel,.saved-deal-panel)[tabindex="-1"]:focus { outline:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,summary,a) { -webkit-tap-highlight-color:transparent; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,summary) { cursor:pointer; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,input,select,textarea):disabled { cursor:default; opacity:.6; }
