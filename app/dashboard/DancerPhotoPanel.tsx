@@ -395,9 +395,13 @@ export function DancerPhotoPanel({
 
   const photoActionBusy = isUploading || Boolean(pinningPhotoId) || deletingPhotoIds.size > 0;
   useEffect(() => { onBusyChange?.(photoActionBusy); return () => onBusyChange?.(false); }, [photoActionBusy, onBusyChange]);
-  // The uploader owns its session history; closing the modal unmounts it.
-  // The full manager already displays accepted photos in its saved library.
-  const visibleQueuedPhotos = queuedPhotos.filter((item) => uploadOnly || item.stage !== "complete" || item.result?.status === "rejected");
+  // Approved photos belong in the gallery. Keep unresolved uploads here and
+  // use the refreshed library to retire reviews, even when approval changes IDs.
+  const visibleQueuedPhotos = queuedPhotos.filter((item) => {
+    if (item.stage !== "complete" || item.result?.status === "rejected") return true;
+    if (!uploadOnly || item.result?.status !== "pending") return false;
+    return photos.some((photo) => photo.id === item.result?.id && photo.status === "pending");
+  });
 
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
@@ -458,15 +462,16 @@ export function DancerPhotoPanel({
       </div>
       {visibleQueuedPhotos.length ? (
         <div className="photo-upload-queue" aria-label="Photos from this upload session">
-          {visibleQueuedPhotos.map((item, index) => {
+          {visibleQueuedPhotos.map((item) => {
+            const selectionNumber = queuedPhotos.indexOf(item) + 1;
             const result = item.result && (photos.find((photo) => photo.id === item.result?.id) || item.result);
             return (
               <div className={`photo-review-card is-${result?.status || "pending"} ${uploadingQueueItemId === item.id && item.stage !== "complete" ? "is-uploading" : ""}`.trim()} key={item.id}>
                 <div className="photo-preview" style={{ backgroundImage: `url(${item.previewUrl})` }} />
                 <span>
-                  <strong>{`Selected photo ${index + 1}`}</strong>
+                  <strong>{`Selected photo ${selectionNumber}`}</strong>
                   <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item.stage === "uploading" ? "Uploading" : item.stage === "checking" ? "Checking" : item.error ? "Upload failed" : "Waiting to upload"}</small>
-                  {item.stage !== "failed" && item.stage !== "complete" ? <progress aria-label={`Photo ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
+                  {item.stage !== "failed" && item.stage !== "complete" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
                   {result?.note ? <em>{result.note}</em> : null}
                   {item.error ? <em>{item.error}</em> : null}
                   {!result ? <span className="photo-queue-actions">
