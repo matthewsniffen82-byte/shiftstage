@@ -40500,6 +40500,47 @@
           line-height: 1;
         }
 
+        #authPage .auth-vip-invite {
+          min-width: 0;
+        }
+
+        #authPage .auth-vip-invite > summary {
+          box-sizing: border-box;
+          list-style: none;
+        }
+
+        #authPage .auth-vip-invite > summary::-webkit-details-marker {
+          display: none;
+        }
+
+        #authPage .auth-vip-invite > summary:focus-visible {
+          outline: 2px solid #c4b5fd !important;
+          outline-offset: 3px !important;
+        }
+
+        #authPage .auth-vip-invite strong {
+          letter-spacing: 0;
+        }
+
+        #authPage .auth-vip-invite-label {
+          display: inline-block;
+          color: #c4b5fd;
+          font-size: 12px;
+          font-weight: 500;
+          white-space: nowrap;
+        }
+
+        #authPage .auth-vip-invite[open] .auth-account-choice-arrow {
+          transform: rotate(90deg);
+        }
+
+        #authPage .auth-vip-invite-copy {
+          margin: 10px 14px 4px;
+          color: var(--dancr-color-text-secondary);
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
         #authPage .auth-form {
           gap: 16px;
         }
@@ -41537,6 +41578,16 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
               <span><strong>Club</strong><small>Apply to list and manage your club.</small></span>
               <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
             </button>
+            <details class="auth-vip-invite" id="vipInviteOnly">
+              <summary class="role-option account-option auth-account-choice">
+                <span class="auth-account-choice-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+                </span>
+                <span><strong>VIP <span class="auth-vip-invite-label">&middot; Invite only</span></strong><small>VIP access is provided by your club.</small></span>
+                <span class="auth-account-choice-arrow" aria-hidden="true">›</span>
+              </summary>
+              <p class="auth-vip-invite-copy">Open the private invitation link sent by your club to set up VIP access. Contact the club if you need an invitation.</p>
+            </details>
           </div>
           <form class="auth-form" id="authForm" data-auth-view="unified">
             <div class="auth-form-head customer-form-head" hidden>

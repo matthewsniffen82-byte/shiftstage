@@ -32,6 +32,27 @@ test("the public auth surface has one sign-in and three concise signup paths", (
   assert.match(liveApp, /if \(!loggedIn\) \{[\s\S]*?openAuthRole\("customer"\)/);
 });
 
+test("Create account lists VIP below Club as an invitation disclosure, not a signup path", () => {
+  const overview = liveApp.match(/<div[^>]*id="authOverview"[^>]*>[\s\S]*?<\/div>/)?.[0] || "";
+  const vip = overview.match(/<details class="auth-vip-invite" id="vipInviteOnly">[\s\S]*?<\/details>/)?.[0] || "";
+  assert.ok(overview.indexOf('id="venueSignupBtn"') < overview.indexOf('id="vipInviteOnly"'));
+  assert.match(vip, /<summary class="role-option account-option auth-account-choice">/);
+  assert.match(vip, /<strong>VIP <span class="auth-vip-invite-label">&middot; Invite only<\/span><\/strong>/);
+  assert.match(vip, /VIP access is provided by your club\./);
+  assert.match(vip, /Open the private invitation link sent by your club to set up VIP access\./);
+  assert.match(vip, /Contact the club if you need an invitation\./);
+  assert.doesNotMatch(vip, /<form|<input|<button|href=|\bdisabled\b|\bopen[\s>]/);
+  assert.match(liveApp, /id="vipSignInLink" href="\/vip">VIP sign in<\/a>/);
+  assert.match(liveApp, /document\.getElementById\("authOverview"\)\.hidden = !isCreate/);
+});
+
+test("VIP invitation disclosure retains a keyboard focus indicator and a wrapping mobile layout", () => {
+  assert.match(liveApp, /#authPage \.auth-vip-invite > summary \{[^}]*box-sizing: border-box;[^}]*list-style: none;/);
+  assert.match(liveApp, /#authPage \.auth-vip-invite > summary:focus-visible \{[^}]*outline: 2px solid #c4b5fd !important;/);
+  assert.match(liveApp, /#authPage \.auth-vip-invite-label \{[^}]*display: inline-block;[^}]*font-size: 12px;/);
+  assert.match(liveApp, /#authPage \.auth-vip-invite\[open\] \.auth-account-choice-arrow \{[^}]*transform: rotate\(90deg\);/);
+});
+
 test("guest signup clearly explains private visibility and email confirmation", () => {
   const signupNoteRule = liveApp.match(/\.auth-signup-note \{[^}]*\}/)?.[0] || "";
 
