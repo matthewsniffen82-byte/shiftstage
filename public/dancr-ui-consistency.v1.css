@@ -2008,7 +2008,7 @@ html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #cust
 }
 html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-list { gap: 8px; }
 html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-item {
-  --inbox-row-face: #15101d;
+  --inbox-row-face: #000;
   --inbox-row-edge: #32283f;
   position: relative !important;
   isolation: isolate;
@@ -2096,7 +2096,7 @@ html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #cust
 }
 html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) button:focus-visible { outline: 2px solid #c4a3f1 !important; outline-offset: 2px !important; }
 @media (hover: hover) {
-  html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-item:hover { --inbox-row-face: #20152c; --inbox-row-edge: #72518e; }
+  html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-item:hover { --inbox-row-face: #000; --inbox-row-edge: #72518e; }
 }
 
 /* Keep the Clubs and TV headings, shared roster disclaimer, and first card close together. */
