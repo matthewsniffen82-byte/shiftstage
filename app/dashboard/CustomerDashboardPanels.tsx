@@ -216,7 +216,7 @@ export function CustomerPanel({
   const [optimisticSavedChange, setOptimisticSavedChange] = useState<((current: CustomerSavedState) => CustomerSavedState) | null>(null);
   const saved = confirmedSaved && optimisticSavedChange ? optimisticSavedChange(confirmedSaved) : confirmedSaved;
   const now = useCustomerMinuteClock();
-  const [plansExpanded, setPlansExpanded] = useState(true);
+  const [plansExpanded, setPlansExpanded] = useState(false);
   const initial = customerDashboardDestination("", initialSection);
   const [view, setView] = useState<CustomerView>(initial.view);
   const [savedFilter, setSavedFilter] = useState<CustomerSavedFilter>(initial.filter);

@@ -92,7 +92,7 @@ test('new customers see one discovery section without a stack of empty cards', (
   assert.ok(component(ui,'CustomerDealPassPanel').props.accountSavedUnavailable);
 });
 
-test('one expanded plans section leads, night planning precedes working dancers, and passes stay separate', () => {
+test('plans start collapsed, preserve the chosen state during refresh and keep passes separate', () => {
   const nextShift=shift();
   const ui=harness('CustomerPanel',{saved:{goingSignals:[{shiftId:nextShift.id,shift:nextShift}],follows:[{dancer:{id:'a',slug:'star',nextShift}}],dealRedemptions:[{id:'pass',status:'generated',generatedAt:new Date(Date.now()-120000).toISOString(),expiresAt:nextShift.endsAt,venue:nextShift.venue}]}});
   const index=match=>ui.nodes().findIndex(match);
@@ -100,16 +100,20 @@ test('one expanded plans section leads, night planning precedes working dancers,
   assert.ok(index(n=>n.type?.name==='CustomerExplore') < index(n=>n.props?.id==='customer-working-now'));
   assert.equal(byId(ui,'customer-pass-wallet').type,'details');
   assert.equal(byId(ui,'customer-plans-list').type,'details');
-  assert.equal(byId(ui,'customer-plans-list').props.open,true);
+  assert.equal(byId(ui,'customer-plans-list').props.open,false);
   assert.equal(ui.nodes().filter(n=>n.type?.name==='CustomerNightPanel').length,1);
   assert.equal(component(ui,'CustomerNextOuting'),undefined);
   assert.equal(component(ui,'CustomerNightPanel').props.signals.length,1);
   const header=byId(ui,'customer-plans-list').props.children[0];
   assert.equal(header.props.children[0],'Your plans ');
   assert.equal(header.props.children[1].props.children,1);
+  byId(ui,'customer-plans-list').props.onToggle({currentTarget:{open:true}}); ui.render();
+  assert.equal(byId(ui,'customer-plans-list').props.open,true);
+  ui.update({isLoading:true});
+  assert.equal(byId(ui,'customer-plans-list').props.open,true,'refreshing preserves expanded plans');
   byId(ui,'customer-plans-list').props.onToggle({currentTarget:{open:false}}); ui.render();
   assert.equal(byId(ui,'customer-plans-list').props.open,false);
-  ui.update({isLoading:true});
+  ui.update({isLoading:false});
   assert.equal(byId(ui,'customer-plans-list').props.open,false,'refreshing does not reopen collapsed plans');
   byId(ui,'customer-plans-list').props.onToggle({currentTarget:{open:true}}); ui.render();
   assert.equal(byId(ui,'customer-plans-list').props.open,true);
