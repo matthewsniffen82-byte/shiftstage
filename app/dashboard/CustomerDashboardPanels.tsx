@@ -817,23 +817,26 @@ function VenueCardIcon({ icon }: { icon: "club" | "pin" | "clock" | "check" }) {
 
 function CustomerDirectionsButton({
   dancerId,
+  iconOnly = false,
   onDirections,
   pending,
   venue,
 }: {
   dancerId?: string | null;
+  iconOnly?: boolean;
   onDirections: (venue: SavedVenueSummary, dancerId?: string | null) => void;
   pending: boolean;
   venue: SavedVenueSummary;
 }) {
   return (
     <button
-      aria-label="Directions"
+      aria-label={iconOnly ? `Directions to ${venue.name || "club"}` : "Directions"}
+      title={iconOnly ? `Directions to ${venue.name || "club"}` : undefined}
       disabled={pending}
       onClick={() => void onDirections(venue, dancerId)}
       type="button"
     >
-      Directions
+      {iconOnly ? <VenueCardIcon icon="pin" /> : "Directions"}
     </button>
   );
 }
@@ -903,22 +906,26 @@ function CustomerDealPassPanel({
       <div className="saved-deal-list saved-deal-bookmarks">
         {savedDeals.map((item) => (
           <article className={`saved-deal-item saved-deal-bookmark${item.deviceOnly || item.deal.isActive ? "" : " unavailable"}`} key={item.dealId}>
-            <span>
-              <strong>{item.deal.title || "Club Deal"}</strong>
-              <small>{item.venue.name || "Club"} · {item.deviceOnly ? "Saved on this device" : savedClubDealAvailability(item.deal)}</small>
-            </span>
-            <div className="customer-card-actions">
-              <Link href={`/deals/transportation/${encodeURIComponent(item.dealId)}`}>View deal</Link>
-              <CustomerDirectionsButton onDirections={onDirections} pending={Boolean(pendingAction)} venue={item.venue} />
-              <details className="customer-card-menu" data-compact-menu name="customer-card-options"><summary aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
-                className="customer-text-action"
-                type="button"
-                disabled={Boolean(pendingAction)}
-                onClick={() => void onRemoveSavedDeal(item.dealId)}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" /></svg>
-                Remove
-              </button></div></details>
+            <div className="saved-deal-heading">
+              <span className="saved-deal-icon" aria-hidden="true"><CustomerDashboardIcon section="customer-saved-deals" /></span>
+              <div className="saved-deal-copy">
+                <span className="saved-deal-venue">{item.venue.name || "Club"}</span>
+                <strong>{item.deal.title || "Club Deal"}</strong>
+                <small className="saved-deal-availability">{item.deviceOnly ? "Saved on this device" : savedClubDealAvailability(item.deal)}</small>
+              </div>
+            </div>
+            <details className="customer-card-menu" data-compact-menu name="customer-card-options"><summary aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
+              className="customer-text-action"
+              type="button"
+              disabled={Boolean(pendingAction)}
+              onClick={() => void onRemoveSavedDeal(item.dealId)}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" /></svg>
+              Remove
+            </button></div></details>
+            <div className="customer-card-actions saved-deal-actions">
+              <Link className="saved-deal-view" href={`/deals/transportation/${encodeURIComponent(item.dealId)}`}><span>View deal</span><span aria-hidden="true">›</span></Link>
+              <CustomerDirectionsButton iconOnly onDirections={onDirections} pending={Boolean(pendingAction)} venue={item.venue} />
             </div>
           </article>
         ))}

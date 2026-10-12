@@ -129,10 +129,24 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-panel { padding:0; border:0; background:transparent; box-shadow:none; overflow:visible; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-head { display:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-privacy-note { margin:0 0 16px; color:var(--customer-muted); font-size:13px; line-height:1.5; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px; padding:18px; border:1px solid var(--customer-line); border-radius:16px; background:var(--customer-surface); }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark>span { flex:1; min-width:140px; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark>span>strong { color:#fff; font-size:17px; font-weight:600; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark>span>small { display:block; margin-top:6px; font-size:12px; color:var(--customer-muted); line-height:1.5; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark { display:grid; grid-template-columns:minmax(0,1fr) 44px; align-items:start; gap:12px 8px; min-width:0; padding:12px; border:1px solid #45404e !important; border-radius:8px !important; background:linear-gradient(#111014,#111014) !important; box-shadow:none; overflow:visible; opacity:1; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-heading { display:grid; grid-template-columns:28px minmax(0,1fr); align-items:start; gap:10px; min-width:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-icon { display:grid; place-items:center; width:28px; height:28px; margin-top:2px; color:#bca0dc; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-icon svg { display:block; width:26px; height:26px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-copy { display:grid; gap:4px; min-width:0; overflow-wrap:anywhere; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-venue { color:#bbb7c5; font-size:12px; font-weight:500; line-height:1.4; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-copy>strong { color:#fff; font-size:18px; font-weight:600; line-height:1.3; white-space:normal; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-availability { margin:2px 0 0; color:#b8b4c2; font-size:12px; line-height:1.5; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-bookmark.unavailable .saved-deal-availability { color:var(--customer-danger); }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-actions { grid-column:1/-1; display:grid !important; grid-template-columns:minmax(0,1fr) 44px; gap:8px; min-width:0; margin:0; padding-top:10px; border-top:1px solid #ffffff14; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-actions>:is(a,button) { width:100%; min-width:0; min-height:44px !important; padding:8px 12px !important; border-radius:8px !important; font-size:13px !important; white-space:normal; overflow-wrap:anywhere; appearance:none; -webkit-appearance:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-actions>.saved-deal-view { justify-content:space-between; gap:8px; border-color:#735194 !important; background:linear-gradient(#241733,#241733) !important; color:#f7efff !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-view>span[aria-hidden] { flex:0 0 auto; font-size:22px; line-height:1; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-actions>button { padding:0 !important; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-actions>button svg { display:block; width:20px; height:20px; flex:0 0 20px; }
+@media (hover:hover) {
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .saved-deal-actions>.saved-deal-view:hover { background:linear-gradient(#322044,#322044) !important; border-color:#a57dc8 !important; }
+}
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-empty-state { display:grid; justify-items:start; gap:8px; padding:16px; border:1px dashed #65517477; border-radius:12px; background:#1d172233; text-align:left; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-empty-state strong { color:#e7deee; font-size:15px; font-weight:500; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-empty-state p { margin:0; max-width:56ch; color:var(--customer-muted); font-size:13px; line-height:1.6; }

@@ -28,7 +28,7 @@ function harness(name = 'CustomerPanel', props = {}, hash = '') {
     addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name),
     setInterval: () => 1, clearInterval() {}, cancelAnimationFrame: id => frames.delete(id), requestAnimationFrame: cb => { frames.set(++sequence, cb); return sequence; } };
   const exports = {};
-  const source = fs.readFileSync('app/dashboard/CustomerDashboardPanels.tsx', 'utf8') + '\nexport { CustomerPassWallet, CustomerNightPanel, FollowedDancerGridCard, CustomerFollowedClubsPanel, SavedVenueCard };';
+  const source = fs.readFileSync('app/dashboard/CustomerDashboardPanels.tsx', 'utf8') + '\nexport { CustomerPassWallet, CustomerNightPanel, FollowedDancerGridCard, CustomerFollowedClubsPanel, SavedVenueCard, CustomerDealPassPanel, CustomerDirectionsButton };';
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
     exports, window, Date, Intl, AbortController, HTMLDetailsElement: class {}, document: { getElementById: () => null },
     require: path => path === 'react' ? react : path === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : path === './customer-dashboard-view' ? { customerDashboardDestination }
@@ -264,4 +264,55 @@ test('unfollow stays outside the card link and both controls retain independent 
   assert.equal(link.props.href,'/dancers/star');
   assert.ok(![link.props.children].flat(Infinity).some(n=>n?.type==='button'));
   ui.nodes().find(n=>n.type==='button').props.onClick(); assert.equal(removed,1);
+});
+
+test('saved deal cards separate offer identity, menu and primary actions without redeeming', () => {
+  const removed = [], directions = [];
+  const venue = { id:'club', name:'Echo House' };
+  const saved = { dealId:'entry/one', venue, deal:{ title:'Free admission', isActive:true } };
+  const ui = harness('CustomerDealPassPanel', { savedDeals:[saved], pendingAction:'', onDirections:v=>directions.push(v), onRemoveSavedDeal:id=>removed.push(id) });
+  const card = ui.nodes().find(n=>n.props?.className==='saved-deal-item saved-deal-bookmark');
+  assert.deepEqual(Array.from(card.props.children, n=>n.props.className), ['saved-deal-heading','customer-card-menu','customer-card-actions saved-deal-actions']);
+  assert.equal(ui.nodes().find(n=>n.props?.className==='saved-deal-venue').props.children, 'Echo House');
+  assert.equal(ui.nodes().find(n=>n.props?.className==='saved-deal-availability').props.children, 'Active Club Deal');
+  const link = ui.nodes().find(n=>n.props?.className==='saved-deal-view');
+  assert.equal(link.props.href, '/deals/transportation/entry%2Fone');
+  assert.equal(link.props.onClick, undefined);
+  assert.equal(ui.nodes().find(n=>n.type==='summary').props['aria-label'], 'Manage saved deal Free admission');
+  const directionProps = component(ui, 'CustomerDirectionsButton').props;
+  assert.equal(directionProps.iconOnly, true);
+  harness('CustomerDirectionsButton', directionProps).tree().props.onClick();
+  assert.deepEqual(directions, [venue]);
+  ui.nodes().find(n=>n.type==='button').props.onClick();
+  assert.deepEqual(removed, ['entry/one']);
+  ui.update({pendingAction:'deal-entry/one'});
+  assert.equal(ui.nodes().find(n=>n.type==='button').props.disabled, true);
+  assert.equal(component(ui, 'CustomerDirectionsButton').props.pending, true);
+});
+
+test('saved deal cards preserve scheduled, unavailable and device-only availability', () => {
+  const base = { dealId:'deal', venue:{}, deal:{ title:'', isActive:true, validDays:['Friday'], validStartTime:'20:00', validEndTime:'23:30' } };
+  const ui = harness('CustomerDealPassPanel', {savedDeals:[base],pendingAction:''});
+  const availability = () => ui.nodes().find(n=>n.props?.className==='saved-deal-availability').props.children;
+  assert.equal(availability(), 'Fri · 8 PM–11:30 PM');
+  assert.equal(ui.nodes().find(n=>n.props?.className==='saved-deal-venue').props.children, 'Club');
+  assert.ok(ui.nodes().some(n=>n.type==='strong'&&n.props.children==='Club Deal'));
+  ui.update({savedDeals:[{...base,deal:{...base.deal,isActive:false}}]});
+  assert.equal(availability(), 'No longer available');
+  assert.ok(ui.nodes().some(n=>n.props?.className?.endsWith(' unavailable')));
+  ui.update({savedDeals:[{...base,deviceOnly:true,deal:{...base.deal,isActive:false}}]});
+  assert.equal(availability(), 'Saved on this device');
+  assert.ok(!ui.nodes().some(n=>n.props?.className?.endsWith(' unavailable')));
+});
+
+test('compact directions keep an accessible label and tooltip without changing plan buttons', () => {
+  const venue = {name:'Echo House'}, ui = harness('CustomerDirectionsButton', {venue,iconOnly:true,pending:true});
+  assert.equal(ui.tree().props['aria-label'], 'Directions to Echo House');
+  assert.equal(ui.tree().props.title, 'Directions to Echo House');
+  assert.equal(ui.tree().props.disabled, true);
+  assert.equal(ui.tree().props.children.props.icon, 'pin');
+  ui.update({iconOnly:false,pending:false});
+  assert.equal(ui.tree().props.children, 'Directions');
+  assert.equal(ui.tree().props.title, undefined);
+  assert.equal(ui.tree().props.disabled, false);
 });
