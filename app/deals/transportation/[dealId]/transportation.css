@@ -262,3 +262,9 @@ body.dancr-button-system .is-free-entry .club-transport-card :is(input,textarea,
   .is-free-entry .club-transport-card { padding: 16px; }
 }
 @media(prefers-reduced-motion:reduce) { .club-entry-chevron { transition: none; } }
+.club-transport-card .club-update-opt-ins { display: grid; gap: 12px; margin: 4px 0 0; padding: 14px; border: 1px solid #4f3b64; border-radius: 12px; min-width: 0; }
+.club-update-opt-ins legend { padding: 0 6px; color: #e0c5ff; font-size: 14px; font-weight: 600; }
+.club-update-opt-ins .club-transport-note { margin: 0; }
+.club-update-confirmation { border: 1px solid #4f3b64; border-radius: 12px; padding: 14px; }
+.club-update-confirmation h2 { margin: 0 0 8px; font-size: 17px; }
+.club-update-confirmation a { color: #d8afff; }

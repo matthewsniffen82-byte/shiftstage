@@ -2,6 +2,7 @@ export const VENUE_SHARING_CONSENT_VERSION = "venue-customer-sharing-v1";
 export type VenueCustomer = {
   id: string; name: string; email: string | null; phone: string | null; city: string;
   joined_at: string; is_follower: boolean; is_guest: boolean;
+  is_updates?: boolean; email_updates_at?: string | null; text_updates_at?: string | null;
 };
 export type VenueShare = { name: string; email: string; city: string; consented_at: string };
 

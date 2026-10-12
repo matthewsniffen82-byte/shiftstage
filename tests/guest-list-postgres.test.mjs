@@ -15,8 +15,21 @@ before(async()=>{
  await pg.exec(video.slice(video.indexOf('create function public.issue_video_admission_pass'),video.indexOf('-- Raw browser identifiers')));
  await pg.exec(read('20260930090000_free_entry_guest_list.sql'));
  await pg.exec(read('20260930190000_standalone_guest_list_admission.sql'));
+ await pg.exec('create table club_shuttle_requests(id uuid primary key,venue_id uuid,notification_rows jsonb);grant select on club_shuttle_requests to service_role');
+ await pg.exec(read('20261012012829_venue_guest_update_opt_ins.sql'));
 });
 after(async()=>pg?.close());
+
+test('real admission registration saves optional update choices atomically without changing pass access',async()=>{
+ await pg.exec('reset role;set role service_role');
+ const args=['u'.repeat(43),id(1),id(780),'club_page','guest_list','Update Guest','+17025550124','updates@example.test','venue-updates-v1','e'.repeat(43),'t'.repeat(43)];
+ const sql='select public.issue_guest_list_admission_pass_with_updates($1,$2,$3,null,$4,null,null,$5,null,$6,$7,$8,true,true,true,$9,$10,$11) receipt';
+ const a=(await pg.query(sql,args)).rows[0].receipt,b=(await pg.query(sql,args)).rows[0].receipt;
+ assert.equal(a.token,b.token);assert.equal(a.guestListJoined,true);assert.equal(a.updates.length,2);
+ await pg.query("update venue_update_subscriptions set withdrawn_at=now() where destination='updates@example.test'");
+ const retry=(await pg.query(sql,args)).rows[0].receipt;assert.equal(retry.updates.find(row=>row.channel==='email').active,false);
+ assert.equal(retry.updates.find(row=>row.channel==='text').active,true);
+});
 async function issue(session,overrides={}){
  await pg.exec('reset role;set role service_role');
  const args={name:'Test Guest',phone:'+17025550123',email:null,consent:true,arrival:'self_drive',...overrides};

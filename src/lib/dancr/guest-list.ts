@@ -1,6 +1,7 @@
 import { normalizeShuttlePhone } from "./club-deal-transportation.ts";
+import { normalizeVenueUpdateChoices, type VenueUpdateChoices } from "./venue-update-preferences.ts";
 
-export type GuestListDetails = { name: string; phone: string; email: string; consent: true };
+export type GuestListDetails = { name: string; phone: string; email: string; consent: true; updates?: VenueUpdateChoices };
 
 export function normalizeGuestListDetails(value: unknown): GuestListDetails | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -11,7 +12,9 @@ export function normalizeGuestListDetails(value: unknown): GuestListDetails | nu
   if (name.length < 2 || name.length > 100 || /[\x00-\x1f\x7f]/.test(name) || !phone
     || email.length > 254 || (email && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email))
     || input.consent !== true) return null;
-  return { name, phone, email, consent: true };
+  const updates = input.updates === undefined ? undefined : normalizeVenueUpdateChoices(input.updates, email);
+  if (updates === null) return null;
+  return { name, phone, email, consent: true, ...(updates ? { updates } : {}) };
 }
 
 export type VenueGuestListEntry = {

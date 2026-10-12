@@ -173,6 +173,6 @@ test("shared contacts show sharing purpose separately from email and text subscr
   ], hasMore: false }));
   await ui.settle();
   assert.match(ui.html(), /Current guest-list visit/); assert.match(ui.html(), /Email updates/); assert.match(ui.html(), /Text updates/);
-  assert.equal((ui.html().match(/No subscription recorded/g) || []).length, 2);
+  assert.equal((ui.html().match(/No active opt-in recorded/g) || []).length, 2);
   assert.match(ui.html(), /mailto:guest%40example.test/); assert.ok(ui.calls.every(call => !call.options.method)); ui.close();
 });

@@ -5,6 +5,7 @@ import { PublicApiError } from "../api-error-policy";
 import { normalizeShuttlePhone, normalizeShuttleRequest } from "./club-deal-transportation";
 import { getActiveClubDealById } from "./deals";
 import { deliverNotificationRows, sendShuttlePhoneAlert } from "./notification-delivery";
+import { recordVenueUpdateOptIns } from "./venue-update-opt-ins";
 
 type ShuttleDetails = NonNullable<ReturnType<typeof normalizeShuttleRequest>>;
 type AfterResponse = (delivery: () => Promise<void>) => void;
@@ -34,7 +35,7 @@ export async function submitClubShuttleRequest(client: SupabaseClient, dealId: s
   const previous = await readReceipt(client, details.requestId);
   if (previous) {
     assertMatchingRequest(previous, details, null, dealId);
-    return handoffRequest(client, previous, afterResponse);
+    return handoffRequest(client, previous, afterResponse, details.updates);
   }
   const deal = await getActiveClubDealById(client, dealId);
   if (!deal) throw new PublicApiError("NOT_FOUND", "This Club Deal is no longer available.", 404);
@@ -46,7 +47,7 @@ export async function submitVenueShuttleRequest(client: SupabaseClient, venueId:
   const previous = await readReceipt(client, details.requestId);
   if (previous) {
     assertMatchingRequest(previous, details, venueId, dealId);
-    return handoffRequest(client, previous, afterResponse);
+    return handoffRequest(client, previous, afterResponse, details.updates);
   }
   const { data: venue, error: venueError } = await client.from("venues")
     .select("id, name, phone, owner_user_id").eq("id", venueId).eq("is_active", true)
@@ -72,7 +73,7 @@ export async function submitVenueShuttleRequest(client: SupabaseClient, venueId:
   const receipt = await readReceipt(client, details.requestId);
   if (!receipt) throw new PublicApiError("UNAVAILABLE", "Your request could not be confirmed. Retry the same request.", 503);
   assertMatchingRequest(receipt, details, venueId, dealId);
-  return handoffRequest(client, receipt, afterResponse);
+  return handoffRequest(client, receipt, afterResponse, details.updates);
 }
 
 function readDetails(input: Record<string, unknown>) {
@@ -99,7 +100,8 @@ function assertMatchingRequest(receipt: ShuttleReceipt, details: ShuttleDetails,
   }
 }
 
-async function handoffRequest(client: SupabaseClient, receipt: ShuttleReceipt, afterResponse?: AfterResponse) {
+async function handoffRequest(client: SupabaseClient, receipt: ShuttleReceipt, afterResponse?: AfterResponse, choices?: ShuttleDetails["updates"]) {
+  const updates = choices ? await recordVenueUpdateOptIns(client, "ride", receipt.id, choices) : [];
   const { data, error } = await client.rpc("handoff_club_shuttle_request", { p_request_id: receipt.id });
   if (error || data?.request_id !== receipt.id || typeof data?.newly_handed_off !== "boolean") {
     console.warn("SHUTTLE_INBOX_HANDOFF_UNCONFIRMED");
@@ -124,7 +126,7 @@ async function handoffRequest(client: SupabaseClient, receipt: ShuttleReceipt, a
     if (afterResponse) afterResponse(deliver);
     else await deliver();
   }
-  return { requestId: receipt.id, alertsScheduled,
+  return { requestId: receipt.id, alertsScheduled, updates,
     phoneAlertAccepted: alertsScheduled ? null : sms, pushAlertAccepted: alertsScheduled ? null : push.push > 0,
     message: "Your request has been sent to the club manager. The club will contact you at the phone number you provided to arrange and confirm pickup. Your ride is not yet confirmed." };
 }

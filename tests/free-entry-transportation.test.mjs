@@ -7,11 +7,27 @@ import * as jsx from "react/jsx-runtime";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as transportation from "../src/lib/dancr/club-deal-transportation.ts";
 import * as guestList from "../src/lib/dancr/guest-list.ts";
+import * as updatePreferences from "../src/lib/dancr/venue-update-preferences.ts";
 import { formatPublicVenueAddress } from "../src/lib/dancr/uber.ts";
 
 const venue = { id: "11111111-1111-4111-8111-111111111111", name: "Test Club", slug: "test-club", address: "123 Test Rd, Las Vegas, NV", city: "Las Vegas", state: "NV" };
 const deal = { id: "22222222-2222-4222-8222-222222222222", venueId: venue.id, dealTitle: "Free admission", isActive: true };
 const key = "mydancrPendingNfcDealV2";
+
+test("guest and ride update choices are optional, initially unchecked and submitted independently", async () => {
+  const ui=client();ui.select("club_shuttle");
+  const html=ui.html();
+  for(const name of ["emailUpdates","textUpdates"]) {
+    const tag=html.match(new RegExp('<input[^>]*name="'+name+'"[^>]*>'))?.[0];
+    assert.ok(tag);assert.doesNotMatch(tag,/checked|\brequired\b/);
+  }
+  await ui.submit("7025550123",{textUpdates:"on"});
+  assert.deepEqual(ui.requests[0].body.updates,{email:false,text:true,version:"venue-updates-v1"});
+  const guest=client();await guest.joinGuestList({emailUpdates:"on"});
+  assert.equal(guest.requests.length,0);assert.match(guest.html(),/Enter an email address to receive email updates/);
+  await guest.joinGuestList({email:"guest@example.test",emailUpdates:"on"});
+  assert.deepEqual(guest.requests[0].body.guest.updates,{email:true,text:false,version:"venue-updates-v1"});
+});
 
 function load(relative, imports, globals = {}) {
   const exports = {};
@@ -52,6 +68,8 @@ function client(props = {}, options = {}) {
     "@/src/lib/dancr/push-invitation": { offerPushNotifications: moment => invitations.push(moment) },
     "@/src/lib/dancr/club-deal-transportation": transportation,
     "@/src/lib/dancr/guest-list": guestList,
+    "@/src/lib/dancr/venue-update-preferences": updatePreferences,
+    "@/app/components/VenueUpdateOptIns": load("../app/components/VenueUpdateOptIns.tsx", {}),
     "@/app/components/NfcIcon": { default: () => null }, "./transportation.css": {},
   }, {
     navigator: { clipboard: options.clipboardUnavailable ? undefined : { writeText: async value => {

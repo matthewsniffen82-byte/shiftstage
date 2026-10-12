@@ -41,22 +41,22 @@ export default function VenueCustomersPanel({ refreshKey, active, timezone }: { 
   return <div className="venue-contacts">
     <header className="venue-section-heading"><h2 id="venue-customers-heading">Contacts</h2>
       <button className="venue-utility" type="button" disabled={busy} onClick={() => void load()}>{busy ? "Loading…" : "Refresh"}</button></header>
-    <p>Followers who chose to share their details, and guests with active passes. Guest-list details are for the current visit. Sharing does not authorize marketing emails or texts.</p>
+    <p>Shared contacts and guests with active passes. Email and text update lists include only guests who chose that channel for this club. Visit and ride details alone do not subscribe anyone.</p>
     <div className="venue-analytics-period" role="group" aria-label="Contact source">
-      {[["all", "All"], ["followers", "Shared followers"], ["guests", "Guest list"]].map(([value, label]) =>
+      {[["all", "Shared contacts"], ["followers", "Shared followers"], ["guests", "Guest list"], ["email_updates", "Email updates"], ["text_updates", "Text updates"]].map(([value, label]) =>
         <button key={value} type="button" aria-pressed={source === value} onClick={() => setSource(value)}>{label}</button>)}
     </div>
     {error ? <p role="alert">{error}</p> : null}
-    {loaded && !entries.length ? <p className="venue-value-empty">No contacts have shared details in this group yet. Private followers are counted in Results.</p> : null}
+    {loaded && !entries.length ? <p className="venue-value-empty">{source.endsWith("_updates") ? "No guests have opted in to this type of update yet." : "No contacts have shared details in this group yet. Private followers are counted in Results."}</p> : null}
     <div className="notification-list">{entries.map(entry => <article className="notification-row venue-guest-record" key={entry.id}>
-      <strong>{entry.name}</strong><span>{entry.is_follower && entry.is_guest ? "Follower · Guest list" : entry.is_follower ? "Follower" : "Guest list"}</span>
+      <strong>{entry.name}</strong><span>{entry.is_updates ? "Club update subscriber" : entry.is_follower && entry.is_guest ? "Follower · Guest list" : entry.is_follower ? "Follower" : "Guest list"}</span>
       <dl>
         <div><dt>Email</dt><dd>{entry.email ? <a href={`mailto:${encodeURIComponent(entry.email)}`}>{entry.email}</a> : "Not shared"}</dd></div>
         <div><dt>Phone</dt><dd>{entry.phone ? <a href={`tel:${entry.phone}`}>{entry.phone}</a> : "Not shared"}</dd></div>
         {entry.city && <div><dt>City</dt><dd>{entry.city}</dd></div>}
-        <div><dt>Shared for</dt><dd>{entry.is_follower && entry.is_guest ? "Club customer list and current guest-list visit" : entry.is_follower ? "Club customer list" : "Current guest-list visit"}</dd></div>
-        <div><dt>Email updates</dt><dd>No subscription recorded</dd></div>
-        <div><dt>Text updates</dt><dd>No subscription recorded</dd></div>
+        <div><dt>Shared for</dt><dd>{entry.is_updates ? "Club updates" : entry.is_follower && entry.is_guest ? "Club customer list and current guest-list visit" : entry.is_follower ? "Club customer list" : "Current guest-list visit"}</dd></div>
+        {(!entry.is_updates || entry.email) && <div><dt>Email updates</dt><dd>{entry.email_updates_at ? <>Opted in · <time dateTime={entry.email_updates_at}>{new Date(entry.email_updates_at).toLocaleDateString(undefined, { timeZone: timezone })}</time></> : "No active opt-in recorded"}</dd></div>}
+        {(!entry.is_updates || entry.phone) && <div><dt>Text updates</dt><dd>{entry.text_updates_at ? <>Opted in · <time dateTime={entry.text_updates_at}>{new Date(entry.text_updates_at).toLocaleDateString(undefined, { timeZone: timezone })}</time></> : "No active opt-in recorded"}</dd></div>}
       </dl>
       <small>Latest shared activity <time dateTime={entry.joined_at}>{new Date(entry.joined_at).toLocaleString(undefined, { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time>{timezone ? ` (${timezone.replaceAll("_", " ")})` : ""}</small>
     </article>)}</div>

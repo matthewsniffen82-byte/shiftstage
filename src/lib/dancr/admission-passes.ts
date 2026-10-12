@@ -11,6 +11,7 @@ import { createAdminSupabaseClient } from "../supabase/admin";
 import { createRequestSupabaseContext, getBearerToken } from "../supabase/request";
 import { readVenueVideo } from "./venue-video-attribution";
 import { normalizeGuestListDetails } from "./guest-list";
+import { venueUpdateReceiptLinks } from "./venue-update-opt-ins";
 
 export const ADMISSION_TOKEN_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -47,17 +48,21 @@ export async function createAdmissionPass(request: Request, body: Record<string,
     attributionToken: typeof body.attributionToken === "string" ? body.attributionToken : "",
     venueId: deal.venueId, dealId,
   });
-  const { data, error } = await (admin as any).rpc(guest ? "issue_guest_list_admission_pass" : "issue_video_admission_pass", {
+  const withUpdates = guest?.updates && (guest.updates.email || guest.updates.text);
+  const { data, error } = await (admin as any).rpc(withUpdates ? "issue_guest_list_admission_pass_with_updates" : guest ? "issue_guest_list_admission_pass" : "issue_video_admission_pass", {
     p_token: randomBytes(32).toString("base64url"), p_deal_id: dealId,
     p_session_id: sessionId, p_customer_id: customerId,
     p_source: attribution.sourceType, p_dancer_id: attribution.dancerId,
     p_shift_id: attribution.shiftId, p_arrival_method: body.transportation,
     p_video_id: readVenueVideo(request, deal.venueId, process.env.DANCR_PUBLIC_RATE_LIMIT_SECRET),
     ...(guest ? { p_guest_name: guest.name, p_phone: guest.phone, p_email: guest.email || null, p_consent: true } : {}),
+    ...(withUpdates ? { p_update_email: guest.updates!.email, p_update_text: guest.updates!.text, p_version: guest.updates!.version,
+      p_email_token: randomBytes(32).toString("base64url"), p_text_token: randomBytes(32).toString("base64url") } : {}),
   });
   if (error) throw error;
   if (!data?.token || !ADMISSION_TOKEN_PATTERN.test(data.token)) throw new Error("Admission pass receipt missing.");
-  const response = NextResponse.json({ ok: true, passUrl: `/deals/pass/${data.token}`, expiresAt: data.expiresAt, guestListJoined: data.guestListJoined === true, session: session || null }, { headers: PASS_HEADERS });
+  const updates = withUpdates ? venueUpdateReceiptLinks(data.updates, guest.updates!) : [];
+  const response = NextResponse.json({ ok: true, passUrl: `/deals/pass/${data.token}`, expiresAt: data.expiresAt, guestListJoined: data.guestListJoined === true, updates, session: session || null }, { headers: PASS_HEADERS });
   response.cookies.set(COOKIE, sessionId, { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge: 365 * 86400 });
   return response;
 }

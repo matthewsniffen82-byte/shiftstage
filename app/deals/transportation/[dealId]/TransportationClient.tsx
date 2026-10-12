@@ -6,6 +6,8 @@ import type { PublicClubDeal, DealSourceType } from "@/src/lib/dancr/types";
 import { AUTONOMOUS_ADMISSION_OPTIONS, admissionOfferHours, normalizeShuttlePhone, type AdmissionMethod, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
 import { readBrowserAuthSession, persistRefreshedBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { normalizeGuestListDetails, type GuestListDetails } from "@/src/lib/dancr/guest-list";
+import { readVenueUpdateChoices, type VenueUpdateChoices, type VenueUpdateReceipt } from "@/src/lib/dancr/venue-update-preferences";
+import VenueUpdateOptIns from "@/app/components/VenueUpdateOptIns";
 import "./transportation.css";
 
 function EntryChevron() {
@@ -72,6 +74,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   const [passUrl, setPassUrl] = useState("");
   const [passError, setPassError] = useState("");
   const [guestListJoined, setGuestListJoined] = useState(false);
+  const [updateReceipts, setUpdateReceipts] = useState<VenueUpdateReceipt[]>([]);
   const guestOpen = expandedSection === "guest_list";
   const [guestBusy, setGuestBusy] = useState(false);
   const [guestError, setGuestError] = useState("");
@@ -81,7 +84,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   const heading = useRef<HTMLHeadingElement>(null);
   const pending = useRef(false);
   const guestPending = useRef(false);
-  const attemptedRequest = useRef<{ requestId: string; name: string; location: string; phone: string; email: string; partySize: number; handoffAccepted: boolean } | null>(null);
+  const attemptedRequest = useRef<{ requestId: string; name: string; location: string; phone: string; email: string; partySize: number; handoffAccepted: boolean; updates?: VenueUpdateChoices } | null>(null);
 
   useEffect(() => {
     heading.current?.focus();
@@ -158,6 +161,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     if (auth) persistRefreshedBrowserAuthSession(result.session, auth);
     setPassUrl(result.passUrl);
     setIssuedMethod(transportation);
+    if (result.updates?.length) setUpdateReceipts(current => [...new Map([...current, ...result.updates].map(item => [item.channel, item])).values()]);
     if (guest) setGuestListJoined(true);
     try { localStorage.setItem("mydancrPendingNfcDealV2", JSON.stringify({
       admissionPassVersion: 1, passUrl: result.passUrl, venueId: venue.id, dealId: deal.id, sourceType, dancerId, transportation,
@@ -178,13 +182,14 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
     if (!deal || !guestOpen || pending.current || guestPending.current || guestListJoined) return;
     setGuestError("");
     const fields = new FormData(event.currentTarget);
-    const guest = normalizeGuestListDetails({ name: fields.get("name"), phone: fields.get("phone"), email: fields.get("email"), consent: fields.get("guestConsent") === "on" });
+    const guest = normalizeGuestListDetails({ name: fields.get("name"), phone: fields.get("phone"), email: fields.get("email"), consent: fields.get("guestConsent") === "on", updates: readVenueUpdateChoices(fields) });
     if (!guest) {
       const errors: Record<string, string> = {};
       if (String(fields.get("name") || "").trim().length < 2) errors["guest-name"] = "Enter your full name.";
       if (!normalizeShuttlePhone(fields.get("phone"))) errors["guest-phone"] = "Enter a valid phone number, including your country code outside the US.";
       const email = String(fields.get("email") || "").trim();
       if (email && !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)) errors["guest-email"] = "Enter a valid email, or leave it blank.";
+      if (!email && fields.get("emailUpdates") === "on") errors["guest-email"] = "Enter an email address to receive email updates.";
       if (fields.get("guestConsent") !== "on") errors["guest-guestConsent"] = "Agree to share your details with the club to continue.";
       setFieldErrors({ ...fieldErrors, ...errors });
       setGuestError("Check your details below before joining the guest list.");
@@ -222,6 +227,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
           location: String(fields.get("location") || "").trim(), phone: contactPhone,
           email: String(fields.get("email") || "").trim(),
           partySize: Number(fields.get("partySize")), handoffAccepted: fields.get("handoffAccepted") === "on",
+          updates: readVenueUpdateChoices(fields),
         };
       }
       const endpoint = deal ? `/api/deals/${encodeURIComponent(deal.id)}/shuttle` : `/api/venues/${encodeURIComponent(venue.id)}/shuttle`;
@@ -235,6 +241,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
         throw new Error(result.error || "Unable to send your request.");
       }
       setMessage(result.message);
+      if (result.updates?.length) setUpdateReceipts(result.updates);
       setComplete(true);
       try { await prepareAdmissionPass("club_shuttle"); }
       catch (reason) { setPassError(reason instanceof Error ? reason.message : "Your pickup request was sent, but your pass could not be generated."); }
@@ -266,6 +273,10 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
       </ol> : null}
       {!deal ? <p className="club-transport-terms">Free entry is currently unavailable. You can still request a free ride.</p> : null}
       {complete ? <div className="club-entry-complete" aria-live="polite">
+        {updateReceipts.length > 0 && <section className="club-update-confirmation"><h2>Your club updates</h2>
+          <p>Save these private links to manage your choices.</p>
+          {updateReceipts.map(item => <p key={item.channel}>{item.channel === "email" ? "Email" : "Text"} updates: {item.active ? "opted in" : "stopped"}. <Link href={item.manageUrl}>Manage {item.channel} updates</Link></p>)}
+        </section>}
         {passMethod === "guest_list" ? <p>Your guest-list details have been sent to {venue.name}.</p> : passMethod === "club_shuttle" ? <div className="club-transport-confirmation" role="status">
           <span className="club-entry-status is-pending">Request sent</span>
           <p><strong>Awaiting club confirmation</strong></p>
@@ -329,6 +340,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
                 <label>Email<input {...fieldFeedback("pickup", "email")} name="email" type="email" autoComplete="email" placeholder="you@example.com" required maxLength={254} readOnly={busy || !!attemptedRequest.current} />{fieldError("pickup", "email")}</label>
               </div>
               <label className="club-transport-consent"><input {...fieldFeedback("pickup", "handoffAccepted")} name="handoffAccepted" type="checkbox" required onClick={event => { if (busy || attemptedRequest.current) event.preventDefault(); }} /><span>I agree to share my details with {venue.name} to arrange pickup.{fieldError("pickup", "handoffAccepted")}</span></label>
+              <VenueUpdateOptIns venueName={venue.name} disabled={busy || !!attemptedRequest.current} />
             </div>
           {showingShuttleForm && error ? <p role="alert" className="club-transport-error">{error}</p> : null}
           {showingShuttleForm ? <button className="club-transport-submit" type="submit" disabled={busy || !shuttleAvailable} aria-busy={busy}>{busy ? "Sending to the club…" : attemptedRequest.current ? "Retry shuttle request" : "Request free pickup"}</button> : null}
@@ -351,6 +363,7 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
                 <label>Phone<input {...fieldFeedback("guest", "phone")} name="phone" type="tel" autoComplete="tel" placeholder="(555) 555-0123" onChange={formatContactPhoneInput} onCompositionEnd={formatContactPhoneInput} required maxLength={40} readOnly={guestBusy} />{fieldError("guest", "phone")}</label>
                 <label>Email (optional)<input {...fieldFeedback("guest", "email")} name="email" type="email" autoComplete="email" placeholder="you@example.com" maxLength={254} readOnly={guestBusy} />{fieldError("guest", "email")}</label>
                 <label className="club-transport-consent"><input {...fieldFeedback("guest", "guestConsent")} name="guestConsent" type="checkbox" required disabled={guestBusy} /><span>I agree to share my details with {venue.name} for the guest list.{fieldError("guest", "guestConsent")}</span></label>
+                <VenueUpdateOptIns venueName={venue.name} disabled={guestBusy} />
               </div>
               {guestError ? <p role="alert" className="club-transport-error">{guestError}</p> : null}
               <button className="club-transport-submit" type="submit" disabled={guestBusy || busy} aria-busy={guestBusy}>{guestBusy ? "Joining guest list…" : "Join guest list"}</button>

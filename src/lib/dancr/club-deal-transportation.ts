@@ -1,3 +1,5 @@
+import { normalizeVenueUpdateChoices } from "./venue-update-preferences.ts";
+
 export const CLUB_TRANSPORTATION_TERMS = "Free admission when you arrive in a private car, club-provided transport, Waymo, Zoox, or Cybercab. Uber, Lyft, and other rideshares or taxis do not qualify. Waymo, Zoox, and Cybercab ride fares are not included.";
 export const CLUB_ARRIVAL_VERIFICATION = "Club staff must verify that you arrived in a private car, club-provided transport, Waymo, Zoox, or Cybercab before admitting you for free.";
 export const CLUB_SHUTTLE_HANDOFF = "MyDancr sends your request to the club. The club handles transportation and will contact you to confirm availability, pickup location, and timing. Submitting a request does not confirm a ride.";
@@ -68,5 +70,7 @@ export function normalizeShuttleRequest(input: Record<string, unknown>) {
   const partySize = input.partySize;
   const id = typeof input.requestId === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input.requestId) ? input.requestId : null;
   if (!name || !location || !phone || !email || typeof partySize !== "number" || !Number.isInteger(partySize) || partySize < 1 || partySize > 100 || !id || input.handoffAccepted !== true) return null;
-  return { name, location, phone, email, partySize, requestId: id };
+  const updates = input.updates === undefined ? undefined : normalizeVenueUpdateChoices(input.updates, email);
+  if (updates === null) return null;
+  return { name, location, phone, email, partySize, requestId: id, ...(updates ? { updates } : {}) };
 }

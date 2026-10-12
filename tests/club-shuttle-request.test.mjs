@@ -23,6 +23,16 @@ test("catalog conversion retains venue rules, removes discount-only wording, and
   assert.deepEqual(transportationDealFields(patch), patch);
   assert.equal(original.deal_title, "Half-off admission");
 });
+
+test("ride update choices are tied to the immutable request and omitted by default",async()=>{
+  const plain=fixture();await plain.run();assert.equal(plain.calls.some(call=>call.updates),false);
+  const selected={...request,updates:{email:false,text:true,version:"venue-updates-v1"}},f=fixture();
+  const result=await f.run(selected);assert.equal(result.updates[0].channel,"text");
+  assert.equal(f.calls.find(call=>call.updates).updates.email,false);
+  const before=f.calls.length;await assert.rejects(f.run({...selected,updates:{...selected.updates,email:true}}),error=>error.status===409);
+  assert.equal(f.calls.slice(before).some(call=>call.updates),false);
+  await f.run(selected);assert.equal(f.receipts.size,1);assert.equal(f.notifications.size,2);
+});
 test("shuttle details require bounded fields, a real phone format, whole party counts and explicit handoff", () => {
   assert.equal(normalizeShuttleRequest(request).phone, "+17025550123");
   assert.equal(normalizeShuttlePhone("+44 7700 900123"), "+447700900123");
@@ -75,6 +85,10 @@ function fixture({ active = true, venueActive = true, ownerActive = true, storeF
     if (name.includes("api-error-policy")) return { PublicApiError };
     if (name === "./club-deal-transportation") return { normalizeShuttleRequest, normalizeShuttlePhone };
     if (name === "./deals") return { getActiveClubDealById: async (_, id) => state.active ? { id, venueId: "venue" } : null };
+    if (name === "./venue-update-opt-ins") return { recordVenueUpdateOptIns: async (_client, source, receipt, choices) => {
+      assert.equal(source,"ride");assert.ok(receipts.has(receipt));calls.push({ updates:choices, receipt });
+      return [{channel:choices.email?"email":"text",active:true,manageUrl:"/updates/"+"u".repeat(43)}];
+    } };
     if (name === "./notification-delivery") return {
       deliverNotificationRows: async (_, rows, options) => { calls.push({ push: rows, options }); await deliveryGate; if (providerThrows) throw new Error("Synthetic provider failure"); return { push }; },
       sendShuttlePhoneAlert: async input => { calls.push({ sms: input }); await deliveryGate; if (providerThrows) throw new Error("Synthetic provider failure"); return sms; },

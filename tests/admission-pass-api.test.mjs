@@ -17,11 +17,12 @@ class RateError extends Error{retryAfterSeconds=60;}
 class AttributionError extends Error{status=403;}
 function load(file,imports){const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../'+file,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,Request,Response,Date,Set,process:{env:{NODE_ENV:'production'}},require(name){assert.ok(name in imports,'Unknown dependency '+name);return imports[name];}});return exports;}
 function fixture(options={}){
- const calls=[],admin={async rpc(name,args){calls.push({scope:'server',name,args});return {data:{token,expiresAt:new Date(Date.now()+3600000).toISOString()}};}},user={async rpc(name,args){calls.push({scope:'user',name,args});return options.denied?{error:{code:'42501'}}:{data:{status:'redeemed',alreadyRedeemed:!!options.already}};}};
+ const calls=[],admin={async rpc(name,args){calls.push({scope:'server',name,args});return {data:{token,expiresAt:new Date(Date.now()+3600000).toISOString(),
+  updates:name==='issue_guest_list_admission_pass_with_updates'?[['email',args.p_update_email,args.p_email_token],['text',args.p_update_text,args.p_text_token]].filter(row=>row[1]).map(([channel,,token])=>({channel,token,active:true})):undefined}};}},user={async rpc(name,args){calls.push({scope:'user',name,args});return options.denied?{error:{code:'42501'}}:{data:{status:'redeemed',alreadyRedeemed:!!options.already}};}};
  const context=async(_request,access)=>{calls.push({access});if(options.noAuth)throw new PublicApiError('UNAUTHORIZED','Sign in.',401);return {user:{id:customerId},client:user,session:{access_token:'new-access'}};};
  const limit=async()=>{calls.push('limit');if(options.limited)throw new RateError('Slow down.');};
  const api=load('src/lib/dancr/admission-passes.ts',{
-  './guest-list':guestList,'./venue-video-attribution':videoAttribution,'server-only':{},'node:crypto':{randomBytes,randomUUID},'next/server':{NextResponse},'../api-error-policy':{PublicApiError},
+  './guest-list':guestList,'./venue-update-opt-ins':load('src/lib/dancr/venue-update-opt-ins.ts',{'server-only':{},'node:crypto':{randomBytes}}),'./venue-video-attribution':videoAttribution,'server-only':{},'node:crypto':{randomBytes,randomUUID},'next/server':{NextResponse},'../api-error-policy':{PublicApiError},
   './deal-redemption-attribution':{DealRedemptionAttributionError:AttributionError,async resolveDealRedemptionAttribution(_client,input){calls.push({attribution:input});if(input.sourceType==='dancer_profile')throw new AttributionError('Invalid source.');return {sourceType:'club_page',dancerId:null,shiftId:null};}},
   './deals':{async getActiveClubDealById(){return options.inactive?null:{id:dealId,venueId:dealId};}},
   './club-deal-transportation':transportation,'./deal-redemption-actions':{enforceDealGenerationRateLimit:limit},'./public-request-rate-limit':{PublicRequestRateLimitError:RateError},
@@ -93,4 +94,16 @@ test('standalone guest-list admission requires details and uses the atomic venue
  assert.equal(call.args.p_arrival_method,'guest_list');assert.equal(call.args.p_guest_name,guest.name);
  assert.equal(call.args.p_phone,'+17025550123');assert.equal(call.args.p_consent,true);
  assert.equal(f.calls.some(c=>c.name==='issue_video_admission_pass'),false);
+});
+
+test('guest update choices use the atomic RPC and return only their own management links',async()=>{
+ const f=fixture(),response=await f.issue({guest:{...guest,email:'guest@example.test',updates:{email:true,text:false,version:'venue-updates-v1'}}});
+ const call=f.calls.find(c=>c.name==='issue_guest_list_admission_pass_with_updates');assert.ok(call);
+ assert.equal(call.args.p_update_email,true);assert.equal(call.args.p_update_text,false);assert.equal(call.args.p_version,'venue-updates-v1');
+ assert.match(call.args.p_email_token,/^[A-Za-z0-9_-]{43}$/);assert.equal('p_venue_id' in call.args,false);
+ const result=await response.json();assert.equal(result.updates.length,1);assert.equal(result.updates[0].manageUrl,'/updates/'+call.args.p_email_token);
+ assert.equal(result.updates[0].channel,'email');assert.equal('p_text_token' in result,false);
+ for(const updates of [{email:'true',text:false,version:'venue-updates-v1'},{email:true,text:false,version:'old'}]) {
+  const invalid=fixture();await assert.rejects(invalid.issue({guest:{...guest,email:'guest@example.test',updates}}),e=>e.status===400);assert.equal(invalid.calls.length,0);
+ }
 });

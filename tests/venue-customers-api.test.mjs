@@ -27,6 +27,8 @@ function fixture({route="customer",authenticated=true,role="owner",follow=true,r
     "@/src/lib/supabase/admin":{createAdminSupabaseClient(){calls.push(["admin"]);return admin;}},
     "@/src/lib/dancr/resource-authorization":{async requirePublicVenue(client,id){assert.equal(client,admin);assert.equal(id,venueId);calls.push(["public-venue"]);}},
     "@/src/lib/dancr/venue-customers":{normalizeVenueShare,VENUE_SHARING_CONSENT_VERSION},
+    "@/src/lib/dancr/venue-update-directory":{attachVenueUpdateStatuses:async(_admin,id,contacts)=>{assert.equal(id,"authorized-venue");return contacts;},
+      listVenueUpdateSubscribers:async(_admin,id,channel,offset)=>{calls.push(["subscribers",id,channel,offset]);return rows;}},
     "@/src/lib/dancr/venue-access":{async getVenueAccess(client,id){assert.equal(client,admin);assert.equal(id,"verified-user");return role?{role,venueId:"authorized-venue"}:null;}},
     "@/src/lib/dancr/public-request-rate-limit":{enforcePublicRequestRateLimit:async(_admin,options)=>{assert.equal(options.subject,"verified-user");},PublicRequestRateLimitError:class extends Error{}},
   };
@@ -79,4 +81,15 @@ test("database errors stay generic and empty directories succeed",async()=>{
   const empty=await fixture({route:"venue"}).get();assert.deepEqual((await empty.json()).entries,[]);
   const f=fixture({route:"venue",error:{code:"XX000",message:"private internal details"}}),r=await f.get();
   assert.equal(r.status,500);assert.doesNotMatch(JSON.stringify(await r.json()),/private internal/);
+});
+
+test("email and text subscriber directories use the authorized club and selected channel",async()=>{
+  for(const [source,channel] of [["email_updates","email"],["text_updates","text"]]) {
+    const f=fixture({route:"venue",rows:Array(51).fill({id:"subscriber"})});
+    const result=await(await f.get(`?source=${source}&offset=50&venueId=forged`)).json();
+    assert.equal(result.entries.length,50);assert.equal(result.hasMore,true);
+    assert.deepEqual(f.calls.find(c=>c[0]==="subscribers"),["subscribers","authorized-venue",channel,50]);
+    const denied=fixture({route:"venue",role:"staff"});assert.equal((await denied.get(`?source=${source}`)).status,403);
+    assert.equal(denied.calls.some(c=>c[0]==="subscribers"),false);
+  }
 });
