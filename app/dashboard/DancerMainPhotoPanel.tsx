@@ -106,7 +106,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
       <strong className="dancer-main-photo-state" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? "Checking" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
-        <button type="button" disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating photo…" : pending ? "Choose another photo" : displayed ? "Change photo" : "Add photo"}</button>
+        <button type="button" disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating main photo…" : pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"}</button>
         {displayed?.status === "approved" ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
         {displayed ? <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{pending ? "Remove pending photo" : "Remove main photo"}</button> : null}
       </div>

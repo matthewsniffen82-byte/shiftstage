@@ -39,7 +39,8 @@ export default function DancerProfileWorkspace({
   const [mediaBusy, setMediaBusy] = useState(false);
   const [cropBusy, setCropBusy] = useState(false);
   const [status, setStatus] = useState("");
-  useEffect(() => { setStatus(""); }, [draftIdentity.stageName, draftIdentity.city]);
+  const [detailsStatus, setDetailsStatus] = useState("");
+  useEffect(() => { setStatus(""); setDetailsStatus(""); }, [draftIdentity.stageName, draftIdentity.city]);
   const root = useRef<HTMLDivElement>(null);
   const savingRef = useRef(false);
   const mounted = useRef(true);
@@ -93,29 +94,35 @@ export default function DancerProfileWorkspace({
     });
   }
   const needsDetails = dirty || !detailsSaved;
-  const onboardingAction = needsDetails ? "Save details" : !faceReady ? pendingFace ? "View face photo status" : "Add face photo"
-    : !mainPhoto ? "Add main photo" : !galleryReady ? "Add or review photos" : "Review agreement";
   function advanceSetup() {
     if (needsDetails || photosReady) { void save(); return; }
+    setStatus(photoBlocker);
+    revealMissingPhoto();
+  }
+  function revealMissingPhoto() {
     if (!faceReady) openEditorArea("dancer-face-photo");
     else if (!mainPhoto) openEditorArea("dancer-main-photo");
     else openEditorArea("dancer-profile-media-library", "photos");
   }
 
-  async function save() {
+  async function save(continueAfterSave = true) {
     if (savingRef.current || hasActiveUpload()) return;
     const form = root.current?.querySelector<HTMLFormElement>(".dancer-profile-identity-form");
     if (form && !form.reportValidity()) return;
     savingRef.current = true;
-    setSaving(true); setStatus("");
+    setSaving(true); setStatus(""); setDetailsStatus("");
+    const report = continueAfterSave ? setStatus : setDetailsStatus;
     try {
       const saved = await saveDancerProfileEditor();
       if (!mounted.current) return;
-      if (!saved) { setStatus("Check your details below and try saving again."); return; }
-      setStatus(onboarding ? photoBlocker || "Details saved. Continue to the Dancer Agreement." : "Changes saved.");
-      if (onboarding && photosReady) onContinue?.();
+      if (!saved) { report("Check your name and city, then try again."); return; }
+      report(!continueAfterSave ? "Name and city saved." : onboarding ? photoBlocker || "Details saved. Continue to the Dancer Agreement." : "Changes saved.");
+      if (onboarding && continueAfterSave) {
+        if (photosReady) onContinue?.();
+        else revealMissingPhoto();
+      }
     } catch {
-      if (mounted.current) setStatus("Unable to save your changes. Please try again.");
+      if (mounted.current) report("Unable to save your changes. Please try again.");
     } finally {
       savingRef.current = false;
       if (mounted.current) setSaving(false);
@@ -139,18 +146,24 @@ export default function DancerProfileWorkspace({
       <section className="dancer-workspace-card" id="dancer-details-section" aria-labelledby="dancer-details-title">
         <header><h3 id="dancer-details-title">Your details</h3>{onboarding ? <button className="dancer-onboarding-preview" type="button" disabled={busy} onClick={() => setView("preview")}>Preview</button> : <span className="dancer-draft-state" data-state={dirty ? "unsaved" : persistedDancerStageName(profile) ? "saved" : "required"} role="status">{dirty ? "Unsaved details" : persistedDancerStageName(profile) ? "Saved" : "Required"}</span>}</header>
         {identityContent}
+        {onboarding && needsDetails ? <button className="dancer-details-save" type="button" disabled={busy} onClick={() => void save(false)}>{saving ? "Saving…" : "Save name & city"}</button> : null}
+        {onboarding && detailsStatus ? <p className="dancer-details-status" role="status" aria-live="polite">{detailsStatus}</p> : null}
         {!onboarding ? <p className="dancer-save-hint">{dirty ? "Unsaved details are kept on this device. Save to update your profile." : "Details update when you save. Photo and video uploads save separately."}</p> : null}
       </section>
+      {onboarding ? <section className="dancer-workspace-card dancer-face-photo" id="dancer-face-photo" aria-labelledby="dancer-face-photo-title">
+        <header><h3 id="dancer-face-photo-title">Face photo</h3></header>
+        <AvatarUploadBusyContext.Provider value={setAvatarBusy}>{avatarContent}</AvatarUploadBusyContext.Provider>
+      </section> : null}
       <section className="dancer-workspace-card" id="dancer-required-photos" aria-labelledby="dancer-photos-title">
-        <header><h3 id="dancer-photos-title">{onboarding ? "Photos" : "Photos & videos"}</h3><span data-state={faceReady && galleryReady ? "saved" : "required"}>{onboarding ? `${approvedCount}/${MIN_DANCER_ONBOARDING_PHOTOS} approved` : `${approvedCount} approved photos`}</span></header>
-        <p className="dancer-photo-guidance">{onboarding ? `A face photo + ${MIN_DANCER_ONBOARDING_PHOTOS} profile photos. Only you in each photo.` : "Use photos of yourself with one person only, including the background. Photos are checked before they appear on your profile."}</p>
+        <header><h3 id="dancer-photos-title">{onboarding ? "Profile photos" : "Photos & videos"}</h3><span data-state={galleryReady ? "saved" : "required"}>{onboarding ? `${approvedCount}/${MIN_DANCER_ONBOARDING_PHOTOS} approved` : `${approvedCount} approved photos`}</span></header>
+        <p className="dancer-photo-guidance">{onboarding ? `Main photo + ${MIN_DANCER_ONBOARDING_PHOTOS - 1} more. Only you in each photo.` : "Use photos of yourself with one person only, including the background. Photos are checked before they appear on your profile."}</p>
         <div className="dancer-workspace-photos">
-          <div className="dancer-face-photo" id="dancer-face-photo"><h4>Face photo</h4>{!onboarding ? <p>Your profile circle. Separate from your gallery photos.</p> : null}<AvatarUploadBusyContext.Provider value={setAvatarBusy}>{avatarContent}</AvatarUploadBusyContext.Provider></div>
+          {!onboarding ? <div className="dancer-face-photo" id="dancer-face-photo"><h4>Face photo</h4><p>Your profile circle. Separate from your gallery photos.</p><AvatarUploadBusyContext.Provider value={setAvatarBusy}>{avatarContent}</AvatarUploadBusyContext.Provider></div> : null}
           <div id="dancer-main-photo">{mainPhotoContent}</div>
         </div>
       </section>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-labelledby="dancer-media-title">
-        <header><div><h3 id="dancer-media-title">{onboarding ? "More photos & videos" : "Profile gallery"}</h3>{!onboarding ? <p>Add more photos or optional videos anytime.</p> : null}</div><button type="button" disabled={busy} aria-expanded={addMedia !== null} onClick={() => { if (!hasActiveUpload()) setAddMedia(addMedia ? null : onboarding ? "photos" : "choose"); }}>{onboarding ? "+ Add" : "+ Add media"}</button></header>
+        <header><div><h3 id="dancer-media-title">{onboarding ? "Additional photos" : "Profile gallery"}</h3>{!onboarding ? <p>Add more photos or optional videos anytime.</p> : null}</div><button type="button" disabled={busy} aria-expanded={addMedia !== null} onClick={() => { if (!hasActiveUpload()) setAddMedia(addMedia ? null : onboarding ? "photos" : "choose"); }}>{onboarding ? addMedia ? "Close uploads" : "+ Add photos" : "+ Add media"}</button></header>
         {addMedia ? <div className="dancer-add-media">
           {!onboarding ? <p>Photos must show only you, with no other people in the background.</p> : null}
           <div className="dancer-add-media-choices">
@@ -198,7 +211,7 @@ export default function DancerProfileWorkspace({
       isPublic={isPublic} onboarding={onboarding} slug={String(profile?.slug || "")} /> : null}
     <footer className="dancer-workspace-footer">
       <span role="status" aria-live="polite" hidden={!footerMessage}>{footerMessage}</span>
-      {view === "edit" ? <button className="dancer-workspace-save" type="button" disabled={busy || (!onboarding && !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? onboardingAction : dirty ? "Save changes" : "Details saved"}</button> : <button type="button" onClick={() => setView("edit")}>Back to editing</button>}
+      {view === "edit" ? <button className="dancer-workspace-save" type="button" disabled={busy || (!onboarding && !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? "Continue" : dirty ? "Save changes" : "Details saved"}</button> : <button type="button" onClick={() => setView("edit")}>Back to editing</button>}
     </footer>
   </div>;
 }

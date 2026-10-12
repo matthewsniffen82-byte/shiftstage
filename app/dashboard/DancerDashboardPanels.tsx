@@ -670,7 +670,7 @@ function DancerSetupPanel({
     }
   }
 
-  const visibleStatus = status
+  const visibleStatus = unifiedSave ? saveStatus === "error" ? status : "" : status
     || (saveStatus === "saving" ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : saveStatus === "saved" ? "Saved" : "");
 
   return (

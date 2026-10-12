@@ -202,7 +202,7 @@ test("the shared face editor crops an owned main photo to a square and uses norm
   const ui = avatarHarness({ compact: true, profile: { dancer_photos: [{ id: "main-photo", status: "approved", isPrimary: true }] }, crop: async (file, signal, assertOwner, ratio) => {
     assert.equal(ratio, 1); assert.equal(await file.text(), "saved-photo"); assertOwner(); return cropped;
   } });
-  ui.button("Use main photo").props.onClick(); await ui.settle();
+  ui.button("Use main as face photo").props.onClick(); await ui.settle();
   assert.equal(ui.sourceRequests[0].body.get("photoId"), "main-photo");
   assert.equal(ui.sourceRequests[0].expectedRole, "dancer");
   assert.equal(ui.posts.length, 1); assert.equal(await ui.posts[0].body.get("file").text(), "square face");
@@ -211,14 +211,14 @@ test("the shared face editor crops an owned main photo to a square and uses norm
 
 test("canceling a reused face crop preserves the existing face photo", async () => {
   const ui = avatarHarness({ compact: true, profile: { avatarPhotoUrl: "existing.jpg", dancer_photos: [{ id: "main", status: "approved", isPrimary: true }] }, crop: async () => null });
-  ui.button("Use main photo").props.onClick(); await ui.settle();
+  ui.button("Use main as face photo").props.onClick(); await ui.settle();
   assert.equal(ui.posts.length, 0); assert.equal(ui.image, "existing.jpg"); assert.match(ui.message, /Crop canceled/);
 });
 
 test("reused face photo preparation rejects duplicate clicks and an account change", async () => {
   let resolve;
   const ui = avatarHarness({ compact: true, profile: { dancer_photos: [{ id: "main", status: "approved", isPrimary: true }] }, source: () => new Promise(done => { resolve = done; }) });
-  const button = ui.button("Use main photo"); button.props.onClick(); button.props.onClick();
+  const button = ui.button("Use main as face photo"); button.props.onClick(); button.props.onClick();
   assert.equal(ui.sourceRequests.length, 1);
   ui.switchAccount(); resolve({ imageDataUrl: "data:image/jpeg;base64," + btoa("saved-photo") }); await ui.settle();
   assert.equal(ui.posts.length, 0); assert.equal(ui.busy, false);

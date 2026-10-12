@@ -290,7 +290,7 @@ export function DancerAvatarPanel({
               }}
             />
             <span className="photo-source-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4zM7 15l3-3 2.5 2.5L15 12l3 3" /><circle cx="16.5" cy="9" r="1" /></svg></span>
-            <span className="photo-source-copy"><strong>{compact ? presentation.state === "pending" ? "Choose another photo" : avatarUrl ? "Change photo" : "Add face photo" : "Gallery"}</strong><small>Choose a clear face photo</small></span>
+            <span className="photo-source-copy"><strong>{compact ? presentation.state === "pending" ? "Replace face photo" : avatarUrl ? "Change face photo" : "Add face photo" : "Gallery"}</strong><small>Choose a clear face photo</small></span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
           </label>
           {!compact ? <label className={`photo-source-action${isSaving ? " is-disabled" : ""}`}>
@@ -311,7 +311,7 @@ export function DancerAvatarPanel({
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </label> : null}
         </div>
-        {compact && mainPhoto ? <button type="button" disabled={isSaving || preparing} onClick={() => void reuseMainPhoto()}>{preparing ? "Preparing photo…" : "Use main photo"}</button> : null}
+        {compact && mainPhoto ? <button type="button" disabled={isSaving || preparing} onClick={() => void reuseMainPhoto()}>{preparing ? "Preparing photo…" : "Use main as face photo"}</button> : null}
         {isSaving ? <progress aria-label="Avatar upload progress" max="100" value={uploadProgress} /> : null}
         {file && !isSaving && presentation.canRetry ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry face photo upload</button> : null}
         {avatarUrl ? <button type="button" disabled={isSaving || preparing} onClick={() => void removeAvatar()}>Remove face photo</button> : null}
