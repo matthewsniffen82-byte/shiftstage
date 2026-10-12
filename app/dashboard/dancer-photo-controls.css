@@ -10,7 +10,8 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-photo-controls-row :is(button,.photo-source-action) {
   box-sizing:border-box; min-height:36px !important; padding:6px 10px !important; border:1px solid #555555 !important;
-  border-radius:8px !important; background:#292929 !important; color:#eeeeee !important;
+  border-radius:8px !important; background:linear-gradient(#292929, #292929) !important; color:#eeeeee !important;
+  color-scheme:only light; -webkit-appearance:none; appearance:none;
   box-shadow:inset 0 1px 0 #ffffff0a !important; font-size:12px !important; font-weight:600 !important; line-height:1.35;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-photo-controls-row > button.dancer-photo-options-toggle {
@@ -46,7 +47,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   background:var(--profile-button-bg) !important; color:#eeeeee !important; box-shadow:inset 0 1px 0 #ffffff0a !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-photo-controls .dancer-photo-controls-row :is(button,.photo-source-action):hover:not(:disabled):not(.is-disabled) {
-  border-color:#777777 !important; background:#363636 !important;
+  border-color:#777777 !important; background:var(--profile-button-hover-bg) !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-photo-controls .photo-source-copy strong {
   color:inherit !important; font-size:12px !important; font-weight:600 !important;
