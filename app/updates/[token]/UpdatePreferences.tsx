@@ -1,11 +1,25 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { readSession, requestDashboardJson } from "@/app/dashboard/dashboard-session";
 import "../updates.css";
 
 type Preference = { channel: "email" | "text"; venueName: string; active: boolean };
 export default function UpdatePreferences({ token }: { token: string }) {
   const [preference, setPreference] = useState<Preference | null>(null);
   const [busy, setBusy] = useState(true), [error, setError] = useState("");
+  const [accountId, setAccountId] = useState(""), [linked, setLinked] = useState(false);
+  useEffect(() => { const account = readSession()?.account; setAccountId(account?.role === "customer" ? String(account.id || "") : ""); }, []);
+  async function saveToAccount() {
+    if (busy || !accountId || readSession()?.account?.id !== accountId) return;
+    setBusy(true); setError("");
+    try {
+      await requestDashboardJson("/api/customer/club-privacy", { method: "POST", expectedRole: "customer", timeoutMs: 20_000,
+        headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "link", link: token }) });
+      if (readSession()?.account?.id === accountId) setLinked(true);
+    } catch (reason) { setError(reason instanceof Error ? reason.message : "Unable to save this preference."); }
+    finally { setBusy(false); }
+  }
   async function load(action: "read" | "unsubscribe", signal?: AbortSignal) {
     setBusy(true); setError("");
     try {
@@ -25,6 +39,8 @@ export default function UpdatePreferences({ token }: { token: string }) {
     {preference && <><h2>{preference.venueName}</h2><p>{preference.channel === "email" ? "Email" : "Text"} updates are {preference.active ? "turned on" : "stopped"}.</p>
       {preference.active && <button type="button" disabled={busy} onClick={() => void load("unsubscribe")}>Stop {preference.channel} updates</button>}
       <p>Your visit, ride request and other update choices are unchanged.</p></>}
+    {preference && accountId ? <div>{linked ? <p role="status">Saved to your account.</p> : <button type="button" disabled={busy} onClick={() => void saveToAccount()}>Save preference to my account</button>}
+      <p><Link href="/dashboard/customer#customer-account-privacy">Privacy & club updates</Link></p></div> : null}
     {error && <button type="button" disabled={busy} onClick={() => void load("read")}>Try again</button>}
   </section></main>;
 }

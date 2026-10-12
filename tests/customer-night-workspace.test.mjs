@@ -4,6 +4,7 @@ import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
 import { customerDashboardDestination } from '../app/dashboard/customer-dashboard-view.ts';
+import * as customerNight from '../src/lib/dancr/customer-night.ts';
 
 // Focused component events and rendering. No browser, app server, or network.
 function harness(name = 'CustomerPanel', props = {}, hash = '') {
@@ -32,7 +33,7 @@ function harness(name = 'CustomerPanel', props = {}, hash = '') {
     require: path => path === 'react' ? react : path === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : path === './customer-dashboard-view' ? { customerDashboardDestination }
       : path === 'next/link' ? { default: 'a' } : path.endsWith('/navigation') ? { homeDiscoveryHref: (view, city = 'Las Vegas') => `/?view=${view}&city=${city}` }
       : path === './DashboardShared' ? { customerDancerHref: d => `/dancers/${d.slug}`, customerVenueHref: v => `/venues/${v.slug}`, customerInitials: () => 'A' }
-      : {},
+      : path === '@/src/lib/dancr/customer-night' ? customerNight : {},
   });
   function render() {
     for (let i = 0; dirty && i < 30; i++) { dirty = false; cursor = 0; effects = []; tree = exports[name](props); effects.forEach(cb => cb()); }
@@ -79,13 +80,26 @@ test('navigation changes the visible destination while retaining account forms a
   ui.unmount();
 });
 
-test('passes appear before plans and unavailable saved activity never looks empty', () => {
+test('new customers see one discovery section without a stack of empty cards', () => {
   const ui = harness('CustomerPanel', { saved: {}, accountSavedUnavailable: false });
-  assert.ok(ui.nodes().findIndex(n => n.type?.name === 'CustomerPassWallet') < ui.nodes().findIndex(n => n.props?.id === 'customer-going'));
+  assert.equal(component(ui,'CustomerPassWallet'),undefined);
+  assert.equal(component(ui,'CustomerNightPanel'),undefined);
+  assert.equal(byId(ui,'customer-working-now'),undefined);
+  assert.equal(ui.nodes().filter(n=>n.type?.name==='CustomerExplore').length,1);
   ui.update({ accountSavedUnavailable: true });
   assert.equal(component(ui,'CustomerPassWallet'),undefined);
   assert.equal(component(ui,'CustomerNightPanel'),undefined);
   assert.ok(component(ui,'CustomerDealPassPanel').props.accountSavedUnavailable);
+});
+
+test('the next outing leads, working dancers come next, and records remain available in disclosures', () => {
+  const nextShift=shift();
+  const ui=harness('CustomerPanel',{saved:{goingSignals:[{shiftId:nextShift.id,shift:nextShift}],follows:[{dancer:{id:'a',slug:'star',nextShift}}],dealRedemptions:[{id:'pass',status:'generated',generatedAt:new Date(Date.now()-120000).toISOString(),expiresAt:nextShift.endsAt,venue:nextShift.venue}]}});
+  const index=match=>ui.nodes().findIndex(match);
+  assert.ok(index(n=>n.type?.name==='CustomerNextOuting') < index(n=>n.props?.id==='customer-working-now'));
+  assert.ok(index(n=>n.props?.id==='customer-working-now') < index(n=>n.type?.name==='CustomerExplore'));
+  assert.equal(byId(ui,'customer-pass-wallet').type,'details');
+  assert.equal(byId(ui,'customer-plans-list').type,'details');
 });
 
 test('Working Now requires a posted, current, checked-in shift, not just a scheduled shift', () => {

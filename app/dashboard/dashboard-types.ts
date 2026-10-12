@@ -103,7 +103,7 @@ export type CustomerSavedState = {
     generatedAt: string;
     expiresAt: string;
     redeemedAt?: string | null;
-    venue?: { name?: string; slug?: string } | null;
+    venue?: SavedVenueSummary | null;
     deal?: { title?: string; terms?: string | null } | null;
   }>;
 };

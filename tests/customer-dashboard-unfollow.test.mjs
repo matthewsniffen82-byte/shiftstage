@@ -34,6 +34,7 @@ function fixture() {
     onSavedChange: update => { saved = update(saved); },
     requestDashboardJson: (path, options) => new Promise((resolve, reject) => { requests.push({ path, options, resolve, reject }); }),
     removeDeviceSavedClubDeal() {}, DEVICE_SAVED_DEALS_CHANGED_EVENT: 'changed', Event,
+    CLUB_PRIVACY_CHANGED_EVENT: 'privacy-changed',
     window: { localStorage: {}, dispatchEvent() {} },
   });
   Object.defineProperty(context, 'saved', { get: () => saved });

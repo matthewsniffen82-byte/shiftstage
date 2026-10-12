@@ -49,7 +49,7 @@ test("I’m Going and followed profile sections use live customer records and pr
   assert.match(dashboard, /No plans yet[\s\S]*?Find dancers/);
   assert.match(dashboard, /function CustomerNightPanel[\s\S]*?<div className="customer-night-panel"[\s\S]*?<div className="customer-night-list">/);
   assert.doesNotMatch(dashboard, /Plans you confirmed|Dancer shifts you chose|info-panel customer-night-panel/);
-  assert.match(dashboard, /No followed dancers yet[\s\S]*?No favorite clubs yet/);
+  assert.match(dashboard, /No followed dancers yet[\s\S]*?You’re not following any clubs yet/);
   for (const id of ["customer-followed-dancers", "customer-followed-clubs", "customer-saved-deals", "customer-going"]) {
     assert.ok(dashboard.includes(`id="${id}"`));
   }
@@ -184,7 +184,7 @@ test("Club Deals can be privately bookmarked without reserving or redeeming them
 test("customer dashboard keeps saved deals separate from cashier redemption activity", () => {
   assert.match(dashboard, /<h2>Saved Club Deals<\/h2>/);
   assert.match(dashboard, /Saved deals are private bookmarks\. Saving does not reserve, select, or redeem an offer\./);
-  assert.match(dashboard, /<CustomerPassWallet deals=\{saved\?\.dealRedemptions \|\| \[\]\}/);
+  assert.match(dashboard, /<CustomerPassWallet deals=\{saved\.dealRedemptions\}/);
   assert.match(dashboard, /id="customer-passes" title="Admission passes"/);
   assert.match(dashboard, />View deal<\/Link>/);
   assert.match(dashboard, />\s*Remove\s*<\/button>/);

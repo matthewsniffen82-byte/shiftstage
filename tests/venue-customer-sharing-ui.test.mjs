@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import ts from "typescript";
 import { VENUE_SHARING_CONSENT_VERSION } from "../src/lib/dancr/venue-customers.ts";
+import { CLUB_PRIVACY_CHANGED_EVENT } from "../src/lib/dancr/customer-club-privacy.ts";
 const require=createRequire(import.meta.url);
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function find(tree,predicate) {
@@ -15,6 +16,7 @@ function find(tree,predicate) {
 function fixture(component, request, props) {
   const source=ts.transpileModule(readFileSync(new URL("../app/dashboard/"+component+".tsx",import.meta.url),"utf8"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
   const states=[],refs=[],effects=[],exports={};let si=0,ri=0,ei=0,pending=[];
+  const listeners=new Map();
   const imports={
     react:{useState(initial){const i=si++;if(!(i in states))states[i]=initial;return [states[i],value=>{states[i]=typeof value==="function"?value(states[i]):value;}];},
       useRef(initial){const i=ri++;return refs[i]??=( {current:initial} );},
@@ -22,13 +24,16 @@ function fixture(component, request, props) {
     "react/jsx-runtime":require("react/jsx-runtime"),
     "./dashboard-session":{requestDashboardJson:request},
     "@/src/lib/dancr/venue-customers":{VENUE_SHARING_CONSENT_VERSION},
+    "@/src/lib/dancr/customer-club-privacy":{CLUB_PRIVACY_CHANGED_EVENT},
     "./venue-customers.css":{},
   };
-  vm.runInNewContext(source,{exports,AbortController,Map,Date,JSON,encodeURIComponent,document:{visibilityState:"visible",addEventListener(){},removeEventListener(){}},
+  vm.runInNewContext(source,{exports,AbortController,Map,Date,JSON,encodeURIComponent,Event,
+    window:{addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name),dispatchEvent:event=>listeners.get(event.type)?.()},
+    document:{visibilityState:"visible",addEventListener(){},removeEventListener(){}},
     FormData:class {constructor(values){this.values=values;}get(key){return this.values[key]??null;}},
     require:name=>{assert.ok(imports[name],name);return imports[name];}});
   return {render(next=props){si=ri=ei=0;pending=[];const tree=exports.default(next);pending.forEach(run=>run());return tree;},
-    close(){effects.forEach(effect=>effect.cleanup?.());}};
+    event(name){listeners.get(name)?.();},close(){effects.forEach(effect=>effect.cleanup?.());}};
 }
 test("following has no automatic sharing request; the explicit consent checkbox starts unchecked",async()=>{
   const requests=[];const f=fixture("VenueCustomerSharing",async(path,options)=>{requests.push([path,options]);return {share:null,email:"me@example.test"};},{venueId:"venue",venueName:"Example Club",disabled:false});
@@ -57,4 +62,11 @@ test("a venue authorization failure clears already displayed private contacts",a
   f.render();await flush();assert.ok(find(f.render(),n=>n.type==="strong"&&n.props.children==="Private Person"));
   fail=true;find(f.render(),n=>n.type==="button"&&n.props.children==="Refresh").props.onClick();await flush();
   const tree=f.render();assert.equal(find(tree,n=>n.type==="strong"&&n.props.children==="Private Person"),undefined);assert.ok(find(tree,n=>n.props.role==="alert"));f.close();
+});
+
+test("open sharing controls refresh when account privacy revokes the grant",async()=>{
+  let shared=true;
+  const f=fixture("VenueCustomerSharing",async()=>({share:shared?{name:'Guest',email:'me@example.test',city:''}:null,email:'me@example.test'}),{venueId:'venue',venueName:'Example Club',disabled:false});
+  f.render().props.onToggle({currentTarget:{open:true}});f.render();await flush();assert.ok(find(f.render(),n=>n.type==='button'&&n.props.children==='Stop sharing'));
+  shared=false;f.event(CLUB_PRIVACY_CHANGED_EVENT);f.render();await flush();assert.ok(find(f.render(),n=>n.type==='form'));f.close();
 });

@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import { VENUE_SHARING_CONSENT_VERSION, type VenueShare } from "@/src/lib/dancr/venue-customers";
+import { CLUB_PRIVACY_CHANGED_EVENT } from "@/src/lib/dancr/customer-club-privacy";
 import "./venue-customers.css";
 
 export default function VenueCustomerSharing({ venueId, venueName, disabled }: { venueId: string; venueName: string; disabled: boolean }) {
@@ -9,6 +10,13 @@ export default function VenueCustomerSharing({ venueId, venueName, disabled }: {
   const [share, setShare] = useState<VenueShare | null>(null), [email, setEmail] = useState("");
   const [error, setError] = useState(""), [status, setStatus] = useState("");
   const controller = useRef<AbortController | null>(null);
+  const updating = useRef(false);
+  const [revision, setRevision] = useState(0);
+  useEffect(() => {
+    const refresh = () => { if (open && !updating.current) setRevision(value => value + 1); };
+    window.addEventListener(CLUB_PRIVACY_CHANGED_EVENT, refresh);
+    return () => window.removeEventListener(CLUB_PRIVACY_CHANGED_EVENT, refresh);
+  }, [open]);
   useEffect(() => {
     if (!open) return;
     const request = new AbortController(); controller.current = request;
@@ -19,14 +27,15 @@ export default function VenueCustomerSharing({ venueId, venueName, disabled }: {
       .catch(reason => { if (!request.signal.aborted) setError(reason instanceof Error ? reason.message : "Unable to load sharing preferences."); })
       .finally(() => { if (!request.signal.aborted) setBusy(false); });
     return () => controller.current?.abort();
-  }, [open, venueId]);
+  }, [open, venueId, revision]);
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     await update({ sharing: true, name: form.get("name"), city: form.get("city"), email, consent: form.get("consent") === "on", consentVersion: VENUE_SHARING_CONSENT_VERSION });
   }
   async function update(body: Record<string, unknown>) {
-    if (busy || disabled) return;
+    if (busy || disabled || updating.current) return;
+    updating.current = true;
     controller.current?.abort();
     const request = new AbortController(); controller.current = request;
     setBusy(true); setError(""); setStatus("");
@@ -38,8 +47,9 @@ export default function VenueCustomerSharing({ venueId, venueName, disabled }: {
       if (request.signal.aborted) return;
       setShare(data.share);
       setStatus(data.share ? "Your details are now shared with this club." : "Follower details are no longer shared. Any active guest-list registration remains available for your visit.");
+      window.dispatchEvent(new Event(CLUB_PRIVACY_CHANGED_EVENT));
     } catch (reason) { if (!request.signal.aborted) setError(reason instanceof Error ? reason.message : "Unable to update sharing preferences."); }
-    finally { if (!request.signal.aborted) setBusy(false); }
+    finally { updating.current = false; if (!request.signal.aborted) setBusy(false); }
   }
   return <details className="venue-customer-sharing" onToggle={event => setOpen(event.currentTarget.open)}>
     <summary>Share details with this club</summary>
