@@ -3,6 +3,8 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer *, body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer *::before, body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer *::after { box-sizing:border-box; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer [hidden] { display:none !important; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,a,summary,input,select,textarea):focus-visible { outline:2px solid #c9a7ff !important; outline-offset:3px; }
+/* Navigation focuses these containers for reading order; keep focus rings on their controls. */
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(.customer-view,#customer-followed-dancers,#customer-followed-clubs,#customer-saved-deals,.customer-saved-panel,.saved-deal-panel)[tabindex="-1"]:focus { outline:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,summary,a) { -webkit-tap-highlight-color:transparent; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,summary) { cursor:pointer; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer :is(button,input,select,textarea):disabled { cursor:default; opacity:.6; }
@@ -92,7 +94,10 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status.is-working { color:#4dec9d; text-shadow:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status.is-working::before { content:""; width:4px; height:4px; flex:0 0 4px; border-radius:50%; background:currentColor; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status:is(.is-upcoming,.is-quiet) { color:#c2b9cd; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { position:absolute; top:7px; right:7px; }
+/* Place the visible face 3px from the portrait corner, inside the shared 44px tap target. */
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { position:absolute; top:0; right:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary::before { inset:3px 3px auto auto; width:30px; height:24px; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary>svg { position:absolute; top:5px; right:8px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card { min-width:0; padding:16px; border:1px solid var(--customer-line); border-radius:16px; background:var(--customer-surface); overflow:visible; box-shadow:0 4px 14px #0003; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { display:grid; grid-template-columns:64px minmax(0,1fr) 44px; gap:12px; align-items:center; }
@@ -177,7 +182,6 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions { flex:1; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions>* { flex:1; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-grid { grid-template-columns:minmax(0,1fr); }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { top:3px; right:3px; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary { border-color:#ffffff12; background:#0e0914b3; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-saved-toolbar { align-items:stretch; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-city-filter { width:100%; }
