@@ -729,7 +729,7 @@ function FollowedDancerGridCard({
     </Link>
     <details className="customer-card-menu customer-dancer-menu"><summary aria-label={`More options for ${dancerName}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
       className="customer-dancer-unfollow"
-      data-follow-control="menu"
+      data-compact-menu-action
       type="button"
       aria-label={`Unfollow ${dancerName}`}
       aria-busy={unfollowing || undefined}
@@ -773,7 +773,7 @@ function SavedVenueCard({
         </div>
         <details className="customer-card-menu"><summary aria-label={`More options for ${venue.name || "club"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
           className="customer-club-favorite"
-          data-follow-control="menu"
+          data-compact-menu-action
           type="button"
           aria-label={`Unfollow ${venue.name || "club"}`}
           title="Unfollow club"
@@ -909,12 +909,14 @@ function CustomerDealPassPanel({
             <div className="customer-card-actions">
               <Link href={`/deals/transportation/${encodeURIComponent(item.dealId)}`}>View deal</Link>
               <CustomerDirectionsButton onDirections={onDirections} pending={Boolean(pendingAction)} venue={item.venue} />
-              <details className="customer-card-menu"><summary aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}>•••</summary><div><button
+              <details className="customer-card-menu"><summary aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
                 className="customer-text-action"
+                data-compact-menu-action
                 type="button"
                 disabled={Boolean(pendingAction)}
                 onClick={() => void onRemoveSavedDeal(item.dealId)}
               >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6" /></svg>
                 Remove
               </button></div></details>
             </div>
