@@ -50,7 +50,7 @@ const performanceCounts = { guestList: 5, vipRequests: 4, vipPending: 1, vipConf
   vipResponseMinutes: null, vipResponseSamples: 0, tableResponseMinutes: 5, tableResponseSamples: 2, tableCompletionMinutes: null, tableCompletionSamples: 0 };
 const performance = { current: performanceCounts, previous: performanceCounts, trackingStartedAt: "2026-01-01",
   dancers: [], tonight: { vipPending: 2, vipConfirmed: 3, tablePending: 4, tableAcknowledged: 1, guestListExpected: 6 } };
-const valueDependencies = { "@/src/lib/dancr/venue-analytics": analytics, "./VenueDancerPerformance": { default: "DancerPerformance" }, "./venue-performance.css": {} };
+const valueDependencies = { "@/src/lib/dancr/venue-analytics": analytics, "./VenueDancerPerformance": { default: "DancerPerformance" }, "./VenueHairColorAnalytics": { default: "HairColorAnalytics" }, "./venue-performance.css": {} };
 
 test("results prioritize outcomes and preserve click source filtering inside supporting disclosures", () => {
   const render = component("app/dashboard/VenueValueAnalytics.tsx", "default", "", valueDependencies);

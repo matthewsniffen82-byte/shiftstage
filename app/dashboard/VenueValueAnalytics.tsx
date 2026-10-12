@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { performanceMinutes, venueMetricChange, type VenueValueReport, type VenueValueMetrics, type VenuePerformanceCounts } from "@/src/lib/dancr/venue-analytics";
 import VenueDancerPerformance from "./VenueDancerPerformance";
+import VenueHairColorAnalytics from "./VenueHairColorAnalytics";
 import "./venue-performance.css";
 
 const labels: Record<string, string> = { card_impression: "Card impressions", club_page: "Club Page opens", directions: "Directions", free_entry: "Free Entry / Club Deal", transport: "Club transport", follow: "Venue follow clicks", unfollow: "Venue unfollow clicks", share: "Share button", share_completed: "Completed share / copy", dancer_profile: "Dancer profiles opened", tv_open: "TV opens", phone: "Phone", website: "Website" };
@@ -61,6 +62,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
       </details>
       <VenueDancerPerformance dancers={performance.dancers} timezone={timezone} />
     </> : <p role="status">Dancer performance and request outcomes are unavailable. Refresh to try again.</p>}
+    <VenueHairColorAnalytics report={report.hairColor} timezone={timezone} />
     <details className="venue-supporting-disclosure"><summary>Audience &amp; conversion <span>Supporting metrics</span></summary><div className="venue-value-supporting">
       {metric("visitors", "Unique browsers")}{metric("impressions", "Venue-card impressions", true)}
       {metric("going", "“I’m Going” signals")}{metric("directions", "Directions opened", true)}

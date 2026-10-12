@@ -1,0 +1,16 @@
+.venue-hair-color { margin-block: 1rem; padding: 1rem; border: 1px solid #39333f; border-radius: 16px; background: #0c0910; }
+.venue-hair-color > summary { cursor: pointer; color: #fff; font-weight: 650; }
+.venue-hair-color > summary span { margin-left: .5rem; color: #b9a6d5; font-size: .8rem; font-weight: 400; }
+.venue-hair-color-channels { display: flex; flex-wrap: wrap; gap: .5rem; margin-block: 1rem; }
+.venue-hair-color-channels button { flex: 1 1 170px; min-height: 44px; padding: .6rem; border: 1px solid #48404f; border-radius: 10px; background: #25212b; color: #eee9f4; font: inherit; cursor: pointer; }
+.venue-hair-color-channels button[aria-pressed="true"] { background: #291047; border-color: #a976ed; color: #fff; }
+.venue-hair-color-channels button:focus-visible, .venue-hair-color > summary:focus-visible { outline: 2px solid #c4a0ff; outline-offset: 3px; }
+.venue-hair-color-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: .75rem; }
+.venue-hair-color-groups section { min-width: 0; border: 1px solid #39333f; border-radius: 12px; padding: .8rem; }
+.venue-hair-color-groups header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; }
+.venue-hair-color-groups h4 { margin: 0; color: #fff; font-size: 1rem; }
+.venue-hair-color-groups header span { color: #b6afc0; font-size: .85rem; }
+.venue-hair-color-groups dl { margin: .7rem 0 0; display: grid; gap: .4rem; }
+.venue-hair-color-groups dl > div { display: flex; justify-content: space-between; gap: .75rem; }
+.venue-hair-color-groups dt { color: #b6afc0; }
+.venue-hair-color-groups dd { margin: 0; color: #fff; font-variant-numeric: tabular-nums; }

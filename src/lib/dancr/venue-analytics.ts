@@ -10,6 +10,7 @@ export type VenueValueReport = {
   dancers: { id: string; name: string; metrics: Record<string, number> }[];
   videos: { id: string; caption: string; dancer: string; metrics: Record<string, number> }[];
   performance?: VenuePerformanceReport;
+  hairColor?: import("./hair-color").VenueHairColorReport;
 };
 
 export type VenuePerformanceCounts = Record<"guestList" | "vipRequests" | "vipPending" | "vipConfirmed" | "vipDeclined" | "vipCancelled" | "tableRequests" | "tablePending" | "tableAcknowledged" | "tableCompleted" | "tableCancelled" | "vipResponseSamples" | "tableResponseSamples" | "tableCompletionSamples", number> & {

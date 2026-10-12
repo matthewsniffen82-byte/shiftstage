@@ -15,7 +15,7 @@ function fixture({ denied = false, rpcError = null, photoError = null, count = 2
   }).outputText;
   const exports = {};
   const client = {
-    rpc: async (name, args) => { calls.push(['rpc', name, args]); return { data: report, error: rpcError }; },
+    rpc: async (name, args) => { calls.push(['rpc', name, args]); return { data: name === 'get_venue_hair_color_analytics' ? { trackingStartedAt: '2026-10-12', internal: [], external: [] } : report, error: rpcError }; },
     from(name) {
       assert.equal(name, 'dancer_profiles'); let ids;
       const query = {
@@ -47,6 +47,9 @@ test('performance is read only after venue authorization and uses venue-local to
   const rpc = f.calls.find(c => c[0] === 'rpc');
   assert.equal(rpc[1], 'get_venue_performance_analytics'); assert.equal(rpc[2].p_venue_id, 'own-venue');
   assert.equal(rpc[2].p_since, '2026-10-01T07:00:00.000Z'); assert.equal(rpc[2].p_tonight_since, '2026-10-08T07:01Z');
+  const hair = f.calls.find(c => c[1] === 'get_venue_hair_color_analytics');
+  assert.equal(hair[2].p_venue_id, 'own-venue'); assert.equal(hair[2].p_since, rpc[2].p_since);
+  assert.equal(r.analytics.valueReport.hairColor.trackingStartedAt, '2026-10-12');
   assert.deepEqual(f.calls.filter(c => c[0] === 'photos').map(c => c[1].length), [200, 3]);
   for (let i = 0; i < 2; i++) assert.deepEqual(f.filters.slice(i * 4, i * 4 + 4), [['status', 'approved'], ['verification_status', 'approved'], ['is_public', true], ['disabled_at', null]]);
   assert.ok(r.analytics.valueReport.performance.dancers[0].photoUrl.startsWith('/approved-photo'));

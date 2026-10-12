@@ -528,6 +528,7 @@ export async function getVenueDashboard(
     workingNow,
     venueDeal,
     valueReport,
+    hairColorReport,
   ] = await Promise.all([
     countByVenue(client, "venue_follows", profile.id),
     countByVenueBetween(client, "venue_follows", profile.id, "created_at", range.start, range.end),
@@ -544,10 +545,15 @@ export async function getVenueDashboard(
       p_venue_id: profile.id, p_since: range.start.toISOString(), p_until: range.end.toISOString(),
       p_tonight_since: tonight.startsAt, p_tonight_until: tonight.endsAt,
     }),
+    client.rpc("get_venue_hair_color_analytics", {
+      p_venue_id: profile.id, p_since: range.start.toISOString(), p_until: range.end.toISOString(),
+    }),
   ]);
 
   if (valueReport.error) throw valueReport.error;
   const report = valueReport.data as VenueValueReport;
+  if (hairColorReport.error) throw hairColorReport.error;
+  report.hairColor = hairColorReport.data;
   if (report.performance?.dancers.length) {
     // Only approved public photos cross into this report; private profiles keep initials.
     // Batch IDs so a busy venue cannot silently hit the API's default row limit.
