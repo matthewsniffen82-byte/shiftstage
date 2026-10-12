@@ -143,7 +143,12 @@ test('one media chooser switches forms while both uploaders remain mounted',asyn
   const f=fixture();await f.click('+ Add photos/videos');
   const active=()=>f.draw().find(n=>n.type===uploadContext.Provider).props.value.active;
   assert.equal(active(),'photos');await f.click('Videos');assert.equal(active(),'videos');
+  assert.equal(f.button('Close uploads').props['aria-expanded'],true);
+  assert.equal(f.button('Close uploads').props.disabled,false);
+  f.props.uploadBusy=true;assert.equal(f.button('Close uploads').props.disabled,true);
+  f.props.uploadBusy=false;
   await f.click('Close uploads');assert.equal(active(),null);
+  assert.equal(f.button('+ Add photos/videos').props['aria-expanded'],false);
   assert.ok(f.draw().some(n=>n.props.children==='Photo uploader'));assert.ok(f.draw().some(n=>n.props.children==='Video uploader'));
 });
 
