@@ -2,7 +2,7 @@ import postcss from 'postcss';
 
 // The legacy discovery feed and React dashboard share the same card selectors.
 // Re-scope those rules without copying or redesigning their declarations.
-const cardClass = /\.(?:home-venue-discovery[\w-]*|home-discovery-feed[\w-]*|home-dancer-grid-action-rail|venue-card-(?:primary|secondary|favorite|page|deals|directions)[\w-]*|venue-lineup[\w-]*|feed-card-action|action-icon|venue)(?=[\s.:\[>+~#]|$)/;
+const cardClass = /\.(?:home-venue-discovery[\w-]*|home-discovery-feed[\w-]*|home-dancer-grid-action-rail|venue-card-(?:primary|secondary|favorite|page|deals|directions)[\w-]*|venue-lineup[\w-]*|feed-card-action|free-entry-(?:cta|label|cue)|venue-dot|action-icon|venue)(?=[\s.:\[>+~#]|$)/;
 
 export function savedVenueCardStyles(sources) {
   const result = postcss.root();
@@ -17,9 +17,11 @@ export function savedVenueCardStyles(sources) {
         return;
       }
       const selectors = rule.selectors.flatMap(selector => {
-        if (!cardClass.test(selector) || /venue-profile|venue-card-grid|home-dancer-discovery|home-dancer-grid-slide/.test(selector)) return [];
+        if (!cardClass.test(selector)) return [];
         const results = selector.indexOf('#results');
-        if (results < 0 && selector.match(cardClass)?.index !== 0) return [];
+        // Shared admission and icon rules can start with html/body or group
+        // several page contexts in :is(). They must retain the same cascade
+        // priority as the discovery-specific rules below.
         // Ancestor layout rules belong to the homepage, not the saved workspace.
         if (results >= 0 && selector.slice(0, results).includes(':has(')) return [];
         const pseudo = selector.match(/::[\w-]+(?:\([^)]*\))?$/)?.[0] || '';

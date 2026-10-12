@@ -9,7 +9,7 @@ import { venueOperatingStatus } from '../src/lib/dancr/venue-operating-status.ts
 
 // Focused component events and rendering. No browser, app server, or network.
 function harness(name = 'CustomerPanel', props = {}, hash = '') {
-  const slots = [], listeners = new Map(), frames = new Map(), writes = [];
+  const slots = [], listeners = new Map(), frames = new Map(), writes = [], navigations = [];
   let cursor = 0, dirty = true, effects = [], tree, sequence = 0;
   const jsx = (type, props) => ({ type, props });
   const react = {
@@ -24,7 +24,7 @@ function harness(name = 'CustomerPanel', props = {}, hash = '') {
       if (!prev || deps.some((v, j) => !Object.is(v, prev.deps[j]))) effects.push(() => { prev?.cleanup?.(); slots[i] = { deps, cleanup: effect() }; });
     },
   };
-  const window = { location: { hash }, history: { replaceState: (_, __, value) => { writes.push(value); window.location.hash = value; } },
+  const window = { location: { hash, assign: value => navigations.push(value) }, history: { replaceState: (_, __, value) => { writes.push(value); window.location.hash = value; } },
     addEventListener: (name, cb) => listeners.set(name, cb), removeEventListener: name => listeners.delete(name),
     setInterval: () => 1, clearInterval() {}, cancelAnimationFrame: id => frames.delete(id), requestAnimationFrame: cb => { frames.set(++sequence, cb); return sequence; } };
   const exports = {};
@@ -44,7 +44,7 @@ function harness(name = 'CustomerPanel', props = {}, hash = '') {
   }
   function nodes(node = tree) { return node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))] : []; }
   render();
-  return { exports, nodes, writes, tree: () => tree, render: () => { dirty = true; return render(); },
+  return { exports, nodes, writes, navigations, tree: () => tree, render: () => { dirty = true; return render(); },
     update(next) { props = { ...props, ...next }; dirty = true; render(); },
     hash(value) { window.location.hash = value; listeners.get('hashchange')?.(); dirty = true; render(); },
     unmount() { slots.forEach(slot => slot?.cleanup?.()); },
@@ -180,7 +180,7 @@ test('plans show one Free Entry action per outing only for clubs with a verified
   assert.equal(entryLinks().length,0,'removed offers lose their action on refresh');
 });
 
-test('saved club entry links use that club’s current offer while keeping club and directions actions', () => {
+test('saved club entry buttons open that club’s current offer while keeping club and directions actions', () => {
   const venue = {id:'club',slug:'echo',name:'Echo House',city:'Las Vegas',activity:{workingNowCount:96}};
   const other = {id:'other',slug:'other',name:'Other Club',city:'Las Vegas'};
   const saved = {venueFollows:[{venueId:'club',venue},{venueId:'other',venue:other}],clubEntryDeals:{club:'free/entry'},dealSaves:[]};
@@ -190,10 +190,12 @@ test('saved club entry links use that club’s current offer while keeping club 
   assert.equal(cards[0].props.entryDealId,'free/entry');
   assert.equal(cards[1].props.entryDealId,undefined,'another club cannot inherit the first club’s offer');
   const ui = harness('SavedVenueCard',cards[0].props);
-  const entry = () => ui.nodes().find(n=>n.type==='a' && n.props.className?.includes('free-entry-cta'));
-  assert.equal(entry().props.href,'/deals/transportation/free%2Fentry?sourceType=club_page');
+  const entry = () => ui.nodes().find(n=>n.type==='button' && n.props.className?.includes('free-entry-cta') && n.props.className.includes('is-available'));
+  entry().props.onClick();
+  assert.equal(ui.navigations.at(-1),'/deals/transportation/free%2Fentry?sourceType=club_page');
   assert.equal(entry().props['aria-label'],'Free Entry at Echo House');
-  assert.ok(ui.nodes().some(n=>n.type==='a' && n.props.href==='/venues/echo'));
+  ui.nodes().find(n=>n.type==='button' && n.props.className?.includes('venue-card-page-action')).props.onClick();
+  assert.equal(ui.navigations.at(-1),'/venues/echo');
   const directionButton = () => ui.nodes().find(n=>n.type==='button' && n.props['aria-label']==='Directions to Echo House');
   directionButton().props.onClick();
   assert.equal(directions[0],venue);
@@ -211,12 +213,19 @@ test('saved club entry links use that club’s current offer while keeping club 
 
 test('saved venue scroll cards show five linked live dancers, total count, and honest empty states', () => {
   const dancers=Array.from({length:8},(_,i)=>({id:String(i),slug:`dancer-${i}`,stageName:`Dancer ${i}`,imageUrl:`/image-${i}.webp`}));
-  const venue={slug:'echo',name:'Echo House',activity:{workingNowCount:96,workingDancers:dancers}};
+  const venue={slug:'echo',name:'Echo House',hoursLabel:'8:00p - 4:00a',activity:{workingNowCount:96,workingDancers:dancers}};
   const ui=harness('SavedVenueCard',{venue});
   const avatars=()=>ui.nodes().filter(n=>n.props?.className?.includes('venue-lineup-profile'));
   assert.equal(avatars().length,5);
   assert.equal(avatars()[0].props.href,'/dancers/dancer-0');
   assert.ok(ui.nodes().some(n=>n.props?.['aria-label']==='96 dancers working now'));
+  const badge=ui.nodes().find(n=>n.props?.className==='home-venue-discovery-lineup-label');
+  assert.equal(badge.type,'span','the NOW badge uses the discovery card’s non-link element');
+  for (const className of ['home-venue-discovery-hours','home-venue-discovery-location']) {
+    const info=ui.nodes().find(n=>n.props?.className===className);
+    assert.equal(info.props.children[0].props.className,'venue-dot','metadata icons retain the discovery sizing wrapper');
+  }
+  assert.equal(ui.nodes().find(n=>n.props?.className==='home-venue-discovery-hours').props.children[1].props.children,venue.hoursLabel);
   ui.update({venue:{...venue,activity:{workingNowCount:0}}});
   assert.equal(avatars().length,0);
   assert.ok(ui.nodes().some(n=>n.props?.children==='No dancers listed now'));

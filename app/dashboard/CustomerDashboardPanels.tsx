@@ -770,10 +770,10 @@ function SavedVenueCard({
       <div className="home-discovery-feed-shade" aria-hidden="true" />
       <div className="home-discovery-feed-copy">
         <h3 className="home-venue-discovery-name">{venue.name}</h3>
-        <span className="home-venue-discovery-location"><VenueCardIcon icon="pin" /><span>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</span></span>
+        <span className="home-venue-discovery-location"><span className="venue-dot" aria-hidden="true"><VenueCardIcon icon="pin" /></span><span>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</span></span>
         <span className="home-venue-discovery-meta">
           <span className={`home-venue-discovery-operating-status is-${status.state}`}>{status.label}</span>
-          {venue.hoursLabel ? <span className="home-venue-discovery-hours" aria-label="Opening hours"><VenueCardIcon icon="clock" /><span>{venue.hoursLabel}</span></span> : null}
+          {venue.hoursLabel ? <span className="home-venue-discovery-hours" aria-label="Opening hours"><span className="venue-dot" aria-hidden="true"><VenueCardIcon icon="clock" /></span><span>{venue.hoursLabel}</span></span> : null}
         </span>
       </div>
       <div className="home-venue-discovery-lineup-slot">
@@ -784,14 +784,14 @@ function SavedVenueCard({
               <span className="venue-lineup-avatar-initial">{customerInitials(dancer.stageName || "Dancer")}</span>
             </span><span data-working-now-indicator aria-hidden="true">NOW</span>
           </Link>)}</span>
-          <Link className="home-venue-discovery-lineup-label" href={`${customerVenueHref(venue)}#venue-working-now`}><strong>{count}</strong><span>NOW</span></Link>
+          <span className="home-venue-discovery-lineup-label" aria-hidden="true"><strong>{count}</strong><span>NOW</span></span>
         </span> : <span className="home-venue-discovery-lineup is-empty"><span className="venue-lineup-empty-text">{count === 0 ? "No dancers listed now" : "Dancer counts unavailable"}</span></span>}
       </div>
       <div className="home-venue-discovery-context-actions venue-card-primary-actions" aria-label={`${venue.name} primary actions`}>
-        {entryDealId ? <Link className={`${entryClass} is-available`} href={`/deals/transportation/${encodeURIComponent(entryDealId)}?sourceType=club_page`} aria-label={`Free Entry at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></Link> : <button className={`${entryClass} is-unavailable`} type="button" disabled title="Free Entry is currently unavailable" aria-label={`Free Entry unavailable at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></button>}
+        {entryDealId ? <button className={`${entryClass} is-available`} type="button" onClick={() => window.location.assign(`/deals/transportation/${encodeURIComponent(entryDealId)}?sourceType=club_page`)} aria-label={`Free Entry at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></button> : <button className={`${entryClass} is-unavailable`} type="button" disabled title="Free Entry is currently unavailable" aria-label={`Free Entry unavailable at ${venue.name || "this club"}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></button>}
       </div>
       <div className="home-dancer-grid-action-rail home-venue-discovery-action-rail venue-card-secondary-actions" aria-label={`${venue.name} secondary actions`}>
-        <Link className="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" href={customerVenueHref(venue)} aria-label={`Open ${venue.name}'s full club profile`}><span className="action-icon" data-action-icon="clubProfile" aria-hidden="true"><VenueCardIcon icon="club" /></span><span>Club Page</span></Link>
+        <button className="feed-card-action home-venue-discovery-profile-action venue-card-secondary-action venue-card-page-action" type="button" onClick={() => window.location.assign(customerVenueHref(venue))} aria-label={`Open ${venue.name}'s full club profile`}><span className="action-icon" data-action-icon="clubProfile" aria-hidden="true"><VenueCardIcon icon="club" /></span><span>Club Page</span></button>
         <button className="home-discovery-feed-directions venue-directions-btn venue-card-secondary-action venue-card-directions-action" type="button" disabled={pending} onClick={() => onDirections(venue)} aria-label={`Directions to ${venue.name}`}><span className="action-icon" data-action-icon="pin" aria-hidden="true"><VenueCardIcon icon="pin" /></span><span>Directions</span></button>
         <button className="feed-card-action venue-card-secondary-action venue-card-favorite-action is-active" type="button" data-venue-follow={venue.id} aria-label={`Unfollow ${venue.name || "club"}`} aria-pressed="true" aria-busy={removing || undefined} disabled={pending} onClick={onUnfollow}><span className="action-icon" data-action-icon="check" aria-hidden="true"><VenueCardIcon icon="check" /></span><span>{removing ? "Unfollowing…" : "Following"}</span></button>
       </div>
