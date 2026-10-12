@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MAX_DANCER_PROFILE_PHOTOS } from "@/src/lib/dancr/media-limits";
+import DancerUploadDisclosure from "./DancerUploadDisclosure";
+import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -499,6 +500,7 @@ export function DancerPhotoPanel({
 
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
+      <DancerUploadDisclosure label="Add photos" defaultOpen={!uploadOnly || approvedPhotos.length < MIN_DANCER_ONBOARDING_PHOTOS}>
       <div className="dancer-photo-upload-form">
         <DancerMediaUploadRules kind="photo" />
         {!uploadOnly && !approvedPhotos.length ? <div className="photo-upload-heading">
@@ -555,6 +557,7 @@ export function DancerPhotoPanel({
         <p className="photo-upload-selection-hint">You can select several photos from your gallery.</p>
         {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
+      </DancerUploadDisclosure>
       {reviews.length ? (
         <div className="photo-upload-queue" role="group" aria-label="Photo upload status">
           {!uploadOnly ? <strong>Upload status · {reviews.length}</strong> : null}

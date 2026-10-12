@@ -1,17 +1,20 @@
 "use client";
 
-import { useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import "./dancer-photo-controls.css";
 
-export default function DancerPhotoControls({ label, primary, children, disabled = false }: {
+export default function DancerPhotoControls({ label, primary, children, disabled = false, compact = false, openRequested = 0 }: {
   label: string;
   primary: ReactNode;
   children?: ReactNode;
   disabled?: boolean;
+  compact?: boolean;
+  openRequested?: number;
 }) {
   const [expanded, setExpanded] = useState(false);
   const optionsId = useId();
   const trigger = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (openRequested) setExpanded(true); }, [openRequested]);
   return <div className="dancer-photo-controls" onKeyDown={event => {
     if (event.key !== "Escape" || !expanded) return;
     event.preventDefault();
@@ -20,16 +23,16 @@ export default function DancerPhotoControls({ label, primary, children, disabled
     trigger.current?.focus();
   }}>
     <div className="dancer-photo-controls-row">
-      {primary}
-      {children ? <button ref={trigger} className="dancer-photo-options-toggle" type="button"
+      {compact ? null : primary}
+      {children || compact ? <button ref={trigger} className="dancer-photo-options-toggle" type="button"
         aria-label={`More options for ${label}`} aria-expanded={expanded} aria-controls={optionsId}
         disabled={disabled} onClick={() => setExpanded(current => !current)}>
         <span aria-hidden="true">•••</span>
       </button> : null}
     </div>
     {/* Keep crop/upload state mounted when the extra controls are collapsed. */}
-    {children ? <div id={optionsId} className="dancer-photo-options" hidden={!expanded} role="group" aria-label={`${label} options`}>
-      {children}
+    {children || compact ? <div id={optionsId} className="dancer-photo-options" hidden={!expanded} role="group" aria-label={`${label} options`}>
+      {compact ? <>{primary}{children}</> : children}
     </div> : null}
   </div>;
 }

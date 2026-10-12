@@ -7,6 +7,7 @@ import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
 import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
+import DancerUploadDisclosure from "./DancerUploadDisclosure";
 import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
@@ -561,6 +562,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       ) : null}
 
       {workspace && (!atVideoLimit || replacement) ? (
+        <DancerUploadDisclosure label="Add videos" defaultOpen={!uploadOnly} openRequested={Boolean(replacement)}>
         <section className="tv-upload-form" aria-label="Add profile videos">
           <DancerMediaUploadRules kind="video" />
           {replacement ? <p className="tv-upload-permissions" role="status">Choose a replacement video.<button type="button" disabled={videoActionBusy} onClick={() => setReplacement(undefined)}>Cancel replacement</button></p> : null}
@@ -648,6 +650,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             </div>
           ) : null}
         </section>
+        </DancerUploadDisclosure>
       ) : null}
 
       {reviews.length ? <div className="tv-upload-queue" aria-label="Videos awaiting approval">

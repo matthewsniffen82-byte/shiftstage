@@ -46,8 +46,9 @@ const component = `${declaration(shared, "persistedDancerStageName")}\n${declara
 const saveEvent = "mydancr:dancer-profile-editor-save";
 
 // Exercise production hooks and Save handlers using local fixture storage and requests.
-function editor({ field, profile = { id: "fixture", stage_name: "Placeholder", city: "" }, storage = new Map(), fail = false } = {}) {
-  const slots = [], requests = [], listeners = new Map();
+function editor({ field, profile = { id: "fixture", stage_name: "Placeholder", city: "" }, storage = new Map(), fail = false, autosave = false, beforeSave = async () => {} } = {}) {
+  const slots = [], requests = [], listeners = new Map(), timers = new Map();
+  let timerId = 0;
   let cursor = 0, effects = [], dirty = true, tree;
   const onProfileChange = next => { profile = next; dirty = true; };
   const { DancerSetupPanel } = evaluate(component, {
@@ -75,20 +76,24 @@ function editor({ field, profile = { id: "fixture", stage_name: "Placeholder", c
       localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
       addEventListener: (name, handler) => listeners.set(name, handler),
       removeEventListener: name => listeners.delete(name),
+      setTimeout: callback => { timers.set(++timerId, callback); return timerId; },
+      clearTimeout: id => timers.delete(id),
     },
     fetch: async () => ({ ok: true, json: async () => ({ ok: true, cities: cities.map(value => ({ value, label: value })) }) }),
     requestDancerProfileJson: async options => {
       assert.equal(options.method, "PATCH");
       const payload = JSON.parse(options.body);
       requests.push(payload);
+      const snapshot = profile;
+      await beforeSave(payload);
       if (fail) throw new Error("Connection lost. Try again.");
-      return { profile: { ...profile, ...await identityUpdate(payload) }, deletedPhotoIds: [] };
+      return { profile: { ...snapshot, ...await identityUpdate(payload) }, deletedPhotoIds: [] };
     },
   });
   function render() {
     for (let count = 0; dirty && count < 20; count++) {
       dirty = false; cursor = 0; effects = [];
-      tree = DancerSetupPanel({ field, profile, onProfileChange, unifiedSave: true });
+      tree = DancerSetupPanel({ field, profile, onProfileChange, unifiedSave: true, autosave });
       effects.forEach(effect => effect());
     }
     assert.equal(dirty, false, "editor updates must settle");
@@ -101,8 +106,13 @@ function editor({ field, profile = { id: "fixture", stage_name: "Placeholder", c
   return {
     requests, storage,
     get profile() { return profile; },
+    updateProfile(next) { profile = next; dirty = true; render(); },
     get fields() { return nodes().filter(node => ["input", "select"].includes(node.type)); },
-    get message() { return nodes().find(node => node.props?.role === "status")?.props.children; },
+    get message() { return [nodes().find(node => node.props?.role === "status")?.props.children].flat(Infinity).filter(value => typeof value === "string").join(""); },
+    get timerCount() { return timers.size; },
+    tick() { const callbacks = [...timers.values()]; timers.clear(); callbacks.forEach(callback => callback()); render(); },
+    retry() { nodes().find(node => node.type === "button" && node.props.children === "Retry save").props.onClick(); render(); },
+    unmount() { slots.forEach(slot => slot?.cleanup?.()); },
     change(type, value) {
       nodes().find(node => node.type === type).props.onChange({ target: { value } });
       render();
@@ -190,6 +200,92 @@ test("a failed save keeps the entered value and draft available to retry", async
 test("separate saves retain server validation for names and active cities", async () => {
   await assert.rejects(identityUpdate({ stageName: "" }), /Stage name is required/);
   await assert.rejects(identityUpdate({ city: "Unknown city" }), /Choose an available city/);
+});
+
+test("autosave waits for valid name and city and combines rapid changes", async () => {
+  const ui = editor({ autosave: true });
+  await ui.ready();
+  ui.change("input", "K"); ui.change("select", "Miami");
+  assert.equal(ui.timerCount, 0);
+  ui.change("input", "Kay"); ui.change("input", "Kay Rose");
+  assert.equal(ui.timerCount, 1);
+  assert.equal(ui.requests.length, 0);
+  ui.tick();
+  assert.equal(ui.message, "Saving…");
+  await ui.ready();
+  assert.equal(ui.requests.length, 1);
+  assert.equal(ui.profile.stage_name, "Kay Rose");
+  assert.equal(ui.message, "Saved");
+  assert.equal(ui.storage.size, 0);
+});
+
+test("an older autosave cannot overwrite typing made while the request is pending", async () => {
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const ui = editor({ autosave: true, beforeSave: () => pending });
+  await ui.ready();ui.change("input", "Kay");ui.change("select", "Miami");ui.tick();
+  ui.change("input", "Kay Rose");
+  assert.equal(ui.fields[0].props.value, "Kay Rose");
+  release();await ui.ready();
+  assert.equal(ui.profile.stage_name, "Kay");
+  assert.equal(ui.fields[0].props.value, "Kay Rose");
+  assert.equal(ui.message, "Unsaved changes");
+  assert.equal(ui.timerCount, 1);
+  ui.tick();await ui.ready();
+  assert.equal(ui.profile.stage_name, "Kay Rose");
+  assert.equal(ui.requests.length, 2);
+  assert.equal(ui.message, "Saved");
+});
+
+test("an identity autosave preserves photos added while its response was pending", async () => {
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const ui = editor({ autosave: true, beforeSave: () => pending });
+  await ui.ready();
+  ui.change("input", "Kay"); ui.change("select", "Miami"); ui.tick();
+  ui.updateProfile({ ...ui.profile, dancer_photos: [{ id: "new-photo" }], avatarPhotoUrl: "new-avatar.jpg" });
+  release(); await ui.ready();
+  assert.equal(ui.profile.stage_name, "Kay");
+  assert.deepEqual(ui.profile.dancer_photos, [{ id: "new-photo" }]);
+  assert.equal(ui.profile.avatarPhotoUrl, "new-avatar.jpg");
+  assert.equal(ui.message, "Saved");
+});
+
+test("Continue waits for an active autosave and flushes the latest edit only once", async () => {
+  let release;
+  const pending = new Promise(resolve => { release = resolve; });
+  const ui = editor({ autosave: true, beforeSave: () => pending });
+  await ui.ready();ui.change("input", "Kay");ui.change("select", "Miami");ui.tick();
+  ui.change("input", "Kay Rose");
+  const continuing = ui.save();
+  release();
+  assert.equal(await continuing, true);
+  await ui.ready();ui.tick();await ui.ready();
+  assert.equal(ui.requests.length, 2);
+  assert.equal(ui.profile.stage_name, "Kay Rose");
+  assert.equal(ui.message, "Saved");
+});
+
+test("failed autosave keeps the draft, stops retrying automatically, and allows explicit retry", async () => {
+  let offline = true;
+  const ui = editor({ autosave: true, beforeSave: () => { if (offline) throw new Error("Connection lost."); } });
+  await ui.ready();ui.change("input", "Kay");ui.change("select", "Miami");ui.tick();await ui.ready();
+  assert.match(ui.message, /Not saved.*Connection lost/);
+  assert.equal(ui.timerCount, 0);
+  assert.equal(ui.storage.size, 1);
+  offline = false;ui.retry();await ui.ready();
+  assert.equal(ui.message, "Saved");
+  assert.equal(ui.requests.length, 2);
+});
+
+test("unmount cancels a scheduled autosave without deleting the local draft", async () => {
+  const ui = editor({ autosave: true });
+  await ui.ready();ui.change("input", "Kay");ui.change("select", "Miami");
+  assert.equal(ui.timerCount, 1);
+  ui.unmount();
+  assert.equal(ui.timerCount, 0);
+  assert.equal(ui.requests.length, 0);
+  assert.equal(ui.storage.size, 1);
 });
 
 test("saving a stage name alone does not let an incomplete profile publish", async () => {

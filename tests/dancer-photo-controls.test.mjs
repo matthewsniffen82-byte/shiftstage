@@ -8,16 +8,17 @@ const code = ts.transpileModule(readFileSync('app/dashboard/DancerPhotoControls.
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
 
-function fixture({ disabled = false, options = true } = {}) {
+function fixture({ disabled = false, options = true, compact = false } = {}) {
   let expanded = false, focused = false;
+  let previousRequest;
   const exports = {}, primary = { type: 'button', props: { children: 'Change photo' } };
   const children = options ? { type: 'CropControl', props: {} } : null;
   runInNewContext(code, { exports, require: name => {
-    if (name === 'react') return { useId: () => 'photo-options', useRef: () => ({ current: { focus: () => { focused = true; } } }), useState: () => [expanded, next => { expanded = typeof next === 'function' ? next(expanded) : next; }] };
+    if (name === 'react') return { useEffect: (effect, [request]) => { if (request !== previousRequest) { previousRequest = request; effect(); } }, useId: () => 'photo-options', useRef: () => ({ current: { focus: () => { focused = true; } } }), useState: () => [expanded, next => { expanded = typeof next === 'function' ? next(expanded) : next; }] };
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
     return {};
   } });
-  const render = () => exports.default({ label: 'main photo', primary, children, disabled });
+  const render = (openRequested = 0) => exports.default({ label: 'main photo', primary, children, disabled, compact, openRequested });
   return { render, children, primary, get focused() { return focused; } };
 }
 
@@ -54,4 +55,13 @@ test('busy controls disable the toggle; empty photos do not show an empty option
   const tree = fixture({ options: false }).render();
   assert.equal(tree.props.children[0].props.children[1], null);
   assert.equal(tree.props.children[1], null);
+});
+
+test('tapping a photo reveals its change and crop actions in the compact menu', () => {
+  const f = fixture({ compact: true });
+  const [row, panel] = f.render().props.children;
+  assert.equal(row.props.children[0], null);
+  assert.deepEqual(Array.from(panel.props.children.props.children), [f.primary, f.children]);
+  f.render(1);
+  assert.equal(f.render(1).props.children[1].props.hidden, false);
 });

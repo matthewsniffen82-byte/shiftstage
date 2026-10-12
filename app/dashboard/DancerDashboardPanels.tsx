@@ -130,6 +130,7 @@ export function DancerPanel({
       onProfileChange={onProfileChange}
       onDraftChange={setDraftIdentity}
       unifiedSave
+      autosave
     />
   );
   const avatarContent = <DancerAvatarPanel compact profile={profile} onProfileChange={onProfileChange} />;
@@ -385,6 +386,7 @@ function DancerSetupPanel({
   onProfileChange,
   profile,
   unifiedSave = false,
+  autosave = false,
 }: {
   deletedPhotoIds?: string[];
   deletedPhotoStoragePaths?: string[];
@@ -394,6 +396,7 @@ function DancerSetupPanel({
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
   unifiedSave?: boolean;
+  autosave?: boolean;
 }) {
   const [stageName, setStageName] = useState("");
   const [city, setCity] = useState("");
@@ -410,9 +413,22 @@ function DancerSetupPanel({
   const actionInFlightRef = useRef(false);
   const draftHydratedRef = useRef(false);
   const draftDirtyRef = useRef(false);
+  const draftRevision = useRef(0);
+  const latestDraft = useRef({ stageName, city });
+  latestDraft.current = { stageName, city };
+  const latestProfile = useRef(profile);
+  latestProfile.current = profile;
+  const savePromise = useRef<Promise<boolean> | null>(null);
   const draftKey = `mydancr:dancer-profile-draft:${String(profile?.id || "profile")}`;
   const editorSaveRef = useRef<() => Promise<boolean>>(async () => true);
   editorSaveRef.current = () => saveProfile();
+
+  useEffect(() => {
+    if (!autosave || !draftHydratedRef.current || !draftDirtyRef.current || saveStatus === "saving" || saveStatus === "error") return;
+    if (stageName.trim().length < 2 || stageName.trim().length > 40 || cityOptionsStatus !== "ready" || !cityOptions.some(option => option.value === city)) return;
+    const timer = window.setTimeout(() => { void editorSaveRef.current(); }, 800);
+    return () => window.clearTimeout(timer);
+  }, [autosave, stageName, city, cityOptions, cityOptionsStatus, saveStatus]);
 
   useEffect(() => {
     console.log("ACTIVE_EDIT_PROFILE_VERSION", "canonical-profile-approval-v14");
@@ -575,6 +591,21 @@ function DancerSetupPanel({
 
   async function saveProfile(event?: React.FormEvent<HTMLFormElement>) {
     event?.preventDefault();
+    if (savePromise.current) {
+      const saved = await savePromise.current;
+      if (!saved || !mountedRef.current) return false;
+      return draftDirtyRef.current ? editorSaveRef.current() : true;
+    }
+    if (autosave && !draftDirtyRef.current && !deletedPhotoIdsRef.current.length && !deletedPhotoStoragePathsRef.current.length) return true;
+    const task = persistProfile();
+    savePromise.current = task;
+    try { return await task; }
+    finally { if (savePromise.current === task) savePromise.current = null; }
+  }
+
+  async function persistProfile() {
+    const revision = draftRevision.current;
+    const { stageName, city } = latestDraft.current;
 
     const session = readSession();
     if (!session?.accessToken) {
@@ -633,15 +664,24 @@ function DancerSetupPanel({
       if (incorrectlyRestoredIds.length) throw new Error("DELETED_PHOTO_RETURNED_AFTER_SAVE");
       if (unconfirmedDeletedIds.length) throw new Error("PROFILE_PHOTO_DELETE_COUNT_MISMATCH");
 
-      if (data.profile) onProfileChange?.(data.profile);
+      if (!data.profile) throw new Error("Unable to confirm your saved details. Try again.");
+      // Background identity saves must not restore a media snapshot from before a newer upload.
+      const nextProfile: Record<string, unknown> = autosave && !idsToDelete.length && !storagePathsToDelete.length
+        ? { ...latestProfile.current } : data.profile;
+      if (nextProfile !== data.profile) {
+        for (const key of ["stage_name", "stageName", "city", "identity_saved_at", "identitySavedAt", "slug"]) {
+          if (key in data.profile) nextProfile[key] = data.profile[key];
+        }
+      }
+      onProfileChange?.(nextProfile);
       const savedIdentity = {
         stageName: persistedDancerStageName(data.profile),
         city: String(data.profile?.city || "").trim(),
       };
       // Saving one field must not discard an unfinished draft in the other.
       const nextDraft = {
-        stageName: field === "city" ? stageName : savedIdentity.stageName,
-        city: field === "stageName" ? city : savedIdentity.city,
+        stageName: draftRevision.current !== revision || field === "city" ? latestDraft.current.stageName : savedIdentity.stageName,
+        city: draftRevision.current !== revision || field === "stageName" ? latestDraft.current.city : savedIdentity.city,
       };
       draftDirtyRef.current = nextDraft.stageName !== savedIdentity.stageName || nextDraft.city !== savedIdentity.city;
       if (draftDirtyRef.current) window.localStorage.setItem(draftKey, JSON.stringify(nextDraft));
@@ -652,7 +692,7 @@ function DancerSetupPanel({
       deletedPhotoIdsRef.current = [];
       deletedPhotoStoragePathsRef.current = [];
       onDeletedPhotoIdsSaved?.();
-      setSaveStatus("saved");
+      setSaveStatus(draftDirtyRef.current ? "idle" : "saved");
       const hasPendingPhotos = Array.isArray(data.profile?.pending_photo_reviews) && data.profile.pending_photo_reviews.length > 0;
       setStatus(hasPendingPhotos
         ? "Saved Profile. Photos awaiting review will appear on your live profile after approval."
@@ -670,7 +710,8 @@ function DancerSetupPanel({
     }
   }
 
-  const visibleStatus = unifiedSave ? saveStatus === "error" ? status : "" : status
+  const visibleStatus = autosave ? saveStatus === "error" ? `Not saved. ${status}` : saveStatus === "saving" ? "Saving…" : draftDirtyRef.current ? "Unsaved changes" : persistedDancerStageName(profile) && city ? "Saved" : ""
+    : unifiedSave ? saveStatus === "error" ? status : "" : status
     || (saveStatus === "saving" ? "Saving changes..." : draftDirtyRef.current ? "Unsaved changes" : saveStatus === "saved" ? "Saved" : "");
 
   return (
@@ -681,8 +722,10 @@ function DancerSetupPanel({
           Stage name
           <input className="dancer-stage-name-input" type="text" value={stageName} minLength={2} maxLength={40} autoComplete="nickname" placeholder="Enter stage name" onChange={(event) => {
             draftDirtyRef.current = true;
+            draftRevision.current += 1;
+            latestDraft.current = { ...latestDraft.current, stageName: event.target.value };
             setStageName(event.target.value);
-            setSaveStatus("idle");
+            if (!actionInFlightRef.current) setSaveStatus("idle");
             setStatus("");
           }} required />
         </label> : null}
@@ -690,8 +733,10 @@ function DancerSetupPanel({
           City
           <select value={city} disabled={cityOptionsStatus !== "ready"} onChange={(event) => {
             draftDirtyRef.current = true;
+            draftRevision.current += 1;
+            latestDraft.current = { ...latestDraft.current, city: event.target.value };
             setCity(event.target.value);
-            setSaveStatus("idle");
+            if (!actionInFlightRef.current) setSaveStatus("idle");
             setStatus("");
           }} required>
             <option value="" disabled>
@@ -714,6 +759,7 @@ function DancerSetupPanel({
         {visibleStatus ? (
           <p className={`dancer-form-save-state ${draftDirtyRef.current ? "is-unsaved" : "is-saved"}`} role="status" aria-live="polite">
             {visibleStatus}
+            {autosave && saveStatus === "error" ? <button type="button" onClick={() => void saveProfile()}>Retry save</button> : null}
           </p>
         ) : null}
       </form>

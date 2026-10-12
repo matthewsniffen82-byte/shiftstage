@@ -53,6 +53,23 @@ test("an empty profile offers exactly one photo control and one video control wi
   assert.match(html, /after review and completion of your profile setup/);
 });
 
+test("compact approved libraries collapse with counts while keeping their content mounted", () => {
+  const html = render({ compact: true, photos: [{ id: "p", imageUrl: "/p.jpg", status: "approved" }], videos: [{ id: "v", videoUrl: "/v.mp4", status: "approved" }] });
+  assert.equal((html.match(/<details class="profile-upload-group">/g) || []).length, 2);
+  assert.equal((html.match(/<summary><strong>(Photos|Videos)<\/strong><span>1 added<\/span><\/summary>/g) || []).length, 2);
+  assert.match(html, /src="\/p.jpg"/);
+  assert.doesNotMatch(html, /<details class="profile-upload-group" open/);
+});
+
+test("tapping a compact gallery photo opens its editing menu and retains View photo", () => {
+  const tree = Uploads({ ...defaultProps, compact: true, photos: [{ id: "p", imageUrl: "/p.jpg", status: "approved" }] });
+  const menu = { open: false };
+  const edit = buttons(tree).find(button => button.props["aria-label"] === "Edit photo 1: Approved");
+  edit.props.onClick({ currentTarget: { parentElement: { querySelector: () => menu } } });
+  assert.equal(menu.open, true);
+  assert.ok(buttons(tree).some(button => button.props.children === "View photo"));
+});
+
 test("separate upload sections render only their own media and loading feedback", () => {
   const media = { photos: [{ id: "photo", imageUrl: "/photo.jpg", status: "approved" }], videos: [{ id: "video", videoUrl: "/video.mp4", status: "approved" }], compact: true };
   const photos = render({ ...media, mediaType: "photos", isVideoLoading: true, videoError: "Video error" });
@@ -359,5 +376,5 @@ test("large saved libraries remain accessible and thumbnails do not start video 
 
 test("video upload confirmation only claims posting for approved media on an eligible visible profile", () => {
   const studio = readFileSync(new URL("../app/dashboard/DancerTvStudio.tsx", import.meta.url), "utf8");
-  assert.match(studio, /video.status === "approved" \? \([\s\S]*?!workspace.profileEligible[\s\S]*?after setup and approval[\s\S]*?workspace.profileVisible[\s\S]*?Added to your profile[\s\S]*?Hidden while incognito is on/);
+  assert.match(studio, /video.status === "approved" \? \([\s\S]*?!workspace\??\.profileEligible[\s\S]*?after setup and approval[\s\S]*?workspace\??\.profileVisible[\s\S]*?Added to your profile[\s\S]*?Hidden while incognito is on/);
 });

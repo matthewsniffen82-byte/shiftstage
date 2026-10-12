@@ -70,6 +70,7 @@ function avatarHarness({ profile = {}, compact = false, crop = async file => fil
   return {
     select, revoked, posts, sourceRequests,
     button: label => nodes().find(node => node.type === "button" && node.props.children === label),
+    buttonByLabel: label => nodes().find(node => node.type === "button" && node.props["aria-label"] === label),
     switchAccount: () => { accountId = "dancer-b"; },
     get busy() { return busy; },
     get badge() { return nodes().find(node => node.props?.className?.startsWith("dancer-avatar-state"))?.props.children; },
@@ -216,6 +217,21 @@ test("canceling a reused face crop preserves the existing face photo", async () 
   const ui = avatarHarness({ compact: true, profile: { avatarPhotoUrl: "existing.jpg", dancer_photos: [{ id: "main", status: "approved", isPrimary: true }] }, crop: async () => null });
   ui.button("Use main as face photo").props.onClick(); await ui.settle();
   assert.equal(ui.posts.length, 0); assert.equal(ui.image, "existing.jpg"); assert.match(ui.message, /Crop canceled/);
+});
+
+test("any approved uploaded photo can become the cropped face photo without choosing a file again", async () => {
+  const ui = avatarHarness({ compact: true, profile: { dancer_photos: [
+    { id: "main", status: "approved", isPrimary: true },
+    { id: "gallery", status: "approved" },
+    { id: "pending", status: "pending" },
+  ] }, crop: async (file, _signal, assertOwner, ratio) => {
+    assert.equal(ratio, 1); assertOwner(); return file;
+  } });
+  assert.equal(ui.buttonByLabel("Use uploaded photo 3 as face photo"), undefined);
+  ui.buttonByLabel("Use uploaded photo 2 as face photo").props.onClick(); await ui.settle();
+  assert.equal(ui.sourceRequests[0].body.get("photoId"), "gallery");
+  assert.equal(ui.posts.length, 1);
+  assert.equal(ui.badge, "Approved");
 });
 
 test("reused face photo preparation rejects duplicate clicks and an account change", async () => {

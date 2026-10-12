@@ -105,7 +105,7 @@ test('setup and live editing place avatar before main photo in the shared photo 
       assert.equal(f.calls.at(-1),`#${sections[index].props.id}`);
     }
     assert.ok(!nodes.some(n=>n.props.className==='dancer-add-media-choices'));
-    if(onboarding) assert.equal(nodes.find(n=>n.type==='footer').props.children[0].props.hidden,true);
+    if(onboarding) assert.equal(nodes.find(n=>n.type==='footer').props.children[0].props.hidden,false);
   }
 });
 
@@ -127,12 +127,15 @@ test('compact onboarding still shows failed saves and does not advance',async()=
   assert.deepEqual(f.calls,['save']);
 });
 
-test('saving name and city beside the fields does not advance a complete profile',async()=>{
-  const f=fixture({draft:true});const details=f.draw().find(n=>n.props.id==='dancer-details-section');
-  const button=walk(details).find(n=>n.props.className==='dancer-details-save');
-  assert.equal(button.props.children,'Save name & city');button.props.onClick();await new Promise(resolve=>setImmediate(resolve));
-  assert.deepEqual(f.calls,['save']);
-  assert.equal(f.draw().find(n=>n.props.className==='dancer-details-status').props.children,'Name and city saved.');
+test('missing requirements are visible before tapping Continue',()=>{
+  const status = f => f.draw().find(n=>n.type==='footer').props.children[0];
+  assert.match(status(fixture({face:false})).props.children,/face photo/);
+  assert.match(status(fixture({count:2})).props.children,/Add 1 more approved profile photo/);
+  assert.equal(status(fixture()).props.hidden,true);
+  const f=fixture();f.props.draftIdentity.stageName='';
+  assert.match(status(f).props.children,/Enter your stage name/);
+  f.props.draftIdentity.stageName='Kay';f.props.draftIdentity.city='';
+  assert.match(status(f).props.children,/Choose your city/);
 });
 
 test('Continue saves an unsaved name and city then reveals missing photos',async()=>{
@@ -140,15 +143,9 @@ test('Continue saves an unsaved name and city then reveals missing photos',async
   assert.deepEqual(f.calls,['save','#dancer-main-photo']);assert.ok(!f.calls.includes('agreement'));
 });
 
-test('a failed save beside the fields stays there and cannot advance',async()=>{
-  const f=fixture({draft:true,saveResult:false});f.draw().find(n=>n.props.className==='dancer-details-save').props.onClick();await new Promise(resolve=>setImmediate(resolve));
-  assert.deepEqual(f.calls,['save']);assert.match(f.draw().find(n=>n.props.className==='dancer-details-status').props.children,/Check your name and city/);
-});
-
-test('both save controls reject invalid fields and duplicate requests',async()=>{
-  const invalid=fixture({draft:true,valid:false});
-  invalid.draw().find(n=>n.props.className==='dancer-details-save').props.onClick();invalid.footer().props.onClick();
+test('Continue rejects invalid fields and duplicate requests',async()=>{
+  const invalid=fixture({draft:true,valid:false});invalid.footer().props.onClick();
   assert.deepEqual(invalid.calls,[]);
-  const f=fixture({draft:true});f.draw().find(n=>n.props.className==='dancer-details-save').props.onClick();f.footer().props.onClick();
-  await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(f.calls,['save']);
+  const f=fixture({draft:true});f.footer().props.onClick();f.footer().props.onClick();
+  await new Promise(resolve=>setImmediate(resolve));assert.deepEqual(f.calls,['save','agreement']);
 });

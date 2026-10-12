@@ -182,13 +182,15 @@ export default function DancerProfileMediaUploads({
         const label = isPhoto ? "Photo" : "Video";
         const items = isPhoto ? photos.filter((photo) => !deletedPhotoIds.has(photo.id)) : videos.filter((video) => !deletedVideoIds.has(video.id));
         if (compact && !items.length && (isPhoto || (!isVideoLoading && !videoError))) return null;
+        const Group = compact ? "details" : "div";
+        const Heading = compact ? "summary" : "header";
         return (
-          <div className="profile-upload-group" key={section}>
-            <header>
+          <Group className="profile-upload-group" key={section}>
+            <Heading>
               <strong>{isPhoto ? "Photos" : "Videos"}</strong>
               {!compact ? <small>{isPhoto ? "Only you in each photo" : "Optional · add now or later"}</small> : null}
               <span>{!isPhoto && isVideoLoading ? "Loading…" : !isPhoto && videoError ? "Unavailable" : `${items.length} added`}</span>
-            </header>
+            </Heading>
             {!compact ? <><p>{isPhoto ? "You can add more photos later." : "You can add videos now or later."}</p>
             <button className="profile-upload-entry" data-profile-editor-trigger={section} disabled={actionsDisabled} onClick={() => onOpen(section)} type="button">
               <svg aria-hidden="true" viewBox="0 0 24 24">
@@ -203,7 +205,12 @@ export default function DancerProfileMediaUploads({
                 {items.map((item, index) => (
                   <li key={item.id}>
                     <div className="profile-upload-preview">
-                      <button aria-label={`${isPhoto ? "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus)}`} disabled={Boolean(deletingVideoId || pinningId) || disabled} onClick={() => setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` })} type="button">
+                      <button aria-label={`${isPhoto ? compact ? "Edit" : "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus)}`} disabled={Boolean(deletingVideoId || pinningId) || disabled} onClick={event => {
+                        if (compact && isPhoto) {
+                          const options = event.currentTarget.parentElement?.querySelector<HTMLDetailsElement>("details.dancer-thumbnail-menu");
+                          if (options) options.open = true;
+                        } else setActivePreview({ kind: isPhoto ? "photo" : "video", id: item.id, label: `${label} ${index + 1}` });
+                      }} type="button">
                         <span className="profile-upload-thumbnail">
                           {isPhoto
                             ? item.imageUrl ? <img alt="" loading="lazy" src={item.imageUrl} /> : <span aria-hidden="true">▧</span>
@@ -213,6 +220,7 @@ export default function DancerProfileMediaUploads({
                       </button>
                       {isPhoto && item.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
                       {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}>•••</summary><div>{isPhoto ? photoActions?.(item.id) : null}
+                        {isPhoto ? <button type="button" disabled={actionsDisabled} onClick={() => setActivePreview({ kind: "photo", id: item.id, label: `${label} ${index + 1}` })}>View photo</button> : null}
                         {onMediaPinned ? <button type="button" disabled={actionsDisabled || item.status !== "approved"} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)}>{item.isPinned ? "Unpin" : "Pin"}</button> : null}
                         <button type="button" disabled={actionsDisabled} onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}>Delete</button>
                       </div></details> : <>
@@ -244,7 +252,7 @@ export default function DancerProfileMediaUploads({
             {isPhoto && photoStatus ? <p role="status" aria-live="polite">{photoStatus}</p> : null}
             {!isPhoto && videoStatus ? <p role="status" aria-live="polite">{videoStatus}</p> : null}
             {!isPhoto && videoError ? <p role="status">{videoError} <button className="profile-upload-retry" onClick={() => announceDancerProfileVideosChanged()} type="button">Retry</button></p> : null}
-          </div>
+          </Group>
         );
       })}
       {!compact || isApproved ? <p className="profile-upload-visibility" role="status" aria-live="polite">

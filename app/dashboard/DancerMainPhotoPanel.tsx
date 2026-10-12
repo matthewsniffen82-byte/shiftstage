@@ -27,6 +27,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
   const [cropping, setCropping] = useState(false);
   const [status, setStatus] = useState("");
   const [retry, setRetry] = useState(false);
+  const [editRequested, setEditRequested] = useState(0);
   const action = useRef<AbortController | null>(null);
   const selection = useRef<{ file: File; uploadKey: string; replacementPhotoId?: string; pendingReviewId?: string } | null>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -100,18 +101,28 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
   }
 
   return <section className="dancer-main-photo-panel" aria-label="Main profile photo" aria-busy={busy || cropping}>
-    <div className="dancer-main-photo-preview">
-      {displayed?.imageUrl ? <img src={displayed.imageUrl} alt={pending ? "Main photo awaiting review" : "Current main profile photo"} /> : <span>{pending ? "Main photo awaiting review" : "No main photo yet"}</span>}
-    </div>
+    <button className="dancer-main-photo-preview dancer-photo-edit-target" type="button" disabled={busy || cropping}
+      aria-label={displayed ? "Edit main photo" : "Add main photo"} onClick={() => displayed ? setEditRequested(value => value + 1) : input.current?.click()}>
+      {displayed?.imageUrl ? <img src={displayed.imageUrl} alt={pending ? "Main photo awaiting review" : "Current main profile photo"} /> : <span>{pending ? "Main photo awaiting review" : "+ Add photo"}</span>}
+    </button>
     <div className="dancer-main-photo-copy">
       <h3>Main photo</h3>
       <p>Shown on your grid card and at the top of your profile.</p>
       <strong className="dancer-main-photo-state" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? "Checking" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
-        <DancerPhotoControls label="main photo" disabled={busy || cropping} primary={
+        <DancerPhotoControls label="main photo" compact openRequested={editRequested} disabled={busy || cropping} primary={
           <button type="button" aria-label={pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"} disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating…" : pending ? "Replace" : displayed ? "Change" : "Add"}</button>
         }>
+          {photos.some(photo => photo.status === "approved" && photo.id !== displayed?.id) ? <details className="dancer-saved-photo-picker">
+            <summary>Choose uploaded photo</summary>
+            <div className="dancer-saved-photo-choices">
+              {photos.filter(photo => photo.status === "approved" && photo.id !== displayed?.id).map((photo, index) => <DancerSavedPhotoCrop
+                key={photo.id} photo={photo} makeMain mainPhotoId={main?.id} disabled={busy || cropping}
+                onBusyChange={setCropping} onProfileChange={onProfileChange} label={`Use uploaded photo ${index + 1} as main photo`}
+                thumbnail={<img src={photo.imageUrl} alt={`Uploaded photo ${index + 1}`} />} />)}
+            </div>
+          </details> : null}
           {displayed ? <>
             {displayed.status === "approved" ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
             <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{pending ? "Remove pending photo" : "Remove main photo"}</button>

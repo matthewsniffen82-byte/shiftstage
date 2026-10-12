@@ -21,7 +21,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
     useState(initial) {
       const i = cursor++;
       if (!(i in slots)) slots[i] = initial;
-      return [slots[i], next => { slots[i] = next; }];
+      return [slots[i], next => { slots[i] = typeof next === 'function' ? next(slots[i]) : next; }];
     },
     useRef(initial) { return slots[cursor++] ||= { current: initial }; },
     useEffect() {},
@@ -56,7 +56,12 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
   return {
     uploads, deletes,
     get image() { return nodes().find(node => node.type === "img"); },
-    get button() { return nodes().find(node => node.type === "button"); },
+    get button() { return nodes().find(node => node.type === "button" && !node.props.className?.includes('dancer-photo-edit-target')); },
+    get target() { return nodes().find(node => node.props.className?.includes('dancer-photo-edit-target')); },
+    get controls() { return nodes().find(node => node.type === 'PhotoControls'); },
+    get choices() { return nodes().filter(node => node.type === 'SavedCrop' && node.props.makeMain); },
+    tapPhoto() { this.target.props.onClick(); render(); },
+    connectInput(click) { nodes().find(node => node.type === 'input').props.ref.current = { click }; },
     get crop() { return nodes().find(node => node.type === "SavedCrop"); },
     get status() { return nodes().find(node => node.props?.role === "status").props.children; },
     get badge() { return nodes().find(node => node.props?.className === 'dancer-main-photo-state').props.children; },
@@ -143,4 +148,21 @@ test('a legacy pending photo row is replaced by identity instead of automaticall
   await ui.upload();
   assert.equal(ui.uploads[0][1].replacementPhotoId, 'main');
   assert.equal(ui.uploads[0][1].pendingReviewId, undefined);
+});
+
+test('empty main target opens upload and an existing photo opens the compact editing menu', () => {
+  const empty = fixture();let opened = 0;
+  empty.connectInput(() => opened++);empty.tapPhoto();
+  assert.equal(opened, 1);
+  const saved = fixture({ dancer_photos: [main] });saved.tapPhoto();
+  assert.equal(saved.controls.props.compact, true);
+  assert.equal(saved.controls.props.openRequested, 1);
+});
+
+test('main photo choices use approved uploaded photos and keep pending photos out of the picker', () => {
+  const ui = fixture({ dancer_photos: [main, { ...main, id:'gallery', is_primary:false }], pending_photo_reviews: [{ ...pending, is_primary:false }] });
+  assert.equal(ui.choices.length, 1);
+  assert.equal(ui.choices[0].props.photo.id, 'gallery');
+  assert.ok(ui.choices[0].props.thumbnail);
+  assert.equal(ui.uploads.length, 0);
 });

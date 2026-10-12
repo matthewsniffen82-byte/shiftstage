@@ -3,7 +3,7 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
 import { DashboardDataRequestError, requestDashboardJson, readSession, requestDancerAvatarJson, requestDancerProfileJson } from "./dashboard-session";
-import type { LoadState } from "./dashboard-types";
+import type { DancerPhotoItem, LoadState } from "./dashboard-types";
 import { AvatarUploadBusyContext } from "./DashboardShared";
 import { cropProfilePhoto } from "./profile-photo-crop";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
@@ -21,7 +21,10 @@ export function DancerAvatarPanel({
 }) {
   const [preparing, setPreparing] = useState(false);
   const preparation = useRef<AbortController | null>(null);
-  const mainPhoto = dancerPhotoItemsFromProfile(profile).find(photo => photo.isPrimary && photo.status === "approved");
+  const approvedPhotos = dancerPhotoItemsFromProfile(profile).filter(photo => photo.status === "approved");
+  const mainPhoto = approvedPhotos.find(photo => photo.isPrimary) || approvedPhotos[0];
+  const [editRequested, setEditRequested] = useState(0);
+  const libraryInput = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [status, setStatus] = useState("");
@@ -77,18 +80,18 @@ export function DancerAvatarPanel({
     void uploadAvatar(nextFile);
   }
 
-  async function reuseMainPhoto() {
-    if (!mainPhoto || preparation.current || actionInFlightRef.current) return;
+  async function reuseMainPhoto(photo: DancerPhotoItem | undefined = mainPhoto) {
+    if (!photo || preparation.current || actionInFlightRef.current) return;
     const owner = readSession()?.account?.id;
     if (!owner) { setStatus("Sign in again to use your main photo."); return; }
     const controller = new AbortController();
     preparation.current = controller;
-    setPreparing(true); setStatus("Opening your main photo. Crop around your face.");
+    setPreparing(true); setStatus("Opening your photo. Crop around your face.");
     const assertOwner = () => {
       if (controller.signal.aborted || !mountedRef.current || readSession()?.account?.id !== owner || readSession()?.account?.role !== "dancer") throw new DOMException("Photo selection canceled.", "AbortError");
     };
     try {
-      const body = new FormData(); body.set("photoId", mainPhoto.id);
+      const body = new FormData(); body.set("photoId", photo.id);
       const data = await requestDashboardJson("/api/dancer/photos/preview", { method: "POST", body, signal: controller.signal, expectedRole: "dancer", fallbackMessage: "Unable to open your main photo." });
       assertOwner();
       if (typeof data.imageDataUrl !== "string" || !data.imageDataUrl.startsWith("data:image/jpeg;base64,")) throw new Error("Unable to prepare your main photo.");
@@ -263,7 +266,9 @@ export function DancerAvatarPanel({
     <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={isSaving || preparing} data-avatar-state={presentation.state || "required"}>
       {!compact ? <p className="dancer-profile-editor-intro">Use a clear solo face photo of yourself.</p> : null}
       <div className="dancer-avatar-editor" aria-label="Face photo preview">
-        <span className="dancer-avatar-preview">
+        <button className="dancer-avatar-preview dancer-photo-edit-target" type="button" disabled={isSaving || preparing}
+          aria-label={visibleAvatar ? "Edit face photo" : "Add face photo"}
+          onClick={() => visibleAvatar || approvedPhotos.length ? setEditRequested(value => value + 1) : libraryInput.current?.click()}>
           {visibleAvatar ? <img src={visibleAvatar} alt="Selected face photo preview" /> : <b aria-hidden="true">+</b>}
           {previewUrl && presentation.state === "approved" && latestAvatarReview?.id === uploadFeedback?.reviewId && avatarUrl ? (
             <img
@@ -275,14 +280,15 @@ export function DancerAvatarPanel({
               onLoad={() => setPreviewUrl((current) => current === previewUrl ? "" : current)}
             />
           ) : null}
-        </span>
+        </button>
         <strong className={`dancer-avatar-state is-${presentation.state || "required"}`}>{presentation.label}</strong>
       </div>
       <div className="dancer-avatar-upload-controls">
-        <DancerPhotoControls label="face photo" disabled={isSaving || preparing} primary={
+        <DancerPhotoControls label="face photo" compact={compact} openRequested={editRequested} disabled={isSaving || preparing} primary={
         <div className="photo-source-grid dancer-avatar-source-grid">
           <label className={`photo-source-action${isSaving ? " is-disabled" : ""}`}>
             <input
+              ref={libraryInput}
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
               aria-label="Choose face photo from your photo library"
               className="photo-source-input"
@@ -317,6 +323,14 @@ export function DancerAvatarPanel({
         </div>}>
           {(compact && mainPhoto) || avatarUrl ? <>
             {compact && mainPhoto ? <button type="button" disabled={isSaving || preparing} onClick={() => void reuseMainPhoto()}>{preparing ? "Preparing photo…" : "Use main as face photo"}</button> : null}
+            {compact && approvedPhotos.length > 1 ? <details className="dancer-saved-photo-picker">
+              <summary>Choose uploaded photo</summary>
+              <div className="dancer-saved-photo-choices">{approvedPhotos.map((photo, index) => <button
+                key={photo.id} type="button" className="dancer-saved-photo-choice" disabled={isSaving || preparing}
+                aria-label={`Use uploaded photo ${index + 1} as face photo`} onClick={() => void reuseMainPhoto(photo)}>
+                <img src={photo.imageUrl} alt={`Uploaded photo ${index + 1}`} />
+              </button>)}</div>
+            </details> : null}
             {avatarUrl ? <button type="button" disabled={isSaving || preparing} onClick={() => void removeAvatar()}>Remove face photo</button> : null}
           </> : null}
         </DancerPhotoControls>

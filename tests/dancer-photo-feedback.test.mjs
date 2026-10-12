@@ -21,7 +21,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, DancerRejectedUploadNotice: "RejectedUploadNotice", DancerMediaUploadRules: "MediaUploadRules", DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
+    exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, MIN_DANCER_ONBOARDING_PHOTOS: 3, DancerRejectedUploadNotice: "RejectedUploadNotice", DancerUploadDisclosure: "UploadDisclosure", DancerMediaUploadRules: "MediaUploadRules", DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     cropProfilePhoto: (...args) => { crops.push(args); throw new Error("Uploads must not open the manual crop editor."); },
     require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }),
@@ -59,6 +59,8 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   render();
   return {
     posts, reads, profiles, pins, crops, previews, revoked, mapProfile: exports.dancerPhotoItemsFromProfile,
+    get picker() { return nodes().find(node => node.type === "UploadDisclosure"); },
+    get reviewsInsidePicker() { return nodes(this.picker).filter(node => node.props?.className?.startsWith("photo-review-card") || node.type === "RejectedUploadNotice"); },
     get pinButtons() { return nodes().filter(node => node.type === "MediaPinButton"); },
     get mainPhotoPicker() { return nodes().find(node => node.type === "InternalMainPhotoPicker"); },
     get notices() { return nodes().filter(node => node.type === "RejectedUploadNotice"); },
@@ -91,6 +93,15 @@ test("selecting several photos uploads the batch without opening a crop popup", 
   assert.equal(ui.reads.length, 1);
   assert.deepEqual(await Promise.all(ui.posts.map(post => post.body.get("file").text())), ["first", "second"]);
   assert.equal(ui.buttons.filter(button => button.props.children === "Retry").length, 0);
+});
+
+test("collapsing photo upload controls leaves pending and rejected reviews outside the disclosure", () => {
+  const ui = photoHarness({ uploadOnly: true, profile: { dancer_photos: [approved("a", 1), approved("b", 2), approved("c", 3)],
+    pending_photo_reviews: [pending()], rejected_photo_reviews: [{ id: "rejected", message: "Choose a solo photo." }] } });
+  assert.equal(ui.picker.props.defaultOpen, false);
+  assert.equal(ui.reviewsInsidePicker.length, 0);
+  assert.equal(ui.cards.length, 2);
+  assert.equal(photoHarness({ uploadOnly: true }).picker.props.defaultOpen, true);
 });
 
 test("camera and library photos go directly to the moderated upload with their original bytes", async () => {
