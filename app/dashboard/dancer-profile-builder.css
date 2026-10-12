@@ -106,7 +106,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboar
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu {
   position:absolute; inset:2px 2px auto; z-index:5; width:auto; height:44px; margin:0;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu[open] { z-index:8; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu[open] { z-index:8; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu > div {
   position:absolute; top:44px; right:0; margin:0;
 }
