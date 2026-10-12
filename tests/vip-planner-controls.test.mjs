@@ -79,15 +79,24 @@ test('VIP filter faces retain dark artwork and Android gets compact spacing with
     if(declarations(node).background)faces.push(declarations(node));
   });
   assert.match(faces[0].background,/linear-gradient\(#1a171e, #1a171e\)/);
+  assert.equal(faces[0]['min-height'],'64px');
+  assert.equal(faces[0].padding,'4px 6px');
+  assert.equal(faces[0]['border-radius'],'8px');
+  assert.equal(faces[0].gap,'2px');
+  const label=declarations(rule(polish,'body.dancr-button-system #vip-dashboard .vip-filter-label'));
+  const counter=declarations(rule(polish,'body.dancr-button-system #vip-dashboard .vip-filter-count'));
+  assert.equal(label['min-height'],'2.6em','reserve two lines for Requested before');
+  assert.equal(counter['font-size'],'12px'); assert.equal(counter.padding,'1px 6px');
   const selected=declarations(rule(polish,'body.dancr-button-system #vip-dashboard .vip-roster-filters button[aria-pressed=true]'));
   assert.match(selected.background,/linear-gradient\(#30243e, #30243e\)/);
   assert.match(declarations(rule(polish,'body.dancr-button-system #vip-dashboard .vip-filter-count')).background,/linear-gradient/);
   const selector='html:is(.is-android, .android-rendering, .is-samsung-browser, .samsung-rendering) body.dancr-button-system #vip-dashboard .vip-roster-filters';
   const compact=rule(polish,selector+' button');
   assert.equal(compact.parent.params,'(max-width: 600px)');
-  assert.equal(declarations(compact)['min-height'],'70px');
-  assert.equal(declarations(compact).padding,'6px');
+  assert.equal(declarations(compact)['min-height'],'64px');
+  assert.equal(declarations(compact).padding,'4px 6px');
   assert.equal(declarations(rule(polish,selector)).gap,'6px');
+  assert.equal(declarations(rule(polish,selector)).margin,'6px 0');
 });
 
 test('Plan a visit shows its count and opens the details step with keyboard focus', () => {

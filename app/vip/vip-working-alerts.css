@@ -3,8 +3,10 @@ body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] button:n
 body.dancr-button-system #vip-dashboard { --vip-nav-height: 80px; --vip-filter-height: 180px; }
 body.dancr-button-system #vip-dashboard .vip-dashboard-nav { top: env(safe-area-inset-top, 0px); }
 body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] {
-  position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height) + 8px); z-index: 4;
-  padding-block: 8px; background: linear-gradient(#141216, #141216); box-shadow: 0 -8px 0 #141216;
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height)); z-index: 4;
+  padding-block: 4px; box-shadow: none;
+  /* Image-backed colors avoid Android recoloring the separator into a gray strip. */
+  background: linear-gradient(#3b254b, #3b254b) top / 100% 1px no-repeat, linear-gradient(#100b15, #100b15);
 }
 body.dancr-button-system #vip-dashboard .vip-dancers { max-height: none; overflow: visible; overscroll-behavior-y: auto; }
 body.dancr-button-system #vip-dashboard :is(.vip-dancer, .vip-dancer a, .vip-dancer button, .vip-dancer input) {

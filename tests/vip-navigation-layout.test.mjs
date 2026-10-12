@@ -70,8 +70,10 @@ test('the opaque filter bar sits below the safe-area-aware navigation and the ro
   const filters = values(prefix + '.vip-roster-filters[role=group]');
   assert.equal(nav.top, 'env(safe-area-inset-top, 0px)');
   assert.equal(filters.position, 'sticky');
-  assert.equal(filters.top, 'calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height) + 8px)');
-  assert.equal(filters['z-index'], '4'); assert.equal(filters.background, 'linear-gradient(#141216, #141216)');
+  assert.equal(filters.top, 'calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height))');
+  assert.equal(filters['z-index'], '4');
+  assert.equal(filters['padding-block'], '4px'); assert.equal(filters['box-shadow'], 'none');
+  assert.equal(filters.background, 'linear-gradient(#3b254b, #3b254b) top / 100% 1px no-repeat, linear-gradient(#100b15, #100b15)');
   assert.equal(filters['grid-template-columns'], 'repeat(3, minmax(0, 1fr))');
   const grid = values(prefix + '.vip-dancers');
   assert.equal(grid['max-height'], 'none'); assert.equal(grid.overflow, 'visible'); assert.equal(grid['overscroll-behavior-y'], 'auto');

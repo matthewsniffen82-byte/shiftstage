@@ -43,12 +43,12 @@ body.dancr-button-system #vip-dashboard button.vip-primary {
 body.dancr-button-system #vip-dashboard :is(.vip-primary, .vip-refresh, .vip-link-action)::before,
 body.dancr-button-system #vip-dashboard :is(.vip-primary, .vip-refresh, .vip-link-action)::after { content: none !important; }
 /* Solid gradients retain the same dark faces when Android recolors native fills. */
-body.dancr-button-system #vip-dashboard .vip-roster-filters button { flex-direction: column; gap: 5px; min-width: 0; min-height: 78px !important; padding: 8px 6px !important; border-color: #3d3447 !important; border-radius: 12px !important; background: linear-gradient(#1a171e, #1a171e) !important; font-size: 12px !important; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters button { flex-direction: column; gap: 2px; min-width: 0; min-height: 64px !important; padding: 4px 6px !important; border-color: #3d3447 !important; border-radius: 8px !important; background: linear-gradient(#1a171e, #1a171e) !important; font-size: 12px !important; }
 body.dancr-button-system #vip-dashboard .vip-roster-filters button::before,
 body.dancr-button-system #vip-dashboard .vip-roster-filters button::after { content: none !important; }
 body.dancr-button-system #vip-dashboard .vip-roster-filters button[aria-pressed=true] { background: linear-gradient(#30243e, #30243e) !important; border-color: #ae83d6 !important; color: #fff !important; box-shadow: inset 0 -2px 0 #ae83d6 !important; }
 body.dancr-button-system #vip-dashboard .vip-filter-label { display: flex; align-items: center; justify-content: center; min-height: 2.6em; line-height: 1.3; }
-body.dancr-button-system #vip-dashboard .vip-filter-count { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; padding: 2px 8px; border-radius: 8px; background: linear-gradient(#2c2534, #2c2534); color: #d4c6e2; font-size: 13px; font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums; }
+body.dancr-button-system #vip-dashboard .vip-filter-count { display: inline-flex; align-items: center; justify-content: center; min-width: 28px; padding: 1px 6px; border-radius: 6px; background: linear-gradient(#2c2534, #2c2534); color: #d4c6e2; font-size: 12px; font-weight: 700; line-height: 1.4; font-variant-numeric: tabular-nums; }
 body.dancr-button-system #vip-dashboard .vip-roster-filters button[aria-pressed=true] .vip-filter-count { background: linear-gradient(#68438c, #68438c); color: #fff; }
 body.dancr-button-system #vip-dashboard :is(button, a, input, select, textarea):focus-visible { outline: 2px solid #c9a4f4 !important; outline-offset: 3px; }
 body.dancr-button-system #vip-dashboard .vip-selected-chips button { min-width: 44px; min-height: 44px; }
@@ -61,7 +61,7 @@ body.dancr-button-system #vip-dashboard .vip-dismiss { padding: 0 !important; bo
 body.dancr-button-system #vip-dashboard form { gap: 12px; }
 body.dancr-button-system #vip-dashboard label { gap: 6px; }
 body.dancr-button-system #vip-dashboard :is(input:not([type=checkbox]), select, textarea) { min-height: 44px; border-radius: 10px; font-size: 16px; font-weight: 400; }
-body.dancr-button-system #vip-dashboard .vip-roster-filters { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+body.dancr-button-system #vip-dashboard .vip-roster-filters { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
 body.dancr-button-system #vip-dashboard .vip-roster-filters button { grid-column: span 2; }
 body.dancr-button-system #vip-dashboard .vip-roster-filters button:nth-child(n+4) { grid-column: span 3; }
 @media (min-width: 900px) {
@@ -139,8 +139,8 @@ body.dancr-button-system #vip-dashboard .vip-mobile-continue strong { color: var
   }
 }
 @media (max-width: 600px) {
-  html:is(.is-android, .android-rendering, .is-samsung-browser, .samsung-rendering) body.dancr-button-system #vip-dashboard .vip-roster-filters { gap: 6px; margin: 10px 0; }
-  html:is(.is-android, .android-rendering, .is-samsung-browser, .samsung-rendering) body.dancr-button-system #vip-dashboard .vip-roster-filters button { min-height: 70px !important; padding: 6px !important; gap: 3px; }
+  html:is(.is-android, .android-rendering, .is-samsung-browser, .samsung-rendering) body.dancr-button-system #vip-dashboard .vip-roster-filters { gap: 6px; margin: 6px 0; }
+  html:is(.is-android, .android-rendering, .is-samsung-browser, .samsung-rendering) body.dancr-button-system #vip-dashboard .vip-roster-filters button { min-height: 64px !important; padding: 4px 6px !important; gap: 2px; }
   body.dancr-button-system #vip-dashboard .dashboard-identity-label,
   body.dancr-button-system #vip-dashboard .vip-venue-count { display: none; }
   body.dancr-button-system #vip-dashboard .dashboard-identity-header { gap: 4px; padding-bottom: 10px; margin-bottom: 10px; }
