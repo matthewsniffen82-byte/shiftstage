@@ -78,8 +78,23 @@ test("dancer and venue signups explain their real approval requirements", () => 
   assert.match(liveApp, /class="dancer-signup-progress"[\s\S]*?aria-valuemax="3"[\s\S]*?Step 1 of 3[\s\S]*?Account login/);
   assert.match(liveApp, /Dancer signup: create account, then confirm email and complete profile verification/);
   assert.match(liveApp, /id="dancerPassword"[^>]*autocomplete="new-password"[^>]*minlength="6"/);
-  assert.match(liveApp, /Free account\. Your profile becomes public after setup and verification\./);
+  assert.match(liveApp, /Free account\. Your profile stays private until setup and verification are complete\./);
   assert.doesNotMatch(liveApp, /Your account is free\. Your public profile goes live only after/);
   assert.match(liveApp, /id="venueSignupCode"[^>]*minlength="30"[^>]*maxlength="30"/);
   assert.match(liveApp, /function openVenueSignup\(\)[\s\S]*?setVenueAuthMode\("signup"\)/);
+});
+
+test("dancer signup keeps a concise privacy note without duplicating later setup instructions", () => {
+  const form = liveApp.match(/<form class="auth-form" id="dancerSignupForm">[\s\S]*?<\/form>/)?.[0] || "";
+  const guidance = form.match(/<div class="auth-signup-guidance">[\s\S]*?<\/div>/)?.[0] || "";
+  assert.equal((guidance.match(/<p>/g) || []).length, 1);
+  assert.match(guidance, /Free account\. Your profile stays private until setup and verification are complete\./);
+  assert.match(guidance, /href="\/privacy"[^>]*>Privacy Policy<\/a>/);
+  assert.doesNotMatch(guidance, /Confirm your email|Dancer Agreement|before submitting/);
+  assert.match(form, /id="dancerPasswordRequirements" data-password-requirements="dancerPassword"/);
+  for (const requirement of ["At least 6 characters", "At least 1 capital letter", "At least 1 number", "At least 1 special character"]) {
+    assert.ok(form.includes(requirement), requirement);
+  }
+  assert.match(form, /type="submit">Create dancer account<\/button>/);
+  assert.match(liveApp, /setDancerSignupStatus\(`Confirmation email sent/);
 });
