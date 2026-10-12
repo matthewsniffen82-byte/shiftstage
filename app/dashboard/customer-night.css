@@ -93,6 +93,17 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status.is-working::before { content:""; width:4px; height:4px; flex:0 0 4px; border-radius:50%; background:currentColor; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status:is(.is-upcoming,.is-quiet) { color:#c2b9cd; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { position:absolute; top:7px; right:7px; }
+/* Keep a 44px tap target around a smaller 30-by-24px three-dot control. */
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu.customer-dancer-menu>summary {
+  position:relative; width:44px; height:44px; min-width:44px; min-height:44px;
+  border:0; background:transparent; box-shadow:none; color:#f1f5f9; letter-spacing:0; cursor:pointer;
+}
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu.customer-dancer-menu>summary::before {
+  content:""; position:absolute; inset:10px 7px; border:1px solid #ffffff30; border-radius:7px;
+  background:linear-gradient(#08080c,#08080c); pointer-events:none;
+}
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary>svg { position:relative; width:20px; height:20px; pointer-events:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu.customer-dancer-menu[open]>summary::before { border-color:#94a3b8; background:linear-gradient(#202027,#202027); }
 /* Unfollow is a compact menu row with one quiet frame and a full touch target. */
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-card-menu.customer-dancer-menu>div {
   width:148px; min-width:0; max-width:calc(100vw - 24px); padding:4px;

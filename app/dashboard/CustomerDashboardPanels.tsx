@@ -722,7 +722,7 @@ function FollowedDancerGridCard({
         {shift && !isWorkingNow ? <small className="customer-followed-dancer-time">{shiftLabel}</small> : null}
       </span>
     </Link>
-    <details className="customer-card-menu customer-dancer-menu"><summary aria-label={`More options for ${dancerName}`}>•••</summary><div><button
+    <details className="customer-card-menu customer-dancer-menu"><summary aria-label={`More options for ${dancerName}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
       className="customer-dancer-unfollow"
       type="button"
       aria-label={`Unfollow ${dancerName}`}
