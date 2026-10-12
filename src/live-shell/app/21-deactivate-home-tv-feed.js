@@ -607,6 +607,7 @@
       tools.setAttribute("aria-label", "Video options");
       const options = document.createElement("details");
       options.className = "home-tv-feed-options";
+      options.dataset.compactMenu = "";
       const summary = document.createElement("summary");
       summary.className = "home-tv-feed-overflow-action";
       summary.setAttribute("aria-label", "Video options");

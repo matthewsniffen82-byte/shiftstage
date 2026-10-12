@@ -690,7 +690,7 @@ export function DancerPhotoCarousel({
     return (
       <>
         <div className="profile-media-control-tools" role="group" aria-label={`${item.kind === "video" ? "Video" : "Photo"} options`}>
-          <details className="profile-media-control-options" onKeyDown={(event) => {
+          <details className="profile-media-control-options" data-compact-menu onKeyDown={(event) => {
             if (event.key !== "Escape" || !event.currentTarget.open) return;
             event.preventDefault();
             event.stopPropagation();

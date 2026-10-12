@@ -133,7 +133,7 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
               fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
               vipReturnHref={vipReturnHref}
             />
-            <details className="profile-options">
+            <details className="profile-options" data-compact-menu>
               <summary aria-label="Profile options" title="Profile options"><span aria-hidden="true">•••</span></summary>
               <div className="profile-options-panel">
                 <DancerReportControl dancerId={profile.id} profileName={profile.stageName} />

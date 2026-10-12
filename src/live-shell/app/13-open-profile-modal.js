@@ -164,7 +164,7 @@
             <div class="profile-tv-viewer-stage" id="profileTvViewerStage" aria-label="Dancer videos. Scroll up or down to change videos."></div>
             <span class="profile-tv-playback-feedback" id="profileTvPlaybackFeedback" aria-hidden="true"></span>
             <div class="profile-media-control-tools" role="group" aria-label="Video options">
-              <details class="profile-media-control-options">
+              <details class="profile-media-control-options" data-compact-menu>
                 <summary class="profile-media-control-overflow" aria-label="Video options" title="Video options"><span aria-hidden="true">•••</span></summary>
                 <div class="profile-media-control-options-panel">
                   <button class="profile-tv-viewer-report" type="button" data-report-profile-tv aria-haspopup="dialog" aria-label="Report video">${actionIconMarkup("report")}<span>Report video</span></button>

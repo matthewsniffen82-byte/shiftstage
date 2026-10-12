@@ -205,7 +205,7 @@ export default function DancerProfileMediaUploads({
                         </span>
                       </button>
                       {isPhoto && item.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
-                      {compact ? <details className="dancer-thumbnail-menu" name="dancer-media-options"><summary aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}>•••</summary><div>{isPhoto ? photoActions?.(item.id) : null}
+                      {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}>•••</summary><div>{isPhoto ? photoActions?.(item.id) : null}
                         {onMediaPinned ? <button type="button" disabled={actionsDisabled || item.status !== "approved"} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)}>{item.isPinned ? "Unpin" : "Pin"}</button> : null}
                         <button type="button" disabled={actionsDisabled} onClick={() => void (isPhoto ? deletePreviewPhoto(item.id) : deletePreviewVideo(item.id))}>Delete</button>
                       </div></details> : <>

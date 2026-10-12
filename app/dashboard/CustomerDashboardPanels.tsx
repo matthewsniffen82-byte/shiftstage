@@ -565,7 +565,7 @@ function CustomerNightPanel({
             <div className="customer-night-controls"><div className="customer-card-actions customer-night-actions">
               {dancer.slug ? <Link href={customerDancerHref(dancer)}>View profile</Link> : null}
               <CustomerDirectionsButton dancerId={dancer.id} onDirections={onDirections} pending={Boolean(pendingAction)} venue={venue} />
-            </div><details className="customer-card-menu"><summary aria-label={`Manage plan for ${dancer.stageName || "dancer"}`}>•••</summary><div>
+            </div><details className="customer-card-menu" data-compact-menu><summary aria-label={`Manage plan for ${dancer.stageName || "dancer"}`}>•••</summary><div>
               {venue.slug ? <Link href={customerVenueHref(venue)}>Club page</Link> : null}
               <button type="button" disabled={Boolean(pendingAction)} aria-busy={pendingAction === `going-${item.shiftId}` || undefined} onClick={() => void onCancelGoing(item.shiftId)}>{pendingAction === `going-${item.shiftId}` ? "Cancelling…" : "Cancel Going"}</button>
             </div></details></div>
@@ -727,9 +727,8 @@ function FollowedDancerGridCard({
         {shift && !isWorkingNow ? <small className="customer-followed-dancer-time">{shiftLabel}</small> : null}
       </span>
     </Link>
-    <details className="customer-card-menu customer-dancer-menu"><summary aria-label={`More options for ${dancerName}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
+    <details className="customer-card-menu customer-dancer-menu" data-compact-menu><summary aria-label={`More options for ${dancerName}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
       className="customer-dancer-unfollow"
-      data-compact-menu-action
       type="button"
       aria-label={`Unfollow ${dancerName}`}
       aria-busy={unfollowing || undefined}
@@ -771,9 +770,8 @@ function SavedVenueCard({
           <Link href={customerVenueHref(venue)}><strong>{venue.name}</strong></Link>
           <small>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</small>
         </div>
-        <details className="customer-card-menu"><summary aria-label={`More options for ${venue.name || "club"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
+        <details className="customer-card-menu" data-compact-menu><summary aria-label={`More options for ${venue.name || "club"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
           className="customer-club-favorite"
-          data-compact-menu-action
           type="button"
           aria-label={`Unfollow ${venue.name || "club"}`}
           title="Unfollow club"
@@ -909,9 +907,8 @@ function CustomerDealPassPanel({
             <div className="customer-card-actions">
               <Link href={`/deals/transportation/${encodeURIComponent(item.dealId)}`}>View deal</Link>
               <CustomerDirectionsButton onDirections={onDirections} pending={Boolean(pendingAction)} venue={item.venue} />
-              <details className="customer-card-menu"><summary aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
+              <details className="customer-card-menu" data-compact-menu><summary aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
                 className="customer-text-action"
-                data-compact-menu-action
                 type="button"
                 disabled={Boolean(pendingAction)}
                 onClick={() => void onRemoveSavedDeal(item.dealId)}

@@ -38,6 +38,7 @@ export default function DancerMediaPinButton({ label, pinned = false, busy = fal
 
   return <details
     className={`dancer-media-menu is-${placement}`}
+    data-compact-menu
     ref={root}
     data-pinned={pinned}
     onClick={event => event.stopPropagation()}
