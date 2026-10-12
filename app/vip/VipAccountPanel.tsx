@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
-import { readSession, requestAccountJson, type DashboardSessionAccount } from "@/app/dashboard/dashboard-session";
+import { clearDashboardSession, readSession, requestAccountJson, type DashboardSessionAccount } from "@/app/dashboard/dashboard-session";
+import { isCurrentBrowserSession } from "@/src/lib/dancr/browser-session";
 
 type Credential = "email" | "password";
 type Feedback = { error: boolean; message: string } | null;
@@ -16,16 +17,22 @@ export default function VipAccountPanel({ account, onAccountChange }: {
   const [feedback, setFeedback] = useState<Feedback>(null);
   const [busy, setBusy] = useState(false);
   const [completedCredential, setCompletedCredential] = useState<Credential | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const pending = useRef<AbortController | null>(null);
   const emailButton = useRef<HTMLButtonElement>(null);
   const passwordButton = useRef<HTMLButtonElement>(null);
   const returnFocus = useRef<Credential | null>(null);
+  const deleteButton = useRef<HTMLButtonElement>(null);
+  const deleteInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setEditing(null);
     setFeedback(null);
     setBusy(false);
     setCompletedCredential(null);
+    setDeleteOpen(false);
+    setDeleteConfirmation("");
     returnFocus.current = null;
     return () => { pending.current?.abort(); pending.current = null; };
   }, [account.id]);
@@ -36,6 +43,10 @@ export default function VipAccountPanel({ account, onAccountChange }: {
     returnFocus.current = null;
   }, [editing, busy]);
 
+  useEffect(() => {
+    if (deleteOpen) deleteInput.current?.focus({ preventScroll: true });
+  }, [deleteOpen]);
+
   function closeForm(credential: Credential) {
     returnFocus.current = credential;
     setEditing(null);
@@ -43,9 +54,49 @@ export default function VipAccountPanel({ account, onAccountChange }: {
 
   function openForm(credential: Credential) {
     if (pending.current) return;
+    setDeleteOpen(false);
+    setDeleteConfirmation("");
     setFeedback(null);
     setCompletedCredential(null);
     setEditing(current => current === credential ? null : credential);
+  }
+
+  async function deleteAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending.current || !deleteOpen) return;
+    if (deleteConfirmation !== "DELETE") {
+      setFeedback({ error: true, message: "Type DELETE exactly to confirm permanent deletion." });
+      return;
+    }
+    const session = readSession();
+    if (!account.id || !session?.accessToken || session.account?.id !== account.id || session.account.role !== "customer") {
+      setFeedback({ error: true, message: "Sign in again before deleting your account." });
+      return;
+    }
+    const controller = new AbortController();
+    pending.current = controller;
+    setBusy(true);
+    setFeedback(null);
+    let deleted = false;
+    let failure = "";
+    try {
+      // Finish session cleanup even if the guest leaves the Account tab while
+      // the server is deleting their login. Navigation must not cancel this.
+      await requestAccountJson({ method: "DELETE", expectedRole: "customer", timeoutMs: 30_000,
+        fallbackMessage: "We couldn’t confirm account deletion." });
+      deleted = true;
+    } catch (error) {
+      failure = error instanceof Error ? error.message : "We couldn’t confirm account deletion.";
+    } finally {
+      if (pending.current === controller) { pending.current = null; setBusy(false); }
+      // Successful deletion also clears refreshed credentials for this account.
+      // A late failure must never sign out a newer session or a different user.
+      if (isCurrentBrowserSession(session) || (deleted && readSession()?.account?.id === account.id)) {
+        clearDashboardSession();
+        if (!deleted) window.alert(`${failure} You have been signed out; sign in again to check your account before retrying.`);
+        window.location.replace("/");
+      }
+    }
   }
 
   async function saveCredential(event: FormEvent<HTMLFormElement>) {
@@ -125,6 +176,23 @@ export default function VipAccountPanel({ account, onAccountChange }: {
         ))}
       </div>
       {feedback ? <p className={`vip-credentials-credential-feedback${feedback.error ? " is-error" : ""}`} role={feedback.error ? "alert" : "status"}>{feedback.message}</p> : null}
+      <section className="vip-account-deletion" aria-labelledby="vip-delete-heading">
+        <h3 id="vip-delete-heading">Delete account</h3>
+        <p>Permanently delete your MyDancr login and end VIP access at every venue. This also ends access to your customer dashboard.</p>
+        <button ref={deleteButton} type="button" className="vip-delete-button" disabled={busy} aria-expanded={deleteOpen} aria-controls={deleteOpen ? "vip-delete-form" : undefined} onClick={() => {
+          if (pending.current) return;
+          setEditing(null); setFeedback(null); setDeleteConfirmation(""); setDeleteOpen(true);
+        }}>Delete account</button>
+        {deleteOpen ? <form id="vip-delete-form" className="vip-delete-form" aria-label="Confirm account deletion" aria-busy={busy} onSubmit={deleteAccount}>
+          <p>This cannot be undone. You’ll be signed out after deletion.</p>
+          <label htmlFor="vip-delete-confirmation">Type DELETE to confirm</label>
+          <input ref={deleteInput} id="vip-delete-confirmation" value={deleteConfirmation} onChange={event => setDeleteConfirmation(event.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} disabled={busy} required aria-describedby="vip-delete-heading" />
+          <div className="vip-actions">
+            <button type="button" disabled={busy} onClick={() => { setDeleteOpen(false); setDeleteConfirmation(""); setFeedback(null); deleteButton.current?.focus(); }}>Cancel</button>
+            <button className="vip-delete-button" type="submit" disabled={busy || deleteConfirmation !== "DELETE"}>{busy ? "Deleting…" : "Permanently delete account"}</button>
+          </div>
+        </form> : null}
+      </section>
       <style>{`
         .info-panel.vip-credentials-account-details { min-width: 0; gap: 16px; }
         .vip-credentials-account-details .vip-credentials-account-details-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -155,6 +223,14 @@ export default function VipAccountPanel({ account, onAccountChange }: {
         body.dancr-button-system .vip-credentials-credential-form-actions > button { min-width: 0 !important; min-height: 46px !important; padding: 10px 12px !important; border-radius: 10px !important; font-size: 13px !important; }
         .vip-credentials-credential-feedback { margin: 16px 0 0; color: #b6e6cf; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
         .vip-credentials-credential-feedback.is-error { color: #fda4af; }
+        .vip-account-deletion { margin-top: 24px; padding-top: 20px; border-top: 1px solid rgba(251,113,133,.22); }
+        .vip-account-deletion h3 { margin: 0; font-size: 16px; color: #fda4af; }
+        .vip-account-deletion p { margin: 10px 0 16px; color: #aaa4b8; font-size: 13px; line-height: 1.6; }
+        body.dancr-button-system #vip-dashboard .vip-account-deletion button.vip-delete-button { background: #30171f !important; border: 1px solid #a74b64 !important; color: #ffd4df !important; box-shadow: none !important; }
+        .vip-account-deletion .vip-delete-form { margin-top: 16px; padding: 16px; border: 1px solid #734052; border-radius: 12px; background: #130d12; gap: 12px; }
+        .vip-delete-form > p { margin: 0; color: #ffd4df; }
+        .vip-account-deletion .vip-delete-form input { font-size: 16px; }
+        .vip-account-deletion .vip-actions > button { flex: 1 1 160px; min-width: 0; }
       `}</style>
     </article>
   );
