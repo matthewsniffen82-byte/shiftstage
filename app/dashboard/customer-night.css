@@ -98,10 +98,14 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status.is-working::before { content:""; width:4px; height:4px; flex:0 0 4px; border-radius:50%; background:currentColor; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status:is(.is-upcoming,.is-quiet) { color:#c2b9cd; }
 /* Place the visible face 3px from the portrait corner, inside the shared 44px tap target. */
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { position:absolute; top:0; right:0; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { position:absolute; top:0; right:0; width:100%; pointer-events:none; }
+body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>:is(summary,div) { pointer-events:auto; }
 /* Override the shared face in its own layer so it stays centered behind the corner icon. */
 @layer dancr-follow-controls {
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary { margin:0 0 0 auto !important; }
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary::before { inset:3px 3px auto auto !important; width:30px !important; height:24px !important; }
+  /* Keep every popup below the right corner and within its own portrait, including the first column. */
+  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>div { width:100% !important; min-width:0 !important; max-width:160px !important; }
 }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary>svg { position:absolute; top:5px; right:8px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
@@ -215,7 +219,6 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions { display:flex !important; flex-wrap:nowrap; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-night-actions>:is(a,button) { width:auto !important; min-width:100px !important; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-status { text-transform:none; letter-spacing:0; }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-followed-dancer-card:nth-child(3n+1) .customer-card-menu>div { left:0; right:auto; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-panel .notification-title-row h2 { padding:0 !important; margin:0 !important; color:#f5f2fa !important; font-size:24px !important; font-weight:600 !important; line-height:1.25 !important; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-panel .notification-title-row h2::before { display:none !important; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .notification-title-row>div:first-child>span { display:none; }
