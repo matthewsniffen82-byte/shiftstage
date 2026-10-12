@@ -98,6 +98,7 @@ body.dancr-button-system .vip-shell.vip-auth-shell {
 body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-pressed=true],
 body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-pressed=true] svg { color: #ff304f !important; }
 body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-pressed=true] svg { fill: currentColor !important; }
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite[aria-busy=true] { opacity: 1 !important; filter: none !important; }
 .vip-dashboard-shell .vip-dancer-favorite::before, .vip-dashboard-shell .vip-dancer-favorite::after { display: none !important; }
 .vip-dashboard-shell .vip-avatar { width: 37px; height: 43px; border-radius: 11px; color: #d6b9f2; background: linear-gradient(135deg, #433051, #251b30); border: 1px solid #5b406d; }
 .vip-dashboard-shell .vip-dancer .vip-avatar { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; border: 0; border-radius: 0; font-size: 24px; }
