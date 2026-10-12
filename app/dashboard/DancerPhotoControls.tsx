@@ -24,7 +24,7 @@ export default function DancerPhotoControls({ label, primary, children, disabled
       {children ? <button ref={trigger} className="dancer-photo-options-toggle" type="button"
         aria-label={`More options for ${label}`} aria-expanded={expanded} aria-controls={optionsId}
         disabled={disabled} onClick={() => setExpanded(current => !current)}>
-        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg>
+        <span aria-hidden="true">•••</span>
       </button> : null}
     </div>
     {/* Keep crop/upload state mounted when the extra controls are collapsed. */}
