@@ -293,7 +293,7 @@ export function DancerAvatarPanel({
               }}
             />
             <span className="photo-source-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4zM7 15l3-3 2.5 2.5L15 12l3 3" /><circle cx="16.5" cy="9" r="1" /></svg></span>
-            <span className="photo-source-copy"><strong>{compact ? presentation.state === "pending" ? "Replace photo" : avatarUrl ? "Change photo" : "Add photo" : "Gallery"}</strong><small>Choose a clear face photo</small></span>
+            <span className="photo-source-copy"><strong>{compact ? presentation.state === "pending" ? "Replace" : avatarUrl ? "Change" : "Add" : "Gallery"}</strong><small>Choose a clear face photo</small></span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
           </label>
           {!compact ? <label className={`photo-source-action${isSaving ? " is-disabled" : ""}`}>

@@ -480,9 +480,9 @@ export function DancerPhotoPanel({
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
       <div className="dancer-photo-upload-form">
-        <div className="photo-upload-heading">
+        {!uploadOnly && !approvedPhotos.length ? <div className="photo-upload-heading">
           <span><strong>Add at least 1 solo photo of yourself. You can add more later.</strong></span>
-        </div>
+        </div> : null}
         <div className="photo-source-grid">
           <label className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}>
             <input
@@ -531,12 +531,12 @@ export function DancerPhotoPanel({
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </label>
         </div>
-        <p className="photo-upload-selection-hint">Select multiple photos at once from your gallery.</p>
+        <p className="photo-upload-selection-hint">You can select several photos from your gallery.</p>
         {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       {reviews.length ? (
-        <div className="photo-upload-queue" aria-label="Photos awaiting approval">
-          <strong>Photo uploads · {reviews.length}</strong>
+        <div className="photo-upload-queue" role="group" aria-label="Photo upload status">
+          {!uploadOnly ? <strong>Upload status · {reviews.length}</strong> : null}
           {reviews.map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
             return (

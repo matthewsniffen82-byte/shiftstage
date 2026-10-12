@@ -165,8 +165,8 @@ export default function DancerProfileWorkspace({
         </div>
       </section>
       <section className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-labelledby="dancer-photos-title">
-        <header><h3 id="dancer-photos-title">Photo uploads</h3><span data-state={galleryReady ? "saved" : "required"}>{onboarding ? `${approvedCount}/${MIN_DANCER_ONBOARDING_PHOTOS} approved` : `${approvedCount} approved photos`}</span></header>
-        <p className="dancer-photo-guidance">{onboarding ? `Main photo + ${MIN_DANCER_ONBOARDING_PHOTOS - 1} more. Only you in each photo.` : "Add more photos of yourself. Only you in each photo, including the background."}</p>
+        <header><h3 id="dancer-photos-title">Photo uploads</h3><span data-state={galleryReady ? "saved" : "required"}>{onboarding && !galleryReady ? `${approvedCount} of ${MIN_DANCER_ONBOARDING_PHOTOS} approved` : `${approvedCount} approved`}</span></header>
+        <p className="dancer-photo-guidance">{onboarding && !galleryReady ? `Main photo + ${MIN_DANCER_ONBOARDING_PHOTOS - 1} more. Only you in each photo.` : "Add more photos if you like. Only you in each photo."}</p>
         <div className="dancer-section-uploader">{photoContent}</div>
         <DancerProfileMediaUploads compact mediaType="photos" photos={additionalPhotos} videos={[]}
           onProfileChange={onProfileChange}

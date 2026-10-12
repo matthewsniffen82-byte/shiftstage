@@ -59,6 +59,51 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-avata
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-avatar-panel > p[role='status'] {
   grid-column:1 / -1;
 }
-body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls-row :is(button,.photo-source-copy strong) {
-  white-space:normal;
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls-row {
+  align-items:center; gap:4px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls-row > :first-child {
+  flex:0 1 80px; width:80px !important;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls-row :is(button:not(.dancer-photo-options-toggle),.photo-source-action) {
+  box-sizing:border-box; display:flex !important; align-items:center; justify-content:center;
+  height:44px !important; min-height:44px !important; margin:0; padding:6px 8px !important;
+  white-space:nowrap; font-size:12px !important; line-height:1.35;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-avatar-source-grid .photo-source-action {
+  width:100% !important; min-width:0;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .photo-source-copy strong {
+  white-space:nowrap; font-size:12px !important;
+}
+
+/* The section already supplies the title, guidance, and outer spacing. */
+body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .dancer-section-uploader > .upload-panel {
+  display:grid; gap:12px; margin:0 !important; padding:0 !important;
+  border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+}
+body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .dancer-photo-upload-form {
+  grid-template-columns:minmax(0,1fr); gap:8px; margin:0; padding:0;
+}
+body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-source-grid {
+  margin:0; gap:8px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-profile-media-library :is(.photo-upload-selection-hint,.photo-upload-status) {
+  margin:0; padding:0; border:0; border-radius:0; background:transparent;
+  font-size:12px; line-height:1.45;
+}
+body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-upload-queue {
+  margin:0; gap:8px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-review-card {
+  padding:8px; gap:10px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-review-card > span {
+  min-width:0; gap:6px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-review-card > span > strong {
+  font-size:14px; line-height:1.4;
+}
+body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-review-card :is(small,em) {
+  font-size:12px; line-height:1.45;
 }

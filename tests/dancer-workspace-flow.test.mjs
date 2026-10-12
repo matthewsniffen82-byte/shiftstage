@@ -39,6 +39,24 @@ test('three approved photos advance while an optional video remains in review',a
   const f=fixture(); assert.equal(f.footer().props.children,'Continue');f.footer().props.onClick();await new Promise(resolve=>setImmediate(resolve));
   assert.deepEqual(f.calls,['save','agreement']);
 });
+test('photo guidance switches to optional additions only when the approved minimum is met',()=>{
+  const f=fixture({count:2,pending:5});
+  const photos=()=>walk(f.draw().find(n=>n.props.id==='dancer-profile-media-library'));
+  const badge=()=>photos().find(n=>n.props['data-state']);
+  const guidance=()=>photos().find(n=>n.props.className==='dancer-photo-guidance').props.children;
+  assert.equal(badge().props.children,'2 of 3 approved');
+  assert.equal(badge().props['data-state'],'required');
+  assert.match(guidance(),/Main photo \+ 2 more/);
+  for(const count of [3,7]) {
+    f.props.profile.dancer_photos=Array.from({length:count},(_,i)=>({id:`approved${i}`,status:'approved',isPrimary:i===0}));
+    assert.equal(badge().props.children,`${count} approved`);
+    assert.equal(badge().props['data-state'],'saved');
+    assert.match(guidance(),/Add more photos if you like/);
+  }
+  f.props.profile.dancer_photos=f.props.profile.dancer_photos.slice(0,2);
+  assert.equal(badge().props.children,'2 of 3 approved');
+  assert.match(guidance(),/Main photo \+ 2 more/);
+});
 test('the next action points to the missing face photo or main photo',()=>{
   const face=fixture({face:false});face.footer().props.onClick();assert.ok(face.calls.includes('#dancer-face-photo'));assert.match(face.draw().find(n=>n.type==='footer').props.children[0].props.children,/face photo/);
   const main=fixture({count:0});main.footer().props.onClick();assert.ok(main.calls.includes('#dancer-main-photo'));assert.match(main.draw().find(n=>n.type==='footer').props.children[0].props.children,/main photo/);

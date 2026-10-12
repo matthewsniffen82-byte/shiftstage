@@ -76,7 +76,7 @@ test("a first main upload appears in the main slot while awaiting approval, incl
   for (const view of [ui, fixture(profile)]) {
     assert.equal(view.image.props.src, pending.previewUrl);
     assert.equal(view.image.props.alt, "Main photo awaiting review");
-    assert.equal(view.button.props.children, "Replace photo");
+    assert.equal(view.button.props.children, "Replace");
     assert.equal(view.button.props['aria-label'], "Replace main photo");
     assert.equal(view.button.props.disabled, false);
     assert.equal(view.crop, undefined);

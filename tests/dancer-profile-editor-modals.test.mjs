@@ -30,7 +30,7 @@ test("stage name and city use the compact editor without changing persistence or
 test("avatar editor has one compact requirement and keeps the real upload workflow", () => {
   assert.match(dashboard, /avatar: "Upload avatar"/);
   assert.match(avatarEditor, /Use a clear solo face photo of yourself\./);
-  assert.match(avatarEditor, /"Change photo" : "Add photo" : "Gallery"/);
+  assert.match(avatarEditor, /"Change" : "Add" : "Gallery"/);
   assert.match(avatarEditor, />Camera<\/strong>/);
   assert.doesNotMatch(avatarEditor, /Profile identity|<h2>Avatar<\/h2>/i);
   assert.match(avatarEditor, /void uploadAvatar\(nextFile\)/);
