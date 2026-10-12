@@ -1,5 +1,5 @@
 export const VENUE_NOTIFICATION_ALERTS = [
-  { key: "vipRequests", title: "VIP requests", description: "Private VIP visit requests and guest nickname changes." },
+  { key: "vipRequests", title: "VIP requests", description: "Private VIP visit requests and request updates." },
   { key: "tableRequests", title: "Table requests", description: "A table requests a specific dancer in MyDancr Internal." },
   { key: "dancerActivity", title: "Dancer activity", description: "Working Now and scheduled appearance updates." },
   { key: "rosterChanges", title: "Roster changes", description: "Dancer affiliations added or removed." },

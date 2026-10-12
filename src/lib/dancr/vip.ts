@@ -69,13 +69,13 @@ export async function getVipState(client: SupabaseClient, userId: string, search
     throw new PublicApiError("INVALID_REQUEST", "Choose a valid dashboard section or request status.", 400);
   }
   const { data: memberships, error } = await client.from("venue_vip_members")
-    .select("venue_id,display_name,nickname,venue:venues!inner(id,name,timezone,is_active,owner:app_users!venues_owner_user_id_fkey(role,account_state))")
+    .select("venue_id,display_name,venue:venues!inner(id,name,timezone,is_active,owner:app_users!venues_owner_user_id_fkey(role,account_state))")
     .eq("user_id", userId).eq("active", true).order("created_at");
   if (error) throw error;
   const venues = (memberships || []).flatMap(member => {
     const venue = first(member.venue); const owner = first(venue?.owner);
     return venue?.is_active && owner?.role === "venue" && owner.account_state === "active"
-      ? [{ id: venue.id as string, name: venue.name as string, timezone: venue.timezone as string, guestName: member.display_name as string, nickname: member.nickname as string }] : [];
+      ? [{ id: venue.id as string, name: venue.name as string, timezone: venue.timezone as string, guestName: member.display_name as string }] : [];
   });
   const requested = search.get("venueId");
   const selected = requested ? venues.find(v => v.id === requested) : venues[0];

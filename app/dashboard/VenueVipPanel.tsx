@@ -81,8 +81,8 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
     <div className="vip-row venue-vip-header"><h2 id="venue-vip-heading">VIP access</h2><button type="button" aria-label="Refresh VIP access" disabled={busy || loading} onClick={() => { setError(""); void load(page, memberSearch, memberPage, pendingOnly); }}>{loading ? "Refreshing…" : "Refresh"}</button></div>
     <div className="venue-vip-invite">
       <p>Invite guests to request visits and dancers.</p>
-      <form className="vip-invite-form" onSubmit={invite}><label>Guest email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><label>VIP nickname (optional)<input type="text" maxLength={80} value={inviteNickname} onChange={event => setInviteNickname(event.target.value)} placeholder="How you know this guest" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send invitation"}</button></form>
-      <small>Invitation valid for 7 days. Nicknames are shared with the VIP. Your team is notified when they change theirs.</small>
+      <form className="vip-invite-form" onSubmit={invite}><label>Guest email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><label>Private nickname (optional)<input type="text" maxLength={80} value={inviteNickname} onChange={event => setInviteNickname(event.target.value)} placeholder="How you know this guest" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send invitation"}</button></form>
+      <small>Invitation valid for 7 days. Nicknames are private to your venue&apos;s owners and managers.</small>
       <details><summary>How invitations work</summary><small>Only the invited email can use the link. Reinviting replaces that email’s unused link. Resend email and New share link also replace the previous link. Owners and managers review each visit request.</small></details>
     </div>
     {status && <p className="vip-feedback" role="status">{status}</p>}{error && <p className="vip-feedback vip-error" role="alert">{error}</p>}
@@ -106,8 +106,8 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
             <button type="button" disabled={busy || loading} onClick={() => { if (window.confirm(`Remove VIP access for ${member.nickname || member.display_name}? Existing requests will remain available for review.`)) void action({ action: "revoke_member", id: member.id }, "VIP access removed. Existing requests are still available below."); }}>Remove VIP access</button>
           </div>
           {editingMember?.id === member.id && <form className="vip-nickname-form" onSubmit={saveNickname}>
-            <label>Venue nickname for {member.display_name}<input autoFocus type="text" maxLength={80} value={editingMember.nickname} onChange={event => setEditingMember({ id: member.id, nickname: event.target.value })} disabled={busy} /></label>
-            <small>Shared with this VIP and your venue’s team. The VIP can change it; your team will be notified. Leave blank to remove.</small>
+            <label>Private nickname for {member.display_name}<input autoFocus type="text" maxLength={80} value={editingMember.nickname} onChange={event => setEditingMember({ id: member.id, nickname: event.target.value })} disabled={busy} /></label>
+            <small>Venue only. The VIP cannot see or change this nickname.</small>
             <div className="vip-actions"><button type="submit" disabled={busy || loading}>Save nickname</button><button type="button" disabled={busy} onClick={() => setEditingMember(null)}>Cancel</button></div>
           </form>}
         </li>)}</ul>

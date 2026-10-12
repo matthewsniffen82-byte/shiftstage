@@ -35,6 +35,7 @@ async function fixture() {
     await db.exec(readFileSync(new URL("../supabase/migrations/20261010200606_vip_anonymous_dancer_requests.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261011084450_vip_pending_request_edits.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261011201618_vip_dancer_status_notifications.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261012012535_vip_venue_private_nicknames.sql", import.meta.url), "utf8"));
     // Match production grants for server-only SECURITY INVOKER request writes.
     await db.exec("grant select on public.app_users,public.venues,public.venue_team_members,public.dancer_profiles to service_role; grant select,insert on public.notifications to service_role");
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
@@ -562,7 +563,7 @@ test("invitation nicknames survive activation and retries preserve the latest me
     assert.equal((await db.query("select nickname from venue_vip_members")).rows[0].nickname, "Friday regular");
     const result = (await submit(db)).notifications;
     assert.ok(result.filter(row => row.payload.kind === "vip_request").every(row => row.body.startsWith("Friday regular requested")));
-    await db.query("select vip_update_own_nickname($1,$2,'Jordan')", [id(5),id(20)]);
+    await db.query("select vip_set_member_nickname($1,$2,(select id from venue_vip_members where user_id=$3 and venue_id=$2),'Jordan')", [id(1),id(20),id(5)]);
     await accept(db);
     await manage(db,"invite",{ email:"person5@example.test",digest:"b".repeat(64),nickname:"Stale invitation label" });
     await accept(db,5,"b".repeat(64));
@@ -571,40 +572,33 @@ test("invitation nicknames survive activation and retries preserve the latest me
   } finally { await db.close(); }
 });
 
-test("VIP nickname changes notify only active venue owners and managers, exactly once per saved change", async () => {
-  const db=await fixture();
-  const save=(name,actor=5,venue=20)=>db.query("select vip_update_own_nickname($1,$2,$3) result",[id(actor),id(venue),name]).then(r=>r.rows[0].result);
+test("venue-private nicknames cannot be read or changed by guests or the retired server RPC", async () => {
+  const db = await fixture();
   try {
-    await invite(db);await accept(db);
-    await db.query("insert into venue_vip_members(venue_id,user_id,display_name,nickname) values($1,$2,'Other identity','Other nickname')",[id(21),id(5)]);
-    const result=await save("  Friday VIP  ");
-    assert.equal(result.nickname,"Friday VIP");assert.equal(result.changed,true);
-    assert.deepEqual(result.notifications.map(n=>n.recipient_id).sort(),[id(1),id(2)]);
-    for(const notification of result.notifications){
-      assert.equal(notification.title,"VIP nickname changed");
-      assert.equal(notification.payload.previousNickname,"");assert.equal(notification.payload.nickname,"Friday VIP");
-      assert.equal(notification.payload.url,"/dashboard/venue#venue-vip");
-      assert.equal(notification.payload.venueId,id(20));assert.match(notification.body,/Test VIP.*Friday VIP/);
+    await manage(db, "invite", { email: "person5@example.test", digest, nickname: "Private venue label" });
+    await accept(db);
+    const member = (await db.query("select id from public.venue_vip_members")).rows[0];
+    await db.query("select public.vip_set_member_nickname($1,$2,$3,'Updated private label')", [id(1), id(20), member.id]);
+    assert.equal((await adminQuery(db, "select count(*)::int n from public.notifications")).rows[0].n, 0, "venue edits do not notify the VIP");
+    for (const role of ["service_role", "anon", "authenticated"]) {
+      await db.exec(`set role ${role}`);
+      await denies(db.query("select public.vip_update_own_nickname($1,$2,'Guest overwrite')", [id(5), id(20)]), "42501");
+      if (role !== "service_role") {
+        await denies(db.query("select nickname from public.venue_vip_members where user_id=$1", [id(5)]), "42501");
+        await denies(db.query("update public.venue_vip_members set nickname='Guest overwrite' where user_id=$1", [id(5)]), "42501");
+        await denies(db.query("select nickname from public.venue_vip_invitations"), "42501");
+      }
     }
-    assert.equal((await save("Friday VIP")).changed,false);
-    assert.equal((await adminQuery(db,"select count(*)::int n from notifications")).rows[0].n,2);
-    await adminQuery(db,"update app_users set account_state='disabled' where id=$1",[id(2)]);
-    const cleared=await save("");assert.equal(cleared.notifications.length,1);
-    assert.equal(cleared.notifications[0].payload.previousNickname,"Friday VIP");assert.equal(cleared.notifications[0].payload.nickname,"");
-    assert.equal((await db.query("select nickname from venue_vip_members where venue_id=$1",[id(21)])).rows[0].nickname,"Other nickname");
-    assert.equal((await db.query("select display_name from venue_vip_members where venue_id=$1",[id(20)])).rows[0].display_name,"Test VIP");
-    for(const actor of [1,3,6]) await denies(save("Imposter",actor),"42501");
-    for(const name of [null,"x".repeat(81),"two\nlines"]) await denies(save(name),"22023");
-    await adminQuery(db,"alter table notifications add constraint nickname_delivery_failure check(false) not valid");
-    await denies(save("Unsaved nickname"),"23514");
-    assert.equal((await db.query("select nickname from venue_vip_members where venue_id=$1",[id(20)])).rows[0].nickname,"");
-    await adminQuery(db,"alter table notifications drop constraint nickname_delivery_failure");
-    await adminQuery(db,"update app_users set account_state='paused' where id=$1",[id(5)]);
-    await denies(save("Paused"),"42501");
-    await adminQuery(db,"update app_users set account_state='active' where id=$1",[id(5)]);
-    await adminQuery(db,"update venues set is_active=false where id=$1",[id(20)]);await denies(save("Inactive venue"),"P0002");
-    await adminQuery(db,"update venues set is_active=true where id=$1",[id(20)]);
-    await db.query("update venue_vip_members set active=false where venue_id=$1",[id(20)]);await denies(save("Revoked"),"42501");
-    for(const role of ["anon","authenticated"]){await db.exec(`set role ${role}`);await denies(save("Direct caller"),"42501");}
+    await db.exec("reset role");
+    await denies(db.query("select public.vip_update_own_nickname($1,$2,'Owner of function')", [id(5), id(20)]), "42501");
+    await db.exec("set role service_role");
+    assert.deepEqual((await db.query("select display_name,nickname from public.venue_vip_members")).rows[0],
+      { display_name: "Test VIP", nickname: "Updated private label" });
+    const submitted = await submit(db);
+    assert.doesNotMatch(JSON.stringify(submitted.request), /nickname|Updated private label/);
+    const reviewed = await manage(db, "request_status", { id: submitted.request.id, expectedStatus: "pending", status: "confirmed", note: "" });
+    assert.doesNotMatch(JSON.stringify(reviewed.request), /nickname|Updated private label/);
+    assert.ok(reviewed.notifications.some(notification => notification.recipient_id === id(5)));
+    assert.doesNotMatch(JSON.stringify(reviewed.notifications), /nickname|Updated private label/);
   } finally { await db.close(); }
 });

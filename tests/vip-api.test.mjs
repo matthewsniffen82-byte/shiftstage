@@ -275,25 +275,38 @@ test("email confirmation preserves a private VIP return path", () => {
   assert.equal(run(new Request("https://example.test/auth/callback?return_to=%2Fvip%2Finvite%2Fprivate-link"), { account: { role: "customer" } }, callback.safeLocalReturnPath, () => false, () => "customer", () => false, () => "/"), "/vip/invite/private-link");
 });
 
-test("VIP nickname API binds the actor to the session and isolates optional notification delivery failures", async () => {
-  const {route,calls}=fixture({deliveryFailure:true});
-  const response=await route.PATCH(request({venueId:id(20),nickname:"  Jordan  ",actorUserId:id(99),memberId:id(99)}));
-  assert.equal(response.status,200);assert.match(response.headers.get('cache-control'),/private.*no-store/);
-  const result=await response.json();assert.equal(result.nickname,'Jordan');assert.equal(result.changed,true);
-  assert.equal(result.session.accessToken,'rotated');assert.equal(result.notifications,undefined);
-  const rpc=calls.find(c=>c[0]==='rpc');assert.equal(rpc[1],'vip_update_own_nickname');
-  assert.equal(rpc[2].p_actor,id(5));assert.equal(rpc[2].p_venue,id(20));assert.equal(rpc[2].p_nickname,'Jordan');
-  for(const nickname of [null,17,'x'.repeat(81),'two\nlines']) assert.equal((await route.PATCH(request({venueId:id(20),nickname}))).status,400);
-  assert.equal((await route.PATCH(request({venueId:'invalid',nickname:'Nick'}))).status,400);
-  const denied=fixture({rpcError:{code:'42501'}});assert.equal((await denied.route.PATCH(request({venueId:id(20),nickname:'Nick'}))).status,403);
-  assert.equal((await route.PATCH(request({venueId:id(20),nickname:''}))).status,200);
+test("VIP nickname API rejects cached clients and forged venue identities without reading or writing records", async () => {
+  const { route, calls } = fixture();
+  for (const nickname of ['Replacement', '', null]) {
+    const response = await route.PATCH(request({ venueId: id(20), nickname, actorUserId: id(1), memberId: id(50) }));
+    assert.equal(response.status, 403);
+    assert.match(response.headers.get('cache-control'), /private.*no-store/);
+    const result = await response.json();
+    assert.equal(result.nickname, undefined);
+    assert.equal(result.notifications, undefined);
+  }
+  assert.ok(calls.every(call => call[0] === 'auth' && call[1].role === 'customer'));
 });
 
 test("venue invitation validates and saves a nickname before delivering the invitation", async () => {
   const {route,calls}=fixture({invitation:true});
   assert.equal((await route.POST(request({action:'invite',email:'guest@example.test',nickname:'  Friday regular  '}))).status,200);
   assert.equal(calls.find(c=>c[0]==='rpc')[2].p_data.nickname,'Friday regular');
+  assert.doesNotMatch(JSON.stringify(calls.find(c => c[0] === 'email')), /nickname|Friday regular/);
   for(const nickname of [17,'x'.repeat(81),'two\nlines']) assert.equal((await route.POST(request({action:'invite',email:'guest@example.test',nickname}))).status,400);
+});
+
+test("guest invitation lookup never selects or returns the private venue nickname", async () => {
+  let columns = '';
+  const query = {
+    select(value) { columns = value; return query; }, eq() { return query; }, is() { return query; }, gt() { return query; },
+    async maybeSingle() { return { data: { email: 'guest@example.test', expires_at: '2027-01-01', nickname: 'Private invitation label',
+      venue: { name: 'Private Club', is_active: true, owner: { role: 'venue', account_state: 'active' } } } }; },
+  };
+  const result = await service.resolveVipInvitation({ from: () => query }, service.newVipToken());
+  assert.doesNotMatch(columns, /nickname/);
+  assert.doesNotMatch(JSON.stringify(result), /nickname|Private invitation label/);
+  assert.equal(result.venueName, 'Private Club');
 });
 
 test("venue request cards show the current nickname beside the original guest identity and escape both", () => {
@@ -301,6 +314,8 @@ test("venue request cards show the current nickname beside the original guest id
   const record={id:id(90),guest_name:'Jordan',nickname:'<script>Friday VIP</script>',starts_at:'2026-10-07T03:30:00Z',timezone:'America/Los_Angeles',dancers:[],status:'pending',notes:'',response_note:''};
   const html=renderToStaticMarkup(React.createElement(component,{requests:[record],onReview:async()=>{}}));
   assert.match(html,/Friday VIP/);assert.match(html,/Guest: Jordan/);assert.doesNotMatch(html,/<script>/);
+  const guestHtml = renderToStaticMarkup(React.createElement(component, { requests: [record] }));
+  assert.doesNotMatch(guestHtml, /Friday VIP|nickname/);
   const notification={notification_type:'support_message',payload:{kind:'vip_nickname_changed'}};
   assert.equal(preferences.venueNotificationCategory(notification),'vipRequests');
   assert.equal(preferences.venueNotificationEnabled(preferences.venueNotificationMetadataPatch({vipRequests:false}),notification),false);

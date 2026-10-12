@@ -161,12 +161,13 @@ for (const action of ['switchAccount', 'unmount']) test(`a late credential respo
 });
 });
 
-test('VIP settings and navigation are independent of the guest dashboard', () => {
+test('VIP credentials stay in the VIP dashboard with only notification preferences shared', () => {
   const dashboard = readFileSync(new URL('../app/vip/VipDashboard.tsx', import.meta.url), 'utf8');
   const guestDashboard = readFileSync(new URL('../app/dashboard/DashboardClient.tsx', import.meta.url), 'utf8');
   const shell = readFileSync(new URL('../src/live-shell/shell.html', import.meta.url), 'utf8');
   assert.match(dashboard, /<VipAccountPanel/);
-  assert.doesNotMatch(dashboard, /dashboard\/customer/);
+  assert.deepEqual([...dashboard.matchAll(/href="(\/dashboard\/customer[^"]*)"/g)].map(match => match[1]),
+    ['/dashboard/customer#customer-alerts']);
   assert.doesNotMatch(guestDashboard, /CustomerVipShortcut/);
   assert.match(shell, /id="vipDashboardLink" href="\/vip">VIP dashboard/);
 });

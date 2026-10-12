@@ -56,6 +56,9 @@ test('venue nickname editing retains failed drafts, saves changes and allows cle
   });
   await ui.settle(); assert.match(ui.html(), /Friday regular/); assert.match(ui.html(), /Jordan Guest/);
   ui.button('Edit nickname').props.onClick(); ui.render();
+  assert.match(ui.html(), /Private nickname for Jordan Guest/);
+  assert.match(ui.html(), /The VIP cannot see or change this nickname/);
+  assert.doesNotMatch(ui.html(), /shared with the VIP|VIP can change it/i);
   ui.input('text').props.onChange({ target: { value: '  Weekend VIP  ' } }); ui.render();
   await ui.form('vip-nickname-form').props.onSubmit({ preventDefault() {} }); await ui.settle();
   assert.match(ui.html(), /Save failed/); assert.equal(ui.input('text').props.value, '  Weekend VIP  ');
