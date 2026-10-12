@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { filterVipDancers, isVipFavorite, type VipDraft, type VipDancerFilter } from "@/src/lib/dancr/vip-dashboard";
 import { vipLocalDate, type VipDancer, type VipVenue } from "@/src/lib/dancr/vip-types";
-import NotificationIcon from "@/app/components/NotificationIcon";
 
 const dancerFilters: Array<{ id: VipDancerFilter; label: string }> = [
   { id: "all", label: "This club" }, { id: "favorites", label: "Favorites" },
@@ -33,7 +32,9 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
   const details = useRef<HTMLElement | null>(null);
   const scope = requestableOnly ? dancers.filter(dancer => dancer.canRequest !== false) : dancers;
   const filterResults = dancerFilters.map(item => ({ ...item, dancers: filterVipDancers(scope, search, item.id, draft.selected) }));
-  const visible = filterResults.find(item => item.id === filter)!.dancers;
+  const visible = filter === "alerts"
+    ? filterVipDancers(scope, search, null, []).filter(dancer => dancer.canRequest !== false || dancer.workingAlertsEnabled)
+    : filterResults.find(item => item.id === filter)!.dancers;
   const selected = dancers.filter(dancer => dancer.canRequest !== false && draft.selected.includes(dancer.id));
   const working = dancers.filter(dancer => dancer.working_now).length;
   const remove = (id: string) => onChange({ ...draft, selected: draft.selected.filter(item => item !== id) });
@@ -50,10 +51,19 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
       <section className="vip-panel vip-roster-panel" ref={roster} id="vip-choose-dancers" tabIndex={-1} hidden={detailsOpen} aria-label="Choose your dancers"><div className="vip-step-heading"><span>1</span><div><h3>Choose your dancers</h3><small>{dancers.filter(dancer => dancer.canRequest !== false).length} at this club · {working} working now</small></div></div>
         <div className="vip-library-toolbar"><label className="vip-search"><span className="vip-sr-only">Search dancers by stage name</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search my dancers" disabled={busy} /></label>
           <label className="vip-library-venue-filter"><input type="checkbox" checked={requestableOnly} disabled={busy} onChange={event => setRequestableOnly(event.target.checked)} />Requestable</label></div>
-        <div className="vip-roster-filters" role="group" aria-label="Dancer filters">{filterResults.map(({ id, label, dancers: matches }) => <button key={id} type="button" aria-label={`${label}, ${matches.length} ${matches.length === 1 ? "dancer" : "dancers"}`} aria-pressed={filter === id} onClick={() => setFilter(id)} disabled={busy}><span className="vip-filter-label">{label}</span><span className="vip-filter-count" aria-hidden="true">{matches.length}</span></button>)}</div>
+        <div className="vip-roster-filters" role="group" aria-label="Dancer filters">{filterResults.map(({ id, label, dancers: matches }) => <button key={id} type="button" aria-label={`${label}, ${matches.length} ${id === "alerts" ? "enabled alerts" : matches.length === 1 ? "dancer" : "dancers"}`} aria-pressed={filter === id} onClick={() => setFilter(id)} disabled={busy}><span className="vip-filter-label">{label}</span><span className="vip-filter-count" aria-hidden="true">{matches.length}</span></button>)}</div>
         {filter === "previous" && onRequests && <div className="vip-actions"><button type="button" disabled={busy} onClick={onRequests}>View request status →</button></div>}
         <p className="vip-library-count" role="status">{visible.length} {visible.length === 1 ? "dancer" : "dancers"}</p>
-        <div className="vip-roster-scroll"><fieldset className="vip-dancers" disabled={busy} tabIndex={0}><legend className="vip-sr-only">Dancers to request</legend>{visible.map(dancer => {
+        {filter === "alerts" ? <fieldset className="vip-working-alert-settings" disabled={busy}>
+          <legend>Working alerts at {venue.name}</legend>
+          {visible.map(dancer => <label className="vip-working-alert-option" key={dancer.id}>
+            <span>{dancer.stage_name}</span>
+            <input type="checkbox" checked={dancer.workingAlertsEnabled === true}
+              aria-label={`Working alerts for ${dancer.stage_name} at ${venue.name}`}
+              disabled={!onWorkingAlert || alertPending.includes(dancer.id) || (!dancer.workingAlertsEnabled && (dancer.canRequest === false || !dancer.profileHref))}
+              onChange={() => { if (!busy) void onWorkingAlert?.(dancer); }} />
+          </label>)}
+        </fieldset> : <div className="vip-roster-scroll"><fieldset className="vip-dancers" disabled={busy} tabIndex={0}><legend className="vip-sr-only">Dancers to request</legend>{visible.map(dancer => {
           const checked = draft.selected.includes(dancer.id);
           const favorite = isVipFavorite(dancer);
           const unavailable = dancer.canRequest === false;
@@ -66,13 +76,8 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
               else if (!unavailable && !checked && draft.selected.length < 10) onChange({ ...draft, selected: [...draft.selected, dancer.id] });
             }} /><img className="vip-selection-icon" src={checked ? selectionIcons.selected : selectionIcons.add} width={21} height={21} alt="" aria-hidden="true" draggable={false} /></label>
             <button type="button" className="vip-dancer-favorite" aria-pressed={favorite} aria-label={`${favorite ? "Remove" : "Save"} ${dancer.stage_name} ${favorite ? "from" : "to"} favorites`} disabled={busy || favoritePending.includes(dancer.id) || (!dancer.profileHref && !favorite)} onClick={() => void onFavorite(dancer)}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" /></svg></button>
-            {onWorkingAlert && <button type="button" className="vip-dancer-alert" aria-pressed={dancer.workingAlertsEnabled === true}
-              aria-label={`${dancer.workingAlertsEnabled ? "Turn off" : "Notify me:"} ${dancer.stage_name} working at ${venue.name}${dancer.workingAlertsEnabled ? " alerts" : ""}`}
-              title={dancer.workingAlertsEnabled ? `Turn off working alerts at ${venue.name}` : `Notify me when working at ${venue.name}`}
-              disabled={busy || alertPending.includes(dancer.id) || (!dancer.workingAlertsEnabled && (unavailable || !dancer.profileHref))}
-              onClick={() => void onWorkingAlert(dancer)}><NotificationIcon notification={{ icon: "bell" }} /></button>}
           </article>;
-        })}</fieldset></div>
+        })}</fieldset></div>}
         {!visible.length && <div className="vip-empty"><p>{!dancers.length ? "No dancers at this club yet." : search || requestableOnly ? "No dancers match these filters." : filter === "favorites" ? "Save dancers with the heart to see your favorites here." : filter === "previous" ? "Dancers you’ve requested at this venue will appear here." : filter === "selected" && !draft.selected.length ? "Select dancers to build your request." : "No dancers match these filters."}</p>{dancers.length > 0 && <button type="button" onClick={() => { setSearch(""); setFilter("all"); setRequestableOnly(false); }}>Show club dancers</button>}</div>}
         <small className="vip-roster-note">Working now describes current check-in status. Availability for your visit is confirmed by the venue.</small>
       </section>

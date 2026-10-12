@@ -77,16 +77,25 @@ test('late bell responses cannot change another club or account, and unmount abo
   }
 });
 
-test('card bells expose their state and remain mutable for unavailable subscribed dancers',()=>{
+test('dancer photos have no bells and Notify me provides separate working-alert settings',()=>{
   const changes=[];
   const roster=[dancer,{...dancer,id:'past',canRequest:false,profileHref:null,favorite:false,workingAlertsEnabled:true}];
   const ui=plannerHarness({dancers:roster,onWorkingAlert:async d=>changes.push(d.id)});
-  const bell=()=>ui.nodes().find(n=>n.props?.className==='vip-dancer-alert');
-  assert.equal(bell().props['aria-pressed'],false);assert.match(bell().props['aria-label'],/Notify me: Aria working at/);
-  bell().props.onClick();assert.deepEqual(changes,['aria']);
-  ui.filter('Notify me');assert.equal(ui.nodes().filter(n=>n.type==='article').length,1);
-  assert.equal(bell().props.disabled,false);assert.equal(bell().props['aria-pressed'],true);
-  ui.props.alertPending=['past'];ui.render();assert.equal(bell().props.disabled,true);
+  const options=()=>ui.nodes().filter(n=>n.props?.className==='vip-working-alert-option');
+  const checkbox=index=>ui.nodes(options()[index]).find(n=>n.type==='input');
+  assert.doesNotMatch(renderToStaticMarkup(ui.tree()),/vip-dancer-alert|data-notification-icon="bell"/);
+  assert.equal(options().length,0);
+  assert.ok(ui.nodes().some(n=>n.props?.className==='vip-dancer-favorite'));
+  assert.ok(ui.nodes().some(n=>n.props?.className==='vip-dancer-select'));
+  ui.filter('Notify me');assert.equal(ui.nodes().filter(n=>n.type==='article').length,0);
+  assert.equal(options().length,2);
+  assert.equal(checkbox(0).props.checked,false);assert.equal(checkbox(0).props.disabled,false);
+  checkbox(0).props.onChange();assert.deepEqual(changes,['aria']);
+  assert.equal(checkbox(1).props.checked,true);assert.equal(checkbox(1).props.disabled,false);
+  ui.props.alertPending=['past'];ui.render();assert.equal(checkbox(1).props.disabled,true);
+  ui.search('missing');assert.equal(options().length,0);ui.search('');
+  ui.props.busy=true;ui.render();checkbox(0).props.onChange();assert.deepEqual(changes,['aria']);
+  ui.props.busy=false;
   ui.props.alertPending=[];ui.props.dancers=roster.map(d=>({...d,workingAlertsEnabled:false}));ui.filter('This club');
   assert.equal(filterVipDancers(ui.props.dancers,'','alerts',[]).length,0);
   assert.equal(isVipFavorite({...dancer,favorite:false,following:true}),false);

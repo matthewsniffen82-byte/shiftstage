@@ -26,7 +26,7 @@ export function vipDestination(hash: string): VipDashboardView {
   return VIP_DESTINATIONS.find(destination => destination.id === id)?.id || "overview";
 }
 
-export function filterVipDancers(dancers: VipDancer[], search: string, filter: VipDancerFilter, selected: string[]) {
+export function filterVipDancers(dancers: VipDancer[], search: string, filter: VipDancerFilter | null, selected: string[]) {
   const terms = search.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
   return dancers.filter(dancer => (filter !== "working" || dancer.working_now)
     && (filter !== "all" || dancer.canRequest !== false || dancer.previouslyRequested)
