@@ -21,7 +21,7 @@ test('the production Echo House identity gets samples and other venue identities
     assert.equal(demo.isVenueDashboardDemo(profile), false);
   }
   const panel = read('app/dashboard/VenueDashboardPanels.tsx');
-  assert.match(panel, /import \{ isVenueDashboardDemo \} from "@\/src\/lib\/dancr\/venue-dashboard-demo"/);
+  assert.match(panel, /import \{ isVenueDashboardDemo, withDemoWorkingRoster \} from "@\/src\/lib\/dancr\/venue-dashboard-demo"/);
   assert.match(panel, /demoComparisons=\{isVenueDashboardDemo\(profile\)\}/);
 });
 
@@ -46,6 +46,43 @@ test('all periods populate eight dancers, with Tonight awaiting enough checkout 
     for (const section of ['guestList', 'rides', 'vip', 'tables', 'contacts', 'roster', 'deals', 'team', 'notifications', 'support']) assert.ok(data[section].length > 0, section);
   }
   assert.ok(new Set(overall).size > 1, 'periods demonstrate different results');
+});
+
+test('Echo working-now results use the dashboard roster once per dancer in every reporting period', () => {
+  const shifts = ['internal', 'external', 'both', 'unknown', 'inactive', 'both', 'nested'].map(dancerId => ({ dancerId }));
+  shifts.push({ dancerId: '' }, {});
+  const affiliations = [
+    { dancerId: 'internal', status: 'active', internalVisible: true, externalVisible: false },
+    { dancerId: 'external', status: 'active', internalVisible: false, externalVisible: true },
+    { dancerId: 'both', status: 'active', internalVisible: true, externalVisible: true },
+    { dancerId: 'inactive', status: 'revoked', internalVisible: true, externalVisible: true },
+    { dancer: { id: 'nested' }, status: 'active', internalVisible: true, externalVisible: true },
+    { dancerId: 'not-working', status: 'active', internalVisible: true, externalVisible: true },
+  ];
+  for (const period of Object.keys(demo.DEMO_PERIODS)) {
+    const { report } = demo.createVenueDashboardDemo(period, now);
+    const before = structuredClone(report);
+    const result = demo.withDemoWorkingRoster(report, echo, shifts, affiliations);
+    assert.deepEqual(result.automatic.liveRoster, { total: 6, internal: 1, external: 1, both: 2, unknown: 2 });
+    assert.equal(result.automatic.current, report.automatic.current);
+    assert.equal(result.automatic.previous, report.automatic.previous);
+    assert.equal(result.automatic.liveAsOf, report.automatic.liveAsOf);
+    assert.equal(result.performance, report.performance);
+    assert.deepEqual(report, before, 'the authorized report is not mutated');
+    assert.deepEqual(demo.withDemoWorkingRoster(report, echo, [], affiliations).automatic.liveRoster,
+      { total: 0, internal: 0, external: 0, both: 0, unknown: 0 }, 'an empty roster stays empty');
+  }
+  const panel = read('app/dashboard/VenueDashboardPanels.tsx');
+  assert.match(panel, /report=\{withDemoWorkingRoster\(analytics\.valueReport as VenueValueReport, profile, workingNow, initialAffiliations as VenueDancerAffiliation\[\]\)\}/);
+});
+
+test('demo working roster never replaces another venue report or creates missing analytics', () => {
+  const { report } = demo.createVenueDashboardDemo('30d', now);
+  for (const profile of [undefined, null, {}, { ...echo, id: 'real-venue' }, { ...echo, slug: 'real-club' }]) {
+    assert.equal(demo.withDemoWorkingRoster(report, profile, [{ dancerId: 'demo' }], []), report);
+  }
+  const missing = { ...report, automatic: undefined };
+  assert.equal(demo.withDemoWorkingRoster(missing, echo, [{ dancerId: 'demo' }], []), missing);
 });
 
 test('queue totals match the visible sample records and stay live independently of the historical period', () => {

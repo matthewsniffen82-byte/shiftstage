@@ -2,11 +2,32 @@ import type { DancerPerformance, VenuePerformanceCounts, VenueValueReport, Venue
 import type { DancerScorePeriod } from "./venue-dancer-scores";
 import type { VenueOperations } from "./venue-operations";
 import type { HairColor } from "./hair-color";
+import type { VenueDancerAffiliation } from "./venue-roster";
 
 // This selects a fictional presentation, never permission to access or write venue data.
 export function isVenueDashboardDemo(profile: Record<string, unknown> | null | undefined) {
   // Echo House retains its original database slug after the fictional rebrand.
   return profile?.id === "260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af" && profile.slug === "talk-of-the-town";
+}
+
+/** Echo's locked demo check-ins have no NFC tag, so use its existing dashboard roster. */
+export function withDemoWorkingRoster(
+  report: VenueValueReport,
+  profile: Record<string, unknown> | null | undefined,
+  workingNow: Array<Record<string, unknown>>,
+  affiliations: VenueDancerAffiliation[],
+): VenueValueReport {
+  if (!isVenueDashboardDemo(profile) || !report.automatic) return report;
+  const members = new Map(affiliations.map(member => [member.dancerId || member.dancer?.id, member]));
+  const dancerIds = new Set(workingNow.map(shift => shift.dancerId).filter((id): id is string => typeof id === "string" && id.length > 0));
+  const liveRoster = { total: dancerIds.size, internal: 0, external: 0, both: 0, unknown: 0 };
+  for (const dancerId of dancerIds) {
+    const member = members.get(dancerId);
+    const internal = member?.status === "active" && member.internalVisible === true;
+    const external = member?.status === "active" && member.externalVisible === true;
+    liveRoster[internal && external ? "both" : internal ? "internal" : external ? "external" : "unknown"]++;
+  }
+  return { ...report, automatic: { ...report.automatic, liveRoster } };
 }
 
 export const DEMO_PERIODS = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
