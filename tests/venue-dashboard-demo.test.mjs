@@ -106,11 +106,11 @@ const jsx = require('react/jsx-runtime');
 const profileDependencies = { VenueRosterProfileButton: ({ dancerId, stageName, children, className }) => React.createElement('button', {
   type: 'button', 'data-profile-id': dancerId, 'aria-label': `View ${stageName} profile`, className,
 }, children) };
-function component(file, dependencies = {}, extra = '') {
+function component(file, dependencies = {}, extra = '', globals = {}) {
   const state = []; let cursor = 0;
   const exports = {};
   vm.runInNewContext(ts.transpileModule(read(file) + extra, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText,
-    { exports, Date, document: { getElementById: () => null }, require(name) {
+    { exports, Date, document: { getElementById: () => null }, ...globals, require(name) {
       if (name === 'react/jsx-runtime') return jsx;
       if (name === 'react') return { useState(initial) { const i = cursor++; if (!(i in state)) state[i] = typeof initial === 'function' ? initial() : initial; return [state[i], value => { state[i] = typeof value === 'function' ? value(state[i]) : value; }]; },
         useMemo: callback => callback(), useEffect() {} };
@@ -179,6 +179,45 @@ test('demo workspace supports all tabs, period changes, filtering, and real repo
   assert.equal(nodes(rowRender({ rows }, 'DemoRows')).filter(node => node.type === 'li').length, 1);
   tree.find(node => node.type === 'input').props.onChange({ target: { value: 'no match' } });
   assert.match(renderToStaticMarkup(rowRender({ rows }, 'DemoRows')), /No sample records match/);
+});
+
+test('Echo House table QR entry leaves demo for recorded data and preserves the dashboard URL', () => {
+  const window = { location: new URL('https://example.invalid/dashboard/venue?tab=venue'), history: { state: { saved: true } } };
+  const replacements = [];
+  window.history.replaceState = (state, title, path) => {
+    replacements.push({ state, title, path });
+    window.location = new URL(path, window.location);
+  };
+  const dependencies = { '@/src/lib/dancr/venue-dashboard-demo': demo, 'next/dynamic': { default: () => 'DemoDashboard' } };
+  const render = component('app/dashboard/VenueDashboardDemoSwitch.tsx', dependencies, '', { window });
+  const props = { profile: echo, workingNow: [], children: React.createElement('LiveDashboard') };
+  const sample = nodes(render(props)).find(node => node.type === 'DemoDashboard');
+  sample.props.onOpenTableQrCodes();
+  const tree = nodes(render(props));
+  assert.ok(tree.some(node => node.type === 'LiveDashboard'));
+  assert.ok(!tree.some(node => node.type === 'DemoDashboard'));
+  assert.ok(tree.some(node => node.props.children === 'Recorded data'));
+  assert.equal(tree.find(node => node.type === 'input').props.checked, false);
+  assert.equal(window.location.href, 'https://example.invalid/dashboard/venue?tab=venue#table-qr-codes');
+  assert.equal(replacements[0].state, window.history.state);
+  const reload = component('app/dashboard/VenueDashboardDemoSwitch.tsx', dependencies, '', { window });
+  assert.ok(nodes(reload(props)).some(node => node.type === 'LiveDashboard'), 'QR deep links stay in recorded data on refresh');
+});
+
+test('demo table QR entry precedes the roster and explicitly opens recorded tools without sample mutations', () => {
+  const render = component('app/dashboard/VenueDemoDashboard.tsx', {
+    '@/src/lib/dancr/venue-dashboard-demo': demo, './VenueDashboardIdentity': {}, './VenueTonightOverview': {}, './VenueSetupChecklist': {}, './VenueValueAnalytics': {},
+  });
+  let opens = 0;
+  const panel = nodes(render({ workingNow: [], onOpenTableQrCodes: () => { opens++; } })).find(node => node.props.id === 'demo-roster');
+  const entry = panel.props.children[0];
+  const button = nodes(entry).find(node => node.type === 'button');
+  assert.equal(button.props.children, 'Table QR codes');
+  assert.match(button.props.title, /leaves demo/);
+  assert.ok(nodes(entry).some(node => node.props.children === 'Recorded data'));
+  button.props.onClick();
+  assert.equal(opens, 1);
+  assert.equal(panel.props.children[1].props.id, 'venue-dancer-roster');
 });
 
 test('demo layout uses constrained mobile tracks and no real operation or contact links', () => {

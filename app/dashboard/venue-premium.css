@@ -86,7 +86,7 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
   overflow: visible;
 }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue [hidden] { display: none !important; }
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-dashboard-section, .venue-roster-workspace, #table-requests) { scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 142px); }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-dashboard-section, .venue-roster-workspace, #table-requests, #table-qr-codes) { scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 142px); }
 
 /* Peer surfaces share an edge, radius and padding; layout wrappers remain flat. */
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.info-panel, .venue-workspace-summary, .venue-publication-panel, .venue-tv-panel, .venue-nfc-roster, .venue-roster-stickers, .ir-panel, .venue-value-breakdown, .venue-supporting-disclosure, .venue-value-methodology) {

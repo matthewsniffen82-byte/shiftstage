@@ -39,7 +39,7 @@ function notifyPublicVenuePublication() {
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"].includes(sectionId)) return "tonight";
   if (sectionId === "venue-overview") return "business";
-  if (["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests"].includes(sectionId)) return "roster";
+  if (["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests", "table-qr-codes"].includes(sectionId)) return "roster";
   if (["venue-publication", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }
@@ -122,8 +122,8 @@ export function VenuePanel({
       setActiveWorkspace(workspace);
       if (sectionId === "venue-working-now") setRosterWorkingOnly(true);
       else if (sectionId === "venue-dancer-roster") setRosterWorkingOnly(false);
-      // The inbox opens itself once its request data has loaded.
-      if (sectionId === "table-requests") return;
+      // Internal tools open themselves once their authorized data has loaded.
+      if (sectionId === "table-requests" || sectionId === "table-qr-codes") return;
       window.cancelAnimationFrame(frame);
       frame = window.requestAnimationFrame(() => {
         if (window.location.hash.slice(1) !== sectionId) return;

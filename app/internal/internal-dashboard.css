@@ -36,6 +36,14 @@ body .ir-staff .ir-profile-link > span:last-child { color: #b8b5c2; font-size: 1
 body .ir-staff .ir-operations { gap: 12px; margin-top: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 body .ir-staff .ir-panel { min-width: 0; padding: 12px; border-color: #34343c; border-radius: 12px; background: #08080b; }
 body .ir-staff .ir-panel h2 span { margin-left: 4px; font-size: 12px; }
+body .ir-staff .ir-table-tools { grid-column: 1 / -1; }
+body .ir-staff .ir-table-tools > summary { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; list-style: none; color: #f4f3f7; }
+body .ir-staff .ir-table-tools > summary::-webkit-details-marker { display: none; }
+body .ir-staff .ir-table-tools > summary h2 { display: flex; flex: 1; align-items: center; gap: 9px; min-width: 0; margin: 0; font-size: 17px; letter-spacing: 0; }
+body .ir-staff .ir-table-tools > summary h2 svg { flex: 0 0 21px; color: #b697ed; }
+body .ir-staff .ir-table-tools > summary::after { content: "+"; flex: none; color: #b697ed; font-size: 22px; }
+body .ir-staff .ir-table-tools[open] > summary::after { content: "\2212"; }
+body .ir-staff .ir-table-tools > summary:hover { color: #d8cafa; }
 body .ir-staff :is(.ir-request, .ir-link) { gap: 8px; padding: 10px 0; border-color: #34343c; }
 body .ir-staff :is(.ir-request, .ir-link) > div:first-child { min-width: 0; flex: 1 1 140px; }
 body .ir-staff :is(.ir-request, .ir-link) strong { font-size: 13px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }

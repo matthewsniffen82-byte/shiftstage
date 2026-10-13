@@ -59,7 +59,7 @@ function SampleList({ rows }: { rows: Array<{ name: string; status: string; deta
   return <ul className="venue-demo-records">{rows.map(row => <li key={row.name}><div><strong>{row.name}</strong><span>{row.status}</span></div><p>{row.detail}</p></li>)}</ul>;
 }
 
-export default function VenueDemoDashboard({ workingNow, affiliations = [] }: { workingNow: Array<Record<string, unknown>>; affiliations?: Array<Record<string, unknown>> }) {
+export default function VenueDemoDashboard({ workingNow, affiliations = [], onOpenTableQrCodes }: { workingNow: Array<Record<string, unknown>>; affiliations?: Array<Record<string, unknown>>; onOpenTableQrCodes?: () => void }) {
   const [workspace, setWorkspace] = useState<Workspace>("tonight");
   const [guestTab, setGuestTab] = useState<GuestTab>("venue-guest-list");
   const [period, setPeriod] = useState<DancerScorePeriod>("30d");
@@ -128,6 +128,7 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [] }: { 
       </section>)}
     </section>
     <section id="demo-roster" role="tabpanel" aria-labelledby="demo-roster-tab" hidden={workspace !== "roster"}>
+      {onOpenTableQrCodes && <div className="venue-demo-table-tools"><button type="button" onClick={onOpenTableQrCodes} title="Open saved table QR codes (leaves demo)">Table QR codes</button><small>Recorded data</small></div>}
       <section id="venue-dancer-roster" className="venue-card-region" tabIndex={-1}><h2>Dancers</h2>
         <div className="venue-performance-tools"><label>Find a dancer<input type="search" value={rosterSearch} onChange={event => setRosterSearch(event.target.value)} /></label>
           <label>Roster<select value={workingOnly ? "working" : "all"} onChange={event => setWorkingOnly(event.target.value === "working")}><option value="all">All affiliated dancers</option><option value="working">Working now</option></select></label></div>

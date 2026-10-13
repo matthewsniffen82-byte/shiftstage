@@ -118,7 +118,7 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
   assert.match(dashboard, /\["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"\]\.includes\(sectionId\)\) return "tonight"/);
   assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
-  assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests"\]\.includes\(sectionId\)\) return "roster"/);
+  assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests", "table-qr-codes"\]\.includes\(sectionId\)\) return "roster"/);
   assert.match(dashboard, /"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "roster"\}[\s\S]*?aria-label="Dancers & tables"/);
   assert.doesNotMatch(venuePanel, /<a href="#venue-dancer-roster"/);
@@ -239,15 +239,13 @@ test("venue-facing NFC language explains the physical actions in plain language"
   assert.doesNotMatch(venueDealPanel, /cashier NFC stickers/);
 });
 
-test("venue roster rows pair each dancer avatar with compact confirmed access removal", () => {
-  assert.match(nfcPanel, /className="venue-nfc-dancer-identity"/);
+test("venue roster cards pair dancer photos with confirmed access removal in their details menu", () => {
+  assert.match(nfcPanel, /className="venue-dancer-card"/);
   assert.match(nfcPanel, /dancer\?\.avatarUrl/);
-  assert.match(nfcPanel, /data-dancer-avatar=""[\s\S]*?data-dancer-avatar-border=""/);
+  assert.match(nfcPanel, /className="venue-card-photo"/);
   assert.match(nfcPanel, /srcSet=\{dancer\.avatarSrcSet \|\| undefined\}/);
-  assert.match(nfcPanel, /className="venue-nfc-remove-access"/);
+  assert.match(nfcPanel, /<details className="venue-card-menu"[\s\S]*?className="venue-nfc-remove-access"[\s\S]*?<\/details>/);
   assert.match(nfcPanel, /window\.confirm\(`Remove \$\{dancerName\}/);
-  assert.match(nfcPanel, /\.venue-nfc-dancer\{display:grid;grid-template-columns:minmax\(0,1fr\) auto/);
-  assert.doesNotMatch(nfcPanel, /\.venue-nfc-dancer\{[^}]*flex-direction:column/);
 });
 
 test("authenticated MyDancr admins provision, disable, and replace physical NFC inventory", () => {

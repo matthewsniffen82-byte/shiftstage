@@ -36,13 +36,17 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   const states = [];
   const refs = [];
   const effects = [];
+  const latestEffects = [];
   const cleanups = [];
   const persisted = [];
   const replacements = [];
   const listeners = new Map();
   const documentListeners = new Map();
+  const elements = new Map();
+  class HTMLDetailsElement {}
   const document = {
     visibilityState: "visible",
+    getElementById: id => elements.get(id),
     addEventListener: (name, callback) => documentListeners.set(name, callback),
     removeEventListener: name => documentListeners.delete(name),
   };
@@ -50,18 +54,20 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   let refIndex = 0;
   let mounting = true;
   const exports = {};
+  const window = {
+    addEventListener: (name, callback) => listeners.set(name, callback),
+    removeEventListener: name => listeners.delete(name),
+    location: { hash: new URL(url).hash, href: url }, history: { state: null, replaceState: (_state, _title, path) => replacements.push(path) },
+    requestAnimationFrame: callback => schedule(callback, 0), cancelAnimationFrame: id => timers.delete(id),
+  };
   vm.runInNewContext(code, {
-    exports, fetch, document, Error, AbortController, URL, crypto: { randomUUID: () => `request-key-${++nextRequestKey}` },
+    exports, fetch, document, HTMLDetailsElement, Error, AbortController, URL, crypto: { randomUUID: () => `request-key-${++nextRequestKey}` },
     Date: class extends Date { static now() { return now; } },
     setTimeout: (callback, delay) => schedule(callback, delay),
     setInterval: (callback, delay) => schedule(callback, delay, true),
     clearTimeout: id => timers.delete(id),
     clearInterval: id => timers.delete(id),
-    window: {
-      addEventListener: (name, callback) => listeners.set(name, callback),
-      removeEventListener: name => listeners.delete(name),
-      location: { hash: "", href: url }, history: { state: null, replaceState: (_state, _title, path) => replacements.push(path) }, cancelAnimationFrame() {},
-    },
+    window,
     require(name) {
       if (name === "react/jsx-runtime") return require(name);
       if (name.endsWith(".css")) return {};
@@ -77,7 +83,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
           return refs[index];
         },
         useCallback: callback => callback,
-        useEffect: callback => { if (mounting) effects.push(callback); },
+        useEffect: callback => { latestEffects.push(callback); if (mounting) effects.push(callback); },
       };
       if (name === "../dashboard/VenueAdminUtilities") return { default: () => null };
       if (name === "./InternalRequestPushSettings") return { InternalRequestPushSettings: () => null };
@@ -95,12 +101,14 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   const render = () => {
     stateIndex = 0;
     refIndex = 0;
+    latestEffects.length = 0;
     const tree = exports[component]({ token, dancerId: dancer.id, stageName: dancer.stageName, ...props });
     mounting = false;
     return tree;
   };
   return {
-    exports, persisted, timers, render, replacements, listeners, documentListeners,
+    exports, persisted, timers, render, replacements, listeners, documentListeners, elements, HTMLDetailsElement, window,
+    runEffect: index => { cleanups.push(latestEffects[index]()); },
     focus: () => listeners.get("focus")?.(),
     pageshow: persisted => listeners.get("pageshow")?.({ persisted }),
     visibility: value => { document.visibilityState = value; documentListeners.get("visibilitychange")?.(); },
@@ -141,6 +149,86 @@ const refreshMessage = app => find(app.render(), node => node.props?.className =
 const textContent = tree => typeof tree === "string" || typeof tree === "number" ? String(tree)
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
 const requestStatusPanel = app => find(app.render(), node => node.props?.["aria-label"] === "Table request status");
+
+test("venue dashboard table QR tools precede requests and roster, retaining authorized create and print actions", async t => {
+  const calls = [];
+  const links = [{ id: 'table-1', kind: 'table', label: 'Table 7', token: 'active-table-token' }];
+  const app = harness(async (url, options) => {
+    calls.push({ url, options });
+    return response({ ...roster, role: 'owner', links, requests: [] });
+  }, { session: { accessToken: 'owner-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true, roster: 'DANCER ROSTER' } });
+  t.after(() => app.unmount()); await app.mount();
+  const operations = find(app.render(), node => node.props?.className === 'ir-operations');
+  const qr = operations.props.children[0];
+  assert.equal(qr.type, 'details');
+  assert.equal(qr.props.id, 'table-qr-codes');
+  assert.match(textContent(find(qr, node => node.type === 'summary')), /Table QR codes 1/);
+  assert.equal(find(qr, node => node.type === 'a' && textContent(node) === 'Open').props.href, '/internal/club/active-table-token');
+  assert.equal(find(qr, node => node.type === 'a' && textContent(node) === 'Print QR sign').props.href, '/internal/sign/active-table-token');
+  assert.ok(find(qr, node => node.type === 'button' && textContent(node) === 'Copy'));
+  assert.ok(find(qr, node => node.type === 'button' && textContent(node) === 'Revoke'));
+  assert.ok(textContent(operations).indexOf('Table QR codes') < textContent(operations).indexOf('Table requests'));
+  assert.ok(textContent(operations).indexOf('Table QR codes') < textContent(operations).indexOf('DANCER ROSTER'));
+  find(qr, node => node.type === 'input' && !node.props.name).props.onChange({ target: { value: 'Table 8' } });
+  find(app.render(), node => node.type === 'form' && node.props.className === 'ir-link-form').props.onSubmit({ preventDefault() {} });
+  await flush();
+  const mutation = calls.find(call => call.options.method === 'POST');
+  assert.equal(mutation.url, '/api/internal');
+  assert.equal(mutation.options.headers.authorization, 'Bearer owner-token');
+  assert.deepEqual(JSON.parse(mutation.options.body), { action: 'link_create', label: 'Table 8', kind: 'table' });
+});
+
+test("staff QR tools remain read-only and guest table links never expose venue QR management", async t => {
+  const data = { ...roster, role: 'staff', links: [{ id: 'table-1', label: 'Table 7', token: 'active-token' }] };
+  const app = harness(async () => response(data), { session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true } });
+  t.after(() => app.unmount()); await app.mount();
+  const qr = find(app.render(), node => node.props?.id === 'table-qr-codes');
+  assert.ok(qr);
+  assert.doesNotMatch(textContent(qr), /Add a table|Rename table|Revoke/);
+  assert.ok(find(qr, node => node.type === 'a' && textContent(node) === 'Print QR sign'));
+  const guest = harness(async () => response({ ...data, kind: 'table' }));
+  t.after(() => guest.unmount()); await guest.mount();
+  assert.equal(find(guest.render(), node => node.props?.id === 'table-qr-codes'), undefined);
+});
+
+test("empty venue table QR tools explain the empty state and allow owners to add a table", async t => {
+  const app = harness(async () => response({ ...roster, role: 'owner', links: [] }), {
+    session: { accessToken: 'owner-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true },
+  });
+  t.after(() => app.unmount()); await app.mount();
+  const qr = find(app.render(), node => node.props?.id === 'table-qr-codes');
+  assert.match(textContent(qr), /No table QR codes yet/);
+  assert.match(textContent(qr), /Add a table/);
+});
+
+test("dashboard QR deep link waits for authorized data, expands and focuses the table tools once", async t => {
+  const app = harness(async () => response({ ...roster, role: 'owner', links: [] }), {
+    url: 'https://example.invalid/dashboard/venue#table-qr-codes',
+    session: { accessToken: 'owner-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true },
+  });
+  t.after(() => app.unmount());
+  const panel = new app.HTMLDetailsElement();
+  const parent = new app.HTMLDetailsElement();
+  let focus = 0; let scroll = 0;
+  Object.assign(panel, { parentElement: parent, scrollIntoView: () => { scroll++; }, focus: () => { focus++; } });
+  app.elements.set('table-qr-codes', panel);
+  await app.mount();
+  assert.equal(focus, 0, 'initial render has no authorized table data');
+  app.render(); app.runEffect(1); await app.advance(0);
+  assert.equal(panel.open, true);
+  assert.equal(parent.open, true);
+  assert.equal(focus, 1);
+  assert.equal(scroll, 1);
+  app.render(); app.runEffect(1); await app.advance(0);
+  assert.equal(focus, 1, 'polling must not continually steal focus');
+  app.window.location.hash = '#table-requests';
+  app.listeners.get('hashchange')();
+  app.window.location.hash = '#table-qr-codes';
+  await app.advance(0);
+  assert.equal(focus, 1, 'stale animation frames do not open the previous section');
+  app.listeners.get('hashchange')(); await app.advance(0);
+  assert.equal(focus, 2, 'an explicit QR navigation can open the tools again');
+});
 
 test("staff table requests have a protected avatar and open the matching profile without mutating requests", async t => {
   const calls = [];
