@@ -136,10 +136,84 @@ test("live roster is labelled separately, only 7/30-day totals compare, and abse
   tree = render({ ...props, period: "all", periodStart: "1970-01-01T00:00:00Z" });
   assert.equal(tree.find(node => node.type === "DancerPerformance").props.period, "all");
   assert.equal(tree.find(node => node.props.className === "venue-value-dates").props.children, "All time");
-  assert.ok(!tree.some(node => typeof node.props.children === "string" && /vs prior period|Compared with|1970|Partial tracking/.test(node.props.children)));
+  assert.ok(!tree.some(node => typeof node.props.children === "string" && /vs prior period|Compared with|1970|Partial tracking|Recorded this period/.test(node.props.children)));
   tree = render({ ...props, report: { ...props.report, performance: undefined, automatic:undefined } });
   assert.ok(tree.some(node => node.props.role === "status" && node.props.children.includes("unavailable")));
   assert.ok(nodes(tree.find(node=>node.props.className==='venue-priority-metrics')).filter(node=>node.type==='strong').every(node=>node.props.children==='—'));
+});
+
+for (const period of ["7d", "30d"]) test(`${period} results use recorded-period copy until comparison history is complete`, () => {
+  const render = component("app/dashboard/VenueValueAnalytics.tsx", "default", "", valueDependencies);
+  const demo = createVenueDashboardDemo(period, new Date("2026-10-13T08:00:00Z"));
+  const props = { ...demo, timezone: "UTC" };
+  const priorityCards = tree => nodes(tree.find(node => node.props.className === "venue-priority-metrics"))
+    .filter(node => node.props.className === "metric");
+  const values = tree => priorityCards(tree).map(node => nodes(node).find(child => child.type === "strong").props.children);
+  const completeTree = render(props);
+  const completeValues = values(completeTree);
+  const baselineStart = 2 * Date.parse(demo.periodStart) - Date.parse(demo.periodEnd);
+  const incompleteStart = new Date(baselineStart + 1).toISOString();
+  demo.report.trackingStartedAt = incompleteStart;
+  demo.report.performance.resultsStartedAt = incompleteStart;
+  const tree = render(props);
+  assert.deepEqual(values(tree), completeValues, "incomplete comparison history must not change recorded totals");
+  assert.ok(priorityCards(tree).every(card => nodes(card).some(node => node.props.children === "Recorded this period")));
+  assert.ok(!tree.some(node => typeof node.props.children === "string" && /Partial tracking|vs prior period/.test(node.props.children)));
+
+  demo.report.trackingStartedAt = new Date(baselineStart).toISOString();
+  let cards = priorityCards(render(props));
+  assert.ok(nodes(cards[0]).some(node => typeof node.props.children === "string" && node.props.children.includes("vs prior period")));
+  assert.ok(nodes(cards[4]).some(node => node.props.children === "Recorded this period"), "presence keeps its own coverage boundary");
+  demo.report.performance.resultsStartedAt = demo.report.trackingStartedAt;
+  cards = priorityCards(render(props));
+  assert.ok(cards.every(card => nodes(card).some(node => typeof node.props.children === "string" && node.props.children.includes("vs prior period"))));
+  assert.ok(!cards.some(card => nodes(card).some(node => node.props.children === "Recorded this period")));
+});
+
+for (const period of ["7d", "30d"]) test(`${period} demo comparisons show numeric samples without changing totals or live comparisons`, () => {
+  const render = component("app/dashboard/VenueValueAnalytics.tsx", "default", "", valueDependencies);
+  const demo = createVenueDashboardDemo(period, new Date("2026-10-13T08:00:00Z"));
+  demo.report.trackingStartedAt = demo.periodEnd;
+  demo.report.performance.resultsStartedAt = demo.periodEnd;
+  const props = { ...demo, timezone: "UTC", demoComparisons: true };
+  const snapshot = JSON.stringify(demo.report);
+  const cards = tree => nodes(tree.find(node => node.props.className === "venue-priority-metrics")).filter(node => node.props.className === "metric");
+  const labels = tree => cards(tree).map(card => nodes(card).filter(node => node.type === "small").at(-1)?.props.children);
+  const tree = render(props);
+  assert.deepEqual(labels(tree), period === "30d"
+    ? ["+18% vs prior period", "+3.6 percentage points vs prior period", "+24% vs prior period", "+17% vs prior period", "+9% vs prior period", "+4.8 percentage points vs prior period"]
+    : ["+12% vs prior period", "+2.1 percentage points vs prior period", "+16% vs prior period", "+11% vs prior period", "+6% vs prior period", "+3.2 percentage points vs prior period"]);
+  assert.ok(tree.some(node => node.props.children === "Demo comparison figures"));
+  assert.equal(JSON.stringify(demo.report), snapshot);
+  const live = render({ ...props, demoComparisons: false });
+  assert.ok(labels(live).every(label => label === "Recorded this period"));
+  assert.ok(!live.some(node => node.props.children === "Demo comparison figures"));
+  for (const value of ["tonight", "all"]) {
+    const other = render({ ...props, period: value });
+    assert.ok(!other.some(node => typeof node.props.children === "string" && /vs prior period|Demo comparison figures/.test(node.props.children)));
+  }
+  demo.report.trackingStartedAt = "2026-01-01";
+  demo.report.performance.resultsStartedAt = "2026-01-01";
+  assert.deepEqual(labels(render(props)), labels(render({ ...props, demoComparisons: false })));
+  assert.ok(!render(props).some(node => node.props.children === "Demo comparison figures"));
+});
+
+test("demo comparisons do not invent activity or missing rates", () => {
+  const render = component("app/dashboard/VenueValueAnalytics.tsx", "default", "", valueDependencies);
+  const demo = createVenueDashboardDemo("30d", new Date("2026-10-13T08:00:00Z"));
+  demo.report.trackingStartedAt = demo.periodEnd;
+  demo.report.performance.resultsStartedAt = demo.periodEnd;
+  for (const key of Object.keys(demo.report.automatic.current)) if (typeof demo.report.automatic.current[key] === "number") demo.report.automatic.current[key] = 0;
+  demo.report.automatic.previous = null;
+  const props = { ...demo, timezone: "UTC", demoComparisons: true };
+  const tree = render(props);
+  const cards = nodes(tree.find(node => node.props.className === "venue-priority-metrics")).filter(node => node.props.className === "metric");
+  assert.deepEqual(cards.map(card => nodes(card).find(node => node.type === "strong").props.children), ["0", "—", "0", "0", "0", "—"]);
+  assert.ok(!tree.some(node => typeof node.props.children === "string" && node.props.children.startsWith("+")));
+  assert.equal(cards.filter(card => nodes(card).some(node => node.props.children === "0% vs prior period")).length, 4);
+  demo.report.automatic = undefined;
+  const unavailable = render(props);
+  assert.ok(!unavailable.some(node => typeof node.props.children === "string" && /vs prior period|Demo comparison figures/.test(node.props.children)));
 });
 
 const dancerResults = (overrides = {}) => ({ checkIns: 2, checkOuts: 1, lastCheckInAt: null, lastCheckOutAt: null,

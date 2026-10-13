@@ -16,6 +16,7 @@ const VenueNfcTagPanel = dynamic(() => import("./VenueNfcTagPanel"));
 
 import VenueValueAnalytics from "./VenueValueAnalytics";
 import type { VenueValueReport } from "@/src/lib/dancr/venue-analytics";
+import { isVenueDashboardDemo } from "@/src/lib/dancr/venue-dashboard-demo";
 import { useVenueOperations } from "./useVenueOperations";
 import VenueTonightOverview from "./VenueTonightOverview";
 import VenueSetupChecklist from "./VenueSetupChecklist";
@@ -384,6 +385,7 @@ export function VenuePanel({
           <h2 className="venue-icon-heading" id="venue-results-heading"><VenueDashboardIcon section="analytics" />Results</h2>
           {analytics?.valueReport ? <VenueValueAnalytics
             report={analytics.valueReport as VenueValueReport}
+            demoComparisons={isVenueDashboardDemo(profile)}
             period={analytics.period === "tonight" || analytics.period === "7d" || analytics.period === "30d" || analytics.period === "all" ? analytics.period : analyticsPeriod}
             periodStart={String(analytics.periodStart)}
             periodEnd={String(analytics.periodEnd)}

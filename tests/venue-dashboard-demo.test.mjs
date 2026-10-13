@@ -20,6 +20,9 @@ test('the production Echo House identity gets samples and other venue identities
     { ...echo, slug: 'echo-house' }, { name: 'Echo House' }, { slug: 'talk-of-the-town' }]) {
     assert.equal(demo.isVenueDashboardDemo(profile), false);
   }
+  const panel = read('app/dashboard/VenueDashboardPanels.tsx');
+  assert.match(panel, /import \{ isVenueDashboardDemo \} from "@\/src\/lib\/dancr\/venue-dashboard-demo"/);
+  assert.match(panel, /demoComparisons=\{isVenueDashboardDemo\(profile\)\}/);
 });
 
 test('all periods populate eight dancers, with Tonight awaiting enough checkout days to rank', () => {
