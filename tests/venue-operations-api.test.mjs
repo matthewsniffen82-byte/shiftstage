@@ -6,7 +6,6 @@ import ts from 'typescript';
 import { PublicApiError, resolveApiError } from '../src/lib/api-error-policy.ts';
 import { pickupUuid } from '../src/lib/dancr/pickup-validation.ts';
 import { RIDE_STATUSES } from '../src/lib/dancr/venue-operations.ts';
-import { venuePassScanPath } from '../src/lib/dancr/venue-pass-scan.ts';
 import { DASHBOARD_SESSION_KEY, requestDashboardJson } from '../app/dashboard/dashboard-session.ts';
 const requestId='97000000-0000-4000-8000-000000000020';
 function fixture(route,{role='owner',signedIn=true,rpcError=null}={}){
@@ -49,12 +48,6 @@ test('ride writes reject staff, revoked access, malformed identifiers and invali
     assert.equal(f.calls.some(c=>c[0]==='rpc'),false);
   }
 });
-test('scanner accepts only same-site admission verification paths',()=>{
-  const origin='https://mydancr.com',path=`/deals/redeem/${requestId}`;
-  assert.equal(venuePassScanPath(origin+path,origin),path);
-  for(const value of ['https://evil.test'+path,'javascript:alert(1)',origin+'/vip/invite/'+requestId,origin+'/deals/redeem/short',`https://user:pass@mydancr.com${path}`,origin+path+'/extra'])assert.equal(venuePassScanPath(value,origin),null);
-});
-
 // Exercise the real dashboard response contract with in-memory route responses only.
 function dashboardFixture(t, response) {
   const stored = new Map([[DASHBOARD_SESSION_KEY, JSON.stringify({ accessToken: 'test-access', account: { role: 'venue' } })]]);

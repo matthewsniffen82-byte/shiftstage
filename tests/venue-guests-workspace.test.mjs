@@ -52,7 +52,6 @@ function fixture(component, props, request = async () => ({}), hash = "") {
     react, "react/jsx-runtime": require("react/jsx-runtime"),
     "next/dynamic": { default: loader => loader.toString().match(/\.\/(\w+)/)[1] },
     "next/link": { default: "a" }, "./venue-guests.css": {}, "./venue-customers.css": {},
-    "./VenuePassScanner": { default: () => null },
     "@/src/lib/dancr/venue-operations": { RIDE_STATUSES, notifyVenueOperationsChanged() {} },
     "./VenueDashboardIdentity": { VenueDashboardIcon: () => null },
     "./dashboard-session": { requestDashboardJson: send }, "../pickups/pickup-session": { requestPickupJson: send },

@@ -5,9 +5,6 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { position:relative; }
 .venue-tab-count { display:inline-grid; place-items:center; min-width:20px; padding:2px 5px; border-radius:7px; background:#402659; color:#fff; font-size:11px; font-variant-numeric:tabular-nums; }
 .venue-tonight-overview { display:grid; gap:14px; margin-bottom:18px; }
-.venue-pass-scanner { display:grid; gap:10px; justify-items:start; }
-.venue-pass-scanner video { width:min(100%,360px); aspect-ratio:1; object-fit:cover; border-radius:12px; background:#000; }
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue button.venue-scan-primary { --venue-control-face:#35106f; --venue-control-edge:#9470c1; }
 .venue-tonight-overview .venue-section-heading { flex-wrap:wrap; gap:6px; }
 .venue-tonight-overview .venue-section-heading>span { color:#b8adc7; font-size:12px; }
 .venue-queue-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }

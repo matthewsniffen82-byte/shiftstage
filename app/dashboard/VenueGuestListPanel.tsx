@@ -5,7 +5,6 @@ import { requestDashboardJson } from "./dashboard-session";
 import { clubArrivalLabel } from "@/src/lib/dancr/club-deal-transportation";
 import type { VenueGuestListEntry } from "@/src/lib/dancr/guest-list";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
-import VenuePassScanner from "./VenuePassScanner";
 
 export default function VenueGuestListPanel({ refreshKey, active = true, timezone }: { refreshKey?: string | null; active?: boolean; timezone?: string }) {
   const [entries, setEntries] = useState<VenueGuestListEntry[]>([]);
@@ -48,8 +47,7 @@ export default function VenueGuestListPanel({ refreshKey, active = true, timezon
   return <div className="venue-guest-list">
     <header className="venue-section-heading"><h2 className="venue-icon-heading" id="venue-guest-list-heading"><VenueDashboardIcon section="guests" />Guest list</h2>
       <button className="venue-utility" type="button" aria-label="Refresh guest list" disabled={busy} onClick={() => void load()}>{busy ? "Loading…" : "Refresh"}</button></header>
-    <p>Each pass admits one guest. Scan their pass when they arrive, then verify entry requirements.</p>
-    <VenuePassScanner active={active} />
+    <p>View guests and their admission status.</p>
     <form className="venue-search-form" role="search" onSubmit={event => { event.preventDefault(); setSearch(input.trim()); }}>
       <label>Find a guest<input type="search" maxLength={100} value={input} onChange={event => setInput(event.target.value)} placeholder="Name, phone or email" /></label><button type="submit">Search</button>
       {(search || input) && <button type="button" onClick={() => { setInput(""); setSearch(""); }}>Clear</button>}
