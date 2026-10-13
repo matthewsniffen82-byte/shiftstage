@@ -23,13 +23,13 @@ before(async () => {
     create table qr_redemptions(id uuid primary key,venue_id uuid,dancer_id uuid,admission_pass_version int,status text,generated_at timestamptz,redeemed_at timestamptz,redemption_token text,expires_at timestamptz,source_type text,voided_at timestamptz);
     create table mydancr_tv_videos(id uuid primary key,venue_id uuid,dancer_id uuid,caption text,venue_tag_status text,published_at timestamptz,expires_at timestamptz,status text);
     create table mydancr_tv_events(id uuid default gen_random_uuid(),video_id uuid,event_type text,occurred_at timestamptz);
-    create table venue_vip_requests(id uuid primary key,venue_id uuid,user_id uuid,dancers jsonb,status text,starts_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());
+    create table venue_vip_requests(id uuid primary key,venue_id uuid,user_id uuid,reviewed_by uuid,dancers jsonb,status text,starts_at timestamptz,created_at timestamptz default now(),updated_at timestamptz default now());
     create table internal_roster_requests(id uuid primary key,venue_id uuid,dancer_id uuid,status text,created_at timestamptz default now(),updated_at timestamptz default now());
     create table venue_guest_list_entries(pass_id uuid primary key,venue_id uuid,created_at timestamptz);
     grant usage on schema public to service_role; grant select,insert,update,delete on all tables in schema public to service_role;`);
   const roster = read('20260928090100_mydancr_internal_roster.sql');
   await db.exec(roster.slice(roster.indexOf('create function public.internal_roster_access('), roster.indexOf('create function public.internal_roster_request(')));
-  for (const migration of ['20260916190000_venue_subscription_analytics.sql', '20260916190100_report_current_pickup_receipts.sql', '20261011232707_venue_performance_channels.sql', '20261012225142_venue_dancer_results.sql', '20261013000159_venue_all_time_analytics.sql']) await db.exec(read(migration));
+  for (const migration of ['20260916190000_venue_subscription_analytics.sql', '20260916190100_report_current_pickup_receipts.sql', '20261011232707_venue_performance_channels.sql', '20261012225142_venue_dancer_results.sql', '20261013000159_venue_all_time_analytics.sql', '20261013011729_automatic_dancer_score_inputs.sql']) await db.exec(read(migration));
   await db.query("insert into app_users values($1,'venue','active'),($2,'venue','active'),($3,'venue','active'),($4,'customer','active')", [id(50),id(51),id(52),id(53)]);
   await db.query('insert into venues(id,owner_user_id) values($1,$2),($3,$4)', [id(1),id(50),id(2),id(52)]);
   await db.query("insert into venue_team_members values($1,$2,'active','staff')", [id(1),id(51)]);
@@ -145,4 +145,27 @@ test('all-time reports remain service-only and arbitrary long or invalid ranges 
     await db.exec(`set role ${role}`); await rejected(() => call('1970-01-01'),/permission denied/); await db.exec('reset role');
   }
   await db.exec('set role service_role'); await call('1970-01-01'); await db.exec('reset role');
+});
+
+test('automatic VIP scoring excludes customer withdrawals and duplicate selections, not staff booking decisions', async () => {
+  const insert = async (n, user, status, reviewer, ago, venue=1, dancers=[10,10]) => db.query(
+    "insert into venue_vip_requests(id,venue_id,user_id,reviewed_by,dancers,status,starts_at,created_at) values($1,$2,$3,$4,$5,$6,now(),now()-$7::interval)",
+    [id(n),id(venue),id(user),reviewer ? id(reviewer) : null,JSON.stringify(dancers.map(n=>({id:id(n)}))),status,ago]);
+  await insert(3000,53,'cancelled',53,'10 days'); // Withdrawn history is not a repeat visit/request.
+  await insert(3001,54,'declined',50,'10 days'); // Staff decision preserves expressed customer interest.
+  await insert(3002,53,'pending',null,'1 day');
+  await insert(3003,54,'confirmed',50,'1 day');
+  await insert(3004,55,'cancelled',50,'1 day'); // Staff cancellation still represents demand.
+  await insert(3005,56,'cancelled',56,'1 day'); // Customer withdrawal does not.
+  await insert(3006,57,'pending',null,'1 day',2);
+  let r=await report(); let vip=r.dancers.find(d=>d.id===id(10)).vip;
+  assert.equal(vip.requests,4); assert.equal(vip.scoringRequests,3);
+  assert.equal(vip.scoringUniqueRequesters,3); assert.equal(vip.scoringRepeatRequesters,1);
+  assert.equal(vip.customerWithdrawals,1);
+  assert.equal(JSON.stringify(r).includes(id(53)),false, 'guest identity must not leave the aggregate');
+  await db.query("update venue_vip_requests set status='declined',reviewed_by=$1 where id=$2",[id(50),id(3002)]);
+  r=await report(); assert.equal(r.dancers.find(d=>d.id===id(10)).vip.scoringRequests,3);
+  await db.query("update venue_vip_requests set status='cancelled',reviewed_by=user_id where id=$1",[id(3003)]);
+  r=await report(); vip=r.dancers.find(d=>d.id===id(10)).vip;
+  assert.equal(vip.scoringRequests,2); assert.equal(vip.scoringRepeatRequesters,0);
 });

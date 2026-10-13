@@ -2,10 +2,16 @@ import type { DancerPerformance } from "./venue-analytics";
 import type { VenueDashboardAnalytics } from "./types";
 
 export type DancerScorePeriod = VenueDashboardAnalytics["period"];
-export type DancerScoreKey = "overall" | "checkIns" | "requests" | "profile";
+export const DANCER_SCORE_LABELS = {
+  overall: "Overall Performance", checkIns: "Check-in Activity", internal: "Internal Table Requests",
+  vip: "VIP Requests", profile: "Profile Interest", conversions: "Verified Entry Conversions",
+} as const;
+export const DANCER_SCORE_CATEGORIES = ["checkIns", "internal", "vip", "profile", "conversions"] as const;
+export type DancerScoreCategory = typeof DANCER_SCORE_CATEGORIES[number];
+export type DancerScoreKey = "overall" | DancerScoreCategory;
 export type DancerScoreSort = DancerScoreKey | "name";
-export const DANCER_SCORE_VERSION = "1";
-export const DANCER_SCORE_WEIGHTS = { checkIns: 15, requests: 45, profile: 40 } as const;
+export const DANCER_SCORE_VERSION = "2";
+export const DANCER_SCORE_WEIGHTS = { checkIns: 15, internal: 25, vip: 20, profile: 10, conversions: 30 } as const;
 export const DANCER_SCORE_MIN_PEERS = 3;
 export const DANCER_SCORE_MINIMUMS = {
   tonight: { hours: 1, requests: 3, claims: 3, actions: 10 },
@@ -14,7 +20,12 @@ export const DANCER_SCORE_MINIMUMS = {
   all: { hours: 4, requests: 10, claims: 10, actions: 30 },
 } as const;
 
-export type DancerScore = { value: number | null; reason: string | null };
+export type DancerScore = {
+  value: number | null;
+  reason: string | null;
+  confidence: "early" | "established" | null;
+  evidence: string;
+};
 export type ScoredDancer = {
   dancer: DancerPerformance;
   scores: Record<DancerScoreKey, DancerScore>;
@@ -22,86 +33,87 @@ export type ScoredDancer = {
   rankedCount: number;
 };
 
-const actionWeights = { dancer_profile: 1, club_page: 2, directions: 3, going: 4, free_entry: 4, transport: 3 } as const;
+// Only events explicitly attributed to both the dancer and this venue.
+const interestWeights = { dancer_profile: 1, club_page: 2, directions: 3, going: 3, free_entry: 3, transport: 3, follow: 2, share_completed: 2 } as const;
 const finite = (value: unknown): number | null => typeof value === "number" && Number.isFinite(value) && value >= 0 ? value : null;
-// SQL channel objects are sparse: omitted event types mean no recorded events.
 const count = (value: unknown) => value === undefined ? 0 : finite(value);
 const rounded = (value: number) => Math.round(Math.min(100, Math.max(0, value)));
-const available = (value: number): DancerScore => ({ value: rounded(value), reason: null });
-const unavailable = (reason: string): DancerScore => ({ value: null, reason });
+const available = (value: number, early: boolean, evidence: string): DancerScore => ({ value: rounded(value), reason: null, confidence: early ? "early" : "established", evidence });
+const unavailable = (reason: string): DancerScore => ({ value: null, reason, confidence: null, evidence: "" });
+const display = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 1 });
 
 function medianPositive(values: number[]) {
   const positive = values.filter(value => value > 0).sort((a, b) => a - b);
   const middle = Math.floor(positive.length / 2);
   return positive.length ? positive.length % 2 ? positive[middle] : positive[middle - 1] / 2 + positive[middle] / 2 : 0;
 }
-
-// A typical positive value is 50, zero is zero, and outliers approach (not exceed) 100.
 function relative(value: number, baseline: number) {
   return value > 0 && baseline > 0 ? 100 / (1 + baseline / value) : 0;
 }
 
-/** Input must be the complete authorized venue report for one selected period, before UI filtering. */
+/** Score the complete authorized venue/period report before search, sort or pagination. */
 export function scoreVenueDancers(dancers: DancerPerformance[], period: DancerScorePeriod): ScoredDancer[] {
   const minimum = DANCER_SCORE_MINIMUMS[period];
   const inputs = dancers.map(dancer => {
     const hours = finite(dancer.internal.checkedInHours);
-    const checkIns = finite(dancer.results?.checkIns);
     const received = count(dancer.internal.requests);
-    const completed = finite(dancer.internal.completed);
     const duringHours = finite(dancer.internal.requestsDuringHours);
-    const vip = count(dancer.vip.requests);
-    const repeat = finite(dancer.vip.repeatRequesters);
+    // Excludes customer withdrawals; staff booking decisions do not affect these aggregates.
+    const vip = finite(dancer.vip.scoringRequests);
+    const vipCustomers = finite(dancer.vip.scoringUniqueRequesters);
+    const repeat = finite(dancer.vip.scoringRepeatRequesters);
     const claims = finite(dancer.results?.profileClaims);
     const cohort = finite(dancer.results?.profileCohortConversions);
-    const redemptions = finite(dancer.results?.profileConversions);
-    const actions = Object.entries(actionWeights).map(([key, weight]) => ({ count: count(dancer.external[key]), weight }));
+    const actions = Object.entries(interestWeights).map(([key, weight]) => ({ count: count(dancer.external[key]), weight }));
     const actionCount = actions.every(action => action.count !== null) ? actions.reduce((sum, action) => sum + action.count!, 0) : null;
-    const checkInEligible = hours !== null && hours >= minimum.hours && checkIns !== null;
-    const tableEligible = hours !== null && hours >= minimum.hours && received !== null && received >= minimum.requests
-      && completed !== null && completed <= received && duringHours !== null && duringHours <= received;
-    const vipEligible = vip !== null && vip >= minimum.requests && repeat !== null && repeat <= vip;
-    const profileEligible = claims !== null && claims >= minimum.claims && cohort !== null && cohort <= claims
-      && redemptions !== null && actionCount !== null && Number.isFinite(actionCount) && actionCount >= minimum.actions;
-    return { dancer, hours, checkIns, received, completed, vip, repeat, claims, cohort, redemptions, actionCount,
-      checkInEligible, tableEligible, vipEligible, profileEligible,
-      tableRate: tableEligible ? duringHours! / hours! : 0,
-      redemptionRate: profileEligible ? redemptions! / actionCount! : 0,
-      actionMix: profileEligible ? actions.reduce((sum, action) => sum + action.count! / actionCount! * action.weight / 4, 0) * 100 : 0,
-    };
+    const interest = actionCount !== null ? actions.reduce((sum, action) => sum + action.count! * action.weight, 0) : null;
+    const checkInEligible = hours !== null && hours >= minimum.hours;
+    const tableRate = hours && duringHours !== null ? duringHours / hours : null;
+    const tableEligible = checkInEligible && received !== null && duringHours !== null && duringHours >= minimum.requests
+      && duringHours <= received && tableRate !== null && Number.isFinite(tableRate);
+    const vipEligible = vip !== null && vip >= minimum.requests && vipCustomers !== null && vipCustomers > 0
+      && vipCustomers <= vip && repeat !== null && repeat <= vipCustomers;
+    const profileEligible = actionCount !== null && Number.isFinite(actionCount) && actionCount >= minimum.actions
+      && interest !== null && Number.isFinite(interest);
+    const conversionEligible = claims !== null && claims >= minimum.claims && cohort !== null && cohort <= claims;
+    return { dancer, hours, duringHours, tableRate, vip, vipCustomers, repeat, claims, cohort, actionCount, interest,
+      checkInEligible, tableEligible, vipEligible, profileEligible, conversionEligible };
   });
   const checkInPeers = inputs.filter(row => row.checkInEligible);
   const tablePeers = inputs.filter(row => row.tableEligible);
   const vipPeers = inputs.filter(row => row.vipEligible);
   const profilePeers = inputs.filter(row => row.profileEligible);
   const baseline = {
-    hours: medianPositive(checkInPeers.map(row => row.hours!)), checkIns: medianPositive(checkInPeers.map(row => row.checkIns!)),
-    tableRate: medianPositive(tablePeers.map(row => row.tableRate)), vip: medianPositive(vipPeers.map(row => row.vip!)),
-    repeat: medianPositive(vipPeers.map(row => row.repeat!)), redemptionRate: medianPositive(profilePeers.map(row => row.redemptionRate)),
+    hours: medianPositive(checkInPeers.map(row => row.hours!)), tableRate: medianPositive(tablePeers.map(row => row.tableRate!)),
+    vip: medianPositive(vipPeers.map(row => row.vip!)), interest: medianPositive(profilePeers.map(row => row.interest!)),
   };
   const peerReason = `Needs ${DANCER_SCORE_MIN_PEERS} dancers with enough data in this club and period.`;
   const scored: ScoredDancer[] = inputs.map(row => {
-    const checkIns = !row.checkInEligible ? unavailable(`Needs at least ${minimum.hours} verified hours and recorded check-in data.`)
+    const checkIns = !row.checkInEligible ? unavailable(`Needs at least ${minimum.hours} recorded checked-in hours.`)
       : checkInPeers.length < DANCER_SCORE_MIN_PEERS ? unavailable(peerReason)
-        : available(0.35 * relative(row.checkIns!, baseline.checkIns) + 0.65 * relative(row.hours!, baseline.hours));
-    const tableReady = row.tableEligible && tablePeers.length >= DANCER_SCORE_MIN_PEERS;
-    const vipReady = row.vipEligible && vipPeers.length >= DANCER_SCORE_MIN_PEERS;
-    const tableScore = tableReady ? 0.6 * row.completed! / row.received! * 100 + 0.4 * relative(row.tableRate, baseline.tableRate) : 0;
-    const vipScore = vipReady ? 0.7 * relative(row.vip!, baseline.vip) + 0.3 * relative(row.repeat!, baseline.repeat) : 0;
-    // Missing/low-sample channels never become zero. Overall weights are never redistributed.
-    const requestWeight = (tableReady ? 0.7 : 0) + (vipReady ? 0.3 : 0);
-    const requests = requestWeight ? available(((tableReady ? tableScore * 0.7 : 0) + (vipReady ? vipScore * 0.3 : 0)) / requestWeight)
-      : unavailable(row.tableEligible || row.vipEligible ? peerReason : `Needs ${minimum.requests} table or VIP requests. Table scoring also needs ${minimum.hours} verified hours.`);
-    const profile = !row.profileEligible ? unavailable(`Needs ${minimum.claims} profile pass claims and ${minimum.actions} recorded profile actions.`)
+        : available(relative(row.hours!, baseline.hours), row.hours! < minimum.hours * 2, `${display(row.hours!)} recorded hours`);
+    const internal = !row.tableEligible ? unavailable(`Needs ${minimum.requests} requests during at least ${minimum.hours} recorded checked-in hours.`)
+      : tablePeers.length < DANCER_SCORE_MIN_PEERS ? unavailable(peerReason)
+        : available(relative(row.tableRate!, baseline.tableRate), row.duringHours! < Math.max(20, minimum.requests * 2), `${display(row.duringHours!)} requests · ${display(row.tableRate!)} / hr`);
+    const vip = !row.vipEligible ? unavailable(`Needs ${minimum.requests} VIP selections with customer-withdrawal tracking.`)
+      : vipPeers.length < DANCER_SCORE_MIN_PEERS ? unavailable(peerReason)
+        : available(0.8 * relative(row.vip!, baseline.vip) + 20 * row.repeat! / row.vipCustomers!, row.vip! < Math.max(20, minimum.requests * 2), `${display(row.vip!)} selections · ${display(row.vipCustomers!)} customers · ${display(row.repeat!)} returning`);
+    const profile = !row.profileEligible ? unavailable(`Needs ${minimum.actions} recorded profile-interest actions.`)
       : profilePeers.length < DANCER_SCORE_MIN_PEERS ? unavailable(peerReason)
-        : available(0.6 * row.cohort! / row.claims! * 100 + 0.25 * relative(row.redemptionRate, baseline.redemptionRate) + 0.15 * row.actionMix);
-    const overall = checkIns.value !== null && requests.value !== null && profile.value !== null
-      ? available((checkIns.value * DANCER_SCORE_WEIGHTS.checkIns + requests.value * DANCER_SCORE_WEIGHTS.requests + profile.value * DANCER_SCORE_WEIGHTS.profile) / 100)
-      : unavailable("All three category scores need enough data before an overall score or rank is assigned.");
-    return { dancer: row.dancer, scores: { overall, checkIns, requests, profile }, rank: null, rankedCount: 0 };
+        : available(relative(row.interest!, baseline.interest), row.actionCount! < minimum.actions * 2, `${display(row.actionCount!)} attributed actions`);
+    // A single claim cohort is the denominator; unrelated clicks never dilute entry results.
+    const conversions = !row.conversionEligible ? unavailable(`Needs ${minimum.claims} profile pass claims with redemption tracking.`)
+      : available(100 * row.cohort! / row.claims!, row.claims! < Math.max(20, minimum.claims * 2), `${display(row.cohort!)} of ${display(row.claims!)} claimed passes redeemed`);
+    const categories = { checkIns, internal, vip, profile, conversions };
+    const eligible = DANCER_SCORE_CATEGORIES.filter(key => categories[key].value !== null);
+    const weight = eligible.reduce((sum, key) => sum + DANCER_SCORE_WEIGHTS[key], 0);
+    const overall = eligible.length < 3 ? unavailable("Needs at least three category scores. Missing categories are never counted as zero.")
+      : available(eligible.reduce((sum, key) => sum + categories[key].value! * DANCER_SCORE_WEIGHTS[key], 0) / weight,
+        eligible.length < 5 || eligible.some(key => categories[key].confidence === "early"), `${eligible.length} of 5 categories`);
+    return { dancer: row.dancer, scores: { overall, ...categories }, rank: null, rankedCount: 0 };
   });
-  const qualified = scored.filter(row => row.scores.overall.value !== null).sort((a, b) => b.scores.overall.value! - a.scores.overall.value!);
-  // Competition ranks use displayed scores: ties share rank and never break on names.
+  // Partial and early scores are useful summaries, but not comparable enough to rank.
+  const qualified = scored.filter(row => row.scores.overall.confidence === "established").sort((a, b) => b.scores.overall.value! - a.scores.overall.value!);
   if (qualified.length >= DANCER_SCORE_MIN_PEERS) {
     let rank = 1;
     qualified.forEach((row, index) => {

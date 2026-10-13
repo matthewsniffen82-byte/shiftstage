@@ -3,13 +3,13 @@
 import { useState } from "react";
 import type { DancerPerformance } from "@/src/lib/dancr/venue-analytics";
 import {
-  DANCER_SCORE_MINIMUMS, DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS,
+  DANCER_SCORE_MINIMUMS, DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS, DANCER_SCORE_LABELS, DANCER_SCORE_CATEGORIES,
   scoreVenueDancers, sortScoredDancers, type DancerScoreKey, type DancerScorePeriod, type DancerScoreSort,
 } from "@/src/lib/dancr/venue-dancer-scores";
 
-const scoreLabels = { overall: "Overall", checkIns: "Check-in activity", requests: "Requests", profile: "Profile results" } as const;
+const scoreLabels = DANCER_SCORE_LABELS;
 const periodLabels = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
-const scoreKeys: DancerScoreKey[] = ["overall", "checkIns", "requests", "profile"];
+const scoreKeys: DancerScoreKey[] = ["overall", ...DANCER_SCORE_CATEGORIES];
 
 export default function VenueDancerPerformance({ dancers, period = "30d" }: { dancers: DancerPerformance[]; period?: DancerScorePeriod }) {
   const [sort, setSort] = useState<DancerScoreSort>("overall");
@@ -30,16 +30,18 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
     </div>
     <details className="venue-score-methodology">
       <summary>How scores are calculated</summary>
-      <p>Activity scores out of 100, not ratings of talent, reliability or attendance at scheduled shifts. Benchmarks use this club&apos;s full report for the selected period. Scores can change as activity is recorded.</p>
+      <p>Scores update from recorded check-ins, customer activity and normal entry scans. No manager completion or arrival buttons are required. Benchmarks use this club&apos;s full report for the selected period.</p>
       <dl>
-        <div><dt>Overall</dt><dd>{DANCER_SCORE_WEIGHTS.requests}% Requests + {DANCER_SCORE_WEIGHTS.profile}% Profile results + {DANCER_SCORE_WEIGHTS.checkIns}% Check-in activity. All three scores are required.</dd></div>
-        <div><dt>Check-in activity</dt><dd>35% verified check-in activity + 65% recorded hours, compared with this club&apos;s typical positive activity. Check-outs and last check-in timestamps do not earn extra points or penalize an ongoing shift.</dd></div>
-        <div><dt>Requests</dt><dd>Table activity contributes 70% and VIP activity 30% when both qualify. Table activity is 60% marked-completed share of received requests + 40% requests per verified hour. VIP activity is 70% selections + 30% repeat requesters, compared with this club&apos;s typical positive counts. When only one channel qualifies, that channel supplies the request score.</dd></div>
-        <div><dt>Profile results</dt><dd>60% profile-pass conversion rate + 25% redeemed passes per recorded action, compared with this club&apos;s typical positive rate + 15% action mix. The action mix weights profile opens 1, club opens 2, directions and transport 3, and offer clicks and &quot;I&apos;m Going&quot; 4, then divides by four times all recorded actions. Clicks cannot outweigh entry results.</dd></div>
-        <div><dt>Enough data</dt><dd>For {periodLabels[period]}: at least {minimum.hours} verified hours for check-in and table scoring; {minimum.requests} table or VIP requests for that channel; {minimum.claims} profile pass claims and {minimum.actions} recorded actions for profile scoring. Each comparison needs {DANCER_SCORE_MIN_PEERS} qualifying dancers. Missing data stays unscored, never zero.</dd></div>
-        <div><dt>Benchmarks and rank</dt><dd>A typical positive count or rate scores 50; zero scores zero. Relative points equal 100 × value ÷ (value + the median positive value). Overall uses rounded category scores. Rank compares overall scores at this club in this period, with at least {DANCER_SCORE_MIN_PEERS} fully scored dancers. Equal displayed scores share a rank; search and sorting do not change ranks.</dd></div>
+        <div><dt>Overall Performance</dt><dd>{DANCER_SCORE_CATEGORIES.map((key, index) => <span key={key}>{index ? " + " : ""}{DANCER_SCORE_WEIGHTS[key]}% {scoreLabels[key]}</span>)}. At least three categories are required. Available weights are rescaled to 100%; missing categories never count as zero. Coverage is shown beneath the score.</dd></div>
+        <div><dt>Check-in Activity</dt><dd>Recorded checked-in hours compared with this club&apos;s typical hours. Overlapping sessions are merged. Repeated check-in taps and missing check-outs do not earn extra points or penalties.</dd></div>
+        <div><dt>Internal Table Requests</dt><dd>Requests received during recorded presence ÷ recorded checked-in hours, compared with this club&apos;s typical rate. This measures demand. Staff acknowledgements, completions and arrival reports do not change the score.</dd></div>
+        <div><dt>VIP Requests</dt><dd>80% relative VIP selections + 20% returning-customer share. Each selected dancer gets one credit per request. Customer withdrawals are excluded, including from repeat history. Staff confirmations, declines and cancellations do not change demand credit.</dd></div>
+        <div><dt>Profile Interest</dt><dd>Weighted activity compared with this club&apos;s typical total: profile opens 1; club opens, follows and completed shares 2; directions, transport, offer clicks and &quot;I&apos;m Going&quot; 3. Only activity attributed to this dancer and club counts. Additional views never dilute entry conversion.</dd></div>
+        <div><dt>Verified Entry Conversions</dt><dd>100 × redeemed profile passes ÷ profile passes claimed in the selected period. Both counts use the same claim cohort and period end. Normal entry scans record redemption; claims alone do not prove admission. Voided passes are excluded.</dd></div>
+        <div><dt>Data confidence</dt><dd>For {periodLabels[period]}: at least {minimum.hours} recorded hours for check-in and table scoring; {minimum.requests} table requests during those hours or VIP selections; {minimum.claims} profile pass claims for conversions; {minimum.actions} actions for profile interest. Relative comparisons need {DANCER_SCORE_MIN_PEERS} qualifying dancers. Missing data stays unscored. Early data remains labelled until hours and actions reach twice their minimum, and requests or claims reach at least 20 and twice their minimum. This is sample coverage, not statistical certainty.</dd></div>
+        <div><dt>Benchmarks and rank</dt><dd>Relative points equal 100 × value ÷ (value + the median positive value); a typical positive value scores 50. Overall uses the displayed category scores. Rank requires all five categories past Early data and at least {DANCER_SCORE_MIN_PEERS} comparable dancers. Equal scores share a rank. Partial scores stay unranked; search and sorting do not change benchmarks.</dd></div>
       </dl>
-      <p>Only tracked activity is available. Recorded actions are not total profile exposure, and VIP exposure is not tracked. Conversion rate uses passes claimed in the period; redemptions use entry date. Earlier untracked history is not reconstructed. Scores do not confirm visits or sales.</p>
+      <p>Only recorded signals are used. Individual table customers, complete profile/card exposure, saved profiles and repeat admissions are not available in this report. Clicks and requests do not prove attendance. These scores do not measure talent, scheduled-shift reliability or revenue. No POS feed is needed.</p>
       <small>Scoring version {DANCER_SCORE_VERSION}</small>
     </details>
     <p className="venue-value-note" role="status">{rows.length.toLocaleString()} {rows.length === 1 ? "dancer" : "dancers"}{search.trim() ? " matching your search" : " with recorded activity"}</p>
@@ -49,7 +51,7 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
           ? <img src={row.dancer.photoUrl} alt="" width="44" height="44" loading="lazy" />
           : row.dancer.name.slice(0, 1).toUpperCase()}</span>
         <div><span className="venue-performance-name">{row.dancer.name}</span>
-          <span className="venue-score-rank" title={row.rank === null ? row.scores.overall.reason || `Needs ${DANCER_SCORE_MIN_PEERS} fully scored dancers in this period.` : undefined}>
+          <span className="venue-score-rank" title={row.rank === null ? row.scores.overall.reason || `Ranking needs all five categories past Early data and ${DANCER_SCORE_MIN_PEERS} comparable dancers.` : undefined}>
             {row.rank === null ? "Unranked" : `#${row.rank} of ${row.rankedCount} ranked dancers`}
           </span>
         </div>
@@ -58,6 +60,8 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
         <dt>{scoreLabels[key]}</dt>
         <dd>{row.scores[key].value === null ? <span className="venue-score-missing">Not enough data</span>
           : <><strong>{row.scores[key].value}</strong><span className="venue-score-scale"> / 100</span></>}</dd>
+        {row.scores[key].confidence === "early" && <small className="venue-score-confidence">Early data</small>}
+        {row.scores[key].evidence && <small className="venue-score-evidence">{row.scores[key].evidence}</small>}
       </div>)}</dl>
     </li>)}</ul> : <p className="venue-value-empty">{search.trim() ? "No dancers match this search." : "No dancer activity recorded in this period."}</p>}
     {rows.length > limit && <button className="venue-performance-more" type="button" onClick={() => setLimit(value => value + 20)}>Show more dancers</button>}
