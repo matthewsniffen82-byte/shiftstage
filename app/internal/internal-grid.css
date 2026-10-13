@@ -93,9 +93,10 @@ body .ir-shell .ir-directory-grid .ir-dancer-copy {
   inset: auto 0 0;
   display: grid;
   gap: 3px;
-  padding: 16px 6px 8px;
+  padding: 8px 6px;
   color: #fff;
-  background: linear-gradient(180deg, rgba(5, 5, 8, 0), rgba(5, 5, 8, .1) 45%, rgba(5, 5, 8, .36));
+  /* Keep the fade at the bottom, even when a longer name wraps. */
+  background: linear-gradient(180deg, rgba(5, 5, 8, 0), rgba(5, 5, 8, .12) 35%, rgba(5, 5, 8, .48)) bottom / 100% 36px no-repeat;
   text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 4px rgba(0, 0, 0, .65);
   pointer-events: none;
 }
