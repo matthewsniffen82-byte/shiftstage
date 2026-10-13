@@ -1,0 +1,33 @@
+.venue-demo-banner,.venue-demo-workspace { grid-column:1 / -1; min-width:0; width:100%; box-sizing:border-box; }
+.venue-demo-banner { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; padding:12px 0; margin:0 0 14px; border-block:1px solid #53666a; color:#c9e5df; }
+.venue-demo-banner > div { flex:1 1 230px; min-width:0; }
+.venue-demo-banner strong { font-size:14px; color:#a3e3d0; }
+.venue-demo-banner p { margin:5px 0 0; font-size:12px; line-height:1.5; }
+.venue-demo-banner label { display:flex; align-items:center; gap:8px; font-size:13px; min-height:44px; cursor:pointer; }
+.venue-demo-banner input { width:20px; height:20px; accent-color:#8060cc; }
+.venue-demo-workspace section[hidden] { display:none !important; }
+.venue-demo-workspace > section { padding:16px 0; }
+.venue-demo-workspace h2 { font-size:18px; margin:14px 0; }
+.venue-demo-workspace h3 { font-size:15px; margin:14px 0 8px; }
+.venue-demo-workspace > section > section { margin:16px 0; }
+.venue-demo-workspace details { margin:12px 0; }
+.venue-demo-workspace details > summary { min-height:44px; padding:10px 0; cursor:pointer; }
+.venue-demo-workspace :is(button,summary,input,select):focus-visible { outline:2px solid #d8cafa; outline-offset:3px; }
+.venue-demo-records,.venue-demo-roster { margin:12px 0; padding:0; list-style:none; }
+.venue-demo-records > li { padding:12px 0; border-bottom:1px solid #34343c; min-width:0; overflow-wrap:anywhere; font-size:14px; }
+.venue-demo-records > li > div { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 14px; }
+.venue-demo-records strong { color:#f1f1f5; font-size:14px; }
+.venue-demo-records span { color:#b9d6c5; font-size:12px; }
+.venue-demo-records p { margin:6px 0; color:#c4c4ce; font-size:13px; line-height:1.5; }
+.venue-demo-records small,.venue-demo-brand small { color:#b3b3c0; font-size:12px; }
+.venue-demo-roster { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 16px; }
+.venue-demo-roster li { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid #34343c; min-width:0; }
+.venue-demo-roster li > div { min-width:0; overflow-wrap:anywhere; }
+.venue-demo-roster .venue-performance-avatar { flex:none; }
+.venue-demo-roster strong { font-size:14px; }
+.venue-demo-roster small { display:block; color:#b9c7c1; font-size:12px; line-height:1.5; margin-top:4px; }
+.venue-demo-brand { display:flex; align-items:center; gap:14px; min-width:0; }
+.venue-demo-brand > img { width:72px; height:72px; flex:none; object-fit:contain; }
+.venue-demo-brand > div { min-width:0; overflow-wrap:anywhere; }
+.venue-demo-brand p { font-size:13px; }
+@media(max-width:480px) { .venue-demo-roster { grid-template-columns:minmax(0,1fr); } }

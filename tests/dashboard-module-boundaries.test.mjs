@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import * as deviceDeals from '../src/lib/dancr/customer-device-deals.ts';
 
 const require = createRequire(import.meta.url);
-const files = ['DashboardClient', 'DashboardShared', 'CustomerDashboardPanels', 'VenueDashboardPanels', 'DancerDashboardPanels', 'DancerProfileEditor', 'DancerAvatarPanel', 'DancerPhotoPanel', 'DancerShiftsPanel', 'DashboardStyles'];
+const files = ['DashboardClient', 'DashboardShared', 'CustomerDashboardPanels', 'VenueDashboardPanels', 'VenueDashboardDemoSwitch', 'DancerDashboardPanels', 'DancerProfileEditor', 'DancerAvatarPanel', 'DancerPhotoPanel', 'DancerShiftsPanel', 'DashboardStyles'];
 const source = name => readFileSync(new URL('../app/dashboard/' + name + '.tsx', import.meta.url), 'utf8');
 
 test('dashboard role boundaries stay small and shared controls cannot import role panels', () => {
@@ -50,6 +50,9 @@ async function renderDashboard(role, initialState = {}, loading = true) {
       if (path.endsWith('/customer-device-deals')) return deviceDeals;
       if (path.endsWith('/payout-copy')) return require('../src/lib/dancr/payout-copy.ts');
       if (path.endsWith('/profile-approval')) return require('../src/lib/dancr/profile-approval.ts');
+      if (path.endsWith('/venue-dashboard-demo')) return require('../src/lib/dancr/venue-dashboard-demo.ts');
+      if (path.endsWith('/customer-night')) return require('../src/lib/dancr/customer-night.ts');
+      if (path === './useVenueOperations') return { useVenueOperations: () => ({ operations: null, error: '' }) };
       if (path.endsWith('/club-deal-presets')) return require('../src/lib/dancr/club-deal-presets.ts');
       if (path === './customer-dashboard-view') return require('../app/dashboard/customer-dashboard-view.ts');
       if (path === './avatar-upload-state') return require('../app/dashboard/avatar-upload-state.ts');
@@ -88,11 +91,10 @@ for (const scenario of ['active', 'cancelled', 'empty']) test('guest dashboard p
     saved: { follows: [], venueFollows: [], dealSaves: [], goingSignals },
   }, false);
   assert.match(html, /id="customer-view-night"[^>]*aria-label="My Night"/);
-  assert.equal((html.match(/id="customer-going"/g) || []).length, 1);
-  const night = html.slice(html.indexOf('id="customer-going"'), html.indexOf('id="customer-working-now"'));
+  assert.equal((html.match(/id="customer-going"/g) || []).length, scenario === 'active' ? 1 : 0);
+  const night = html.slice(html.indexOf('id="customer-view-night"'), html.indexOf('id="customer-view-saved"'));
   assert.equal(night.includes('Sample dancer'), scenario === 'active');
-  assert.equal(night.includes('No plans yet'), scenario !== 'active');
-  assert.ok(html.indexOf('id="customer-passes"') < html.indexOf('id="customer-going"'));
+  assert.equal(night.includes('id="customer-plans-list"'), scenario === 'active');
 
 });
 for (const role of ['dancer', 'venue']) test(role + ' panels render after their dynamic modules resolve', async () => {
