@@ -30,6 +30,8 @@ before(async () => {
   const roster = read('20260928090100_mydancr_internal_roster.sql');
   await db.exec(roster.slice(roster.indexOf('create function public.internal_roster_access('), roster.indexOf('create function public.internal_roster_request(')));
   for (const migration of ['20260916190000_venue_subscription_analytics.sql', '20260916190100_report_current_pickup_receipts.sql', '20261011232707_venue_performance_channels.sql', '20261012225142_venue_dancer_results.sql', '20261013000159_venue_all_time_analytics.sql', '20261013011729_automatic_dancer_score_inputs.sql']) await db.exec(read(migration));
+  await db.exec("alter table venues add column timezone text default 'America/Los_Angeles'; alter table shifts add column shift_source text default 'scheduled', add column nfc_tag_id uuid, add column ended_reason text;");
+  await db.exec(read('20261013024002_dancer_roster_accuracy_scores.sql'));
   await db.query("insert into app_users values($1,'venue','active'),($2,'venue','active'),($3,'venue','active'),($4,'customer','active')", [id(50),id(51),id(52),id(53)]);
   await db.query('insert into venues(id,owner_user_id) values($1,$2),($3,$4)', [id(1),id(50),id(2),id(52)]);
   await db.query("insert into venue_team_members values($1,$2,'active','staff')", [id(1),id(51)]);
@@ -46,6 +48,76 @@ async function rejected(work, pattern) { await db.exec('savepoint expected_error
 async function pass(n,{venue=1,dancer=10,source='dancer_profile',status='generated',redeemed=false}={}) {
   await db.query("insert into qr_redemptions(id,venue_id,dancer_id,admission_pass_version,status,generated_at,redeemed_at,redemption_token,expires_at,source_type) values($1,$2,$3,1,$4,now()-interval '2 days',case when $5 then now()-interval '1 day' end,$6,now()+interval '1 day',$7)",[id(n),id(venue),id(dancer),status,redeemed,`pass-${n}`,source]);
 }
+
+async function session(n, { start = '2026-10-10T20:00Z', end = '2026-10-11T02:00Z', day = '2026-10-10', kind = 'dancer', venue = 1, dancer = 10, tracked = true, closed = true } = {}) {
+  await db.query(`insert into venue_dancer_work_sessions(shift_id,venue_id,dancer_id,started_at,expires_at,closed_at,dancer_check_in_at,check_in_day,dancer_check_out_at,closure_reason)
+    values($1,$2,$3,$4,$5,case when $8 then $5::timestamptz end,case when $9 then $4::timestamptz end,$6,case when $7='dancer' then $5::timestamptz end,case when $8 then $7 end)`,
+    [id(n),id(venue),id(dancer),start,end,day,kind,closed,tracked]);
+}
+async function accuracy(since='2026-10-10T00:00Z', until='2026-10-12T00:00Z') {
+  const r = await db.query("select get_venue_performance_analytics($1,$2,$3,$3::timestamptz-interval '12 hours',$3) result",[id(1),since,until]);
+  return r.rows[0].result.performance.dancers.find(d => d.id === id(10))?.internal;
+}
+
+test('accuracy pairs dancer checkout with its NFC visit and preserves evidence after shift deletion',async()=>{
+  await db.query("insert into shifts(id,venue_id,dancer_id,status,checked_in_at,location_status,location_verification_expires_at,shift_source,nfc_tag_id) values($1,$2,$3,'posted',clock_timestamp(),'club_confirmed',now()+interval '2 hours','nfc_presence',$4)",[id(701),id(1),id(10),id(900)]);
+  await db.query("update shifts set location_verification_expires_at=now()+interval '3 hours' where id=$1",[id(701)]);
+  let visits=(await db.query('select * from venue_dancer_work_sessions where shift_id=$1',[id(701)])).rows;
+  assert.equal(visits.length,1); assert.ok(visits[0].dancer_check_in_at); assert.ok(visits[0].check_in_day);
+  await db.query("update shifts set checked_out_at=clock_timestamp(),ended_reason='manual',location_verification_expires_at=clock_timestamp() where id=$1",[id(701)]);
+  await db.query('delete from shifts where id=$1',[id(701)]);
+  visits=(await db.query('select * from venue_dancer_work_sessions where shift_id=$1',[id(701)])).rows;
+  assert.equal(visits[0].closure_reason,'dancer'); assert.ok(visits[0].dancer_check_out_at);
+  const r=(await report()).dancers[0].internal;
+  assert.equal(r.verifiedCheckInDays,1); assert.equal(r.checkoutEligibleDays,1); assert.equal(r.dancerCheckoutDays,1);
+});
+
+test('unverified and demo checkins earn no accuracy, while late or staff checkouts cannot earn dancer credit',async()=>{
+  for (const [n,source,reason] of [[710,'demo_locked','manual'],[711,'nfc_presence','venue_checkout'],[712,'nfc_presence','manual']]) {
+    await db.query("insert into shifts(id,venue_id,dancer_id,status,checked_in_at,location_status,location_verification_expires_at,shift_source,nfc_tag_id) values($1,$2,$3,'posted',clock_timestamp(),'club_confirmed',now()+interval '2 hours',$4,$5)",[id(n),id(1),id(10),source,id(900)]);
+    if(n===712) await db.query("update venue_dancer_work_sessions set started_at=now()-interval '2 hours',expires_at=now()-interval '1 hour' where shift_id=$1",[id(n)]);
+    await db.query('update shifts set checked_out_at=clock_timestamp(),ended_reason=$2,location_verification_expires_at=clock_timestamp() where id=$1',[id(n),reason]);
+  }
+  const visits=(await db.query('select shift_id,dancer_check_in_at,dancer_check_out_at,closure_reason from venue_dancer_work_sessions order by shift_id')).rows;
+  assert.equal(visits[0].dancer_check_in_at,null);
+  assert.equal(visits[1].closure_reason,'venue'); assert.equal(visits[1].dancer_check_out_at,null);
+  assert.equal(visits[2].closure_reason,'expired'); assert.equal(visits[2].dancer_check_out_at,null);
+});
+
+test('same-day repeats cannot dilute missed checkout and active visits wait without penalties',async()=>{
+  await session(720); await session(721,{kind:'expired'});
+  await session(722,{start:'2026-10-10T22:00Z',end:'2026-10-13T02:00Z',closed:false,kind:null});
+  let r=await accuracy();
+  assert.equal(r.verifiedCheckInDays,1); assert.equal(r.checkoutEligibleDays,1); assert.equal(r.dancerCheckoutDays,0); assert.equal(r.activeCheckInDays,1);
+  assert.equal(r.rosterTrackedHours,28,'overlapping recorded hours are merged');
+  await db.exec('delete from venue_dancer_work_sessions');
+  await session(723,{end:'2026-10-13T02:00Z',closed:false,kind:null});
+  r=await accuracy(); assert.equal(r.checkoutEligibleDays,0); assert.equal(r.dancerCheckoutDays,0); assert.equal(r.activeCheckInDays,1);
+});
+
+test('checkout accuracy respects the period end, midnight, other venues and unknown history',async()=>{
+  await session(730,{start:'2026-10-09T23:00Z',end:'2026-10-10T03:00Z',day:'2026-10-09'});
+  await session(731,{start:'2026-10-11T20:00Z',end:'2026-10-12T02:00Z',day:'2026-10-11'});
+  await session(732,{tracked:false,kind:'expired'});
+  await session(733,{venue:2,kind:'expired'});
+  const r=await accuracy();
+  assert.equal(r.verifiedCheckInDays,2); assert.equal(r.checkoutEligibleDays,1); assert.equal(r.dancerCheckoutDays,1); assert.equal(r.activeCheckInDays,1);
+  assert.equal(r.rosterTrackedHours,7);
+  const later=await accuracy('2026-10-10T00:00Z','2026-10-12T04:00Z');
+  assert.equal(later.checkoutEligibleDays,2); assert.equal(later.dancerCheckoutDays,2);
+});
+
+test('lazy expiry needs no manager update and administrative interruption remains ungraded',async()=>{
+  await session(740,{closed:false,kind:null});
+  await session(741,{start:'2026-10-11T08:00Z',end:'2026-10-11T10:00Z',day:'2026-10-11',kind:'interrupted'});
+  const r=await accuracy(); assert.equal(r.verifiedCheckInDays,2); assert.equal(r.checkoutEligibleDays,1); assert.equal(r.dancerCheckoutDays,0);
+  for(const role of ['anon','authenticated','service_role']) {
+    assert.equal((await db.query('select has_function_privilege($1,\'public.capture_venue_work_session()\',\'execute\') allowed',[role])).rows[0].allowed,false);
+  }
+  for(const role of ['anon','authenticated']) {
+    assert.equal((await db.query('select has_function_privilege($1,\'public.get_venue_performance_customer_scores(uuid,timestamptz,timestamptz,timestamptz,timestamptz)\',\'execute\') allowed',[role])).rows[0].allowed,false);
+  }
+});
 test('arrival is explicit, idempotent, venue-scoped and distinct from completion',async()=>{
   await request(200); await request(201); await request(202,'completed'); await request(203,'pending');
   await attendance(200,'arrived'); const stamp=(await db.query('select attendance_recorded_at from internal_roster_requests where id=$1',[id(200)])).rows[0].attendance_recorded_at;

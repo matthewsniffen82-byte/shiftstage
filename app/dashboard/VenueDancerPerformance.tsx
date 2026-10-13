@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { DancerPerformance } from "@/src/lib/dancr/venue-analytics";
 import {
-  DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS, DANCER_SCORE_LABELS, DANCER_SCORE_CATEGORIES,
+  DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS, DANCER_SCORE_LABELS, DANCER_SCORE_CATEGORIES, CHECK_IN_SCORE_WEIGHTS,
   scoreVenueDancers, sortScoredDancers, type DancerScoreKey, type DancerScorePeriod, type DancerScoreSort,
 } from "@/src/lib/dancr/venue-dancer-scores";
 
@@ -35,7 +35,7 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
       <p>Scores are out of 100, based on recorded activity at this club for the selected period.</p>
       <dl>
         <div><dt>Overall Performance</dt><dd>Weighted average of at least three categories. Missing categories are excluded; remaining weights are rescaled.</dd></div>
-        <div><dt>Check-in Activity · {DANCER_SCORE_WEIGHTS.checkIns}%</dt><dd>Recorded checked-in hours compared with this club&apos;s typical hours.</dd></div>
+        <div><dt>Check-in Activity · {DANCER_SCORE_WEIGHTS.checkIns}%</dt><dd>{CHECK_IN_SCORE_WEIGHTS.accuracy}% dancer checkout accuracy + {CHECK_IN_SCORE_WEIGHTS.days}% relative check-in days + {CHECK_IN_SCORE_WEIGHTS.hours}% relative tracked hours. A day earns accuracy credit when every ended visit has the dancer&apos;s own checkout before expiry. Active visits wait; staff checkout and expiry earn no credit. Repeated taps add no days. Without ended visits, activity is provisional; three ended days are needed to leave Early data.</dd></div>
         <div><dt>Internal Table Requests · {DANCER_SCORE_WEIGHTS.internal}%</dt><dd>Requests received per checked-in hour, compared with this club&apos;s typical rate.</dd></div>
         <div><dt>VIP Requests · {DANCER_SCORE_WEIGHTS.vip}%</dt><dd>80% relative selections + 20% returning-customer share. Customer withdrawals are excluded.</dd></div>
         <div><dt>Profile Interest · {DANCER_SCORE_WEIGHTS.profile}%</dt><dd>Weighted actions: profile opens 1; club opens, follows and completed shares 2; directions, transport, offer clicks and &quot;I&apos;m Going&quot; 3.</dd></div>

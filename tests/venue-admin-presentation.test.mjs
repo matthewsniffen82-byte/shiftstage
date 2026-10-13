@@ -98,7 +98,8 @@ const dancerResults = (overrides = {}) => ({ checkIns: 2, checkOuts: 1, lastChec
   tableArrived: 0, tableNoShows: 0, tableAttendanceUnrecorded: 0, showUpPercent: null, ...overrides });
 const scoreDependencies = { "@/src/lib/dancr/venue-dancer-scores": scoring };
 const scoredDancers = () => ["Aria", "Bella", "Celeste"].map((name, index) => ({ id: String.fromCharCode(97 + index), name,
-  internal: { requests: 20, completed: 8, checkedInHours: 8, requestsDuringHours: 20 },
+  internal: { requests: 20, completed: 8, checkedInHours: 8, requestsDuringHours: 20,
+    rosterTrackedHours: 8, verifiedCheckInDays: 4, checkoutEligibleDays: 4, dancerCheckoutDays: 4, activeCheckInDays: 0 },
   external: { dancer_profile: 10, club_page: 10, directions: 10, going: 10, free_entry: 10, transport: 10 },
   vip: { requests: 20, scoringRequests: 20, scoringUniqueRequesters: 10, scoringRepeatRequesters: 2 }, results: dancerResults(),
 }));
@@ -117,7 +118,7 @@ test("dancer rows show six compact scores with full labels and evidence in colla
     assert.deepEqual(nodes(details).filter(node => node.type === "dt").map(node => node.props.children), Object.values(scoring.DANCER_SCORE_LABELS));
     assert.equal(details.props.open, undefined);
     assert.equal(nodes(grid).filter(node => node.props.className === "venue-score-evidence").length, 0);
-    assert.deepEqual(nodes(row).filter(node => node.type === "strong").map(node => node.props.children), [49, 50, 50, 44, 50, 50]);
+    assert.deepEqual(nodes(row).filter(node => node.type === "strong").map(node => node.props.children), [53, 75, 50, 44, 50, 50]);
     assert.equal(nodes(row).filter(node => node.props.className === "venue-score-evidence").length, 6);
     assert.ok(nodes(row).some(node => node.props.className === "venue-score-rank" && node.props.children === "#1 of 3 ranked dancers"));
     assert.equal(nodes(row).filter(node => node.type === "details").length, 1);
@@ -174,7 +175,7 @@ test("search, category sorting and pagination do not recalculate club ranks", ()
 
 test("missing data stays unranked and changing reporting period recalculates eligibility", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
-  const dancers = scoredDancers().map(row => ({ ...row, internal: { ...row.internal, checkedInHours: 1 } }));
+  const dancers = scoredDancers().map(row => ({ ...row, internal: { ...row.internal, checkedInHours: 1, rosterTrackedHours: 1 } }));
   let tree = render({ dancers, period: "tonight" });
   assert.ok(tree.some(node => node.props.className === "venue-score-early" && node.props.children === "Early"));
   assert.ok(tree.some(node => node.props.className === "venue-score-confidence" && node.props.children === "Early data"));
@@ -185,7 +186,7 @@ test("missing data stays unranked and changing reporting period recalculates eli
   assert.ok(nodes(missing).some(node => node.props['aria-hidden'] === 'true' && node.props.children === "—"));
   assert.ok(nodes(missing).some(node => node.props.className === "dashboard-sr-only" && node.props.children === "Not enough data"));
   const details = tree.find(node => node.props.className === "venue-score-details");
-  assert.ok(nodes(details).some(node => Array.isArray(node.props.children) && node.props.children.includes("Needs at least 4 recorded checked-in hours.")));
+  assert.ok(nodes(details).some(node => Array.isArray(node.props.children) && node.props.children.includes("Needs at least 4 hours with verified dancer check-in and checkout tracking.")));
   assert.ok(tree.some(node => node.props.className === "venue-score-evidence" && node.props.children === "3 of 5 categories"));
   tree.find(node => node.type === "input").props.onChange({ target: { value: "Nobody matches" } });
   assert.ok(render({ dancers }).some(node => node.props.children === "No dancers match this search."));

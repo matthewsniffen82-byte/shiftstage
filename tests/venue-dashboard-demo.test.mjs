@@ -22,7 +22,7 @@ test('the production Echo House identity gets samples and other venue identities
   }
 });
 
-test('all periods populate every report and give all eight fictional dancers valid category scores and a rank', () => {
+test('all periods populate eight dancers, with Tonight awaiting enough checkout days to rank', () => {
   let lastClaims = 0;
   const overall = [];
   for (const period of Object.keys(demo.DEMO_PERIODS)) {
@@ -37,7 +37,7 @@ test('all periods populate every report and give all eight fictional dancers val
     assert.equal(data.report.hairColor.external.length, 4);
     const scored = scoreVenueDancers(data.report.performance.dancers, period);
     assert.equal(scored.length, 8);
-    assert.ok(scored.every(row => row.rank !== null && row.rankedCount === 8));
+    assert.ok(scored.every(row => period === 'tonight' ? row.rank === null && row.scores.checkIns.confidence === 'early' : row.rank !== null && row.rankedCount === 8));
     for (const row of scored) for (const score of Object.values(row.scores)) assert.ok(Number.isInteger(score.value) && score.value >= 0 && score.value <= 100);
     overall.push(scored.map(row => row.scores.overall.value).join(','));
     for (const section of ['guestList', 'rides', 'vip', 'tables', 'contacts', 'roster', 'deals', 'team', 'notifications', 'support']) assert.ok(data[section].length > 0, section);

@@ -18,9 +18,9 @@ VIP and internal status breakdowns use the **current state of requests created i
 
 Tonight’s live VIP counts use scheduled dates, including requests submitted earlier. The internal queue includes pending/acknowledged requests received in the preceding six hours, matching the operational queue. Guest-list passes awaiting admission are currently valid, unused passes; they do not guarantee attendance.
 
-## Automatic dancer scores (version 2)
+## Automatic dancer scores (version 3)
 
-The private venue report shows **Overall Performance**, **Check-in Activity**, **Internal Table Requests**, **VIP Requests**, **Profile Interest**, and **Verified Entry Conversions**. Each score includes its sample evidence; small or partial samples display **Early data**. Search, sort and pagination happen after scoring the complete authorized venue/period report and cannot alter benchmarks or ranks. No manager acknowledgement, completion, arrival or booking-status action is needed to maintain scores.
+The private venue report shows **Overall Performance**, **Check-in Activity**, **Internal Table Requests**, **VIP Requests**, **Profile Interest**, and **Verified Entry Conversions**. Each score includes its sample evidence; small or partial samples display **Early data**. Search, sort and pagination happen after scoring the complete authorized venue/period report and cannot alter benchmarks or ranks. No manager acknowledgement, completion, arrival or booking-status action is needed to maintain scores. Dancers' own checkouts now contribute to Check-in Activity.
 
 These are product activity indicators, not validated ratings of talent, reliability, scheduled-shift attendance, revenue or future performance. Appearance and private identity data never enter the formula. Scores stay private to authorized venue staff, are not permanent ratings, and do not change access or staffing.
 
@@ -30,7 +30,7 @@ For relative comparisons, points are `100 * value / (value + medianPositive)`. T
 
 | Category | Calculation | Overall weight |
 | --- | --- | --- |
-| Check-in Activity | Relative recorded checked-in hours. Overlapping sessions are merged by the existing work ledger. Tap counts and checkout counts add no points. | 15% |
+| Check-in Activity | 50% checkout accuracy + 25% relative verified check-in days + 25% relative tracked hours. Checkout accuracy is the percentage of eligible check-in days on which every ended visit has the dancer's own checkout before expiry. | 15% |
 | Internal Table Requests | Relative requests received during recorded presence divided by recorded hours. Staff acknowledgement/completion/arrival status is ignored. | 25% |
 | VIP Requests | 80% relative customer selections + 20% returning-customer share among distinct requesting accounts. Customer-withdrawn requests are excluded from current demand and repeat history; staff decisions are ignored. | 20% |
 | Profile Interest | Relative weighted sum of explicitly dancer-and-venue-attributed events: profile opens 1; club opens, follows and completed shares 2; directions, transport, offer clicks and I'm Going signals 3. | 10% |
@@ -39,6 +39,18 @@ For relative comparisons, points are `100 * value / (value + medianPositive)`. T
 Category scores are rounded to integers from 0 to 100. Overall is the weighted mean of the displayed eligible category scores, with available weights normalized to 100%, rounded again. At least three categories are required; missing or unavailable channels are never zero-filled. The Overall tile shows how many of the five categories contributed. Partial scores are labelled Early data and never ranked against complete scores.
 
 Entry scans remain part of the ordinary door workflow. No POS integration is used. Redemption-date totals can include older passes, so they do not enter the claim-cohort conversion denominator. More profile views cannot dilute entry conversion. Profile interest represents observed activity, not an exposure-adjusted rate.
+
+### Check-in and checkout accuracy
+
+The work-session ledger records dancer check-in provenance, the venue-local check-in date, the dancer's checkout timestamp and closure reason. Only server-verified NFC check-ins from scheduled/NFC shifts qualify; centrally managed demo assignments and historical sessions without this evidence do not. Tracking starts prospectively, without guessing who ended old sessions. Echo House's isolated sample report includes synthetic accuracy inputs.
+
+For visits overlapping the selected period, each original venue-local check-in date counts once. The hours component merges overlapping intervals and clips them to the period. Repeat taps/refreshes do not create additional check-in days. An overnight visit retains its original check-in date and its own paired checkout, even across a report boundary. Only checkouts by the period end can earn credit.
+
+An eligible day contains at least one ended visit. It earns accuracy credit only if every eligible ended visit was checked out by the dancer before its recorded expiry. Staff checkout and expired presence count as incomplete, including expiry that has not yet been reconciled by a background process. Other administrative interruptions are ungraded. Active visits are excluded from checkout opportunities until they end; a day can contain both ended and active visits. Repeated successful short visits cannot dilute another missed checkout on the same day. This measures record completeness, not independent proof of the dancer's physical departure time.
+
+With no ended visits, the two activity components are rescaled to 50% check-in days and 50% hours, labelled Early data with `Checkout accuracy pending`. This awards no assumed checkout accuracy. Once visits end, the normal 50/25/25 weights apply. The category remains Early until it has at least three eligible ended days and twice the period's minimum tracked hours. Unknown/malformed accuracy inputs leave this category unscored and do not disable Internal Table Requests.
+
+Migration `20261013024002_dancer_roster_accuracy_scores.sql` was applied to production. A read-only Echo House report returned all five new aggregate fields for 96 dancers. The report remains inaccessible to anonymous/authenticated database callers, and security/performance advisors reported no new findings. Focused database tests verify actor distinctions, same-day deduplication, active/expired visits, midnight/period boundaries, overlap handling and historical-data exclusion.
 
 ### Evidence and ranking
 
@@ -49,7 +61,7 @@ Entry scans remain part of the ordinary door workflow. No POS integration is use
 | 30 days | 4 | 10 | 10 | 30 |
 | All time | 4 | 10 | 10 | 30 |
 
-Below these minimums, or with missing/malformed required inputs, the category is **Not enough data**. Valid zero conversion remains zero. Samples remain Early data until hours and actions reach twice the period minimum; request/claim samples must reach both twice the minimum and at least 20. These labels describe sample coverage, not statistical certainty.
+Below these minimums, or with missing/malformed required inputs, the category is **Not enough data**. Check-in Activity uses only hours with the new provenance tracking and requires at least one verified check-in day; Tables continues using the existing recorded hours. Valid zero conversion remains zero. Check-in Activity stays Early until twice the minimum hours and three eligible ended days; Interest needs twice the action minimum; request/claim samples must reach both twice the minimum and at least 20. These labels describe sample coverage, not statistical certainty.
 
 Rank requires all five categories past Early data, and at least three such dancers at the club. Equal displayed Overall scores share competition rank (1, 1, 3). Partial, early and missing scores remain unranked. These scores are not comparable across different clubs or reporting periods.
 
@@ -71,7 +83,7 @@ Clicks, browser counts, shares and TV results remain in supporting disclosures. 
 
 ## Attendance and profile conversions
 
-The dancer results extension records explicit, verified check-ins and check-outs in a private event ledger. Expiring presence does not become a check-out. Events survive shift deletion; prior check-in/out events are not reconstructed. The aggregates retain event counts and each dancer's latest recorded check-in within the selected period. The automatic score view uses recorded hours without rewarding repeated taps; venue-wide attendance summaries remain available.
+The dancer results extension retains check-in/out event counts and each dancer's latest recorded check-in within the selected period. Events survive shift deletion; prior events are not reconstructed. Those raw event counts are not used as proof of a dancer's own checkout: expiry reconciliation and staff actions can also set checkout timestamps. Version 3 uses the work-session provenance ledger to pair dancer checkouts and distinguish expiry, staff checkout and other interruptions. Venue-wide attendance summaries remain available independently.
 
 Staff first mark a table request seen, then choose **Mark arrived** or **Didn’t arrive at table**. Mark arrived confirms the dancer actually attended; Complete closes the attended request. Didn’t arrive at table closes it as cancelled and preserves the `no_show` outcome. This is only about acknowledged internal table requests, not shifts or VIP bookings, and is never inferred automatically. These actions require venue staff access and reject stale transitions. Requests remain in the staff inbox after the dancer checks out, within the existing six-hour queue window. Unknown attendance is shown separately. Table attendance rate is arrived / (arrived + no-show), using requests created in the selected period; completed legacy requests never imply arrival.
 

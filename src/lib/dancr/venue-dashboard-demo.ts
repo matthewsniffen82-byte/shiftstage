@@ -28,12 +28,17 @@ export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, p
     photoUrl: photos.find(photo => photo.name === name)?.url || null,
     profileDancerId: photos.find(photo => photo.name === name)?.dancerId || null }));
   const dancers: DancerPerformance[] = roster.map((dancer, i) => {
+    const checkInDays = { tonight: 1, "7d": 5, "30d": 20, all: 80 }[period];
+    const checkoutDays = checkInDays;
+    const accurateDays = Math.max(0, checkoutDays - Math.floor(checkoutDays * ((i + phase) % 4) / 10));
     const requests = (20 + i) * factor;
     const completed = (16 + (i + phase) % 3 + Math.floor(i / 2)) * factor;
     const claims = (20 + i * 2) * factor;
     const conversions = (8 + (i + phase) % 4 + Math.floor(i / 2)) * factor;
     return { id: dancer.id, name: dancer.name, photoUrl: dancer.photoUrl,
       internal: { checkedInHours: (3 + i * 0.35) * factor, requests, completed,
+        rosterTrackedHours: (3 + i * 0.35) * factor, verifiedCheckInDays: checkInDays,
+        checkoutEligibleDays: checkoutDays, dancerCheckoutDays: accurateDays, activeCheckInDays: dancer.working ? 1 : 0,
         requestsDuringHours: requests, pending: i < 2 ? 1 : 0, acknowledged: i === 2 ? 1 : 0,
         cancelled: requests - completed - (i < 3 ? 1 : 0) },
       vip: { requests: (20 + i) * factor, repeatRequesters: (5 - Math.floor(i / 2)) * factor,
@@ -41,8 +46,8 @@ export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, p
         scoringRepeatRequesters: (5 - Math.floor(i / 2)) * factor },
       external: { dancer_profile: (32 + i * 5) * factor, club_page: (18 + i) * factor,
         directions: (15 + i) * factor, going: (10 + i) * factor, free_entry: (18 + i * 2) * factor, transport: (8 + i) * factor },
-      results: { checkIns: factor, checkOuts: dancer.working ? factor - 1 : factor,
-        lastCheckInAt: ago(3 + i * 0.35), lastCheckOutAt: dancer.working ? null : ago(1),
+      results: { checkIns: checkInDays + (dancer.working ? 1 : 0), checkOuts: accurateDays,
+        lastCheckInAt: ago(3 + i * 0.35), lastCheckOutAt: dancer.working ? ago(5.5) : ago(1),
         tableArrived: completed, tableNoShows: factor, tableAttendanceUnrecorded: requests - completed - factor,
         showUpPercent: Math.round(completed / (completed + factor) * 100),
         profileClaims: claims, profileConversions: conversions, profileCohortConversions: conversions,
