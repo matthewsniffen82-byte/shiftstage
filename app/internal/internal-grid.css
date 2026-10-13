@@ -95,8 +95,8 @@ body .ir-shell .ir-directory-grid .ir-dancer-copy {
   gap: 3px;
   padding: 16px 6px 8px;
   color: #fff;
-  background: linear-gradient(180deg, rgba(5, 5, 8, 0), rgba(5, 5, 8, .24) 45%, rgba(5, 5, 8, .68));
-  text-shadow: 0 1px 4px rgba(0, 0, 0, .65);
+  background: linear-gradient(180deg, rgba(5, 5, 8, 0), rgba(5, 5, 8, .1) 45%, rgba(5, 5, 8, .36));
+  text-shadow: 0 1px 2px rgba(0, 0, 0, .9), 0 0 4px rgba(0, 0, 0, .65);
   pointer-events: none;
 }
 body .ir-directory-grid .ir-dancer-copy strong {
@@ -109,7 +109,7 @@ body .ir-directory-grid .ir-dancer-copy strong {
   line-height: 1.15;
   white-space: nowrap;
 }
-body .ir-directory-grid .ir-dancer-copy > span { font-size: 10px; font-weight: 500; line-height: 1.3; color: #c6c3cf; }
+body .ir-directory-grid .ir-dancer-copy > span { font-size: 10px; font-weight: 600; line-height: 1.3; color: #fff; }
 body .ir-shell .ir-directory-grid .ir-table-request,
 body.dancr-button-system .ir-shell .ir-directory-grid .ir-table-request {
   position: relative !important;
