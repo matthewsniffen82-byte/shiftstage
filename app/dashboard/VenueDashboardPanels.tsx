@@ -279,31 +279,40 @@ export function VenuePanel({
     : "";
   return (
     <>
-      <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
-        {([
-          ["tonight", "Tonight"],
-          ["roster", "Dancers & tables"],
-          ["business", "Results"],
-          ["venue", "Manage venue"],
-        ] as const).map(([workspace, label]) => (
-          <button
-            aria-controls={`venue-workspace-${workspace}`}
-            aria-selected={activeWorkspace === workspace}
-            className={activeWorkspace === workspace ? "active" : ""}
-            id={`venue-workspace-${workspace}-tab`}
-            key={workspace}
-            onKeyDown={(event) => moveVenueWorkspaceFocus(event, workspace)}
-            onClick={() => selectVenueWorkspace(workspace)}
-            role="tab"
-            tabIndex={activeWorkspace === workspace ? 0 : -1}
-            type="button"
-          >
-            <VenueDashboardIcon section={workspace === "business" ? "analytics" : workspace} />
-            <strong>{label}</strong>
-            {workspace === "roster" && Number(operations?.tablePending) > 0 && <span className="venue-tab-count" aria-label={`${operations?.tablePending} pending table requests`}>{operations?.tablePending}</span>}
-          </button>
-        ))}
-      </nav>
+      <div className="venue-workspace-toolbar">
+        <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
+          {([
+            ["tonight", "Tonight"],
+            ["roster", "Dancers & tables"],
+            ["business", "Results"],
+            ["venue", "Manage venue"],
+          ] as const).map(([workspace, label]) => (
+            <button
+              aria-controls={`venue-workspace-${workspace}`}
+              aria-selected={activeWorkspace === workspace}
+              className={activeWorkspace === workspace ? "active" : ""}
+              id={`venue-workspace-${workspace}-tab`}
+              key={workspace}
+              onKeyDown={(event) => moveVenueWorkspaceFocus(event, workspace)}
+              onClick={() => selectVenueWorkspace(workspace)}
+              role="tab"
+              tabIndex={activeWorkspace === workspace ? 0 : -1}
+              type="button"
+            >
+              <VenueDashboardIcon section={workspace === "business" ? "analytics" : workspace} />
+              <strong>{label}</strong>
+              {workspace === "roster" && Number(operations?.tablePending) > 0 && <span className="venue-tab-count" aria-label={`${operations?.tablePending} pending table requests`}>{operations?.tablePending}</span>}
+            </button>
+          ))}
+        </nav>
+        {activeWorkspace === "business" && <div className="venue-analytics-period" role="group" aria-label="Analytics period">
+          {(["tonight", "7d", "30d", "all"] as const).map((period) => (
+            <button className={analyticsPeriod === period ? "active" : ""} aria-pressed={analyticsPeriod === period} type="button" key={period} onClick={() => onAnalyticsPeriodChange(period)}>
+              {period === "tonight" ? "Tonight" : period === "7d" ? "7 days" : period === "30d" ? "30 days" : "All time"}
+            </button>
+          ))}
+        </div>}
+      </div>
       <section className="venue-command-panel" aria-label="Venue status">
         <div className="venue-command-status">
           <span className={isPublished ? "venue-live-pill" : "venue-live-pill is-draft"}>{isPublished ? "LIVE" : isPausedForDeals ? "HIDDEN" : "PRIVATE DRAFT"}</span>
@@ -373,13 +382,6 @@ export function VenuePanel({
         {(activeWorkspace === "business" || openedWorkspaces.includes("business")) && <>
         <section className="info-panel" id="venue-overview" aria-labelledby="venue-results-heading">
           <h2 className="venue-icon-heading" id="venue-results-heading"><VenueDashboardIcon section="analytics" />Results</h2>
-          <div className="venue-analytics-period" role="group" aria-label="Analytics period">
-            {(["tonight", "7d", "30d", "all"] as const).map((period) => (
-              <button className={analyticsPeriod === period ? "active" : ""} aria-pressed={analyticsPeriod === period} type="button" key={period} onClick={() => onAnalyticsPeriodChange(period)}>
-                {period === "tonight" ? "Tonight" : period === "7d" ? "7 days" : period === "30d" ? "30 days" : "All time"}
-              </button>
-            ))}
-          </div>
           {analytics?.valueReport ? <VenueValueAnalytics
             report={analytics.valueReport as VenueValueReport}
             period={analytics.period === "tonight" || analytics.period === "7d" || analytics.period === "30d" || analytics.period === "all" ? analytics.period : analyticsPeriod}

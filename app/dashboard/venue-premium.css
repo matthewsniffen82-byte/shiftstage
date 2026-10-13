@@ -55,9 +55,6 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 
 /* Persistent dashboard tabs replace the consumer dock on the venue route. */
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs {
-  position: sticky;
-  top: calc(var(--mydancr-preview-banner-offset, 0px) + 6px);
-  z-index: 40;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;

@@ -1,5 +1,7 @@
 /* Club operations: compact queues and clear next actions on phones and desktops. */
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { position:sticky; top:calc(var(--mydancr-demo-banner-height,0px) + env(safe-area-inset-top,0px)); z-index:30; padding:6px; background:#08080c; border:1px solid #34343c; }
+/* One sticky surface keeps Results ranges below the tabs at every tab height. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-toolbar { position:sticky; top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 6px); z-index:40; grid-column:1 / -1; align-self:start; min-width:0; display:grid; gap:6px; border-radius:16px; background:#050507; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { padding:6px; background:#08080c; border:1px solid #34343c; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { position:relative; }
 .venue-tab-count { display:inline-grid; place-items:center; min-width:20px; padding:2px 5px; border-radius:7px; background:#402659; color:#fff; font-size:11px; font-variant-numeric:tabular-nums; }
 .venue-tonight-overview { display:grid; gap:14px; margin-bottom:18px; }
