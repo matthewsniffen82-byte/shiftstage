@@ -188,3 +188,82 @@ test('missing, malformed and extreme data cannot produce nonfinite or out-of-ran
   const huge = dancer('a'); huge.external.directions = Number.MAX_VALUE; huge.internal.checkedInHours = Number.MAX_VALUE;
   for (const s of Object.values(score(huge).scores)) assert.ok(s.value === null || Number.isInteger(s.value) && s.value >= 0 && s.value <= 100);
 });
+
+test('score details expose the actual counts, baselines, weights and rounded calculations', () => {
+  const result = score(dancer('a')).scores;
+  const inputs = key => Object.fromEntries(result[key].details.inputs.map(input => [input.label, input.value]));
+  assert.deepEqual(inputs('checkIns'), {
+    'Check-in days': '4', 'Tracked hours': '8 h', 'Complete checkout days': '4 of 4 · 100%',
+    'Both-roster hours': '0 h · +0% activity boost',
+  });
+  assert.deepEqual(inputs('internal'), {
+    'Requests while checked in': '20', 'Checked-in hours': '8 h', 'Requests per hour': '2.5', 'Club median per hour': '2.5',
+  });
+  assert.deepEqual(inputs('vip'), {
+    'VIP selections': '20', 'Club median selections': '20', 'Requesting customers': '10', 'Returning requesters': '2 of 10 · 20%',
+  });
+  assert.deepEqual(inputs('profile'), {
+    'Profile opens': '10 × 1 = 10', 'Club opens': '10 × 2 = 20', Directions: '10 × 3 = 30',
+    "I'm Going": '10 × 3 = 30', 'Offer clicks': '10 × 3 = 30', 'Transport clicks': '10 × 3 = 30',
+    'Weighted action total': '150', 'Club median weighted total': '150',
+  });
+  assert.deepEqual(inputs('conversions'), { 'Profile passes redeemed': '10 of 20 claimed', 'Conversion rate': '50%' });
+  assert.deepEqual(inputs('overall'), { 'Check-ins': '75 × 15%', Tables: '50 × 25%', VIP: '44 × 20%', Interest: '50 × 10%', Entries: '50 × 30%' });
+  assert.equal(result.internal.details.calculation[1].value, '100 × 2.5 ÷ (2.5 + 2.5) ≈ 50');
+  assert.equal(result.vip.details.calculation[2].value, '40 + 4 ≈ 44');
+  assert.equal(result.checkIns.details.calculation.at(-1).value, '25 + 50 ≈ 75');
+  assert.equal(result.overall.details.calculation[0].value, '(75 × 15 + 50 × 25 + 44 × 20 + 50 × 10 + 50 × 30) ÷ 100 ≈ 53');
+});
+
+test('details show only counted actions and cohort redemptions, not unrelated totals', () => {
+  const row = dancer('a');
+  Object.assign(row.external, { follow: 3, share_completed: 2, share: 100, impressions: 999 });
+  Object.assign(row.results, { profileClaims: 23, profileCohortConversions: 20, profileConversions: 999 });
+  const result = score(row).scores;
+  assert.ok(result.profile.details.inputs.some(input => input.label === 'Follows' && input.value === '3 × 2 = 6'));
+  assert.ok(result.profile.details.inputs.some(input => input.label === 'Completed shares' && input.value === '2 × 2 = 4'));
+  assert.ok(result.profile.details.inputs.some(input => input.label === 'Weighted action total' && input.value === '160'));
+  assert.ok(!JSON.stringify(result.profile.details).includes('999'));
+  assert.deepEqual(result.conversions.details.inputs, [
+    { label: 'Profile passes redeemed', value: '20 of 23 claimed' }, { label: 'Conversion rate', value: '87%' },
+  ]);
+  assert.equal(result.conversions.details.calculation[0].value, '20 ÷ 23 × 100 ≈ 87');
+  row.results.profileCohortConversions = 0;
+  assert.equal(score(row).scores.conversions.details.calculation[0].value, '0 ÷ 23 × 100 ≈ 0');
+});
+
+test('check-in details account for partial boosts, provisional scores and unknown roster history', () => {
+  const row = dancer('a'); row.internal.rosterBothHours = 4;
+  let details = score(row).scores.checkIns.details;
+  assert.equal(details.inputs.at(-1).value, '4 h · +12.5% activity boost');
+  assert.equal(details.calculation.at(-1).value, '28.125 + 50 ≈ 78');
+  Object.assign(row.internal, { checkoutEligibleDays: 0, dancerCheckoutDays: 0, activeCheckInDays: 1 });
+  details = score(row).scores.checkIns.details;
+  assert.equal(details.inputs[2].value, 'Pending ended visits');
+  assert.equal(details.calculation.at(-1).label, 'Provisional score · Rounded');
+  assert.equal(details.calculation.at(-1).value, '28.125 ÷ 0.5 ≈ 56');
+  assert.ok(!details.calculation.some(step => step.label.startsWith('Checkout points')));
+  delete row.internal.rosterBothHours;
+  details = score(row).scores.checkIns.details;
+  assert.equal(details.inputs.at(-1).value, 'Not recorded · No boost');
+  assert.equal(details.calculation.at(-1).value, '25 ÷ 0.5 ≈ 50');
+});
+
+test('unscored categories have no invented details and partial overall displays normalized weights', () => {
+  const row = dancer('a'); row.vip = {};
+  const result = score(row).scores;
+  assert.equal(result.vip.details, undefined);
+  assert.deepEqual(result.overall.details.inputs.map(input => input.value),
+    ['75 × 18.75%', '50 × 31.25%', 'Not scored · Excluded', '50 × 12.5%', '50 × 37.5%']);
+  assert.equal(result.overall.details.calculation[0].value, '(75 × 15 + 50 × 25 + 50 × 10 + 50 × 30) ÷ 80 ≈ 55');
+  row.internal = {}; row.results = undefined; row.external = {};
+  assert.ok(Object.values(score(row).scores).every(category => category.details === undefined));
+});
+
+test('all reporting periods expose calculations matching their displayed scores', () => {
+  for (const period of ['tonight', '7d', '30d', 'all']) {
+    for (const category of Object.values(score(dancer('a'), period).scores)) {
+      assert.ok(category.details.calculation.at(-1).value.endsWith(`≈ ${category.value}`));
+    }
+  }
+});

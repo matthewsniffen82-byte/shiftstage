@@ -76,10 +76,21 @@ body.dancr-button-system .venue-score-dialog > header button { flex: none; min-h
 .venue-performance-summary .venue-score dd strong, .venue-performance-summary .venue-score-missing { font-size: 22px; }
 .venue-score-details { grid-column: 1 / -1; min-width: 0; color: #bdbdc6; font-size: 12px; }
 .venue-score-details > h4 { margin: 16px 0 10px; color: #dedee6; font-size: 13px; }
-.venue-score-details dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px 12px; margin: 0 0 4px; }
-.venue-score-details dl > div { min-width: 0; }
+.venue-score-details > dl { display: grid; grid-template-columns: minmax(0,1fr); gap: 0; margin: 0 0 4px; }
+.venue-score-details > dl > div { min-width: 0; padding-block: 12px; border-top: 1px solid #34343c; }
 .venue-score-details dt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; color: #ededf1; font-weight: 650; line-height: 1.4; }
 .venue-score-details dd { margin: 2px 0 0; line-height: 1.4; overflow-wrap: anywhere; }
+.venue-score-detail-result { margin-left: auto; color: #ede2ba; font-size: 12px; font-variant-numeric: tabular-nums; }
+.venue-score-inputs { list-style: none; padding: 0; margin: 8px 0 0; }
+.venue-score-inputs > li { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: baseline; gap: 10px; padding-block: 4px; }
+.venue-score-inputs > li > * { min-width: 0; overflow-wrap: anywhere; }
+.venue-score-inputs strong { text-align: right; font-size: 12px; font-weight: 500; color: #ededf1; font-variant-numeric: tabular-nums; }
+.venue-score-calculation { margin-top: 4px; }
+.venue-score-calculation > summary { min-height: 44px; padding-block: 12px; color: #c8b2ed; font-size: 12px; cursor: pointer; }
+.venue-score-calculation > ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.venue-score-calculation li { min-width: 0; }
+.venue-score-calculation li > span { display: block; color: #bdbdc6; font-size: 11px; }
+.venue-score-calculation code { display: block; margin-top: 3px; color: #ededf1; font: inherit; font-variant-numeric: tabular-nums; white-space: normal; overflow-wrap: anywhere; }
 .venue-score-confidence, .venue-score-evidence { display: block; font-size: 11px; line-height: 1.4; color: #bdbdc6; overflow-wrap: anywhere; }
 .venue-score-confidence { color: #bdbdc6; font-weight: 400; }
 .venue-score-methodology { border-block: 1px solid #34343c; margin: 10px 0; padding: 0; color: #bdbdc6; font-size: 13px; line-height: 1.5; }

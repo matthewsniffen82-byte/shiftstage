@@ -96,10 +96,15 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
       {renderScores(selected.scores)}
       <div className="venue-score-details">
         <h4>Score details · Out of 100</h4>
-        <dl>{scoreKeys.map(key => <div key={key}>
-          <dt><span>{compactScoreLabels[key]}</span>{selected.scores[key].confidence === "early" && <span className="venue-score-confidence">Early data</span>}</dt>
-          <dd>{selected.scores[key].evidence ? <span className="venue-score-evidence">{selected.scores[key].evidence}</span>
-              : <span>Not enough data. {selected.scores[key].reason}</span>}</dd>
+        <dl>{scoreKeys.map(key => <div key={`${selected.dancer.id}:${period}:${key}`}>
+          <dt><span>{compactScoreLabels[key]}</span>{selected.scores[key].confidence === "early" && <span className="venue-score-confidence">Early data</span>}{selected.scores[key].value !== null && <strong className="venue-score-detail-result">Score {selected.scores[key].value}</strong>}</dt>
+          <dd>{selected.scores[key].details ? <>
+            <ul className="venue-score-inputs" aria-label={`${compactScoreLabels[key]} inputs`}>{selected.scores[key].details.inputs.map(input => <li key={input.label}><span>{input.label}</span><strong>{input.value}</strong></li>)}</ul>
+            <details className="venue-score-calculation">
+              <summary>View calculation<span className="dashboard-sr-only"> for {compactScoreLabels[key]}</span></summary>
+              <ul>{selected.scores[key].details.calculation.map(step => <li key={step.label}><span>{step.label}</span><code>{step.value}</code></li>)}</ul>
+            </details>
+          </> : <span>Not enough data. {selected.scores[key].reason}</span>}</dd>
         </div>)}</dl>
       </div>
       </>}
