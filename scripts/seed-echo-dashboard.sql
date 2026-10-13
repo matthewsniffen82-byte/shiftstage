@@ -140,12 +140,40 @@ select pg_temp.echo_id('page:'||d.id||':'||r),e.venue_id,d.id,g.id,'page_view','
 from echo_dancers d cross join echo_context e cross join generate_series(1,12) r
 join echo_guests g on g.n=r on conflict do nothing;
 
+-- The ride reader requires UUID v4 version/variant bits; a raw MD5 cast does not set them.
+create or replace function pg_temp.echo_ride_id(n integer) returns uuid language sql immutable as $$
+  select overlay(overlay(md5('mydancr-echo-dashboard-v1:ride:'||n) placing '4' from 13 for 1)
+    placing '8' from 17 for 1)::uuid
+$$;
+
+-- BEGIN Echo ride ID repair (may also run independently inside a transaction).
+-- Repair only the six original fictional receipts, preserving staff decisions and handoff state.
+-- Foreign keys deliberately prevent this repair if a legacy receipt already has status history.
+with legacy as (
+  select hash::uuid old_id,
+    overlay(overlay(hash placing '4' from 13 for 1) placing '8' from 17 for 1)::uuid new_id
+  from generate_series(1,6) n
+  cross join lateral (select md5('mydancr-echo-dashboard-v1:ride:'||n) hash) h
+)
+update public.club_shuttle_requests r
+set id=legacy.new_id,
+  notification_rows=jsonb_set(r.notification_rows,'{0,payload,requestId}',to_jsonb(legacy.new_id::text))
+from legacy
+where r.id=legacy.old_id and r.id<>legacy.new_id
+  and r.venue_id='260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af' and r.handed_off_at is not null
+  and jsonb_array_length(r.notification_rows)=1
+  and r.notification_rows->0->'payload'->>'kind'='club_shuttle_request'
+  and r.notification_rows->0->'payload'->>'dataset_marker'='mydancr-echo-dashboard-v1'
+  and r.notification_rows->0->'payload'->>'requestId'=r.id::text
+  and r.notification_rows->0->'payload'->>'venueId'=r.venue_id::text;
+-- END Echo ride ID repair.
+
 -- Receipt payloads populate the ride cards; handed_off_at prevents the handoff worker from sending alerts.
 insert into public.club_shuttle_requests(id,venue_id,deal_id,details_hash,notification_rows,created_at,handed_off_at,staff_status)
-select pg_temp.echo_id('ride:'||g.n),e.venue_id,e.deal_id,md5('echo-ride-'||g.n)||md5('echo-ride-'||g.n),
+select pg_temp.echo_ride_id(g.n),e.venue_id,e.deal_id,md5('echo-ride-'||g.n)||md5('echo-ride-'||g.n),
   jsonb_build_array(jsonb_build_object('id',pg_temp.echo_id('ride-notice:'||g.n),'recipient_id',g.id,
     'notification_type','support_message','channel','in_app','title','Sample shuttle request','body','Fictional sample ride',
-    'payload',jsonb_build_object('kind','club_shuttle_request','requestId',pg_temp.echo_id('ride:'||g.n),'venueId',e.venue_id,
+    'payload',jsonb_build_object('kind','club_shuttle_request','requestId',pg_temp.echo_ride_id(g.n),'venueId',e.venue_id,
       'name',g.name,'email',g.email,'phone','+170255501'||lpad(g.n::text,2,'0'),'location','Sample hotel lobby '||g.n,
       'partySize',2+g.n%5,'dataset_marker','mydancr-echo-dashboard-v1'))),
   e.stamp-make_interval(mins=>g.n*4),e.stamp,
