@@ -283,14 +283,10 @@ test("performance rows show every score beside the portrait and retain the full 
     assert.equal(nodes(grid).filter(node => node.props.className === "venue-score-evidence").length, 0);
     assert.deepEqual(nodes(grid).filter(node => node.type === "strong").map(node => node.props.children), [53, 75, 50, 44, 50, 50]);
     assert.equal(nodes(dialog).filter(node => node.props.className === "venue-score-inputs").length, 6);
-    const calculations = nodes(dialog).filter(node => node.props.className === "venue-score-calculation");
-    assert.equal(calculations.length, 6);
-    assert.ok(calculations.every(node => node.props.open === undefined), "formulas stay collapsed until requested");
-    assert.deepEqual(calculations.map(node => nodes(node).find(child => child.type === "summary").props.children[0]), Array(6).fill("View calculation"));
+    assert.ok(!nodes(dialog).some(node => ["details", "summary", "code"].includes(node.type)), "score popup shows inputs without calculation disclosures or formulas");
     assert.deepEqual(nodes(details).filter(node => node.props.className === "venue-score-detail-result").map(node => node.props.children[1]), [53, 75, 50, 44, 50, 50]);
     const entries = nodes(details).find(node => node.props['aria-label'] === "Entries inputs");
     assert.deepEqual(nodes(entries).filter(node => node.type === "strong").map(node => node.props.children), ["10 of 20 claimed", "50%"]);
-    assert.ok(nodes(details).some(node => node.type === "code" && node.props.children === "10 ÷ 20 × 100 ≈ 50"));
     assert.equal(nodes(details).filter(node => node.type === "p").length, 0, "use input rows rather than explanation paragraphs");
     assert.ok(nodes(dialog).some(node => node.props.className === "venue-score-rank" && node.props.children === "#1 of 3 ranked dancers"));
     assert.ok(nodes(row).some(node => node.props.className === "venue-score-card-rank" && node.props.title === "#1 of 3 ranked dancers"));
@@ -394,7 +390,7 @@ test("missing data stays unranked and changing reporting period recalculates eli
   tree = render({ dancers, period: "tonight" });
   assert.ok(tree.some(node => node.props.className === "venue-score-early" && node.props.children === "Early"));
   assert.ok(tree.some(node => node.props.className === "venue-score-confidence" && node.props.children === "Early data"));
-  assert.equal(tree.filter(node => node.props.className === "venue-score-calculation").length, 6);
+  assert.equal(tree.filter(node => node.props.className === "venue-score-inputs").length, 6);
   assert.ok(!tree.some(node => node.props.children === "Not scored · Excluded"));
   tree = render({ dancers, period: "all" });
   assert.ok(tree.filter(node => node.props.className === "venue-score-rank").every(node => node.props.children === "Unranked"));
@@ -403,7 +399,7 @@ test("missing data stays unranked and changing reporting period recalculates eli
   assert.ok(nodes(missing).some(node => node.props.className === "dashboard-sr-only" && node.props.children === "Not enough data"));
   const details = tree.find(node => node.props.className === "venue-score-details");
   assert.ok(nodes(details).some(node => Array.isArray(node.props.children) && node.props.children.includes("Needs at least 4 hours with verified dancer check-in and checkout tracking.")));
-  assert.equal(nodes(details).filter(node => node.props.className === "venue-score-calculation").length, 4);
+  assert.equal(nodes(details).filter(node => node.props.className === "venue-score-inputs").length, 4);
   const overallInputs = nodes(details).find(node => node.props['aria-label'] === "Overall inputs");
   assert.deepEqual(nodes(overallInputs).filter(node => node.type === "strong").map(node => node.props.children),
     ["Not scored · Excluded", "Not scored · Excluded", "44 × 33.3333%", "50 × 16.6667%", "50 × 50%"]);
@@ -412,7 +408,7 @@ test("missing data stays unranked and changing reporting period recalculates eli
   assert.equal(analytics.performanceMinutes(null), "Not yet available");
 });
 
-test("score calculations retain the full-club baseline when searching and sorting", () => {
+test("score inputs retain the full-club baseline when searching and sorting", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
   const dancers = scoredDancers();
   dancers[1].external.dancer_profile += 150;
@@ -426,7 +422,10 @@ test("score calculations retain the full-club baseline when searching and sortin
   const inputs = tree.find(node => node.props['aria-label'] === "Interest inputs");
   const median = nodes(inputs).find(node => node.type === "li" && node.props.children[0].props.children === "Club median weighted total");
   assert.equal(median.props.children[1].props.children, "150");
-  assert.ok(tree.some(node => node.type === "code" && node.props.children === "100 × 300 ÷ (300 + 150) ≈ 67"));
+  const total = nodes(inputs).find(node => node.type === "li" && node.props.children[0].props.children === "Weighted action total");
+  assert.equal(total.props.children[1].props.children, "300");
+  const section = tree.find(node => node.type === "div" && node.key === "b:30d:profile");
+  assert.equal(nodes(section).find(node => node.props.className === "venue-score-detail-result").props.children[1], 67);
 });
 
 test("score dialog keeps six columns and performance rows preserve the original portrait width", () => {
@@ -441,8 +440,7 @@ test("score dialog keeps six columns and performance rows preserve the original 
   assert.match(css, /\.venue-performance-summary \.venue-performance-scores\s*\{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(css, /\.venue-score-details > dl\s*\{[^}]*grid-template-columns: minmax\(0,1fr\)/);
   assert.match(css, /\.venue-score-inputs > li\s*\{[^}]*grid-template-columns: minmax\(0,1fr\) minmax\(0,1fr\)/);
-  assert.match(css, /\.venue-score-calculation > summary\s*\{[^}]*min-height: 44px/);
-  assert.match(css, /\.venue-score-calculation code\s*\{[^}]*white-space: normal;[^}]*overflow-wrap: anywhere/);
+  assert.doesNotMatch(css, /\.venue-score-calculation/);
 });
 
 test("automatic totals exclude staff-confirmed results and show missing rates without inventing zero", () => {

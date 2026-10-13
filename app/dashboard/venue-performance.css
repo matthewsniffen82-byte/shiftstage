@@ -85,12 +85,6 @@ body.dancr-button-system .venue-score-dialog > header button { flex: none; min-h
 .venue-score-inputs > li { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: baseline; gap: 10px; padding-block: 4px; }
 .venue-score-inputs > li > * { min-width: 0; overflow-wrap: anywhere; }
 .venue-score-inputs strong { text-align: right; font-size: 12px; font-weight: 500; color: #ededf1; font-variant-numeric: tabular-nums; }
-.venue-score-calculation { margin-top: 4px; }
-.venue-score-calculation > summary { min-height: 44px; padding-block: 12px; color: #c8b2ed; font-size: 12px; cursor: pointer; }
-.venue-score-calculation > ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-.venue-score-calculation li { min-width: 0; }
-.venue-score-calculation li > span { display: block; color: #bdbdc6; font-size: 11px; }
-.venue-score-calculation code { display: block; margin-top: 3px; color: #ededf1; font: inherit; font-variant-numeric: tabular-nums; white-space: normal; overflow-wrap: anywhere; }
 .venue-score-confidence, .venue-score-evidence { display: block; font-size: 11px; line-height: 1.4; color: #bdbdc6; overflow-wrap: anywhere; }
 .venue-score-confidence { color: #bdbdc6; font-weight: 400; }
 .venue-score-methodology { border-block: 1px solid #34343c; margin: 10px 0; padding: 0; color: #bdbdc6; font-size: 13px; line-height: 1.5; }
