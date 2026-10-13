@@ -56,14 +56,25 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
 }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-count {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
   min-width: 20px;
+  min-height: 20px;
   padding: 2px 4px;
+  border: 1px solid #80639b;
   border-radius: 6px;
-  background: #26232e;
-  color: #e5e2eb;
+  /* Match the other venue counts; a flat gradient resists mobile dark-mode recoloring. */
+  background: linear-gradient(#30203f, #30203f) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: currentColor !important;
   font-size: 11px;
-  line-height: 1.4;
+  font-weight: 800;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-shadow: none;
 }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-tab-panel {
