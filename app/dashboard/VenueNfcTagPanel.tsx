@@ -371,7 +371,7 @@ export default function VenueNfcTagPanel({
           const identity = <span className="venue-card-portrait">
               <span className="venue-card-photo" aria-hidden="true">
                   {dancer?.avatarUrl ? (
-                    <img src={dancer.avatarUrl} srcSet={dancer.avatarSrcSet || undefined} sizes="(max-width: 620px) 44vw, 240px" alt="" loading="lazy" decoding="async" />
+                    <img src={dancer.avatarUrl} srcSet={dancer.avatarSrcSet || undefined} sizes="(max-width: 620px) 30vw, 320px" alt="" loading="lazy" decoding="async" />
                   ) : (dancer?.stageName || "D").slice(0, 1).toUpperCase()}
               </span>
               <span className="venue-card-caption">

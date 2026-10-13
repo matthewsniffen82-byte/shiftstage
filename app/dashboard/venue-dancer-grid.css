@@ -1,23 +1,27 @@
-/* The directory's portrait cards, with readable staff details below the photo. */
+/* Match the homepage's three equal portrait columns and ten-pixel gutters. */
 .venue-card-region { container-type: inline-size; min-width: 0; }
 body .venue-dancer-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: start;
-  gap: 12px 8px;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
   margin: 12px 0;
   padding: 0;
   list-style: none;
 }
 body .venue-dancer-grid .venue-dancer-card {
   position: relative;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  width: 100%;
   min-width: 0;
   margin: 0;
   padding: 0;
-  border: 1px solid #303037;
-  border-radius: 8px;
+  border: 0;
+  border-radius: 2px;
   background: #08080b;
   color: #f8f8fa;
   box-shadow: none;
@@ -36,7 +40,7 @@ body .venue-dancer-grid button.ir-profile-link.venue-card-profile {
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
-  border-radius: 8px 8px 0 0 !important;
+  border-radius: 2px !important;
   background: transparent !important;
   color: inherit !important;
   box-shadow: none !important;
@@ -52,7 +56,7 @@ body .venue-dancer-grid .venue-card-portrait {
   width: 100%;
   aspect-ratio: 9 / 16;
   overflow: hidden;
-  border-radius: 8px 8px 0 0;
+  border-radius: 2px;
   background: #15151b;
 }
 body .venue-dancer-grid .venue-card-photo {
@@ -87,7 +91,7 @@ body .venue-dancer-grid .venue-card-caption {
 }
 body .venue-dancer-grid .venue-card-caption strong {
   color: #fff;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
@@ -120,9 +124,3 @@ body .venue-dancer-grid .venue-card-options summary { border: 1px solid #34343c;
 body .venue-dancer-grid .venue-card-options details > div { box-sizing: border-box; width: 128px; background: #08080b; border-color: #34343c; }
 body .venue-dancer-grid .ir-profile-control > small[role="status"] { display: block; padding: 8px; overflow-wrap: anywhere; }
 body .venue-dancer-grid button.venue-card-profile:focus-visible { outline: 2px solid #d8cafa !important; outline-offset: -3px; }
-@container (min-width: 560px) {
-  body .venue-dancer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@container (min-width: 840px) {
-  body .venue-dancer-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
