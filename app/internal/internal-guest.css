@@ -62,8 +62,9 @@ body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy strong {
   line-height: 1.18; white-space: normal; overflow-wrap: anywhere;
 }
 body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy > span {
-  color: #fff;
-  -webkit-text-fill-color: currentColor;
+  /* Match the public dancer grid's supporting gray on mobile, too. */
+  color: #b3b5c2 !important;
+  -webkit-text-fill-color: #b3b5c2 !important;
   font-size: clamp(9px, 2.5vw, 10px);
   font-weight: 600;
   line-height: 1.3;
