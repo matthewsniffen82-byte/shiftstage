@@ -35,7 +35,7 @@
 .venue-performance-list > li { border-bottom: 1px solid #34343c; }
 .venue-performance-avatar { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; overflow: hidden; background: #29292f; color: #ededf1; font-weight: 600; }
 .venue-performance-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.venue-performance-name { font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
+.venue-performance-name { display: block; color: #f4f4f6; font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
 .venue-outcome-counts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 0 0 12px; }
 .venue-outcome-counts > div { min-width: 0; padding: 10px; background: #19191f; border-radius: 8px; }
 .venue-outcome-counts dt { font-size: 12px; line-height: 1.4; color: #c4bbce; }
@@ -44,8 +44,9 @@
 .venue-performance .venue-value-note { color: #bdbdc6; }
 .venue-scored-list > li { display: grid; grid-template-columns: minmax(160px,1fr) minmax(0,3fr); align-items: center; gap: 8px 16px; padding: 12px 0; }
 .venue-score-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.venue-score-identity > div { min-width: 0; }
+.venue-score-identity > .venue-score-copy { min-width: 0; }
 .venue-score-identity .venue-performance-avatar { flex: none; }
+.venue-performance button.venue-score-identity:is(:hover, :focus-visible) .venue-performance-name { text-decoration: underline; text-underline-offset: 3px; }
 .venue-score-rank { display: block; margin-top: 4px; color: #bdbdc6; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
 .venue-score-grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 4px; margin: 0; min-width: 0; }
 .venue-score { min-width: 0; padding: 8px 3px; text-align: center; border-bottom: 2px solid #494951; background: #17171c; }

@@ -144,7 +144,7 @@ test("live roster is labelled separately, only 7/30-day totals compare, and abse
 const dancerResults = (overrides = {}) => ({ checkIns: 2, checkOuts: 1, lastCheckInAt: null, lastCheckOutAt: null,
   profileConversions: 10, profileClaims: 20, profileCohortConversions: 10, profileConversionPercent: 50,
   tableArrived: 0, tableNoShows: 0, tableAttendanceUnrecorded: 0, showUpPercent: null, ...overrides });
-const scoreDependencies = { "@/src/lib/dancr/venue-dancer-scores": scoring };
+const scoreDependencies = { "@/src/lib/dancr/venue-dancer-scores": scoring, "../internal/InternalRoster": { VenueRosterProfileButton: "ProfileButton" } };
 const scoredDancers = () => ["Aria", "Bella", "Celeste"].map((name, index) => ({ id: String.fromCharCode(97 + index), name,
   internal: { requests: 20, completed: 8, checkedInHours: 8, requestsDuringHours: 20,
     rosterTrackedHours: 8, verifiedCheckInDays: 4, checkoutEligibleDays: 4, dancerCheckoutDays: 4, activeCheckInDays: 0 },
@@ -157,7 +157,12 @@ test("dancer rows show six compact scores with full labels and evidence in colla
   const tree = render({ dancers: scoredDancers(), period: "30d" });
   const rows = tree.filter(node => node.type === "li");
   assert.equal(rows.length, 3);
+  assert.deepEqual(tree.filter(node => node.type === "ProfileButton").map(node => node.props.dancerId), ["a", "b", "c"]);
   for (const row of rows) {
+    const profile = nodes(row).find(node => node.type === "ProfileButton");
+    assert.ok(nodes(profile).some(node => node.props.className === "venue-performance-avatar"));
+    assert.ok(nodes(profile).some(node => node.props.className === "venue-performance-name" && node.props.children === profile.props.stageName));
+    assert.ok(!nodes(profile).some(node => node.type === "details" || node.props.className === "venue-score-grid"));
     const grid = nodes(row).find(node => node.props.className === "venue-score-grid");
     const details = nodes(row).find(node => node.type === "details");
     assert.equal(grid.props['aria-label'], 'Performance scores out of 100');
@@ -175,6 +180,10 @@ test("dancer rows show six compact scores with full labels and evidence in colla
   assert.equal(tree.filter(node => node.type === "details").length, 4);
   assert.ok(tree.some(node => node.type === "summary" && node.props.children === "How scores are calculated"));
   assert.equal(tree.find(node => node.type === "details").props.open, undefined);
+  const demo = createVenueDashboardDemo("tonight", new Date("2026-10-12"), [{ name: "Aria", url: "/approved-photo.jpg", dancerId: "real-aria" }]);
+  const demoTree = render({ dancers: demo.report.performance.dancers, period: "tonight" });
+  assert.deepEqual(demoTree.filter(node => node.type === "ProfileButton").map(node => node.props.dancerId), ["real-aria"]);
+  assert.equal(demoTree.filter(node => node.type === "li").length, demo.report.performance.dancers.length);
 });
 
 test("score explanation stays concise and preserves weights, conversion scope and ranking safeguards", () => {

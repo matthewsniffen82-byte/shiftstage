@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { DancerPerformance } from "@/src/lib/dancr/venue-analytics";
+import { VenueRosterProfileButton } from "../internal/InternalRoster";
 import {
   DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS, DANCER_SCORE_LABELS, DANCER_SCORE_CATEGORIES, CHECK_IN_SCORE_WEIGHTS, BOTH_ROSTER_ACTIVITY_BOOST,
   scoreVenueDancers, sortScoredDancers, type DancerScoreKey, type DancerScorePeriod, type DancerScoreSort,
@@ -46,17 +47,21 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
       <small>Scoring version {DANCER_SCORE_VERSION}</small>
     </details>
     <p className="venue-value-note" role="status">{rows.length.toLocaleString()} {rows.length === 1 ? "dancer" : "dancers"}{search.trim() ? " matching your search" : " with recorded activity"}</p>
-    {rows.length ? <ul className="venue-performance-list venue-scored-list">{rows.slice(0, limit).map(row => <li key={row.dancer.id}>
-      <div className="venue-score-identity">
+    {rows.length ? <ul className="venue-performance-list venue-scored-list">{rows.slice(0, limit).map(row => {
+      const profileId = row.dancer.profileDancerId === undefined ? row.dancer.id : row.dancer.profileDancerId;
+      const identity = <>
         <span className="venue-performance-avatar">{row.dancer.photoUrl
           ? <img src={row.dancer.photoUrl} alt="" width="44" height="44" loading="lazy" />
           : row.dancer.name.slice(0, 1).toUpperCase()}</span>
-        <div><span className="venue-performance-name">{row.dancer.name}</span>
+        <span className="venue-score-copy"><span className="venue-performance-name">{row.dancer.name}</span>
           <span className="venue-score-rank" title={row.rank === null ? row.scores.overall.reason || `Ranking needs all five categories past Early data and ${DANCER_SCORE_MIN_PEERS} comparable dancers.` : undefined}>
             {row.rank === null ? "Unranked" : `#${row.rank} of ${row.rankedCount} ranked dancers`}
           </span>
-        </div>
-      </div>
+        </span>
+      </>;
+      return <li key={row.dancer.id}>
+      {profileId ? <VenueRosterProfileButton dancerId={profileId} stageName={row.dancer.name} className="ir-profile-link venue-dancer-profile-trigger venue-score-identity">{identity}</VenueRosterProfileButton>
+        : <div className="venue-score-identity">{identity}</div>}
       <dl className="venue-score-grid" aria-label="Performance scores out of 100">{scoreKeys.map(key => <div key={key} className={`venue-score venue-score-${key}`} title={row.scores[key].reason || undefined}>
         <dt><abbr title={scoreLabels[key]}>{compactScoreLabels[key]}</abbr></dt>
         <dd>{row.scores[key].value === null ? <span className="venue-score-missing"><span aria-hidden="true">—</span><span className="dashboard-sr-only">Not enough data</span></span>
@@ -72,7 +77,7 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
               : <span>Not enough data. {row.scores[key].reason}</span>}</dd>
         </div>)}</dl>
       </details>
-    </li>)}</ul> : <p className="venue-value-empty">{search.trim() ? "No dancers match this search." : "No dancer activity recorded in this period."}</p>}
+    </li>; })}</ul> : <p className="venue-value-empty">{search.trim() ? "No dancers match this search." : "No dancer activity recorded in this period."}</p>}
     {rows.length > limit && <button className="venue-performance-more" type="button" onClick={() => setLimit(value => value + 20)}>Show more dancers</button>}
   </section>;
 }
