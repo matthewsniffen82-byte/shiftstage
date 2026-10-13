@@ -12,7 +12,7 @@ const [callbackSource, liveAppSource, dancerDashboardSource, signupRouteSource, 
   readFile(new URL("../src/lib/dancr/account-provisioning.ts", import.meta.url), "utf8"),
 ]);
 
-test("confirmed dancer accounts pause on a dedicated confirmation page before profile setup", () => {
+test("confirmed accounts share an automatic success screen while preserving dancer profile continuation", () => {
   const redirectResolver =
     callbackSource.match(/function callbackRedirectPath[\s\S]*?function callbackRole/)?.[0] || "";
   const liveAppPath =
@@ -26,10 +26,10 @@ test("confirmed dancer accounts pause on a dedicated confirmation page before pr
   assert.match(liveAppPath, /params\.set\("role", role\)/);
   assert.match(liveAppPath, /for \(const key of \["resume", "reset_target"\]\)/);
   assert.match(liveAppPath, /return `\/\?\$\{params\.toString\(\)\}`/);
-  assert.match(callbackSource, /const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback\(request\)/);
   assert.match(callbackPage, /<h1>Email confirmed<\/h1>/);
-  assert.match(callbackPage, />Complete your profile<\/a>/);
-  assert.match(callbackPage, /if \(shouldPauseForDancer\)[\s\S]*?continueLink\.href = destination/);
+  assert.match(callbackPage, /Opening your dashboard…/);
+  assert.match(callbackPage, /id="emailConfirmationContinue"[^>]+>Continue<\/a>/);
+  assert.match(callbackPage, /if \(!isPasswordReset && session\?\.accessToken\)[\s\S]*?showConfirmation\(destination, JSON.stringify\(session\)\)/);
   assert.match(callbackPage, /window\.location\.replace\(destination\)/);
 
   assert.match(dancerDashboardSource, /<DashboardClient role="dancer" \/>/);

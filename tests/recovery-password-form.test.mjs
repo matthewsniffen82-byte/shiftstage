@@ -32,17 +32,23 @@ async function callbackFixture(query, hash, valid = true, options = {}) {
   const html = await response.text();
   const script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
   const navigations = [], writes = [], elements = {};
+  let stored = null;
+  const redirectTimers = new Set();
   const document = { title: "callback", getElementById: (id) => elements[id] ||= { hidden: true } };
   await vm.runInNewContext(script.replace("void completeCallback();", "completeCallback();"), {
-    URL, URLSearchParams, document, AbortController, setTimeout, clearTimeout,
+    URL, URLSearchParams, document, AbortController,
+    setTimeout(callback, delay) { if (delay !== 1200) return setTimeout(callback, delay); const timer = { callback }; redirectTimers.add(timer); return timer; },
+    clearTimeout(timer) { if (!redirectTimers.delete(timer)) clearTimeout(timer); },
     window: { location: { hash, search: query, pathname: "/auth/callback", origin: "https://mydancr.com", replace: (path) => navigations.push(path) }, history: { replaceState() {} } },
-    localStorage: { getItem: () => { if (options.storageReadBlocked) throw new Error("Blocked"); return null; }, setItem: (key, value) => { if (options.storageBlocked) throw new Error("Blocked"); writes.push({ key, value }); }, removeItem: (key) => writes.push({ removed: key }) },
+    localStorage: { getItem: () => { if (options.storageReadBlocked) throw new Error("Blocked"); return stored; }, setItem: (key, value) => { if (options.storageBlocked) throw new Error("Blocked"); stored = value; writes.push({ key, value }); }, removeItem: (key) => { stored = null; writes.push({ removed: key }); } },
     fetch: async () => {
       if (options.networkFailure) throw new Error("Network failed");
       return { status: options.status || (valid ? 200 : 401), ok: valid, json: async () => valid ? { ok: true, session, account: session.account } : { ok: false } };
     },
   });
-  return { navigations, writes, elements };
+  return { navigations, writes, elements,
+    continueAutomatically() { for (const timer of redirectTimers) { redirectTimers.delete(timer); timer.callback(); } },
+  };
 }
 
 const recoveryHash = "#access_token=test-access&refresh_token=test-refresh&type=recovery";
@@ -95,10 +101,12 @@ test("invalid recovery cannot reuse an unrelated stored session or enter the das
 test("recovery with no tokens opens the expired-link state", async () => {
   assert.deepEqual((await callbackFixture("?type=recovery", "")).navigations, ["/account/reset-password?error=expired"]);
 });
-test("ordinary dancer confirmation retains its confirmation screen", async () => {
+test("ordinary dancer confirmation shows success before automatically continuing", async () => {
   const result = await callbackFixture("?role=dancer&dancr_confirm=1", recoveryHash.replace("recovery", "signup"));
   assert.deepEqual(result.navigations, []);
-  assert.equal(result.elements.dancerConfirmation.hidden, false);
+  assert.equal(result.elements.emailConfirmation.hidden, false);
+  result.continueAutomatically();
+  assert.deepEqual(result.navigations, [result.elements.emailConfirmationContinue.href]);
 });
 
 const formSource = readFileSync(new URL("../app/account/reset-password/ResetPasswordClient.tsx", import.meta.url), "utf8");
@@ -241,6 +249,8 @@ test("expired reset links do not use an already signed-in account", async () => 
 
 test("fragment confirmation uses the verified account role instead of an email redirect hint", async () => {
   const result = await callbackFixture("?role=customer", recoveryHash.replace("recovery", "email_change"));
+  assert.match(result.elements.emailConfirmationContinue.href, /^\/dashboard\/dancer\?/);
+  result.continueAutomatically();
   assert.match(result.navigations[0], /^\/dashboard\/dancer\?/);
 });
 

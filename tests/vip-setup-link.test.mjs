@@ -142,17 +142,23 @@ function landingFixture({ result, failure = false, changed = false, storageFails
   }, { Response });
   return (async () => {
     const response = route.GET(), html = await response.text(), script = html.match(/<script>([\s\S]*?)<\/script>/)[1];
-    const nodes = { status: { textContent: '' }, retry: { hidden: true, addEventListener: (_, callback) => { nodes.retry.click = callback; } } };
+    const nodes = { heading: { textContent: 'Confirming your email' }, continue: { hidden: true, href: '' }, signIn: { hidden: false }, status: { textContent: '' }, retry: { hidden: true, addEventListener: (_, callback) => { nodes.retry.click = callback; } } };
+    const redirectTimers = new Set();
     const calls = [], destinations = []; let stored = null;
     const window = { location: { hash: noLink ? '' : '#link=private-credential', replace: url => destinations.push(url) },
       history: { replaceState: (...args) => calls.push(['history', ...args]) },
       localStorage: { getItem: () => { if (storageFails) throw new Error('Storage unavailable'); return stored; }, setItem: (_, value) => { stored = value; } },
     };
     vm.runInNewContext(script, { window, document: { getElementById: id => nodes[id] }, URLSearchParams, AbortSignal, Error,
+      setTimeout(callback, delay) { assert.equal(delay, 1200); const timer = { callback }; redirectTimers.add(timer); return timer; },
+      clearTimeout(timer) { redirectTimers.delete(timer); },
       fetch: async (url, input) => { calls.push(['fetch', url, input]); if (changed) stored = 'other-account'; return { ok: !failure, json: async () => result || { ok: true, returnTo: '/vip/invite/' + invitation, complete: false, account: { id: userId, role: 'customer', accountState: 'active' }, session: { accessToken: 'access', refreshToken: 'refresh' } } }; },
     });
     await new Promise(resolve => setImmediate(resolve));
-    return { response, html, calls, destinations, nodes, stored: () => stored };
+    return { response, html, calls, destinations, nodes, stored: () => stored,
+      changeSession(value) { stored = value; },
+      continueAutomatically() { for (const timer of redirectTimers) { redirectTimers.delete(timer); timer.callback(); } },
+    };
   })();
 }
 
@@ -164,19 +170,49 @@ test('standalone email landing clears the fragment before exchange and safely st
   assert.match(f.response.headers.get('cache-control'), /no-store/);
   assert.equal(f.response.headers.get('referrer-policy'), 'no-referrer');
   assert.equal(JSON.parse(f.stored()).account.id, userId);
+  assert.equal(f.nodes.heading.textContent, 'Email confirmed');
+  assert.equal(f.nodes.status.textContent, 'Opening your password setup…');
+  assert.equal(f.nodes.continue.hidden, false);
+  assert.deepEqual(f.destinations, []);
+  f.continueAutomatically();
   assert.equal(f.destinations[0], '/account/reset-password?setup=1&return_to=' + encodeURIComponent('/vip/invite/' + invitation));
+  assert.equal(f.nodes.continue.href, f.destinations[0]);
   assert.doesNotMatch(f.html, /<script[^>]+src=|<iframe/);
 });
 
 test('landing refuses changed sessions, blocked storage, bad destinations and failures; completed links do not sign in', async () => {
   for (const options of [{ changed: true }, { storageFails: true }, { noLink: true }, { result: { ok: true, returnTo: '//evil.test' } }, { failure: true, result: { ok: false, error: 'Try later' } }]) {
     const f = await landingFixture(options); assert.equal(f.destinations.length, 0); assert.ok(f.nodes.status.textContent);
+    assert.equal(f.nodes.continue.hidden, true);
     assert.equal(f.stored(), options.changed ? 'other-account' : null);
   }
   const retry = await landingFixture({ failure: true }); assert.equal(retry.nodes.retry.hidden, false);
   await retry.nodes.retry.click(); assert.equal(retry.calls.filter(c => c[0] === 'fetch').length, 2);
   const done = await landingFixture({ result: { ok: true, complete: true, returnTo: '/vip/invite/' + invitation } });
   assert.equal(done.stored(), null); assert.equal(done.destinations[0], '/vip/invite/' + invitation);
+});
+
+test('VIP Continue opens required password setup once even when the timer has not fired', async () => {
+  const f = await landingFixture();
+  let prevented = false;
+  f.nodes.continue.onclick({ preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.deepEqual(f.destinations, [f.nodes.continue.href]);
+  assert.match(f.destinations[0], /^\/account\/reset-password\?setup=1&return_to=/);
+  f.continueAutomatically();
+  assert.equal(f.destinations.length, 1);
+});
+
+for (const manual of [false, true]) test(`VIP confirmation respects session changes during its success screen (${manual ? 'Continue' : 'automatic'})`, async () => {
+  const f = await landingFixture();
+  f.changeSession('newer-account');
+  if (manual) f.nodes.continue.onclick({ preventDefault() {} });
+  else f.continueAutomatically();
+  assert.deepEqual(f.destinations, []);
+  assert.equal(f.stored(), 'newer-account');
+  assert.equal(f.nodes.continue.hidden, true);
+  assert.equal(f.nodes.signIn.hidden, false);
+  assert.match(f.nodes.status.textContent, /sign-in changed/);
 });
 
 test('exchange requires signed proof before any privileged call, with bounded bodies and durable throttling', async () => {

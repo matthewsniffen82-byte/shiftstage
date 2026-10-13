@@ -43,12 +43,15 @@ async function callbackFixture({ role = 'customer', stored = savedSession('custo
   assert.ok(source);
   const store = new Map(stored ? [[sessionKey, JSON.stringify(stored)]] : []);
   const calls = [], navigation = [], scrubbed = [];
+  const redirectTimers = new Set();
   const nodes = new Map();
   const node = id => {
     if (!nodes.has(id)) nodes.set(id, { hidden: id !== 'openingDancr', href: '', textContent: '' });
     return nodes.get(id);
   };
-  const context = vm.createContext({ URL, URLSearchParams, AbortController, setTimeout, clearTimeout,
+  const context = vm.createContext({ URL, URLSearchParams, AbortController,
+    setTimeout(callback, delay) { if (delay !== 1200) return setTimeout(callback, delay); const timer = { callback }; redirectTimers.add(timer); return timer; },
+    clearTimeout(timer) { if (!redirectTimers.delete(timer)) clearTimeout(timer); },
     localStorage: { getItem: key => store.get(key) ?? null, setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) },
     document: { title: 'Opening MyDancr', getElementById: node },
     window: { location: { origin: 'https://mydancr.com', pathname: '/auth/callback', search: query.split('#')[0], hash: query.includes('#') ? '#' + query.split('#')[1] : '', replace: value => navigation.push(value) }, history: { replaceState: (_state, _title, value) => scrubbed.push(value) } },
@@ -58,7 +61,9 @@ async function callbackFixture({ role = 'customer', stored = savedSession('custo
     },
   });
   vm.runInContext(source.replace('void completeCallback();', 'globalThis.completion = completeCallback();'), context);
-  return { html, calls, navigation, scrubbed, node, store, completion: context.completion, status: response.status };
+  return { html, calls, navigation, scrubbed, node, store, completion: context.completion, status: response.status,
+    continueAutomatically() { for (const timer of redirectTimers) { redirectTimers.delete(timer); timer.callback(); } },
+  };
 }
 
 for (const input of ['/a/..//outside.example/path', '/a/%2e%2e//outside.example/path', '/.//outside.example/path']) {
@@ -83,7 +88,7 @@ for (const role of ['customer', 'dancer', 'venue', 'admin']) test(`reused confir
   assert.deepEqual(f.scrubbed, ['/auth/callback']);
   assert.equal(JSON.parse(f.store.get(sessionKey)).account.role, role);
   assert.equal(f.node('confirmationError').hidden, true);
-  assert.equal(f.node('dancerConfirmation').hidden, true, 'an already-signed-in dancer does not repeat first-confirmation onboarding');
+  assert.equal(f.node('emailConfirmation').hidden, true, 'an already-signed-in dancer does not repeat first-confirmation onboarding');
 });
 
 test('a provider rejecting an already-used token still preserves a valid browser sign-in', async () => {
@@ -113,7 +118,7 @@ test('a signed-out reused link shows current sign-in links and does not claim ve
   const f = await callbackFixture({ stored: null });
   await f.completion;
   assert.equal(f.node('confirmationError').hidden, false);
-  assert.equal(f.node('dancerConfirmation').hidden, true);
+  assert.equal(f.node('emailConfirmation').hidden, true);
   assert.equal(f.calls.length, 0);
   assert.deepEqual(f.navigation, []);
   assert.doesNotMatch(f.html, /href="\/account(?:\?|"|\/)/);
@@ -173,7 +178,7 @@ for (const type of ['signup', 'recovery', 'email_change']) {
       await f.completion;
       assert.equal(f.store.get(sessionKey) ?? null, newer);
       assert.deepEqual(f.navigation, ['/?auth=login']);
-      assert.equal(f.node('dancerConfirmation').hidden, true);
+      assert.equal(f.node('emailConfirmation').hidden, true);
     });
   }
 }
@@ -202,17 +207,57 @@ test('a valid recovery link can still deliberately replace the previously signed
 test('fresh customer confirmation with an old account return URL goes to the current dashboard', async () => {
   const f = await callbackFixture({ stored: null, freshRole: 'customer', query: '?token_hash=new-token&type=signup&return_to=%2Faccount%3Fmode%3Dlogin' });
   await f.completion;
+  assert.equal(f.node('emailConfirmation').hidden, false);
+  assert.deepEqual(f.navigation, []);
+  f.continueAutomatically();
   assert.equal(new URL(f.navigation[0], 'https://mydancr.com').pathname, '/dashboard/customer');
   assert.equal(f.calls.length, 0);
 });
 
-test('a fresh dancer confirmation retains the current first-time profile continuation', async () => {
+test('a fresh dancer confirmation automatically continues to the current profile setup', async () => {
   const f = await callbackFixture({ stored: null, freshRole: 'dancer', query: '?token_hash=new-token&type=signup&role=dancer' });
   await f.completion;
-  assert.equal(f.node('dancerConfirmation').hidden, false);
+  assert.equal(f.node('emailConfirmation').hidden, false);
   assert.equal(f.node('confirmationError').hidden, true);
-  assert.match(f.node('dancerConfirmationContinue').href, /^\/\?dancr_confirm=1/);
+  assert.match(f.node('emailConfirmationContinue').href, /^\/\?dancr_confirm=1/);
+  f.continueAutomatically();
+  assert.deepEqual(f.navigation, [f.node('emailConfirmationContinue').href]);
   assert.equal(f.calls.length, 0);
+});
+
+for (const role of ['customer', 'dancer', 'venue', 'admin']) test(`fresh ${role} confirmations show success and automatically use the verified destination`, async () => {
+  const f = await callbackFixture({ stored: null, freshRole: role, query: '?token_hash=new-token&type=signup&role=' + role });
+  await f.completion;
+  assert.equal(f.node('emailConfirmation').hidden, false);
+  assert.equal(f.node('openingDancr').hidden, true);
+  assert.deepEqual(f.navigation, []);
+  assert.equal(JSON.parse(f.store.get(sessionKey)).account.role, role);
+  const destination = new URL(f.node('emailConfirmationContinue').href, 'https://mydancr.com');
+  assert.equal(destination.pathname, role === 'dancer' ? '/' : role === 'admin' ? '/admin' : '/dashboard/' + role);
+  if (role === 'dancer') assert.equal(destination.searchParams.get('dancr_confirm'), '1');
+  f.continueAutomatically();
+  assert.deepEqual(f.navigation, [destination.pathname + destination.search]);
+});
+
+test('Continue works before the automatic redirect and does not navigate twice', async () => {
+  const f = await callbackFixture({ stored: null, freshRole: 'venue', query: '?token_hash=new-token&type=email&role=venue' });
+  await f.completion;
+  let prevented = false;
+  f.node('emailConfirmationContinue').onclick({ preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.deepEqual(f.navigation, [f.node('emailConfirmationContinue').href]);
+  f.continueAutomatically();
+  assert.equal(f.navigation.length, 1);
+});
+
+for (const manual of [false, true]) test(`a newer sign-in or logout during confirmation is respected (${manual ? 'Continue' : 'automatic'})`, async () => {
+  const f = await callbackFixture({ stored: null, freshRole: 'dancer', query: '?token_hash=new-token&type=signup' });
+  await f.completion;
+  f.store.delete(sessionKey);
+  if (manual) f.node('emailConfirmationContinue').onclick({ preventDefault() {} });
+  else f.continueAutomatically();
+  assert.deepEqual(f.navigation, ['/?auth=login']);
+  assert.equal(f.store.has(sessionKey), false);
 });
 
 test('a cached role cannot override the role verified by the server', async () => {

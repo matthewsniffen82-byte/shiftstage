@@ -34,10 +34,7 @@ export async function GET(request: Request) {
     console.warn("AUTH_CALLBACK_TEMPORARILY_UNAVAILABLE", safeErrorMetadata(error));
   }
   const redirectPath = callbackRedirectPath(request, callbackSession);
-  const role = callbackRole(request, callbackSession);
-  const showDancerConfirmation = role === "dancer" && !isPasswordResetCallback(request);
-
-  const html = callbackHtml(callbackSession, redirectPath, showDancerConfirmation, isPasswordResetCallback(request), unavailable,
+  const html = callbackHtml(callbackSession, redirectPath, isPasswordResetCallback(request), unavailable,
     vipReturnPath(new URL(request.url).searchParams.get("vip_return_to")));
   return new Response(html, {
     status: unavailable ? 503 : 200,
@@ -127,14 +124,12 @@ function liveAppCallbackPath(url: URL, role: CallbackRole) {
 function callbackHtml(
   callbackSession: Awaited<ReturnType<typeof readCallbackSession>>,
   redirectPath: string,
-  showDancerConfirmation: boolean,
   passwordReset: boolean,
   unavailable: boolean,
   vipRecoveryReturn: string,
 ) {
   const sessionJson = JSON.stringify(callbackSession || null).replace(/</g, "\\u003c");
   const redirectJson = JSON.stringify(redirectPath).replace(/</g, "\\u003c");
-  const dancerConfirmationJson = JSON.stringify(showDancerConfirmation);
   const sessionKeyJson = JSON.stringify(BROWSER_AUTH_SESSION_KEY);
   return `<!doctype html>
 <html lang="en">
@@ -142,7 +137,7 @@ function callbackHtml(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="referrer" content="no-referrer">
-    <title>${showDancerConfirmation ? "Email confirmed | MyDancr" : "Opening Dancr"}</title>
+    <title>Checking your link | MyDancr</title>
     <style>
       :root { color-scheme: dark; }
       * { box-sizing: border-box; }
@@ -160,12 +155,12 @@ function callbackHtml(
     <link rel="stylesheet" href="/dancr-status-pages.v1.css?v=1">
   </head>
   <body class="dancr-status-page">
-    <main id="dancerConfirmation" class="dancr-status-card" hidden>
-      <p class="eyebrow">Dancer account</p>
+    <main id="emailConfirmation" class="dancr-status-card" aria-live="polite" hidden>
+      <p class="eyebrow">MyDancr</p>
       <span class="dancr-status-mark is-success" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-8" /></svg></span>
       <h1>Email confirmed</h1>
-      <p>Your email is verified. Complete the required dancer profile steps before your profile can go live.</p>
-      <a id="dancerConfirmationContinue" href="${escapeHtml(redirectPath)}">Complete your profile</a>
+      <p>Opening your dashboard…</p>
+      <a id="emailConfirmationContinue" href="${escapeHtml(redirectPath)}">Continue</a>
     </main>
     <main id="emailChangePending" class="dancr-status-card" hidden>
       <p class="eyebrow">Email change</p>
@@ -185,9 +180,9 @@ function callbackHtml(
     <main id="openingDancr" class="dancr-status-card">
       <p class="eyebrow">MyDancr</p>
       <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3" /></svg></span>
-      <h1>Opening Dancr</h1>
-      <p>Your live account is being connected.</p>
-      <a href="${escapeHtml(redirectPath)}">Continue</a>
+      <h1>Checking your link</h1>
+      <p role="status">Please wait while we securely connect your account.</p>
+      <noscript>Enable JavaScript to verify your link and continue.</noscript>
     </main>
     <main id="temporaryError" class="dancr-status-card" hidden>
       <p class="eyebrow">MyDancr</p>
@@ -202,7 +197,6 @@ function callbackHtml(
       const redirectTo = ${redirectJson};
       const vipEntryReturn = ${JSON.stringify(vipReturnPath(redirectPath))};
       const vipRecoveryReturn = ${JSON.stringify(vipRecoveryReturn)};
-      const showDancerConfirmation = ${dancerConfirmationJson};
       const fragmentParams = new URLSearchParams(window.location.hash ? window.location.hash.slice(1) : "");
       const queryParams = new URLSearchParams(window.location.search);
       const pendingEmailMessage = "Confirmation link accepted. Please proceed to confirm link sent to the other email";
@@ -216,8 +210,40 @@ function callbackHtml(
 
       function showTemporaryError(message) {
         document.getElementById("openingDancr").hidden = true;
+        document.getElementById("emailConfirmation").hidden = true;
         document.getElementById("temporaryError").hidden = false;
         if (message) document.getElementById("temporaryErrorMessage").textContent = message;
+      }
+
+      function showConfirmation(destination, savedSession) {
+        document.title = "Email confirmed | MyDancr";
+        document.getElementById("openingDancr").hidden = true;
+        const continueLink = document.getElementById("emailConfirmationContinue");
+        continueLink.href = destination;
+        let navigating = false;
+        function continueToDashboard() {
+          if (navigating) return;
+          try {
+            // Respect a sign-in or logout in another tab during the success message.
+            if (localStorage.getItem(sessionStorageKey) !== savedSession) {
+              navigating = true;
+              window.location.replace("/?auth=login");
+              return;
+            }
+          } catch {
+            showTemporaryError("This browser couldn't read your sign-in. Allow site storage, then sign in again.");
+            return;
+          }
+          navigating = true;
+          window.location.replace(destination);
+        }
+        const redirectTimer = setTimeout(continueToDashboard, 1200);
+        continueLink.onclick = function(event) {
+          event.preventDefault();
+          clearTimeout(redirectTimer);
+          continueToDashboard();
+        };
+        document.getElementById("emailConfirmation").hidden = false;
       }
 
       async function validateFragmentSession() {
@@ -356,17 +382,8 @@ function callbackHtml(
           }
         }
         const destination = redirectUrl.pathname + redirectUrl.search;
-        const shouldPauseForDancer = !isPasswordReset && showDancerConfirmation && (!session || authoritativeRole === "dancer");
-
-        if (shouldPauseForDancer) {
-          document.getElementById("openingDancr").hidden = true;
-          if (session?.accessToken) {
-            const continueLink = document.getElementById("dancerConfirmationContinue");
-            continueLink.href = destination;
-            document.getElementById("dancerConfirmation").hidden = false;
-          } else {
-            document.getElementById("confirmationError").hidden = false;
-          }
+        if (!isPasswordReset && session?.accessToken) {
+          showConfirmation(destination, JSON.stringify(session));
           return;
         }
 

@@ -39,17 +39,22 @@ async function runPage(url, { stored = null, provider, validate } = {}) {
   const storage = new Map(stored ? [[sessionKey, JSON.stringify(stored)]] : []);
   const initial = storage.get(sessionKey);
   const writes = [], redirects = [], requests = [];
+  const redirectTimers = new Set();
   const location = new URL(url);
   location.replace = destination => redirects.push(destination);
   const document = { title: "Opening Dancr", getElementById: id => elements[id] };
   const context = vm.createContext({
-    URL, URLSearchParams, AbortController, setTimeout, clearTimeout, document,
+    URL, URLSearchParams, AbortController, document,
+    setTimeout(callback, delay) { if (delay !== 1200) return setTimeout(callback, delay); const timer = { callback }; redirectTimers.add(timer); return timer; },
+    clearTimeout(timer) { if (!redirectTimers.delete(timer)) clearTimeout(timer); },
     window: { location, history: { replaceState(_state, _title, path) { location.href = new URL(path, location).href; } } },
     localStorage: { getItem: key => storage.get(key) ?? null, setItem(key, value) { storage.set(key, value); writes.push(key); } },
     fetch: async (...args) => { requests.push(args); return { ok: true, status: 200, json: async () => validate ?? { ok: false } }; },
   });
   await vm.runInContext(script.replace("void completeCallback();", "completeCallback();"), context);
-  return { elements, storage, initial, writes, redirects, requests, location, document };
+  return { elements, storage, initial, writes, redirects, requests, location, document,
+    continueAutomatically() { for (const timer of redirectTimers) { redirectTimers.delete(timer); timer.callback(); } },
+  };
 }
 
 for (const transport of ["query", "fragment"]) for (const signedIn of [false, true]) {
@@ -60,7 +65,7 @@ for (const transport of ["query", "fragment"]) for (const signedIn of [false, tr
     const stored = signedIn ? { accessToken: "existing-access", refreshToken: "existing-refresh", account: { ...account, email: "old@example.invalid" } } : null;
     const page = await runPage(url.href, { stored });
     assert.equal(page.elements.emailChangePending.hidden, false);
-    assert.equal(page.elements.dancerConfirmation.hidden, true);
+    assert.equal(page.elements.emailConfirmation.hidden, true);
     assert.equal(page.elements.confirmationError.hidden, true);
     assert.equal(page.elements.openingDancr.hidden, true);
     assert.equal(page.document.title, "Confirm email change | MyDancr");
@@ -69,6 +74,8 @@ for (const transport of ["query", "fragment"]) for (const signedIn of [false, tr
     assert.deepEqual(page.requests, []);
     assert.deepEqual(page.writes, []);
     assert.equal(page.storage.get(sessionKey), page.initial);
+    page.continueAutomatically();
+    assert.deepEqual(page.redirects, []);
   });
 }
 
@@ -100,9 +107,12 @@ for (const transport of ["token_hash", "fragment"]) test(`the final confirmation
     validate: { ok: true, account, session: { accessToken: session.access_token, refreshToken: session.refresh_token } },
   });
   assert.equal(page.elements.emailChangePending.hidden, true);
-  assert.equal(page.elements.dancerConfirmation.hidden, false);
+  assert.equal(page.elements.emailConfirmation.hidden, false);
   assert.equal(JSON.parse(page.storage.get(sessionKey)).account.email, "new@example.invalid");
   assert.deepEqual(page.writes, [sessionKey]);
+  assert.deepEqual(page.redirects, []);
+  page.continueAutomatically();
+  assert.deepEqual(page.redirects, [page.elements.emailConfirmationContinue.href]);
 });
 
 test("arbitrary redirect messages never create a confirmation or a session", async () => {
