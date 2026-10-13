@@ -245,19 +245,8 @@ test("public feed is real, navigable, measurable, and preserves existing discove
   assert.match(tvSource, /timezone: row\.timezone \|\| "UTC"/);
   assert.match(feedClient, /formatShift\(video\.shift\.shiftDate \|\| video\.shift\.startsAt, video\.shift\.timezone\)/);
   assert.match(feedClient, /function formatShift\(value: string, timeZone: string\)[\s\S]*?timeZone,/);
-  assert.match(
-    tvSource,
-    /function tvSchedulePriority\(video: NormalizedFeedRow\) \{[\s\S]*?video\.shift\?\.isActive[\s\S]*?return 0[\s\S]*?video\.shift[\s\S]*?return 1[\s\S]*?return 2/,
-  );
-  assert.doesNotMatch(tvSource, /comparePublicTvFeedRows|upcomingDifference|scoreDifference/);
-  assert.match(
-    tvSource,
-    /const scheduleOrdered = \[0, 1, 2\]\.flatMap\(\(priority\) =>[\s\S]*?shuffleVideos\(remaining\.filter\(\(video\) => tvSchedulePriority\(video\) === priority\)\)/,
-  );
-  assert.match(
-    tvSource,
-    /function shuffleVideos\(rows: NormalizedFeedRow\[\]\) \{[\s\S]*?for \(let index = shuffled\.length - 1; index > 0; index -= 1\)[\s\S]*?Math\.floor\(Math\.random\(\) \* \(index \+ 1\)\)[\s\S]*?return shuffled/,
-  );
+  assert.match(tvSource, /await orderByPerformance/);
+  assert.doesNotMatch(tvSource, /function (?:tvSchedulePriority|shuffleVideos|diversifyDancers)|const scheduleOrdered/);
   assert.match(tvSource, /from\("shifts"\)[\s\S]*?eq\("status", "posted"\)[\s\S]*?is\("checked_out_at", null\)[\s\S]*?const active = isConfirmedActiveTvShift\(shift, now\);[\s\S]*?return active \? \[String\(shift\.dancer_id \|\| ""\)\] : \[\]/);
   assert.match(liveApp, /class="controls home-discovery-controls"[\s\S]*?class="field home-city-filter"[\s\S]*?id="homeFilterToggle"[\s\S]*?aria-controls="homeAdvancedFilters"/);
   assert.match(liveApp, /class="home-advanced-filters" id="homeAdvancedFilters"[\s\S]*?id="distanceSelect"[\s\S]*?id="venueSelect"[\s\S]*?id="locationBtn"/);

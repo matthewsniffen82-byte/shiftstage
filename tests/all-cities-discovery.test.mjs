@@ -102,19 +102,19 @@ test('TV feed and video count support All cities without a literal city filter',
   assert.ok(feed.queries[0].filters.some(([kind, key, value]) => kind === 'eq' && key === 'status' && value === 'approved'));
 });
 
-test('dancer mapping retains cities and grouping mixes cities without duplicates', () => {
+test('dancer mapping retains cities and grouping preserves score order across cities without duplicates', () => {
   const ctx = context({ formatLiveDistance: () => '',
     isWorkingTonight: profile => Boolean(profile.now),
     dailyRotationScore: profile => profile.order,
     upcomingSortValue: profile => profile.order,
     shiftStartMinutes: () => 0,
   });
-  vm.runInContext(fn('mapLiveDancer') + fn('interleaveDancerCities') + fn('demoDancerGridPriority') + fn('dancerDirectoryGroups'), ctx);
+  vm.runInContext(fn('mapLiveDancer') + fn('dancerGridPosition') + fn('dancerDirectoryGroups'), ctx);
   const mapped = ctx.mapLiveDancer({ id: 'miami', stageName: 'Luna', city: 'Miami' }, false, 0, {});
   assert.equal(mapped.city, 'Miami');
   const rows = ['Las Vegas', 'Las Vegas', 'Las Vegas', 'Miami', 'Atlanta'].map((city, order) => ({ id: order, city, order }));
   const groups = ctx.dancerDirectoryGroups(rows, 'All cities');
-  assert.deepEqual(Array.from(groups.notWorkingNow, row => row.city), ['Las Vegas', 'Miami', 'Atlanta', 'Las Vegas', 'Las Vegas']);
+  assert.deepEqual(Array.from(groups.notWorkingNow, row => row.city), ['Las Vegas', 'Las Vegas', 'Las Vegas', 'Miami', 'Atlanta']);
   assert.equal(new Set(groups.notWorkingNow.map(row => row.id)).size, rows.length);
   assert.equal(ctx.dancerDirectoryGroups([], 'All cities').notWorkingNow.length, 0);
 });

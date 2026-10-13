@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {createHash} from 'node:crypto';
+import {randomUUID,createHash} from 'node:crypto';
 import {fixture,row,id,compile} from './helpers/discovery-fixture.mjs';
 
 test('identity is hashed, invalid session headers reject, and expired login remains a guest',async()=>{
@@ -17,7 +17,7 @@ test('concurrent requests keep one snapshot; later scores cannot reshuffle pages
  const scope={surface:'tv',city:'Vegas'};
  const [a,b]=await Promise.all([f.service.discoverySnapshot(f.admin,c,scope),f.service.discoverySnapshot(f.admin,c,scope)]);
  assert.equal(a.snapshot.id,b.snapshot.id);assert.equal(f.data.discovery_sessions.length,1);
- candidates[59].availableUntil=new Date(Date.now()+86400000).toISOString();
+ candidates[59].performanceScore=100;
  const count=f.calls.length;
  const next=await f.service.discoverySnapshot(f.admin,c,scope,`rank1:${a.snapshot.id}:24`);
  assert.equal(next.offset,24);assert.deepEqual(next.snapshot.ordered_ids,a.snapshot.ordered_ids);assert.equal(f.calls.length,count);
@@ -56,7 +56,7 @@ test('ranked TV revalidates each page, keeps raw cursor advancement and ignores 
 });
 test('old snapshots cannot keep dancers hidden after the control is removed',async()=>{
  const f=fixture(),c=await f.service.discoveryContext(f.admin,f.request());
- const scopeHash=createHash('sha256').update(JSON.stringify(['grid','vegas','','for-you',''])).digest('hex');
+ const scopeHash=createHash('sha256').update(JSON.stringify(['discovery-v2','grid','vegas','','for-you',''])).digest('hex');
  f.data.discovery_sessions.push({id:id(80),viewer_hash:c.viewerHash,visit_id:c.visitId,scope_hash:scopeHash,surface:'grid',ordered_ids:[id(2)],expires_at:new Date(Date.now()+3600000).toISOString()});
  const grid=await f.service.rankPublicGrid(f.admin,c,'Vegas',[{id:id(1)},{id:id(2)}]);
  assert.equal(grid.length,2);assert.notEqual(grid[0].discovery.session,id(80));
@@ -69,10 +69,53 @@ test('new snapshots are rate limited but an existing snapshot remains readable',
  await assert.rejects(f.service.discoverySnapshot(f.admin,c,{surface:'tv',city:'Miami'}));
 });
 
+test('public grids and TV share score order for guests and accounts, and a new visit sees updated scores',async()=>{
+ const candidates=[row(1,{performanceScore:20}),row(2,{performanceScore:85}),row(3,{performanceScore:60})],f=fixture(candidates);
+ const cards=candidates.map(row=>({id:row.id}));
+ for(const token of ['', 'valid']) {
+  const c=await f.service.discoveryContext(f.admin,f.request(id(50),id(51),token));
+  f.data.follows.push({customer_id:id(99),dancer_id:id(1)});
+  const grid=await f.service.rankPublicGrid(f.admin,c,'Vegas',cards);
+  const tv=await f.service.discoverySnapshot(f.admin,c,{surface:'tv',city:'Vegas'});
+  assert.deepEqual(Array.from(grid,r=>r.id),[id(2),id(3),id(1)]);
+  assert.deepEqual(Array.from(tv.snapshot.ordered_ids),[id(2),id(3),id(1)]);
+  assert.doesNotMatch(JSON.stringify(grid),/performanceScore|buckets|Private/);
+ }
+ assert.deepEqual(Array.from(await f.service.rankPublicGrid(f.admin,null,'Vegas',cards),r=>r.id),[id(2),id(3),id(1)]);
+ candidates[0].performanceScore=100;
+ const c=await f.service.discoveryContext(f.admin,f.request(id(50),id(52)));
+ assert.equal((await f.service.rankPublicGrid(f.admin,c,'Vegas',cards))[0].id,id(1));
+});
+
+test('newest is an explicit chronological TV filter; default placement remains score based',async()=>{
+ const candidates=[row(1,{performanceScore:20,freshAt:'2026-10-12'}),row(2,{performanceScore:85,freshAt:'2026-10-01'})],f=fixture(candidates);
+ const c=await f.service.discoveryContext(f.admin,f.request());
+ assert.deepEqual(Array.from((await f.service.discoverySnapshot(f.admin,c,{surface:'tv',city:'Vegas',filter:'new'})).snapshot.ordered_ids),[id(1),id(2)]);
+ assert.deepEqual(Array.from((await f.service.discoverySnapshot(f.admin,c,{surface:'tv',city:'Vegas'})).snapshot.ordered_ids),[id(2),id(1)]);
+});
+
+test('clients without discovery headers receive ranked TV with a private cookie that preserves page identity',async()=>{
+ const f=fixture([row(1,{performanceScore:20}),row(2,{performanceScore:85}),row(3,{performanceScore:60})]);
+ const tv=compile('src/lib/dancr/discovery-tv.ts',{'./discovery-service':f.service,'./tv':{getPublicMyDancrTvFeed:async(_,opts)=>opts.candidateVideoIds.map(id=>({id,dancer:{id}}))}});
+ const route=compile('app/api/public/tv/route.ts',{
+  'node:crypto':{randomUUID},'next/server':{NextResponse:{json:Response.json}},'@/src/lib/dancr/discovery-service':f.service,
+  '@/src/lib/dancr/discovery-tv':tv,'@/src/lib/api':{apiError:e=>Response.json({error:e.message},{status:e.status||500})},
+  '@/src/lib/dancr/tv':{MYDANCR_TV_FILTERS:new Set(['for-you']),parseTvFeedCursor:()=>null},
+  '@/src/lib/dancr/media-limits':{MAX_DANCER_PROFILE_VIDEOS:50},'@/src/lib/dancr/public-cache-policy':{},
+  '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>f.admin},'@/src/lib/supabase/request':{},
+ });
+ const first=await route.GET(new Request('https://example.test/api/public/tv?paging=1&limit=2'));
+ assert.equal(first.status,200);assert.equal(first.headers.get('cache-control'),'private, no-store');
+ const cookie=first.headers.get('set-cookie');assert.match(cookie,/HttpOnly; SameSite=Lax; Secure/);
+ const body=await first.json();assert.deepEqual(body.videos.map(r=>r.id),[id(2),id(3)]);
+ const second=await route.GET(new Request('https://example.test/api/public/tv?paging=1&limit=2&cursor='+body.nextCursor,{headers:{cookie:cookie.split(';')[0]}}));
+ assert.equal(second.status,200);assert.deepEqual((await second.json()).videos.map(r=>r.id),[id(1)]);
+});
+
 test('the public TV route opts browsers into private ranked pages and preserves direct-link scope',async()=>{
  const f=fixture(),calls=[];
  const route=compile('app/api/public/tv/route.ts',{
-  'next/server':{NextResponse:{json:Response.json}},'@/src/lib/dancr/discovery-service':f.service,
+  'node:crypto':{randomUUID},'next/server':{NextResponse:{json:Response.json}},'@/src/lib/dancr/discovery-service':f.service,
   '@/src/lib/dancr/discovery-tv':{getRankedTvPage:async(_,context,options)=>{calls.push({context,options});return {videos:[],nextCursor:null};}},
   '@/src/lib/api':{apiError:e=>Response.json({error:e.message},{status:e.status||500})},
   '@/src/lib/dancr/tv':{MYDANCR_TV_FILTERS:new Set(['for-you','following']),parseTvFeedCursor:()=>null},

@@ -53,15 +53,9 @@ test("homepage and legacy TV links carry the exact club filter into the canonica
   assert.match(tvClientSource, /className="tv-venue-clear" href=\{allVenueTvHref\}>All clubs/);
 });
 
-test("club TV scope includes confirmed current or unexpired posted shifts", () => {
-  assert.doesNotMatch(tvSource, /function getPublicTvVenueScope[\s\S]*?from\("venue_dancer_affiliations"\)/);
-  assert.match(
-    tvSource,
-    /from\("shifts"\)[\s\S]*?eq\("venue_id", venueId\)[\s\S]*?eq\("status", "posted"\)[\s\S]*?gte\("ends_at"/,
-  );
-  assert.match(tvSource, /const active = isConfirmedActiveTvShift\(shift, now\);[\s\S]*?const scheduled = shift\.shift_source === "scheduled" && Number\.isFinite\(start\) && Number\.isFinite\(end\) && end >= now;[\s\S]*?active \|\| scheduled/);
-  assert.match(tvSource, /const candidateDancerIds = \[\.\.\.new Set\(shiftDancerIds\)\][\s\S]*?getPublicTvShiftContexts\(admin, candidateDancerIds, now\)[\s\S]*?resolvedContexts\.get\(dancerId\)\?\.venue\?\.id === venueId/);
-  assert.match(tvSource, /function applyPublicTvShiftContext[\s\S]*?context[\s\S]*?venue: null, shift: null/);
+test("club TV scope still verifies active presence before score ordering", () => {
+  assert.match(tvSource, /async function getPublicTvVenueScope/);
+  assert.match(tvSource, /isActiveNfcPresence/);
   assert.match(tvSource, /!venueId \|\| venueDancerIds\.includes\(selectedRowWithShift\.dancer\.id\)/);
 });
 
@@ -85,63 +79,8 @@ test("the public TV API validates a venue preference separately from its hard ve
   );
 });
 
-test("selected-venue videos lead a bounded block before the rest of the city feed", () => {
-  assert.match(tvFeedOrderSource, /MYDANCR_TV_PREFERRED_VENUE_LEAD_LIMIT = 6/);
-  assert.match(
-    tvSource,
-    /const preferredVenueScope = preferredVenueId[\s\S]*?getPublicTvVenueScope\(admin, preferredVenueId[\s\S]*?const preferredVenueDancerIds = preferredVenueScope\?\.dancerIds[\s\S]*?const preferredVenueQuery = preferredVenueId[\s\S]*?dancerIds: options\.dancerId \? undefined : preferredVenueDancerIds[\s\S]*?Promise\.resolve\(\{ data: \[\], error: null \}\)/,
-  );
-  assert.match(
-    tvSource,
-    /const preferredRows = \(preferredVenueResult\.data \|\| \[\]\) as any\[\];[\s\S]*?const cityRows = \(data \|\| \[\]\) as any\[\];[\s\S]*?const mergedRowsById = new Map<string, any>\(\);[\s\S]*?mergedRowsById\.has\(row\.id\)[\s\S]*?mergedRowsById\.set\(row\.id, row\)[\s\S]*?const mergedRows = \[\.\.\.mergedRowsById\.values\(\)\]/,
-  );
-  assert.match(
-    tvFeedOrderSource,
-    /function prioritizeMyDancrTvVenue[\s\S]*?video\.venue\?\.id === preferredVenueId[\s\S]*?video\.venue\?\.id !== preferredVenueId[\s\S]*?preferred\.slice\(0, MYDANCR_TV_PREFERRED_VENUE_LEAD_LIMIT\)[\s\S]*?\[\.\.\.preferredLead, \.\.\.cityWide, \.\.\.preferredRemainder\]/,
-  );
-  assert.match(
-    tvSource,
-    /const venuePrioritized = prioritizeMyDancrTvVenue\([\s\S]*?const profileOrdered = options\.dancerId \?[\s\S]*?: venuePrioritized;[\s\S]*?const deduped = profileOrdered\.slice\(/,
-  );
-
-  const preferredVenue = "venue-a";
-  const preferredVideos = Array.from({ length: 8 }, (_, index) => ({
-    id: `preferred-${index + 1}`,
-    venue: { id: preferredVenue },
-  }));
-  const cityVideos = Array.from({ length: 3 }, (_, index) => ({
-    id: `city-${index + 1}`,
-    venue: { id: "venue-b" },
-  }));
-  const ordered = prioritizeMyDancrTvVenue(
-    [...preferredVideos, ...cityVideos],
-    preferredVenue,
-  );
-  assert.deepEqual(
-    ordered.map((video) => video.id),
-    [
-      "preferred-1",
-      "preferred-2",
-      "preferred-3",
-      "preferred-4",
-      "preferred-5",
-      "preferred-6",
-      "city-1",
-      "city-2",
-      "city-3",
-      "preferred-7",
-      "preferred-8",
-    ],
-  );
-  assert.equal(ordered.length, preferredVideos.length + cityVideos.length);
-});
-
-test("a directly selected TV video stays first without removing citywide videos", () => {
-  const rows = [
-    { id: "city-selected", venue: { id: "venue-b" } },
-    { id: "preferred", venue: { id: "venue-a" } },
-    { id: "city-other", venue: null },
-  ];
-  const ordered = prioritizeMyDancrTvVenue(rows, "venue-a", "city-selected");
-  assert.deepEqual(ordered.map((video) => video.id), ["city-selected", "preferred", "city-other"]);
+test("venue preference no longer promotes a block ahead of higher performance scores", () => {
+  assert.match(tvSource, /await orderByPerformance/);
+  assert.doesNotMatch(tvSource, /prioritizeMyDancrTvVenue|shuffleVideos|diversifyFeed/);
+  assert.match(publicTvRoute, /!dancerId \? await discoveryContext\(admin, request, anonymousSession\)/);
 });

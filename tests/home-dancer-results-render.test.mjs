@@ -66,7 +66,7 @@ function directoryFixture(profiles) {
     "updateTabCounts", "updateHomeLiveSummary", "deactivateHomeTvFeed", "deactivateHomeDiscoveryFeed",
   ]) state[name] = () => {};
   const functions = [
-    "demoDancerGridPriority", "dancerDirectoryGroups", "dancerDirectorySections", "dancerDirectoryFilterMarkup",
+    "dancerGridPosition", "dancerDirectoryGroups", "dancerDirectorySections", "dancerDirectoryFilterMarkup",
     "spreadDancerGridPhotos", "homeDancerGridSectionMarkup", "homeDancerGridContentKey", "renderHomeDancerGrid", "render",
   ].map((name) => {
     const source = homeSource.match(new RegExp(`    function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?(?=\\r?\\n    (?:async )?function )`))?.[0];
@@ -155,7 +155,7 @@ test("ending a shift moves a dancer to the other tab and updates both counts", (
   assert.match(fixture.markup, /<article data-profile="Checked-in dancer"/);
 });
 
-test("pins Star first while preserving status filtering and everyone else's earned order", () => {
+test("preserves earned order without pinning demo dancers or rearranging repeated photos", () => {
   const star = { id: "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2", name: "Star", now: false };
   const profiles = [
     { name: "A", now: true, mainPhotoUrl: "https://images.test/same.webp" },
@@ -166,7 +166,7 @@ test("pins Star first while preserving status filtering and everyone else's earn
   const fixture = directoryFixture(profiles);
   const names = () => [...fixture.markup.matchAll(/<article data-profile="([^"]+)"/g)].map(match => match[1]);
   fixture.state.render();
-  assert.deepEqual(names(), ["A", "C", "B"]);
+  assert.deepEqual(names(), ["A", "B", "C"]);
   assert.equal(fixture.state.headerCount, "4 dancers");
   fixture.state.dancerDirectoryFilter = "not_now";
   fixture.state.render();
@@ -178,7 +178,7 @@ test("pins Star first while preserving status filtering and everyone else's earn
   profiles[2].discovery = { position: 3 };
   fixture.state.dancerDirectoryFilter = "now";
   fixture.state.render();
-  assert.deepEqual(names(), ["Star", "A", "B", "C"]);
+  assert.deepEqual(names(), ["A", "B", "Star", "C"]);
   assert.equal(names().length, 4);
   assert.match(fixture.markup, /Only participating MyDancr dancers are shown\./);
 });

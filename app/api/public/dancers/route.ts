@@ -4,6 +4,7 @@ import { getApprovedDancersByCity, getTonightShifts } from "@/src/lib/dancr/publ
 import { PRIVATE_NO_STORE_CACHE_CONTROL, PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import type { DancerCard } from "@/src/lib/dancr/types";
+import { orderByPerformance } from "@/src/lib/dancr/performance-placement";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,8 +19,9 @@ export async function GET(request: Request) {
     }
     const scope = requestedScope === "tonight" ? "tonight" : "all";
     const client = createAdminSupabaseClient();
-    const dancers =
+    const eligible =
       scope === "tonight" ? await getTonightShifts(client, city) : await getApprovedDancersByCity(client, city);
+    const dancers = await orderByPerformance(client, eligible, row => ({ dancerId: row.id, venueId: row.venueId }), row => row.id);
 
     return NextResponse.json(
       { ok: true, city, scope, dancers: dancers.map(toPublicDancerCard) },

@@ -12,7 +12,7 @@ import { isPublicDancerProfileEligible } from "./profile-approval";
 import { responsivePublicImage } from "./responsive-image";
 import { MAX_DANCER_PROFILE_VIDEOS } from "./media-limits";
 import type { PublicClubDeal } from "./types";
-import { prioritizeMyDancrTvVenue } from "./tv-feed-order";
+import { orderByPerformance } from "./performance-placement";
 import { isActiveNfcPresence } from "./shift-presence";
 import { requireVenueAccess } from "./venue-access";
 import {
@@ -348,17 +348,15 @@ export async function getPublicMyDancrTvFeed(
     );
   }
 
-  const diversified = diversifyFeed(rows, selectedVideoId);
-  const venuePrioritized = prioritizeMyDancrTvVenue(
-    diversified,
-    preferredVenueId,
-    selectedVideoId,
-  );
-  const profileOrdered = options.dancerId ? [...venuePrioritized].sort((a, b) => {
+  const performanceOrdered = options.dancerId || options.candidateVideoIds ? rows
+    : await orderByPerformance(admin, rows, row => ({ dancerId: row.dancer.id, venueId: row.venue?.id }), row => `${row.dancer.id}:${row.id}`);
+  const profileOrdered = [...performanceOrdered].sort((a, b) => {
     if (a.id === selectedVideoId) return -1;
     if (b.id === selectedVideoId) return 1;
-    return Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)) || b.publishedAt.localeCompare(a.publishedAt) || a.id.localeCompare(b.id);
-  }) : venuePrioritized;
+    return options.dancerId
+      ? Number(Boolean(b.isPinned)) - Number(Boolean(a.isPinned)) || b.publishedAt.localeCompare(a.publishedAt) || a.id.localeCompare(b.id)
+      : 0;
+  });
   const deduped = profileOrdered.slice(
     0,
     page ? pageLimit + Number(Boolean(selectedRow))
@@ -615,12 +613,6 @@ function isConfirmedActiveTvShift(shift: any, now: number) {
   return isActiveNfcPresence(shift, now);
 }
 
-function tvSchedulePriority(video: NormalizedFeedRow) {
-  if (video.shift?.isActive) return 0;
-  if (video.shift) return 1;
-  return 2;
-}
-
 async function signPublicVideos(
   admin: AdminClient,
   rows: NormalizedFeedRow[],
@@ -690,39 +682,6 @@ function normalizedVideoPosterStoragePath(row: any) {
   } catch {
     return null;
   }
-}
-
-function diversifyFeed(rows: NormalizedFeedRow[], selectedVideoId = "") {
-  const selected = selectedVideoId
-    ? rows.find((video) => video.id === selectedVideoId) || null
-    : null;
-  const remaining = selected ? rows.filter((video) => video.id !== selected.id) : rows;
-  const scheduleOrdered = [0, 1, 2].flatMap((priority) =>
-    diversifyDancers(
-      shuffleVideos(remaining.filter((video) => tvSchedulePriority(video) === priority)),
-    ),
-  );
-  return selected ? [selected, ...scheduleOrdered] : scheduleOrdered;
-}
-
-function shuffleVideos(rows: NormalizedFeedRow[]) {
-  const shuffled = [...rows];
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1));
-    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
-  }
-  return shuffled;
-}
-
-function diversifyDancers(rows: NormalizedFeedRow[]) {
-  const remaining = [...rows];
-  const result: NormalizedFeedRow[] = [];
-  while (remaining.length) {
-    const recentDancers = new Set(result.slice(-2).map((video) => video.dancer.id));
-    const nextIndex = remaining.findIndex((video) => !recentDancers.has(video.dancer.id));
-    result.push(remaining.splice(nextIndex >= 0 ? nextIndex : 0, 1)[0]);
-  }
-  return result;
 }
 
 async function signManagedVideoUrls(_admin: AdminClient, videos: any[]) {

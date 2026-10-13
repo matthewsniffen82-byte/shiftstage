@@ -156,7 +156,7 @@ test("results lead with four demand cards and retain audience growth, content an
   assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 8);
   for (const text of ["Table requests", "VIP requests", "Repeat VIPs", "Working alerts", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
   assert.ok(html.indexOf("Table requests") < html.indexOf("Profile views"));
-  for (const text of ["Profile views", "New followers", "Content likes", "Social link taps", "Your audience", "Top content", "City activity rank #4", "Your discovery boosts", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
+  for (const text of ["Profile views", "New followers", "Content likes", "Social link taps", "Your audience", "Top content", "City activity rank #4", "Your discovery placement", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /Infinity|NaN|<details|Unranked/);
 });
 

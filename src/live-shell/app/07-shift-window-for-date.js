@@ -245,48 +245,17 @@
       return date.getTime() + (startMinutes * 60000);
     }
 
-    function dailyRotationScore(profile, city = selectedCity()) {
-      city = profileDiscoveryCity(profile, city);
-      const seed = `${city}|${localDateValue(new Date(), city)}|${profile.name}`;
-      let hash = 0;
-      for (let index = 0; index < seed.length; index += 1) {
-        hash = ((hash << 5) - hash + seed.charCodeAt(index)) | 0;
-      }
-      return Math.abs(hash);
-    }
-
-    function interleaveDancerCities(profiles) {
-      const groups = new Map();
-      profiles.forEach((profile) => {
-        const city = profile.city || "";
-        if (!groups.has(city)) groups.set(city, []);
-        groups.get(city).push(profile);
-      });
-      const mixed = [];
-      for (let index = 0; mixed.length < profiles.length; index += 1) {
-        groups.forEach((group) => { if (group[index]) mixed.push(group[index]); });
-      }
-      return mixed;
-    }
-
-    function demoDancerGridPriority(profile) {
-      // Pin the original Star first, then preserve the server's earned order.
-      if (profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2") return -1;
+    function dancerGridPosition(profile) {
       return Number.isInteger(profile.discovery?.position) ? profile.discovery.position : 5000;
     }
 
     function dancerDirectoryGroups(profiles, city = selectedCity()) {
       const workingNow = profiles
         .filter((profile) => isWorkingTonight(profile, city))
-        .sort((a, b) => (
-          demoDancerGridPriority(a) - demoDancerGridPriority(b) ||
-          shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
-          dailyRotationScore(a, city) - dailyRotationScore(b, city)
-        ));
+        .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b));
       const notWorkingNow = profiles
         .filter((profile) => !isWorkingTonight(profile, city))
-        .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || dailyRotationScore(a, city) - dailyRotationScore(b, city));
-      if (city === ALL_CITIES && !profiles.some(profile => profile.discovery)) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
+        .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b));
       return { workingNow, notWorkingNow };
     }
 

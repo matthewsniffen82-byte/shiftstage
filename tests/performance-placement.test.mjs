@@ -1,0 +1,69 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {compile} from './helpers/discovery-fixture.mjs';
+import * as scoring from '../src/lib/dancr/venue-dancer-scores.ts';
+
+const dancer = (id, conversion=10) => ({id,name:'Private '+id,
+ internal:{checkedInHours:8,requests:20,requestsDuringHours:20,rosterTrackedHours:8,rosterBothHours:0,verifiedCheckInDays:4,checkoutEligibleDays:4,dancerCheckoutDays:4,activeCheckInDays:0},
+ vip:{scoringRequests:20,scoringUniqueRequesters:10,scoringRepeatRequesters:2},
+ external:{dancer_profile:10,club_page:10,directions:10,going:10,free_entry:10,transport:10},
+ results:{profileClaims:20,profileCohortConversions:conversion},
+});
+const now=Date.parse('2026-10-12T14:00:00Z');
+function fixture(reports, affiliations=[]) {
+ const calls=[];let fail=false;
+ const admin={
+  async rpc(name,args){calls.push({name,args});return {data:fail?null:{performance:{dancers:reports[args.p_venue_id]||[]}},error:fail?new Error('report unavailable'):null};},
+  from(table){assert.equal(table,'venue_dancer_affiliations');let rows=[...affiliations];const q={
+   select(){return q;},in(k,v){rows=rows.filter(r=>v.includes(r[k]));return q;},eq(k,v){rows=rows.filter(r=>r[k]===v);return q;},
+   order(k){if(k==='approved_at')rows.sort((a,b)=>String(b[k]).localeCompare(String(a[k])));return q;},
+   range(start,end){rows=rows.slice(start,end+1);return q;},then(resolve){return Promise.resolve({data:rows,error:null}).then(resolve);},
+  };return q;},
+ };
+ const service=compile('src/lib/dancr/performance-placement.ts',{'server-only':{},'./venue-dancer-scores':scoring});
+ return {admin,service,calls,fail(value){fail=value;}};
+}
+test('placement uses the exact dashboard score over the full venue cohort, never the filtered grid',async()=>{
+ const report=[dancer('a',18),dancer('b',2),dancer('private-peer',10)];
+ const f=fixture({club:report});
+ const scores=await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'b',venueId:'club'},{dancerId:'a',venueId:'club'}],now);
+ const dashboard=scoring.scoreVenueDancers(report,'30d');
+ assert.deepEqual(Array.from(scores),[dashboard[1].scores.overall.value,dashboard[0].scores.overall.value]);
+ assert.equal(f.calls.length,1);assert.equal(f.calls[0].name,'get_venue_performance_analytics');
+ assert.equal(f.calls[0].args.p_since,new Date(now-30*86400000).toISOString());
+ assert.equal(f.calls[0].args.p_until,new Date(now).toISOString());
+ assert.equal(Date.parse(f.calls[0].args.p_tonight_until)-Date.parse(f.calls[0].args.p_tonight_since),86400000);
+});
+test('explicit club wins; otherwise only the most recent active affiliation supplies placement',async()=>{
+ const report=[dancer('a',18),dancer('b'),dancer('c')], other=[dancer('a',0),dancer('b'),dancer('c')];
+ const affiliations=[{id:'1',dancer_id:'a',venue_id:'club',status:'active',approved_at:'2026-10-01'},
+ {id:'2',dancer_id:'a',venue_id:'other',status:'active',approved_at:'2026-09-01'},
+ {id:'3',dancer_id:'a',venue_id:'revoked',status:'revoked',approved_at:'2026-10-12'}];
+ const f=fixture({club:report,other},affiliations);
+ const result=await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a'},{dancerId:'a',venueId:'other'},{dancerId:'new'}],now);
+ assert.deepEqual(Array.from(result),[scoring.scoreVenueDancers(report,'30d')[0].scores.overall.value,scoring.scoreVenueDancers(other,'30d')[0].scores.overall.value,null]);
+ assert.deepEqual(f.calls.map(c=>c.args.p_venue_id).sort(),['club','other']);
+});
+test('duplicate dancers and concurrent requests share a report; scores refresh after one minute',async()=>{
+ const report=[dancer('a',18),dancer('b'),dancer('c')], f=fixture({club:report});
+ const ids=Array.from({length:25},()=>({dancerId:'a',venueId:'club'}));
+ const [a,b]=await Promise.all([f.service.getPerformancePlacementScores(f.admin,ids,now),f.service.getPerformancePlacementScores(f.admin,ids,now)]);
+ assert.deepEqual(a,b);assert.equal(f.calls.length,1);
+ report[0].results.profileCohortConversions=0;
+ const refreshed=await f.service.getPerformancePlacementScores(f.admin,ids,now+61000);
+ assert.equal(f.calls.length,2);assert.ok(refreshed[0]<a[0]);
+});
+test('report failures reject and are evicted instead of reviving the retired algorithm',async()=>{
+ const f=fixture({club:[dancer('a')]});f.fail(true);
+ await assert.rejects(f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a',venueId:'club'}],now),/unavailable/);
+ f.fail(false);assert.equal((await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a',venueId:'club'}],now)).length,1);
+ assert.equal(f.calls.length,2);
+});
+test('ordered public cards contain no private scores or report fields and unscored dancers remain visible',async()=>{
+ const f=fixture({club:[dancer('a',18),dancer('b',2),dancer('c')]});
+ const rows=[{id:'new'},{id:'b'},{id:'a'}];
+ const result=await f.service.orderByPerformance(f.admin,rows,row=>({dancerId:row.id,venueId:'club'}),row=>row.id);
+ assert.deepEqual(Array.from(result),[rows[2],rows[1],rows[0]]);
+ assert.deepEqual(rows.map(r=>r.id),['new','b','a']);
+ assert.doesNotMatch(JSON.stringify(result),/score|Private|internal|external|vip/);
+});

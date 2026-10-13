@@ -36,6 +36,7 @@ test("discovery JSON removes internal fields from both venue and dancer offer li
   const dancer={id:"dancer",venueId,shiftId:"shift",shiftSource:"nfc_presence"};
   const client={from:()=>query([{id:venueId,name:"Venue"}])};
   const route=load("app/api/public/discovery/route.ts",{
+    "@/src/lib/dancr/discovery-service":{discoveryContext:async()=>null,rankPublicGrid:async(_admin,_context,_city,rows)=>rows},
     "@/src/lib/supabase/admin":{createAdminSupabaseClient:()=>client},
     "@/src/lib/dancr/markets":{isAllMyDancrCities:()=>false},
     "@/src/lib/dancr/public":{getLiveDancerDiscovery:async()=>({dancers:[dancer],tonightDancers:[dancer]}),getPublicVenuePopularity:async()=>new Map(),formatVenueHours:()=>"Tonight"},
@@ -78,7 +79,7 @@ test("TV enrichment selects public deal fields while preserving attribution",asy
   const service=load(path,{}, {
     normalizeTvCity:()=>"",MYDANCR_TV_FILTERS:new Set(["for-you"]),UUID_PATTERN:/^[a-f0-9-]+$/,MYDANCR_TV_PROFILE_VIDEO_LIMIT:50,
     publicTvRowsQuery:()=>query([video]),normalizeFeedRow:row=>row,getPublicTvShiftContexts:async()=>new Map(),applyPublicTvShiftContext:row=>row,
-    diversifyFeed:rows=>rows,prioritizeMyDancrTvVenue:rows=>rows,signPublicVideos:async(_admin,rows)=>rows,
+    orderByPerformance:async(_,rows)=>rows,signPublicVideos:async(_admin,rows)=>rows,
     getActiveClubDealListsForVenues:async()=>new Map([[venueId,[internal]]]),createDancerDealAttributionToken:input=>`attribution-${input.dealId}`,toPublicClubDeal,
   },source.slice(start,end));
   const rows=await service.getPublicMyDancrTvFeed({},{});assert.equal(rows.length,1);assert.deepEqual(copy(rows[0].deal),visible);assert.deepEqual(copy(rows[0].deals),[visible]);assert.equal(rows[0].dealAttributionToken,`attribution-${id}`);

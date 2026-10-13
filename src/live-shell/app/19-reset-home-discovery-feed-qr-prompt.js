@@ -368,51 +368,8 @@
     }
 
     function spreadDancerGridPhotos(profiles) {
-      if (profiles.some(profile => profile.discovery)) return profiles;
-      const entries = profiles.map((profile) => {
-        const path = publicProfilePhotoUrl(profile).split(/[?#]/)[0];
-        return { profile, path, filename: path.slice(path.lastIndexOf("/") + 1) };
-      });
-      // Demo copies keep the source filename in a separate storage directory.
-      // Only known demo filenames are shared across paths; normal uploads with
-      // generic names such as photo.jpg still represent distinct photographs.
-      const demoFilenames = new Set(entries
-        .filter((entry) => /\/mydancr-[^/]+-grid-v1\//.test(entry.path))
-        .map((entry) => entry.filename));
-      const pinned = entries.find((entry) => demoDancerGridPriority(entry.profile) < 0);
-      const groups = new Map();
-      entries.forEach((entry, index) => {
-        entry.key = entry.path
-          ? demoFilenames.has(entry.filename) ? `demo:${entry.filename}` : entry.path
-          : `missing:${index}`;
-        if (entry === pinned) return;
-        if (!groups.has(entry.key)) groups.set(entry.key, { key: entry.key, entries: [], next: 0 });
-        groups.get(entry.key).entries.push(entry);
-      });
-      const mixed = pinned ? [pinned.profile] : [];
-      const recent = pinned ? [pinned.key] : [];
-      while (mixed.length < profiles.length) {
-        let chosen = null;
-        let bestPenalty = Infinity;
-        let mostRemaining = 0;
-        for (const group of groups.values()) {
-          const remaining = group.entries.length - group.next;
-          if (!remaining) continue;
-          // Keep repeats out of the previous three slots (including the card
-          // directly above). If a filtered roster has too few distinct photos,
-          // prefer the least recent repeat without hiding any dancers.
-          const penalty = recent.lastIndexOf(group.key) + 1;
-          if (penalty < bestPenalty || (penalty === bestPenalty && remaining > mostRemaining)) {
-            chosen = group;
-            bestPenalty = penalty;
-            mostRemaining = remaining;
-          }
-        }
-        mixed.push(chosen.entries[chosen.next++].profile);
-        recent.push(chosen.key);
-        if (recent.length > 3) recent.shift();
-      }
-      return mixed;
+      // Preserve earned placement even when dancers share a demo photo.
+      return profiles;
     }
 
     function homeDancerGridSectionMarkup(label, className, profiles, city, compactDirectory = false, startIndex = 0, showEmpty = false) {

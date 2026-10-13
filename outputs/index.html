@@ -49894,48 +49894,17 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       return date.getTime() + (startMinutes * 60000);
     }
 
-    function dailyRotationScore(profile, city = selectedCity()) {
-      city = profileDiscoveryCity(profile, city);
-      const seed = `${city}|${localDateValue(new Date(), city)}|${profile.name}`;
-      let hash = 0;
-      for (let index = 0; index < seed.length; index += 1) {
-        hash = ((hash << 5) - hash + seed.charCodeAt(index)) | 0;
-      }
-      return Math.abs(hash);
-    }
-
-    function interleaveDancerCities(profiles) {
-      const groups = new Map();
-      profiles.forEach((profile) => {
-        const city = profile.city || "";
-        if (!groups.has(city)) groups.set(city, []);
-        groups.get(city).push(profile);
-      });
-      const mixed = [];
-      for (let index = 0; mixed.length < profiles.length; index += 1) {
-        groups.forEach((group) => { if (group[index]) mixed.push(group[index]); });
-      }
-      return mixed;
-    }
-
-    function demoDancerGridPriority(profile) {
-      // Pin the original Star first, then preserve the server's earned order.
-      if (profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2") return -1;
+    function dancerGridPosition(profile) {
       return Number.isInteger(profile.discovery?.position) ? profile.discovery.position : 5000;
     }
 
     function dancerDirectoryGroups(profiles, city = selectedCity()) {
       const workingNow = profiles
         .filter((profile) => isWorkingTonight(profile, city))
-        .sort((a, b) => (
-          demoDancerGridPriority(a) - demoDancerGridPriority(b) ||
-          shiftStartMinutes(a.time) - shiftStartMinutes(b.time) ||
-          dailyRotationScore(a, city) - dailyRotationScore(b, city)
-        ));
+        .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b));
       const notWorkingNow = profiles
         .filter((profile) => !isWorkingTonight(profile, city))
-        .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || dailyRotationScore(a, city) - dailyRotationScore(b, city));
-      if (city === ALL_CITIES && !profiles.some(profile => profile.discovery)) return { workingNow: interleaveDancerCities(workingNow), notWorkingNow: interleaveDancerCities(notWorkingNow) };
+        .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b));
       return { workingNow, notWorkingNow };
     }
 
@@ -53576,7 +53545,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const localProfiles = venueDancers(city, venue.name);
       const tonight = localProfiles
         .filter((profile) => isWorkingTonight(profile))
-        .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time));
+        .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b));
       const followsVenue = isFollowingVenue(city, venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const activitySections = [
@@ -60776,7 +60745,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const market = discoveryMarket(city);
       return market.dancers
         .filter((profile) => isApprovedPublicProfile(profile) && isWorkingTonight(profile, city) && profileMatchesVenueFilter(profile))
-        .sort((a, b) => demoDancerGridPriority(a) - demoDancerGridPriority(b) || shiftStartMinutes(a.time) - shiftStartMinutes(b.time))
+        .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b))
         .map((profile) => withTrendingRank(profile, city));
     }
 
@@ -61270,51 +61239,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     }
 
     function spreadDancerGridPhotos(profiles) {
-      if (profiles.some(profile => profile.discovery)) return profiles;
-      const entries = profiles.map((profile) => {
-        const path = publicProfilePhotoUrl(profile).split(/[?#]/)[0];
-        return { profile, path, filename: path.slice(path.lastIndexOf("/") + 1) };
-      });
-      // Demo copies keep the source filename in a separate storage directory.
-      // Only known demo filenames are shared across paths; normal uploads with
-      // generic names such as photo.jpg still represent distinct photographs.
-      const demoFilenames = new Set(entries
-        .filter((entry) => /\/mydancr-[^/]+-grid-v1\//.test(entry.path))
-        .map((entry) => entry.filename));
-      const pinned = entries.find((entry) => demoDancerGridPriority(entry.profile) < 0);
-      const groups = new Map();
-      entries.forEach((entry, index) => {
-        entry.key = entry.path
-          ? demoFilenames.has(entry.filename) ? `demo:${entry.filename}` : entry.path
-          : `missing:${index}`;
-        if (entry === pinned) return;
-        if (!groups.has(entry.key)) groups.set(entry.key, { key: entry.key, entries: [], next: 0 });
-        groups.get(entry.key).entries.push(entry);
-      });
-      const mixed = pinned ? [pinned.profile] : [];
-      const recent = pinned ? [pinned.key] : [];
-      while (mixed.length < profiles.length) {
-        let chosen = null;
-        let bestPenalty = Infinity;
-        let mostRemaining = 0;
-        for (const group of groups.values()) {
-          const remaining = group.entries.length - group.next;
-          if (!remaining) continue;
-          // Keep repeats out of the previous three slots (including the card
-          // directly above). If a filtered roster has too few distinct photos,
-          // prefer the least recent repeat without hiding any dancers.
-          const penalty = recent.lastIndexOf(group.key) + 1;
-          if (penalty < bestPenalty || (penalty === bestPenalty && remaining > mostRemaining)) {
-            chosen = group;
-            bestPenalty = penalty;
-            mostRemaining = remaining;
-          }
-        }
-        mixed.push(chosen.entries[chosen.next++].profile);
-        recent.push(chosen.key);
-        if (recent.length > 3) recent.shift();
-      }
-      return mixed;
+      // Preserve earned placement even when dancers share a demo photo.
+      return profiles;
     }
 
     function homeDancerGridSectionMarkup(label, className, profiles, city, compactDirectory = false, startIndex = 0, showEmpty = false) {

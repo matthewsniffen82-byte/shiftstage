@@ -7,6 +7,7 @@ import { PublicApiError } from "../api-error-policy";
 import { rankDiscovery, type RankingCandidate, type RankingSurface } from "./discovery-ranking";
 import { isAllMyDancrCities } from "./markets";
 import { enforcePublicRequestRateLimit } from "./public-request-rate-limit";
+import { getPerformancePlacementScores, orderByPerformance, PLACEMENT_VERSION } from "./performance-placement";
 
 export const DISCOVERY_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export type DiscoveryContext = { viewerHash: string; userId: string | null; visitId: string; request: Request };
@@ -15,9 +16,10 @@ type Scope = { surface: RankingSurface; city: string; venueId?: string; dancerId
 type Snapshot = { id: string; ordered_ids: string[]; expires_at: string };
 let lastPruned = 0;
 
-export async function discoveryContext(admin: SupabaseClient, request: Request): Promise<DiscoveryContext | null> {
-  const session = request.headers.get("x-discovery-session") || "";
-  const visitId = request.headers.get("x-discovery-visit") || "";
+export async function discoveryContext(admin: SupabaseClient, request: Request, anonymousSession?: string): Promise<DiscoveryContext | null> {
+  const hasHeaders = request.headers.has("x-discovery-session") || request.headers.has("x-discovery-visit");
+  const session = request.headers.get("x-discovery-session") || (!hasHeaders ? anonymousSession : "") || "";
+  const visitId = request.headers.get("x-discovery-visit") || (!hasHeaders ? anonymousSession : "") || "";
   if (!session && !visitId) return null;
   if (!DISCOVERY_UUID.test(session) || !DISCOVERY_UUID.test(visitId)) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery session.", 400);
   const token = getBearerToken(request);
@@ -41,8 +43,8 @@ export function parseRankedCursor(value: string) {
 }
 
 export async function discoverySnapshot(admin: SupabaseClient, context: DiscoveryContext, scope: Scope, cursor = "") {
-  // Retire snapshots that may have omitted dancers using the removed hide control.
-  const scopeHash = createHash("sha256").update(JSON.stringify(["discovery-v2", scope.surface, scope.city.toLowerCase(), scope.venueId || "", scope.filter || "for-you", scope.selectedVideoId || ""])).digest("hex");
+  // Old discovery snapshots must not retain the retired ranking algorithm.
+  const scopeHash = createHash("sha256").update(JSON.stringify([PLACEMENT_VERSION, scope.surface, scope.city.toLowerCase(), scope.venueId || "", scope.filter || "for-you", scope.selectedVideoId || ""])).digest("hex");
   const parsed = cursor ? parseRankedCursor(cursor) : null;
   if (cursor && !parsed) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery cursor.", 400);
   let query = admin.from("discovery_sessions").select("id,ordered_ids,expires_at")
@@ -56,28 +58,22 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   if (parsed) throw new PublicApiError("INVALID_REQUEST", "This feed has expired. Refresh to discover more videos.", 409);
   await enforcePublicRequestRateLimit(admin,{namespace:"discovery_snapshot",request:context.request,subject:context.viewerHash,
     windowSeconds:60,ipLimit:90,subjectLimit:30});
-  const [candidateResult, history, dancerFollows, venueFollows] = await Promise.all([
+  const [candidateResult, dancerFollows] = await Promise.all([
     admin.rpc("get_discovery_candidates", { p_surface: scope.surface, p_city: isAllMyDancrCities(scope.city) ? "" : scope.city,
-      p_venue: scope.venueId || null, p_dancer_ids: scope.dancerIds || null, p_seed: `${context.viewerHash.slice(0,24)}:${context.visitId}`,
+      p_venue: scope.venueId || null, p_dancer_ids: scope.dancerIds || null, p_seed: PLACEMENT_VERSION,
       p_selected_video: scope.selectedVideoId || null }),
-    admin.from("discovery_events").select("entity_id,dancer_id,event_type,occurred_at")
-      .eq("viewer_hash", context.viewerHash).gte("occurred_at", new Date(Date.now()-30*86400000).toISOString())
-      .in("event_type", ["completed","engaged"]).order("occurred_at", { ascending: false }).limit(5000),
-    context.userId ? admin.from("follows").select("dancer_id").eq("customer_id",context.userId).limit(1000) : Promise.resolve({ data: [], error: null }),
-    context.userId ? admin.from("venue_follows").select("venue_id").eq("customer_id",context.userId).limit(1000) : Promise.resolve({ data: [], error: null }),
+    context.userId && scope.filter === "following" ? admin.from("follows").select("dancer_id").eq("customer_id",context.userId).limit(1000) : Promise.resolve({ data: [], error: null }),
   ]);
-  for (const result of [candidateResult,history,dancerFollows,venueFollows]) if (result.error) throw result.error;
+  for (const result of [candidateResult,dancerFollows]) if (result.error) throw result.error;
   const candidates = readRankingCandidates(candidateResult.data);
-  const watched = new Map<string,string>();
-  for (const row of history.data || []) if (!watched.has(row.entity_id)) watched.set(row.entity_id,row.occurred_at);
   const followingDancers = (dancerFollows.data || []).map(row=>row.dancer_id);
   const now = Date.now();
   const eligible = candidates.filter(row => scope.filter !== "following" || followingDancers.includes(row.dancerId))
     .filter(row => scope.filter !== "tonight" || Date.parse(row.availableUntil || "") > now
-      || (Date.parse(row.nextShiftEndsAt || "") > now && Date.parse(row.nextShiftAt || "") <= now + 86400000))
-    .map(row=>({ ...row, seenAt: watched.get(row.id) || null }));
-  const ranked = rankDiscovery(eligible, { surface: scope.surface, now, seed: context.visitId, selectedId: scope.selectedVideoId,
-    followingDancers, followingVenues: (venueFollows.data || []).map(row=>row.venue_id) });
+      || (Date.parse(row.nextShiftEndsAt || "") > now && Date.parse(row.nextShiftAt || "") <= now + 86400000));
+  const scores = await getPerformancePlacementScores(admin, eligible, now);
+  const ranked = rankDiscovery(eligible.map((row, index) => ({ ...row, performanceScore: scores[index] })),
+    { surface: scope.surface, selectedId: scope.selectedVideoId });
   let orderedIds = ranked.map(row=>row.id);
   // Explicit newest sorting and direct links retain their meaning.
   if (scope.filter === "new") orderedIds = [...ranked].sort((a,b)=>Date.parse(b.freshAt || "1970-01-01")-Date.parse(a.freshAt || "1970-01-01")).map(row=>row.id);
@@ -114,7 +110,8 @@ export function readRankingCandidates(value: unknown): RankingCandidate[] {
   });
 }
 
-export async function rankPublicGrid<T extends { id: string }>(admin: SupabaseClient, context: DiscoveryContext, city: string, rows: T[]) {
+export async function rankPublicGrid<T extends { id: string; venueId?: string | null }>(admin: SupabaseClient, context: DiscoveryContext | null, city: string, rows: T[]): Promise<(T & { discovery?: DiscoveryPlacement })[]> {
+  if (!context) return orderByPerformance(admin, rows, row => ({ dancerId: row.id, venueId: row.venueId }), row => row.id);
   const { snapshot } = await discoverySnapshot(admin,context,{surface:"grid",city,dancerIds:rows.map(row=>row.id)});
   const byId = new Map(rows.map(row=>[row.id,row]));
   const ordered = snapshot.ordered_ids.flatMap((id,position)=>{

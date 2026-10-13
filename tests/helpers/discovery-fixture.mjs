@@ -47,7 +47,10 @@ export function fixture(candidates=[row(1),row(2)]) {
  const limiter={PublicRequestRateLimitError,enforcePublicRequestRateLimit:async()=>{if(blocked)throw new PublicRequestRateLimitError();}};
  const service=compile('src/lib/dancr/discovery-service.ts',{'server-only':{},'node:crypto':{createHash,createHmac},
   '../server-env':{getServerEnv:()=> 'synthetic-test-secret'},'../supabase/request':{getBearerToken:req=>req.headers.get('authorization')?.replace('Bearer ','')||null},
-  '../api-error-policy':{PublicApiError},'./discovery-ranking':ranking,'./markets':{isAllMyDancrCities:city=>city==='All cities'},'./public-request-rate-limit':limiter});
+  '../api-error-policy':{PublicApiError},'./performance-placement':{PLACEMENT_VERSION:'performance-4-30d',
+   getPerformancePlacementScores:async(_admin,rows)=>rows.map(row=>candidates.find(c=>c.dancerId===row.dancerId)?.performanceScore ?? null),
+   orderByPerformance:async(_admin,rows)=>[...rows].sort((a,b)=>(candidates.find(c=>c.dancerId===b.id)?.performanceScore ?? -1)-(candidates.find(c=>c.dancerId===a.id)?.performanceScore ?? -1)||a.id.localeCompare(b.id))},
+  './discovery-ranking':ranking,'./markets':{isAllMyDancrCities:city=>city==='All cities'},'./public-request-rate-limit':limiter});
  const request=(viewer=id(50),visit=id(51),token='')=>new Request('https://example.test',{headers:{'x-discovery-session':viewer,'x-discovery-visit':visit,...(token?{authorization:'Bearer '+token}:{})}});
  return {admin,data,calls,service,limiter,request,block:()=>{blocked=true;}};
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { discoveryContext, parseRankedCursor } from "@/src/lib/dancr/discovery-service";
+import { randomUUID } from "node:crypto";
+import { DISCOVERY_UUID, discoveryContext, parseRankedCursor } from "@/src/lib/dancr/discovery-service";
 import { getRankedTvPage } from "@/src/lib/dancr/discovery-tv";
 import { apiError } from "@/src/lib/api";
 import { getPublicMyDancrTvFeed, parseTvFeedCursor, MYDANCR_TV_FILTERS } from "@/src/lib/dancr/tv";
@@ -32,11 +33,19 @@ export async function GET(request: Request) {
     }
     const limit = Math.min(MAX_DANCER_PROFILE_VIDEOS, Math.max(1, Number.parseInt(url.searchParams.get("limit") || "12", 10) || 12));
     const admin = createAdminSupabaseClient();
-    const ranking = !dancerId && !preferredVenueId ? await discoveryContext(admin, request) : null;
+    // Readers without browser discovery headers still get the same performance
+    // order and a stable paginated snapshot, including signed-out visitors.
+    const cookieSession = request.headers.get("cookie")?.match(/(?:^|;\s*)md_tv_placement=([^;]+)/)?.[1];
+    const anonymousSession = cookieSession && DISCOVERY_UUID.test(cookieSession) ? cookieSession : randomUUID();
+    const ranking = !dancerId ? await discoveryContext(admin, request, anonymousSession) : null;
     if (ranking) {
       const feed = await getRankedTvPage(admin,ranking,{city,filter,venueId,selectedVideoId,cursor,limit});
-      return NextResponse.json({ok:true,city,filter,...feed,requiresAccount:filter === "following" && !ranking.userId},
+      const response = NextResponse.json({ok:true,city,filter,...feed,requiresAccount:filter === "following" && !ranking.userId},
         {headers:{"Cache-Control":"private, no-store","Server-Timing":`tv;dur=${(performance.now()-started).toFixed(1)}`}});
+      if (!request.headers.has("x-discovery-session") && !request.headers.has("x-discovery-visit")) {
+        response.headers.append("Set-Cookie", `md_tv_placement=${anonymousSession}; Path=/api/public/tv; Max-Age=7200; HttpOnly; SameSite=Lax; Secure`);
+      }
+      return response;
     }
     if (parseRankedCursor(cursor)) return NextResponse.json({ok:false,error:"Refresh this feed to continue."},{status:400});
     const followingDancerIds = filter === "following"

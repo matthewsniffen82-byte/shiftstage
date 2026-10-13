@@ -62,9 +62,12 @@ export async function GET(request: Request) {
       venueDataPromise,
     ]);
     const ranking = await discoveryContext(client, request);
-    const rankedDancers = ranking ? await rankPublicGrid(client,ranking,city,discovery.dancers) : discovery.dancers;
-    const tonightIds = new Set(discovery.tonightDancers.map(row=>row.id));
-    const rankedTonight = ranking ? rankedDancers.filter(row=>tonightIds.has(row.id)) : discovery.tonightDancers;
+    const rankedDancers = await rankPublicGrid(client,ranking,city,discovery.dancers);
+    const tonightById = new Map(discovery.tonightDancers.map(row=>[row.id,row]));
+    const rankedTonight = rankedDancers.flatMap(row => {
+      const tonight = tonightById.get(row.id);
+      return tonight ? [{ ...tonight, ...(row.discovery ? { discovery: row.discovery } : {}) }] : [];
+    });
 
     const venues = venueRows.map((venue) => {
       const coverImage = responsivePublicImage(

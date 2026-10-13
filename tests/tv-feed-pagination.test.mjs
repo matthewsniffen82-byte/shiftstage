@@ -41,9 +41,9 @@ function fixture(count, excluded = new Set()) {
     tvCitiesMatch: (a,b) => a === b,
     normalizeFeedRow: row => row && !excluded.has(row.id) ? row : null,
     getPublicTvShiftContexts: async () => new Map(), applyPublicTvShiftContext: row => row,
-    // Real diversification reorders a page; deliberately reverse each batch to
+    // Performance ranking reorders a page; deliberately reverse each batch to
     // prove that the cursor follows the query, not the last displayed video.
-    diversifyFeed: rows => [...rows].reverse(), prioritizeMyDancrTvVenue: rows => rows,
+    orderByPerformance: async (_, rows) => [...rows].reverse(),
     signPublicVideos: async (_, rows) => rows, getActiveClubDealListsForVenues: async () => new Map(),
     toPublicClubDeal: deal => deal,
   });
@@ -93,6 +93,7 @@ test('legacy readers keep their array contract and malformed cursors cannot reac
 test('HTTP pagination is opt-in, rejects malformed cursors, and leaves dancer readers unchanged', async () => {
   const calls = [], exports = {}, cursor = timestamp + '|' + uuid(1);
   const deps = {
+    'node:crypto': {randomUUID: () => uuid(999)},
     '@/src/lib/dancr/discovery-service': { discoveryContext: async () => null, parseRankedCursor: () => null },
     '@/src/lib/dancr/discovery-tv': {},
     'next/server': { NextResponse: { json: (body, init) => Response.json(body, init) } },
