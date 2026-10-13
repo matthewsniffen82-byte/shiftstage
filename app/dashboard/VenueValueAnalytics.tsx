@@ -4,6 +4,7 @@ import { useState } from "react";
 import { venueAutomaticRate, venueMetricChange, type VenueValueReport, type VenueAutomaticMetric, type VenueDemandBucket } from "@/src/lib/dancr/venue-analytics";
 import VenueDancerPerformance from "./VenueDancerPerformance";
 import VenueHairColorAnalytics from "./VenueHairColorAnalytics";
+import VenueMostRequestedDancers from "./VenueMostRequestedDancers";
 import "./venue-performance.css";
 
 const labels: Record<string, string> = { card_impression: "Card impressions", club_page: "Club Page opens", directions: "Directions", free_entry: "Free Entry / Club Deal", transport: "Club transport", follow: "Venue follow clicks", unfollow: "Venue unfollow clicks", share: "Share button", share_completed: "Completed share / copy", dancer_profile: "Dancer profiles opened", tv_open: "TV opens", phone: "Phone", website: "Website" };
@@ -42,7 +43,6 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
     return card(label, value, help, change, kind && kind !== "tables" ? "%" : "");
   };
   const buckets = (title: string, items: VenueDemandBucket[] | undefined) => <div className="venue-demand-group"><h4>{title}</h4>{items?.length ? <ol className="venue-demand-list">{items.map((item, i) => <li key={item.label + ":" + i}><span>{item.label}</span><strong>{number(item.total)}</strong></li>)}</ol> : <p className="venue-value-empty">{items ? "No requests this period." : "Not yet available."}</p>}</div>;
-  const topDancers = (channel: "vip" | "internal") => performance?.dancers.map(d => ({ label: d.name, total: Number(channel === "vip" ? d.vip.scoringRequests || 0 : d.internal.requests || 0) })).filter(d => d.total > 0).sort((a, b) => b.total - a.total || a.label.localeCompare(b.label)).slice(0, 5);
   return <div className="venue-value-analytics">
     <p className="venue-value-dates">{dateRange}</p>
     <p className="venue-value-note">{period === "tonight" ? "Tonight’s results so far." : period === "all" ? "All available recorded history." : "Compared with the preceding period of the same length."} Updates from dancer check-ins, customer actions and entry scans.</p>
@@ -58,8 +58,8 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
           {automatic && <p className="venue-value-note">Live roster as of {formatDate(automatic.liveAsOf)}. Each dancer counts once, independently of the reporting period.</p>}
         </>}
         {category.id === "entries" && <p className="venue-value-note">{current ? number(current.cohortAdmissions) + " of " + number(current.claims) + " passes claimed this period were redeemed by its end. " : ""}Admissions use entry date and may include older passes. Signups, claims and entries overlap; they are not added together as customers. Door staff use the normal entry scan.</p>}
-        {category.id === "vip" && <><div className="venue-demand-grid">{buckets("Most requested dancers", topDancers("vip"))}{buckets("Most requested dates", current?.vipDates)}{buckets("Most requested hours", current?.vipHours)}</div><p className="venue-value-note">Customer, selection and requested-time counts exclude customer withdrawals. Repeat means an earlier request at this club, not a visit. Times are local to the club; staff approval does not change demand.</p></>}
-        {category.id === "tables" && <><div className="venue-demand-grid">{buckets("Busiest tables", current?.tables)}{buckets("Most requested dancers", topDancers("internal"))}{buckets("Busiest request hours", current?.tableHours)}</div><p className="venue-value-note">Requests are counted automatically. Times are local to the club.</p></>}
+        {category.id === "vip" && <><div className="venue-demand-grid"><VenueMostRequestedDancers key={`vip:${period}`} dancers={performance?.dancers} channel="vip" />{buckets("Most requested dates", current?.vipDates)}{buckets("Most requested hours", current?.vipHours)}</div><p className="venue-value-note">Customer, selection and requested-time counts exclude customer withdrawals. Repeat means an earlier request at this club, not a visit. Times are local to the club; staff approval does not change demand.</p></>}
+        {category.id === "tables" && <><div className="venue-demand-grid">{buckets("Busiest tables", current?.tables)}<VenueMostRequestedDancers key={`internal:${period}`} dancers={performance?.dancers} channel="internal" />{buckets("Busiest request hours", current?.tableHours)}</div><p className="venue-value-note">Requests are counted automatically. Times are local to the club.</p></>}
         {category.id === "interest" && <>
           <div className="venue-auto-metrics">{card("Total venue followers", totalFollowers)}</div><p className="venue-value-note">Dancer actions must identify this club. Browsers are not people; clicks and I’m Going do not verify arrival.</p>
           <details className="venue-supporting-disclosure"><summary id="venue-interactions-heading">Customer actions <span>Views, clicks &amp; shares</span></summary>

@@ -1,0 +1,34 @@
+.venue-most-requested { align-self: start; }
+/* Only the portraits scroll; the heading stays above the contained list. */
+.venue-requested-scroll {
+  box-sizing: border-box;
+  max-height: min(440px, 52vh);
+  max-height: min(440px, 52dvh);
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #8b739f #100d17;
+  padding: 8px;
+  border: 1px solid #51405e;
+  border-radius: 12px;
+  background: linear-gradient(#100d17, #100d17);
+  scroll-padding-block: 8px;
+  -webkit-overflow-scrolling: touch;
+}
+body .venue-requested-scroll .venue-dancer-grid { margin: 0; }
+body .venue-requested-scroll .venue-card-caption .venue-requested-count {
+  color: #fff;
+  -webkit-text-fill-color: currentColor;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: normal;
+}
+.venue-requested-scroll:focus-visible { outline: 2px solid #c9a4f4; outline-offset: 3px; }
+/* Keep each three-column portrait grid wide enough at tablet sizes, too. */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .venue-value-analytics .venue-demand-grid { grid-template-columns: minmax(0, 1fr); }
+}

@@ -285,7 +285,7 @@ test('roster and table identities open matching real profiles, including off-shi
 
 test('demo renders the real report, score and queue components without network access or invalid values', () => {
   const cache = new Map();
-  const modules = ['VenueDemoDashboard', 'VenueValueAnalytics', 'VenueDancerPerformance', 'VenueHairColorAnalytics', 'VenueTonightOverview', 'VenueSetupChecklist', 'VenueDashboardIdentity'];
+  const modules = ['VenueDemoDashboard', 'VenueValueAnalytics', 'VenueDancerPerformance', 'VenueHairColorAnalytics', 'VenueTonightOverview', 'VenueSetupChecklist', 'VenueDashboardIdentity', 'VenueMostRequestedDancers'];
   function load(name) {
     if (cache.has(name)) return cache.get(name);
     const exports = {}; cache.set(name, exports);

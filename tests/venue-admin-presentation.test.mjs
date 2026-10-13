@@ -52,7 +52,7 @@ const performanceCounts = { guestList: 5, vipRequests: 4, vipPending: 1, vipConf
   vipResponseMinutes: null, vipResponseSamples: 0, tableResponseMinutes: 5, tableResponseSamples: 2, tableCompletionMinutes: null, tableCompletionSamples: 0 };
 const performance = { current: performanceCounts, previous: performanceCounts, trackingStartedAt: "2026-01-01",
   dancers: [], tonight: { vipPending: 2, vipConfirmed: 3, tablePending: 4, tableAcknowledged: 1, guestListExpected: 6 } };
-const valueDependencies = { "@/src/lib/dancr/venue-analytics": analytics, "./VenueDancerPerformance": { default: "DancerPerformance" }, "./VenueHairColorAnalytics": { default: "HairColorAnalytics" }, "./venue-performance.css": {} };
+const valueDependencies = { "@/src/lib/dancr/venue-analytics": analytics, "./VenueDancerPerformance": { default: "DancerPerformance" }, "./VenueHairColorAnalytics": { default: "HairColorAnalytics" }, "./VenueMostRequestedDancers": { default: "MostRequestedDancers" }, "./venue-performance.css": {} };
 
 test("results show six priority metrics and seven compact automatic categories, preserving source filtering", () => {
   const render = component("app/dashboard/VenueValueAnalytics.tsx", "default", "", valueDependencies);
@@ -70,6 +70,8 @@ test("results show six priority metrics and seven compact automatic categories, 
     ['Roster activity','Guest list & entries','VIP demand','Table requests','Customer interest','Transportation demand','Dancer contribution']);
   assert.ok(categories.every(node=>node.props.open===undefined));
   assert.equal(tree.find(node => node.type === "DancerPerformance").props.dancers, performance.dancers);
+  assert.deepEqual(tree.filter(node => node.type === "MostRequestedDancers").map(node => node.props.channel), ["vip", "internal"]);
+  assert.ok(tree.filter(node => node.type === "MostRequestedDancers").every(node => node.props.dancers === performance.dancers));
   assert.equal(tree.filter(node => node.props.className === "venue-supporting-disclosure").length, 3);
   assert.equal(tree.find(node => node.props?.className === "venue-value-methodology").props.open, undefined);
   tree.find(node => node.type === "select").props.onChange({ target: { value: "dancer_profile" } });
@@ -78,6 +80,40 @@ test("results show six priority metrics and seven compact automatic categories, 
   assert.equal(nodes(mobile).filter(node => node.type === "li").length, 1);
   assert.equal(nodes(mobile).find(node => node.type === "strong").props.children, "Free Entry / Club Deal");
   assert.ok(!tree.some(node => node.props?.children === "Planned visits"));
+});
+
+const requestedDependencies = {
+  "../internal/InternalRoster": { VenueRosterProfileButton: "ProfileButton" },
+  "./venue-dancer-grid.css": {}, "./venue-requested-dancers.css": {},
+};
+test("most-requested profiles include every requested dancer in channel-specific ranked order", () => {
+  const render = component("app/dashboard/VenueMostRequestedDancers.tsx", "default", "", requestedDependencies);
+  const dancers = Array.from({ length: 9 }, (_, i) => ({ id: `dancer-${i}`, name: `Dancer ${i}`, photoUrl: i ? null : "/approved-photo.jpg",
+    internal: { requests: i }, vip: { scoringRequests: 9 - i } }));
+  const originalIds = dancers.map(dancer => dancer.id);
+  const tree = render({ dancers, channel: "internal" });
+  const profiles = tree.filter(node => node.type === "ProfileButton");
+  assert.deepEqual(profiles.map(node => node.props.dancerId), originalIds.slice(1).reverse());
+  assert.equal(profiles.length, 8, "the scrollable list is not truncated to five dancers");
+  assert.deepEqual(dancers.map(dancer => dancer.id), originalIds, "ranking must not reorder the source report");
+  assert.equal(tree.find(node => node.props.role === "region").props.tabIndex, 0);
+  assert.equal(tree.find(node => node.type === "ol").props['aria-label'], "Dancers ranked by table requests");
+  const vip = render({ dancers, channel: "vip" });
+  assert.deepEqual(vip.filter(node => node.type === "ProfileButton").map(node => node.props.dancerId), originalIds);
+  assert.equal(vip.find(node => node.type === "img").props.src, "/approved-photo.jpg");
+  assert.equal(vip.filter(node => node.props.className === "venue-requested-count").at(-1).props.children.join(""), "1 request");
+  const tied = render({ dancers: [{ ...dancers[0], name: "Zoe" }, { ...dancers[0], id: "another", name: "Aria" }], channel: "vip" });
+  assert.deepEqual(tied.filter(node => node.type === "ProfileButton").map(node => node.props.stageName), ["Aria", "Zoe"]);
+});
+
+test("most-requested profiles distinguish unavailable and empty reports and use real demo profile IDs", () => {
+  const render = component("app/dashboard/VenueMostRequestedDancers.tsx", "default", "", requestedDependencies);
+  assert.ok(render({ channel: "vip" }).some(node => node.props.children === "Not yet available."));
+  assert.ok(render({ channel: "vip", dancers: [] }).some(node => node.props.children === "No requests this period."));
+  const demo = createVenueDashboardDemo("tonight", new Date("2026-10-12"), [{ name: "Aria", url: "/approved-photo.jpg", dancerId: "real-aria" }]);
+  const tree = render({ channel: "vip", dancers: demo.report.performance.dancers });
+  assert.deepEqual(tree.filter(node => node.type === "ProfileButton").map(node => node.props.dancerId), ["real-aria"]);
+  assert.equal(tree.filter(node => node.type === "li").length, demo.report.performance.dancers.length);
 });
 
 test("live roster is labelled separately, only 7/30-day totals compare, and absent aggregates do not become zeroes", () => {

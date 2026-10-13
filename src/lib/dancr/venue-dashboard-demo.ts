@@ -35,7 +35,7 @@ export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, p
     const completed = (16 + (i + phase) % 3 + Math.floor(i / 2)) * factor;
     const claims = (20 + i * 2) * factor;
     const conversions = (8 + (i + phase) % 4 + Math.floor(i / 2)) * factor;
-    return { id: dancer.id, name: dancer.name, photoUrl: dancer.photoUrl,
+    return { id: dancer.id, name: dancer.name, photoUrl: dancer.photoUrl, profileDancerId: dancer.profileDancerId,
       internal: { checkedInHours: (3 + i * 0.35) * factor, requests, completed,
         rosterTrackedHours: (3 + i * 0.35) * factor,
         rosterBothHours: (3 + i * 0.35) * factor * (i % 3 === 0 ? 1 : i % 3 === 1 ? 0.5 : 0), verifiedCheckInDays: checkInDays,
