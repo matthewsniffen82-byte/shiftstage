@@ -67,7 +67,7 @@ test("results show six priority metrics and seven compact automatic categories, 
   assert.deepEqual(cards.map(node => nodes(node).find(item => item.type === "strong").props.children), ["2", "25%", "4", "8", "3", "75%"]);
   const categories=tree.filter(node=>node.props.className==='venue-auto-category');
   assert.deepEqual(categories.map(node=>nodes(node).find(child=>child.type==='summary').props.children[0].props.children),
-    ['Roster activity','Guest list & entries','VIP demand','Internal table demand','Customer interest','Transportation demand','Dancer contribution']);
+    ['Roster activity','Guest list & entries','VIP demand','Table requests','Customer interest','Transportation demand','Dancer contribution']);
   assert.ok(categories.every(node=>node.props.open===undefined));
   assert.equal(tree.find(node => node.type === "DancerPerformance").props.dancers, performance.dancers);
   assert.equal(tree.filter(node => node.props.className === "venue-supporting-disclosure").length, 3);
