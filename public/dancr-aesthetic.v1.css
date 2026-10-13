@@ -13410,7 +13410,7 @@ body.dancr-button-system.dancer-directory-active > .app main.stack > section.sta
 /* Directory and club lineup cards share the same caption fade. */
 body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column .home-dancer-grid-copy,
 body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-copy {
-  background: linear-gradient(180deg, transparent, rgba(46, 22, 75, .24) 24%, rgba(38, 20, 62, .8) 56%, rgba(21, 11, 37, .92)) !important;
+  background: linear-gradient(180deg, transparent, rgba(46, 22, 75, .12) 24%, rgba(38, 20, 62, .4) 56%, rgba(21, 11, 37, .68)) !important;
 }
 
 /* Grid taps open profiles without flashing an edge over the portrait. */
