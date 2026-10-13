@@ -155,7 +155,7 @@ test("ending a shift moves a dancer to the other tab and updates both counts", (
   assert.match(fixture.markup, /<article data-profile="Checked-in dancer"/);
 });
 
-test("preserves earned order without pinning demo dancers or rearranging repeated photos", () => {
+test("pins Star first within the selected status while preserving all other dancer ordering", () => {
   const star = { id: "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2", name: "Star", now: false };
   const profiles = [
     { name: "A", now: true, mainPhotoUrl: "https://images.test/same.webp" },
@@ -178,9 +178,25 @@ test("preserves earned order without pinning demo dancers or rearranging repeate
   profiles[2].discovery = { position: 3 };
   fixture.state.dancerDirectoryFilter = "now";
   fixture.state.render();
-  assert.deepEqual(names(), ["A", "B", "Star", "C"]);
+  assert.deepEqual(names(), ["Star", "A", "B", "C"]);
   assert.equal(names().length, 4);
+  assert.equal(star.discovery.position, 2, "pinning must not rewrite earned placement data");
+  star.discovery.position = 99;
+  fixture.state.render();
+  assert.deepEqual(names(), ["Star", "A", "B", "C"], "refreshes keep Star in the top-left slot");
+  fixture.state.profiles = profiles.filter(profile => profile !== star);
+  fixture.state.render();
+  assert.deepEqual(names(), ["A", "B", "C"], "do not inject Star into a scope she does not belong to");
   assert.match(fixture.markup, /Only participating MyDancr dancers are shown\./);
+});
+
+test("pinning uses Star's exact identity rather than a matching name or photo", () => {
+  const fixture = directoryFixture([
+    { id: "other-star", name: "Star", now: true, discovery: { position: 4 } },
+    { id: "first", name: "First by score", now: true, discovery: { position: 0 } },
+  ]);
+  fixture.state.render();
+  assert.deepEqual([...fixture.markup.matchAll(/<article data-profile="([^"]+)"/g)].map(match => match[1]), ["First by score", "Star"]);
 });
 
 test("choosing a specific club resets Not Working Now and shows only the Working Now tab", () => {
