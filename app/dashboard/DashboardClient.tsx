@@ -620,6 +620,10 @@ export default function DashboardClient({
           ) : null}
           {role === "venue" ? (
             <>
+              {!venueAccountPaused && <div className="venue-internal-entry">
+                <span>Live club roster</span>
+                <a className="primary-link" href="/internal">View Internal <span aria-hidden="true">→</span></a>
+              </div>}
               {venueAccountPaused ? <>
                 <InfoPanel title="Account paused">
                   <p>Your venue tools are unavailable while your account is paused. Manage your account or contact support below.</p>

@@ -1,2 +1,5 @@
-import { redirect } from "next/navigation";
-export default function Page() { redirect("/dashboard/venue#venue-dancer-roster"); }
+import { InternalRoster } from "./InternalRoster";
+
+export default function Page() {
+  return <InternalRoster />;
+}

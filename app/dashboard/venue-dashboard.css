@@ -147,3 +147,5 @@ body .dashboard-shell.dashboard-shell-venue .venue-dashboard-overview-grid .metr
 .venue-value-methodology li > strong{color:#e1d9eb}
 .venue-value-billing{margin:12px 0 0;color:#b8b6c7;font-size:12px;line-height:1.5}
 @media(max-width:640px){.venue-value-metrics,.venue-value-supporting{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.venue-value-analytics .metric{padding:12px}.venue-value-metrics .metric strong{font-size:26px}}
+.venue-internal-entry { grid-column:1 / -1; display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px 12px; min-width:0; }
+.venue-internal-entry > span { color:#b8b5c2; font-size:12px; }
