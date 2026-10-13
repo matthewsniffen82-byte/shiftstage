@@ -27,6 +27,16 @@ test("the shared aesthetic is loaded by both Next pages and the live homepage", 
   );
 });
 
+test("the violet page backdrop is one shade darker with device-specific brightness preserved", () => {
+  assert.deepEqual([...aesthetic.matchAll(/--discovery-backdrop:\s*(#[a-f0-9]+);/g)].map(match => match[1]),
+    ["#150e1f", "#0c0314", "#272031"]);
+  assert.deepEqual([...aesthetic.matchAll(/--discovery-header-backdrop: linear-gradient\(180deg, (#[a-f0-9]+), var\(--discovery-backdrop\)\);/g)].map(match => match[1]),
+    ["#100b1a", "#0a0312", "#211c2b"]);
+  assert.match(aesthetic, /@supports \(-webkit-touch-callout: none\) \{\s*:root \{\s*--discovery-backdrop: #0c0314;/);
+  assert.match(aesthetic, /:root:is\(\.is-android, \.android-rendering, \.is-samsung-browser, \.samsung-rendering\) \{\s*--discovery-backdrop: #272031;/);
+  assert.match(aesthetic, /main\.stack:has\(> section\.stack > #results\) \{\s*background: var\(--discovery-backdrop\) !important;/);
+});
+
 test("the live homepage declares its authored dark scheme before CSS loads", () => {
   assert.match(
     liveApp,
