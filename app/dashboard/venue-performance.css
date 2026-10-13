@@ -1,46 +1,51 @@
 .venue-performance { margin-top: 18px; border-top: 1px solid #34343c; padding-top: 12px; }
 .venue-dancer-results { margin-block: 16px; }
 .venue-dancer-results h3 { font-size: 16px; margin-bottom: 10px; }
-.venue-performance-detail dd.venue-result-time { font-size: 13px; line-height: 1.5; }
 .venue-performance h3, .venue-result-outcomes h3 { margin: 6px 0; font-size: 16px; }
-.venue-performance-channels { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin: 12px 0; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-performance-channels button { --venue-control-face: #111114; --venue-control-edge: #34343c; min-height: 44px !important; border-radius: 10px !important; font-size: 13px !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-performance-channels button[aria-pressed="true"] { --venue-control-face: #29292f; --venue-control-edge: #85858f; font-weight: 700 !important; }
 .venue-performance-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .venue-performance-tools label { display: grid; gap: 5px; min-width: 0; font-size: 12px; color: #bdbdc6; }
 .venue-performance-tools :is(input,select) { width: 100%; min-width: 0; min-height: 44px; margin: 0; padding: 8px; border: 1px solid #494951; border-radius: 8px; background: #141417; color: #fff; font: inherit; }
 .venue-performance-list { margin: 0; padding: 0; list-style: none; }
 .venue-performance-list > li { border-bottom: 1px solid #34343c; }
-.venue-performance-list summary { display: grid; grid-template-columns: 44px minmax(0,1fr) minmax(0,2fr) 16px; align-items: center; gap: 10px; padding: 12px 0; cursor: pointer; list-style: none; }
-.venue-performance-list summary::-webkit-details-marker { display: none; }
 .venue-performance-avatar { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; overflow: hidden; background: #29292f; color: #ededf1; font-weight: 600; }
 .venue-performance-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .venue-performance-name { font-size: 14px; font-weight: 650; overflow-wrap: anywhere; }
-.venue-performance-highlights { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; min-width: 0; color: #bdbdc6; font-size: 11px; line-height: 1.4; font-variant-numeric: tabular-nums; }
-.venue-performance-highlights > span { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.venue-performance-highlights b { color: #f4f4f6; font-size: 14px; font-weight: 600; }
-.venue-performance-expand { text-align: center; }
-.venue-performance-expand::after { content: "+"; color: #bdbdc6; }
-.venue-performance-list details[open] > summary .venue-performance-expand::after { content: "−"; }
-.venue-performance-detail h4 { margin: 12px 0 8px; color: #e2e2e7; font-size: 13px; }
-.venue-performance-detail dl, .venue-outcome-counts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 0 0 12px; }
-.venue-performance-detail dl > div, .venue-outcome-counts > div { min-width: 0; padding: 10px; background: #19191f; border-radius: 8px; }
-.venue-performance-detail dt, .venue-outcome-counts dt { font-size: 12px; line-height: 1.4; color: #c4bbce; }
-.venue-performance-detail dd, .venue-outcome-counts dd { margin: 4px 0 0; color: #fff; font-size: 16px; font-variant-numeric: tabular-nums; }
-.venue-performance-detail small, .venue-outcome-counts small { display: block; color: #b8afc4; font-size: 11px; line-height: 1.4; margin-top: 4px; }
-.venue-performance-detail dl > div { background: #141417; }
-.venue-performance-detail dt, .venue-performance-detail small, .venue-performance .venue-value-note { color: #bdbdc6; }
+.venue-outcome-counts { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 0 0 12px; }
+.venue-outcome-counts > div { min-width: 0; padding: 10px; background: #19191f; border-radius: 8px; }
+.venue-outcome-counts dt { font-size: 12px; line-height: 1.4; color: #c4bbce; }
+.venue-outcome-counts dd { margin: 4px 0 0; color: #fff; font-size: 16px; font-variant-numeric: tabular-nums; }
+.venue-outcome-counts small { display: block; color: #b8afc4; font-size: 11px; line-height: 1.4; margin-top: 4px; }
+.venue-performance .venue-value-note { color: #bdbdc6; }
+.venue-scored-list > li { display: grid; grid-template-columns: minmax(160px,1fr) minmax(0,3fr); align-items: center; gap: 16px; padding: 14px 0; }
+.venue-score-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.venue-score-identity > div { min-width: 0; }
+.venue-score-identity .venue-performance-avatar { flex: none; }
+.venue-score-rank { display: block; margin-top: 4px; color: #bdbdc6; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.venue-score-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 8px; margin: 0; min-width: 0; }
+.venue-score { min-width: 0; min-height: 92px; padding: 10px; border-bottom: 2px solid #494951; background: #17171c; }
+.venue-score-overall { border-color: #c7ab73; background: #242328; }
+.venue-score dt { color: #d0d0d8; font-size: 12px; line-height: 1.4; min-height: 34px; overflow-wrap: anywhere; }
+.venue-score dd { margin: 6px 0 0; color: #f4f4f6; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.venue-score dd strong { font-size: 26px; font-weight: 650; }
+.venue-score-scale { font-size: 11px; color: #bdbdc6; white-space: nowrap; }
+.venue-score-missing { display: block; font-size: 12px; line-height: 1.4; color: #bdbdc6; overflow-wrap: anywhere; }
+.venue-score-methodology { border-block: 1px solid #34343c; margin: 12px 0; padding: 10px 0; color: #bdbdc6; font-size: 13px; line-height: 1.6; }
+.venue-score-methodology summary { color: #dedee6; cursor: pointer; min-height: 28px; }
+.venue-score-methodology dl { margin: 12px 0; }
+.venue-score-methodology dl > div + div { margin-top: 12px; }
+.venue-score-methodology dt { font-weight: 650; color: #ededf1; }
+.venue-score-methodology dd { margin: 3px 0 0; }
+.venue-score-methodology p { margin: 10px 0; }
+.venue-score-methodology small { font-size: 11px; }
 .venue-result-outcomes { padding-block: 10px; border-top: 1px solid #35313e; }
 .venue-tonight-results { margin-block: 12px; padding: 12px; border: 1px solid #6e5185; border-radius: 12px; background: #21172b; }
 .venue-tonight-results h3 { margin: 0 0 10px; font-size: 15px; }
 .venue-tonight-results .venue-outcome-counts { margin: 0; }
 .venue-performance :is(button,summary,input,select):focus-visible { outline: 2px solid #d4d4dc; outline-offset: 3px; }
 @media(max-width:640px) {
-  .venue-performance-detail dl, .venue-outcome-counts { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .venue-performance-list summary { grid-template-columns: 40px minmax(0,1fr) 16px; gap: 10px; }
+  .venue-outcome-counts { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .venue-scored-list > li { grid-template-columns: minmax(0,1fr); gap: 12px; }
   .venue-performance-avatar { width: 40px; height: 40px; }
-  .venue-performance-highlights { grid-column: 1 / -1; grid-row: 2; }
-  .venue-performance-highlights > span { padding: 8px; border-radius: 8px; background: #141417; }
-  .venue-performance-expand { grid-column: 3; grid-row: 1; }
 }
+@media(max-width:480px) { .venue-score-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
 @media(max-width:380px) { .venue-performance-tools { grid-template-columns: minmax(0,1fr); } }

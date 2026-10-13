@@ -1,89 +1,65 @@
 "use client";
 
 import { useState } from "react";
+import type { DancerPerformance } from "@/src/lib/dancr/venue-analytics";
 import {
-  sortDancerPerformance,
-  type DancerPerformance, type DancerPerformanceChannel, type DancerPerformanceSort,
-} from "@/src/lib/dancr/venue-analytics";
+  DANCER_SCORE_MINIMUMS, DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS,
+  scoreVenueDancers, sortScoredDancers, type DancerScoreKey, type DancerScorePeriod, type DancerScoreSort,
+} from "@/src/lib/dancr/venue-dancer-scores";
 
-const channels = { all: "All", internal: "Internal", external: "External", vip: "VIP" } as const;
-const counts = (value: number | null | undefined) => (value || 0).toLocaleString();
-const activityMetrics = [
-  ["dancer_profile", "Profile opens from this venue"], ["club_page", "Club page opens"],
-  ["directions", "Directions"],
-  ["going", "“I’m Going” signals"], ["free_entry", "Offer clicks"], ["transport", "Transport clicks"],
-] as const;
-const checkedInTime = (value: number | null | undefined) => value == null || !Number.isFinite(value)
-  ? "Not recorded" : `${value.toLocaleString(undefined, { maximumFractionDigits: 1 })} hr`;
+const scoreLabels = { overall: "Overall", checkIns: "Check-in activity", requests: "Requests", profile: "Profile results" } as const;
+const periodLabels = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
+const scoreKeys: DancerScoreKey[] = ["overall", "checkIns", "requests", "profile"];
 
-function Count({ label, value }: { label: string; value: number | null | undefined }) {
-  return <div><dt>{label}</dt><dd>{counts(value)}</dd></div>;
-}
-
-export default function VenueDancerPerformance({ dancers, timezone = "America/Los_Angeles" }: { dancers: DancerPerformance[]; timezone?: string }) {
-  const [channel, setChannel] = useState<DancerPerformanceChannel>("all");
-  const [sort, setSort] = useState<DancerPerformanceSort>("tableRequests");
+export default function VenueDancerPerformance({ dancers, period = "30d" }: { dancers: DancerPerformance[]; period?: DancerScorePeriod }) {
+  const [sort, setSort] = useState<DancerScoreSort>("overall");
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(20);
-  const rows = sortDancerPerformance(dancers, channel, sort).filter(row => row.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
-  const chooseChannel = (next: DancerPerformanceChannel) => {
-    setChannel(next); setSort(next === "external" ? "conversions" : next === "vip" ? "vipRequests" : "tableRequests"); setLimit(20);
-  };
+  const scored = scoreVenueDancers(dancers, period);
+  const rows = sortScoredDancers(scored, sort).filter(row => row.dancer.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
+  const minimum = DANCER_SCORE_MINIMUMS[period];
   return <section className="venue-performance" aria-labelledby="venue-performance-heading">
     <h3 id="venue-performance-heading">Dancer performance</h3>
-    <p className="venue-value-note">At this club in the selected period.</p>
-    <div className="venue-performance-channels" role="group" aria-label="Dancer performance channel">
-      {Object.entries(channels).map(([key, label]) => <button key={key} type="button" aria-pressed={channel === key}
-        onClick={() => chooseChannel(key as DancerPerformanceChannel)}>{label}</button>)}
-    </div>
+    <p className="venue-value-note">{periodLabels[period]} · Private to this club</p>
     <div className="venue-performance-tools">
       <label>Find a dancer<input type="search" value={search} placeholder="Search stage names" onChange={event => { setSearch(event.target.value); setLimit(20); }} /></label>
-      <label>Sort by<select value={sort} onChange={event => { setSort(event.target.value as DancerPerformanceSort); setLimit(20); }}>
-        {(channel === "all" || channel === "internal") && <><option value="tableRequests">Table requests received</option><option value="hours">Checked-in time</option></>}
-        {(channel === "all" || channel === "internal") && <option value="completed">Marked completed table requests</option>}
-        {(channel === "all" || channel === "vip") && <><option value="vipRequests">VIP requests selecting dancer</option><option value="repeatRequesters">Repeat VIP requesters</option></>}
-        {(channel === "all" || channel === "external") && <option value="conversions">Redeemed profile passes</option>}
-        {(channel === "all" || channel === "internal") && <option value="checkIns">Check-ins</option>}
+      <label>Sort by<select value={sort} onChange={event => { setSort(event.target.value as DancerScoreSort); setLimit(20); }}>
+        {scoreKeys.map(key => <option key={key} value={key}>{scoreLabels[key]} score</option>)}
         <option value="name">Name</option>
       </select></label>
     </div>
-    <p className="venue-value-note" role="status">{rows.length.toLocaleString()} {rows.length === 1 ? "dancer" : "dancers"} with {channel === "all" ? "recorded" : channels[channel]} activity{search.trim() ? " matching your search" : ""}</p>
-    {rows.length ? <ul className="venue-performance-list">{rows.slice(0, limit).map(row => <li key={row.id}>
-      <details><summary>
-        <span className="venue-performance-avatar">{row.photoUrl
-          ? <img src={row.photoUrl} alt="" width="44" height="44" loading="lazy" />
-          : row.name.slice(0, 1).toUpperCase()}</span>
-        <span className="venue-performance-name">{row.name}</span>
-        <span className="venue-performance-highlights">
-          <span><b>{checkedInTime(row.internal.checkedInHours)}</b><span>Checked-in time</span></span>
-          <span><b>{counts(row.internal.requests)}</b><span>Table requests received</span></span>
-          <span><b>{row.results ? counts(row.results.profileConversions) : "Not recorded"}</b><span>Redeemed profile passes</span></span>
-        </span>
-        <span className="venue-performance-expand" aria-hidden="true" />
-      </summary>
-      <div className="venue-performance-detail"><h4>Check-ins &amp; check-outs</h4><dl>
-        <div><dt>Checked-in time</dt><dd>{checkedInTime(row.internal.checkedInHours)}</dd></div>
-        <div><dt>Check-ins</dt><dd>{row.results ? counts(row.results.checkIns) : "Not recorded"}</dd></div>
-        <div><dt>Check-outs</dt><dd>{row.results ? counts(row.results.checkOuts) : "Not recorded"}</dd></div>
-        <div><dt>Last check-in this period</dt><dd className="venue-result-time">{row.results?.lastCheckInAt ? new Date(row.results.lastCheckInAt).toLocaleString(undefined, { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "Not recorded"}</dd></div>
-      </dl></div>
-      {(channel === "all" || channel === "internal") && <div className="venue-performance-detail"><h4>Internal · table requests</h4><dl>
-        <Count label="Requests received" value={row.internal.requests} />
-        <Count label="Marked completed" value={row.internal.completed} />
-      </dl></div>}
-      {(channel === "all" || channel === "external") && <div className="venue-performance-detail"><h4>External · pass results</h4><dl>
-        <div><dt>Redeemed profile passes</dt><dd>{row.results ? counts(row.results.profileConversions) : "Not recorded"}</dd></div>
-        <div><dt>Profile pass conversion rate</dt><dd>{row.results ? row.results.profileConversionPercent == null ? "No qualifying claims" : `${row.results.profileConversionPercent}%` : "Not recorded"}</dd></div>
-      </dl><p className="venue-value-note">A profile pass converts when staff redeem it for entry. Each pass counts once; repeat visits may use separate passes. The rate uses profile passes claimed in this period.</p></div>}
-      {(channel === "all" || channel === "vip") && <div className="venue-performance-detail"><h4>VIP · dancer selections</h4><dl>
-        <Count label="Selected in requests" value={row.vip.requests} />
-        <Count label="Repeat VIP requesters" value={row.vip.repeatRequesters} />
-      </dl><p className="venue-value-note">Repeat requesters have an earlier request for this dancer at this club.</p></div>}
-      {(channel === "all" || channel === "external") && <div className="venue-performance-detail"><h4>Clicks &amp; profile activity</h4><dl>
-        {activityMetrics.map(([key, label]) => <Count key={key} label={label} value={row.external[key]} />)}
-      </dl><p className="venue-value-note">Activity attributed to this dancer and club. Clicks and planned visits do not confirm entry.</p></div>}
-      </details>
-    </li>)}</ul> : <p className="venue-value-empty">{search.trim() ? "No dancers match this search." : "No dancer activity recorded for this channel in this period."}</p>}
+    <details className="venue-score-methodology">
+      <summary>How scores are calculated</summary>
+      <p>Activity scores out of 100, not ratings of talent, reliability or attendance at scheduled shifts. Benchmarks use this club&apos;s full report for the selected period. Scores can change as activity is recorded.</p>
+      <dl>
+        <div><dt>Overall</dt><dd>{DANCER_SCORE_WEIGHTS.requests}% Requests + {DANCER_SCORE_WEIGHTS.profile}% Profile results + {DANCER_SCORE_WEIGHTS.checkIns}% Check-in activity. All three scores are required.</dd></div>
+        <div><dt>Check-in activity</dt><dd>35% verified check-in activity + 65% recorded hours, compared with this club&apos;s typical positive activity. Check-outs and last check-in timestamps do not earn extra points or penalize an ongoing shift.</dd></div>
+        <div><dt>Requests</dt><dd>Table activity contributes 70% and VIP activity 30% when both qualify. Table activity is 60% marked-completed share of received requests + 40% requests per verified hour. VIP activity is 70% selections + 30% repeat requesters, compared with this club&apos;s typical positive counts. When only one channel qualifies, that channel supplies the request score.</dd></div>
+        <div><dt>Profile results</dt><dd>60% profile-pass conversion rate + 25% redeemed passes per recorded action, compared with this club&apos;s typical positive rate + 15% action mix. The action mix weights profile opens 1, club opens 2, directions and transport 3, and offer clicks and &quot;I&apos;m Going&quot; 4, then divides by four times all recorded actions. Clicks cannot outweigh entry results.</dd></div>
+        <div><dt>Enough data</dt><dd>For {periodLabels[period]}: at least {minimum.hours} verified hours for check-in and table scoring; {minimum.requests} table or VIP requests for that channel; {minimum.claims} profile pass claims and {minimum.actions} recorded actions for profile scoring. Each comparison needs {DANCER_SCORE_MIN_PEERS} qualifying dancers. Missing data stays unscored, never zero.</dd></div>
+        <div><dt>Benchmarks and rank</dt><dd>A typical positive count or rate scores 50; zero scores zero. Relative points equal 100 × value ÷ (value + the median positive value). Overall uses rounded category scores. Rank compares overall scores at this club in this period, with at least {DANCER_SCORE_MIN_PEERS} fully scored dancers. Equal displayed scores share a rank; search and sorting do not change ranks.</dd></div>
+      </dl>
+      <p>Only tracked activity is available. Recorded actions are not total profile exposure, and VIP exposure is not tracked. Conversion rate uses passes claimed in the period; redemptions use entry date. Earlier untracked history is not reconstructed. Scores do not confirm visits or sales.</p>
+      <small>Scoring version {DANCER_SCORE_VERSION}</small>
+    </details>
+    <p className="venue-value-note" role="status">{rows.length.toLocaleString()} {rows.length === 1 ? "dancer" : "dancers"}{search.trim() ? " matching your search" : " with recorded activity"}</p>
+    {rows.length ? <ul className="venue-performance-list venue-scored-list">{rows.slice(0, limit).map(row => <li key={row.dancer.id}>
+      <div className="venue-score-identity">
+        <span className="venue-performance-avatar">{row.dancer.photoUrl
+          ? <img src={row.dancer.photoUrl} alt="" width="44" height="44" loading="lazy" />
+          : row.dancer.name.slice(0, 1).toUpperCase()}</span>
+        <div><span className="venue-performance-name">{row.dancer.name}</span>
+          <span className="venue-score-rank" title={row.rank === null ? row.scores.overall.reason || `Needs ${DANCER_SCORE_MIN_PEERS} fully scored dancers in this period.` : undefined}>
+            {row.rank === null ? "Unranked" : `#${row.rank} of ${row.rankedCount} ranked dancers`}
+          </span>
+        </div>
+      </div>
+      <dl className="venue-score-grid">{scoreKeys.map(key => <div key={key} className={`venue-score venue-score-${key}`} title={row.scores[key].reason || undefined}>
+        <dt>{scoreLabels[key]}</dt>
+        <dd>{row.scores[key].value === null ? <span className="venue-score-missing">Not enough data</span>
+          : <><strong>{row.scores[key].value}</strong><span className="venue-score-scale"> / 100</span></>}</dd>
+      </div>)}</dl>
+    </li>)}</ul> : <p className="venue-value-empty">{search.trim() ? "No dancers match this search." : "No dancer activity recorded in this period."}</p>}
     {rows.length > limit && <button className="venue-performance-more" type="button" onClick={() => setLimit(value => value + 20)}>Show more dancers</button>}
   </section>;
 }

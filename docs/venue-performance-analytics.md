@@ -18,20 +18,40 @@ VIP and internal status breakdowns use the **current state of requests created i
 
 Tonight’s live VIP counts use scheduled dates, including requests submitted earlier. The internal queue includes pending/acknowledged requests received in the preceding six hours, matching the operational queue. Guest-list passes awaiting admission are currently valid, unused passes; they do not guarantee attendance.
 
-## Dancer channels
+## Dancer scores (version 1)
 
-- **Check-ins:** check-in count, check-out count, recorded checked-in time, and last recorded check-in within the period. This section stays visible in every channel.
-- **Internal:** table requests received and marked completed. Completed counts the current completed status of requests received within the selected period; it does not use completion date.
-- **External passes:** redeemed admission passes/deals issued through the dancer's profile and profile pass conversion percentage.
-- **Clicks and activity:** all six venue-and-dancer-attributed measures: profile opens from this venue, club page opens, directions, “I’m Going” signals, offer clicks and transport clicks. Generic dancer profile popularity and follower counts are excluded.
-- **VIP:** number of requests selecting the dancer and repeat VIP requesters. A dancer gets one credit per request, even for duplicated legacy selection IDs. A multi-dancer request still counts once in venue totals.
-- **All:** displays the channels together with their own labels. Table and VIP request sorting remain separate, not a combined customer count or performance score.
+The private venue report displays exactly four scores per dancer: **Overall**, **Check-in activity**, **Requests**, and **Profile results**. There is no expanded list of raw dancer metrics or Internal / External / VIP tab strip. A collapsed calculation disclosure explains the formula, current-period sample requirements and limitations. Avatar, stage name and overall venue rank accompany the four scores.
 
-Repeat VIP requesters are distinct VIP accounts that have an earlier request selecting the same dancer at the same venue. This includes declined/cancelled requests and uses current selections, since pending selections may be edited. This measure never claims repeat visits. Analytics return aggregates only, without guest names, emails, phone numbers, account IDs or browser identifiers.
+These are initial product activity indicators, not validated measures of talent, reliability, scheduled-shift attendance, sales or future performance. No appearance, hair-color classification, private identity data or guest contact information enters the formula. Existing data and venue-wide operational reports are retained.
 
-Each compact dancer row shows the public avatar and name, checked-in time, table requests received and redeemed profile passes. Missing recorded hours or result data says **Not recorded**; recorded zeroes remain zero. Neutral fills keep the three measures readable without a composite score.
+### Formula
 
-Dancers are searchable and sortable by table requests received, marked completed table requests, checked-in time, VIP selections, repeat VIP requesters, redeemed profile passes, check-ins or name where applicable. All/Internal default to table requests received, External to redeemed profile passes, and VIP to request selections. Opening a row shows only the measures listed above, with clicks and activity last. Extra status breakdowns, attendance outcomes, request rates, response/completion timing and all-source pass totals are no longer displayed per dancer. Operational records and venue-level reporting are retained. The list paginates locally without truncating database counts. Approved public avatars are fetched in batches; other profiles use initials. Private internal-only photos are not published through analytics.
+A relative component is `100 * value / (value + medianPositive)`, using the median of positive values among qualifying dancers in the complete authorized venue report for the same period. Zero scores zero, a typical positive value scores 50, and larger values approach 100. At least three qualifying dancers are required for each comparison; equal activity does not give everyone 100.
+
+- **Check-in activity:** 35% relative verified check-in count + 65% relative recorded hours. Check-outs and last check-in timestamps do not add points or penalize an ongoing shift.
+- **Requests:** 70% table activity + 30% VIP activity when both qualify. Table activity is 60% marked-completed / received requests + 40% relative requests during recorded presence / recorded hours. VIP activity is 70% relative request selections + 30% relative repeat-requester counts. If only one channel has sufficient data and peers, it supplies the request score; a missing channel is not counted as zero.
+- **Profile results:** 60% profile-pass cohort conversion percentage + 25% relative redeemed profile passes / recorded actions + 15% weighted action mix. Action weights are profile opens 1, club opens 2, directions 3, transport 3, offer clicks 4, and "I'm Going" 4. The action-mix percentage is weighted actions divided by four times total actions.
+- **Overall:** 45% Requests + 40% Profile results + 15% Check-in activity. All three category scores must exist. Overall weights are never redistributed around a missing category.
+
+Each category is rounded to an integer from 0 to 100. Overall is computed from these displayed category scores and rounded again, so the formula matches what staff see. Verified hours adjust table demand; recorded action counts adjust redemption activity. These are observed opportunity proxies, not full exposure adjustment: VIP impressions and total profile exposure are not available. Larger raw workloads are not a substitute for stronger conversion or completion rates.
+
+### Evidence and ranking
+
+| Period | Verified hours for check-in/table scoring | Table or VIP requests for that channel | Profile pass claims | Profile actions |
+| --- | --- | --- | --- | --- |
+| Tonight | 1 | 3 | 3 | 10 |
+| 7 days | 2 | 5 | 5 | 20 |
+| 30 days | 4 | 10 | 10 | 30 |
+| All time | 4 | 10 | 10 | 30 |
+
+Profile scoring requires both the claim and action minimum. Check-in scoring requires recorded check-in data even if the count is zero for an ongoing session. Negative, nonfinite, missing or inconsistent required data remains unscored. Missing data and insufficient samples show **Not enough data**, not zero.
+
+Overall rank is assigned only with at least three fully scored dancers at the club. Ranking is by the displayed overall score, descending. Equal scores share a competition rank (1, 1, 3), never a name-based tiebreak. Unscored dancers remain unranked; small overall cohorts can show category/overall scores without claiming a meaningful club rank.
+
+Search, sort and pagination run only after scoring the entire authorized period report and cannot alter benchmarks or ranks. Sort choices are the four scores and name, with missing scores last. Default sort is Overall. The list paginates locally without truncating database counts. Approved public avatars are retained; other profiles use initials. No scores are exposed to public profiles or dancer accounts, stored as permanent ratings, or used to change access or staffing.
+
+Repeat VIP requesters remain distinct accounts with an earlier same-dancer request at this club, including declined/cancelled requests. These are requests, not verified repeat visits. Completed table requests use current status of requests received in the selected period, not completion date. Profile conversion percentage uses the claim cohort; redeemed-pass activity uses entry date. Older untracked history is never reconstructed.
+
 
 ## Reliable timing and hours
 
@@ -39,19 +59,19 @@ Migration `20261011232707_venue_performance_channels.sql` records the deployment
 
 Times are medians from request creation to the recorded transition, across requests created in the selected period. Sample counts make partial history visible. A request created before deployment can gain a reliable response timestamp if handled afterward, but historical transitions are never inferred from `updated_at`.
 
-The private work-session ledger starts existing active check-ins at deployment and records future verified presence, expiration, checkout, venue changes and shift deletion. Shift reuse starts a new session after an interruption. Hours are clipped to the selected interval; overlapping sessions for the same dancer and venue are merged. The rate numerator includes only table requests created during those observed intervals. Historical request totals are still visible independently. Initial rate coverage will be partial until a complete reporting period has been observed.
+The private work-session ledger starts existing active check-ins at deployment and records future verified presence, expiration, checkout, venue changes and shift deletion. Shift reuse starts a new session after an interruption. Hours are clipped to the selected interval; overlapping sessions for the same dancer and venue are merged. The rate numerator includes only table requests created during those observed intervals. Historical request totals remain available in the authorized aggregates and venue-wide reports. Initial rate coverage will be partial until a complete reporting period has been observed.
 
 Clicks, browser counts, shares and TV results remain in supporting disclosures. “I’m Going” signals are explicitly separate from VIP requests. TV retains the existing confirmed-venue-tag and time-bound attribution rules.
 
 ## Attendance and profile conversions
 
-The dancer results extension records explicit, verified check-ins and check-outs in a private event ledger. Expiring presence does not become a check-out. Events survive shift deletion; prior check-in/out events are not reconstructed. The dashboard shows the tracking start date, event counts and each dancer's latest recorded check-in within the selected period in the venue timezone.
+The dancer results extension records explicit, verified check-ins and check-outs in a private event ledger. Expiring presence does not become a check-out. Events survive shift deletion; prior check-in/out events are not reconstructed. The aggregates retain event counts and each dancer's latest recorded check-in within the selected period. The four-score dancer view uses recorded check-ins and hours without displaying the raw event counts or timestamps; venue-wide attendance summaries remain available.
 
 Staff first mark a table request seen, then choose **Mark arrived** or **Didn’t arrive at table**. Mark arrived confirms the dancer actually attended; Complete closes the attended request. Didn’t arrive at table closes it as cancelled and preserves the `no_show` outcome. This is only about acknowledged internal table requests, not shifts or VIP bookings, and is never inferred automatically. These actions require venue staff access and reject stale transitions. Requests remain in the staff inbox after the dancer checks out, within the existing six-hour queue window. Unknown attendance is shown separately. Table attendance rate is arrived / (arrived + no-show), using requests created in the selected period; completed legacy requests never imply arrival.
 
 A **profile conversion** is a dancer-profile admission pass redeemed by staff for entry. Each pass counts once, attributed to its issuing dancer and venue. These are converted passes, not unique people. Voided passes are excluded. Revenue, sales entry and purchase metrics are omitted because there is no club sales/POS feed.
 
-Conversion counts use the redemption date. The displayed claim conversion percentage uses passes claimed in the selected period that converted before its end, divided by all nonvoided profile claims from that period, including expired claims. A null percentage means no qualifying denominator. Conversions and check-ins can also be used to sort dancers. Existing channel metrics remain independent.
+Conversion counts use the redemption date. The claim conversion percentage used by Profile results uses passes claimed in the selected period that converted before its end, divided by all nonvoided profile claims from that period, including expired claims. A null percentage means no qualifying denominator. Dancers can be sorted by Overall, Check-in activity, Requests, Profile results or name. The underlying channel metrics remain independent.
 
 The additive migration `venue_dancer_results` preserves the previous channel report as `get_venue_performance_channels` and wraps it with these aggregates. All new RPCs are service-only and authorize staff inside the database before writes. Ledgers have RLS and no anonymous or authenticated grants. The new attendance-event trigger is a private definer function; the attendance command is a security invoker with empty search paths.
 

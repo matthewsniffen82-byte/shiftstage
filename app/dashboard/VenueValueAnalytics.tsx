@@ -60,7 +60,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
         <p className="venue-value-note">Current status of requests received in this period. Completed means marked complete by staff.</p>
         <p className="venue-value-note">Median time to acknowledge: <strong>{performanceMinutes(performance.current.tableResponseMinutes)}</strong> · {number(performance.current.tableResponseSamples)} recorded responses.<br />Median time to complete: <strong>{performanceMinutes(performance.current.tableCompletionMinutes)}</strong> · {number(performance.current.tableCompletionSamples)} recorded completions.</p>
       </details>
-      <VenueDancerPerformance dancers={performance.dancers} timezone={timezone} />
+      <VenueDancerPerformance dancers={performance.dancers} period={period} />
     </> : <p role="status">Dancer performance and request outcomes are unavailable. Refresh to try again.</p>}
     <VenueHairColorAnalytics report={report.hairColor} timezone={timezone} />
     <details className="venue-supporting-disclosure"><summary>Audience &amp; conversion <span>Supporting metrics</span></summary><div className="venue-value-supporting">
