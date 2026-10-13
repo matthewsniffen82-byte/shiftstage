@@ -2113,6 +2113,17 @@ html body.dancr-button-system > .app main.stack > section.stack
   > .content-head.discovery-section-head.tv-section-head {
   border-bottom: 0 !important;
 }
+/* Keep the TV name and location readable instead of compressing them together. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > .content-head.discovery-section-head.tv-section-head > #tabTitle {
+  font-family: var(--font-ui) !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0.01em !important;
+  word-spacing: 0.08em !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 html body.dancr-button-system > .app main.stack > section.stack > .venue-directory-roster-note {
   display: none;
   width: 100%;
