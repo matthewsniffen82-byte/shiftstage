@@ -614,7 +614,7 @@ export async function getVenueDashboard(
   };
 }
 
-export type VenueAnalyticsPeriod = "tonight" | "7d" | "30d" | "all";
+export type VenueAnalyticsPeriod = VenueDashboardAnalytics["period"];
 
 export function readVenueAnalyticsPeriod(value: string | null | undefined): VenueAnalyticsPeriod {
   return value === "tonight" || value === "7d" || value === "30d" || value === "all" ? value : "30d";

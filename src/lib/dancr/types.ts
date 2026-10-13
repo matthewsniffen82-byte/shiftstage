@@ -142,7 +142,7 @@ export type VenueOwnerProfile = {
 
 export type VenueDashboardAnalytics = {
   valueReport: import("./venue-analytics").VenueValueReport;
-  period: "tonight" | "7d" | "30d";
+  period: "tonight" | "7d" | "30d" | "all";
   periodLabel: string;
   periodStart: string;
   periodEnd: string;
