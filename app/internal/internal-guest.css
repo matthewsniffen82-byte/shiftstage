@@ -1,5 +1,5 @@
 /* Table QR pages share the public directory's compact, neutral presentation. */
-body .ir-guest .ir-terms { margin: 0 0 4px; border: 0; border-radius: 0; background: none; font-size: 13px; line-height: 1.5; }
+body .ir-guest .ir-terms { margin: 0; border: 0; border-radius: 0; background: none; font-size: 13px; line-height: 1.5; }
 body .ir-guest .ir-terms summary { width: fit-content; max-width: 100%; padding: 12px 2px; min-height: 44px; box-sizing: border-box; cursor: pointer; color: #aaa6b5; font-size: 12px; font-weight: 500; }
 body .ir-guest .ir-terms summary::marker { color: #918b9c; font-size: 10px; }
 body .ir-guest .ir-terms summary:hover { color: #d8d4e0; }
@@ -17,7 +17,7 @@ body .ir-shell.ir-guest {
 }
 
 body .ir-guest .ir-header {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
   padding: 8px 12px;
   border: 1px solid #34343c;
   border-radius: 14px;
@@ -33,7 +33,7 @@ body .ir-guest > :is(.ir-header, .ir-roster-section) {
 body .ir-guest > .ir-roster-section {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  row-gap: 8px;
+  row-gap: 4px;
 }
 body .ir-guest .ir-header > div { display: grid; grid-template-columns: minmax(0, 1fr) fit-content(42%); align-items: center; gap: 4px 10px; width: 100%; min-width: 0; }
 body .ir-guest .ir-brand { grid-column: 2; grid-row: 1; align-self: end; justify-self: center; width: fit-content; color: #f8fafc; font-size: 12px; line-height: 1.2; }
@@ -47,7 +47,7 @@ body .ir-guest p { color: #b8b5c2; font-size: 13px; line-height: 1.5; overflow-w
 body .ir-guest .ir-header p { grid-column: 2; grid-row: 2; align-self: start; justify-self: center; margin: 0; padding: 5px 9px; border: 1px solid #48444f; border-radius: 8px; color: #f8fafc; background: linear-gradient(#17131d, #17131d); font-size: 16px; font-weight: 700; line-height: 1.25; text-align: center; }
 body .ir-guest .ir-section-title { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; margin: 0; }
 body .ir-guest .ir-section-title h2 { min-width: 0; margin: 0; }
-body .ir-guest .ir-roster-scope-note { margin: 0 0 4px; color: #b8b5c2; font-size: 13px; line-height: 1.5; text-align: left; }
+body .ir-guest .ir-roster-scope-note { margin: 0; color: #b8b5c2; font-size: 12px; line-height: 1.4; text-align: left; }
 body .ir-guest .ir-live { padding: 0; color: var(--dancr-color-success, #34d399); font-size: 12px; line-height: 1.4; }
 body .ir-guest .ir-section-title .ir-live { box-sizing: border-box; display: inline-flex; align-items: center; min-height: 30px; padding: 3px 7px; border: 1px solid #254b3b; border-radius: 999px; background: #07110c; font-size: 11px; font-weight: 600; white-space: nowrap; }
 
@@ -176,8 +176,8 @@ body .ir-guest .internal-request-sent-label { display: inline-flex; align-items:
 body .ir-guest .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 
 body .ir-guest .ir-panel { padding: 14px; border-color: #34343c; border-radius: 14px; background: #08080b; }
-body .ir-guest .ir-notice { margin: 12px 0; padding: 10px 12px; border-color: #45454f; border-radius: 10px; color: #cbd5e1 !important; background: #08080b; }
-body .ir-guest .ir-request-notice { display: grid; gap: 3px; margin: 8px 0 10px; padding: 8px 10px; line-height: 1.4; }
+body .ir-guest .ir-notice { margin: 4px 0; padding: 8px 10px; border-color: #45454f; border-radius: 10px; color: #cbd5e1 !important; background: #08080b; }
+body .ir-guest .ir-request-notice { display: grid; gap: 3px; margin: 4px 0; padding: 8px 10px; line-height: 1.4; }
 body .ir-guest .ir-request-notice strong { color: #f4f2f8; font-size: 13px; font-weight: 650; }
 body .ir-guest .ir-request-notice > span { color: #bfc2ce; font-size: 12px; }
 body .ir-guest .ir-table-status { margin-top: 12px; padding: 10px 12px; border: 1px solid #4a385f; border-radius: 10px; background: #15101d; overflow-wrap: anywhere; }
