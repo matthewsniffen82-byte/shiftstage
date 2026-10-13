@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { createVenueDashboardDemo, DEMO_PERIODS, type DemoRecord, type DemoRosterDancer } from "@/src/lib/dancr/venue-dashboard-demo";
 import type { VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import { VenueRosterProfileButton } from "../internal/InternalRoster";
@@ -19,10 +19,10 @@ type Workspace = typeof workspaces[number][0];
 type GuestTab = typeof guestTabs[number][0];
 const timezone = "America/Los_Angeles";
 
-function DemoDancerIdentity({ dancer }: { dancer: DemoRosterDancer }) {
+function DemoDancerIdentity({ dancer, children }: { dancer: DemoRosterDancer; children?: ReactNode }) {
   const identity = <span className="venue-card-portrait">
     <span className="venue-card-photo" aria-hidden="true">{dancer.photoUrl ? <img src={dancer.photoUrl} alt="" loading="lazy" decoding="async" /> : dancer.name[0]}</span>
-    <span className="venue-card-caption"><strong>{dancer.name}</strong>{dancer.profileDancerId && <small>View profile ↗</small>}</span>
+    <span className="venue-card-caption"><strong>{dancer.name}</strong>{children}</span>
   </span>;
   return dancer.profileDancerId ? <VenueRosterProfileButton dancerId={dancer.profileDancerId} stageName={dancer.name} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
     : identity;
@@ -42,10 +42,11 @@ function DemoRows({ rows, timeLabel = "Received", dancerCards = false }: { rows:
     </div>
     <p className="venue-value-note" role="status">{visible.length} sample records</p>
     {dancerCards ? <ul className="venue-dancer-grid" aria-label="Table request cards">{visible.map(row => <li className="venue-dancer-card" key={row.id}>
-      {row.dancer && <DemoDancerIdentity dancer={row.dancer} />}
-      <div className="venue-card-details"><strong>{row.tableLabel || row.name}</strong><span className="venue-card-status" data-state={row.status.toLowerCase()}>{row.status}</span>
+      {row.dancer && <DemoDancerIdentity dancer={row.dancer}><small>{row.tableLabel || row.name}</small><span className="venue-card-status" data-state={row.status.toLowerCase()}>{row.status}</span></DemoDancerIdentity>}
+      <details className="venue-card-menu" name="venue-card-details"><summary aria-label={`Request details for ${row.name}`} title="Request details"><span aria-hidden="true">•••</span></summary>
+      <div className="venue-card-popover"><div className="venue-card-details"><strong>{row.tableLabel || row.name}</strong><span className="venue-card-status" data-state={row.status.toLowerCase()}>{row.status}</span>
         <small>{row.detail}</small><small>{timeLabel}: <time dateTime={row.at}>{new Date(row.at).toLocaleString(undefined, { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></small>
-      </div>
+      </div></div></details>
     </li>)}</ul> : <ul className="venue-demo-records">{visible.map(row => <li key={row.id}><div><strong>{row.name}</strong><span>{row.status}</span></div>
       <p>{row.detail}</p><small>{timeLabel}: <time dateTime={row.at}>{new Date(row.at).toLocaleString(undefined, {
         timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
@@ -130,9 +131,10 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [] }: { 
       <section id="venue-dancer-roster" className="venue-card-region" tabIndex={-1}><h2>Dancers</h2>
         <div className="venue-performance-tools"><label>Find a dancer<input type="search" value={rosterSearch} onChange={event => setRosterSearch(event.target.value)} /></label>
           <label>Roster<select value={workingOnly ? "working" : "all"} onChange={event => setWorkingOnly(event.target.value === "working")}><option value="all">All affiliated dancers</option><option value="working">Working now</option></select></label></div>
-        <ul className="venue-dancer-grid" aria-label="Dancer roster cards">{roster.map(row => <li className="venue-dancer-card" key={row.id}><DemoDancerIdentity dancer={row} />
-          <div className="venue-card-details"><span className="venue-card-status" data-state={row.working ? "working" : "inactive"}>{row.working ? "● Working now" : "Not working now"}</span>
-            <small>{row.working ? "Internal + External" : "Affiliated"}</small></div>
+        <ul className="venue-dancer-grid" aria-label="Dancer roster cards">{roster.map(row => <li className="venue-dancer-card" key={row.id}><DemoDancerIdentity dancer={row}>
+          <small>{row.working ? "Internal + External" : "Affiliated"}</small>
+          <span className="venue-card-status" data-state={row.working ? "working" : "inactive"}>{row.working ? "● Working now" : "Not working now"}</span>
+        </DemoDancerIdentity>
         </li>)}</ul>
         {!roster.length && <p>No sample dancers match these filters.</p>}
       </section>

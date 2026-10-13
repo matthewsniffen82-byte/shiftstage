@@ -14,27 +14,32 @@ body .venue-dancer-grid {
 body .venue-dancer-grid .venue-dancer-card {
   position: relative;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
+  display: block;
   width: 100%;
   min-width: 0;
+  max-width: none;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: 9 / 16;
   margin: 0;
   padding: 0;
   border: 0;
   border-radius: 2px;
-  background: #08080b;
+  background: #050507;
   color: #f8f8fa;
   box-shadow: none;
   /* Keep option menus and the profile dialog outside the card's clipping area. */
   overflow: visible;
   color-scheme: only dark;
 }
-body .venue-dancer-grid .ir-profile-control { flex: none; min-width: 0; }
-body .venue-dancer-grid .venue-table-request-identity { flex: none; min-width: 0; }
+body .venue-dancer-grid .ir-profile-control,
+body .venue-dancer-grid .venue-table-request-identity { position: absolute; inset: 0; min-width: 0; }
 body .venue-dancer-grid button.ir-profile-link.venue-card-profile {
   display: block !important;
   position: relative !important;
   width: 100% !important;
+  height: 100% !important;
   min-width: 0 !important;
   min-height: 0 !important;
   margin: 0 !important;
@@ -54,6 +59,7 @@ body .venue-dancer-grid .venue-card-portrait {
   position: relative;
   display: block;
   width: 100%;
+  height: 100%;
   aspect-ratio: 9 / 16;
   overflow: hidden;
   border-radius: 2px;
@@ -83,8 +89,8 @@ body .venue-dancer-grid .venue-card-caption {
   inset: auto 0 0;
   display: grid;
   gap: 3px;
-  padding: 32px 8px 10px;
-  background: linear-gradient(transparent, rgba(5, 5, 8, .9));
+  padding: 24px 7px 7px;
+  background: linear-gradient(180deg, transparent, rgba(5, 5, 8, .94) 48%);
   color: #fff;
   text-shadow: 0 1px 4px #000;
   text-align: left;
@@ -92,8 +98,11 @@ body .venue-dancer-grid .venue-card-caption {
 body .venue-dancer-grid .venue-card-caption strong {
   color: #fff;
   font-size: 15px;
-  line-height: 1.2;
-  overflow-wrap: anywhere;
+  line-height: 1.05;
+  letter-spacing: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 body .venue-dancer-grid .venue-card-details {
   display: grid;
@@ -105,7 +114,9 @@ body .venue-dancer-grid .venue-card-details {
 }
 body .venue-dancer-grid .venue-card-details > strong { color: #f7f7fa; font-size: 14px; line-height: 1.3; }
 body .venue-dancer-grid :is(.venue-card-details, .venue-card-caption) small { margin: 0; color: #c6c6ce; font-size: 11px; font-weight: 400; line-height: 1.45; }
-body .venue-dancer-grid .venue-card-caption small { color: #e1e1e8; }
+body .venue-dancer-grid .venue-card-caption small { color: #e1e1e8; font-size: 10px; line-height: 1.1; }
+body .venue-dancer-grid .venue-card-caption > :is(small, .venue-card-status) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body .venue-dancer-grid .venue-card-caption .venue-card-status { font-size: 10px; line-height: 1.3; }
 body .venue-dancer-grid .venue-card-status { color: #bebec8; font-size: 12px; font-weight: 650; line-height: 1.4; }
 body .venue-dancer-grid .venue-card-status[data-state="pending"] { color: #ffd28a; }
 body .venue-dancer-grid .venue-card-status:is([data-state="working"], [data-state="arrived"], [data-state="completed"]) { color: #75dfb6; }
@@ -117,10 +128,27 @@ body .venue-dancer-grid .venue-card-actions {
   padding: 0 8px 10px;
 }
 body .venue-dancer-grid .venue-card-actions button { width: 100%; min-width: 0; min-height: 44px; white-space: normal; overflow-wrap: anywhere; }
-body .venue-dancer-grid .venue-card-options { position: absolute; top: 6px; right: 6px; z-index: 2; }
-body .venue-dancer-grid .venue-card-options:empty { display: none; }
-body .venue-dancer-grid .venue-card-options details { margin: 0; }
-body .venue-dancer-grid .venue-card-options summary { border: 1px solid #34343c; border-radius: 8px; background: #08080bee; color: #ededf1; }
-body .venue-dancer-grid .venue-card-options details > div { box-sizing: border-box; width: 128px; background: #08080b; border-color: #34343c; }
-body .venue-dancer-grid .ir-profile-control > small[role="status"] { display: block; padding: 8px; overflow-wrap: anywhere; }
+body .venue-dancer-grid .venue-card-menu { position: absolute; inset: 0; z-index: 2; margin: 0; padding: 0; border: 0; background: none; pointer-events: none; }
+body .venue-dancer-grid .venue-card-menu > summary {
+  position: absolute; top: 2px; right: 2px; display: grid; place-items: center;
+  box-sizing: border-box; width: 44px; height: 44px; margin: 0; padding: 4px;
+  list-style: none; border: 0; cursor: pointer; pointer-events: auto;
+}
+body .venue-dancer-grid .venue-card-menu > summary::-webkit-details-marker { display: none; }
+body .venue-dancer-grid .venue-card-menu > summary > span { display: grid; place-items: center; width: 32px; height: 28px; border: 1px solid #34343c; border-radius: 6px; background: #08080bee; color: #ededf1; font: 16px/1 Arial, sans-serif; letter-spacing: 0; }
+body .venue-dancer-grid .venue-card-menu > summary:focus-visible { outline: 2px solid #d8cafa; outline-offset: -3px; }
+body .venue-dancer-grid .venue-card-menu > .venue-card-popover {
+  position: absolute; top: 46px; right: 0; box-sizing: border-box; width: min(240px, calc(100vw - 48px));
+  max-height: min(360px, 60dvh); overflow: auto; overscroll-behavior: contain;
+  border: 1px solid #50505b; border-radius: 8px; background: #101014; box-shadow: 0 6px 20px #0009; pointer-events: auto;
+}
+body .venue-dancer-grid .venue-card-menu:not([open]) > .venue-card-popover { display: none; }
+body .venue-dancer-grid .venue-dancer-card:has(.venue-card-menu[open]) { z-index: 3; }
+body .venue-dancer-grid .venue-dancer-card:nth-child(3n + 1) .venue-card-popover { right: auto; left: 0; }
+body .venue-dancer-grid .venue-dancer-card:nth-child(3n + 2) .venue-card-popover { right: auto; left: 50%; transform: translateX(-50%); }
+body .venue-dancer-grid .venue-card-actions:empty { display: none !important; }
+body .venue-dancer-grid .ir-profile-control > small[role="status"] { position: absolute; inset: auto 0 0; z-index: 4; display: block; box-sizing: border-box; max-width: 100%; max-height: 60%; overflow: auto; margin: 0; padding: 8px; background: #101014; overflow-wrap: anywhere; }
 body .venue-dancer-grid button.venue-card-profile:focus-visible { outline: 2px solid #d8cafa !important; outline-offset: -3px; }
+@media (max-width: 420px) {
+  body .venue-dancer-grid .venue-card-caption { padding: 20px 5px 5px; }
+}

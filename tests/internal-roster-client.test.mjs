@@ -202,7 +202,13 @@ test("staff request cards prioritize pending requests, use authorized main photo
   assert.equal(photo.props.token, undefined);
   assert.match(textContent(cards[0]), /VIP Booth/);
   assert.match(textContent(cards[2]), /Seen by staff/);
+  const caption = find(cards[0], node => node.props?.className === 'venue-card-caption');
+  assert.match(textContent(caption), /VIP Booth/);
+  assert.match(textContent(caption), /New request/);
+  const menu = find(cards[0], node => node.type === 'details' && node.props?.className === 'venue-card-menu');
+  assert.equal(find(menu, node => node.type === 'summary').props['aria-label'], 'VIP Booth request details for Demo dancer');
   const actions = find(cards[0], node => node.props?.className === 'ir-actions venue-card-actions');
+  assert.equal(find(menu, node => node.props?.className === 'ir-actions venue-card-actions'), actions, 'actions stay accessible without extending card height');
   find(actions, node => node.type === 'button' && node.props.children === 'Mark seen').props.onClick();
   await flush(); await flush();
   assert.equal(calls[0].id, 'newest');

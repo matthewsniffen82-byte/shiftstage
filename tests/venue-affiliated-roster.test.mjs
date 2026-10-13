@@ -97,12 +97,19 @@ test("live roster cards retain photos, shift details and permission-scoped profi
   assert.equal(nodes(cards[0]).find(node => node.type === 'ProfileButton').props.dancerId, 'one');
   assert.equal(nodes(cards[0]).find(node => node.type === 'img').props.src, '/bella.jpg');
   assert.ok(nodes(cards[0]).some(node => node.props.children === 'Internal + External'));
+  const caption = nodes(cards[0]).find(node => node.props.className === 'venue-card-caption');
+  assert.ok(nodes(caption).some(node => node.props.children === '● Working now'));
+  const menu = nodes(cards[0]).find(node => node.type === 'details');
+  assert.equal(nodes(cards[0]).find(node => node.props.className === 'venue-card-details'),
+    nodes(menu).find(node => node.props.className === 'venue-card-details'), 'full shift details stay in the menu, not below the card');
   assert.equal(nodes(cards[0]).find(node => node.type === 'time').props.dateTime, '2026-10-13T03:00:00Z');
   assert.equal(nodes(cards[1]).find(node => node.type === 'ProfileButton'), undefined);
   assert.ok(nodes(cards[1]).some(node => node.props.children === 'Not working now'));
-  assert.equal(tree.filter(node => node.props.className === 'venue-roster-menu').length, 2);
+  assert.equal(tree.filter(node => node.props.className === 'venue-card-menu').length, 2);
+  assert.equal(tree.filter(node => node.props.className === 'venue-nfc-remove-access').length, 2);
   tree = render({ canManageRoster: false });
-  assert.equal(tree.filter(node => node.props.className === 'venue-roster-menu').length, 0);
+  assert.equal(tree.filter(node => node.props.className === 'venue-card-menu').length, 2, 'staff can still inspect full shift details');
+  assert.equal(tree.filter(node => node.props.className === 'venue-nfc-remove-access').length, 0);
   tree.find(node => node.type === 'input' && node.props.type === 'search').props.onChange({ target: { value: 'Ivy' } });
   tree = render({ canManageRoster: false });
   assert.equal(tree.filter(node => node.props.className === 'venue-dancer-card').length, 1);

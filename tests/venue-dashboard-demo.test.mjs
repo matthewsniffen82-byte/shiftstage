@@ -201,6 +201,8 @@ test('table cards show table, dancer, status and received time while preserving 
   let tree = nodes(render({ rows, dancerCards: true }, 'DemoRows'));
   const list = tree.find(node => node.props['aria-label'] === 'Table request cards');
   const html = renderToStaticMarkup(list);
+  assert.equal((html.match(/class="venue-card-menu"/g) || []).length, rows.length);
+  assert.match(html, /<summary aria-label="Request details for Table 1/);
   assert.deepEqual(Array.from(list.props.children.slice(0, 2), card => card.key), ['demo-table-0', 'demo-table-1']);
   for (const text of ['Aria', 'Table 1', 'Pending', '2 guests', 'Received:', 'dateTime="2026-10-13T05:55:00.000Z"']) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /<button|Mark seen|Dismiss/, 'sample requests cannot perform live actions');
@@ -226,6 +228,8 @@ test('roster and table identities open matching real profiles, including off-shi
   const tree = nodes(render({ workingNow, affiliations }));
   const roster = tree.find(node => node.props['aria-label'] === 'Dancer roster cards');
   const rosterHtml = renderToStaticMarkup(roster);
+  assert.doesNotMatch(rosterHtml, /venue-card-details|View profile ↗/, 'roster cards have no height-extending footer');
+  assert.match(rosterHtml, /venue-card-caption[\s\S]*?Working now/);
   for (let i = 0; i < 8; i++) {
     assert.ok(rosterHtml.includes(`data-profile-id="real-${i}"`));
     assert.ok(rosterHtml.includes(`aria-label="View ${names[i]} profile"`));
