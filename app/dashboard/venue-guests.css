@@ -1,7 +1,20 @@
 .venue-guests-workspace { min-width: 0; }
-.venue-guests-tabs { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin-bottom: 12px; }
+.venue-guests-tabs { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: 1fr; gap: 6px; margin-bottom: 12px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button { --venue-control-face: #19151f; --venue-control-edge: #50435f; font-size: 12px !important; line-height: 1.3; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button[aria-selected="true"] { --venue-control-face: #382447; --venue-control-edge: #bc91e9; font-weight: 700 !important; }
+/* Keep counts in a consistent trailing column, independent of label length. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs > button > .venue-tab-count {
+  min-width: 36px;
+  padding-inline: 4px;
+  justify-self: end;
+}
 .venue-guest-tab-panel[hidden] { display: none !important; }
 .venue-guest-record { overflow-wrap: anywhere; }
 .venue-guest-record dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px 16px; margin: 8px 0; }
