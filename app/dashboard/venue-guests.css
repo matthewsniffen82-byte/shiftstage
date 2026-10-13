@@ -2,6 +2,14 @@
 .venue-guests-tabs { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; margin-bottom: 12px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button { --venue-control-face: #19151f; --venue-control-edge: #50435f; font-size: 12px !important; line-height: 1.3; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button[aria-selected="true"] { --venue-control-face: #382447; --venue-control-edge: #bc91e9; font-weight: 700 !important; }
+/* A gradient keeps mobile automatic darkening from washing out the count badge. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs .venue-tab-count {
+  display: inline-grid; place-items: center; box-sizing: border-box; flex-shrink: 0;
+  min-width: 24px; min-height: 24px; padding: 3px 6px; border: 1px solid #80639b; border-radius: 7px;
+  background: linear-gradient(#30203f, #30203f) !important; color: #fff !important;
+  -webkit-text-fill-color: currentColor !important; font-size: 13px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: 0; white-space: nowrap; text-shadow: none;
+}
 .venue-guest-tab-panel[hidden] { display: none !important; }
 .venue-guest-record { overflow-wrap: anywhere; }
 .venue-guest-record dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px 16px; margin: 8px 0; }
