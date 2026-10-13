@@ -12,12 +12,12 @@ export function isVenueDashboardDemo(profile: Record<string, unknown> | null | u
 export const DEMO_PERIODS = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
 const names = ["Aria", "Aurora", "Autumn", "Ava", "Bailey", "Bianca", "Blair", "Brooke"];
 const colors: HairColor[] = ["brown", "red", "black", "brown", "brown", "blonde", "black", "brown"];
-export type DemoRecord = { id: string; name: string; status: string; detail: string; at: string };
-export type DemoRosterDancer = { id: string; name: string; working: boolean; photoUrl: string | null };
+export type DemoRecord = { id: string; name: string; status: string; detail: string; at: string; dancer?: DemoRosterDancer };
+export type DemoRosterDancer = { id: string; name: string; working: boolean; photoUrl: string | null; profileDancerId: string | null };
 const DAY = 86_400_000;
 
 /** Entirely synthetic, deterministic data. No database, notifications, credentials or redeemable tokens. */
-export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, photos: Array<{ name: string; url: string }> = []) {
+export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, photos: Array<{ name: string; url: string; dancerId?: string }> = []) {
   const end = now.toISOString();
   const ago = (hours: number) => new Date(now.getTime() - hours * 3_600_000).toISOString();
   const trackingStartedAt = new Date(now.getTime() - 180 * DAY).toISOString();
@@ -25,7 +25,8 @@ export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, p
   const phase = { tonight: 0, "7d": 1, "30d": 2, all: 3 }[period];
   const periodStart = new Date(now.getTime() - ({ tonight: 0.25, "7d": 7, "30d": 30, all: 180 }[period]) * DAY).toISOString();
   const roster: DemoRosterDancer[] = names.map((name, i) => ({ id: `demo-dancer-${i}`, name, working: i < 6,
-    photoUrl: photos.find(photo => photo.name === name)?.url || null }));
+    photoUrl: photos.find(photo => photo.name === name)?.url || null,
+    profileDancerId: photos.find(photo => photo.name === name)?.dancerId || null }));
   const dancers: DancerPerformance[] = roster.map((dancer, i) => {
     const requests = (20 + i) * factor;
     const completed = (16 + (i + phase) % 3 + Math.floor(i / 2)) * factor;
@@ -61,7 +62,7 @@ export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, p
   const vip: DemoRecord[] = ["Pending", "Pending", "Confirmed", "Confirmed", "Declined"].map((status, i) => ({ id: `demo-vip-${i}`,
     name: `Sample VIP ${i + 1}`, status, detail: `${names[i]} and ${names[i + 1]} · Party of ${i + 2} · Nickname: Sample regular ${i + 1}`, at: new Date(now.getTime() + (i + 1) * 1_800_000).toISOString() }));
   const tables: DemoRecord[] = ["Pending", "Pending", "Acknowledged", "Completed", "Completed", "Cancelled"].map((status, i) => ({
-    id: `demo-table-${i}`, name: `Table ${i + 1} · ${names[i]}`, status, detail: `Sample table request · ${i + 2} guests`, at: ago((i + 1) / 12) }));
+    id: `demo-table-${i}`, name: `Table ${i + 1} · ${names[i]}`, dancer: roster[i], status, detail: `Sample table request · ${i + 2} guests`, at: ago((i + 1) / 12) }));
   const contacts: DemoRecord[] = Array.from({ length: 6 }, (_, i) => ({ id: `demo-contact-${i}`, name: `Sample contact ${i + 1}`,
     status: i % 2 ? "Guest list" : "VIP", detail: `guest${i + 1}@example.invalid · Fictional shared contact`, at: ago(i + 1) }));
   const operations: VenueOperations = { vipPending: vip.filter(row => row.status === "Pending").length,

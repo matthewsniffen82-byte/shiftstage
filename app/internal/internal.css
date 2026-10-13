@@ -34,3 +34,20 @@ html body.dancr-button-system .ir-profile-dialog,
 html body.dancr-button-system .ir-full-profile-frame {
   background: var(--discovery-backdrop, #1c122b) !important;
 }
+.ir-profile-control { min-width:0; }
+body .ir-staff button.ir-profile-link.venue-dancer-profile-trigger {
+  display:flex !important; flex-direction:row !important; align-items:center; justify-content:flex-start !important;
+  gap:10px; width:100%; min-width:0; min-height:48px; padding:0 !important; margin:0;
+  border:0 !important; border-radius:0 !important; background:transparent !important; box-shadow:none !important;
+  color:inherit; font:inherit; text-align:left; cursor:pointer;
+}
+body .ir-staff button.ir-profile-link.venue-dancer-profile-trigger::before,
+body .ir-staff button.ir-profile-link.venue-dancer-profile-trigger::after { display:none !important; }
+body .ir-staff .venue-dancer-profile-trigger:is(:hover,:focus-visible) strong { text-decoration:underline; text-underline-offset:3px; }
+body .ir-staff .venue-dancer-profile-trigger:focus-visible { outline:2px solid #c1a0f5; outline-offset:4px; }
+.venue-table-request-identity { flex:1 1 220px; min-width:0; }
+.venue-table-request-copy { min-width:0; overflow-wrap:anywhere; }
+.venue-table-request-unavailable { display:flex; align-items:center; gap:10px; }
+.venue-table-avatar { position:relative; display:grid; place-items:center; flex:0 0 44px; width:44px; height:44px; overflow:hidden; border-radius:50%; background:#29292f; color:#ededf1; }
+.venue-table-avatar > img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center top; }
+.venue-table-avatar > [aria-label="Media loading"] { display:none; }

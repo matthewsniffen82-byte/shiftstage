@@ -84,10 +84,13 @@ test('sample counts reconcile, conversion and completion rates are bounded, and 
 });
 
 test('fixtures are deterministic, isolated and contain no usable contacts, credentials, or pass tokens', () => {
-  const photos = [{ name: 'Aria', url: '/sample-aria.jpg' }];
+  const photos = [{ name: 'Aria', url: '/sample-aria.jpg', dancerId: 'approved-aria-id' }];
   const first = demo.createVenueDashboardDemo('30d', now, photos);
   assert.deepEqual(first, demo.createVenueDashboardDemo('30d', now, photos));
   assert.equal(first.roster[0].photoUrl, '/sample-aria.jpg');
+  assert.equal(first.roster[0].profileDancerId, 'approved-aria-id');
+  assert.equal(first.tables[0].dancer, first.roster[0]);
+  assert.equal(first.roster[1].profileDancerId, null, 'never send synthetic dancer IDs to the profile API');
   assert.equal(first.report.performance.dancers[0].photoUrl, '/sample-aria.jpg');
   first.report.performance.dancers[0].internal.requests = 0;
   assert.ok(demo.createVenueDashboardDemo('30d', now).report.performance.dancers[0].internal.requests > 0);
@@ -100,6 +103,9 @@ test('fixtures are deterministic, isolated and contain no usable contacts, crede
 
 const require = createRequire(import.meta.url);
 const jsx = require('react/jsx-runtime');
+const profileDependencies = { VenueRosterProfileButton: ({ dancerId, stageName, children, className }) => React.createElement('button', {
+  type: 'button', 'data-profile-id': dancerId, 'aria-label': `View ${stageName} profile`, className,
+}, children) };
 function component(file, dependencies = {}, extra = '') {
   const state = []; let cursor = 0;
   const exports = {};
@@ -109,6 +115,7 @@ function component(file, dependencies = {}, extra = '') {
       if (name === 'react') return { useState(initial) { const i = cursor++; if (!(i in state)) state[i] = typeof initial === 'function' ? initial() : initial; return [state[i], value => { state[i] = typeof value === 'function' ? value(state[i]) : value; }]; },
         useMemo: callback => callback(), useEffect() {} };
       if (name.endsWith('.css')) return {};
+      if (name === '../internal/InternalRoster') return profileDependencies;
       if (name in dependencies) return dependencies[name];
       throw new Error('Unexpected import ' + name);
     } });
@@ -186,6 +193,31 @@ test('demo layout uses constrained mobile tracks and no real operation or contac
   assert.match(css, /\.venue-demo-banner,\.venue-demo-workspace\s*\{\s*grid-column:1 \/ -1; min-width:0; width:100%/);
 });
 
+test('roster and table identities open matching real profiles, including off-shift affiliations', () => {
+  const render = component('app/dashboard/VenueDemoDashboard.tsx', {
+    '@/src/lib/dancr/venue-dashboard-demo': demo, './VenueDashboardIdentity': { VenueDashboardIcon: () => null },
+    './VenueTonightOverview': { default: () => null }, './VenueSetupChecklist': { default: () => null }, './VenueValueAnalytics': { default: () => null },
+  });
+  const names = ['Aria', 'Aurora', 'Autumn', 'Ava', 'Bailey', 'Bianca', 'Blair', 'Brooke'];
+  const workingNow = names.slice(0, 6).map((stageName, i) => ({ stageName, dancerId: `real-${i}`, avatarUrl: `/avatar-${i}.jpg` }));
+  const affiliations = names.slice(6).map((stageName, i) => ({ canViewProfile: true, dancerId: `real-${i + 6}`, dancer: { stageName, avatarUrl: `/avatar-${i + 6}.jpg` } }));
+  const tree = nodes(render({ workingNow, affiliations }));
+  const roster = tree.find(node => node.props.className === 'venue-demo-roster');
+  const rosterHtml = renderToStaticMarkup(roster);
+  for (let i = 0; i < 8; i++) {
+    assert.ok(rosterHtml.includes(`data-profile-id="real-${i}"`));
+    assert.ok(rosterHtml.includes(`aria-label="View ${names[i]} profile"`));
+    assert.ok(rosterHtml.includes(`src="/avatar-${i}.jpg"`));
+  }
+  const tables = tree.find(node => node.props.id === 'table-requests');
+  const tableHtml = renderToStaticMarkup(tables);
+  assert.equal((tableHtml.match(/data-profile-id=/g) || []).length, 6);
+  for (let i = 0; i < 6; i++) assert.ok(tableHtml.includes(`data-profile-id="real-${i}"`));
+  const empty = renderToStaticMarkup(nodes(render({ workingNow: [], affiliations: [{ ...affiliations[0], canViewProfile: false }] })).find(node => node.props.className === 'venue-demo-roster'));
+  assert.doesNotMatch(empty, /data-profile-id=|<button/);
+  assert.match(empty, /aria-hidden="true">A<\/span>/);
+});
+
 test('demo renders the real report, score and queue components without network access or invalid values', () => {
   const cache = new Map();
   const modules = ['VenueDemoDashboard', 'VenueValueAnalytics', 'VenueDancerPerformance', 'VenueHairColorAnalytics', 'VenueTonightOverview', 'VenueSetupChecklist', 'VenueDashboardIdentity'];
@@ -198,6 +230,7 @@ test('demo renders the real report, score and queue components without network a
       if (path === 'react') return React;
       if (path === 'react/jsx-runtime') return jsx;
       if (path.endsWith('.css')) return {};
+      if (path === '../internal/InternalRoster') return profileDependencies;
       if (modules.includes(path.slice(2))) return load(path.slice(2));
       if (path.startsWith('@/src/lib/dancr/')) return require(`../src/lib/dancr/${path.split('/').at(-1)}.ts`);
       throw new Error(`Unexpected dependency: ${path}`);

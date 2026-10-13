@@ -635,7 +635,7 @@ export default function DashboardClient({
                     <AccountControlsPanel accountRole="venue" accountState={String(state.account?.accountState)} />
                   </div>
                 </DashboardSection>
-              </> : <VenueDashboardDemoSwitch key={String(state.profile?.id || "")} profile={state.profile} workingNow={state.workingNow || []}><VenuePanel
+              </> : <VenueDashboardDemoSwitch key={String(state.profile?.id || "")} profile={state.profile} workingNow={state.workingNow || []} affiliations={state.affiliations || []}><VenuePanel
                   account={state.account || null}
                   analytics={state.analytics}
                   deal={state.deal}

@@ -24,6 +24,11 @@
 .venue-demo-roster li { display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px solid #34343c; min-width:0; }
 .venue-demo-roster li > div { min-width:0; overflow-wrap:anywhere; }
 .venue-demo-roster .venue-performance-avatar { flex:none; }
+.venue-demo-dancer-identity { display:flex; align-items:center; gap:10px; min-width:0; }
+.venue-demo-dancer-copy { min-width:0; overflow-wrap:anywhere; text-align:left; }
+.venue-demo-workspace .ir-profile-control { min-width:0; flex:1; }
+.venue-demo-workspace .venue-performance-avatar { flex:0 0 44px; }
+.venue-demo-workspace .venue-demo-dancer-copy small { display:block; margin-top:4px; }
 .venue-demo-roster strong { font-size:14px; }
 .venue-demo-roster small { display:block; color:#b9c7c1; font-size:12px; line-height:1.5; margin-top:4px; }
 .venue-demo-brand { display:flex; align-items:center; gap:14px; min-width:0; }

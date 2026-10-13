@@ -365,9 +365,7 @@ export default function VenueNfcTagPanel({
         {rosterEntries.slice(0, visibleCount).map(({ id, affiliation, dancer, checkIn }) => {
           const visibility = rosterChannelVisibility(affiliation);
           const checkedInAt = typeof checkIn?.checkedInAt === "string" && Number.isFinite(Date.parse(checkIn.checkedInAt)) ? checkIn.checkedInAt : null;
-          return (
-          <div className="venue-nfc-dancer" key={id}>
-            <span className="venue-nfc-dancer-identity">
+          const identity = <span className="venue-nfc-dancer-identity">
               <span className="venue-nfc-dancer-avatar" data-dancer-avatar="" aria-hidden="true">
                 <span data-dancer-avatar-border="">
                   {dancer?.avatarUrl ? (
@@ -382,9 +380,13 @@ export default function VenueNfcTagPanel({
                 {checkedInAt ? <small>Checked in · <time dateTime={checkedInAt}>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone }).format(new Date(checkedInAt))}</time></small> : null}
                 {visibility.internal || visibility.external ? <small className="venue-roster-channel">{visibility.internal && visibility.external ? "Internal + External" : visibility.internal ? "Internal only" : "External only"}</small> : null}
               </span>
-            </span>
+            </span>;
+          return (
+          <div className="venue-nfc-dancer" key={id}>
+            {affiliation?.canViewProfile && affiliation.dancerId
+              ? <VenueRosterProfileButton dancerId={affiliation.dancerId} stageName={dancer?.stageName || "Dancer"} className="ir-profile-link venue-dancer-profile-trigger">{identity}</VenueRosterProfileButton>
+              : identity}
             <div className="venue-roster-actions">
-              {affiliation?.canViewProfile && affiliation.dancerId ? <VenueRosterProfileButton dancerId={affiliation.dancerId} stageName={dancer?.stageName || "Dancer"} /> : null}
               {canManageRoster && affiliation ? (
                 <details className="venue-roster-menu" name="venue-roster-options"><summary aria-label={`More options for ${dancer?.stageName || "dancer"}`}>•••</summary><div><button className="venue-nfc-remove-access" type="button" disabled={isSaving}
                   aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} affiliation from Internal and External`} onClick={() => removeAccess(affiliation)}>

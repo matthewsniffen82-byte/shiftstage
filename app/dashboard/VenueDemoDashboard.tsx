@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent } from "react";
-import { createVenueDashboardDemo, DEMO_PERIODS, type DemoRecord } from "@/src/lib/dancr/venue-dashboard-demo";
+import { createVenueDashboardDemo, DEMO_PERIODS, type DemoRecord, type DemoRosterDancer } from "@/src/lib/dancr/venue-dashboard-demo";
+import type { VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
+import { VenueRosterProfileButton } from "../internal/InternalRoster";
 import type { DancerScorePeriod } from "@/src/lib/dancr/venue-dancer-scores";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import VenueTonightOverview from "./VenueTonightOverview";
@@ -16,6 +18,13 @@ type Workspace = typeof workspaces[number][0];
 type GuestTab = typeof guestTabs[number][0];
 const timezone = "America/Los_Angeles";
 
+function DemoDancerIdentity({ dancer, label = dancer.name, detail }: { dancer: DemoRosterDancer; label?: string; detail?: string }) {
+  const identity = <><span className="venue-performance-avatar" aria-hidden="true">{dancer.photoUrl ? <img src={dancer.photoUrl} alt="" width="44" height="44" loading="lazy" /> : dancer.name[0]}</span>
+    <span className="venue-demo-dancer-copy"><strong>{label}</strong>{detail && <small>{detail}</small>}</span></>;
+  return dancer.profileDancerId ? <VenueRosterProfileButton dancerId={dancer.profileDancerId} stageName={dancer.name} className="ir-profile-link venue-dancer-profile-trigger">{identity}</VenueRosterProfileButton>
+    : <div className="venue-demo-dancer-identity">{identity}</div>;
+}
+
 function DemoRows({ rows, timeLabel = "Received" }: { rows: DemoRecord[]; timeLabel?: string }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
@@ -28,7 +37,7 @@ function DemoRows({ rows, timeLabel = "Received" }: { rows: DemoRecord[]; timeLa
         {[...new Set(rows.map(row => row.status))].map(value => <option key={value}>{value}</option>)}</select></label>
     </div>
     <p className="venue-value-note" role="status">{visible.length} sample records</p>
-    <ul className="venue-demo-records">{visible.map(row => <li key={row.id}><div><strong>{row.name}</strong><span>{row.status}</span></div>
+    <ul className="venue-demo-records">{visible.map(row => <li key={row.id}><div>{row.dancer ? <DemoDancerIdentity dancer={row.dancer} label={row.name} /> : <strong>{row.name}</strong>}<span>{row.status}</span></div>
       <p>{row.detail}</p><small>{timeLabel}: <time dateTime={row.at}>{new Date(row.at).toLocaleString(undefined, {
         timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
       })}</time></small></li>)}</ul>
@@ -40,7 +49,7 @@ function SampleList({ rows }: { rows: Array<{ name: string; status: string; deta
   return <ul className="venue-demo-records">{rows.map(row => <li key={row.name}><div><strong>{row.name}</strong><span>{row.status}</span></div><p>{row.detail}</p></li>)}</ul>;
 }
 
-export default function VenueDemoDashboard({ workingNow }: { workingNow: Array<Record<string, unknown>> }) {
+export default function VenueDemoDashboard({ workingNow, affiliations = [] }: { workingNow: Array<Record<string, unknown>>; affiliations?: Array<Record<string, unknown>> }) {
   const [workspace, setWorkspace] = useState<Workspace>("tonight");
   const [guestTab, setGuestTab] = useState<GuestTab>("venue-guest-list");
   const [period, setPeriod] = useState<DancerScorePeriod>("30d");
@@ -48,8 +57,12 @@ export default function VenueDemoDashboard({ workingNow }: { workingNow: Array<R
   const [rosterSearch, setRosterSearch] = useState("");
   const [workingOnly, setWorkingOnly] = useState(false);
   const [focusSection, setFocusSection] = useState("");
-  const photos = useMemo(() => workingNow.flatMap(row => typeof row.stageName === "string" && typeof row.avatarUrl === "string"
-    ? [{ name: row.stageName, url: row.avatarUrl }] : []), [workingNow]);
+  const photos = useMemo(() => [
+    ...(affiliations as VenueDancerAffiliation[]).flatMap(row => row.canViewProfile && row.dancer?.stageName
+      ? [{ name: row.dancer.stageName, url: row.dancer.avatarUrl || "", dancerId: row.dancerId || row.dancer.id }] : []),
+    ...workingNow.flatMap(row => typeof row.stageName === "string"
+      ? [{ name: row.stageName, url: typeof row.avatarUrl === "string" ? row.avatarUrl : "", dancerId: typeof row.dancerId === "string" ? row.dancerId : undefined }] : []),
+  ], [workingNow, affiliations]);
   const data = useMemo(() => createVenueDashboardDemo(period, snapshot, photos), [period, snapshot, photos]);
   const working = data.roster.filter(row => row.working);
   const roster = data.roster.filter(row => (!workingOnly || row.working) && row.name.toLowerCase().includes(rosterSearch.trim().toLowerCase()));
@@ -108,8 +121,7 @@ export default function VenueDemoDashboard({ workingNow }: { workingNow: Array<R
       <section id="venue-dancer-roster" tabIndex={-1}><h2>Dancers</h2>
         <div className="venue-performance-tools"><label>Find a dancer<input type="search" value={rosterSearch} onChange={event => setRosterSearch(event.target.value)} /></label>
           <label>Roster<select value={workingOnly ? "working" : "all"} onChange={event => setWorkingOnly(event.target.value === "working")}><option value="all">All affiliated dancers</option><option value="working">Working now</option></select></label></div>
-        <ul className="venue-demo-roster">{roster.map(row => <li key={row.id}><span className="venue-performance-avatar">{row.photoUrl ? <img src={row.photoUrl} alt="" width="44" height="44" /> : row.name[0]}</span>
-          <div><strong>{row.name}</strong><small>{row.working ? "Working now · Internal & public" : "Affiliated · Not working"}</small></div></li>)}</ul>
+        <ul className="venue-demo-roster">{roster.map(row => <li key={row.id}><DemoDancerIdentity dancer={row} detail={row.working ? "Working now · Internal & public" : "Affiliated · Not working"} /></li>)}</ul>
         {!roster.length && <p>No sample dancers match these filters.</p>}
       </section>
       <section id="table-requests" tabIndex={-1}><h2>Recent table requests</h2><DemoRows rows={data.tables} /></section>

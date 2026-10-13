@@ -7,8 +7,8 @@ import "./venue-dashboard-demo.css";
 
 const VenueDemoDashboard = dynamic(() => import("./VenueDemoDashboard"), { loading: () => <p role="status">Loading demo dashboard...</p> });
 
-export default function VenueDashboardDemoSwitch({ profile, workingNow, children }: {
-  profile?: Record<string, unknown> | null; workingNow: Array<Record<string, unknown>>; children: ReactNode;
+export default function VenueDashboardDemoSwitch({ profile, workingNow, affiliations = [], children }: {
+  profile?: Record<string, unknown> | null; workingNow: Array<Record<string, unknown>>; affiliations?: Array<Record<string, unknown>>; children: ReactNode;
 }) {
   const [demo, setDemo] = useState(true);
   if (!isVenueDashboardDemo(profile)) return <>{children}</>;
@@ -18,6 +18,6 @@ export default function VenueDashboardDemoSwitch({ profile, workingNow, children
         <p>{demo ? "Fictional, read-only samples. No messages, admissions or account changes are sent." : "Showing this venue's saved records. Normal actions are enabled."}</p></div>
       <label><input type="checkbox" role="switch" checked={demo} onChange={event => setDemo(event.target.checked)} />Demo data</label>
     </aside>
-    {demo ? <VenueDemoDashboard workingNow={workingNow} /> : children}
+    {demo ? <VenueDemoDashboard workingNow={workingNow} affiliations={affiliations} /> : children}
   </>;
 }

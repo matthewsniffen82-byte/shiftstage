@@ -23,7 +23,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-function harness(fetch, { token = "table-token", session = null, component = "InternalRoster", url = "https://example.invalid/internal/club/table-token" } = {}) {
+function harness(fetch, { token = "table-token", session = null, component = "InternalRoster", props = {}, url = "https://example.invalid/internal/club/table-token" } = {}) {
   let now = 0;
   let nextTimer = 0;
   let nextRequestKey = 0;
@@ -94,7 +94,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   const render = () => {
     stateIndex = 0;
     refIndex = 0;
-    const tree = exports[component]({ token, dancerId: dancer.id, stageName: dancer.stageName });
+    const tree = exports[component]({ token, dancerId: dancer.id, stageName: dancer.stageName, ...props });
     mounting = false;
     return tree;
   };
@@ -140,6 +140,54 @@ const refreshMessage = app => find(app.render(), node => node.props?.className =
 const textContent = tree => typeof tree === "string" || typeof tree === "number" ? String(tree)
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
 const requestStatusPanel = app => find(app.render(), node => node.props?.["aria-label"] === "Table request status");
+
+test("staff table requests have a protected avatar and open the matching profile without mutating requests", async t => {
+  const calls = [];
+  const app = harness(async (url, options) => {
+    calls.push({ url, options });
+    if (url.includes('/profile/')) return response({ ok: true, profile: { id: dancer.id, stage_name: dancer.stageName } });
+    return response({ ...roster, requests: [{ id: 'request-1', dancer_id: dancer.id, link_id: 'table-1', status: 'pending', created_at: '2026-10-13T03:00:00Z' }], links: [{ id: 'table-1', label: 'Table 7' }] });
+  }, { token: undefined, session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true } });
+  t.after(() => app.unmount()); await app.mount();
+  const request = find(app.render(), node => node.props?.className === 'ir-request');
+  const button = find(request, node => node.props?.className === 'ir-profile-link venue-dancer-profile-trigger');
+  assert.equal(button.props['aria-label'], 'View Demo dancer profile');
+  const avatar = find(button, node => node.type?.name === 'ProtectedMedia');
+  assert.equal(avatar.props.id, dancer.id);
+  assert.equal(avatar.props.kind, 'avatar');
+  assert.equal(avatar.props.token, undefined);
+  assert.match(textContent(button), /Table 7 → Demo dancer/);
+  button.props.onClick(); await flush(); await flush();
+  assert.equal(profile(app).id, dancer.id);
+  assert.ok(calls.some(call => call.url === '/api/internal/profile/' + dancer.id && call.options.headers.authorization === 'Bearer staff-token'));
+  assert.ok(calls.every(call => call.options.method === 'GET'));
+  find(app.render(), node => node.type?.name === 'ClubProfileDialog').props.onClose();
+  assert.equal(profile(app), null);
+  assert.ok(find(app.render(), node => node.props?.className === 'ir-request'));
+});
+
+test("requests for dancers no longer in the authorized roster have initials without a dead profile action", async t => {
+  const app = harness(async () => response({ ...roster, dancers: [], requests: [{ id: 'request-1', dancer_id: 'removed-id', dancerName: 'Former dancer', status: 'pending', created_at: '2026-10-13T03:00:00Z' }] }),
+    { session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true } });
+  t.after(() => app.unmount()); await app.mount();
+  const identity = find(app.render(), node => node.props?.className === 'venue-table-request-identity');
+  assert.match(textContent(identity), /Former dancer/);
+  assert.equal(find(identity, node => node.type === 'button' || node.type?.name === 'ProtectedMedia'), undefined);
+});
+
+test("roster profile triggers retain clickable custom identity content", async t => {
+  const children = require('react').createElement('span', null, 'Avatar and dancer name');
+  const app = harness(async () => response({ ok: true, profile: { id: dancer.id } }), {
+    component: 'VenueRosterProfileButton', session: { accessToken: 'staff-token', account: { role: 'venue' } },
+    props: { children, className: 'ir-profile-link venue-dancer-profile-trigger' },
+  });
+  t.after(() => app.unmount()); await app.mount();
+  const button = find(app.render(), node => node.type === 'button');
+  assert.equal(button.props.children, children);
+  assert.equal(button.props.className, 'ir-profile-link venue-dancer-profile-trigger');
+  assert.equal(button.props['aria-label'], 'View Demo dancer profile');
+  assert.equal(button.props['aria-busy'], false);
+});
 
 test("table QR opens the roster directly with collapsed terms and no consent gate", async t => {
   const calls = [];
