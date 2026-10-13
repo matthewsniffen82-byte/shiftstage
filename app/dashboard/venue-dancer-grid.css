@@ -25,7 +25,7 @@ body .venue-dancer-grid .venue-dancer-card {
   margin: 0;
   padding: 0;
   border: 0;
-  border-radius: 2px;
+  border-radius: 8px;
   background: #050507;
   color: #f8f8fa;
   box-shadow: none;
@@ -45,7 +45,7 @@ body .venue-dancer-grid button.ir-profile-link.venue-card-profile {
   margin: 0 !important;
   padding: 0 !important;
   border: 0 !important;
-  border-radius: 2px !important;
+  border-radius: 8px !important;
   background: transparent !important;
   color: inherit !important;
   box-shadow: none !important;
@@ -62,7 +62,7 @@ body .venue-dancer-grid .venue-card-portrait {
   height: 100%;
   aspect-ratio: 9 / 16;
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 8px;
   background: #15151b;
 }
 body .venue-dancer-grid .venue-card-photo {
@@ -116,6 +116,14 @@ body .venue-dancer-grid .venue-card-details > strong { color: #f7f7fa; font-size
 body .venue-dancer-grid :is(.venue-card-details, .venue-card-caption) small { margin: 0; color: #c6c6ce; font-size: 11px; font-weight: 400; line-height: 1.45; }
 body .venue-dancer-grid .venue-card-caption small { color: #e1e1e8; font-size: 10px; line-height: 1.1; }
 body .venue-dancer-grid .venue-card-caption > :is(small, .venue-card-status) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Roster access labels must stay readable even when both channels need two lines. */
+body .venue-dancer-grid[aria-label="Dancer roster cards"] .venue-card-caption > small {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: normal;
+  word-break: normal;
+}
 body .venue-dancer-grid .venue-card-caption .venue-card-status { font-size: 10px; line-height: 1.3; }
 body .venue-dancer-grid .venue-card-status { color: #bebec8; font-size: 12px; font-weight: 650; line-height: 1.4; }
 body .venue-dancer-grid .venue-card-status[data-state="pending"] { color: #ffd28a; }

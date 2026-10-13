@@ -114,6 +114,13 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
   box-shadow: none !important;
   overflow: visible;
 }
+/* Let portrait grids use the full panel width, like the homepage grid, while
+   retaining the existing inset for headings, filters and staff instructions. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-nfc-roster .venue-roster-content > .venue-dancer-grid,
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-requests.ir-panel > .venue-dancer-grid {
+  width: calc(100% + 32px) !important;
+  margin-inline: -16px !important;
+}
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-account .info-panel {
   border: 1px solid #3c3248 !important;
   background: #17141d !important;

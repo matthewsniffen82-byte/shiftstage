@@ -6,6 +6,8 @@ import postcss from "postcss";
 const read = path => readFileSync(new URL(path, import.meta.url), "utf8");
 const venue = postcss.parse(read("../app/dashboard/venue-dancer-grid.css"));
 const home = postcss.parse(read("../src/live-shell/styles/override-styles-04-dancr-button-system-home-dancer-grid-action-rail-feed-card-actio.css"));
+const homeFinishes = postcss.parse(read("../public/dancr-ui-consistency.v1.css"));
+const premium = postcss.parse(read("../app/dashboard/venue-premium.css"));
 const homeGrid = "#results.home-dancer-grid.home-dancer-three-column";
 
 function declarations(root, selector) {
@@ -33,6 +35,11 @@ test("venue roster and request grids match the homepage's columns and spacing at
 
 test("whole venue cards match homepage dimensions, not just the photo area", () => {
   const expected = declarations(home, `${homeGrid} > .home-dancer-grid-card`);
+  homeFinishes.walkRules(rule => {
+    if (!rule.selector.endsWith(".home-dancer-grid-card.is-compact-directory")) return;
+    rule.walkDecls("border-radius", ({ value }) => { expected["border-radius"] = value; });
+  });
+  assert.equal(expected["border-radius"], "8px", "include the homepage's final rounded-card override");
   const card = declarations(venue, "body .venue-dancer-grid .venue-dancer-card");
   const photo = declarations(venue, "body .venue-dancer-grid .venue-card-portrait");
   for (const property of ["width", "min-width", "max-width", "height", "min-height", "max-height", "aspect-ratio", "margin", "padding", "border", "border-radius", "background"]) {
@@ -42,8 +49,41 @@ test("whole venue cards match homepage dimensions, not just the photo area", () 
   assert.equal(photo["border-radius"], expected["border-radius"]);
   assert.equal(photo.width, "100%");
   assert.equal(photo.height, "100%");
+  assert.equal(declarations(venue, "body .venue-dancer-grid button.ir-profile-link.venue-card-profile")["border-radius"], expected["border-radius"]);
   assert.equal(card.overflow, "visible", "profile dialogs and staff menus must not be clipped");
   assert.equal(declarations(venue, "body .venue-dancer-grid .venue-card-details")["overflow-wrap"], "anywhere");
+});
+
+test("live venue grids recover the panel inset without moving headings or filters", () => {
+  let panelInset, gridWidth, gridMargin;
+  premium.walkRules(rule => {
+    if (rule.selector.includes(":is(.info-panel, .venue-workspace-summary,")) {
+      rule.walkDecls("padding", ({ value }) => { panelInset = parseFloat(value); });
+    }
+    if (rule.selector.includes(".venue-roster-content > .venue-dancer-grid")) {
+      assert.ok(rule.selector.includes("#table-requests.ir-panel > .venue-dancer-grid"));
+      rule.walkDecls("width", ({ value, important }) => {
+        gridWidth = value;
+        assert.ok(important, "override the shared public grid width");
+      });
+      rule.walkDecls("margin-inline", ({ value, important }) => {
+        gridMargin = value;
+        assert.ok(important, "override the shared public grid margins");
+      });
+    }
+  });
+  assert.ok(panelInset > 0);
+  assert.equal(gridWidth, `calc(100% + ${panelInset * 2}px)`);
+  assert.equal(gridMargin, `-${panelInset}px`);
+});
+
+test("roster channel labels wrap in full instead of truncating Internal or External", () => {
+  const label = declarations(venue, 'body .venue-dancer-grid[aria-label="Dancer roster cards"] .venue-card-caption > small');
+  assert.equal(label["white-space"], "normal");
+  assert.equal(label.overflow, "visible");
+  assert.equal(label["text-overflow"], "clip");
+  assert.equal(label["overflow-wrap"], "normal", "keep each channel word intact");
+  assert.equal(label["word-break"], "normal");
 });
 
 test("details, profile errors and actions cannot add height to a compact card", () => {
