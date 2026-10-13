@@ -74,6 +74,15 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button[aria-selected="true"] { --venue-control-face: #2a2235; --venue-control-edge: #a17ad1; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button[aria-selected="true"]::before { box-shadow: inset 0 -2px 0 #a17ad1; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs strong { font-size: 13px; font-weight: 600; }
+/* Share readable counts across both navigation rows, including mobile tabs.
+   The flat gradient resists automatic dark-mode recoloring of solid fills. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-workspace-tabs, .venue-guests-tabs) .venue-tab-count {
+  display: inline-grid; place-items: center; box-sizing: border-box; flex-shrink: 0;
+  min-width: 24px; min-height: 24px; padding: 3px 6px; border: 1px solid #80639b; border-radius: 7px;
+  background: linear-gradient(#30203f, #30203f) !important; color: #fff !important;
+  -webkit-text-fill-color: currentColor !important; font-size: 13px !important; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums; letter-spacing: 0; white-space: nowrap; text-shadow: none;
+}
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-workspace-tabs svg, .venue-icon-heading > svg, .ir-panel h2 > svg, .venue-nfc-roster-head > svg, .venue-roster-stickers > summary > svg) { flex: 0 0 21px; width: 21px; height: 21px; color: var(--venue-accent); }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-section-divider { display: none; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-workspace-panel, .venue-roster-panel, .venue-manage-panel):not([hidden]) { display: grid; gap: 16px; }
