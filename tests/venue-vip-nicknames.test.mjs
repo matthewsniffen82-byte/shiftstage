@@ -144,7 +144,7 @@ test('pending invitation actions expose the replacement link and preserve the ne
   assert.equal(ui.nodes().filter(n => n.type === 'button' && n.props.children === 'Share invitation').length, 2);
   ui.button('Resend email').props.onClick(); await ui.settle();
   const body = JSON.parse(ui.calls.filter(c => c.options.method === 'POST').at(-1).options.body);
-  assert.equal(body.id, 'new-invitation'); assert.equal(body.action, 'resend_invitation'); assert.match(ui.html(), /Invitation emailed/);
+  assert.equal(body.id, 'new-invitation'); assert.equal(body.action, 'resend_invitation'); assert.match(ui.html(), /Invitation sent/);
   ui.unmount();
 });
 

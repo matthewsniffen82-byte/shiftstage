@@ -11,6 +11,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
   const [state, setState] = useState<VenueVipState | null>(null);
   const [page, setPage] = useState(0); const [email, setEmail] = useState("");
   const [inviteNickname, setInviteNickname] = useState("");
+  const [invitationSent, setInvitationSent] = useState(false);
   const [link, setLink] = useState(""); const [linkId, setLinkId] = useState(""); const [status, setStatus] = useState(""); const [error, setError] = useState("");
   const [busy, setBusy] = useState(false); const [loading, setLoading] = useState(false);
   const [pendingOnly, setPendingOnly] = useState(true);
@@ -47,9 +48,9 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
       const data = await requestDashboardJson("/api/venue/vip", { expectedRole: "venue", method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body), timeoutMs: 30000 });
       if (!mounted.current || readSession()?.account?.id !== accountId) return false;
       if (invitationAction) {
-        if (body.action === "invite") { setEmail(""); setInviteNickname(""); }
+        if (body.action === "invite") { setEmail(""); setInviteNickname(""); setInvitationSent(data.emailDelivered === true); }
         setLink(data.invitationUrl); setLinkId(data.invitationId || "");
-        setStatus(body.action === "share_invitation" ? "New private link ready to share. The previous link has been replaced." : data.emailDelivered ? "Invitation emailed. You can also copy the private link below." : "Invitation created. Email could not be sent; copy and share the private link below.");
+        setStatus(body.action === "share_invitation" ? "New private link ready to share. The previous link has been replaced." : data.emailDelivered ? "Invitation sent. You can also copy the private link below." : "Invitation created. Email could not be sent; copy and share the private link below.");
       } else { setStatus(success); if (body.action === "revoke_invitation") setLink(""); }
       if (body.action === "set_nickname") {
         setState(current => current ? { ...current, members: current.members.map(member => member.id === body.id ? { ...member, nickname: String(body.nickname).trim() } : member) } : current);
@@ -67,7 +68,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
       else { await navigator.clipboard.writeText(link); setStatus("Private link copied."); }
     } catch (failure) { if (!(failure instanceof Error && failure.name === "AbortError")) setStatus("Select and copy the private link above."); }
   }
-  function invite(event: FormEvent) { event.preventDefault(); void action({ action: "invite", email, nickname: inviteNickname }, ""); }
+  function invite(event: FormEvent) { event.preventDefault(); if (!invitationSent) void action({ action: "invite", email, nickname: inviteNickname }, ""); }
   async function review(request: VipRequest, status: string, note: string) {
     await action({ action: "request_status", id: request.id, expectedStatus: request.status, expectedUpdatedAt: request.updated_at || request.created_at, status, note }, `Request ${status}. The VIP has been notified.`);
   }
@@ -93,7 +94,11 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
     <details className="venue-vip-management"><summary>Invite &amp; manage VIPs</summary>
     <div className="venue-vip-invite">
       <p>Invite guests to request visits and dancers.</p>
-      <form className="vip-invite-form" onSubmit={invite}><label>Guest email<input type="email" required maxLength={254} value={email} onChange={event => setEmail(event.target.value)} placeholder="guest@example.com" disabled={busy} /></label><label>Private nickname (optional)<input type="text" maxLength={80} value={inviteNickname} onChange={event => setInviteNickname(event.target.value)} placeholder="How you know this guest" disabled={busy} /></label><button type="submit" className="vip-primary" disabled={busy}>{busy ? "Please wait…" : "Send invitation"}</button></form>
+      <form className="vip-invite-form" onSubmit={invite}>
+        <label>Guest email<input type="email" required maxLength={254} value={email} onChange={event => { setEmail(event.target.value); setInvitationSent(false); }} placeholder="guest@example.com" disabled={busy} /></label>
+        <label>Private nickname (optional)<input type="text" maxLength={80} value={inviteNickname} onChange={event => { setInviteNickname(event.target.value); setInvitationSent(false); }} placeholder="How you know this guest" disabled={busy} /></label>
+        <button type="submit" className="vip-primary" disabled={busy || invitationSent}>{busy ? "Please wait…" : invitationSent ? "Invitation sent" : "Send invitation"}</button>
+      </form>
       <small>Invitation valid for 7 days. Nicknames are private to your venue&apos;s owners and managers.</small>
       <details><summary>How invitations work</summary><small>Only the invited email can use the link. Reinviting replaces that email’s unused link. Resend email and New share link also replace the previous link. Owners and managers review each visit request.</small></details>
     </div>
