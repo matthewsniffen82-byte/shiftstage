@@ -11,6 +11,7 @@ import VenueSetupChecklist from "./VenueSetupChecklist";
 import VenueValueAnalytics from "./VenueValueAnalytics";
 import "./venue-workspace.css";
 import "./venue-guests.css";
+import "./venue-dancer-grid.css";
 
 const workspaces = [["tonight", "Tonight"], ["roster", "Dancers & tables"], ["business", "Results"], ["venue", "Manage venue"]] as const;
 const guestTabs = [["venue-guest-list", "Guest list"], ["venue-pickups", "Ride requests"], ["venue-vip", "VIP requests"], ["venue-customers", "Contacts"]] as const;
@@ -18,18 +19,21 @@ type Workspace = typeof workspaces[number][0];
 type GuestTab = typeof guestTabs[number][0];
 const timezone = "America/Los_Angeles";
 
-function DemoDancerIdentity({ dancer, label = dancer.name, detail }: { dancer: DemoRosterDancer; label?: string; detail?: string }) {
-  const identity = <><span className="venue-performance-avatar" aria-hidden="true">{dancer.photoUrl ? <img src={dancer.photoUrl} alt="" width="44" height="44" loading="lazy" /> : dancer.name[0]}</span>
-    <span className="venue-demo-dancer-copy"><strong>{label}</strong>{detail && <small>{detail}</small>}</span></>;
-  return dancer.profileDancerId ? <VenueRosterProfileButton dancerId={dancer.profileDancerId} stageName={dancer.name} className="ir-profile-link venue-dancer-profile-trigger">{identity}</VenueRosterProfileButton>
-    : <div className="venue-demo-dancer-identity">{identity}</div>;
+function DemoDancerIdentity({ dancer }: { dancer: DemoRosterDancer }) {
+  const identity = <span className="venue-card-portrait">
+    <span className="venue-card-photo" aria-hidden="true">{dancer.photoUrl ? <img src={dancer.photoUrl} alt="" loading="lazy" decoding="async" /> : dancer.name[0]}</span>
+    <span className="venue-card-caption"><strong>{dancer.name}</strong>{dancer.profileDancerId && <small>View profile ↗</small>}</span>
+  </span>;
+  return dancer.profileDancerId ? <VenueRosterProfileButton dancerId={dancer.profileDancerId} stageName={dancer.name} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
+    : identity;
 }
 
-function DemoRows({ rows, timeLabel = "Received" }: { rows: DemoRecord[]; timeLabel?: string }) {
+function DemoRows({ rows, timeLabel = "Received", dancerCards = false }: { rows: DemoRecord[]; timeLabel?: string; dancerCards?: boolean }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const visible = rows.filter(row => (status === "all" || row.status === status)
-    && `${row.name} ${row.detail}`.toLowerCase().includes(search.trim().toLowerCase()));
+    && `${row.name} ${row.detail}`.toLowerCase().includes(search.trim().toLowerCase()))
+    .sort((a, b) => dancerCards ? Number(b.status === "Pending") - Number(a.status === "Pending") || Date.parse(b.at) - Date.parse(a.at) : 0);
   return <>
     <div className="venue-performance-tools">
       <label>Search<input type="search" value={search} onChange={event => setSearch(event.target.value)} /></label>
@@ -37,10 +41,15 @@ function DemoRows({ rows, timeLabel = "Received" }: { rows: DemoRecord[]; timeLa
         {[...new Set(rows.map(row => row.status))].map(value => <option key={value}>{value}</option>)}</select></label>
     </div>
     <p className="venue-value-note" role="status">{visible.length} sample records</p>
-    <ul className="venue-demo-records">{visible.map(row => <li key={row.id}><div>{row.dancer ? <DemoDancerIdentity dancer={row.dancer} label={row.name} /> : <strong>{row.name}</strong>}<span>{row.status}</span></div>
+    {dancerCards ? <ul className="venue-dancer-grid" aria-label="Table request cards">{visible.map(row => <li className="venue-dancer-card" key={row.id}>
+      {row.dancer && <DemoDancerIdentity dancer={row.dancer} />}
+      <div className="venue-card-details"><strong>{row.tableLabel || row.name}</strong><span className="venue-card-status" data-state={row.status.toLowerCase()}>{row.status}</span>
+        <small>{row.detail}</small><small>{timeLabel}: <time dateTime={row.at}>{new Date(row.at).toLocaleString(undefined, { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></small>
+      </div>
+    </li>)}</ul> : <ul className="venue-demo-records">{visible.map(row => <li key={row.id}><div><strong>{row.name}</strong><span>{row.status}</span></div>
       <p>{row.detail}</p><small>{timeLabel}: <time dateTime={row.at}>{new Date(row.at).toLocaleString(undefined, {
         timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
-      })}</time></small></li>)}</ul>
+      })}</time></small></li>)}</ul>}
     {!visible.length && <p className="venue-value-empty">No sample records match these filters.</p>}
   </>;
 }
@@ -118,13 +127,16 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [] }: { 
       </section>)}
     </section>
     <section id="demo-roster" role="tabpanel" aria-labelledby="demo-roster-tab" hidden={workspace !== "roster"}>
-      <section id="venue-dancer-roster" tabIndex={-1}><h2>Dancers</h2>
+      <section id="venue-dancer-roster" className="venue-card-region" tabIndex={-1}><h2>Dancers</h2>
         <div className="venue-performance-tools"><label>Find a dancer<input type="search" value={rosterSearch} onChange={event => setRosterSearch(event.target.value)} /></label>
           <label>Roster<select value={workingOnly ? "working" : "all"} onChange={event => setWorkingOnly(event.target.value === "working")}><option value="all">All affiliated dancers</option><option value="working">Working now</option></select></label></div>
-        <ul className="venue-demo-roster">{roster.map(row => <li key={row.id}><DemoDancerIdentity dancer={row} detail={row.working ? "Working now · Internal & public" : "Affiliated · Not working"} /></li>)}</ul>
+        <ul className="venue-dancer-grid" aria-label="Dancer roster cards">{roster.map(row => <li className="venue-dancer-card" key={row.id}><DemoDancerIdentity dancer={row} />
+          <div className="venue-card-details"><span className="venue-card-status" data-state={row.working ? "working" : "inactive"}>{row.working ? "● Working now" : "Not working now"}</span>
+            <small>{row.working ? "Internal + External" : "Affiliated"}</small></div>
+        </li>)}</ul>
         {!roster.length && <p>No sample dancers match these filters.</p>}
       </section>
-      <section id="table-requests" tabIndex={-1}><h2>Recent table requests</h2><DemoRows rows={data.tables} /></section>
+      <section id="table-requests" className="venue-card-region" tabIndex={-1}><h2>Recent table requests</h2><DemoRows rows={data.tables} dancerCards /></section>
       <details id="venue-nfc-tags" tabIndex={-1}><summary>Check-in stickers</summary><SampleList rows={[
         { name: "Dressing room", status: "Active", detail: "Sample sticker · 128 check-in taps · Last used 10 minutes ago" },
         { name: "Front desk", status: "Active", detail: "Sample sticker · 84 pass scans · Last used 5 minutes ago" },

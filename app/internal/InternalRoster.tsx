@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
 import { InternalFullProfile, type InternalProfile as Profile, type InternalRequestAction } from "./InternalFullProfile";
+import "../dashboard/venue-dancer-grid.css";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-terms";
 
@@ -410,23 +411,27 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
       </section> : null}
       {staff && snapshot.receipt ? <p className="ir-notice" role="status">Your request: <strong>{snapshot.receipt.status === "acknowledged" ? "Seen by club staff" : snapshot.receipt.status}</strong></p> : null}
     </> : null}
-      {staff ? <div className="ir-operations">{snapshot ? <><section className="ir-panel" id="table-requests" tabIndex={-1}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot.requests?.length || 0}</span></h2><p>“Seen” confirms staff saw the request. Coordinate availability with the dancer.</p>
+      {staff ? <div className="ir-operations">{snapshot ? <><section className="ir-panel venue-card-region" id="table-requests" tabIndex={-1}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot.requests?.length || 0}</span></h2><p>“Seen” confirms staff saw the request. Coordinate availability with the dancer.</p>
         <p>Mark “Arrived” only after the dancer reaches the table. Use “Didn’t arrive at table” when an acknowledged request ends without their arrival.</p>
-        {snapshot.requests?.length ? snapshot.requests.map(item => {
+        {snapshot.requests?.length ? <div className="venue-dancer-grid" aria-label="Table request cards">{[...snapshot.requests].sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || Date.parse(b.created_at) - Date.parse(a.created_at)).map(item => {
           const dancer = snapshot.dancers.find(row => row.id === item.dancer_id);
           const dancerName = item.dancerName || dancer?.stageName || "Dancer";
-          const identity = <><span className="venue-table-avatar" aria-hidden="true"><span>{dancerName.slice(0, 1).toUpperCase()}</span>
-            {dancer && <ProtectedMedia id={dancer.id} kind="avatar" revision={dancer.avatarRevision} alt="" lazy />}</span>
-            <span className="venue-table-request-copy"><strong>{snapshot.links?.find(link => link.id === item.link_id)?.label || "Table"} → {dancerName}</strong><small>{item.attendance === "arrived" ? "Arrived at table" : item.status === "pending" ? "New request" : "Seen by staff"} · {new Date(item.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</small></span></>;
-          return <article className="ir-request" key={item.id}><div className="venue-table-request-identity">
-            {dancer ? <button type="button" className="ir-profile-link venue-dancer-profile-trigger" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>{identity}</button>
-              : <div className="venue-table-request-unavailable">{identity}</div>}</div><div className="ir-actions">
+          const identity = <span className="venue-card-portrait"><span className="venue-card-photo" aria-hidden="true">{dancerName.slice(0, 1).toUpperCase()}
+            {dancer && <ProtectedMedia id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" lazy />}</span>
+            <span className="venue-card-caption"><strong>{dancerName}</strong>{dancer && <small>{openingProfileId === dancer.id ? "Opening…" : "View profile ↗"}</small>}</span></span>;
+          return <article className="venue-dancer-card" data-request-id={item.id} key={item.id}><div className="venue-table-request-identity">
+            {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>{identity}</button>
+              : identity}</div>
+            <div className="venue-card-details"><strong>{snapshot.links?.find(link => link.id === item.link_id)?.label || "Table"}</strong>
+              <span className="venue-card-status" data-state={item.status === "pending" ? "pending" : item.attendance === "arrived" ? "arrived" : "acknowledged"}>{item.status === "pending" ? "New request" : item.attendance === "arrived" ? "Arrived at table" : "Seen by staff"}</span>
+              <small>Received: <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></small>
+            </div><div className="ir-actions venue-card-actions">
           {item.status === "pending" || item.attendance === "arrived" ? <button disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: item.status === "pending" ? "acknowledged" : "completed" })}>{item.status === "pending" ? "Mark seen" : "Complete"}</button> : <>
             <button disabled={busy} onClick={() => void mutate({ action: "request_attendance", id: item.id, expectedStatus: item.status, attendance: "arrived" })}>Mark arrived</button>
             <button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_attendance", id: item.id, expectedStatus: item.status, attendance: "no_show" })}>Didn’t arrive at table</button>
           </>}
           <button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: "cancelled" })}>Dismiss</button></div></article>;
-        }) : <p className="ir-empty">No open requests.</p>}
+        })}</div> : <p className="ir-empty">No open requests.</p>}
         <InternalRequestPushSettings />
       </section></> : null}{roster}{snapshot ? <section className="ir-panel ir-table-tools"><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h2v2h-2ZM20 14v6h-6v-2" /></svg>Table QR codes <span>{snapshot.links?.length || 0}</span></h2><p>Create and number your tables, print their QR signs, or revoke a shared link.</p>
         {snapshot.role !== "staff" ? <details className="ir-table-create"><summary>Add a table</summary><form className="ir-link-form" onSubmit={event => { event.preventDefault(); void mutate({ action: "link_create", label, kind: "table" }); }}><label>Table number or name<input value={label} maxLength={60} required onChange={event => setLabel(event.target.value)} /></label><button disabled={busy || !label.trim()}>Create link</button></form></details> : null}

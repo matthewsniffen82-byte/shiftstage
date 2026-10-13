@@ -193,6 +193,28 @@ test('demo layout uses constrained mobile tracks and no real operation or contac
   assert.match(css, /\.venue-demo-banner,\.venue-demo-workspace\s*\{\s*grid-column:1 \/ -1; min-width:0; width:100%/);
 });
 
+test('table cards show table, dancer, status and received time while preserving search and status filters', () => {
+  const render = component('app/dashboard/VenueDemoDashboard.tsx', {
+    '@/src/lib/dancr/venue-dashboard-demo': demo, './VenueDashboardIdentity': {}, './VenueTonightOverview': {}, './VenueSetupChecklist': {}, './VenueValueAnalytics': {},
+  }, '\nexport { DemoRows };');
+  const rows = [...demo.createVenueDashboardDemo('tonight', now).tables].reverse();
+  let tree = nodes(render({ rows, dancerCards: true }, 'DemoRows'));
+  const list = tree.find(node => node.props['aria-label'] === 'Table request cards');
+  const html = renderToStaticMarkup(list);
+  assert.deepEqual(Array.from(list.props.children.slice(0, 2), card => card.key), ['demo-table-0', 'demo-table-1']);
+  for (const text of ['Aria', 'Table 1', 'Pending', '2 guests', 'Received:', 'dateTime="2026-10-13T05:55:00.000Z"']) assert.ok(html.includes(text), text);
+  assert.doesNotMatch(html, /<button|Mark seen|Dismiss/, 'sample requests cannot perform live actions');
+  tree.find(node => node.type === 'select').props.onChange({ target: { value: 'Completed' } });
+  tree = nodes(render({ rows, dancerCards: true }, 'DemoRows'));
+  assert.equal(tree.filter(node => node.type === 'li').length, 2);
+  tree.find(node => node.type === 'input').props.onChange({ target: { value: 'Bailey' } });
+  tree = nodes(render({ rows, dancerCards: true }, 'DemoRows'));
+  assert.equal(tree.filter(node => node.type === 'li').length, 1);
+  assert.equal(tree.find(node => node.type === 'li').key, 'demo-table-4');
+  tree.find(node => node.type === 'input').props.onChange({ target: { value: 'missing' } });
+  assert.match(renderToStaticMarkup(render({ rows, dancerCards: true }, 'DemoRows')), /No sample records match/);
+});
+
 test('roster and table identities open matching real profiles, including off-shift affiliations', () => {
   const render = component('app/dashboard/VenueDemoDashboard.tsx', {
     '@/src/lib/dancr/venue-dashboard-demo': demo, './VenueDashboardIdentity': { VenueDashboardIcon: () => null },
@@ -202,7 +224,7 @@ test('roster and table identities open matching real profiles, including off-shi
   const workingNow = names.slice(0, 6).map((stageName, i) => ({ stageName, dancerId: `real-${i}`, avatarUrl: `/avatar-${i}.jpg` }));
   const affiliations = names.slice(6).map((stageName, i) => ({ canViewProfile: true, dancerId: `real-${i + 6}`, dancer: { stageName, avatarUrl: `/avatar-${i + 6}.jpg` } }));
   const tree = nodes(render({ workingNow, affiliations }));
-  const roster = tree.find(node => node.props.className === 'venue-demo-roster');
+  const roster = tree.find(node => node.props['aria-label'] === 'Dancer roster cards');
   const rosterHtml = renderToStaticMarkup(roster);
   for (let i = 0; i < 8; i++) {
     assert.ok(rosterHtml.includes(`data-profile-id="real-${i}"`));
@@ -213,7 +235,7 @@ test('roster and table identities open matching real profiles, including off-shi
   const tableHtml = renderToStaticMarkup(tables);
   assert.equal((tableHtml.match(/data-profile-id=/g) || []).length, 6);
   for (let i = 0; i < 6; i++) assert.ok(tableHtml.includes(`data-profile-id="real-${i}"`));
-  const empty = renderToStaticMarkup(nodes(render({ workingNow: [], affiliations: [{ ...affiliations[0], canViewProfile: false }] })).find(node => node.props.className === 'venue-demo-roster'));
+  const empty = renderToStaticMarkup(nodes(render({ workingNow: [], affiliations: [{ ...affiliations[0], canViewProfile: false }] })).find(node => node.props['aria-label'] === 'Dancer roster cards'));
   assert.doesNotMatch(empty, /data-profile-id=|<button/);
   assert.match(empty, /aria-hidden="true">A<\/span>/);
 });

@@ -64,6 +64,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
     },
     require(name) {
       if (name === "react/jsx-runtime") return require(name);
+      if (name.endsWith(".css")) return {};
       if (name === "react") return {
         useState(initial) {
           const index = stateIndex++;
@@ -149,21 +150,24 @@ test("staff table requests have a protected avatar and open the matching profile
     return response({ ...roster, requests: [{ id: 'request-1', dancer_id: dancer.id, link_id: 'table-1', status: 'pending', created_at: '2026-10-13T03:00:00Z' }], links: [{ id: 'table-1', label: 'Table 7' }] });
   }, { token: undefined, session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true } });
   t.after(() => app.unmount()); await app.mount();
-  const request = find(app.render(), node => node.props?.className === 'ir-request');
-  const button = find(request, node => node.props?.className === 'ir-profile-link venue-dancer-profile-trigger');
+  const request = find(app.render(), node => node.props?.['data-request-id']);
+  const button = find(request, node => node.props?.className === 'ir-profile-link venue-card-profile');
   assert.equal(button.props['aria-label'], 'View Demo dancer profile');
   const avatar = find(button, node => node.type?.name === 'ProtectedMedia');
   assert.equal(avatar.props.id, dancer.id);
   assert.equal(avatar.props.kind, 'avatar');
   assert.equal(avatar.props.token, undefined);
-  assert.match(textContent(button), /Table 7 → Demo dancer/);
+  assert.match(textContent(button), /Demo dancer/);
+  assert.match(textContent(request), /Table 7/);
+  assert.match(textContent(request), /New request/);
+  assert.equal(find(request, node => node.type === 'time').props.dateTime, '2026-10-13T03:00:00Z');
   button.props.onClick(); await flush(); await flush();
   assert.equal(profile(app).id, dancer.id);
   assert.ok(calls.some(call => call.url === '/api/internal/profile/' + dancer.id && call.options.headers.authorization === 'Bearer staff-token'));
   assert.ok(calls.every(call => call.options.method === 'GET'));
   find(app.render(), node => node.type?.name === 'ClubProfileDialog').props.onClose();
   assert.equal(profile(app), null);
-  assert.ok(find(app.render(), node => node.props?.className === 'ir-request'));
+  assert.ok(find(app.render(), node => node.props?.['data-request-id']));
 });
 
 test("requests for dancers no longer in the authorized roster have initials without a dead profile action", async t => {
@@ -173,6 +177,37 @@ test("requests for dancers no longer in the authorized roster have initials with
   const identity = find(app.render(), node => node.props?.className === 'venue-table-request-identity');
   assert.match(textContent(identity), /Former dancer/);
   assert.equal(find(identity, node => node.type === 'button' || node.type?.name === 'ProtectedMedia'), undefined);
+});
+
+test("staff request cards prioritize pending requests, use authorized main photos and keep actions on the selected request", async t => {
+  const saved = [
+    { id: 'seen', dancer_id: dancer.id, link_id: 'table-1', status: 'acknowledged', created_at: '2026-10-13T04:00:00Z' },
+    { id: 'older', dancer_id: dancer.id, link_id: 'table-1', status: 'pending', created_at: '2026-10-13T02:00:00Z' },
+    { id: 'newest', dancer_id: dancer.id, link_id: 'table-2', status: 'pending', created_at: '2026-10-13T03:00:00Z' },
+  ];
+  const calls = [];
+  const app = harness(async (_url, options) => {
+    if (options.body) calls.push(JSON.parse(options.body));
+    return response({ ...roster, dancers: [{ ...dancer, mainPhotoId: 'approved-photo', mainPhotoRevision: 'revision-2' }], requests: saved,
+      links: [{ id: 'table-1', label: 'Table 1' }, { id: 'table-2', label: 'VIP Booth' }] });
+  }, { session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true } });
+  t.after(() => app.unmount()); await app.mount();
+  const cards = find(app.render(), node => node.props?.['aria-label'] === 'Table request cards').props.children;
+  assert.deepEqual(Array.from(cards, card => card.props['data-request-id']), ['newest', 'older', 'seen']);
+  assert.deepEqual(saved.map(row => row.id), ['seen', 'older', 'newest'], 'rendering must not reorder the saved snapshot');
+  const photo = find(cards[0], node => node.type?.name === 'ProtectedMedia');
+  assert.equal(photo.props.id, 'approved-photo');
+  assert.equal(photo.props.kind, 'photo');
+  assert.equal(photo.props.revision, 'revision-2');
+  assert.equal(photo.props.token, undefined);
+  assert.match(textContent(cards[0]), /VIP Booth/);
+  assert.match(textContent(cards[2]), /Seen by staff/);
+  const actions = find(cards[0], node => node.props?.className === 'ir-actions venue-card-actions');
+  find(actions, node => node.type === 'button' && node.props.children === 'Mark seen').props.onClick();
+  await flush(); await flush();
+  assert.equal(calls[0].id, 'newest');
+  assert.equal(calls[0].status, 'acknowledged');
+  assert.equal(calls[0].expectedStatus, 'pending');
 });
 
 test("roster profile triggers retain clickable custom identity content", async t => {
@@ -465,9 +500,9 @@ test('staff see cancelled requests disappear on a lightweight inbox refresh',asy
  const calls=[],saved={id:'saved-request',dancer_id:dancer.id,link_id:'table',status:'pending',created_at:new Date().toISOString()};
  const app=harness(async url=>{calls.push(url);return response(url==='/api/internal/requests'?{ok:true,requests:[]}:{...roster,requests:[saved],links:[]});},
   {token:'',session:{accessToken:'staff-token',account:{role:'venue'}}});t.after(()=>app.unmount());await app.mount();
- assert.ok(find(app.render(),node=>node.props?.className==='ir-request'));
+ assert.ok(find(app.render(),node=>node.props?.['data-request-id']));
  await app.advance(10000);assert.equal(calls.at(-1),'/api/internal/requests');
- assert.equal(find(app.render(),node=>node.props?.className==='ir-request'),undefined);assert.ok(grid(app));
+ assert.equal(find(app.render(),node=>node.props?.['data-request-id']),undefined);assert.ok(grid(app));
 });
 
 test('staff explicitly confirm arrival before completing and record no-shows separately',async t=>{
@@ -483,7 +518,7 @@ test('staff explicitly confirm arrival before completing and record no-shows sep
   button(outcome==='arrived'?'Mark arrived':'Didn’t arrive at table').props.onClick();await flush();
   assert.equal(writes[0].action,'request_attendance');assert.equal(writes[0].attendance,outcome);assert.equal(writes[0].expectedStatus,'acknowledged');
   if(outcome==='arrived') {assert.ok(button('Complete'));button('Complete').props.onClick();await flush();assert.equal(writes[1].action,'request_status');assert.equal(writes[1].status,'completed');}
-  else assert.equal(find(app.render(),node=>node.props?.className==='ir-request'),undefined);
+  else assert.equal(find(app.render(),node=>node.props?.['data-request-id']),undefined);
  }
 });
 

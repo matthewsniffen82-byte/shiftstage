@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InternalRoster, VenueRosterProfileButton } from "../internal/InternalRoster";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
+import "./venue-dancer-grid.css";
 import { getVenueRosterEntries, filterRosterChannel, rosterChannelVisibility, sortVenueRosterEntries, type VenueRosterSort, type VenueRosterChannel, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import {
   readDashboardAccessToken,
@@ -339,7 +340,7 @@ export default function VenueNfcTagPanel({
           <span><strong>Dancer roster</strong><small>Dressing-room NFC sets working status.</small></span>
           <b>{isLoading && !activeAffiliations.length ? "…" : `${activeAffiliations.length} affiliated`}</b>
         </summary>
-        <div className="venue-roster-content">
+        <div className="venue-roster-content venue-card-region">
         <div className="venue-roster-controls">
         <label className="venue-roster-search">
           Search dancers
@@ -362,31 +363,34 @@ export default function VenueNfcTagPanel({
         </div>
         <small>Internal and External filters include dancers who chose Both for their active shift.</small>
         <p className="venue-roster-results" role="status">{isRosterLoading ? "Loading dancers…" : `${rosterEntries.length} ${rosterEntries.length === 1 ? "dancer" : "dancers"}${search.trim() ? " matching your search" : workingOnly ? " working now" : " affiliated"}`}</p>
+        <div className="venue-dancer-grid" aria-label="Dancer roster cards">
         {rosterEntries.slice(0, visibleCount).map(({ id, affiliation, dancer, checkIn }) => {
           const visibility = rosterChannelVisibility(affiliation);
           const checkedInAt = typeof checkIn?.checkedInAt === "string" && Number.isFinite(Date.parse(checkIn.checkedInAt)) ? checkIn.checkedInAt : null;
-          const identity = <span className="venue-nfc-dancer-identity">
-              <span className="venue-nfc-dancer-avatar" data-dancer-avatar="" aria-hidden="true">
-                <span data-dancer-avatar-border="">
+          const canOpenProfile = Boolean(affiliation?.canViewProfile && affiliation.dancerId);
+          const identity = <span className="venue-card-portrait">
+              <span className="venue-card-photo" aria-hidden="true">
                   {dancer?.avatarUrl ? (
-                    <img src={dancer.avatarUrl} srcSet={dancer.avatarSrcSet || undefined} sizes="48px" alt="" loading="lazy" decoding="async" />
+                    <img src={dancer.avatarUrl} srcSet={dancer.avatarSrcSet || undefined} sizes="(max-width: 620px) 44vw, 240px" alt="" loading="lazy" decoding="async" />
                   ) : (dancer?.stageName || "D").slice(0, 1).toUpperCase()}
-                </span>
               </span>
-              <span className="venue-nfc-dancer-copy">
+              <span className="venue-card-caption">
                 <strong>{dancer?.stageName || "Dancer"}</strong>
-                {dancer?.city ? <small>{dancer.city}</small> : null}
-                <small className={checkIn ? "venue-roster-working" : ""}>{checkIn ? "● Working now · NFC" : "Not working now"}</small>
-                {checkedInAt ? <small>Checked in · <time dateTime={checkedInAt}>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone }).format(new Date(checkedInAt))}</time></small> : null}
-                {visibility.internal || visibility.external ? <small className="venue-roster-channel">{visibility.internal && visibility.external ? "Internal + External" : visibility.internal ? "Internal only" : "External only"}</small> : null}
+                {canOpenProfile && <small>View profile ↗</small>}
               </span>
             </span>;
           return (
-          <div className="venue-nfc-dancer" key={id}>
+          <article className="venue-dancer-card" key={id}>
             {affiliation?.canViewProfile && affiliation.dancerId
-              ? <VenueRosterProfileButton dancerId={affiliation.dancerId} stageName={dancer?.stageName || "Dancer"} className="ir-profile-link venue-dancer-profile-trigger">{identity}</VenueRosterProfileButton>
+              ? <VenueRosterProfileButton dancerId={affiliation.dancerId} stageName={dancer?.stageName || "Dancer"} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
               : identity}
-            <div className="venue-roster-actions">
+            <div className="venue-card-details">
+              <span className="venue-card-status" data-state={checkIn ? "working" : "inactive"}>{checkIn ? "● Working now" : "Not working now"}</span>
+              {visibility.internal || visibility.external ? <small>{visibility.internal && visibility.external ? "Internal + External" : visibility.internal ? "Internal only" : "External only"}</small> : null}
+              {checkedInAt ? <small>Checked in · <time dateTime={checkedInAt}>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone }).format(new Date(checkedInAt))}</time></small> : null}
+              {dancer?.city ? <small>{dancer.city}</small> : null}
+            </div>
+            <div className="venue-card-options">
               {canManageRoster && affiliation ? (
                 <details className="venue-roster-menu" name="venue-roster-options"><summary aria-label={`More options for ${dancer?.stageName || "dancer"}`}>•••</summary><div><button className="venue-nfc-remove-access" type="button" disabled={isSaving}
                   aria-label={`Remove ${affiliation.dancer?.stageName || "dancer"} affiliation from Internal and External`} onClick={() => removeAccess(affiliation)}>
@@ -394,9 +398,10 @@ export default function VenueNfcTagPanel({
                 </button></div></details>
               ) : null}
             </div>
-          </div>
+          </article>
           );
         })}
+        </div>
         {!isRosterLoading && !rosterEntries.length ? <p>{search.trim() || channel !== "all" ? "No dancers match these filters." : workingOnly ? "No dancers are working now." : "No dancers have used this venue's dancer check-in sticker yet."}</p> : null}
         {rosterEntries.length > visibleCount ? <button type="button" onClick={() => setVisibleCount((count) => count + 50)}>Show more dancers ({rosterEntries.length - visibleCount} remaining)</button> : null}
         </div>

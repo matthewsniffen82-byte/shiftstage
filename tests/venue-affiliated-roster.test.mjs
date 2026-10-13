@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
@@ -65,6 +66,49 @@ test("working rows only attach matching active affiliations and preserve the exa
 });
 
 const panel = read("../app/dashboard/VenueNfcTagPanel.tsx");
+test("live roster cards retain photos, shift details and permission-scoped profile and management controls", () => {
+  const require = createRequire(import.meta.url);
+  const exports = {};
+  const state = []; let cursor = 0;
+  vm.runInNewContext(ts.transpileModule(panel, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText, {
+    exports, Date, Intl, require(name) {
+      if (name === 'react/jsx-runtime') return require(name);
+      if (name === 'react') return {
+        useState(initial) { const index = cursor++; if (!(index in state)) state[index] = initial; return [state[index], value => { state[index] = typeof value === 'function' ? value(state[index]) : value; }]; },
+        useCallback: callback => callback, useEffect() {}, useRef: value => ({ current: value }),
+      };
+      if (name.endsWith('.css') || name === './dashboard-session') return {};
+      if (name.includes('venue-roster')) return roster;
+      if (name === '../internal/InternalRoster') return { InternalRoster: 'InternalRoster', VenueRosterProfileButton: 'ProfileButton' };
+      if (name === './VenueDashboardIdentity') return { VenueDashboardIcon: 'Icon' };
+      throw new Error(`Unexpected import: ${name}`);
+    },
+  });
+  const nodes = tree => tree && typeof tree === 'object' ? [tree, ...[tree.props?.children, tree.props?.roster].flat(Infinity).flatMap(nodes)] : [];
+  const fixture = [
+    { ...affiliations[0], canViewProfile: true, workingUntil: new Date(Date.now() + 3600000).toISOString(), internalVisible: true, externalVisible: true, dancer: { ...affiliations[0].dancer, avatarUrl: '/bella.jpg' } },
+    { ...affiliations[1], canViewProfile: false },
+  ];
+  const props = { initialAffiliations: fixture, workingNow: [{ dancerId: 'one', checkedInAt: '2026-10-13T03:00:00Z' }], timeZone: 'America/Los_Angeles', workingOnly: false, onWorkingOnlyChange() {} };
+  const render = options => { cursor = 0; return nodes(exports.default({ ...props, ...options })); };
+  let tree = render({ canManageRoster: true });
+  const cards = tree.filter(node => node.props.className === 'venue-dancer-card');
+  assert.equal(cards.length, 2);
+  assert.equal(nodes(cards[0]).find(node => node.type === 'ProfileButton').props.dancerId, 'one');
+  assert.equal(nodes(cards[0]).find(node => node.type === 'img').props.src, '/bella.jpg');
+  assert.ok(nodes(cards[0]).some(node => node.props.children === 'Internal + External'));
+  assert.equal(nodes(cards[0]).find(node => node.type === 'time').props.dateTime, '2026-10-13T03:00:00Z');
+  assert.equal(nodes(cards[1]).find(node => node.type === 'ProfileButton'), undefined);
+  assert.ok(nodes(cards[1]).some(node => node.props.children === 'Not working now'));
+  assert.equal(tree.filter(node => node.props.className === 'venue-roster-menu').length, 2);
+  tree = render({ canManageRoster: false });
+  assert.equal(tree.filter(node => node.props.className === 'venue-roster-menu').length, 0);
+  tree.find(node => node.type === 'input' && node.props.type === 'search').props.onChange({ target: { value: 'Ivy' } });
+  tree = render({ canManageRoster: false });
+  assert.equal(tree.filter(node => node.props.className === 'venue-dancer-card').length, 1);
+  assert.ok(tree.some(node => node.props.children === 'Ivy'));
+});
+
 const removal = compile(panel.slice(panel.indexOf("  async function removeAccess("), panel.indexOf("  function startTapTest(")));
 function removalFixture({ canManageRoster = true, confirmed = true } = {}) {
   let saved = affiliations;
