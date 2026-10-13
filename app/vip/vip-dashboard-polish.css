@@ -123,7 +123,20 @@ body.dancr-button-system #vip-dashboard .vip-dancer-favorite { left: 0; display:
 body.dancr-button-system #vip-dashboard .vip-dancer-favorite svg { width: 30px; height: 30px; box-sizing: border-box; padding: 5px; border: 1px solid #ffffffa6; border-radius: 50%; background: transparent; filter: drop-shadow(0 1px 2px #000b); }
 body.dancr-button-system #vip-dashboard .vip-plan-grid { grid-template-columns: minmax(0, 1fr); }
 body.dancr-button-system #vip-dashboard .vip-visit-panel { position: static; width: 100%; max-width: 680px; }
-body.dancr-button-system #vip-dashboard .vip-back-to-dancers { margin-bottom: 18px; }
+/* Keep visit details compact while preserving room for native date/time pickers. */
+body.dancr-button-system #vip-dashboard .vip-panel.vip-visit-panel { padding: 12px; }
+body.dancr-button-system #vip-dashboard .vip-back-to-dancers { margin-bottom: 8px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-step-heading { gap: 8px; margin-bottom: 10px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-step-heading > span { width: 28px; height: 28px; border-radius: 8px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel > form { gap: 10px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-date-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 135px), 1fr)); gap: 8px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-date-grid label { gap: 4px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-date-grid input { min-height: 44px; padding: 8px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-selected-summary { padding: 8px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-selected-chips { gap: 6px; margin-top: 6px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-selected-chips li { gap: 0; padding: 0 0 0 8px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-submit-area { gap: 6px; }
+body.dancr-button-system #vip-dashboard .vip-visit-panel .vip-submit-area small { line-height: 1.45; }
 body.dancr-button-system #vip-dashboard:has(.vip-mobile-continue) { padding-bottom: calc(110px + env(safe-area-inset-bottom)); }
 body.dancr-button-system #vip-dashboard .vip-mobile-continue { position: fixed; z-index: 6; bottom: calc(12px + env(safe-area-inset-bottom)); left: 14px; right: 14px; max-width: 580px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border: 1px solid #51445e; border-radius: 16px; background: #1b1622; box-shadow: 0 8px 30px #0008; font-size: 13px; color: #f6f2ed; }
 body.dancr-button-system #vip-dashboard .vip-mobile-continue strong { color: var(--vip-gold); }
