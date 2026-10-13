@@ -27,7 +27,7 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
     <div className="venue-performance-tools">
       <label>Find a dancer<input type="search" value={search} placeholder="Search stage names" onChange={event => { setSearch(event.target.value); setLimit(20); }} /></label>
       <label>Sort by<select value={sort} onChange={event => { setSort(event.target.value as DancerScoreSort); setLimit(20); }}>
-        {scoreKeys.map(key => <option key={key} value={key}>{scoreLabels[key]} score</option>)}
+        {scoreKeys.map(key => <option key={key} value={key}>{compactScoreLabels[key]} score</option>)}
         <option value="name">Name</option>
       </select></label>
     </div>
@@ -35,12 +35,12 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
       <summary>How scores are calculated</summary>
       <p>Scores are out of 100, based on recorded activity at this club for the selected period.</p>
       <dl>
-        <div><dt>Overall Performance</dt><dd>Weighted average of at least three categories. Missing categories are excluded; remaining weights are rescaled.</dd></div>
-        <div><dt>Check-in Activity · {DANCER_SCORE_WEIGHTS.checkIns}%</dt><dd>{CHECK_IN_SCORE_WEIGHTS.accuracy}% checkout accuracy + {CHECK_IN_SCORE_WEIGHTS.days}% relative check-in days + {CHECK_IN_SCORE_WEIGHTS.hours}% relative hours. Both-roster time boosts the days-and-hours portion by {BOTH_ROSTER_ACTIVITY_BOOST * 100}%, prorated by time and capped at 50 points. Internal-only and external-only are equal. Every ended visit needs the dancer&apos;s checkout before expiry for that day&apos;s accuracy credit. Active visits wait; staff checkout and expiry earn none. Without ended visits, activity is provisional; three ended days are needed to leave Early data.</dd></div>
-        <div><dt>Internal Table Requests · {DANCER_SCORE_WEIGHTS.internal}%</dt><dd>Requests received per checked-in hour, compared with this club&apos;s typical rate.</dd></div>
-        <div><dt>VIP Requests · {DANCER_SCORE_WEIGHTS.vip}%</dt><dd>80% relative selections + 20% returning-customer share. Customer withdrawals are excluded.</dd></div>
-        <div><dt>Profile Interest · {DANCER_SCORE_WEIGHTS.profile}%</dt><dd>Weighted actions: profile opens 1; club opens, follows and completed shares 2; directions, transport, offer clicks and &quot;I&apos;m Going&quot; 3.</dd></div>
-        <div><dt>Verified Entry Conversions · {DANCER_SCORE_WEIGHTS.conversions}%</dt><dd>Percentage of profile passes claimed in this period and redeemed by period end. Voided passes are excluded.</dd></div>
+        <div><dt>{compactScoreLabels.overall}</dt><dd>Weighted average of at least three categories. Missing categories are excluded; remaining weights are rescaled.</dd></div>
+        <div><dt>{compactScoreLabels.checkIns} · {DANCER_SCORE_WEIGHTS.checkIns}%</dt><dd>{CHECK_IN_SCORE_WEIGHTS.accuracy}% checkout accuracy + {CHECK_IN_SCORE_WEIGHTS.days}% relative check-in days + {CHECK_IN_SCORE_WEIGHTS.hours}% relative hours. Both-roster time boosts the days-and-hours portion by {BOTH_ROSTER_ACTIVITY_BOOST * 100}%, prorated by time and capped at 50 points. Internal-only and external-only are equal. Every ended visit needs the dancer&apos;s checkout before expiry for that day&apos;s accuracy credit. Active visits wait; staff checkout and expiry earn none. Without ended visits, activity is provisional; three ended days are needed to leave Early data.</dd></div>
+        <div><dt>{compactScoreLabels.internal} · {DANCER_SCORE_WEIGHTS.internal}%</dt><dd>Requests received per checked-in hour, compared with this club&apos;s typical rate.</dd></div>
+        <div><dt>{compactScoreLabels.vip} · {DANCER_SCORE_WEIGHTS.vip}%</dt><dd>80% relative selections + 20% returning-customer share. Customer withdrawals are excluded.</dd></div>
+        <div><dt>{compactScoreLabels.profile} · {DANCER_SCORE_WEIGHTS.profile}%</dt><dd>Weighted actions: profile opens 1; club opens, follows and completed shares 2; directions, transport, offer clicks and &quot;I&apos;m Going&quot; 3.</dd></div>
+        <div><dt>{compactScoreLabels.conversions} · {DANCER_SCORE_WEIGHTS.conversions}%</dt><dd>Percentage of profile passes claimed in this period and redeemed by period end. Voided passes are excluded.</dd></div>
         <div><dt>Benchmarks and rank</dt><dd>Relative scores compare qualifying dancers at this club; typical positive activity earns 50 points. Ranking needs all five categories past Early data and at least {DANCER_SCORE_MIN_PEERS} comparable dancers. Ties share a rank.</dd></div>
       </dl>
       <p>Early data means a small or partial sample. Missing data stays unscored. Staff request-status updates do not affect scores. Clicks and requests do not prove attendance or revenue.</p>
@@ -71,9 +71,8 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
       <details className="venue-score-details">
         <summary>Score details <span>Out of 100</span></summary>
         <dl>{scoreKeys.map(key => <div key={key}>
-          <dt>{scoreLabels[key]}</dt>
-          <dd>{row.scores[key].confidence === "early" && <span className="venue-score-confidence">Early data</span>}
-            {row.scores[key].evidence ? <span className="venue-score-evidence">{row.scores[key].evidence}</span>
+          <dt><span>{compactScoreLabels[key]}</span>{row.scores[key].confidence === "early" && <span className="venue-score-confidence">Early data</span>}</dt>
+          <dd>{row.scores[key].evidence ? <span className="venue-score-evidence">{row.scores[key].evidence}</span>
               : <span>Not enough data. {row.scores[key].reason}</span>}</dd>
         </div>)}</dl>
       </details>

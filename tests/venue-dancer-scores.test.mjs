@@ -55,7 +55,7 @@ test('Both earns a prorated 25 percent activity boost without changing checkout 
   assert.deepEqual(scoreVenueDancers(rows,'30d').map(row=>row.scores.checkIns.value),[75,78,81]);
   rows[2].internal.dancerCheckoutDays=0;
   assert.equal(scoreVenueDancers(rows,'30d')[2].scores.checkIns.value,31,'Both cannot supply missing checkout points');
-  assert.match(scoreVenueDancers(rows,'30d')[1].scores.checkIns.evidence,/4 hours on both rosters/);
+  assert.match(scoreVenueDancers(rows,'30d')[1].scores.checkIns.evidence,/4h on both rosters/);
 });
 
 test('Both bonus stays within the activity allocation, including provisional visits', () => {

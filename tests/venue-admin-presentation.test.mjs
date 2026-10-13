@@ -227,7 +227,7 @@ const scoredDancers = () => ["Aria", "Bella", "Celeste"].map((name, index) => ({
   vip: { requests: 20, scoringRequests: 20, scoringUniqueRequesters: 10, scoringRepeatRequesters: 2 }, results: dancerResults(),
 }));
 
-test("dancer rows show six compact scores with full labels and evidence in collapsed details", () => {
+test("dancer rows use matching titles for scores, sorting and collapsed details", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
   const tree = render({ dancers: scoredDancers(), period: "30d" });
   const rows = tree.filter(node => node.type === "li");
@@ -243,7 +243,8 @@ test("dancer rows show six compact scores with full labels and evidence in colla
     assert.equal(grid.props['aria-label'], 'Performance scores out of 100');
     assert.deepEqual(nodes(grid).filter(node => node.type === "abbr").map(node => node.props.children), ["Overall", "Check-ins", "Tables", "VIP", "Interest", "Entries"]);
     assert.deepEqual(nodes(grid).filter(node => node.type === "abbr").map(node => node.props.title), Object.values(scoring.DANCER_SCORE_LABELS));
-    assert.deepEqual(nodes(details).filter(node => node.type === "dt").map(node => node.props.children), Object.values(scoring.DANCER_SCORE_LABELS));
+    assert.deepEqual(nodes(details).filter(node => node.type === "dt").map(node => node.props.children[0].props.children),
+      nodes(grid).filter(node => node.type === "abbr").map(node => node.props.children));
     assert.equal(details.props.open, undefined);
     assert.equal(nodes(grid).filter(node => node.props.className === "venue-score-evidence").length, 0);
     assert.deepEqual(nodes(row).filter(node => node.type === "strong").map(node => node.props.children), [53, 75, 50, 44, 50, 50]);
@@ -252,6 +253,8 @@ test("dancer rows show six compact scores with full labels and evidence in colla
     assert.equal(nodes(row).filter(node => node.type === "details").length, 1);
   }
   assert.deepEqual(tree.filter(node => node.type === "option").map(node => node.props.value), ["overall", "checkIns", "internal", "vip", "profile", "conversions", "name"]);
+  assert.deepEqual(tree.filter(node => node.type === "option" && node.props.value !== "name").map(node => node.props.children.join("")),
+    ["Overall", "Check-ins", "Tables", "VIP", "Interest", "Entries"].map(label => `${label} score`));
   assert.equal(tree.filter(node => node.type === "details").length, 4);
   assert.ok(tree.some(node => node.type === "summary" && node.props.children === "How scores are calculated"));
   assert.equal(tree.find(node => node.type === "details").props.open, undefined);
@@ -267,11 +270,14 @@ test("score explanation stays concise and preserves weights, conversion scope an
     : node && typeof node === "object" ? text(node.props?.children)
       : typeof node === "string" || typeof node === "number" ? String(node) : "";
   for (const period of ["tonight", "7d", "30d", "all"]) {
-    const explanation = render({ dancers: scoredDancers(), period }).find(node => node.props.className === "venue-score-methodology");
+    const tree = render({ dancers: scoredDancers(), period });
+    const explanation = tree.find(node => node.props.className === "venue-score-methodology");
+    const grid = tree.find(node => node.props.className === "venue-score-grid");
+    const labels = nodes(grid).filter(node => node.type === "abbr").map(node => node.props.children);
     const copy = nodes(explanation).filter(node => ["p", "dt", "dd", "summary", "small"].includes(node.type)).map(text).join(" ");
     assert.ok(copy.split(/\s+/).length <= 280, "keep the explanation scannable");
-    for (const key of scoring.DANCER_SCORE_CATEGORIES) {
-      assert.ok(copy.includes(`${scoring.DANCER_SCORE_LABELS[key]} · ${scoring.DANCER_SCORE_WEIGHTS[key]}%`));
+    for (const [index, key] of scoring.DANCER_SCORE_CATEGORIES.entries()) {
+      assert.ok(copy.includes(`${labels[index + 1]} · ${scoring.DANCER_SCORE_WEIGHTS[key]}%`));
     }
     assert.match(copy, /at least three categories.*Missing categories are excluded; remaining weights are rescaled/);
     assert.match(copy, /claimed in this period and redeemed by period end/);

@@ -115,7 +115,7 @@ export function scoreVenueDancers(dancers: DancerPerformance[], period: DancerSc
     const checkIns = !row.checkInEligible ? unavailable(`Needs at least ${minimum.hours} hours with verified dancer check-in and checkout tracking.`)
       : checkInPeers.length < DANCER_SCORE_MIN_PEERS ? unavailable(peerReason)
         : available(checkInValue, row.rosterHours! < minimum.hours * 2 || row.checkoutDays! < 3,
-          `${display(row.checkInDays!)} check-in days · ${row.checkoutDays! > 0 ? `${display(row.accurateDays!)} of ${display(row.checkoutDays!)} ended days with dancer checkouts` : "Checkout accuracy pending"} · ${display(row.rosterHours!)} tracked hours · ${display(row.bothHours!)} hours on both rosters${row.activeDays! > 0 ? ` · ${display(row.activeDays!)} days with active visits` : ""}`);
+          `${display(row.checkInDays!)} check-in ${row.checkInDays === 1 ? "day" : "days"} · ${row.checkoutDays! > 0 ? `Dancer checkout: ${display(row.accurateDays!)}/${display(row.checkoutDays!)} ended days` : "Checkout accuracy pending"} · ${display(row.rosterHours!)}h tracked · ${display(row.bothHours!)}h on both rosters${row.activeDays! > 0 ? ` · ${display(row.activeDays!)} active ${row.activeDays === 1 ? "day" : "days"}` : ""}`);
     const internal = !row.tableEligible ? unavailable(`Needs ${minimum.requests} requests during at least ${minimum.hours} recorded checked-in hours.`)
       : tablePeers.length < DANCER_SCORE_MIN_PEERS ? unavailable(peerReason)
         : available(relative(row.tableRate!, baseline.tableRate), row.duringHours! < Math.max(20, minimum.requests * 2), `${display(row.duringHours!)} requests · ${display(row.tableRate!)} / hr`);
