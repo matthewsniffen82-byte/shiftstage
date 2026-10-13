@@ -85,6 +85,35 @@ test('demo working roster never replaces another venue report or creates missing
   assert.equal(demo.withDemoWorkingRoster(missing, echo, [{ dancerId: 'demo' }], []), missing);
 });
 
+test('Echo fills empty single-roster cards with sample counts while preserving the working total', () => {
+  const shifts = Array.from({ length: 96 }, (_, i) => ({ dancerId: `dancer-${i}` }));
+  const affiliations = shifts.map(({ dancerId }) => ({ dancerId, status: 'active', internalVisible: true, externalVisible: true }));
+  const before = structuredClone(affiliations);
+  for (const period of Object.keys(demo.DEMO_PERIODS)) {
+    const { report } = demo.createVenueDashboardDemo(period, now);
+    const result = demo.withDemoWorkingRoster(report, echo, shifts, affiliations);
+    assert.deepEqual(result.automatic.liveRoster, { total: 96, internal: 12, external: 18, both: 66, unknown: 0 });
+    assert.equal(result.automatic.liveRosterIsSample, true);
+    assert.equal(result.automatic.current, report.automatic.current);
+    assert.equal(result.performance, report.performance);
+  }
+  assert.deepEqual(affiliations, before, 'sample results never change dancer visibility');
+  const { report } = demo.createVenueDashboardDemo('30d', now);
+  for (const total of [0, 1, 2, 3, 4, 8, 17, 95]) {
+    const { liveRoster, liveRosterIsSample } = demo.withDemoWorkingRoster(report, echo, shifts.slice(0, total), affiliations).automatic;
+    assert.equal(liveRoster.total, total);
+    assert.equal(liveRoster.internal + liveRoster.external + liveRoster.both + liveRoster.unknown, total);
+    assert.equal(liveRosterIsSample, total >= 3);
+    if (total >= 3) assert.ok(liveRoster.internal > 0 && liveRoster.external > 0 && liveRoster.both > 0);
+  }
+  for (const mode of ['internal', 'external']) {
+    const mixed = affiliations.map((member, i) => i === 0 ? { ...member, internalVisible: mode === 'internal', externalVisible: mode === 'external' } : member);
+    const { liveRoster } = demo.withDemoWorkingRoster(report, echo, shifts, mixed).automatic;
+    assert.equal(liveRoster[mode], 1, 'existing single-roster counts are retained');
+    assert.equal(liveRoster.internal + liveRoster.external + liveRoster.both, 96);
+  }
+});
+
 test('queue totals match the visible sample records and stay live independently of the historical period', () => {
   const expected = demo.createVenueDashboardDemo('tonight', now).operations;
   for (const period of Object.keys(demo.DEMO_PERIODS)) {

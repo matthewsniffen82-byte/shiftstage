@@ -144,6 +144,18 @@ test("live roster is labelled separately, only 7/30-day totals compare, and abse
   assert.ok(nodes(tree.find(node=>node.props.className==='venue-priority-metrics')).filter(node=>node.type==='strong').every(node=>node.props.children==='—'));
 });
 
+test('sample working roster is labelled separately from recorded live data', () => {
+  const render = component("app/dashboard/VenueValueAnalytics.tsx", "default", "", valueDependencies);
+  const demo = createVenueDashboardDemo('30d', new Date('2026-10-13T08:00:00Z'));
+  const notes = tree => tree.filter(node => node.props.className === 'venue-value-note')
+    .map(node => [node.props.children].flat(Infinity).join('')).join('\n');
+  assert.match(notes(render({ ...demo, timezone: 'UTC' })), /Live roster as of/);
+  demo.report.automatic.liveRosterIsSample = true;
+  const text = notes(render({ ...demo, timezone: 'UTC' }));
+  assert.match(text, /Sample roster as of/);
+  assert.doesNotMatch(text, /Live roster as of/);
+});
+
 for (const period of ["7d", "30d"]) test(`${period} results use recorded-period copy until comparison history is complete`, () => {
   const render = component("app/dashboard/VenueValueAnalytics.tsx", "default", "", valueDependencies);
   const demo = createVenueDashboardDemo(period, new Date("2026-10-13T08:00:00Z"));

@@ -27,7 +27,16 @@ export function withDemoWorkingRoster(
     const external = member?.status === "active" && member.externalVisible === true;
     liveRoster[internal && external ? "both" : internal ? "internal" : external ? "external" : "unknown"]++;
   }
-  return { ...report, automatic: { ...report.automatic, liveRoster } };
+  // Show every mode in Echo's sample results without changing anyone's roster visibility.
+  const liveRosterIsSample = liveRoster.both >= 3 && (liveRoster.internal === 0 || liveRoster.external === 0);
+  if (liveRosterIsSample) {
+    const internal = liveRoster.internal === 0 ? Math.max(1, Math.floor(liveRoster.both / 8)) : 0;
+    const external = liveRoster.external === 0 ? Math.max(1, Math.floor(liveRoster.both * 3 / 16)) : 0;
+    liveRoster.internal += internal;
+    liveRoster.external += external;
+    liveRoster.both -= internal + external;
+  }
+  return { ...report, automatic: { ...report.automatic, liveRoster, liveRosterIsSample } };
 }
 
 export const DEMO_PERIODS = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;

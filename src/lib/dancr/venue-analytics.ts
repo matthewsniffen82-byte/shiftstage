@@ -24,6 +24,7 @@ export type VenueAutomaticReport = {
   current: VenueAutomaticPeriod;
   previous: VenueAutomaticPeriod | null;
   liveRoster: Record<"total" | "internal" | "external" | "both" | "unknown", number>;
+  liveRosterIsSample?: boolean;
   liveAsOf: string;
 };
 
