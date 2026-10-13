@@ -166,6 +166,18 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-value-analytics { display: grid; gap: 16px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-value-breakdown { margin: 0; }
 
+/* Keep the Results introduction and first metrics close together. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-toolbar:has(.venue-analytics-period) + .venue-command-panel { padding-bottom: 0 !important; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-overview { display: grid; align-content: start; gap: 6px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-results-heading { margin: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-overview .venue-value-analytics { gap: 10px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-results-intro { display: grid; gap: 4px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-results-intro > p { margin: 0 !important; line-height: 1.4; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-overview .venue-priority-metrics { gap: 8px; margin: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-overview .venue-priority-metrics > .metric { min-height: 0; padding: 10px; gap: 3px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-overview .venue-priority-metrics > .metric > strong { margin: 0; line-height: 1.15; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-overview .venue-auto-categories { margin-top: 2px; }
+
 /* Expandable tools retain full tap areas and show an explicit open state. */
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon] { border: 1px solid var(--venue-card-edge) !important; border-radius: 16px !important; background: #121116 !important; box-shadow: 0 5px 14px #0004 !important; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-dashboard-section[data-section-icon][open] { border-color: #81629f !important; }

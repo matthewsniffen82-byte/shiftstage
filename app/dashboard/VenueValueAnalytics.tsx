@@ -44,8 +44,10 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
   };
   const buckets = (title: string, items: VenueDemandBucket[] | undefined) => <div className="venue-demand-group"><h4>{title}</h4>{items?.length ? <ol className="venue-demand-list">{items.map((item, i) => <li key={item.label + ":" + i}><span>{item.label}</span><strong>{number(item.total)}</strong></li>)}</ol> : <p className="venue-value-empty">{items ? "No requests this period." : "Not yet available."}</p>}</div>;
   return <div className="venue-value-analytics">
-    <p className="venue-value-dates">{dateRange}</p>
-    <p className="venue-value-note">{period === "tonight" ? "Tonight’s results so far." : period === "all" ? "All available recorded history." : "Compared with the preceding period of the same length."} Updates from dancer check-ins, customer actions and entry scans.</p>
+    <div className="venue-results-intro">
+      <p className="venue-value-dates">{dateRange}</p>
+      <p className="venue-value-note">{period === "tonight" ? "Tonight’s results so far." : period === "all" ? "All available recorded history." : "Compared with the preceding period of the same length."} Updates from dancer check-ins, customer actions and entry scans.</p>
+    </div>
     {!automatic && <p role="status">Automatic venue metrics are unavailable. Refresh to try again.</p>}
     <div className="venue-priority-metrics" aria-label="Venue results at a glance">{priority.map(metric)}</div>
     <div className="venue-auto-categories">{categories.map(category => <details className="venue-auto-category" key={category.id} id={"venue-results-" + category.id}>
