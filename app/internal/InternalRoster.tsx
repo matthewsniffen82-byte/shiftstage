@@ -15,6 +15,8 @@ type ClubRequest = { id: string; link_id: string; dancer_id: string; dancerName?
 type Snapshot = { venueName: string; venueLogoUrl?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 
 const ROSTER_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
+// Match the public grid's pinned profile; only reorder dancers in the current roster.
+const STAR_PROFILE_ID = "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2";
 const REQUEST_SENT_NOTICE = "Request sent to club staff. Staff acknowledgement does not guarantee the dancer is available.";
 const REQUEST_STATUS_LABELS: Record<string, string> = {
   pending: "Pending staff acknowledgment",
@@ -344,7 +346,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
   }
 
   const staff = !token;
-  const dancers = snapshot?.dancers || [];
+  const dancers = (snapshot?.dancers || []).slice().sort((a, b) => Number(b.id === STAR_PROFILE_ID) - Number(a.id === STAR_PROFILE_ID));
   // Table snapshots already carry each dancer's active request, including after reload.
   // A receipt alone has no dancer identity; never assign it to an unrelated card.
   const tableRequests = staff ? [] : dancers.filter(dancer => dancer.requestStatus);

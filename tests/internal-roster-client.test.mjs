@@ -151,6 +151,26 @@ const textContent = tree => typeof tree === "string" || typeof tree === "number"
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
 const requestStatusPanel = app => find(app.render(), node => node.props?.["aria-label"] === "Table request status");
 
+for (const staff of [false, true]) test(`Star stays first in the ${staff ? "staff" : "table"} internal grid across refreshes`, async t => {
+  const star = { ...dancer, id: "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2", stageName: "Star" };
+  const otherStar = { ...dancer, id: "another-star", stageName: "Star" };
+  let dancers = [dancer, otherStar, star];
+  const app = harness(async () => response({ ...roster, dancers }), staff ? {
+    session: { accessToken: "owner-token", account: { role: "venue" } }, props: { token: undefined },
+  } : {});
+  t.after(() => app.unmount());
+  await app.mount();
+  const ids = () => Array.from(grid(app).props.children, card => card.key);
+  assert.deepEqual(ids(), [star.id, dancer.id, otherStar.id]);
+  assert.deepEqual(dancers.map(item => item.id), [dancer.id, otherStar.id, star.id], "rendering does not mutate the roster snapshot");
+  dancers = [otherStar, star, dancer];
+  await app.advance(refreshInterval);
+  assert.deepEqual(ids(), [star.id, otherStar.id, dancer.id], "keep the server's order for all other dancers");
+  dancers = [dancer, otherStar];
+  await app.advance(refreshInterval);
+  assert.deepEqual(ids(), [dancer.id, otherStar.id], "do not add Star when she is absent or promote a matching stage name");
+});
+
 test("venue table sections reserve their place before the roster while the first request is pending", async t => {
   const pending = deferred();
   const app = harness(() => pending.promise, {
