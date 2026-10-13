@@ -11,11 +11,13 @@ import { scoreVenueDancers } from '../src/lib/dancr/venue-dancer-scores.ts';
 
 const now = new Date('2026-10-13T06:00:00Z');
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
-const echo = { id: '260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af', slug: 'echo-house' };
+// The authorized production response uses the original slug, not the display-name slug.
+const echo = { id: '260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af', name: 'Echo House', slug: 'talk-of-the-town' };
 
-test('only the exact fictional venue gets the demo presentation', () => {
+test('the production Echo House identity gets samples and other venue identities do not', () => {
   assert.equal(demo.isVenueDashboardDemo(echo), true);
-  for (const profile of [undefined, null, {}, { ...echo, id: 'real-venue' }, { ...echo, slug: 'real-club' }, { name: 'Echo House' }]) {
+  for (const profile of [undefined, null, {}, { ...echo, id: 'real-venue' }, { ...echo, slug: 'real-club' },
+    { ...echo, slug: 'echo-house' }, { name: 'Echo House' }, { slug: 'talk-of-the-town' }]) {
     assert.equal(demo.isVenueDashboardDemo(profile), false);
   }
 });

@@ -5,7 +5,8 @@ import type { HairColor } from "./hair-color";
 
 // This selects a fictional presentation, never permission to access or write venue data.
 export function isVenueDashboardDemo(profile: Record<string, unknown> | null | undefined) {
-  return profile?.id === "260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af" && profile.slug === "echo-house";
+  // Echo House retains its original database slug after the fictional rebrand.
+  return profile?.id === "260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af" && profile.slug === "talk-of-the-town";
 }
 
 export const DEMO_PERIODS = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
