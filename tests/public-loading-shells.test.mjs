@@ -1,20 +1,35 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import vm from "node:vm";
 
 const [liveShell, tvFeed] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
 ]);
 
-test("public discovery keeps final card geometry instead of visible loading copy", () => {
-  assert.match(liveShell, /const cardCount = tabName === "venues" \? 1 : 3/);
-  assert.match(liveShell, /class="home-discovery-loading-card" aria-hidden="true"/);
-  assert.match(liveShell, /\.home-discovery-loading-card \{[\s\S]*?aspect-ratio: 9 \/ 16/);
+test("dancer discovery shows visible compact progress while clubs retain their loading card", () => {
+  const start = liveShell.indexOf('    function homeDiscoveryLoadingStateMarkup(');
+  const source = liveShell.slice(start, liveShell.indexOf('\n    }', start) + '\n    }'.length);
+  const context = vm.createContext({ activeTab: 'dancers', escapeHtml: value => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;') });
+  vm.runInContext(source, context);
+  for (const tab of ['dancers', 'tonight']) {
+    const markup = context.homeDiscoveryLoadingStateMarkup('Las Vegas', tab);
+    assert.match(markup, /role="status".*aria-live="polite" aria-busy="true"/);
+    assert.match(markup, /home-discovery-loading-spinner" aria-hidden="true"/);
+    assert.match(markup, /<span>Loading (?:dancers|who is working) in Las Vegas…<\/span>/);
+    assert.doesNotMatch(markup, /home-discovery-loading-card|home-discovery-loading-copy/);
+  }
+  const clubs = context.homeDiscoveryLoadingStateMarkup('Las Vegas', 'venues');
+  assert.match(clubs, /class="home-discovery-loading-card" aria-hidden="true"/);
+  assert.match(clubs, /aria-label="Loading clubs in Las Vegas"/);
+  assert.doesNotMatch(clubs, /home-discovery-loading-spinner/);
+  const escaped = context.homeDiscoveryLoadingStateMarkup('<img src=x>"', 'dancers');
+  assert.ok(escaped.includes('&lt;img src=x&gt;&quot;'));
+  assert.doesNotMatch(escaped, /<img/);
+  assert.match(liveShell, /\.home-discovery-loading\.is-dancers \{[^}]*display: flex;[^}]*min-height: 120px;[^}]*color: #d4d4dc;/);
+  assert.match(liveShell, /@media \(prefers-reduced-motion: reduce\) \{\s*\.home-discovery-loading-card::after,\s*\.home-discovery-loading-spinner \{ animation: none; \}/);
   assert.match(liveShell, /\.home-discovery-loading\.is-venues \.home-discovery-loading-card \{[\s\S]*?min-height: 390px/);
-  assert.match(liveShell, /aria-label="\$\{loadingLabel\}" aria-live="polite" aria-busy="true"/);
-  assert.doesNotMatch(liveShell, /<strong>\$\{loadingLabel\}<\/strong>/);
-  assert.doesNotMatch(liveShell, /"Loading clubs\.\.\."|"Loading live profiles\.\.\."/);
 });
 
 test("home TV uses a poster-shaped shell without a black loading box", () => {

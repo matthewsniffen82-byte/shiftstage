@@ -221,7 +221,7 @@ test("Dancers uses grouped grid browsing while Venues retains its inline feed", 
   );
   assert.match(
     homeSource,
-    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*return;/,
+    /if \(activeTab === "dancers"\) \{\s*renderHomeDancerGrid\(city, items\);\s*observeDiscoveryGrid\(\);\s*return;/,
   );
   assert.match(
     homeSource,
@@ -436,7 +436,7 @@ test("a hard refresh keeps Clubs in a truthful loading state until discovery is 
   );
   assert.match(
     homeSource,
-    /function homeDiscoveryLoadingStateMarkup\(city, tabName = activeTab\)[\s\S]*?Loading clubs in \$\{safeCity\}[\s\S]*?const cardCount = tabName === "venues" \? 1 : 3[\s\S]*?class="home-discovery-loading \$\{presentation\}" role="status" aria-label="\$\{loadingLabel\}" aria-live="polite" aria-busy="true"/,
+    /function homeDiscoveryLoadingStateMarkup\(city, tabName = activeTab\)[\s\S]*?Loading clubs in \$\{safeCity\}[\s\S]*?class="home-discovery-loading is-venues" role="status" aria-label="\$\{loadingLabel\}" aria-live="polite" aria-busy="true"/,
   );
   assert.match(
     homeSource,

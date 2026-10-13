@@ -25,9 +25,28 @@
             radial-gradient(circle at 20% 82%, rgba(139,92,246,.17), transparent 42%),
             linear-gradient(145deg,#111118,#07070b);
         }
-        .home-discovery-loading.is-dancers .home-discovery-loading-card {
-          border: 0;
-          background: linear-gradient(145deg,#111118,#07070b);
+        .home-discovery-loading.is-dancers {
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+          min-height: 120px;
+          padding: 24px 12px;
+          color: #d4d4dc;
+          font-size: 14px;
+          line-height: 1.5;
+          text-align: center;
+        }
+        .home-discovery-loading-spinner {
+          box-sizing: border-box;
+          flex: 0 0 20px;
+          width: 20px;
+          height: 20px;
+          border: 2px solid #ffffff29;
+          border-top-color: #c4b5fd;
+          border-radius: 50%;
+          animation: homeDiscoveryLoadingSpin .8s linear infinite;
         }
         .home-discovery-loading.is-venues .home-discovery-loading-card {
           min-height: 390px;
@@ -65,8 +84,12 @@
         @keyframes homeDiscoveryLoadingSweep {
           to { transform: translateX(100%); }
         }
+        @keyframes homeDiscoveryLoadingSpin {
+          to { transform: rotate(360deg); }
+        }
         @media (prefers-reduced-motion: reduce) {
-          .home-discovery-loading-card::after { animation: none; }
+          .home-discovery-loading-card::after,
+          .home-discovery-loading-spinner { animation: none; }
         }
         body.overlay-open .home-feed-card .card-profile-destination {
           display: none !important;

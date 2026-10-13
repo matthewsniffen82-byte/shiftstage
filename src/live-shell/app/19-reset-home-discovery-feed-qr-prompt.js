@@ -628,16 +628,19 @@
         : tabName === "tonight"
           ? `Loading who is working in ${safeCity}`
           : `Loading dancers in ${safeCity}`;
-      const presentation = tabName === "venues" ? "is-venues" : "is-dancers";
-      const cardCount = tabName === "venues" ? 1 : 3;
-      const cards = Array.from({ length: cardCount }, () => `
+      if (tabName !== "venues") {
+        return `
+          <section class="home-discovery-loading is-dancers" role="status" aria-label="${loadingLabel}" aria-live="polite" aria-busy="true">
+            <span class="home-discovery-loading-spinner" aria-hidden="true"></span>
+            <span>${loadingLabel}…</span>
+          </section>
+        `;
+      }
+      return `
+        <section class="home-discovery-loading is-venues" role="status" aria-label="${loadingLabel}" aria-live="polite" aria-busy="true">
         <span class="home-discovery-loading-card" aria-hidden="true">
           <span class="home-discovery-loading-copy"><span></span><span></span><span></span></span>
         </span>
-      `).join("");
-      return `
-        <section class="home-discovery-loading ${presentation}" role="status" aria-label="${loadingLabel}" aria-live="polite" aria-busy="true">
-          ${cards}
         </section>
       `;
     }
