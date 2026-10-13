@@ -21,6 +21,7 @@ before(async () => {
   await db.query('insert into dancer_profiles(id) values($1),($2)', [id(1),id(2)]);
   await db.exec(readFileSync(new URL('../supabase/migrations/20261012225032_venue_hair_color_analytics.sql', import.meta.url), 'utf8'));
   await db.exec(existingPhotosMigration);
+  await db.exec(readFileSync(new URL('../supabase/migrations/20261013000159_venue_all_time_analytics.sql', import.meta.url), 'utf8'));
 });
 after(async () => db?.close());
 beforeEach(async () => db.exec('begin'));
@@ -34,6 +35,18 @@ async function current(channel = 'external') {
 async function report(venue = 10) {
   return (await db.query("select get_venue_hair_color_analytics($1,'2026-10-01','2026-11-01') report",[id(venue)])).rows[0].report;
 }
+
+test('all-time hair reports keep historical events without assigning current photos to them', async () => {
+  await db.query("insert into internal_roster_requests values($1,$2,'2025-01-01','completed'),($3,$2,'2025-01-01','completed')",[id(10),id(1),id(11)]);
+  await db.query("insert into venue_interactions values($1,$2,'2025-01-01','directions')",[id(10),id(1)]);
+  const result = (await db.query("select get_venue_hair_color_analytics($1,'1970-01-01T00:00:00Z','2026-11-01') report",[id(10)])).rows[0].report;
+  assert.equal(result.internal[0].color,'unknown'); assert.equal(result.internal[0].metrics.requests,1);
+  assert.equal(result.external[0].metrics.directions,1);
+  assert.equal((await report()).internal.length,0);
+  await db.exec('savepoint invalid_period');
+  await assert.rejects(db.query("select get_venue_hair_color_analytics($1,'2025-01-01','2026-11-01')",[id(10)]),/Invalid report period/);
+  await db.exec('rollback to invalid_period');
+});
 
 test('approved main choices enqueue once; pending media is never analyzed', async () => {
   await photo(100, true, 'pending');

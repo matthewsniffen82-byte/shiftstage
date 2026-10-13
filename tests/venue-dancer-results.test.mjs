@@ -29,7 +29,7 @@ before(async () => {
     grant usage on schema public to service_role; grant select,insert,update,delete on all tables in schema public to service_role;`);
   const roster = read('20260928090100_mydancr_internal_roster.sql');
   await db.exec(roster.slice(roster.indexOf('create function public.internal_roster_access('), roster.indexOf('create function public.internal_roster_request(')));
-  for (const migration of ['20260916190000_venue_subscription_analytics.sql', '20260916190100_report_current_pickup_receipts.sql', '20261011232707_venue_performance_channels.sql', '20261012225142_venue_dancer_results.sql']) await db.exec(read(migration));
+  for (const migration of ['20260916190000_venue_subscription_analytics.sql', '20260916190100_report_current_pickup_receipts.sql', '20261011232707_venue_performance_channels.sql', '20261012225142_venue_dancer_results.sql', '20261013000159_venue_all_time_analytics.sql']) await db.exec(read(migration));
   await db.query("insert into app_users values($1,'venue','active'),($2,'venue','active'),($3,'venue','active'),($4,'customer','active')", [id(50),id(51),id(52),id(53)]);
   await db.query('insert into venues(id,owner_user_id) values($1,$2),($3,$4)', [id(1),id(50),id(2),id(52)]);
   await db.query("insert into venue_team_members values($1,$2,'active','staff')", [id(1),id(51)]);
@@ -102,4 +102,47 @@ test('private attendance and RPCs deny public callers and suspended staff',async
   await db.exec('set role service_role'); await attendance(200,'arrived'); await report(); await db.exec('reset role');
   await db.query("update app_users set account_state='suspended' where id=$1",[id(51)]);
   await rejected(()=>attendance(200,'arrived'),/ACCESS_DENIED/);
+});
+
+test('every dancer metric shares Tonight, 7-day, 30-day and all-time boundaries without mixing venues', async () => {
+  const end = '2026-10-12T12:00:00Z';
+  const times = ['2026-10-12T10:00:00Z', '2026-10-09T10:00:00Z', '2026-09-27T10:00:00Z', '2026-08-12T10:00:00Z'];
+  for (const [i, time] of times.entries()) {
+    for (const venue of [1, 2]) {
+      await db.query("insert into venue_dancer_attendance_events(shift_id,venue_id,dancer_id,kind,occurred_at) values(gen_random_uuid(),$1,$2,'check_in',$3),(gen_random_uuid(),$1,$2,'check_out',$3::timestamptz+interval '1 hour')", [id(venue), id(10), time]);
+      await db.query("insert into venue_dancer_work_sessions(shift_id,venue_id,dancer_id,started_at,expires_at,closed_at) values(gen_random_uuid(),$1,$2,$3,$3::timestamptz+interval '1 hour',$3::timestamptz+interval '1 hour')", [id(venue), id(10), time]);
+      await db.query("insert into internal_roster_requests(id,venue_id,dancer_id,status,created_at) values(gen_random_uuid(),$1,$2,'completed',$3)", [id(venue),id(10),time]);
+      await db.query("insert into venue_vip_requests(id,venue_id,user_id,dancers,status,starts_at,created_at) values(gen_random_uuid(),$1,$2,$3,'pending',$4,$4)", [id(venue),id(53),JSON.stringify([{ id:id(10) },{ id:id(10) }]),time]);
+      await db.query("insert into shifts(id,venue_id,dancer_id) values($1,$2,$3)", [id(1000 + venue * 10 + i),id(venue),id(10)]);
+      await db.query('insert into going_signals values($1,$2)', [id(1000 + venue * 10 + i),time]);
+      for (const type of ['dancer_profile','club_page','directions','free_entry','transport']) {
+        await db.query("insert into venue_interactions(id,venue_id,dancer_id,occurred_at,event_type,source,session_id) values(gen_random_uuid(),$1,$2,$3,$4,'dancer_profile','test-browser')",[id(venue),id(10),time,type]);
+      }
+      await db.query("insert into qr_redemptions(id,venue_id,dancer_id,admission_pass_version,status,generated_at,redeemed_at,source_type) values(gen_random_uuid(),$1,$2,1,'redeemed',$3,$3::timestamptz+interval '1 hour','dancer_profile'),(gen_random_uuid(),$1,$2,1,'expired',$3,null,'dancer_profile')",[id(venue),id(10),time]);
+    }
+  }
+  for (const [start, count] of [['2026-10-12T00:00:00Z',1],['2026-10-05T12:00:00Z',2],['2026-09-12T12:00:00Z',3],['1970-01-01T00:00:00Z',4]]) {
+    const { result } = (await db.query("select get_venue_performance_analytics($1,$2,$3,'2026-10-12T00:00Z','2026-10-13T00:00Z') result",[id(1),start,end])).rows[0];
+    assert.equal(result.performance.dancers.length,1);
+    const dancer = result.performance.dancers[0];
+    assert.equal(dancer.results.checkIns,count); assert.equal(dancer.results.checkOuts,count);
+    assert.equal(dancer.internal.checkedInHours,count);
+    assert.equal(new Date(dancer.results.lastCheckInAt).toISOString(),'2026-10-12T10:00:00.000Z');
+    assert.equal(dancer.internal.requests,count); assert.equal(dancer.internal.completed,count);
+    assert.equal(dancer.results.profileConversions,count); assert.equal(dancer.results.profileClaims,count*2);
+    assert.equal(dancer.results.profileConversionPercent,50);
+    assert.equal(dancer.vip.requests,count); assert.equal(dancer.vip.repeatRequesters,1);
+    for (const key of ['dancer_profile','club_page','directions','free_entry','transport','going']) assert.equal(dancer.external[key],count,key);
+  }
+});
+
+test('all-time reports remain service-only and arbitrary long or invalid ranges stay rejected', async () => {
+  const call = (since,until='2026-10-12') => db.query("select get_venue_performance_analytics($1,$2,$3,'2026-10-12','2026-10-13')",[id(1),since,until]);
+  await rejected(() => call('2026-01-01'), /31 days/);
+  await rejected(() => call('1970-01-01','infinity'), /31 days/);
+  await rejected(() => call(null), /31 days/);
+  for (const role of ['anon','authenticated']) {
+    await db.exec(`set role ${role}`); await rejected(() => call('1970-01-01'),/permission denied/); await db.exec('reset role');
+  }
+  await db.exec('set role service_role'); await call('1970-01-01'); await db.exec('reset role');
 });

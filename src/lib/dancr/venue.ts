@@ -601,9 +601,9 @@ export async function getVenueDashboard(
       cashierNfcRedemptions: admissionMetrics.redemptions,
       admissionPassesClaimed: admissionMetrics.claims,
       claimToAdmissionPercent: conversionPercent(admissionMetrics.cohortRedemptions, admissionMetrics.claims),
-      pageViewsChangePercent: percentChange(pageViews, previousPageViews),
-      directionsChangePercent: percentChange(directions, previousDirections),
-      redemptionsChangePercent: percentChange(admissionMetrics.redemptions, admissionMetrics.previousRedemptions),
+      pageViewsChangePercent: period === "all" ? null : percentChange(pageViews, previousPageViews),
+      directionsChangePercent: period === "all" ? null : percentChange(directions, previousDirections),
+      redemptionsChangePercent: period === "all" ? null : percentChange(admissionMetrics.redemptions, admissionMetrics.previousRedemptions),
       directionConversionPercent: conversionPercent(directions, pageViews),
       redemptionConversionPercent: conversionPercent(admissionMetrics.cohortRedemptions, admissionMetrics.claims),
     },
@@ -614,10 +614,10 @@ export async function getVenueDashboard(
   };
 }
 
-export type VenueAnalyticsPeriod = "tonight" | "7d" | "30d";
+export type VenueAnalyticsPeriod = "tonight" | "7d" | "30d" | "all";
 
 export function readVenueAnalyticsPeriod(value: string | null | undefined): VenueAnalyticsPeriod {
-  return value === "tonight" || value === "7d" || value === "30d" ? value : "30d";
+  return value === "tonight" || value === "7d" || value === "30d" || value === "all" ? value : "30d";
 }
 
 const VENUE_OWNER_COLUMNS =
@@ -847,6 +847,10 @@ function venueAnalyticsRange(timeZone: string, period: VenueAnalyticsPeriod, now
   if (period === "tonight") {
     start = new Date(getTonightWindow(timeZone, now).startsAt);
     label = "Tonight";
+  } else if (period === "all") {
+    // The epoch selects all history in the service-only reporting RPCs.
+    start = new Date(0);
+    label = "All time";
   } else {
     const days = period === "7d" ? 7 : 30;
     start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
@@ -857,7 +861,7 @@ function venueAnalyticsRange(timeZone: string, period: VenueAnalyticsPeriod, now
     label,
     start,
     end: now,
-    previousStart: new Date(start.getTime() - duration),
+    previousStart: period === "all" ? start : new Date(start.getTime() - duration),
   };
 }
 

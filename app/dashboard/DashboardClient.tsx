@@ -72,7 +72,7 @@ export default function DashboardClient({
   const [customerSavedLoading, setCustomerSavedLoading] = useState(true);
   const [deviceSavedDeals, setDeviceSavedDeals] = useState<DeviceSavedClubDeal[]>([]);
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const [analyticsPeriod, setAnalyticsPeriod] = useState<"tonight" | "7d" | "30d">("30d");
+  const [analyticsPeriod, setAnalyticsPeriod] = useState<"tonight" | "7d" | "30d" | "all">("30d");
   const [isVenueRefreshing, setIsVenueRefreshing] = useState(false);
   const [venueRefreshStatus, setVenueRefreshStatus] = useState("");
   const [customerAlertCount, setCustomerAlertCount] = useState(0);

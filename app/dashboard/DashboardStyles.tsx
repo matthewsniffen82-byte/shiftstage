@@ -737,6 +737,7 @@ export function DashboardStyles() {
       .venue-working-verification { justify-items: end; text-align: right; }
       .venue-working-verification > strong { color: #76f0c8; font-size: 11px; }
       .venue-analytics-period { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; padding: 5px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: #050507; }
+      .venue-analytics-period[aria-label="Analytics period"] { grid-template-columns: repeat(4,minmax(0,1fr)); }
       .venue-analytics-period button { min-height: 40px; border: 1px solid transparent; border-radius: 9px; color: var(--mydancr-dashboard-muted); background: transparent; font: inherit; font-size: 12px; font-weight: 850; cursor: pointer; }
       .venue-analytics-period button.active { border-color: rgba(124,58,237,.58); color: #f8fafc; background: #7c3aed; box-shadow: 0 0 16px rgba(124,58,237,.22); }
       .venue-analytics-period button:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }

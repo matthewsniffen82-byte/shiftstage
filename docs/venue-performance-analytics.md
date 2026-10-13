@@ -1,6 +1,6 @@
 # Venue results and dancer performance
 
-The venue Results workspace uses Tonight, 7 days, and 30 days. Longer periods compare with the immediately preceding interval of identical length. Tonight shows results so far plus live queues. It uses the existing venue-local Tonight boundary from `getTonightWindow`.
+The venue Results workspace uses Tonight, 7 days, 30 days, and All time. The shared period applies to every dancer section and the supporting reports. The 7-day and 30-day periods compare with the immediately preceding interval of identical length. All time includes all available recorded history, with no prior-period comparison or invented history. Tonight shows results so far plus live queues. It uses the existing venue-local Tonight boundary from `getTonightWindow`.
 
 ## Results
 
@@ -20,16 +20,18 @@ Tonight’s live VIP counts use scheduled dates, including requests submitted ea
 
 ## Dancer channels
 
-- **Internal:** table requests received and current pending/acknowledged/completed/cancelled states, recorded checked-in hours, requests during those hours, requests per recorded hour, and median acknowledgement/completion times with sample counts.
-- **External:** explicitly venue-and-dancer-attributed profile opens, club opens, directions, pass claims, verified admissions, offer/transport clicks and “I’m Going” signals. Generic dancer profile popularity and follower counts are excluded.
-- **VIP:** current selections in requests, current pending/confirmed/declined/cancelled states and repeat requesters. A dancer gets one credit per request, even for duplicated legacy selection IDs. A multi-dancer request still counts once in venue totals.
-- **All:** displays the channels together with their own labels. Request sorting uses table plus VIP request counts as workload, not distinct customers or an overall performance score.
+- **Check-ins:** check-in count, check-out count, recorded checked-in time, and last recorded check-in within the period. This section stays visible in every channel.
+- **Internal:** table requests received and marked completed. Completed counts the current completed status of requests received within the selected period; it does not use completion date.
+- **External passes:** redeemed admission passes/deals issued through the dancer's profile and profile pass conversion percentage.
+- **Clicks and activity:** all six venue-and-dancer-attributed measures: profile opens from this venue, club page opens, directions, “I’m Going” signals, offer clicks and transport clicks. Generic dancer profile popularity and follower counts are excluded.
+- **VIP:** number of requests selecting the dancer and repeat VIP requesters. A dancer gets one credit per request, even for duplicated legacy selection IDs. A multi-dancer request still counts once in venue totals.
+- **All:** displays the channels together with their own labels. Table and VIP request sorting remain separate, not a combined customer count or performance score.
 
 Repeat VIP requesters are distinct VIP accounts that have an earlier request selecting the same dancer at the same venue. This includes declined/cancelled requests and uses current selections, since pending selections may be edited. This measure never claims repeat visits. Analytics return aggregates only, without guest names, emails, phone numbers, account IDs or browser identifiers.
 
-Each compact dancer row shows the public avatar and name, checked-in time, requests attended and redeemed profile passes. Unknown attendance says **Not recorded**; it never becomes a missed arrival. Recorded zeroes remain zero, and mixed attendance shows confirmed arrivals with the unknown count in the expanded details. Legacy completed requests do not substitute for confirmed arrivals. Neutral fills keep the three measures readable without a composite score.
+Each compact dancer row shows the public avatar and name, checked-in time, table requests received and redeemed profile passes. Missing recorded hours or result data says **Not recorded**; recorded zeroes remain zero. Neutral fills keep the three measures readable without a composite score.
 
-Dancers are searchable and sortable by requests attended, checked-in time, requests, completed table requests, verified admissions, profile conversions, check-ins or name where applicable. All/Internal default to requests attended, External to redeemed profile passes, and VIP to request selections. Opening a row shows check-in/out times, Internal / External / VIP breakdowns, explicit missed table arrivals and conversion rates. Clicks and profile activity come last. The list paginates locally without truncating database counts. Approved public avatars are fetched in batches; other profiles use initials. Private internal-only photos are not published through analytics.
+Dancers are searchable and sortable by table requests received, marked completed table requests, checked-in time, VIP selections, repeat VIP requesters, redeemed profile passes, check-ins or name where applicable. All/Internal default to table requests received, External to redeemed profile passes, and VIP to request selections. Opening a row shows only the measures listed above, with clicks and activity last. Extra status breakdowns, attendance outcomes, request rates, response/completion timing and all-source pass totals are no longer displayed per dancer. Operational records and venue-level reporting are retained. The list paginates locally without truncating database counts. Approved public avatars are fetched in batches; other profiles use initials. Private internal-only photos are not published through analytics.
 
 ## Reliable timing and hours
 
@@ -43,7 +45,7 @@ Clicks, browser counts, shares and TV results remain in supporting disclosures. 
 
 ## Attendance and profile conversions
 
-The dancer results extension records explicit, verified check-ins and check-outs in a private event ledger. Expiring presence does not become a check-out. Events survive shift deletion; prior check-in/out events are not reconstructed. The dashboard shows the tracking start date, event counts and each dancer’s latest recorded times in the venue timezone.
+The dancer results extension records explicit, verified check-ins and check-outs in a private event ledger. Expiring presence does not become a check-out. Events survive shift deletion; prior check-in/out events are not reconstructed. The dashboard shows the tracking start date, event counts and each dancer's latest recorded check-in within the selected period in the venue timezone.
 
 Staff first mark a table request seen, then choose **Mark arrived** or **Didn’t arrive at table**. Mark arrived confirms the dancer actually attended; Complete closes the attended request. Didn’t arrive at table closes it as cancelled and preserves the `no_show` outcome. This is only about acknowledged internal table requests, not shifts or VIP bookings, and is never inferred automatically. These actions require venue staff access and reject stale transitions. Requests remain in the staff inbox after the dancer checks out, within the existing six-hour queue window. Unknown attendance is shown separately. Table attendance rate is arrived / (arrived + no-show), using requests created in the selected period; completed legacy requests never imply arrival.
 
@@ -58,6 +60,8 @@ The additive migration `venue_dancer_results` preserves the previous channel rep
 `get_venue_performance_analytics` wraps the existing subscription analytics RPC without replacing it. It is a service-role-only, security-invoker function with an empty search path. The dashboard authorizes venue access before calling it. New tracking tables have RLS, no public/authenticated grants, and service-role read access only. A non-callable definer trigger maintains the private presence ledger when existing shift commands execute.
 
 Deploy the additive migration before the application commit. Verify aggregate output and permissions read-only, run Supabase advisors, then verify Vercel success for the exact application SHA. Unit/component checks use PGlite and in-memory React/service fixtures; no E2E or browser journeys are used.
+
+All-time reporting uses the explicit UTC epoch boundary in the service-only subscription and hair-color RPCs. Ordinary custom ranges retain their existing limits and finite-date validation. Migration `20261013000159_venue_all_time_analytics.sql` preserves attribution, permissions and existing records. The CLI-created migration was aligned to the production migration version returned by Supabase. Security and performance advisors reported no new findings.
 
 Production migration was applied on October 11, 2026 with the Supabase-generated version above; the CLI-created file was aligned to that recorded version. Read-only verification confirmed aggregate output, 498 initially observed work sessions, service-only RPC execution, and denied public ledger reads. Advisors found no new security findings or unindexed foreign keys. Two new indexes initially received informational [unused-index notices](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index); they are retained for dancer foreign-key lookups and venue/time-range request reporting as activity accumulates.
 

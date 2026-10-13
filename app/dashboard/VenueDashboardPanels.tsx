@@ -83,10 +83,10 @@ export function VenuePanel({
   venueAccess?: LoadState["venueAccess"];
   refreshedAt?: string | null;
   supportThreads?: Array<Record<string, unknown>>;
-  analyticsPeriod: "tonight" | "7d" | "30d";
+  analyticsPeriod: "tonight" | "7d" | "30d" | "all";
   isRefreshing: boolean;
   refreshStatus: string;
-  onAnalyticsPeriodChange: (period: "tonight" | "7d" | "30d") => void;
+  onAnalyticsPeriodChange: (period: "tonight" | "7d" | "30d" | "all") => void;
   onRefresh: () => void;
   onAccessRemoved: (affiliation: VenueDancerAffiliation) => void;
   onProfileChange: (profile: Record<string, unknown>) => void;
@@ -374,15 +374,15 @@ export function VenuePanel({
         <section className="info-panel" id="venue-overview" aria-labelledby="venue-results-heading">
           <h2 className="venue-icon-heading" id="venue-results-heading"><VenueDashboardIcon section="analytics" />Results</h2>
           <div className="venue-analytics-period" role="group" aria-label="Analytics period">
-            {(["tonight", "7d", "30d"] as const).map((period) => (
+            {(["tonight", "7d", "30d", "all"] as const).map((period) => (
               <button className={analyticsPeriod === period ? "active" : ""} aria-pressed={analyticsPeriod === period} type="button" key={period} onClick={() => onAnalyticsPeriodChange(period)}>
-                {period === "tonight" ? "Tonight" : period === "7d" ? "7 days" : "30 days"}
+                {period === "tonight" ? "Tonight" : period === "7d" ? "7 days" : period === "30d" ? "30 days" : "All time"}
               </button>
             ))}
           </div>
           {analytics?.valueReport ? <VenueValueAnalytics
             report={analytics.valueReport as VenueValueReport}
-            period={analytics.period === "tonight" || analytics.period === "7d" || analytics.period === "30d" ? analytics.period : analyticsPeriod}
+            period={analytics.period === "tonight" || analytics.period === "7d" || analytics.period === "30d" || analytics.period === "all" ? analytics.period : analyticsPeriod}
             periodStart={String(analytics.periodStart)}
             periodEnd={String(analytics.periodEnd)}
             timezone={String(profile?.timezone || "America/Los_Angeles")}

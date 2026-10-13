@@ -9,8 +9,8 @@ const source = readFileSync(new URL('../src/lib/dancr/venue.ts', import.meta.url
 function fixture({ denied = false, rpcError = null, photoError = null, count = 203 } = {}) {
   const calls = [], filters = [], dancers = Array.from({ length: count }, (_, i) => ({ id: `dancer-${i}`, name: `Dancer ${i}` }));
   const report = { current: { claims: 1, admissions: 1, cohortRedemptions: 1, directions: 2 }, previous: { admissions: 0, directions: 1 }, performance: { dancers } };
-  const start = new Date('2026-10-01T07:00Z'), end = new Date('2026-10-08T07:00Z');
-  const code = ts.transpileModule(source.slice(source.indexOf('export async function getVenueDashboard('), source.indexOf('export type VenueAnalyticsPeriod')), {
+  const code = ts.transpileModule(source.slice(source.indexOf('export async function getVenueDashboard('), source.indexOf('const VENUE_OWNER_COLUMNS'))
+    + source.slice(source.indexOf('function venueAnalyticsRange('), source.indexOf('function percentChange(')), {
     compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
   }).outputText;
   const exports = {};
@@ -27,18 +27,17 @@ function fixture({ denied = false, rpcError = null, photoError = null, count = 2
       }; return query;
     },
   };
-  vm.runInNewContext(code, { exports, Date,
+  vm.runInNewContext(code, { exports, Date: class extends Date { constructor(value = '2026-10-08T07:00:00.000Z') { super(value); } },
     requireVenueAccess: async (_client, user, permission) => { calls.push(['authorize', user, permission]); if (denied) throw new Error('Forbidden'); },
     requireVenueForAccount: async () => { calls.push(['profile']); return { id: 'own-venue', timezone: 'America/Los_Angeles' }; },
-    venueAnalyticsRange: () => ({ start, end, previousStart: new Date('2026-09-24T07:00Z'), label: 'Last 7 days' }),
-    getTonightWindow: () => ({ startsAt: '2026-10-08T07:01Z', endsAt: '2026-10-09T07:01Z' }),
+    getTonightWindow: () => ({ startsAt: '2026-10-07T19:00Z', endsAt: '2026-10-08T19:00Z' }),
     countByVenue: async () => 0, countByVenueBetween: async () => 0, countVenueEvents: async () => 0,
     countVenueNfcTaps: async () => 0, countUpcomingShifts: async () => 0, countVenueGoingSignals: async () => 0,
     getWorkingDancers: async () => [], getVenueDealsForAccount: async () => ({ deals: [] }),
     dancerPhotoDeliveryUrl: path => `/approved-photo?path=${encodeURIComponent(path)}`,
     conversionPercent: () => 0, percentChange: () => 0, getVenuePublicationState: () => ({}),
   });
-  return { run: () => exports.getVenueDashboard(client, 'owner', '7d'), calls, filters };
+  return { run: (period = '7d') => exports.getVenueDashboard(client, 'owner', period), readPeriod: exports.readVenueAnalyticsPeriod, calls, filters };
 }
 
 test('performance is read only after venue authorization and uses venue-local tonight boundaries', async () => {
@@ -46,7 +45,7 @@ test('performance is read only after venue authorization and uses venue-local to
   assert.equal(f.calls[0][0], 'authorize'); assert.equal(f.calls[0][2], 'view_dashboard');
   const rpc = f.calls.find(c => c[0] === 'rpc');
   assert.equal(rpc[1], 'get_venue_performance_analytics'); assert.equal(rpc[2].p_venue_id, 'own-venue');
-  assert.equal(rpc[2].p_since, '2026-10-01T07:00:00.000Z'); assert.equal(rpc[2].p_tonight_since, '2026-10-08T07:01Z');
+  assert.equal(rpc[2].p_since, '2026-10-01T07:00:00.000Z'); assert.equal(rpc[2].p_tonight_since, '2026-10-07T19:00Z');
   const hair = f.calls.find(c => c[1] === 'get_venue_hair_color_analytics');
   assert.equal(hair[2].p_venue_id, 'own-venue'); assert.equal(hair[2].p_since, rpc[2].p_since);
   assert.equal(r.analytics.valueReport.hairColor.trackingStartedAt, '2026-10-12');
@@ -55,6 +54,25 @@ test('performance is read only after venue authorization and uses venue-local to
   assert.ok(r.analytics.valueReport.performance.dancers[0].photoUrl.startsWith('/approved-photo'));
   assert.equal(r.analytics.valueReport.performance.dancers[1].photoUrl, null);
   assert.equal(r.analytics.valueReport.performance.dancers[2].photoUrl, null);
+});
+
+test('Tonight, 7 days, 30 days and All time use identical boundaries across every reporting section', async () => {
+  for (const [period, since, label] of [
+    ['tonight', '2026-10-07T19:00:00.000Z', 'Tonight'],
+    ['7d', '2026-10-01T07:00:00.000Z', 'Last 7 days'],
+    ['30d', '2026-09-08T07:00:00.000Z', 'Last 30 days'],
+    ['all', '1970-01-01T00:00:00.000Z', 'All time'],
+  ]) {
+    const f = fixture({ count: 0 }); const { analytics } = await f.run(period);
+    assert.equal(f.readPeriod(period), period);
+    assert.equal(analytics.period, period); assert.equal(analytics.periodLabel, label);
+    assert.equal(analytics.periodStart, since);
+    for (const call of f.calls.filter(call => call[0] === 'rpc')) {
+      assert.equal(call[2].p_since, since); assert.equal(call[2].p_until, '2026-10-08T07:00:00.000Z');
+    }
+    if (period === 'all') for (const key of ['pageViewsChangePercent', 'directionsChangePercent', 'redemptionsChangePercent']) assert.equal(analytics[key], null);
+  }
+  for (const invalid of [null, undefined, '', 'forever', '365d']) assert.equal(fixture().readPeriod(invalid), '30d');
 });
 
 test('denied access never starts analytics or photo reads; data failures are not turned into zero outcomes', async () => {

@@ -311,7 +311,7 @@ export function requestVenueTvVideosJson(options: DashboardJsonRequestOptions = 
 }
 
 export function requestVenueDashboardJson(
-  period: "tonight" | "7d" | "30d",
+  period: "tonight" | "7d" | "30d" | "all",
   options: DashboardJsonRequestOptions = {},
 ) {
   return requestDashboardJson(`/api/venue/dashboard?period=${encodeURIComponent(period)}`, {
