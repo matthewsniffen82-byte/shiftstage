@@ -45,6 +45,7 @@ export type DancerPerformance = {
   id: string;
   name: string;
   photoUrl?: string | null;
+  photoSrcSet?: string | null;
   // Optional presentation mapping for demo rows; null means no real profile.
   profileDancerId?: string | null;
   internal: Record<string, number | null>;

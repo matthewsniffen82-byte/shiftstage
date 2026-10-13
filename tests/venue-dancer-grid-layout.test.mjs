@@ -106,10 +106,10 @@ test("details, profile errors and actions cannot add height to a compact card", 
 });
 
 test("demo and live venue rosters and requests all use the same grid stylesheet", () => {
-  for (const file of ["VenueDemoDashboard", "VenueNfcTagPanel", "VenueMostRequestedDancers"]) {
+  for (const file of ["VenueDemoDashboard", "VenueNfcTagPanel", "VenueMostRequestedDancers", "VenueDancerPerformance"]) {
     const source = read(`../app/dashboard/${file}.tsx`);
     assert.ok(source.includes('import "./venue-dancer-grid.css";'));
-    assert.ok(source.includes('className="venue-dancer-grid"'));
+    assert.match(source, /className="venue-dancer-grid(?: [^"]*)?"/);
   }
   const internal = read("../app/internal/InternalRoster.tsx");
   assert.ok(internal.includes('import "../dashboard/venue-dancer-grid.css";'));

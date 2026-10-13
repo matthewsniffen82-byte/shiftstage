@@ -42,11 +42,17 @@
 .venue-outcome-counts dd { margin: 4px 0 0; color: #fff; font-size: 16px; font-variant-numeric: tabular-nums; }
 .venue-outcome-counts small { display: block; color: #b8afc4; font-size: 11px; line-height: 1.4; margin-top: 4px; }
 .venue-performance .venue-value-note { color: #bdbdc6; }
-.venue-scored-list > li { display: grid; grid-template-columns: minmax(160px,1fr) minmax(0,3fr); align-items: center; gap: 6px 14px; padding: 10px 0; }
-.venue-score-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.venue-score-identity > .venue-score-copy { min-width: 0; }
-.venue-score-identity .venue-performance-avatar { flex: none; }
-.venue-performance button.venue-score-identity:is(:hover, :focus-visible) .venue-performance-name { text-decoration: underline; text-underline-offset: 3px; }
+.venue-performance-cards > li { min-width: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-performance button.venue-score-card-button { display: block; width: 100%; min-width: 0; min-height: 44px; margin: 4px 0 0; padding: 6px 2px !important; border: 0 !important; border-radius: 6px !important; background: transparent !important; color: #e2dce9; box-shadow: none !important; font-size: 11px !important; line-height: 1.3; text-align: center; cursor: pointer; }
+body.dancr-button-system .venue-performance button.venue-score-card-button::before, body.dancr-button-system .venue-performance button.venue-score-card-button::after { display: none !important; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-performance button.venue-score-card-button:hover { background: #202026 !important; }
+.venue-score-card-overall { font-variant-numeric: tabular-nums; }
+dialog.venue-score-dialog { box-sizing: border-box; width: min(600px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); margin: auto; padding: 16px; overflow: auto; border: 1px solid #494951; border-radius: 14px; background: #0b0a0f; color: #f4f4f6; }
+dialog.venue-score-dialog:not([open]) { display: none; }
+dialog.venue-score-dialog::backdrop { background: rgb(0 0 0 / 72%); }
+.venue-score-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.venue-score-dialog > header h3 { min-width: 0; overflow-wrap: anywhere; }
+body.dancr-button-system .venue-score-dialog > header button { flex: none; min-height: 44px; padding: 6px 12px; font-size: 13px; }
 .venue-score-rank { display: block; margin-top: 2px; color: #bdbdc6; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
 .venue-score-grid { display: grid; grid-template-columns: repeat(6,minmax(0,1fr)); gap: 4px; margin: 0; min-width: 0; }
 .venue-score { min-width: 0; padding: 8px 3px; text-align: center; border-bottom: 2px solid #494951; background: #17171c; }
@@ -58,8 +64,7 @@
 .venue-score-missing { color: #bdbdc6; }
 .venue-score-early { display: block; margin-top: 3px; font-size: 10px; line-height: 1.3; color: #dedee6; }
 .venue-score-details { grid-column: 1 / -1; min-width: 0; color: #bdbdc6; font-size: 12px; }
-.venue-score-details > summary { box-sizing: border-box; min-height: 44px; padding: 10px 0; cursor: pointer; color: #dedee6; }
-.venue-score-details > summary > span { float: right; color: #bdbdc6; font-size: 11px; }
+.venue-score-details > h4 { margin: 16px 0 10px; color: #dedee6; font-size: 13px; }
 .venue-score-details dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px 12px; margin: 0 0 4px; }
 .venue-score-details dl > div { min-width: 0; }
 .venue-score-details dt { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; color: #ededf1; font-weight: 650; line-height: 1.4; }
@@ -81,7 +86,6 @@
 .venue-performance :is(button,summary,input,select):focus-visible { outline: 2px solid #d4d4dc; outline-offset: 3px; }
 @media(max-width:640px) {
   .venue-outcome-counts { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .venue-scored-list > li { grid-template-columns: minmax(0,1fr); gap: 6px; }
   .venue-performance-avatar { width: 40px; height: 40px; }
 }
 @media(max-width:480px) {

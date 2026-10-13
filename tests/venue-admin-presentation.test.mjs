@@ -17,17 +17,19 @@ function nodes(element) {
 function component(file, name, extra = "", dependencies = {}) {
   const source = readFileSync(new URL("../" + file, import.meta.url), "utf8");
   const code = ts.transpileModule(source + extra, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-  const state = []; let index = 0;
+  const state = []; let index = 0; let effects = [];
   const exports = {};
   vm.runInNewContext(code, { exports, URLSearchParams, Date: class extends Date { constructor(value = "2026-01-01T00:05:00.000Z") { super(value); } }, require(module) {
     if (module === "react/jsx-runtime") return jsx;
-    if (module === "react") return { useState(initial) { const i = index++; if (!(i in state)) state[i] = initial; return [state[i], value => { state[i] = typeof value === "function" ? value(state[i]) : value; }]; }, useRef: value => ({ current: value }), useEffect() {} };
+    if (module === "react") return { useState(initial) { const i = index++; if (!(i in state)) state[i] = initial; return [state[i], value => { state[i] = typeof value === "function" ? value(state[i]) : value; }]; }, useRef(value) { const i = index++; return state[i] ||= { current: value }; }, useEffect(effect) { effects.push(effect); } };
     if (module in dependencies) return dependencies[module];
     if (module === "next/link" || module.includes("VenueAdminUtilities")) return { default: () => null };
     if (module === "./pickup-session") return {};
     throw new Error("Unexpected import: " + module);
   } });
-  return props => { index = 0; return nodes(exports[name](props)); };
+  const render = props => { index = 0; effects = []; return nodes(exports[name](props)); };
+  render.flushEffects = () => effects.forEach(effect => effect());
+  return render;
 }
 
 test("pickup presets preserve UTC inclusive dates across year boundaries and keep custom/all behavior", () => {
@@ -219,7 +221,7 @@ test("demo comparisons do not invent activity or missing rates", () => {
 const dancerResults = (overrides = {}) => ({ checkIns: 2, checkOuts: 1, lastCheckInAt: null, lastCheckOutAt: null,
   profileConversions: 10, profileClaims: 20, profileCohortConversions: 10, profileConversionPercent: 50,
   tableArrived: 0, tableNoShows: 0, tableAttendanceUnrecorded: 0, showUpPercent: null, ...overrides });
-const scoreDependencies = { "@/src/lib/dancr/venue-dancer-scores": scoring, "../internal/InternalRoster": { VenueRosterProfileButton: "ProfileButton" } };
+const scoreDependencies = { "@/src/lib/dancr/venue-dancer-scores": scoring, "../internal/InternalRoster": { VenueRosterProfileButton: "ProfileButton" }, "./VenueGridImage": { default: "GridImage" }, "./venue-dancer-grid.css": {} };
 const scoredDancers = () => ["Aria", "Bella", "Celeste"].map((name, index) => ({ id: String.fromCharCode(97 + index), name,
   internal: { requests: 20, completed: 8, checkedInHours: 8, requestsDuringHours: 20,
     rosterTrackedHours: 8, verifiedCheckInDays: 4, checkoutEligibleDays: 4, dancerCheckoutDays: 4, activeCheckInDays: 0 },
@@ -227,35 +229,50 @@ const scoredDancers = () => ["Aria", "Bella", "Celeste"].map((name, index) => ({
   vip: { requests: 20, scoringRequests: 20, scoringUniqueRequesters: 10, scoringRepeatRequesters: 2 }, results: dancerResults(),
 }));
 
-test("dancer rows use matching titles for scores, sorting and collapsed details", () => {
+test("performance cards open full profiles and keep each dancer's score breakdown in a separate dialog", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
-  const tree = render({ dancers: scoredDancers(), period: "30d" });
+  const dancers = scoredDancers().map(row => ({ ...row, photoUrl: `/main-${row.id}.jpg`, photoSrcSet: `/main-${row.id}.jpg 480w` }));
+  const tree = render({ dancers, period: "30d" });
+  assert.ok(tree.some(node => node.props.className === "venue-dancer-grid venue-performance-cards"));
+  assert.equal(tree.filter(node => node.props.className === "venue-dancer-card").length, 3);
+  assert.equal(tree.filter(node => node.props.className === "venue-score-grid").length, 0);
   const rows = tree.filter(node => node.type === "li");
   assert.equal(rows.length, 3);
   assert.deepEqual(tree.filter(node => node.type === "ProfileButton").map(node => node.props.dancerId), ["a", "b", "c"]);
   for (const row of rows) {
     const profile = nodes(row).find(node => node.type === "ProfileButton");
-    assert.ok(nodes(profile).some(node => node.props.className === "venue-performance-avatar"));
-    assert.ok(nodes(profile).some(node => node.props.className === "venue-performance-name" && node.props.children === profile.props.stageName));
+    assert.equal(profile.props.className, "ir-profile-link venue-card-profile");
+    assert.ok(nodes(profile).some(node => node.props.className === "venue-card-portrait"));
+    assert.ok(nodes(profile).some(node => node.type === "strong" && node.props.children === profile.props.stageName));
+    const image = nodes(profile).find(node => node.type === "GridImage");
+    assert.equal(image.props.src, `/main-${profile.props.dancerId}.jpg`);
+    assert.equal(image.props.srcSet, `/main-${profile.props.dancerId}.jpg 480w`);
     assert.ok(!nodes(profile).some(node => node.type === "details" || node.props.className === "venue-score-grid"));
-    const grid = nodes(row).find(node => node.props.className === "venue-score-grid");
-    const details = nodes(row).find(node => node.type === "details");
+    const trigger = nodes(row).find(node => node.props.className === "venue-score-card-button");
+    assert.equal(trigger.props['aria-haspopup'], 'dialog');
+    trigger.props.onClick();
+    const expanded = render({ dancers, period: "30d" });
+    const dialog = expanded.find(node => node.type === "dialog");
+    assert.equal(dialog.props['aria-label'], `${profile.props.stageName} performance scores`);
+    const grid = nodes(dialog).find(node => node.props.className === "venue-score-grid");
+    const details = nodes(dialog).find(node => node.props.className === "venue-score-details");
     assert.equal(grid.props['aria-label'], 'Performance scores out of 100');
     assert.deepEqual(nodes(grid).filter(node => node.type === "abbr").map(node => node.props.children), ["Overall", "Check-ins", "Tables", "VIP", "Interest", "Entries"]);
     assert.deepEqual(nodes(grid).filter(node => node.type === "abbr").map(node => node.props.title), Object.values(scoring.DANCER_SCORE_LABELS));
     assert.deepEqual(nodes(details).filter(node => node.type === "dt").map(node => node.props.children[0].props.children),
       nodes(grid).filter(node => node.type === "abbr").map(node => node.props.children));
-    assert.equal(details.props.open, undefined);
     assert.equal(nodes(grid).filter(node => node.props.className === "venue-score-evidence").length, 0);
-    assert.deepEqual(nodes(row).filter(node => node.type === "strong").map(node => node.props.children), [53, 75, 50, 44, 50, 50]);
-    assert.equal(nodes(row).filter(node => node.props.className === "venue-score-evidence").length, 6);
-    assert.ok(nodes(row).some(node => node.props.className === "venue-score-rank" && node.props.children === "#1 of 3 ranked dancers"));
-    assert.equal(nodes(row).filter(node => node.type === "details").length, 1);
+    assert.deepEqual(nodes(grid).filter(node => node.type === "strong").map(node => node.props.children), [53, 75, 50, 44, 50, 50]);
+    assert.equal(nodes(dialog).filter(node => node.props.className === "venue-score-evidence").length, 6);
+    assert.ok(nodes(dialog).some(node => node.props.className === "venue-score-rank" && node.props.children === "#1 of 3 ranked dancers"));
+    assert.ok(nodes(row).some(node => node.props.className === "venue-score-card-rank" && node.props.title === "#1 of 3 ranked dancers"));
+    dialog.props.onClose();
+    assert.equal(render({ dancers }).filter(node => node.props.className === "venue-score-grid").length, 0);
   }
   assert.deepEqual(tree.filter(node => node.type === "option").map(node => node.props.value), ["overall", "checkIns", "internal", "vip", "profile", "conversions", "name"]);
   assert.deepEqual(tree.filter(node => node.type === "option" && node.props.value !== "name").map(node => node.props.children.join("")),
     ["Overall", "Check-ins", "Tables", "VIP", "Interest", "Entries"].map(label => `${label} score`));
-  assert.equal(tree.filter(node => node.type === "details").length, 4);
+  assert.equal(tree.filter(node => node.type === "details").length, 1);
   assert.ok(tree.some(node => node.type === "summary" && node.props.children === "How scores are calculated"));
   assert.equal(tree.find(node => node.type === "details").props.open, undefined);
   const demo = createVenueDashboardDemo("tonight", new Date("2026-10-12"), [{ name: "Aria", url: "/approved-photo.jpg", dancerId: "real-aria" }]);
@@ -264,13 +281,43 @@ test("dancer rows use matching titles for scores, sorting and collapsed details"
   assert.equal(demoTree.filter(node => node.type === "li").length, demo.report.performance.dancers.length);
 });
 
+test("score dialog opens modally, closes, reopens and dismisses when its dancer disappears", () => {
+  const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
+  const dancers = scoredDancers();
+  let tree = render({ dancers });
+  const calls = [];
+  const nativeDialog = {
+    open: false,
+    showModal() { this.open = true; calls.push('open'); },
+    close() { this.open = false; calls.push('close'); tree.find(node => node.type === 'dialog').props.onClose(); },
+  };
+  tree.find(node => node.type === 'dialog').props.ref.current = nativeDialog;
+  render.flushEffects();
+  assert.deepEqual(calls, []);
+  tree.find(node => node.props.className === 'venue-score-card-button').props.onClick();
+  tree = render({ dancers }); render.flushEffects();
+  assert.deepEqual(calls, ['open']);
+  tree = render({ dancers, period: 'tonight' }); render.flushEffects();
+  assert.deepEqual(calls, ['open'], 'period updates keep the open dialog and refresh its scores');
+  tree.find(node => node.type === 'button' && node.props.children === 'Close').props.onClick();
+  tree = render({ dancers }); render.flushEffects();
+  assert.deepEqual(calls, ['open', 'close']);
+  assert.ok(!tree.some(node => node.props.className === 'venue-score-grid'));
+  tree.find(node => node.props.className === 'venue-score-card-button').props.onClick();
+  tree = render({ dancers }); render.flushEffects();
+  tree = render({ dancers: [] }); render.flushEffects();
+  assert.deepEqual(calls, ['open', 'close', 'open', 'close']);
+});
+
 test("score explanation stays concise and preserves weights, conversion scope and ranking safeguards", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
   const text = node => Array.isArray(node) ? node.map(text).join("")
     : node && typeof node === "object" ? text(node.props?.children)
       : typeof node === "string" || typeof node === "number" ? String(node) : "";
   for (const period of ["tonight", "7d", "30d", "all"]) {
-    const tree = render({ dancers: scoredDancers(), period });
+    let tree = render({ dancers: scoredDancers(), period });
+    tree.find(node => node.props.className === "venue-score-card-button").props.onClick();
+    tree = render({ dancers: scoredDancers(), period });
     const explanation = tree.find(node => node.props.className === "venue-score-methodology");
     const grid = tree.find(node => node.props.className === "venue-score-grid");
     const labels = nodes(grid).filter(node => node.type === "abbr").map(node => node.props.children);
@@ -295,13 +342,13 @@ test("search, category sorting and pagination do not recalculate club ranks", ()
   dancers[0].internal.completed = 10; dancers[0].results.profileCohortConversions = 10;
   const original = structuredClone(dancers);
   let tree = render({ dancers, period: "7d" });
-  const before = tree.filter(node => node.type === "li").map(node => [node.key, nodes(node).find(node => node.props.className === "venue-score-rank").props.children]);
+  const before = tree.filter(node => node.type === "li").map(node => [node.key, nodes(node).find(node => node.props.className === "venue-score-card-rank").props.title]);
   tree.find(node => node.type === "input").props.onChange({ target: { value: "  BELL  " } });
   tree = render({ dancers, period: "7d" });
   assert.equal(tree.filter(node => node.type === "li").length, 1);
-  assert.equal(tree.find(node => node.props.className === "venue-score-rank").props.children, before.find(([id]) => id === "b")[1]);
+  assert.equal(tree.find(node => node.props.className === "venue-score-card-rank").props.title, before.find(([id]) => id === "b")[1]);
   tree.find(node => node.type === "select").props.onChange({ target: { value: "profile" } });
-  assert.equal(render({ dancers, period: "7d" }).find(node => node.props.className === "venue-score-rank").props.children, before.find(([id]) => id === "b")[1]);
+  assert.equal(render({ dancers, period: "7d" }).find(node => node.props.className === "venue-score-card-rank").props.title, before.find(([id]) => id === "b")[1]);
   tree.find(node => node.type === "input").props.onChange({ target: { value: "" } });
   const many = Array.from({ length: 25 }, (_, i) => ({ ...dancers[0], id: String(i), name: `Dancer ${i}` }));
   tree = render({ dancers: many });
@@ -315,6 +362,8 @@ test("missing data stays unranked and changing reporting period recalculates eli
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
   const dancers = scoredDancers().map(row => ({ ...row, internal: { ...row.internal, checkedInHours: 1, rosterTrackedHours: 1 } }));
   let tree = render({ dancers, period: "tonight" });
+  tree.find(node => node.props.className === "venue-score-card-button").props.onClick();
+  tree = render({ dancers, period: "tonight" });
   assert.ok(tree.some(node => node.props.className === "venue-score-early" && node.props.children === "Early"));
   assert.ok(tree.some(node => node.props.className === "venue-score-confidence" && node.props.children === "Early data"));
   assert.ok(tree.some(node => node.props.className === "venue-score-evidence" && node.props.children === "5 of 5 categories"));
@@ -337,7 +386,7 @@ test("score layout keeps six compact columns on phones and larger screens", () =
   assert.match(grids[0], /grid-template-columns: repeat\(6,minmax\(0,1fr\)\)/);
   assert.ok(grids.slice(1).every(rule => !rule.includes('grid-template-columns')));
   assert.doesNotMatch(css, /min-height: 92px/);
-  assert.match(css, /\.venue-score-details > summary\s*\{[^}]*min-height: 44px/);
+  assert.match(css, /button\.venue-score-card-button\s*\{[^}]*min-height: 44px/);
 });
 
 test("automatic totals exclude staff-confirmed results and show missing rates without inventing zero", () => {

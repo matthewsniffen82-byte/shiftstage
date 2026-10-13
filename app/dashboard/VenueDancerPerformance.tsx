@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { DancerPerformance } from "@/src/lib/dancr/venue-analytics";
 import { VenueRosterProfileButton } from "../internal/InternalRoster";
+import VenueGridImage from "./VenueGridImage";
+import "./venue-dancer-grid.css";
 import {
   DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS, DANCER_SCORE_LABELS, DANCER_SCORE_CATEGORIES, CHECK_IN_SCORE_WEIGHTS, BOTH_ROSTER_ACTIVITY_BOOST,
   scoreVenueDancers, sortScoredDancers, type DancerScoreKey, type DancerScorePeriod, type DancerScoreSort,
@@ -19,7 +21,16 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
   const [sort, setSort] = useState<DancerScoreSort>("overall");
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(20);
+  const [scoreDancerId, setScoreDancerId] = useState<string | null>(null);
+  const scoreDialog = useRef<HTMLDialogElement>(null);
   const scored = scoreVenueDancers(dancers, period);
+  const selected = scored.find(row => row.dancer.id === scoreDancerId);
+  const selectedId = selected?.dancer.id;
+  useEffect(() => {
+    const dialog = scoreDialog.current;
+    if (selectedId && dialog && !dialog.open) dialog.showModal();
+    else if (!selectedId && dialog?.open) dialog.close();
+  }, [selectedId]);
   const rows = sortScoredDancers(scored, sort).filter(row => row.dancer.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
   return <section className="venue-performance" aria-labelledby="venue-performance-heading">
     <h3 id="venue-performance-heading">Dancer performance</h3>
@@ -47,36 +58,44 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
       <small>Scoring version {DANCER_SCORE_VERSION}</small>
     </details>
     <p className="venue-value-note" role="status">{rows.length.toLocaleString()} {rows.length === 1 ? "dancer" : "dancers"}{search.trim() ? " matching your search" : " with recorded activity"}</p>
-    {rows.length ? <ul className="venue-performance-list venue-scored-list">{rows.slice(0, limit).map(row => {
+    {rows.length ? <div className="venue-card-region"><ul className="venue-dancer-grid venue-performance-cards" aria-label="Dancer performance cards">{rows.slice(0, limit).map((row, index) => {
       const profileId = row.dancer.profileDancerId === undefined ? row.dancer.id : row.dancer.profileDancerId;
-      const identity = <>
-        <span className="venue-performance-avatar">{row.dancer.photoUrl
-          ? <img src={row.dancer.photoUrl} alt="" width="44" height="44" loading="lazy" />
-          : row.dancer.name.slice(0, 1).toUpperCase()}</span>
-        <span className="venue-score-copy"><span className="venue-performance-name">{row.dancer.name}</span>
-          <span className="venue-score-rank" title={row.rank === null ? row.scores.overall.reason || `Ranking needs all five categories past Early data and ${DANCER_SCORE_MIN_PEERS} comparable dancers.` : undefined}>
-            {row.rank === null ? "Unranked" : `#${row.rank} of ${row.rankedCount} ranked dancers`}
-          </span>
+      const rank = row.rank === null ? "Unranked" : `#${row.rank} of ${row.rankedCount} ranked dancers`;
+      const identity = <span className="venue-card-portrait">
+        <span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={row.dancer.photoUrl} srcSet={row.dancer.photoSrcSet || undefined} sizes="(max-width: 620px) 30vw, 320px" lazy={index >= 12} /></span>
+        <span className="venue-card-caption">
+          <strong>{row.dancer.name}</strong>
+          <small className="venue-score-card-rank" title={rank}>{row.rank === null ? "Unranked" : `Rank #${row.rank}`}</small>
+          <small className="venue-score-card-overall">{row.scores.overall.value === null ? "Not enough data" : `${row.scores.overall.value}/100 overall`}{row.scores.overall.confidence === "early" ? " · Early" : ""}</small>
         </span>
-      </>;
+      </span>;
       return <li key={row.dancer.id}>
-      {profileId ? <VenueRosterProfileButton dancerId={profileId} stageName={row.dancer.name} className="ir-profile-link venue-dancer-profile-trigger venue-score-identity">{identity}</VenueRosterProfileButton>
-        : <div className="venue-score-identity">{identity}</div>}
-      <dl className="venue-score-grid" aria-label="Performance scores out of 100">{scoreKeys.map(key => <div key={key} className={`venue-score venue-score-${key}`} title={row.scores[key].reason || undefined}>
-        <dt><abbr title={scoreLabels[key]}>{compactScoreLabels[key]}</abbr></dt>
-        <dd>{row.scores[key].value === null ? <span className="venue-score-missing"><span aria-hidden="true">—</span><span className="dashboard-sr-only">Not enough data</span></span>
-          : <><strong>{row.scores[key].value}</strong><span className="dashboard-sr-only"> out of 100</span></>}</dd>
-        {row.scores[key].confidence === "early" && <small className="venue-score-early">Early</small>}
-      </div>)}</dl>
-      <details className="venue-score-details">
-        <summary>Score details <span>Out of 100</span></summary>
-        <dl>{scoreKeys.map(key => <div key={key}>
-          <dt><span>{compactScoreLabels[key]}</span>{row.scores[key].confidence === "early" && <span className="venue-score-confidence">Early data</span>}</dt>
-          <dd>{row.scores[key].evidence ? <span className="venue-score-evidence">{row.scores[key].evidence}</span>
-              : <span>Not enough data. {row.scores[key].reason}</span>}</dd>
-        </div>)}</dl>
-      </details>
-    </li>; })}</ul> : <p className="venue-value-empty">{search.trim() ? "No dancers match this search." : "No dancer activity recorded in this period."}</p>}
+        <div className="venue-dancer-card">
+          {profileId ? <VenueRosterProfileButton dancerId={profileId} stageName={row.dancer.name} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton> : identity}
+        </div>
+        <button type="button" className="venue-score-card-button" aria-label={`View ${row.dancer.name} score details`} aria-haspopup="dialog" onClick={() => setScoreDancerId(row.dancer.id)}>Score details</button>
+      </li>; })}</ul></div> : <p className="venue-value-empty">{search.trim() ? "No dancers match this search." : "No dancer activity recorded in this period."}</p>}
     {rows.length > limit && <button className="venue-performance-more" type="button" onClick={() => setLimit(value => value + 20)}>Show more dancers</button>}
+    <dialog ref={scoreDialog} className="venue-score-dialog" aria-label={selected ? `${selected.dancer.name} performance scores` : "Performance scores"} onClose={() => setScoreDancerId(null)}>
+      {selected && <>
+      <header><h3>{selected.dancer.name}</h3><button type="button" autoFocus onClick={() => scoreDialog.current?.close()}>Close</button></header>
+      <p className="venue-value-note">{periodLabels[period]} · Private to this club</p>
+      <p className="venue-score-rank">{selected.rank === null ? "Unranked" : `#${selected.rank} of ${selected.rankedCount} ranked dancers`}</p>
+      <dl className="venue-score-grid" aria-label="Performance scores out of 100">{scoreKeys.map(key => <div key={key} className={`venue-score venue-score-${key}`} title={selected.scores[key].reason || undefined}>
+        <dt><abbr title={scoreLabels[key]}>{compactScoreLabels[key]}</abbr></dt>
+        <dd>{selected.scores[key].value === null ? <span className="venue-score-missing"><span aria-hidden="true">—</span><span className="dashboard-sr-only">Not enough data</span></span>
+          : <><strong>{selected.scores[key].value}</strong><span className="dashboard-sr-only"> out of 100</span></>}</dd>
+        {selected.scores[key].confidence === "early" && <small className="venue-score-early">Early</small>}
+      </div>)}</dl>
+      <div className="venue-score-details">
+        <h4>Score details · Out of 100</h4>
+        <dl>{scoreKeys.map(key => <div key={key}>
+          <dt><span>{compactScoreLabels[key]}</span>{selected.scores[key].confidence === "early" && <span className="venue-score-confidence">Early data</span>}</dt>
+          <dd>{selected.scores[key].evidence ? <span className="venue-score-evidence">{selected.scores[key].evidence}</span>
+              : <span>Not enough data. {selected.scores[key].reason}</span>}</dd>
+        </div>)}</dl>
+      </div>
+      </>}
+    </dialog>
   </section>;
 }

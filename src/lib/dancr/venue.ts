@@ -24,7 +24,6 @@ import {
 import { isActiveNfcPresence } from "./shift-presence";
 import { getVenueAccess, requireVenueAccess } from "./venue-access";
 import { getTonightWindow } from "./schedule";
-import { dancerPhotoDeliveryUrl } from "./media-delivery-url";
 import type { VenueValueReport } from "./venue-analytics";
 import type {
   ClubDeal,
@@ -555,7 +554,7 @@ export async function getVenueDashboard(
   if (hairColorReport.error) throw hairColorReport.error;
   report.hairColor = hairColorReport.data;
   if (report.performance?.dancers.length) {
-    // Only approved public photos cross into this report; private profiles keep initials.
+    // Use the same approved main portraits as dancer cards; private profiles keep placeholders.
     // Batch IDs so a busy venue cannot silently hit the API's default row limit.
     const dancers = report.performance.dancers;
     for (let offset = 0; offset < dancers.length; offset += 200) {
@@ -564,10 +563,17 @@ export async function getVenueDashboard(
         .in("id", batch.map(dancer => dancer.id)).eq("status", "approved").eq("verification_status", "approved")
         .eq("is_public", true).is("disabled_at", null);
       if (error) throw error;
-      const paths = new Map((photos || []).map(photo => [photo.id, photo.avatar_storage_path]));
+      const approvedIds = (photos || []).map(photo => photo.id);
+      const primary = approvedIds.length ? await client.from("dancer_photos").select("dancer_id,storage_path")
+        .in("dancer_id", approvedIds).eq("is_primary", true).eq("review_status", "approved") : { data: [], error: null };
+      if (primary.error) throw primary.error;
+      const primaryPaths = new Map((primary.data || []).map(photo => [photo.dancer_id, photo.storage_path]));
+      const avatars = new Map((photos || []).map(photo => [photo.id, photo.avatar_storage_path]));
       for (const dancer of batch) {
-        const path = paths.get(dancer.id);
-        dancer.photoUrl = path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 160) : null;
+        const image = responsivePublicImage(client, "dancer-photos", primaryPaths.get(dancer.id))
+          || responsivePublicImage(client, "dancer-photos", avatars.get(dancer.id));
+        dancer.photoUrl = image?.imageUrl || null;
+        dancer.photoSrcSet = image?.imageSrcSet || null;
       }
     }
   }
