@@ -10,10 +10,10 @@ type RequestActions = {
   onEdit?: (request: VipRequest) => void;
   onWithdraw?: (request: VipRequest) => Promise<boolean>;
 };
-export default function VipRequests({ requests, ...actions }: RequestActions & { requests: VipRequest[] }) {
+export default function VipRequests({ requests, emptyMessage, ...actions }: RequestActions & { requests: VipRequest[]; emptyMessage?: string }) {
   return <div className="vip-request-list">{requests.length ? requests.map(request =>
     <RequestCard key={request.id} request={request} {...actions} />
-  ) : <p className="vip-empty">{actions.onReview ? "No visit requests yet." : "No requests yet. Your requests and venue responses will appear here."}</p>}</div>;
+  ) : <p className="vip-empty">{emptyMessage || (actions.onReview ? "No visit requests yet." : "No requests yet. Your requests and venue responses will appear here.")}</p>}</div>;
 }
 function RequestCard({ request, onReview, busy = false, venueName, featured, onRepeat, onEdit, onWithdraw }: { request: VipRequest } & RequestActions) {
   const [note, setNote] = useState("");
@@ -34,7 +34,7 @@ function RequestCard({ request, onReview, busy = false, venueName, featured, onR
     </div>}
     {request.status === "pending" && onWithdraw && confirmWithdrawal && <div className="vip-withdraw-confirm" role="group" aria-label="Confirm withdrawal"><p>Withdraw this pending request? Your venue will be notified.</p><div className="vip-actions"><button type="button" disabled={busy} onClick={async () => { if (await onWithdraw(request)) setConfirmWithdrawal(false); }}>{busy ? "Withdrawing…" : "Yes, withdraw"}</button><button type="button" disabled={busy} onClick={() => setConfirmWithdrawal(false)}>Keep request</button></div></div>}
     {onReview && ["pending", "confirmed"].includes(request.status) && <div className="vip-review">
-      <label>Message to VIP (optional)<textarea maxLength={500} value={note} onChange={event => setNote(event.target.value)} disabled={busy} rows={2} /></label>
+      <details className="vip-review-message"><summary>{note ? "Edit message" : "Add message"}</summary><label>Message to VIP (optional)<textarea maxLength={500} value={note} onChange={event => setNote(event.target.value)} disabled={busy} rows={2} /></label></details>
       {request.status === "pending" && <small>Check dancer availability before confirming.</small>}
       <div className="vip-actions">{request.status === "pending" ? <>
         <button type="button" className="vip-primary" disabled={busy} onClick={() => void onReview(request, "confirmed", note)}>Confirm request</button>

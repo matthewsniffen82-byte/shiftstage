@@ -7,8 +7,10 @@ const member = { id: 'member-1', display_name: 'Jordan Guest', nickname: 'Friday
 const initial = { invitations: [], members: [member], memberCount: 51, membersHasMore: true, requests: [], hasMore: true };
 
 // Focused component events with in-memory data only; no browser or network.
-function panelHarness(request = async () => initial, props = {}) {
+function panelHarness(request = async () => initial, props = {}, globals = {}) {
   const slots = [], calls = []; let cursor = 0, dirty = true, effects = [], tree, accountId = 'owner-1';
+  const closedMenus = [];
+  const RequestCards = () => null;
   const react = {
     useState(initial) { const i = cursor++; slots[i] ||= { value: initial }; return [slots[i].value, next => {
       const value = typeof next === 'function' ? next(slots[i].value) : next;
@@ -27,8 +29,8 @@ function panelHarness(request = async () => initial, props = {}) {
     '@/src/lib/dancr/venue-operations': { notifyVenueOperationsChanged() {} },
     react,
     './dashboard-session': { readSession: () => ({ account: { id: accountId } }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
-    '../vip/VipRequests': { __esModule: true, default: () => null },
-  }).default;
+    '../vip/VipRequests': { __esModule: true, default: RequestCards },
+  }, globals).default;
   function render(next = {}) {
     props = { ...props, ...next };
     dirty = true;
@@ -38,8 +40,12 @@ function panelHarness(request = async () => initial, props = {}) {
   function nodes(node = tree) { return node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))] : []; }
   async function settle() { for (let i = 0; i < 8; i++) { await Promise.resolve(); render(); } }
   render();
-  return { calls, render, nodes, settle, html: () => renderToStaticMarkup(tree), session: id => { accountId = id; },
+  return { calls, closedMenus, render, nodes, settle, html: () => renderToStaticMarkup(tree), session: id => { accountId = id; },
     button: text => nodes().find(node => node.type === 'button' && node.props.children === text),
+    click: text => nodes().find(node => node.type === 'button' && node.props.children === text).props.onClick({ currentTarget: { closest: () => ({ removeAttribute: name => closedMenus.push(name) }) } }),
+    tab: id => nodes().find(node => node.props?.id === `venue-vip-tab-${id}`),
+    panel: id => nodes().find(node => node.props?.id === `venue-vip-panel-${id}`),
+    requests: () => nodes().find(node => node.type === RequestCards),
     input: type => nodes().findLast(node => node.type === 'input' && node.props.type === type),
     form: name => nodes().find(node => node.type === 'form' && node.props.className === name),
     unmount: () => slots.forEach(slot => slot?.cleanup?.()),
@@ -56,7 +62,8 @@ test('venue nickname editing retains failed drafts, saves changes and allows cle
     return { ...initial, members: [{ ...member, nickname }] };
   });
   await ui.settle(); assert.match(ui.html(), /Friday regular/); assert.match(ui.html(), /Jordan Guest/);
-  ui.button('Edit nickname').props.onClick(); ui.render();
+  ui.click('Edit nickname'); ui.render();
+  assert.deepEqual(ui.closedMenus, ['open']);
   assert.match(ui.html(), /Private nickname for Jordan Guest/);
   assert.match(ui.html(), /The VIP cannot see or change this nickname/);
   assert.doesNotMatch(ui.html(), /shared with the VIP|VIP can change it/i);
@@ -65,7 +72,7 @@ test('venue nickname editing retains failed drafts, saves changes and allows cle
   assert.match(ui.html(), /Save failed/); assert.equal(ui.input('text').props.value, '  Weekend VIP  ');
   await ui.form('vip-nickname-form').props.onSubmit({ preventDefault() {} }); await ui.settle();
   assert.equal(ui.form('vip-nickname-form'), undefined); assert.match(ui.html(), /Weekend VIP/); assert.match(ui.html(), /Jordan Guest/);
-  ui.button('Edit nickname').props.onClick(); ui.render(); ui.input('text').props.onChange({ target: { value: '' } }); ui.render();
+  ui.click('Edit nickname'); ui.render(); ui.input('text').props.onChange({ target: { value: '' } }); ui.render();
   await ui.form('vip-nickname-form').props.onSubmit({ preventDefault() {} }); await ui.settle();
   assert.ok(ui.button('Add nickname')); assert.match(ui.html(), /Nickname removed/); assert.doesNotMatch(ui.html(), /Weekend VIP/);
   ui.unmount();
@@ -104,7 +111,7 @@ test('VIP nickname search resets member pagination and survives independent visi
 
 test('nickname saves do not update a different signed-in account after a delayed response', async () => {
   let resolve; const ui = panelHarness(async (_url, options) => options.method === 'POST' ? new Promise(done => { resolve = done; }) : initial);
-  await ui.settle(); ui.button('Edit nickname').props.onClick(); ui.render();
+  await ui.settle(); ui.click('Edit nickname'); ui.render();
   ui.input('text').props.onChange({ target: { value: 'New nickname' } }); ui.render();
   const saving = ui.form('vip-nickname-form').props.onSubmit({ preventDefault() {} });
   ui.session('another-owner'); resolve({ ok: true }); await saving; await ui.settle();
@@ -181,12 +188,87 @@ test('venue invitations save a nickname and keep the draft when sending fails', 
     }
     return {...initial,invitations:invitation?[invitation]:[]};
   });
-  await ui.settle();ui.input('email').props.onChange({target:{value:'guest@example.test'}});
+  await ui.settle();ui.click('Invite guest');ui.render();ui.input('email').props.onChange({target:{value:'guest@example.test'}});
   ui.input('text').props.onChange({target:{value:'Friday regular'}});ui.render();
   ui.form('vip-invite-form').props.onSubmit({preventDefault(){}});await ui.settle();
   assert.equal(ui.input('text').props.value,'Friday regular');assert.match(ui.html(),/Invitation unavailable/);
   ui.form('vip-invite-form').props.onSubmit({preventDefault(){}});await ui.settle();
-  assert.equal(ui.input('text').props.value,'');assert.match(ui.html(),/Friday regular/);ui.unmount();
+  assert.equal(ui.input('text').props.value,'');assert.match(ui.html(),/Friday regular/);
+  assert.equal(ui.button('Invitation sent').props.disabled,true);
+  ui.click('Invite guest');ui.render();assert.equal(ui.button('Send invitation').props.disabled,false);ui.unmount();
+});
+
+test('VIP workspace starts with pending requests and supports keyboard navigation through a single visible panel', async () => {
+  const ui = panelHarness(async () => ({ ...initial, requestCount: 7 })); await ui.settle();
+  assert.equal(ui.tab('requests').props['aria-selected'], true);
+  assert.equal(ui.button('Pending requests').props['aria-pressed'], true);
+  assert.equal(ui.panel('requests').props.hidden, false);
+  assert.equal(ui.panel('members').props.hidden, true);
+  assert.equal(ui.panel('invitations').props.hidden, true);
+  assert.equal(ui.tab('requests').props.children[1].props.children, 7);
+  assert.equal(ui.tab('members').props.children[1].props.children, 51);
+  assert.equal(ui.tab('invitations').props.children[1].props.children, 0);
+  for (const [from, key, to] of [['requests', 'ArrowRight', 'members'], ['members', 'End', 'invitations'], ['invitations', 'ArrowRight', 'requests'], ['requests', 'ArrowLeft', 'invitations'], ['invitations', 'Home', 'requests']]) {
+    let prevented = false, focused;
+    ui.tab(from).props.onKeyDown({ key, preventDefault() { prevented = true; }, currentTarget: { parentElement: {
+      querySelector: selector => ({ focus() { focused = selector; } }),
+    } } }); ui.render();
+    assert.equal(prevented, true); assert.equal(focused, `#venue-vip-tab-${to}`);
+    assert.equal(ui.tab(to).props.tabIndex, 0); assert.equal(ui.panel(to).props.hidden, false);
+    assert.equal(ui.nodes().filter(node => node.props?.role === 'tabpanel' && !node.props.hidden).length, 1);
+  }
+  assert.equal(ui.calls.length, 1, 'navigation does not submit or reload anything'); ui.unmount();
+});
+
+test('Invite guest opens the form on demand and closing or switching tabs preserves the unsent draft', async () => {
+  const ui = panelHarness(); await ui.settle();
+  let focused = 0;
+  ui.input('email').props.ref.current = { focus() { focused++; } };
+  const invitationForm = () => ui.nodes().find(node => node.props?.id === 'venue-vip-invite-form');
+  assert.equal(invitationForm().props.hidden, true);
+  ui.click('Invite guest'); ui.render();
+  assert.equal(focused, 1);
+  assert.equal(ui.panel('invitations').props.hidden, false); assert.equal(invitationForm().props.hidden, false);
+  ui.input('email').props.onChange({ target: { value: 'draft@example.test' } });
+  ui.input('text').props.onChange({ target: { value: 'Friday regular' } }); ui.render();
+  ui.tab('members').props.onClick(); ui.render();
+  assert.equal(ui.panel('members').props.hidden, false); assert.ok(ui.input('search'));
+  ui.tab('invitations').props.onClick(); ui.render();
+  assert.equal(focused, 1, 'returning through a tab does not steal focus from the tab');
+  ui.click('Close'); ui.render(); assert.equal(invitationForm().props.hidden, true);
+  ui.click('Invite guest'); ui.render();
+  assert.equal(ui.input('email').props.value, 'draft@example.test'); assert.equal(ui.input('text').props.value, 'Friday regular');
+  assert.equal(ui.calls.some(call => call.options.method === 'POST'), false); ui.unmount();
+});
+
+test('request empty states distinguish pending, all statuses and an empty later page', async () => {
+  const ui = panelHarness(async () => ({ ...initial, requestCount: 0 })); await ui.settle();
+  assert.match(ui.requests().props.emptyMessage, /^No pending requests/);
+  ui.click('All statuses'); await ui.settle();
+  assert.equal(ui.requests().props.emptyMessage, 'No visit requests yet.');
+  ui.click('Older requests'); await ui.settle();
+  assert.match(ui.requests().props.emptyMessage, /Return to newer requests/);
+  ui.click('Pending requests'); await ui.settle();
+  assert.match(ui.requests().props.emptyMessage, /^No pending requests/); ui.unmount();
+});
+
+test('VIP guest totals remain stable during search and removal still requires confirmation', async () => {
+  let confirmed = false, removed = false;
+  const ui = panelHarness(async (url, options) => {
+    if (options.method === 'POST') { assert.equal(JSON.parse(options.body).action, 'revoke_member'); removed = true; return {}; }
+    const searched = new URL(url, 'https://example.test').searchParams.get('memberSearch');
+    return { ...initial, memberCount: searched ? (removed ? 0 : 1) : 51, members: removed ? [] : [member] };
+  }, {}, { window: { confirm: () => confirmed } });
+  await ui.settle(); ui.tab('members').props.onClick(); ui.render();
+  const menu = ui.nodes().find(node => node.type === 'details' && node.props.className === 'venue-vip-menu');
+  assert.equal(menu.props.open, undefined); assert.equal(menu.props['data-compact-menu'], true);
+  ui.input('search').props.onChange({ target: { value: 'Friday' } }); ui.render();
+  ui.form('vip-member-search').props.onSubmit({ preventDefault() {} }); await ui.settle();
+  assert.equal(ui.tab('members').props.children[1].props.children, 51); assert.match(ui.html(), /1 VIP matches/);
+  ui.click('Remove VIP access'); await ui.settle(); assert.equal(removed, false);
+  confirmed = true; ui.click('Remove VIP access'); await ui.settle();
+  assert.equal(removed, true); assert.equal(ui.tab('members').props.children[1].props.children, 50);
+  assert.match(ui.html(), /Existing requests are still available in Requests/); ui.unmount();
 });
 
 test('venue requests resolve current nicknames outside the member search page without exposing user IDs', async () => {

@@ -1,0 +1,184 @@
+/* Keep the venue workspace independent of the guest VIP lounge. The full scope
+   wins over the dashboard's shared control styles regardless of chunk order. */
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip {
+  --vip-card: #08080c;
+  --vip-line: #34343e;
+  --vip-muted: #b4b4c1;
+  --venue-control-face: #08080c;
+  --venue-control-edge: #34343e;
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-actions { gap: 6px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-header > .vip-actions { margin-left: auto; }
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--vip-line);
+  border-radius: 12px;
+  background: #000;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-tabs > button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px !important;
+  font-size: 12px !important;
+  line-height: 1.3;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--vip-muted) !important;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-tabs > button::before { content: none !important; }
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-tabs > button[aria-selected="true"] {
+  border-color: #8966c5 !important;
+  background: #17121f !important;
+  color: #fff !important;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-count {
+  min-width: 20px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  background: #26232e;
+  color: #e5e2eb;
+  font-size: 11px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-tab-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(.venue-vip-tab-panel, .venue-vip-invite)[hidden] { display: none !important; }
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(button, summary):focus-visible {
+  outline: 2px solid #b995ff;
+  outline-offset: 3px;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip button {
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 12px !important;
+  line-height: 1.4;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip button.vip-primary {
+  --venue-control-face: #54209a;
+  --venue-control-edge: #9871cd;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(p, li) { font-size: 13px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip h3 { font-size: 15px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-feedback { padding: 10px 12px; }
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-request-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-request-filters > button[aria-pressed="true"] {
+  --venue-control-face: #17121f;
+  --venue-control-edge: #8966c5;
+  color: #fff !important;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-request {
+  gap: 8px;
+  padding: 12px;
+  background: #000;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-request-time { font-size: 15px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-request-time small { margin-top: 0; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-badge { padding: 3px 7px; }
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip details.vip-review-message {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-review-message > summary { color: #cdb7f1; font-size: 12px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-review-message > label { padding-bottom: 8px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-empty { border-style: solid; padding: 12px; background: #000; }
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-invite {
+  padding: 12px;
+  border: 1px solid var(--vip-line);
+  border-radius: 12px;
+  background: #000;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-invite-form { gap: 8px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-invite-form > button { justify-self: start; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(input, textarea) { padding: 9px 10px; font-size: 16px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-link-result { padding: 12px; border-color: var(--vip-line); }
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-member-search {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  margin: 0;
+  gap: 6px;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-member-search > label { grid-column: auto; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-access-list { gap: 6px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-access-list > li {
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--vip-line);
+  border-radius: 10px;
+  background: #000;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-access-list > li > span { flex: 1 1 140px; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip details.venue-vip-menu {
+  position: relative;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-menu[open] { z-index: 2; }
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-menu > div {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 3;
+}
+
+@media (max-width: 420px) {
+  html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-tabs > button { font-size: 11px !important; gap: 4px; padding: 6px 3px !important; }
+  html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-member-search { grid-template-columns: 1fr 1fr; }
+  html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-member-search > label { grid-column: 1 / -1; }
+}
