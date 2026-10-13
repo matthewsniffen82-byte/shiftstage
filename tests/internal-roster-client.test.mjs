@@ -433,14 +433,16 @@ test("table QR opens the roster directly with collapsed terms and no consent gat
   assert.ok(calls.every(call => call.options.method === "GET"), "opening never writes an acceptance");
 });
 
-test("a guest hard reload waits quietly for the real venue and table header", async t => {
+test("a guest hard reload shows loading progress until the real venue and table header arrive", async t => {
   const pending = deferred();
   const app = harness(() => pending.promise);
   t.after(() => app.unmount()); await app.mount();
   const loading = app.render();
   assert.equal(loading.props["aria-busy"], true);
   assert.equal(find(loading, node => node.props?.role === "status").props.className, "ir-loading-status");
-  assert.equal(find(loading, node => node.props?.className === "ir-loading-placeholder").props["aria-hidden"], "true");
+  assert.equal(textContent(find(loading, node => node.props?.role === "status")), "Loading dancers…");
+  assert.equal(find(loading, node => node.props?.className === "ir-loading-spinner").props["aria-hidden"], "true");
+  assert.equal(find(loading, node => node.props?.className === "ir-loading-placeholder"), undefined);
   assert.equal(find(loading, node => node.type === "header" || node.type === "footer"), undefined);
   assert.equal(grid(app), undefined);
   assert.equal(refreshButton(app), undefined);
@@ -449,7 +451,7 @@ test("a guest hard reload waits quietly for the real venue and table header", as
   await flush();
   const loaded = app.render();
   assert.equal(loaded.props["aria-busy"], undefined);
-  assert.equal(find(loaded, node => node.props?.className === "ir-loading-placeholder"), undefined);
+  assert.equal(find(loaded, node => node.props?.className === "ir-loading-status"), undefined);
   assert.equal(find(loaded, node => node.type?.name === "VenueBrandLogo").props.name, roster.venueName);
   const header = find(loaded, node => node.type === "header");
   assert.equal(find(header, node => node.type === "p").props.children, "Table 1");
@@ -458,14 +460,14 @@ test("a guest hard reload waits quietly for the real venue and table header", as
   assert.ok(refreshButton(app));
 });
 
-test("guest loading failures leave the quiet placeholder and retain a working retry", async t => {
+test("guest loading failures replace progress with an error and retain a working retry", async t => {
   let calls = 0;
   const app = harness(async () => ++calls === 1
     ? response({ ok: false, error: "This club link is unavailable." }, 403)
     : response({ ...roster, label: "Table 12" }));
   t.after(() => app.unmount()); await app.mount();
   assert.equal(alertMessage(app), "This club link is unavailable.");
-  assert.equal(find(app.render(), node => node.props?.className === "ir-loading-placeholder"), undefined);
+  assert.equal(find(app.render(), node => node.props?.className === "ir-loading-status"), undefined);
   assert.equal(find(app.render(), node => node.type === "header"), undefined);
   find(alert(app), node => node.type === "button").props.onClick(); await flush();
   assert.equal(alert(app), undefined);
@@ -479,7 +481,7 @@ test("staff keep their existing sign-in and loading presentation", async t => {
   t.after(() => app.unmount()); await app.mount();
   assert.ok(find(app.render(), node => node.type === "header"));
   assert.equal(find(app.render(), node => node.props?.role === "status").props.children, "Loading the live roster…");
-  assert.equal(find(app.render(), node => node.props?.className === "ir-loading-placeholder"), undefined);
+  assert.equal(find(app.render(), node => node.props?.className === "ir-loading-status"), undefined);
 });
 
 test("saved table requests identify every requested dancer without locking other cards", async t => {

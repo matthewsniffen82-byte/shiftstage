@@ -350,13 +350,11 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
   const tableRequests = staff ? [] : dancers.filter(dancer => dancer.requestStatus);
   const receiptStatus = snapshot?.receipt?.status;
   const inactiveReceipt = !!receiptStatus && ["completed", "cancelled", "expired"].includes(receiptStatus);
-  // A hard reload has no verified venue identity yet. Keep it quiet until the
-  // first response instead of flashing generic club/table names or zero counts.
+  // Show progress until the first response supplies the real venue/table identity.
   if (!staff && !snapshot && !error) return <div className="ir-shell ir-guest" aria-busy={true} data-global-navigation-swipe="ignore">
-    <span className="ir-loading-status" role="status">Loading club roster</span>
-    <div className="ir-loading-placeholder" aria-hidden="true">
-      <div className="ir-loading-header" />
-      <div className="ir-loading-grid"><span /><span /><span /></div>
+    <div className="ir-loading-status" role="status">
+      <span className="ir-loading-spinner" aria-hidden="true" />
+      <span>Loading dancers…</span>
     </div>
   </div>;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore">
