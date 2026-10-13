@@ -150,6 +150,71 @@ const textContent = tree => typeof tree === "string" || typeof tree === "number"
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");
 const requestStatusPanel = app => find(app.render(), node => node.props?.["aria-label"] === "Table request status");
 
+test("venue table sections reserve their place before the roster while the first request is pending", async t => {
+  const pending = deferred();
+  const app = harness(() => pending.promise, {
+    session: { accessToken: 'owner-token', account: { role: 'venue' } },
+    props: { token: undefined, operationsOnly: true, roster: 'DANCER ROSTER' },
+  });
+  t.after(() => app.unmount());
+  const sectionOrder = tree => find(tree, node => node.props?.className === 'ir-operations').props.children.map(node => node?.props?.id || node);
+  const expectedOrder = ['table-qr-codes', 'table-requests', 'DANCER ROSTER'];
+  assert.deepEqual(Array.from(sectionOrder(app.render())), expectedOrder, 'the first paint already has the final section order');
+  await app.mount();
+  const loading = app.render();
+  assert.deepEqual(Array.from(sectionOrder(loading)), expectedOrder);
+  for (const id of expectedOrder.slice(0, 2)) {
+    const section = find(loading, node => node.props?.id === id);
+    assert.equal(section.props['aria-busy'], true);
+    assert.match(textContent(find(section, node => node.type === 'h2')), /—$/);
+    assert.equal(find(section, node => node.type === 'button' || node.type === 'form' || node.type === 'a'), undefined);
+  }
+  const placeholder = find(loading, node => node.props?.className === 'venue-dancer-grid');
+  assert.equal(placeholder.props['aria-hidden'], 'true');
+  assert.equal(placeholder.props.children.length, 3);
+  assert.doesNotMatch(textContent(loading), /No open requests|No table QR codes|Loading the live roster/);
+  pending.resolve(response({ ...roster, role: 'owner', links: [{ id: 'table-1', label: 'Table 7', token: 'active-token' }], requests: [
+    { id: 'request-1', dancer_id: dancer.id, link_id: 'table-1', status: 'pending', created_at: '2026-10-13T03:00:00Z' },
+  ] }));
+  await flush();
+  const loaded = app.render();
+  assert.deepEqual(Array.from(sectionOrder(loaded)), expectedOrder);
+  for (const id of expectedOrder.slice(0, 2)) {
+    const section = find(loaded, node => node.props?.id === id);
+    assert.equal(section.props['aria-busy'], undefined);
+    assert.match(textContent(find(section, node => node.type === 'h2')), /1$/);
+  }
+  assert.ok(find(loaded, node => node.props?.['data-request-id'] === 'request-1'));
+  assert.doesNotMatch(textContent(loaded), /Loading table/);
+});
+
+test("failed table loading retains section order and distinguishes unavailable data from a confirmed empty result", async t => {
+  let reads = 0;
+  const app = harness(async () => ++reads === 1
+    ? response({ ok: false, error: 'Connection interrupted.' }, 503)
+    : response({ ...roster, role: 'owner', links: [], requests: [] }), {
+    session: { accessToken: 'owner-token', account: { role: 'venue' } },
+    props: { token: undefined, operationsOnly: true, roster: 'DANCER ROSTER' },
+  });
+  t.after(() => app.unmount()); await app.mount();
+  const failed = app.render();
+  const operations = find(failed, node => node.props?.className === 'ir-operations');
+  assert.deepEqual(Array.from(operations.props.children, node => node?.props?.id || node), ['table-qr-codes', 'table-requests', 'DANCER ROSTER']);
+  assert.match(textContent(operations), /Table QR codes unavailable/);
+  assert.match(textContent(operations), /Table requests unavailable/);
+  assert.doesNotMatch(textContent(operations), /Loading|No open requests|No table QR codes/);
+  assert.equal(find(operations, node => node.props?.['aria-busy'] || node.type === 'form'), undefined);
+  find(alert(app), node => node.type === 'button').props.onClick(); await flush();
+  assert.equal(alert(app), undefined);
+  const recovered = find(app.render(), node => node.props?.className === 'ir-operations');
+  for (const id of ['table-qr-codes', 'table-requests']) {
+    const heading = find(find(recovered, node => node.props?.id === id), node => node.type === 'h2');
+    assert.equal(find(heading, node => node.type === 'span').props.children, 0);
+  }
+  assert.match(textContent(recovered), /No open requests/);
+  assert.match(textContent(recovered), /No table QR codes yet/);
+});
+
 test("venue dashboard table QR tools precede requests and roster, retaining authorized create and print actions", async t => {
   const calls = [];
   const links = [{ id: 'table-1', kind: 'table', label: 'Table 7', token: 'active-table-token' }];

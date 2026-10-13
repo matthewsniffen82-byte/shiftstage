@@ -360,7 +360,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
       {!staff && snapshot?.venueLogoUrl ? <VenueBrandLogo key={snapshot.venueLogoUrl} url={snapshot.venueLogoUrl} name={snapshot.venueName} /> : <h1 className={staff ? undefined : "ir-venue-identity"}>{snapshot?.venueName || "Club roster"}</h1>}
       <p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p>
     </div>{staff ? <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a> : null}</header> : null}
-    {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" data-sign-in-action href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot ? <p role="status">Loading the live roster…</p> : null}
+    {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" data-sign-in-action href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot && !operationsOnly ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className={`ir-notice${!staff && notice === REQUEST_SENT_NOTICE ? " ir-request-notice" : ""}`} role="status">{!staff && notice === REQUEST_SENT_NOTICE ? <><strong>Request sent to club staff.</strong><span>Staff acknowledgment does not guarantee dancer availability.</span></> : notice}</p> : null}
     {snapshot ? <>
       {!staff ? <details className="ir-terms"><summary>View terms</summary><div>
@@ -413,12 +413,17 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
       </section> : null}
       {staff && snapshot.receipt ? <p className="ir-notice" role="status">Your request: <strong>{snapshot.receipt.status === "acknowledged" ? "Seen by club staff" : snapshot.receipt.status}</strong></p> : null}
     </> : null}
-      {staff ? <div className="ir-operations">{snapshot ? <details className="ir-panel ir-table-tools" id="table-qr-codes" tabIndex={-1}>
-        <summary><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h2v2h-2ZM20 14v6h-6v-2" /></svg>Table QR codes <span>{snapshot.links?.length || 0}</span></h2></summary>
+      {/* Keep the table sections ahead of the independently loaded roster,
+          including the first paint. Unknown counts must not appear as zero. */}
+      {staff ? <div className="ir-operations"><details className="ir-panel ir-table-tools" id="table-qr-codes" tabIndex={-1} aria-busy={!snapshot && !error || undefined}>
+        <summary><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h2v2h-2ZM20 14v6h-6v-2" /></svg>Table QR codes <span>{snapshot ? snapshot.links?.length || 0 : "—"}</span></h2></summary>
+        {snapshot ? <>
         {snapshot.role !== "staff" ? <details className="ir-table-create"><summary>Add a table</summary><form className="ir-link-form" onSubmit={event => { event.preventDefault(); void mutate({ action: "link_create", label, kind: "table" }); }}><label>Table number or name<input value={label} maxLength={60} required onChange={event => setLabel(event.target.value)} /></label><button disabled={busy || !label.trim()}>Create link</button></form></details> : null}
         {!snapshot.links?.length ? <p>No table QR codes yet.</p> : null}
         {snapshot.links?.map(link => <article className="ir-link" key={link.id}><div><strong>{link.label}</strong><small>QR active</small>{snapshot.role !== "staff" ? <details className="ir-table-edit"><summary>Rename table</summary><form key={link.label} className="ir-rename-form" onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void mutate({ action: "link_update", id: link.id, label: String(form.get("label") || "") }); }}><input name="label" aria-label={`Table number or name for ${link.label}`} defaultValue={link.label} required maxLength={60} /><button disabled={busy}>Save name</button></form></details> : null}</div><div className="ir-actions"><a href={`/internal/club/${link.token}`} target="_blank" rel="noreferrer">Open</a><a href={`/internal/sign/${link.token}`} target="_blank" rel="noreferrer">Print QR sign</a><button className="ir-secondary" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/internal/club/${link.token}`).then(() => setNotice("Club link copied.")).catch(() => setNotice("Open the link and copy its address."))}>Copy</button>{snapshot.role !== "staff" ? <button className="ir-secondary ir-revoke" disabled={busy} onClick={() => { if (window.confirm(`Revoke ${link.label}? Its current QR code and shared link will stop working.`)) void mutate({ action: "link_revoke", id: link.id }); }}>Revoke</button> : null}</div></article>)}
-      </details> : null}{snapshot ? <><section className="ir-panel venue-card-region" id="table-requests" tabIndex={-1}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot.requests?.length || 0}</span></h2>
+        </> : <p role="status">{error ? "Table QR codes unavailable." : "Loading table QR codes…"}</p>}
+      </details><section className="ir-panel venue-card-region" id="table-requests" tabIndex={-1} aria-busy={!snapshot && !error || undefined}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot ? snapshot.requests?.length || 0 : "—"}</span></h2>
+        {snapshot ? <>
         {snapshot.requests?.length ? <div className="venue-dancer-grid" aria-label="Table request cards">{[...snapshot.requests].sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || Date.parse(b.created_at) - Date.parse(a.created_at)).map(item => {
           const dancer = snapshot.dancers.find(row => row.id === item.dancer_id);
           const dancerName = item.dancerName || dancer?.stageName || "Dancer";
@@ -443,7 +448,11 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
           <button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: "cancelled" })}>Dismiss</button></div></div></details></article>;
         })}</div> : <p className="ir-empty">No open requests.</p>}
         <InternalRequestPushSettings />
-      </section></> : null}{roster}</div> : null}
+        </> : <>
+          <p role="status">{error ? "Table requests unavailable." : "Loading table requests…"}</p>
+          {!error ? <div className="venue-dancer-grid" aria-hidden="true"><span className="venue-dancer-card" /><span className="venue-dancer-card" /><span className="venue-dancer-card" /></div> : null}
+        </>}
+      </section>{roster}</div> : null}
     <ClubProfileDialog profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: notice } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); setNotice("That profile could not load. Please try again."); }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }} />
     {!operationsOnly ? <footer>Powered by MyDancr · {staff ? "Visibility is chosen by each dancer at check-in." : "Availability may change. Club staff coordinate all requests."}</footer> : null}
   </div>;
