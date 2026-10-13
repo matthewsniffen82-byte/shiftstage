@@ -448,7 +448,7 @@ test("dancer signup displays the password rejection and lets the user correct it
   assert.equal(cooldownCalls, 1);
 });
 
-function passwordFixture({ providerError = null, revokeFails = false, revokeThrows = false, emailThrows = false, lookupFails = false, setupRecordFails = false } = {}) {
+function passwordFixture({ providerError = null, revokeFails = false, revokeThrows = false, emailThrows = false, lookupFails = false, setupRecordFails = false, userMetadata = {}, role = account.role } = {}) {
   const calls = [];
   const client = { auth: {
     updateUser: async payload => { calls.push({ update: payload }); return { error: providerError }; },
@@ -460,13 +460,64 @@ function passwordFixture({ providerError = null, revokeFails = false, revokeThro
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ auth: { admin: { updateUserById: async (id, input) => ({ data: { user: { id, app_metadata: input.app_metadata } }, error: setupRecordFails ? new Error('unavailable') : null }) } } }) },
     "@/src/lib/api": api,
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: r => r.json() },
-    "@/src/lib/supabase/request": { createRequestSupabaseContext: async () => ({ client, user: { id: account.id, email: "customer@example.com" }, session: {} }) },
-    "@/src/lib/dancr/auth": { getAccountByUserId: async () => { calls.push("account"); if (lookupFails) throw new Error("database"); return account; } },
+    "@/src/lib/supabase/request": { createRequestSupabaseContext: async () => ({ client, user: { id: account.id, email: "customer@example.com", ...userMetadata }, session: {} }) },
+    "@/src/lib/dancr/auth": { getAccountByUserId: async () => { calls.push("account"); if (lookupFails) throw new Error("database"); return { ...account, role }; } },
     "@/src/lib/dancr/notification-delivery": { sendTransactionalEmail: async payload => { calls.push({ email: payload }); if (emailThrows) throw new Error("email"); return { delivered: true }; } },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
   });
   return { calls, ...route };
 }
+
+for (const options of [{}, { setupRecordFails: true }, { revokeFails: true }]) test(`first-time customer password setup sends setup confirmation ${JSON.stringify(options)}`, async () => {
+  const f = passwordFixture(options);
+  const response = await f.PATCH(jsonRequest("PATCH", { password: "First1!password" }));
+  assert.equal(response.status, 200);
+  const emails = f.calls.filter(call => call.email);
+  assert.equal(emails.length, 1);
+  const email = emails[0].email;
+  assert.equal(email.to, "customer@example.com");
+  assert.equal(email.subject, "Your MyDancr password is now set");
+  assert.match(email.text, /Your MyDancr password is now set\. You can sign in using your email and password\./);
+  assert.match(email.text, /If you did not set this password, reset it immediately/);
+  assert.match(email.text, /MyDancr will never ask you to send your password/);
+  assert.doesNotMatch(email.text, /password was changed|First1!password/);
+  assert.equal(f.calls.filter(call => call === "revoke").length, 1);
+  assert.match(email.text, options.revokeFails ? /could not confirm/ : /Other active MyDancr sessions were signed out/);
+});
+
+test("later password changes retain the security alert regardless of client setup flags", async () => {
+  const f = passwordFixture({ userMetadata: {
+    app_metadata: { mydancr_password_setup_completed_at: "2026-10-01T00:00:00.000Z" },
+    user_metadata: { mydancr_password_setup_completed_at: null },
+  } });
+  const response = await f.PATCH(jsonRequest("PATCH", {
+    password: "Later1!password", passwordSetupComplete: false, isFirstPasswordSetup: true,
+  }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).passwordSetupComplete, true);
+  const email = f.calls.find(call => call.email).email;
+  assert.equal(email.subject, "Your MyDancr password was changed");
+  assert.match(email.text, /Your MyDancr password was changed successfully\./);
+  assert.match(email.text, /If you did not make this change, reset your password immediately/);
+  assert.match(email.text, /Other active MyDancr sessions were signed out for your security\./);
+  assert.doesNotMatch(email.text, /password is now set|Later1!password/);
+});
+
+test("user-editable metadata cannot turn a first password setup into a change alert", async () => {
+  const f = passwordFixture({ userMetadata: {
+    user_metadata: { mydancr_password_setup_completed_at: "2026-10-01T00:00:00.000Z" },
+  } });
+  assert.equal((await f.PATCH(jsonRequest("PATCH", { password: "First1!password" }))).status, 200);
+  assert.equal(f.calls.find(call => call.email).email.subject, "Your MyDancr password is now set");
+});
+
+for (const role of ["dancer", "venue", "admin"]) test(`${role} password changes retain the security alert without a customer setup marker`, async () => {
+  const f = passwordFixture({ role });
+  assert.equal((await f.PATCH(jsonRequest("PATCH", { password: "Later1!password" }))).status, 200);
+  const email = f.calls.find(call => call.email).email;
+  assert.equal(email.subject, "Your MyDancr password was changed");
+  assert.match(email.text, /If you did not make this change/);
+});
 
 for (const options of [{}, { revokeFails: true }, { revokeThrows: true }, { emailThrows: true }, { setupRecordFails: true }]) test(`committed password update survives secondary failures ${JSON.stringify(options)}`, async () => {
   const f = passwordFixture(options);

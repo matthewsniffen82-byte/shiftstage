@@ -57,7 +57,7 @@ test("the unified public sign-in has an account-aware forgotten-email form", () 
   assert.match(accountPage, /Email where support can reach you/);
   assert.match(accountPage, /Never send a password, reset code, government ID, or payment information/);
   assert.match(liveApp, /id="customerForgotLoginBtn"/);
-  assert.match(liveApp, /id="loginRecoveryRole"[\s\S]*?<option value="customer">Guest<\/option>[\s\S]*?<option value="dancer">Dancer<\/option>[\s\S]*?<option value="venue">Venue<\/option>/);
+  assert.match(liveApp, /id="loginRecoveryRole"[\s\S]*?<option value="customer">Guest<\/option>[\s\S]*?<option value="dancer">Dancer<\/option>[\s\S]*?<option value="venue">Club<\/option>/);
   assert.match(liveApp, /id="loginRecoveryForm"/);
   assert.match(liveApp, /fetch\("\/api\/account-recovery"/);
   assert.match(liveApp, /body\.customer-auth-overlay-open \.discovery-sticky-head/);
@@ -124,7 +124,7 @@ test("each recovery button opens its own next-step dialog from the pressed contr
 test("a successful password change revokes other sessions and sends a security alert", () => {
   assert.match(accountRoute, /client\.auth\.updateUser\(\{ password \}\)/);
   assert.match(accountRoute, /client\.auth\.signOut\(\{ scope: "others" \}\)/);
-  assert.match(accountRoute, /subject: "Your MyDancr password was changed"/);
+  assert.match(accountRoute, /subject: isFirstPasswordSetup\s*\? "Your MyDancr password is now set"\s*: "Your MyDancr password was changed"/);
   assert.match(accountRoute, /If you did not make this change/);
   assert.match(accountRoute, /password_change_alert_delivery_failed/);
 });

@@ -81,6 +81,7 @@ export async function PATCH(request: Request) {
 
       // Resolve required response context before committing the credential change.
       const account = await getAccountByUserId(client, user.id);
+      const isFirstPasswordSetup = account?.role === "customer" && !passwordSetupCompleted(user);
       const { error } = await client.auth.updateUser({ password });
 
       // A confirmed match already satisfies the requested password; finish the normal update flow.
@@ -109,14 +110,20 @@ export async function PATCH(request: Request) {
       if (user.email) {
         const delivery = await sendTransactionalEmail({
           to: user.email,
-          subject: "Your MyDancr password was changed",
+          subject: isFirstPasswordSetup
+            ? "Your MyDancr password is now set"
+            : "Your MyDancr password was changed",
           text: [
-            "Your MyDancr password was changed successfully.",
+            isFirstPasswordSetup
+              ? "Your MyDancr password is now set. You can sign in using your email and password."
+              : "Your MyDancr password was changed successfully.",
             "",
             signOutError
               ? "We could not confirm that your other sessions were signed out. Contact support if you need help securing another device."
               : "Other active MyDancr sessions were signed out for your security.",
-            "If you did not make this change, reset your password immediately from the MyDancr sign-in page and contact support@mydancr.com.",
+            isFirstPasswordSetup
+              ? "If you did not set this password, reset it immediately from the MyDancr sign-in page and contact support@mydancr.com."
+              : "If you did not make this change, reset your password immediately from the MyDancr sign-in page and contact support@mydancr.com.",
             "",
             "MyDancr will never ask you to send your password or reset code by email.",
           ].join("\n"),
