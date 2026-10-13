@@ -8,7 +8,7 @@ import * as accessTerms from "../src/lib/dancr/access-terms.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/internal/InternalRoster.tsx", import.meta.url), "utf8");
-const code = ts.transpileModule(`${source}\nexport { rosterFetch };`, {
+const code = ts.transpileModule(`${source}\nexport { rosterFetch, ProtectedMedia };`, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
 const flush = () => new Promise(resolve => setImmediate(resolve));
@@ -86,6 +86,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
         useEffect: callback => { latestEffects.push(callback); if (mounting) effects.push(callback); },
       };
       if (name === "../dashboard/VenueAdminUtilities") return { default: () => null };
+      if (name === "../dashboard/VenueGridImage") return { default: "VenueGridImage" };
       if (name === "./InternalRequestPushSettings") return { InternalRequestPushSettings: () => null };
       if (name === "./InternalFullProfile") return { InternalFullProfile: () => null };
       if (name === "@/src/lib/dancr/access-terms") return accessTerms;
@@ -323,12 +324,42 @@ test("staff table requests have a protected avatar and open the matching profile
   assert.ok(find(app.render(), node => node.props?.['data-request-id']));
 });
 
-test("requests for dancers no longer in the authorized roster have initials without a dead profile action", async t => {
+test("private table photos distinguish downloading, HTTP failure and a stalled connection", async t => {
+  for (const timeout of [false, true]) {
+    const pending = deferred();
+    const app = harness(() => pending.promise, { component: 'ProtectedMedia', session: { accessToken: 'staff-token', account: { role: 'venue' } },
+      props: { token: undefined, id: 'photo-1', kind: 'photo', grid: true } });
+    t.after(() => app.unmount()); await app.mount();
+    assert.equal(app.render().props.pending, true);
+    if (timeout) await app.advance(15000);
+    else { pending.resolve({ ok: false }); await flush(); }
+    assert.equal(app.render().props.pending, false);
+    assert.equal(app.render().props.src, '');
+  }
+});
+
+test("private table photos reveal the authorized Blob and cancel downloads on unmount", async t => {
+  let signal;
+  const pending = deferred();
+  const app = harness((_url, options) => { signal = options.signal; return pending.promise; }, {
+    component: 'ProtectedMedia', session: { accessToken: 'staff-token', account: { role: 'venue' } },
+    props: { token: undefined, id: 'photo-1', kind: 'photo', grid: true },
+  });
+  t.after(() => app.unmount()); await app.mount();
+  pending.resolve({ ok: true, blob: async () => new Blob(['photo']) }); await flush();
+  assert.match(app.render().props.src, /^blob:/);
+  assert.equal(app.timers.size, 0, 'settled media clears its deadline');
+  app.unmount();
+  assert.equal(signal.aborted, true);
+});
+
+test("requests for dancers no longer in the authorized roster have a photo fallback without a dead profile action", async t => {
   const app = harness(async () => response({ ...roster, dancers: [], requests: [{ id: 'request-1', dancer_id: 'removed-id', dancerName: 'Former dancer', status: 'pending', created_at: '2026-10-13T03:00:00Z' }] }),
     { session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true } });
   t.after(() => app.unmount()); await app.mount();
   const identity = find(app.render(), node => node.props?.className === 'venue-table-request-identity');
   assert.match(textContent(identity), /Former dancer/);
+  assert.ok(find(identity, node => node.type === 'VenueGridImage' && !node.props.src));
   assert.equal(find(identity, node => node.type === 'button' || node.type?.name === 'ProtectedMedia'), undefined);
 });
 
@@ -353,6 +384,9 @@ test("staff request cards prioritize pending requests, use authorized main photo
   assert.equal(photo.props.kind, 'photo');
   assert.equal(photo.props.revision, 'revision-2');
   assert.equal(photo.props.token, undefined);
+  assert.equal(photo.props.grid, true);
+  assert.equal(photo.props.lazy, false);
+  assert.equal(photo.props.priority, true);
   assert.match(textContent(cards[0]), /VIP Booth/);
   assert.match(textContent(cards[2]), /Seen by staff/);
   const caption = find(cards[0], node => node.props?.className === 'venue-card-caption');

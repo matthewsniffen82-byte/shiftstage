@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
+import VenueGridImage from "../dashboard/VenueGridImage";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
 import { InternalFullProfile, type InternalProfile as Profile, type InternalRequestAction } from "./InternalFullProfile";
 import "../dashboard/venue-dancer-grid.css";
@@ -63,10 +64,12 @@ async function rosterFetch(url: string, token: string | undefined, body?: Record
   }
 }
 
-function ProtectedMedia({ id, kind, token, alt, className, revision, priority = false, lazy = false }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string; priority?: boolean; lazy?: boolean }) {
+function ProtectedMedia({ id, kind, token, alt, className, revision, priority = false, lazy = false, grid = false }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string; priority?: boolean; lazy?: boolean; grid?: boolean }) {
   const [url, setUrl] = useState("");
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
     setUrl("");
+    setFailed(false);
     if (token) return; // Native images can stream and decode without waiting for a Blob.
     let objectUrl = "";
     const controller = new AbortController();
@@ -74,13 +77,16 @@ function ProtectedMedia({ id, kind, token, alt, className, revision, priority = 
     const headers: Record<string, string> = {};
     if (session?.accessToken) headers.authorization = `Bearer ${session.accessToken}`;
     if (session?.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
+    const timer = setTimeout(() => { setFailed(true); controller.abort(); }, 15000);
     void fetch(`/api/internal/${kind}/${id}${kind === "video" ? "" : "?width=320"}`, { headers, cache: "no-store", signal: controller.signal })
       .then(async response => { if (!response.ok) throw new Error(); return response.blob(); })
       .then(blob => { if (controller.signal.aborted || (session && !isCurrentBrowserSession(session))) return; objectUrl = URL.createObjectURL(blob); setUrl(objectUrl); })
-      .catch(() => { if (!controller.signal.aborted) setUrl(""); });
-    return () => { controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
+      .catch(() => { if (!controller.signal.aborted) { setUrl(""); setFailed(true); } })
+      .finally(() => clearTimeout(timer));
+    return () => { clearTimeout(timer); controller.abort(); if (objectUrl) URL.revokeObjectURL(objectUrl); };
   }, [id, kind, token, revision]);
   const mediaUrl = token ? `/api/internal/${kind}/${id}?token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision || "")}${kind === "video" ? "" : "&width=320"}` : url;
+  if (grid && kind !== "video") return <VenueGridImage src={mediaUrl} pending={!failed} lazy={lazy} priority={priority} />;
   return mediaUrl ? kind === "video" ? <video src={mediaUrl} controls playsInline preload="metadata" aria-label={alt} /> : <img className={className} src={mediaUrl} alt={alt} decoding="async" loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"} /> : <span className={className} aria-label="Media loading">…</span>;
 }
 
@@ -424,14 +430,14 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
         </> : <p role="status">{error ? "Table QR codes unavailable." : "Loading table QR codes…"}</p>}
       </details><section className="ir-panel venue-card-region" id="table-requests" tabIndex={-1} aria-busy={!snapshot && !error || undefined}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot ? snapshot.requests?.length || 0 : "—"}</span></h2>
         {snapshot ? <>
-        {snapshot.requests?.length ? <div className="venue-dancer-grid" aria-label="Table request cards">{[...snapshot.requests].sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || Date.parse(b.created_at) - Date.parse(a.created_at)).map(item => {
+        {snapshot.requests?.length ? <div className="venue-dancer-grid" aria-label="Table request cards">{[...snapshot.requests].sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || Date.parse(b.created_at) - Date.parse(a.created_at)).map((item, index) => {
           const dancer = snapshot.dancers.find(row => row.id === item.dancer_id);
           const dancerName = item.dancerName || dancer?.stageName || "Dancer";
           const tableLabel = snapshot.links?.find(link => link.id === item.link_id)?.label || "Table";
           const requestState = item.status === "pending" ? "pending" : item.attendance === "arrived" ? "arrived" : "acknowledged";
           const requestLabel = item.status === "pending" ? "New request" : item.attendance === "arrived" ? "Arrived at table" : "Seen by staff";
-          const identity = <span className="venue-card-portrait"><span className="venue-card-photo" aria-hidden="true">{dancerName.slice(0, 1).toUpperCase()}
-            {dancer && <ProtectedMedia id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" lazy />}</span>
+          const identity = <span className="venue-card-portrait"><span className="venue-card-photo" aria-hidden="true">
+            {dancer ? <ProtectedMedia key={`${dancer.mainPhotoId || dancer.id}:${dancer.mainPhotoRevision || dancer.avatarRevision}`} id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" grid lazy={index >= 12} priority={index < 3} /> : <VenueGridImage />}</span>
             <span className="venue-card-caption"><strong>{dancerName}</strong><small>{tableLabel}</small><span className="venue-card-status" data-state={requestState}>{openingProfileId === dancer?.id ? "Opening…" : requestLabel}</span></span></span>;
           return <article className="venue-dancer-card" data-request-id={item.id} key={item.id}><div className="venue-table-request-identity">
             {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>{identity}</button>

@@ -9,6 +9,7 @@ import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import VenueTonightOverview from "./VenueTonightOverview";
 import VenueSetupChecklist from "./VenueSetupChecklist";
 import VenueValueAnalytics from "./VenueValueAnalytics";
+import VenueGridImage from "./VenueGridImage";
 import "./venue-workspace.css";
 import "./venue-guests.css";
 import "./venue-dancer-grid.css";
@@ -21,7 +22,7 @@ const timezone = "America/Los_Angeles";
 
 function DemoDancerIdentity({ dancer, children }: { dancer: DemoRosterDancer; children?: ReactNode }) {
   const identity = <span className="venue-card-portrait">
-    <span className="venue-card-photo" aria-hidden="true">{dancer.photoUrl ? <img src={dancer.photoUrl} alt="" loading="lazy" decoding="async" /> : dancer.name[0]}</span>
+    <span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={dancer.photoUrl} /></span>
     <span className="venue-card-caption"><strong>{dancer.name}</strong>{children}</span>
   </span>;
   return dancer.profileDancerId ? <VenueRosterProfileButton dancerId={dancer.profileDancerId} stageName={dancer.name} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>

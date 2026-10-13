@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { InternalRoster, VenueRosterProfileButton } from "../internal/InternalRoster";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
+import VenueGridImage from "./VenueGridImage";
 import "./venue-dancer-grid.css";
 import { getVenueRosterEntries, filterRosterChannel, rosterChannelVisibility, sortVenueRosterEntries, type VenueRosterSort, type VenueRosterChannel, type VenueDancerAffiliation as DancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import {
@@ -364,14 +365,12 @@ export default function VenueNfcTagPanel({
         <small>Internal and External filters include dancers who chose Both for their active shift.</small>
         <p className="venue-roster-results" role="status">{isRosterLoading ? "Loading dancers…" : `${rosterEntries.length} ${rosterEntries.length === 1 ? "dancer" : "dancers"}${search.trim() ? " matching your search" : workingOnly ? " working now" : " affiliated"}`}</p>
         <div className="venue-dancer-grid" aria-label="Dancer roster cards">
-        {rosterEntries.slice(0, visibleCount).map(({ id, affiliation, dancer, checkIn }) => {
+        {rosterEntries.slice(0, visibleCount).map(({ id, affiliation, dancer, checkIn }, index) => {
           const visibility = rosterChannelVisibility(affiliation);
           const checkedInAt = typeof checkIn?.checkedInAt === "string" && Number.isFinite(Date.parse(checkIn.checkedInAt)) ? checkIn.checkedInAt : null;
           const identity = <span className="venue-card-portrait">
               <span className="venue-card-photo" aria-hidden="true">
-                  {dancer?.avatarUrl ? (
-                    <img src={dancer.avatarUrl} srcSet={dancer.avatarSrcSet || undefined} sizes="(max-width: 620px) 30vw, 320px" alt="" loading="lazy" decoding="async" />
-                  ) : (dancer?.stageName || "D").slice(0, 1).toUpperCase()}
+                  <VenueGridImage src={dancer?.avatarUrl} srcSet={dancer?.avatarSrcSet || undefined} sizes="(max-width: 620px) 30vw, 320px" lazy={index >= 12} priority={index < 3} />
               </span>
               <span className="venue-card-caption">
                 <strong>{dancer?.stageName || "Dancer"}</strong>

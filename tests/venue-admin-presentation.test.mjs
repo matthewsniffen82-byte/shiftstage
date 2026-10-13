@@ -84,6 +84,7 @@ test("results show six priority metrics and seven compact automatic categories, 
 
 const requestedDependencies = {
   "../internal/InternalRoster": { VenueRosterProfileButton: "ProfileButton" },
+  "./VenueGridImage": { default: "VenueGridImage" },
   "./venue-dancer-grid.css": {}, "./venue-requested-dancers.css": {},
 };
 test("most-requested profiles include every requested dancer in channel-specific ranked order", () => {
@@ -100,7 +101,7 @@ test("most-requested profiles include every requested dancer in channel-specific
   assert.equal(tree.find(node => node.type === "ol").props['aria-label'], "Dancers ranked by table requests");
   const vip = render({ dancers, channel: "vip" });
   assert.deepEqual(vip.filter(node => node.type === "ProfileButton").map(node => node.props.dancerId), originalIds);
-  assert.equal(vip.find(node => node.type === "img").props.src, "/approved-photo.jpg");
+  assert.equal(vip.find(node => node.type === "VenueGridImage").props.src, "/approved-photo.jpg");
   assert.equal(vip.filter(node => node.props.className === "venue-requested-count").at(-1).props.children.join(""), "1 request");
   const tied = render({ dancers: [{ ...dancers[0], name: "Zoe" }, { ...dancers[0], id: "another", name: "Aria" }], channel: "vip" });
   assert.deepEqual(tied.filter(node => node.type === "ProfileButton").map(node => node.props.stageName), ["Aria", "Zoe"]);

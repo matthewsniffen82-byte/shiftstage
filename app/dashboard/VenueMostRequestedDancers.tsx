@@ -2,6 +2,7 @@
 
 import type { DancerPerformance } from "@/src/lib/dancr/venue-analytics";
 import { VenueRosterProfileButton } from "../internal/InternalRoster";
+import VenueGridImage from "./VenueGridImage";
 import "./venue-dancer-grid.css";
 import "./venue-requested-dancers.css";
 
@@ -16,11 +17,11 @@ export default function VenueMostRequestedDancers({ dancers, channel }: {
     <h4 id={headingId}>Most requested dancers</h4>
     {rows?.length ? <div className="venue-requested-scroll venue-card-region" role="region" aria-labelledby={headingId} tabIndex={0}>
       <ol className="venue-dancer-grid" aria-label={channel === "vip" ? "Dancers ranked by VIP requests" : "Dancers ranked by table requests"}>
-        {rows.map(({ dancer, total }) => {
+        {rows.map(({ dancer, total }, index) => {
           const profileId = dancer.profileDancerId === undefined ? dancer.id : dancer.profileDancerId;
           const portrait = <span className="venue-card-portrait">
-            <span className="venue-card-photo" aria-hidden="true">{dancer.name.slice(0, 1).toUpperCase()}
-              {dancer.photoUrl && <img key={dancer.photoUrl} src={dancer.photoUrl} alt="" loading="lazy" decoding="async" onError={event => { event.currentTarget.style.display = "none"; }} />}
+            <span className="venue-card-photo" aria-hidden="true">
+              <VenueGridImage src={dancer.photoUrl} lazy={index >= 12} />
             </span>
             <span className="venue-card-caption"><strong>{dancer.name}</strong><small className="venue-requested-count">{total.toLocaleString()} {total === 1 ? "request" : "requests"}</small></span>
           </span>;

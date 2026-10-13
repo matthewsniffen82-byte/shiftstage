@@ -103,6 +103,10 @@ test('fixtures are deterministic, isolated and contain no usable contacts, crede
 
 const require = createRequire(import.meta.url);
 const jsx = require('react/jsx-runtime');
+const gridImage = {};
+vm.runInNewContext(ts.transpileModule(read('app/dashboard/VenueGridImage.tsx'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
+}).outputText, { exports: gridImage, require });
 const profileDependencies = { VenueRosterProfileButton: ({ dancerId, stageName, children, className }) => React.createElement('button', {
   type: 'button', 'data-profile-id': dancerId, 'aria-label': `View ${stageName} profile`, className,
 }, children) };
@@ -116,6 +120,7 @@ function component(file, dependencies = {}, extra = '', globals = {}) {
         useMemo: callback => callback(), useEffect() {} };
       if (name.endsWith('.css')) return {};
       if (name === '../internal/InternalRoster') return profileDependencies;
+      if (name === './VenueGridImage') return gridImage;
       if (name in dependencies) return dependencies[name];
       throw new Error('Unexpected import ' + name);
     } });
@@ -280,12 +285,13 @@ test('roster and table identities open matching real profiles, including off-shi
   for (let i = 0; i < 6; i++) assert.ok(tableHtml.includes(`data-profile-id="real-${i}"`));
   const empty = renderToStaticMarkup(nodes(render({ workingNow: [], affiliations: [{ ...affiliations[0], canViewProfile: false }] })).find(node => node.props['aria-label'] === 'Dancer roster cards'));
   assert.doesNotMatch(empty, /data-profile-id=|<button/);
-  assert.match(empty, /aria-hidden="true">A<\/span>/);
+  assert.match(empty, /Photo unavailable/);
+  assert.doesNotMatch(empty, /aria-hidden="true">A<\/span>/);
 });
 
 test('demo renders the real report, score and queue components without network access or invalid values', () => {
   const cache = new Map();
-  const modules = ['VenueDemoDashboard', 'VenueValueAnalytics', 'VenueDancerPerformance', 'VenueHairColorAnalytics', 'VenueTonightOverview', 'VenueSetupChecklist', 'VenueDashboardIdentity', 'VenueMostRequestedDancers'];
+  const modules = ['VenueDemoDashboard', 'VenueValueAnalytics', 'VenueDancerPerformance', 'VenueHairColorAnalytics', 'VenueTonightOverview', 'VenueSetupChecklist', 'VenueDashboardIdentity', 'VenueMostRequestedDancers', 'VenueGridImage'];
   function load(name) {
     if (cache.has(name)) return cache.get(name);
     const exports = {}; cache.set(name, exports);
