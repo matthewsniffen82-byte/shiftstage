@@ -46,7 +46,6 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
   return <div className="venue-value-analytics">
     <div className="venue-results-intro">
       <p className="venue-value-dates">{dateRange}</p>
-      <p className="venue-value-note">{period === "tonight" ? "Tonight’s results so far." : period === "all" ? "All available recorded history." : "Compared with the preceding period of the same length."} Updates from dancer check-ins, customer actions and entry scans.</p>
     </div>
     {!automatic && <p role="status">Automatic venue metrics are unavailable. Refresh to try again.</p>}
     <div className="venue-priority-metrics" aria-label="Venue results at a glance">{priority.map(metric)}</div>
