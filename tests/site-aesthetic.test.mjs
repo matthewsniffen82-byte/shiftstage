@@ -238,7 +238,7 @@ test("dancer discovery follows the neutral brand and semantic state hierarchy", 
   );
 });
 
-test("media venue pins use violet while Upcoming keeps the cyan schedule signal", () => {
+test("media venue pins stay neutral while Upcoming keeps the cyan schedule signal", () => {
   const venuePinRules = aesthetic.match(
     /Venue pins always represent place, never schedule state[\s\S]*?(?=\.tv-shell \.tv-verified-mark)/,
   )?.[0] || "";
@@ -250,7 +250,7 @@ test("media venue pins use violet while Upcoming keeps the cyan schedule signal"
   assert.match(venuePinRules, /\.home-tv-feed-venue svg/);
   assert.match(venuePinRules, /\.tv-shell \.tv-card-venue-line svg/);
   assert.match(venuePinRules, /color: var\(--dancr-color-text-muted\) !important;/);
-  assert.match(venuePinRules, /\.home-tv-feed-venue svg,\s*\.tv-shell \.tv-card-venue-line svg \{\s*color: var\(--dancr-color-avatar-ring-violet\) !important;/);
+  assert.match(venuePinRules, /\.home-tv-feed-venue svg,\s*\.tv-shell \.tv-card-venue-line svg \{\s*color: var\(--dancr-color-text-secondary\) !important;/);
   assert.match(venuePinRules, /stroke: currentColor !important;/);
   assert.match(venuePinRules, /filter: none !important;/);
   assert.match(
@@ -258,7 +258,7 @@ test("media venue pins use violet while Upcoming keeps the cyan schedule signal"
     /compact Working Now row pairs the pin directly with the club name[\s\S]*?\.profile-venue-destination\.is-live > \.venue-dot,[\s\S]*?\.profile-venue-destination\.is-live > \.venue-dot svg \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important;[\s\S]*?box-shadow: none !important;[\s\S]*?filter: none !important;/,
   );
   assert.match(venuePinRules, /border-color: var\(--dancr-color-border-subtle\) !important;/);
-  assert.doesNotMatch(venuePinRules, /dancr-color-info|dancr-color-live|dancr-color-success/);
+  assert.doesNotMatch(venuePinRules, /dancr-color-info|dancr-color-live|dancr-color-success|dancr-color-avatar-ring-violet/);
   assert.match(
     aesthetic,
     /\.home-dancer-grid-status\.is-upcoming[\s\S]*?var\(--dancr-color-info\)/,

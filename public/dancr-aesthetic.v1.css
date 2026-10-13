@@ -5828,7 +5828,7 @@ body.dancr-button-system .home-tv-feed-meta {
 }
 
 /* Venue pins always represent place, never schedule state. Discovery and
- * profile pins stay muted; media venue links use violet, not schedule cyan. */
+ * profile pins stay muted; media pins use a readable neutral gray. */
 body.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot,
 body.dancr-button-system > .app main.stack > section.stack
@@ -5848,7 +5848,7 @@ body.dancr-button-system #profileBackdrop .profile-modal .profile-venue-destinat
 
 body.dancr-button-system .home-tv-feed-venue svg,
 .tv-shell .tv-card-venue-line svg {
-  color: var(--dancr-color-avatar-ring-violet) !important;
+  color: var(--dancr-color-text-secondary) !important;
   stroke: currentColor !important;
   filter: none !important;
 }
