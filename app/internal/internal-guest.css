@@ -138,7 +138,7 @@ body .ir-guest .ir-refresh-message:not([data-error]) { position: absolute; width
   body .ir-guest .ir-roster-refresh[aria-busy="true"] svg { animation: none; opacity: .55; }
 }
 
-/* Full-width action below the portrait, with a visible 44px touch target in every state. */
+/* A slimmer 32px face below the portrait keeps the full 44px touch target. */
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request {
   --ir-guest-control-edge: #8c62c9;
   --dancr-shadow-brand-control: 0 2px 6px rgba(124, 58, 237, .08);
@@ -152,7 +152,7 @@ body.dancr-button-system .ir-shell.ir-guest button.ir-table-request {
   white-space: nowrap;
 }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before {
-  inset-block: 0;
+  inset-block: 6px;
   background: linear-gradient(180deg, rgba(255, 255, 255, .08), transparent 48%), linear-gradient(120deg, #6930c4, #482083);
 }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent])::before {
