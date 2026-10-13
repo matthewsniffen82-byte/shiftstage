@@ -16,6 +16,8 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
   justify-self: end;
 }
 .venue-guest-tab-panel[hidden] { display: none !important; }
+/* Opening a guest section focuses its container for navigation, not interaction. */
+.venue-guest-tab-panel[tabindex="-1"]:focus { outline: none; }
 .venue-guest-record { overflow-wrap: anywhere; }
 .venue-guest-record dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px 16px; margin: 8px 0; }
 .venue-guest-record dl > div { min-width: 0; }
