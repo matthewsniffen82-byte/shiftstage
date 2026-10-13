@@ -221,7 +221,7 @@ test('demo table QR entry precedes the roster and explicitly opens recorded tool
 });
 
 test('demo layout uses constrained mobile tracks and no real operation or contact links', () => {
-  assert.match(read('app/dashboard/DashboardClient.tsx'), /<VenueDashboardDemoSwitch[^>]*profile=\{state.profile\}[\s\S]*?<VenuePanel[\s\S]*?<\/VenueDashboardDemoSwitch>/);
+  assert.doesNotMatch(read('app/dashboard/DashboardClient.tsx'), /VenueDashboardDemoSwitch|VenueDemoDashboard/);
   const source = read('app/dashboard/VenueDemoDashboard.tsx');
   assert.doesNotMatch(source, /<form|<a\s|href=|VenuePassScanner|offerPushNotifications|AccountControlsPanel|requestVenue/);
   const css = read('app/dashboard/venue-dashboard-demo.css');

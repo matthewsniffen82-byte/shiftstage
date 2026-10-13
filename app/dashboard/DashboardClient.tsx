@@ -42,7 +42,6 @@ import { DashboardStyles } from "./DashboardStyles";
 import { AgentDashboardShortcut, CustomerWelcomeCard, CustomerPanel, CustomerPreferencesPanel } from "./CustomerDashboardPanels";
 import dynamic from "next/dynamic";
 const VenuePanel = dynamic(() => import("./VenueDashboardPanels").then(module => module.VenuePanel));
-const VenueDashboardDemoSwitch = dynamic(() => import("./VenueDashboardDemoSwitch"));
 
 const DancerPanel = dynamic(() => import("./DancerDashboardPanels").then(module => module.DancerPanel));
 
@@ -635,7 +634,7 @@ export default function DashboardClient({
                     <AccountControlsPanel accountRole="venue" accountState={String(state.account?.accountState)} />
                   </div>
                 </DashboardSection>
-              </> : <VenueDashboardDemoSwitch key={String(state.profile?.id || "")} profile={state.profile} workingNow={state.workingNow || []} affiliations={state.affiliations || []}><VenuePanel
+              </> : <VenuePanel key={String(state.profile?.id || "")}
                   account={state.account || null}
                   analytics={state.analytics}
                   deal={state.deal}
@@ -666,7 +665,7 @@ export default function DashboardClient({
                   onProfileChange={updateProfile}
                    onPublicationChange={(publication) => setState((current) => ({ ...current, publication }))}
                    onDealRequestsChange={(dealRequests) => setState((current) => ({ ...current, dealRequests }))}
-                /></VenueDashboardDemoSwitch>}
+                />}
             </>
           ) : null}
         </section>
