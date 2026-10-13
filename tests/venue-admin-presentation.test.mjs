@@ -103,20 +103,27 @@ const scoredDancers = () => ["Aria", "Bella", "Celeste"].map((name, index) => ({
   vip: { requests: 20, scoringRequests: 20, scoringUniqueRequesters: 10, scoringRepeatRequesters: 2 }, results: dancerResults(),
 }));
 
-test("dancer rows show five automatic categories, overall, sample evidence and venue rank", () => {
+test("dancer rows show six compact scores with full labels and evidence in collapsed details", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
   const tree = render({ dancers: scoredDancers(), period: "30d" });
   const rows = tree.filter(node => node.type === "li");
   assert.equal(rows.length, 3);
   for (const row of rows) {
-    assert.deepEqual(nodes(row).filter(node => node.type === "dt").map(node => node.props.children), ["Overall Performance", "Check-in Activity", "Internal Table Requests", "VIP Requests", "Profile Interest", "Verified Entry Conversions"]);
+    const grid = nodes(row).find(node => node.props.className === "venue-score-grid");
+    const details = nodes(row).find(node => node.type === "details");
+    assert.equal(grid.props['aria-label'], 'Performance scores out of 100');
+    assert.deepEqual(nodes(grid).filter(node => node.type === "abbr").map(node => node.props.children), ["Overall", "Check-ins", "Tables", "VIP", "Interest", "Entries"]);
+    assert.deepEqual(nodes(grid).filter(node => node.type === "abbr").map(node => node.props.title), Object.values(scoring.DANCER_SCORE_LABELS));
+    assert.deepEqual(nodes(details).filter(node => node.type === "dt").map(node => node.props.children), Object.values(scoring.DANCER_SCORE_LABELS));
+    assert.equal(details.props.open, undefined);
+    assert.equal(nodes(grid).filter(node => node.props.className === "venue-score-evidence").length, 0);
     assert.deepEqual(nodes(row).filter(node => node.type === "strong").map(node => node.props.children), [49, 50, 50, 44, 50, 50]);
     assert.equal(nodes(row).filter(node => node.props.className === "venue-score-evidence").length, 6);
     assert.ok(nodes(row).some(node => node.props.className === "venue-score-rank" && node.props.children === "#1 of 3 ranked dancers"));
-    assert.equal(nodes(row).filter(node => node.type === "details").length, 0);
+    assert.equal(nodes(row).filter(node => node.type === "details").length, 1);
   }
   assert.deepEqual(tree.filter(node => node.type === "option").map(node => node.props.value), ["overall", "checkIns", "internal", "vip", "profile", "conversions", "name"]);
-  assert.equal(tree.filter(node => node.type === "details").length, 1);
+  assert.equal(tree.filter(node => node.type === "details").length, 4);
   assert.ok(tree.some(node => node.type === "summary" && node.props.children === "How scores are calculated"));
   assert.equal(tree.find(node => node.type === "details").props.open, undefined);
 });
@@ -169,23 +176,29 @@ test("missing data stays unranked and changing reporting period recalculates eli
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
   const dancers = scoredDancers().map(row => ({ ...row, internal: { ...row.internal, checkedInHours: 1 } }));
   let tree = render({ dancers, period: "tonight" });
+  assert.ok(tree.some(node => node.props.className === "venue-score-early" && node.props.children === "Early"));
   assert.ok(tree.some(node => node.props.className === "venue-score-confidence" && node.props.children === "Early data"));
   assert.ok(tree.some(node => node.props.className === "venue-score-evidence" && node.props.children === "5 of 5 categories"));
   tree = render({ dancers, period: "all" });
   assert.ok(tree.filter(node => node.props.className === "venue-score-rank").every(node => node.props.children === "Unranked"));
-  assert.ok(tree.some(node => node.props.className === "venue-score-missing" && node.props.children === "Not enough data"));
+  const missing = tree.find(node => node.props.className === "venue-score-missing");
+  assert.ok(nodes(missing).some(node => node.props['aria-hidden'] === 'true' && node.props.children === "—"));
+  assert.ok(nodes(missing).some(node => node.props.className === "dashboard-sr-only" && node.props.children === "Not enough data"));
+  const details = tree.find(node => node.props.className === "venue-score-details");
+  assert.ok(nodes(details).some(node => Array.isArray(node.props.children) && node.props.children.includes("Needs at least 4 recorded checked-in hours.")));
   assert.ok(tree.some(node => node.props.className === "venue-score-evidence" && node.props.children === "3 of 5 categories"));
   tree.find(node => node.type === "input").props.onChange({ target: { value: "Nobody matches" } });
   assert.ok(render({ dancers }).some(node => node.props.children === "No dancers match this search."));
   assert.equal(analytics.performanceMinutes(null), "Not yet available");
 });
 
-test("score layout keeps three columns on desktop and two on small screens", () => {
+test("score layout keeps six compact columns on phones and larger screens", () => {
   const css = readFileSync(new URL("../app/dashboard/venue-performance.css", import.meta.url), "utf8");
-  assert.match(css, /\.venue-score-grid\s*\{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
-  assert.match(css, /@media\(max-width:480px\)\s*\{\s*\.venue-score-grid\s*\{\s*grid-template-columns: repeat\(2,minmax\(0,1fr\)\)/);
-  assert.match(css, /\.venue-score\s*\{[^}]*min-height: 92px/);
-  assert.match(css, /\.venue-score-missing\s*\{[^}]*overflow-wrap: anywhere/);
+  const grids = [...css.matchAll(/\.venue-score-grid\s*\{([^}]+)\}/g)].map(match => match[1]);
+  assert.match(grids[0], /grid-template-columns: repeat\(6,minmax\(0,1fr\)\)/);
+  assert.ok(grids.slice(1).every(rule => !rule.includes('grid-template-columns')));
+  assert.doesNotMatch(css, /min-height: 92px/);
+  assert.match(css, /\.venue-score-details > summary\s*\{[^}]*min-height: 44px/);
 });
 
 test("venue attendance summary labels missing records and staff-confirmed missed table arrivals", () => {

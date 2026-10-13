@@ -8,6 +8,9 @@ import {
 } from "@/src/lib/dancr/venue-dancer-scores";
 
 const scoreLabels = DANCER_SCORE_LABELS;
+const compactScoreLabels: Record<DancerScoreKey, string> = {
+  overall: "Overall", checkIns: "Check-ins", internal: "Tables", vip: "VIP", profile: "Interest", conversions: "Entries",
+};
 const periodLabels = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
 const scoreKeys: DancerScoreKey[] = ["overall", ...DANCER_SCORE_CATEGORIES];
 
@@ -54,13 +57,21 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
           </span>
         </div>
       </div>
-      <dl className="venue-score-grid">{scoreKeys.map(key => <div key={key} className={`venue-score venue-score-${key}`} title={row.scores[key].reason || undefined}>
-        <dt>{scoreLabels[key]}</dt>
-        <dd>{row.scores[key].value === null ? <span className="venue-score-missing">Not enough data</span>
-          : <><strong>{row.scores[key].value}</strong><span className="venue-score-scale"> / 100</span></>}</dd>
-        {row.scores[key].confidence === "early" && <small className="venue-score-confidence">Early data</small>}
-        {row.scores[key].evidence && <small className="venue-score-evidence">{row.scores[key].evidence}</small>}
+      <dl className="venue-score-grid" aria-label="Performance scores out of 100">{scoreKeys.map(key => <div key={key} className={`venue-score venue-score-${key}`} title={row.scores[key].reason || undefined}>
+        <dt><abbr title={scoreLabels[key]}>{compactScoreLabels[key]}</abbr></dt>
+        <dd>{row.scores[key].value === null ? <span className="venue-score-missing"><span aria-hidden="true">—</span><span className="dashboard-sr-only">Not enough data</span></span>
+          : <><strong>{row.scores[key].value}</strong><span className="dashboard-sr-only"> out of 100</span></>}</dd>
+        {row.scores[key].confidence === "early" && <small className="venue-score-early">Early</small>}
       </div>)}</dl>
+      <details className="venue-score-details">
+        <summary>Score details <span>Out of 100</span></summary>
+        <dl>{scoreKeys.map(key => <div key={key}>
+          <dt>{scoreLabels[key]}</dt>
+          <dd>{row.scores[key].confidence === "early" && <span className="venue-score-confidence">Early data</span>}
+            {row.scores[key].evidence ? <span className="venue-score-evidence">{row.scores[key].evidence}</span>
+              : <span>Not enough data. {row.scores[key].reason}</span>}</dd>
+        </div>)}</dl>
+      </details>
     </li>)}</ul> : <p className="venue-value-empty">{search.trim() ? "No dancers match this search." : "No dancer activity recorded in this period."}</p>}
     {rows.length > limit && <button className="venue-performance-more" type="button" onClick={() => setLimit(value => value + 20)}>Show more dancers</button>}
   </section>;
