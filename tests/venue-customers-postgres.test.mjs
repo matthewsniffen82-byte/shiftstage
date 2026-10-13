@@ -16,6 +16,7 @@ before(async () => {
     grant all on all tables in schema public to service_role;
   `);
   await pg.exec(readFileSync(new URL("../supabase/migrations/20261007200000_venue_customer_sharing.sql", import.meta.url), "utf8"));
+  await pg.exec(readFileSync(new URL("../supabase/migrations/20261013074748_venue_shared_contacts_count.sql", import.meta.url), "utf8"));
   await pg.query("insert into venues values($1),($2);", [id(1),id(2)]);
   for (const n of [10,11,12]) {
     await pg.query("insert into app_users values($1,'customer','active')", [id(n)]);
@@ -32,6 +33,9 @@ async function guest(pass, { venue=1,customer=10,expires="1 hour",status="genera
 }
 async function rows(venue=1, source="all",offset=0) {
   return (await pg.query("select * from get_venue_customers($1,$2,$3)",[id(venue),source,offset])).rows;
+}
+async function count(venue=1) {
+  return Number((await pg.query("select count_venue_customers($1) as total",[id(venue)])).rows[0].total);
 }
 async function transaction(fn) {
   await pg.exec("begin");
@@ -74,12 +78,40 @@ test("unconsented, orphaned, and malformed contact writes fail database constrai
 });
 test("browser roles cannot read or mutate contacts or execute the server-only directory",async()=>{
   for(const role of ["anon","authenticated"]) {
-    for(const sql of ["select * from venue_customer_shares","delete from venue_customer_shares","select * from get_venue_customers(null,'all',0)"]) {
+    for(const sql of ["select * from venue_customer_shares","delete from venue_customer_shares","select * from get_venue_customers(null,'all',0)","select count_venue_customers(null)"]) {
       await transaction(async()=>{await pg.exec("set local role "+role);await assert.rejects(pg.query(sql),e=>e.code==="42501");});
     }
   }
-  await transaction(async()=>{await pg.exec("set local role service_role");assert.deepEqual(await rows(),[]);});
+  await transaction(async()=>{await pg.exec("set local role service_role");assert.deepEqual(await rows(),[]);assert.equal(await count(),0);});
 });
+
+test("contact totals match unique shared contacts and respect venue, consent, account and visit boundaries", () => transaction(async () => {
+  assert.equal(await count(),0);
+  await share(); await share(11,2);
+  await guest(200); await guest(201); // One follower with two visits remains one contact.
+  await guest(202,{customer:null}); await guest(203,{customer:null}); // Anonymous repeat visits merge by phone.
+  await guest(204,{customer:11,expires:"-1 hour"});
+  await guest(205,{customer:12,status:"cancelled"});
+  await guest(206,{customer:11,venue:2});
+  assert.equal(await count(),2); assert.equal(await count(),(await rows()).length);
+  assert.equal(await count(2),1);
+  await pg.query("update app_users set account_state='disabled' where id=$1",[id(10)]);
+  assert.equal(await count(),1);
+  await pg.query("update qr_redemptions set expires_at=now()-interval '1 second' where customer_id is null");
+  assert.equal(await count(),0);
+  await pg.query("delete from venue_customer_shares where customer_id=$1",[id(11)]);
+  assert.equal(await count(2),1); // Current visit details still exist until the visit expires.
+  await pg.query("update qr_redemptions set expires_at=now()-interval '1 second' where venue_id=$1",[id(2)]);
+  assert.equal(await count(2),0);
+}));
+
+test("contact totals include all pages instead of the first 50 contacts", () => transaction(async () => {
+  for(let n=300;n<365;n++) await guest(n,{customer:null,phone:`+1702555${n}`});
+  assert.equal((await rows()).length,51);
+  assert.equal(await count(),65);
+  const directory=[...(await rows()).slice(0,50),...await rows(1,"all",50)];
+  assert.equal(await count(),new Set(directory.map(row=>row.id)).size);
+}));
 test("paging is bounded and invalid filters are rejected",async()=>{
   for(const args of [[1,"other",0],[1,"all",-1],[1,null,0]]) await transaction(async()=>assert.rejects(rows(...args),e=>e.code==="22023"));
   await transaction(async()=>{await share();assert.equal((await rows(1,"all",1)).length,0);});

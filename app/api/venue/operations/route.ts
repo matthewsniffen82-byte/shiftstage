@@ -15,9 +15,15 @@ export async function GET(request: Request) {
     const { data: venue, error: venueError } = await admin.from("venues").select("timezone").eq("id", access.venueId).single();
     if (venueError) throw venueError;
     const window = getTonightWindow(venue.timezone);
-    const { data, error } = await admin.rpc("get_venue_operations", { p_venue: access.venueId, p_since: window.startsAt, p_until: window.endsAt });
+    const canManage = access.role === "owner" || access.role === "manager";
+    const [{ data, error }, contacts] = await Promise.all([
+      admin.rpc("get_venue_operations", { p_venue: access.venueId, p_since: window.startsAt, p_until: window.endsAt }),
+      canManage ? admin.rpc("count_venue_customers", { p_venue_id: access.venueId }) : Promise.resolve({ data: null, error: null }),
+    ]);
     if (error) throw error;
-    const operations = access.role === "staff" ? { ...data, vipPending: null, ridesOpen: null, teamReady: null } : data;
+    if (contacts.error) throw contacts.error;
+    const operations = canManage ? { ...data, contactsShared: contacts.data }
+      : { ...data, vipPending: null, ridesOpen: null, teamReady: null, contactsShared: null };
     return NextResponse.json({ ok: true, operations, session }, { headers: { "cache-control": "private, no-store" } });
   } catch (error) { return apiError(error, "Unable to load tonight’s queues."); }
 }

@@ -27,7 +27,10 @@ export default function VenueGuestsPanel({ venueId, role, refreshKey, active, ti
   const canManage = role === "owner" || role === "manager";
   const selectedTab = canManage ? selected : "venue-guest-list";
   const visibleTabs = canManage ? tabs : tabs.slice(0, 1);
-  const counts: Record<string, number | undefined> = { "venue-guest-list": operations?.guestExpected, "venue-pickups": operations?.ridesOpen, "venue-vip": operations?.vipPending };
+  const counts: Record<GuestTab, number | null | undefined> = {
+    "venue-guest-list": operations?.guestExpected, "venue-pickups": operations?.ridesOpen,
+    "venue-vip": operations?.vipPending, "venue-customers": operations?.contactsShared,
+  };
   useEffect(() => {
     if (active) setOpened(previous => previous.includes(selectedTab) ? previous : [...previous, selectedTab]);
   }, [active, selectedTab]);
@@ -64,7 +67,7 @@ export default function VenueGuestsPanel({ venueId, role, refreshKey, active, ti
     <div className="venue-guests-tabs" role="tablist" aria-label="Guest information">
       {visibleTabs.map(([id, label]) => <button type="button" role="tab" key={id} id={`${id}-tab`} aria-controls={id}
         aria-selected={selectedTab === id} tabIndex={selectedTab === id ? 0 : -1}
-        onClick={() => select(id)} onKeyDown={event => moveFocus(event, id)}>{label}{counts[id] != null && <span className="venue-tab-count" aria-label={`${counts[id]} ${id === "venue-pickups" ? "open in the last 48 hours" : id === "venue-vip" ? "pending" : "awaiting admission"}`}>{counts[id]}</span>}</button>)}
+        onClick={() => select(id)} onKeyDown={event => moveFocus(event, id)}>{label}{counts[id] != null && <span className="venue-tab-count" aria-label={`${counts[id]} ${id === "venue-pickups" ? "open in the last 48 hours" : id === "venue-vip" ? "pending" : id === "venue-customers" ? "shared contacts" : "awaiting admission"}`}>{counts[id]}</span>}</button>)}
     </div>
     {visibleTabs.map(([id]) => <section key={id} id={id} className="info-panel venue-guest-tab-panel" role="tabpanel"
       aria-labelledby={`${id}-tab`} hidden={selectedTab !== id} tabIndex={-1}>

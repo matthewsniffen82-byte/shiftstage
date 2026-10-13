@@ -2,6 +2,7 @@ export const RIDE_STATUSES = { received: "Received", contacted: "Contacted", arr
 export type RideStatus = keyof typeof RIDE_STATUSES;
 export type VenueOperations = {
   vipPending: number; tablePending: number; guestExpected: number; admitted: number; ridesOpen: number;
+  contactsShared?: number | null;
   teamReady: boolean; checkInReady: boolean;
 };
 export const VENUE_OPERATIONS_CHANGED = "mydancr:venue-operations-changed";

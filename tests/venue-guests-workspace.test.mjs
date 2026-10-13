@@ -83,6 +83,20 @@ function fixture(component, props, request = async () => ({}), hash = "") {
 }
 const guestProps = { venueId: "venue-a", role: "owner", active: true, timezone: "America/Los_Angeles" };
 
+test("Contacts shows the shared total before opening and updates its badge including zero", () => {
+  const ui = fixture("VenueGuestsPanel", { ...guestProps, operations: { contactsShared: 127 } });
+  const badge = () => ui.nodes(ui.button("Contacts")).find(node => node.props?.className === "venue-tab-count");
+  assert.equal(badge().props.children,127);
+  assert.equal(badge().props['aria-label'],"127 shared contacts");
+  assert.ok(!ui.nodes().some(node => node.type === "VenueCustomersPanel"));
+  ui.button("Contacts").props.onClick(); ui.render();
+  assert.equal(badge().props.children,127);
+  ui.render({ operations: { contactsShared: 0 } });
+  assert.equal(badge().props.children,0);
+  ui.render({ operations: null }); assert.equal(badge(),undefined);
+  ui.close();
+});
+
 test("Guests loads tabs on demand and retains opened panes and drafts while marking hidden tools inactive", () => {
   const ui = fixture("VenueGuestsPanel", guestProps);
   assert.equal(ui.nodes().filter(node => node.props.role === "tab").length, 4);

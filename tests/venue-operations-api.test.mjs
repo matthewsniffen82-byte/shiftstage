@@ -8,10 +8,10 @@ import { pickupUuid } from '../src/lib/dancr/pickup-validation.ts';
 import { RIDE_STATUSES } from '../src/lib/dancr/venue-operations.ts';
 import { DASHBOARD_SESSION_KEY, requestDashboardJson } from '../app/dashboard/dashboard-session.ts';
 const requestId='97000000-0000-4000-8000-000000000020';
-function fixture(route,{role='owner',signedIn=true,rpcError=null}={}){
+function fixture(route,{role='owner',signedIn=true,rpcError=null,contactsError=null,contactsShared=127}={}){
   const calls=[],exports={};
   const admin={from(table){calls.push(['from',table]);return{select(){return this;},eq(key,value){calls.push(['eq',key,value]);return this;},single:async()=>({data:{timezone:'UTC'}})};},
-    rpc:async(name,args)=>{calls.push(['rpc',name,args]);return {data:route==='rides'?{id:requestId,staff_status:args.p_status,staff_status_version:args.p_version+1}:{vipPending:3,tablePending:2,guestExpected:4,admitted:1,ridesOpen:5,teamReady:true,checkInReady:true},error:rpcError};}};
+    rpc:async(name,args)=>{calls.push(['rpc',name,args]);if(name==='count_venue_customers')return {data:contactsShared,error:contactsError};return {data:route==='rides'?{id:requestId,staff_status:args.p_status,staff_status_version:args.p_version+1}:{vipPending:3,tablePending:2,guestExpected:4,admitted:1,ridesOpen:5,teamReady:true,checkInReady:true},error:rpcError};}};
   const imports={
     'next/server':{NextResponse:{json:Response.json}},'@/src/lib/api':{PublicApiError,apiError(e,fallback){const r=resolveApiError(e,fallback);return Response.json(r.body,{status:r.status});}},
     '@/src/lib/supabase/request':{createRequestSupabaseContext:async()=>{if(!signedIn)throw new PublicApiError('AUTH_REQUIRED','Sign in',401);return{user:{id:'verified-owner'},session:{accessToken:'rotated'}};}},
@@ -32,6 +32,22 @@ test('live operations use the authorized club and suppress manager-only queues f
     assert.equal(f.calls.find(c=>c[0]==='rpc')[2].p_venue,'authorized-venue');
     assert.equal(body.operations.tablePending,2);assert.equal(body.operations.vipPending,role==='staff'?null:3);
     assert.equal(body.operations.ridesOpen,role==='staff'?null:5);
+    assert.equal(body.operations.contactsShared,role==='staff'?null:127);
+    const countCall=f.calls.find(c=>c[0]==='rpc'&&c[1]==='count_venue_customers');
+    if(role==='staff')assert.equal(countCall,undefined);
+    else assert.equal(countCall[2].p_venue_id,'authorized-venue');
+  }
+});
+
+test('shared contact totals preserve zero and failures cannot masquerade as an empty directory',async()=>{
+  const response=await fixture('operations',{contactsShared:0}).run();
+  assert.equal((await response.json()).operations.contactsShared,0);
+  const failed=await fixture('operations',{contactsError:new Error('Private database details')}).run();
+  assert.equal(failed.status,500);
+  assert.doesNotMatch(JSON.stringify(await failed.json()),/Private database details/);
+  for(const options of [{role:null},{signedIn:false}]){
+    const denied=fixture('operations',options);await denied.run();
+    assert.equal(denied.calls.some(c=>c[0]==='rpc'),false);
   }
 });
 test('ride updates bind the actor and venue to current access and propagate conflict errors',async()=>{
