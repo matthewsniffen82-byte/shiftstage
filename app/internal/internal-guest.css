@@ -1,8 +1,10 @@
 /* Table QR pages share the public directory's compact, neutral presentation. */
-body .ir-guest .ir-terms { margin: 0 0 12px; border: 1px solid #34343c; border-radius: 12px; background: #08080b; font-size: 13px; line-height: 1.5; }
-body .ir-guest .ir-terms summary { padding: 12px 14px; min-height: 44px; box-sizing: border-box; cursor: pointer; color: #e4e4e9; font-weight: 600; }
-body .ir-guest .ir-terms summary:focus-visible { outline: 2px solid #b899ec; outline-offset: 2px; border-radius: 12px; }
-body .ir-guest .ir-terms > div { padding: 0 14px 12px; color: #c7c7d0; }
+body .ir-guest .ir-terms { margin: 0 0 4px; border: 0; border-radius: 0; background: none; font-size: 13px; line-height: 1.5; }
+body .ir-guest .ir-terms summary { width: fit-content; max-width: 100%; padding: 12px 2px; min-height: 44px; box-sizing: border-box; cursor: pointer; color: #aaa6b5; font-size: 12px; font-weight: 500; }
+body .ir-guest .ir-terms summary::marker { color: #918b9c; font-size: 10px; }
+body .ir-guest .ir-terms summary:hover { color: #d8d4e0; }
+body .ir-guest .ir-terms summary:focus-visible { outline: 2px solid #b899ec; outline-offset: 2px; border-radius: 4px; }
+body .ir-guest .ir-terms > div { margin-bottom: 8px; padding: 8px 12px; border-left: 2px solid #34343c; color: #c7c7d0; }
 body .ir-guest .ir-terms p { margin: 0 0 10px; }
 body .ir-guest .ir-terms p:last-child { margin-bottom: 0; }
 body .ir-guest .ir-terms a { color: #d9c7fa; text-decoration: underline; text-underline-offset: 3px; }
@@ -158,11 +160,13 @@ body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not(
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent]):active::before { background: linear-gradient(120deg, #55259f, #3e1b72); }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled { --ir-guest-control-edge: #55545f; }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:disabled::before { background: linear-gradient(#111118, #111118); }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent] { --ir-guest-control-edge: #494653; color: #dddbe5 !important; }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:disabled { opacity: 1 !important; cursor: default; }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]::before { background: linear-gradient(#1a1920, #1a1920); }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:enabled:is(:hover, :active) { --ir-guest-control-edge: #777481; }
-body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:enabled:active::before { background: linear-gradient(#33333b, #33333b); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent] { --ir-guest-control-edge: #85858f; color: #fff !important; -webkit-text-fill-color: currentColor !important; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:enabled { opacity: 1 !important; cursor: pointer; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:disabled:not([aria-busy="true"]) { opacity: 1 !important; cursor: default; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent][aria-busy="true"] { opacity: .55 !important; cursor: wait; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]::before { background: linear-gradient(#303037, #303037); }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:enabled:is(:hover, :active) { --ir-guest-control-edge: #b7b7c3; }
+body.dancr-button-system .ir-shell.ir-guest button.ir-table-request[data-request-sent]:enabled:active::before { background: linear-gradient(#41414a, #41414a); }
 body .ir-guest .internal-request-sent-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; color: #f8fafc !important; }
 body .ir-guest .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 

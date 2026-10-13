@@ -41495,17 +41495,27 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
   .profile-actions-compact :is(#goingBtn, .profile-action-going)[data-internal-table-request]:enabled:not([data-request-sent])::before {
   box-shadow: inset 0 0 0 .65px var(--profile-action-border), var(--dancr-shadow-brand-control) !important;
 }
-/* Keep the sent state gray through confirmation and the available cancel action. */
+/* Match the roster's charcoal cancel action without muting an enabled label. */
 html.internal-profile-embed [data-internal-table-request][data-request-sent] {
-  --profile-action-background: linear-gradient(#29292f, #29292f) !important;
-  --profile-action-border: #55545f !important;
+  --profile-action-background: linear-gradient(#303037, #303037) !important;
+  --profile-action-border: #85858f !important;
   --profile-action-shadow: none !important;
 }
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-actions-compact.profile-venue-actions :is(#goingBtn, .profile-action-icon-control)[data-internal-table-request][data-request-sent]:enabled {
+  color: #fff !important;
+  -webkit-text-fill-color: currentColor !important;
+  opacity: 1 !important;
+  cursor: pointer;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-actions-compact.profile-venue-actions :is(#goingBtn, .profile-action-icon-control)[data-internal-table-request][data-request-sent][aria-busy="true"] {
+  opacity: .55 !important;
+  cursor: wait;
+}
 html.internal-profile-embed [data-internal-table-request][data-request-sent]:enabled:is(:hover, :active) {
-  --profile-action-border: #777481 !important;
+  --profile-action-border: #b7b7c3 !important;
 }
 html.internal-profile-embed [data-internal-table-request][data-request-sent]:enabled:active {
-  --profile-action-background: linear-gradient(#33333b, #33333b) !important;
+  --profile-action-background: linear-gradient(#41414a, #41414a) !important;
 }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label { display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #f8fafc !important; font: inherit !important; }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
