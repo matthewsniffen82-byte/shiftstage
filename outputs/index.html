@@ -63196,6 +63196,25 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       dancerPhotoBorder.textContent = dancerName.charAt(0).toLocaleUpperCase();
       if (dancerPhotoUrl) {
         const dancerPhotoImage = document.createElement("img");
+        const primaryPhotoUrl = String(item?.dancer?.primaryPhotoUrl || "").trim();
+        // A failed responsive thumbnail must not permanently discard the avatar.
+        // Retry the feed's approved fallback URL, then its primary profile photo.
+        const photoFallbacks = [...new Set([dancerPhotoUrl, primaryPhotoUrl].filter(Boolean))];
+        dancerPhotoImage.addEventListener("error", () => {
+          const fallbackUrl = photoFallbacks.shift();
+          if (!fallbackUrl) {
+            dancerPhotoImage.remove();
+            return;
+          }
+          dancerPhotoImage.removeAttribute("srcset");
+          if (fallbackUrl === primaryPhotoUrl && primaryPhotoUrl !== dancerPhotoUrl) {
+            dancerPhotoImage.style.objectPosition = avatarPhotoPosition(
+              item?.dancer?.primaryPhotoFocalX,
+              item?.dancer?.primaryPhotoFocalY
+            );
+          }
+          dancerPhotoImage.src = fallbackUrl;
+        });
         dancerPhotoImage.sizes = "48px";
         dancerPhotoImage.srcset = String(item?.dancer?.avatarPhotoSrcSet || "");
         dancerPhotoImage.width = 48;
@@ -63206,7 +63225,6 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         dancerPhotoImage.decoding = "async";
         dancerPhotoImage.referrerPolicy = "no-referrer";
         dancerPhotoImage.style.objectPosition = dancerPhotoPosition;
-        dancerPhotoImage.addEventListener("error", () => dancerPhotoImage.remove());
         dancerPhotoBorder.appendChild(dancerPhotoImage);
       }
       dancerPhoto.appendChild(dancerPhotoBorder);

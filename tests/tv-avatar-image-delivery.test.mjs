@@ -47,12 +47,14 @@ test('TV serializers reuse responsive avatar candidates without extra lookups or
   assert.ok(videos.every(video => !('dancerAvatarPath' in video)));
 });
 
-test('the live TV card declares responsive candidates before assigning its fallback URL', () => {
+function renderTvAvatar(dancer) {
   const factory = shell.slice(shell.indexOf('    function createHomeTvFeedCopy('), shell.indexOf('    function createHomeTvFeedActionButton('));
   const elements = [];
   const createElement = tagName => {
-    const element = { tagName, style: {}, dataset: {}, children: [], writes: [],
-      setAttribute() {}, addEventListener() {}, append(...children) { this.children.push(...children); },
+    const element = { tagName, style: {}, dataset: {}, children: [], writes: [], handlers: {}, removed: false,
+      setAttribute() {}, addEventListener(name, handler) { this.handlers[name] = handler; },
+      removeAttribute(name) { this[name] = ''; }, remove() { this.removed = true; },
+      append(...children) { this.children.push(...children); },
       appendChild(child) { this.children.push(child); },
     };
     for (const property of ['src', 'srcset', 'sizes', 'width', 'height']) {
@@ -61,10 +63,14 @@ test('the live TV card declares responsive candidates before assigning its fallb
     elements.push(element);
     return element;
   };
-  const context = vm.createContext({ document: { createElement }, avatarPhotoPosition: () => '50% 50%', citySelect: { value: 'Las Vegas' } });
+  const context = vm.createContext({ document: { createElement }, avatarPhotoPosition: (x = 50, y = 50) => `${x}% ${y}%`, citySelect: { value: 'Las Vegas' } });
   vm.runInContext(factory, context);
-  context.createHomeTvFeedCopy({ id: 'video', dancer: { slug: 'dancer', stageName: 'Dancer', avatarPhotoUrl: '/fallback', avatarPhotoSrcSet: '/small 96w, /medium 160w, /large 480w' } }, null);
-  const image = elements.find(element => element.tagName === 'img');
+  context.createHomeTvFeedCopy({ id: 'video', dancer: { slug: 'dancer', stageName: 'Dancer', ...dancer } }, null);
+  return elements.find(element => element.tagName === 'img');
+}
+
+test('the live TV card declares responsive candidates before assigning its fallback URL', () => {
+  const image = renderTvAvatar({ avatarPhotoUrl: '/fallback', avatarPhotoSrcSet: '/small 96w, /medium 160w, /large 480w' });
   assert.equal(image.sizes, '48px');
   assert.equal(image.width, 48);
   assert.equal(image.height, 48);
@@ -72,4 +78,34 @@ test('the live TV card declares responsive candidates before assigning its fallb
   assert.ok(image.writes.indexOf('srcset') < image.writes.indexOf('src'));
   assert.equal(image.src, '/fallback');
   assert.equal(image.loading, 'lazy');
+});
+
+test('a failed TV avatar thumbnail retries the stored avatar before the approved primary photo', () => {
+  const image = renderTvAvatar({ avatarPhotoUrl: '/avatar', avatarPhotoSrcSet: '/thumbnail 96w',
+    avatarPhotoFocalX: 40, avatarPhotoFocalY: 30, primaryPhotoUrl: '/primary', primaryPhotoFocalX: 25, primaryPhotoFocalY: 10 });
+  image.handlers.error();
+  assert.equal(image.srcset, '');
+  assert.equal(image.src, '/avatar');
+  assert.equal(image.style.objectPosition, '40% 30%');
+  assert.equal(image.removed, false);
+  image.handlers.error();
+  assert.equal(image.src, '/primary');
+  assert.equal(image.style.objectPosition, '25% 10%');
+  assert.equal(image.removed, false);
+  image.handlers.error();
+  assert.equal(image.removed, true, 'show initials only after all supplied photo URLs fail');
+});
+
+test('TV avatar retries are bounded when the avatar and primary photo are the same', () => {
+  const image = renderTvAvatar({ avatarPhotoUrl: '/primary', primaryPhotoUrl: '/primary' });
+  image.handlers.error();
+  assert.equal(image.removed, false);
+  image.handlers.error();
+  assert.equal(image.removed, true);
+  assert.equal(image.writes.filter(property => property === 'src').length, 2);
+});
+
+test('TV cards use the supplied primary photo or initials when no avatar exists', () => {
+  assert.equal(renderTvAvatar({ primaryPhotoUrl: '/primary' }).src, '/primary');
+  assert.equal(renderTvAvatar({}), undefined);
 });
