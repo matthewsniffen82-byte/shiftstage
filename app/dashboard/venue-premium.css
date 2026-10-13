@@ -226,6 +226,7 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.ir-table-create, .ir-table-edit) > summary::after { content: "+"; margin-left: 12px; font-size: 20px; font-weight: 400; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.ir-table-create, .ir-table-edit)[open] > summary::after { content: "−"; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-table-create { padding: 0 12px; border: 1px solid #645077; border-radius: 10px; background: #21192b; margin-top: 12px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-table-create + .ir-link { border-top: 0; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-rename-form { padding-bottom: 10px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-push-settings { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding: 12px 0 0 !important; margin: 12px 0 0 !important; border: 0 !important; border-top: 1px solid #493957 !important; border-radius: 0 !important; background: transparent !important; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-alert-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
