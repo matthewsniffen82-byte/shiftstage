@@ -229,13 +229,14 @@ const scoredDancers = () => ["Aria", "Bella", "Celeste"].map((name, index) => ({
   vip: { requests: 20, scoringRequests: 20, scoringUniqueRequesters: 10, scoringRepeatRequesters: 2 }, results: dancerResults(),
 }));
 
-test("performance cards open full profiles and keep each dancer's score breakdown in a separate dialog", () => {
+test("performance rows show every score beside the portrait and retain the full profile and score explanation", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
   const dancers = scoredDancers().map(row => ({ ...row, photoUrl: `/main-${row.id}.jpg`, photoSrcSet: `/main-${row.id}.jpg 480w` }));
   const tree = render({ dancers, period: "30d" });
   assert.ok(tree.some(node => node.props.className === "venue-dancer-grid venue-performance-cards"));
   assert.equal(tree.filter(node => node.props.className === "venue-dancer-card").length, 3);
   assert.equal(tree.filter(node => node.props.className === "venue-score-grid").length, 0);
+  assert.equal(tree.filter(node => node.props.className === "venue-score-grid venue-performance-scores").length, 3);
   const rows = tree.filter(node => node.type === "li");
   assert.equal(rows.length, 3);
   assert.deepEqual(tree.filter(node => node.type === "ProfileButton").map(node => node.props.dancerId), ["a", "b", "c"]);
@@ -248,6 +249,12 @@ test("performance cards open full profiles and keep each dancer's score breakdow
     assert.equal(image.props.src, `/main-${profile.props.dancerId}.jpg`);
     assert.equal(image.props.srcSet, `/main-${profile.props.dancerId}.jpg 480w`);
     assert.ok(!nodes(profile).some(node => node.type === "details" || node.props.className === "venue-score-grid"));
+    const summary = nodes(row).find(node => node.props.className === "venue-performance-summary");
+    const inlineGrid = nodes(summary).find(node => node.props.className === "venue-score-grid venue-performance-scores");
+    assert.equal(inlineGrid.props['aria-label'], 'Performance scores out of 100');
+    assert.deepEqual(nodes(inlineGrid).filter(node => node.type === "abbr").map(node => node.props.children), ["Overall", "Check-ins", "Tables", "VIP", "Interest", "Entries"]);
+    assert.deepEqual(nodes(inlineGrid).filter(node => node.type === "strong").map(node => node.props.children), [53, 75, 50, 44, 50, 50]);
+    assert.ok(!nodes(profile).includes(inlineGrid), "scores sit beside the photo, outside its profile button");
     const trigger = nodes(row).find(node => node.props.className === "venue-score-card-button");
     assert.equal(trigger.props['aria-haspopup'], 'dialog');
     trigger.props.onClick();
@@ -380,13 +387,16 @@ test("missing data stays unranked and changing reporting period recalculates eli
   assert.equal(analytics.performanceMinutes(null), "Not yet available");
 });
 
-test("score layout keeps six compact columns on phones and larger screens", () => {
+test("score dialog keeps six columns and performance rows preserve the original portrait width", () => {
   const css = readFileSync(new URL("../app/dashboard/venue-performance.css", import.meta.url), "utf8");
   const grids = [...css.matchAll(/\.venue-score-grid\s*\{([^}]+)\}/g)].map(match => match[1]);
   assert.match(grids[0], /grid-template-columns: repeat\(6,minmax\(0,1fr\)\)/);
   assert.ok(grids.slice(1).every(rule => !rule.includes('grid-template-columns')));
   assert.doesNotMatch(css, /min-height: 92px/);
   assert.match(css, /button\.venue-score-card-button\s*\{[^}]*min-height: 44px/);
+  assert.match(css, /body \.venue-dancer-grid\.venue-performance-cards\s*\{[^}]*grid-template-columns: minmax\(0,1fr\)/);
+  assert.match(css, /\.venue-performance-cards > li\s*\{[^}]*grid-template-columns: calc\(\(100% - 20px\) \/ 3\) minmax\(0,1fr\)/);
+  assert.match(css, /\.venue-performance-summary \.venue-performance-scores\s*\{[^}]*grid-template-columns: repeat\(3,minmax\(0,1fr\)\)/);
 });
 
 test("automatic totals exclude staff-confirmed results and show missing rates without inventing zero", () => {
