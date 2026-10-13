@@ -183,6 +183,32 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-nfc-roster-head strong { font-size: 18px; font-weight: 650; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-nfc-roster-head small { display: block; margin-top: 4px; font-size: 12px; font-weight: 400; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-nfc-roster-head > b, .venue-roster-stickers > summary > span, .venue-supporting-disclosure > summary > span) { margin-left: auto; font-size: 11px; font-weight: 500; color: #beb3cc; }
+/* Match the navigation counts with a compact, readable face. A flat gradient
+   keeps mobile automatic dark mode from turning the count into a pale block. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-roster-filters > button > b, .venue-nfc-roster-head > b) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  min-width: 28px;
+  min-height: 24px;
+  padding: 3px 7px;
+  border: 1px solid #645077;
+  border-radius: 7px;
+  background: linear-gradient(#241a30, #241a30) !important;
+  color: #fff !important;
+  -webkit-text-fill-color: currentColor !important;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  letter-spacing: 0;
+  white-space: nowrap;
+  text-shadow: none;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-filters > button[aria-pressed="true"] > b { border-color: #9876b6; background: linear-gradient(#382447, #382447) !important; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-filters > button { flex-wrap: wrap; gap: 6px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-content { padding: 0; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.notification-row, .support-thread, .venue-nfc-dancer, .nfc-tag-row) { padding: 12px !important; border: 1px solid #36303f !important; background: #1b1821 !important; border-radius: 12px !important; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.notification-list, .support-thread-list) { gap: 8px !important; }
