@@ -118,9 +118,10 @@ body.dancr-button-system #vip-dashboard .vip-dancer-select,
 body.dancr-button-system #vip-dashboard .vip-dancer-favorite { width: min(44px, calc(50% - 5px)) !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; top: 0; box-sizing: border-box; padding: 5px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; }
 /* Keep generous tap areas while tucking the visible controls into the photo corners. */
 body.dancr-button-system #vip-dashboard .vip-dancer-select { right: 0; align-items: flex-start; justify-content: flex-end; }
-/* A small outlined heart circle sits inside the full corner tap target. */
-body.dancr-button-system #vip-dashboard .vip-dancer-favorite { left: 0; display: grid !important; place-items: start !important; border-radius: 50% !important; color: #fff !important; }
-body.dancr-button-system #vip-dashboard .vip-dancer-favorite svg { width: 30px; height: 30px; box-sizing: border-box; padding: 5px; border: 1px solid #ffffffa6; border-radius: 50%; background: transparent; filter: drop-shadow(0 1px 2px #000b); }
+/* Match the bare heart and plus/check artwork inside the full corner tap targets. */
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite { left: 0; display: grid !important; place-items: start !important; color: #fff !important; }
+body.dancr-button-system #vip-dashboard :is(.vip-dancer-favorite svg, .vip-selection-icon) { width: 21px; height: 21px; }
+body.dancr-button-system #vip-dashboard .vip-dancer-favorite svg { box-sizing: border-box; padding: 0; border: 0; border-radius: 0; background: transparent; filter: drop-shadow(0 1px 2px #000b); }
 body.dancr-button-system #vip-dashboard .vip-plan-grid { grid-template-columns: minmax(0, 1fr); }
 body.dancr-button-system #vip-dashboard .vip-visit-panel { position: static; width: 100%; max-width: 680px; }
 /* Keep visit details compact while preserving room for native date/time pickers. */
