@@ -31,14 +31,20 @@ function fixture(props = {}) {
 }
 const image = tree => tree.props.children[0];
 
-test('grid photos keep their placeholder until loaded, with eager opening and deferred later images', () => {
+test('grid photos show visible progress until loaded, with eager opening and deferred later images', () => {
   const app = fixture({ priority: true });
-  const pending = image(app.render());
+  const tree = app.render();
+  const pending = image(tree);
+  const progress = tree.props.children[1];
+  assert.equal(progress.props.className, 'venue-grid-image-loading');
+  assert.equal(progress.props.children[0].props.className, 'venue-grid-image-spinner');
+  assert.equal(progress.props.children[1].props.children, 'Loading photo…');
   assert.equal(pending.props['data-venue-image-state'], 'loading');
   assert.equal(pending.props.loading, 'eager');
   assert.equal(pending.props.fetchPriority, 'high');
   pending.props.onLoad();
   assert.equal(image(app.render()).props['data-venue-image-state'], 'ready');
+  assert.equal(app.render().props.children[1], null);
   assert.equal(image(fixture({ lazy: true }).render()).props.loading, 'lazy');
 });
 
@@ -46,6 +52,7 @@ test('cached success and image failure settle without leaving a permanent loadin
   const app = fixture();
   app.render(); app.cached({ complete: true, naturalWidth: 320 });
   assert.equal(image(app.render()).props['data-venue-image-state'], 'ready');
+  assert.equal(app.render().props.children[1], null);
   image(app.render()).props.onError();
   assert.equal(image(app.render()).props['data-venue-image-state'], 'error');
   assert.equal(app.render().props.children[1].props.children, 'Photo unavailable');
@@ -55,7 +62,10 @@ test('cached success and image failure settle without leaving a permanent loadin
 
 test('missing photos differ from pending private downloads; changed sources reset image readiness', () => {
   const app = fixture();
-  assert.equal(app.wrapper({ pending: true }).props['data-venue-image-state'], 'loading');
+  const pending = app.wrapper({ pending: true });
+  assert.equal(pending.props['data-venue-image-state'], 'loading');
+  assert.equal(pending.props.className, 'venue-grid-image-loading');
+  assert.equal(pending.props.children[1].props.children, 'Loading photo…');
   assert.equal(app.wrapper({}).props.children, 'Photo unavailable');
   const original = app.wrapper({ src: '/one.jpg', srcSet: '/one-large.jpg 2x' });
   assert.equal(original.key, app.wrapper({ src: '/one.jpg', srcSet: '/one-large.jpg 2x' }).key);

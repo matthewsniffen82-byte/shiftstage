@@ -11,6 +11,13 @@ type Props = {
   priority?: boolean;
 };
 
+function loadingPhoto() {
+  return <span className="venue-grid-image-loading" data-venue-image-state="loading" aria-label="Photo loading">
+    <span className="venue-grid-image-spinner" aria-hidden="true" />
+    <span>Loading photo…</span>
+  </span>;
+}
+
 function LoadedGridImage({ src, srcSet, sizes, lazy, priority }: Props & { src: string }) {
   const image = useRef<HTMLImageElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
@@ -23,13 +30,13 @@ function LoadedGridImage({ src, srcSet, sizes, lazy, priority }: Props & { src: 
       loading={lazy ? "lazy" : "eager"} fetchPriority={priority ? "high" : "auto"}
       data-venue-image-state={state}
       onLoad={() => setState("ready")} onError={() => setState("error")} />
-    {state === "error" && <span className="venue-grid-image-unavailable">Photo unavailable</span>}
+    {state === "loading" ? loadingPhoto() : state === "error" ? <span className="venue-grid-image-unavailable">Photo unavailable</span> : null}
   </>;
 }
 
 export default function VenueGridImage({ src, srcSet, pending = false, ...props }: Props) {
   if (!src) return pending
-    ? <span data-venue-image-state="loading" aria-label="Photo loading" />
+    ? loadingPhoto()
     : <span className="venue-grid-image-unavailable">Photo unavailable</span>;
   // A replacement source gets its own readiness state; ordinary refreshes keep
   // the loaded image mounted, just as the homepage grid does.

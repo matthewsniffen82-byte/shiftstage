@@ -89,6 +89,32 @@ body .venue-dancer-grid .venue-card-photo [aria-label="Media loading"] { display
 body .venue-dancer-grid .venue-card-photo img[data-venue-image-state] { opacity: 0; }
 body .venue-dancer-grid .venue-card-photo img[data-venue-image-state="ready"] { opacity: 1; }
 body .venue-dancer-grid .venue-card-photo img[data-venue-image-state="error"] { visibility: hidden; }
+body .venue-dancer-grid .venue-grid-image-loading {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  color: #d4d4dc;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
+}
+body .venue-dancer-grid .venue-grid-image-spinner {
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #ffffff29;
+  border-top-color: #c4b5fd;
+  border-radius: 50%;
+  animation: venueGridPhotoLoading .8s linear infinite;
+}
+@keyframes venueGridPhotoLoading { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  body .venue-dancer-grid .venue-grid-image-spinner { animation: none; }
+}
 body .venue-dancer-grid .venue-grid-image-unavailable { padding: 10px; color: #b8b1c2; font-size: 11px; line-height: 1.4; text-align: center; }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   body .venue-dancer-grid .venue-card-photo img[data-venue-image-state] { transition: opacity .16s ease; }
