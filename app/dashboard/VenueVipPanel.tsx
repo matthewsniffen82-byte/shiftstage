@@ -5,6 +5,7 @@ import { readSession, requestDashboardJson } from "./dashboard-session";
 import type { VenueVipState, VipRequest } from "@/src/lib/dancr/vip-types";
 import { notifyVenueOperationsChanged } from "@/src/lib/dancr/venue-operations";
 import VipRequests from "../vip/VipRequests";
+import VenueVipDancerCards from "./VenueVipDancerCards";
 import "../vip/vip.css";
 import "./venue-vip.css";
 
@@ -128,7 +129,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
         <button type="button" disabled={busy || loading} aria-pressed={pendingOnly} onClick={() => { setError(""); void load(0, memberSearch, memberPage, true); }}>Pending requests</button>
         <button type="button" disabled={busy || loading} aria-pressed={!pendingOnly} onClick={() => { setError(""); void load(0, memberSearch, memberPage, false); }}>All statuses</button>
       </div>
-      <VipRequests requests={state.requests} onReview={review} busy={busy || loading} emptyMessage={page > 0 ? "No requests on this page. Return to newer requests." : pendingOnly ? "No pending requests. Check All statuses for previous visits." : "No visit requests yet."} />
+      <VipRequests requests={state.requests} onReview={review} busy={busy || loading} renderDancers={request => <VenueVipDancerCards dancers={request.dancers} />} emptyMessage={page > 0 ? "No requests on this page. Return to newer requests." : pendingOnly ? "No pending requests. Check All statuses for previous visits." : "No visit requests yet."} />
       <div className="vip-actions">{page > 0 && <button type="button" disabled={busy || loading} onClick={() => void load(page - 1, memberSearch, memberPage, pendingOnly)}>Newer requests</button>}{state.hasMore && <button type="button" disabled={busy || loading} onClick={() => void load(page + 1, memberSearch, memberPage, pendingOnly)}>Older requests</button>}</div>
     </>}
     </section>

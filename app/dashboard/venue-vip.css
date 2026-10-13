@@ -127,6 +127,21 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
   background: #000;
 }
 
+/* Recover both nested insets so portraits have the same width as the roster grid. */
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-requests .vip-request-list {
+  grid-template-columns: minmax(0, 1fr);
+  width: calc(100% + 32px);
+  margin-inline: -16px;
+}
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-requested-dancers .venue-dancer-grid {
+  width: calc(100% + 26px) !important;
+  margin: 8px -13px 0 !important;
+}
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-dancer-grid button.venue-card-profile {
+  min-height: 0 !important;
+  padding: 0 !important;
+}
+
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-request-time { font-size: 15px; }
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-request-time small { margin-top: 0; }
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-badge { padding: 3px 7px; }

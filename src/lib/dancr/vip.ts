@@ -5,6 +5,7 @@ import { PublicApiError } from "../api-error-policy";
 import { requireVenueAccess } from "./venue-access";
 import type { VipState, VenueVipState, VipInvitation, VipDancer } from "./vip-types";
 import { dancerPhotoDeliveryUrl } from "./media-delivery-url";
+import { withVenueVipDancerCards } from "./venue-vip-dancer-cards";
 
 export const VIP_HEADERS = { "cache-control": "private, no-store, max-age=0", "referrer-policy": "no-referrer" };
 const requestColumns = "id,venue_id,guest_name,starts_at,timezone,dancers,notes,status,response_note,created_at,updated_at";
@@ -136,8 +137,10 @@ export async function getVenueVipState(client: SupabaseClient, userId: string, s
   if (labels.error) throw labels.error;
   const nicknames = new Map((labels.data || []).map(member => [member.user_id, member.nickname]));
   const namedRequests = requestPage.map(({ user_id, ...request }) => ({ ...request, nickname: nicknames.get(user_id) || "" }));
+  const requestCards = namedRequests.some(request => request.dancers?.length)
+    ? await withVenueVipDancerCards(client, namedRequests) : namedRequests;
   return { invitations: invitations.data || [], members: members.data?.members || [], memberCount: members.data?.memberCount || 0,
-    membersHasMore: members.data?.membersHasMore || false, requests: namedRequests, hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
+    membersHasMore: members.data?.membersHasMore || false, requests: requestCards, hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
 }
 
 async function vipWorkingFavorites(client: SupabaseClient, userId: string, venueId: string): Promise<VipDancer[]> {

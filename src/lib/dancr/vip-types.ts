@@ -2,7 +2,7 @@ export type VipVenue = { id: string; name: string; timezone: string; guestName: 
 export type VipDancer = { id: string; stage_name: string; working_now: boolean; photoUrl?: string | null; profileHref?: string | null; favorite?: boolean; following?: boolean; workingAlertsEnabled?: boolean; previouslyRequested?: boolean; canRequest?: boolean };
 export type VipRequest = {
   id: string; venue_id: string; guest_name: string; nickname?: string; starts_at: string; timezone: string;
-  dancers: Array<{ id: string; stageName: string }>; notes: string;
+  dancers: Array<{ id: string; stageName: string; photoUrl?: string | null; photoSrcSet?: string | null }>; notes: string;
   status: "pending" | "confirmed" | "declined" | "cancelled";
   response_note: string; created_at: string; updated_at?: string;
 };

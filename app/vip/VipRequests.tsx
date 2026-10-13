@@ -1,10 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { formatVipDate, type VipRequest } from "@/src/lib/dancr/vip-types";
 import { vipCalendar } from "@/src/lib/dancr/vip-calendar";
 
 type RequestActions = {
   busy?: boolean; venueName?: string; featured?: boolean;
+  renderDancers?: (request: VipRequest) => ReactNode;
   onReview?: (request: VipRequest, status: string, note: string) => Promise<void>;
   onRepeat?: (request: VipRequest) => void;
   onEdit?: (request: VipRequest) => void;
@@ -15,14 +16,14 @@ export default function VipRequests({ requests, emptyMessage, ...actions }: Requ
     <RequestCard key={request.id} request={request} {...actions} />
   ) : <p className="vip-empty">{emptyMessage || (actions.onReview ? "No visit requests yet." : "No requests yet. Your requests and venue responses will appear here.")}</p>}</div>;
 }
-function RequestCard({ request, onReview, busy = false, venueName, featured, onRepeat, onEdit, onWithdraw }: { request: VipRequest } & RequestActions) {
+function RequestCard({ request, onReview, busy = false, venueName, featured, onRepeat, onEdit, onWithdraw, renderDancers }: { request: VipRequest } & RequestActions) {
   const [note, setNote] = useState("");
   const [confirmWithdrawal, setConfirmWithdrawal] = useState(false);
   return <article className={`vip-request${featured ? " vip-request-featured" : ""}`}>
     <div className="vip-row"><strong>{onReview ? request.nickname || request.guest_name : featured ? "Your night is confirmed" : "Your visit"}</strong><span className={`vip-badge vip-status-${request.status}`}>{request.status}</span></div>
     {onReview && request.nickname && <small>Guest: {request.guest_name}</small>}
     <p className="vip-request-time"><time dateTime={request.starts_at}>{featured ? <><span>{new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: request.timezone }).format(new Date(request.starts_at))}</span><strong>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: request.timezone }).format(new Date(request.starts_at))}</strong></> : formatVipDate(request.starts_at, request.timezone)}</time><small>{request.timezone.replaceAll("_", " ")}</small></p>
-    <p><strong>Requested dancers</strong><br />{request.dancers.map(dancer => dancer.stageName).join(", ")}</p>
+    {renderDancers ? renderDancers(request) : <p><strong>Requested dancers</strong><br />{request.dancers.map(dancer => dancer.stageName).join(", ")}</p>}
     {request.notes && <p className="vip-note">{request.notes}</p>}
     {request.response_note && <p className="vip-note"><strong>Venue response</strong><br />{request.response_note}</p>}
     {request.status === "pending" && !onReview && <small>Awaiting venue review. Dancer availability is subject to confirmation.</small>}
