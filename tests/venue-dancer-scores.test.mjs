@@ -4,7 +4,7 @@ import { scoreVenueDancers, sortScoredDancers, DANCER_SCORE_CATEGORIES, DANCER_S
 
 const dancer = id => ({ id, name: id,
   internal: { checkedInHours: 8, requests: 20, completed: 8, requestsDuringHours: 20,
-    rosterTrackedHours: 8, verifiedCheckInDays: 4, checkoutEligibleDays: 4, dancerCheckoutDays: 4, activeCheckInDays: 0 },
+    rosterTrackedHours: 8, rosterBothHours: 0, verifiedCheckInDays: 4, checkoutEligibleDays: 4, dancerCheckoutDays: 4, activeCheckInDays: 0 },
   vip: { requests: 25, scoringRequests: 20, scoringUniqueRequesters: 10, scoringRepeatRequesters: 2 },
   external: { dancer_profile: 10, club_page: 10, directions: 10, going: 10, free_entry: 10, transport: 10 },
   results: { checkIns: 2, checkOuts: 1, tableArrived: 8, tableNoShows: 0, tableAttendanceUnrecorded: 2,
@@ -48,6 +48,30 @@ test('active first visits show provisional activity and accuracy needs three end
   assert.match(result.scores.checkIns.evidence,/Checkout accuracy pending/);
   Object.assign(row.internal,{checkoutEligibleDays:2,dancerCheckoutDays:2}); assert.equal(score(row).scores.checkIns.confidence,'early');
   Object.assign(row.internal,{checkoutEligibleDays:3,dancerCheckoutDays:3}); assert.equal(score(row).scores.checkIns.confidence,'established');
+});
+
+test('Both earns a prorated 25 percent activity boost without changing checkout accuracy or peer baselines', () => {
+  const rows=peers(); rows[1].internal.rosterBothHours=4; rows[2].internal.rosterBothHours=8;
+  assert.deepEqual(scoreVenueDancers(rows,'30d').map(row=>row.scores.checkIns.value),[75,78,81]);
+  rows[2].internal.dancerCheckoutDays=0;
+  assert.equal(scoreVenueDancers(rows,'30d')[2].scores.checkIns.value,31,'Both cannot supply missing checkout points');
+  assert.match(scoreVenueDancers(rows,'30d')[1].scores.checkIns.evidence,/4 hours on both rosters/);
+});
+
+test('Both bonus stays within the activity allocation, including provisional visits', () => {
+  const row=dancer('a'); Object.assign(row.internal,{rosterTrackedHours:800,rosterBothHours:800,verifiedCheckInDays:400});
+  assert.equal(score(row).scores.checkIns.value,100);
+  row.internal.dancerCheckoutDays=0; assert.equal(score(row).scores.checkIns.value,50);
+  Object.assign(row.internal,{rosterTrackedHours:8,rosterBothHours:8,verifiedCheckInDays:4,checkoutEligibleDays:0,dancerCheckoutDays:0,activeCheckInDays:1});
+  assert.equal(score(row).scores.checkIns.value,63); assert.equal(score(row).scores.checkIns.confidence,'early');
+});
+
+test('unknown mode history earns no bonus and invalid mode hours cannot inflate scores', () => {
+  const row=dancer('a'); delete row.internal.rosterBothHours;
+  assert.equal(score(row).scores.checkIns.value,75);
+  for (const invalid of [null,NaN,Infinity,-1,8.01]) {
+    row.internal.rosterBothHours=invalid; assert.equal(score(row).scores.checkIns.value,null);
+  }
 });
 
 test('legacy hours and inconsistent paired counts never invent roster accuracy or suppress table scoring', () => {

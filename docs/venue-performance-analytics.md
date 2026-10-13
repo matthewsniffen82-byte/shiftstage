@@ -18,7 +18,7 @@ VIP and internal status breakdowns use the **current state of requests created i
 
 Tonight’s live VIP counts use scheduled dates, including requests submitted earlier. The internal queue includes pending/acknowledged requests received in the preceding six hours, matching the operational queue. Guest-list passes awaiting admission are currently valid, unused passes; they do not guarantee attendance.
 
-## Automatic dancer scores (version 3)
+## Automatic dancer scores (version 4)
 
 The private venue report shows **Overall Performance**, **Check-in Activity**, **Internal Table Requests**, **VIP Requests**, **Profile Interest**, and **Verified Entry Conversions**. Each score includes its sample evidence; small or partial samples display **Early data**. Search, sort and pagination happen after scoring the complete authorized venue/period report and cannot alter benchmarks or ranks. No manager acknowledgement, completion, arrival or booking-status action is needed to maintain scores. Dancers' own checkouts now contribute to Check-in Activity.
 
@@ -30,7 +30,7 @@ For relative comparisons, points are `100 * value / (value + medianPositive)`. T
 
 | Category | Calculation | Overall weight |
 | --- | --- | --- |
-| Check-in Activity | 50% checkout accuracy + 25% relative verified check-in days + 25% relative tracked hours. Checkout accuracy is the percentage of eligible check-in days on which every ended visit has the dancer's own checkout before expiry. | 15% |
+| Check-in Activity | 50% checkout accuracy + 25% relative verified check-in days + 25% relative tracked hours. Time on both rosters boosts the days-and-hours portion by up to 25%, capped at 50 points. Checkout accuracy is the percentage of eligible check-in days on which every ended visit has the dancer's own checkout before expiry. | 15% |
 | Internal Table Requests | Relative requests received during recorded presence divided by recorded hours. Staff acknowledgement/completion/arrival status is ignored. | 25% |
 | VIP Requests | 80% relative customer selections + 20% returning-customer share among distinct requesting accounts. Customer-withdrawn requests are excluded from current demand and repeat history; staff decisions are ignored. | 20% |
 | Profile Interest | Relative weighted sum of explicitly dancer-and-venue-attributed events: profile opens 1; club opens, follows and completed shares 2; directions, transport, offer clicks and I'm Going signals 3. | 10% |
@@ -50,7 +50,13 @@ An eligible day contains at least one ended visit. It earns accuracy credit only
 
 With no ended visits, the two activity components are rescaled to 50% check-in days and 50% hours, labelled Early data with `Checkout accuracy pending`. This awards no assumed checkout accuracy. Once visits end, the normal 50/25/25 weights apply. The category remains Early until it has at least three eligible ended days and twice the period's minimum tracked hours. Unknown/malformed accuracy inputs leave this category unscored and do not disable Internal Table Requests.
 
+Version 4 adds an activity multiplier of `1 + 0.25 * (rosterBothHours / rosterTrackedHours)`. Internal-only and external-only use the same base weight. The multiplier applies to the combined days-and-hours points, capped at that portion's 50-point allocation; checkout points are never boosted. For example, otherwise identical dancers at the club's median activity with perfect checkout accuracy score 75 for one roster, 78 for half their hours on both, and 81 for all hours on both. These are rounded examples, not fixed scores for each mode. The baseline remains actual days/hours so another dancer's mode cannot move the comparison. Provisional scores use the same multiplier and remain Early data.
+
+Private work-session records retain closed Both intervals and an open Both start time. Both requires the verified shift's channel and the dancer's current channel preference to agree on Both. Channel/preference changes start or stop timing immediately; repeated taps retain the original start. Checkout freezes mode history, automatic expiry limits time, and deleting a shift does not erase recorded intervals. Report calculations merge overlaps and clip to the visit and reporting period. Existing verified active visits start mode timing at deployment; earlier or unknown mode history earns no bonus. This records selected roster participation, not proof of customer exposure. The report exposes `rosterBothHours` alongside actual hours in Score details, without changing actual attendance totals or adding manager work.
+
 Migration `20261013024002_dancer_roster_accuracy_scores.sql` was applied to production. A read-only Echo House report returned all five new aggregate fields for 96 dancers. The report remains inaccessible to anonymous/authenticated database callers, and security/performance advisors reported no new findings. Focused database tests verify actor distinctions, same-day deduplication, active/expired visits, midnight/period boundaries, overlap handling and historical-data exclusion.
+
+Migration `20261013031912_dancer_both_roster_score_weight.sql` adds the Both timing and report field. Production verification returned bounded Both hours for all 96 Echo House dancers, retained private report/trigger access, and introduced no new security/performance advisor findings. Focused database tests cover mode changes, repeated taps, checkout/deletion history, expired visits, overlap clipping and no retroactive mode credit.
 
 ### Evidence and ranking
 
