@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { DancerPerformance } from "@/src/lib/dancr/venue-analytics";
 import {
-  DANCER_SCORE_MINIMUMS, DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS, DANCER_SCORE_LABELS, DANCER_SCORE_CATEGORIES,
+  DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS, DANCER_SCORE_LABELS, DANCER_SCORE_CATEGORIES,
   scoreVenueDancers, sortScoredDancers, type DancerScoreKey, type DancerScorePeriod, type DancerScoreSort,
 } from "@/src/lib/dancr/venue-dancer-scores";
 
@@ -17,7 +17,6 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
   const [limit, setLimit] = useState(20);
   const scored = scoreVenueDancers(dancers, period);
   const rows = sortScoredDancers(scored, sort).filter(row => row.dancer.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()));
-  const minimum = DANCER_SCORE_MINIMUMS[period];
   return <section className="venue-performance" aria-labelledby="venue-performance-heading">
     <h3 id="venue-performance-heading">Dancer performance</h3>
     <p className="venue-value-note">{periodLabels[period]} · Private to this club</p>
@@ -30,18 +29,17 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
     </div>
     <details className="venue-score-methodology">
       <summary>How scores are calculated</summary>
-      <p>Scores update from recorded check-ins, customer activity and normal entry scans. No manager completion or arrival buttons are required. Benchmarks use this club&apos;s full report for the selected period.</p>
+      <p>Scores are out of 100, based on recorded activity at this club for the selected period.</p>
       <dl>
-        <div><dt>Overall Performance</dt><dd>{DANCER_SCORE_CATEGORIES.map((key, index) => <span key={key}>{index ? " + " : ""}{DANCER_SCORE_WEIGHTS[key]}% {scoreLabels[key]}</span>)}. At least three categories are required. Available weights are rescaled to 100%; missing categories never count as zero. Coverage is shown beneath the score.</dd></div>
-        <div><dt>Check-in Activity</dt><dd>Recorded checked-in hours compared with this club&apos;s typical hours. Overlapping sessions are merged. Repeated check-in taps and missing check-outs do not earn extra points or penalties.</dd></div>
-        <div><dt>Internal Table Requests</dt><dd>Requests received during recorded presence ÷ recorded checked-in hours, compared with this club&apos;s typical rate. This measures demand. Staff acknowledgements, completions and arrival reports do not change the score.</dd></div>
-        <div><dt>VIP Requests</dt><dd>80% relative VIP selections + 20% returning-customer share. Each selected dancer gets one credit per request. Customer withdrawals are excluded, including from repeat history. Staff confirmations, declines and cancellations do not change demand credit.</dd></div>
-        <div><dt>Profile Interest</dt><dd>Weighted activity compared with this club&apos;s typical total: profile opens 1; club opens, follows and completed shares 2; directions, transport, offer clicks and &quot;I&apos;m Going&quot; 3. Only activity attributed to this dancer and club counts. Additional views never dilute entry conversion.</dd></div>
-        <div><dt>Verified Entry Conversions</dt><dd>100 × redeemed profile passes ÷ profile passes claimed in the selected period. Both counts use the same claim cohort and period end. Normal entry scans record redemption; claims alone do not prove admission. Voided passes are excluded.</dd></div>
-        <div><dt>Data confidence</dt><dd>For {periodLabels[period]}: at least {minimum.hours} recorded hours for check-in and table scoring; {minimum.requests} table requests during those hours or VIP selections; {minimum.claims} profile pass claims for conversions; {minimum.actions} actions for profile interest. Relative comparisons need {DANCER_SCORE_MIN_PEERS} qualifying dancers. Missing data stays unscored. Early data remains labelled until hours and actions reach twice their minimum, and requests or claims reach at least 20 and twice their minimum. This is sample coverage, not statistical certainty.</dd></div>
-        <div><dt>Benchmarks and rank</dt><dd>Relative points equal 100 × value ÷ (value + the median positive value); a typical positive value scores 50. Overall uses the displayed category scores. Rank requires all five categories past Early data and at least {DANCER_SCORE_MIN_PEERS} comparable dancers. Equal scores share a rank. Partial scores stay unranked; search and sorting do not change benchmarks.</dd></div>
+        <div><dt>Overall Performance</dt><dd>Weighted average of at least three categories. Missing categories are excluded; remaining weights are rescaled.</dd></div>
+        <div><dt>Check-in Activity · {DANCER_SCORE_WEIGHTS.checkIns}%</dt><dd>Recorded checked-in hours compared with this club&apos;s typical hours.</dd></div>
+        <div><dt>Internal Table Requests · {DANCER_SCORE_WEIGHTS.internal}%</dt><dd>Requests received per checked-in hour, compared with this club&apos;s typical rate.</dd></div>
+        <div><dt>VIP Requests · {DANCER_SCORE_WEIGHTS.vip}%</dt><dd>80% relative selections + 20% returning-customer share. Customer withdrawals are excluded.</dd></div>
+        <div><dt>Profile Interest · {DANCER_SCORE_WEIGHTS.profile}%</dt><dd>Weighted actions: profile opens 1; club opens, follows and completed shares 2; directions, transport, offer clicks and &quot;I&apos;m Going&quot; 3.</dd></div>
+        <div><dt>Verified Entry Conversions · {DANCER_SCORE_WEIGHTS.conversions}%</dt><dd>Percentage of profile passes claimed in this period and redeemed by period end. Voided passes are excluded.</dd></div>
+        <div><dt>Benchmarks and rank</dt><dd>Relative scores compare qualifying dancers at this club; typical positive activity earns 50 points. Ranking needs all five categories past Early data and at least {DANCER_SCORE_MIN_PEERS} comparable dancers. Ties share a rank.</dd></div>
       </dl>
-      <p>Only recorded signals are used. Individual table customers, complete profile/card exposure, saved profiles and repeat admissions are not available in this report. Clicks and requests do not prove attendance. These scores do not measure talent, scheduled-shift reliability or revenue. No POS feed is needed.</p>
+      <p>Early data means a small or partial sample. Missing data stays unscored. Staff request-status updates do not affect scores. Clicks and requests do not prove attendance or revenue.</p>
       <small>Scoring version {DANCER_SCORE_VERSION}</small>
     </details>
     <p className="venue-value-note" role="status">{rows.length.toLocaleString()} {rows.length === 1 ? "dancer" : "dancers"}{search.trim() ? " matching your search" : " with recorded activity"}</p>

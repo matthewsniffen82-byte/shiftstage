@@ -121,6 +121,28 @@ test("dancer rows show five automatic categories, overall, sample evidence and v
   assert.equal(tree.find(node => node.type === "details").props.open, undefined);
 });
 
+test("score explanation stays concise and preserves weights, conversion scope and ranking safeguards", () => {
+  const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
+  const text = node => Array.isArray(node) ? node.map(text).join("")
+    : node && typeof node === "object" ? text(node.props?.children)
+      : typeof node === "string" || typeof node === "number" ? String(node) : "";
+  for (const period of ["tonight", "7d", "30d", "all"]) {
+    const explanation = render({ dancers: scoredDancers(), period }).find(node => node.props.className === "venue-score-methodology");
+    const copy = nodes(explanation).filter(node => ["p", "dt", "dd", "summary", "small"].includes(node.type)).map(text).join(" ");
+    assert.ok(copy.split(/\s+/).length <= 280, "keep the explanation scannable");
+    for (const key of scoring.DANCER_SCORE_CATEGORIES) {
+      assert.ok(copy.includes(`${scoring.DANCER_SCORE_LABELS[key]} · ${scoring.DANCER_SCORE_WEIGHTS[key]}%`));
+    }
+    assert.match(copy, /at least three categories.*Missing categories are excluded; remaining weights are rescaled/);
+    assert.match(copy, /claimed in this period and redeemed by period end/);
+    assert.match(copy, /Customer withdrawals are excluded/);
+    assert.match(copy, /Voided passes are excluded/);
+    assert.ok(copy.includes(`all five categories past Early data and at least ${scoring.DANCER_SCORE_MIN_PEERS} comparable dancers`));
+    assert.match(copy, /Missing data stays unscored/);
+    assert.match(copy, /do not prove attendance or revenue/);
+  }
+});
+
 test("search, category sorting and pagination do not recalculate club ranks", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
   const dancers = scoredDancers();
