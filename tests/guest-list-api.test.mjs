@@ -6,17 +6,18 @@ import {createRequire} from 'node:module';
 import ts from 'typescript';
 import {PublicApiError,resolveApiError} from '../src/lib/api-error-policy.ts';
 import {normalizeGuestListDetails} from '../src/lib/dancr/guest-list.ts';
+import {getTonightWindow,getScheduleDateWindow} from '../src/lib/dancr/schedule.ts';
 const require=createRequire(import.meta.url),{NextResponse}=require('next/server');
 const source=ts.transpileModule(readFileSync(new URL('../app/api/venue/guest-list/route.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-function fixture({access=true,authenticated=true,permissions=['view_deals'],rows=[],error=null}={}){
+function fixture({access=true,authenticated=true,permissions=['view_deals'],rows=[],error=null,timezone='UTC',counts={all:0,generated:0,redeemed:0}}={}){
  const calls=[],exports={},query={};
  const browserClient={from(){assert.fail('Private venue ownership must not be read through the browser client');}};
- const adminClient={from(table){calls.push(['from',table]);assert.equal(table,'venues');return query;},rpc:async(name,args)=>{calls.push(['rpc',name,args]);return {data:rows,error};}};
- query.single=async()=>({data:{timezone:'UTC'}});
+ const adminClient={from(table){calls.push(['from',table]);assert.equal(table,'venues');return query;},rpc:async(name,args)=>{calls.push(['rpc',name,args]);return {data:{entries:rows.slice(0,50),hasMore:rows.length>50,counts},error};}};
+ query.single=async()=>({data:{timezone}});
  for(const method of ['select','eq','gt','in','order'])query[method]=(...args)=>{calls.push([method,...args]);return query;};
  query.range=async(...args)=>{calls.push(['range',...args]);return {data:rows,error};};
  const imports={
-  '@/src/lib/dancr/schedule':{getTonightWindow:()=>({startsAt:'2026-10-12T00:01:00Z'})},
+  '@/src/lib/dancr/schedule':{getTonightWindow,getScheduleDateWindow},
   'next/server':{NextResponse},'@/src/lib/api-error-policy':{PublicApiError},
   '@/src/lib/api':{apiError(error,fallback){const r=resolveApiError(error,fallback);return NextResponse.json(r.body,{status:r.status});}},
   '@/src/lib/supabase/request':{async createRequestSupabaseContext(_request,options){assert.equal(options.role,'venue');if(!authenticated)throw new PublicApiError('UNAUTHORIZED','Sign in.',401);return {client:browserClient,user:{id:'staff'},session:{accessToken:'renewed'}};}},
@@ -47,6 +48,28 @@ test('guest admission timestamps come from the redeemed pass and remain unavaila
  assert.equal(body.entries[0].redeemedAt,rows[0].redeemed_at);
  assert.equal(body.entries[1].redeemedAt,null);
  assert.equal(body.entries[0].status,'redeemed');
+});
+
+test('guest-list defaults to club Tonight and returns counts for the whole matching list',async()=>{
+ const f=fixture({timezone:'America/Los_Angeles',counts:{all:120,generated:110,redeemed:10}});
+ const body=await(await f.get('?status=redeemed&offset=50')).json();
+ const rpc=f.calls.find(c=>c[0]==='rpc'); assert.equal(rpc[1],'venue_guest_list_workspace');
+ assert.equal(rpc[2].p_start,getTonightWindow('America/Los_Angeles').startsAt);
+ assert.equal(rpc[2].p_end,getTonightWindow('America/Los_Angeles').endsAt);
+ assert.deepEqual(body.counts,{all:120,generated:110,redeemed:10});assert.equal(body.timezone,'America/Los_Angeles');
+ assert.ok(Number.isFinite(Date.parse(body.updatedAt)));
+});
+
+test('selected dates use DST-safe club boundaries; all-active passes omit date boundaries',async()=>{
+ const f=fixture({timezone:'America/Los_Angeles'});
+ assert.equal((await f.get('?period=date&date=2026-11-01')).status,200);
+ const args=f.calls.find(c=>c[0]==='rpc')[2];
+ assert.equal(args.p_start,'2026-11-01T07:01:00.000Z');assert.equal(args.p_end,'2026-11-02T08:01:00.000Z');
+ const active=fixture();await active.get('?period=active');
+ assert.equal(active.calls.find(c=>c[0]==='rpc')[2].p_start,null);
+ for(const search of ['?period=date','?period=date&date=2026-02-30','?period=invalid','?status=voided','?search='+('a'.repeat(101))]){
+  const bad=fixture();assert.equal((await bad.get(search)).status,400);assert.equal(bad.calls.some(c=>c[0]==='rpc'),false);
+ }
 });
 
 test('an authorized empty guest list succeeds while database failures remain errors',async()=>{

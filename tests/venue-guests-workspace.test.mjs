@@ -8,6 +8,7 @@ import { RIDE_STATUSES } from "../src/lib/dancr/venue-operations.ts";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const require = createRequire(import.meta.url);
+class DashboardDataRequestError extends Error { constructor(message,status) { super(message); this.status=status; } }
 // Component events and mocked responses only; no browser, server, or network.
 function fixture(component, props, request = async () => ({}), hash = "") {
   const slots = [], calls = [], listeners = new Map(), intervals = new Map(), frames = new Map(), focused = [];
@@ -51,10 +52,10 @@ function fixture(component, props, request = async () => ({}), hash = "") {
   const imports = {
     react, "react/jsx-runtime": require("react/jsx-runtime"),
     "next/dynamic": { default: loader => loader.toString().match(/\.\/(\w+)/)[1] },
-    "next/link": { default: "a" }, "./venue-guests.css": {}, "./venue-customers.css": {},
+    "next/link": { default: "a" }, "./venue-guests.css": {}, "./venue-customers.css": {}, "./venue-guest-list.css": {},
     "@/src/lib/dancr/venue-operations": { RIDE_STATUSES, notifyVenueOperationsChanged() {} },
     "./VenueDashboardIdentity": { VenueDashboardIcon: () => null },
-    "./dashboard-session": { requestDashboardJson: send }, "../pickups/pickup-session": { requestPickupJson: send },
+    "./dashboard-session": { requestDashboardJson: send, DashboardDataRequestError }, "../pickups/pickup-session": { requestPickupJson: send },
     "@/src/lib/dancr/club-deal-transportation": { clubArrivalLabel: () => "Driving" },
   };
   const exports = {};
@@ -73,7 +74,7 @@ function fixture(component, props, request = async () => ({}), hash = "") {
   async function settle() { await new Promise(resolve => setImmediate(resolve)); render(); flushFrames(); }
   render(); flushFrames();
   return { render, nodes, settle, calls, focused, intervals, window, html: () => renderToStaticMarkup(tree),
-    button: label => nodes().find(node => node.type === "button" && [node.props.children].flat().some(child => child === label)),
+    button: label => nodes().find(node => node.type === "button" && (node.props['aria-label'] === label || [node.props.children].flat().some(child => child === label || child?.props?.children === label))),
     pane: id => nodes().find(node => node.props?.role === "tabpanel" && node.props.id === id),
     hash(value) { window.location.hash = value; listeners.get("hashchange")?.(); render(); flushFrames(); },
     tick() { [...intervals.values()].forEach(run => run()); },
@@ -156,16 +157,16 @@ test("inactive ride tabs stop polling and abort pending loads before a venue cha
   ui.render({ active: true, venueId: "venue-b" }); assert.match(ui.calls.at(-1).url, /venueId=venue-b/); ui.close();
 });
 
-test("guest list shows recorded admission details and removes private entries on refresh failure", async () => {
+test("guest list shows recorded admission details and removes private entries after access is revoked", async () => {
   let fail = false;
   const ui = fixture("VenueGuestListPanel", guestProps, async () => {
-    if (fail) throw new Error("Access removed");
+    if (fail) throw new DashboardDataRequestError("Access removed",403);
     return { entries: [{ id: "pass", name: "Admitted guest", phone: ride.phone, email: null, createdAt: ride.requested_at,
-      expiresAt: "2026-10-12T12:00:00Z", arrivalMethod: "self_drive", status: "redeemed", redeemedAt: null }], hasMore: false };
+      expiresAt: "2026-10-12T12:00:00Z", arrivalMethod: "self_drive", status: "redeemed", redeemedAt: null }], hasMore: false, counts: {all:1,redeemed:1,generated:0}, updatedAt:'2026-10-12T01:00:00Z' };
   });
-  await ui.settle(); assert.match(ui.html(), /Verified admission/); assert.match(ui.html(), /Time unavailable/);
+  await ui.settle(); assert.match(ui.html(), /Admitted/); assert.match(ui.html(), /Time unavailable/);
   assert.match(ui.html(), /Pass valid until/); assert.match(ui.html(), /America\/Los Angeles/);
-  fail = true; ui.button("Refresh").props.onClick(); await ui.settle();
+  fail = true; ui.button("Refresh guest list").props.onClick(); await ui.settle();
   assert.doesNotMatch(ui.html(), /Admitted guest/); assert.match(ui.html(), /Access removed/); ui.close();
 });
 
@@ -179,14 +180,65 @@ test("shared contacts show sharing purpose separately from email and text subscr
   assert.match(ui.html(), /mailto:guest%40example.test/); assert.ok(ui.calls.every(call => !call.options.method)); ui.close();
 });
 
+const guestRow = index => ({ id: `pass-${index}`, name: `Guest ${index}`, phone: ride.phone, email: 'guest@example.test',
+  createdAt: ride.requested_at, expiresAt: '2026-10-12T12:00:00Z', arrivalMethod:'self_drive',status:'generated' });
+const guestPage = (entries, extra={}) => ({entries,hasMore:false,counts:{all:entries.length,generated:entries.length,redeemed:0},updatedAt:'2026-10-12T01:00:00Z',timezone:'America/Los_Angeles',...extra});
+
+test('guest refresh retains every loaded page and scroll position; a new filter resets the list',async()=>{
+ let hold=false, release;
+ const ui=fixture('VenueGuestListPanel',guestProps,async url=>{
+  if(hold){await new Promise(resolve=>{release=resolve;});hold=false;}
+  const p=new URL(url,'https://example.test').searchParams;
+  const start=Number(p.get('offset')),length=start===0?50:5;
+  return guestPage(Array.from({length},(_,i)=>guestRow(start+i)),{hasMore:start===0,counts:{all:55,generated:55,redeemed:0}});
+ });
+ await ui.settle();assert.match(ui.calls[0].url,/period=tonight/);assert.match(ui.html(),/55 guests in this view/);
+ assert.equal(ui.nodes().filter(n=>n.type==='details').length,50);
+ const region=ui.nodes().find(n=>n.props.className==='venue-guest-scroll');region.props.ref.current={scrollTop:240};
+ ui.button('Load more guests').props.onClick();await ui.settle();assert.equal(ui.nodes().filter(n=>n.type==='details').length,55);
+ hold=true;ui.button('Refresh guest list').props.onClick();ui.render();assert.match(ui.html(),/Guest 54/);assert.match(ui.html(),/Updating/);
+ release();await ui.settle();assert.equal(ui.nodes().filter(n=>n.type==='details').length,55);assert.equal(region.props.ref.current.scrollTop,240);
+ assert.match(ui.calls.at(-1).url,/offset=50/);
+ ui.button('Admitted').props.onClick();ui.render();assert.equal(region.props.ref.current.scrollTop,0);assert.doesNotMatch(ui.html(),/Guest 54/);
+ await ui.settle();assert.match(ui.calls.at(-1).url,/status=redeemed/);assert.match(ui.calls.at(-1).url,/offset=0/);ui.close();
+});
+
+test('transient guest refresh failures retain details and Retry recovers without an empty-state flash',async()=>{
+ let fail=false;
+ const ui=fixture('VenueGuestListPanel',guestProps,async()=>{if(fail)throw new DashboardDataRequestError('Try again.',503);return guestPage([guestRow(1)]);});
+ await ui.settle();fail=true;ui.button('Refresh guest list').props.onClick();await ui.settle();
+ assert.match(ui.html(),/Guest 1/);assert.match(ui.html(),/Showing the last loaded list/);assert.doesNotMatch(ui.html(),/No guests tonight/);
+ fail=false;ui.button('Retry').props.onClick();await ui.settle();assert.doesNotMatch(ui.html(),/role="alert"/);assert.match(ui.html(),/Guest 1/);ui.close();
+});
+
+test('guest search, empty states and date selection remain separate from admission controls',async()=>{
+ const ui=fixture('VenueGuestListPanel',guestProps,async()=>guestPage([]));await ui.settle();assert.match(ui.html(),/No guests tonight/);
+ ui.nodes().find(n=>n.type==='input'&&n.props.type==='search').props.onChange({target:{value:'Nobody'}});ui.render();
+ ui.nodes().find(n=>n.type==='form').props.onSubmit({preventDefault(){}});ui.render();await ui.settle();
+ assert.match(ui.html(),/No guests match your search/);assert.match(ui.calls.at(-1).url,/search=Nobody/);
+ ui.button('Clear filters').props.onClick();ui.render();await ui.settle();
+ const calls=ui.calls.length;ui.nodes().find(n=>n.type==='select').props.onChange({target:{value:'date'}});ui.render();
+ assert.equal(ui.calls.length,calls);assert.match(ui.html(),/Choose a date to see/);
+ ui.nodes().find(n=>n.props.type==='date').props.onChange({target:{value:'2026-10-11'}});ui.render();await ui.settle();
+ assert.match(ui.calls.at(-1).url,/date=2026-10-11/);assert.match(ui.html(),/No guests for this date/);
+ assert.doesNotMatch(ui.html(),/Scan pass|Mark admitted|Verify admission/);ui.close();
+});
+
+test('hidden guest tabs abort pending refreshes and ignore late private data',async()=>{
+ let resolve;
+ const ui=fixture('VenueGuestListPanel',{...guestProps,active:false},()=>new Promise(done=>{resolve=done;}));
+ assert.equal(ui.calls.length,0);ui.render({active:true});ui.render({active:false});assert.equal(ui.calls[0].options.signal.aborted,true);
+ resolve(guestPage([guestRow(1)]));await ui.settle();assert.doesNotMatch(ui.html(),/Guest 1/);ui.close();
+});
+
 test("guest searches and status filters restart pagination and reach the server", async () => {
-  const ui = fixture("VenueGuestListPanel", guestProps, async () => ({ entries: [], hasMore: false }));
+  const ui = fixture("VenueGuestListPanel", guestProps, async () => guestPage([]));
   await ui.settle();
   ui.nodes().find(n => n.type === "input").props.onChange({ target: { value: "María" } }); ui.render();
   ui.nodes().find(n => n.type === "form").props.onSubmit({ preventDefault() {} }); await ui.settle();
   let params = new URL(ui.calls.at(-1).url, "https://example.test").searchParams;
   assert.equal(params.get("search"), "María"); assert.equal(params.get("offset"), "0");
-  ui.nodes().find(n => n.type === "select" && n.props.value === "all").props.onChange({ target: { value: "generated" } }); await ui.settle();
+  ui.button("Awaiting admission").props.onClick(); await ui.settle();
   params = new URL(ui.calls.at(-1).url, "https://example.test").searchParams;
   assert.equal(params.get("status"), "generated"); assert.equal(params.get("search"), "María");
   ui.close();
