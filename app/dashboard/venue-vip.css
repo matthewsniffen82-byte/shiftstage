@@ -171,6 +171,43 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
 }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .vip-access-list > li > span { flex: 1 1 140px; }
+
+/* Give invitations a deliberate action row instead of wrapping two buttons
+   above an oversized third button. Keep the full labels and 44px touch area. */
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-invitations > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-invitation-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 6px;
+  min-width: 0;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-invitation-actions > button {
+  --venue-control-face: #18131f;
+  --venue-control-edge: #50435f;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px !important;
+  padding: 6px !important;
+  border-radius: 8px !important;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-invitation-actions > .venue-vip-revoke-invitation {
+  --venue-control-face: #241117;
+  --venue-control-edge: #794354;
+  color: #ffd0dc !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip details.venue-vip-menu {
   position: relative;
   flex: 0 0 auto;
