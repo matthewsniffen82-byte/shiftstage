@@ -153,7 +153,7 @@ test("every photo and video has three-dot options with an approval-aware pin act
   const html = render({ photos: items, videos: items, onMediaPinned() {} });
   const pins = html.match(/<button[^>]*aria-label="(?:Unpin|Pin) [^>]*>/g);
   assert.equal(pins.length, 6);
-  assert.equal((html.match(/<summary aria-label="Options for/g) || []).length, 6);
+  assert.equal((html.match(/<summary class="dashboard-menu-trigger" aria-label="Options for/g) || []).length, 6);
   assert.equal((html.match(/<details class="dancer-media-menu/g) || []).length, 6);
   for (const [index, pin] of pins.entries()) {
     const approved = index % 3 === 0;

@@ -241,7 +241,7 @@ test('table cards show table, dancer, status and received time while preserving 
   const list = tree.find(node => node.props['aria-label'] === 'Table request cards');
   const html = renderToStaticMarkup(list);
   assert.equal((html.match(/class="venue-card-menu"/g) || []).length, rows.length);
-  assert.match(html, /<summary aria-label="Request details for Table 1/);
+  assert.match(html, /<summary class="dashboard-menu-trigger" aria-label="Request details for Table 1/);
   assert.deepEqual(Array.from(list.props.children.slice(0, 2), card => card.key), ['demo-table-0', 'demo-table-1']);
   for (const text of ['Aria', 'Table 1', 'Pending', '2 guests', 'Received:', 'dateTime="2026-10-13T05:55:00.000Z"']) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /<button|Mark seen|Dismiss/, 'sample requests cannot perform live actions');

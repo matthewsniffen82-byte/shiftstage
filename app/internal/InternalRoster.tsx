@@ -432,7 +432,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
           return <article className="venue-dancer-card" data-request-id={item.id} key={item.id}><div className="venue-table-request-identity">
             {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>{identity}</button>
               : identity}</div>
-            <details className="venue-card-menu" name="venue-card-details"><summary aria-label={`${tableLabel} request details for ${dancerName}`} title="Request details"><span aria-hidden="true">•••</span></summary>
+            <details className="venue-card-menu" name="venue-card-details"><summary className="dashboard-menu-trigger" aria-label={`${tableLabel} request details for ${dancerName}`} title="Request details"><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary>
             <div className="venue-card-popover"><div className="venue-card-details"><strong>{tableLabel} · {dancerName}</strong>
               <span className="venue-card-status" data-state={requestState}>{requestLabel}</span>
               <small>Received: <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></small>

@@ -43,7 +43,7 @@ function DemoRows({ rows, timeLabel = "Received", dancerCards = false }: { rows:
     <p className="venue-value-note" role="status">{visible.length} sample records</p>
     {dancerCards ? <ul className="venue-dancer-grid" aria-label="Table request cards">{visible.map(row => <li className="venue-dancer-card" key={row.id}>
       {row.dancer && <DemoDancerIdentity dancer={row.dancer}><small>{row.tableLabel || row.name}</small><span className="venue-card-status" data-state={row.status.toLowerCase()}>{row.status}</span></DemoDancerIdentity>}
-      <details className="venue-card-menu" name="venue-card-details"><summary aria-label={`Request details for ${row.name}`} title="Request details"><span aria-hidden="true">•••</span></summary>
+      <details className="venue-card-menu" name="venue-card-details"><summary className="dashboard-menu-trigger" aria-label={`Request details for ${row.name}`} title="Request details"><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary>
       <div className="venue-card-popover"><div className="venue-card-details"><strong>{row.tableLabel || row.name}</strong><span className="venue-card-status" data-state={row.status.toLowerCase()}>{row.status}</span>
         <small>{row.detail}</small><small>{timeLabel}: <time dateTime={row.at}>{new Date(row.at).toLocaleString(undefined, { timeZone: timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></small>
       </div></div></details>

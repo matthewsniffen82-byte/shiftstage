@@ -564,7 +564,7 @@ function CustomerNightPanel({
             <div className="customer-night-controls"><div className="customer-card-actions customer-night-actions">
               {dancer.slug ? <Link href={customerDancerHref(dancer)}>View profile</Link> : null}
               <CustomerDirectionsButton dancerId={dancer.id} onDirections={onDirections} pending={Boolean(pendingAction)} venue={venue} />
-            </div><details className="customer-card-menu" data-compact-menu name="customer-card-options"><summary aria-label={`Manage plan for ${dancer.stageName || "dancer"}`}>•••</summary><div>
+            </div><details className="customer-card-menu" data-compact-menu name="customer-card-options"><summary className="dashboard-menu-trigger" aria-label={`Manage plan for ${dancer.stageName || "dancer"}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div>
               {venue.slug ? <Link href={customerVenueHref(venue)}>Club page</Link> : null}
               <button className="customer-plan-cancel" type="button" disabled={Boolean(pendingAction)} aria-busy={pendingAction === `going-${item.shiftId}` || undefined} onClick={() => void onCancelGoing(item.shiftId)}>{pendingAction === `going-${item.shiftId}` ? "Cancelling…" : "Cancel Going"}</button>
             </div></details></div>
@@ -726,7 +726,7 @@ function FollowedDancerGridCard({
         {shift && !isWorkingNow ? <small className="customer-followed-dancer-time">{shiftLabel}</small> : null}
       </span>
     </Link>
-    <details className="customer-card-menu customer-dancer-menu" data-compact-menu name="customer-card-options"><summary aria-label={`More options for ${dancerName}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
+    <details className="customer-card-menu customer-dancer-menu" data-compact-menu name="customer-card-options"><summary className="dashboard-menu-trigger" aria-label={`More options for ${dancerName}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div><button
       className="customer-dancer-unfollow"
       type="button"
       aria-label={`Unfollow ${dancerName}`}
@@ -913,7 +913,7 @@ function CustomerDealPassPanel({
                 <small className="saved-deal-availability">{item.deviceOnly ? "Saved on this device" : savedClubDealAvailability(item.deal)}</small>
               </div>
             </div>
-            <details className="customer-card-menu" data-compact-menu name="customer-card-options"><summary aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}><svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="10" r="1.4" /><circle cx="10" cy="10" r="1.4" /><circle cx="15" cy="10" r="1.4" /></svg></summary><div><button
+            <details className="customer-card-menu" data-compact-menu name="customer-card-options"><summary className="dashboard-menu-trigger" aria-label={`Manage saved deal ${item.deal.title || "Club Deal"}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div><button
               className="customer-text-action"
               type="button"
               disabled={Boolean(pendingAction)}

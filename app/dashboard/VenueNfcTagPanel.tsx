@@ -384,7 +384,7 @@ export default function VenueNfcTagPanel({
             {affiliation?.canViewProfile && affiliation.dancerId
               ? <VenueRosterProfileButton dancerId={affiliation.dancerId} stageName={dancer?.stageName || "Dancer"} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
               : identity}
-            <details className="venue-card-menu" name="venue-card-details"><summary aria-label={`Details for ${dancer?.stageName || "dancer"}`} title="Dancer details"><span aria-hidden="true">•••</span></summary>
+            <details className="venue-card-menu" name="venue-card-details"><summary className="dashboard-menu-trigger" aria-label={`Details for ${dancer?.stageName || "dancer"}`} title="Dancer details"><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary>
             <div className="venue-card-popover"><div className="venue-card-details">
               <strong>{dancer?.stageName || "Dancer"}</strong>
               <span className="venue-card-status" data-state={checkIn ? "working" : "inactive"}>{checkIn ? "● Working now" : "Not working now"}</span>

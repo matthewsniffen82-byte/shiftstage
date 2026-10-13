@@ -26,10 +26,10 @@ export default function DancerPhotoControls({ label, primary, children, disabled
   }}>
     <div className="dancer-photo-controls-row">
       {compact ? null : primary}
-      {children || compact ? <button ref={trigger} className="dancer-photo-options-toggle" type="button"
+      {children || compact ? <button ref={trigger} className="dancer-photo-options-toggle dashboard-menu-trigger" type="button"
         aria-label={`More options for ${label}`} aria-expanded={expanded} aria-controls={optionsId}
         disabled={disabled} onClick={() => setExpanded(current => !current)}>
-        <span aria-hidden="true">•••</span>
+        <span className="dashboard-menu-dots" aria-hidden="true">•••</span>
       </button> : null}
     </div>
     {/* Keep crop/upload state mounted when the extra controls are collapsed. */}

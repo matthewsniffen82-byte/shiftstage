@@ -56,9 +56,9 @@ export default function DancerMediaPinButton({ label, pinned = false, busy = fal
       });
     }}
   >
-    <summary aria-label={`Options for ${label}`} aria-disabled={blocked} aria-busy={busy}
+    <summary className="dashboard-menu-trigger" aria-label={`Options for ${label}`} aria-disabled={blocked} aria-busy={busy}
       onClick={event => { if (blocked) event.preventDefault(); }}>
-      <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" /></svg></span>
+      <span className="dashboard-menu-dots" aria-hidden="true">•••</span>
     </summary>
     <div className="dancer-media-menu-popover">
       <button type="button" aria-label={action} disabled={blocked || !available}

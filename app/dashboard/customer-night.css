@@ -100,14 +100,12 @@ body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell
 /* Place the visible face 3px from the portrait corner, inside the shared 44px tap target. */
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu { position:absolute; top:0; right:0; width:100%; pointer-events:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>:is(summary,div) { pointer-events:auto; }
-/* Override the shared face in its own layer so it stays centered behind the corner icon. */
+/* Keep the shared three-dot control and its popup at the portrait's right edge. */
 @layer dancr-follow-controls {
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary { margin:0 0 0 auto !important; }
-  body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary::before { inset:3px 3px auto auto !important; width:30px !important; height:24px !important; }
   /* Keep every popup below the right corner and within its own portrait, including the first column. */
   body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>div { width:100% !important; min-width:0 !important; max-width:160px !important; }
 }
-body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-dancer-menu>summary>svg { position:absolute; top:5px; right:8px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-card { min-width:0; padding:12px; border:1px solid var(--customer-line); border-radius:14px !important; background:var(--customer-surface); overflow:visible; box-shadow:none; }
 body.dancr-button-system main#customer-dashboard.dashboard-shell.dashboard-shell-customer .customer-favorite-club-header { display:grid; grid-template-columns:112px minmax(0,1fr) 44px; gap:10px; align-items:center; padding:0; }

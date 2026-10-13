@@ -50,10 +50,11 @@ test("three dots open options and only the pin-icon action changes the saved sta
     assert.equal(m.tree.type, "details");
     assert.equal(m.summary.props["aria-label"], "Options for photo 2");
     assert.equal(m.tree.props["data-pinned"], pinned);
-    const dots = m.summary.props.children.props.children;
-    assert.equal(dots.type, "svg");
-    assert.equal(dots.props.children.length, 3);
-    assert.ok(dots.props.children.every(child => child.type === "circle"));
+    assert.equal(m.summary.props.className, "dashboard-menu-trigger");
+    const dots = m.summary.props.children;
+    assert.equal(dots.props.className, "dashboard-menu-dots");
+    assert.equal(dots.props["aria-hidden"], "true");
+    assert.equal(dots.props.children, "•••");
     assert.equal(m.action.props["aria-label"], `${pinned ? "Unpin" : "Pin"} photo 2`);
     assert.equal(m.action.props.children[0].type, "svg");
     assert.equal(m.action.props.children[1].props.children, pinned ? "Unpin" : "Pin");
