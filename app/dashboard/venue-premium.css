@@ -240,6 +240,25 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-table-create { padding: 0 12px; border: 1px solid #645077; border-radius: 10px; background: #21192b; margin-top: 12px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-table-create + .ir-link { border-top: 0; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-rename-form { padding-bottom: 10px; }
+/* Keep table identity and Rename on one row; expand the form only when needed. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes.ir-table-tools { padding: 12px !important; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes > summary > h2 { margin: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-table-create { margin-top: 6px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-link { gap: 6px !important; padding: 8px 0 !important; border-top: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-link:last-child { padding-bottom: 0 !important; border-bottom: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-link > div:first-child {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-link > div:first-child > strong { grid-column: 1; grid-row: 1; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-link > div:first-child > small { grid-column: 1; grid-row: 2; margin-top: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-table-edit { grid-column: 2; grid-row: 1 / span 2; min-width: 0; margin: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-table-edit > summary { gap: 6px; font-size: 12px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-table-edit > summary::after { margin-left: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-table-edit[open] { grid-column: 1 / -1; grid-row: 3; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #table-qr-codes .ir-rename-form { margin-top: 0; padding-bottom: 4px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-push-settings { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding: 12px 0 0 !important; margin: 12px 0 0 !important; border: 0 !important; border-top: 1px solid #493957 !important; border-radius: 0 !important; background: transparent !important; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-alert-summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .ir-alert-summary strong { font-size: 14px !important; font-weight: 600; }
