@@ -138,13 +138,11 @@ body .ir-guest .ir-refresh-message:not([data-error]) { position: absolute; width
   body .ir-guest .ir-roster-refresh[aria-busy="true"] svg { animation: none; opacity: .55; }
 }
 
-/* A 32px face sits inside the full 44px target for every request state.
-   Lower the control and caption together to reveal more of the portrait. */
-body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-requestable .ir-dancer-copy { padding-bottom: 46px; }
+/* Full-width action below the portrait, with a visible 44px touch target in every state. */
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request {
   --ir-guest-control-edge: #8c62c9;
   --dancr-shadow-brand-control: 0 2px 6px rgba(124, 58, 237, .08);
-  inset: auto 6px 2px !important;
+  inset: auto !important;
   height: 44px !important;
   min-height: 44px !important;
   padding: 2px 4px !important;
@@ -154,7 +152,7 @@ body.dancr-button-system .ir-shell.ir-guest button.ir-table-request {
   white-space: nowrap;
 }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request::before {
-  inset-block: 6px;
+  inset-block: 0;
   background: linear-gradient(180deg, rgba(255, 255, 255, .08), transparent 48%), linear-gradient(120deg, #6930c4, #482083);
 }
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request:enabled:not([data-request-sent])::before {
