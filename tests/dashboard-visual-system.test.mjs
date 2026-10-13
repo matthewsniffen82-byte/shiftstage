@@ -73,15 +73,17 @@ test("venue dashboard uses one state-aware four-destination workspace", () => {
   const commandIndex = venuePanel.indexOf('className="venue-command-panel"');
   const tabsIndex = venuePanel.indexOf('className="venue-workspace-tabs"');
   const tonightIndex = venuePanel.indexOf('id="venue-workspace-tonight"');
+  const rosterIndex = venuePanel.indexOf('id="venue-workspace-roster"');
   const metricsIndex = venuePanel.indexOf('className="venue-dashboard-metrics venue-tonight-metrics"');
   const managementIndex = venuePanel.indexOf("<DashboardSection");
 
-  assert.ok(commandIndex >= 0);
-  assert.ok(tabsIndex > commandIndex);
-  assert.ok(tonightIndex > tabsIndex);
-  assert.ok(metricsIndex > tonightIndex);
+  assert.ok(tabsIndex >= 0);
+  assert.ok(commandIndex > tabsIndex);
+  assert.ok(tonightIndex > commandIndex);
+  assert.ok(rosterIndex > tonightIndex);
+  assert.ok(metricsIndex > rosterIndex);
   assert.ok(managementIndex > metricsIndex);
-  assert.match(venuePanel, /\["tonight", "Guests & pickups"[\s\S]*?\["roster", "Dancers & tables"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Manage venue"/);
+  assert.match(venuePanel, /\["tonight", "Tonight"[\s\S]*?\["roster", "Dancers & tables"[\s\S]*?\["business", "Results"[\s\S]*?\["venue", "Manage venue"/);
   assert.doesNotMatch(venuePanel, /Roster · deals · check-in|Preview · review · MyDancr TV|Analytics · team · account/);
   assert.match(venuePanel, /role="tablist"[\s\S]*?aria-selected=\{activeWorkspace === workspace\}/);
   assert.match(venuePanel, /initialVenueWorkspace\(profile\?\.isActive === true\)/);
@@ -118,7 +120,7 @@ test("venue dashboard uses one state-aware four-destination workspace", () => {
   assert.match(routedDashboards, /\.venue-dashboard-metrics \.metric strong \{ font-size: 22px; \}/);
   assert.match(routedDashboards, /\.venue-dashboard-section > summary \{ min-height: 76px;/);
   assert.doesNotMatch(routedDashboards, /venue-deal-builder-progress/);
-  assert.match(routedDashboards, /<section className=\{`dashboard-head dashboard-head-\$\{role\}`\}[\s\S]*?<h1>\{dashboardHeading\}<\/h1>/);
+  assert.match(routedDashboards, /className="dashboard-identity-title-row"[\s\S]*?<h1>\{dashboardHeading\}<\/h1>/);
   assert.match(
     routedDashboards,
     /\.dashboard-shell-venue \.dashboard-head h1 \{[^}]*?font-size: clamp\(32px,5vw,48px\);[^}]*?white-space: normal;/,
