@@ -35,6 +35,10 @@ before(async () => {
   await db.exec(`create table dancer_channel_preferences(dancer_id uuid primary key,visibility text);
     create table dancer_shift_channels(shift_id uuid primary key references shifts(id) on delete cascade,dancer_id uuid,venue_id uuid,visibility text);`);
   await db.exec(read('20261013031912_dancer_both_roster_score_weight.sql'));
+  await db.exec(`alter table internal_roster_requests add column link_id uuid;
+    create table internal_roster_links(id uuid primary key,venue_id uuid,label text);
+    grant select on dancer_channel_preferences,dancer_shift_channels,internal_roster_links to service_role;`);
+  await db.exec(read('20261013040600_venue_automatic_results.sql'));
   await db.query("insert into app_users values($1,'venue','active'),($2,'venue','active'),($3,'venue','active'),($4,'customer','active')", [id(50),id(51),id(52),id(53)]);
   await db.query('insert into venues(id,owner_user_id) values($1,$2),($3,$4)', [id(1),id(50),id(2),id(52)]);
   await db.query("insert into venue_team_members values($1,$2,'active','staff')", [id(1),id(51)]);
@@ -61,6 +65,71 @@ async function accuracy(since='2026-10-10T00:00Z', until='2026-10-12T00:00Z') {
   const r = await db.query("select get_venue_performance_analytics($1,$2,$3,$3::timestamptz-interval '12 hours',$3) result",[id(1),since,until]);
   return r.rows[0].result.performance.dancers.find(d => d.id === id(10))?.internal;
 }
+
+async function automatic(since='2026-10-10T00:00Z',until='2026-10-12T00:00Z',venue=1) {
+  return (await db.query("select get_venue_performance_analytics($1,$2,$3,$3::timestamptz-interval '12 hours',$3) result",[id(venue),since,until])).rows[0].result.automatic;
+}
+
+test('automatic VIP demand counts venue requests once, excludes withdrawals from customer demand and uses local requested time',async()=>{
+  for(const [n,user,venue,created,withdrawn,choices] of [
+    [8000,50,1,'2026-10-09',false,[10]], [8001,50,1,'2026-10-10',false,[10,10,11]],
+    [8002,51,1,'2026-10-11',false,[11]], [8003,50,1,'2026-10-11',true,[10]], [8004,51,2,'2026-10-11',false,[10]],
+  ]) await db.query("insert into venue_vip_requests(id,venue_id,user_id,dancers,created_at,starts_at,status,reviewed_by) values($1,$2,$3,$4,$5,'2026-10-11T04:00Z',$6,$7)",
+    [id(n),id(venue),id(user),JSON.stringify(choices.map(n=>({id:id(n)}))),created,withdrawn?'cancelled':'pending',withdrawn?id(user):null]);
+  const r=await automatic();
+  assert.equal(r.current.vipRequests,3); assert.equal(r.current.vipCustomers,2); assert.equal(r.current.vipSelections,3);
+  assert.equal(r.current.vipWithdrawals,1); assert.equal(r.current.vipRepeatCustomers,1); assert.equal(r.previous.vipRequests,1);
+  assert.deepEqual(r.current.vipHours,[{label:'21:00',total:2}]); assert.deepEqual(r.current.vipDates,[{label:'2026-10-10',total:2}]);
+  assert.ok(!JSON.stringify(r).includes(id(50)),'requester identities never leave the aggregate');
+  await db.query("update venue_vip_requests set status='confirmed',reviewed_by=$2 where id=$1",[id(8001),id(51)]);
+  assert.deepEqual((await automatic()).current,r.current,'manager approval does not alter automatic demand');
+});
+
+test('venue conversion uses a nonvoided claim cohort and excludes future redemptions from both comparison periods',async()=>{
+  for(const [n,generated,redeemed,voided] of [[8100,'2026-10-09','2026-10-10',false],[8101,'2026-10-10','2026-10-11',false],
+    [8102,'2026-10-11','2026-10-13',false],[8103,'2026-10-10','2026-10-11',true],[8104,'2026-10-11',null,false]]) {
+    await db.query("insert into qr_redemptions(id,venue_id,dancer_id,admission_pass_version,status,generated_at,redeemed_at,voided_at,redemption_token,expires_at) values($1,$2,$3,1,$4,$5,$6,case when $7 then $6::timestamptz end,$8,'2026-10-14')",
+      [id(n),id(1),id(10),redeemed?'redeemed':'generated',generated,redeemed,voided,`auto-${n}`]);
+  }
+  const r=await automatic(); assert.equal(r.current.claims,3); assert.equal(r.current.admissions,2); assert.equal(r.current.cohortAdmissions,1);
+  assert.equal(r.previous.claims,1); assert.equal(r.previous.cohortAdmissions,0);
+  const all=await automatic('1970-01-01T00:00Z','2026-10-14'); assert.equal(all.previous,null); assert.equal(all.current.claims,4); assert.equal(all.current.admissions,3);
+});
+
+test('automatic roster and table totals merge hours, retain checkout evidence and ignore staff arrival states',async()=>{
+  await session(8200,{bothPeriods:'{[2026-10-10T22:00Z,2026-10-11T00:00Z)}'}); await session(8201,{kind:'expired'});
+  await db.query("insert into internal_roster_links values($1,$2,'Table A')",[id(8299),id(1)]);
+  for(const [n,venue,stamp] of [[8202,1,'2026-10-10T20:30Z'],[8203,1,'2026-10-10T22:30Z'],[8204,1,'2026-10-11T03:00Z'],[8205,2,'2026-10-10T22:30Z']])
+    await db.query("insert into internal_roster_requests(id,venue_id,dancer_id,link_id,status,created_at) values($1,$2,$3,$4,'pending',$5)",[id(n),id(venue),id(10),id(8299),stamp]);
+  const r=(await automatic()).current;
+  assert.equal(r.dancersCheckedIn,1); assert.equal(r.checkedInHours,6); assert.equal(r.bothRosterHours,2);
+  assert.equal(r.checkIns,2); assert.equal(r.dancerCheckouts,1); assert.equal(r.expiredCheckins,1);
+  assert.equal(r.checkoutEligibleDays,1); assert.equal(r.dancerCheckoutDays,0);
+  assert.equal(r.tableRequests,3); assert.equal(r.tableRequestsDuringHours,2); assert.deepEqual(r.tables,[{label:'Table A',total:3}]);
+  await db.query("update internal_roster_requests set status='completed',attendance='arrived' where venue_id=$1",[id(1)]);
+  assert.deepEqual((await automatic()).current,r);
+});
+
+test('customer and pickup aggregates count existing events without exposing browser IDs or multiplying passengers',async()=>{
+  await db.query("insert into venue_page_events values($1,'page_view','secret-browser','2026-10-10'),($1,'page_view','secret-browser','2026-10-11'),($2,'page_view','other','2026-10-11')",[id(1),id(2)]);
+  for(const [n,type] of [[8300,'dancer_profile'],[8301,'share_completed'],[8302,'transport']])
+    await db.query("insert into venue_interactions(id,venue_id,dancer_id,event_type,source,session_id,occurred_at) values($1,$2,$3,$4,'dancer_profile','secret-browser','2026-10-11')",[id(n),id(1),id(10),type]);
+  const notice={payload:{kind:'club_shuttle_request',requestId:id(8310),venueId:id(1),partySize:5}};
+  await db.query("insert into club_shuttle_requests values($1,$2,'2026-10-11T05:00Z',$3)",[id(8310),id(1),JSON.stringify([notice,notice])]);
+  const r=(await automatic()).current;
+  assert.equal(r.clubVisits,2); assert.equal(r.uniqueBrowsers,1); assert.equal(r.profileOpens,1); assert.equal(r.completedShares,1);
+  assert.equal(r.pickups,1); assert.equal(r.passengers,5); assert.equal(r.transportClicks,1); assert.deepEqual(r.pickupHours,[{label:'22:00',total:1}]);
+  assert.ok(!JSON.stringify(r).includes('secret-browser'));
+});
+
+test('live roster stays independent of history and automatic helpers remain service-only',async()=>{
+  await modeVisit(8400,'both');
+  const r=await automatic(); assert.deepEqual(r.liveRoster,{total:1,internal:0,external:0,both:1,unknown:0});
+  assert.equal(r.current.dancersCheckedIn,0,'current visit is outside this historical period');
+  for(const role of ['anon','authenticated']) for(const signature of ['get_venue_automatic_period(uuid,timestamptz,timestamptz)','get_venue_performance_scored_dancers(uuid,timestamptz,timestamptz,timestamptz,timestamptz)'])
+    assert.equal((await db.query('select has_function_privilege($1,$2,\'execute\') allowed',[role,`public.${signature}`])).rows[0].allowed,false);
+  await db.exec('set local role service_role'); assert.equal((await automatic()).liveRoster.both,1);
+});
 
 test('accuracy pairs dancer checkout with its NFC visit and preserves evidence after shift deletion',async()=>{
   await db.query("insert into shifts(id,venue_id,dancer_id,status,checked_in_at,location_status,location_verification_expires_at,shift_source,nfc_tag_id) values($1,$2,$3,'posted',clock_timestamp(),'club_confirmed',now()+interval '2 hours','nfc_presence',$4)",[id(701),id(1),id(10),id(900)]);

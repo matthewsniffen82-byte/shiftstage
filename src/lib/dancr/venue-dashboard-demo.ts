@@ -1,4 +1,4 @@
-import type { DancerPerformance, VenuePerformanceCounts, VenueValueReport } from "./venue-analytics";
+import type { DancerPerformance, VenuePerformanceCounts, VenueValueReport, VenueAutomaticPeriod } from "./venue-analytics";
 import type { DancerScorePeriod } from "./venue-dancer-scores";
 import type { VenueOperations } from "./venue-operations";
 import type { HairColor } from "./hair-color";
@@ -77,8 +77,8 @@ export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, p
     admitted: names.reduce((total, _, i) => total + 8 + i % 4 + Math.floor(i / 2), 8),
     ridesOpen: rides.filter(row => ["Received", "Contacted", "Arranged"].includes(row.status)).length,
     teamReady: true, checkInReady: true };
-  const performance: VenuePerformanceCounts = { guestList: 16 * factor, vipRequests: sum(dancer => dancer.vip.requests),
-    vipPending: 2, vipConfirmed: sum(dancer => dancer.vip.requests) - 3 * factor - 2, vipDeclined: 2 * factor, vipCancelled: factor,
+  const performance: VenuePerformanceCounts = { guestList: 16 * factor, vipRequests: 100 * factor,
+    vipPending: 2, vipConfirmed: 97 * factor - 2, vipDeclined: 2 * factor, vipCancelled: factor,
     tableRequests: sum(dancer => dancer.internal.requests!), tablePending: sum(dancer => dancer.internal.pending!),
     tableAcknowledged: sum(dancer => dancer.internal.acknowledged!), tableCompleted: sum(dancer => dancer.internal.completed!),
     tableCancelled: sum(dancer => dancer.internal.cancelled!), vipResponseMinutes: 7, vipResponseSamples: 18 * factor,
@@ -117,6 +117,29 @@ export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, p
       currentPhotos: { internal: [...new Set(colors)].map(color => ({ color, state: "ready", dancers: colors.filter(value => value === color).length })),
         external: [...new Set(colors)].map(color => ({ color, state: "ready", dancers: colors.filter(value => value === color).length })) } },
   };
+  const actionTotal = (type: string) => report.interactions.filter(row => row.event_type === type).reduce((total, row) => total + row.total, 0);
+  const automatic: VenueAutomaticPeriod = {
+    dancersCheckedIn: dancers.length, checkedInHours: sum(d => d.internal.checkedInHours!), bothRosterHours: sum(d => d.internal.rosterBothHours!),
+    checkIns: sum(d => d.results!.checkIns), dancerCheckouts: sum(d => d.results!.checkOuts),
+    expiredCheckins: sum(d => d.internal.checkoutEligibleDays! - d.internal.dancerCheckoutDays!),
+    checkoutEligibleDays: sum(d => d.internal.checkoutEligibleDays!), dancerCheckoutDays: sum(d => d.internal.dancerCheckoutDays!),
+    claims, admissions, cohortAdmissions: admissions, guestList: performance.guestList,
+    vipRequests: performance.vipRequests, vipCustomers: 70 * factor, vipRepeatCustomers: 24 * factor, vipWithdrawals: factor,
+    vipSelections: sum(d => d.vip.scoringRequests), tableRequests: performance.tableRequests,
+    tableRequestsDuringHours: sum(d => d.internal.requestsDuringHours!),
+    clubVisits: 600 * factor, uniqueBrowsers: current.visitors, profileOpens: actionTotal("dancer_profile"),
+    directions: actionTotal("directions"), completedShares: actionTotal("share_completed"), transportClicks: actionTotal("transport"),
+    followers: current.followers, going: current.going, pickups: current.pickups, passengers: current.passengers,
+    vipDates: [45, 34, 20].map((total, i) => ({ label: new Date(now.getTime() + i * DAY).toISOString().slice(0, 10), total: total * factor })),
+    vipHours: [45, 34, 20].map((total, i) => ({ label: `${22 - i}:00`, total: total * factor })),
+    tableHours: [74, 56, 36, 22].map((total, i) => ({ label: `${22 - i}:00`, total: total * factor })),
+    pickupHours: [5, 3, 1].map((total, i) => ({ label: `${21 - i}:00`, total: total * factor })),
+    tables: [48, 40, 32, 28, 24].map((total, i) => ({ label: `Table ${i + 1}`, total: total * factor })),
+  };
+  report.automatic = { current: automatic,
+    previous: period === "all" ? null : Object.fromEntries(Object.entries(automatic).map(([key, value]) => [key,
+      Array.isArray(value) ? value.map(row => ({ ...row, total: Math.floor(row.total * 0.8) })) : Math.floor(value * 0.8)])) as VenueAutomaticPeriod,
+    liveRoster: { total: 6, internal: 2, external: 2, both: 2, unknown: 0 }, liveAsOf: end };
   return { report, period, periodStart, periodEnd: end, roster, operations, guestList, rides, vip, tables, contacts,
     totalFollowers: 2450, conversion: Math.round(admissions / claims * 100),
     deals: [

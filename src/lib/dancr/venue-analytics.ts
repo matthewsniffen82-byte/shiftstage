@@ -11,7 +11,30 @@ export type VenueValueReport = {
   videos: { id: string; caption: string; dancer: string; metrics: Record<string, number> }[];
   performance?: VenuePerformanceReport;
   hairColor?: import("./hair-color").VenueHairColorReport;
+  automatic?: VenueAutomaticReport;
 };
+
+export type VenueDemandBucket = { label: string; total: number };
+export type VenueAutomaticMetric = "dancersCheckedIn" | "checkedInHours" | "bothRosterHours" | "checkIns" | "dancerCheckouts" | "expiredCheckins"
+  | "checkoutEligibleDays" | "dancerCheckoutDays" | "claims" | "admissions" | "cohortAdmissions" | "guestList"
+  | "vipRequests" | "vipCustomers" | "vipRepeatCustomers" | "vipWithdrawals" | "vipSelections" | "tableRequests" | "tableRequestsDuringHours"
+  | "clubVisits" | "uniqueBrowsers" | "profileOpens" | "directions" | "completedShares" | "transportClicks" | "followers" | "going" | "pickups" | "passengers";
+export type VenueAutomaticPeriod = Record<VenueAutomaticMetric, number> & Record<"vipDates" | "vipHours" | "tableHours" | "pickupHours" | "tables", VenueDemandBucket[]>;
+export type VenueAutomaticReport = {
+  current: VenueAutomaticPeriod;
+  previous: VenueAutomaticPeriod | null;
+  liveRoster: Record<"total" | "internal" | "external" | "both" | "unknown", number>;
+  liveAsOf: string;
+};
+
+export function venueAutomaticRate(row: VenueAutomaticPeriod | null | undefined, kind: "conversion" | "checkout" | "tables") {
+  if (!row) return null;
+  const [numerator, denominator] = kind === "conversion" ? [row.cohortAdmissions, row.claims]
+    : kind === "checkout" ? [row.dancerCheckoutDays, row.checkoutEligibleDays] : [row.tableRequestsDuringHours, row.checkedInHours];
+  if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator <= 0 || numerator < 0
+    || (kind !== "tables" && numerator > denominator)) return null;
+  return numerator / denominator * (kind === "tables" ? 1 : 100);
+}
 
 export type VenuePerformanceCounts = Record<"guestList" | "vipRequests" | "vipPending" | "vipConfirmed" | "vipDeclined" | "vipCancelled" | "tableRequests" | "tablePending" | "tableAcknowledged" | "tableCompleted" | "tableCancelled" | "vipResponseSamples" | "tableResponseSamples" | "tableCompletionSamples", number> & {
   vipResponseMinutes: number | null;

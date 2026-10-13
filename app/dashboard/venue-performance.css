@@ -1,4 +1,30 @@
 .venue-performance { margin-top: 18px; border-top: 1px solid #34343c; padding-top: 12px; }
+.venue-priority-metrics, .venue-auto-metrics { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin-block: 12px; }
+.venue-value-analytics :is(.venue-priority-metrics,.venue-auto-metrics) > .metric { min-width: 0; padding: 12px; border: 1px solid #36333d; border-radius: 10px; background: #141218; display: grid; align-content: start; gap: 5px; }
+.venue-value-analytics :is(.venue-priority-metrics,.venue-auto-metrics) .metric > span { font-size: 12px; color: #c6c1cd; line-height: 1.4; }
+.venue-value-analytics :is(.venue-priority-metrics,.venue-auto-metrics) .metric > strong { font-size: 23px; color: #f4f2f7; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.venue-value-analytics :is(.venue-priority-metrics,.venue-auto-metrics) .metric > small { font-size: 11px; color: #a9a4b0; line-height: 1.4; }
+.venue-auto-categories { display: grid; gap: 8px; margin-top: 16px; }
+.venue-auto-category { min-width: 0; border: 1px solid #36333d; border-radius: 12px; background: #0f0d13; }
+.venue-auto-category > summary { min-height: 52px; padding: 12px; cursor: pointer; color: #f0edf4; }
+.venue-auto-category > summary > span { font-size: 15px; font-weight: 650; }
+.venue-auto-category > summary > small { display: block; margin: 4px 0 0 17px; color: #aaa4b4; font-size: 12px; line-height: 1.4; }
+.venue-auto-category[open] > summary { border-bottom: 1px solid #36333d; }
+.venue-auto-category-body { padding: 0 12px 12px; min-width: 0; }
+.venue-auto-category-body h4 { font-size: 13px; margin: 14px 0 8px; }
+.venue-auto-category-body .venue-performance { margin-top: 0; border-top: 0; }
+.venue-auto-category > summary:focus-visible { outline: 2px solid #d4d4dc; outline-offset: 3px; border-radius: 12px; }
+.venue-demand-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.venue-demand-group { min-width: 0; }
+.venue-demand-list { list-style: none; padding: 0; margin: 0; }
+.venue-demand-list li { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-bottom: 1px solid #302d36; font-size: 12px; }
+.venue-demand-list span { min-width: 0; overflow-wrap: anywhere; }
+.venue-demand-list strong { flex: none; font-variant-numeric: tabular-nums; }
+@media(min-width:1100px) { .venue-priority-metrics { grid-template-columns: repeat(6,minmax(0,1fr)); } }
+@media(max-width:640px) {
+  .venue-priority-metrics, .venue-auto-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .venue-demand-grid { grid-template-columns: minmax(0,1fr); gap: 0; }
+}
 .venue-dancer-results { margin-block: 16px; }
 .venue-dancer-results h3 { font-size: 16px; margin-bottom: 10px; }
 .venue-performance h3, .venue-result-outcomes h3 { margin: 6px 0; font-size: 16px; }

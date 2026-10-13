@@ -12,6 +12,8 @@ Coverage:
 
 Check-in Activity samples include verified check-in days, days with complete dancer checkouts, active visits and tracked hours. Both-roster hours vary between none, half and all of the recorded hours to demonstrate the prorated 25% activity boost. Tonight has only one check-in day, so its scores remain Early data and unranked; longer periods contain enough ended days to demonstrate ranks. The checkout sample distinguishes roster record completeness from raw check-in/out event totals.
 
+The seven automatic Results categories include populated headline totals, a separate six-dancer live roster, claim-cohort conversion, VIP customers/withdrawals/selections, request-time and table breakdowns, customer-interest events and transportation demand. VIP venue requests count once while dancer selections can exceed that total. Seven-/30-day samples have comparison totals; All time has none. All values remain isolated synthetic fixtures.
+
 Demo search, filters, tabs, disclosures, score sorting and period controls work locally. The live venue component is not mounted while samples are displayed. No sample write controls, scanner, outgoing contact links, messages, notifications, authentication tokens or redeemable passes exist. Fixtures never enter Supabase and do not affect actual performance or operational records. The existing parent dashboard may still perform authorized read-only refreshes for identity and roster images.
 
 Validation uses focused fixture/component tests, TypeScript and lint checks. No E2E tests or automated browser journeys.
