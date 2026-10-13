@@ -88,9 +88,9 @@ body .venue-dancer-grid .venue-card-caption {
   position: absolute;
   inset: auto 0 0;
   display: grid;
-  gap: 3px;
-  padding: 24px 7px 7px;
-  background: linear-gradient(180deg, transparent, rgba(5, 5, 8, .94) 48%);
+  gap: 2px;
+  padding: 12px 7px 6px;
+  background: linear-gradient(180deg, transparent, rgba(5, 5, 8, .38) 35%, rgba(5, 5, 8, .78) 70%, rgba(5, 5, 8, .9));
   color: #fff;
   text-shadow: 0 1px 4px #000;
   text-align: left;
@@ -130,15 +130,17 @@ body .venue-dancer-grid .venue-card-actions {
 body .venue-dancer-grid .venue-card-actions button { width: 100%; min-width: 0; min-height: 44px; white-space: normal; overflow-wrap: anywhere; }
 body .venue-dancer-grid .venue-card-menu { position: absolute; inset: 0; z-index: 2; margin: 0; padding: 0; border: 0; background: none; pointer-events: none; }
 body .venue-dancer-grid .venue-card-menu > summary {
-  position: absolute; top: 2px; right: 2px; display: grid; place-items: center;
-  box-sizing: border-box; width: 44px; height: 44px; margin: 0; padding: 4px;
-  list-style: none; border: 0; cursor: pointer; pointer-events: auto;
+  position: absolute; top: 0; right: 0; display: flex; align-items: flex-start; justify-content: flex-end;
+  box-sizing: border-box; width: 44px; height: 44px; margin: 0; padding: 3px;
+  list-style: none; border: 0; background: none; box-shadow: none; cursor: pointer; pointer-events: auto;
 }
 body .venue-dancer-grid .venue-card-menu > summary::-webkit-details-marker { display: none; }
-body .venue-dancer-grid .venue-card-menu > summary > span { display: grid; place-items: center; width: 32px; height: 28px; border: 1px solid #34343c; border-radius: 6px; background: #08080bee; color: #ededf1; font: 16px/1 Arial, sans-serif; letter-spacing: 0; }
+/* A small translucent face keeps the dots readable; the touch target stays 44px. */
+body .venue-dancer-grid .venue-card-menu > summary > span { display: grid; place-items: center; width: 24px; height: 20px; border: 0; border-radius: 5px; background: rgba(5, 5, 8, .38); color: #fff; font: 13px/1 Arial, sans-serif; letter-spacing: 0; text-shadow: 0 1px 3px #000; }
+body .venue-dancer-grid .venue-card-menu[open] > summary > span { background: rgba(5, 5, 8, .72); }
 body .venue-dancer-grid .venue-card-menu > summary:focus-visible { outline: 2px solid #d8cafa; outline-offset: -3px; }
 body .venue-dancer-grid .venue-card-menu > .venue-card-popover {
-  position: absolute; top: 46px; right: 0; box-sizing: border-box; width: min(240px, calc(100vw - 48px));
+  position: absolute; top: 30px; right: 0; box-sizing: border-box; width: min(240px, calc(100vw - 48px));
   max-height: min(360px, 60dvh); overflow: auto; overscroll-behavior: contain;
   border: 1px solid #50505b; border-radius: 8px; background: #101014; box-shadow: 0 6px 20px #0009; pointer-events: auto;
 }
@@ -150,5 +152,5 @@ body .venue-dancer-grid .venue-card-actions:empty { display: none !important; }
 body .venue-dancer-grid .ir-profile-control > small[role="status"] { position: absolute; inset: auto 0 0; z-index: 4; display: block; box-sizing: border-box; max-width: 100%; max-height: 60%; overflow: auto; margin: 0; padding: 8px; background: #101014; overflow-wrap: anywhere; }
 body .venue-dancer-grid button.venue-card-profile:focus-visible { outline: 2px solid #d8cafa !important; outline-offset: -3px; }
 @media (max-width: 420px) {
-  body .venue-dancer-grid .venue-card-caption { padding: 20px 5px 5px; }
+  body .venue-dancer-grid .venue-card-caption { padding: 10px 5px 5px; }
 }
