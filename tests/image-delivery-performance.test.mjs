@@ -108,8 +108,8 @@ test("club lineup requests stay thumbnail-sized and bounded even with fifty work
   assert.match(firstCard, /venue-lineup-avatar-initial">&lt;<\/span>/);
   assert.match(firstCard, /data-venue-dancer-profile/);
   const laterCard = context.venueLineupMarkup({}, "Las Vegas", { profiles });
-  assert.equal((laterCard.match(/loading="lazy" fetchpriority="auto"/g) || []).length, 4);
-  assert.match(laterCard, />\+46<\/span>/);
+  assert.equal((laterCard.match(/loading="lazy" fetchpriority="auto"/g) || []).length, 5);
+  assert.match(laterCard, />\+45<\/span>/);
   const withoutPhoto = context.venueLineupMarkup({}, "Las Vegas", { profiles: [{ id: "1", name: " Star ", photo: "" }] });
   assert.doesNotMatch(withoutPhoto, /<img /);
   assert.match(withoutPhoto, /venue-lineup-avatar-initial">S<\/span>/);

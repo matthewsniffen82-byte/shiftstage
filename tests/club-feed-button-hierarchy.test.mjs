@@ -109,7 +109,7 @@ test("the mobile lineup explains working-now avatars without changing venue acti
     /function venueLineupMarkup\(venue, city, options = \{\}\) \{[\s\S]*?(?=\n    function venueCardQrMarkup)/,
   )?.[0] || "";
 
-  assert.match(lineup, /const visibleLimit = options\.mobile \? 5 : 4/);
+  assert.match(lineup, /const visibleLimit = 5/);
   assert.match(lineup, /const remainingMarkup = remaining > 0/);
   assert.match(lineup, /aria-label="\$\{remaining\} more dancers working now">\+\$\{remaining\}/);
   assert.match(lineup, /classPrefix = options\.mobile \? "home-venue-discovery" : "venue-card"/);

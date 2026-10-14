@@ -217,8 +217,7 @@
       const visual = venueVisualAttrs(venue);
       const localProfiles = venueDancers(city, venue.name);
       const workingNow = localProfiles
-        .filter((profile) => isWorkingTonight(profile, city))
-        .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
+        .filter((profile) => isWorkingTonight(profile, city));
       const followsVenue = isFollowingVenue(city, venue.name);
       const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
       const hoursMarkup = operatingStatus.hoursLabel

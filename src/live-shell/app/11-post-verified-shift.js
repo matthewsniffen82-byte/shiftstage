@@ -177,16 +177,17 @@
     }
 
     function venueLineupMarkup(venue, city, options = {}) {
+      // Public discovery already orders dancers by the venue's 30-day Overall
+      // Performance score. Keep that order when selecting the live top five.
       const liveProfiles = (Array.isArray(options.profiles)
         ? options.profiles
         : venueDancers(city, venue.name))
-        .filter((profile) => isWorkingTonight(profile, city))
-        .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
+        .filter((profile) => isWorkingTonight(profile, city));
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
       if (!liveProfiles.length) {
         return `<span class="${classPrefix}-lineup is-empty"><span class="venue-lineup-empty-text">No dancers listed now</span></span>`;
       }
-      const visibleLimit = options.mobile ? 5 : 4;
+      const visibleLimit = 5;
       const profiles = liveProfiles.slice(0, visibleLimit);
       const remaining = liveProfiles.length - profiles.length;
       const avatars = profiles.map((profile) => {
@@ -246,8 +247,7 @@
       const logoMarkup = venueLogoMarkup(venue, "venue-card-logo");
       const visual = venueVisualAttrs(venue);
       const workingNow = venueDancers(city, venue.name)
-        .filter((profile) => isWorkingTonight(profile, city))
-        .sort((left, right) => shiftStartMinutes(left.time) - shiftStartMinutes(right.time));
+        .filter((profile) => isWorkingTonight(profile, city));
       const followsVenue = isFollowingVenue(city, venue.name);
       const dealMarkup = venue.activeDeal?.dealTitle
         ? `<span class="venue-card-offer"><small>Tonight's offer</small><strong>${escapeHtml(venue.activeDeal.dealTitle)}</strong></span>`
