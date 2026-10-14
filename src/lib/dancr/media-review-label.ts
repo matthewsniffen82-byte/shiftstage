@@ -21,18 +21,19 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   const label = mediaReviewLabel(status, moderationStatus);
   if (["Approved", "Removed", "Expired"].includes(label)) return "";
   const rejected = label === "Not approved";
+  const rejectedPhoto = kind === "photo" && rejected;
   const codes = Array.isArray(reasonCodes) ? reasonCodes.filter((code): code is string => typeof code === "string") : [];
   // Video safety checks prefix frame/text reasons; the content policy prefixes photo/video reasons.
   const reasons = new Set(codes.map(code => code.toLowerCase().replace(/^(frame_\d+_|text_|photo_policy_|policy_)/, "")));
   const has = (...values: string[]) => values.some(value => reasons.has(value));
   const notes: string[] = [];
   if (has("multiple_people_detected")) notes.push(`The check detected more than one person. Choose a ${kind} showing only you, including in the background.`);
-  if (has("person_count_uncertain", "dancer_visibility_uncertain")) notes.push(`We couldn't confirm that you are the only person shown. This ${kind} needs a manual review.`);
+  if (has("person_count_uncertain", "dancer_visibility_uncertain")) notes.push(`We couldn't confirm that you are the only person shown. ${rejectedPhoto ? "Choose a clear solo photo of yourself." : `This ${kind} needs a manual review.`}`);
   if (has("dancer_not_visible", "avatar_face_required")) notes.push(`We couldn't find a clear view of you. Choose a clearer ${kind} of yourself.`);
   if (has("visible_branding_or_logo")) notes.push(`Branding, a logo, or a watermark was detected. Choose a ${kind} without these, including on clothing and in the background.`);
-  if (has("branding_or_logo_uncertain")) notes.push("Possible branding or a logo needs a manual review.");
-  if (has("copyright_or_consent_uncertain")) notes.push(`We couldn't confirm the rights or consent for this ${kind}. It needs a manual review.`);
-  if (has("unreadable_or_obscured_content")) notes.push(`Part of this ${kind} is unclear or obscured. It needs a manual review, or you can replace it with a clearer one.`);
+  if (has("branding_or_logo_uncertain")) notes.push(rejectedPhoto ? "We couldn't rule out branding, a logo, or a watermark. Choose a photo clearly free of these." : "Possible branding or a logo needs a manual review.");
+  if (has("copyright_or_consent_uncertain")) notes.push(`We couldn't confirm the rights or consent for this ${kind}. ${rejectedPhoto ? "Choose an original photo you have permission to share." : "It needs a manual review."}`);
+  if (has("unreadable_or_obscured_content")) notes.push(`Part of this ${kind} is unclear or obscured. ${rejectedPhoto ? "Choose a clearer photo." : "It needs a manual review, or you can replace it with a clearer one."}`);
   const concerns: [string[], string, string][] = [
     [["nudity_rejected", "explicit_sexual_content_rejected", "explicit_nudity_or_sex_act"], "nudity or sexual activity", "Choose content with intimate areas covered and no sexual activity."],
     [["minor_safety_rejected", "minor_or_age_uncertain"], "age eligibility", "Everyone shown must be 18 or older."],
@@ -48,8 +49,9 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   for (const [matches, concern, guidance] of concerns) {
     if (has(...matches)) notes.push(rejected ? `Flagged for ${concern}. ${guidance}` : `Possible ${concern} needs a manual review.`);
   }
-  if (has("sexual_content_requires_review")) notes.push(`The automatic check couldn't confirm that this ${kind} meets the nudity and sexual-content rules. It needs a manual review.`);
-  if (!notes.length && [...reasons].some(reason => reason.startsWith("provider_flagged_"))) notes.push("The automatic safety check flagged content that needs a manual review.");
+  if (has("sexual_content_requires_review")) notes.push(`The automatic check couldn't confirm that this ${kind} meets the nudity and sexual-content rules. ${rejectedPhoto ? "Choose a photo with intimate areas clearly covered and no sexual activity." : "It needs a manual review."}`);
+  if (!notes.length && [...reasons].some(reason => reason.startsWith("provider_flagged_"))) notes.push(rejectedPhoto ? "The automatic safety check couldn't approve this photo. Choose another photo." : "The automatic safety check flagged content that needs a manual review.");
+  if (rejectedPhoto && !notes.length && has("photo_approval_not_confirmed")) notes.push("This photo wasn't approved because the automatic check couldn't confirm it meets the photo guidelines. Choose another photo.");
   if (!rejected && !notes.length && (label === "Review delayed" || [...reasons].some(reason => /^(provider_(?!not_flagged|flagged_)|openai_|image_url_|image_load_|storage_image_|database_update_failed|moderation_unknown_error|video_moderation_|video_decode_failed|public_watermark_processing_failed|approved_publication_unconfirmed|missing_openai_|invalid_openai_)/.test(reason)))) {
     const problem = has("provider_timeout", "openai_timeout", "video_moderation_timeout")
       ? "The automatic check timed out."

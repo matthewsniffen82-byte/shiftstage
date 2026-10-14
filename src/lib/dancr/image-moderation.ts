@@ -33,7 +33,6 @@ import {
 import {
   DANCR_IMAGE_MODERATION_MODEL,
   evaluateDancrImageModeration,
-  type DancrImageModerationDecision,
   type DancrImageModerationEvaluation,
 } from "./moderation-policy";
 import {
@@ -69,7 +68,7 @@ type ModeratedPhotoInput = {
 };
 
 type ModeratedPhotoResult = {
-  decision: DancrImageModerationDecision | "moderation_retry" | "moderation_error";
+  decision: "approved" | "rejected" | "moderating" | "moderation_retry" | "moderation_error";
   message: string;
   moderationRecordId?: string;
   reasonCodes?: string[];
@@ -183,10 +182,10 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       ...dancerMediaIdentityCategoryFlags(identityAnalysis),
       ...dancerPhotoContentCategoryFlags(contentAnalysis),
     };
-    evaluation = combineDancerMediaModeration(
+    evaluation = finalizePhotoModeration(combineDancerMediaModeration(
       applyDancerPhotoContentPolicy(evaluateDancrImageModeration(providerResult), contentAnalysis),
       evaluateDancerMediaIdentity(identityAnalysis),
-    );
+    ));
     logModeration("decision_evaluated", {
       recordId: record.id,
       flagged: Boolean(providerResult.flagged),
@@ -195,7 +194,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       personCount: identityAnalysis.personCount,
       singlePersonOnly: identityAnalysis.singlePersonOnly,
       personCountConfidence: identityAnalysis.personCountConfidence,
-      decision: evaluation.decision === "review" ? "pending_review" : evaluation.decision,
+      decision: evaluation.decision,
     });
   } catch (error) {
     errorCode = moderationErrorCode(error);
@@ -269,33 +268,6 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
       evaluation,
       categoryFlags,
     });
-  }
-
-  if (evaluation.decision === "review") {
-    const reviewPath = tempPath.replace(`${input.userId}/${profile.id}/`, `${input.userId}/${profile.id}/review-`);
-    await copyPrivateModerationObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, image.contentType);
-    await updateModerationRecord(admin, record.id, {
-      decision: "review",
-      status: "pending_review",
-      temporaryStoragePath: reviewPath,
-      reasonCodes: evaluation.reasonCodes,
-      categoryFlags,
-      categoryScores: evaluation.categoryScores,
-      providerFlagged: evaluation.providerFlagged,
-      errorCode,
-      completedAt: new Date().toISOString(),
-    }, expectedUpdatedAt);
-    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-    logModeration("queued_for_review", { recordId: record.id });
-    logModeration("database_status_written", { recordId: record.id, databaseStatus: "pending_review" });
-    return {
-      decision: "review",
-      moderationRecordId: record.id,
-      reasonCodes: evaluation.reasonCodes,
-      providerFlagged: evaluation.providerFlagged,
-      message: "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
-      photo: pendingModerationPhoto(record.id, uploadContext),
-    };
   }
 
   await updateModerationRecord(admin, record.id, {
@@ -405,10 +377,10 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       ...dancerMediaIdentityCategoryFlags(identityAnalysis),
       ...dancerPhotoContentCategoryFlags(contentAnalysis),
     };
-    const evaluation = combineDancerMediaModeration(
+    const evaluation = finalizePhotoModeration(combineDancerMediaModeration(
       applyDancerPhotoContentPolicy(evaluateDancrImageModeration(providerResult), contentAnalysis),
       evaluateDancerMediaIdentity(identityAnalysis),
-    );
+    ));
     logModeration("retry_decision_evaluated", {
       recordId: record.id,
       attemptCount,
@@ -416,7 +388,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       personCount: identityAnalysis.personCount,
       singlePersonOnly: identityAnalysis.singlePersonOnly,
       personCountConfidence: identityAnalysis.personCountConfidence,
-      decision: evaluation.decision === "review" ? "pending_review" : evaluation.decision,
+      decision: evaluation.decision,
     });
 
     if (evaluation.decision === "approved") {
@@ -437,33 +409,6 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
         evaluation,
         categoryFlags,
       });
-    }
-
-    if (evaluation.decision === "review") {
-      const reviewPath = tempPath.replace(`${record.user_id}/${profile.id}/`, `${record.user_id}/${profile.id}/review-`);
-      await copyPrivateModerationObject(admin, MODERATION_TEMP_BUCKET, tempPath, MODERATION_REVIEW_BUCKET, reviewPath, downloadedImage.contentType);
-      await updateModerationRecord(admin, record.id, {
-        decision: "review",
-        status: "pending_review",
-        temporaryStoragePath: reviewPath,
-        reasonCodes: evaluation.reasonCodes,
-        categoryFlags,
-        categoryScores: evaluation.categoryScores,
-        providerFlagged: evaluation.providerFlagged,
-        attemptCount,
-        lockedAt: null,
-        completedAt: new Date().toISOString(),
-      }, expectedUpdatedAt);
-      await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-      logModeration("retry_database_status_written", { recordId: record.id, databaseStatus: "pending_review", attemptCount });
-      return {
-        decision: "review",
-        moderationRecordId: record.id,
-        reasonCodes: evaluation.reasonCodes,
-        providerFlagged: evaluation.providerFlagged,
-        message: "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
-        photo: pendingModerationPhoto(record.id, uploadContext),
-      };
     }
 
     await updateModerationRecord(admin, record.id, {
@@ -1146,15 +1091,20 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
       },
     };
   }
+  const rejected = record.decision === "rejected" || ["pending_review", "completed"].includes(record.status);
+  const decision = rejected ? "rejected"
+    : record.status === "moderation_retry" ? "moderation_retry"
+    : ["error", "moderation_error"].includes(record.status) ? "moderation_error" : "moderating";
   return {
-    decision: record.decision || "review",
+    decision,
     moderationRecordId: record.id,
     reasonCodes: record.reason_codes || [],
     providerFlagged: Boolean(record.provider_flagged),
-    message: record.decision === "rejected"
+    message: rejected
       ? photoRejectionMessage(record.reason_codes || [])
-      : "Your photo was uploaded and is awaiting a quick review. It will not appear publicly until approved.",
-    photo: record.decision === "rejected" ? undefined : pendingModerationPhoto(record.id, record.upload_context),
+      : decision === "moderating" ? "Checking your photo. It will only appear publicly if approved."
+      : moderationUploadErrorMessage(record.error_code || "provider_error"),
+    photo: rejected ? undefined : pendingModerationPhoto(record.id, record.upload_context),
   };
 }
 
@@ -1175,6 +1125,16 @@ function galleryPublicationResponse(
   };
 }
 
+/** Completed photo checks have two outcomes; uncertainty is never a review queue. */
+function finalizePhotoModeration(evaluation: DancrImageModerationEvaluation): DancrImageModerationEvaluation {
+  if (evaluation.decision !== "review") return evaluation;
+  return {
+    ...evaluation,
+    decision: "rejected",
+    reasonCodes: [...new Set([...evaluation.reasonCodes, "photo_approval_not_confirmed"])],
+  };
+}
+
 export function photoRejectionMessage(reasonCodes: string[]) {
   const reasons = new Set((reasonCodes || []).map(String));
   if (reasons.has("visible_branding_or_logo")) {
@@ -1191,6 +1151,9 @@ export function photoRejectionMessage(reasonCodes: string[]) {
   }
   if (reasons.has("dancer_not_visible")) {
     return "A clear photo of you is required. Choose a photo where you are visible.";
+  }
+  if (reasons.has("photo_approval_not_confirmed")) {
+    return "This photo wasn't approved because the automatic check couldn't confirm it meets the photo guidelines. Please upload a different image.";
   }
   return "This photo does not meet Dancr's photo guidelines. Please upload a different image.";
 }

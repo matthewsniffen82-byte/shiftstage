@@ -4,6 +4,17 @@ import { mediaReview } from './helpers/media-review-label.mjs';
 
 const explain = mediaReview.mediaReviewExplanation;
 
+for (const reason of ['person_count_uncertain', 'dancer_visibility_uncertain', 'branding_or_logo_uncertain',
+  'photo_policy_copyright_or_consent_uncertain', 'photo_policy_unreadable_or_obscured_content',
+  'sexual_content_requires_review', 'provider_flagged_other', 'photo_approval_not_confirmed']) {
+  test(`a rejected photo explains ${reason} without promising manual review`, () => {
+    const note = explain('photo', 'rejected', { reasonCodes: [reason, 'photo_approval_not_confirmed'] });
+    assert.match(note, /Choose/);
+    assert.doesNotMatch(note, /manual review|wait for review|not a rejection|specific reason wasn't saved/);
+    assert.equal(mediaReview.mediaReviewLabel('rejected'), 'Not approved');
+  });
+}
+
 for (const kind of ['photo', 'video']) {
   test(`${kind} explains uncertainty without calling it a rejection`, () => {
     const note = explain(kind, 'review', { reasonCodes: ['person_count_uncertain', 'branding_or_logo_uncertain'] });
