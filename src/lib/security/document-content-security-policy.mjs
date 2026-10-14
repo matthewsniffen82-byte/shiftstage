@@ -27,11 +27,16 @@ const privateDocumentPaths = new Set([
   "/dashboard/dancer", "/dashboard/dancer/tv",
   "/dashboard/venue", "/dashboard/agent",
   "/dashboard/customer", "/dashboard/customer/saved", "/dashboard/customer/offers",
+  "/dashboard/vip", "/vip",
+  "/internal", "/internal/follow-return",
   "/account", "/account/reset-password",
 ]);
 
 export function isPrivateDocumentPath(pathname) {
-  return privateDocumentPaths.has(pathname.replace(/\/$/, ""));
+  const path = pathname.replace(/\/$/, "");
+  return privateDocumentPaths.has(path)
+    || /^\/vip\/invite\/[^/]+$/.test(path)
+    || /^\/internal\/(?:club|sign)\/[^/]+$/.test(path);
 }
 
 export async function createPrivateDocumentPolicy() {

@@ -9,6 +9,7 @@ import { PublicApiError } from "@/src/lib/api-error-policy";
 import { validateUserTermsAcceptance } from "@/src/lib/dancr/user-terms";
 import { USER_TERMS_VERSION } from "@/src/lib/dancr/user-terms-version";
 import { passwordSetupCompleted, passwordLoginCompleted } from "@/src/lib/dancr/password-setup";
+import { enforcePublicRequestRateLimit, PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,8 +18,19 @@ const readBody = (request: Request) => readBoundedJsonObject(request, { maxBytes
 export async function POST(request: Request) {
   try {
     const body = await readBody(request);
-    return NextResponse.json({ ok: true, invitation: await resolveVipInvitation(createAdminSupabaseClient(), body.token) }, { headers: VIP_HEADERS });
-  } catch (error) { return failure(error); }
+    const digest = vipTokenDigest(body.token);
+    const admin = createAdminSupabaseClient();
+    await enforcePublicRequestRateLimit(admin, {
+      namespace: "vip_invitation_lookup", request, subject: digest,
+      windowSeconds: 600, ipLimit: 120, subjectLimit: 30,
+    });
+    return NextResponse.json({ ok: true, invitation: await resolveVipInvitation(admin, body.token) }, { headers: VIP_HEADERS });
+  } catch (error) {
+    if (error instanceof PublicRequestRateLimitError) return NextResponse.json({
+      ok: false, error: "Please wait before opening this invitation again.",
+    }, { status: 429, headers: { ...VIP_HEADERS, "retry-after": String(error.retryAfterSeconds) } });
+    return failure(error);
+  }
 }
 export async function PATCH(request: Request) {
   try {

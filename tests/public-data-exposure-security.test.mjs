@@ -45,9 +45,10 @@ test("public dancer and venue mappers omit ownership, precise proximity, and QR 
   );
   assert.doesNotMatch(publicTypes, /checkinDistanceFeet|venueQrCodeUrl|venueQrCodeLabel/);
 
-  assert.match(publicService, /const PUBLIC_DANCER_DIRECTORY_LIMIT = 200/);
+  assert.match(publicService, /const PUBLIC_DANCER_DIRECTORY_LIMIT = 800/);
+  assert.match(publicService, /const ALL_CITIES_DANCER_DIRECTORY_LIMIT = 800/);
   assert.ok(
-    (publicService.match(/\.limit\((?:isAllMyDancrCities\(cityName\) \? PUBLIC_DANCER_DIRECTORY_LIMIT \* 4 : )?PUBLIC_DANCER_DIRECTORY_LIMIT\)/g) || []).length >= 2,
+    (publicService.match(/\.limit\((?:isAllMyDancrCities\(cityName\) \? ALL_CITIES_DANCER_DIRECTORY_LIMIT : )?PUBLIC_DANCER_DIRECTORY_LIMIT\)/g) || []).length >= 2,
     "both public directory queries must be capped",
   );
   assert.match(publicService, /const PUBLIC_PROFILE_MEDIA_LIMIT = 50/);

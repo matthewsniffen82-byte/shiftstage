@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createHash } from "node:crypto";
 import test from "node:test";
@@ -22,7 +22,9 @@ function fixture() {
   } });
   return { exports, calls };
 }
-for (const pathname of ["/admin", "/admin/operations", "/dashboard/dancer", "/dashboard/dancer/tv", "/dashboard/customer/saved", "/dashboard/venue", "/dashboard/agent", "/account?venue_nfc=synthetic", "/account/reset-password"]) test(`${pathname} receives a fresh policy without permitting arbitrary inline scripts`, async () => {
+for (const pathname of ["/admin", "/admin/operations", "/dashboard/dancer", "/dashboard/dancer/tv", "/dashboard/customer/saved", "/dashboard/venue", "/dashboard/agent", "/account?venue_nfc=synthetic", "/account/reset-password",
+  "/dashboard/vip", "/vip", "/vip/invite/synthetic", "/vip/invite/synthetic/", "/internal", "/internal/club/synthetic", "/internal/sign/synthetic", "/internal/follow-return?state=synthetic",
+]) test(`${pathname} receives a fresh policy without permitting arbitrary inline scripts`, async () => {
   const f = fixture();
   const request = () => new NextRequest("https://www.mydancr.com" + pathname, { headers: {
     "content-security-policy": "script-src 'unsafe-inline' 'nonce-attacker'", "x-nonce": "attacker", authorization: "Bearer synthetic",
@@ -39,7 +41,9 @@ for (const pathname of ["/admin", "/admin/operations", "/dashboard/dancer", "/da
   for (const header of ["cdn-cache-control", "vercel-cdn-cache-control"]) assert.equal(first.headers.get(header), "no-store");
   assert.deepEqual(f.calls, [], "HTML policy generation does not alter API authentication");
 });
-for (const pathname of ["/", "/dancers/synthetic", "/api/public/discovery", "/accounting", "/administrator", "/dashboard-old", "/admin/security-fixture-missing", "/dashboard/missing", "/account/missing"]) test(`${pathname} keeps its existing public/cache policy`, async () => {
+for (const pathname of ["/", "/dancers/synthetic", "/api/public/discovery", "/accounting", "/administrator", "/dashboard-old", "/admin/security-fixture-missing", "/dashboard/missing", "/account/missing",
+  "/vip/missing", "/vip/invite", "/vip/invite/synthetic/extra", "/internal/missing", "/internal/club", "/internal/sign", "/internal/club/synthetic/extra", "/internalized", "/internal/profile-viewer",
+]) test(`${pathname} keeps its existing public/cache policy`, async () => {
   const f = fixture(), response = await f.exports.middleware(new NextRequest("https://www.mydancr.com" + pathname, { headers: { authorization: "Bearer synthetic" } }));
   assert.equal(response.headers.get("content-security-policy"), null);
   assert.equal(response.headers.get("cache-control"), null);
@@ -47,13 +51,21 @@ for (const pathname of ["/", "/dancers/synthetic", "/api/public/discovery", "/ac
 });
 
 test("every existing private document page is covered and renders per request", () => {
-  for (const area of ["admin", "dashboard", "account"]) {
+  for (const area of ["admin", "dashboard", "account", "vip", "internal"]) {
     const directory = new URL("../app/" + area + "/", import.meta.url);
     for (const entry of readdirSync(directory, { recursive: true }).map(String).map(path => path.replaceAll("\\", "/"))) {
       if (!/(?:^|\/)page\.tsx$/.test(entry)) continue;
-      const path = "/" + area + (entry === "page.tsx" ? "" : "/" + entry.slice(0, -"/page.tsx".length));
+      const path = ("/" + area + (entry === "page.tsx" ? "" : "/" + entry.slice(0, -"/page.tsx".length)))
+        .replace(/\[token\]/g, "synthetic");
       assert.ok(policy.isPrivateDocumentPath(path), path + " requires CSP review when introduced");
-      assert.match(readFileSync(new URL(entry, directory), "utf8"), /export const dynamic = "force-dynamic"/);
+      const renderingSources = [readFileSync(new URL(entry, directory), "utf8")];
+      // A server layout can opt its client-only descendant pages into dynamic rendering.
+      const segments = entry.split("/").slice(0, -1);
+      for (let depth = 0; depth <= segments.length; depth++) {
+        const layout = new URL([...segments.slice(0, depth), "layout.tsx"].join("/"), directory);
+        if (existsSync(layout)) renderingSources.push(readFileSync(layout, "utf8"));
+      }
+      assert.ok(renderingSources.some(source => /export const dynamic = "force-dynamic"/.test(source)), path + " must render per request");
       assert.ok(policy.isPrivateDocumentPath(path + "/"));
     }
   }

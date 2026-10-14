@@ -1,16 +1,14 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { liveShellRoute } from "./helpers/live-shell-route.mjs";
 import { contentSecurityPolicy } from "../src/lib/security/document-content-security-policy.mjs";
 import {
   createRootContentSecurityPolicy,
   sha256Source,
 } from "../src/lib/security/root-content-security-policy.mjs";
 
-const [nextConfig, rootRoute] = await Promise.all([
-  readFile(new URL("../next.config.mjs", import.meta.url), "utf8"),
-  readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
-]);
+const nextConfig = await readFile(new URL("../next.config.mjs", import.meta.url), "utf8");
 
 test("every application route receives the production security header baseline", () => {
   assert.match(nextConfig, /import \{ contentSecurityPolicy \} from "\.\/src\/lib\/security\/document-content-security-policy\.mjs"/);
@@ -47,7 +45,7 @@ test("API responses default to no-store at the edge", () => {
   assert.match(nextConfig, /source: "\/api\/:path\*"[\s\S]*?Content-Security-Policy[\s\S]*?apiContentSecurityPolicy/);
 });
 
-test("the cached production home shell allowlists exact inline scripts without unsafe-inline", () => {
+test("the production home shell allowlists exact inline scripts without unsafe-inline", async () => {
   const trustedOne = "document.documentElement.dataset.ready = 'true';";
   const trustedTwo = "console.log('trusted');";
   const policy = createRootContentSecurityPolicy(
@@ -60,7 +58,15 @@ test("the cached production home shell allowlists exact inline scripts without u
   assert.ok(!policy.includes(sha256Source("console.log('injected');")));
   assert.doesNotMatch(policy.match(/script-src [^;]+/)?.[0] || "", /unsafe-inline/);
   assert.match(policy, /script-src-attr 'none'/);
-  assert.match(rootRoute, /createRootContentSecurityPolicy\(withVersionedAssets\)/);
-  assert.match(rootRoute, /"content-security-policy": contentSecurityPolicy/);
+  const response = await liveShellRoute().route.GET();
+  const html = await response.text();
+  const actualPolicy = response.headers.get("content-security-policy");
+  assert.equal(actualPolicy, createRootContentSecurityPolicy(html));
+  const inlineScripts = Array.from(html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi))
+    .filter(([, attributes, script]) => !/\bsrc\s*=/i.test(attributes) && script.trim());
+  assert.ok(inlineScripts.length > 0);
+  for (const [, , script] of inlineScripts) assert.ok(actualPolicy.includes(sha256Source(script)));
+  assert.doesNotMatch(actualPolicy.match(/script-src [^;]+/)?.[0] || "", /unsafe-inline/);
+  assert.ok(!actualPolicy.includes(sha256Source("console.log('injected');")));
   assert.match(nextConfig, /source: "\/"[\s\S]*?Content-Security-Policy[\s\S]*?rootContentSecurityPolicy/);
 });
