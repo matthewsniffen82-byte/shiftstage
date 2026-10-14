@@ -300,7 +300,7 @@ export default function DancerProfileWorkspace({
       {visibilityContent}
     </fieldset>
     </DancerProfileUploadContext.Provider>
-    {preview ? <DancerProfilePreviewContent name={draftIdentity.stageName.trim()} city={draftIdentity.city}
+    {preview ? <DancerProfilePreviewContent profile={profile} name={draftIdentity.stageName.trim()} city={draftIdentity.city}
       avatarUrl={String(profile?.avatarPhotoUrl || "")} photos={approvedPhotos} videos={uploadedVideos}
       isPublic={isPublic} onboarding={onboarding} onEdit={onboarding ? openEditorArea : undefined} slug={String(profile?.slug || "")} /> : null}
     <footer className="dancer-workspace-footer">

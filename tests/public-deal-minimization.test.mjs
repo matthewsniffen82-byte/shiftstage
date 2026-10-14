@@ -21,6 +21,8 @@ function load(path, dependencies={},globals={},selectedSource) {
   const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
   vm.runInNewContext(compiled,{exports,Request,Response,URL,URLSearchParams,console:{log(){},info(){},warn(){},error(){}},require:name=>{
     if(name in dependencies)return dependencies[name];
+    if(name==="@/src/lib/dancr/public-dancer-content")return load("src/lib/dancr/public-dancer-content.ts", dependencies, globals);
+    if(name==="./PublicDancerProfile")return load("app/dancers/[slug]/PublicDancerProfile.tsx", dependencies, globals);
     if(name==="@/src/lib/dancr/public-club-deal"||name==="./public-club-deal")return {toPublicClubDeal};
     if(name==="next/server")return require(name);
     if(name==="react/jsx-runtime")return {jsx:(type,props)=>({type,props}),jsxs:(type,props)=>({type,props})};
@@ -105,6 +107,6 @@ test("dancer page passes public offer props across the React client boundary",as
     "@/src/lib/dancr/image-focal-point":{imageFocalPointCss:()=>"50% 50%"},
     "@/src/lib/dancr/deal-attribution":{createDancerDealAttributionToken:()=>"synthetic-attribution"},
   });
-  const tree=await page.default({params:Promise.resolve({slug:"fixture"})});const deals=[];
+  const entry=await page.default({params:Promise.resolve({slug:"fixture"})});const tree=entry.type(entry.props);const deals=[];
   walk(tree,node=>{if(node.props?.deal)deals.push(node.props);});assert.equal(deals.length,1);assert.deepEqual(copy(deals[0].deal),visible);assert.deepEqual(copy(deals[0].deals),[visible]);assert.equal(deals[0].attributionToken,"synthetic-attribution");
 });

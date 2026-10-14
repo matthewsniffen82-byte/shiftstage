@@ -7,10 +7,12 @@ export function ProfileCloseButton({
   fallbackHref,
   vipReturnHref = "",
   profileType = "dancer",
+  onClose,
 }: {
   fallbackHref: string;
   vipReturnHref?: string;
   profileType?: "dancer" | "venue";
+  onClose?: () => void;
 }) {
   function navigateToFallback() {
     const destination = new URL(fallbackHref, window.location.origin);
@@ -18,6 +20,7 @@ export function ProfileCloseButton({
   }
 
   function closeProfile() {
+    if (onClose) { onClose(); return; }
     // VIP links open without a referrer, so their explicit return takes priority.
     if (vipReturnHref) {
       window.location.assign(new URL(vipReturnHref, window.location.origin).toString());
@@ -63,7 +66,7 @@ export function ProfileCloseButton({
     </button>
   );
 }
-export function ProfileShareButton({ dancerId, stageName }: { dancerId: string; stageName: string }) {
+export function ProfileShareButton({ dancerId, stageName, preview = false }: { dancerId: string; stageName: string; preview?: boolean }) {
   const [status, setStatus] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -131,7 +134,8 @@ export function ProfileShareButton({ dancerId, stageName }: { dancerId: string; 
           aria-haspopup="dialog"
           aria-label={`Share ${stageName} profile`}
           className="profile-action-icon-control profile-share-trigger"
-          onClick={() => setDialogOpen(true)}
+          aria-disabled={preview || undefined}
+          onClick={() => { if (!preview) setDialogOpen(true); }}
           type="button"
         >
           <span className="profile-action-main">

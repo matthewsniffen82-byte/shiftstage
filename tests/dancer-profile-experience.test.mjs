@@ -48,7 +48,7 @@ test("the public dancer profile keeps a compact identity that scrolls with the w
   assert.match(profilePage, /className="profile-titlebar-city">\{profile\.city\}<\/span>/);
   assert.doesNotMatch(profilePage, /const nextShift =/);
   assert.match(profilePage, /<ProfileCloseButton/);
-  assert.match(profilePage, /<DancerReportControl dancerId=\{profile\.id\} profileName=\{profile\.stageName\} \/>/);
+  assert.match(profilePage, /<DancerReportControl preview=\{preview\} dancerId=\{profile\.id\} profileName=\{profile\.stageName\} \/>/);
   assert.match(navigationActions, /className="public-profile-close"/);
   assert.match(profilePage, /\.profile-titlebar \{ position: relative; z-index: 10;/);
   assert.doesNotMatch(profilePage, /\.profile-titlebar \{ position: sticky;/);
@@ -111,7 +111,7 @@ test("the mobile profile keeps nightlife actions and active deals above the medi
   assert.match(profilePage, /format\(profile\.profileViewsToday \|\| 0\)[\s\S]*?<dt>Views today<\/dt>/);
   assert.doesNotMatch(profilePage, /className="profile-overview"/);
   assert.doesNotMatch(profilePage, /<dt>Notifications<\/dt>/);
-  assert.match(profilePage, /shareControl=\{<ProfileShareButton dancerId=\{profile\.id\} stageName=\{profile\.stageName\} \/>\}/);
+  assert.match(profilePage, /shareControl=\{<ProfileShareButton dancerId=\{profile\.id\} stageName=\{profile\.stageName\} preview=\{preview\} \/>\}/);
   assert.match(profilePage, /videos=\{tvVideos\.map\(/);
   assert.doesNotMatch(profilePage, /<TvVideoStrip/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
@@ -187,7 +187,7 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   );
   assert.doesNotMatch(profileActions, /Sign in required/);
   assert.match(profileActions, /aria-pressed=\{actionShift \? isGoing : undefined\}/);
-  const followButtonIndex = profileActions.indexOf('if (requireCustomerAccount("follow"))');
+  const followButtonIndex = profileActions.indexOf('if (!preview && requireCustomerAccount("follow"))');
   const goingIndex = profileActions.indexOf('className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going');
   const shareIndex = profileActions.indexOf('{shareControl ?');
   const tonightIndex = profileActions.indexOf('className={`profile-tonight-card');
@@ -209,7 +209,7 @@ test("profile actions keep customer and safety controls visible while Tonight ow
   assert.match(profileActions, /details: null/);
   assert.match(profileActions, /const reportAbortRef = useRef<AbortController \| null>\(null\);/);
   assert.match(profileActions, /const reportInFlightRef = useRef\(false\);/);
-  assert.match(profileActions, /if \(reportInFlightRef\.current \|\| reportSubmitted\) return;/);
+  assert.match(profileActions, /if \(preview \|\| reportInFlightRef\.current \|\| reportSubmitted\) return;/);
   assert.match(profileActions, /fetch\("\/api\/reports", \{[\s\S]*?signal: controller\.signal/);
   assert.match(profileActions, /if \(!mountedRef\.current \|\| controller\.signal\.aborted\) return;/);
   assert.match(profileActions, /reportAbortRef\.current\?\.abort\(\);/);
@@ -256,7 +256,7 @@ test("the profile shows the current shift once without the retired upcoming list
 });
 
 test("profiles can be shared and close back to the referring site page", () => {
-  assert.match(profilePage, /<ProfileShareButton dancerId=\{profile\.id\} stageName=\{profile\.stageName\} \/>/);
+  assert.match(profilePage, /<ProfileShareButton dancerId=\{profile\.id\} stageName=\{profile\.stageName\} preview=\{preview\} \/>/);
   assert.match(profilePage, /<ProfileCloseButton/);
   assert.match(navigationActions, /navigator\.share/);
   assert.match(navigationActions, /navigator\.clipboard\.writeText\(url\)/);

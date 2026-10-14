@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import fs from "node:fs";
+import fs from "./helpers/dashboard-test-fs.mjs";
 import test from "node:test";
 
 const liveApp = fs.readFileSync("outputs/index.html", "utf8");

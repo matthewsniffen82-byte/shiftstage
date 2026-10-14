@@ -9,7 +9,7 @@ const read = p => readFileSync(new URL('../'+p,import.meta.url),'utf8');
 function load(path, dependencies={}, globals={}) {
   const exports={};
   vm.runInNewContext(ts.transpileModule(read(path),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText,
-    {exports,console:{warn(){},log(){}},Date,Map,Set,require:name=>dependencies[name]||{},...globals});
+    {exports,console:{warn(){},log(){}},Date,Map,Set,require:name=>dependencies[name] || (name==="@/src/lib/dancr/public-dancer-content" ? load("src/lib/dancr/public-dancer-content.ts",dependencies,globals) : name==="./PublicDancerProfile" ? load("app/dancers/[slug]/PublicDancerProfile.tsx",dependencies,globals) : {}),...globals});
   return exports;
 }
 const profile={id:'dancer',slug:'synthetic',stage_name:'Synthetic',city:'Las Vegas',status:'approved',verification_status:'approved',is_public:true,disabled_at:null,social_links:[],shifts:[]};
@@ -57,12 +57,14 @@ test('profile video outages render a recoverable partial page; primary lookup fa
   const mapped={id:'dancer',slug:'synthetic',stageName:'Synthetic',city:'Las Vegas',photos:[],socialLinks:[],upcomingShifts:[],followerCount:0,goingCount:0};
   let primaryError=false;
   const page=load('app/dancers/[slug]/page.tsx',{
+    '@/src/lib/dancr/safe-return-path':{safeLocalReturnPath:()=>''},
+    '@/src/lib/dancr/public-club-deal':{toPublicClubDeal:deal=>deal},
     'react/jsx-runtime':{jsx,jsxs},
     '@/src/lib/dancr/public':{getDancerProfile:async()=>{if(primaryError)throw new Error('primary unavailable');return mapped;}},
     '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>({})},
     '@/src/lib/dancr/tv':{getPublicMyDancrTvFeed:async()=>{throw new Error('video unavailable');}},
   });
-  const tree=await page.default({params:Promise.resolve({slug:'synthetic'})});
+  const entry=await page.default({params:Promise.resolve({slug:'synthetic'})}); const tree=entry.type(entry.props);
   function texts(node){if(!node)return '';if(typeof node==='string')return node;if(Array.isArray(node))return node.map(texts).join(' ');return texts(node.props?.children);}
   assert.match(texts(tree),/Some profile details are temporarily unavailable/);
   primaryError=true;await assert.rejects(page.default({params:Promise.resolve({slug:'synthetic'})}),/primary unavailable/);

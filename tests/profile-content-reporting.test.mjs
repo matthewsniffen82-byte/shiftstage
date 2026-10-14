@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
 import vm from "node:vm";
 
@@ -46,7 +46,7 @@ test("live profiles expose reporting through the labeled options disclosure", ()
 });
 
 test("standalone profiles expose reporting through the labeled options disclosure", () => {
-  assert.match(profilePage, /<details className="profile-options">\s*<summary aria-label="Profile options"[\s\S]*?className="profile-options-panel">\s*<DancerReportControl dancerId=\{profile.id\} profileName=\{profile.stageName\} \/>/);
+  assert.match(profilePage, /<details className="profile-options">\s*<summary aria-label="Profile options"[\s\S]*?className="profile-options-panel">\s*<DancerReportControl preview=\{preview\} dancerId=\{profile.id\} profileName=\{profile.stageName\} \/>/);
   assert.match(profileActions, /className="profile-header-report-action"[\s\S]*?onClick=\{openReport\}[\s\S]*?<ReportFlagIcon \/>/);
   assert.doesNotMatch(profileActions, /profile-header-overflow|reportMenuOpen/);
   assert.match(profilePage, /\.profile-header-report-action \{[^}]*width: 44px;[^}]*min-height: 44px;[^}]*background: transparent !important;/);

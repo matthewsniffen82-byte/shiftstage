@@ -29,6 +29,7 @@ import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
 
 type DancerPhotoCarouselProps = {
   dancerId?: string;
+  preview?: boolean;
   photos: Array<{
     id: string;
     imageUrl: string;
@@ -113,6 +114,7 @@ function orderPinnedMedia<T extends ProfileMedia>(items: T[]): T[] {
 
 export function DancerPhotoCarousel({
   dancerId,
+  preview = false,
   photos,
   videos = [],
   stageName,
@@ -150,14 +152,14 @@ export function DancerPhotoCarousel({
   videoMedia.slice(0, 6).forEach((video) => {
     if (video.posterUrl) preload(video.posterUrl, { as: "image", fetchPriority: "low" });
   });
-  const { stateFor: mediaLikeStateFor, toggle: toggleMediaLike } = useAnonymousMediaLikes(mediaLikeSeeds);
+  const { stateFor: mediaLikeStateFor, toggle: toggleMediaLike } = useAnonymousMediaLikes(preview ? [] : mediaLikeSeeds);
   const [activeTab, setActiveTab] = useState<MediaTab>(
     photoMedia.length || !videoMedia.length ? "photo" : "video",
   );
   const [viewer, setViewer] = useState<MediaViewer | null>(null);
   const [viewerFullscreen, setViewerFullscreen] = useState(false);
   const featuredPhotoIndex = Math.max(0, photoMedia.findIndex((photo) => photo.isPrimary));
-  const featuredPhoto = photoMedia[featuredPhotoIndex];
+  const featuredPhoto = preview && !photoMedia.some(photo => photo.isPrimary) ? undefined : photoMedia[featuredPhotoIndex];
   const [visibleCounts, setVisibleCounts] = useState<Record<MediaTab, number>>({
     photo: DANCER_PROFILE_MEDIA_PAGE_SIZE,
     video: DANCER_PROFILE_MEDIA_PAGE_SIZE,
@@ -257,7 +259,7 @@ export function DancerPhotoCarousel({
   }, [viewerKind]);
 
   useEffect(() => {
-    if (deepLinkHandled.current) return;
+    if (preview || deepLinkHandled.current) return;
     const params = new URLSearchParams(window.location.search);
     const requestedKind = params.get("media");
     if (requestedKind !== "photo" && requestedKind !== "video") {
@@ -276,7 +278,7 @@ export function DancerPhotoCarousel({
     setActiveTab(requestedKind);
     setViewer({ kind: requestedKind, index });
     settleViewerAtIndex(index);
-  }, [photoMedia, settleViewerAtIndex, videoMedia]);
+  }, [preview, photoMedia, settleViewerAtIndex, videoMedia]);
 
   useEffect(() => {
     if (activeTab === "photo" && !photoMedia.length && videoMedia.length) {
@@ -560,7 +562,7 @@ export function DancerPhotoCarousel({
   }
 
   async function shareViewerItem(item = activeViewerItem, index = viewerIndex) {
-    if (!item) return;
+    if (preview || !item) return;
     const url = viewerShareUrl(item, index);
     const isVideo = item.kind === "video";
     setShareStatusIndex(index);
@@ -616,14 +618,14 @@ export function DancerPhotoCarousel({
 
   function openMediaReport(item = activeViewerItem, index = viewerIndex) {
     const target = activeMediaReportTarget(item, index);
-    if (!target || reportSaving || reportedTargets.includes(target.key)) return;
+    if (preview || !target || reportSaving || reportedTargets.includes(target.key)) return;
     setShareStatusIndex(index);
     setReportError("");
     setReportTarget(target);
   }
 
   async function submitMediaReport(reason: PublicReportReason) {
-    if (!reportTarget || reportSaving) return;
+    if (preview || !reportTarget || reportSaving) return;
     const controller = new AbortController();
     reportAbortRef.current?.abort();
     reportAbortRef.current = controller;
@@ -686,7 +688,7 @@ export function DancerPhotoCarousel({
   function renderViewerControls(item: ProfileMedia, index: number, openDeal?: (trigger: HTMLElement | null) => void) {
     const target = activeMediaReportTarget(item, index);
     const workingNow = viewerStatus === "Working Now";
-    const avatarUrl = viewerAvatar?.url || featuredPhoto?.imageUrl;
+    const avatarUrl = viewerAvatar?.url || (preview ? "" : featuredPhoto?.imageUrl);
     return (
       <>
         <div className="profile-media-control-tools" role="group" aria-label={`${item.kind === "video" ? "Video" : "Photo"} options`}>
@@ -725,8 +727,8 @@ export function DancerPhotoCarousel({
             <div className="profile-media-context">
               <span className={`profile-media-schedule${workingNow ? " is-now" : ""}`}>{workingNow ? "Working now" : "Not working now"}</span>
               {workingNow && viewerVenue ? <div className="profile-media-club-row">
-                <a className="profile-media-venue" href={viewerVenue.href} aria-label={`Open ${viewerVenue.name} club profile`}><VenuePinIcon /><span>{viewerVenue.name}</span></a>
-                {viewerDeal && openDeal ? <button className="profile-media-entry" type="button" onClick={(event) => openDeal(event.currentTarget)} aria-label={`View free entry for ${viewerVenue.name}`}><EntryQrIcon /><span>Free Entry</span></button> : null}
+                <a className="profile-media-venue" onClick={preview ? event => event.preventDefault() : undefined} href={viewerVenue.href} aria-label={`Open ${viewerVenue.name} club profile`}><VenuePinIcon /><span>{viewerVenue.name}</span></a>
+                {!preview && viewerDeal && openDeal ? <button className="profile-media-entry" type="button" onClick={(event) => openDeal(event.currentTarget)} aria-label={`View free entry for ${viewerVenue.name}`}><EntryQrIcon /><span>Free Entry</span></button> : null}
               </div> : null}
             </div>
           </div>
@@ -747,7 +749,7 @@ export function DancerPhotoCarousel({
             ) : null}
             <DancerMediaFollowButton stageName={stageName} />
             {(() => {
-              const like = mediaLikeStateFor(item.kind, item.id);
+              const like = preview ? { liked: false, likeCount: item.likeCount || 0, pending: false } : mediaLikeStateFor(item.kind, item.id);
               return (
                 <MediaLikeButton
                   className="profile-media-viewer-like"
@@ -756,6 +758,7 @@ export function DancerPhotoCarousel({
                   mediaType={item.kind}
                   pending={like.pending}
                   onToggle={() => {
+                    if (preview) return;
                     setShareStatusIndex(index);
                     setShareStatus("");
                     void toggleMediaLike(item.kind, item.id).catch(() => {

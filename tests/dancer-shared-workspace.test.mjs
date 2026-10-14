@@ -189,9 +189,9 @@ test('onboarding preview offers direct identity, avatar, and main-photo editing 
   }
   ui.button('Edit photos/videos').props.onClick();
   assert.deepEqual(edited, ['dancer-details-section', 'dancer-face-photo', 'dancer-main-photo', 'dancer-profile-media-library']);
-  const gallery = ui.nodes().find(n => n.type === 'Carousel');
+  const gallery = ui.nodes().find(n => n.type === './DancerPublicProfilePreview');
   assert.deepEqual(Array.from(gallery.props.photos, p => p.id), ['main']);
-  assert.deepEqual(Array.from(gallery.props.videos, p => p.id), ['approved-video']);
+  assert.deepEqual(Array.from(gallery.props.videos, p => p.id), ['approved-video', 'pending-video']); // Filtering is tested at the public preview boundary.
   assert.equal(ui.button('Club display'), undefined);
   assert.ok(!ui.nodes().some(n => n.props?.children === 'See your discovery card'));
 });
@@ -203,6 +203,8 @@ test('preview leaves the avatar and main photo empty without hiding approved gal
     videos: [], isPublic: false, onboarding: true, slug: 'kay', onEdit() {},
   });
   assert.ok(!ui.nodes().some(node => node.type === 'img'));
-  assert.ok(ui.nodes().some(node => node.props?.children === 'Add main photo'));
-  assert.equal(ui.nodes().find(node => node.type === 'Carousel').props.photos.length, 1);
+  const preview = ui.nodes().find(node => node.type === './DancerPublicProfilePreview');
+  assert.equal(preview.props.avatarUrl, '');
+  assert.equal(preview.props.photos.some(photo => photo.isPrimary), false);
+  assert.equal(preview.props.photos.length, 1);
 });

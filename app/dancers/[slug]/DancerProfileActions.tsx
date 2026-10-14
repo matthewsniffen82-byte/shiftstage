@@ -142,10 +142,11 @@ export function DancerGoingCount() {
   return <>{goingCount === null ? "—" : new Intl.NumberFormat("en-US").format(goingCount)}</>;
 }
 
-export function DancerWorkingAlertHint({ stageName }: { stageName: string }) {
+export function DancerWorkingAlertHint({ stageName, preview = false }: { stageName: string; preview?: boolean }) {
   const { followedBy } = useDancerFollowState();
   const [state, setState] = useState({ following: false, enabled: false });
   useEffect(() => {
+    if (preview) return;
     let currentRequest: AbortController | null = null;
     async function refresh() {
       currentRequest?.abort();
@@ -179,7 +180,7 @@ export function DancerWorkingAlertHint({ stageName }: { stageName: string }) {
       window.removeEventListener("focus", refresh);
       window.removeEventListener("storage", refresh);
     };
-  }, [followedBy]);
+  }, [followedBy, preview]);
   return (
     <span className="profile-empty-copy profile-working-alert" aria-live="polite">
       <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg>
@@ -246,9 +247,11 @@ export function DancerNotificationCount() {
 export function DancerReportControl({
   dancerId,
   profileName,
+  preview = false,
 }: {
   dancerId: string;
   profileName: string;
+  preview?: boolean;
 }) {
   const [reportSaving, setReportSaving] = useState(false);
   const [reportSubmitted, setReportSubmitted] = useState(false);
@@ -283,13 +286,13 @@ export function DancerReportControl({
   }, [reportDialogOpen, reportSaving]);
 
   function openReport() {
-    if (reportSaving || reportSubmitted) return;
+    if (preview || reportSaving || reportSubmitted) return;
     setReportError("");
     setReportDialogOpen(true);
   }
 
   async function submitReport(reason: PublicReportReason) {
-    if (reportInFlightRef.current || reportSubmitted) return;
+    if (preview || reportInFlightRef.current || reportSubmitted) return;
     const controller = new AbortController();
     reportAbortRef.current?.abort();
     reportAbortRef.current = controller;
@@ -376,12 +379,14 @@ export function DancerProfileActions({
   shareControl,
   children,
   hasClubDeal = false,
+  preview = false,
 }: {
   dancerId: string;
   shifts: ShiftAction[];
   shareControl?: ReactNode;
   children?: ReactNode;
   hasClubDeal?: boolean;
+  preview?: boolean;
 }) {
   const {
     mediaFollowAction,
@@ -419,13 +424,13 @@ export function DancerProfileActions({
   // Both profile follow buttons use the existing account gate and save handler.
   useEffect(() => {
     mediaFollowAction.current = () => {
-      if (requireCustomerAccount("follow")) void updateFollow();
+      if (!preview && requireCustomerAccount("follow")) void updateFollow();
     };
     return () => { mediaFollowAction.current = null; };
   });
   useEffect(() => {
-    setMediaFollowState({ following: saved.following, disabled: !savedLoaded || followSaving, busy: followSaving, status });
-  }, [followSaving, saved.following, savedLoaded, setMediaFollowState, status]);
+    setMediaFollowState({ following: saved.following, disabled: preview || !savedLoaded || followSaving, busy: followSaving, status });
+  }, [preview, followSaving, saved.following, savedLoaded, setMediaFollowState, status]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -440,6 +445,7 @@ export function DancerProfileActions({
 
   useEffect(() => {
     const controller = new AbortController();
+    if (preview) { setSavedLoaded(true); return () => controller.abort(); }
     setSavedLoaded(false);
     setStatus("");
     const accessToken = readBrowserAccessToken("customer");
@@ -506,7 +512,7 @@ export function DancerProfileActions({
       });
 
     return () => controller.abort();
-  }, [actionShiftId, dancerId, setGoingCount, setFollowedBy]);
+  }, [preview, actionShiftId, dancerId, setGoingCount, setFollowedBy]);
 
   useEffect(() => {
     if (!accountRequiredAction) return;
@@ -677,7 +683,7 @@ export function DancerProfileActions({
           className={`profile-action-secondary profile-action-icon-control${saved.following ? " is-selected" : ""}`}
           type="button"
           onClick={() => {
-            if (requireCustomerAccount("follow")) updateFollow();
+            if (!preview && requireCustomerAccount("follow")) updateFollow();
           }}
           disabled={!savedLoaded || followSaving}
         >
@@ -710,7 +716,7 @@ export function DancerProfileActions({
             aria-busy={goingSaving || undefined}
             className={`${actionShift ? "profile-action-available" : "profile-action-secondary"} profile-action-going profile-action-icon-control${isGoing ? " is-going" : ""}${!actionShift ? " profile-action-unavailable" : ""}`}
             disabled={actionShift ? !savedLoaded || goingSaving : true}
-            onClick={() => actionShift && updateGoing(actionShift.id)}
+            onClick={() => !preview && actionShift && updateGoing(actionShift.id)}
             type="button"
           >
             <span className="profile-action-main">

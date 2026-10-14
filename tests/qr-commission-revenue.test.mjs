@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync } from "./helpers/dashboard-test-fs.mjs";
 import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
 
