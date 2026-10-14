@@ -1136,6 +1136,8 @@ export function DashboardStyles() {
       .dancer-step-one-footer small { color: var(--mydancr-dashboard-muted); font-size: 10px; }
       .dancer-step-one-footer.is-ready { border-color: rgba(76,223,166,.3); background: rgba(25,140,101,.07); }
       .dancer-onboarding-agreement { display:grid; gap:12px; padding-top:16px; scroll-margin-top:calc(var(--mydancr-preview-banner-offset, 0px) + 14px); }
+      .dancer-onboarding-agreement-heading h3 { margin:0 0 4px; font-size:18px; line-height:1.3; }
+      .dancer-onboarding-agreement-heading p { margin:0; color:#c4bfcc; font-size:13px; line-height:1.5; }
       .dancer-profile-agreement p { margin:0; color:#c4bfcc; font-size:13px; line-height:1.5; }
       .dancer-profile-agreement form { display:grid; gap:16px; }
       .dancer-profile-agreement-check { display:flex; align-items:flex-start; gap:12px; color:#eee9f5; font-size:14px; line-height:1.6; }

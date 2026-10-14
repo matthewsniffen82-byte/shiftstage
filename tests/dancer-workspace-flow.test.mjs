@@ -51,7 +51,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboa
   };
 }
 
-test('new dancers save name and city, then continue directly from media to verification',async()=>{
+test('new dancers save name and city, then continue directly from media to the agreement',async()=>{
   const f=fixture({newProfile:true,count:0,face:false});
   assert.equal(f.step(),'details');
   assert.equal(f.draw().find(n=>n.props.id==='dancer-details-section').props.hidden,false);
@@ -61,7 +61,7 @@ test('new dancers save name and city, then continue directly from media to verif
   await f.click();assert.equal(f.step(),'media');assert.equal(f.calls.includes('agreement'),false);
   f.props.profile.avatarPhotoUrl='/face.jpg';
   f.props.profile.dancer_photos=Array.from({length:3},(_,i)=>({id:`ready${i}`,status:'approved',isPrimary:i===0}));
-  await f.click('Continue to verification');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
+  await f.click('Continue to agreement');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
   assert.deepEqual(f.calls.filter(c=>['save','agreement'].includes(c)),['save','save','agreement']);
   const navigation=f.draw().find(n=>n.props.className==='dancer-builder-steps');
   assert.deepEqual(walk(navigation).filter(n=>n.type==='button').map(n=>n.props.children[1]),['Name & city','Photos & videos']);
@@ -92,8 +92,8 @@ test('an approved gallery does not label missing avatar or main photo as ready',
   }
 });
 
-test('pending videos do not block required verification handoff',async()=>{
-  const f=fixture();await f.click('Continue to verification');
+test('pending videos do not block required agreement handoff',async()=>{
+  const f=fixture();await f.click('Continue to agreement');
   assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });
 
@@ -188,14 +188,14 @@ test('a removed main photo cannot be replaced implicitly by enough approved gall
   assert.ok(!f.calls.includes('agreement'));
 });
 
-test('failed media-step saves cannot hand off to verification',async()=>{
+test('failed media-step saves cannot hand off to the agreement',async()=>{
   for(const options of [{valid:false},{saveResult:false},{save:async()=>{throw Error('offline');}}]) {
-    const f=fixture(options);await f.click('Continue to verification');
+    const f=fixture(options);await f.click('Continue to agreement');
     assert.ok(!f.calls.includes('agreement'));assert.equal(f.footer().props.disabled,false);
   }
 });
 
-test('duplicate verification requests save and continue only once',async()=>{
+test('duplicate agreement requests save and continue only once',async()=>{
   let resolve;const f=fixture({save:()=>new Promise(done=>{resolve=done;})});
   const proceed=f.footer();proceed.props.onClick();proceed.props.onClick();
   assert.equal(f.calls.filter(c=>c==='save').length,1);assert.equal(f.footer().props.disabled,true);

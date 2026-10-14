@@ -7,10 +7,11 @@ import { readSession, requestDashboardJson } from "./dashboard-session";
 
 export type DancerProfileAgreementInput = { agreementAccepted: boolean; agreementVersion: string };
 
-export default function DancerProfileAgreementReview({ profileId, busy, onSubmit }: {
+export default function DancerProfileAgreementReview({ profileId, busy, onSubmit, submitLabel = "Continue" }: {
   profileId: string;
   busy: boolean;
   onSubmit: (input: DancerProfileAgreementInput) => Promise<void>;
+  submitLabel?: string;
 }) {
   const [agreement, setAgreement] = useState<DancerAgreementAccess | null>(null);
   const [checked, setChecked] = useState(false);
@@ -57,7 +58,7 @@ export default function DancerProfileAgreementReview({ profileId, busy, onSubmit
       {error && <p role="alert">{error}</p>}
       {error && <button type="button" disabled={busy} onClick={() => setAttempt(value => value + 1)}>Try again</button>}
       <button className="dancer-onboarding-primary" id="dancer-onboarding-agreement-button" aria-describedby="dancer-onboarding-agreement-status" aria-busy={busy} type="submit" disabled={busy || !agreement || (!agreement.accepted && !checked)}>
-        {busy ? "Submitting profile…" : "Continue"}
+        {busy ? "Saving…" : submitLabel}
       </button>
     </form>
   </div>;

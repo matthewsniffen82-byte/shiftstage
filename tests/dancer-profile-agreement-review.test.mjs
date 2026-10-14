@@ -7,6 +7,7 @@ import ts from "typescript";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import * as version from "../src/lib/dancr/dancer-agreement-version.ts";
+import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "../src/lib/dancr/media-limits.ts";
 import { PublicApiError } from "../src/lib/api-error-policy.ts";
 import { loadAgreementComponent } from "./helpers/dancer-agreement-ui.mjs";
 
@@ -18,7 +19,7 @@ const serviceCode = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreem
 const receipt = (accepted = false) => ({ required: true, accepted, version: version.DANCER_AGREEMENT_VERSION, acceptedAt: accepted ? "2026-09-20T01:00:00Z" : null });
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
 
-function ui({ accepted = false, fail = false, stale = false } = {}) {
+function ui({ accepted = false, fail = false, stale = false, submitLabel } = {}) {
   const slots = [], effects = [], submissions = []; let cursor = 0;
   const exports = {};
   vm.runInNewContext(uiCode, { exports, AbortController, Error, require(name) {
@@ -35,7 +36,7 @@ function ui({ accepted = false, fail = false, stale = false } = {}) {
     };
     throw new Error(name);
   } });
-  const render = (busy = false) => { cursor = 0; return exports.default({ profileId: "synthetic-profile", busy, onSubmit: async input => { submissions.push(input); } }); };
+  const render = (busy = false) => { cursor = 0; return exports.default({ profileId: "synthetic-profile", busy, submitLabel, onSubmit: async input => { submissions.push(input); } }); };
   return { render, submissions, async load() { render(); const cleanup = effects.shift()(); await new Promise(resolve => setImmediate(resolve)); return cleanup; } };
 }
 
@@ -75,6 +76,22 @@ test("loading, failed and stale agreement checks cannot submit; saved consent do
   assert.match(renderToStaticMarkup(f.render()), /acceptance is saved/);
 });
 
+test("destination-specific agreement buttons still require explicit consent", async () => {
+  for (const submitLabel of ["Continue to verification", "Continue to club confirmation", "Save agreement"]) {
+    const f = ui({ submitLabel }); await f.load();
+    let nodes = walk(f.render());
+    let submit = nodes.find(node => node.props.id === "dancer-onboarding-agreement-button");
+    assert.equal(submit.props.children, submitLabel);
+    assert.equal(submit.props.disabled, true);
+    nodes.find(node => node.type === "input").props.onChange({ target: { checked: true } });
+    nodes = walk(f.render());
+    submit = nodes.find(node => node.props.id === "dancer-onboarding-agreement-button");
+    assert.equal(submit.props.disabled, false);
+    await nodes.find(node => node.type === "form").props.onSubmit({ preventDefault() {} });
+    assert.equal(f.submissions.length, 1);
+  }
+});
+
 function service({ accepted = false, failure = false } = {}) {
   const exports = {}, calls = []; let current = receipt(accepted);
   vm.runInNewContext(serviceCode, { exports, Error, Date, require(name) {
@@ -112,10 +129,10 @@ test("submission requires explicit current-version consent, saves it durably and
 
 const route = readFileSync(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8");
 const submitCode = compile("export " + route.slice(route.indexOf("async function submitProfileForReview("), route.indexOf("\nfunction photoSlotKey(")));
-function submission({ avatar = true, photo = true, acceptanceFails = false } = {}) {
+function submission({ avatar = true, photo = true, photoCount = 3, acceptanceFails = false } = {}) {
   const calls = [], exports = {};
-  vm.runInNewContext(submitCode, { exports, Error, createAdminSupabaseClient: () => ({ from(table) {
-    const result = { data: table === "dancer_profiles" ? { avatar_storage_path: avatar ? "synthetic-avatar" : "" } : photo ? [{ review_status: "approved" }] : [], error: null };
+  vm.runInNewContext(submitCode, { exports, Error, ProfileInputError: Error, MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount, createAdminSupabaseClient: () => ({ from(table) {
+    const result = { data: table === "dancer_profiles" ? { avatar_storage_path: avatar ? "synthetic-avatar" : "" } : photo ? Array.from({ length: photoCount }, (_, id) => ({ id: String(id), review_status: "approved" })) : [], error: null };
     return { select() { return this; }, eq() { return this; }, maybeSingle: async () => result, then: (resolve, reject) => Promise.resolve(result).then(resolve, reject) };
   } }), acceptDancerProfileSubmissionAgreement: async () => { calls.push("accept"); if (acceptanceFails) throw new Error("acceptance failed"); },
   transitionDancerPublication: async (_db, _id, action) => { calls.push(action); return { status: "pending_review" }; } });
@@ -123,8 +140,8 @@ function submission({ avatar = true, photo = true, acceptanceFails = false } = {
 }
 
 test("profile submission checks approved media before acceptance and cannot transition on acceptance failure", async () => {
-  for (const options of [{ avatar: false }, { photo: false }]) {
-    const f = submission(options); await assert.rejects(f.run()); assert.deepEqual(f.calls, []);
+  for (const options of [{ avatar: false }, { photo: false }, { photoCount: 2 }]) {
+    const f = submission(options); await assert.rejects(f.run(), options.avatar === false ? /Upload an avatar/ : /At least 3 profile photos/); assert.deepEqual(f.calls, []);
   }
   const blocked = submission({ acceptanceFails: true });
   await assert.rejects(blocked.run(), /acceptance failed/); assert.deepEqual(blocked.calls, ["accept"]);

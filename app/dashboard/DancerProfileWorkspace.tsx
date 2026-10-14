@@ -23,13 +23,13 @@ const profileSteps: { id: ProfileStep; label: string }[] = [
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
   draftIdentity, profile, onProfileChange, onboarding = false,
-  onContinue, onBusyChange, isPublic = false, uploadBusy = false, visibilityContent,
+  onContinue, continueLabel = "Continue to agreement", onBusyChange, isPublic = false, uploadBusy = false, visibilityContent,
 }: {
   identityContent: ReactNode; avatarContent: ReactNode; mainPhotoContent: ReactNode;
   photoContent: ReactNode; videoContent: ReactNode; draftIdentity: DancerIdentityDraft;
   profile?: LoadState["profile"]; onProfileChange?: (profile: Record<string, unknown>) => void;
   uploadBusy?: boolean;
-  onboarding?: boolean; profileReady?: boolean; agreementComplete?: boolean; onContinue?: () => void;
+  onboarding?: boolean; profileReady?: boolean; agreementComplete?: boolean; onContinue?: () => void; continueLabel?: string;
   onBusyChange?: (busy: boolean) => void; isPublic?: boolean;
   visibilityContent?: ReactNode;
 }) {
@@ -142,7 +142,7 @@ export default function DancerProfileWorkspace({
     if (step === "details") { void save("media"); return; }
     if (identityHint) { showStep("details"); setStatus(identityHint); return; }
     if (!photosReady) { revealMissingPhoto(); setStatus(photoBlocker); return; }
-    void save("verification");
+    void save("continue");
   }
   function chooseStep(next: ProfileStep) {
     if (savingRef.current || hasActiveUpload() || next === step) return;
@@ -156,7 +156,7 @@ export default function DancerProfileWorkspace({
     else openEditorArea("dancer-profile-media-library");
   }
 
-  async function save(next?: ProfileStep | "verification") {
+  async function save(next?: ProfileStep | "continue") {
     if (savingRef.current || hasActiveUpload()) return;
     if (onboarding && identityHint) { showStep("details"); setStatus(identityHint); return; }
     const form = root.current?.querySelector<HTMLFormElement>(".dancer-profile-identity-form");
@@ -172,7 +172,7 @@ export default function DancerProfileWorkspace({
       if (!saved) { if (onboarding) showStep("details"); setStatus("Check your name and city, then try again."); return; }
       setStatus(onboarding ? "" : "Changes saved.");
       if (onboarding) {
-        if (next === "verification" && photosReady) onContinue?.();
+        if (next === "continue" && photosReady) onContinue?.();
         else showStep("media");
       }
     } catch {
@@ -286,7 +286,7 @@ export default function DancerProfileWorkspace({
     </DancerProfileUploadContext.Provider>
     <footer className="dancer-workspace-footer">
       <span id="dancer-workspace-next-step" role="status" aria-live="polite" hidden={!footerMessage}>{footerMessage}</span>
-      <button className="dancer-workspace-save" type="button" aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (!onboarding && !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "media" ? "Continue to verification" : "Continue" : dirty ? "Save changes" : "Details saved"}</button>
+      <button className="dancer-workspace-save" type="button" aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (!onboarding && !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "media" ? continueLabel : "Continue" : dirty ? "Save changes" : "Details saved"}</button>
       {onboarding && step !== "details" ? <button className="dancer-builder-back" type="button" disabled={busy} onClick={() => chooseStep("details")}>Back</button> : null}
     </footer>
   </div>;

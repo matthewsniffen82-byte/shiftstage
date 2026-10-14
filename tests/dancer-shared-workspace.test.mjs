@@ -73,10 +73,10 @@ const props = { profile, draftIdentity: { stageName: 'Star', city: 'Las Vegas' }
 const editingProps = { ...props, draftIdentity: { stageName: 'Draft', city: 'Las Vegas' } };
 const readyProfile = { ...profile, photos: [...profile.photos, { id: 'extra-one', status: 'approved' }, { id: 'extra-two', status: 'approved' }] };
 
-test('onboarding saves before verification; returning editors save without advancing onboarding', async () => {
+test('onboarding saves before the agreement; returning editors save without advancing onboarding', async () => {
   for (const onboarding of [true, false]) {
     const ui = harness(editorFile, { ...editingProps, profile: readyProfile, onboarding });
-    await ui.click(onboarding ? 'Continue to verification' : 'Save changes');
+    await ui.click(onboarding ? 'Continue to agreement' : 'Save changes');
     assert.equal(ui.saves, 1);
     assert.equal(ui.continuing, onboarding ? 1 : 0);
   }
@@ -85,11 +85,11 @@ test('onboarding saves before verification; returning editors save without advan
 test('invalid identity, failed saves, and thrown save errors never advance onboarding', async () => {
   for (const options of [{ valid: false }, { save: async () => false }, { save: async () => { throw Error('offline'); } }]) {
     const ui = harness(editorFile, { ...editingProps, profile: readyProfile, onboarding: true }, options);
-    await ui.click('Continue to verification');
+    await ui.click('Continue to agreement');
     assert.equal(ui.continuing, 0);
     assert.equal(ui.saves, options.valid === false ? 0 : 1);
-    assert.ok(ui.button('Continue') || ui.button('Continue to verification'));
-    assert.equal((ui.button('Continue') || ui.button('Continue to verification')).props.disabled, false);
+    assert.ok(ui.button('Continue') || ui.button('Continue to agreement'));
+    assert.equal((ui.button('Continue') || ui.button('Continue to agreement')).props.disabled, false);
   }
 });
 
@@ -163,16 +163,16 @@ test('the library contains approved extra photos only', () => {
 
 test('pending face reviews prevent continuing, and only approved photos count toward setup', async () => {
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, avatarPhotoUrl: '', pending_avatar_review: { status: 'pending_review' } } });
-  await ui.click('Continue to verification');
+  await ui.click('Continue to agreement');
   assert.equal(ui.continuing, 0);
   assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Face photo: awaiting review/.test(node.props.children)));
   ui.update({ profile: readyProfile });
-  await ui.click('Continue to verification'); assert.equal(ui.continuing, 1);
+  await ui.click('Continue to agreement'); assert.equal(ui.continuing, 1);
 });
 
 test('saving details never advances past a pending main photo', async () => {
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, photos: [{ id: 'main-review', isPrimary: true, status: 'pending', moderationStatus: 'pending_review' }] } });
-  await ui.click('Continue to verification');
+  await ui.click('Continue to agreement');
   assert.equal(ui.saves, 0); assert.equal(ui.continuing, 0);
   assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Main photo: awaiting review/.test(node.props.children)));
 });

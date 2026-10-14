@@ -59,7 +59,7 @@ test("initial onboarding nests every production workspace directly under its ste
   const checklist = panel.indexOf("<DancerOnboardingCommand");
 
   assert.ok(checklist >= 0, "setup checklist should render");
-  assert.match(panel, /profileMediaContent=\{\(\{ profileReady, agreementComplete, continueToAgreement \}\) => <DancerProfileWorkspace/);
+  assert.match(panel, /profileMediaContent=\{\(\{ profileReady, agreementComplete, continueToAgreement, continueLabel \}\) => <DancerProfileWorkspace/);
   assert.match(panel, /<DancerProfileWorkspace/);
   assert.match(panel, /venueVerificationContent=\{<DancerNfcPanel/);
   assert.doesNotMatch(panel, /\{!isApproved \? profileMediaSection : null\}/);

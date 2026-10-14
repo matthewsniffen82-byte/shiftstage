@@ -15,7 +15,7 @@ const code = ts.transpileModule(command, { compilerOptions: { module: ts.ModuleK
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
 const consent = { agreementAccepted: true, agreementVersion: DANCER_AGREEMENT_VERSION };
 const receipt = { accepted: true, version: DANCER_AGREEMENT_VERSION };
-function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, save = async () => ({ agreement: receipt }) } = {}) {
+function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, save = async () => ({ agreement: receipt }), saveProfile } = {}) {
   const slots = [], effects = [], requests = [], profileSaves = [], events = [], profileChanges = [], exports = {};
   let cursor = 0, controls;
   const profile = Object.freeze({ id: "saved-profile", stage_name: "Existing", city: "Las Vegas", avatarPhotoUrl: ready ? "saved-avatar" : "", status: effectiveStatus, verification_status: "approved" });
@@ -30,12 +30,12 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
     window: { location: { search: "" }, localStorage: { removeItem() {}, setItem() {} }, addEventListener() {}, removeEventListener() {}, dispatchEvent: event => events.push(event.type), requestAnimationFrame: fn => fn() },
     document: { getElementById: () => null, querySelector: () => null },
     persistedDancerStageName: p => p.stage_name,
-    dancerPhotoItemsFromProfile: () => ready ? [1,2,3].map(id => ({ id: String(id), status: "approved" })) : [],
+    dancerPhotoItemsFromProfile: () => ready ? [1,2,3].map(id => ({ id: String(id), status: "approved", isPrimary: id === 1 })) : [],
     DANCER_PHOTOS_KEEP_OPEN_EVENT: "keep-open",
     DancerProfileAgreementReview: "AgreementReview", DancerAgeVerificationGate: "AgeVerification",
     readSession: () => ({ accessToken: "fixture" }),
     requestDashboardJson: async (path, options) => { requests.push({ path, options }); return save(); },
-    requestDancerProfileJson: async options => { profileSaves.push(options); return { profile: { ...profile, status: "pending_review" } }; },
+    requestDancerProfileJson: async options => { profileSaves.push(options); return saveProfile ? saveProfile() : { profile: { ...profile, status: "pending_review" } }; },
     effectiveDancerProfileStatus: p => p.status, offerPushNotifications() {},
   });
   function render() {
@@ -44,6 +44,8 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
   }
   render(); effects.splice(0).forEach(fn => fn());
   return { render, requests, profileSaves, events, profileChanges, profile,
+    get continueLabel() { render(); return controls.continueLabel; },
+    setAge(value) { render().find(node => node.type === "AgeVerification").props.onVerificationChange(value); },
     continueFromProfile() { controls.continueToAgreement(); },
     submit() { return render().find(node => node.type === "AgreementReview").props.onSubmit(consent); },
   };
@@ -56,6 +58,7 @@ for (const effectiveStatus of ["approved", "pending_review"]) test(`${effectiveS
   assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-agreement").props.hidden, false);
   assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-agreement-status").props.children, "");
   assert.ok(nodes.find(node => node.type === "AgreementReview"));
+  assert.equal(nodes.find(node => node.type === "AgreementReview").props.submitLabel, "Save agreement");
   await f.submit();
   assert.equal(f.requests[0].path, "/api/dancer/agreement");
   assert.deepEqual(JSON.parse(f.requests[0].options.body), consent);
@@ -89,13 +92,66 @@ test("a pending renewal saves once even if Continue is triggered again", async (
 
 test("a new dancer keeps the original profile-to-agreement-to-verification flow", async () => {
   const f = fixture({ effectiveStatus: "draft" });
+  f.setAge({ required: true, status: "not_started" });
+  assert.equal(f.continueLabel, "Continue to agreement");
   assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-agreement").props.hidden, true);
   f.continueFromProfile();
   assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-agreement").props.hidden, false);
+  assert.ok(f.render().some(node => node.type === "h3" && node.props.children === "Dancer Agreement"));
+  assert.equal(f.render().find(node => node.type === "AgreementReview").props.submitLabel, "Continue to verification");
   await f.submit();
   assert.equal(f.requests.length, 0);
   assert.deepEqual(JSON.parse(f.profileSaves[0].body), { submitForReview: true, ...consent });
   assert.equal(f.profileChanges[0].status, "pending_review");
   assert.deepEqual(f.events, ["mydancr:dancer-agreement-saved"]);
   assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-age-button").props["aria-expanded"], true);
+});
+
+test("a dancer with no required age check accepts the agreement before continuing directly to the club", async () => {
+  const f = fixture({ effectiveStatus: "draft", agreementReviewRequired: false });
+  f.setAge({ required: false, status: "not_started" });
+  assert.equal(f.continueLabel, "Continue to agreement");
+  f.continueFromProfile();
+  let nodes = f.render();
+  assert.ok(nodes.some(node => node.type === "p" && /Age verification isn’t required/.test(node.props.children)));
+  assert.equal(nodes.find(node => node.type === "AgreementReview").props.submitLabel, "Continue to club confirmation");
+  assert.equal(f.profileSaves.length, 0, "opening the agreement does not accept or submit it");
+  await f.submit();
+  assert.deepEqual(JSON.parse(f.profileSaves[0].body), { submitForReview: true, ...consent });
+  nodes = f.render();
+  assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-nfc-button").props["aria-expanded"], true);
+  assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-age-button").props["aria-expanded"], false);
+});
+
+test("submitted dancers continue from edited photos to their actual next step without another agreement screen", () => {
+  for (const [age, label, destination] of [
+    [{ required: false, status: "not_started" }, "Continue to club confirmation", "dancer-onboarding-nfc"],
+    [{ required: true, status: "verified" }, "Continue to club confirmation", "dancer-onboarding-nfc"],
+    [{ required: true, status: "not_started" }, "Continue to verification", "dancer-onboarding-age"],
+    [null, "Continue to verification", "dancer-onboarding-age"],
+  ]) {
+    const f = fixture({ effectiveStatus: "pending_review", agreementReviewRequired: false });
+    f.setAge(age);
+    assert.equal(f.continueLabel, label);
+    f.render().find(node => node.props.id === "dancer-profile-media-button").props.onClick();
+    f.continueFromProfile();
+    const nodes = f.render();
+    assert.equal(nodes.find(node => node.props.id === `${destination}-button`).props["aria-expanded"], true);
+    assert.equal(nodes.find(node => node.props.id === "dancer-profile-media-button").props["aria-expanded"], false);
+    assert.equal(nodes.some(node => node.type === "AgreementReview"), false);
+    assert.equal(f.profileSaves.length, 0);
+  }
+});
+
+test("a failed profile submission stays on the agreement and keeps later steps locked", async () => {
+  const f = fixture({ effectiveStatus: "draft", agreementReviewRequired: false, saveProfile: async () => { throw Error("Save unavailable"); } });
+  f.setAge({ required: false, status: "not_started" });
+  f.continueFromProfile();
+  await f.submit();
+  const nodes = f.render();
+  assert.equal(nodes.find(node => node.props.id === "dancer-profile-media-button").props["aria-expanded"], true);
+  assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-agreement").props.hidden, false);
+  assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-nfc-button").props.disabled, true);
+  assert.match(nodes.find(node => node.props.id === "dancer-onboarding-agreement-status").props.children, /Save unavailable/);
+  assert.equal(f.profileChanges.length, 0);
 });

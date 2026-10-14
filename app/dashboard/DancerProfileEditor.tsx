@@ -509,7 +509,7 @@ export function DancerOnboardingCommand({
   isVenueApproved: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
-  profileMediaContent: (controls: { continueToAgreement: () => void; profileReady: boolean; agreementComplete: boolean }) => ReactNode;
+  profileMediaContent: (controls: { continueToAgreement: () => void; continueLabel: string; profileReady: boolean; agreementComplete: boolean }) => ReactNode;
   venueVerificationContent: ReactNode;
 }) {
   const [status, setStatus] = useState("");
@@ -550,6 +550,11 @@ export function DancerOnboardingCommand({
   const ageVerified = ageVerification?.status === "verified";
   const ageNotRequired = !ageVerified && ageVerification?.required === false;
   const ageAccessAllowed = ageVerified || ageNotRequired;
+  const nextStepLabel = ageAccessAllowed ? "Continue to club confirmation" : "Continue to verification";
+  const agreementNextStep = renewingAgreement ? "Review the updated agreement to continue."
+    : ageNotRequired ? "Age verification isn’t required. After accepting the agreement, confirm your club."
+    : ageVerified ? "Your age is verified. After accepting the agreement, confirm your club."
+    : "Accept the agreement to finish profile setup, then continue to age verification.";
   const setupDetail = profileReady
     ? "Your details, face photo, and three profile photos are ready."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
@@ -558,7 +563,7 @@ export function DancerOnboardingCommand({
       id: "dancer-profile-media",
       label: "Create profile",
       complete: submitted,
-      detail: renewingAgreement ? "Review the updated Dancer Agreement." : submitted ? "Profile submitted. Continue with verification." : profileReady ? "Profile ready. Continue to the next step." : setupDetail,
+      detail: renewingAgreement ? "Review the updated Dancer Agreement." : submitted ? ageAccessAllowed ? "Profile submitted. Confirm your club." : "Profile submitted. Continue with verification." : profileReady ? "Profile ready. Continue to the Dancer Agreement." : setupDetail,
       locked: false,
     },
     {
@@ -648,6 +653,10 @@ export function DancerOnboardingCommand({
   }
 
   function continueToProfileAgreement() {
+    if (submitted) {
+      openStep(ageAccessAllowed ? "dancer-onboarding-nfc" : "dancer-onboarding-age");
+      return;
+    }
     setReviewAgreement(true);
     setExpandedStepId("dancer-profile-media");
     window.localStorage.setItem(storageKey, "dancer-profile-media");
@@ -823,18 +832,23 @@ export function DancerOnboardingCommand({
                   <>
                     <div hidden={reviewAgreement && (profileReady || renewingAgreement) && !submitted}>{profileMediaContent({
                       continueToAgreement: continueToProfileAgreement,
+                      continueLabel: submitted ? nextStepLabel : "Continue to agreement",
                       profileReady,
                       agreementComplete: submitted,
                     })}</div>
                     <div hidden={!reviewAgreement && !submitted} className="dancer-onboarding-agreement" id="dancer-onboarding-agreement" tabIndex={-1}>
+                      {!submitted && (profileReady || renewingAgreement) ? <header className="dancer-onboarding-agreement-heading">
+                        <h3>Dancer Agreement</h3>
+                        <p>{agreementNextStep}</p>
+                      </header> : null}
                       {reviewAgreement && !submitted && !renewingAgreement ? <button type="button" disabled={isSubmitting} onClick={() => setReviewAgreement(false)}>← Back to profile</button> : null}
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Profile complete</strong>
-                          <span>Your saved photos remain editable. Complete verification and confirm your club to activate your profile.</span>
+                          <span>{ageAccessAllowed ? "Your saved photos remain editable. Confirm your club to activate your profile." : "Your saved photos remain editable. Complete verification and confirm your club to activate your profile."}</span>
                         </div>
                       ) : profileReady || renewingAgreement ? (
-                        <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile} />
+                        <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile} submitLabel={renewingAgreement ? "Save agreement" : nextStepLabel} />
                       ) : null}
                       <p className="dancer-onboarding-announcement" id="dancer-onboarding-agreement-status" role="status" aria-live="polite">
                         {status || (!profileReady && !submitted && !renewingAgreement ? setupDetail : "")}
