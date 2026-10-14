@@ -52,7 +52,7 @@ export default function DancerProfileAgreementReview({ profileId, busy, onSubmit
       {agreement?.accepted ? <p>Your Dancer Agreement acceptance is saved.</p> : agreement ? (
         <label className="dancer-profile-agreement-check">
           <input type="checkbox" required checked={checked} disabled={busy} onChange={event => setChecked(event.target.checked)} />
-          <span>By checking this box, I agree to the <DancerAgreementLink />.</span>
+          <span>I agree to the <DancerAgreementLink />.</span>
         </label>
       ) : null}
       {error && <p role="alert">{error}</p>}

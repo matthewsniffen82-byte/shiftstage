@@ -43,7 +43,7 @@ function ui({ accepted = false, fail = false, stale = false, submitLabel } = {})
 test("agreement starts unchecked and continues only after an explicit choice, without a profile review or preview", async () => {
   const f = ui(); await f.load();
   let tree = f.render(); const html = renderToStaticMarkup(tree);
-  assert.match(html, /By checking this box, I agree to the/);
+  assert.match(html, /I agree to the/);
   assert.match(html, /href="\/dancer-agreement" aria-haspopup="dialog"/);
   assert.match(html, /type="checkbox" required=""/);
   assert.doesNotMatch(html, /checked=""/);
@@ -77,7 +77,7 @@ test("loading, failed and stale agreement checks cannot submit; saved consent do
 });
 
 test("destination-specific agreement buttons still require explicit consent", async () => {
-  for (const submitLabel of ["Continue to verification", "Continue to club confirmation", "Save agreement"]) {
+  for (const submitLabel of ["Continue to age verification", "Save agreement"]) {
     const f = ui({ submitLabel }); await f.load();
     let nodes = walk(f.render());
     let submit = nodes.find(node => node.props.id === "dancer-onboarding-agreement-button");

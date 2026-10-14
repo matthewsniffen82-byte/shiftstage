@@ -552,9 +552,7 @@ export function DancerOnboardingCommand({
   const ageAccessAllowed = ageVerified || ageNotRequired;
   const nextStepLabel = ageAccessAllowed ? "Continue to club confirmation" : "Continue to verification";
   const agreementNextStep = renewingAgreement ? "Review the updated agreement to continue."
-    : ageNotRequired ? "Age verification isn’t required. After accepting the agreement, confirm your club."
-    : ageVerified ? "Your age is verified. After accepting the agreement, confirm your club."
-    : "Accept the agreement to finish profile setup, then continue to age verification.";
+    : "Review and accept the Dancer Agreement to continue to age verification.";
   const setupDetail = profileReady
     ? "Your details, face photo, and three profile photos are ready."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
@@ -592,8 +590,10 @@ export function DancerOnboardingCommand({
   const previousCurrentStep = useRef(firstIncomplete.id);
   useEffect(() => {
     if (previousCurrentStep.current !== firstIncomplete.id) {
+      const previousStepId = previousCurrentStep.current;
       previousCurrentStep.current = firstIncomplete.id;
-      setExpandedStepId(firstIncomplete.id);
+      // Keep an explicitly chosen destination when submission updates the completed steps.
+      setExpandedStepId(current => current === null || current === previousStepId ? firstIncomplete.id : current);
     }
   }, [firstIncomplete.id]);
   const storageKey = `mydancr:dancer-onboarding-step:${String(profile?.id || "profile")}`;
@@ -731,10 +731,10 @@ export function DancerOnboardingCommand({
       }
       onProfileChange?.(data.profile);
       window.dispatchEvent(new Event("mydancr:dancer-agreement-saved"));
-      const nextStep = ageAccessAllowed ? "dancer-onboarding-nfc" : "dancer-onboarding-age";
+      const nextStep = "dancer-onboarding-age";
       window.localStorage.setItem(storageKey, nextStep);
       setExpandedStepId(nextStep);
-      setStatus(ageAccessAllowed ? "Profile submitted. You're ready for your first club tap." : "Profile submitted. Verify you are 18 or older, then tap the club's official dressing-room sticker to activate your profile.");
+      setStatus("Profile submitted. Continue to age verification.");
       offerPushNotifications("dancer-review");
       window.requestAnimationFrame(() => {
         if (!isCurrentProfileSubmissionAction(requestId, controller)) return;
@@ -841,15 +841,15 @@ export function DancerOnboardingCommand({
                         <h3>Dancer Agreement</h3>
                         <p>{agreementNextStep}</p>
                       </header> : null}
-                      {reviewAgreement && !submitted && !renewingAgreement ? <button type="button" disabled={isSubmitting} onClick={() => setReviewAgreement(false)}>← Back to profile</button> : null}
                       {submitted ? (
                         <div className="dancer-onboarding-complete-note" role="status">
                           <strong>✓ Profile complete</strong>
                           <span>{ageAccessAllowed ? "Your saved photos remain editable. Confirm your club to activate your profile." : "Your saved photos remain editable. Complete verification and confirm your club to activate your profile."}</span>
                         </div>
                       ) : profileReady || renewingAgreement ? (
-                        <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile} submitLabel={renewingAgreement ? "Save agreement" : nextStepLabel} />
+                        <DancerProfileAgreementReview key={String(profile?.id)} profileId={String(profile?.id)} busy={isSubmitting} onSubmit={submitProfile} submitLabel={renewingAgreement ? "Save agreement" : "Continue to age verification"} />
                       ) : null}
+                      {reviewAgreement && !submitted && !renewingAgreement ? <button className="dancer-onboarding-agreement-back" type="button" disabled={isSubmitting} onClick={() => setReviewAgreement(false)}>← Back to profile</button> : null}
                       <p className="dancer-onboarding-announcement" id="dancer-onboarding-agreement-status" role="status" aria-live="polite">
                         {status || (!profileReady && !submitted && !renewingAgreement ? setupDetail : "")}
                       </p>

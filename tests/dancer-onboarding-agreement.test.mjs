@@ -40,10 +40,11 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
   });
   function render() {
     cursor = 0;
-    return walk(exports.DancerOnboardingCommand({ agreementReviewRequired, effectiveStatus, isVenueApproved: effectiveStatus === "approved", profile, onProfileChange: p => profileChanges.push(p), profileMediaContent: input => { controls = input; return React.createElement("div", null, "Profile editor"); }, venueVerificationContent: "Club confirmation" }));
+    return walk(exports.DancerOnboardingCommand({ agreementReviewRequired, effectiveStatus, isVenueApproved: effectiveStatus === "approved", profile, onProfileChange: p => { profileChanges.push(p); effectiveStatus = p.status; agreementReviewRequired = false; }, profileMediaContent: input => { controls = input; return React.createElement("div", null, "Profile editor"); }, venueVerificationContent: "Club confirmation" }));
   }
   render(); effects.splice(0).forEach(fn => fn());
   return { render, requests, profileSaves, events, profileChanges, profile,
+    flushEffects() { effects.length = 0; render(); effects.splice(0).forEach(fn => fn()); },
     get continueLabel() { render(); return controls.continueLabel; },
     setAge(value) { render().find(node => node.type === "AgeVerification").props.onVerificationChange(value); },
     continueFromProfile() { controls.continueToAgreement(); },
@@ -98,29 +99,34 @@ test("a new dancer keeps the original profile-to-agreement-to-verification flow"
   f.continueFromProfile();
   assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-agreement").props.hidden, false);
   assert.ok(f.render().some(node => node.type === "h3" && node.props.children === "Dancer Agreement"));
-  assert.equal(f.render().find(node => node.type === "AgreementReview").props.submitLabel, "Continue to verification");
+  assert.equal(f.render().find(node => node.type === "AgreementReview").props.submitLabel, "Continue to age verification");
   await f.submit();
   assert.equal(f.requests.length, 0);
   assert.deepEqual(JSON.parse(f.profileSaves[0].body), { submitForReview: true, ...consent });
   assert.equal(f.profileChanges[0].status, "pending_review");
   assert.deepEqual(f.events, ["mydancr:dancer-agreement-saved"]);
+  f.flushEffects();
   assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-age-button").props["aria-expanded"], true);
+  f.setAge({ required: true, status: "verified" });
+  f.flushEffects();
+  assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-nfc-button").props["aria-expanded"], true);
 });
 
-test("a dancer with no required age check accepts the agreement before continuing directly to the club", async () => {
+test("the agreement continues to the age-verification step even when the account has no required check", async () => {
   const f = fixture({ effectiveStatus: "draft", agreementReviewRequired: false });
   f.setAge({ required: false, status: "not_started" });
   assert.equal(f.continueLabel, "Continue to agreement");
   f.continueFromProfile();
   let nodes = f.render();
-  assert.ok(nodes.some(node => node.type === "p" && /Age verification isn’t required/.test(node.props.children)));
-  assert.equal(nodes.find(node => node.type === "AgreementReview").props.submitLabel, "Continue to club confirmation");
+  assert.ok(nodes.some(node => node.type === "p" && /Review and accept the Dancer Agreement to continue to age verification/.test(node.props.children)));
+  assert.equal(nodes.find(node => node.type === "AgreementReview").props.submitLabel, "Continue to age verification");
   assert.equal(f.profileSaves.length, 0, "opening the agreement does not accept or submit it");
   await f.submit();
   assert.deepEqual(JSON.parse(f.profileSaves[0].body), { submitForReview: true, ...consent });
+  f.flushEffects();
   nodes = f.render();
-  assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-nfc-button").props["aria-expanded"], true);
-  assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-age-button").props["aria-expanded"], false);
+  assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-nfc-button").props["aria-expanded"], false);
+  assert.equal(nodes.find(node => node.props.id === "dancer-onboarding-age-button").props["aria-expanded"], true);
 });
 
 test("submitted dancers continue from edited photos to their actual next step without another agreement screen", () => {
