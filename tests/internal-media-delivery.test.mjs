@@ -70,7 +70,7 @@ for (const [kind, headers] of [
   ["image", { "content-type": "image/svg+xml" }],
   ["video", { "content-type": "image/jpeg" }],
   ["image", { "content-length": String(10 * 1024 * 1024 + 1) }],
-  ["video", { "content-type": "video/mp4", "content-length": String(75 * 1024 * 1024 + 1) }],
+  ["video", { "content-type": "video/mp4", "content-length": String(100 * 1024 * 1024 + 1) }],
   ["image", { "content-length": "-1" }],
 ]) test(`unsafe ${kind} headers are rejected and their body is cancelled: ${JSON.stringify(headers)}`, async () => {
   const responses = [], f = fixture({ responses });
@@ -83,7 +83,7 @@ for (const [kind, headers] of [
 for (const kind of ["image", "video"]) test(`${kind} decoded bytes are capped even when length is missing or dishonest`, async () => {
   for (const length of [null, "1"]) {
     let cancelled = false, sent = 0;
-    const maximum = (kind === "image" ? 10 : 75) * 1024 * 1024;
+    const maximum = (kind === "image" ? 10 : 100) * 1024 * 1024;
     const chunk = new Uint8Array(1024 * 1024);
     const upstream = new Response(new ReadableStream({
       pull(controller) { controller.enqueue(chunk); }, cancel() { cancelled = true; },

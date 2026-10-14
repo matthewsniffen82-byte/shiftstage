@@ -1,6 +1,6 @@
 import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import { discoveryContext, rankPublicGrid } from "@/src/lib/dancr/discovery-service";
-import { isAllMyDancrCities } from "@/src/lib/dancr/markets";
+import { findAvailableMyDancrCity, isAllMyDancrCities, MYDANCR_ALL_CITIES } from "@/src/lib/dancr/markets";
 import { NextResponse } from "next/server";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealListsForVenues } from "@/src/lib/dancr/deals";
@@ -26,13 +26,15 @@ export async function GET(request: Request) {
 
   try {
     const url = new URL(request.url);
-    city = (url.searchParams.get("city") || city).trim();
-    if (!city || city.length > 80) {
+    city = (url.searchParams.get("city") ?? city).trim();
+    const availableCity = findAvailableMyDancrCity(city);
+    if (city.length > 80 || (!availableCity && !isAllMyDancrCities(city))) {
       return NextResponse.json(
         { ok: false, error: "Choose a valid city." },
         { status: 400, headers: { "cache-control": "private, no-store" } },
       );
     }
+    city = availableCity || MYDANCR_ALL_CITIES;
 
     const client = createAdminSupabaseClient();
     const discoveryPromise = getLiveDancerDiscovery(client, city);

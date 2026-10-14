@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { PublicApiError } from "../api-error-policy";
 import { notificationIconName } from "./notification-icon";
 
 type DancrClient = SupabaseClient;
@@ -51,7 +52,7 @@ export async function markNotificationRead(client: DancrClient, userId: string, 
     .maybeSingle();
 
   if (error) throw error;
-  if (!data) throw new Error("Notification not found.");
+  if (!data) throw new PublicApiError("NOT_FOUND", "Notification not found.", 404);
 
   return { id: data.id, readAt: data.read_at };
 }

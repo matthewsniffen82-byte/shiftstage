@@ -5,6 +5,8 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import { toPublicClubDeal } from "../src/lib/dancr/public-club-deal.ts";
+import * as markets from "../src/lib/dancr/markets.ts";
+import { safeLocalReturnPath } from "../src/lib/dancr/safe-return-path.ts";
 
 const require = createRequire(import.meta.url);
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -38,7 +40,7 @@ test("discovery JSON removes internal fields from both venue and dancer offer li
   const route=load("app/api/public/discovery/route.ts",{
     "@/src/lib/dancr/discovery-service":{discoveryContext:async()=>null,rankPublicGrid:async(_admin,_context,_city,rows)=>rows},
     "@/src/lib/supabase/admin":{createAdminSupabaseClient:()=>client},
-    "@/src/lib/dancr/markets":{isAllMyDancrCities:()=>false},
+    "@/src/lib/dancr/markets":markets,
     "@/src/lib/dancr/public":{getLiveDancerDiscovery:async()=>({dancers:[dancer],tonightDancers:[dancer]}),getPublicVenuePopularity:async()=>new Map(),formatVenueHours:()=>"Tonight"},
     "@/src/lib/dancr/deals":{getActiveClubDealListsForVenues:async()=>new Map([[venueId,[internal]]])},
     "@/src/lib/dancr/responsive-image":{responsivePublicImage:()=>null},
@@ -54,7 +56,7 @@ test("discovery JSON removes internal fields from both venue and dancer offer li
 });
 function nfcFixture() {
   let redemptions=0;
-  const tag={id:"tag",type:"cashier",venueId,venue:{name:"Venue"}};
+  const tag={id:"tag",type:"cashier",venueId,venue:{name:"Venue",slug:"fixture"}};
   const route=load("app/api/nfc/[token]/route.ts",{
     "@/src/lib/dancr/nfc":{resolveNfcTag:async()=>tag,recordNfcTagScan:async()=>{}},
     "@/src/lib/dancr/deals":{getActiveClubDealsForVenue:async()=>[internal]},
@@ -67,9 +69,9 @@ test("NFC offer lookup serializes the public projection without issuing a redemp
   const f=nfcFixture();const response=await f.route.GET(new Request("https://example.test/api/nfc/tag"),{params:Promise.resolve({token:"tag"})});
   assert.equal(response.status,200);assert.deepEqual((await response.json()).deals,[visible]);assert.equal(f.count(),0);
 });
-test("NFC completion minimizes the deal as well as the financial confirmation",async()=>{
+test("retired cashier NFC completion returns no deal or financial confirmation",async()=>{
   const f=nfcFixture();const response=await f.route.POST(new Request("https://example.test/api/nfc/tag",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({sessionId:id,dealId:id,sourceType:"club_page"})}),{params:Promise.resolve({token:"tag"})});
-  assert.equal(response.status,200);const body=await response.json();assert.deepEqual(body.deal,visible);assert.equal(body.confirmation.status,"redeemed");assert.equal(f.count(),1);
+  assert.equal(response.status,410);const body=await response.json();assert.equal(body.deal,undefined);assert.equal(body.confirmation,undefined);assert.equal(body.replacement,"admission_pass");assert.equal(body.venueUrl,"/venues/fixture");assert.equal(f.count(),0);
 });
 test("TV enrichment selects public deal fields while preserving attribution",async()=>{
   const path="src/lib/dancr/tv.ts",source=read(path);
@@ -95,6 +97,7 @@ test("claim page passes only public offer props to its client component",async()
 test("dancer page passes public offer props across the React client boundary",async()=>{
   const profile={id:"dancer",slug:"fixture",stageName:"Fixture",city:"Vegas",photos:[],socialLinks:[],upcomingShifts:[{id:"shift",venueId,venueName:"Venue",venueSlug:"venue",shiftSource:"nfc_presence",startsAt:new Date().toISOString(),endsAt:new Date(Date.now()+60000).toISOString()}]};
   const page=load("app/dancers/[slug]/page.tsx",{
+    "@/src/lib/dancr/safe-return-path":{safeLocalReturnPath},
     "@/src/lib/dancr/public":{getDancerProfile:async()=>profile,getVenueProfile:async()=>null},
     "@/src/lib/dancr/deals":{getActiveClubDealsForVenue:async()=>[internal]},
     "@/src/lib/dancr/tv":{getPublicMyDancrTvFeed:async()=>[]},

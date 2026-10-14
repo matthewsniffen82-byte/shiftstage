@@ -31,11 +31,11 @@ test("financial allocation remains database-derived and atomically persisted", (
   assert.match(latestFinanceMigration, /insert into public\.deal_revenue_events[\s\S]*?insert into public\.agent_commission_events[\s\S]*?insert into public\.commission_events/);
 });
 
-test("legacy non-NFC financial confirmation is retired at route and database boundaries", () => {
-  assert.match(redemptionRoute, /export async function POST\(\)/);
-  assert.match(redemptionRoute, /status: 410/);
-  assert.match(redemptionRoute, /replacement: "cashier_nfc"/);
-  assert.doesNotMatch(redemptionRoute, /createRequestSupabaseContext|redeemDealToken|QR_REDEMPTION_VENUE_CONFIRMED/);
+test("staff admission confirmation preserves retired legacy financial entrypoints", () => {
+  assert.match(redemptionRoute, /createRequestSupabaseContext\(request, \{ role: "venue" \}\)/);
+  assert.match(redemptionRoute, /readBoundedJsonObject\(request, \{ maxBytes: 256/);
+  assert.match(redemptionRoute, /\(client as any\)\.rpc\("confirm_admission_pass", \{ p_token: token, p_arrival_verified: body\.arrivalVerified === true \}\)/);
+  assert.doesNotMatch(redemptionRoute, /redeemDealToken|QR_REDEMPTION_VENUE_CONFIRMED|rpc\("confirm_deal_redemption"/);
   assert.doesNotMatch(redemptionActions, /export async function (?:createDealRedemption|redeemDealToken)|rpc\("confirm_deal_redemption"/);
   assert.doesNotMatch(nfc, /export async function confirmRedemptionFromNfc/);
   assert.match(deals, /if \(!\/\^\[A-Za-z0-9_-\]\{40,120\}\$\/\.test\(token\)\) return null;/);

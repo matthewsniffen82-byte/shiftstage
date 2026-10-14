@@ -64,9 +64,12 @@ test("public dancer and venue mappers omit ownership, precise proximity, and QR 
 test("public list inputs and public profile identifiers are bounded before database access", () => {
   for (const source of [venuesRoute, discoveryRoute, dancersRoute]) {
     assert.match(source, /\.trim\(\)/);
-    assert.match(source, /!city \|\| city\.length > 80/);
+    assert.match(source, /city\.length > 80/);
     assert.match(source, /status: 400/);
   }
+  for (const source of [venuesRoute, dancersRoute]) assert.match(source, /!city \|\| city\.length > 80/);
+  assert.match(discoveryRoute, /!availableCity && !isAllMyDancrCities\(city\)/);
+  assert.ok(discoveryRoute.indexOf("findAvailableMyDancrCity(city)") < discoveryRoute.indexOf("const client = createAdminSupabaseClient()"));
 
   for (const source of [venueProfileRoute, dancerProfileRoute]) {
     assert.match(source, /const PUBLIC_SLUG_PATTERN = \^?\/\^\[a-z0-9\]/);

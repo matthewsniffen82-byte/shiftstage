@@ -4,6 +4,7 @@ import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
 import * as notificationIcons from '../src/lib/dancr/notification-icon.ts';
+import { PublicApiError } from '../src/lib/api-error-policy.ts';
 
 function load(path, imports = {}) {
   const exports = {};
@@ -42,7 +43,7 @@ test('old authenticated and guest chat APIs are gone, without reading messages o
 });
 
 test('notification lists exclude retired chat alerts before pagination while keeping contact requests and notices without a kind', async () => {
-  const { getUserNotifications } = load('src/lib/dancr/notifications.ts', { './notification-icon': notificationIcons });
+  const { getUserNotifications } = load('src/lib/dancr/notifications.ts', { './notification-icon': notificationIcons, '../api-error-policy': { PublicApiError } });
   const calls = [];
   const query = {
     select() { return this; }, eq(...args) { calls.push(['eq', ...args]); return this; },

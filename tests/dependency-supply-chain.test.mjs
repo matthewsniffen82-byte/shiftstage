@@ -16,6 +16,17 @@ const vercel = JSON.parse(
 
 const PINNED_NPM = "11.19.1";
 
+test("runtime dependencies retain the reviewed security patch floors", () => {
+  for (const [name, floor] of [["next", [15, 5, 27]], ["sharp", [0, 35, 5]], ["source-map-js", [1, 2, 2]]]) {
+    const entries = Object.entries(packageLock.packages).filter(([path]) => path.endsWith("node_modules/" + name));
+    assert.ok(entries.length > 0, name + " must be present in the lockfile");
+    for (const [, metadata] of entries) {
+      const [major, minor, patch] = metadata.version.split(".").map(Number);
+      assert.ok(major === floor[0] && minor === floor[1] && patch >= floor[2], `Review ${name} ${metadata.version}`);
+    }
+  }
+});
+
 test("brace expansion stays above the reviewed denial-of-service fixes", () => {
   assert.equal(packageJson.overrides["brace-expansion"], "^5.0.12");
   const entries = Object.entries(packageLock.packages).filter(([path]) => path.endsWith("node_modules/brace-expansion"));

@@ -156,6 +156,7 @@ test("a large dancer directory prioritizes all opening rows without eagerly requ
     mobileThumbnailSource: () => '<source media="(max-width: 520px)" srcset="https://images.example/photo-small 320w">', isWorkingTonight: () => false,
     profileCardDistanceLabel: () => "", homeDiscoveryFeedStatus: () => ({className: "is-open"}),
     homeDancerGridScheduleLabel: () => "Not working now",
+    discoveryCardAttributes: () => "",
   });
   vm.runInContext(shell.match(/function homeDancerGridCard\([^]*?(?=\n    function spreadDancerGridPhotos)/)[0], context);
   const cards = Array.from({length: 500}, (_, index) => context.homeDancerGridCard({id: String(index), name: `Dancer ${index}`}, "Las Vegas", true, index));
