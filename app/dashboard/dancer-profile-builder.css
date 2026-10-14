@@ -125,7 +125,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboar
   position:relative;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-main-photo-actions .dancer-photo-controls-row {
-  position:absolute; top:2px; left:calc(var(--profile-main-photo-width) - 46px); z-index:5;
+  position:static;
 }
 @layer dancr-follow-controls {
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu > summary {

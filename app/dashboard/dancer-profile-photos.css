@@ -2,7 +2,7 @@
    Size the frame itself so empty, pending, and approved previews stay identical. */
 body.dancr-button-system #dancer-dashboard #dancer-required-photos {
   --profile-main-photo-width: calc((min(100vw, 1440px) - 88px) / 3);
-  display:grid; grid-template-columns:minmax(0,1fr) minmax(var(--profile-main-photo-width),1fr);
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
   column-gap:12px; row-gap:6px; align-items:start;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos > header {
@@ -19,7 +19,9 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos > header {
   }
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-profile-photo-slot {
-  display:block; min-width:0; scroll-margin-top:24px;
+  /* Shared heading and guidance rows keep both photo tops level when text wraps. */
+  display:grid; grid-row:span 3; grid-template-rows:subgrid; align-items:start;
+  min-width:0; scroll-margin-top:24px; text-align:center;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-profile-photo-slot > h4 {
   margin:0; color:#eeeeee; font-size:14px !important; font-weight:600; line-height:1.4;
@@ -28,7 +30,7 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo
   min-height:0; margin:4px 0 8px; font-size:12px; line-height:1.45;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos :is(.dancer-main-photo-panel,.dancer-avatar-panel) {
-  gap:6px !important;
+  gap:6px !important; justify-items:center; width:100%;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-panel {
   display:grid !important; grid-template-columns:minmax(0,1fr); align-items:start;
@@ -45,6 +47,7 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-copy {
   display:flex; flex-direction:column; grid-column:1; grid-row:2; min-width:0; gap:6px;
+  align-items:center; width:100%;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-copy > * {
   grid-column:auto; grid-row:auto;
@@ -56,7 +59,13 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-avata
   grid-template-columns:minmax(0,1fr); align-items:start;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-avatar-editor {
-  min-height:48px; flex-direction:column; align-items:flex-start; gap:6px;
+  min-height:48px; flex-direction:column; align-items:center; gap:6px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-avatar-upload-controls {
+  justify-self:stretch; justify-items:center;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-actions {
+  width:100%; justify-content:center;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-avatar-preview {
   /* The avatar in the public profile identity is always a 48px circle. */
@@ -66,7 +75,16 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-avata
   grid-column:1 / -1;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls-row {
-  align-items:center; gap:4px;
+  align-items:center; justify-content:center; gap:4px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-media-upload-rules {
+  width:100%; text-align:left;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-media-upload-rules > summary {
+  width:fit-content; max-width:100%; margin-inline:auto; text-align:center;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-options {
+  text-align:left;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-photo-controls-row > :first-child {
   flex:0 1 80px; width:80px !important;
