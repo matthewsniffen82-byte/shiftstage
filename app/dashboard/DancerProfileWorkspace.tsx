@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import DancerProfilePreviewContent from "./DancerProfilePreviewContent";
 import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
@@ -15,38 +14,32 @@ import { DancerProfileUploadContext, type ProfileUploadKind } from "./DancerProf
 import "./dancer-profile-photos.css";
 import "./dancer-profile-builder.css";
 
-type ProfileStep = "details" | "media" | "preview";
+type ProfileStep = "details" | "media";
 const profileSteps: { id: ProfileStep; label: string }[] = [
   { id: "details", label: "Name & city" },
   { id: "media", label: "Photos & videos" },
-  { id: "preview", label: "Preview" },
 ];
 
 export default function DancerProfileWorkspace({
   identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
   draftIdentity, profile, onProfileChange, onboarding = false,
-  onContinue, onBusyChange, isPublic = false, uploadBusy = false, editorRequested = 0, previewRequested = 0, visibilityContent,
+  onContinue, onBusyChange, isPublic = false, uploadBusy = false, visibilityContent,
 }: {
   identityContent: ReactNode; avatarContent: ReactNode; mainPhotoContent: ReactNode;
   photoContent: ReactNode; videoContent: ReactNode; draftIdentity: DancerIdentityDraft;
   profile?: LoadState["profile"]; onProfileChange?: (profile: Record<string, unknown>) => void;
-  uploadBusy?: boolean; editorRequested?: number; previewRequested?: number;
+  uploadBusy?: boolean;
   onboarding?: boolean; profileReady?: boolean; agreementComplete?: boolean; onContinue?: () => void;
   onBusyChange?: (busy: boolean) => void; isPublic?: boolean;
   visibilityContent?: ReactNode;
 }) {
-  const [view, setView] = useState<"edit" | "preview">("edit");
   const [step, setStep] = useState<ProfileStep>("details");
   const [uploadKind, setUploadKind] = useState<ProfileUploadKind | null>(null);
   const openUpload = useCallback((kind: ProfileUploadKind) => setUploadKind(kind), []);
-  const preview = onboarding ? step === "preview" : view === "preview";
-  useEffect(() => { if (editorRequested) setView("edit"); }, [editorRequested]);
-  useEffect(() => { if (previewRequested) setView("preview"); }, [previewRequested]);
   useEffect(() => {
     const reveal = () => {
       const hash = window.location.hash;
       if (!/photos|video|media|details|share|visibility/.test(hash)) return;
-      setView("edit");
       if (onboarding) {
         setStep(/details/.test(hash) ? "details" : "media");
         if (/video/.test(hash)) setUploadKind("videos");
@@ -92,8 +85,7 @@ export default function DancerProfileWorkspace({
     : !draftIdentity.city.trim() ? "Choose your city." : "";
   const setupHint = identityHint || (step === "details" ? "" : photoBlocker);
   const busy = saving || avatarBusy || mediaBusy || cropBusy || uploadBusy;
-  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? setupHint : preview
-    ? "Preview uses your draft details and approved media." : "");
+  const footerMessage = busy ? "Finishing your update…" : status || (onboarding ? setupHint : "");
   const stepStorageKey = `mydancr:dancer-profile-builder:${String(profile?.id || "profile")}`;
   const restoredProfile = useRef("");
   useEffect(() => {
@@ -102,11 +94,11 @@ export default function DancerProfileWorkspace({
     let savedStep = "";
     try { savedStep = window.localStorage.getItem(stepStorageKey) || ""; } catch { /* Storage can be unavailable. */ }
     const hash = window.location.hash;
-    setStep(!detailsSaved || /details/.test(hash) ? "details" : /photos|video/.test(hash) ? "media" : savedStep === "details" ? "details"
-      : savedStep === "preview" && photosReady ? "preview" : "media");
-  }, [onboarding, profile?.id, stepStorageKey, detailsSaved, photosReady]);
+    // Retired preview progress resumes at media, with all requirements checked again.
+    setStep(!detailsSaved || /details/.test(hash) ? "details" : /photos|video|media/.test(hash) ? "media" : savedStep === "details" ? "details" : "media");
+  }, [onboarding, profile?.id, stepStorageKey, detailsSaved]);
   useEffect(() => { setStatus(""); }, [faceReady, mainPhoto?.id, faceState, mainState, approvedCount]);
-  // Upload panels expose their own busy state; retain them while switching views.
+  // Upload panels expose their own busy state; retain them while switching steps.
   const hasActiveUpload = () => busy || Boolean(root.current?.querySelector('[aria-busy="true"]'));
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   useEffect(() => { onBusyChange?.(busy); return () => onBusyChange?.(false); }, [busy, onBusyChange]);
@@ -130,7 +122,6 @@ export default function DancerProfileWorkspace({
 
   function openEditorArea(id: string) {
     if (hasActiveUpload()) return;
-    setView("edit");
     if (onboarding) {
       showStep(id === "dancer-details-section" ? "details" : "media");
       if (id === "dancer-profile-media-library") setUploadKind("photos");
@@ -151,14 +142,11 @@ export default function DancerProfileWorkspace({
     if (step === "details") { void save("media"); return; }
     if (identityHint) { showStep("details"); setStatus(identityHint); return; }
     if (!photosReady) { revealMissingPhoto(); setStatus(photoBlocker); return; }
-    if (step === "preview") { void save("verification"); return; }
-    if (needsDetails) { void save("preview"); return; }
-    showStep("preview");
+    void save("verification");
   }
   function chooseStep(next: ProfileStep) {
     if (savingRef.current || hasActiveUpload() || next === step) return;
     if (next === "details") { showStep(next); return; }
-    if (next === "preview" && !photosReady) return;
     if (needsDetails) { void save(next); return; }
     showStep(next);
   }
@@ -185,7 +173,7 @@ export default function DancerProfileWorkspace({
       setStatus(onboarding ? "" : "Changes saved.");
       if (onboarding) {
         if (next === "verification" && photosReady) onContinue?.();
-        else showStep(next === "preview" && photosReady ? "preview" : "media");
+        else showStep("media");
       }
     } catch {
       if (mounted.current) setStatus("Unable to save your changes. Please try again.");
@@ -213,23 +201,19 @@ export default function DancerProfileWorkspace({
     {onboarding ? <>
       <nav className="dancer-builder-steps" aria-label="Profile setup steps">
         {profileSteps.map((item, index) => <button type="button" key={item.id} aria-current={step === item.id ? "step" : undefined}
-          disabled={busy || (item.id === "preview" && (!detailsSaved || !photosReady))} onClick={() => chooseStep(item.id)}>
+          disabled={busy} onClick={() => chooseStep(item.id)}>
           <span aria-hidden="true">{index + 1}</span>{item.label}
         </button>)}
       </nav>
       <header className="dancer-builder-heading">
-        <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : step === "media" ? "Build your profile" : "Your profile preview"}</h3>
+        <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : "Build your profile"}</h3>
         {step === "media" ? <span className="dancer-builder-requirement" data-state={photosReady ? "saved" : "required"} role="status">{!faceReady ? "Add avatar" : !mainPhoto ? "Add main photo" : galleryReady ? "Photos ready" : `${approvedCount} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos approved`}</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-workspace-heading">
       <div><h2>Your profile</h2><p>Manage your details, media, and visibility.</p></div>
-      <div className="dancer-workspace-view" aria-label="Profile view">
-        <button type="button" aria-pressed={view === "edit"} disabled={busy} onClick={() => setView("edit")}>Edit</button>
-        <button type="button" aria-pressed={view === "preview"} disabled={busy} onClick={() => setView("preview")}>Preview</button>
-      </div>
     </header> : null}
-    {!onboarding && view === "edit" ? <nav className="dancer-editor-shortcuts" aria-label="Profile sections">
+    {!onboarding ? <nav className="dancer-editor-shortcuts" aria-label="Profile sections">
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-details-section")}>Details</button>
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-required-photos")}>Profile photos</button>
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-profile-media-library")}>Photo uploads</button>
@@ -237,7 +221,7 @@ export default function DancerProfileWorkspace({
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-visibility-sharing")}>Visibility & sharing</button>
     </nav> : null}
     <DancerProfileUploadContext.Provider value={onboarding ? { active: uploadKind, open: openUpload } : null}>
-    <fieldset disabled={busy} hidden={preview} className="dancer-workspace-edit">
+    <fieldset disabled={busy} className="dancer-workspace-edit">
       <section hidden={onboarding && step !== "details"} className="dancer-workspace-card" id="dancer-details-section" aria-label={onboarding ? "Name and city" : undefined} aria-labelledby={onboarding ? undefined : "dancer-details-title"}>
         {!onboarding ? <header><h3 id="dancer-details-title">Your details</h3></header> : null}
         {identityContent}
@@ -300,13 +284,10 @@ export default function DancerProfileWorkspace({
       {visibilityContent}
     </fieldset>
     </DancerProfileUploadContext.Provider>
-    {preview ? <DancerProfilePreviewContent profile={profile} name={draftIdentity.stageName.trim()} city={draftIdentity.city}
-      avatarUrl={String(profile?.avatarPhotoUrl || "")} photos={approvedPhotos} videos={uploadedVideos}
-      isPublic={isPublic} onboarding={onboarding} onEdit={onboarding ? openEditorArea : undefined} slug={String(profile?.slug || "")} /> : null}
     <footer className="dancer-workspace-footer">
       <span id="dancer-workspace-next-step" role="status" aria-live="polite" hidden={!footerMessage}>{footerMessage}</span>
-      {onboarding || !preview ? <button className="dancer-workspace-save" type="button" aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (!onboarding && !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "preview" ? "Continue to verification" : "Continue" : dirty ? "Save changes" : "Details saved"}</button> : <button type="button" onClick={() => setView("edit")}>Back to editing</button>}
-      {onboarding && step !== "details" ? <button className="dancer-builder-back" type="button" disabled={busy} onClick={() => chooseStep(step === "preview" ? "media" : "details")}>Back</button> : null}
+      <button className="dancer-workspace-save" type="button" aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (!onboarding && !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "media" ? "Continue to verification" : "Continue" : dirty ? "Save changes" : "Details saved"}</button>
+      {onboarding && step !== "details" ? <button className="dancer-builder-back" type="button" disabled={busy} onClick={() => chooseStep("details")}>Back</button> : null}
     </footer>
   </div>;
 }

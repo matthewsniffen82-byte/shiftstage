@@ -44,14 +44,14 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboa
     assert.equal(dirty,false,'effects settle');return nodes;
   }
   const button=label=>draw().find(n=>n.type==='button'&&n.props.children===label);
-  const stepButton=id=>walk(draw().find(n=>n.props.className==='dancer-builder-steps')).filter(n=>n.type==='button')[['details','media','preview'].indexOf(id)];
+  const stepButton=id=>walk(draw().find(n=>n.props.className==='dancer-builder-steps')).filter(n=>n.type==='button')[['details','media'].indexOf(id)];
   const footer=()=>draw().find(n=>n.type==='footer').props.children[1];
   return {draw,button,stepButton,footer,calls,props,storage,step:()=>draw()[0].props['data-builder-step'],message:()=>draw().find(n=>n.props.id==='dancer-workspace-next-step').props.children,
-    async click(label='Continue') {const b=button(label);assert.ok(b,label);b.props.onClick();draw();await new Promise(resolve=>setImmediate(resolve));draw();},
+    async click(label) {const b=label ? button(label) : footer();assert.ok(b,label);b.props.onClick();draw();await new Promise(resolve=>setImmediate(resolve));draw();},
   };
 }
 
-test('new dancers see only name and city, then media, then preview before the agreement',async()=>{
+test('new dancers save name and city, then continue directly from media to verification',async()=>{
   const f=fixture({newProfile:true,count:0,face:false});
   assert.equal(f.step(),'details');
   assert.equal(f.draw().find(n=>n.props.id==='dancer-details-section').props.hidden,false);
@@ -61,8 +61,10 @@ test('new dancers see only name and city, then media, then preview before the ag
   await f.click();assert.equal(f.step(),'media');assert.equal(f.calls.includes('agreement'),false);
   f.props.profile.avatarPhotoUrl='/face.jpg';
   f.props.profile.dancer_photos=Array.from({length:3},(_,i)=>({id:`ready${i}`,status:'approved',isPrimary:i===0}));
-  await f.click();assert.equal(f.step(),'preview');assert.equal(f.calls.includes('agreement'),false);
   await f.click('Continue to verification');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
+  assert.deepEqual(f.calls.filter(c=>['save','agreement'].includes(c)),['save','save','agreement']);
+  const navigation=f.draw().find(n=>n.props.className==='dancer-builder-steps');
+  assert.deepEqual(walk(navigation).filter(n=>n.type==='button').map(n=>n.props.children[1]),['Name & city','Photos & videos']);
 });
 
 test('pending media does not count toward the required three approved photos',async()=>{
@@ -70,8 +72,7 @@ test('pending media does not count toward the required three approved photos',as
   assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'2 of 3 photos approved');
   await f.click();assert.equal(f.step(),'media');assert.match(f.message(),/Add 1 more approved profile photo/);
   assert.ok(f.calls.includes('#dancer-profile-media-library'));
-  assert.equal(f.stepButton('preview').props.disabled,true);
-  f.stepButton('preview').props.onClick();assert.equal(f.step(),'media');
+  assert.equal(f.calls.includes('agreement'),false);
 });
 
 test('the single requirement indicator becomes Photos ready, even with extra photos',()=>{
@@ -91,8 +92,8 @@ test('an approved gallery does not label missing avatar or main photo as ready',
   }
 });
 
-test('pending videos do not block preview or required verification handoff',async()=>{
-  const f=fixture();await f.click();assert.equal(f.step(),'preview');await f.click('Continue to verification');
+test('pending videos do not block required verification handoff',async()=>{
+  const f=fixture();await f.click('Continue to verification');
   assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });
 
@@ -108,14 +109,13 @@ test('failed or invalid identity saves cannot leave step one',async()=>{
   }
 });
 
-test('changing identity from preview saves before returning to media',async()=>{
-  const f=fixture({savedStep:'preview'});const preview=f.draw().find(n=>n.type==='./DancerProfilePreviewContent');
-  preview.props.onEdit('dancer-details-section');assert.equal(f.step(),'details');
+test('going back to identity saves changes before returning to media',async()=>{
+  const f=fixture();await f.click('Back');assert.equal(f.step(),'details');
   f.props.draftIdentity.stageName='New name';await f.click();assert.equal(f.step(),'media');assert.equal(f.props.profile.stage_name,'New name');
 });
 
 test('progress resumes per profile and stale preview progress cannot bypass missing requirements',()=>{
-  assert.equal(fixture({savedStep:'preview'}).step(),'preview');
+  assert.equal(fixture({savedStep:'preview'}).step(),'media');
   assert.equal(fixture({savedStep:'details'}).step(),'details');
   assert.equal(fixture({savedStep:'preview',count:1}).step(),'media');
   assert.equal(fixture({savedStep:'preview',newProfile:true}).step(),'details');
@@ -123,18 +123,18 @@ test('progress resumes per profile and stale preview progress cannot bypass miss
   assert.equal(fixture({storageBlocked:true}).step(),'media');
 });
 
-test('navigation persists the selected step and approved-only preview retains all editors mounted',async()=>{
-  const f=fixture({pending:2});await f.click();
-  assert.equal(f.storage.get('mydancr:dancer-profile-builder:owner'),'preview');
-  const nodes=f.draw(),preview=nodes.find(n=>n.type==='./DancerProfilePreviewContent');
-  assert.equal(preview.props.photos.length,3);assert.equal(nodes.find(n=>n.type==='fieldset').props.hidden,true);
+test('navigation persists the selected step and retains all editors mounted',async()=>{
+  const f=fixture({pending:2});await f.click('Back');
+  assert.equal(f.storage.get('mydancr:dancer-profile-builder:owner'),'details');
+  const nodes=f.draw();
+  assert.ok(!nodes.find(n=>n.type==='fieldset').props.hidden);
   for(const content of ['Identity','Photo uploader','Video uploader','Avatar','Main']) assert.ok(nodes.some(n=>React.Children.toArray(n.props.children).includes(content)),content);
-  await f.click('Back');assert.equal(f.step(),'media');assert.equal(f.storage.get('mydancr:dancer-profile-builder:owner'),'media');
+  await f.click();assert.equal(f.step(),'media');assert.equal(f.storage.get('mydancr:dancer-profile-builder:owner'),'media');
 });
 
 test('active uploads disable Continue and step navigation without unmounting their queues',async()=>{
   const f=fixture({busy:true});assert.equal(f.footer().props.disabled,true);
-  for(const id of ['details','media','preview']) {assert.equal(f.stepButton(id).props.disabled,true);f.stepButton(id).props.onClick();}
+  for(const id of ['details','media']) {assert.equal(f.stepButton(id).props.disabled,true);f.stepButton(id).props.onClick();}
   assert.equal(f.step(),'media');await f.click();assert.ok(!f.calls.includes('save'));
   assert.ok(f.draw().some(n=>n.props.children==='Photo uploader'));
 });
@@ -164,9 +164,9 @@ test('duplicate Continue requests wait for the same save and advance only once',
   resolve(true);await new Promise(done=>setImmediate(done));assert.equal(f.step(),'media');assert.ok(!f.calls.includes('agreement'));
 });
 
-test('returning dancers retain their existing editor, save, and preview behavior',async()=>{
+test('returning dancers retain their editor and save without a preview control',async()=>{
   const f=fixture({onboarding:false,count:1,draft:true});assert.equal(f.footer().props.children,'Save changes');await f.click('Save changes');assert.equal(f.calls.filter(c=>c==='save').length,1);
-  assert.ok(!f.calls.includes('agreement'));await f.click('Preview');assert.equal(f.draw().find(n=>n.type==='fieldset').props.hidden,true);await f.click('Back to editing');assert.equal(f.draw().find(n=>n.type==='fieldset').props.hidden,false);
+  assert.ok(!f.calls.includes('agreement'));assert.equal(f.button('Preview'),undefined);assert.ok(!f.draw().find(n=>n.type==='fieldset').props.hidden);
 });
 
 
@@ -175,7 +175,7 @@ test('incoming media links override saved preview progress and open the requeste
   assert.equal(f.step(),'media');
   assert.equal(f.draw().find(n=>n.type===uploadContext.Provider).props.value.active,'videos');
   assert.equal(fixture({savedStep:'preview',hash:'#dancer-details-section'}).step(),'details');
-  assert.equal(fixture({savedStep:'preview',hash:'#dancer-profile-media'}).step(),'preview');
+  assert.equal(fixture({savedStep:'preview',hash:'#dancer-profile-media'}).step(),'media');
 });
 
 test('a removed main photo cannot be replaced implicitly by enough approved gallery photos',async()=>{
@@ -184,7 +184,21 @@ test('a removed main photo cannot be replaced implicitly by enough approved gall
   await f.click();
   assert.equal(f.step(),'media');
   assert.match(f.message(),/Add your main photo/);
-  assert.equal(f.stepButton('preview').props.disabled,true);
   assert.ok(f.calls.includes('#dancer-main-photo'));
   assert.ok(!f.calls.includes('agreement'));
+});
+
+test('failed media-step saves cannot hand off to verification',async()=>{
+  for(const options of [{valid:false},{saveResult:false},{save:async()=>{throw Error('offline');}}]) {
+    const f=fixture(options);await f.click('Continue to verification');
+    assert.ok(!f.calls.includes('agreement'));assert.equal(f.footer().props.disabled,false);
+  }
+});
+
+test('duplicate verification requests save and continue only once',async()=>{
+  let resolve;const f=fixture({save:()=>new Promise(done=>{resolve=done;})});
+  const proceed=f.footer();proceed.props.onClick();proceed.props.onClick();
+  assert.equal(f.calls.filter(c=>c==='save').length,1);assert.equal(f.footer().props.disabled,true);
+  resolve(true);await new Promise(done=>setImmediate(done));
+  assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });

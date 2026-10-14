@@ -3,7 +3,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   display:none !important;
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-steps {
-  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px;
+  display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px;
   margin:0; padding:0 0 6px; border-bottom:1px solid #302936;
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-heading {
@@ -63,7 +63,7 @@ body.dancr-button-system #dancer-dashboard .dancer-builder-preview-gallery-headi
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-preview-gallery-heading h4 { margin:0; }
 
-/* Keep the three setup steps compact without shrinking the media or tap targets. */
+/* Keep the setup steps compact without shrinking the media or tap targets. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-section-uploader {
   margin:0;
 }

@@ -18,9 +18,9 @@ export function dancerDashboardDestination(hash: string): Destination {
   return "overview";
 }
 
-export default function DancerDashboardWorkspace({ overview, profile, results, account, busy = false, editorRequested = 0, previewRequested = 0 }: {
+export default function DancerDashboardWorkspace({ overview, profile, results, account, busy = false, editorRequested = 0 }: {
   overview: ReactNode; profile: ReactNode; results: ReactNode; account: ReactNode;
-  busy?: boolean; editorRequested?: number; previewRequested?: number;
+  busy?: boolean; editorRequested?: number;
 }) {
   const [active, setActive] = useState<Destination>("overview");
   const [visited, setVisited] = useState<Destination[]>(["overview"]);
@@ -54,10 +54,10 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
     return () => window.removeEventListener("hashchange", sync);
   }, []);
   useEffect(() => {
-    if (!editorRequested && !previewRequested) return;
+    if (!editorRequested) return;
     select("profile");
     window.history.replaceState(null, "", "#dancer-profile");
-  }, [editorRequested, previewRequested]);
+  }, [editorRequested]);
   return <div className="dancer-dashboard-workspace">
     <nav className="dancer-dashboard-nav" aria-label="Dancer dashboard">
       {destinations.map(item => <button key={item.id} type="button" aria-current={active === item.id ? "page" : undefined} aria-controls={`dancer-destination-${item.id}`} disabled={busy} onClick={() => {

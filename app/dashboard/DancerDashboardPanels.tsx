@@ -57,7 +57,6 @@ export function DancerPanel({
   const [photosBusy, setPhotosBusy] = useState(false);
   const [videoBusy, setVideoBusy] = useState(false);
   const [editorRequested, setEditorRequested] = useState(0);
-  const [previewRequested, setPreviewRequested] = useState(0);
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
   const [draftIdentity, setDraftIdentity] = useState(() => ({
@@ -149,8 +148,7 @@ export function DancerPanel({
   );
   const videoContent = <DancerTvStudio embedded uploadOnly onBusyChange={setVideoBusy} />;
   const workspaceProps = { identityContent: identityContent(), avatarContent, mainPhotoContent, photoContent, videoContent,
-    draftIdentity, profile, onProfileChange, isPublic, editorRequested, previewRequested, uploadBusy: mainBusy || photosBusy || videoBusy, onBusyChange: setEditorBusy };
-  const preview = <button type="button" onClick={() => setPreviewRequested(value => value + 1)}>Preview profile</button>;
+    draftIdentity, profile, onProfileChange, isPublic, uploadBusy: mainBusy || photosBusy || videoBusy, onBusyChange: setEditorBusy };
   const visibilityAndSharing = <section className="dancer-workspace-card" id="dancer-visibility-sharing" aria-label="Visibility and sharing">
     <h3>Visibility & sharing</h3>
     <DashboardSection id="dancer-visibility" title="Profile visibility" description="Choose whether your public profile is visible." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /></DashboardSection>
@@ -170,7 +168,7 @@ export function DancerPanel({
         profileMediaContent={({ profileReady, agreementComplete, continueToAgreement }) => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} onboarding profileReady={profileReady} agreementComplete={agreementComplete} onContinue={continueToAgreement} />}
         venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />} />
       {accountContent}
-    </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested} previewRequested={previewRequested}
+    </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested}
       overview={<>
         <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager /></section></DancerAgeVerificationGate>
         <section className="dancer-daily-card" id="dancer-overview">
@@ -181,7 +179,7 @@ export function DancerPanel({
             {hasPendingAvatar || hasPendingPhotos ? <p>New photos are being checked. Approved photos stay in place. <a href="#dancer-photos-title">View review status</a></p> : null}
             {!isPublic ? <p>Your public profile is hidden. <a href="#dancer-visibility">Manage visibility</a></p> : null}
           </section> : null}
-          <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button>{preview}<a href="#dancer-share">Share profile</a>{isPublic && profile?.slug ? <Link href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer">View public profile</Link> : null}</div>
+          <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button><a href="#dancer-share">Share profile</a>{isPublic && profile?.slug ? <Link href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer">View public profile</Link> : null}</div>
         </section>
         <DancerAgeVerificationGate><DancerAnalyticsPanel compact initialAnalytics={analytics} /></DancerAgeVerificationGate>
       </>}
