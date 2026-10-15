@@ -25,7 +25,7 @@ test("the production home shell always serves a fresh page document", () => {
 test("home discovery uses one consolidated endpoint with current visibility checks", () => {
   assert.match(homeSource, /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{/);
   assert.doesNotMatch(homeSource, /fetchJson\(`\/api\/public\/dancers\?\$\{query\}`\)/);
-  assert.match(discoveryRouteSource, /getLiveDancerDiscovery\(client, city\)/);
+  assert.match(discoveryRouteSource, /getLiveDancerDiscovery\(client, city, afterId\)/);
   assert.match(discoveryRouteSource, /PUBLIC_DYNAMIC_CACHE_CONTROL/);
   assert.match(publicCacheSource, /PRIVATE_NO_STORE_CACHE_CONTROL = "private, no-store, max-age=0"/);
   assert.match(publicCacheSource, /PUBLIC_DYNAMIC_CACHE_CONTROL =\s+PRIVATE_NO_STORE_CACHE_CONTROL/);

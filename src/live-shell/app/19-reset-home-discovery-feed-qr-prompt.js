@@ -398,7 +398,7 @@
             const active = dancerDirectoryFilter === filter.id;
             const empty = counts[filter.id] === 0;
             const statusDot = '<span class="dancer-directory-filter-status" aria-hidden="true"></span>';
-            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}</span></button>`;
+            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}${hasMoreDiscovery(city) ? "+" : ""}</span></button>`;
           }).join("")}
         </div>
       `;
@@ -514,6 +514,7 @@
         imageOffset += section.profiles.length;
         return markup;
       }).join("");
+      const moreProfiles = hasMoreDiscovery(city);
       const emptyLabels = {
         now: `No dancers are currently checked in on MyDancr ${locationPhrase}.`,
         not_now: `No dancers are off shift ${locationPhrase}.`
@@ -526,9 +527,10 @@
         ${dancerDirectoryFilterMarkup(profiles, city)}
         <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
         ${sectionMarkup}
-        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
+        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(moreProfiles ? "No matching dancers in the profiles loaded so far. Load more to keep browsing." : emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
       `;
-      const nextRenderKey = homeDancerGridContentKey(city, gridMarkup);
+      const pagedMarkup = gridMarkup + discoveryPaginationMarkup(city);
+      const nextRenderKey = homeDancerGridContentKey(city, pagedMarkup);
       if (
         homeDancerGridRenderKey === nextRenderKey &&
         results.querySelector(":scope > .dancer-directory-filters")
@@ -536,7 +538,7 @@
         return;
       }
       homeDancerGridRenderKey = nextRenderKey;
-      renderStableMediaMarkup(results, gridMarkup);
+      renderStableMediaMarkup(results, pagedMarkup);
       revealDancerGridRows(results);
       window.requestAnimationFrame(() => {
         prefetchProfileNavigationFromElement(results.querySelector(".home-dancer-grid-card"));

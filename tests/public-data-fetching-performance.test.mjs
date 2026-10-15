@@ -25,7 +25,7 @@ test("dancer profiles fetch approved media once and load independent metrics in 
 });
 
 test("discovery enriches venues while dancer discovery is still in flight", () => {
-  assert.match(discoveryRoute, /const discoveryPromise = getLiveDancerDiscovery\(client, city\)/);
+  assert.match(discoveryRoute, /const discoveryPromise = getLiveDancerDiscovery\(client, city, afterId\)/);
   assert.match(discoveryRoute, /const venueDataPromise = \(async \(\) => \{/);
   assert.ok(discoveryRoute.includes(
     "const [activeDeals, venuePopularityById] = await Promise.all([",
@@ -43,10 +43,8 @@ test("TV prepares deals alongside signed playback URLs", () => {
   );
 });
 
-test("venue profile and upcoming schedule queries run concurrently", () => {
-  assert.match(
-    venueProfileRoute,
-    /Promise\.all\(\[[\s\S]*?getVenueProfile\(client, slug\)[\s\S]*?\.from\("shifts"\)[\s\S]*?\.eq\("venues\.slug", slug\)/,
-  );
-  assert.doesNotMatch(venueProfileRoute, /\.eq\("venue_id", venue\.id\)/);
+test("venue profiles do not refetch the retired upcoming-shift schedule", () => {
+  assert.match(venueProfileRoute, /await getVenueProfile\(client, slug\)/);
+  assert.match(venueProfileRoute, /upcomingShifts: \[\]/);
+  assert.doesNotMatch(venueProfileRoute, /\.from\("shifts"\)/);
 });

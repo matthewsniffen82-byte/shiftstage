@@ -139,7 +139,7 @@ test("equal stage names have a deterministic parent ID tie-break", async () => {
   const f = fixture([], { profiles: [{ ...profile, id: "z" }, { ...profile, id: "a" }] });
   assert.deepEqual(Array.from((await f.get()).dancers, card => card.id), ["a", "z"]);
 });
-for (const [city, limit, cityFilter] of [[" Las Vegas ", "200", "ilike.Las Vegas"], ["All cities", "800", undefined]]) {
+for (const [city, limit, cityFilter] of [[" Las Vegas ", "101", "ilike.Las Vegas"], ["All cities", "101", undefined]]) {
   test(`city scope and parent bounds are retained: ${city}`, async () => {
     const f = fixture([]); await f.get(city);
     assert.equal(f.queries[0].limit, limit); assert.equal(f.queries[0].city, cityFilter);

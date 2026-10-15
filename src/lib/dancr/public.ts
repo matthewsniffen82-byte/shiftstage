@@ -11,8 +11,7 @@ import { isActiveNfcPresence } from "./shift-presence";
 
 type DancrClient = SupabaseClient;
 
-const PUBLIC_DANCER_DIRECTORY_LIMIT = 800;
-const ALL_CITIES_DANCER_DIRECTORY_LIMIT = 800;
+const PUBLIC_DANCER_PAGE_SIZE = 100;
 const PUBLIC_PROFILE_MEDIA_LIMIT = 50;
 const PUBLIC_PROFILE_SHIFT_LIMIT = 50;
 
@@ -28,15 +27,16 @@ export function isApprovedPublicDancerRow(dancer: any) {
 }
 
 export async function getApprovedDancersByCity(client: DancrClient, city: string): Promise<DancerCard[]> {
-  const rows = await getApprovedDancerRowsByCity(client, city);
+  const { rows } = await getApprovedDancerRowsByCity(client, city);
   return toDancerCards(client, rows);
 }
 
 export async function getLiveDancerDiscovery(
   client: DancrClient,
   city: string,
-): Promise<{ dancers: DancerCard[]; tonightDancers: DancerCard[] }> {
-  const rows = await getApprovedDancerRowsByCity(client, city);
+  afterId: string | null = null,
+): Promise<{ dancers: DancerCard[]; tonightDancers: DancerCard[]; nextAfterId: string | null }> {
+  const { rows, nextAfterId } = await getApprovedDancerRowsByCity(client, city, afterId);
   const dancers = rows.map((row) => buildDancerCard(client, row).card);
   const now = Date.now();
   const tonightDancers = rows
@@ -51,6 +51,7 @@ export async function getLiveDancerDiscovery(
   const hydratedCards = await hydrateDancerCardMetrics(client, [...dancers, ...tonightDancers]);
 
   return {
+    nextAfterId,
     dancers: hydratedCards.slice(0, dancers.length),
     tonightDancers: hydratedCards.slice(dancers.length),
   };
@@ -60,11 +61,11 @@ function filterPublicDancerCity(query: any, city: string) {
   return isAllMyDancrCities(city) ? query : query.ilike("city", city);
 }
 
-async function getApprovedDancerRowsByCity(client: DancrClient, city: string): Promise<any[]> {
+async function getApprovedDancerRowsByCity(client: DancrClient, city: string, afterId: string | null = null) {
   const cityName = city.trim();
   const now = new Date().toISOString();
   const shiftFields = `id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues!inner(id, name, slug, timezone, is_active, has_active_club_deal)`;
-  const current = await applyPublicApprovalFilters(filterPublicDancerCity(client
+  let query = applyPublicApprovalFilters(filterPublicDancerCity(client
     .from("dancer_profiles")
     .select(
       `
@@ -101,12 +102,15 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
     .lt("live_shifts.location_verification_expires_at", "infinity")
     .eq("live_shifts.venues.is_active", true)
     .eq("live_shifts.venues.has_active_club_deal", true)
-    .order("stage_name", { ascending: true })
     .order("id", { ascending: true })
     .order("starts_at", { referencedTable: "live_shifts", ascending: true })
     .order("id", { referencedTable: "live_shifts", ascending: true })
     .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "live_shifts" })
-    .limit(isAllMyDancrCities(cityName) ? ALL_CITIES_DANCER_DIRECTORY_LIMIT : PUBLIC_DANCER_DIRECTORY_LIMIT);
+    .limit(PUBLIC_DANCER_PAGE_SIZE + 1);
+
+  // Immutable keyset ordering avoids offset skips when earlier profiles disappear.
+  if (afterId) query = query.gt("id", afterId);
+  const current = await query;
 
   const data: any[] | null = current.data as any[] | null;
   const error: any = current.error;
@@ -114,7 +118,9 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
 
   // Only a current check-in can associate a dancer with a public club.
   const selected = (value: any) => Array.isArray(value) ? value.slice(0, PUBLIC_PROFILE_SHIFT_LIMIT) : value && typeof value === "object" ? [value] : [];
-  const rows = (data || []).filter(isApprovedPublicDancerRow).map(({ live_shifts, ...row }) => ({
+  const page = (data || []).slice(0, PUBLIC_DANCER_PAGE_SIZE);
+  const nextAfterId = (data || []).length > PUBLIC_DANCER_PAGE_SIZE ? String(page.at(-1).id) : null;
+  const rows = page.filter(isApprovedPublicDancerRow).map(({ live_shifts, ...row }) => ({
     ...row,
     shifts: selected(live_shifts),
   }));
@@ -122,7 +128,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string): P
     rawCount: data?.length || 0,
     publicApprovedCount: rows.length,
   });
-  return rows;
+  return { rows, nextAfterId };
 }
 
 export async function getTonightShifts(client: DancrClient, city: string, now = new Date()): Promise<DancerCard[]> {
@@ -168,7 +174,7 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
     .order("starts_at", { referencedTable: "shifts", ascending: true })
     .order("id", { referencedTable: "shifts", ascending: true })
     .limit(PUBLIC_PROFILE_SHIFT_LIMIT, { referencedTable: "shifts" })
-    .limit(PUBLIC_DANCER_DIRECTORY_LIMIT);
+    .limit(PUBLIC_DANCER_PAGE_SIZE);
 
   const data: any[] | null = current.data as any[] | null;
   const error: any = current.error;

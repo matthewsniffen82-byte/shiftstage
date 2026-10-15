@@ -12,7 +12,7 @@ import { getPerformancePlacementScores, orderByPerformance, PLACEMENT_VERSION } 
 export const DISCOVERY_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 export type DiscoveryContext = { viewerHash: string; userId: string | null; visitId: string; request: Request };
 export type DiscoveryPlacement = { session: string; position: number };
-type Scope = { surface: RankingSurface; city: string; venueId?: string; dancerIds?: string[]; filter?: string; selectedVideoId?: string };
+type Scope = { surface: RankingSurface; city: string; venueId?: string; dancerIds?: string[]; filter?: string; selectedVideoId?: string; gridPage?: string };
 type Snapshot = { id: string; ordered_ids: string[]; expires_at: string };
 let lastPruned = 0;
 
@@ -44,7 +44,7 @@ export function parseRankedCursor(value: string) {
 
 export async function discoverySnapshot(admin: SupabaseClient, context: DiscoveryContext, scope: Scope, cursor = "") {
   // Old discovery snapshots must not retain the retired ranking algorithm.
-  const scopeHash = createHash("sha256").update(JSON.stringify([PLACEMENT_VERSION, scope.surface, scope.city.toLowerCase(), scope.venueId || "", scope.filter || "for-you", scope.selectedVideoId || ""])).digest("hex");
+  const scopeHash = createHash("sha256").update(JSON.stringify([PLACEMENT_VERSION, scope.surface, scope.city.toLowerCase(), scope.venueId || "", scope.filter || "for-you", scope.selectedVideoId || "", ...(scope.gridPage ? [scope.gridPage] : [])])).digest("hex");
   const parsed = cursor ? parseRankedCursor(cursor) : null;
   if (cursor && !parsed) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery cursor.", 400);
   let query = admin.from("discovery_sessions").select("id,ordered_ids,expires_at")
@@ -110,9 +110,13 @@ export function readRankingCandidates(value: unknown): RankingCandidate[] {
   });
 }
 
-export async function rankPublicGrid<T extends { id: string; venueId?: string | null }>(admin: SupabaseClient, context: DiscoveryContext | null, city: string, rows: T[]): Promise<(T & { discovery?: DiscoveryPlacement })[]> {
+export async function rankPublicGrid<T extends { id: string; venueId?: string | null }>(admin: SupabaseClient, context: DiscoveryContext | null, city: string, rows: T[], pageKey?: string): Promise<(T & { discovery?: DiscoveryPlacement })[]> {
   if (!context) return orderByPerformance(admin, rows, row => ({ dancerId: row.id, venueId: row.venueId }), row => row.id);
-  const { snapshot } = await discoverySnapshot(admin,context,{surface:"grid",city,dancerIds:rows.map(row=>row.id)});
+  if (!rows.length) return [];
+  // A batch must never reuse another page's IDs or exclude newly eligible rows.
+  const gridPage = pageKey === undefined ? undefined : createHash("sha256")
+    .update(JSON.stringify([pageKey, rows.map(row => row.id).sort()])).digest("hex");
+  const { snapshot } = await discoverySnapshot(admin,context,{surface:"grid",city,dancerIds:rows.map(row=>row.id),gridPage});
   const byId = new Map(rows.map(row=>[row.id,row]));
   const ordered = snapshot.ordered_ids.flatMap((id,position)=>{
     const row=byId.get(id); return row ? [{...row,discovery:{session:snapshot.id,position}}] : [];

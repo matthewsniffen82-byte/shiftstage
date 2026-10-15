@@ -32271,6 +32271,8 @@
   line-height: 1.3;
   text-shadow: 0 1px 3px #000;
 }
+
+    .dancer-directory-pagination { grid-column: 1 / -1; display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 24px 16px; text-align: center; }
   </style>
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
@@ -46522,6 +46524,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         trend: item.currentRank || null,
         trendRank: item.currentRank || null,
         discovery: item.discovery || null,
+        directoryPosition: index,
         distance: formatLiveDistance(item.distanceMiles),
         mainPhotoUrl: item.primaryPhotoUrl || galleryPhotoUrls[0] || "",
         mainPhotoFocalX: item.primaryPhotoFocalX ?? 50,
@@ -48220,7 +48223,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     function applyLiveMarket(city, dancers, tonightDancers, venues) {
       const market = discoveryMarket(city);
       if (!market) return false;
-      if (city === ALL_CITIES) {
+      // Paged All cities results must not overwrite independently loaded city pages.
+      if (city === ALL_CITIES && !market.pagination) {
         const cityNames = new Set([...Object.keys(markets), ...(dancers || []).map((item) => item.city), ...(venues || []).map((item) => item.city)]);
         cityNames.forEach((name) => {
           if (!name || name === ALL_CITIES) return;
@@ -48415,69 +48419,111 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     }
 
     async function loadLiveDiscovery(city = selectedCity(), options = {}) {
+      const market = discoveryMarket(city);
+      if (!market) return;
+      const more = Boolean(options.more);
       const force = Boolean(options.force);
       const cacheBust = force && options.cacheBust !== false;
       const keepCurrentResults = liveMarketState[city] === "ready";
       const background = Boolean(options.background && keepCurrentResults);
-      if (!discoveryMarket(city)) return;
+      const previous = market.pagination;
+      if (more && !previous?.nextCursor) return;
       if (liveMarketState[city] === "loading" || liveMarketRefreshes.has(city)) {
-        // Publication or browser Back must not lose a fresh read behind an older request.
         if (cacheBust) liveMarketPendingRefreshes.add(city);
         return;
       }
-      if (!force && liveMarketState[city] === "ready") return;
-      // Once this city has loaded, keep its cards and counts visible during any refresh.
+      if (!more && !force && keepCurrentResults) return;
       if (keepCurrentResults) liveMarketRefreshes.add(city);
       else liveMarketState[city] = "loading";
-      const params = new URLSearchParams({ city });
-      if (cacheBust) params.set("refresh", String(Date.now()));
-      const query = params.toString();
+      if (previous) { previous.loading = more; previous.error = false; }
+      if (more && citySelect.value === city) render();
+      const headers = discoveryRequestHeaders();
+      const identity = JSON.stringify(headers);
+      // Refresh all pages already browsed, so revoked visibility and changed
+      // check-ins do not remain cached on later pages. There is no page ceiling.
+      const pagesToRead = more ? 1 : Math.max(1, previous?.pageCount || 1);
+      let cursor = more ? previous.nextCursor : null;
+      let pageCount = more ? previous.pageCount : 0;
+      let dancers = more ? [...previous.dancers] : [];
+      let tonightDancers = more ? [...previous.tonightDancers] : [];
+      let venues = more ? previous.venues : [];
+      const seenCursors = new Set();
       try {
-        const discovery = await fetchJson(`/api/public/discovery?${query}`, {
-          headers: discoveryRequestHeaders(), cache: "no-store",
-          timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
-          retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
-        });
-        applyLiveMarket(
-          city,
-          discovery.dancers || [],
-          discovery.tonightDancers || [],
-          discovery.venues || []
-        );
+        for (let page = 0; page < pagesToRead; page += 1) {
+          if (cursor && seenCursors.has(cursor)) throw new Error("Discovery pagination did not advance.");
+          if (cursor) seenCursors.add(cursor);
+          const params = new URLSearchParams({ city });
+          if (cursor) params.set("cursor", cursor);
+          if (cacheBust) params.set("refresh", String(Date.now()));
+          const query = params.toString();
+          const discovery = await fetchJson(`/api/public/discovery?${query}`, {
+            headers, cache: "no-store",
+            timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
+            retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
+          });
+          if (discovery.ok === false || !Array.isArray(discovery.dancers)) throw new Error("Invalid discovery page.");
+          if (discovery.nextCursor != null && (typeof discovery.nextCursor !== "string" || !discovery.nextCursor || discovery.nextCursor === cursor)) {
+            throw new Error("Invalid discovery continuation.");
+          }
+          if (identity !== JSON.stringify(discoveryRequestHeaders())) {
+            liveMarketPendingRefreshes.add(city);
+            return;
+          }
+          dancers = mergeDiscoveryPageRows(dancers, discovery.dancers);
+          tonightDancers = mergeDiscoveryPageRows(tonightDancers, discovery.tonightDancers || []);
+          venues = discovery.venues || venues;
+          cursor = discovery.nextCursor || null;
+          pageCount += 1;
+          if (!cursor) break;
+        }
+        market.pagination = { dancers, tonightDancers, venues, nextCursor: cursor, pageCount, loading: false, error: false };
+        applyLiveMarket(city, dancers, tonightDancers, venues);
         liveMarketState[city] = "ready";
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
           if (adminDashboard.classList.contains("show")) renderAdminDashboard();
         }
-        // Public results must not wait for a private account request. Background
-        // refreshes also must not refetch saved state and render every card twice.
-        if (isCustomerSession() && !background) void loadLiveCustomerSaved();
+        if (isCustomerSession() && !background && !more) void loadLiveCustomerSaved();
       } catch (error) {
+        if (previous) { previous.loading = false; previous.error = more; }
         if (keepCurrentResults) {
           liveMarketState[city] = "ready";
           console.warn("Live discovery refresh failed; keeping the current public results", error);
+          if (more && citySelect.value === city) render();
           return;
         }
-        const hasCurrentResults = Boolean(discoveryMarket(city)?.dancers?.length || discoveryMarket(city)?.venues?.length);
+        const hasCurrentResults = Boolean(market.dancers?.length || market.venues?.length);
         liveMarketState[city] = hasCurrentResults ? "ready" : "error";
-        console.warn(
-          hasCurrentResults
-            ? "Live discovery unavailable; keeping the current public results"
-            : "Live discovery unavailable; public dancer profiles hidden",
-          error
-        );
-        if (citySelect.value === city) {
-          render();
-          if (customerDashboard.classList.contains("show")) renderDashboard();
-          if (adminDashboard.classList.contains("show")) renderAdminDashboard();
-        }
+        console.warn("Live discovery unavailable", error);
+        if (citySelect.value === city) render();
       } finally {
+        if (previous) previous.loading = false;
         liveMarketRefreshes.delete(city);
         if (liveMarketPendingRefreshes.delete(city)) {
+          if (liveMarketState[city] === "loading") liveMarketState[city] = null;
           void loadLiveDiscovery(city, { force: true, cacheBust: true, background: true });
         }
       }
+    }
+
+    function mergeDiscoveryPageRows(previous, incoming) {
+      const rows = new Map(previous.map(row => [row.id, row]));
+      incoming.forEach(row => rows.set(row.id, row));
+      return [...rows.values()];
+    }
+
+    function hasMoreDiscovery(city = selectedCity()) {
+      return Boolean(discoveryMarket(city)?.pagination?.nextCursor);
+    }
+
+    function discoveryPaginationMarkup(city) {
+      const page = discoveryMarket(city)?.pagination;
+      if (!page?.nextCursor) return "";
+      return `<div class="dancer-directory-pagination" aria-live="polite">
+        <span>${page.error ? "More dancers could not load. Try again." : "More dancers are available."}</span>
+        <button class="home-discovery-empty-action" type="button" data-more-live-discovery="${escapeHtml(city)}"${page.loading ? " disabled" : ""}>${page.loading ? "Loading dancers…" : page.error ? "Try again" : "Load more dancers"}</button>
+      </div>`;
     }
 
     async function refreshPublicDiscoveryAfterAdminReview(profile, status) {
@@ -49930,7 +49976,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     function dancerGridPosition(profile) {
       // Pin Star's existing profile without changing eligibility or score data.
       if (profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2") return -1;
-      return Number.isInteger(profile.discovery?.position) ? profile.discovery.position : 5000;
+      if (Number.isInteger(profile.directoryPosition)) return profile.directoryPosition;
+      return Number.isInteger(profile.discovery?.position) ? profile.discovery.position : Number.MAX_SAFE_INTEGER;
     }
 
     function dancerDirectoryGroups(profiles, city = selectedCity()) {
@@ -61304,7 +61351,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
             const active = dancerDirectoryFilter === filter.id;
             const empty = counts[filter.id] === 0;
             const statusDot = '<span class="dancer-directory-filter-status" aria-hidden="true"></span>';
-            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}</span></button>`;
+            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}${hasMoreDiscovery(city) ? "+" : ""}</span></button>`;
           }).join("")}
         </div>
       `;
@@ -61420,6 +61467,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         imageOffset += section.profiles.length;
         return markup;
       }).join("");
+      const moreProfiles = hasMoreDiscovery(city);
       const emptyLabels = {
         now: `No dancers are currently checked in on MyDancr ${locationPhrase}.`,
         not_now: `No dancers are off shift ${locationPhrase}.`
@@ -61432,9 +61480,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         ${dancerDirectoryFilterMarkup(profiles, city)}
         <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
         ${sectionMarkup}
-        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
+        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(moreProfiles ? "No matching dancers in the profiles loaded so far. Load more to keep browsing." : emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
       `;
-      const nextRenderKey = homeDancerGridContentKey(city, gridMarkup);
+      const pagedMarkup = gridMarkup + discoveryPaginationMarkup(city);
+      const nextRenderKey = homeDancerGridContentKey(city, pagedMarkup);
       if (
         homeDancerGridRenderKey === nextRenderKey &&
         results.querySelector(":scope > .dancer-directory-filters")
@@ -61442,7 +61491,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         return;
       }
       homeDancerGridRenderKey = nextRenderKey;
-      renderStableMediaMarkup(results, gridMarkup);
+      renderStableMediaMarkup(results, pagedMarkup);
       revealDancerGridRows(results);
       window.requestAnimationFrame(() => {
         prefetchProfileNavigationFromElement(results.querySelector(".home-dancer-grid-card"));
@@ -61895,7 +61944,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const resultCount = allItems.length;
       const resultCountLabel = activeTab === "venues"
         ? `${resultCount} club${resultCount === 1 ? "" : "s"}`
-        : `${resultCount} dancer${resultCount === 1 ? "" : "s"}`;
+        : `${resultCount} dancer${resultCount === 1 ? "" : "s"}${hasMoreDiscovery(city) ? " loaded" : ""}`;
       setHomeTvFeedCount(unavailableDiscovery
         ? "Unavailable"
         : loadingDiscovery
@@ -64356,6 +64405,12 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         const retryRequest = loadLiveDiscovery(retryCity, { force: true });
         if (citySelect.value === retryCity) render();
         await retryRequest;
+        return;
+      }
+      const moreDiscovery = event.target.closest("[data-more-live-discovery]");
+      if (moreDiscovery) {
+        event.preventDefault();
+        await loadLiveDiscovery(moreDiscovery.dataset.moreLiveDiscovery || selectedCity(), { more: true });
         return;
       }
       const dancerFilterButton = event.target.closest("[data-dancer-directory-filter]");

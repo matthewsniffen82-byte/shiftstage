@@ -1,6 +1,7 @@
+import { discoveryCursor, parseDiscoveryCursor } from "@/src/lib/dancr/discovery-pagination";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
-import { getApprovedDancersByCity, getTonightShifts } from "@/src/lib/dancr/public";
+import { getLiveDancerDiscovery } from "@/src/lib/dancr/public";
 import { PRIVATE_NO_STORE_CACHE_CONTROL, PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import type { DancerCard } from "@/src/lib/dancr/types";
@@ -18,13 +19,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Choose a valid city." }, { status: 400 });
     }
     const scope = requestedScope === "tonight" ? "tonight" : "all";
+    let afterId: string | null;
+    try { afterId = parseDiscoveryCursor(url.searchParams.get("cursor"), city); }
+    catch { return NextResponse.json({ ok: false, error: "Invalid discovery cursor." }, { status: 400, headers: { "cache-control": "private, no-store" } }); }
     const client = createAdminSupabaseClient();
-    const eligible =
-      scope === "tonight" ? await getTonightShifts(client, city) : await getApprovedDancersByCity(client, city);
+    const page = await getLiveDancerDiscovery(client, city, afterId);
+    const eligible = scope === "tonight" ? page.tonightDancers : page.dancers;
     const dancers = await orderByPerformance(client, eligible, row => ({ dancerId: row.id, venueId: row.venueId }), row => row.id);
 
     return NextResponse.json(
-      { ok: true, city, scope, dancers: dancers.map(toPublicDancerCard) },
+      { ok: true, city, scope, nextCursor: page.nextAfterId ? discoveryCursor(city, page.nextAfterId) : null, dancers: dancers.map(toPublicDancerCard) },
       { headers: { "Cache-Control": dancers.some(dancer => dancer.metricsUnavailable) ? PRIVATE_NO_STORE_CACHE_CONTROL : PUBLIC_DYNAMIC_CACHE_CONTROL } },
     );
   } catch (error) {

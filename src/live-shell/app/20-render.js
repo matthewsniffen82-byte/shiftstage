@@ -74,7 +74,7 @@
       const resultCount = allItems.length;
       const resultCountLabel = activeTab === "venues"
         ? `${resultCount} club${resultCount === 1 ? "" : "s"}`
-        : `${resultCount} dancer${resultCount === 1 ? "" : "s"}`;
+        : `${resultCount} dancer${resultCount === 1 ? "" : "s"}${hasMoreDiscovery(city) ? " loaded" : ""}`;
       setHomeTvFeedCount(unavailableDiscovery
         ? "Unavailable"
         : loadingDiscovery

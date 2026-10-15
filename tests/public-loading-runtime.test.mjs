@@ -12,7 +12,7 @@ const feedSource = functionSource("    async function loadHomeTvFeed(", "    fun
 
 function context(overrides = {}) {
   return createDiscoveryContext({
-    AbortController, URLSearchParams, console,
+    AbortController, URLSearchParams, console, discoveryRequestHeaders: () => ({}),
     LIVE_JSON_REQUEST_TIMEOUT_MS: 15,
     PUBLIC_DISCOVERY_REQUEST_RETRIES: 1,
     window: { setTimeout, clearTimeout },
@@ -178,3 +178,112 @@ function createDiscoveryContext(values) {
   vm.runInContext(source.slice(start, end), context);
   return context;
 }
+
+
+function pagedDiscoveryFixture() {
+  const requests = [], panel = { classList: { contains: () => false } };
+  let renders = 0, privateLoads = 0;
+  const ctx = context({
+    markets: { Vegas: { dancers: [], venues: [] }, Miami: { dancers: [], venues: [] } },
+    liveMarketState: {}, liveMarketRefreshes: new Set(), liveMarketPendingRefreshes: new Set(),
+    citySelect: { value: "Vegas" }, customerDashboard: panel, adminDashboard: panel,
+    console: { warn() {} }, isCustomerSession: () => true,
+    fetchJson: (url, options) => new Promise((resolve, reject) => requests.push({ url, options, resolve, reject })),
+    applyLiveMarket: (city, dancers, tonight, venues) => Object.assign(ctx.markets[city], { dancers, tonight, venues }),
+    render: () => { renders += 1; }, loadLiveCustomerSaved: () => { privateLoads += 1; },
+    escapeHtml: value => String(value),
+  });
+  vm.runInContext(discoverySource, ctx);
+  return { ctx, requests, renders: () => renders, privateLoads: () => privateLoads };
+}
+
+test("directory pages append once, retain filters and stop only at the final cursor", async () => {
+  const f = pagedDiscoveryFixture(), { ctx, requests } = f;
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
+  assert.equal(ctx.hasMoreDiscovery("Vegas"), true);
+  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  assert.match(requests[1].url, /cursor=next/);
+  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /disabled/);
+  await ctx.loadLiveDiscovery("Vegas", { more: true });
+  assert.equal(requests.length, 2, "double clicks cannot request the same page twice");
+  requests[1].resolve({ dancers: [{ id: "first", updated: true }, { id: "last" }], nextCursor: null }); await request;
+  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["first", "last"]);
+  assert.equal(ctx.markets.Vegas.dancers[0].updated, true);
+  assert.equal(ctx.hasMoreDiscovery("Vegas"), false);
+  assert.equal(ctx.discoveryPaginationMarkup("Vegas"), "");
+  assert.equal(f.privateLoads(), 1);
+  await ctx.loadLiveDiscovery("Vegas", { more: true });
+  assert.equal(requests.length, 2);
+});
+
+test("a failed next page keeps its cursor and visible cards for retry", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { more: true }); requests[1].reject(new Error("offline")); await request;
+  assert.equal(ctx.markets.Vegas.pagination.nextCursor, "next");
+  assert.equal(ctx.markets.Vegas.dancers.length, 1);
+  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Try again/);
+  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  requests[2].resolve({ dancers: [{ id: "last" }], nextCursor: null }); await request;
+  assert.equal(ctx.markets.Vegas.dancers.length, 2);
+});
+
+test("refresh revalidates all loaded pages and removes revoked profiles without reducing browsed depth", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  requests[1].resolve({ dancers: [{ id: "revoked" }], nextCursor: "third" }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { force: true, background: true });
+  requests[2].resolve({ dancers: [{ id: "first" }], nextCursor: "new-next" });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.match(requests[3].url, /cursor=new-next/);
+  requests[3].resolve({ dancers: [{ id: "replacement" }], nextCursor: "new-third" }); await request;
+  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["first", "replacement"]);
+  assert.equal(ctx.markets.Vegas.pagination.pageCount, 2);
+  assert.equal(ctx.markets.Vegas.pagination.nextCursor, "new-third");
+});
+
+test("a late page for a previous city never replaces the newly selected city's results", async () => {
+  const f = pagedDiscoveryFixture(), { ctx, requests } = f;
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  ctx.citySelect.value = "Miami";
+  const cityRequest = ctx.loadLiveDiscovery("Miami");
+  requests[2].resolve({ dancers: [{ id: "miami" }], nextCursor: null }); await cityRequest;
+  const renders = f.renders();
+  requests[1].resolve({ dancers: [{ id: "vegas-late" }], nextCursor: null }); await request;
+  assert.equal(f.renders(), renders);
+  assert.deepEqual(Array.from(ctx.markets.Miami.dancers, r => r.id), ["miami"]);
+});
+
+test("a stalled continuation cannot cause an endless pagination loop", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  requests[1].resolve({ dancers: [{ id: "duplicate" }], nextCursor: "next" }); await request;
+  assert.equal(ctx.markets.Vegas.dancers.length, 1);
+  assert.equal(ctx.markets.Vegas.pagination.error, true);
+});
+
+
+test("All cities pagination preserves independently loaded city cards and continuation", () => {
+  const cityMarket = { dancers: [{ id: "local" }], venues: [], pagination: { nextCursor: "local-next" } };
+  const ctx = context({
+    markets: { Vegas: cityMarket }, allCitiesMarket: { dancers: [], venues: [], pagination: { nextCursor: "global-next" } },
+    venuePreviewRequested: () => false, mergeAuthenticatedDancerIntoDiscovery: (_city, rows) => rows,
+    mapLiveDancer: row => row, mapLiveVenue: row => row, dedupePublicVenues: rows => rows,
+    isApprovedPublicProfile: () => true, followedByCity: {}, followedVenuesByCity: {}, followedDancerIds: new Set(),
+  });
+  const applySource = functionSource("    function applyLiveMarket(", "    const LIVE_JSON_REQUEST_TIMEOUT_MS");
+  vm.runInContext(applySource, ctx);
+  ctx.applyLiveMarket("All cities", [{ id: "global", city: "Vegas" }], [], []);
+  assert.equal(ctx.markets.Vegas, cityMarket);
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "local");
+  assert.equal(ctx.markets.Vegas.pagination.nextCursor, "local-next");
+  assert.equal(ctx.allCitiesMarket.dancers[0].id, "global");
+});

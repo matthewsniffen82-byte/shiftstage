@@ -388,6 +388,12 @@
         await retryRequest;
         return;
       }
+      const moreDiscovery = event.target.closest("[data-more-live-discovery]");
+      if (moreDiscovery) {
+        event.preventDefault();
+        await loadLiveDiscovery(moreDiscovery.dataset.moreLiveDiscovery || selectedCity(), { more: true });
+        return;
+      }
       const dancerFilterButton = event.target.closest("[data-dancer-directory-filter]");
       if (dancerFilterButton) {
         event.preventDefault();

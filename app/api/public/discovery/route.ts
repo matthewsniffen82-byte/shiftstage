@@ -1,3 +1,4 @@
+import { discoveryCursor, parseDiscoveryCursor } from "@/src/lib/dancr/discovery-pagination";
 import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
 import { discoveryContext, rankPublicGrid } from "@/src/lib/dancr/discovery-service";
 import { findAvailableMyDancrCity, isAllMyDancrCities, MYDANCR_ALL_CITIES } from "@/src/lib/dancr/markets";
@@ -36,8 +37,14 @@ export async function GET(request: Request) {
     }
     city = availableCity || MYDANCR_ALL_CITIES;
 
+    let afterId: string | null;
+    try { afterId = parseDiscoveryCursor(url.searchParams.get("cursor"), city); }
+    catch {
+      return NextResponse.json({ ok: false, error: "Invalid discovery cursor." },
+        { status: 400, headers: { "cache-control": "private, no-store" } });
+    }
     const client = createAdminSupabaseClient();
-    const discoveryPromise = getLiveDancerDiscovery(client, city);
+    const discoveryPromise = getLiveDancerDiscovery(client, city, afterId);
     const venueDataPromise = (async () => {
       let venueQuery = client
         .from("venues")
@@ -64,7 +71,7 @@ export async function GET(request: Request) {
       venueDataPromise,
     ]);
     const ranking = await discoveryContext(client, request);
-    const rankedDancers = await rankPublicGrid(client,ranking,city,discovery.dancers);
+    const rankedDancers = await rankPublicGrid(client,ranking,city,discovery.dancers, afterId || "first");
     const tonightById = new Map(discovery.tonightDancers.map(row=>[row.id,row]));
     const rankedTonight = rankedDancers.flatMap(row => {
       const tonight = tonightById.get(row.id);
@@ -135,6 +142,7 @@ export async function GET(request: Request) {
       {
         ok: true,
         city,
+        nextCursor: discovery.nextAfterId ? discoveryCursor(city, discovery.nextAfterId) : null,
         dancers: rankedDancers.map(withActiveDeal),
         tonightDancers: rankedTonight.map(withActiveDeal),
         venues,

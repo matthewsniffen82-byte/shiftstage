@@ -45,10 +45,11 @@ function queryFixture(rows = []) {
           // This fixture evaluates parent city/approval scope only. Filters on
           // optional embedded records do not remove their parent profile.
           if (typeof key === 'string' && key.includes('.')) return true;
+          if (kind === 'gt') return row[key] > value;
           if (kind === 'ilike') return String(row[key]).toLowerCase() === String(value).toLowerCase();
           if (kind === 'eq' || kind === 'is') return row[key] === value;
           return true;
-        })).slice(0, log.filters.findLast(([kind, , options]) => kind === 'limit' && !options)?.[1] ?? rows.length), count: rows.length, error: null,
+        })).sort((a,b) => log.filters.some(([kind, field, options]) => kind === "order" && field === "id" && !options?.referencedTable) ? String(a.id).localeCompare(String(b.id)) : 0).slice(0, log.filters.findLast(([kind, , options]) => kind === 'limit' && !options)?.[1] ?? rows.length), count: rows.length, error: null,
       }).then(resolve);
       return (...args) => { log.filters.push([method, ...args]); return query; };
     } });
@@ -70,11 +71,11 @@ test('combined dancer queries retain approval and visibility while city queries 
     { ...approved('hidden'), is_public: false }, { ...approved('pending'), status: 'pending' },
     { ...approved('disabled'), disabled_at: '2026-09-01' }];
   const all = queryFixture(rows);
-  assert.deepEqual(Array.from(await service.getApprovedDancerRowsByCity(all, 'All cities'), row => row.city), ['Las Vegas', 'Miami', 'Atlanta']);
+  assert.deepEqual(Array.from((await service.getApprovedDancerRowsByCity(all, 'All cities')).rows, row => row.city), ['Atlanta', 'Las Vegas', 'Miami']);
   assert.ok(!all.queries[0].filters.some(([kind]) => kind === 'ilike'));
-  assert.ok(all.queries[0].filters.some(([kind, n]) => kind === 'limit' && n === 800));
+  assert.ok(all.queries[0].filters.some(([kind, n]) => kind === 'limit' && n === 101));
   const local = queryFixture(rows);
-  assert.deepEqual(Array.from(await service.getApprovedDancerRowsByCity(local, 'Miami'), row => row.city), ['Miami']);
+  assert.deepEqual(Array.from((await service.getApprovedDancerRowsByCity(local, 'Miami')).rows, row => row.city), ['Miami']);
 });
 
 test('city discovery includes all dancers in the seven populated demo venue rosters', async () => {
@@ -83,7 +84,13 @@ test('city discovery includes all dancers in the seven populated demo venue rost
   const rows = Object.entries(counts).flatMap(([venue, count]) => Array.from({ length: count }, (_, i) => ({
     id: `${venue}-${i}`, venue, city: 'Las Vegas', status: 'approved', verification_status: 'approved', is_public: true, disabled_at: null,
   })));
-  const result = await service.getApprovedDancerRowsByCity(queryFixture(rows), 'Las Vegas');
+  const result = [], client = queryFixture(rows);
+  let after = null;
+  do {
+    const page = await service.getApprovedDancerRowsByCity(client, 'Las Vegas', after);
+    result.push(...page.rows);
+    after = page.nextAfterId;
+  } while (after);
   assert.equal(result.length, 524);
   for (const [venue, count] of Object.entries(counts)) assert.equal(result.filter(row => row.venue === venue).length, count);
 });

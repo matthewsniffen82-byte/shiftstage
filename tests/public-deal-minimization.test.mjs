@@ -1,3 +1,4 @@
+import * as discoveryPagination from "../src/lib/dancr/discovery-pagination.ts";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -43,6 +44,7 @@ test("discovery JSON removes internal fields from both venue and dancer offer li
     "@/src/lib/dancr/discovery-service":{discoveryContext:async()=>null,rankPublicGrid:async(_admin,_context,_city,rows)=>rows},
     "@/src/lib/supabase/admin":{createAdminSupabaseClient:()=>client},
     "@/src/lib/dancr/markets":markets,
+    "@/src/lib/dancr/discovery-pagination":discoveryPagination,
     "@/src/lib/dancr/public":{getLiveDancerDiscovery:async()=>({dancers:[dancer],tonightDancers:[dancer]}),getPublicVenuePopularity:async()=>new Map(),formatVenueHours:()=>"Tonight"},
     "@/src/lib/dancr/deals":{getActiveClubDealListsForVenues:async()=>new Map([[venueId,[internal]]])},
     "@/src/lib/dancr/responsive-image":{responsivePublicImage:()=>null},

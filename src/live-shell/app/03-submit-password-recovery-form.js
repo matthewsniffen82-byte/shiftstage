@@ -863,6 +863,7 @@
         trend: item.currentRank || null,
         trendRank: item.currentRank || null,
         discovery: item.discovery || null,
+        directoryPosition: index,
         distance: formatLiveDistance(item.distanceMiles),
         mainPhotoUrl: item.primaryPhotoUrl || galleryPhotoUrls[0] || "",
         mainPhotoFocalX: item.primaryPhotoFocalX ?? 50,

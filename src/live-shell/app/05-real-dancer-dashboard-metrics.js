@@ -518,7 +518,8 @@
     function applyLiveMarket(city, dancers, tonightDancers, venues) {
       const market = discoveryMarket(city);
       if (!market) return false;
-      if (city === ALL_CITIES) {
+      // Paged All cities results must not overwrite independently loaded city pages.
+      if (city === ALL_CITIES && !market.pagination) {
         const cityNames = new Set([...Object.keys(markets), ...(dancers || []).map((item) => item.city), ...(venues || []).map((item) => item.city)]);
         cityNames.forEach((name) => {
           if (!name || name === ALL_CITIES) return;
@@ -713,69 +714,111 @@
     }
 
     async function loadLiveDiscovery(city = selectedCity(), options = {}) {
+      const market = discoveryMarket(city);
+      if (!market) return;
+      const more = Boolean(options.more);
       const force = Boolean(options.force);
       const cacheBust = force && options.cacheBust !== false;
       const keepCurrentResults = liveMarketState[city] === "ready";
       const background = Boolean(options.background && keepCurrentResults);
-      if (!discoveryMarket(city)) return;
+      const previous = market.pagination;
+      if (more && !previous?.nextCursor) return;
       if (liveMarketState[city] === "loading" || liveMarketRefreshes.has(city)) {
-        // Publication or browser Back must not lose a fresh read behind an older request.
         if (cacheBust) liveMarketPendingRefreshes.add(city);
         return;
       }
-      if (!force && liveMarketState[city] === "ready") return;
-      // Once this city has loaded, keep its cards and counts visible during any refresh.
+      if (!more && !force && keepCurrentResults) return;
       if (keepCurrentResults) liveMarketRefreshes.add(city);
       else liveMarketState[city] = "loading";
-      const params = new URLSearchParams({ city });
-      if (cacheBust) params.set("refresh", String(Date.now()));
-      const query = params.toString();
+      if (previous) { previous.loading = more; previous.error = false; }
+      if (more && citySelect.value === city) render();
+      const headers = discoveryRequestHeaders();
+      const identity = JSON.stringify(headers);
+      // Refresh all pages already browsed, so revoked visibility and changed
+      // check-ins do not remain cached on later pages. There is no page ceiling.
+      const pagesToRead = more ? 1 : Math.max(1, previous?.pageCount || 1);
+      let cursor = more ? previous.nextCursor : null;
+      let pageCount = more ? previous.pageCount : 0;
+      let dancers = more ? [...previous.dancers] : [];
+      let tonightDancers = more ? [...previous.tonightDancers] : [];
+      let venues = more ? previous.venues : [];
+      const seenCursors = new Set();
       try {
-        const discovery = await fetchJson(`/api/public/discovery?${query}`, {
-          headers: discoveryRequestHeaders(), cache: "no-store",
-          timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
-          retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
-        });
-        applyLiveMarket(
-          city,
-          discovery.dancers || [],
-          discovery.tonightDancers || [],
-          discovery.venues || []
-        );
+        for (let page = 0; page < pagesToRead; page += 1) {
+          if (cursor && seenCursors.has(cursor)) throw new Error("Discovery pagination did not advance.");
+          if (cursor) seenCursors.add(cursor);
+          const params = new URLSearchParams({ city });
+          if (cursor) params.set("cursor", cursor);
+          if (cacheBust) params.set("refresh", String(Date.now()));
+          const query = params.toString();
+          const discovery = await fetchJson(`/api/public/discovery?${query}`, {
+            headers, cache: "no-store",
+            timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
+            retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
+          });
+          if (discovery.ok === false || !Array.isArray(discovery.dancers)) throw new Error("Invalid discovery page.");
+          if (discovery.nextCursor != null && (typeof discovery.nextCursor !== "string" || !discovery.nextCursor || discovery.nextCursor === cursor)) {
+            throw new Error("Invalid discovery continuation.");
+          }
+          if (identity !== JSON.stringify(discoveryRequestHeaders())) {
+            liveMarketPendingRefreshes.add(city);
+            return;
+          }
+          dancers = mergeDiscoveryPageRows(dancers, discovery.dancers);
+          tonightDancers = mergeDiscoveryPageRows(tonightDancers, discovery.tonightDancers || []);
+          venues = discovery.venues || venues;
+          cursor = discovery.nextCursor || null;
+          pageCount += 1;
+          if (!cursor) break;
+        }
+        market.pagination = { dancers, tonightDancers, venues, nextCursor: cursor, pageCount, loading: false, error: false };
+        applyLiveMarket(city, dancers, tonightDancers, venues);
         liveMarketState[city] = "ready";
         if (citySelect.value === city) {
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
           if (adminDashboard.classList.contains("show")) renderAdminDashboard();
         }
-        // Public results must not wait for a private account request. Background
-        // refreshes also must not refetch saved state and render every card twice.
-        if (isCustomerSession() && !background) void loadLiveCustomerSaved();
+        if (isCustomerSession() && !background && !more) void loadLiveCustomerSaved();
       } catch (error) {
+        if (previous) { previous.loading = false; previous.error = more; }
         if (keepCurrentResults) {
           liveMarketState[city] = "ready";
           console.warn("Live discovery refresh failed; keeping the current public results", error);
+          if (more && citySelect.value === city) render();
           return;
         }
-        const hasCurrentResults = Boolean(discoveryMarket(city)?.dancers?.length || discoveryMarket(city)?.venues?.length);
+        const hasCurrentResults = Boolean(market.dancers?.length || market.venues?.length);
         liveMarketState[city] = hasCurrentResults ? "ready" : "error";
-        console.warn(
-          hasCurrentResults
-            ? "Live discovery unavailable; keeping the current public results"
-            : "Live discovery unavailable; public dancer profiles hidden",
-          error
-        );
-        if (citySelect.value === city) {
-          render();
-          if (customerDashboard.classList.contains("show")) renderDashboard();
-          if (adminDashboard.classList.contains("show")) renderAdminDashboard();
-        }
+        console.warn("Live discovery unavailable", error);
+        if (citySelect.value === city) render();
       } finally {
+        if (previous) previous.loading = false;
         liveMarketRefreshes.delete(city);
         if (liveMarketPendingRefreshes.delete(city)) {
+          if (liveMarketState[city] === "loading") liveMarketState[city] = null;
           void loadLiveDiscovery(city, { force: true, cacheBust: true, background: true });
         }
       }
+    }
+
+    function mergeDiscoveryPageRows(previous, incoming) {
+      const rows = new Map(previous.map(row => [row.id, row]));
+      incoming.forEach(row => rows.set(row.id, row));
+      return [...rows.values()];
+    }
+
+    function hasMoreDiscovery(city = selectedCity()) {
+      return Boolean(discoveryMarket(city)?.pagination?.nextCursor);
+    }
+
+    function discoveryPaginationMarkup(city) {
+      const page = discoveryMarket(city)?.pagination;
+      if (!page?.nextCursor) return "";
+      return `<div class="dancer-directory-pagination" aria-live="polite">
+        <span>${page.error ? "More dancers could not load. Try again." : "More dancers are available."}</span>
+        <button class="home-discovery-empty-action" type="button" data-more-live-discovery="${escapeHtml(city)}"${page.loading ? " disabled" : ""}>${page.loading ? "Loading dancers…" : page.error ? "Try again" : "Load more dancers"}</button>
+      </div>`;
     }
 
     async function refreshPublicDiscoveryAfterAdminReview(profile, status) {

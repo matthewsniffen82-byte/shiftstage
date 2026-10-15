@@ -9,7 +9,7 @@ const sectionsSource = html.match(/function dancerDirectorySections\(profiles, c
 const noop = () => {};
 const node = () => ({ classList: { toggle: noop, remove: noop }, replaceChildren: noop, closest: () => node() });
 
-function harness({ working = 7, off = 7, venue = "all", loading = false, error = false } = {}) {
+function harness({ working = 7, off = 7, venue = "all", loading = false, error = false, more = false } = {}) {
   const items = Array.from({ length: working + off }, (_, index) => ({ working: index < working }));
   let count;
   let visible;
@@ -24,7 +24,7 @@ function harness({ working = 7, off = 7, venue = "all", loading = false, error =
     syncHomeDestinationLocation: noop, updateTabCounts: noop, updateHomeLiveSummary: noop,
     deactivateHomeTvFeed: noop, deactivateHomeDiscoveryFeed: noop,
     selectedVenueFilter: () => venue, selectedHomeTvVenueFilter: () => null,
-    liveDiscoveryIsLoading: () => loading, getItems: () => items,
+    observeDiscoveryGrid: noop, hasMoreDiscovery: () => more, liveDiscoveryIsLoading: () => loading, getItems: () => items,
     discoveryLocationPhrase: () => "in Las Vegas", resolveVenueByName: () => null,
     setHomeTvFeedCount: value => { count = value; },
     homeDiscoveryLoadingStateMarkup: () => "Loading", escapeHtml: value => value,
@@ -61,4 +61,8 @@ test("loading and unavailable discovery never present a misleading numeric total
   assert.equal(harness({ working: 0, off: 0, loading: true }).render().count, "Dancers");
   assert.equal(harness({ working: 0, off: 0, error: true }).render().count, "Unavailable");
   assert.deepEqual(harness({ working: 0, off: 0 }).render(), { count: "0 dancers", visible: 0 });
+});
+
+test("partial directory counts explicitly describe loaded profiles", () => {
+  assert.equal(harness({ more: true }).render().count, "14 dancers loaded");
 });
