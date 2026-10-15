@@ -1955,7 +1955,7 @@ html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directo
   color: #e2e4ec !important;
   -webkit-text-fill-color: currentColor !important;
   color-scheme: only light;
-  font-size: clamp(10px, 2.5vw, 11px);
+  font-size: clamp(8px, 2vw, 9px);
   font-weight: 600;
   line-height: 1.2;
 }
