@@ -1955,8 +1955,8 @@ html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directo
   color: #e2e4ec !important;
   -webkit-text-fill-color: currentColor !important;
   color-scheme: only light;
-  font-size: clamp(8px, 2vw, 9px);
-  font-weight: 600;
+  font-size: clamp(7px, 1.8vw, 8px);
+  font-weight: 400;
   line-height: 1.2;
 }
 html body.dancr-button-system > .app main.stack > section.stack
