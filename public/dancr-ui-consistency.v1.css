@@ -1952,9 +1952,11 @@ html body.dancr-button-system > .app main.stack > section.stack
   line-height: 1.2;
 }
 html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directory .home-dancer-grid-distance {
-  color: #b8bac4;
-  font-size: clamp(8px, 2vw, 9px);
-  font-weight: 400;
+  color: #e2e4ec !important;
+  -webkit-text-fill-color: currentColor !important;
+  color-scheme: only light;
+  font-size: clamp(10px, 2.5vw, 11px);
+  font-weight: 600;
   line-height: 1.2;
 }
 html body.dancr-button-system > .app main.stack > section.stack
@@ -1989,15 +1991,24 @@ html body.dancr-button-system > .app main.stack > section.stack
   > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot,
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot svg {
-  color: #b8bac4 !important;
+  color: #e2e4ec !important;
+  color-scheme: only light;
+}
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot,
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot {
+  width: 12px !important;
+  height: 12px !important;
+  flex: 0 0 12px !important;
 }
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot svg,
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot svg {
-  width: 9px !important;
-  height: 9px !important;
-  stroke-width: 1.5 !important;
+  width: 12px !important;
+  height: 12px !important;
+  stroke-width: 2 !important;
 }
 
 /* Header inboxes use one compact surface for alerts and saved admission passes. */
