@@ -1952,7 +1952,7 @@ html body.dancr-button-system > .app main.stack > section.stack
   line-height: 1.2;
 }
 html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directory .home-dancer-grid-distance {
-  color: #b3b5c2;
+  color: #b8bac4;
   font-size: clamp(8px, 2vw, 9px);
   font-weight: 400;
   line-height: 1.2;
@@ -1980,6 +1980,16 @@ html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directo
   flex: 0 0 4px;
   border-radius: 50%;
   background: currentColor;
+}
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot,
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot svg,
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot,
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot svg {
+  color: #b8bac4 !important;
 }
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot svg,
