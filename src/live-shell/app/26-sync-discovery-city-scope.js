@@ -303,6 +303,7 @@
     });
 
     venueSelect?.addEventListener("change", () => {
+      void loadLiveDiscovery(selectedCity());
       homeDiscoveryFeedOpen = false;
       deactivateHomeDiscoveryFeed();
       tonightExpanded = false;

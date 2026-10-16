@@ -16,8 +16,8 @@ export async function POST(request: Request) {
     const position = body.position;
     const displayPosition = body.displayPosition ?? position;
     if (!DISCOVERY_UUID.test(session) || !DISCOVERY_UUID.test(entity) || !events.has(event)
-      || !Number.isInteger(position) || Number(position)<0 || Number(position)>4999
-      || !Number.isInteger(displayPosition) || Number(displayPosition)<0 || Number(displayPosition)>4999) throw invalid();
+      || !Number.isSafeInteger(position) || Number(position)<0
+      || !Number.isSafeInteger(displayPosition) || Number(displayPosition)<0) throw invalid();
     const admin = createAdminSupabaseClient();
     const context = await discoveryContext(admin,request);
     if (!context) throw invalid();

@@ -396,9 +396,11 @@
         <div class="dancer-directory-filters${clubSelected ? " is-club-specific" : ""}" role="tablist" aria-label="Filter dancers">
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
-            const empty = counts[filter.id] === 0;
+            const loadedFilter = discoveryMarket(city)?.pagination?.filter;
+            const countKnown = !loadedFilter || loadedFilter === "all" || loadedFilter === filter.id;
+            const empty = countKnown && counts[filter.id] === 0;
             const statusDot = '<span class="dancer-directory-filter-status" aria-hidden="true"></span>';
-            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${counts[filter.id]}${hasMoreDiscovery(city) ? "+" : ""}</span></button>`;
+            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${countKnown ? counts[filter.id] : ""}${countKnown && hasMoreDiscovery(city) ? "+" : ""}</span></button>`;
           }).join("")}
         </div>
       `;

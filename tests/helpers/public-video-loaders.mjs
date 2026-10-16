@@ -4,7 +4,7 @@ const source = readFileSync(new URL("../../outputs/index.html", import.meta.url)
 const extract = (start, end) => source.slice(source.indexOf(start), source.indexOf(end, source.indexOf(start)));
 export function publicVideoLoaders() {
   const requests = [], renders = [];
-  const context = vm.createContext({ AbortController, URLSearchParams, console,
+  const context = vm.createContext({ AbortController, URLSearchParams, console, discoveryRequestHeaders: () => ({}),
     LIVE_JSON_REQUEST_TIMEOUT_MS: 10000, PUBLIC_DISCOVERY_REQUEST_RETRIES: 1,
     window: { setTimeout, clearTimeout },
     homeTvFeedAbort: null, homeTvFeedRequest: 0, homeTvFeedCity: "Vegas", homeTvFeedVenueId: "", homeTvFeedSelectedVideoId: "",

@@ -58,7 +58,6 @@ test('keyset pages reach every eligible profile beyond both 800 and 5,000 withou
     assert.ok(page.dancers.length <= 100);
     seen.push(...page.dancers.map(r => r.id));
     after = page.nextAfterId;
-    if (after) assert.equal(parseDiscoveryCursor(discoveryCursor('All cities', after), 'All cities'), after);
   } while (after);
   assert.equal(seen.length, 5207);
   assert.equal(new Set(seen).size, 5207);
@@ -85,8 +84,8 @@ test('malformed and cross-city cursors are rejected; IDs have no numeric page ce
   for (const value of ['bad', 'directory1:Las%20Vegas:1', `directory1:Miami:${id(10)}`, 'x'.repeat(301), `directory1:Las%20Vegas:${id(1)},id.gt.0`]) {
     assert.throws(() => parseDiscoveryCursor(value, 'Las Vegas'), /Invalid discovery cursor/);
   }
-  assert.equal(parseDiscoveryCursor(null, 'Las Vegas'), null);
-  assert.equal(parseDiscoveryCursor(discoveryCursor('Las Vegas', id(99999999)), 'Las Vegas'), id(99999999));
+  assert.equal(parseDiscoveryCursor(null, 'Las Vegas'), '');
+  assert.equal(parseDiscoveryCursor(discoveryCursor('Las Vegas', id(1), 99999999), 'Las Vegas'), 'rank1:' + id(1) + ':99999999');
 });
 
 test('later ranking pages and newly eligible rows cannot reuse an earlier subset snapshot', async () => {

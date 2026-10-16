@@ -18,7 +18,7 @@ async function setup({surface='tv',self=false}={}) {
 }
 test('events require the issued identity, entity and position, and reject large payloads',async()=>{
  const f=await setup();
- for(const extra of [{session:id(81)},{entityId:id(2)},{position:1},{position:-1},{displayPosition:5000},{event:'bad'}])assert.equal((await f.post('impression',extra)).status,400);
+ for(const extra of [{session:id(81)},{entityId:id(2)},{position:1},{position:-1},{displayPosition:Number.MAX_SAFE_INTEGER+1},{event:'bad'}])assert.equal((await f.post('impression',extra)).status,400);
  assert.equal((await f.post('impression',{},f.request(id(55),id(51),'').headers)).status,400);
  assert.equal((await f.post('impression',{padding:'x'.repeat(3000)})).status,413);
  assert.equal(f.data.discovery_events.length,0);
@@ -45,4 +45,12 @@ test('follow activity requires a real account follow; retired Show less events a
 });
 test('rate limits return 429 and do not write an event',async()=>{
  const f=await setup();f.block();const response=await f.post();assert.equal(response.status,429);assert.equal(response.headers.get('retry-after'),'60');assert.equal(f.data.discovery_events.length,0);
+});
+
+test('valid ranked events beyond position 5,000 remain recordable', async () => {
+ const f=await setup({surface:'grid'});
+ f.data.discovery_sessions[0].ordered_ids=Array.from({length:5207},(_,i)=>id(i+100));
+ f.data.discovery_sessions[0].ordered_ids[5206]=id(1);
+ assert.equal((await f.post('impression',{position:5206,displayPosition:5206})).status,200);
+ assert.equal(f.data.discovery_events[0].position,5206);
 });

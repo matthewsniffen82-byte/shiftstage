@@ -1,13 +1,14 @@
-import { discoveryCursor, parseDiscoveryCursor } from "@/src/lib/dancr/discovery-pagination";
+import { directoryFilter, directoryVenue, parseDiscoveryCursor } from "@/src/lib/dancr/discovery-pagination";
 import { toPublicClubDeal } from "@/src/lib/dancr/public-club-deal";
-import { discoveryContext, rankPublicGrid } from "@/src/lib/dancr/discovery-service";
+import { getRankedDirectoryPage } from "@/src/lib/dancr/public-directory";
+import { PublicApiError } from "@/src/lib/api-error-policy";
+import { PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
 import { findAvailableMyDancrCity, isAllMyDancrCities, MYDANCR_ALL_CITIES } from "@/src/lib/dancr/markets";
 import { NextResponse } from "next/server";
 import { createDancerDealAttributionToken } from "@/src/lib/dancr/deal-attribution";
 import { getActiveClubDealListsForVenues } from "@/src/lib/dancr/deals";
 import {
   formatVenueHours,
-  getLiveDancerDiscovery,
   getPublicVenuePopularity,
 } from "@/src/lib/dancr/public";
 import { PRIVATE_NO_STORE_CACHE_CONTROL, PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
@@ -37,14 +38,18 @@ export async function GET(request: Request) {
     }
     city = availableCity || MYDANCR_ALL_CITIES;
 
-    let afterId: string | null;
-    try { afterId = parseDiscoveryCursor(url.searchParams.get("cursor"), city); }
+    let cursor: string, filter: "all" | "now" | "not_now", venueId: string | undefined;
+    try {
+      cursor = parseDiscoveryCursor(url.searchParams.get("cursor"), city);
+      filter = directoryFilter(url.searchParams.get("filter"));
+      venueId = directoryVenue(url.searchParams.get("venue"));
+    }
     catch {
       return NextResponse.json({ ok: false, error: "Invalid discovery cursor." },
         { status: 400, headers: { "cache-control": "private, no-store" } });
     }
     const client = createAdminSupabaseClient();
-    const discoveryPromise = getLiveDancerDiscovery(client, city, afterId);
+    const discoveryPromise = getRankedDirectoryPage(client, request, { city, cursor, filter, venueId });
     const venueDataPromise = (async () => {
       let venueQuery = client
         .from("venues")
@@ -70,13 +75,8 @@ export async function GET(request: Request) {
       discoveryPromise,
       venueDataPromise,
     ]);
-    const ranking = await discoveryContext(client, request);
-    const rankedDancers = await rankPublicGrid(client,ranking,city,discovery.dancers, afterId || "first");
-    const tonightById = new Map(discovery.tonightDancers.map(row=>[row.id,row]));
-    const rankedTonight = rankedDancers.flatMap(row => {
-      const tonight = tonightById.get(row.id);
-      return tonight ? [{ ...tonight, ...(row.discovery ? { discovery: row.discovery } : {}) }] : [];
-    });
+    const rankedDancers = discovery.dancers;
+    const rankedTonight = discovery.tonightDancers;
 
     const venues = venueRows.map((venue) => {
       const coverImage = responsivePublicImage(
@@ -142,21 +142,26 @@ export async function GET(request: Request) {
       {
         ok: true,
         city,
-        nextCursor: discovery.nextAfterId ? discoveryCursor(city, discovery.nextAfterId) : null,
+        nextCursor: discovery.nextCursor,
         dancers: rankedDancers.map(withActiveDeal),
         tonightDancers: rankedTonight.map(withActiveDeal),
         venues,
       },
       {
         headers: {
-          "cache-control": Boolean(ranking) || discovery.dancers.some(dancer => dancer.metricsUnavailable)
+          "cache-control": discovery.dancers.some(dancer => dancer.metricsUnavailable)
             || [...venuePopularityById.values()].some(venue => venue.metricsUnavailable)
             ? PRIVATE_NO_STORE_CACHE_CONTROL : PUBLIC_DYNAMIC_CACHE_CONTROL,
+          ...(discovery.cookie ? { "set-cookie": discovery.cookie } : {}),
           "server-timing": `discovery;dur=${Date.now() - startedAt}`,
         },
       },
     );
   } catch (error) {
+    if (error instanceof PublicApiError) return NextResponse.json({ ok: false, error: error.message },
+      { status: error.status, headers: { "cache-control": PRIVATE_NO_STORE_CACHE_CONTROL } });
+    if (error instanceof PublicRequestRateLimitError) return NextResponse.json({ ok: false, error: "Please wait before refreshing discovery." },
+      { status: 429, headers: { "cache-control": PRIVATE_NO_STORE_CACHE_CONTROL, "retry-after": String(error.retryAfterSeconds) } });
     console.error("PUBLIC_DISCOVERY_LOAD_FAILED", {
       ...safeErrorMetadata(error),
     });

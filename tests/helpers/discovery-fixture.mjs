@@ -21,7 +21,9 @@ export function fixture(candidates=[row(1),row(2)]) {
  const data={discovery_sessions:[],discovery_events:[],follows:[],venue_follows:[],dancer_profiles:[],mydancr_tv_videos:[]},calls=[];
  let blocked=false;
  const admin={auth:{getUser:async token=>({data:{user:token==='valid'?{id:id(99)}:null},error:token==='valid'?null:new Error('expired')})},
-  rpc:async(name,args)=>{calls.push([name,args]);return {data:name==='get_discovery_candidates'?structuredClone(candidates.filter(row=>!args.p_dancer_ids || args.p_dancer_ids.includes(row.dancerId))):null,error:null};},
+  rpc:async(name,args)=>{calls.push([name,args]);
+   if (['get_public_directory_candidates','get_public_tv_ranking_candidates'].includes(name)) return {data:structuredClone(candidates.filter(row=>(!args.p_after || row.id>args.p_after) && (!args.p_city || row.city===args.p_city) && (!args.p_venue || row.venueId===args.p_venue)).sort((a,b)=>a.id.localeCompare(b.id)).slice(0,1000)),error:null};
+   return {data:name==='get_discovery_candidates'?structuredClone(candidates.filter(row=>!args.p_dancer_ids || args.p_dancer_ids.includes(row.dancerId))):null,error:null};},
   from(table) {
    const filters=[];let mutation=null,payload=null,options=null,single=false,limit=Infinity,order=null;
    const execute=()=>{
@@ -50,6 +52,7 @@ export function fixture(candidates=[row(1),row(2)]) {
   '../api-error-policy':{PublicApiError},'./performance-placement':{PLACEMENT_VERSION:'performance-4-30d',
    getPerformancePlacementScores:async(_admin,rows)=>rows.map(row=>candidates.find(c=>c.dancerId===row.dancerId)?.performanceScore ?? null),
    orderByPerformance:async(_admin,rows)=>[...rows].sort((a,b)=>(candidates.find(c=>c.dancerId===b.id)?.performanceScore ?? -1)-(candidates.find(c=>c.dancerId===a.id)?.performanceScore ?? -1)||a.id.localeCompare(b.id))},
+  './directory-candidates':compile('src/lib/dancr/directory-candidates.ts',{'./markets':{isAllMyDancrCities:city=>city==='All cities'}}),
   './discovery-ranking':ranking,'./markets':{isAllMyDancrCities:city=>city==='All cities'},'./public-request-rate-limit':limiter});
  const request=(viewer=id(50),visit=id(51),token='')=>new Request('https://example.test',{headers:{'x-discovery-session':viewer,'x-discovery-visit':visit,...(token?{authorization:'Bearer '+token}:{})}});
  return {admin,data,calls,service,limiter,request,block:()=>{blocked=true;}};

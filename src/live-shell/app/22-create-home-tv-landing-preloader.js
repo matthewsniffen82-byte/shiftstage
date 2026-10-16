@@ -400,6 +400,7 @@
         const nextFilter = dancerFilterButton.dataset.dancerDirectoryFilter;
         if (!dancerDirectoryFilters.includes(nextFilter)) return;
         dancerDirectoryFilter = nextFilter;
+        void loadLiveDiscovery(selectedCity());
         syncHomeDestinationLocation("dancers");
         render();
         results.querySelector(`[data-dancer-directory-filter="${nextFilter}"]`)?.focus({ preventScroll: true });

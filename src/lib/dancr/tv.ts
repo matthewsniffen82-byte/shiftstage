@@ -236,11 +236,13 @@ export async function getPublicMyDancrTvFeed(
   const venueId = options.venueId && UUID_PATTERN.test(options.venueId)
     ? options.venueId
     : "";
-  const venueScope = venueId
+  // Ranked pages already identify their videos. Recheck those dancers
+  // directly so a separate club-wide shortlist cannot hide a ranked video.
+  const venueScope = venueId && !options.candidateVideoIds
     ? await getPublicTvVenueScope(admin, venueId, now.getTime())
     : null;
   const venueDancerIds = venueScope?.dancerIds || [];
-  if (venueId && !venueDancerIds.length) return result([]);
+  if (venueId && !options.candidateVideoIds && !venueDancerIds.length) return result([]);
   if (venueId && options.dancerId && !venueDancerIds.includes(options.dancerId)) return result([]);
   const preferredVenueId =
     !venueId && options.preferredVenueId && UUID_PATTERN.test(options.preferredVenueId)
@@ -254,7 +256,7 @@ export async function getPublicMyDancrTvFeed(
     nowIso,
     city,
     dancerId: options.dancerId,
-    dancerIds: options.dancerId ? undefined : venueDancerIds,
+    dancerIds: options.dancerId || options.candidateVideoIds ? undefined : venueDancerIds,
     limit: queryLimit,
     cursor,
     paginated: Boolean(page),

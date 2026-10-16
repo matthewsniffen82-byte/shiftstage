@@ -639,6 +639,7 @@
         selectedVenueName = null;
       }
       activeTab = nextTab;
+      void loadLiveDiscovery(selectedCity());
       homeTvFeedLandingPending = nextTab === "tv" && options.scroll !== false;
       homeDiscoveryFeedOpen =
         nextTab === "venues" &&

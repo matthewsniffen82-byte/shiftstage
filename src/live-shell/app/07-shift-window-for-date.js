@@ -246,8 +246,6 @@
     }
 
     function dancerGridPosition(profile) {
-      // Pin Star's existing profile without changing eligibility or score data.
-      if (profile.id === "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2") return -1;
       if (Number.isInteger(profile.directoryPosition)) return profile.directoryPosition;
       return Number.isInteger(profile.discovery?.position) ? profile.discovery.position : Number.MAX_SAFE_INTEGER;
     }

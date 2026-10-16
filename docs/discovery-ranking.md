@@ -1,35 +1,25 @@
 # Discovery ranking
 
-The homepage dancer grid and MyDancr TV request a private, two-hour ordering snapshot. The snapshot is bound to the visitor, page visit, city, venue, feed filter and selected video. Returning to a tab or fetching another page keeps that order. A new page visit gets a new ranking. Content visibility and venue presence are checked again when serving each page; removed content never becomes visible because it was previously ranked.
+The dancer directory and MyDancrTV rank all eligible candidates in the requested city before pagination. Neither feed has a total profile, video, or page-count cap. The default order is the venue dashboard's rolling 30-day Overall Performance score, descending; ties use dancer ID, then video ID. Scores use each venue's full analytics cohort, not the current page or public subset. Unscored dancers follow scored dancers. No profile is hard-coded above the score order.
 
-| Signal | Dancer grid | TV |
-| --- | ---: | ---: |
-| Availability | 35 | 20 |
-| Visitor engagement | 25 | 20 |
-| Fresh approved media | 20 | 20 |
-| Follow relevance | 20 | 15 |
-| Video watch quality | 0 | 25 |
+The server reads lightweight candidate identities through service-only, UUID-keyset RPCs in batches of 1,000 until an empty batch. It then calculates the complete order and saves a private, two-hour snapshot. Only the requested page receives full cards, photos, metrics, or playback data: up to 100 directory cards or 24 TV videos per request. These are request sizes, not total discovery limits. Venue score reports are shared in a one-minute in-process cache.
 
-Availability gives full credit to a current verified club check-in, 60% for a shift within 24 hours, and 30% for a shift within seven days. Expired check-ins do not score in new snapshots. The directory retains its Working Now and Not Working Now filters, with earned order within each group.
+Directory Working Now, Not Working Now, and club filters apply before pagination. Changing a filter starts at its globally ranked first page; a late response from the previous filter cannot replace it. Directory pages recheck visibility and current presence, skip revoked profiles, and backfill from the saved order. A club TV page validates its selected videos directly instead of using the old capped club roster.
 
-Freshness fades linearly over seven days. Dates are capped to a UTC day and one bonus per candidate; extra uploads on the same day cannot stack the boost. A grid profile uses its newest approved photo or published video; TV uses the video's publication date.
+TV Newest explicitly sorts by publication time. Following limits eligibility to the verified account's complete follow list. A directly linked eligible video remains first. Individual dancer profile media retains its existing pin and publication ordering.
 
-Engagement uses a visitor's action rate per recorded impression, not lifetime counts. Each visitor/item/day contributes at most one impression and one action to scoring, even when several action types occur. Fourteen days of observations decay with a seven-day half-life. Placement cohorts (positions 1–3, 4–12, and later) and 50 prior exposures smooth sparse samples. Viewing quality also compares duration bands (up to 10, 20, and 30 seconds).
-
-One in five positions is available for exploration, prioritizing the least-exposed eligible candidates. TV uses six distinct dancers at the beginning when available, then avoids the previous three dancers where possible. An explicitly linked video stays first. Recently engaged-with videos receive 45% of their normal score for seven days. Explicit New and Following filters retain their meaning.
-
-The “Show less” control has been removed. The API rejects its retired event type, and previous hide preferences no longer affect grid or TV results. Snapshot scope version `discovery-v2` rebuilds older orders so they cannot retain those omissions. The original migration remains unchanged as historical schema; its legacy event value grants no behavior or client write access.
-
-The candidate pool is bounded to 800 dancers, 50 videos per dancer, and 5,000 videos per visit. Dancer sampling rotates with the visitor/visit seed. Videos are sampled in rounds by dancer to prevent upload volume from consuming the whole pool. Existing profile and curated venue readers keep their existing ordering contracts.
+Snapshots are bound to the visitor, page visit, city, venue, filter, and selected video. Later score changes cannot create duplicates or skips while browsing. A new page visit recalculates placement; expired continuations require a fresh ranking. Headerless readers receive a private session cookie. The global-discovery-v1 scope version prevents older, incomplete snapshots from being reused.
 
 ## Event integrity and privacy
 
-The service verifies an issued snapshot, identity, entity and position before accepting events. Impressions require visible cards or actual video playback. Engaged views require at least three seconds (or half of a shorter video), and completions require 90% distinct played coverage. Seeking, hidden tabs, covered players and replaying a short fragment do not accumulate completion coverage. The server also enforces elapsed-time floors, real follow records, daily uniqueness, self-activity exclusion for verified signed-in owners, and IP/subject rate limits. Browser telemetry cannot prove attention or fully prevent deliberate automation; unauthenticated visitors cannot reliably be identified as a profile owner.
+Events require the issued snapshot, visitor, entity, and position. Public responses contain placement receipts, never private analytics reports or ranking scores. Event positions support feeds beyond 5,000 entries. Existing daily deduplication, follow verification, self-activity exclusion, watch-time checks, and rate limits remain in force. Show less stays retired and cannot remove candidates.
 
-Account/device identifiers are HMAC hashed on the server. The two new tables and ranking RPC are accessible only to the service role; public API responses expose placement receipts, not scores or visitor history. Events expire after 30 days, and expired snapshots are pruned after one additional day. Pruning runs at most once per day per active server instance. Retention is opportunistic while the service receives traffic.
-
-Dancer Results explains current availability/freshness boosts and the remaining ranking factors. Its existing city activity rank is labeled separately because personalized discovery has no single universal position.
+Account/device identifiers are HMAC hashed. Snapshot and event tables retain RLS and service-role-only access. New candidate RPCs use SECURITY INVOKER, an empty search path, and service-role-only execution. Events expire after 30 days; expired snapshots are pruned after one additional day. Pruning remains opportunistic, at most daily per active server instance.
 
 ## Validation and delivery
 
-Focused tests cover policy, real PostgreSQL migration execution through PGlite, privileges, event validation, session isolation, pagination and existing homepage behavior. No browser journeys or E2E tests are used. Migration `20261010034253_discovery_ranking.sql` was applied to the Dancr Supabase project before deployment. These tables are additive; previous public readers continue to work without ranking headers.
+The global_discovery_ranking migration removes the snapshot length constraint, widens event positions, and adds paged candidate RPCs. Apply it before deploying the dependent server code. The original get_discovery_candidates RPC remains for legacy callers; production directory and TV ranking use the new uncapped traversal.
+
+Focused tests exercise the real migration in PGlite, service-only privileges, a highest scorer beyond entry 5,000 appearing first, complete traversal of 5,207 dancers and videos, stable continuation after scores change, filters, revoked visibility, session isolation, expired cursors, and follow lists beyond 1,000 accounts. No E2E tests or automated browser journeys are used.
+
+Production migration: `20261016000448_global_discovery_ranking.sql`, applied to Dancr. The local CLI-created migration was renamed to the version assigned by the production migration ledger. Read-only verification confirmed all 528 currently eligible dancers are candidates, event positions are bigint, both new RPCs are service-only, RLS is retained, and no new security advisories were introduced.

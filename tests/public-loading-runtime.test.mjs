@@ -12,7 +12,7 @@ const feedSource = functionSource("    async function loadHomeTvFeed(", "    fun
 
 function context(overrides = {}) {
   return createDiscoveryContext({
-    AbortController, URLSearchParams, console, discoveryRequestHeaders: () => ({}),
+    AbortController, URLSearchParams, console, activeTab: "tv", dancerDirectoryFilter: "now", selectedVenueFilter: () => "all", resolveVenueByName: () => null, discoveryRequestHeaders: () => ({}),
     LIVE_JSON_REQUEST_TIMEOUT_MS: 15,
     PUBLIC_DISCOVERY_REQUEST_RETRIES: 1,
     window: { setTimeout, clearTimeout },
@@ -268,6 +268,55 @@ test("a stalled continuation cannot cause an endless pagination loop", async () 
   requests[1].resolve({ dancers: [{ id: "duplicate" }], nextCursor: "next" }); await request;
   assert.equal(ctx.markets.Vegas.dancers.length, 1);
   assert.equal(ctx.markets.Vegas.pagination.error, true);
+});
+
+test("changing directory status or club starts from that filter's globally ranked first page", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  ctx.activeTab = "dancers";
+  let request = ctx.loadLiveDiscovery("Vegas");
+  assert.match(requests[0].url, /filter=now/);
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: "working-next" }); await request;
+  ctx.dancerDirectoryFilter = "not_now";
+  request = ctx.loadLiveDiscovery("Vegas");
+  assert.match(requests[1].url, /filter=not_now/);
+  assert.doesNotMatch(requests[1].url, /cursor=/);
+  assert.equal(ctx.liveMarketState.Vegas, "loading");
+  requests[1].resolve({ dancers: [{ id: "off" }], nextCursor: "off-next" }); await request;
+  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["off"]);
+  ctx.selectedVenueFilter = () => "Club";
+  ctx.resolveVenueByName = () => ({ id: "club-id" });
+  request = ctx.loadLiveDiscovery("Vegas");
+  assert.match(requests[2].url, /filter=now&venue=club-id/);
+  assert.doesNotMatch(requests[2].url, /cursor=/);
+  requests[2].resolve({ dancers: [{ id: "club-top" }], nextCursor: null }); await request;
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "club-top");
+});
+
+test("a filter change while a page is pending discards the stale response and fetches the new scope", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: "next" }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  ctx.dancerDirectoryFilter = "not_now";
+  await ctx.loadLiveDiscovery("Vegas");
+  requests[1].resolve({ dancers: [{ id: "stale" }], nextCursor: null }); await request;
+  assert.equal(requests.length, 3);
+  assert.match(requests[2].url, /filter=not_now/);
+  requests[2].resolve({ dancers: [{ id: "fresh" }], nextCursor: null });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["fresh"]);
+});
+
+test("an expired directory continuation restarts from a fresh ranking instead of repeatedly retrying it", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "old" }], nextCursor: "expired" }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  requests[1].reject(Object.assign(new Error("expired"), { status: 409 })); await request;
+  assert.equal(requests.length, 3); assert.doesNotMatch(requests[2].url, /cursor=/);
+  requests[2].resolve({ dancers: [{ id: "fresh" }], nextCursor: null });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "fresh");
 });
 
 

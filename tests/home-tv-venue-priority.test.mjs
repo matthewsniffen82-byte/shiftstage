@@ -61,7 +61,7 @@ test("club TV scope still verifies active presence before score ordering", () =>
 
 test("the all-venues city feed stays unrestricted by club affiliation or schedule", () => {
   assert.match(tvSource, /const venueScope = venueId[\s\S]*?getPublicTvVenueScope[\s\S]*?: null;/);
-  assert.match(tvSource, /dancerIds: options\.dancerId \? undefined : venueDancerIds/);
+  assert.match(tvSource, /dancerIds: options\.dancerId \|\| options\.candidateVideoIds \? undefined : venueDancerIds/);
   assert.match(homeSource, /venueName === "all"\) return null/);
   assert.match(homeSource, /venueFilter \? `MyDancr TV at \$\{venueFilter\.name\}` : `MyDancr TV \$\{discoveryLocationPhrase\(city\)\}`/);
 });

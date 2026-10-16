@@ -25,7 +25,7 @@ test("dancer profiles fetch approved media once and load independent metrics in 
 });
 
 test("discovery enriches venues while dancer discovery is still in flight", () => {
-  assert.match(discoveryRoute, /const discoveryPromise = getLiveDancerDiscovery\(client, city, afterId\)/);
+  assert.match(discoveryRoute, /const discoveryPromise = getRankedDirectoryPage\(client, request, \{ city, cursor, filter, venueId \}\)/);
   assert.match(discoveryRoute, /const venueDataPromise = \(async \(\) => \{/);
   assert.ok(discoveryRoute.includes(
     "const [activeDeals, venuePopularityById] = await Promise.all([",

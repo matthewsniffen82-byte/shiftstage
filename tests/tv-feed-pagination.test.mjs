@@ -48,7 +48,7 @@ function fixture(count, excluded = new Set()) {
     toPublicClubDeal: deal => deal,
   });
   vm.runInContext(ts.transpileModule(code, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, context);
-  return { ...context.exports, admin, queries };
+  return { ...context.exports, admin, queries, rows, context };
 }
 
 test('small keyset pages reach beyond the former 120-row ceiling without repeats or skipped timestamp ties', async () => {
@@ -66,6 +66,19 @@ test('small keyset pages reach beyond the former 120-row ceiling without repeats
     assert.ok(operations.some(([name,key,value]) => name === 'eq' && key === 'dancer_profiles.is_public' && value === true));
     assert.deepEqual(Array.from(operations.filter(([name]) => name === 'order'), op => op[1]), ['published_at', 'id']);
   }
+});
+
+test('ranked club video pages revalidate their own dancers without a capped club-wide shortlist', async () => {
+  const f = fixture(1), venueId = uuid(900);
+  f.context.getPublicTvVenueScope = () => { throw new Error('Do not fetch a capped club shortlist for a ranked page'); };
+  f.rows[0].venue = { id: venueId };
+  const options = { city: 'Vegas', venueId, candidateVideoIds: [uuid(1)], limit: 1 };
+  const videos = await f.getPublicMyDancrTvFeed(f.admin, options);
+  assert.equal(videos.length, 1); assert.equal(videos[0].id, uuid(1));
+  assert.ok(f.queries[0].some(([method, key]) => method === 'in' && key === 'id'));
+  assert.ok(!f.queries[0].some(([method, key]) => method === 'in' && key === 'dancer_id'));
+  f.rows[0].venue = { id: uuid(901) };
+  assert.equal((await f.getPublicMyDancrTvFeed(f.admin, options)).length, 0);
 });
 
 test('a page removed by visibility checks still advances; a selected deep link does not drop a candidate', async () => {

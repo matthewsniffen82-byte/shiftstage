@@ -104,11 +104,11 @@ test('clients without discovery headers receive ranked TV with a private cookie 
   '@/src/lib/dancr/media-limits':{MAX_DANCER_PROFILE_VIDEOS:50},'@/src/lib/dancr/public-cache-policy':{},
   '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>f.admin},'@/src/lib/supabase/request':{},
  });
- const first=await route.GET(new Request('https://example.test/api/public/tv?paging=1&limit=2'));
+ const first=await route.GET(new Request('https://example.test/api/public/tv?city=Vegas&paging=1&limit=2'));
  assert.equal(first.status,200);assert.equal(first.headers.get('cache-control'),'private, no-store');
  const cookie=first.headers.get('set-cookie');assert.match(cookie,/HttpOnly; SameSite=Lax; Secure/);
  const body=await first.json();assert.deepEqual(body.videos.map(r=>r.id),[id(2),id(3)]);
- const second=await route.GET(new Request('https://example.test/api/public/tv?paging=1&limit=2&cursor='+body.nextCursor,{headers:{cookie:cookie.split(';')[0]}}));
+ const second=await route.GET(new Request('https://example.test/api/public/tv?city=Vegas&paging=1&limit=2&cursor='+body.nextCursor,{headers:{cookie:cookie.split(';')[0]}}));
  assert.equal(second.status,200);assert.deepEqual((await second.json()).videos.map(r=>r.id),[id(1)]);
 });
 

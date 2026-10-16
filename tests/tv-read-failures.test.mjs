@@ -12,7 +12,11 @@ function routeFixture({authError,queryError,rows=[]}={}){
  const query=new Proxy({then:resolve=>resolve({data:queryError?null:rows,error:queryError||null})},{
   get:(target,key)=>target[key]||((...args)=>{calls.push([key,...args]);return query;})
  });
+ // Exercise the retained non-ranked route; ranked reads have dedicated session tests.
  const dependencies={
+  "node:crypto":{randomUUID:()=>"90000000-0000-4000-8000-000000000001"},
+  "@/src/lib/dancr/discovery-service":{DISCOVERY_UUID:/^[a-f0-9-]{36}$/,discoveryContext:async()=>null,parseRankedCursor:()=>null},
+  "@/src/lib/dancr/discovery-tv":{},
   'next/server':{NextResponse:{json:(body,options)=>Response.json(body,options)}},
   '@/src/lib/api':{apiError:(error,fallback)=>{const result=resolveApiError(error,fallback);return Response.json(result.body,{status:result.status});}},
   '@/src/lib/dancr/tv':{MYDANCR_TV_FILTERS:new Set(['for-you','following','tonight','new']),getPublicMyDancrTvFeed:async(_admin,input)=>{calls.push(['feed',input]);return [];}},

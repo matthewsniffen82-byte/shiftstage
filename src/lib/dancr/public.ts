@@ -35,8 +35,9 @@ export async function getLiveDancerDiscovery(
   client: DancrClient,
   city: string,
   afterId: string | null = null,
+  dancerIds?: string[],
 ): Promise<{ dancers: DancerCard[]; tonightDancers: DancerCard[]; nextAfterId: string | null }> {
-  const { rows, nextAfterId } = await getApprovedDancerRowsByCity(client, city, afterId);
+  const { rows, nextAfterId } = await getApprovedDancerRowsByCity(client, city, afterId, dancerIds);
   const dancers = rows.map((row) => buildDancerCard(client, row).card);
   const now = Date.now();
   const tonightDancers = rows
@@ -61,7 +62,9 @@ function filterPublicDancerCity(query: any, city: string) {
   return isAllMyDancrCities(city) ? query : query.ilike("city", city);
 }
 
-async function getApprovedDancerRowsByCity(client: DancrClient, city: string, afterId: string | null = null) {
+async function getApprovedDancerRowsByCity(client: DancrClient, city: string, afterId: string | null = null, dancerIds?: string[]) {
+  if (dancerIds && !dancerIds.length) return { rows: [], nextAfterId: null };
+  if (dancerIds && dancerIds.length > PUBLIC_DANCER_PAGE_SIZE) throw new Error("Directory card page is too large.");
   const cityName = city.trim();
   const now = new Date().toISOString();
   const shiftFields = `id, shift_date, shift_source, starts_at, ends_at, timezone, status, location_status, checked_in_at, checked_out_at, location_verification_expires_at, venue_id, venues!inner(id, name, slug, timezone, is_active, has_active_club_deal)`;
@@ -110,6 +113,7 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string, af
 
   // Immutable keyset ordering avoids offset skips when earlier profiles disappear.
   if (afterId) query = query.gt("id", afterId);
+  if (dancerIds) query = query.in("id", dancerIds);
   const current = await query;
 
   const data: any[] | null = current.data as any[] | null;

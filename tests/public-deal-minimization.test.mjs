@@ -41,7 +41,7 @@ test("discovery JSON removes internal fields from both venue and dancer offer li
   const dancer={id:"dancer",venueId,shiftId:"shift",shiftSource:"nfc_presence"};
   const client={from:()=>query([{id:venueId,name:"Venue"}])};
   const route=load("app/api/public/discovery/route.ts",{
-    "@/src/lib/dancr/discovery-service":{discoveryContext:async()=>null,rankPublicGrid:async(_admin,_context,_city,rows)=>rows},
+    "@/src/lib/dancr/public-directory":{getRankedDirectoryPage:async()=>({dancers:[dancer],tonightDancers:[dancer],nextCursor:null})},
     "@/src/lib/supabase/admin":{createAdminSupabaseClient:()=>client},
     "@/src/lib/dancr/markets":markets,
     "@/src/lib/dancr/discovery-pagination":discoveryPagination,
