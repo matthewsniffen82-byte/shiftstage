@@ -48,7 +48,8 @@ test('every dancer upload entry includes rules for its own media type', () => {
   for (const panel of ['DancerPhotoPanel.tsx', 'DancerMainPhotoPanel.tsx']) {
     assert.match(source(panel), /<DancerMediaUploadRules kind="photo" \/>/);
   }
-  assert.match(source('DancerAvatarPanel.tsx'), /<DancerMediaUploadRules kind="photo" facePhoto \/>/);
+  // Avatars now crop an approved main photo rather than accepting another upload.
+  assert.doesNotMatch(source('DancerAvatarPanel.tsx'), /type="file"/);
   assert.match(source('DancerTvStudio.tsx'), /<DancerMediaUploadRules kind="video" \/>/);
 });
 

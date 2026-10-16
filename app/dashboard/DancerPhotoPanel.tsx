@@ -507,20 +507,27 @@ export function DancerPhotoPanel({
           <span><strong>Add at least 1 solo photo of yourself. You can add more later.</strong></span>
         </div> : null}
         <div className="photo-source-grid">
-          <label className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}>
-            <input
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-              aria-label="Choose profile photos from your library"
-              className="photo-source-input"
-              disabled={photoActionBusy}
-              multiple
-              ref={galleryPhotoInputRef}
-              type="file"
-              onChange={(event) => {
-                queuePhotos(Array.from(event.target.files || []), "gallery");
-                event.target.value = "";
-              }}
-            />
+          <input
+            accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+            aria-hidden="true"
+            className="photo-source-input"
+            disabled={photoActionBusy}
+            multiple
+            ref={galleryPhotoInputRef}
+            tabIndex={-1}
+            type="file"
+            onChange={(event) => {
+              queuePhotos(Array.from(event.target.files || []), "gallery");
+              event.target.value = "";
+            }}
+          />
+          <button
+            aria-label="Choose profile photos from your library"
+            className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}
+            disabled={photoActionBusy}
+            type="button"
+            onClick={() => galleryPhotoInputRef.current?.click()}
+          >
             <span className="photo-source-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4zM7 15l3-3 2.5 2.5L15 12l3 3" /><circle cx="16.5" cy="9" r="1" /></svg>
             </span>
@@ -529,21 +536,28 @@ export function DancerPhotoPanel({
               <small>Choose existing photos</small>
             </span>
             <span className="photo-source-cta" aria-hidden="true">Choose</span>
-          </label>
-          <label className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}>
-            <input
-              accept="image/*"
-              aria-label="Take a new profile photo"
-              capture="environment"
-              className="photo-source-input"
-              disabled={photoActionBusy}
-              ref={cameraPhotoInputRef}
-              type="file"
-              onChange={(event) => {
-                queuePhotos(Array.from(event.target.files || []), "camera");
-                event.target.value = "";
-              }}
-            />
+          </button>
+          <input
+            accept="image/*"
+            aria-hidden="true"
+            capture="environment"
+            className="photo-source-input"
+            disabled={photoActionBusy}
+            ref={cameraPhotoInputRef}
+            tabIndex={-1}
+            type="file"
+            onChange={(event) => {
+              queuePhotos(Array.from(event.target.files || []), "camera");
+              event.target.value = "";
+            }}
+          />
+          <button
+            aria-label="Take a new profile photo"
+            className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}
+            disabled={photoActionBusy}
+            type="button"
+            onClick={() => cameraPhotoInputRef.current?.click()}
+          >
             <span className="photo-source-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M5 8h3l1.5-2h5L16 8h3v10H5z" /><circle cx="12" cy="13" r="3" /></svg>
             </span>
@@ -552,7 +566,7 @@ export function DancerPhotoPanel({
               <small>Take photo now</small>
             </span>
             <span className="photo-source-cta" aria-hidden="true">Open</span>
-          </label>
+          </button>
         </div>
         <p className="photo-upload-selection-hint">You can select several photos from your gallery.</p>
         {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}

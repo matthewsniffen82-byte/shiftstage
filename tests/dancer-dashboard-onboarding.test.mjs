@@ -338,7 +338,7 @@ test("a completed profile photo upload clears the native filename from onboardin
   assert.match(dashboard, /Take photo now/);
   assert.doesNotMatch(dashboard, /Choose from your phone or take a new photo\. Upload starts automatically\./);
   assert.match(dashboard, /\.photo-preview:not\(\.empty\) \{ filter: brightness\(1\.14\) contrast\(1\.03\); \}/);
-  assert.match(dashboard, /\.photo-source-input \{ position: absolute; inset: 0;[\s\S]*?opacity: 0;/);
+  assert.match(dashboard, /\.photo-source-input \{ position: fixed; width: 1px; height: 1px;[\s\S]*?opacity: 0; pointer-events: none;/);
   assert.match(dashboard, /event\.target\.value = ""/);
   assert.match(dashboard, /if \(galleryPhotoInputRef\.current\) galleryPhotoInputRef\.current\.value = ""/);
   assert.match(dashboard, /if \(cameraPhotoInputRef\.current\) cameraPhotoInputRef\.current\.value = ""/);
