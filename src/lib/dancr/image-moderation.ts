@@ -551,7 +551,7 @@ async function approveModeratedUpload(
     "31536000",
     input.isAvatar
       ? {}
-      : { archiveOriginal: true, watermark: true },
+      : { archiveOriginal: true, watermark: true, mainPhotoAvatar: true },
   );
   const finalPath = uploadedImage.storagePath;
 

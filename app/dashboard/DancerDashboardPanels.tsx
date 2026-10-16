@@ -63,9 +63,9 @@ export function DancerPanel({
     stageName: persistedDancerStageName(profile),
     city: String(profile?.city || ""),
   }));
-  const hasRejectedMedia = (profile?.avatar_review as Record<string, unknown> | undefined)?.decision === "rejected"
+  const hasRejectedMedia = (!profile?.avatar_source_photo_id && (profile?.avatar_review as Record<string, unknown> | undefined)?.decision === "rejected")
     || dancerPhotoItemsFromProfile(profile).some(photo => photo.status === "rejected");
-  const hasPendingAvatar = Boolean(profile?.pending_avatar_review);
+  const hasPendingAvatar = !profile?.avatar_source_photo_id && Boolean(profile?.pending_avatar_review);
   const hasPendingPhotos = dancerPhotoItemsFromProfile(profile).some((photo) => photo.status === "pending");
 
   useEffect(() => {

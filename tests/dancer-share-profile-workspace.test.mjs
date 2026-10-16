@@ -5,9 +5,9 @@ import test from "node:test";
 const dashboard = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 
 test("the final dancer workspace focuses on sharing instead of redundant billing cards", () => {
-  const workspace = dashboard.match(/const profileMediaWorkspace = \([\s\S]*?\n  \);/)?.[0] || "";
-  assert.match(workspace, /<details className="dancer-profile-share-tools">[\s\S]*<summary>[\s\S]*Share profile<\/span><\/summary>[\s\S]*<DancerSharePanel profile=\{profile\} \/>/);
-  assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"|title="Share profile"/);
+  const workspace = readFileSync("app/dashboard/DancerDashboardPanels.tsx", "utf8");
+  assert.match(workspace, /id="dancer-visibility-sharing"[\s\S]*id="dancer-share"[\s\S]*<DancerSharePanel profile=\{profile\} \/>/);
+  assert.doesNotMatch(dashboard, /id="dancer-sharing-billing"/);
   assert.doesNotMatch(dashboard, /function DancerBillingPanel/);
   assert.doesNotMatch(dashboard, /<Metric label="Subscription" value="FREE"/);
   assert.doesNotMatch(dashboard, /<Metric label="Monthly cost" value="\$0"/);

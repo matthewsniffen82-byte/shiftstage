@@ -21,7 +21,7 @@ const [
   readFile(new URL("../app/api/dancer/profile/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/public.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
-  readFile(new URL("../app/dancers/[slug]/page.tsx", import.meta.url), "utf8"),
+  readFile(new URL("../app/dancers/[slug]/PublicDancerProfile.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/tv/TvFeedClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
@@ -65,7 +65,7 @@ test("dancer dashboard avatar setup uses the same mobile-safe face-centering wor
   assert.match(liveShell, /function dancerSetupAvatarEditorMarkup\(profile\)/);
   assert.match(liveShell, /data-dashboard-avatar-editor/);
   assert.match(liveShell, /id="setupAvatarUploadStatus"/);
-  assert.match(liveShell, /MyDancr checks it and automatically centers the best square crop/);
+  assert.match(liveShell, /Your avatar is created automatically, with an adjustable crop/);
   assert.match(liveShell, /pendingAvatarUrl \? "" : publicAvatarPhotoSrcSet\(profile\)/);
   assert.match(liveShell, /\["approvedAvatarUploadStatus", "setupAvatarUploadStatus", "dancerDashboardAvatarStatus"\]/);
   assert.match(liveShell, /renderDancerSetup\(\);[\s\S]*?renderApprovedVisualProfileEditor\(\)/);
@@ -96,7 +96,7 @@ test("approved dancer dashboard exposes a dedicated live avatar editor", () => {
   );
   assert.match(liveShell, /function dancerDashboardAvatarEditorMarkup\(profile\)/);
   assert.match(liveShell, /id="dancerDashboardAvatarStatus"[^>]*aria-live="polite"/);
-  assert.match(liveShell, /MyDancr automatically centers it for avatar circles across the site/);
+  assert.match(liveShell, /Your approved main photo automatically supplies your avatar/);
   assert.match(liveShell, /renderDancerDashboardAvatarEditor\(profile, approved\)/);
   assert.match(
     liveShell,
@@ -180,7 +180,7 @@ test("all circular public identity surfaces prefer the approved avatar with main
   assert.match(publicService, /const avatarPhoto = dedicatedAvatar \|\| primaryPhoto/);
   assert.match(publicService, /avatarPhotoUrl: avatarPhoto\?\.imageUrl \|\| null/);
   assert.match(tvService, /const avatarPhoto = avatarPath[\s\S]*?: primaryPhoto/);
-  assert.match(dancerProfile, /const avatarPhoto = profile\.avatarPhotoUrl \|\| heroPhoto/);
+  assert.match(dancerProfile, /const avatarPhoto = profile\.avatarPhotoUrl \|\| \(preview \? "" : heroPhoto\)/);
   assert.match(tvFeed, /video\.dancer\.avatarPhotoUrl/);
   assert.match(liveShell, /function publicAvatarPhotoUrl\(profile\)/);
   assert.match(

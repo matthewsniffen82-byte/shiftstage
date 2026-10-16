@@ -64,6 +64,7 @@ type ResponsiveImageManifest = {
 export type ResponsiveImageUploadOptions = {
   archiveOriginal?: boolean;
   watermark?: boolean;
+  mainPhotoAvatar?: boolean;
 };
 
 const RESPONSIVE_MANIFEST_PATTERN =
@@ -174,6 +175,11 @@ export async function uploadResponsiveImage(
       path: responsiveVariantStoragePath(storagePath, variant.width),
     })),
   ];
+
+  if (options.mainPhotoAvatar) {
+    const { cropMainPhotoAvatar, mainPhotoAvatarPath } = await import("./main-photo-avatar-image");
+    objects.push({ buffer: await cropMainPhotoAvatar(master.buffer), contentType: "image/jpeg", path: mainPhotoAvatarPath(storagePath) });
+  }
 
   if (options.archiveOriginal) {
     await archiveOriginalMedia(

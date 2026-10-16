@@ -616,13 +616,12 @@
           <div class="dancer-dashboard-avatar-copy">
             <span class="eyebrow">Profile avatar</span>
             <strong>Your circular profile photo</strong>
-            <p>Upload a clear face photo. MyDancr automatically centers it for avatar circles across the site.</p>
+            <p>Your approved main photo automatically supplies your avatar.</p>
             <span class="dancer-dashboard-avatar-status ${avatarStatusClass}" id="dancerDashboardAvatarStatus" aria-live="polite">${displayText(avatarStatus)}</span>
           </div>
         </div>
         <div class="dancer-dashboard-avatar-actions">
-          <button type="button" data-approved-avatar-upload>${dedicatedAvatarPath || pendingAvatarReview ? "Replace avatar" : "Upload avatar"}</button>
-          ${dedicatedAvatarPath || pendingAvatarReview ? '<button class="approved-avatar-remove" type="button" data-approved-avatar-remove>Remove avatar</button>' : ""}
+          <a href="/dashboard/dancer#dancer-main-photo">Main photo &amp; avatar crop</a>
         </div>
       `;
     }
@@ -756,19 +755,18 @@
         ? "Replacement awaiting review. Your current live avatar stays visible until approval."
         : dedicatedAvatarPath
           ? "Live in dancer avatar circles across MyDancr."
-          : "Upload a clear face photo to create your centered avatar.";
+          : "Your avatar appears when your main photo is approved.";
       const avatarStatusClass = pendingAvatarReview ? "is-pending" : dedicatedAvatarPath ? "is-live" : "";
       return `
         <div class="setup-avatar-editor" data-dashboard-avatar-editor>
           <span class="setup-avatar-preview${avatarPreviewAttrs.className}"${avatarPreviewAttrs.style} role="img" aria-label="Avatar preview">${avatarPreviewUrl ? "" : displayText(avatarInitials)}</span>
           <div class="setup-avatar-copy">
             <strong>Face avatar</strong>
-            <p>Choose a clear face photo. MyDancr checks it and automatically centers the best square crop for every avatar circle.</p>
+            <p>Upload your main photo once. Your avatar is created automatically, with an adjustable crop.</p>
             <span class="setup-avatar-status ${avatarStatusClass}" id="setupAvatarUploadStatus" aria-live="polite">${displayText(avatarStatus)}</span>
           </div>
           <div class="setup-avatar-actions">
-            <button class="action-btn secondary" type="button" data-approved-avatar-upload>${dedicatedAvatarPath || pendingAvatarReview ? "Replace avatar" : "Upload clear face photo"}</button>
-            ${dedicatedAvatarPath || pendingAvatarReview ? '<button class="action-btn secondary" type="button" data-approved-avatar-remove>Remove avatar</button>' : ""}
+            <a class="action-btn secondary" href="/dashboard/dancer#dancer-main-photo">Add or edit main photo</a>
           </div>
         </div>
       `;

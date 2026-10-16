@@ -117,12 +117,12 @@ test("onboarding expands the current required step and exposes accessible contro
   assert.match(dashboard, /dancer-onboarding-step-marker" aria-hidden="true">\{displayComplete \? "✓" : index \+ 1\}/);
 });
 
-test("profile and media workspace uses production avatar face centering and moderation", () => {
+test("profile and media workspace derives the avatar from the approved main photo", () => {
   assert.match(dashboard, /DancerAvatarPanel/);
-  assert.match(dashboard, /requestDancerAvatarJson/);
+  assert.match(dashboard, /requestDashboardJson\("\/api\/dancer\/avatar\/crop"/);
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/avatar"/);
-  assert.match(dashboard, /Checking your avatar/);
-  assert.match(dashboard, /avatarUploadPresentation\(\{ upload: uploadFeedback, avatarUrl, pendingReview: pendingAvatar, latestReview: latestAvatarReview \}\)/);
+  assert.match(dashboard, /Saving your avatar crop/);
+  assert.match(dashboard, /Your avatar appears when your main photo is approved/);
   assert.match(avatarRoute, /moderateAndStoreDancerPhoto/);
   assert.match(avatarRoute, /PROFILE_AVATAR_CONTEXT/);
   assert.match(avatarRoute, /isAvatarFaceRequiredError/);
@@ -217,9 +217,9 @@ test("approved dancers retain analytics without commission promotions", () => {
 
 test("the full profile editor retains accessible add targets that preserve the active editor", () => {
   assert.match(dashboard, /const \[activeEditorSection, setActiveEditorSection\] = useState<DancerProfileEditorSectionId \| null>\(null\)/);
-  assert.match(dashboard, /aria-label=\{headerImage \? "Edit avatar" : "Add avatar"\}/);
+  assert.match(dashboard, /aria-label="Adjust avatar crop"\s+disabled=\{!headerImage\}/);
   assert.match(dashboard, /className="dancer-profile-builder-avatar-camera" viewBox="0 0 24 24"/);
-  assert.match(dashboard, /headerImage \? "Change avatar" : "Add avatar"/);
+  assert.match(dashboard, /headerImage \? "Adjust crop" : "Automatic avatar"/);
   assert.match(dashboard, /aria-label=\{isEditor \? "Close profile editor" : "Close profile preview"\}[\s\S]*?viewBox="0 0 20 20"[\s\S]*?d="M5\.5 5\.5l9 9M14\.5 5\.5l-9 9"/);
   assert.match(dashboard, /\.dancer-profile-builder-avatar \{ width:64px; min-width:64px; max-width:64px; height:64px; min-height:64px; max-height:64px; aspect-ratio:1;/);
   assert.match(dashboard, /\.dancer-profile-builder-avatar\.is-empty \{[^}]*border:1px solid #645778 !important;/);
@@ -342,10 +342,8 @@ test("a completed profile photo upload clears the native filename from onboardin
   assert.match(dashboard, /event\.target\.value = ""/);
   assert.match(dashboard, /if \(galleryPhotoInputRef\.current\) galleryPhotoInputRef\.current\.value = ""/);
   assert.match(dashboard, /if \(cameraPhotoInputRef\.current\) cameraPhotoInputRef\.current\.value = ""/);
-  assert.match(dashboard, /aria-label="Choose face photo from your photo library"/);
-  assert.match(dashboard, /aria-label="Take a new avatar photo"/);
-  assert.match(dashboard, /capture="user"/);
-  assert.match(dashboard, /dancer-avatar-source-grid/);
+  assert.match(dashboard, /aria-label="Adjust avatar crop"/);
+  assert.doesNotMatch(dashboard, /aria-label="Choose face photo from your photo library"/);
 });
 
 test("photo and video uploaders auto-upload multiple phone files with independent recovery", () => {

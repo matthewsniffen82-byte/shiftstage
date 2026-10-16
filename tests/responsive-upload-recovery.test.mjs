@@ -8,18 +8,19 @@ import vm from 'node:vm';
 import test,{before} from 'node:test';
 import ts from 'typescript';
 import sharp from 'sharp';
+import { detector } from './helpers/avatar-face-runtime.mjs';
 
 // Run actual image preparation, watermark, archive and path code. Only storage
 // transport is synthetic; the old-source switch proves the regression cases.
 const nativeRequire=createRequire(import.meta.url),cache=new Map(),root=fileURLToPath(new URL('../',import.meta.url));
 function load(relative){
- const absolute=path.resolve(root,relative);if(cache.has(absolute))return cache.get(absolute).exports;
+ let absolute=path.resolve(root,relative);if(!path.extname(absolute))absolute+='.ts';if(cache.has(absolute))return cache.get(absolute).exports;
  const testModule={exports:{}};cache.set(absolute,testModule);
  const baseline=process.env.MYDANCR_RESPONSIVE_UPLOAD_BASELINE==='1'&&['responsive-image.ts','media-watermark.ts'].includes(path.basename(absolute));
  const source=baseline?execFileSync('git',['show','52a63c8e9bccc5fe6606bce7d10416779fbd72a4:'+relative.replaceAll('\\','/')],{encoding:'utf8',windowsHide:true}):readFileSync(absolute,'utf8');
  const compiled=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,esModuleInterop:true}}).outputText;
  // Match Next's server-only marker resolution only for the protected media signer.
- const requireModule=name=>name==='server-only'&&absolute===path.resolve(root,'src/lib/dancr/media-delivery-url.ts')
+ const requireModule=name=>name==='./avatar-face-detector'?detector:name==='server-only'
   ?nativeRequire('next/dist/compiled/server-only/empty.js')
   :name.startsWith('.')?load(path.relative(root,path.resolve(path.dirname(absolute),name))):nativeRequire(name);
  vm.runInNewContext(compiled,{exports:testModule.exports,module:testModule,require:requireModule,Buffer,console,process,URL,setTimeout,clearTimeout});
@@ -29,6 +30,17 @@ const responsive=load('src/lib/dancr/responsive-image.ts'),watermark=load('src/l
 const bucket='dancer-photos',archiveBucket='dancr-media-originals',oldBytes=Buffer.from('preserved existing bytes');
 let master;
 before(async()=>{const buffer=await sharp({create:{width:700,height:800,channels:3,background:'#223344'}}).jpeg().toBuffer();master={buffer,width:700,height:800,contentType:'image/jpeg',extension:'jpg',storageFileName:'fixture.jpg',sha256:'synthetic'};});
+
+test('approved profile uploads include a complete square avatar before publication can proceed',async()=>{
+ const h=harness(),result=await h.run({archiveOriginal:true,watermark:true,mainPhotoAvatar:true});
+ const bytes=h.files.get(bucket+'/'+result.storagePath+'.avatar.jpg');assert.ok(bytes);
+ const metadata=await sharp(bytes).metadata();assert.equal(metadata.width,640);assert.equal(metadata.height,640);
+});
+test('failed avatar derivative upload prevents publication and retains the original files',async()=>{
+ const h=harness({failStage:5,publicMode:'error'});
+ await assert.rejects(h.run({archiveOriginal:true,watermark:true,mainPhotoAvatar:true}));h.noRemoval();
+ assert.equal(h.calls.filter(c=>c.bucket===bucket).length,5);
+});
 
 function harness(options={}){
  const calls=[],files=new Map();let publicAttempt=0,releaseHold;

@@ -181,12 +181,12 @@
         ? "Replacement awaiting review. Your current live avatar stays visible until approval."
         : dedicatedAvatarPath
           ? "Live in dancer avatar circles across MyDancr."
-          : "Your main photo is used until you upload a dedicated avatar.";
+          : "Your avatar is created automatically from your approved main photo.";
       return `
         <div class="approved-visual-profile">
           <div class="approved-edit-help">
             <strong>Edit your public profile</strong>
-            <span>Update your stage name and face avatar first. For gallery pictures, tap the pencil and then tap a picture to replace or delete it.</span>
+            <span>Your main photo also supplies your avatar. For gallery pictures, tap the pencil and then tap a picture to replace or delete it.</span>
           </div>
           <section class="profile-modal">
             <section class="approved-profile-identity-editor" aria-labelledby="approvedIdentityEditorTitle">
@@ -209,14 +209,13 @@
                   </div>
                   <div class="approved-avatar-copy">
                     <strong id="approvedAvatarEditorTitle">Face avatar</strong>
-                    <p>Use a clear face photo. MyDancr centers it in live avatar circles.</p>
+                    <p>Your avatar is created from your main photo. Adjust its crop in your profile.</p>
                     <span class="approved-avatar-status ${pendingAvatarReview ? "is-pending" : dedicatedAvatarPath ? "is-live" : ""}" id="approvedAvatarUploadStatus" aria-live="polite">${displayText(avatarStatus)}</span>
                   </div>
                 </div>
               </div>
               <div class="approved-avatar-actions">
-                <button type="button" data-approved-avatar-upload>${dedicatedAvatarPath || pendingAvatarReview ? "Replace avatar" : "Upload avatar"}</button>
-                ${dedicatedAvatarPath || pendingAvatarReview ? '<button class="approved-avatar-remove" type="button" data-approved-avatar-remove>Remove avatar</button>' : ""}
+                <a href="/dashboard/dancer#dancer-main-photo">Main photo &amp; avatar crop</a>
               </div>
             </section>
             <div class="approved-photo-edit-frame">

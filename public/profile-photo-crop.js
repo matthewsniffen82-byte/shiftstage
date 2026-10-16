@@ -29,7 +29,7 @@
 
   function crop(file, options) {
     if (options.signal?.aborted) return Promise.reject(new DOMException("Photo selection closed.", "AbortError"));
-    if (confirmed.has(file)) return Promise.resolve(confirmed.get(file));
+    if (!options.onCrop && confirmed.has(file)) return Promise.resolve(confirmed.get(file));
     if (active) return Promise.reject(new Error("Finish the current photo crop first."));
     if (!file.size || file.size > 25 * 1024 * 1024) return Promise.reject(new Error("Photos must be 25 MB or smaller."));
     let ratio;
@@ -44,6 +44,10 @@
       dialog.className = "dancr-photo-crop";
       dialog.setAttribute("aria-label", "Crop profile photo");
       dialog.innerHTML = '<div data-crop-header><h2>Fit your photo to the card</h2><p>Drag to position, then adjust zoom. Framing may vary slightly by screen.</p></div><div data-crop-frame hidden><canvas tabindex="0" role="img" aria-label="Photo crop preview. Use arrow keys to reposition the photo."></canvas></div><div data-crop-controls><label data-crop-zoom hidden>Zoom<input type="range" min="1" max="3" step="0.01" value="1" aria-label="Photo zoom"></label><div data-crop-actions><button type="button" data-crop-cancel>Cancel</button><button type="button" data-crop-reset hidden disabled>Reset</button><button type="button" data-crop-confirm hidden disabled>Use photo</button><button type="button" data-crop-retry hidden>Retry</button></div><p data-crop-status role="status" aria-live="polite">Preparing your photo…</p></div>';
+      if (options.onCrop) {
+        dialog.setAttribute("aria-label", "Adjust avatar crop");
+        dialog.querySelector("h2").textContent = "Fit your face in the avatar";
+      }
       const canvas = dialog.querySelector("canvas");
       const frame = dialog.querySelector("[data-crop-frame]");
       const range = dialog.querySelector("input");
@@ -111,7 +115,7 @@
           dialog.querySelector("[data-crop-zoom]").hidden = false;
           confirm.hidden = reset.hidden = false;
           confirm.disabled = reset.disabled = false;
-          status.textContent = options.confirmLabel ? "Your current photo stays visible until the saved crop is approved." : "Your photo is added to your profile only after you choose Use photo.";
+          status.textContent = options.onCrop ? "Drag and zoom your main photo, then save your avatar crop." : options.confirmLabel ? "Your current photo stays visible until the saved crop is approved." : "Your photo is added to your profile only after you choose Use photo.";
           if (!dialog.open) dialog.showModal();
           draw();
           canvas.focus({ preventScroll: true });
@@ -164,6 +168,11 @@
         status.textContent = "Saving your crop…";
         try {
           const rect = cropRect(image.naturalWidth, image.naturalHeight, ratio, zoom, x, y);
+          if (options.onCrop) {
+            options.onCrop({ x: rect.x / image.naturalWidth, y: rect.y / image.naturalHeight, width: rect.width / image.naturalWidth, height: rect.height / image.naturalHeight });
+            finish(file);
+            return;
+          }
           const output = document.createElement("canvas");
           const scale = Math.min(1, 2400 / Math.max(rect.width, rect.height));
           output.width = Math.max(1, Math.round(rect.width * scale));

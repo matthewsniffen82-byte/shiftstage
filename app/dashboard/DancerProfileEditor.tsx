@@ -389,7 +389,8 @@ export function DancerProfilePreview({
             <header className="profile-titlebar">
               {isEditor ? (
                 <button
-                  aria-label={headerImage ? "Edit avatar" : "Add avatar"}
+                  aria-label="Adjust avatar crop"
+                  disabled={!headerImage}
                   className="dancer-profile-builder-avatar-control"
                   data-profile-editor-trigger="avatar"
                   onClick={() => openEditorSection("avatar")}
@@ -402,7 +403,7 @@ export function DancerProfilePreview({
                       </svg>
                     )}
                   </span>
-                  <small>{headerImage ? "Change avatar" : "Add avatar"}</small>
+                  <small>{headerImage ? "Adjust crop" : "Automatic avatar"}</small>
                 </button>
               ) : (
                 <span className={`profile-titlebar-avatar${headerImage ? " has-photo" : ""}`}>
@@ -554,7 +555,7 @@ export function DancerOnboardingCommand({
   const agreementNextStep = renewingAgreement ? "Review the updated agreement to continue."
     : "Review and accept the Dancer Agreement to continue to age verification.";
   const setupDetail = profileReady
-    ? "Your details, face photo, and three profile photos are ready."
+    ? "Your details, automatic avatar, and three profile photos are ready."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
   const steps = useMemo(() => [
     {
@@ -880,7 +881,6 @@ function dancerProfileSetupBlocker({
   persistedStageName,
   persistedCity,
   avatarUrl,
-  pendingAvatar,
   approvedPhotos,
   pendingPhotos,
   rejectedPhotos,
@@ -894,9 +894,8 @@ function dancerProfileSetupBlocker({
   rejectedPhotos: DancerPhotoItem[];
 }) {
   if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
-  if (!avatarUrl && pendingAvatar) return "Awaiting review: your face photo. Your progress is saved.";
-  if (!avatarUrl) return "Add a clear face photo.";
   if (!approvedPhotos.some(photo => photo.isPrimary)) return "Choose your main photo.";
+  if (!avatarUrl) return "Refresh your profile to load the avatar from your main photo.";
   if (approvedProfilePhotoCount(approvedPhotos) < MIN_DANCER_ONBOARDING_PHOTOS) {
     if (pendingPhotos.length) return `Awaiting review: ${approvedPhotos.length} of ${MIN_DANCER_ONBOARDING_PHOTOS} required profile photos approved. You can add photos while you wait.`;
     if (rejectedPhotos.length) return "Needs your action: replace photos that were not approved. Three approved profile photos are required.";
@@ -975,11 +974,11 @@ export function DancerOnboardingProfileMediaWorkspace({
           {identityContent()}
         </DancerIdentityEditor>
       </article>
-      <details className="dancer-setup-extra" open={avatarState !== "complete" ? true : undefined}>
-        <summary>Avatar <small>{avatarState === "complete" ? "✓ Saved" : "Required"}</small></summary>
+      {mainPhotoContent}
+      <details className="dancer-setup-extra">
+        <summary>Avatar <small>{avatarState === "complete" ? "✓ Saved" : "Automatic"}</small></summary>
         {avatarContent}
       </details>
-      {mainPhotoContent}
       <details className="dancer-setup-extra">
         <summary>More photos <small>Optional</small></summary>
         {photoContent}

@@ -107,7 +107,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
     </button>
     <div className="dancer-main-photo-copy">
       <h3>Main photo</h3>
-      <p>Shown on your grid card and at the top of your profile.</p>
+      <p>Shown on your dancer card and profile. Your avatar is created automatically.</p>
       <strong className="dancer-main-photo-state" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? "Checking" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">

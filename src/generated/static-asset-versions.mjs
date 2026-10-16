@@ -34,7 +34,7 @@ export const staticAssetVersions = {
   "/dancer-profile-layout.css": "071775e11b0e6d11",
   "/profile-media-card-feed.css": "58ff4f6d9ffe88b2",
   "/profile-photo-crop.css": "117dfd4225c521ff",
-  "/profile-photo-crop.js": "0f0703c7c1ce7e7c",
+  "/profile-photo-crop.js": "7dbbbeff55a0f58f",
   "/profile-video-crop.js": "067b7b292e74f9bd",
   "/profile-video-crop.css": "7c9b4d705656f8d8",
   "/profile-video-progress-line.js": "7ec0a8f3dd91c802",

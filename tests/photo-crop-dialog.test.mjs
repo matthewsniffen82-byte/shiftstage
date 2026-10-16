@@ -32,9 +32,19 @@ function fixture() {
   const controller = new AbortController();
   return { dialog, node, viewport, controller,
     decode: () => decode(),
-    start: prepare => window.DancrPhotoCrop.crop({ size: 100 }, { aspectRatio: .75, prepare, signal: controller.signal }),
+    start: (prepare, options = {}) => window.DancrPhotoCrop.crop({ size: 100 }, { aspectRatio: .75, prepare, signal: controller.signal, ...options }),
   };
 }
+
+test('avatar crop returns normalized square coordinates without uploading or encoding new image bytes', async () => {
+  const f = fixture(); let selected;
+  const result = f.start(async () => 'data:image/jpeg;base64,fixture', { aspectRatio: 1, onCrop: value => { selected = value; } });
+  await tick(); f.decode(); await tick();
+  f.node('[data-crop-confirm]').dispatchEvent(new Event('click'));
+  await result;
+  assert.deepEqual({ ...selected }, { x: 0, y: .125, width: 1, height: .75 });
+  assert.equal(f.dialog.removed, true);
+});
 
 test("the editor first opens with a decoded photo and sizes it around the controls in the visible viewport", async () => {
   const f = fixture();

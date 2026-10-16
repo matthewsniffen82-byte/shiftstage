@@ -1,349 +1,88 @@
 "use client";
 
 import { useContext, useEffect, useRef, useState } from "react";
-import { AVATAR_REJECTED_MESSAGE, avatarUploadPresentation, type AvatarUploadFeedback } from "./avatar-upload-state";
-import { DashboardDataRequestError, requestDashboardJson, readSession, requestDancerAvatarJson, requestDancerProfileJson } from "./dashboard-session";
-import type { DancerPhotoItem, LoadState } from "./dashboard-types";
+import { DASHBOARD_SESSION_KEY, requestDashboardJson, readSession, requestDancerProfileJson } from "./dashboard-session";
+import type { LoadState } from "./dashboard-types";
 import { AvatarUploadBusyContext } from "./DashboardShared";
-import { cropProfilePhoto } from "./profile-photo-crop";
+import { cropProfilePhoto, type AvatarCrop } from "./profile-photo-crop";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
-import DancerMediaRetryButton from "./DancerMediaRetryButton";
-import DancerPhotoControls from "./DancerPhotoControls";
-import DancerMediaUploadRules from "./DancerMediaUploadRules";
-export function DancerAvatarPanel({
-  compact = false,
-  onProfileChange,
-  profile,
-}: {
+
+export function DancerAvatarPanel({ compact = false, onProfileChange, profile }: {
   compact?: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
 }) {
-  const [preparing, setPreparing] = useState(false);
-  const preparation = useRef<AbortController | null>(null);
-  const approvedPhotos = dancerPhotoItemsFromProfile(profile).filter(photo => photo.status === "approved");
-  const mainPhoto = approvedPhotos.find(photo => photo.isPrimary);
-  const [editRequested, setEditRequested] = useState(0);
-  const libraryInput = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [status, setStatus] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadFeedback, setUploadFeedback] = useState<AvatarUploadFeedback | null>(null);
-  const reportAvatarBusy = useContext(AvatarUploadBusyContext);
-  const mountedRef = useRef(false);
-  const actionSequenceRef = useRef(0);
-  const actionAbortRef = useRef<AbortController | null>(null);
-  const actionInFlightRef = useRef(false);
-  const uploadIdentityRef = useRef<{ signature: string; key: string } | null>(null);
+  const main = dancerPhotoItemsFromProfile(profile).find(photo => photo.status === "approved" && photo.isPrimary);
   const avatarUrl = String(profile?.avatarPhotoUrl || "");
-  const pendingAvatar = profile?.pending_avatar_review as Record<string, unknown> | undefined;
-  const latestAvatarReview = profile?.avatar_review as Record<string, unknown> | undefined;
-  const pendingPreviewRef = useRef({ id: "", url: "" });
-  const pendingId = String(pendingAvatar?.id || "");
-  if (pendingPreviewRef.current.id !== pendingId) {
-    pendingPreviewRef.current = { id: pendingId, url: String(pendingAvatar?.previewUrl || "") };
-  }
-
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState("");
+  const action = useRef<AbortController | null>(null);
+  const reportBusy = useContext(AvatarUploadBusyContext);
+  useEffect(() => { reportBusy(busy); return () => reportBusy(false); }, [busy, reportBusy]);
   useEffect(() => {
-    reportAvatarBusy(isSaving || preparing);
-    return () => reportAvatarBusy(false);
-  }, [isSaving, preparing, reportAvatarBusy]);
+    action.current?.abort(); action.current = null; setBusy(false); setStatus("");
+    return () => { action.current?.abort(); action.current = null; };
+  }, [profile?.id, main?.id, main?.storagePath, profile?.avatar_updated_at]);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      preparation.current?.abort();
-      actionSequenceRef.current += 1;
-      actionAbortRef.current?.abort();
-      actionAbortRef.current = null;
-      actionInFlightRef.current = false;
-      uploadIdentityRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-  }, [previewUrl]);
-
-  function selectAvatar(nextFile: File | null, fromMainPhoto = false) {
-    if (actionInFlightRef.current) return;
-    if (preparation.current && !fromMainPhoto) return;
-    if (!nextFile) return;
-    uploadIdentityRef.current = createAvatarUploadIdentity(nextFile);
-    setFile(nextFile);
-    setPreviewUrl(URL.createObjectURL(nextFile));
-    setUploadFeedback(null);
-    setStatus("");
-    void uploadAvatar(nextFile);
-  }
-
-  async function reuseMainPhoto(photo: DancerPhotoItem | undefined = mainPhoto) {
-    if (!photo || preparation.current || actionInFlightRef.current) return;
+  async function adjustCrop() {
+    if (!main || action.current) return;
     const owner = readSession()?.account?.id;
-    if (!owner) { setStatus("Sign in again to use your main photo."); return; }
-    const controller = new AbortController();
-    preparation.current = controller;
-    setPreparing(true); setStatus("Opening your photo. Crop around your face.");
+    if (!owner) { setStatus("Sign in again to adjust your avatar."); return; }
+    const controller = new AbortController(); action.current = controller;
+    setBusy(true); setStatus("Opening your main photo…");
     const assertOwner = () => {
-      if (controller.signal.aborted || !mountedRef.current || readSession()?.account?.id !== owner || readSession()?.account?.role !== "dancer") throw new DOMException("Photo selection canceled.", "AbortError");
+      const session = readSession();
+      if (controller.signal.aborted || session?.account?.id !== owner || session.account.role !== "dancer") throw new DOMException("Crop canceled.", "AbortError");
     };
+    const accountChanged = (event: StorageEvent) => {
+      if (event.key !== DASHBOARD_SESSION_KEY && event.key !== null) return;
+      try { assertOwner(); } catch { controller.abort(); }
+    };
+    window.addEventListener("storage", accountChanged);
     try {
-      const body = new FormData(); body.set("photoId", photo.id);
-      const data = await requestDashboardJson("/api/dancer/photos/preview", { method: "POST", body, signal: controller.signal, expectedRole: "dancer", fallbackMessage: "Unable to open your main photo." });
       assertOwner();
-      if (typeof data.imageDataUrl !== "string" || !data.imageDataUrl.startsWith("data:image/jpeg;base64,")) throw new Error("Unable to prepare your main photo.");
-      const bytes = Uint8Array.from(atob(data.imageDataUrl.split(",")[1]), character => character.charCodeAt(0));
-      const cropped = await cropProfilePhoto(new File([bytes], "face-photo.jpg", { type: "image/jpeg" }), controller.signal, assertOwner, 1, data.imageDataUrl);
+      const body = new FormData(); body.set("photoId", main.id);
+      const prepared = await requestDashboardJson("/api/dancer/photos/preview", { method: "POST", body, signal: controller.signal, expectedRole: "dancer" });
       assertOwner();
-      if (cropped) selectAvatar(cropped, true);
-      else setStatus("Crop canceled. Your face photo hasn’t changed.");
-    } catch (error) {
-      if (!controller.signal.aborted && mountedRef.current) setStatus(error instanceof Error ? error.message : "Unable to use your main photo.");
-    } finally {
-      if (!controller.signal.aborted && mountedRef.current) setPreparing(false);
-      if (preparation.current === controller) preparation.current = null;
-    }
-  }
-
-  async function refreshProfile(signal: AbortSignal) {
-    const data = await requestDancerProfileJson({
-      cache: "no-store",
-      fallbackMessage: "Unable to refresh your avatar.",
-      signal,
-    });
-    if (!data.profile) throw new Error("Unable to refresh your avatar.");
-    return data.profile as Record<string, unknown>;
-  }
-
-  function beginAvatarAction() {
-    if (!mountedRef.current || actionInFlightRef.current) return null;
-    actionInFlightRef.current = true;
-    const requestId = ++actionSequenceRef.current;
-    actionAbortRef.current?.abort();
-    const controller = new AbortController();
-    actionAbortRef.current = controller;
-    return { requestId, controller };
-  }
-
-  function isCurrentAvatarAction(requestId: number, controller: AbortController) {
-    return mountedRef.current && !controller.signal.aborted && requestId === actionSequenceRef.current;
-  }
-
-  function finishAvatarAction(requestId: number) {
-    if (requestId !== actionSequenceRef.current) return false;
-    actionAbortRef.current = null;
-    actionInFlightRef.current = false;
-    return mountedRef.current;
-  }
-
-  async function uploadAvatar(nextFile: File) {
-    const session = readSession();
-    if (!session?.accessToken) {
-      setUploadFeedback({ state: "failed", message: "Sign in again before uploading your avatar." });
-      return;
-    }
-    if (!nextFile.type.startsWith("image/") || nextFile.size > 25 * 1024 * 1024) {
-      setFile(null);
-      setUploadFeedback({ state: "failed", message: nextFile.size > 25 * 1024 * 1024
-        ? "Avatar photos must be 25 MB or smaller. Choose another photo."
-        : "Choose a JPEG, PNG, WebP, HEIC, or HEIF image." });
-      return;
-    }
-    const formData = new FormData();
-    const signature = avatarFileSignature(nextFile);
-    const uploadIdentity = uploadIdentityRef.current?.signature === signature
-      ? uploadIdentityRef.current
-      : createAvatarUploadIdentity(nextFile);
-    uploadIdentityRef.current = uploadIdentity;
-    const uploadKey = uploadIdentity.key;
-    formData.set("file", nextFile);
-    formData.set("idempotencyKey", uploadKey);
-    const action = beginAvatarAction();
-    if (!action) return;
-    const { requestId, controller } = action;
-    setIsSaving(true);
-    setUploadProgress(25);
-    setStatus("");
-    setUploadFeedback({ state: "checking", message: "Checking your avatar..." });
-    try {
-      const data = await requestDancerAvatarJson({
-        method: "POST",
-        headers: { "idempotency-key": uploadKey },
-        body: formData,
-        fallbackMessage: "Unable to upload avatar.",
-        signal: controller.signal,
+      if (typeof prepared.imageDataUrl !== "string" || !prepared.imageDataUrl.startsWith("data:image/jpeg;base64,")) throw new Error("Unable to open your main photo.");
+      const bytes = Uint8Array.from(atob(prepared.imageDataUrl.split(",")[1]), character => character.charCodeAt(0));
+      let crop: AvatarCrop | undefined;
+      await cropProfilePhoto(new File([bytes], "main-photo.jpg", { type: "image/jpeg" }), controller.signal, assertOwner, 1, prepared.imageDataUrl, value => { crop = value; });
+      assertOwner();
+      if (!crop) { setStatus("Crop canceled. Your avatar hasn’t changed."); return; }
+      setStatus("Saving your avatar crop…");
+      await requestDashboardJson("/api/dancer/avatar/crop", {
+        method: "POST", headers: { "content-type": "application/json" }, signal: controller.signal, expectedRole: "dancer",
+        body: JSON.stringify({ photoId: main.id, sourcePath: main.storagePath, expectedAvatarUpdatedAt: profile?.avatar_updated_at ?? null, crop }),
+        fallbackMessage: "Unable to save your crop. Refresh your profile before trying again.",
       });
-      if (!isCurrentAvatarAction(requestId, controller)) return;
-      setUploadProgress(85);
-      // The server has received this file. A failed read must never offer to upload it again.
-      const decision = String(data.decision || "pending").toLowerCase();
-      const feedback: AvatarUploadFeedback = {
-        state: decision === "approved" ? "approved" : decision === "rejected" ? "rejected" : "pending",
-        reviewId: String(data.moderationRecordId || ""),
-        moderationStatus: decision === "review" ? "pending_review" : decision,
-        message: decision === "rejected" ? AVATAR_REJECTED_MESSAGE : "",
-      };
-      setUploadFeedback(feedback);
-      setFile(null);
-      uploadIdentityRef.current = null;
+      assertOwner();
+      // An acknowledged save is never retried just because the profile read failed.
+      setStatus("Avatar crop saved.");
       try {
-        const refreshedProfile = await refreshProfile(controller.signal);
-        if (!isCurrentAvatarAction(requestId, controller)) return;
-        onProfileChange?.(refreshedProfile);
-      } catch {
-        if (!isCurrentAvatarAction(requestId, controller)) return;
-        setUploadFeedback({ ...feedback, message: decision === "rejected" ? AVATAR_REJECTED_MESSAGE
-          : "Your photo was uploaded. Reload the dashboard to see its latest status." });
-      }
+        const refreshed = await requestDancerProfileJson({ cache: "no-store", signal: controller.signal });
+        assertOwner();
+        if (!refreshed.profile) throw new Error("Profile unavailable.");
+        onProfileChange?.(refreshed.profile);
+      } catch { assertOwner(); setStatus("Avatar crop saved. Reload to see the latest photo."); }
     } catch (error) {
-      if (isCurrentAvatarAction(requestId, controller)) {
-        const rejected = error instanceof DashboardDataRequestError && error.status === 422;
-        if (rejected) {
-          setFile(null);
-          uploadIdentityRef.current = null;
-        }
-        setUploadFeedback({ state: rejected ? "rejected" : "failed", message: rejected
-          ? AVATAR_REJECTED_MESSAGE
-          : error instanceof Error ? error.message : "Unable to upload avatar. Try again." });
-      }
+      if (!controller.signal.aborted) setStatus(error instanceof Error ? error.message : "Unable to adjust your avatar.");
     } finally {
-      if (finishAvatarAction(requestId)) {
-        setIsSaving(false);
-        setUploadProgress(0);
-      }
+      window.removeEventListener("storage", accountChanged);
+      if (action.current === controller) { action.current = null; setBusy(false); }
     }
   }
 
-  function avatarFileSignature(nextFile: File) {
-    return `${nextFile.name}:${nextFile.size}:${nextFile.lastModified}`;
-  }
-
-  function createAvatarUploadIdentity(nextFile: File) {
-    const signature = avatarFileSignature(nextFile);
-    return { signature, key: `${signature}:avatar:${crypto.randomUUID()}` };
-  }
-
-  async function removeAvatar() {
-    if (actionInFlightRef.current) return;
-    if (!window.confirm("Remove your current avatar? A moderated avatar is required before profile submission.")) return;
-    const session = readSession();
-    if (!session?.accessToken) return setStatus("Sign in required.");
-    const action = beginAvatarAction();
-    if (!action) return;
-    const { requestId, controller } = action;
-    setIsSaving(true);
-    setStatus("Removing avatar...");
-    try {
-      await requestDancerAvatarJson({
-        method: "DELETE",
-        fallbackMessage: "Unable to remove avatar.",
-        signal: controller.signal,
-      });
-      if (!isCurrentAvatarAction(requestId, controller)) return;
-      pendingPreviewRef.current = { id: "", url: "" };
-      uploadIdentityRef.current = null;
-      setUploadFeedback(null);
-      setFile(null);
-      setPreviewUrl("");
-      onProfileChange?.({ ...profile, avatarPhotoUrl: "", pending_avatar_review: null, avatar_review: null });
-      const refreshedProfile = await refreshProfile(controller.signal);
-      if (!isCurrentAvatarAction(requestId, controller)) return;
-      onProfileChange?.(refreshedProfile);
-      setStatus("Avatar removed.");
-    } catch (error) {
-      if (isCurrentAvatarAction(requestId, controller)) {
-        setStatus(error instanceof Error ? error.message : "Unable to remove avatar.");
-      }
-    } finally {
-      if (finishAvatarAction(requestId)) setIsSaving(false);
-    }
-  }
-
-  const visibleAvatar = previewUrl || pendingPreviewRef.current.url || avatarUrl;
-  const presentation = avatarUploadPresentation({ upload: uploadFeedback, avatarUrl, pendingReview: pendingAvatar, latestReview: latestAvatarReview });
-  const statusMessage = status || presentation.message;
-  return (
-    <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={isSaving || preparing} data-avatar-state={presentation.state || "required"}>
-      {!compact ? <p className="dancer-profile-editor-intro">Use a clear solo face photo of yourself.</p> : null}
-      <div className="dancer-avatar-editor" aria-label="Face photo preview">
-        <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!visibleAvatar} type="button" disabled={isSaving || preparing}
-          aria-label={visibleAvatar ? "Edit face photo" : "Add face photo"}
-          onClick={() => visibleAvatar ? setEditRequested(value => value + 1) : libraryInput.current?.click()}>
-          {visibleAvatar ? <img src={visibleAvatar} alt="Selected face photo preview" /> : <b aria-hidden="true">+</b>}
-          {previewUrl && presentation.state === "approved" && latestAvatarReview?.id === uploadFeedback?.reviewId && avatarUrl ? (
-            <img
-              alt=""
-              aria-hidden="true"
-              data-avatar-approved-preview
-              src={avatarUrl}
-              style={{ display: "none" }}
-              onLoad={() => setPreviewUrl((current) => current === previewUrl ? "" : current)}
-            />
-          ) : null}
-        </button>
-        <strong className={`dancer-avatar-state is-${presentation.state || "required"}`}>{presentation.label}</strong>
-      </div>
-      <div className="dancer-avatar-upload-controls">
-        <DancerPhotoControls label="face photo" compact={compact} hidden={compact && !visibleAvatar} openRequested={editRequested} disabled={isSaving || preparing} primary={
-        <div className="photo-source-grid dancer-avatar-source-grid">
-          <label className={`photo-source-action${isSaving ? " is-disabled" : ""}`}>
-            <input
-              ref={libraryInput}
-              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-              aria-label="Choose face photo from your photo library"
-              className="photo-source-input"
-              disabled={isSaving || preparing}
-              type="file"
-              onChange={(event) => {
-                selectAvatar(event.target.files?.[0] || null);
-                event.target.value = "";
-              }}
-            />
-            <span className="photo-source-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5.5h16v13H4zM7 15l3-3 2.5 2.5L15 12l3 3" /><circle cx="16.5" cy="9" r="1" /></svg></span>
-            <span className="photo-source-copy"><strong>{compact ? presentation.state === "pending" ? "Replace" : avatarUrl ? "Change" : "Add" : "Gallery"}</strong><small>Choose a clear face photo</small></span>
-            <span className="photo-source-cta" aria-hidden="true">Choose</span>
-          </label>
-          {!compact ? <label className={`photo-source-action${isSaving ? " is-disabled" : ""}`}>
-            <input
-              accept="image/*"
-              aria-label="Take a new avatar photo"
-              capture="user"
-              className="photo-source-input"
-              disabled={isSaving || preparing}
-              type="file"
-              onChange={(event) => {
-                selectAvatar(event.target.files?.[0] || null);
-                event.target.value = "";
-              }}
-            />
-            <span className="photo-source-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 8h3l1.5-2h5L16 8h3v10H5z" /><circle cx="12" cy="13" r="3" /></svg></span>
-            <span className="photo-source-copy"><strong>Camera</strong><small>Take a new face photo now</small></span>
-            <span className="photo-source-cta" aria-hidden="true">Open</span>
-          </label> : null}
-        </div>}>
-          {(compact && mainPhoto) || avatarUrl ? <>
-            {compact && mainPhoto ? <button type="button" disabled={isSaving || preparing} onClick={() => void reuseMainPhoto()}>{preparing ? "Preparing photo…" : "Use main as face photo"}</button> : null}
-            {compact && approvedPhotos.length > 1 ? <details className="dancer-saved-photo-picker">
-              <summary>Choose uploaded photo</summary>
-              <div className="dancer-saved-photo-choices">{approvedPhotos.map((photo, index) => <button
-                key={photo.id} type="button" className="dancer-saved-photo-choice" disabled={isSaving || preparing}
-                aria-label={`Use uploaded photo ${index + 1} as face photo`} onClick={() => void reuseMainPhoto(photo)}>
-                <img src={photo.imageUrl} alt={`Uploaded photo ${index + 1}`} />
-              </button>)}</div>
-            </details> : null}
-            {avatarUrl ? <button type="button" disabled={isSaving || preparing} onClick={() => void removeAvatar()}>Remove face photo</button> : null}
-          </> : null}
-        </DancerPhotoControls>
-        {isSaving ? <progress aria-label="Avatar upload progress" max="100" value={uploadProgress} /> : null}
-        {file && !isSaving && presentation.canRetry ? <button type="button" onClick={() => void uploadAvatar(file)}>Retry face photo upload</button> : null}
-        {pendingId ? <DancerMediaRetryButton id={pendingId} kind="photo" status="pending" moderationStatus={String(pendingAvatar?.status || "")}
-          disabled={isSaving || preparing} onBusyChange={setPreparing} onRetried={({ profile }) => { if (profile) { setUploadFeedback(null); onProfileChange?.(profile); } }} /> : null}
-      </div>
-      <DancerMediaUploadRules kind="photo" facePhoto />
-      {statusMessage ? <p role="status" aria-live="polite">{compact ? statusMessage.replace(/\bAvatar\b/g, "Face photo").replace(/\bavatar\b/g, "face photo") : statusMessage}</p> : null}
-    </article>
-  );
+  return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={busy} data-avatar-state={avatarUrl ? "approved" : "automatic"}>
+    <div className="dancer-avatar-editor" aria-label="Automatic avatar preview">
+      <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!avatarUrl} type="button" disabled={busy || !main}
+        aria-label="Adjust avatar crop" onClick={() => void adjustCrop()}>
+        {avatarUrl ? <img src={avatarUrl} alt="Avatar from your main photo" style={{ objectPosition: `${profile?.avatarPhotoFocalX ?? 50}% ${profile?.avatarPhotoFocalY ?? 50}%` }} /> : <span aria-hidden="true">Auto</span>}
+      </button>
+    </div>
+    <div className="dancer-avatar-upload-controls">
+      {main ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>Your avatar appears when your main photo is approved.</p>}
+    </div>
+    {status ? <p role="status" aria-live="polite">{status}</p> : null}
+  </article>;
 }

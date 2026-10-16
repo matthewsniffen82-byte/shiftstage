@@ -77,9 +77,8 @@ export default function DancerProfileWorkspace({
   const photosReady = faceReady && Boolean(mainPhoto) && galleryReady;
   const faceState = faceReady ? "Approved" : pendingFace ? mediaReviewLabel("pending", String(pendingFace.status || "pending_review")) : "Required";
   const mainState = mainPhoto ? "Approved" : pendingMain ? mediaReviewLabel(pendingMain.status, pendingMain.moderationStatus) : "Required";
-  const photoBlocker = !faceReady
-    ? pendingFace ? `Face photo: ${faceState.toLowerCase()}. You can choose another photo while you wait.` : "Add a clear face photo to continue."
-    : !mainPhoto ? pendingMain ? `Main photo: ${mainState.toLowerCase()}. You can choose another photo while you wait.` : "Add your main photo to continue."
+  const photoBlocker = !mainPhoto ? pendingMain ? `Main photo: ${mainState.toLowerCase()}. Your avatar will update when it is approved.` : "Add your main photo to continue."
+    : !faceReady ? "Refresh your profile to load the avatar from your main photo."
     : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - approvedCount} more approved profile photo${MIN_DANCER_ONBOARDING_PHOTOS - approvedCount === 1 ? "" : "s"}.` : "";
   const identityHint = draftIdentity.stageName.trim().length < 2 ? "Enter your stage name."
     : !draftIdentity.city.trim() ? "Choose your city." : "";
@@ -151,8 +150,7 @@ export default function DancerProfileWorkspace({
     showStep(next);
   }
   function revealMissingPhoto() {
-    if (!faceReady) openEditorArea("dancer-face-photo");
-    else if (!mainPhoto) openEditorArea("dancer-main-photo");
+    if (!mainPhoto || !faceReady) openEditorArea("dancer-main-photo");
     else openEditorArea("dancer-profile-media-library");
   }
 
@@ -183,17 +181,17 @@ export default function DancerProfileWorkspace({
     }
   }
 
-  const requiredPhotos = <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label={onboarding ? "Avatar and main photo" : undefined} aria-labelledby={onboarding ? undefined : "dancer-profile-photos-title"}>
+  const requiredPhotos = <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label={onboarding ? "Main photo and automatic avatar" : undefined} aria-labelledby={onboarding ? undefined : "dancer-profile-photos-title"}>
     {!onboarding ? <header><h3 id="dancer-profile-photos-title">Profile photos</h3></header> : null}
-    <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">
-      <h4 id="dancer-face-photo-title">Avatar</h4>
-      <p className="dancer-photo-guidance">{onboarding ? "Tap to choose or crop." : "Tap to edit your profile circle."}</p>
-      <AvatarUploadBusyContext.Provider value={setAvatarBusy}>{avatarContent}</AvatarUploadBusyContext.Provider>
-    </div>
     <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
       <h4 id="dancer-main-upload-title">Main photo</h4>
-      <p className="dancer-photo-guidance">{onboarding ? "Your dancer card. Tap to edit." : "Tap to edit your dancer card."}</p>
+      <p className="dancer-photo-guidance">Upload once for your dancer card and avatar.</p>
       {mainPhotoContent}
+    </div>
+    <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">
+      <h4 id="dancer-face-photo-title">Avatar</h4>
+      <p className="dancer-photo-guidance">Created from your main photo. Adjust the crop anytime.</p>
+      <AvatarUploadBusyContext.Provider value={setAvatarBusy}>{avatarContent}</AvatarUploadBusyContext.Provider>
     </div>
   </section>;
 
@@ -207,7 +205,7 @@ export default function DancerProfileWorkspace({
       </nav>
       <header className="dancer-builder-heading">
         <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : "Build your profile"}</h3>
-        {step === "media" ? <span className="dancer-builder-requirement" data-state={photosReady ? "saved" : "required"} role="status">{!faceReady ? "Add avatar" : !mainPhoto ? "Add main photo" : galleryReady ? "Photos ready" : `${approvedCount} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos approved`}</span> : null}
+        {step === "media" ? <span className="dancer-builder-requirement" data-state={photosReady ? "saved" : "required"} role="status">{!mainPhoto ? "Add main photo" : galleryReady && faceReady ? "Photos ready" : `${approvedCount} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos approved`}</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-workspace-heading">

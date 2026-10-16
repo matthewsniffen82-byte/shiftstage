@@ -244,7 +244,7 @@ test("both production steps render inside the Profile Setup box", () => {
   assert.doesNotMatch(liveAppSource, /setupStepMarkup\("review"/);
   assert.doesNotMatch(liveAppSource, /setupStepMarkup\("payout"/);
   assert.match(liveAppSource, /setupStepMarkup\("approval", "Confirm venue affiliation"/);
-  assert.match(liveAppSource, /Upload clear face photo/);
+  assert.match(liveAppSource, /Add or edit main photo/);
   assert.match(liveAppSource, /approvedProfileVideoManagerMarkup\(\)/);
 });
 

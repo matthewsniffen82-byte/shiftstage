@@ -1,0 +1,11 @@
+# Main photo and avatar
+
+New approved profile photo uploads include a 640px square avatar derivative. The local face detector positions the crop when it finds a face; otherwise a centered square is used. The dashboard offers one main-photo upload and an optional avatar crop adjustment. It keeps the existing three-photo onboarding minimum.
+
+The deferred `sync_main_photo_avatar` trigger selects the final approved main photo at transaction commit, including automatic moderation, later moderator approval, primary selection, replacement, rejection and deletion. Main photo changes invalidate older avatar work through the existing monotonic avatar version. Gallery-only edits preserve a custom avatar crop. Existing avatars remain unchanged until their main photo changes; older photos without a derivative use the approved source as a fallback.
+
+`POST /api/dancer/avatar/crop` accepts an owned main photo ID, its storage path, the exact avatar version, and normalized square crop coordinates. It does not accept uploaded image bytes. The server crops the approved source, verifies storage upload receipts, and commits through the service-only invoker function `save_main_photo_avatar_crop`, which rechecks ownership, account status, approval, source identity and avatar version. Uncertain writes retain bytes. The reusable default derivative is retained when saving a custom crop.
+
+Public media delivery continues to check current visibility before serving the avatar. Changing or withdrawing the main photo removes the previous avatar reference. Retained unreferenced bytes cannot authorize public delivery. Existing avatar upload endpoints remain compatible with older clients and reviews; the current UI directs dancers to their main photo.
+
+Validation uses focused component and service tests, actual image cropping with Sharp, and PGlite execution of the migration against the existing avatar publication fixture. No E2E or automated browser journeys are used.

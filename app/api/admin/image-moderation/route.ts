@@ -160,7 +160,7 @@ async function approveReviewRecord(admin: any, record: any, reviewerId: string, 
     "31536000",
     isAvatar
       ? {}
-      : { archiveOriginal: true, watermark: true },
+      : { archiveOriginal: true, watermark: true, mainPhotoAvatar: true },
   );
   const finalPath = uploadedImage.storagePath;
 
