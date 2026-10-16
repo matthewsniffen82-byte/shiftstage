@@ -13,6 +13,46 @@ beforeEach(async () => { await seedWorker(db); });
 after(async () => { await db?.close(); });
 const foreignWorker = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 
+test("deferred submission acknowledges storage before inspection or AI, then validates in the worker", async () => {
+  await patchWorker(db, { status: "uploading" });
+  const h = videoWorkerHarness(db);
+  assert.equal((await h.submit(true)).status, "moderating");
+  assert.equal(h.inspections.length, 0);
+  assert.equal(h.providers.length, 0);
+  assert.equal((await workerSnapshot(db)).row.upload_validation_pending, true);
+  assert.equal((await h.retry()).status, "approved");
+  assert.equal(h.inspections.length, 1);
+  assert.equal(h.providers.length, 1);
+  assert.equal((await workerSnapshot(db)).row.upload_validation_pending, false);
+});
+
+test("failed background inspection stays private and manual approval cannot bypass it", async () => {
+  await patchWorker(db, { status: "uploading" });
+  const h = videoWorkerHarness(db, { inspectionError: new Error("Invalid uploaded container") });
+  await h.submit(true);
+  assert.equal((await h.retry()).status, "submitted");
+  assert.equal(h.providers.length, 0);
+  assert.equal(h.watermarks.length, 0);
+  assert.equal((await workerSnapshot(db)).row.upload_validation_pending, true);
+  await assert.rejects(h.review(), /validate this video/);
+  await assert.rejects(patchWorker(db, { status: "approved" }), /tv_validated_before_approval/);
+  h.advance(600_000);
+  await h.retryOwn();
+  assert.equal((await workerSnapshot(db)).row.upload_validation_pending, true);
+  const recovered = videoWorkerHarness(db);
+  assert.equal((await recovered.retry()).status, "approved");
+  assert.equal(recovered.inspections.length, 1);
+});
+
+test("a replaced worker cannot commit inspection results or run AI", async () => {
+  await patchWorker(db, { upload_validation_pending: true });
+  const h = videoWorkerHarness(db, { beforeInspectionReturns: () => patchWorker(db, { moderation_details: { workerId: foreignWorker } }) });
+  await assert.rejects(h.retry(), /review changed/);
+  assert.equal(h.providers.length, 0);
+  assert.equal(h.watermarks.length, 0);
+  assert.equal((await workerSnapshot(db)).row.upload_validation_pending, true);
+});
+
 const unfinishedProfile = { stage_name: "", city: null, status: "draft", verification_status: "pending", approved_at: null, is_public: false };
 test("owner retry queues a pending video and only the claimed worker publishes it", async () => {
   await patchWorker(db, { status: "submitted", moderation_started_at: new Date(workerInstant - 600000).toISOString(), reviewed_by: null, reviewed_at: null });

@@ -1,6 +1,6 @@
 import "server-only";
 import { withOpenAIRequestDeadline as withTimeout } from "../openai-request.ts";
-import { assertServerJobActive, MODERATION_WORKER_STALE_MS, runWithServerJob, withServerJobFetch } from "../server-job.ts";
+import { assertServerJobActive, MODERATION_WORKER_STALE_MS, runWithServerJob } from "../server-job.ts";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "crypto";
@@ -88,14 +88,15 @@ type ModeratedPhotoResult = {
 };
 
 const rateLimitMemory = new Map<string, { count: number; resetAt: number }>();
-const openAITextDiagnostics = new WeakMap<object, Promise<void>>();
 
 export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: DancrClient, input: ModeratedPhotoInput): Promise<ModeratedPhotoResult> {
   return runWithServerJob(async () => {
   enforceUploadRateLimit(input.userId, input.ipAddress);
   const profile = await getOwnDancerProfile(admin, input.userId);
   const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
+  const preparationStartedAt = Date.now();
   const image = await validateAndPrepareDancrImage(input.file);
+  logModeration("stage_timing", { stage: "prepare", durationMs: Date.now() - preparationStartedAt });
   let idempotencyKey = safeIdempotencyKey(input.idempotencyKey || `${image.sha256}:${randomUUID()}`);
   const existing = await findExistingModerationRecord(admin, input.userId, idempotencyKey);
   if (existing && existing.status !== "error") return moderationRecordToUploadResponse(admin, existing, profile.id);
@@ -129,7 +130,9 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
     : input.uploadContext || profilePhotoUploadContext(Boolean(input.isPrimary), resolvedSortOrder);
   logModeration("moderation_started", { uploadContext });
 
+  const storageStartedAt = Date.now();
   await uploadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath, image);
+  logModeration("stage_timing", { stage: "private_storage", durationMs: Date.now() - storageStartedAt });
   logModeration("uploaded_successfully", {
     uploadContext,
     contentType: image.contentType,
@@ -169,14 +172,16 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   let errorCode: string | null = null;
 
   try {
+    const reviewStartedAt = Date.now();
     const [providerResult, identityAnalysis, contentAnalysis] = await Promise.all([
-      moderateImageWithOpenAI(admin, tempPath),
+      moderateImageWithOpenAI(admin, tempPath, image),
       analyzeDancerMediaIdentity({
         targetImages: [image.buffer],
         mediaType: "photo",
       }),
       analyzeDancerPhotoContent(image),
     ]);
+    logModeration("stage_timing", { stage: "all_ai_checks", durationMs: Date.now() - reviewStartedAt });
     categoryFlags = {
       ...(providerResult.categories || {}),
       ...dancerMediaIdentityCategoryFlags(identityAnalysis),
@@ -364,14 +369,16 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
     const downloaded = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
     const downloadedImage = moderationImageFromPrivateObject(downloaded);
     if (isAvatar) avatarRetryReference(record, profile);
+    const reviewStartedAt = Date.now();
     const [providerResult, identityAnalysis, contentAnalysis] = await Promise.all([
-      moderateImageWithOpenAI(admin, tempPath),
+      moderateImageWithOpenAI(admin, tempPath, downloadedImage),
       analyzeDancerMediaIdentity({
         targetImages: [downloadedImage.buffer],
         mediaType: "photo",
       }),
       analyzeDancerPhotoContent(downloadedImage),
     ]);
+    logModeration("stage_timing", { stage: "all_ai_checks", durationMs: Date.now() - reviewStartedAt });
     categoryFlags = {
       ...(providerResult.categories || {}),
       ...dancerMediaIdentityCategoryFlags(identityAnalysis),
@@ -628,49 +635,18 @@ async function approveModeratedUpload(
   }
 }
 
-export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string): Promise<any> {
-  const apiKeyPresent = Boolean(process.env.OPENAI_API_KEY);
-  logModeration("openai_key_present", { present: apiKeyPresent });
-  if (!apiKeyPresent) throw new Error("MODERATION_AUTH_KEY_MISSING");
+export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string, prepared?: Pick<ValidatedDancrImage, "buffer" | "contentType">): Promise<any> {
   const apiKey = getServerEnv("OPENAI_API_KEY");
-  console.log("OPENAI_CONFIGURATION", {
-    apiKeyPresent: Boolean(apiKey),
-    model: DANCR_IMAGE_MODERATION_MODEL,
-  });
   const openai = await createOpenAIClient({ apiKey });
-  await runOpenAITextDiagnostic(openai);
-  await verifyStorageObjectExists(admin, MODERATION_TEMP_BUCKET, tempPath);
-  const imageUrl = await createModerationSignedUrl(admin, tempPath);
-  await probeSignedImageUrl(imageUrl, tempPath);
-
-  logModeration("calling_openai_moderation", {
-    model: DANCR_IMAGE_MODERATION_MODEL,
-    imageSource: "supabase_signed_url",
-  });
+  // The normalized bytes are already available to the other required AI checks.
+  // Reuse them instead of a text diagnostic, storage download and URL probe.
+  const image = prepared || await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+  const startedAt = Date.now();
   let response: any;
   try {
-    response = await createModeration(openai, [{ type: "image_url", image_url: { url: imageUrl } }]);
-  } catch (error) {
-    console.error("OPENAI_IMAGE_REQUEST_FAILED", openAIRequestFailureDetails(error));
-    if (!shouldAttemptDataUrlFallback(error)) throw error;
-    const image = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-    const dataUrl = `data:${image.contentType};base64,${image.buffer.toString("base64")}`;
-    logModeration("signed_url_fallback_to_data_url", {
-      model: DANCR_IMAGE_MODERATION_MODEL,
-      signedUrlError: sanitizeProviderError(error),
-      imageSource: "server_data_url",
-      fileSize: image.buffer.byteLength,
-      mimeType: image.contentType,
-    });
-    try {
-      response = await createModeration(openai, [{ type: "image_url", image_url: { url: dataUrl } }]);
-    } catch (fallbackError) {
-      console.error("OPENAI_IMAGE_REQUEST_FAILED", {
-        ...openAIRequestFailureDetails(fallbackError),
-        imageSource: "server_data_url",
-      });
-      throw fallbackError;
-    }
+    response = await createModeration(openai, [{ type: "image_url", image_url: { url: `data:${image.contentType};base64,${image.buffer.toString("base64")}` } }]);
+  } finally {
+    logModeration("stage_timing", { stage: "safety_check", durationMs: Date.now() - startedAt });
   }
   const result = response?.results?.[0];
   if (!result) throw new Error("provider_response_incomplete");
@@ -708,108 +684,6 @@ async function createModeration(openai: any, input: Array<{ type: "image_url"; i
       "provider_timeout",
     ),
   );
-}
-
-async function runOpenAITextDiagnostic(openai: any) {
-  if (!openAITextDiagnostics.has(openai)) {
-    const diagnostic = (async () => {
-      try {
-        const testResponse: any = await withTimeout(
-          (requestOptions) => openai.moderations.create({
-            model: DANCR_IMAGE_MODERATION_MODEL,
-            input: "A normal profile photo",
-          }, requestOptions),
-          20000,
-          "provider_timeout",
-        );
-        console.log("OPENAI_TEXT_TEST", {
-          success: true,
-          ...safeErrorMetadata({ request_id: testResponse?._request_id }),
-          flagged: testResponse?.results?.[0]?.flagged === true,
-        });
-      } catch (error) {
-        console.error("OPENAI_TEXT_TEST_FAILED", openAIRequestFailureDetails(error));
-        openAITextDiagnostics.delete(openai);
-        throw error;
-      }
-    })();
-    // Each job creates its own client; cancellation cannot poison another job.
-    openAITextDiagnostics.set(openai, diagnostic);
-  }
-  return openAITextDiagnostics.get(openai);
-}
-
-async function verifyStorageObjectExists(client: DancrClient, bucket: string, storagePath: string) {
-  const { data, error } = await client.storage.from(bucket).download(storagePath);
-  if (error || !data) {
-    console.error("STORAGE_IMAGE_RECORD", {
-      imageId: "moderation_temp",
-      bucket,
-      exists: false,
-      errorCode: safeErrorMetadata(error).code || "STORAGE_OBJECT_UNAVAILABLE",
-    });
-    throw new Error("STORAGE_IMAGE_MISSING");
-  }
-  console.log("STORAGE_IMAGE_RECORD", {
-    imageId: "moderation_temp",
-    bucket,
-    exists: true,
-    mimeType: safeImageLogContentType(data.type),
-    fileSize: data.size,
-  });
-}
-
-async function createModerationSignedUrl(client: DancrClient, tempPath: string) {
-  const { data, error } = await client.storage
-    .from(MODERATION_TEMP_BUCKET)
-    .createSignedUrl(tempPath, 10 * 60);
-  if (error || !data?.signedUrl) {
-    throw new Error(`MODERATION_SIGNED_URL_FAILED: ${error?.message || "No URL returned"}`);
-  }
-  logModeration("signed_url_created", {
-    storageBucket: MODERATION_TEMP_BUCKET,
-    imageUrlType: signedUrlType(data.signedUrl),
-    signedUrlCreated: true,
-  });
-  return data.signedUrl;
-}
-
-async function probeSignedImageUrl(imageUrl: string, tempPath: string) {
-  if (!imageUrl.startsWith("https://")) {
-    throw new Error(`MODERATION_IMAGE_URL_NOT_HTTPS_${signedUrlType(imageUrl)}`);
-  }
-  const startedAt = Date.now();
-  const probe = await withServerJobFetch(fetch)(imageUrl, { method: "GET" });
-  try {
-  const contentType = probe.headers.get("content-type") || "";
-  console.log("IMAGE_PROBE_RESULT", {
-    status: probe.status,
-    ok: probe.ok,
-    contentType: safeImageLogContentType(contentType),
-    contentLength: safeImageLogContentLength(probe.headers.get("content-length")),
-  });
-  console.log("IMAGE_URL_PROBE", {
-    status: probe.status,
-    ok: probe.ok,
-    contentType: safeImageLogContentType(contentType),
-  });
-  logModeration("signed_image_probe", {
-    storageBucket: MODERATION_TEMP_BUCKET,
-    status: probe.status,
-    ok: probe.ok,
-    contentType: safeImageLogContentType(contentType),
-    contentLength: safeImageLogContentLength(probe.headers.get("content-length")),
-    durationMs: Date.now() - startedAt,
-  });
-  if (!probe.ok) {
-    throw new Error(`IMAGE_LOAD_FAILED_HTTP_${probe.status}`);
-  }
-  if (!contentType.startsWith("image/")) {
-    throw new Error(`IMAGE_LOAD_FAILED_CONTENT_TYPE_${contentType || "missing"}`);
-  }
-  } finally {
-    await probe.body?.cancel().catch(() => undefined);
-  }
 }
 
 async function downloadPrivateObject(client: DancrClient, bucket: string, path: string) {
@@ -1256,9 +1130,6 @@ function sanitizeProviderError(error: unknown) {
   return safeErrorMetadata(error);
 }
 
-function openAIRequestFailureDetails(error: unknown) {
-  return safeErrorMetadata(error);
-}
 
 function didReachOpenAI(errorCode: string | null) {
   return [
@@ -1285,23 +1156,7 @@ function imageInaccessibleDiagnosticCode(error: unknown) {
   return status ? `IMAGE_URL_INACCESSIBLE_${status}` : "IMAGE_URL_INACCESSIBLE";
 }
 
-function signedUrlType(url: string) {
-  if (url.startsWith("blob:")) return "blob";
-  if (url.startsWith("file:")) return "file";
-  if (url.startsWith("content:")) return "content";
-  if (url.startsWith("capacitor:")) return "capacitor";
-  if (url.startsWith("https://")) return "https";
-  if (url.startsWith("/")) return "relative";
-  return "unknown";
-}
 
-function shouldAttemptDataUrlFallback(error: unknown) {
-  const anyError = error as any;
-  const status = Number(anyError?.status || anyError?.response?.status || 0);
-  const code = String(anyError?.code || anyError?.error?.code || "");
-  const message = error instanceof Error ? error.message.toLowerCase() : String(error || "").toLowerCase();
-  return status === 400 || code.includes("invalid") || message.includes("image") || message.includes("url");
-}
 
 function retryableModerationError(errorCode: string | null) {
   return [
@@ -1321,15 +1176,4 @@ function retryDelayTimestamp(attemptCount: number) {
       ? 120_000
       : 600_000;
   return new Date(Date.now() + delayMs).toISOString();
-}
-
-function safeImageLogContentType(value: string | null) {
-  const type = value?.split(";", 1)[0].trim().toLowerCase();
-  return ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"].includes(type || "") ? type : undefined;
-}
-
-function safeImageLogContentLength(value: string | null) {
-  if (!value || !/^\d{1,16}$/.test(value)) return undefined;
-  const length = Number(value);
-  return Number.isSafeInteger(length) ? length : undefined;
 }

@@ -4,6 +4,7 @@ import { readBoundedFormData } from "@/src/lib/bounded-form-data";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { deleteOwnDancerPhoto } from "@/src/lib/dancr/dancer";
 import { moderateAndStoreDancerPhoto, retryOwnDancerPhotoReview } from "@/src/lib/dancr/image-moderation";
+import { readReservedPhotoUpload } from "@/src/lib/dancr/photo-upload-reservation";
 import { MAX_DANCR_RAW_UPLOAD_BYTES } from "@/src/lib/dancr/image-validation";
 import {
   DancerMediaRateLimitError,
@@ -28,6 +29,12 @@ export async function POST(request: Request) {
       request,
       userId: user.id,
     });
+    if (request.headers.get("content-type")?.split(";", 1)[0] === "application/json") {
+      const body = await readBoundedJsonObject(request, { maxBytes: 2048, invalidMessage: "Invalid photo upload.", tooLargeMessage: "Invalid photo upload." });
+      const input = await readReservedPhotoUpload(admin, user.id, body.uploadId);
+      const result = await moderateAndStoreDancerPhoto(client, admin, { ...input, ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "" });
+      return NextResponse.json({ ok: result.decision !== "rejected", ...result, session }, { status: result.decision === "rejected" ? 422 : 200, headers: { "Cache-Control": "no-store" } });
+    }
     const formData = await readBoundedFormData(request, {
       maxBytes: MAX_PHOTO_UPLOAD_BODY_BYTES,
       invalidMessage: "Invalid photo upload request.",

@@ -104,21 +104,6 @@ for(const value of privateValues.slice(0,6)) test('support notification failure 
   assert.deepEqual(json(logs),[['SUPPORT_NOTIFICATION_DELIVERY_FAILED',{errorCode:'database_error'}]]);
   await deliverAtomicSupportNotifications({},{...receipt,duplicate:true});assert.equal(attempts,1);
 });
-for(const [type,length,expectedType,expectedLength] of [
-  ['image/jpeg; private=synthetic-secret','123','image/jpeg',123],
-  ['image/owner@example.invalid','synthetic-secret',undefined,undefined],
-  ['image/png','9999999999999999','image/png',undefined],
-]) test('image probe logs normalize response headers '+type,async()=>{
-  const logs=[];
-  const {probeSignedImageUrl}=load('src/lib/dancr/image-moderation.ts',{
-    internals:['probeSignedImageUrl'],dependencies:{'../security/safe-error-metadata':{safeErrorMetadata}},
-    globals:{console:{log:(...args)=>logs.push(args),info:value=>logs.push(JSON.parse(value))},fetch:async()=>({status:200,ok:true,headers:new Headers({'content-type':type,'content-length':length})})},
-  });
-  await probeSignedImageUrl('https://storage.example.invalid/private-signed-object','private/path');
-  assert.equal(logs.length,3);
-  for(const entry of logs){const data=Array.isArray(entry)?entry[1]:entry;assert.equal(data.contentType,expectedType);if('contentLength' in data)assert.equal(data.contentLength,expectedLength);}
-  assert.doesNotMatch(JSON.stringify(logs),/synthetic-secret|owner@example|private-signed|private\/path/);
-});
 test('profile debug logs retain counts without repeating private state or gallery identifiers',()=>{
   const dancer=source('src/lib/dancr/dancer.ts'),dashboard=source('app/dashboard/DashboardClient.tsx');
   for(const match of dancer.matchAll(/console\.log\("PROFILE_IMAGES_AFTER_SAVE", ([^\n]+)\);/g))assert.doesNotMatch(match[1],/dancerId|remainingPhotoIds/);
@@ -131,12 +116,12 @@ for(const requestId of ['req_valid-123',...privateValues.slice(0,6)]) test('succ
     dependencies:{'../security/safe-error-metadata':{safeErrorMetadata},'../openai-client':{createOpenAIClient:async()=>({moderations:{create:async request=>{requests.push(request);return {_request_id:requestId,results:[typeof request.input==='string'?{flagged:'synthetic-private-flag'}:providerResult]};}}})},'../server-env':{getServerEnv:()=> 'synthetic-key'}},
     globals:{process:{env:{OPENAI_API_KEY:'synthetic-key'}},console:{log:(...args)=>logs.push(args),info:value=>logs.push(JSON.parse(value))},setTimeout:()=>1,clearTimeout:()=>{},fetch:async()=>({status:200,ok:true,headers:new Headers({'content-type':'image/jpeg'})})},
   });
-  const client={storage:{from:()=>({download:async()=>({data:{type:'image/jpeg',size:123},error:null}),createSignedUrl:async()=>({data:{signedUrl:'https://storage.example.invalid/synthetic-private-object'},error:null})})}};
-  assert.equal(await moderateImageWithOpenAI(client,'synthetic-private-path'),providerResult);
-  assert.equal(requests.length,2);assert.equal(requests[0].input,'A normal profile photo');
+  const client={storage:{from:()=>{throw new Error('Prepared bytes must avoid redundant storage calls');}}};
+  assert.equal(await moderateImageWithOpenAI(client,'synthetic-private-path',{buffer:Buffer.from('private image bytes'),contentType:'image/jpeg'}),providerResult);
+  assert.equal(requests.length,1);assert.match(requests[0].input[0].image_url.url,/^data:image\/jpeg;base64,/);
   assert.doesNotMatch(JSON.stringify(logs),/synthetic-private|private\.invalid|owner@example|Bearer|password=/);
   const receiptLogs=logs.filter(entry=>Array.isArray(entry)&&['OPENAI_TEXT_TEST','OPENAI_MODERATION_RESULT','OPENAI_IMAGE_MODERATION_RESULT'].includes(entry[0]));
-  assert.equal(receiptLogs.length,3);
+  assert.equal(receiptLogs.length,2);
   for(const entry of receiptLogs)assert.equal(entry[1].requestId,requestId==='req_valid-123'?requestId:undefined);
   assert.ok(logs.some(entry=>entry.event==='image_moderation.moderation_completed'&&entry.categoryCount===1));
 });

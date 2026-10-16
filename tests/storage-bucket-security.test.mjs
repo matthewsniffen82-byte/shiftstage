@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { checkStorageBucketSecurity, STORAGE_BUCKET_REQUIREMENTS } from "../src/lib/security/storage-bucket-policy.mjs";
 
-const buckets = JSON.parse(readFileSync(new URL("./fixtures/storage-current-access.json", import.meta.url), "utf8")).catalog.buckets;
+const buckets = JSON.parse(readFileSync(new URL("./fixtures/storage-current-access.json", import.meta.url), "utf8")).catalog.buckets.concat([{ id: "dancer-photo-uploads", public: false, file_size_limit: 26214400, allowed_mime_types: ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif", "application/octet-stream"] }]);
 const safe = value => checkStorageBucketSecurity(value).every(check => check.ok);
 
 test("storage readiness accepts the audited configuration and stronger restrictions", () => {

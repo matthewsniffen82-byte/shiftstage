@@ -74,7 +74,7 @@ export const MYDANCR_TV_EVENT_SOURCES = new Set([
 ]);
 
 const IDENTITY_PROFILE_FIELDS = ", venue_approved_at";
-const VIDEO_WORKER_FIELDS = "moderation_attempt_count, moderation_started_at, moderation_details, updated_at";
+const VIDEO_WORKER_FIELDS = "moderation_attempt_count, moderation_started_at, moderation_details, updated_at, dancer_id, file_size_bytes, upload_edit, upload_validation_pending";
 const VIDEO_WORKER_STALE_AFTER_MS = 5 * 60 * 1000;
 const VIDEO_WORKER_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const PUBLIC_TV_SELECT =
@@ -1072,7 +1072,8 @@ export async function submitMyDancrTvUpload(
     throw new Error("The uploaded video type could not be verified.");
   }
 
-  const verified = await inspectStoredMyDancrTvVideo(admin, {
+  const deferModeration = options.deferModeration === true;
+  const verified = deferModeration ? { durationSeconds: video.duration_seconds, fileSizeBytes: video.file_size_bytes, width: video.width, height: video.height, storagePath: video.storage_path, mimeType: video.storage_mime } : await inspectStoredMyDancrTvVideo(admin, {
     bucket: MYDANCR_TV_BUCKET,
     expectedBytes: Number(video.file_size_bytes),
     maxBytes: MYDANCR_TV_MAX_BYTES,
@@ -1087,12 +1088,12 @@ export async function submitMyDancrTvUpload(
   const submittedMime = "mimeType" in verified ? verified.mimeType : video.storage_mime;
   const submittedAt = new Date().toISOString();
   const demoAutoApprove = isVideoDemoAutoApproveMode();
-  const deferModeration = options.deferModeration === true;
   const workerId = deferModeration ? null : crypto.randomUUID();
   const { data: moderating, error: updateError } = await admin
     .from("mydancr_tv_videos")
     .update({
       status: "moderating",
+      upload_validation_pending: deferModeration,
       storage_path: submittedStoragePath,
       storage_mime: submittedMime,
       submitted_at: submittedAt,
@@ -1121,7 +1122,7 @@ export async function submitMyDancrTvUpload(
     .single();
   if (updateError) throw updateError;
   assertVideoWorkerClaim(moderating, { ...video, storage_path: submittedStoragePath }, workerId, deferModeration ? 0 : 1, submittedAt);
-  if (video.upload_edit) {
+  if (video.upload_edit && !deferModeration) {
     const { error: cleanupError } = await admin.storage.from(MYDANCR_TV_BUCKET).remove([video.storage_path]);
     if (cleanupError) console.warn(JSON.stringify({ event: "mydancr_tv.crop_source_cleanup_pending", videoId: video.id }));
   }
@@ -1348,6 +1349,7 @@ async function autoApproveMyDancrTvDemoUpload(
   if (!isDancerMediaOnboardingEligible(one(video.dancer_profiles))) {
     throw new Error("The dancer profile is not eligible for media onboarding.");
   }
+  video = await validateQueuedVideo(admin, video);
   await assertVideoWorkerCurrent(admin, video, expectedStatus);
 
   const completedAt = new Date().toISOString();
@@ -1397,6 +1399,44 @@ async function autoApproveMyDancrTvDemoUpload(
   }, VIDEO_PROCESSING_JOB_TIMEOUT_MS);
 }
 
+/** Run inspection and editing under the same durable lease as moderation. */
+async function validateQueuedVideo(admin: AdminClient, video: any) {
+  if (video.upload_validation_pending !== true) return video;
+  await assertVideoWorkerCurrent(admin, video);
+  assertMyDancrTvStoragePath(video);
+  const startedAt = Date.now();
+  const verified = await inspectStoredMyDancrTvVideo(admin, {
+    bucket: MYDANCR_TV_BUCKET, expectedBytes: Number(video.file_size_bytes), maxBytes: MYDANCR_TV_MAX_BYTES,
+    maxDurationSeconds: MYDANCR_TV_MAX_DURATION_SECONDS, mimeType: video.storage_mime, storagePath: video.storage_path,
+    edit: video.upload_edit ? normalizeVideoUploadEdit(video.upload_edit) : null,
+    editedStoragePath: `${video.submitted_by}/${video.dancer_id}/${video.id}.mp4`,
+  });
+  assertServerJobActive();
+  const storagePath = "storagePath" in verified ? verified.storagePath : video.storage_path;
+  const mimeType = "mimeType" in verified ? verified.mimeType : video.storage_mime;
+  const update = admin.from("mydancr_tv_videos").update({
+    storage_path: storagePath, storage_mime: mimeType, duration_seconds: verified.durationSeconds,
+    file_size_bytes: verified.fileSizeBytes, width: verified.width, height: verified.height, upload_validation_pending: false,
+  });
+  const { data, error } = await matchVideoWorkerOwner(update, video).eq("upload_validation_pending", true)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, submitted_at, ${VIDEO_WORKER_FIELDS}, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`).maybeSingle();
+  if (error) throw error;
+  if (!data) throw videoWorkerConflict();
+  const state = videoWorkerState(video);
+  assertVideoWorkerClaim(data, { ...video, storage_path: storagePath }, state.workerId, state.attempt, state.startedAt!);
+  if (data.upload_validation_pending !== false || data.storage_mime !== mimeType || data.file_size_bytes !== verified.fileSizeBytes
+    || data.width !== verified.width || data.height !== verified.height || data.duration_seconds !== verified.durationSeconds) throw videoWorkerUnavailable();
+  console.info(JSON.stringify({ event: "media_processing.stage", media: "video", stage: "inspection_and_edit", durationMs: Date.now() - startedAt, succeeded: true }));
+  if (storagePath !== video.storage_path) {
+    // A committed canonical path survives cleanup failures and worker restarts.
+    try {
+      const removed = await admin.storage.from(MYDANCR_TV_BUCKET).remove([video.storage_path]);
+      if (removed.error) throw removed.error;
+    } catch { console.warn(JSON.stringify({ event: "mydancr_tv.crop_source_cleanup_pending", videoId: video.id })); }
+  }
+  return data;
+}
+
 function videoWorkerUnavailable() {
   return new PublicApiError("UNAVAILABLE", "Video review could not be confirmed. Refresh the video before trying again.", 503);
 }
@@ -1439,6 +1479,7 @@ function matchVideoWorkerSnapshot(query: any, video: any, status: string) {
     .eq("submitted_by", video.submitted_by).eq("storage_path", video.storage_path)
     .eq("storage_mime", video.storage_mime).eq("caption", video.caption)
     .eq("duration_seconds", video.duration_seconds).eq("width", video.width).eq("height", video.height);
+  if (typeof video.upload_validation_pending === "boolean") matched = matched.eq("upload_validation_pending", video.upload_validation_pending);
   matched = state.startedAt === null ? matched.is("moderation_started_at", null) : matched.eq("moderation_started_at", state.startedAt);
   return state.workerId === null ? matched.is("moderation_details->>workerId", null) : matched.eq("moderation_details->>workerId", state.workerId);
 }
@@ -1477,12 +1518,15 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   if (!videoWorkerState(video).workerId) throw videoWorkerUnavailable();
   let moderation: MyDancrTvModerationResult;
   try {
+    video = await validateQueuedVideo(admin, video);
+    const moderationStartedAt = Date.now();
     moderation = await moderateStoredMyDancrTvVideo(admin, {
       videoId: video.id,
       storagePath: video.storage_path,
       storageMime: video.storage_mime,
       caption: video.caption,
     });
+    console.info(JSON.stringify({ event: "media_processing.stage", media: "video", stage: "ai_review", durationMs: Date.now() - moderationStartedAt, succeeded: true }));
   } catch (error) {
     assertServerJobActive();
     const completedAt = new Date().toISOString();
@@ -1758,13 +1802,14 @@ export async function reviewMyDancrTvVideo(
   return runWithServerJob(async () => {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, status, storage_path, storage_mime, duration_seconds, width, height, moderation_details, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, status, storage_path, storage_mime, duration_seconds, width, height, moderation_details, upload_validation_pending, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
   if (!video) throw new Error("Video not found.");
   if (video.status !== "submitted") throw new Error("This video is no longer waiting for review.");
 
+  if (decision === "approved" && video.upload_validation_pending) throw new Error("Restart automated processing to validate this video before approval.");
   if (decision === "approved" && !isDancerMediaOnboardingEligible(one(video.dancer_profiles))) {
     throw new Error("The dancer profile is not eligible for media onboarding.");
   }

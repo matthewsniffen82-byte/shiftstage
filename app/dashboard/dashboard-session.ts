@@ -350,12 +350,16 @@ export async function requestDancerMediaPin(mediaType: "photo" | "video", mediaI
 }
 
 export function requestDancerPhotosJson(options: DashboardJsonRequestOptions = {}) {
-  return requestDashboardJson("/api/dancer/photos", {
+  const requestOptions = {
     ...options,
     acceptResponse: options.acceptResponse || isRejectedDancerPhotoModerationResponse,
     expectedRole: "dancer",
     fallbackMessage: options.fallbackMessage || "Unable to update dancer photos.",
-  });
+  } satisfies DashboardJsonRequestOptions;
+  if (options.method === "POST" && options.body instanceof FormData) {
+    return import("./direct-photo-upload").then(({ directPhotoUpload }) => directPhotoUpload(requestOptions, requestDashboardJson));
+  }
+  return requestDashboardJson("/api/dancer/photos", requestOptions);
 }
 
 export function requestDancerInternalMainPhotoJson(options: DashboardJsonRequestOptions = {}) {

@@ -13,7 +13,7 @@ export const workerVideoId = slotId(100);
 export const workerUserId = slotId(1);
 export const workerVideoPath = `${workerUserId}/${workerUserId}/${workerVideoId}.mp4`;
 export const workerInstant = Date.parse("2026-09-12T12:00:00.000Z");
-const columns = new Set([...slotSchema.columns.map(column => column.column_name), "upload_edit"]);
+const columns = new Set([...slotSchema.columns.map(column => column.column_name), "upload_edit", "upload_validation_pending"]);
 const quote = value => '"' + value.replaceAll('"', '""') + '"';
 const source = process.env.VIDEO_WORKER_BASELINE === "1"
   ? execFileSync("git", ["show", "8e01369bda91831d0f3952062082b21f67899a0d:src/lib/dancr/tv.ts"], { encoding: "utf8", windowsHide: true })
@@ -28,7 +28,7 @@ export async function createWorkerDatabase() {
   const db = await createSlotDatabase();
   try {
     await db.exec(ownershipSchema + ownershipTrigger);
-    await db.exec("alter table public.mydancr_tv_videos add column upload_edit jsonb");
+    await db.exec("alter table public.mydancr_tv_videos add column upload_edit jsonb; alter table public.mydancr_tv_videos add column upload_validation_pending boolean not null default false; alter table public.mydancr_tv_videos add constraint tv_validated_before_approval check (not upload_validation_pending or status <> 'approved')");
     return db;
   }
   catch (error) { await db.close(); throw error; }
@@ -70,7 +70,7 @@ export const captureWorker = pending => pending.then(value => ({ value }), error
 export function videoWorkerHarness(db, options = {}) {
   let instant = workerInstant, releaseReads, released = false;
   const readBarrier = new Promise(resolve => { releaseReads = resolve; });
-  const calls = [], providers = [], watermarks = [], pending = [];
+  const calls = [], providers = [], watermarks = [], pending = [], inspections = [];
   let reads = 0, claimAttempts = 0;
   class ControlledDate extends Date {
     constructor(...args) { super(...(args.length ? args : [instant])); }
@@ -164,13 +164,13 @@ export function videoWorkerHarness(db, options = {}) {
         watermarks.push(input); await options.beforeWatermarkReturns?.(); return { posterStoragePath: "synthetic-poster" };
       } };
       if (name === "./media-identity") return { DancerIdentityReferenceRequiredError: class extends Error {}, isDancerIdentityReferenceRequiredError: error => error?.identityMissing === true };
-      if (name === "./video-upload-validation") return { async inspectStoredMyDancrTvVideo() { return { durationSeconds: 10, fileSizeBytes: 1024, width: 720, height: 1280 }; } };
+      if (name === "./video-upload-validation") return { async inspectStoredMyDancrTvVideo(_client, input) { inspections.push(input); await options.beforeInspectionReturns?.(); if (options.inspectionError) throw options.inspectionError; return { durationSeconds: 10, fileSizeBytes: 1024, width: 720, height: 1280 }; } };
       if (name === "../security/safe-error-metadata") return { safeErrorMetadata: () => ({ code: "SYNTHETIC" }) };
       if (name === "./media-limits") return { MAX_DANCER_PROFILE_VIDEOS: 50 };
       return {};
     },
   });
-  return { calls, providers, watermarks, client,
+  return { calls, providers, watermarks, inspections, client,
     advance(milliseconds) { instant += milliseconds; },
     retry: () => tv.retryMyDancrTvAutomatedModeration(client, workerVideoId),
     retryOwn: (userId = workerUserId) => tv.queueOwnMyDancrTvReviewRetry(client, userId, workerVideoId),

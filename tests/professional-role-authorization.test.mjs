@@ -49,7 +49,7 @@ test("account recovery and self-service routes can still authenticate a paused a
   assert.equal(f.calls.some(c=>c[0]==="from"),false);
 });
 
-const dancerRoutes=["app/api/dancer/analytics/route.ts","app/api/dancer/avatar/route.ts","app/api/dancer/billing/route.ts","app/api/dancer/media/pin/route.ts","app/api/dancer/photos/preview/route.ts","app/api/dancer/photos/route.ts","app/api/dancer/profile/route.ts","app/api/dancer/profile/visibility/route.ts","app/api/dancer/ranking-events/route.ts","app/api/dancer/reviews/route.ts","app/api/dancer/shifts/check-in/route.ts","app/api/dancer/shifts/route.ts","app/api/dancer/tv/videos/[id]/route.ts","app/api/dancer/tv/videos/route.ts","app/api/dancer/weekly-report/route.ts"];
+const dancerRoutes=["app/api/dancer/photos/uploads/route.ts","app/api/dancer/analytics/route.ts","app/api/dancer/avatar/route.ts","app/api/dancer/billing/route.ts","app/api/dancer/media/pin/route.ts","app/api/dancer/photos/preview/route.ts","app/api/dancer/photos/route.ts","app/api/dancer/profile/route.ts","app/api/dancer/profile/visibility/route.ts","app/api/dancer/ranking-events/route.ts","app/api/dancer/reviews/route.ts","app/api/dancer/shifts/check-in/route.ts","app/api/dancer/shifts/route.ts","app/api/dancer/tv/videos/[id]/route.ts","app/api/dancer/tv/videos/route.ts","app/api/dancer/weekly-report/route.ts"];
 const routeFiles=[...dancerRoutes,"app/api/agent/commissions/route.ts"];
 for (const file of routeFiles) {
   const source=readFileSync(new URL("../"+file,import.meta.url),"utf8");
