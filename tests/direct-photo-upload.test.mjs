@@ -132,6 +132,9 @@ test("direct transfer uses a scoped PUT, preserves progress, and sends only an I
     if (name.endsWith("/env")) return { getPublicEnv: () => ({ supabaseUrl: "https://test.supabase.co" }) };
     return { DASHBOARD_SESSION_KEY: "session", readSession: () => ({ account: { id: account, role: "dancer" } }) };
   }, { XMLHttpRequest: Xhr, window: { addEventListener: (k, v) => listeners.set(k, v), removeEventListener: k => listeners.delete(k) } });
+  assert.equal(browser.photoUploadMime(new File(["heic"], "photo.heic", { type: "image/heic-sequence" })), "application/octet-stream");
+  assert.equal(browser.photoUploadMime(new File(["heic"], "photo.heic")), "application/octet-stream");
+  assert.equal(browser.photoUploadMime(new File(["photo"], "photo.jpg", { type: "image/jpeg" })), "image/jpeg");
   const signedUrl = "https://test.supabase.co/storage/v1/object/upload/sign/dancer-photo-uploads/" + owner + "/" + id + "?token=synthetic";
   for (const bad of [signedUrl.replace("test.supabase.co", "evil.invalid"), signedUrl.replace(owner, stranger), signedUrl.replace("/upload/sign/", "/public/")]) assert.throws(() => browser.checkedPhotoUploadUrl(bad, owner, id), /destination/);
   const body = new FormData();

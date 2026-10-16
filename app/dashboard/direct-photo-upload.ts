@@ -14,6 +14,13 @@ export function checkedPhotoUploadUrl(value: string, owner: string, id: string) 
   return url.href;
 }
 
+export function photoUploadMime(file: File) {
+  // Some phones omit HEIC MIME types or use image/heic-sequence. Preserve
+  // those files as binary; the server still verifies their actual image bytes.
+  const type = file.type.toLowerCase();
+  return ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"].includes(type) ? type : "application/octet-stream";
+}
+
 function transferPhoto(url: string, file: File, signal: AbortSignal, progress?: (percent: number) => void) {
   return new Promise<number>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -29,7 +36,7 @@ function transferPhoto(url: string, file: File, signal: AbortSignal, progress?: 
     const abort = () => { xhr.abort(); finish(new DOMException("Photo upload canceled.", "AbortError")); };
     if (signal.aborted) { abort(); return; }
     xhr.open("PUT", url);
-    xhr.setRequestHeader("content-type", file.type || "application/octet-stream");
+    xhr.setRequestHeader("content-type", photoUploadMime(file));
     xhr.upload.onprogress = event => {
       if (event.lengthComputable && event.total) progress?.(Math.min(99, Math.floor(event.loaded / event.total * 100)));
     };
