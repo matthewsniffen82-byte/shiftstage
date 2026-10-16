@@ -12,6 +12,7 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
   photoSlot?: { isPrimary: boolean; sortOrder: number };
   makeMain?: boolean;
   onUploadStart?: () => void;
+  onUploadProgress?: (percent: number) => void;
 }) {
   const owner = readSession()?.account?.id;
   if (!owner || readSession()?.account?.role !== "dancer") throw new Error("Sign in as a dancer to upload your main photo.");
@@ -68,6 +69,7 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
     const data = await requestDancerPhotosJson({
       method: "POST", headers: { "idempotency-key": options.uploadKey }, body,
       signal: controller.signal, fallbackMessage: "Unable to upload your main photo. Try again.",
+      onUploadProgress: options.onUploadProgress,
     });
     assertOwner();
     const decision = String(data.decision || "");

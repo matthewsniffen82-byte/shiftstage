@@ -13,6 +13,8 @@ import { requestDancerMediaPin } from "./dashboard-session";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import type { LoadState, DancerPhotoItem, DancerPhotoQueueItem } from "./dashboard-types";
 import { DANCER_PHOTOS_KEEP_OPEN_EVENT } from "./DashboardShared";
+import { preparePhotoUpload } from "./prepare-photo-upload";
+import { runMediaUploadBatch } from "./media-upload-batch";
 export function DancerPhotoPanel({
   uploadOnly = false,
   onBusyChange,
@@ -36,7 +38,6 @@ export function DancerPhotoPanel({
     relabelPhotoItems(dancerPhotoItemsFromProfile(profile, deletedPhotoIds)),
   );
   const [queuedPhotos, setQueuedPhotos] = useState<DancerPhotoQueueItem[]>([]);
-  const [uploadingQueueItemId, setUploadingQueueItemId] = useState("");
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [pinningPhotoId, setPinningPhotoId] = useState("");
@@ -254,15 +255,16 @@ export function DancerPhotoPanel({
     let workingPhotos = [...photos];
     let acceptedCount = 0;
     let rejectedCount = 0;
-    let deletionsPersisted = false;
+    // Reserve distinct positions before requests overlap, including positions retained by retries.
+    let nextSortOrder = Math.max(nextGalleryPhotoSortOrder(workingPhotos), ...batch.map(item => (item.uploadSortOrder ?? -1) + 1));
     try {
-      for (let index = 0; index < batch.length; index += 1) {
+      await persistQueuedPhotoDeletions(controller.signal);
+      await runMediaUploadBatch(batch, batch.some(item => item.replaces) ? 1 : 2, async queuedItem => {
         if (!isCurrentPhotoAction(requestId, controller)) return;
-        let item = batch[index];
-        let uploadSortOrder = item.uploadSortOrder;
-        setUploadingQueueItemId(item.id);
-        updateQueuedPhoto(item.id, { stage: "uploading", progress: 5, error: undefined });
-        setStatus(`Uploading photo ${index + 1} of ${batch.length}...`);
+        let item = queuedItem;
+        const uploadSortOrder = item.uploadSortOrder ?? nextSortOrder++;
+        updateQueuedPhoto(item.id, { stage: "preparing", progress: 0, uploadSortOrder, error: undefined });
+        setStatus(`Uploading ${batch.length} ${batch.length === 1 ? "photo" : "photos"}...`);
         try {
           if (!item.file.type.startsWith("image/") || !item.file.size || item.file.size > 25 * 1024 * 1024) {
             throw new Error("Choose a photo between 1 byte and 25 MB.");
@@ -284,18 +286,12 @@ export function DancerPhotoPanel({
           if (workingPhotos.length >= MAX_DANCER_PROFILE_PHOTOS) {
             throw new Error("No profile photo slot is available for this photo.");
           }
-          if (!deletionsPersisted) {
-            await persistQueuedPhotoDeletions(controller.signal);
-            if (!isCurrentPhotoAction(requestId, controller)) return;
-            deletionsPersisted = true;
-          }
-          updateQueuedPhoto(item.id, { stage: "uploading", progress: 25 });
-          setStatus(`Checking photo ${index + 1} of ${batch.length}...`);
-          uploadSortOrder = uploadSortOrder ?? nextGalleryPhotoSortOrder(workingPhotos);
+          const file = await preparePhotoUpload(item.file, controller.signal);
+          if (!isCurrentPhotoAction(requestId, controller)) return;
+          updateQueuedPhoto(item.id, { stage: "uploading", progress: 0 });
           const uploadKey = `${item.id}:gallery`;
-          updateQueuedPhoto(item.id, { uploadSortOrder });
           const formData = new FormData();
-          formData.set("file", item.file);
+          formData.set("file", file);
           formData.set("isPrimary", "false");
           formData.set("replaceExisting", "false");
           formData.set("sortOrder", String(uploadSortOrder));
@@ -307,9 +303,13 @@ export function DancerPhotoPanel({
             body: formData,
             fallbackMessage: "Unable to upload photo.",
             signal: controller.signal,
+            onUploadProgress: progress => {
+              if (isCurrentPhotoAction(requestId, controller)) updateQueuedPhoto(item.id, {
+                progress, stage: progress === 100 ? "checking" : "uploading",
+              });
+            },
           });
           if (!isCurrentPhotoAction(requestId, controller)) return;
-          updateQueuedPhoto(item.id, { stage: "checking", progress: 85 });
           const uploadStatus = normalizePhotoStatus(data.photo?.reviewStatus || data.photo?.review_status || data.decision);
           const approved = uploadStatus === "approved";
           const uploadedPhoto: DancerPhotoItem = {
@@ -343,7 +343,7 @@ export function DancerPhotoPanel({
           failedItems.push(failedItem);
           updateQueuedPhoto(item.id, failedItem);
         }
-      }
+      }, controller.signal);
 
       if (acceptedCount || rejectedCount) {
         const refreshData = await requestDancerProfileJson({
@@ -386,7 +386,6 @@ export function DancerPhotoPanel({
       }
     } finally {
       if (finishPhotoAction(requestId)) {
-        setUploadingQueueItemId("");
         setIsUploading(false);
         window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
       }
@@ -581,12 +580,12 @@ export function DancerPhotoPanel({
               label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
               disabled={photoActionBusy} onDismiss={() => dismissRejectedPhoto(result.id)} />;
             return (
-              <div className={`photo-review-card is-${result?.status || "pending"} ${item && uploadingQueueItemId === item.id && item.stage !== "complete" ? "is-uploading" : ""}`.trim()} key={item?.id || result?.id}>
+              <div className={`photo-review-card is-${result?.status || "pending"} ${item && ["preparing", "uploading", "checking"].includes(item.stage) ? "is-uploading" : ""}`.trim()} key={item?.id || result?.id}>
                 <div className="photo-preview" style={{ backgroundImage: `url(${item?.previewUrl || result?.imageUrl || ""})` }} aria-label="Photo preview">{!item?.previewUrl && !result?.imageUrl ? <span>Photo</span> : null}</div>
                 <span>
                   <strong>{`Selected photo ${selectionNumber}`}</strong>
-                  <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "uploading" ? "Uploading" : item?.stage === "checking" ? "Checking" : item?.error ? "Upload failed" : "Waiting to upload"}</small>
-                  {item && item.stage !== "failed" && item.stage !== "complete" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
+                  <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "preparing" ? "Preparing photo" : item?.stage === "uploading" ? `Uploading ${item.progress}%` : item?.stage === "checking" ? "Uploaded · Processing and reviewing" : item?.error ? "Upload failed" : "Waiting to upload"}</small>
+                  {item?.stage === "uploading" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
                   {result?.note ? <em>{result.note}</em> : null}
                   {result ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
                     disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(result.id, data)} /> : null}

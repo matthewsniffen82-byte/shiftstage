@@ -36,7 +36,7 @@ function harness(initial = [], { maxVideos = 50 } = {}) {
       if (name === '@/src/lib/dancr/media-limits') return { MAX_DANCER_PROFILE_VIDEOS: 50 };
       if (name === './profile-video-crop') return { cropProfileVideo: async () => cropCancelled ? null : { source: { durationSeconds: 10, width: 720, height: 1280 } } };
       if (name === './dancer-profile-media-sync') return { announceDancerProfileVideosChanged() {}, primeVideoPreviewFrame() {} };
-      if (name === '@/src/lib/supabase/client') return { createBrowserSupabaseClient: () => ({ storage: { from: () => ({ uploadToSignedUrl: async () => ({ error: uploadError ? new Error('Connection lost.') : null }) }) } }) };
+      if (name === './resumable-video-upload') return { uploadResumableVideo: async (_file, options) => { if (uploadError) throw new Error('Connection lost.'); options.onProgress(100); } };
       if (name === './dashboard-session') return {
         readDashboardAccessToken: () => 'fixture',
         requestDancerTvVideosJson: async options => {
@@ -134,9 +134,9 @@ test('saved video reasons explain waiting review and replace legacy generic note
 
 test('submitted video remains visible through refresh failure then moves into the approved library', async () => {
   const ui = harness(); await ui.settle(); ui.permissions(); ui.setReadError(true); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking']); assert.equal(ui.library.length, 0);
+  assert.deepEqual(ui.statuses, ['Uploaded · Processing and reviewing']); assert.equal(ui.library.length, 0);
   assert.equal(ui.revoked.length, 0, 'do not discard the only preview after submission');
-  ui.rerender(); assert.deepEqual(ui.statuses, ['Checking']);
+  ui.rerender(); assert.deepEqual(ui.statuses, ['Uploaded · Processing and reviewing']);
   ui.setReadError(false); await ui.refresh();
   const id = ui.calls.find(call => call[1] === 'PATCH')[0];
   await ui.refresh([video(id, 'approved')]); ui.rerender();

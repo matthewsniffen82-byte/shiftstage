@@ -212,7 +212,7 @@ export type DancerPhotoQueueItem = {
   file: File;
   previewUrl: string;
   source: "gallery" | "camera";
-  stage: "queued" | "uploading" | "checking" | "failed" | "complete";
+  stage: "queued" | "preparing" | "uploading" | "checking" | "failed" | "complete";
   progress: number;
   uploadSortOrder?: number;
   replaces?: { photoId?: string; queueId?: string };

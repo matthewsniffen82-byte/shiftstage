@@ -193,7 +193,7 @@ test("public notification actions prevent duplicate and stale updates", () => {
 
 test("public dancer profile state loads cancel when the dancer or shift changes", () => {
   const stateLoader = dancerActionsSource.match(
-    /useEffect\(\(\) => \{[\s\S]*?setSavedLoaded\(false\);[\s\S]*?\}, \[actionShiftId, dancerId, setGoingCount, setFollowedBy\]\);/,
+    /useEffect\(\(\) => \{[\s\S]*?setSavedLoaded\(false\);[\s\S]*?\}, \[preview, actionShiftId, dancerId, setGoingCount, setFollowedBy\]\);/,
   )?.[0] || "";
 
   assert.match(stateLoader, /const controller = new AbortController\(\);/);

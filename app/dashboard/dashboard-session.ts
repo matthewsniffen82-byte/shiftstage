@@ -7,6 +7,7 @@ import {
   revokeBrowserAuthSession,
 } from "../../src/lib/dancr/browser-session.ts";
 import { safeErrorMetadata } from "../../src/lib/security/safe-error-metadata.ts";
+import { uploadFormData } from "./upload-form-data.ts";
 
 export type DashboardSessionAccount = {
   id?: string | null;
@@ -114,6 +115,7 @@ export function dashboardLoadErrorMessage(error: unknown) {
 }
 
 export type DashboardJsonRequestOptions = Omit<RequestInit, "headers"> & {
+  onUploadProgress?: (percent: number) => void;
   timeoutMs?: number;
   expectedRole?: string;
   fallbackMessage?: string;
@@ -141,6 +143,7 @@ export async function requestDashboardJson(
     fallbackMessage = "Unable to update dashboard.",
     headers: requestHeaders,
     timeoutMs,
+    onUploadProgress,
     ...requestInit
   } = options;
   const authHeaders = currentDashboardAuthHeaders(expectedRole);
@@ -159,7 +162,12 @@ export async function requestDashboardJson(
   }) : null;
 
   const request = async () => {
-    const response = await fetch(path, {
+    const response = onUploadProgress && requestInit.method === "POST" && requestInit.body instanceof FormData
+      ? await uploadFormData(path, requestInit.body, {
+        signal: controller?.signal || requestInit.signal,
+        headers: { ...requestHeaders, ...authHeaders },
+        onProgress: onUploadProgress,
+      }) : await fetch(path, {
       ...requestInit,
       ...(controller ? { signal: controller.signal } : {}),
       headers: { ...requestHeaders, ...authHeaders },

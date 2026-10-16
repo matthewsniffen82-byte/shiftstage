@@ -44,7 +44,10 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
     try {
       const result = await uploadMainProfilePhoto(selection.current.file, {
         ...selection.current, signal: controller.signal,
-        onUploadStart: () => { if (!controller.signal.aborted) setStatus("Uploading and checking your main photo…"); },
+        onUploadStart: () => { if (!controller.signal.aborted) setStatus("Uploading your main photo…"); },
+        onUploadProgress: percent => {
+          if (!controller.signal.aborted) setStatus(percent === 100 ? "Photo uploaded. Processing and reviewing…" : `Uploading your main photo ${percent}%…`);
+        },
       });
       if (controller.signal.aborted) return;
       selection.current = null;

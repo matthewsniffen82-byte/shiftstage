@@ -4,6 +4,8 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
 import { mediaReview } from "./helpers/media-review-label.mjs";
+import { preparePhotoUpload } from "../app/dashboard/prepare-photo-upload.ts";
+import { runMediaUploadBatch } from "../app/dashboard/media-upload-batch.ts";
 
 const source = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 const photoSource = source.slice(source.indexOf("type DancerPhotoItem ="), source.indexOf("\nfunction InfoPanel("));
@@ -21,6 +23,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
+    preparePhotoUpload, runMediaUploadBatch,
     exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, MIN_DANCER_ONBOARDING_PHOTOS: 3, DancerRejectedUploadNotice: "RejectedUploadNotice", DancerUploadDisclosure: "UploadDisclosure", DancerMediaUploadRules: "MediaUploadRules", DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     cropProfilePhoto: (...args) => { crops.push(args); throw new Error("Uploads must not open the manual crop editor."); },
@@ -73,8 +76,8 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
     get replacements() { return nodes().filter(node => node.type === "input" && /^Replace photo/.test(node.props['aria-label'] || '')); },
     get progress() { return nodes().filter(node => node.type === "progress"); },
     select(files = [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })], source = "gallery") {
-      const label = source === "camera" ? "Take a new profile photo" : "Choose profile photos from your library";
-      nodes().find(node => node.props?.["aria-label"] === label).props.onChange({ target: { files, value: "" } });
+      nodes().find(node => node.type === "input" && node.props.className === "photo-source-input"
+        && Boolean(node.props.capture) === (source === "camera")).props.onChange({ target: { files, value: "" } });
       render();
     },
     updateProfile(next) { profile = next; dirty = true; render(); },
@@ -93,6 +96,28 @@ test("selecting several photos uploads the batch without opening a crop popup", 
   assert.equal(ui.reads.length, 1);
   assert.deepEqual(await Promise.all(ui.posts.map(post => post.body.get("file").text())), ["first", "second"]);
   assert.equal(ui.buttons.filter(button => button.props.children === "Retry").length, 0);
+});
+
+test("overlapping photo reviews reserve selection order and show real progress before results arrive", async () => {
+  const releases = [];
+  const ui = photoHarness({ uploadOnly: true,
+    post: () => new Promise(resolve => releases.push(resolve)),
+    read: async () => ({ profile: { dancer_photos: [approved('first', 1), approved('second', 2), approved('third', 3)] } }),
+  });
+  ui.select(['first', 'second', 'third'].map(name => new File([name], name + '.jpg', { type: 'image/jpeg' })));
+  await ui.settle();
+  assert.equal(ui.posts.length, 2, 'the second upload starts before the first review completes');
+  ui.posts[0].onUploadProgress(43); ui.posts[1].onUploadProgress(100); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Uploading 43%', 'Uploaded · Processing and reviewing', 'Waiting to upload']);
+  assert.equal(ui.progress[0].props.value, 43);
+  releases[1]({ decision: 'approved', photo: approved('second', 2) }); await ui.settle();
+  assert.equal(ui.posts.length, 3, 'the third upload does not wait for the first review');
+  assert.deepEqual(ui.posts.map(post => Number(post.body.get('sortOrder'))), [1, 2, 3]);
+  releases[2]({ decision: 'approved', photo: approved('third', 3) }); await ui.settle();
+  assert.equal(ui.reads.length, 0, 'final refresh waits for all in-flight reviews');
+  releases[0]({ decision: 'approved', photo: approved('first', 1) }); await ui.settle();
+  assert.equal(ui.reads.length, 1);
+  assert.equal(ui.cards.length, 0);
 });
 
 test("collapsing photo upload controls leaves pending and rejected reviews outside the disclosure", () => {
@@ -160,7 +185,7 @@ test("the Add photo box clears approved uploads while keeping them in the galler
   assert.equal(ui.profiles.length, 1);
   assert.equal(ui.cards.length, 0);
   assert.deepEqual(photoHarness({ profile: ui.profiles[0] }).statuses, ["Approved"]);
-  assert.equal(ui.buttons.length, 0, "completed receipts cannot retry or remove saved photos");
+  assert.equal(ui.buttons.filter(button => button.props.className !== "photo-source-action").length, 0, "completed receipts cannot retry or remove saved photos");
   assert.equal(ui.progress.length, 0);
   assert.deepEqual(ui.revoked, [], "keep the local preview until the uploader closes");
   ui.updateProfile(ui.profiles[0]);
@@ -199,10 +224,10 @@ test("mixed batches clear approvals while keeping unresolved photos in selection
   ui.select(["first", "second", "third"].map(name => new File([name], `${name}.jpg`, { type: "image/jpeg" })));
   await ui.settle();
   releases[0]({ decision: "approved", photo: approved() }); await ui.settle();
-  assert.deepEqual(ui.statuses, ["Approved", "Uploading", "Waiting to upload"]);
+  assert.deepEqual(ui.statuses, ["Approved", "Uploading 0%", "Uploading 0%"]);
   assert.deepEqual(ui.labels, ["Selected photo 1", "Selected photo 2", "Selected photo 3"]);
   releases[1]({ decision: "rejected", moderationRecordId: "rejected", message: "Choose a solo photo." }); await ui.settle();
-  assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Uploading"]);
+  assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Uploading 0%"]);
   releases[2]({ decision: "review", photo: { id: "review", reviewStatus: "pending" } }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Not approved", "Awaiting review"]);
   assert.deepEqual(ui.labels, ["second.jpg", "Selected photo 3"]);
@@ -248,7 +273,7 @@ test("a refresh failure preserves completed outcomes and retries only the failed
   ui.select(["first", "second", "third"].map(name => new File([name], `${name}.jpg`, { type: "image/jpeg" })));
   await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Upload failed"]);
-  assert.deepEqual(ui.buttons.map(button => button.props.children), ["Refresh library", "Retry", "Remove"]);
+  assert.deepEqual(ui.buttons.filter(button => button.props.className !== "photo-source-action").map(button => button.props.children), ["Refresh library", "Retry", "Remove"]);
   ui.buttons.find(button => button.props.children === "Retry").props.onClick(); await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Approved"]);
   assert.equal(ui.posts[2].headers["idempotency-key"], ui.posts[3].headers["idempotency-key"]);

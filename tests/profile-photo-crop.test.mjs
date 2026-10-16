@@ -42,8 +42,8 @@ test("crop preview measures the existing TV card CSS instead of inventing anothe
 test("dashboard photos upload directly without opening the manual crop editor", () => {
   const batch = dashboard.split("  async function uploadPhotoBatch(")[1].split("  async function pinPhoto(")[0];
   assert.doesNotMatch(batch, /cropProfilePhoto|cropped|Crop canceled/);
-  assert.match(batch, /formData\.set\("file", item\.file\)/);
-  assert.ok(batch.indexOf("persistQueuedPhotoDeletions(controller.signal)") < batch.indexOf('formData.set("file", item.file)'));
+  assert.match(batch, /formData\.set\("file", file\)/);
+  assert.ok(batch.indexOf("persistQueuedPhotoDeletions(controller.signal)") < batch.indexOf('formData.set("file", file)'));
   assert.match(batch, /await requestDancerPhotosJson\(/);
   assert.match(batch, /const uploadKey = `\$\{item\.id\}:gallery`/);
 });

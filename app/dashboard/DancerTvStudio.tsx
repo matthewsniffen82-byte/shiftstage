@@ -8,7 +8,7 @@ import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
-import { createBrowserSupabaseClient } from "@/src/lib/supabase/client";
+import { uploadResumableVideo } from "./resumable-video-upload";
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -24,6 +24,7 @@ import {
 } from "./dancer-profile-media-sync";
 import { cropProfileVideo } from "./profile-video-crop";
 import { VIDEO_UPLOAD_MAX_SECONDS, VIDEO_UPLOAD_MAX_BYTES } from "@/src/lib/dancr/video-upload-edit-policy";
+import type { VideoUploadEdit } from "@/src/lib/dancr/video-upload-edit-policy";
 
 type Workspace = {
   profile: {
@@ -63,6 +64,7 @@ type QueuedVideo = {
   stage: "queued" | "validating" | "uploading" | "checking" | "submitted" | "failed";
   progress: number;
   error?: string;
+  edit?: VideoUploadEdit;
   replaces?: { videoId?: string; queueId?: string };
 };
 
@@ -326,10 +328,10 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         if (!isCurrentVideoAction(requestId, controller)) return;
         let item = batch[index];
         setUploadingQueueItemId(item.id);
-        updateQueuedVideo(item.id, { stage: "validating", progress: 10, error: undefined });
+        updateQueuedVideo(item.id, { stage: "validating", progress: 0, error: undefined });
         setStatus(`Preparing video ${index + 1} of ${batch.length}...`);
         try {
-          const edit = await cropProfileVideo(item.file, controller.signal);
+          const edit = item.edit || await cropProfileVideo(item.file, controller.signal);
           if (!edit) {
             cancelledIds.add(item.id);
             queuedPreviewUrlsRef.current.delete(item.previewUrl);
@@ -338,6 +340,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           }
           const metadata = { ...edit.source, duration: edit.source.durationSeconds };
           if (!isCurrentVideoAction(requestId, controller)) return;
+          item = { ...item, edit };
+          updateQueuedVideo(item.id, { edit });
           if (item.replaces) {
             const { videoId, queueId } = item.replaces;
             if (videoId) {
@@ -349,7 +353,6 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             item = { ...item, replaces: undefined };
             updateQueuedVideo(item.id, { replaces: undefined });
           }
-          updateQueuedVideo(item.id, { stage: "uploading", progress: 30 });
           const data = await requestDancerTvVideosJson({
             method: "POST",
             headers: { "content-type": "application/json" },
@@ -374,19 +377,18 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           if (!data.upload.alreadySubmitted && !data.upload.uploadComplete) {
             if (!data.upload.path || !data.upload.token) throw new Error("Unable to prepare upload.");
             setStatus(`Uploading video ${index + 1} of ${batch.length} securely...`);
-            const supabase = createBrowserSupabaseClient();
-            const { error: uploadError } = await supabase.storage
-              .from("mydancr-tv-videos")
-              .uploadToSignedUrl(data.upload.path, data.upload.token, item.file, {
-                contentType: item.file.type,
-                upsert: false,
-              });
+            updateQueuedVideo(item.id, { stage: "uploading", progress: 0 });
+            await uploadResumableVideo(item.file, {
+              path: data.upload.path, token: data.upload.token, signal: controller.signal,
+              onProgress: progress => {
+                if (isCurrentVideoAction(requestId, controller)) updateQueuedVideo(item.id, { progress });
+              },
+            });
             if (!isCurrentVideoAction(requestId, controller)) return;
-            if (uploadError) throw uploadError;
           }
 
           if (!data.upload.alreadySubmitted) {
-            updateQueuedVideo(item.id, { stage: "checking", progress: 85 });
+            updateQueuedVideo(item.id, { stage: "checking", progress: 100 });
             setStatus(`Checking video ${index + 1} of ${batch.length}...`);
             await requestDancerTvVideoJson(preparedVideoId, {
               method: "PATCH",
@@ -662,8 +664,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
           <div>
             <strong>Selected video {index + 1}</strong>
-            <small>{item?.error ? "Upload failed" : video ? statusLabel(video.status) : item?.stage === "validating" ? "Preparing video" : item?.stage === "uploading" ? "Uploading securely" : item?.stage === "checking" || item?.stage === "submitted" ? "Checking" : "Waiting to upload"}</small>
-            {item && !["failed", "submitted"].includes(item.stage) ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
+            <small>{item?.error ? "Upload failed" : item?.stage === "validating" ? "Preparing video" : item?.stage === "uploading" ? `Uploading ${item.progress}%` : item?.stage === "checking" ? "Uploaded · Processing and reviewing" : video ? statusLabel(video.status) : item?.stage === "submitted" ? "Uploaded · Processing and reviewing" : "Waiting to upload"}</small>
+            {item?.stage === "uploading" ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
             {video ? <p>{mediaReviewExplanation("video", video.status, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes })}</p> : null}
             {item?.error ? <p>{item.error}</p> : null}
             {video && !item?.error ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={videoActionBusy} onBusyChange={setRetrying}

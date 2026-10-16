@@ -359,7 +359,7 @@ test("photo and video uploaders auto-upload multiple phone files with independen
   assert.match(dashboard, /<DancerMediaPinButton label=\{photo\.label\.toLowerCase\(\)\}/);
   assert.match(dashboard, /className="photo-card-remove-action"/);
   assert.doesNotMatch(dashboard, /disabled=\{isArranging \|\| photos\.findIndex/);
-  assert.match(dashboard, /for \(let index = 0; index < batch\.length; index \+= 1\)/);
+  assert.match(dashboard, /await runMediaUploadBatch\(batch/);
   assert.match(dashboard, /DANCER_PHOTOS_KEEP_OPEN_EVENT/);
   assert.doesNotMatch(dashboard, /Choose the original camera photo for maximum detail/);
 
@@ -370,7 +370,7 @@ test("photo and video uploaders auto-upload multiple phone files with independen
   assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
   assert.match(dancerStudio, /stage: "failed",\s*progress: 0/);
   assert.match(dancerStudio, /for \(let index = 0; index < batch\.length; index \+= 1\)/);
-  assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, item\.file/);
+  assert.match(dancerStudio, /uploadResumableVideo\(item\.file/);
   assert.match(dancerStudio, /preparedVideoId[\s\S]*?method: "DELETE"/);
 });
 
