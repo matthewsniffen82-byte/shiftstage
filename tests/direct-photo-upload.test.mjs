@@ -117,14 +117,14 @@ test("expired photos cannot renew or finalize; failed cleanup retains the retry 
   assert.equal(f.objects.size, 0);
 });
 
-test("direct transfer uses a scoped PUT, preserves progress, and sends only an ID to moderation", async () => {
+for (const [mime, transferMime] of [["image/jpeg", "image/jpeg"], ["image/heic-sequence", "application/octet-stream"], ["", "application/octet-stream"]]) test("direct photo transfer binds MIME type, preserves progress and sends only an ID: " + mime, async () => {
   const listeners = new Map(), requests = [], transfers = [], progress = [];
   let account = owner;
   const id = randomUUID();
   class Xhr {
     upload = {};
     open(method, url) { transfers.push({ method, url }); }
-    setRequestHeader(key, value) { assert.equal(key, "content-type"); assert.equal(value, "image/jpeg"); }
+    setRequestHeader(key, value) { assert.equal(key, "content-type"); assert.equal(value, transferMime); }
     send(file) { assert.equal(file.size, 5); this.upload.onprogress({ lengthComputable: true, loaded: 5, total: 5 }); this.status = 200; this.onload(); }
     abort() {}
   }
@@ -138,11 +138,11 @@ test("direct transfer uses a scoped PUT, preserves progress, and sends only an I
   const signedUrl = "https://test.supabase.co/storage/v1/object/upload/sign/dancer-photo-uploads/" + owner + "/" + id + "?token=synthetic";
   for (const bad of [signedUrl.replace("test.supabase.co", "evil.invalid"), signedUrl.replace(owner, stranger), signedUrl.replace("/upload/sign/", "/public/")]) assert.throws(() => browser.checkedPhotoUploadUrl(bad, owner, id), /destination/);
   const body = new FormData();
-  body.set("file", new File(["photo"], "photo.jpg", { type: "image/jpeg" }));
+  body.set("file", new File(["photo"], "photo.jpg", { type: mime }));
   body.set("idempotencyKey", "test"); body.set("sortOrder", "1");
   const request = async (path, options) => {
     requests.push([path, options]);
-    if (path.endsWith("/uploads")) return { upload: { id, uploadComplete: false, signedUrl } };
+    if (path.endsWith("/uploads")) { assert.equal(JSON.parse(options.body).mime, transferMime); return { upload: { id, uploadComplete: false, signedUrl } }; }
     assert.deepEqual(JSON.parse(options.body), { uploadId: id });
     return { decision: "approved" };
   };

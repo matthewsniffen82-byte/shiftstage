@@ -72,7 +72,7 @@ export async function directPhotoUpload(options: DashboardJsonRequestOptions, re
     assertOwner();
     const reservationBody = JSON.stringify({
       uploadKey: options.headers?.["idempotency-key"] || body.get("idempotencyKey"),
-      bytes: file.size, mime: file.type || "application/octet-stream",
+      bytes: file.size, mime: photoUploadMime(file),
       isPrimary: body.get("isPrimary") === "true", sortOrder: Number(body.get("sortOrder") || 0),
       replaceExisting: body.get("replaceExisting") === "true", replacementPhotoId: body.get("replacementPhotoId") || null,
     });
