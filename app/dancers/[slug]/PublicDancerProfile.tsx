@@ -254,6 +254,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
           videos={tvVideos.map((video) => ({
             id: video.id,
             videoUrl: video.videoUrl,
+            mobilePlaybackAvailable: video.mobilePlaybackAvailable,
             posterUrl: video.posterUrl || null,
             durationSeconds: video.durationSeconds,
             likeCount: video.likeCount,

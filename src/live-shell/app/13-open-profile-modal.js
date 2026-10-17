@@ -301,7 +301,8 @@
         slide.setAttribute("aria-label", `${profileName} video ${index + 1} of ${videos.length}`);
         const video = document.createElement("video");
         video.className = "profile-tv-viewer-video";
-        video.dataset.videoUrl = String(item.videoUrl || "").trim();
+        video.dataset.videoUrl = homeTvPlaybackVideoUrl(item);
+        video.dataset.fullVideoUrl = String(item.videoUrl || "").trim();
         video.loop = true;
         video.muted = profileTvViewerMuted;
         video.defaultMuted = profileTvViewerMuted;
@@ -319,6 +320,11 @@
           syncProfileTvVideoLoading(overlay, index);
         });
         video.addEventListener("emptied", () => { delete video.dataset.frameReady; });
+        video.addEventListener("error", () => {
+          if (fallbackPublicVideoSource(video) && !overlay.hidden
+            && video === activeProfileTvViewerVideo() && document.visibilityState !== "hidden"
+            && video.dataset.userPaused !== "true") void playProfileTvViewerVideo(video);
+        });
         watchVideoPosterPresentation(video);
         slide.appendChild(video);
         const poster = document.createElement("img");
@@ -445,7 +451,10 @@
           video.removeAttribute("id");
         }
         video.muted = profileTvViewerMuted;
-        if (videoIndex !== nextIndex) video.pause();
+        if (videoIndex !== nextIndex) {
+          video.pause();
+          delete video.dataset.userPaused;
+        }
       });
       if (options.scroll !== false && stage) {
         scrollProfileTvViewerTo(nextIndex, options);
@@ -611,12 +620,14 @@
       const video = activeProfileTvViewerVideo();
       if (!video) return;
       if (video.paused) {
+        delete video.dataset.userPaused;
         showProfileTvPlaybackFeedback(false);
         void video.play().catch(() => {
           showProfileTvPlaybackFeedback(true);
           document.getElementById("profileTvViewerStatus").textContent = "Tap the video again to start it.";
         });
       } else {
+        video.dataset.userPaused = "true";
         video.pause();
         showProfileTvPlaybackFeedback(true);
       }

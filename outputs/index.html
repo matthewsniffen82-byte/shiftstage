@@ -55472,7 +55472,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         slide.setAttribute("aria-label", `${profileName} video ${index + 1} of ${videos.length}`);
         const video = document.createElement("video");
         video.className = "profile-tv-viewer-video";
-        video.dataset.videoUrl = String(item.videoUrl || "").trim();
+        video.dataset.videoUrl = homeTvPlaybackVideoUrl(item);
+        video.dataset.fullVideoUrl = String(item.videoUrl || "").trim();
         video.loop = true;
         video.muted = profileTvViewerMuted;
         video.defaultMuted = profileTvViewerMuted;
@@ -55490,6 +55491,11 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           syncProfileTvVideoLoading(overlay, index);
         });
         video.addEventListener("emptied", () => { delete video.dataset.frameReady; });
+        video.addEventListener("error", () => {
+          if (fallbackPublicVideoSource(video) && !overlay.hidden
+            && video === activeProfileTvViewerVideo() && document.visibilityState !== "hidden"
+            && video.dataset.userPaused !== "true") void playProfileTvViewerVideo(video);
+        });
         watchVideoPosterPresentation(video);
         slide.appendChild(video);
         const poster = document.createElement("img");
@@ -55616,7 +55622,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           video.removeAttribute("id");
         }
         video.muted = profileTvViewerMuted;
-        if (videoIndex !== nextIndex) video.pause();
+        if (videoIndex !== nextIndex) {
+          video.pause();
+          delete video.dataset.userPaused;
+        }
       });
       if (options.scroll !== false && stage) {
         scrollProfileTvViewerTo(nextIndex, options);
@@ -55782,12 +55791,14 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       const video = activeProfileTvViewerVideo();
       if (!video) return;
       if (video.paused) {
+        delete video.dataset.userPaused;
         showProfileTvPlaybackFeedback(false);
         void video.play().catch(() => {
           showProfileTvPlaybackFeedback(true);
           document.getElementById("profileTvViewerStatus").textContent = "Tap the video again to start it.";
         });
       } else {
+        video.dataset.userPaused = "true";
         video.pause();
         showProfileTvPlaybackFeedback(true);
       }
@@ -62519,6 +62530,35 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         };
     }
 
+    // Shared with profile video viewers, including before the TV feature loads.
+    function homeTvPlaybackVideoUrl(item) {
+      const original = String(item?.videoUrl || "").trim();
+      if (item?.mobilePlaybackAvailable !== true || !/Android|iPhone/i.test(navigator.userAgent || "") || !window.matchMedia("(max-width: 760px)").matches) return original;
+      try {
+        const url = new URL(original, window.location.href);
+        if (url.origin !== window.location.origin || url.pathname !== "/api/media/dancer-video" || !url.searchParams.get("id")) return original;
+        url.searchParams.set("playback", "mobile");
+        return url.href;
+      } catch { return original; }
+    }
+
+    function fallbackPublicVideoSource(video) {
+      const fullVideoUrl = video.dataset.fullVideoUrl;
+      if (!fullVideoUrl || video.dataset.videoUrl === fullVideoUrl || !video.hasAttribute("src")) return false;
+      const position = video.currentTime;
+      video.dataset.videoUrl = fullVideoUrl;
+      delete video.dataset.frameReady;
+      if (Number.isFinite(position) && position > 0) {
+        video.addEventListener("loadedmetadata", () => {
+          if (video.dataset.videoUrl === fullVideoUrl && Number.isFinite(video.duration)) {
+            video.currentTime = Math.min(position, Math.max(0, video.duration - .1));
+          }
+        }, { once: true });
+      }
+      video.src = fullVideoUrl;
+      return true;
+    }
+
     function canWarmAdjacentVideo() {
       const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
       if (!connection) return true;
@@ -63082,30 +63122,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       nextSlide.querySelector("video")?.focus({ preventScroll: true });
     }
 
-    function homeTvPlaybackVideoUrl(item) {
-      const original = String(item?.videoUrl || "").trim();
-      if (item?.mobilePlaybackAvailable !== true || !/Android|iPhone/i.test(navigator.userAgent || "") || !window.matchMedia("(max-width: 760px)").matches) return original;
-      try {
-        const url = new URL(original, window.location.href);
-        if (url.origin !== window.location.origin || url.pathname !== "/api/media/dancer-video" || !url.searchParams.get("id")) return original;
-        url.searchParams.set("playback", "mobile");
-        return url.href;
-      } catch { return original; }
-    }
-
     function fallbackHomeTvFeedVideo(video, slide, videoId) {
-      const fullVideoUrl = video.dataset.fullVideoUrl;
-      if (!fullVideoUrl || video.dataset.videoUrl === fullVideoUrl || !video.hasAttribute("src")) return false;
-      const position = video.currentTime;
-      video.dataset.videoUrl = fullVideoUrl;
-      if (Number.isFinite(position) && position > 0) {
-        video.addEventListener("loadedmetadata", () => {
-          if (video.dataset.videoUrl === fullVideoUrl && Number.isFinite(video.duration)) {
-            video.currentTime = Math.min(position, Math.max(0, video.duration - .1));
-          }
-        }, { once: true });
-      }
-      video.src = fullVideoUrl;
+      if (!fallbackPublicVideoSource(video)) return false;
       if (slide.getAttribute("aria-current") === "true") activateHomeTvFeedVideo(videoId);
       return true;
     }

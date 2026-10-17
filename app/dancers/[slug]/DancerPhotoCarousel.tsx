@@ -22,6 +22,7 @@ import { recordPublicEngagementShare } from "@/src/lib/dancr/engagement-client";
 import { useVideoSoundPreference } from "@/src/lib/dancr/use-video-sound-preference";
 import { useAdaptiveVideoWarmup } from "@/src/lib/dancr/use-adaptive-video-warmup";
 import { videoBufferMode } from "@/src/lib/dancr/video-buffer-policy";
+import { publicVideoPlaybackUrl, fallbackPublicVideoSource } from "@/src/lib/dancr/public-video-playback";
 import { videoResourceRef } from "@/src/lib/dancr/video-resource-ref";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
@@ -45,6 +46,7 @@ type DancerPhotoCarouselProps = {
   videos?: Array<{
     id: string;
     videoUrl: string;
+    mobilePlaybackAvailable?: boolean;
     posterUrl?: string | null;
     durationSeconds: number;
     likeCount?: number;
@@ -79,6 +81,7 @@ type VideoMedia = {
   id: string;
   kind: "video";
   videoUrl: string;
+  mobilePlaybackAvailable?: boolean;
   posterUrl: string | null;
   durationSeconds: number;
   likeCount?: number;
@@ -1057,6 +1060,13 @@ export function DancerPhotoCarousel({
                       if (index === viewerIndex) setViewerVideoReadyVersion((version) => version + 1);
                     }}
                     onEmptied={(event) => { delete event.currentTarget.dataset.frameReady; }}
+                    onError={(event) => {
+                      const video = event.currentTarget;
+                      if (fallbackPublicVideoSource(video) && index === viewerIndex
+                        && document.visibilityState !== "hidden" && video.dataset.userPaused !== "true") {
+                        void video.play().catch(() => undefined);
+                      }
+                    }}
                     onPointerDown={() => {
                       playbackTapIndex.current = index;
                       window.clearTimeout(playbackTapTimer.current);
@@ -1074,7 +1084,8 @@ export function DancerPhotoCarousel({
                     tabIndex={index === viewerIndex ? 0 : -1}
                     poster={Math.abs(index - viewerIndex) <= 2 ? item.posterUrl || undefined : undefined}
                     preload="none"
-                    data-video-url={item.videoUrl}
+                    data-video-url={publicVideoPlaybackUrl(item)}
+                    data-full-video-url={item.videoUrl}
                   />
                   {item.posterUrl ? (
                     <img

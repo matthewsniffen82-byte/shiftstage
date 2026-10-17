@@ -122,7 +122,7 @@ test('native playback failure falls back once, retaining position without playin
     const video = { dataset: { videoUrl: 'mobile', fullVideoUrl: 'full' }, currentTime: 3, duration: 8, hasAttribute: () => true, addEventListener: (type, fn) => { listeners[type] = fn; } };
     const slide = { getAttribute: () => active ? 'true' : null };
     const c = vm.createContext({ activateHomeTvFeedVideo: id => plays.push(id) });
-    vm.runInContext(source('fallbackHomeTvFeedVideo'), c);
+    vm.runInContext([source('fallbackPublicVideoSource'), source('fallbackHomeTvFeedVideo')].join('\n'), c);
     assert.equal(c.fallbackHomeTvFeedVideo(video, slide, 'v1'), true);
     assert.equal(video.src, 'full');
     assert.deepEqual(plays, active ? ['v1'] : []);

@@ -40,7 +40,7 @@ test("routed profile grids remain poster-only and the viewer loads a bounded for
   assert.match(profileCarousel, /videoBufferMode\(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute\("src"\)\)/);
   assert.match(profileCarousel, /if \(!video.hasAttribute\("src"\)\) video.src = video.dataset.videoUrl/);
   assert.match(profileCarousel, /if \(video.hasAttribute\("src"\)\) \{\s*delete video.dataset.frameReady;\s*video.removeAttribute\("src"\);\s*video.load\(\)/);
-  assert.match(profileCarousel, /preload="none"\s*data-video-url=\{item.videoUrl\}/);
+  assert.match(profileCarousel, /preload="none"\s*data-video-url=\{publicVideoPlaybackUrl\(item\)\}/);
 });
 
 test("routed TV feed starts with one source and warms only the immediate next item", () => {
@@ -64,7 +64,7 @@ test("live shell defers home and full-profile video sources beyond the active wi
   assert.match(liveShell, /function attachDeferredVideoSource[\s\S]*?video\.dataset\.videoUrl[\s\S]*?if \(!video\.hasAttribute\("src"\)\) video\.src = videoUrl/);
   assert.match(liveShell, /function releaseDeferredVideoSource[\s\S]*?video\.removeAttribute\("src"\)[\s\S]*?video\.load\(\)/);
   assert.match(liveShell, /function primeHomeTvFeedNeighbors[\s\S]*?videoBufferMode\(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute\("src"\)\)[\s\S]*?applyVideoBufferMode\(video, mode\)/);
-  assert.match(liveShell, /video\.dataset\.videoUrl = String\(item\.videoUrl \|\| ""\)\.trim\(\)[\s\S]*?if \(index === 0\) attachDeferredVideoSource\(video, "auto"\)/);
+  assert.match(liveShell, /video\.dataset\.videoUrl = homeTvPlaybackVideoUrl\(item\)[\s\S]*?if \(index === 0\) attachDeferredVideoSource\(video, "auto"\)/);
 
   assert.match(liveShell, /function syncProfileTvVideoLoading[\s\S]*?canWarmAdjacentVideo\(\)[\s\S]*?videoBufferMode\(index, activeIndex, allowNextWarmup, activeReady, video.hasAttribute\("src"\)\)[\s\S]*?applyVideoBufferMode\(video, mode\)/);
   assert.match(liveShell, /video\.className = "profile-tv-viewer-video"[\s\S]*?video\.dataset\.videoUrl[\s\S]*?video\.preload = "none"/);

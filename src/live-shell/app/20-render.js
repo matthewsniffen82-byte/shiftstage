@@ -634,6 +634,35 @@
         };
     }
 
+    // Shared with profile video viewers, including before the TV feature loads.
+    function homeTvPlaybackVideoUrl(item) {
+      const original = String(item?.videoUrl || "").trim();
+      if (item?.mobilePlaybackAvailable !== true || !/Android|iPhone/i.test(navigator.userAgent || "") || !window.matchMedia("(max-width: 760px)").matches) return original;
+      try {
+        const url = new URL(original, window.location.href);
+        if (url.origin !== window.location.origin || url.pathname !== "/api/media/dancer-video" || !url.searchParams.get("id")) return original;
+        url.searchParams.set("playback", "mobile");
+        return url.href;
+      } catch { return original; }
+    }
+
+    function fallbackPublicVideoSource(video) {
+      const fullVideoUrl = video.dataset.fullVideoUrl;
+      if (!fullVideoUrl || video.dataset.videoUrl === fullVideoUrl || !video.hasAttribute("src")) return false;
+      const position = video.currentTime;
+      video.dataset.videoUrl = fullVideoUrl;
+      delete video.dataset.frameReady;
+      if (Number.isFinite(position) && position > 0) {
+        video.addEventListener("loadedmetadata", () => {
+          if (video.dataset.videoUrl === fullVideoUrl && Number.isFinite(video.duration)) {
+            video.currentTime = Math.min(position, Math.max(0, video.duration - .1));
+          }
+        }, { once: true });
+      }
+      video.src = fullVideoUrl;
+      return true;
+    }
+
     function canWarmAdjacentVideo() {
       const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
       if (!connection) return true;
