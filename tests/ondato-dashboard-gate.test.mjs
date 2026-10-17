@@ -13,7 +13,7 @@ function render(verification, props = {}) {
   const exports = {}; let state = 0;
   vm.runInNewContext(code, { exports, require(name) {
     if (name === 'react/jsx-runtime') return require(name);
-    if (name === 'react') return { ...React, useState: initial => [state++ === 0 ? verification : initial, () => {}], useEffect() {}, useCallback: fn => fn };
+    if (name === 'react') return { ...React, useState: initial => [state++ === 0 ? verification : initial, () => {}], useEffect() {}, useCallback: fn => fn, useRef: value => ({ current: value }) };
     if (name === './dashboard-session') return { requestDashboardJson() { throw new Error('No network while rendering'); } };
     if (name === '@/src/lib/dancr/ondato-url') return { ondatoHostedUrl };
     throw new Error(name);

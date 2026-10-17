@@ -11,6 +11,7 @@ before(async () => {
   for (const name of ['20260917190000_dancer_didit_age_verification', '20260917210000_dancer_veriff_age_verification', '20260918090000_veriff_after_profile_before_first_tap', '20260922010000_dancer_ondato_age_verification']) {
     await db.exec(readFileSync(new URL(`../supabase/migrations/${name}.sql`, import.meta.url), 'utf8'));
   }
+  await db.exec(readFileSync(new URL('../supabase/migrations/20261017222036_ondato_onboarding_reconciliation.sql', import.meta.url), 'utf8'));
   await db.exec('set role service_role');
 });
 after(async () => db?.close());
@@ -127,4 +128,78 @@ scenario('three-start limit, private records and service-only activation remain 
     for(const sql of ['select * from public.dancer_age_verifications','select public.activate_dancer_age_verification()',"update public.dancer_age_verifications set status='verified'"]) await rejected(sql,/permission denied/);
     await db.exec('set role service_role');
   }
+});
+
+const reconcileSql = 'select public.reconcile_dancer_age_verification($1,$2,$3,$4,$5,$6) as applied';
+async function reconciliationFixture() {
+  const row = (await db.query(reserveSql)).rows[0].value;
+  await db.query("update public.dancer_age_verifications set status='pending', session_id=$1, verification_url='https://idv.ondato.com/' where user_id=$2", [id(81), id(1)]);
+  return [id(1), row.attempt_id, id(81), id(80)];
+}
+
+scenario('overlapping approvals preserve the first approval time and an intervening physical tap', async () => {
+  await db.exec('select public.activate_dancer_age_verification()');
+  const args = await reconciliationFixture();
+  const firstTime = new Date(Date.now() - 2000).toISOString();
+  assert.equal((await db.query(reconcileSql, [...args, 'verified', firstTime])).rows[0].applied, true);
+  assert.equal((await tap(db)).enrollmentStatus, 'completed');
+  const before = await tapSnapshot(db);
+  // A second worker may have read the pending row before the first saved.
+  // The RPC must use the row's current approval time, not that stale snapshot.
+  const laterTime = new Date().toISOString();
+  assert.equal((await db.query(reconcileSql, [...args, 'verified', laterTime])).rows[0].applied, true);
+  const row = (await db.query('select verified_at, checked_at, verification_url from public.dancer_age_verifications')).rows[0];
+  assert.equal(new Date(row.verified_at).toISOString(), firstTime);
+  assert.equal(new Date(row.checked_at).toISOString(), laterTime);
+  assert.equal(row.verification_url, null);
+  assert.deepEqual(await tapSnapshot(db), before);
+});
+
+scenario('rejections revoke access and older approvals or superseded attempts cannot restore it', async () => {
+  await db.exec('select public.activate_dancer_age_verification()');
+  const args = await reconciliationFixture();
+  const now = Date.now();
+  await db.query(reconcileSql, [...args, 'verified', new Date(now - 4000).toISOString()]);
+  await tap(db);
+  await db.exec(`update public.dancer_profiles set is_public=true where id='${id(10)}'`);
+  const rejectedAt = new Date(now - 1000).toISOString();
+  await db.query(reconcileSql, [...args, 'declined', rejectedAt]);
+  assert.equal((await db.query('select is_public from public.dancer_profiles where id=$1', [id(10)])).rows[0].is_public, false);
+  for (const time of [new Date(now - 3000).toISOString(), rejectedAt]) {
+    assert.equal((await db.query(reconcileSql, [...args, 'verified', time])).rows[0].applied, false);
+  }
+  for (let index = 0; index < 4; index++) {
+    const wrong = [...args]; wrong[index] = id(99);
+    assert.equal((await db.query(reconcileSql, [...wrong, 'verified', new Date(now).toISOString()])).rows[0].applied, false);
+  }
+  const row = (await db.query('select status, verified_at from public.dancer_age_verifications')).rows[0];
+  assert.equal(row.status, 'declined'); assert.equal(row.verified_at, null);
+  await rejected(tapSql, /AGE_VERIFICATION_REQUIRED_BEFORE_TAP/);
+});
+
+scenario('unfinished decisions preserve the hosted link and reconciliation rejects invalid inputs and browser roles', async () => {
+  const args = await reconciliationFixture();
+  const stamp = new Date().toISOString();
+  await db.query(reconcileSql, [...args, 'pending', stamp]);
+  assert.equal((await db.query('select verification_url from public.dancer_age_verifications')).rows[0].verification_url, 'https://idv.ondato.com/');
+  for (const [status, time] of [['creating', stamp], [null, stamp], ['verified', null], ['verified', 'infinity'], ['verified', '2100-01-01']]) {
+    await rejected(reconcileSql, /Invalid verification decision/, [...args, status, time]);
+  }
+  for (const role of ['anon', 'authenticated']) {
+    await db.exec(`set role ${role}`);
+    await rejected(reconcileSql, /permission denied/, [...args, 'verified', stamp]);
+    await db.exec('set role service_role');
+  }
+  const fn = (await db.query("select prosecdef from pg_proc where proname='reconcile_dancer_age_verification'")).rows[0];
+  assert.equal(fn.prosecdef, false);
+});
+
+scenario('a rejection wins a simultaneous timestamp tie and approval cannot undo it', async () => {
+  const args = await reconciliationFixture();
+  const stamp = new Date().toISOString();
+  await db.query(reconcileSql, [...args, 'verified', stamp]);
+  assert.equal((await db.query(reconcileSql, [...args, 'declined', stamp])).rows[0].applied, true);
+  assert.equal((await db.query(reconcileSql, [...args, 'verified', stamp])).rows[0].applied, false);
+  const row = (await db.query('select status,verified_at from public.dancer_age_verifications')).rows[0];
+  assert.equal(row.status, 'declined'); assert.equal(row.verified_at, null);
 });

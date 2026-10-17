@@ -211,12 +211,11 @@ export async function reconcileOndatoSession(admin: SupabaseClient, sessionId: s
   let status;
   try { status = inspectOndatoDecision(identity, identification, identificationSetup, expected).status; }
   catch (error) { throw referenceFailure(error); }
-  const { error: saveError } = await admin.from("dancer_age_verifications").update({
-    status, checked_at: checkedAt,
-    verified_at: status === "verified" ? (attempt.status === "verified" && attempt.verified_at ? attempt.verified_at : checkedAt) : null,
-    ...(status === "verified" || status === "declined" || status === "expired" ? { verification_url: null } : {}),
-  }).eq("user_id", attempt.user_id).eq("provider", "ondato").eq("provider_integration_id", config.setupId)
-    .eq("attempt_id", attempt.attempt_id).eq("session_id", sessionId)
-    .or(`checked_at.is.null,checked_at.lt.${checkedAt}`);
+  // Read/modify/write the verification time in one database statement. Two
+  // concurrent approvals can both have read a pending row before either saves.
+  const { error: saveError } = await admin.rpc("reconcile_dancer_age_verification", {
+    p_user_id: attempt.user_id, p_attempt_id: attempt.attempt_id, p_session_id: sessionId,
+    p_integration_id: config.setupId, p_status: status, p_checked_at: checkedAt,
+  });
   if (saveError) throw unavailable();
 }

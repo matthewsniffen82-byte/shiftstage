@@ -14,7 +14,13 @@ const attempt={user_id:'owner',attempt_id:ids.attemptId,provider:'ondato',provid
 function fixture({ reservation = attempt, current = attempt, idv = identity(), kyc = identification(), setup = identificationSetup(), idvSetup = { id: ids.setupId, applicationId: ids.applicationId, isLive: true, isDisabled: false }, setupError = false, httpError = null, created = { id: ids.sessionId }, saveError = null, env = {}, configured = true, providerError = false, token = { access_token: "server-only-access-token", token_type: "Bearer" }, reservationError = null } = {}) {
   const calls = [], writes = [];
   const admin = {
-    async rpc(name, args) { calls.push({ rpc: name, args }); return { data: reservation, error: reservationError }; },
+    async rpc(name, args) {
+      calls.push({ rpc: name, args });
+      if (name === 'reconcile_dancer_age_verification') {
+        writes.push({ rpc: name, args }); return { data: !saveError, error: saveError };
+      }
+      return { data: reservation, error: reservationError };
+    },
     from(table) {
       const filters = []; let mutation;
       const query = { select() { return this; }, eq(column, value) { filters.push([column, value]); return this; }, or(value) { filters.push(['or', value]); return this; },
@@ -151,14 +157,17 @@ test('authoritative IDV, KYC and identification setup retrieval saves only a con
   assert.equal(requests[3].options.headers.authorization,'Bearer server-only-access-token');
   assert.equal(requests[3].options.signal,requests[1].options.signal);
   assert.equal(requests[3].options.cache,'no-store');
-  assert.equal(f.writes[0].mutation.status,'verified');
-  assert.deepEqual(Object.keys(f.writes[0].mutation).sort(),['checked_at','status','verification_url','verified_at']);
-  for(const [key,value] of [['session_id',ids.sessionId],['provider','ondato'],['attempt_id',ids.attemptId]]) assert.ok(f.writes[0].filters.some(([k,v])=>k===key&&v===value));
-  assert.ok(f.writes[0].filters.some(([k,v])=>k==='or'&&v.startsWith('checked_at.is.null,checked_at.lt.')));
+  assert.equal(f.writes[0].rpc,'reconcile_dancer_age_verification');
+  assert.equal(f.writes[0].args.p_status,'verified');
+  assert.deepEqual(Object.keys(f.writes[0].args).sort(),['p_attempt_id','p_checked_at','p_integration_id','p_session_id','p_status','p_user_id']);
+  for(const [key,value] of [['p_session_id',ids.sessionId],['p_user_id','owner'],['p_integration_id',ids.setupId],['p_attempt_id',ids.attemptId]]) assert.equal(f.writes[0].args[key],value);
+  assert.ok(Number.isFinite(Date.parse(f.writes[0].args.p_checked_at)));
 });
-test('duplicate approvals preserve the first verification timestamp so saved physical taps stay valid',async()=>{
+test('duplicate approvals leave the first verification timestamp to atomic database reconciliation',async()=>{
   const verified_at='2026-01-01T00:00:00Z';const f=fixture({current:{...attempt,status:'verified',verified_at}});await f.reconcile();
-  assert.equal(f.writes[0].mutation.verified_at,verified_at);
+  assert.equal(f.writes[0].args.p_status,'verified');
+  assert.ok(!JSON.stringify(f.writes[0]).includes(verified_at));
+  await assert.rejects(fixture({saveError:{code:'database-unavailable'}}).reconcile(), error => error.status === 503);
 });
 
 test('a completed live-style unified setup reconciles from review without creating a new session', async () => {
@@ -169,8 +178,7 @@ test('a completed live-style unified setup reconciles from review without creati
   assert.equal(result.referenceFailure, null);
   assert.equal(f.writes.length, 0);
   await f.reconcile();
-  assert.equal(f.writes[0].mutation.status, 'verified');
-  assert.equal(f.writes[0].mutation.verification_url, null);
+  assert.equal(f.writes[0].args.p_status, 'verified');
   assert.ok(f.calls.filter(c => c.url && !c.url.endsWith('/connect/token')).every(c => c.options.method === 'GET'));
 });
 test('unknown sessions, mismatched results and unavailable provider responses never overwrite saved approvals',async()=>{
@@ -184,17 +192,17 @@ test('unknown sessions, mismatched results and unavailable provider responses ne
 
 test('missing or passive-only setups cannot approve; unfinished and rejected checks do not need setup retrieval',async()=>{
   for(const setup of [null,{}, {...identificationSetup(),face:{enabled:true,activeLivenessEnabled:false,passiveLivenessEnabled:true}}]){
-    const f=fixture({setup});await f.reconcile();assert.equal(f.writes[0].mutation.status,'in_review');assert.equal(f.writes[0].mutation.verified_at,null);
+    const f=fixture({setup});await f.reconcile();assert.equal(f.writes[0].args.p_status,'in_review');
   }
   for(const [patch,expected] of [[{kyc:{...identification(),status:'Rejected'}},'declined'],
     [{idv:{...identity(),status:'Expired'}},'expired'],[{idv:{...identity(),status:'InProgress'}},'in_review'],
     [{idv:{...identity(),step:{kycIdentification:{id:ids.kycId,isSuccess:null}}}},'in_review']]){
-    const f=fixture({...patch,setupError:true});await f.reconcile();assert.equal(f.writes[0].mutation.status,expected);
+    const f=fixture({...patch,setupError:true});await f.reconcile();assert.equal(f.writes[0].args.p_status,expected);
     assert.equal(f.calls.filter(x=>x.url?.endsWith('/setup')).length,0);
   }
 });
 test('a current rejection revokes approval; ordinary access uses the saved result without provider calls',async()=>{
-  const f=fixture({kyc:{...identification(),status:'Rejected'}});await f.reconcile();assert.equal(f.writes[0].mutation.status,'declined');assert.equal(f.writes[0].mutation.verified_at,null);
+  const f=fixture({kyc:{...identification(),status:'Rejected'}});await f.reconcile();assert.equal(f.writes[0].args.p_status,'declined');
   const saved=fixture({current:{...attempt,status:'verified',verified_at:'2026-01-01'},providerError:true});
   assert.equal((await saved.get()).status,'verified');assert.equal(saved.calls.filter(x=>x.url).length,0);
 });

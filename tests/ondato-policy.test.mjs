@@ -93,6 +93,25 @@ test('incomplete, expired and rejected sessions never approve',()=>{
   assert.equal(evaluateOndatoDecision(identity(),{...identification(),status:'Rejected'},null,ids,now),'declined');
 });
 
+test('an unfinished capture can be resumed while processing and suspended sessions remain in review', () => {
+  const unfinished = { ...identification(), status: 'Awaiting', statusReason: 'Unfinished', completedUtc: null, document: null, rules: [] };
+  for (const status of ['Pending', 'InProgress']) {
+    assert.equal(evaluateOndatoDecision({ ...identity(), status }, unfinished, null, ids, now), 'pending');
+    for (const statusReason of ['Processing', 'AwaitingClientDecision', undefined]) {
+      assert.equal(evaluateOndatoDecision({ ...identity(), status }, { ...unfinished, statusReason }, null, ids, now), 'in_review');
+    }
+  }
+  for (const status of ['Completed', 'Suspended']) {
+    assert.equal(evaluateOndatoDecision({ ...identity(), status }, unfinished, null, ids, now), 'in_review');
+  }
+});
+
+test('duplicate identity rejections and failed fraud checks never grant approval', () => {
+  assert.equal(evaluateOndatoDecision(identity(), { ...identification(), status: 'Rejected', statusReason: 'DuplicatedInfo' }, null, ids, now), 'declined');
+  assert.equal(evaluateOndatoDecision(identity(), { ...identification(), fraudChecks: [{ name: 'DocumentManipulation', status: 'Fail' }] }, identificationSetup(), ids, now), 'in_review');
+  assert.equal(evaluateOndatoDecision(identity(), { ...identification(), fraudChecks: [{ name: 'DocumentManipulation', status: 'Success' }] }, identificationSetup(), ids, now), 'verified');
+});
+
 test('birthday boundary, leap days, malformed and future dates are handled conservatively',()=>{
   assert.equal(isAdultDateOfBirth('2008-09-22',now),true);
   for(const value of ['2008-09-23','2008-02-30','2027-01-01','1900-01-01','18',null]) assert.equal(isAdultDateOfBirth(value,now),false);

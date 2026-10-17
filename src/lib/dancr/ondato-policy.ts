@@ -71,6 +71,12 @@ export function inspectOndatoDecision(identity: unknown, identification: unknown
   assertOndatoReference(kyc.applicationId, expected.applicationId, "kyc_application");
   assertOndatoReference(kyc.externalReferenceId, expected.attemptId, "kyc_attempt");
   if (kyc.status === "Rejected") return { status: "declined", reason: "provider_rejected" };
+  // A KYC record exists as soon as capture starts. Leaving that capture flow
+  // must not strand the dancer in manual review with no way to resume it.
+  if ((idv.status === "Pending" || idv.status === "InProgress")
+    && kyc.status === "Awaiting" && kyc.statusReason === "Unfinished") {
+    return { status: "pending", reason: "identification_unfinished" };
+  }
   if (idv.status !== "Completed") return { status: "in_review", reason: "session_not_completed" };
   if (kyc.status !== "Approved") return { status: "in_review", reason: "identification_not_approved" };
   if (step.isSuccess !== true) return { status: "in_review", reason: "identification_step_not_successful" };
@@ -108,6 +114,8 @@ export function inspectOndatoDecision(identity: unknown, identification: unknown
   // If Ondato also enables passive liveness, require its result as well.
   if (face.passiveLivenessEnabled === true) requiredRules.push("SuccessfulPassiveLivenessCheck");
   if (rules.some(rule => rule.status === "Fail")) return { status: "in_review", reason: "provider_rule_failed" };
+  const fraudChecks = Array.isArray(kyc.fraudChecks) ? kyc.fraudChecks.map(jsonObject) : [];
+  if (fraudChecks.some(check => check.status === "Fail")) return { status: "in_review", reason: "provider_fraud_check_failed" };
   if (!requiredRules.every(name => rules.some(rule => rule.name === name && rule.status === "Success"))) return { status: "in_review", reason: "required_face_rule_not_successful" };
   return { status: "verified", reason: "verification_passed" };
 }

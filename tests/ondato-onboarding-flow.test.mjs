@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS } from '../src/lib/dancr/media-limits.ts';
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../app/dashboard/DancerProfileEditor.tsx', import.meta.url), 'utf8');
@@ -18,7 +19,8 @@ function render(effectiveStatus, verification) {
     exports, require, useState: () => [states[stateIndex++], () => {}], useRef: value => ({ current: value }),
     useMemo: fn => fn(), useEffect() {},
     persistedDancerStageName: profile => profile.stageName,
-    dancerPhotoItemsFromProfile: () => [{ status: 'approved' }],
+    approvedProfilePhotoCount, MIN_DANCER_ONBOARDING_PHOTOS,
+    dancerPhotoItemsFromProfile: () => [1, 2, 3].map(id => ({ id, status: 'approved', isPrimary: id === 1 })),
     dancerProfileSetupBlocker: () => 'Finish your profile',
     DancerAgeVerificationGate: ({ profileSubmitted, children }) => React.createElement('div', { 'data-profile-submitted': profileSubmitted }, children),
     DancerProfileAgreementReview: ({ children }) => React.createElement('div', null, 'PROFILE_AGREEMENT_REVIEW', children),

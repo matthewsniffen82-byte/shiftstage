@@ -1,10 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { requestDashboardJson } from "./dashboard-session";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { readSession, requestDashboardJson } from "./dashboard-session";
 import { ondatoHostedUrl } from "@/src/lib/dancr/ondato-url";
 
 export type DancerAgeVerification = { required: boolean; configured: boolean; status: string; verifiedAt: string | null };
+
+function captureVerificationAccount() {
+  const owner = readSession()?.account?.id;
+  // Token refresh is allowed; a response for another dancer or a signed-out
+  // session must never update this gate or redirect to a previous account's IDV.
+  return () => Boolean(owner && readSession()?.account?.id === owner && readSession()?.account?.role === "dancer");
+}
 
 export default function DancerAgeVerificationGate({ children, profileSubmitted = true, onVerificationChange }: {
   children: ReactNode;
@@ -15,51 +22,108 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
   const [busy, setBusy] = useState(false);
   const [consent, setConsent] = useState(false);
   const [error, setError] = useState("");
+  const mounted = useRef(false);
+  const inFlight = useRef(false);
+  const requestSequence = useRef(0);
+  const actionController = useRef<AbortController | null>(null);
   const load = useCallback(async (refresh = false, signal?: AbortSignal) => {
-    const data = await requestDashboardJson(`/api/dancer/age-verification${refresh ? "?action=refresh" : ""}`, {
-      method: refresh ? "POST" : "GET", cache: "no-store", expectedRole: "dancer", timeoutMs: 25_000, signal,
-      fallbackMessage: "We couldn't check your verification. Please try again.",
-    });
-    if (!signal?.aborted) {
+    const sequence = ++requestSequence.current;
+    const isCurrentAccount = captureVerificationAccount();
+    let data;
+    try {
+      data = await requestDashboardJson(`/api/dancer/age-verification${refresh ? "?action=refresh" : ""}`, {
+        method: refresh ? "POST" : "GET", cache: "no-store", expectedRole: "dancer", timeoutMs: 25_000, signal,
+        fallbackMessage: "We couldn't check your verification. Please try again.",
+      });
+    } catch (failure) {
+      if (mounted.current && !signal?.aborted && sequence === requestSequence.current && isCurrentAccount()) throw failure;
+      return;
+    }
+    if (mounted.current && !signal?.aborted && sequence === requestSequence.current && isCurrentAccount()) {
       setVerification(data.verification);
       onVerificationChange?.(data.verification);
+      setError("");
+      return data.verification as DancerAgeVerification;
     }
   }, [onVerificationChange]);
 
   useEffect(() => {
+    mounted.current = true;
     const controller = new AbortController();
+    const isCurrentAccount = captureVerificationAccount();
     const returned = new URLSearchParams(window.location.search).get("age-verification") === "returned";
-    void load(returned, controller.signal).catch(() => {
-      if (!controller.signal.aborted) setError("We couldn't check your verification. Please try again.");
-    });
-    return () => controller.abort();
-  }, [load]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const waiting = (value?: DancerAgeVerification) => value?.configured
+      && ["creating", "pending", "in_review"].includes(value.status);
+    async function check(refresh: boolean, remaining: number) {
+      try {
+        if (controller.signal.aborted || !isCurrentAccount()) return;
+        if (inFlight.current || (refresh && document.visibilityState === "hidden")) {
+          // Pausing must not consume the remaining checks or leave a tab that
+          // was opened in the background permanently stuck on "Checking".
+          timer = setTimeout(() => void check(refresh, remaining), 15_000);
+          return;
+        }
+        const value = await load(refresh, controller.signal);
+        if (controller.signal.aborted || !isCurrentAccount() || !value) return;
+        // Read saved approval first so an Ondato outage cannot hide it. A
+        // returned or previously unfinished check then gets fresh evidence.
+        if (!refresh && profileSubmitted && value.status !== "verified" && value.configured && (returned || waiting(value))) {
+          await check(true, remaining);
+        } else if (profileSubmitted && waiting(value) && remaining > 0) {
+          timer = setTimeout(() => void check(true, remaining - 1), 15_000);
+        }
+      } catch {
+        if (!controller.signal.aborted && isCurrentAccount()) setError("We couldn't check your verification. Please try again.");
+      }
+    }
+    void check(false, 8);
+    return () => {
+      mounted.current = false;
+      controller.abort();
+      actionController.current?.abort();
+      requestSequence.current += 1;
+      clearTimeout(timer);
+    };
+  }, [load, profileSubmitted]);
 
   async function act(start: boolean) {
-    if (busy || (start && (!consent || !profileSubmitted))) return;
+    if (!mounted.current || inFlight.current || (start && (!consent || !profileSubmitted))) return;
+    inFlight.current = true;
+    requestSequence.current += 1;
+    const controller = new AbortController();
+    actionController.current = controller;
+    const isCurrentAccount = captureVerificationAccount();
+    const current = () => mounted.current && !controller.signal.aborted && isCurrentAccount();
     setBusy(true);
     setError("");
     try {
       if (start) {
         const data = await requestDashboardJson("/api/dancer/age-verification", {
-          method: "POST", expectedRole: "dancer", timeoutMs: 25_000, fallbackMessage: "Unable to start verification.",
+          method: "POST", expectedRole: "dancer", timeoutMs: 25_000, signal: controller.signal, fallbackMessage: "Unable to start verification.",
         });
+        if (!current()) return;
         if (data.url) {
           const url = ondatoHostedUrl(data.url);
           if (!url) throw new Error("Unable to open verification.");
           window.location.assign(url);
           return;
         }
-        await load();
-      } else await load(Boolean(verification?.configured));
+        await load(false, controller.signal);
+      } else await load(Boolean(verification?.configured && profileSubmitted), controller.signal);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : "Unable to complete verification.");
-    } finally { setBusy(false); }
+      if (current()) setError(failure instanceof Error ? failure.message : "Unable to complete verification.");
+    } finally {
+      inFlight.current = false;
+      if (actionController.current === controller) actionController.current = null;
+      if (current()) setBusy(false);
+    }
   }
 
   if (verification && !verification.required && !verification.configured) return <>{children}</>;
   if (verification?.status === "verified") return <>{children}</>;
   const reviewing = verification?.status === "in_review";
+  const pending = verification?.status === "pending";
   const canStart = profileSubmitted && verification?.configured && !reviewing;
   return <>
     <section className="dancer-age-verification" aria-labelledby="dancer-age-heading" aria-busy={busy}>
@@ -71,6 +135,8 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
         : !profileSubmitted ? "Finish and submit your dancer profile first, then verify you are 18 or older before your first club tap."
         : !verification.configured ? "Age verification is being connected. Please check back shortly. Account settings and support remain available."
         : reviewing ? "Your verification needs review. Check your status again later or contact MyDancr support."
+        : pending ? "Your verification is unfinished. Continue in Ondato to finish your ID photos and live selfie."
+        : verification.status === "expired" ? "Your verification session ended. Start again when you have your photo ID ready."
         : verification.status === "declined" ? "Your verification was not approved. You must be 18 or older to use dancer features. You can retry with a valid ID or contact support."
         : "Have your photo ID ready. Ondato will ask for ID photos and a live selfie."}</p>
       {canStart && <>
@@ -86,7 +152,7 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
       </>}
       <div className="dancer-age-actions">
         {canStart && <button type="button" className="button primary" disabled={busy || !consent} onClick={() => void act(true)}>
-          {busy ? "Please wait…" : "Verify age"}
+          {busy ? "Please wait…" : pending ? "Continue verification" : "Verify age"}
         </button>}
         <button type="button" className="button secondary" disabled={busy} onClick={() => void act(false)}>Check verification status</button>
       </div>

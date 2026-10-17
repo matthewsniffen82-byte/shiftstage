@@ -585,8 +585,8 @@ export function DancerOnboardingCommand({
     },
   ], [ageAccessAllowed, ageNotRequired, ageVerified, isVenueApproved, profileReady, renewingAgreement, setupDetail, submitted]);
   const firstIncomplete = steps.find((step) => !step.complete && !step.notRequired) || steps[steps.length - 1];
-  const completedSteps = steps.filter((step) => step.complete || step.notRequired).length;
-  const progressLabel = `${completedSteps} of ${steps.length} complete${ageNotRequired ? " · Age check not required" : ""}`;
+  const completedSteps = steps.filter((step) => step.complete).length;
+  const progressLabel = `${completedSteps} of ${steps.length} complete${ageNotRequired ? " · 1 not required" : ""}`;
   const visibleExpandedStepId = expandedStepId === null ? firstIncomplete.id : expandedStepId;
   const previousCurrentStep = useRef(firstIncomplete.id);
   useEffect(() => {
