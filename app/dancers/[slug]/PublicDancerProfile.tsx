@@ -47,9 +47,10 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
   const heroPhotoFocalY =
     profile.primaryPhotoFocalY ?? profile.photos[0]?.focalY ?? 50;
   const avatarPhoto = profile.avatarPhotoUrl || (preview ? "" : heroPhoto);
-  const avatarPhotoSrcSet = profile.avatarPhotoSrcSet || heroPhotoSrcSet;
-  const avatarPhotoWidth = profile.avatarPhotoWidth || heroPhotoWidth;
-  const avatarPhotoHeight = profile.avatarPhotoHeight || heroPhotoHeight;
+  const avatarUsesHero = avatarPhoto === heroPhoto;
+  const avatarPhotoSrcSet = profile.avatarPhotoSrcSet || (avatarUsesHero ? heroPhotoSrcSet : null);
+  const avatarPhotoWidth = profile.avatarPhotoWidth || (avatarUsesHero ? heroPhotoWidth : null);
+  const avatarPhotoHeight = profile.avatarPhotoHeight || (avatarUsesHero ? heroPhotoHeight : null);
   const avatarPhotoFocalX = profile.avatarPhotoFocalX ?? heroPhotoFocalX;
   const avatarPhotoFocalY = profile.avatarPhotoFocalY ?? heroPhotoFocalY;
   const gallery = profile.photos.length

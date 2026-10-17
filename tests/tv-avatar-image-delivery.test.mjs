@@ -36,12 +36,14 @@ test('TV serializers reuse responsive avatar candidates without extra lookups or
   })));
   assert.deepEqual(queries, ['dancer_photos'], 'reuse the avatar from the original eligible-profile join');
   for (let index = 0; index < 3; index++) {
-    const expected = responsivePublicImage(client, 'dancer-photos', paths[index]);
+    const expected = responsivePublicImage(client, 'dancer-photos', paths[index], { avatar: index !== 1 });
     assert.equal(videos[index].dancer.avatarPhotoUrl, expected.imageUrl);
     assert.equal(videos[index].dancer.avatarPhotoSrcSet, expected.imageSrcSet);
   }
   assert.match(videos[0].dancer.avatarPhotoSrcSet, /width=96 96w/);
   assert.match(videos[0].dancer.avatarPhotoSrcSet, /width=160 160w/);
+  assert.match(videos[2].dancer.avatarPhotoSrcSet, /width=96 96w/);
+  assert.match(videos[2].dancer.avatarPhotoSrcSet, /width=320 320w/);
   assert.equal(videos[3].dancer.avatarPhotoSrcSet, null);
   assert.ok(videos.every(video => !('storagePath' in video)));
   assert.ok(videos.every(video => !('dancerAvatarPath' in video)));

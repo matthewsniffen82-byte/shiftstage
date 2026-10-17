@@ -16,6 +16,7 @@ const unavailable = (status = 404) => new Response(null, { status, headers: HEAD
 type Dependencies = { publicClient: SupabaseClient; admin: SupabaseClient; storageUrl: string; serviceKey: string; fetch?: typeof fetch; photoCache?: PhotoDeliveryCache };
 export async function serveDancerMedia(request: Request, kind: 'photo' | 'video', deps: Dependencies) {
   const started = performance.now();
+  let finishPhotoRequest = () => {};
   try {
     if (request.signal.aborted) return unavailable(503);
     const params = new URL(request.url).searchParams;
@@ -88,45 +89,60 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
     // Posters are small images too. Preview, ranged and video-byte requests
     // retain their existing streaming path; permission is never cached.
     const photoCache = bucket === 'dancer-photos' && !preview && !range ? deps.photoCache : undefined;
-    const cacheKey = upstreamUrl.href;
-    const cached = photoCache?.get(cacheKey);
+    // The proxy must advertise the browser's WebP support to Storage; without
+    // it, resized JPEG avatars keep the larger original encoding.
+    const useWebp = transform && (request.headers.get('accept') || '').split(',').some(value => {
+      const [type, ...parameters] = value.trim().toLowerCase().split(';');
+      const quality = parameters.map(parameter => parameter.trim()).find(parameter => parameter.startsWith('q='));
+      return type.trim() === 'image/webp' && (!quality || Number(quality.slice(2)) > 0);
+    });
+    const cacheKey = upstreamUrl.href + (useWebp ? '|webp' : '');
     const authorizationMs = (performance.now() - started).toFixed(1);
+    let cached = photoCache?.get(cacheKey);
+    if (!cached && photoCache && request.method !== 'HEAD') {
+      const pending = photoCache.waitFor(cacheKey, request.signal);
+      if (pending) await pending;
+      if (request.signal.aborted) return unavailable(503);
+      cached = photoCache.get(cacheKey);
+    }
     if (cached) {
       const headers = new Headers(cached.headers);
       headers.set('Server-Timing', `authorize;dur=${authorizationMs}, image_cache;desc="hit"`);
       return new Response(request.method === 'HEAD' ? null : cached.bytes, { headers });
     }
+    if (request.method !== 'HEAD') finishPhotoRequest = photoCache?.begin(cacheKey) || finishPhotoRequest;
     const abort = new AbortController();
-    const cancel = () => abort.abort();
+    const cancel = () => { abort.abort(); finishPhotoRequest(); };
     request.signal.addEventListener('abort',cancel,{once:true});
     const timeout = setTimeout(cancel, 60_000);
+    const release = () => { clearTimeout(timeout); request.signal.removeEventListener('abort',cancel); finishPhotoRequest(); };
     let upstream: Response;
     const storageStarted = performance.now();
     try {
       upstream = await (deps.fetch || fetch)(upstreamUrl, { method:request.method==='HEAD'?'HEAD':'GET', cache:'no-store', redirect:'error',
-        signal:abort.signal, headers:{apikey:deps.serviceKey,authorization:`Bearer ${deps.serviceKey}`,...(range?{range}:{})} });
+        signal:abort.signal, headers:{apikey:deps.serviceKey,authorization:`Bearer ${deps.serviceKey}`,...(useWebp?{accept:'image/webp'}:{}),...(range?{range}:{})} });
       // Redirect a missing derivative to the full-video endpoint so subsequent
       // range requests use that representation's URL and repeat authorization.
       if (fullVideoPath && upstream.status === 404 && !abort.signal.aborted) {
         await upstream.body?.cancel();
-        clearTimeout(timeout); request.signal.removeEventListener('abort',cancel);
+        release();
         const fallback = new URL(request.url);
         fallback.searchParams.delete('playback');
         return new Response(null, { status: 307, headers: { ...HEADERS, Location: fallback.pathname + fallback.search } });
       }
-    } catch { clearTimeout(timeout); request.signal.removeEventListener('abort',cancel); return unavailable(503); }
+    } catch { release(); return unavailable(503); }
     // Dispose of late headers even if the upstream transport ignored cancellation.
-    if (abort.signal.aborted) { await upstream.body?.cancel(); clearTimeout(timeout); request.signal.removeEventListener('abort',cancel); return unavailable(503); }
-    if (![200,206].includes(upstream.status)) { await upstream.body?.cancel(); clearTimeout(timeout);request.signal.removeEventListener('abort',cancel);return unavailable(upstream.status===416?416:upstream.status>=500?503:404); }
+    if (abort.signal.aborted) { await upstream.body?.cancel(); release(); return unavailable(503); }
+    if (![200,206].includes(upstream.status)) { await upstream.body?.cancel(); release(); return unavailable(upstream.status===416?416:upstream.status>=500?503:404); }
     const headers = new Headers(HEADERS);
+    if (transform) headers.set('Vary', 'Accept');
     headers.set('Server-Timing', `authorize;dur=${authorizationMs}, storage;dur=${(performance.now() - storageStarted).toFixed(1)}, image_cache;desc="${photoCache ? 'miss' : 'bypass'}"`);
     for(const name of ['content-type','content-length','content-range','accept-ranges']) { const value=upstream.headers.get(name);if(value)headers.set(name,value); }
     const maximumBytes = bucket === 'dancer-photos' ? 10 * 1024 * 1024 : 100 * 1024 * 1024;
     const allowedType = bucket === 'dancer-photos' ? /^image\/(jpeg|png|webp)(?:;|$)/i : /^video\/(mp4|webm|quicktime)(?:;|$)/i;
-    if (!allowedType.test(headers.get('content-type')||'') || Number(headers.get('content-length')) > maximumBytes) {await upstream.body?.cancel();clearTimeout(timeout);request.signal.removeEventListener('abort',cancel);return unavailable();}
-    if(request.method==='HEAD'||!upstream.body) {clearTimeout(timeout);request.signal.removeEventListener('abort',cancel);return new Response(null,{status:upstream.status,headers});}
+    if (!allowedType.test(headers.get('content-type')||'') || Number(headers.get('content-length')) > maximumBytes) {await upstream.body?.cancel();release();return unavailable();}
+    if(request.method==='HEAD'||!upstream.body) {release();return new Response(null,{status:upstream.status,headers});}
     const reader=upstream.body.getReader();
-    const release=()=>{clearTimeout(timeout);request.signal.removeEventListener('abort',cancel);};
     let transferred = 0;
     let cacheChunks: Uint8Array[] | null = photoCache && upstream.status === 200 ? [] : null;
     const body = new ReadableStream({
@@ -145,7 +161,7 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
           } else {
             transferred += next.value.byteLength;
             if (transferred > maximumBytes) { cancel(); await reader.cancel(); throw new Error('Media size exceeded.'); }
-            if (transferred > MAX_CACHED_PHOTO_BYTES) cacheChunks = null;
+            if (transferred > MAX_CACHED_PHOTO_BYTES) { cacheChunks = null; finishPhotoRequest(); }
             cacheChunks?.push(next.value.slice());
             controller.enqueue(next.value);
           }
@@ -154,5 +170,5 @@ export async function serveDancerMedia(request: Request, kind: 'photo' | 'video'
       async cancel() { cacheChunks = null; cancel(); release(); await reader.cancel(); },
     });
     return new Response(body,{status:upstream.status,headers});
-  } catch {return unavailable(503);}
+  } catch {finishPhotoRequest();return unavailable(503);}
 }

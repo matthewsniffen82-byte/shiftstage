@@ -250,7 +250,7 @@ test("profile surfaces use responsive sources and concise plural upload guidance
   assert.doesNotMatch(dashboard, /never enlarges a small/);
   assert.match(liveShell, /function responsiveCssImageSet/);
   assert.match(liveShell, /profilePhotoSrcSet/);
-  assert.match(liveShell, /nativeResponsivePhotoAttrs\(logoImageUrl, venue\?\.logoImageSrcSet\)/);
+  assert.match(liveShell, /nativeResponsivePhotoAttrs\(logoImageUrl, useSymbol \? "" : venue\?\.logoImageSrcSet\)/);
   assert.match(liveShell, /original camera images/);
   assert.match(liveShell, /image\/heic,image\/heif/);
   assert.match(dashboard, /sizes = "\(max-width: 860px\) calc\(100vw - 72px\), \(max-width: 1200px\) 30vw, 340px"/);

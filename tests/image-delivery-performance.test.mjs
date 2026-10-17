@@ -7,6 +7,7 @@ import sharp from "sharp";
 import { importMediaModule } from './helpers/server-media-module.mjs';
 
 const { responsivePublicImage } = await importMediaModule('responsive-image.ts');
+const { verifyMediaPreview } = await importMediaModule('media-delivery-url.ts');
 const shell = readFileSync("outputs/index.html", "utf8");
 const client = { storage: { from: () => ({ getPublicUrl: (path, options) => {
   if (options) assert.equal(options.transform.resize, "contain", "preserve the full photo aspect ratio");
@@ -28,6 +29,31 @@ test("tiny avatar candidates preserve full-size fallbacks and the existing water
     assert.ok(widths.every(candidate => candidate <= width), "delivery must not upscale");
     assert.equal(small.imageUrl, small.masterImageUrl, "small original stays the fallback");
   }
+});
+
+test("main-photo crops and legacy avatars get small candidates of their own approved object", () => {
+  process.env.DANCR_ACCOUNT_RECOVERY_SECRET = 'synthetic-avatar-delivery-secret';
+  for (const path of ['owner/photo.r320-480.m1200x1800.jpg.avatar.jpg', 'owner/profile/avatar/crop.jpg', 'owner/legacy.jpg']) {
+    for (const preview of [false, true]) {
+      const image = responsivePublicImage(client, 'dancer-photos', path, { avatar: true, preview });
+      const candidates = image.imageSrcSet.split(', ').map(source => {
+        const [url, descriptor] = source.split(' ');
+        const parsed = new URL(url);
+        assert.equal(parsed.pathname, '/api/media/dancer-photo');
+        assert.equal(parsed.searchParams.get('path'), path);
+        assert.equal(parsed.searchParams.has('preview'), preview);
+        if (preview) assert.equal(verifyMediaPreview(parsed.searchParams.get('preview'), 'photo:' + path), true);
+        assert.equal(descriptor, parsed.searchParams.get('width') + 'w');
+        return Number(parsed.searchParams.get('width'));
+      });
+      assert.deepEqual(candidates, [96, 160, 320]);
+      assert.equal(image.imageUrl, image.masterImageUrl, 'retain the original for failed thumbnail fallback');
+      assert.equal(new URL(image.masterImageUrl).searchParams.has('width'), false);
+      assert.equal(image.imageWidth, null, 'do not invent dimensions for a legacy crop');
+    }
+    assert.equal(responsivePublicImage(client, 'dancer-photos', path).imageSrcSet, null, 'unclassified images stay unchanged');
+  }
+  assert.equal(responsivePublicImage(client, 'dancer-photos', 'https://untrusted.example/avatar.jpg', { avatar: true }), null);
 });
 
 test("thumbnail candidates do not downgrade CSS portraits or native fallback images", () => {
@@ -81,6 +107,21 @@ test("an avatar without smaller variants keeps its own photo", () => {
   assert.equal(context.publicAvatarPhotoSrcSet({avatar:'legacy-avatar',main:'main'}), '');
   assert.equal(context.publicAvatarPhotoSrcSet({main:'main'}), 'https://images.example/main 320w');
   assert.equal(context.publicAvatarPhotoSrcSet({avatar:'avatar',main:'main',avatarPhotoSrcSet:'https://images.example/avatar 320w'}), 'https://images.example/avatar 320w');
+});
+
+test("direct profiles keep dedicated avatar candidates separate from gallery photos", () => {
+  const source = readFileSync('app/dancers/[slug]/PublicDancerProfile.tsx', 'utf8');
+  const start = source.indexOf('  const heroPhoto =');
+  const end = source.indexOf('  const gallery =', start);
+  assert.ok(start > 0 && end > start);
+  const select = new Function('profile', 'preview', source.slice(start, end) + '\nreturn { avatarPhoto, avatarPhotoSrcSet, avatarPhotoWidth, avatarPhotoHeight };');
+  const base = { photos: [], primaryPhotoUrl: '/gallery', primaryPhotoSrcSet: '/gallery-small 320w', primaryPhotoWidth: 1200, primaryPhotoHeight: 1800 };
+  assert.deepEqual(select({ ...base, avatarPhotoUrl: '/avatar' }, false), {
+    avatarPhoto: '/avatar', avatarPhotoSrcSet: null, avatarPhotoWidth: null, avatarPhotoHeight: null,
+  });
+  assert.equal(select({ ...base, avatarPhotoUrl: '/avatar', avatarPhotoSrcSet: '/avatar-small 96w' }, false).avatarPhotoSrcSet, '/avatar-small 96w');
+  assert.equal(select(base, false).avatarPhotoSrcSet, base.primaryPhotoSrcSet);
+  assert.equal(select(base, true).avatarPhotoSrcSet, null, 'private previews do not fall back to public gallery candidates');
 });
 
 test("club lineup requests stay thumbnail-sized and bounded even with fifty working dancers", () => {

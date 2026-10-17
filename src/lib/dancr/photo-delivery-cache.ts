@@ -4,11 +4,42 @@ export const MAX_CACHED_PHOTO_BYTES = 512 * 1024;
 const MAX_TOTAL_BYTES = 8 * 1024 * 1024;
 const MAX_ENTRIES = 128;
 const TTL_MS = 120_000;
+const PENDING_TIMEOUT_MS = 60_000;
 type Entry = { bytes: Uint8Array<ArrayBuffer>; headers: Headers; expiresAt: number };
 
 export class PhotoDeliveryCache {
   private entries = new Map<string, Entry>();
   private totalBytes = 0;
+  private pending = new Map<string, Promise<void>>();
+
+  // Identical in-flight thumbnails share one Storage download, but callers
+  // still authorize independently before waiting or reading the result.
+  waitFor(key: string, signal: AbortSignal) {
+    const pending = this.pending.get(key);
+    if (!pending) return null;
+    if (signal.aborted) return Promise.resolve();
+    return new Promise<void>(resolve => {
+      const done = () => { signal.removeEventListener('abort', done); resolve(); };
+      signal.addEventListener('abort', done, { once: true });
+      void pending.then(done);
+    });
+  }
+
+  begin(key: string) {
+    if (this.pending.has(key) || this.pending.size >= MAX_ENTRIES) return () => {};
+    let resolve!: () => void;
+    const pending = new Promise<void>(done => { resolve = done; });
+    this.pending.set(key, pending);
+    const complete = () => {
+      clearTimeout(timeout);
+      if (this.pending.get(key) === pending) this.pending.delete(key);
+      resolve();
+    };
+    // A disconnected consumer must not leave future readers waiting forever.
+    const timeout = setTimeout(complete, PENDING_TIMEOUT_MS);
+    timeout.unref();
+    return complete;
+  }
 
   get(key: string, now = Date.now()) {
     const entry = this.entries.get(key);

@@ -250,7 +250,7 @@ export function responsivePublicImage(
   client: DancrClient,
   bucket: string,
   storagePath: string | null | undefined,
-  options: { preview?: boolean } = {},
+  options: { preview?: boolean; avatar?: boolean } = {},
 ): ResponsivePublicImage | null {
   const normalizedPath = String(storagePath || "").trim();
   if (!normalizedPath) return null;
@@ -274,11 +274,17 @@ export function responsivePublicImage(
   const masterImageUrl = deliveryUrl(normalizedPath);
   const manifest = parseResponsiveImageManifest(normalizedPath);
   if (!manifest) {
+    // Main-photo crops and older avatars have no stored responsive manifest.
+    // Resize their own approved object for small circles; never substitute the
+    // gallery photo or claim dimensions for an unknown original.
+    const avatarSources = options.avatar && bucket === "dancer-photos"
+      ? [...DANCR_THUMBNAIL_IMAGE_WIDTHS, 320].map(width => `${deliveryUrl(normalizedPath, width)} ${width}w`).join(", ")
+      : null;
     return {
       imageFocalX: DEFAULT_IMAGE_FOCAL_PERCENT,
       imageFocalY: DEFAULT_IMAGE_FOCAL_PERCENT,
       imageHeight: null,
-      imageSrcSet: null,
+      imageSrcSet: avatarSources,
       imageUrl: masterImageUrl,
       imageWidth: null,
       masterImageUrl,

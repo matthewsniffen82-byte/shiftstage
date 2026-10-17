@@ -644,7 +644,7 @@ async function signPublicVideos(
       : null;
     const avatarPath = row.dancerAvatarPath;
     const avatarPhoto = avatarPath
-      ? responsivePublicImage(admin, "dancer-photos", avatarPath)
+      ? responsivePublicImage(admin, "dancer-photos", avatarPath, { avatar: true })
       : primaryPhoto;
     const {
       storagePath: _storagePath,

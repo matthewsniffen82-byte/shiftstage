@@ -426,6 +426,7 @@ function buildDancerCard(
     client,
     "dancer-photos",
     row.avatar_storage_path,
+    { avatar: true },
   );
   const avatarPhoto = dedicatedAvatar || primaryPhoto;
 

@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { setImmediate as nextTurn } from 'node:timers/promises';
 import { importMediaModule } from './helpers/server-media-module.mjs';
 const { serveDancerMedia } = await importMediaModule('media-delivery.ts');
 const { PhotoDeliveryCache, MAX_CACHED_PHOTO_BYTES } = await importMediaModule('photo-delivery-cache.ts');
@@ -29,6 +30,101 @@ function fixture() {
   };
   return { state, deps, get: (options = {}, requestUrl = url) => serveDancerMedia(new Request(requestUrl, options), 'photo', deps) };
 }
+
+test('simultaneous grid/profile photos share one download after independent visibility checks', async () => {
+  const f = fixture();
+  const started = Promise.withResolvers();
+  const download = Promise.withResolvers();
+  f.deps.fetch = async () => {
+    f.state.downloads++; started.resolve(); await download.promise;
+    return new Response(bytes, { headers });
+  };
+  const first = f.get().then(drain);
+  await started.promise;
+  const second = f.get().then(drain);
+  const third = f.get().then(drain);
+  await nextTurn();
+  assert.equal(f.state.reads, 6);
+  assert.equal(f.state.downloads, 1);
+  f.state.visible = false;
+  assert.equal((await f.get()).status, 404, 'in-flight bytes do not authorize a new reader');
+  download.resolve();
+  for (const result of await Promise.all([first, second, third])) assert.deepEqual(result.data, bytes);
+  assert.equal(f.state.downloads, 1);
+});
+
+test('a cancelled waiter leaves the shared photo download running for other readers', async () => {
+  const f = fixture();
+  const started = Promise.withResolvers();
+  const download = Promise.withResolvers();
+  let upstreamSignal;
+  f.deps.fetch = async (_url, options) => {
+    f.state.downloads++; upstreamSignal = options.signal; started.resolve(); await download.promise;
+    return new Response(bytes, { headers });
+  };
+  const first = f.get().then(drain);
+  await started.promise;
+  const controller = new AbortController();
+  const second = f.get({ signal: controller.signal });
+  const third = f.get().then(drain);
+  await nextTurn(); controller.abort();
+  assert.equal((await second).status, 503);
+  assert.equal(upstreamSignal.aborted, false);
+  download.resolve();
+  for (const result of await Promise.all([first, third])) assert.deepEqual(result.data, bytes);
+  assert.equal(f.state.downloads, 1);
+});
+
+test('a failed leading download releases waiters to retry and never poisons the photo cache', async () => {
+  const f = fixture();
+  const started = Promise.withResolvers();
+  const download = Promise.withResolvers();
+  f.deps.fetch = async () => {
+    if (++f.state.downloads === 1) { started.resolve(); await download.promise; throw new Error('storage unavailable'); }
+    return new Response(bytes, { headers });
+  };
+  const first = f.get(); await started.promise;
+  const second = f.get().then(drain); await nextTurn();
+  download.resolve();
+  assert.equal((await first).status, 503);
+  assert.deepEqual((await second).data, bytes);
+  assert.deepEqual((await drain(await f.get())).data, bytes);
+  assert.equal(f.state.downloads, 2);
+});
+
+test('cancelling the leading stream releases waiting readers without caching partial bytes', async () => {
+  const f = fixture();
+  f.deps.fetch = async () => {
+    if (++f.state.downloads === 1) return new Response(new ReadableStream({ pull(controller) { controller.enqueue(bytes); } }), { headers });
+    return new Response(bytes, { headers });
+  };
+  const first = await f.get();
+  const second = f.get().then(drain);
+  await nextTurn();
+  assert.equal(f.state.downloads, 1);
+  await first.body.cancel();
+  assert.deepEqual((await second).data, bytes);
+  assert.deepEqual((await drain(await f.get())).data, bytes);
+  assert.equal(f.state.downloads, 2);
+});
+
+test('transforms negotiate WebP only for compatible clients and cache formats separately', async () => {
+  const f = fixture();
+  const formats = [];
+  f.deps.fetch = async (_url, options) => {
+    const type = options.headers.accept === 'image/webp' ? 'image/webp' : 'image/jpeg';
+    formats.push(type);
+    return new Response(bytes, { headers: { 'content-type': type } });
+  };
+  for (const [accept, type] of [['image/avif,image/webp,image/*,*/*;q=0.8', 'image/webp'], ['image/jpeg', 'image/jpeg'], ['image/webp', 'image/webp'], ['image/webp;q=0,image/jpeg', 'image/jpeg']]) {
+    const response = await f.get({ headers: { accept } }, url + '&width=160');
+    await response.arrayBuffer();
+    assert.equal(response.headers.get('content-type'), type);
+    assert.equal(response.headers.get('vary'), 'Accept');
+    assert.match(response.headers.get('cache-control'), /no-store/);
+  }
+  assert.deepEqual(formats, ['image/webp', 'image/jpeg']);
+});
 
 test('repeat photos skip Storage but recheck current visibility and keep browsers from caching', async () => {
   const f = fixture();
