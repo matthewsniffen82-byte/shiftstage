@@ -929,12 +929,31 @@
       avatar?.addEventListener("error", () => avatar.remove(), { once: true });
     }
 
-    function setProfilePhotoFullscreen(active, index = Number(profilePhotoViewer.dataset.profilePhotoIndex || 0)) {
-      profilePhotoViewer.classList.toggle("is-media-fullscreen", active);
-      profilePhotoViewer.querySelectorAll("[data-profile-media-fullscreen]").forEach((button) => {
-        button.setAttribute("aria-pressed", String(active));
-        button.setAttribute("aria-label", active ? "Exit full-screen media" : "View media full screen");
+    function profileMediaFullscreenController(overlay, align) {
+      if (overlay.profileFullscreenController) return overlay.profileFullscreenController;
+      overlay.profileFullscreenController = window.MyDancrMediaFullscreen.createController(overlay, {
+        onChange(active) {
+          overlay.classList.toggle("is-media-fullscreen", active);
+          overlay.querySelectorAll("[data-profile-media-fullscreen], [data-profile-tv-fullscreen]").forEach((button) => {
+            button.setAttribute("aria-pressed", String(active));
+            button.setAttribute("aria-label", active ? "Exit full-screen media" : "View media full screen");
+          });
+          align();
+        },
+        onLayout: align,
       });
+      return overlay.profileFullscreenController;
+    }
+
+    function disposeProfileMediaFullscreen(overlay) {
+      overlay?.profileFullscreenController?.dispose();
+      if (overlay) delete overlay.profileFullscreenController;
+    }
+
+    function setProfilePhotoFullscreen(active, index = Number(profilePhotoViewer.dataset.profilePhotoIndex || 0)) {
+      if (profilePhotoViewer.hidden) return;
       syncProfilePhotoViewerPosition(index);
-      scrollProfilePhotoViewerTo(index, { instant: true });
+      void profileMediaFullscreenController(profilePhotoViewer, () => {
+        scrollProfilePhotoViewerTo(Number(profilePhotoViewer.dataset.profilePhotoIndex || 0), { instant: true });
+      }).set(active);
     }

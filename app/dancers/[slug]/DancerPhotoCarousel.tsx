@@ -27,6 +27,7 @@ import { videoResourceRef } from "@/src/lib/dancr/video-resource-ref";
 import { useAnonymousMediaLikes } from "@/src/lib/dancr/use-anonymous-media-likes";
 import { DANCER_PROFILE_MEDIA_PAGE_SIZE } from "@/src/lib/dancr/media-limits";
 import { imageFocalPointCss } from "@/src/lib/dancr/image-focal-point";
+import mediaFullscreen, { type MediaFullscreenController } from "@/public/profile-media-fullscreen";
 
 type DancerPhotoCarouselProps = {
   dancerId?: string;
@@ -180,6 +181,8 @@ export function DancerPhotoCarousel({
   const deepLinkHandled = useRef(false);
   const backButton = useRef<HTMLButtonElement | null>(null);
   const viewerFeed = useRef<HTMLDivElement | null>(null);
+  const viewerSurface = useRef<HTMLDivElement | null>(null);
+  const fullscreenController = useRef<MediaFullscreenController | null>(null);
   const viewerTrigger = useRef<HTMLButtonElement | null>(null);
   const pendingViewerIndex = useRef(0);
   const viewerOpeningIndex = useRef<number | null>(null);
@@ -261,6 +264,35 @@ export function DancerPhotoCarousel({
         : closestIndex
     ), 0);
   }, [viewerKind]);
+
+  useEffect(() => {
+    const surface = viewerSurface.current;
+    if (!viewerKind || !surface) return;
+    const controller = mediaFullscreen.createController(surface, {
+      onChange(active) {
+        const index = pendingViewerIndex.current;
+        flushSync(() => {
+          setViewerFullscreen(active);
+          setViewer(current => current ? { ...current, index } : current);
+        });
+        scrollViewerToIndex(index, { instant: true });
+      },
+      onLayout() {
+        const index = pendingViewerIndex.current;
+        const scrollTop = viewerFeed.current?.scrollTop;
+        window.requestAnimationFrame(() => {
+          if (viewerSurface.current === surface && pendingViewerIndex.current === index && viewerFeed.current?.scrollTop === scrollTop) {
+            scrollViewerToIndex(index, { instant: true });
+          }
+        });
+      },
+    });
+    fullscreenController.current = controller;
+    return () => {
+      controller.dispose();
+      if (fullscreenController.current === controller) fullscreenController.current = null;
+    };
+  }, [viewerKind, scrollViewerToIndex]);
 
   useEffect(() => {
     if (preview || deepLinkHandled.current) return;
@@ -446,9 +478,7 @@ export function DancerPhotoCarousel({
           return;
         }
         if (viewerFullscreen) {
-          const index = currentViewerScrollIndex();
-          setViewerFullscreen(false);
-          window.requestAnimationFrame(() => scrollViewerToIndex(index, { instant: true }));
+          void fullscreenController.current?.set(false);
           return;
         }
         window.cancelAnimationFrame(viewerOpeningFrame.current);
@@ -491,6 +521,8 @@ export function DancerPhotoCarousel({
   }
 
   function closeViewer() {
+    fullscreenController.current?.dispose();
+    fullscreenController.current = null;
     setViewerFullscreen(false);
     window.cancelAnimationFrame(viewerOpeningFrame.current);
     viewerOpeningFrame.current = 0;
@@ -783,8 +815,8 @@ export function DancerPhotoCarousel({
             <button className="profile-media-control-fullscreen" type="button"
               aria-label={viewerFullscreen ? "Exit full-screen media" : "View media full screen"} aria-pressed={viewerFullscreen}
               onClick={() => {
-                flushSync(() => { setViewerFullscreen(!viewerFullscreen); setViewer({ kind: item.kind, index }); });
-                scrollViewerToIndex(index, { instant: true });
+                pendingViewerIndex.current = index;
+                void fullscreenController.current?.set(!viewerFullscreen);
               }}>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d={viewerFullscreen ? "M8 8H3V3M16 8h5V3M21 21v-5h-5M3 21v-5h5" : "M8 3H3v5M16 3h5v5M21 16v5h-5M3 16v5h5"} /></svg>
             </button>
@@ -979,6 +1011,7 @@ export function DancerPhotoCarousel({
           aria-label={`${stageName} ${viewer.kind} viewer`}
           aria-modal="true"
           className={`profile-media-viewer profile-media-card-feed is-${viewer.kind}${viewerFullscreen ? " is-media-fullscreen" : ""}`}
+          ref={viewerSurface}
           data-profile-media-heading={`${stageName} · ${viewer.kind === "photo" ? "Photos" : "Videos"}`}
           role="dialog"
           onClick={(event) => {

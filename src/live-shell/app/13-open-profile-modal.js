@@ -555,6 +555,7 @@
       const overlay = document.getElementById("profileTvViewer");
       if (!overlay || overlay.hidden) return;
       const returnTarget = overlay.profileTvReturnTarget;
+      disposeProfileMediaFullscreen(overlay);
       const stage = document.getElementById("profileTvViewerStage");
       stage?.querySelectorAll("video").forEach(releaseDeferredVideoSource);
       clearProfileTvPlaybackFeedback();
@@ -582,11 +583,9 @@
     function setProfileTvFullscreen(active) {
       const overlay = document.getElementById("profileTvViewer");
       if (!overlay || overlay.hidden) return;
-      overlay.classList.toggle("is-media-fullscreen", active);
-      const button = overlay.querySelector("[data-profile-tv-fullscreen]");
-      button.setAttribute("aria-pressed", String(active));
-      button.setAttribute("aria-label", active ? "Exit full-screen videos" : "View videos full screen");
-      scrollProfileTvViewerTo(Number(overlay.dataset.videoIndex || 0), { instant: true });
+      void profileMediaFullscreenController(overlay, () => {
+        scrollProfileTvViewerTo(Number(overlay.dataset.videoIndex || 0), { instant: true });
+      }).set(active);
     }
 
     function profileTvSoundIcon(muted) {

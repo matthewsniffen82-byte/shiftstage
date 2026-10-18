@@ -121,6 +121,7 @@
 
     function closeProfilePhotoViewer() {
       if (!profilePhotoViewer) return;
+      disposeProfileMediaFullscreen(profilePhotoViewer);
       profilePhotoViewer.classList.remove("is-media-fullscreen");
       closeProfileMediaOptions(profilePhotoViewer);
       profilePhotoViewer.querySelectorAll("[data-profile-media-fullscreen]").forEach((button) => {

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import postcss from "postcss";
+import mediaFullscreen from "../public/profile-media-fullscreen.js";
 
 const live = fs.readFileSync("outputs/index.html", "utf8");
 const carousel = fs.readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "utf8");
@@ -60,6 +61,9 @@ test("expanding and collapsing preserves the selected photo or video", () => {
   const fullscreen = button();
   const classes = new Set();
   const overlay = {
+    isConnected: true,
+    ownerDocument: { addEventListener() {}, removeEventListener() {} },
+    addEventListener() {}, removeEventListener() {},
     hidden: false, dataset: { videoIndex: "12", profilePhotoIndex: "8" },
     classList: { toggle(name, active) { if (active) classes.add(name); else classes.delete(name); } },
     querySelector: () => fullscreen,
@@ -68,13 +72,16 @@ test("expanding and collapsing preserves the selected photo or video", () => {
   const selected = [];
   const context = vm.createContext({
     document: { getElementById: () => overlay },
+    window: { MyDancrMediaFullscreen: mediaFullscreen },
     profilePhotoViewer: overlay,
     syncProfilePhotoViewerPosition: (index) => selected.push(["photo", index]),
     scrollProfilePhotoViewerTo: (index, options) => selected.push(["photo-scroll", index, options.instant]),
     scrollProfileTvViewerTo: (index, options) => selected.push(["video-scroll", index, options.instant]),
   });
-  vm.runInContext(["setProfilePhotoFullscreen", "setProfileTvFullscreen"].map(source).join("\n"), context);
+  vm.runInContext(["profileMediaFullscreenController", "setProfilePhotoFullscreen", "setProfileTvFullscreen"].map(source).join("\n"), context);
   for (const toggle of [context.setProfilePhotoFullscreen, context.setProfileTvFullscreen]) {
+    overlay.profileFullscreenController?.dispose();
+    delete overlay.profileFullscreenController;
     toggle(true);
     assert.ok(classes.has("is-media-fullscreen"));
     assert.equal(fullscreen.attributes["aria-pressed"], "true");

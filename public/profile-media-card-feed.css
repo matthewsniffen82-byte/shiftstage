@@ -550,8 +550,19 @@ html body.dancr-button-system:has(.profile-media-card-feed:not([hidden]))
   --profile-media-card-gap: 10px;
 }
 body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .public-profile-shell .profile-media-viewer).profile-media-card-feed.is-media-fullscreen {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
   background: #000 !important;
 }
+.profile-media-card-feed::backdrop { background: #000; }
 .profile-media-card-feed.is-media-fullscreen .profile-media-card-header { display: none; }
 .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-image, .profile-tv-viewer-stage, .profile-media-viewer-stage) {
   max-width: none !important;

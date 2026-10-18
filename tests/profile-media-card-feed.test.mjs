@@ -174,7 +174,9 @@ test("photo windows load the lower card before the previous card fully leaves th
 
 test("one in-flow header scrolls away, with no header padding repeated on later cards", () => {
   assert.match(css, /\.profile-media-card-header \{[^}]*position: relative;[^}]*height: var\(--profile-media-card-header\)/);
-  assert.doesNotMatch(css, /position: (?:fixed|sticky)/);
+  const headerRule = css.match(/\.profile-media-card-header \{[^}]*\}/)?.[0];
+  assert.ok(headerRule);
+  assert.doesNotMatch(headerRule, /position: (?:fixed|sticky)/);
   assert.match(css, /padding: 0 5px 24px !important/);
   assert.match(css, /scroll-padding: 0 !important/);
   assert.match(carousel, /data-profile-media-scroll-feed[^]*?<div className="profile-media-card-header">[^]*?viewerItems\.map/);
