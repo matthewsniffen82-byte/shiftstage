@@ -10,19 +10,20 @@ const route = readFileSync(new URL("../app/api/dancer/dashboard/route.ts", impor
 
 test("dancer analytics replace the retired deal and weekly panels", () => {
   assert.match(panels, /id="dancer-performance"/);
-  assert.match(panels, /<DancerAnalyticsPanel initialAnalytics=\{analytics\} \/>/);
+  assert.match(panels, /<DancerAnalyticsPanel initialAnalytics=\{analytics\} presenceKey=\{presenceKey\} \/>/);
   assert.doesNotMatch(panels, /Club Deal activity|Cashier opens|Redeemed deals|Weekly results|Unranked|No ranking milestones/);
   assert.match(route, /requestedPeriod === null \? getDancerDealMetrics\(client, user.id, admin\) : Promise.resolve\(null\)/);
-  assert.match(loader, /\/api\/dancer\/dashboard\?period=7d/);
+  assert.match(loader, /\/api\/dancer\/dashboard\?period=auto/);
   assert.doesNotMatch(loader, /\/api\/dancer\/(weekly-report|ranking-events)/);
 });
 
 test("analytics put requests first while retaining audience and content detail", () => {
   for (const label of ["Table requests", "VIP requests", "Repeat VIPs"]) assert.ok(analytics.includes('label="' + label + '"'));
-  assert.match(analytics, /Working alerts/);
-  for (const label of ["Profile views", "New followers", "Content likes", "Social link taps"]) assert.ok(analytics.includes('label="' + label + '"'));
+  assert.match(analytics, /Working-alert subscribers/);
+  for (const label of ["Profile views", "New followers", "Content likes"]) assert.ok(analytics.includes('label="' + label + '"'));
+  assert.doesNotMatch(analytics, /Social link taps|current\.socialLinkTaps/);
   assert.match(analytics, /Your audience/);
   assert.match(analytics, /Top content/);
-  assert.doesNotMatch(analytics, /<details/);
+  assert.match(analytics, /<details className="dancer-results-info"/);
   assert.match(styles, /\.dancer-analytics-metrics \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
 });

@@ -213,13 +213,14 @@ test("empty activity returns real zeroes with no invented rank or top content", 
 test("results lead with four demand cards and retain audience growth, content and safe comparisons", async () => {
   const result = await service.getOwnDancerAudienceAnalytics(database(fixture()), "owner", "7d", now);
   result.profileViews = { value: 12, previous: 0 };
+  result.contentLikes = { value: 5, previous: 10 };
   result.socialLinkTaps = { value: 5, previous: 10 };
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
-  assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 8);
+  assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 7);
   for (const text of ["Table requests", "VIP requests", "Repeat VIPs", "New followers", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
   assert.ok(html.indexOf("Table requests") < html.indexOf("Profile views"));
-  for (const text of ["Profile views", "New followers", "Content likes", "Social link taps", "Your audience", "Top content", "City activity rank #4", "Your discovery placement", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
-  assert.doesNotMatch(html, /Infinity|NaN|Unranked/);
+  for (const text of ["Profile views", "New followers", "Content likes", "Your audience", "Top content", "City activity rank #4", "Your discovery placement", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
+  assert.doesNotMatch(html, /Social link taps|Infinity|NaN|Unranked/);
 });
 
 test("only supported analytics periods are accepted", () => {

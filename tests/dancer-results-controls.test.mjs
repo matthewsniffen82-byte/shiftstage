@@ -38,6 +38,30 @@ function fixture(initial=data('7d'), props={}) {
     async settle(){await new Promise(resolve=>setImmediate(resolve));render();},close(){slots.forEach(slot=>slot?.cleanup?.());}};
 }
 
+test('audience growth shows only the three supported metrics, even with historical social taps',()=>{
+  const initial=data('7d');initial.socialLinkTaps={value:99,previous:50};
+  const ui=fixture(initial);
+  const growth=ui.nodes().find(node=>node.props?.className==='dancer-analytics-metrics dancer-results-growth');
+  assert.deepEqual(Array.from(growth.props.children,node=>node.props.label),['New followers','Profile views','Content likes']);
+  assert.doesNotMatch(ui.html(),/Social link taps/);ui.close();
+});
+
+test('retired social taps do not hide the empty results state',()=>{
+  const initial=data('7d');
+  for(const key of ['profileViews','newFollowers','contentLikes'])initial[key]={value:0,previous:0};
+  initial.socialLinkTaps={value:99,previous:50};
+  initial.performance.current=counts();initial.performance.alerts={total:0,vip:0};
+  const ui=fixture(initial);assert.match(ui.html(),/Your results will appear here/);ui.close();
+});
+
+test('three growth cards fill the row on desktop without leaving an empty mobile grid cell',()=>{
+  const css=readFileSync(new URL('../app/dashboard/dancer-results.css',import.meta.url),'utf8');
+  assert.match(css,/\.dancer-results-growth > :last-child \{ grid-column: 1 \/ -1; \}/);
+  const desktop=css.slice(css.indexOf('@media (min-width: 860px)'),css.indexOf('@media (max-width: 400px)'));
+  assert.match(desktop,/\.dancer-results-growth \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
+  assert.match(desktop,/\.dancer-results-growth > :last-child \{ grid-column: auto; \}/);
+});
+
 test('club filtering updates request cards and recorded shifts while audience remains explicitly global',()=>{
   const ui=fixture();assert.match(ui.html(),/<strong>10<\/strong>/);
   ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-a'}});ui.render();

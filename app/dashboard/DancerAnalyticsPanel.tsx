@@ -81,7 +81,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
   const requestMetric = (key: keyof DancerRequestCounts): DancerEngagementMetric => ({
     value: selected!.current[key], previous: selected!.previous?.[key] ?? null,
   });
-  const hasActivity = current && ([current.profileViews, current.newFollowers, current.contentLikes, current.socialLinkTaps].some(metric => metric.value > 0)
+  const hasActivity = current && ([current.profileViews, current.newFollowers, current.contentLikes].some(metric => metric.value > 0)
     || performance!.current.tableRequests > 0 || performance!.current.vipRequests > 0 || performance!.alerts.total > 0);
 
   if (compact) return <section className="dancer-daily-card dancer-activity-summary" aria-label="Recent activity" aria-busy={loading}>
@@ -169,7 +169,6 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
           <EngagementCard label="New followers" metric={current.newFollowers} period={period} title="People who followed during this period and still follow you." />
           <EngagementCard label="Profile views" metric={current.profileViews} period={period} />
           <EngagementCard label="Content likes" metric={current.contentLikes} period={period} title="Likes added during this period that have not been removed." />
-          <EngagementCard label="Social link taps" metric={current.socialLinkTaps} period={period} />
         </div>
         {current.currentRank ? <p className="dancer-results-note">City activity rank #{number(current.currentRank)}</p> : null}
       </section>
