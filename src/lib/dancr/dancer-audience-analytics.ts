@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { dancerPhotoDeliveryUrl, dancerVideoDeliveryUrl } from "./media-delivery-url.ts";
+import { getTonightWindow } from "./schedule.ts";
 import type { DancerAnalyticsPeriod, DancerAudienceAnalytics, DancerTopContent, DancerPerformanceAnalytics } from "./dancer-analytics-types.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -7,8 +8,8 @@ const PAGE_SIZE = 1000;
 
 export function dancerAnalyticsPeriod(value: string | null): DancerAnalyticsPeriod {
   if (value === null || value === "7d") return "7d";
-  if (value === "30d") return "30d";
-  throw new Error("Choose a 7-day or 30-day analytics period.");
+  if (value === "tonight" || value === "30d") return value;
+  throw new Error("Choose Tonight, a 7-day or 30-day analytics period.");
 }
 
 // The caller authenticates the dancer. Resolve ownership before using the admin
@@ -20,16 +21,30 @@ export async function getOwnDancerAudienceAnalytics(
   now = new Date(),
 ): Promise<DancerAudienceAnalytics> {
   const { data: profile, error } = await admin.from("dancer_profiles")
-    .select("id, created_at").eq("user_id", userId).maybeSingle();
+    .select("id, created_at, city").eq("user_id", userId).maybeSingle();
   if (error) throw error;
   if (!profile) throw new Error("Dancer profile not found.");
 
   const dancerId = String(profile.id);
   const duration = (period === "30d" ? 30 : 7) * DAY_MS;
   const end = now.toISOString();
-  const start = new Date(now.getTime() - duration).toISOString();
+  let start = new Date(now.getTime() - duration).toISOString();
+  if (period === "tonight") {
+    let timeZone = "America/Los_Angeles";
+    if (profile.city?.trim()) {
+      const venue = await admin.from("venues").select("timezone")
+        .ilike("city", profile.city.trim()).eq("is_active", true).order("name").limit(1).maybeSingle();
+      if (venue.error) throw venue.error;
+      timeZone = venue.data?.timezone || timeZone;
+    }
+    start = getTonightWindow(timeZone, now).startsAt;
+    // Keep the preceding window until the shared 00:01 rollover has elapsed.
+    if (Date.parse(start) >= now.getTime()) {
+      start = getTonightWindow(timeZone, new Date(Date.parse(start) - 2 * 60 * 1000)).startsAt;
+    }
+  }
   const previousStart = new Date(now.getTime() - duration * 2).toISOString();
-  const canCompare = new Date(profile.created_at).getTime() <= Date.parse(previousStart);
+  const canCompare = period !== "tonight" && new Date(profile.created_at).getTime() <= Date.parse(previousStart);
 
   const count = async (table: string, dateColumn?: string, from?: string, to?: string) => {
     let query = admin.from(table).select("*", { count: "exact", head: true }).eq("dancer_id", dancerId);

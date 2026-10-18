@@ -8,11 +8,12 @@ import "./dancer-results.css";
 
 const number = (value: number) => new Intl.NumberFormat("en-US").format(value);
 const channels = { internal: "Internal", vip: "VIP", external: "External" } as const;
+const periods = { tonight: "Tonight", "7d": "7 days", "30d": "30 days" } as const;
 
 function readAnalytics(value: unknown): DancerAudienceAnalytics | null {
   if (!value || typeof value !== "object") return null;
   const data = value as DancerAudienceAnalytics;
-  return (data.period === "7d" || data.period === "30d") && data.profileViews && data.audience && Array.isArray(data.topContent)
+  return (data.period === "tonight" || data.period === "7d" || data.period === "30d") && data.profileViews && data.audience && Array.isArray(data.topContent)
     && data.performance?.current && data.performance.alerts && Array.isArray(data.performance.clubs) && Array.isArray(data.performance.shifts) ? data : null;
 }
 
@@ -48,7 +49,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
   }, [initialAnalytics, period, retry]);
 
   const current = analytics?.period === period ? analytics : null;
-  const days = period === "7d" ? 7 : 30;
+  const periodLabel = period === "tonight" ? "Tonight" : `Last ${periods[period]}`;
   const loading = !current && !error;
   const performance = current?.performance;
   const club = performance?.clubs.find(item => item.id === clubId);
@@ -76,8 +77,8 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
   return <div className="dancer-analytics" aria-busy={loading}>
     <div className="dancer-analytics-toolbar">
       <div className="dancer-analytics-period" role="group" aria-label="Analytics period">
-        {(["7d", "30d"] as const).map(value => <button key={value} type="button" aria-pressed={period === value}
-          onClick={() => { setError(""); setPeriod(value); setShiftLimit(5); }}>Last {value === "7d" ? "7" : "30"} days</button>)}
+        {(["tonight", "7d", "30d"] as const).map(value => <button key={value} type="button" aria-pressed={period === value}
+          onClick={() => { setError(""); setPeriod(value); setShiftLimit(5); }}>{periods[value]}</button>)}
       </div>
     </div>
     {loading && <p role="status">Loading results…</p>}
@@ -89,15 +90,15 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
           {performance.clubs.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
         </select>
       </label>
-      <div className="dancer-analytics-metrics" aria-label={`Your results in the last ${days} days`}>
-        <EngagementCard label="Table requests" metric={requestMetric("tableRequests")} days={days} title="Table requests submitted for you during this period, including cancelled requests." />
-        <EngagementCard label="VIP requests" metric={requestMetric("vipRequests")} days={days} title="Submitted VIP visit requests that included you, counted once per request." />
-        <EngagementCard label="Repeat VIPs" metric={requestMetric("repeatVips")} days={days} title="Unique VIPs who requested you during this period and had an earlier request for you at the same club." />
+      <div className="dancer-analytics-metrics" aria-label={`Your results: ${periodLabel}`}>
+        <EngagementCard label="Table requests" metric={requestMetric("tableRequests")} period={period} title="Table requests submitted for you during this period, including cancelled requests." />
+        <EngagementCard label="VIP requests" metric={requestMetric("vipRequests")} period={period} title="Submitted VIP visit requests that included you, counted once per request." />
+        <EngagementCard label="Repeat VIPs" metric={requestMetric("repeatVips")} period={period} title="Unique VIPs who requested you during this period and had an earlier request for you at the same club." />
         <div className="dancer-analytics-metric"><span>Working alerts</span><strong>{number(performance.alerts.total)}</strong><small>Unique subscribers · current total across all clubs</small></div>
       </div>
       {!hasActivity && <p className="dancer-analytics-empty">Your results will appear here as guests follow or request you.</p>}
       <section className="dancer-analytics-audience" aria-labelledby="dancer-request-details-heading">
-        <h3 id="dancer-request-details-heading">Request details <small>{club?.name || "All clubs"} · last {days} days</small></h3>
+        <h3 id="dancer-request-details-heading">Request details <small>{club?.name || "All clubs"} · {periodLabel}</small></h3>
         <div className="dancer-analytics-period dancer-results-channels" role="group" aria-label="Results channel">
           {Object.entries(channels).map(([key, label]) => <button type="button" key={key} aria-pressed={channel === key}
             onClick={() => setChannel(key as keyof typeof channels)}>{label}</button>)}
@@ -135,17 +136,17 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
         <p className="dancer-results-note">Following on profiles and in VIP uses the same subscription. Muted working alerts and inactive accounts are excluded from the alert total. VIP subscribers are included in that total.</p>
       </section>
       <section className="dancer-analytics-audience" aria-labelledby="dancer-growth-heading">
-        <h3 id="dancer-growth-heading">Audience growth <small>All clubs · last {days} days</small></h3>
+        <h3 id="dancer-growth-heading">Audience growth <small>All clubs · {periodLabel}</small></h3>
         <div className="dancer-analytics-metrics dancer-results-growth">
-          <EngagementCard label="New followers" metric={current.newFollowers} days={days} title="People who followed during this period and still follow you." />
-          <EngagementCard label="Profile views" metric={current.profileViews} days={days} />
-          <EngagementCard label="Content likes" metric={current.contentLikes} days={days} title="Likes added during this period that have not been removed." />
-          <EngagementCard label="Social link taps" metric={current.socialLinkTaps} days={days} />
+          <EngagementCard label="New followers" metric={current.newFollowers} period={period} title="People who followed during this period and still follow you." />
+          <EngagementCard label="Profile views" metric={current.profileViews} period={period} />
+          <EngagementCard label="Content likes" metric={current.contentLikes} period={period} title="Likes added during this period that have not been removed." />
+          <EngagementCard label="Social link taps" metric={current.socialLinkTaps} period={period} />
         </div>
         {current.currentRank ? <p className="dancer-results-note">City activity rank #{number(current.currentRank)}</p> : null}
       </section>
       <section className="dancer-analytics-content" aria-labelledby="dancer-content-heading">
-        <h3 id="dancer-content-heading">Top content <small>Last {days} days · by likes and video views</small></h3>
+        <h3 id="dancer-content-heading">Top content <small>{periodLabel} · by likes and video views</small></h3>
         {current.topContent.length ? <ul>{current.topContent.map((item, index) => <li key={`${item.kind}:${item.id}`}>
           <span className="dancer-analytics-thumbnail">{item.thumbnailUrl ? <img src={item.thumbnailUrl} alt={item.kind === "photo" ? `Top photo ${index + 1}` : "Video thumbnail"} loading="lazy" /> : <span aria-hidden="true">{item.kind === "video" ? "▶" : "♡"}</span>}</span>
           <span className="dancer-analytics-content-copy"><strong>{item.label}</strong><small>{number(item.likes)} {item.likes === 1 ? "like" : "likes"}{item.views !== null ? ` · ${number(item.views)} ${item.views === 1 ? "video view" : "video views"}` : ""}</small></span>
@@ -160,9 +161,10 @@ function Detail({ label, value }: { label: string; value: number }) {
   return <div><dt>{label}</dt><dd>{number(value)}</dd></div>;
 }
 
-function EngagementCard({ label, metric, days, title }: { label: string; metric: DancerEngagementMetric; days: number; title?: string }) {
-  const difference = metric.previous === null ? null : metric.value - metric.previous;
-  const trend = difference === null ? `Last ${days} days`
+function EngagementCard({ label, metric, period, title }: { label: string; metric: DancerEngagementMetric; period: DancerAnalyticsPeriod; title?: string }) {
+  const days = period === "30d" ? 30 : 7;
+  const difference = period === "tonight" || metric.previous === null ? null : metric.value - metric.previous;
+  const trend = period === "tonight" ? "Tonight so far" : difference === null ? `Last ${days} days`
     : difference === 0 ? "No change"
     : metric.previous === 0 ? `+${number(difference)} vs prior ${days} days`
     : `${difference > 0 ? "+" : "−"}${number(Math.round(Math.abs(difference) / metric.previous! * 100))}% vs prior ${days} days`;

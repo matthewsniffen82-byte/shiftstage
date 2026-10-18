@@ -45,7 +45,7 @@ test('club filtering updates request cards and recorded shifts while audience re
 
 test('period changes hide stale results, abort older reads and retain the selected club',async()=>{
   const ui=fixture();ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-b'}});ui.render();
-  const periodButton=value=>ui.nodes().find(node=>node.type==='button'&&Array.isArray(node.props.children)&&node.props.children.includes(value));
+  const periodButton=value=>ui.button(`${value} days`);
   periodButton('30').props.onClick();ui.render();assert.equal(ui.calls.length,1);assert.match(ui.html(),/Loading results/);assert.doesNotMatch(ui.html(),/7 requests/);
   periodButton('7').props.onClick();ui.render();assert.equal(ui.calls[0].options.signal.aborted,true);
   ui.calls[0].resolve({analytics:data('30d')});await ui.settle();
@@ -59,4 +59,24 @@ test('period changes hide stale results, abort older reads and retain the select
 test('older cached audience-only payloads refresh instead of inventing missing request counts',()=>{
   const initial=data('7d');delete initial.performance;const ui=fixture(initial);
   assert.equal(ui.calls.length,1);assert.match(ui.html(),/Loading results/);assert.doesNotMatch(ui.html(),/Table requests/);ui.close();
+});
+
+test('Tonight loads its own results, updates headings and hides prior-period comparisons',async()=>{
+  const ui=fixture();
+  const group=ui.nodes().find(node=>node.props?.['aria-label']==='Analytics period');
+  assert.deepEqual(Array.from(group.props.children,button=>button.props.children),['Tonight','7 days','30 days']);
+  ui.button('Tonight').props.onClick();ui.render();
+  assert.equal(ui.calls[0].url,'/api/dancer/analytics?period=tonight');
+  assert.equal(ui.button('Tonight').props['aria-pressed'],true);
+  assert.match(ui.html(),/Loading results/);
+  assert.doesNotMatch(ui.html(),/Table requests/);
+  const tonight=data('tonight');tonight.performance.current=counts(2);
+  ui.calls[0].resolve({analytics:tonight});await ui.settle();
+  const html=ui.html();
+  assert.match(html,/Your results: Tonight/);
+  assert.match(html,/Tonight so far/);
+  assert.match(html,/All clubs · Tonight/);
+  assert.doesNotMatch(html,/Last 7 days|Last 30 days|vs prior|No change/);
+  ui.button('7 days').props.onClick();ui.render();
+  assert.match(ui.html(),/Last 7 days/);assert.equal(ui.calls.length,1);ui.close();
 });

@@ -1,4 +1,4 @@
-export type DancerAnalyticsPeriod = "7d" | "30d";
+export type DancerAnalyticsPeriod = "tonight" | "7d" | "30d";
 
 export type DancerEngagementMetric = {
   value: number;

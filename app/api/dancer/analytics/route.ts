@@ -12,8 +12,8 @@ export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const requestedPeriod = new URL(request.url).searchParams.get("period");
-    if (requestedPeriod !== null && requestedPeriod !== "7d" && requestedPeriod !== "30d") {
-      return NextResponse.json({ ok: false, error: "Choose a 7-day or 30-day analytics period." }, { status: 400 });
+    if (requestedPeriod !== null && requestedPeriod !== "tonight" && requestedPeriod !== "7d" && requestedPeriod !== "30d") {
+      return NextResponse.json({ ok: false, error: "Choose Tonight, a 7-day or 30-day analytics period." }, { status: 400 });
     }
     const admin = createAdminSupabaseClient();
     const analytics = requestedPeriod === null

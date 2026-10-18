@@ -86,6 +86,23 @@ test('recorded shift intervals merge overlaps, clip to the period and exclude re
   assert.equal(new Date(r.shifts[0].startedAt).toISOString(),'2026-10-05T00:00:00.000Z'); assert.ok(r.workTrackingStartedAt);
 });
 
+test('Tonight windows count requests and admissions so far and clip overnight shifts to the local start',async()=>{
+  const since='2026-10-11T07:01:00Z',until='2026-10-11T10:00:00Z';
+  await db.query("insert into internal_roster_requests(venue_id,dancer_id,created_at,status) values($1,$2,'2026-10-11T07:00:59Z','pending'),($1,$2,$3,'completed'),($1,$2,'2026-10-11T08:00:00Z','pending'),($1,$2,$4,'pending')",[id(21),id(10),since,until]);
+  await vip(30,'2026-10-10T08:00:00Z',{venue:21});
+  await vip(30,'2026-10-11T08:00:00Z',{venue:21});
+  await vip(31,until,{venue:21});
+  await db.query("insert into qr_redemptions values($1,$2,1,'2026-10-10T08:00:00Z','2026-10-11T08:00:00Z','redeemed')",[id(21),id(10)]);
+  await db.query("insert into venue_dancer_work_sessions(shift_id,venue_id,dancer_id,started_at,expires_at) values($1,$2,$3,'2026-10-11T05:00:00Z','2026-10-11T12:00:00Z')",[id(50),id(21),id(10)]);
+  const r=await report(10,since,until);
+  assert.equal(r.current.tableRequests,2);assert.equal(r.current.tableCompleted,1);
+  assert.equal(r.current.vipRequests,1);assert.equal(r.current.repeatVips,1);
+  assert.deepEqual(r.external,{claims:0,admissions:1});
+  assert.equal(r.shifts.length,1);assert.equal(r.shifts[0].requests,2);
+  assert.equal(new Date(r.shifts[0].startedAt).getTime(),Date.parse(since));
+  assert.equal(new Date(r.shifts[0].endedAt).getTime(),Date.parse(until));
+});
+
 test('attributed admissions require redeemed admission passes and use redemption time independently from claim time',async()=>{
   await db.query("insert into qr_redemptions values($1,$2,1,'2026-09-01','2026-10-06','redeemed'),($1,$2,1,'2026-10-06',null,'generated'),($1,$2,0,'2026-10-06','2026-10-06','redeemed'),($1,$3,1,'2026-10-06','2026-10-06','redeemed')",[id(20),id(10),id(11)]);
   const r=await report(); assert.deepEqual(r.external,{claims:1,admissions:1});

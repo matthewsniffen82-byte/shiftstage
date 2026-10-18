@@ -16,6 +16,7 @@ function compile(file, dependencies = {}) {
   return exports;
 }
 const service = compile("../src/lib/dancr/dancer-audience-analytics.ts", {
+  "./schedule.ts": compile("../src/lib/dancr/schedule.ts"),
   "./media-delivery-url.ts": {
     dancerPhotoDeliveryUrl: path => "/photo?path=" + path,
     dancerVideoDeliveryUrl: id => "/video?id=" + id,
@@ -63,9 +64,11 @@ function database(rows, failTable) {
     const query = {
       select(fields, options = {}) { call.fields = fields; call.options = options; return query; },
       eq(key, value) { call.filters.push([key, "eq", value]); return query; },
+      ilike(key, value) { call.filters.push([key, "ilike", value]); return query; },
       gte(key, value) { call.filters.push([key, "gte", value]); return query; },
       lt(key, value) { call.filters.push([key, "lt", value]); return query; },
       range(offset, end) { call.offset = offset; call.end = end; return query; },
+      limit(value) { call.end = value - 1; return query; },
       order(key) { call.order = key; return query; },
       maybeSingle() { call.single = true; return query; },
       then(resolve, reject) {
@@ -77,7 +80,7 @@ function database(rows, failTable) {
             const foreignKey = parent === "dancer_photos" ? "photo_id" : "video_id";
             actual = rows[parent]?.find(item => item.id === row[foreignKey])?.[field];
           }
-          return op === "eq" ? actual === value : op === "gte" ? actual >= value : actual < value;
+          return op === "ilike" ? String(actual).toLowerCase() === value.toLowerCase() : op === "eq" ? actual === value : op === "gte" ? actual >= value : actual < value;
         }));
         const count = data.length;
         if (call.order) data = [...data].sort((a, b) => String(a[call.order]).localeCompare(String(b[call.order])));
@@ -118,6 +121,55 @@ test("30-day analytics use a matching prior 30 days and update content rankings"
   assert.equal(result.profileViews.previous, 1);
   assert.equal(result.contentLikes.value, 1007);
   assert.equal(result.topContent.find(item => item.kind === "video").views, 2);
+});
+
+test("Tonight scopes activity and the performance RPC to the dancer's local window through now", async () => {
+  const rows = fixture();
+  rows.dancer_profiles[0].city = "New York";
+  rows.venues = [{ name: "Other city", city: "Las Vegas", timezone: "America/Los_Angeles", is_active: true },
+    { name: "Closed", city: "New York", timezone: "UTC", is_active: false },
+    { name: "Local club", city: "new york", timezone: "America/New_York", is_active: true }];
+  const start = "2026-09-23T04:01:00.000Z";
+  rows.profile_views = ["2026-09-23T04:00:59.999Z", start, "2026-09-23T06:00:00.000Z", now.toISOString()]
+    .map(viewed_at => ({ dancer_id: "mine", viewed_at })).concat({ dancer_id: "other", viewed_at: start });
+  rows.social_clicks.push({ dancer_id: "mine", clicked_at: start });
+  rows.follows.push({ dancer_id: "mine", created_at: start });
+  rows.media_likes.push({ id: "tonight-photo", photo_id: "photo-1", created_at: start });
+  rows.mydancr_tv_events.push({ id: "tonight-video", video_id: "video-1", event_type: "engaged_view", occurred_at: start });
+  const db = database(rows);
+  const result = await service.getOwnDancerAudienceAnalytics(db, "owner", "tonight", now);
+  assert.equal(result.period, "tonight");
+  assert.equal(result.periodStart, start);
+  assert.equal(result.periodEnd, now.toISOString());
+  assert.equal(result.profileViews.value, 2);
+  assert.equal(result.socialLinkTaps.value, 1);
+  assert.equal(result.newFollowers.value, 1);
+  assert.equal(result.contentLikes.value, 1);
+  assert.equal(result.topContent.find(item => item.kind === "video").views, 1);
+  assert.equal(result.profileViews.previous, null);
+  assert.equal(result.performance.previous, null);
+  const params = db.calls.find(call => call.table === "get_dancer_performance_analytics").params;
+  assert.deepEqual({ ...params }, { p_dancer_id: "mine", p_since: start, p_until: now.toISOString() });
+  assert.equal(db.calls.filter(call => call.table === "profile_views").length, 1);
+});
+
+test("Tonight handles timezone fallbacks, the local rollover, and daylight saving changes", async () => {
+  for (const [timestamp, expected] of [
+    ["2026-09-23T06:00:00Z", "2026-09-22T07:01:00.000Z"],
+    ["2026-09-23T07:00:30Z", "2026-09-22T07:01:00.000Z"],
+    ["2026-09-23T07:01:00Z", "2026-09-22T07:01:00.000Z"],
+    ["2026-09-23T07:01:01Z", "2026-09-23T07:01:00.000Z"],
+    ["2026-11-01T12:00:00Z", "2026-11-01T07:01:00.000Z"],
+    ["2026-03-08T12:00:00Z", "2026-03-08T08:01:00.000Z"],
+  ]) {
+    const result = await service.getOwnDancerAudienceAnalytics(database(fixture()), "owner", "tonight", new Date(timestamp));
+    assert.equal(result.periodStart, expected, timestamp);
+    assert.ok(result.periodStart < result.periodEnd);
+  }
+  const rows = fixture(); rows.dancer_profiles[0].city = "No clubs yet";
+  const result = await service.getOwnDancerAudienceAnalytics(database(rows), "owner", "tonight", now);
+  assert.equal(result.periodStart, "2026-09-23T07:01:00.000Z");
+  await assert.rejects(service.getOwnDancerAudienceAnalytics(database(rows, "venues"), "owner", "tonight", now), /database unavailable/);
 });
 
 test("a new account does not compare against time before the profile existed", async () => {
@@ -162,6 +214,7 @@ test("results lead with four demand cards and retain audience growth, content an
 
 test("only supported analytics periods are accepted", () => {
   assert.equal(service.dancerAnalyticsPeriod(null), "7d");
+  assert.equal(service.dancerAnalyticsPeriod("tonight"), "tonight");
   assert.equal(service.dancerAnalyticsPeriod("30d"), "30d");
   assert.throws(() => service.dancerAnalyticsPeriod("365d"), /7-day or 30-day/);
 });
@@ -194,6 +247,14 @@ function routes({ denied = false } = {}) {
 }
 
 for (const endpoint of ["analytics", "dashboard"]) {
+  test(`${endpoint} accepts Tonight without changing ownership or cache protection`, async () => {
+    const route = routes();
+    const response = await route[endpoint].GET(new Request(`https://mydancr.test/api/dancer/${endpoint}?period=tonight&dancerId=someone-else`));
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).analytics.period, "tonight");
+    assert.equal(response.headers.get("cache-control"), "private, no-store");
+    assert.deepEqual(route.calls, ["tonight"]);
+  });
   test(`${endpoint} serves the requested period only for the authenticated owner and skips legacy deal queries`, async () => {
     const route = routes();
     const response = await route[endpoint].GET(new Request(`https://mydancr.test/api/dancer/${endpoint}?period=30d&dancerId=someone-else`));
