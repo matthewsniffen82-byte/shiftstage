@@ -6,6 +6,7 @@ import vm from "node:vm";
 const html = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 const renderSource = html.match(/function render\(\) \{[\s\S]*?(?=\n    async function renderHomeTvLaunch)/)[0];
 const sectionsSource = html.match(/function dancerDirectorySections\(profiles, city\) \{[\s\S]*?(?=\n    function homeDancerGridContentKey)/)[0];
+const tabCountsSource = html.match(/function updateTabCounts\(city\) \{[\s\S]*?(?=\n    function updateHomeLiveSummary)/)[0];
 const noop = () => {};
 const node = () => ({ classList: { toggle: noop, remove: noop }, replaceChildren: noop, closest: () => node() });
 
@@ -13,15 +14,16 @@ function harness({ working = 7, off = 7, venue = "all", loading = false, error =
   const items = Array.from({ length: working + off }, (_, index) => ({ working: index < working }));
   let count;
   let visible;
+  const dancerTab = { dataset: { tab: "dancers", tabLabel: "Dancers" }, innerHTML: "" };
   const context = vm.createContext({
     activeTab: "dancers", citySelect: { value: "Las Vegas" }, ALL_CITIES: "All cities",
     dancerDirectoryFilter: "now", selectedVenueName: null, userLocationOutsideMarkets: false,
     homeTvLaunchScope: "Las Vegas:", homeDiscoveryFeedOpen: false,
     liveMarketState: { "Las Vegas": error ? "error" : "ready" },
     homeTvLandingPreload: { sync: noop }, results: node(), tabTitle: node(), viewAllBtn: node(),
-    document: { body: node(), querySelectorAll: () => [], createElement: node, createTextNode: value => value },
+    document: { body: node(), querySelectorAll: selector => selector === ".tab[data-tab]" ? [dancerTab] : [], createElement: node, createTextNode: value => value },
     syncDiscoveryCityScope: noop, syncCityPickerSelection: noop, populateVenueSelect: noop,
-    syncHomeDestinationLocation: noop, updateTabCounts: noop, updateHomeLiveSummary: noop,
+    syncHomeDestinationLocation: noop, homeNavigationIconMarkup: () => "", updateHomeLiveSummary: noop,
     deactivateHomeTvFeed: noop, deactivateHomeDiscoveryFeed: noop,
     selectedVenueFilter: () => venue, selectedHomeTvVenueFilter: () => null,
     observeDiscoveryGrid: noop, hasMoreDiscovery: () => more, liveDiscoveryIsLoading: () => loading, getItems: () => items,
@@ -31,8 +33,9 @@ function harness({ working = 7, off = 7, venue = "all", loading = false, error =
     dancerDirectoryGroups: profiles => ({ workingNow: profiles.filter(p => p.working), notWorkingNow: profiles.filter(p => !p.working) }),
     renderHomeDancerGrid: (city, profiles) => { visible = context.dancerDirectorySections(profiles, city)[0].profiles.length; },
   });
-  vm.runInContext(`${sectionsSource}\n${renderSource}`, context);
+  vm.runInContext(`${sectionsSource}\n${tabCountsSource}\n${renderSource}`, context);
   return {
+    navCount: () => dancerTab.innerHTML.match(/class="tab-count">([^<]+)</)?.[1],
     render(filter = "now") {
       context.dancerDirectoryFilter = filter;
       context.render();
@@ -64,5 +67,13 @@ test("loading and unavailable discovery never present a misleading numeric total
 });
 
 test("partial directory counts explicitly describe loaded profiles", () => {
-  assert.equal(harness({ more: true }).render().count, "14 dancers loaded");
+  const h = harness({ more: true });
+  assert.equal(h.render().count, "14 dancers loaded");
+  assert.equal(h.navCount(), "14+");
+});
+
+test("heading and bottom navigation show the actual complete count above 100", () => {
+  const h = harness({ working: 237, off: 0 });
+  assert.deepEqual(h.render(), { count: "237 dancers", visible: 237 });
+  assert.equal(h.navCount(), "237");
 });

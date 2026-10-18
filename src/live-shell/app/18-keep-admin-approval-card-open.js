@@ -913,7 +913,8 @@
         const tabName = tab.dataset.tab;
         const label = tab.dataset.tabLabel || tab.textContent.trim();
         const liveTab = ["tonight", "dancers", "venues"].includes(tabName);
-        const count = liveTab && (loading || unavailable) ? "..." : (counts[tabName] ?? 0);
+        const partial = ["tonight", "dancers"].includes(tabName) && hasMoreDiscovery(city);
+        const count = liveTab && (loading || unavailable) ? "..." : `${counts[tabName] ?? 0}${partial ? "+" : ""}`;
         tab.innerHTML = `${homeNavigationIconMarkup(tabName)}<span class="home-nav-label">${label}</span><span class="tab-count">${count}</span>`;
       });
     }

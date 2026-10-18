@@ -738,17 +738,30 @@
       if (more && citySelect.value === city) render();
       const headers = discoveryRequestHeaders();
       const identity = JSON.stringify(headers);
-      // Refresh all pages already browsed, so revoked visibility and changed
-      // check-ins do not remain cached on later pages. There is no page ceiling.
-      const pagesToRead = more ? 1 : Math.max(1, scopeChanged ? 1 : previous?.pageCount || 1);
+      // Follow every continuation automatically, including on refresh. The API's
+      // batch size must not become the directory's total or require a load-more click.
       let cursor = more ? previous.nextCursor : null;
       let pageCount = more ? previous.pageCount : 0;
+      const startingPageCount = pageCount;
       let dancers = more ? [...previous.dancers] : [];
       let tonightDancers = more ? [...previous.tonightDancers] : [];
       let venues = more ? previous.venues : [];
       const seenCursors = new Set();
+      const publishResults = (error = false) => {
+        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, dancers, tonightDancers, venues, nextCursor: cursor, pageCount, loading: false, error };
+        applyLiveMarket(city, dancers, tonightDancers, venues);
+        // Initial club links may resolve only once venue metadata arrives.
+        if (citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) liveMarketPendingRefreshes.add(city);
+        liveMarketState[city] = "ready";
+        if (citySelect.value === city) {
+          render();
+          if (customerDashboard.classList.contains("show")) renderDashboard();
+          if (adminDashboard.classList.contains("show")) renderAdminDashboard();
+        }
+        if (isCustomerSession() && !background && !more) void loadLiveCustomerSaved();
+      };
       try {
-        for (let page = 0; page < pagesToRead; page += 1) {
+        do {
           if (cursor && seenCursors.has(cursor)) throw new Error("Discovery pagination did not advance.");
           if (cursor) seenCursors.add(cursor);
           const params = new URLSearchParams({ city, filter: requestedScope.filter });
@@ -775,22 +788,23 @@
           venues = discovery.venues || venues;
           cursor = discovery.nextCursor || null;
           pageCount += 1;
-          if (!cursor) break;
-        }
-        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, dancers, tonightDancers, venues, nextCursor: cursor, pageCount, loading: false, error: false };
-        applyLiveMarket(city, dancers, tonightDancers, venues);
-        // Initial club links may resolve only once venue metadata arrives.
-        if (citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) liveMarketPendingRefreshes.add(city);
-        liveMarketState[city] = "ready";
-        if (citySelect.value === city) {
-          render();
-          if (customerDashboard.classList.contains("show")) renderDashboard();
-          if (adminDashboard.classList.contains("show")) renderAdminDashboard();
-        }
-        if (isCustomerSession() && !background && !more) void loadLiveCustomerSaved();
+        } while (cursor);
+        publishResults();
       } catch (error) {
+        if (identity !== JSON.stringify(discoveryRequestHeaders())
+          || citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) {
+          liveMarketPendingRefreshes.add(city);
+          return;
+        }
         if (cursor && Number(error?.status) === 409) liveMarketPendingRefreshes.add(city);
         if (previous) { previous.loading = false; previous.error = more; }
+        // Keep successful batches and a retry cursor if a later request fails.
+        // A background refresh still replaces the existing directory atomically.
+        if (pageCount > startingPageCount && (!keepCurrentResults || more)) {
+          publishResults(true);
+          console.warn("Some live discovery pages could not load", error);
+          return;
+        }
         if (keepCurrentResults) {
           liveMarketState[city] = "ready";
           console.warn("Live discovery refresh failed; keeping the current public results", error);

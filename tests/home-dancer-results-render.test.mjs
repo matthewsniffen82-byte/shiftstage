@@ -79,6 +79,16 @@ function directoryFixture(profiles) {
   return { state, get markup() { return markup; }, get writes() { return writes; } };
 }
 
+test("the grid and Working Now count include all 237 loaded dancers", () => {
+  const profiles = Array.from({ length: 237 }, (_, index) => ({ name: `Dancer ${index}`, now: true }));
+  const fixture = directoryFixture(profiles);
+  fixture.state.render();
+  assert.equal(fixture.state.headerCount, "237 dancers");
+  assert.equal((fixture.markup.match(/<article /g) || []).length, 237);
+  assert.match(fixture.markup, /dancer-directory-filter-count">237<\/span>/);
+  assert.doesNotMatch(fixture.markup, /100\+|Load more dancers/);
+});
+
 test("status tabs count their cards while the heading keeps the whole discovery scope", () => {
   const profiles = Array.from({ length: 14 }, (_, index) => ({
     name: `Dancer ${index}`, now: index < 7, scheduled: index < 9,

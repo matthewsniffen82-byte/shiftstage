@@ -197,60 +197,72 @@ function pagedDiscoveryFixture() {
   return { ctx, requests, renders: () => renders, privateLoads: () => privateLoads };
 }
 
-test("directory pages append once, retain filters and stop only at the final cursor", async () => {
+const nextPage = () => new Promise(resolve => setImmediate(resolve));
+const dancerRows = (start, count) => Array.from({ length: count }, (_, index) => ({ id: `dancer-${start + index}` }));
+
+test("directory automatically loads every batch beyond 100 and publishes the complete unique total", async () => {
   const f = pagedDiscoveryFixture(), { ctx, requests } = f;
-  let request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
-  assert.equal(ctx.hasMoreDiscovery("Vegas"), true);
-  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  const request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: dancerRows(0, 100), nextCursor: "next" }); await nextPage();
   assert.match(requests[1].url, /cursor=next/);
-  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /disabled/);
+  assert.equal(ctx.liveMarketState.Vegas, "loading", "100 is not presented as the final total");
+  assert.equal(f.renders(), 0);
   await ctx.loadLiveDiscovery("Vegas", { more: true });
-  assert.equal(requests.length, 2, "double clicks cannot request the same page twice");
-  requests[1].resolve({ dancers: [{ id: "first", updated: true }, { id: "last" }], nextCursor: null }); await request;
-  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["first", "last"]);
+  assert.equal(requests.length, 2, "concurrent calls cannot request the same page twice");
+  requests[1].resolve({ dancers: dancerRows(100, 100), nextCursor: "last" }); await nextPage();
+  assert.match(requests[2].url, /cursor=last/);
+  requests[2].resolve({ dancers: [{ id: "dancer-0", updated: true }, ...dancerRows(200, 37)], nextCursor: null }); await request;
+  assert.equal(ctx.markets.Vegas.dancers.length, 237);
+  assert.equal(new Set(ctx.markets.Vegas.dancers.map(r => r.id)).size, 237);
   assert.equal(ctx.markets.Vegas.dancers[0].updated, true);
+  assert.equal(ctx.markets.Vegas.pagination.pageCount, 3);
   assert.equal(ctx.hasMoreDiscovery("Vegas"), false);
   assert.equal(ctx.discoveryPaginationMarkup("Vegas"), "");
+  assert.equal(f.renders(), 1);
   assert.equal(f.privateLoads(), 1);
   await ctx.loadLiveDiscovery("Vegas", { more: true });
-  assert.equal(requests.length, 2);
+  assert.equal(requests.length, 3);
 });
 
 test("a failed next page keeps its cursor and visible cards for retry", async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
   let request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
-  request = ctx.loadLiveDiscovery("Vegas", { more: true }); requests[1].reject(new Error("offline")); await request;
+  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await nextPage();
+  requests[1].reject(new Error("offline")); await request;
   assert.equal(ctx.markets.Vegas.pagination.nextCursor, "next");
   assert.equal(ctx.markets.Vegas.dancers.length, 1);
   assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Try again/);
   request = ctx.loadLiveDiscovery("Vegas", { more: true });
-  requests[2].resolve({ dancers: [{ id: "last" }], nextCursor: null }); await request;
-  assert.equal(ctx.markets.Vegas.dancers.length, 2);
+  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /disabled/);
+  await ctx.loadLiveDiscovery("Vegas", { more: true });
+  assert.equal(requests.length, 3);
+  requests[2].resolve({ dancers: [{ id: "middle" }], nextCursor: "last" }); await nextPage();
+  requests[3].resolve({ dancers: [{ id: "last" }], nextCursor: null }); await request;
+  assert.equal(ctx.markets.Vegas.dancers.length, 3);
+  assert.equal(ctx.hasMoreDiscovery("Vegas"), false);
 });
 
-test("refresh revalidates all loaded pages and removes revoked profiles without reducing browsed depth", async () => {
+test("refresh revalidates the entire directory, removes revoked profiles and includes new later pages", async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
   let request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
-  request = ctx.loadLiveDiscovery("Vegas", { more: true });
-  requests[1].resolve({ dancers: [{ id: "revoked" }], nextCursor: "third" }); await request;
+  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await nextPage();
+  requests[1].resolve({ dancers: [{ id: "revoked" }], nextCursor: null }); await request;
   request = ctx.loadLiveDiscovery("Vegas", { force: true, background: true });
   requests[2].resolve({ dancers: [{ id: "first" }], nextCursor: "new-next" });
   await new Promise(resolve => setImmediate(resolve));
   assert.match(requests[3].url, /cursor=new-next/);
-  requests[3].resolve({ dancers: [{ id: "replacement" }], nextCursor: "new-third" }); await request;
-  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["first", "replacement"]);
-  assert.equal(ctx.markets.Vegas.pagination.pageCount, 2);
-  assert.equal(ctx.markets.Vegas.pagination.nextCursor, "new-third");
+  requests[3].resolve({ dancers: [{ id: "replacement" }], nextCursor: "new-third" }); await nextPage();
+  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["first", "revoked"], "refresh publishes complete replacement data together");
+  requests[4].resolve({ dancers: [{ id: "added" }], nextCursor: null }); await request;
+  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["first", "replacement", "added"]);
+  assert.equal(ctx.markets.Vegas.pagination.pageCount, 3);
+  assert.equal(ctx.markets.Vegas.pagination.nextCursor, null);
 });
 
 test("a late page for a previous city never replaces the newly selected city's results", async () => {
   const f = pagedDiscoveryFixture(), { ctx, requests } = f;
-  let request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
-  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  const request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await nextPage();
   ctx.citySelect.value = "Miami";
   const cityRequest = ctx.loadLiveDiscovery("Miami");
   requests[2].resolve({ dancers: [{ id: "miami" }], nextCursor: null }); await cityRequest;
@@ -262,9 +274,8 @@ test("a late page for a previous city never replaces the newly selected city's r
 
 test("a stalled continuation cannot cause an endless pagination loop", async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
-  let request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await request;
-  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  const request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "first" }], nextCursor: "next" }); await nextPage();
   requests[1].resolve({ dancers: [{ id: "duplicate" }], nextCursor: "next" }); await request;
   assert.equal(ctx.markets.Vegas.dancers.length, 1);
   assert.equal(ctx.markets.Vegas.pagination.error, true);
@@ -275,13 +286,13 @@ test("changing directory status or club starts from that filter's globally ranke
   ctx.activeTab = "dancers";
   let request = ctx.loadLiveDiscovery("Vegas");
   assert.match(requests[0].url, /filter=now/);
-  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: "working-next" }); await request;
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: null }); await request;
   ctx.dancerDirectoryFilter = "not_now";
   request = ctx.loadLiveDiscovery("Vegas");
   assert.match(requests[1].url, /filter=not_now/);
   assert.doesNotMatch(requests[1].url, /cursor=/);
   assert.equal(ctx.liveMarketState.Vegas, "loading");
-  requests[1].resolve({ dancers: [{ id: "off" }], nextCursor: "off-next" }); await request;
+  requests[1].resolve({ dancers: [{ id: "off" }], nextCursor: null }); await request;
   assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["off"]);
   ctx.selectedVenueFilter = () => "Club";
   ctx.resolveVenueByName = () => ({ id: "club-id" });
@@ -293,25 +304,42 @@ test("changing directory status or club starts from that filter's globally ranke
 });
 
 test("a filter change while a page is pending discards the stale response and fetches the new scope", async () => {
-  const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+  for (const failed of [false, true]) {
+    const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+    const request = ctx.loadLiveDiscovery("Vegas");
+    requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: "next" }); await nextPage();
+    ctx.dancerDirectoryFilter = "not_now";
+    await ctx.loadLiveDiscovery("Vegas");
+    if (failed) requests[1].reject(new Error("offline"));
+    else requests[1].resolve({ dancers: [{ id: "stale" }], nextCursor: null });
+    await request;
+    assert.equal(requests.length, 3);
+    assert.equal(ctx.markets.Vegas.dancers.length, 0, "even a failed continuation must not publish the previous filter's first page");
+    assert.match(requests[2].url, /filter=not_now/);
+    requests[2].resolve({ dancers: [{ id: "fresh" }], nextCursor: null });
+    await nextPage();
+    assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["fresh"]);
+  }
+});
+
+test("a failed later refresh page preserves the previous complete directory and its count", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
   let request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: "next" }); await request;
-  request = ctx.loadLiveDiscovery("Vegas", { more: true });
-  ctx.dancerDirectoryFilter = "not_now";
-  await ctx.loadLiveDiscovery("Vegas");
-  requests[1].resolve({ dancers: [{ id: "stale" }], nextCursor: null }); await request;
-  assert.equal(requests.length, 3);
-  assert.match(requests[2].url, /filter=not_now/);
-  requests[2].resolve({ dancers: [{ id: "fresh" }], nextCursor: null });
-  await new Promise(resolve => setImmediate(resolve));
-  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["fresh"]);
+  requests[0].resolve({ dancers: dancerRows(0, 100), nextCursor: "next" }); await nextPage();
+  requests[1].resolve({ dancers: dancerRows(100, 37), nextCursor: null }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { force: true, background: true });
+  requests[2].resolve({ dancers: [{ id: "replacement" }], nextCursor: "new-next" }); await nextPage();
+  requests[3].reject(new Error("offline")); await request;
+  assert.equal(ctx.markets.Vegas.dancers.length, 137);
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "dancer-0");
+  assert.equal(ctx.markets.Vegas.pagination.nextCursor, null);
+  assert.equal(ctx.liveMarketState.Vegas, "ready");
 });
 
 test("an expired directory continuation restarts from a fresh ranking instead of repeatedly retrying it", async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
-  let request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: [{ id: "old" }], nextCursor: "expired" }); await request;
-  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  const request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "old" }], nextCursor: "expired" }); await nextPage();
   requests[1].reject(Object.assign(new Error("expired"), { status: 409 })); await request;
   assert.equal(requests.length, 3); assert.doesNotMatch(requests[2].url, /cursor=/);
   requests[2].resolve({ dancers: [{ id: "fresh" }], nextCursor: null });
