@@ -138,6 +138,8 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   width: calc(100% + var(--dancer-results-toolbar-outset) + var(--dancer-results-toolbar-outset));
   max-width: none; margin-inline: calc(0px - var(--dancer-results-toolbar-outset));
   padding: 0; gap: 0; border: 0; border-radius: 0;
+  /* Continue the Results card's outer edges across both sticky filter boxes. */
+  border-inline: 1px solid var(--dancer-border, #41334f);
   /* Mask scrolling content around the separate boxes' rounded corners. */
   background: #050507;
 }
