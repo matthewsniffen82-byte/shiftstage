@@ -33,5 +33,5 @@ test("tightening the gap preserves the control dimensions and navigation-aligned
   const periodPrefix = compact.replace("#dancer-performance ", "") + ".dancer-analytics-toolbar > .dancer-analytics-period";
   assert.equal(values(periodPrefix + " > button")["min-height"], "44px");
   assert.deepEqual(values(compact + ".dancer-analytics-toolbar > .dancer-analytics-period > button"), {});
-  assert.equal(values(compact + ".dancer-results-club select")["min-height"], "38px");
+  assert.equal(values(compact + ".dancer-results-club select")["min-height"], "40px");
 });
