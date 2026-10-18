@@ -1,8 +1,8 @@
-/* Match the venue Results range bar: one framed rail, 44px controls and inset faces. */
+/* Keep the venue-style date buttons inside the shared date-and-club filter box. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); box-sizing: border-box; width: 100%;
-  min-width: 0; max-width: 100%; gap: 3px; padding: 3px; border: 1px solid #34343c; border-radius: 10px;
-  background: #19191f;
+  min-width: 0; max-width: 100%; gap: 3px; padding: 4px; border: 0; border-radius: 11px 11px 0 0;
+  background: transparent;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button {
   --results-period-face: #1b1922;
@@ -137,15 +137,15 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar {
   width: calc(100% + var(--dancer-results-toolbar-outset) + var(--dancer-results-toolbar-outset));
   max-width: none; margin-inline: calc(0px - var(--dancer-results-toolbar-outset));
-  padding: 0; gap: 0; border-radius: 10px;
-  background: linear-gradient(130deg, #15121b, #0d0c11);
+  padding: 0; gap: 0; border: 1px solid #39313f; border-radius: 12px;
+  background: linear-gradient(#100e15, #100e15);
 }
-/* One compact club control. The native picker covers the entire visible field. */
+/* The club row shares the outer frame; its native picker covers the whole row. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club {
   position:relative; box-sizing:border-box; grid-template-columns:auto minmax(0,1fr); gap:12px;
   width:100%;
-  min-height:44px; margin:8px 0; padding:8px 34px 8px 12px;
-  border:1px solid #39313f; border-radius:10px; background:linear-gradient(#100e15,#100e15);
+  min-height:44px; margin:0; padding:10px 34px 10px 12px;
+  border:0; border-top:1px solid #2e2835; border-radius:0 0 11px 11px; background:transparent;
   color:#a9a0b4; font-size:12px !important; letter-spacing:normal !important; text-transform:none; font-weight:500 !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club-name {
@@ -162,7 +162,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   height:100%; min-height:44px !important; margin:0; opacity:0; cursor:pointer;
   font-size:16px !important;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club:focus-within { border-color:#9470bc; outline:2px solid #9470bc; outline-offset:2px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club:focus-within { outline:2px solid #9470bc; outline-offset:-3px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club:has(select:disabled)::after { display:none; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club select:disabled { cursor:default; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-range { font-size:11px; }
