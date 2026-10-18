@@ -186,7 +186,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
       </section>
       <section className="dancer-analytics-audience" aria-labelledby="dancer-audience-heading">
         <h3 id="dancer-audience-heading">Your audience <small>Across all clubs</small></h3>
-        <dl>
+        <dl className="dancer-audience-counts">
           <Detail label="Total followers" value={current.audience.totalFollowers} />
           <Detail label="Working-alert subscribers" value={performance.alerts.total} />
           <Detail label="Including active VIPs" value={performance.alerts.vip} />
