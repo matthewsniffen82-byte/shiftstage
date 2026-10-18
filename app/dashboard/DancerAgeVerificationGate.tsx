@@ -13,10 +13,11 @@ function captureVerificationAccount() {
   return () => Boolean(owner && readSession()?.account?.id === owner && readSession()?.account?.role === "dancer");
 }
 
-export default function DancerAgeVerificationGate({ children, profileSubmitted = true, onVerificationChange }: {
+export default function DancerAgeVerificationGate({ children, profileSubmitted = true, onVerificationChange, loadingLabel = "Checking account status…" }: {
   children: ReactNode;
   profileSubmitted?: boolean;
   onVerificationChange?: (verification: DancerAgeVerification) => void;
+  loadingLabel?: string;
 }) {
   const [verification, setVerification] = useState<DancerAgeVerification | null>(null);
   const [busy, setBusy] = useState(false);
@@ -122,6 +123,14 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
 
   if (verification && !verification.required && !verification.configured) return <>{children}</>;
   if (verification?.status === "verified") return <>{children}</>;
+  // An unanswered check is not evidence that the dancer needs to verify again.
+  // Keep protected content gated while showing loading or a recoverable error.
+  if (!verification) return <section className="dancer-age-verification" aria-label="Account status" aria-busy={!error || busy}>
+    {error ? <>
+      <p role="alert">{error}</p>
+      <button type="button" className="button secondary" disabled={busy} onClick={() => void act(false)}>Try again</button>
+    </> : <p className="dancer-age-intro" role="status">{loadingLabel}</p>}
+  </section>;
   const reviewing = verification?.status === "in_review";
   const pending = verification?.status === "pending";
   const canStart = profileSubmitted && verification?.configured && !reviewing;
@@ -131,8 +140,7 @@ export default function DancerAgeVerificationGate({ children, profileSubmitted =
         <span className="dancer-age-eyebrow">Dancer account</span>
         <h2 id="dancer-age-heading">Verify you’re 18+</h2>
       </div>
-      <p className="dancer-age-intro">{!verification ? "Checking your verification status…"
-        : !profileSubmitted ? "Finish and submit your dancer profile first, then verify you are 18 or older before your first club tap."
+      <p className="dancer-age-intro">{!profileSubmitted ? "Finish and submit your dancer profile first, then verify you are 18 or older before your first club tap."
         : !verification.configured ? "Age verification is being connected. Please check back shortly. Account settings and support remain available."
         : reviewing ? "Your verification needs review. Check your status again later or contact MyDancr support."
         : pending ? "Your verification is unfinished. Continue in Ondato to finish your ID photos and live selfie."

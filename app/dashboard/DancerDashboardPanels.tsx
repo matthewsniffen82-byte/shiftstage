@@ -182,10 +182,10 @@ export function DancerPanel({
           </section> : null}
           <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button><a href="#dancer-share">Share profile</a>{isPublic && profile?.slug ? <Link href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer">View public profile</Link> : null}</div>
         </section>
-        <DancerAgeVerificationGate><DancerAnalyticsPanel compact initialAnalytics={analytics} /></DancerAgeVerificationGate>
+        <DancerAgeVerificationGate loadingLabel="Loading results…"><DancerAnalyticsPanel compact initialAnalytics={analytics} /></DancerAgeVerificationGate>
       </>}
       profile={<DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} visibilityContent={visibilityAndSharing} />}
-      results={<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} /></section></DancerAgeVerificationGate>}
+      results={<DancerAgeVerificationGate loadingLabel="Loading results…"><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} /></section></DancerAgeVerificationGate>}
       account={accountTools}
     />}
   </>;

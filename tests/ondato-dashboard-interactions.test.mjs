@@ -117,6 +117,17 @@ test('a saved approval remains usable on return without depending on provider av
   assert.equal(ui.calls.length, 1); assert.equal(ui.timers.size, 0); ui.unmount();
 });
 
+test('slow saved approval goes from neutral loading to content without a verification prompt', async () => {
+  const saved = deferred(); const ui = harness({ request: () => saved.promise });
+  assert.match(ui.html, /role="status">Checking account status…/);
+  assert.doesNotMatch(ui.html, /PRIVATE_DANCER_TOOLS|Verify you’re 18\+|Check verification status/);
+  assert.equal(ui.button(), undefined);
+  saved.resolve(response('verified')); await ui.settle();
+  assert.match(ui.html, /PRIVATE_DANCER_TOOLS/);
+  assert.doesNotMatch(ui.html, /Checking account status|Verify you’re 18\+/);
+  assert.equal(ui.calls.length, 1); ui.unmount();
+});
+
 test('unfinished capture offers resume and rapid double clicks start only one request', async () => {
   const start = deferred();
   const ui = harness({ request: (path, options) => options.method === 'POST' && !path.includes('?') ? start.promise : Promise.resolve(response('pending')) });
@@ -168,6 +179,8 @@ test('a failed initial status read can be retried and successful retries clear t
   let count = 0;
   const ui = harness({ request: async () => { if (++count === 1) throw new Error('offline'); return response('not_started'); } });
   await ui.settle(); assert.match(ui.html, /role="alert"/);
+  assert.match(ui.html, /Try again/);
+  assert.doesNotMatch(ui.html, /PRIVATE_DANCER_TOOLS|Verify you’re 18\+|role="status"/);
   ui.button().props.onClick(); await ui.settle();
   assert.doesNotMatch(ui.html, /role="alert"/); assert.ok(ui.button(true)); ui.unmount();
 });

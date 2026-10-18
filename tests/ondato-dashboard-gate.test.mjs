@@ -20,8 +20,15 @@ function render(verification, props = {}) {
   } });
   return renderToStaticMarkup(exports.default({ children: React.createElement('div', null, 'PRIVATE_DANCER_TOOLS'), ...props }));
 }
-test('loading, failed, pending, and unconfigured required checks do not render dancer tools', () => {
-  for (const verification of [null, ...['not_started', 'pending', 'in_review', 'declined'].map(status => ({ required: true, configured: true, status })), { required: true, configured: false, status: 'not_started' }]) {
+test('unknown status shows loading without suggesting the dancer needs another age check', () => {
+  const html = render(null, { loadingLabel: 'Loading results…' });
+  assert.match(html, /role="status">Loading results…/);
+  assert.match(html, /aria-busy="true"/);
+  assert.doesNotMatch(html, /PRIVATE_DANCER_TOOLS|Verify you’re 18\+|Check verification status|<button|Ondato/);
+});
+
+test('pending and unconfigured required checks do not render dancer tools', () => {
+  for (const verification of [...['not_started', 'pending', 'in_review', 'declined'].map(status => ({ required: true, configured: true, status })), { required: true, configured: false, status: 'not_started' }]) {
     const html = render(verification); assert.ok(!html.includes('PRIVATE_DANCER_TOOLS')); assert.ok(html.includes('Verify you’re 18+'));
   }
 });
