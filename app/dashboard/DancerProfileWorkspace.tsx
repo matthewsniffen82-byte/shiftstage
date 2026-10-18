@@ -42,8 +42,12 @@ export default function DancerProfileWorkspace({
       if (!/photos|video|media|details|share|visibility/.test(hash)) return;
       if (onboarding) {
         setStep(/details/.test(hash) ? "details" : "media");
-        if (/video/.test(hash)) setUploadKind("videos");
-        else if (/photos/.test(hash)) setUploadKind("photos");
+      }
+      if (/video/.test(hash)) setUploadKind("videos");
+      else if (/photos|media-library/.test(hash)) setUploadKind("photos");
+      if (hash === "#dancer-photos-title" || hash === "#dancer-videos-title") {
+        const targetId = /video/.test(hash) ? "dancer-builder-video-upload" : "dancer-profile-media-library";
+        window.requestAnimationFrame(() => root.current?.querySelector<HTMLElement>(`#${targetId}`)?.scrollIntoView({ block: "start" }));
       }
     };
     reveal(); window.addEventListener("hashchange", reveal);
@@ -65,7 +69,6 @@ export default function DancerProfileWorkspace({
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
   const mainPhoto = primaryPhoto;
   const pendingMain = photos.find(photo => photo.isPrimary && photo.status === "pending");
-  const additionalPhotos = approvedPhotos.filter(photo => photo.id !== mainPhoto?.id);
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
   const dirty = draftIdentity.stageName.trim() !== persistedDancerStageName(profile)
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
@@ -123,11 +126,11 @@ export default function DancerProfileWorkspace({
     if (hasActiveUpload()) return;
     if (onboarding) {
       showStep(id === "dancer-details-section" ? "details" : "media");
-      if (id === "dancer-profile-media-library") setUploadKind("photos");
-      if (id === "dancer-profile-video-library") setUploadKind("videos");
     }
+    if (id === "dancer-profile-media-library") setUploadKind("photos");
+    if (id === "dancer-profile-video-library") setUploadKind("videos");
     window.requestAnimationFrame(() => {
-      const targetId = onboarding && id === "dancer-profile-video-library" ? "dancer-builder-video-upload" : id;
+      const targetId = id === "dancer-profile-video-library" ? "dancer-builder-video-upload" : id;
       const area = root.current?.querySelector<HTMLElement>(`#${targetId}`);
       const uploader = area?.querySelector<HTMLDetailsElement>('details[data-profile-upload]');
       if (uploader) uploader.open = true;
@@ -181,8 +184,7 @@ export default function DancerProfileWorkspace({
     }
   }
 
-  const requiredPhotos = <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label={onboarding ? "Main photo and automatic avatar" : undefined} aria-labelledby={onboarding ? undefined : "dancer-profile-photos-title"}>
-    {!onboarding ? <header><h3 id="dancer-profile-photos-title">Profile photos</h3></header> : null}
+  const requiredPhotos = <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label="Main photo and automatic avatar">
     <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
       <h4 id="dancer-main-upload-title">Main photo</h4>
       <p className="dancer-photo-guidance">Upload once for your dancer card and avatar.</p>
@@ -195,7 +197,7 @@ export default function DancerProfileWorkspace({
     </div>
   </section>;
 
-  return <div ref={root} className="dancer-profile-workspace" data-onboarding={onboarding || undefined} data-builder-step={onboarding ? step : undefined} aria-label={onboarding ? "Create your profile" : "Edit your profile"}>
+  return <div ref={root} className="dancer-profile-workspace" data-media-layout="shared" data-onboarding={onboarding || undefined} data-builder-step={onboarding ? step : undefined} aria-label={onboarding ? "Create your profile" : "Edit your profile"}>
     {onboarding ? <>
       <nav className="dancer-builder-steps" aria-label="Profile setup steps">
         {profileSteps.map((item, index) => <button type="button" key={item.id} aria-current={step === item.id ? "step" : undefined}
@@ -218,26 +220,25 @@ export default function DancerProfileWorkspace({
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-profile-video-library")}>Videos</button>
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-visibility-sharing")}>Visibility & sharing</button>
     </nav> : null}
-    <DancerProfileUploadContext.Provider value={onboarding ? { active: uploadKind, open: openUpload } : null}>
+    <DancerProfileUploadContext.Provider value={{ active: uploadKind, open: openUpload }}>
     <fieldset disabled={busy} className="dancer-workspace-edit">
       <section hidden={onboarding && step !== "details"} className="dancer-workspace-card" id="dancer-details-section" aria-label={onboarding ? "Name and city" : undefined} aria-labelledby={onboarding ? undefined : "dancer-details-title"}>
         {!onboarding ? <header><h3 id="dancer-details-title">Your details</h3></header> : null}
         {identityContent}
       </section>
+      <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
       {requiredPhotos}
-      {onboarding ? <section hidden={step !== "media"} className="dancer-builder-upload-entry" aria-label="Add profile media">
+      <section hidden={onboarding && step !== "media"} className="dancer-builder-upload-entry" aria-label="Add profile media">
         <button type="button" aria-expanded={uploadKind !== null} aria-controls="dancer-builder-upload-types" disabled={busy} onClick={() => setUploadKind(uploadKind ? null : "photos")}>{uploadKind ? "Close uploads" : "+ Add photos/videos"}</button>
         <div id="dancer-builder-upload-types" hidden={!uploadKind} className="dancer-builder-upload-types" role="group" aria-label="Upload type">
           <button type="button" aria-pressed={uploadKind === "photos"} disabled={busy} onClick={() => setUploadKind("photos")}>Photos</button>
           <button type="button" aria-pressed={uploadKind === "videos"} disabled={busy} onClick={() => setUploadKind("videos")}>Videos</button>
         </div>
-      </section> : null}
-      <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label={onboarding ? "Photo uploads and library" : undefined} aria-labelledby={onboarding ? undefined : "dancer-photos-title"}>
-        {!onboarding ? <><header><h3 id="dancer-photos-title">Photo uploads</h3><span data-state={galleryReady ? "saved" : "required"}>{approvedCount} approved</span></header>
-        <p className="dancer-photo-guidance">Add more photos if you like. Only you in each photo.</p></> : null}
+      </section>
+      <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
         <div className="dancer-section-uploader">{photoContent}</div>
-        {onboarding ? <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div> : null}
-        <DancerProfileMediaUploads compact expanded={onboarding} mediaType="photos" photos={onboarding ? approvedPhotos : additionalPhotos} videos={[]}
+        <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>
+        <DancerProfileMediaUploads compact expanded mediaType="photos" photos={approvedPhotos} videos={[]}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={false} videoError=""
           disabled={cropBusy || saving || avatarBusy}
@@ -266,10 +267,8 @@ export default function DancerProfileWorkspace({
         />
         {!onboarding && approvedPhotos.length > 1 ? <DancerInternalMainPhotoPicker photos={photos} disabled={busy} onProfileChange={onProfileChange} /> : null}
       </section>
-      <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label={onboarding ? "Video uploads and library" : undefined} aria-labelledby={onboarding ? undefined : "dancer-videos-title"}>
-        {!onboarding ? <header><h3 id="dancer-videos-title">Video uploads</h3></header> : null}
-        {!onboarding ? <div className="dancer-section-uploader">{videoContent}</div> : null}
-        <DancerProfileMediaUploads compact expanded={onboarding} mediaType="videos" photos={[]} videos={uploadedVideos.filter(video => video.status === "approved").map(video => ({ ...video, imageUrl: video.posterUrl }))}
+      <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
+        <DancerProfileMediaUploads compact expanded mediaType="videos" photos={[]} videos={uploadedVideos.filter(video => video.status === "approved").map(video => ({ ...video, imageUrl: video.posterUrl }))}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={isMediaLoading} videoError={mediaError}
           disabled={cropBusy || saving || avatarBusy}
@@ -279,6 +278,7 @@ export default function DancerProfileWorkspace({
           onMediaPinned={(_kind, id, pinned) => setUploadedVideos(current => current.map(video => video.id === id ? { ...video, isPinned: pinned } : video))}
         />
       </section>
+      </div>
       {visibilityContent}
     </fieldset>
     </DancerProfileUploadContext.Provider>

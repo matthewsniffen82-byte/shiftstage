@@ -1,5 +1,5 @@
 /* The guided builder shares the existing editor, uploaders, and photo dimensions. */
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] [hidden] {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] [hidden] {
   display:none !important;
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-steps {
@@ -31,8 +31,12 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-profile-media-panel {
   box-sizing:border-box; width:100%; min-width:0; padding:8px 7px !important;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit > .dancer-workspace-card {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit > .dancer-workspace-card,
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-profile-media-area > .dancer-workspace-card {
   margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-media-area {
+  display:grid; gap:8px; min-width:0;
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry { display:grid; gap:6px; }
 body.dancr-button-system #dancer-dashboard .dancer-builder-upload-types { display:flex; gap:6px; }
@@ -43,16 +47,16 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-workspace-next-step {
   flex-basis:auto; padding:0; font-size:12px; color:#c7bfce;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-media-upload-rules:not([open]) > summary > span {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .dancer-media-upload-rules:not([open]) > summary > span {
   display:none;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-builder-video-uploader > .tv-studio-embedded {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-builder-video-uploader > .tv-studio-embedded {
   padding:0 !important; margin:0 !important; border:0 !important; background:transparent !important;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-guided-upload-form {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .dancer-guided-upload-form {
   padding:8px; border:1px solid #41364f; border-radius:10px; background:#100a18;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-builder-upload-entry {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .dancer-builder-upload-entry {
   margin-top:0 !important; padding-top:8px !important; border-top:1px solid #302936 !important;
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-card-preview {
@@ -64,7 +68,7 @@ body.dancr-button-system #dancer-dashboard .dancer-builder-preview-gallery-headi
 body.dancr-button-system #dancer-dashboard .dancer-builder-preview-gallery-heading h4 { margin:0; }
 
 /* Keep the setup steps compact without shrinking the media or tap targets. */
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-section-uploader {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-section-uploader {
   margin:0;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-preview {
@@ -79,25 +83,25 @@ body.dancr-button-system #dancer-dashboard .dancer-builder-preview-summary {
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-builder-preview-summary .dancer-preview-identity {
   display:grid; justify-items:start; gap:8px; min-width:0;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-profile-media-uploads.is-compact {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-profile-media-uploads.is-compact {
   width:100%; max-width:none; gap:8px; margin:0;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .profile-upload-group { gap:6px; }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .profile-upload-group > header strong { font-size:16px; }
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .profile-upload-group { gap:6px; }
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .profile-upload-group > header strong { font-size:16px; }
 
 /* The enclosing frame now provides the public profile's actual gallery width.
    Both media types fill it normally with three columns, 10px gaps, and 9:16
    frames; no negative gallery margins or overflow beyond the builder border. */
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] :is(.profile-upload-items,.dancer-profile-inline-preview .profile-media-grid) {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] :is(.profile-upload-items,.dancer-profile-inline-preview .profile-media-grid) {
   display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; gap:10px;
   box-sizing:border-box; width:100%; min-width:0; min-height:0; max-width:100%; margin:0;
   padding:0; overflow:visible;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] :is(.profile-upload-thumbnail,.dancer-profile-inline-preview .profile-media-grid-item) {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] :is(.profile-upload-thumbnail,.dancer-profile-inline-preview .profile-media-grid-item) {
   box-sizing:border-box; display:block; width:100%; height:auto; min-height:0; max-height:none;
   aspect-ratio:9 / 16; padding:0; border:0; border-radius:8px; overflow:hidden;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .profile-upload-thumbnail > img {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .profile-upload-thumbnail > img {
   display:block; width:100%; height:100%; object-fit:cover;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-profile-inline-preview .profile-media-tabs {
@@ -105,40 +109,40 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboar
 }
 
 /* Approved media forms an uninterrupted gallery, with its label in the menu. */
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .profile-upload-items > li[data-review-status='approved'] {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .profile-upload-items > li[data-review-status='approved'] {
   gap:0;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .profile-upload-items > li[data-review-status='approved'] > :is(strong,small) {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .profile-upload-items > li[data-review-status='approved'] > :is(strong,small) {
   display:none;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-thumbnail-menu {
   position:absolute; inset:2px 2px auto; z-index:5; width:auto; height:44px; margin:0;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu[open] { z-index:8; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu > div {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-thumbnail-menu[open] { z-index:8; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-thumbnail-menu > div {
   position:absolute; top:44px; right:0; margin:0;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .profile-upload-menu-caption {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .profile-upload-menu-caption {
   display:block; margin:0; padding:6px 8px; color:#c9c3d2; font-size:11px; line-height:1.4;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-main-photo-panel {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-panel {
   position:relative;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-main-photo-actions .dancer-photo-controls-row {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-actions .dancer-photo-controls-row {
   position:static;
 }
 @layer dancr-follow-controls {
-  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu > summary {
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .dancer-thumbnail-menu > summary {
     margin-left:auto !important;
   }
-  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] .dancer-thumbnail-menu > div {
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .dancer-thumbnail-menu > div {
     width:100% !important;
   }
 }
 
 /* Override shared button treatments only for these lightweight navigation/edit targets. */
 @layer dancr-profile-builder-controls {
-  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] :is(.photo-source-action,.tv-video-source-action) {
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] :is(.photo-source-action,.tv-video-source-action) {
     min-height:44px !important; padding:8px !important;
   }
   body.dancr-button-system #dancer-dashboard .dancer-builder-preview-gallery-heading > button {

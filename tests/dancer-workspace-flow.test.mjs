@@ -87,7 +87,8 @@ test('an approved gallery does not label missing avatar or main photo as ready',
     const f=fixture({count:5,face:missing!=='avatar'});
     if (missing==='main') f.props.profile.dancer_photos.forEach(photo=>{photo.isPrimary=false;});
     const indicator=f.draw().find(n=>n.props.className==='dancer-builder-requirement');
-    assert.equal(indicator.props.children,missing==='avatar'?'Add avatar':'Add main photo');
+    assert.notEqual(indicator.props.children,'Photos ready');
+    if (missing==='main') assert.equal(indicator.props.children,'Add main photo');
     assert.equal(indicator.props['data-state'],'required');
   }
 });
@@ -97,8 +98,8 @@ test('pending videos do not block required agreement handoff',async()=>{
   assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });
 
-test('missing face or main photo brings the appropriate editing target into view',async()=>{
-  for(const [options,id,reason] of [[{face:false},'dancer-face-photo',/face photo/],[{count:0},'dancer-main-photo',/main photo/]]) {
+test('missing automatic avatar or main photo brings the main photo into view',async()=>{
+  for(const [options,id,reason] of [[{face:false},'dancer-main-photo',/avatar from your main photo/],[{count:0},'dancer-main-photo',/main photo/]]) {
     const f=fixture(options);await f.click();assert.equal(f.step(),'media');assert.ok(f.calls.includes(`#${id}`));assert.match(f.message(),reason);assert.ok(!f.calls.includes('agreement'));
   }
 });
@@ -139,8 +140,8 @@ test('active uploads disable Continue and step navigation without unmounting the
   assert.ok(f.draw().some(n=>n.props.children==='Photo uploader'));
 });
 
-test('one media chooser switches forms while both uploaders remain mounted',async()=>{
-  const f=fixture();await f.click('+ Add photos/videos');
+for (const onboarding of [true, false]) test(`one media chooser switches forms while both uploaders remain mounted: onboarding=${onboarding}`,async()=>{
+  const f=fixture({onboarding});await f.click('+ Add photos/videos');
   const active=()=>f.draw().find(n=>n.type===uploadContext.Provider).props.value.active;
   assert.equal(active(),'photos');await f.click('Videos');assert.equal(active(),'videos');
   assert.equal(f.button('Close uploads').props['aria-expanded'],true);
@@ -150,12 +151,32 @@ test('one media chooser switches forms while both uploaders remain mounted',asyn
   await f.click('Close uploads');assert.equal(active(),null);
   assert.equal(f.button('+ Add photos/videos').props['aria-expanded'],false);
   assert.ok(f.draw().some(n=>n.props.children==='Photo uploader'));assert.ok(f.draw().some(n=>n.props.children==='Video uploader'));
+  const media=f.draw().find(n=>n.props.className==='dancer-profile-media-area');
+  assert.equal(walk(media).filter(n=>n.props.children==='Photo uploader').length,1);
+  assert.equal(walk(media).filter(n=>n.props.children==='Video uploader').length,1);
 });
 
-test('the onboarding library is expanded, includes the main photo, and excludes pending media',()=>{
-  const f=fixture({pending:2});const libraries=f.draw().filter(n=>n.type==='./DancerProfileMediaUploads');
-  assert.equal(libraries[0].props.expanded,true);assert.equal(libraries[0].props.photos.length,3);assert.equal(libraries[1].props.videos.length,0);
-  const returning=fixture({onboarding:false});assert.equal(returning.draw().find(n=>n.type==='./DancerProfileMediaUploads').props.photos.length,2);
+test('both libraries stay expanded, include the main photo, and exclude pending media',()=>{
+  for (const onboarding of [true,false]) {
+    const f=fixture({onboarding,pending:2});const libraries=f.draw().filter(n=>n.type==='./DancerProfileMediaUploads');
+    assert.ok(libraries.every(library=>library.props.expanded));
+    assert.equal(libraries[0].props.photos.length,3);assert.equal(libraries[0].props.photos[0].isPrimary,true);assert.equal(libraries[1].props.videos.length,0);
+  }
+});
+
+test('dashboard media shortcuts select the shared chooser and keep one uploader for each type',async()=>{
+  const f=fixture({onboarding:false});
+  const active=()=>f.draw().find(n=>n.type===uploadContext.Provider).props.value.active;
+  await f.click('Videos');assert.equal(active(),'videos');assert.ok(f.calls.includes('#dancer-builder-video-upload'));
+  await f.click('Photo uploads');assert.equal(active(),'photos');assert.ok(f.calls.includes('#dancer-profile-media-library'));
+  f.props.uploadBusy=true;assert.equal(f.button('Photo uploads').props.disabled,true);
+});
+
+test('returning dancers can open photo and video uploads from incoming links',()=>{
+  for (const [hash,kind] of [['#dancer-profile-videos','videos'],['#dancer-profile-media-library','photos'],['#dancer-photos-title','photos'],['#dancer-videos-title','videos']]) {
+    const f=fixture({onboarding:false,hash});
+    assert.equal(f.draw().find(n=>n.type===uploadContext.Provider).props.value.active,kind);
+  }
 });
 
 test('duplicate Continue requests wait for the same save and advance only once',async()=>{

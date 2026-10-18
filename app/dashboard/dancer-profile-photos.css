@@ -102,55 +102,55 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos .photo-source
 }
 
 /* Keep setup compact without shrinking the photo previews or 44px menu targets. */
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos {
   row-gap:4px;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-photo-guidance {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-photo-guidance {
   margin:0; line-height:1.4;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos :is(.dancer-avatar-panel,.dancer-main-photo-panel) {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos :is(.dancer-avatar-panel,.dancer-main-photo-panel) {
   gap:4px !important; align-content:start;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos :is(.dancer-avatar-panel,.dancer-main-photo-copy) {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos :is(.dancer-avatar-panel,.dancer-main-photo-copy) {
   display:grid; grid-template-columns:minmax(0,1fr) minmax(0,max-content) 44px minmax(0,1fr); justify-items:center; align-items:center; gap:4px;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-avatar-editor {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-avatar-editor {
   display:contents;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-avatar-preview {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-avatar-preview {
   grid-column:1 / -1; grid-row:1; justify-self:center;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-avatar-state {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-avatar-state {
   grid-column:2; grid-row:2;
 }
 /* The menu panel gets its own full-width row; opening it never rearranges the badge or trigger. */
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos :is(.dancer-avatar-upload-controls,.dancer-main-photo-actions),
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-photo-controls:not([hidden]) {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos :is(.dancer-avatar-upload-controls,.dancer-main-photo-actions),
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-photo-controls:not([hidden]) {
   display:contents !important;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-avatar-panel .dancer-photo-controls-row {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-avatar-panel .dancer-photo-controls-row {
   grid-column:3; grid-row:2;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-main-photo-state {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-state {
   grid-column:2; grid-row:1;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-main-photo-copy .dancer-photo-controls-row {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-copy .dancer-photo-controls-row {
   grid-column:3; grid-row:1;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-main-photo-copy > :is(button,p),
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-avatar-upload-controls > :not(.dancer-photo-controls) {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-copy > :is(button,p),
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-avatar-upload-controls > :not(.dancer-photo-controls) {
   grid-column:1 / -1; grid-row:auto;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-photo-options {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-photo-options {
   grid-column:1 / -1; width:100%; box-sizing:border-box;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-avatar-panel .dancer-photo-options {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-avatar-panel .dancer-photo-options {
   grid-row:3;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos .dancer-main-photo-copy .dancer-photo-options {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-copy .dancer-photo-options {
   grid-row:2;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-onboarding] #dancer-required-photos :is(.dancer-avatar-upload-controls,.dancer-main-photo-actions):has(> .dancer-photo-controls[hidden]) {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos :is(.dancer-avatar-upload-controls,.dancer-main-photo-actions):has(> .dancer-photo-controls[hidden]) {
   display:none !important;
 }
 /* The section already supplies the title, guidance, and outer spacing. */

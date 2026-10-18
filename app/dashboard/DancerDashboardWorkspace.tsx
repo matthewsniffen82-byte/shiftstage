@@ -12,7 +12,7 @@ const destinations = [
 type Destination = typeof destinations[number]["id"];
 
 export function dancerDashboardDestination(hash: string): Destination {
-  if (/profile|media|photos|details|share|visibility/.test(hash)) return "profile";
+  if (/profile|media|photos|video|details|share|visibility/.test(hash)) return "profile";
   if (/performance|results/.test(hash)) return "results";
   if (/account|support|notification|connected|verification|nfc/.test(hash)) return "account";
   return "overview";

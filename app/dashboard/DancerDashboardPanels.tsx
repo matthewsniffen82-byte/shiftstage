@@ -175,8 +175,8 @@ export function DancerPanel({
           <header><div><h2>Your profile</h2><p>Public visibility is separate from your club check-in.</p></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{isPublic ? "Public" : "Hidden"}</span></header>
           {hasPendingAvatar || hasPendingPhotos || hasRejectedMedia || !isPublic ? <section className="dancer-attention-note" aria-label="Profile attention">
             <h3>{hasRejectedMedia ? "Needs attention" : hasPendingAvatar || hasPendingPhotos ? "Awaiting review" : "Profile visibility"}</h3>
-            {hasRejectedMedia ? <p>A photo needs replacement. <a href="#dancer-photos-title">Review photos</a></p> : null}
-            {hasPendingAvatar || hasPendingPhotos ? <p>New photos are being checked. Approved photos stay in place. <a href="#dancer-photos-title">View review status</a></p> : null}
+            {hasRejectedMedia ? <p>A photo needs replacement. <a href="#dancer-profile-media-library">Review photos</a></p> : null}
+            {hasPendingAvatar || hasPendingPhotos ? <p>New photos are being checked. Approved photos stay in place. <a href="#dancer-profile-media-library">View review status</a></p> : null}
             {!isPublic ? <p>Your public profile is hidden. <a href="#dancer-visibility">Manage visibility</a></p> : null}
           </section> : null}
           <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button><a href="#dancer-share">Share profile</a>{isPublic && profile?.slug ? <Link href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer">View public profile</Link> : null}</div>

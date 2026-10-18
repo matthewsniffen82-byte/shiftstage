@@ -130,7 +130,7 @@ test('legacy deep links select their destination and profile contents remain mou
   const profilePanel = ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');
   assert.equal(profilePanel.props.hidden, true); assert.equal(profilePanel.props.children, 'Profile editor');
   ui.update({ busy: true }); assert.ok(ui.nodes().filter(n => n.type === 'button').every(n => n.props.disabled));
-  for (const [hash, destination] of [['#dancer-schedule','overview'],['#dancer-performance','results'],['#dancer-support','account'],['#dancer-visibility','profile']]) assert.equal(ui.exports.dancerDashboardDestination(hash), destination);
+  for (const [hash, destination] of [['#dancer-schedule','overview'],['#dancer-performance','results'],['#dancer-support','account'],['#dancer-visibility','profile'],['#dancer-videos-title','profile']]) assert.equal(ui.exports.dancerDashboardDestination(hash), destination);
 });
 
 test('Edit profile still opens the editor from the overview', () => {
@@ -153,10 +153,10 @@ test('editing details clears a previous saved confirmation', async () => {
   assert.ok(ui.listeners.has('beforeunload'));
 });
 
-test('the library contains approved extra photos only', () => {
+test('the library contains all approved photos, including the main photo', () => {
   const ui = harness(editorFile, { ...props, profile: { ...profile, photos: [...profile.photos, { id: 'pending-main', isPrimary: true, status: 'pending' }, { id: 'extra', status: 'approved' }] } });
   const library = ui.nodes().find(node => node.type === './DancerProfileMediaUploads');
-  assert.deepEqual(Array.from(library.props.photos, photo => photo.id), ['extra']);
+  assert.deepEqual(Array.from(library.props.photos, photo => photo.id), ['approved', 'extra']);
   const emptyMain = harness(editorFile, { ...props, profile: { ...profile, photos: [{ id: 'gallery', status: 'approved' }] } });
   assert.equal(emptyMain.nodes().find(node => node.type === './DancerProfileMediaUploads').props.photos.length, 1);
 });
@@ -165,7 +165,7 @@ test('pending face reviews prevent continuing, and only approved photos count to
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, avatarPhotoUrl: '', pending_avatar_review: { status: 'pending_review' } } });
   await ui.click('Continue to agreement');
   assert.equal(ui.continuing, 0);
-  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Face photo: awaiting review/.test(node.props.children)));
+  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /avatar from your main photo/.test(node.props.children)));
   ui.update({ profile: readyProfile });
   await ui.click('Continue to agreement'); assert.equal(ui.continuing, 1);
 });
