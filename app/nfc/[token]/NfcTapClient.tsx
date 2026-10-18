@@ -13,6 +13,11 @@ import { customerFacingDealDescription, customerFacingDealTerms } from "@/src/li
 import { CLUB_ARRIVAL_VERIFICATION, CLUB_TRANSPORTATION_TERMS, isEligibleClubTransportation, type EligibleClubTransportation } from "@/src/lib/dancr/club-deal-transportation";
 
 const DEAL_INTENT_KEY = "mydancrPendingNfcDealV2";
+const VISIBILITY_DESCRIPTIONS: Record<VisibilityMode, string> = {
+  internal: "Appear on this club’s roster, with a link to your full profile.",
+  external: "Appear in public MyDancr discovery.",
+  both: "Appear on the club roster and in public MyDancr discovery.",
+};
 
 type TagState = {
   tag: { id: string; type: "dressing_room" | "cashier"; label: string };
@@ -113,7 +118,7 @@ export function NfcTapClient({ token }: { token: string }) {
         setPhase("ready");
         const preferredDeal = data.deals?.find((deal: PublicClubDeal) => deal.id === preferred);
         setStatus(data.tag.type === "dressing_room"
-          ? "Choose where to appear, then confirm your club check-in."
+          ? ""
           : pendingIntent?.venueId === data.venue.id && preferredDeal
             ? `${preferredDeal.dealTitle} is selected. This registered cashier tap is completing the redemption automatically.`
           : data.deals?.length
@@ -258,15 +263,13 @@ export function NfcTapClient({ token }: { token: string }) {
         {state?.tag.type === "dressing_room" && !complete ? (
           <div className="nfc-action-copy">
             <strong>Choose where you appear</strong>
-            <p>Log in to your MyDancr dancer account first. No particular page needs to be open.</p>
-            <p>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link if prompted, and log in there if asked.</p>
-            <p>Complete your profile and Ondato age verification first. Your check-in lasts 6 hours, followed by a 6-hour cooldown at all clubs. Retapping does not extend it.</p>
-            <p>Everyone completes a full profile. Internal shows your same approved avatar and stage name; customers can tap your avatar to see your full profile. Internal only keeps you out of external discovery.</p>
+            <p>{dancerNeedsSignIn ? "Sign in to choose your visibility." : "Select your visibility below."}</p>
+            <p>Check-in lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown across all clubs</strong>. Tapping again won&apos;t extend it.</p>
             {!dancerNeedsSignIn ? <fieldset className="nfc-visibility" disabled={isSubmitting}>
               <legend>Show me on</legend>
               {VISIBILITY_OPTIONS.map(option => <label key={option.value}>
                 <input type="radio" name="visibility" value={option.value} checked={visibility === option.value} onChange={() => { setVisibility(option.value); tapSessionRef.current = ""; }} />
-                <span><strong>{option.label}</strong><small>{option.description}</small></span>
+                <span><strong>{option.label}</strong><small>{VISIBILITY_DESCRIPTIONS[option.value]}</small></span>
               </label>)}
             </fieldset> : null}
           </div>
@@ -312,6 +315,13 @@ export function NfcTapClient({ token }: { token: string }) {
             </button>
           )
         ) : null}
+        {state?.tag.type === "dressing_room" && !complete ? (
+          <details className="nfc-help">
+            <summary>How check-in works</summary>
+            <p>For future check-ins, unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted. No particular page needs to be open.</p>
+            <p>The internal roster shows your approved avatar and stage name. Customers can tap your avatar to view your full profile. Internal only keeps you out of public MyDancr discovery.</p>
+          </details>
+        ) : null}
         {phase === "error" && !complete ? <a className="nfc-secondary" href={exitHref}>{exitLabel}</a> : null}
         {complete ? (
           <a
@@ -325,7 +335,8 @@ export function NfcTapClient({ token }: { token: string }) {
       <p className="nfc-security">Only use MyDancr tap stickers physically posted by club staff. A disabled or replaced sticker cannot authorize an action.</p>
       <style>{`
         .nfc-visibility{display:grid;gap:10px;border:0;padding:0;margin:8px 0}.nfc-visibility legend{padding:0 0 10px;color:#c4b5fd;font-weight:700}.nfc-visibility label{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid #45404f;border-radius:14px;cursor:pointer}.nfc-visibility label:has(input:checked){border-color:#a78bfa;background:#211630}.nfc-visibility input{accent-color:#a78bfa;margin-top:4px;min-width:20px;min-height:20px}.nfc-visibility span{display:grid;gap:6px}.nfc-visibility small{color:#bbb5c5;line-height:1.45}.nfc-primary:disabled{opacity:.5;cursor:not-allowed}
-        .nfc-page{min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;justify-items:center;gap:18px;box-sizing:border-box;padding:max(clamp(28px,6dvh,58px),env(safe-area-inset-top)) 16px max(90px,calc(24px + env(safe-area-inset-bottom)));overflow-anchor:none;color:#fff;background:radial-gradient(circle at 50% 18%,rgba(53,216,255,.08),transparent 30rem),#050507;font-family:var(--font-body,Arial,sans-serif)}
+        .nfc-page{min-height:100dvh;display:grid;grid-template-columns:minmax(0,1fr);align-content:start;justify-items:center;gap:18px;box-sizing:border-box;padding:max(clamp(28px,6dvh,58px),env(safe-area-inset-top)) 16px calc(110px + env(safe-area-inset-bottom));overflow-anchor:none;color:#fff;background:radial-gradient(circle at 50% 18%,rgba(53,216,255,.08),transparent 30rem),#050507;font-family:var(--font-body,Arial,sans-serif)}
+        .nfc-page :is(input,button,a,summary){scroll-margin-bottom:calc(110px + env(safe-area-inset-bottom))}.nfc-help{width:100%;box-sizing:border-box;padding:0 14px;border:1px solid rgba(255,255,255,.1);border-radius:14px;text-align:left}.nfc-help summary{padding:14px 0;color:#c4b5fd;font-weight:700;cursor:pointer}.nfc-help summary:focus-visible{outline:2px solid #a78bfa;outline-offset:3px;border-radius:4px}.nfc-card .nfc-help p{margin:0 0 14px;color:rgba(248,248,252,.7);font-size:14px;line-height:1.5}
         .nfc-card{position:relative;width:min(430px,calc(100vw - 32px));max-width:100%;display:grid;justify-items:center;align-content:start;gap:13px;box-sizing:border-box;padding:26px 20px;overflow-anchor:none;border:1px solid rgba(255,255,255,.14);border-radius:24px;background:linear-gradient(145deg,rgba(17,18,22,.96),rgba(5,6,8,.985));box-shadow:0 28px 80px rgba(0,0,0,.62),inset 0 1px 0 rgba(255,255,255,.06)}
         .nfc-exit{position:absolute;z-index:2;top:14px;right:14px;width:48px;height:48px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:50%;color:rgba(255,255,255,.78);background:rgba(34,35,41,.94);box-shadow:0 10px 28px rgba(0,0,0,.34);text-decoration:none}.nfc-exit svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}.nfc-exit:focus-visible{outline:3px solid rgba(53,216,255,.74);outline-offset:3px}
         .nfc-card.complete{border-color:rgba(126,234,255,.28)}.nfc-symbol{width:88px;height:88px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.14);border-radius:20px;color:#f7f1ff;background:radial-gradient(circle at 45% 35%,rgba(133,76,255,.22),transparent 56%),rgba(9,9,13,.92);box-shadow:0 14px 34px rgba(0,0,0,.38);font-weight:950}
