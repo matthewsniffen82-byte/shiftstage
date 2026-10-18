@@ -537,7 +537,8 @@ html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profil
 .profile-media-card-feed .profile-media-control-fullscreen[aria-pressed="true"] .profile-media-control-expand { display: none; }
 .profile-media-card-feed .profile-media-control-fullscreen[aria-pressed="true"] .profile-media-control-collapse { display: block; }
 
-/* Expand fills the available viewer, retaining the custom controls and swiping. */
+/* Expanded photos and videos fill the viewer without letterboxing, retaining
+ * the custom controls and swiping. */
 .profile-media-card-feed.is-media-fullscreen {
   --profile-media-card-height: 100%;
   --profile-media-card-gap: 0px;
@@ -553,8 +554,8 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .public-prof
 .profile-media-card-feed.is-media-fullscreen :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide) {
   border-radius: 0 !important;
 }
-.profile-media-card-feed.is-media-fullscreen :is(.profile-tv-viewer-slide, .profile-media-viewer-slide) > :is(img, video) { object-fit: contain !important; }
-.profile-media-card-feed.is-media-fullscreen .profile-photo-viewer-slide-image { background-size: contain !important; }
+.profile-media-card-feed.is-media-fullscreen :is(.profile-tv-viewer-slide, .profile-media-viewer-slide) > :is(img, video) { object-fit: cover !important; }
+.profile-media-card-feed.is-media-fullscreen .profile-photo-viewer-slide-image { background-size: cover !important; }
 
 /* Match TV's identity, live status, club, and compact entry offer placement. */
 html body.dancr-button-system .profile-media-card-feed .profile-media-identity {

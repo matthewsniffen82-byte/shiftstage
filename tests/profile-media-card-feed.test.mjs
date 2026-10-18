@@ -187,9 +187,9 @@ test("one in-flow header scrolls away, with no header padding repeated on later 
 test("profile photos and videos use edge-to-edge fill with centered cropping", () => {
   assert.match(css, /\.profile-photo-viewer-slide-image \{[^}]*background-size: cover !important;[^}]*background-position: center !important;[^}]*background-repeat: no-repeat !important/);
   assert.match(css, /> :is\(img, video\) \{[^}]*object-fit: cover !important;[^}]*object-position: center !important/);
-  const normalViewCss = css.split("/* Expand fills the available viewer")[0];
-  assert.doesNotMatch(normalViewCss, /(?:object-fit|background-size): contain/);
-  assert.match(css, /\.is-media-fullscreen[^}]*object-fit: contain !important/);
+  assert.doesNotMatch(css, /(?:object-fit|background-size): contain/);
+  assert.match(css, /\.is-media-fullscreen[^}]*object-fit: cover !important/);
+  assert.match(css, /\.is-media-fullscreen \.profile-photo-viewer-slide-image \{ background-size: cover !important/);
   assert.match(css, /background: #000 !important/);
 });
 
