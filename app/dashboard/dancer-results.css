@@ -47,13 +47,19 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 
 /* Follow the measured dashboard navigation, including wrapped mobile labels. */
 body.dancr-button-system #dancer-dashboard .dancer-analytics-toolbar {
+  --dancer-results-sticky-gap: 4px;
   position: sticky;
-  top: calc(max(var(--mydancr-preview-banner-offset, 0px), var(--mydancr-demo-banner-height, 0px), env(safe-area-inset-top, 0px)) + var(--dancer-dashboard-nav-height, 94px) + 6px);
+  top: calc(max(var(--mydancr-preview-banner-offset, 0px), var(--mydancr-demo-banner-height, 0px), env(safe-area-inset-top, 0px)) + var(--dancer-dashboard-nav-height, 94px) + var(--dancer-results-sticky-gap));
   z-index: 30; align-self: start; display: grid; grid-template-columns: minmax(0, 1fr);
   justify-content: stretch; align-items: start; justify-self: stretch;
   box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; margin: 0; gap: 8px;
   padding: 10px; border: 1px solid #45404d; border-radius: 12px; background: #0c0a10;
   box-shadow: 0 4px 12px #0004;
+}
+/* Cover only the gap above the border, without blocking either bar's controls. */
+body.dancr-button-system #dancer-dashboard .dancer-analytics-toolbar::before {
+  content: ""; position: absolute; inset-inline: -1px; bottom: calc(100% + 1px);
+  height: var(--dancer-results-sticky-gap); background: #070609; pointer-events: none;
 }
 body.dancr-button-system #dancer-dashboard .dancer-results-club { grid-template-columns: auto minmax(0, 1fr); align-items: center; width: 100%; min-width: 0; max-width: none; gap: 10px; margin: 0; }
 body.dancr-button-system #dancer-dashboard .dancer-results-range { display: flex; flex-wrap: wrap; gap: 2px 8px; min-width: 0; margin: 0; color: #d0ccd7; font-size: 12px; line-height: 1.4; }
@@ -136,3 +142,59 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-metric > span { font-size:12px; font-weight:550; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-metric > strong { font-size:26px; font-weight:650; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-metric > small { font-size:10px; line-height:1.3; }
+
+/* Compact channels share the range controls' solid face and equal columns. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels { padding:0; border:0; background:none; margin:0 0 8px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button {
+  min-width:0; min-height:36px !important; padding:6px 4px !important; border:1px solid transparent !important;
+  border-radius:10px !important; background:linear-gradient(#1b1922,#1b1922) !important; box-shadow:none !important;
+  font-size:12px !important; font-weight:600 !important; line-height:1.35; white-space:nowrap;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button[aria-pressed="true"] { background:linear-gradient(#30223f,#30223f) !important; border-color:#9470bc !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button::before,
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button::after,
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-count::before,
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-count::after,
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-pending::before,
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-pending::after { display:none !important; }
+body.dancr-button-system #dancer-dashboard .dancer-results-period-label { margin:0; color:#c5becf; font-size:12px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance button.dancer-request-count {
+  display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; gap:3px;
+  width:100%; min-width:0; min-height:44px !important; margin:0; padding:0 !important; text-align:left;
+  border:0 !important; border-radius:4px !important; background:none !important; box-shadow:none !important;
+  color:#fff !important; text-transform:none; letter-spacing:normal; text-shadow:none !important;
+}
+.dancer-request-count > span { padding-right:28px; color:#d0ccd7; font-size:12px; font-weight:550; line-height:1.4; }
+.dancer-request-count > strong { font-size:26px; font-weight:650; line-height:1.15; font-variant-numeric:tabular-nums; }
+.dancer-request-count > small { color:#c9a4f4; font-size:10px; font-weight:500; line-height:1.4; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance button.dancer-request-pending {
+  min-width:0; min-height:32px !important; padding:5px 8px !important; margin:3px 0;
+  border:1px solid #74613a !important; border-radius:8px !important; background:linear-gradient(#292215,#292215) !important;
+  color:#f5d991 !important; box-shadow:none !important; font-size:11px !important; font-weight:600 !important; line-height:1.4;
+}
+
+/* The native modal stays above both sticky bars and restores focus on close. */
+dialog.dancer-request-dialog { box-sizing:border-box; width:min(520px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); margin:auto; padding:16px; border:1px solid #645778; border-radius:16px; background:#100d18; color:#f4f3f7; overflow:auto; }
+.dancer-request-dialog::backdrop { background:#000c; }
+.dancer-request-dialog > header, .dancer-request-dialog > footer { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+body.dancr-button-system #dancer-dashboard .dancer-request-dialog h2 { margin:0; font-size:18px; }
+body.dancr-button-system #dancer-dashboard .dancer-request-dialog p { margin:10px 0; font-size:13px; line-height:1.5; }
+body.dancr-button-system #dancer-dashboard .dancer-request-dialog .dancer-request-context { color:#c5becf; font-size:12px; }
+.dancer-request-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button {
+  min-width:0; min-height:40px !important; padding:6px 10px !important; border:1px solid #50435f !important;
+  border-radius:9px !important; background:linear-gradient(#1b1922,#1b1922) !important; color:#f4f3f7 !important;
+  box-shadow:none !important; font-size:12px !important; font-weight:600 !important; line-height:1.4;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button[aria-pressed="true"] { background:linear-gradient(#30223f,#30223f) !important; border-color:#9470bc !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button:disabled { opacity:.45; cursor:default; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button::before,
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button::after { display:none !important; }
+.dancer-request-list { display:grid; gap:8px; margin:12px 0; padding:0; list-style:none; }
+.dancer-request-list > li { display:grid; gap:5px; min-width:0; padding:10px; border:1px solid #39323f; border-radius:10px; font-size:13px; overflow-wrap:anywhere; }
+.dancer-request-list > li > div { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.dancer-request-list small { color:#c5becf; font-size:11px; }
+.dancer-request-status { padding:3px 6px; border-radius:5px; background:#28232e; color:#d7d0e0; font-size:10px; }
+.dancer-request-status[data-pending="true"] { background:#292215; color:#f5d991; }
+.dancer-request-dialog > footer { margin-top:12px; font-size:12px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance :is(.dancer-request-count,.dancer-request-pending,.dancer-results-channels > button,.dancer-request-dialog button):focus-visible { outline:2px solid #c9a4f4 !important; outline-offset:2px; }

@@ -5,6 +5,8 @@ import type { DancerAnalyticsPeriod, DancerAnalyticsSelection, DancerAudienceAna
 import { requestDashboardJson } from "./dashboard-session";
 import { DancerDiscoveryBoosts } from "./DancerDiscoveryBoosts";
 import { DancerResultsTrend } from "./DancerResultsTrend";
+import { DancerRequestDialog } from "./DancerRequestDialog";
+import type { DancerRequestChannel, DancerRequestWindow } from "@/src/lib/dancr/dancer-request-types";
 import "./dancer-results.css";
 
 const number = (value: number) => new Intl.NumberFormat("en-US").format(value);
@@ -44,6 +46,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
   const [trendMetric, setTrendMetric] = useState<"views" | "followers" | "requests">("views");
   const [clubs, setClubs] = useState(initial?.performance.clubs || []);
   const [activeShift, setActiveShift] = useState(initial?.activeShift || null);
+  const [requestWindow, setRequestWindow] = useState<DancerRequestWindow | null>(null);
 
   useEffect(() => {
     const initial = readAnalytics(initialAnalytics);
@@ -81,6 +84,14 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
   const requestMetric = (key: keyof DancerRequestCounts): DancerEngagementMetric => ({
     value: selected!.current[key], previous: selected!.previous?.[key] ?? null,
   });
+  const activityLabel = period === "shift" ? "This shift so far" : period === "tonight" ? "Tonight so far" : period === "all" ? "All recorded activity" : periodLabel;
+  const openRequests = (channel: DancerRequestChannel, pending: boolean) => {
+    if (!current) return;
+    setRequestWindow({ channel, pending, since: current.periodStart, until: current.periodEnd,
+      venueId: period === "shift" ? current.activeShift?.venueId : club?.id,
+      label: `${activityLabel} · ${period === "shift" ? current.activeShift?.venueName : club?.name || "All clubs"}`,
+    });
+  };
   const hasActivity = current && ([current.profileViews, current.newFollowers, current.contentLikes].some(metric => metric.value > 0)
     || performance!.current.tableRequests > 0 || performance!.current.vipRequests > 0 || performance!.alerts.total > 0);
 
@@ -115,9 +126,10 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
     {loading && <p role="status">Loading results…</p>}
     {error && <div className="dancer-analytics-error" role="alert"><p>{error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Try again</button></div>}
     {current && performance && selected && <>
+      <p className="dancer-results-period-label">{activityLabel}</p>
       <div className="dancer-analytics-metrics" aria-label={`Your results: ${periodLabel}`}>
-        <EngagementCard label="Table requests" metric={requestMetric("tableRequests")} period={period} title="Table requests submitted for you during this period, including cancelled requests." />
-        <EngagementCard label="VIP requests" metric={requestMetric("vipRequests")} period={period} title="Submitted VIP visit requests that included you, counted once per request." />
+        <EngagementCard label="Table requests" metric={requestMetric("tableRequests")} period={period} pendingCount={selected.current.tablePending} onView={pending => openRequests("internal", pending)} title="Table requests submitted for you during this period, including cancelled requests." />
+        <EngagementCard label="VIP requests" metric={requestMetric("vipRequests")} period={period} pendingCount={selected.current.vipPending} onView={pending => openRequests("vip", pending)} title="Submitted VIP visit requests that included you, counted once per request." />
         <EngagementCard label="Repeat VIPs" metric={requestMetric("repeatVips")} period={period} title="Unique VIPs who requested you during this period and had an earlier request for you at the same club." />
         <EngagementCard label="New followers" metric={current.newFollowers} period={period} scope="All clubs" title="People who followed during this period and still follow you. Removed follows are not retained, so a reliable previous-period comparison is unavailable." />
       </div>
@@ -182,6 +194,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
       </section>
       <DancerDiscoveryBoosts />
     </>}
+    {requestWindow && <DancerRequestDialog window={requestWindow} onClose={() => setRequestWindow(null)} />}
   </div>;
 }
 
@@ -189,17 +202,20 @@ function Detail({ label, value }: { label: string; value: number }) {
   return <div><dt>{label}</dt><dd>{number(value)}</dd></div>;
 }
 
-function EngagementCard({ label, metric, period, title, scope }: { label: string; metric: DancerEngagementMetric; period: DancerAnalyticsPeriod; title?: string; scope?: string }) {
+function EngagementCard({ label, metric, period, title, scope, pendingCount = 0, onView }: { label: string; metric: DancerEngagementMetric; period: DancerAnalyticsPeriod; title?: string; scope?: string; pendingCount?: number; onView?: (pending: boolean) => void }) {
   const days = period === "30d" ? 30 : 7;
   const difference = period === "shift" || period === "tonight" || period === "all" || metric.previous === null ? null : metric.value - metric.previous;
-  const trend = period === "shift" ? "This shift so far" : period === "all" ? "All recorded activity" : period === "tonight" ? "Tonight so far" : difference === null ? `Last ${days} days · comparison unavailable`
+  const trend = period === "shift" || period === "all" || period === "tonight" ? null : difference === null ? "Comparison unavailable"
     : difference === 0 ? "No change"
     : metric.previous === 0 ? `+${number(difference)} vs prior ${days} days`
     : `${difference > 0 ? "+" : "−"}${number(Math.round(Math.abs(difference) / metric.previous! * 100))}% vs prior ${days} days`;
   return <div className="dancer-analytics-metric">
-    <span>{label}</span><strong>{number(metric.value)}</strong>
+    {onView ? <button className="dancer-request-count" type="button" onClick={() => onView(false)} aria-label={`View ${number(metric.value)} ${label.toLowerCase()}`}>
+      <span>{label}</span><strong>{number(metric.value)}</strong><small>View requests →</small>
+    </button> : <><span>{label}</span><strong>{number(metric.value)}</strong></>}
+    {onView && pendingCount > 0 && <button className="dancer-request-pending" type="button" onClick={() => onView(true)} aria-label={`View ${number(pendingCount)} pending ${label.toLowerCase()}`}>{number(pendingCount)} pending</button>}
     {scope && <small>{scope}</small>}
-    <small className={difference !== null && difference > 0 ? "positive" : difference !== null && difference < 0 ? "negative" : undefined}>{trend}</small>
+    {trend && <small className={difference !== null && difference > 0 ? "positive" : difference !== null && difference < 0 ? "negative" : undefined}>{trend}</small>}
     {title && <ResultsInfo label={label}>{title}</ResultsInfo>}
   </div>;
 }

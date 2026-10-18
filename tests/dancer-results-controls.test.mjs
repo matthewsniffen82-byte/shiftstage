@@ -22,7 +22,7 @@ function fixture(initial=data('7d'), props={}) {
     useState(initial){const i=cursor++;slots[i]??={value:typeof initial==='function'?initial():initial};return [slots[i].value,next=>{const value=typeof next==='function'?next(slots[i].value):next;if(!Object.is(value,slots[i].value)){slots[i].value=value;dirty=true;}}];},
     useEffect(effect,deps){const i=cursor++,prior=slots[i];if(!prior||deps.some((value,j)=>!Object.is(value,prior.deps[j])))effects.push(()=>{prior?.cleanup?.();slots[i]={deps,cleanup:effect()};});},
   };
-  const imports={react,'react/jsx-runtime':require('react/jsx-runtime'),'./dancer-results.css':{},'./DancerDiscoveryBoosts':{DancerDiscoveryBoosts:()=>null},
+  const imports={react,'react/jsx-runtime':require('react/jsx-runtime'),'./dancer-results.css':{},'./DancerDiscoveryBoosts':{DancerDiscoveryBoosts:()=>null},'./DancerRequestDialog':{DancerRequestDialog:()=>null},
     './dashboard-session':{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>calls.push({url,options,resolve,reject}))}};
   const trendExports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerResultsTrend.tsx',import.meta.url),'utf8'),{
@@ -156,6 +156,36 @@ const checkedIn = () => {
   result.performance.shifts=result.performance.shifts.slice(0,1);
   return result;
 };
+
+test('request cards open owned details with the selected snapshot, club and pending filter',()=>{
+  const initial=checkedIn();initial.performance.clubs[0].current.tablePending=2;
+  const ui=fixture(initial);
+  const table=ui.nodes().find(node=>node.props?.label==='Table requests'&&node.props?.onView);
+  assert.equal(table.props.pendingCount,2);
+  assert.match(ui.html(),/View 2 pending table requests/);
+  table.props.onView(true);ui.render();
+  let dialog=ui.nodes().find(node=>node.props?.window);
+  assert.deepEqual(JSON.parse(JSON.stringify(dialog.props.window)),{channel:'internal',pending:true,since:initial.periodStart,until:initial.periodEnd,venueId:'club-a',label:'This shift so far · Club A'});
+  dialog.props.onClose();ui.render();assert.equal(ui.nodes().some(node=>node.props?.window),false);
+  ui.nodes().find(node=>node.props?.label==='VIP requests'&&node.props?.onView).props.onView(false);ui.render();
+  dialog=ui.nodes().find(node=>node.props?.window);assert.equal(dialog.props.window.channel,'vip');assert.equal(dialog.props.window.pending,false);
+  ui.close();
+  const all=fixture();all.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-b'}});all.render();
+  all.nodes().find(node=>node.props?.label==='Table requests'&&node.props?.onView).props.onView(false);all.render();
+  assert.equal(all.nodes().find(node=>node.props?.window).props.window.venueId,'club-b');all.close();
+});
+
+test('shift caption appears once, pending is actionable and count buttons do not contain info controls',()=>{
+  const initial=checkedIn();initial.performance.clubs[0].current.vipPending=1;
+  const ui=fixture(initial),html=ui.html();
+  assert.equal(html.match(/This shift so far/g)?.length,1);
+  assert.match(html,/View 1 pending vip requests/);
+  const card=ui.nodes().find(node=>node.props?.label==='VIP requests'&&node.props?.onView);
+  const element=card.type(card.props),children=element.props.children.flat(Infinity).filter(Boolean);
+  assert.equal(children.filter(node=>node.type==='button').length,2);
+  assert.equal(children.filter(node=>node.type==='button').some(node=>[node.props.children].flat(Infinity).some(child=>child?.type==='details'||child?.type==='button')),false);
+  assert.ok(children.some(node=>typeof node.type==='function'&&node.props.label==='VIP requests'));ui.close();
+});
 
 test('checked-in dashboards default to actual shift dates and the current club',()=>{
   const ui=fixture(checkedIn());

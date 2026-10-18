@@ -23,6 +23,7 @@ const service = compile("../src/lib/dancr/dancer-audience-analytics.ts", {
   },
 });
 const { DancerAnalyticsPanel } = compile("../app/dashboard/DancerAnalyticsPanel.tsx", { "./dashboard-session": {},
+  "./DancerRequestDialog": compile("../app/dashboard/DancerRequestDialog.tsx", {"./dashboard-session":{}}),
   "./DancerResultsTrend": compile("../app/dashboard/DancerResultsTrend.tsx"),
   "./dancer-results.css": {},
   "./DancerDiscoveryBoosts": compile("../app/dashboard/DancerDiscoveryBoosts.tsx", {"./dashboard-session":{}}) });
