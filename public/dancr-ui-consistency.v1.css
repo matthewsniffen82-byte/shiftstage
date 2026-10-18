@@ -1298,8 +1298,8 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
   white-space: nowrap !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#citySelectButton, #homeFilterToggle) {
-  --discovery-control-face: #050507;
-  --discovery-control-edge: #4a365f;
+  --discovery-control-face: #000;
+  --discovery-control-edge: #32283f;
   --discovery-control-inset: 4px;
   height: 44px !important;
   min-height: 44px !important;
@@ -1335,8 +1335,8 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle:is(.has-active-filters, .is-open),
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton[aria-expanded="true"] {
-  --discovery-control-face: #160f20;
-  --discovery-control-edge: #9470bc;
+  --discovery-control-face: #22152f;
+  --discovery-control-edge: #5a4075;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters {
   grid-column: 1 / -1;
@@ -1414,6 +1414,10 @@ html body.dancr-button-system > .app main.stack > #homeLiveSummary #homeLiveWork
 }
 
 /* Open discovery menus follow the same compact treatment as their triggers. */
+html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#citySelectPanel, #homeAdvancedFilters).is-open {
+  border-color: #382f46 !important;
+  background: linear-gradient(#100c17, #100c17) !important;
+}
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel.is-open {
   padding: 4px !important;
 }
@@ -1421,7 +1425,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
   gap: 0 !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option {
-  --discovery-control-face: #050507;
+  --discovery-control-face: #000;
   --discovery-control-edge: transparent;
   grid-template-columns: 16px minmax(0, 1fr) auto !important;
   gap: 8px !important;
@@ -1431,8 +1435,8 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
   font-weight: 600 !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option[aria-selected="true"] {
-  --discovery-control-face: #160e24;
-  --discovery-control-edge: #594271;
+  --discovery-control-face: #22152f;
+  --discovery-control-edge: #5a4075;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel .venue-picker-radio {
   box-sizing: border-box;
@@ -1452,7 +1456,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
   gap: 2px !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .field > label {
-  color: #96939f !important;
+  color: #bdb5c9 !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   letter-spacing: .02em !important;
@@ -1747,7 +1751,7 @@ html body.dancr-button-system > .app > header
 /* Header utilities reuse the notification palette with faint purple faces. */
 html body.dancr-button-system > .app > header .topbar
   :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
-  --discovery-header-face: #160f20;
+  --discovery-header-face: #22152f;
   --discovery-header-edge: #4a365f;
   color: #c4a3f1 !important;
   border-color: #4a365f !important;
@@ -1761,17 +1765,17 @@ html body.dancr-button-system > .app > header .topbar
 html body.dancr-button-system > .app > header .topbar
   :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(.active, .is-open, [aria-expanded="true"], :focus-visible) {
   --discovery-header-face: #22152f;
-  --discovery-header-edge: #9470bc;
+  --discovery-header-edge: #5a4075;
   color: #f8fafc !important;
-  border-color: #9470bc !important;
+  border-color: #5a4075 !important;
 }
 @media (hover: hover) {
   html body.dancr-button-system > .app > header .topbar
     :is(.customer-quick-btn, #accountBtn.account-icon-btn):hover {
     --discovery-header-face: #22152f;
-    --discovery-header-edge: #9470bc;
+    --discovery-header-edge: #5a4075;
     color: #f8fafc !important;
-    border-color: #9470bc !important;
+    border-color: #5a4075 !important;
   }
 }
 /* Keep the header-to-hero spacing identical on every discovery landing tab. */
@@ -1787,7 +1791,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton, #homeFilterToggle) {
-  --discovery-control-edge: #4a365f;
+  --discovery-control-edge: #32283f;
   font-weight: 600 !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
@@ -1796,7 +1800,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton[aria-expanded="true"], #homeFilterToggle:is(.has-active-filters, .is-open)) {
-  --discovery-control-edge: #9470bc;
+  --discovery-control-edge: #5a4075;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > #homeLiveSummary {
   display: flex !important;
@@ -1868,11 +1872,17 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   }
 }
 
-/* Selected Not Working Now uses violet on every platform; live status stays green. */
+/* Status controls reuse the inbox fills on every platform; live status stays green. */
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="not_now"][aria-selected] {
+  --discovery-control-face: #000;
+  --discovery-control-edge: #32283f;
+  color: #bdb5c9 !important;
+}
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="not_now"][aria-selected="true"] {
   --discovery-control-face: #22152f;
-  --discovery-control-edge: #9470bc;
+  --discovery-control-edge: #5a4075;
   color: #f5f3f8 !important;
 }
 
