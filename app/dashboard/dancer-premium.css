@@ -209,7 +209,8 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule > header h2 { color:var(--dancer-green); }
 
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-avatar-state { position:static; inset:auto; margin:0; width:fit-content !important; max-width:100%; font-size:10px; font-weight:500; letter-spacing:0; text-transform:none; box-shadow:none; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-workspace-card .dancer-profile-identity-editor { padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; }
+/* The padding-free identity panel must leave room for complete field focus rings. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-workspace-card .dancer-profile-identity-editor { overflow:visible; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; }
 
 /* Reuse the existing guest media viewer inside the inline preview. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-inline-preview { position:static !important; inset:auto !important; z-index:auto !important; overflow:visible !important; min-height:0; background:transparent !important; }
