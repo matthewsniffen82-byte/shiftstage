@@ -120,7 +120,7 @@ function dataFixture() {
   const dancers = [{ id: 'd1', stage_name: 'Aria', working_now: false }, { id: 'd2', stage_name: 'Nova', working_now: true }];
   const tables = {
     venue_vip_members: [{ user_id: 'guest', active: true, display_name: 'Guest', venue: { id: venueId, name: 'Invited venue', timezone: 'America/Los_Angeles', is_active: true, owner: { role: 'venue', account_state: 'active' } } }],
-    favorites: [],
+    follows: [],
     dancer_profiles: [{ id: 'd1', slug: 'aria', is_public: true, avatar_storage_path: 'd1/avatar.jpg', status: 'approved', verification_status: 'approved', disabled_at: null },
       { id: 'd2', slug: 'nova', is_public: true, avatar_storage_path: null, status: 'approved', verification_status: 'approved', disabled_at: null },
       { id: 'outsider', avatar_storage_path: 'private/photo.jpg', status: 'approved', verification_status: 'approved', disabled_at: null }],
@@ -173,9 +173,9 @@ test('VIP planner includes only eligible dancer photos through the revocable pho
   assert.equal(result.dancers[1].photoUrl, null); assert.doesNotMatch(JSON.stringify(result), /private\/photo|outsider|preview=/);
 });
 
-test('VIP favorites belong to the guest and older requested dancers belong to the current venue', async () => {
+test('VIP follows belong to the guest and older requested dancers belong to the current venue', async () => {
   const { client, calls, service, tables } = dataFixture();
-  tables.favorites = [{ customer_id: 'guest', dancer_id: 'd1' }, { customer_id: 'another-guest', dancer_id: 'd2' }, { customer_id: 'guest', dancer_id: 'outsider' }];
+  tables.follows = [{ customer_id: 'guest', dancer_id: 'd1' }, { customer_id: 'another-guest', dancer_id: 'd2' }, { customer_id: 'guest', dancer_id: 'outsider' }];
   tables.venue_vip_requests = [
     { id: 'other-guest', user_id: 'another-guest', venue_id: venueId, dancers: [{ id: 'd1' }], created_at: 2000 },
     { id: 'other-venue', user_id: 'guest', venue_id: 'another-venue', dancers: [{ id: 'd1' }], created_at: 2000 },
@@ -183,7 +183,7 @@ test('VIP favorites belong to the guest and older requested dancers belong to th
       dancers: i === 0 ? [{ id: 'd2' }, { id: 'd2' }] : [{ id: 'no-longer-eligible' }] })),
   ];
   const result = await service.getVipState(client, 'guest', new URLSearchParams({ view: 'plan' }));
-  assert.deepEqual(Array.from(result.dancers, row => [row.id, row.favorite, row.previouslyRequested, row.profileHref]), [
+  assert.deepEqual(Array.from(result.dancers, row => [row.id, row.following, row.previouslyRequested, row.profileHref]), [
     ['d1', true, false, '/dancers/aria'], ['d2', false, true, '/dancers/nova'],
   ]);
   assert.doesNotMatch(JSON.stringify(result.dancers), /outsider|no-longer-eligible/);
@@ -195,12 +195,12 @@ test('VIP favorites belong to the guest and older requested dancers belong to th
   }
 });
 
-test('VIP planner cannot expose a private profile or turn a history/favorite failure into empty success', async () => {
+test('VIP planner cannot expose a private profile or turn a history/following failure into empty success', async () => {
   const f = dataFixture(); f.tables.dancer_profiles[0].is_public = false;
   const result = await f.service.getVipState(f.client, 'guest', new URLSearchParams({ view: 'plan' }));
   assert.equal(result.dancers[0].profileHref, null); assert.equal(result.dancers[0].photoUrl, null);
   assert.equal(result.dancers[1].profileHref, '/dancers/nova');
-  for (const table of ['favorites', 'venue_vip_requests']) {
+  for (const table of ['follows', 'venue_vip_requests']) {
     const failed = dataFixture(); failed.failures[table] = new Error(`${table} unavailable`);
     await assert.rejects(failed.service.getVipState(failed.client, 'guest', new URLSearchParams({ view: 'plan' })), new RegExp(`${table} unavailable`));
   }

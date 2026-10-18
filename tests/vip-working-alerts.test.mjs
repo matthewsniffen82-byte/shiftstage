@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import * as React from 'react';
 import { compileVip, dashboardHarness, venues, state } from './helpers/vip-dashboard-fixture.mjs';
 import { plannerHarness } from './helpers/vip-planner-fixture.mjs';
-import { filterVipDancers, isVipFavorite } from '../src/lib/dancr/vip-dashboard.ts';
+import { filterVipDancers, isVipFollowing } from '../src/lib/dancr/vip-dashboard.ts';
 import { followAlertKey } from '../src/lib/dancr/customer-notification-preferences.ts';
 import { notificationIconName } from '../src/lib/dancr/notification-icon.ts';
 
@@ -25,17 +25,15 @@ test('VIP inbox reuses read controls and opens working alerts in the correct clu
   assert.doesNotMatch(html,/Follow dancers and clubs/);
 });
 
-test('returning from a profile immediately refreshes Follow and Unfollow without changing favorites or visit drafts',async()=>{
+test('returning from a profile immediately refreshes Follow and Unfollow without changing visit drafts',async()=>{
   let saved={...dancer,following:false};
   const ui=dashboardHarness({hash:'#vip-plan',request:async()=>state(venues[0].id,{dancers:[saved]})});
   await ui.settle();ui.planner().props.onChange({selected:['aria'],date:'2027-01-02',time:'21:00'});ui.render();
   saved={...saved,following:true};ui.advance(1000);ui.event('focus');await ui.settle();
   assert.equal(ui.planner().props.dancers[0].following,true);
-  assert.equal(ui.planner().props.dancers[0].favorite,true);
   assert.deepEqual(JSON.parse(JSON.stringify(ui.planner().props.draft)),{selected:['aria'],date:'2027-01-02',time:'21:00'});
   saved={...saved,following:false};ui.advance(1000);ui.event('visibilitychange');await ui.settle();
   assert.equal(ui.planner().props.dancers[0].following,false);
-  assert.equal(ui.planner().props.dancers[0].favorite,true);
   assert.ok(!ui.calls.some(c=>c.options.method==='POST'));
   assert.equal(ui.planner().props.onWorkingAlert,undefined);
   ui.navigate('overview');await ui.settle();
@@ -71,24 +69,24 @@ test('late Following refreshes cannot change another club or account, and unmoun
   }
 });
 
-test('Following shows followed dancers on or off shift, independently of Favorites, with no photo bells',()=>{
+test('Following shows followed dancers on or off shift, with no Favorites filter or photo bells',()=>{
   const roster=[dancer,{...dancer,id:'past',stage_name:'Past',canRequest:false,profileHref:null,favorite:false},
     {...dancer,id:'favorite',stage_name:'Favorite only',following:false,working_now:true}];
   const ui=plannerHarness({dancers:roster});
   const cards=()=>ui.nodes().filter(n=>n.type==='article');
   assert.doesNotMatch(renderToStaticMarkup(ui.tree()),/vip-dancer-alert|data-notification-icon="bell"|Notify me|Working alerts for/);
-  assert.ok(ui.nodes().some(n=>n.props?.className==='vip-dancer-favorite'));
+  assert.ok(ui.nodes().some(n=>n.props?.className==='vip-dancer-follow'));
   assert.ok(ui.nodes().some(n=>n.props?.className==='vip-dancer-select'));
   ui.filter('Following');assert.equal(cards().length,2);
   const profile=ui.nodes().find(n=>n.type==='a'&&n.props.className==='vip-profile-link');
   assert.equal(profile.props.target,'_blank');assert.match(profile.props.href,/\/dancers\/aria\?return_to=/);
   assert.match(renderToStaticMarkup(ui.tree()),/Affiliated · off shift|Unavailable at this club/);
   ui.search('past');assert.equal(cards().length,1);ui.search('missing');assert.equal(cards().length,0);ui.search('');
-  ui.filter('Favorites');assert.equal(cards().length,2);
+  assert.doesNotMatch(renderToStaticMarkup(ui.tree()), /Favorites/);
   assert.deepEqual(filterVipDancers(roster,'','following',[]).map(d=>d.id),['aria','past']);
   ui.props.dancers=roster.map(d=>({...d,following:false}));ui.filter('Following');
   assert.equal(cards().length,0);assert.match(renderToStaticMarkup(ui.tree()),/No dancers followed yet/);
-  assert.equal(isVipFavorite({...dancer,favorite:false,following:true}),false);
+  assert.equal(isVipFollowing({...dancer,favorite:false,following:true}),true);
   assert.equal(followAlertKey('vip_dancer_working_now'),'workingNow');
   assert.equal(notificationIconName({payload:{kind:'vip_dancer_working_now'}}),'clock');
 });

@@ -6,8 +6,8 @@ import * as types from '../../src/lib/dancr/vip-types.ts';
 export function plannerHarness(options = {}) {
   const slots = [], focused = [];
   let cursor = 0, effects = [], tree;
-  const props = { venue: venues[0], dancers, draft: helpers.emptyVipDraft(), busy: false, favoritePending: [],
-    onChange: next => { props.draft = next; }, onSubmit: async () => {}, onFavorite: async () => {}, ...options };
+  const props = { venue: venues[0], dancers, draft: helpers.emptyVipDraft(), busy: false, followPending: [],
+    onChange: next => { props.draft = next; }, onSubmit: async () => {}, onFollow: async () => {}, ...options };
   const Component = compileVip('app/vip/VipPlan.tsx', {
     react: {
       useState(initial) { const index = cursor++; slots[index] ||= { value: initial }; return [slots[index].value, next => { slots[index].value = next; }]; },

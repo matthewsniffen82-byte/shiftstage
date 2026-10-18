@@ -6,12 +6,12 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { readSession, requestDashboardJson, type DashboardSessionAccount } from "@/app/dashboard/dashboard-session";
-import { emptyVipDraft, isVipFavorite, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, vipRequestDraft, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
+import { emptyVipDraft, isVipFollowing, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, vipRequestDraft, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
 import { type VipDancer, type VipDashboardView, type VipRequest, type VipRequestFilter, type VipState, type VipVenue } from "@/src/lib/dancr/vip-types";
 import { readVipWorkspace, saveVipWorkspace, vipDraftFingerprint } from "@/src/lib/dancr/vip-draft-storage";
 import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
 import VipRequests from "./VipRequests";
-import { VipWorkingFavorites } from "./VipMyDancers";
+import { VipWorkingFollowing } from "./VipMyDancers";
 import VipAccountPanel from "./VipAccountPanel";
 import { NotificationPanel } from "@/app/dashboard/DashboardShared";
 import { useVipElementHeight } from "./useVipElementHeight";
@@ -40,10 +40,10 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const [busy, setBusy] = useState(false);
   const [drafts, setDrafts] = useState<Record<string, VipDraft>>({});
   const [editing, setEditing] = useState<{ accountId: string; request: VipRequest; draft: VipDraft } | null>(null);
-  const [favoritePending, setFavoritePending] = useState<string[]>([]);
-  const [optimisticFavorites, setOptimisticFavorites] = useState<Record<string, boolean>>({});
-  const favoriteRequests = useRef(new Map<string, AbortController>());
-  const confirmedFavorites = useRef({ revision: 0, values: new Map<string, { revision: number; favorite: boolean }>() });
+  const [followPending, setFollowPending] = useState<string[]>([]);
+  const [optimisticFollows, setOptimisticFollows] = useState<Record<string, boolean>>({});
+  const followRequests = useRef(new Map<string, AbortController>());
+  const confirmedFollows = useRef({ revision: 0, values: new Map<string, { revision: number; following: boolean }>() });
   const dashboardSurface = useRef<HTMLElement | null>(null);
   const navigation = useRef<HTMLElement | null>(null);
   useVipElementHeight(navigation, dashboardSurface, "--vip-nav-height");
@@ -56,8 +56,8 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const requestScope = `${account.id}|${venueId}|${view}|${view === "requests" ? `${filter}|${page}` : ""}`;
   const requestKey = `${requestScope}|${revision}`;
   const data = response?.key === requestScope ? { ...response.data, dancers: response.data.dancers.map(dancer => {
-    const favorite = optimisticFavorites[`${account.id}:${dancer.id}`];
-    return favorite === undefined ? dancer : { ...dancer, favorite };
+    const following = optimisticFollows[`${account.id}:${dancer.id}`];
+    return following === undefined ? dancer : { ...dancer, following };
   }) } : null;
   const venue = venues.find(item => item.id === (venueId || lastVenue.current));
   const activeEdit = editing && editing.accountId === account.id && editing.request.venue_id === venue?.id ? editing : null;
@@ -94,13 +94,13 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       setView(vipDestination(window.location.hash));
     };
     sync(); window.addEventListener("hashchange", sync);
-    const favorites = favoriteRequests.current;
-    return () => { mounted.current = false; submitAbort.current?.abort(); favorites.forEach(controller => controller.abort()); window.removeEventListener("hashchange", sync); };
+    const follows = followRequests.current;
+    return () => { mounted.current = false; submitAbort.current?.abort(); follows.forEach(controller => controller.abort()); window.removeEventListener("hashchange", sync); };
   }, []);
   useEffect(() => {
     const update = (returning = false) => {
       if (document.visibilityState !== "visible" || refreshing.current || locked.current || signingOut
-        || favoriteRequests.current.size || readSession()?.account?.id !== account.id || (!returning && Date.now() - lastFetched.current < 15000)) return;
+        || followRequests.current.size || readSession()?.account?.id !== account.id || (!returning && Date.now() - lastFetched.current < 15000)) return;
       refreshing.current = true;
       setRevision(value => value + 1);
     };
@@ -113,7 +113,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   useEffect(() => {
     const controller = new AbortController();
     const expectedAccount = account.id;
-    const favoriteRevision = confirmedFavorites.current.revision;
+    const followRevision = confirmedFollows.current.revision;
     const query = new URLSearchParams({ view: view === "plan" ? "dancers" : view, venueId: venueId || lastVenue.current });
     if (view === "requests") { query.set("status", filter); query.set("page", String(page)); }
     setLoading(true); setError("");
@@ -128,10 +128,10 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
           setEditing(previous => previous?.request.venue_id === result.selectedVenueId ? { ...previous, draft: reconcileVipDraft(previous.draft, result.dancers) } : previous);
         }
         lastFetched.current = Date.now();
-        // A read started before a heart was saved must not undo that newer save.
+        // A read started before a follow was saved must not undo that newer save.
         setResponse({ key: requestScope, data: { ...result, dancers: result.dancers.map(dancer => {
-          const confirmed = confirmedFavorites.current.values.get(`${expectedAccount}:${dancer.id}`);
-          return confirmed && confirmed.revision > favoriteRevision ? { ...dancer, favorite: confirmed.favorite } : dancer;
+          const confirmed = confirmedFollows.current.values.get(`${expectedAccount}:${dancer.id}`);
+          return confirmed && confirmed.revision > followRevision ? { ...dancer, following: confirmed.following } : dancer;
         }) } });
       })
       .catch(failure => {
@@ -201,28 +201,28 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       return false;
     } finally { locked.current = false; submitAbort.current = null; if (mounted.current) setBusy(false); }
   }
-  async function toggleFavorite(dancer: VipDancer) {
-    if (disabled || favoriteRequests.current.has(dancer.id) || readSession()?.account?.id !== account.id) return;
+  async function toggleFollow(dancer: VipDancer) {
+    if (disabled || followRequests.current.has(dancer.id) || readSession()?.account?.id !== account.id) return;
     const controller = new AbortController(), expectedAccount = account.id;
-    const favoriteKey = `${expectedAccount}:${dancer.id}`, saving = !isVipFavorite(dancer);
-    favoriteRequests.current.set(dancer.id, controller);
-    setFavoritePending(previous => [...previous, dancer.id]); setError("");
-    setOptimisticFavorites(previous => ({ ...previous, [favoriteKey]: saving }));
+    const followKey = `${expectedAccount}:${dancer.id}`, saving = !isVipFollowing(dancer);
+    followRequests.current.set(dancer.id, controller);
+    setFollowPending(previous => [...previous, dancer.id]); setError("");
+    setOptimisticFollows(previous => ({ ...previous, [followKey]: saving }));
     try {
-      const result = await requestDashboardJson("/api/customer/favorites", {
+      const result = await requestDashboardJson("/api/customer/follows", {
           expectedRole: "customer", method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ dancerId: dancer.id, favorite: saving }), timeoutMs: 20000, signal: controller.signal });
+          body: JSON.stringify({ dancerId: dancer.id, following: saving }), timeoutMs: 20000, signal: controller.signal });
       if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
-      confirmedFavorites.current.values.set(favoriteKey, { revision: ++confirmedFavorites.current.revision, favorite: result.favorite === true });
+      confirmedFollows.current.values.set(followKey, { revision: ++confirmedFollows.current.revision, following: result.following === true });
       setResponse(previous => previous ? { ...previous, data: { ...previous.data,
-        dancers: previous.data.dancers.map(item => item.id === dancer.id ? { ...item, favorite: result.favorite === true } : item) } } : previous);
+        dancers: previous.data.dancers.map(item => item.id === dancer.id ? { ...item, following: result.following === true } : item) } } : previous);
     } catch (failure) {
       if (mounted.current && !controller.signal.aborted && readSession()?.account?.id === expectedAccount) setError(message(failure));
     } finally {
-      favoriteRequests.current.delete(dancer.id);
+      followRequests.current.delete(dancer.id);
       if (mounted.current) {
-        setFavoritePending(previous => previous.filter(id => id !== dancer.id));
-        setOptimisticFavorites(previous => { const next = { ...previous }; delete next[favoriteKey]; return next; });
+        setFollowPending(previous => previous.filter(id => id !== dancer.id));
+        setOptimisticFollows(previous => { const next = { ...previous }; delete next[followKey]; return next; });
       }
     }
   }
@@ -309,10 +309,10 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
           <button type="button" className="vip-summary-card" onClick={() => { setFilter("confirmed"); setPage(0); navigate("requests"); }}><VipIcon kind="requests" /><span><strong>{data.summary?.upcoming ?? "—"}</strong><small>Upcoming visits</small></span><span aria-hidden="true">→</span></button>
         </div>
         </div>
-        <VipWorkingFavorites dancers={data.dancers} onRequest={requestDancer} onBrowse={() => navigate("dancers")} busy={disabled || loading} />
+        <VipWorkingFollowing dancers={data.dancers} onRequest={requestDancer} onBrowse={() => navigate("dancers")} busy={disabled || loading} />
         </div>
         <div className="vip-updates"><NotificationPanel key={account.id} customerMode vipMode panelId="vip-updates" refreshKey={revision} /></div>
-      </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && dancer.canRequest !== false))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFavorite={toggleFavorite} favoritePending={favoritePending} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled} />
+      </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && dancer.canRequest !== false))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFollow={toggleFollow} followPending={followPending} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled} />
       : <>
         <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>View plans and venue responses.</p></div></div>
         <div className="vip-request-toolbar">

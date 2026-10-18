@@ -9,10 +9,14 @@ import * as returnPaths from '../src/lib/dancr/safe-return-path.ts';
 const origin = 'https://mydancr.test';
 const fallbackHref = '/?city=Las%20Vegas&view=dancers';
 const profile = { id: 'dancer-1', slug: 'aria', stageName: 'Aria', city: 'Las Vegas', photos: [], upcomingShifts: [] };
+const PublicProfile = compileVip('app/dancers/[slug]/PublicDancerProfile.tsx', {
+  './ProfileNavigationActions': { ProfileCloseButton: 'profile-close-button' },
+}).default;
 const Page = compileVip('app/dancers/[slug]/page.tsx', {
   '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },
   '@/src/lib/dancr/public': { getDancerProfile: async () => profile },
-  '@/src/lib/dancr/tv': { getPublicMyDancrTvFeed: async () => [] },
+  '@/src/lib/dancr/public-dancer-content': { loadPublicDancerContent: async () => ({ tvVideos: [] }) },
+  './PublicDancerProfile': { __esModule: true, default: PublicProfile },
   '@/src/lib/dancr/safe-return-path': returnPaths,
   './ProfileNavigationActions': { ProfileCloseButton: 'profile-close-button' },
   'next/navigation': { notFound() { throw Error('Not found'); }, permanentRedirect(href) { throw Object.assign(Error('Redirect'), { href }); } },
@@ -24,7 +28,7 @@ function nodes(node) {
 
 async function closeProps(returnTo) {
   const tree = await Page({ params: Promise.resolve({ slug: 'aria' }), searchParams: Promise.resolve({ return_to: returnTo }) });
-  return nodes(tree).find(node => node.type === 'profile-close-button').props;
+  return nodes(PublicProfile(tree.props)).find(node => node.type === 'profile-close-button').props;
 }
 
 function navigation(props, { referrer = '', historyLength = 1 } = {}) {
@@ -49,7 +53,7 @@ test('profiles opened from each VIP venue return to that venue planner without r
   }).default;
   for (const venue of venues) {
     const tree = Planner({ venue, dancers: [{ ...dancers[0], profileHref: '/dancers/aria' }],
-      draft: dashboard.emptyVipDraft(), onChange() {}, onSubmit() {}, onFavorite() {}, favoritePending: [], busy: false });
+      draft: dashboard.emptyVipDraft(), onChange() {}, onSubmit() {}, onFollow() {}, followPending: [], busy: false });
     const link = nodes(tree).find(node => node.type === 'a');
     assert.equal(link.props.target, '_blank');
     assert.match(link.props.rel, /noreferrer/);

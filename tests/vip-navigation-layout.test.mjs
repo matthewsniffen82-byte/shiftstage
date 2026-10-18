@@ -61,7 +61,7 @@ test('navigation and the complete dancer header own measured refs while the rost
   const grid = planner.nodes().find(node => node.props?.className === 'vip-dancers');
   assert.ok(!planner.nodes(header).includes(grid));
   assert.equal(grid.props.tabIndex, undefined);
-  assert.ok(planner.nodes(grid).some(node => node.props?.className === 'vip-dancer-favorite'));
+  assert.ok(planner.nodes(grid).some(node => node.props?.className === 'vip-dancer-follow'));
 });
 
 test('the dancer box sticks from its heading below safe-area-aware navigation instead of from the filter buttons', () => {

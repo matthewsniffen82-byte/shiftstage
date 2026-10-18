@@ -111,30 +111,28 @@ test('Plan a visit shows its count and opens the details step with keyboard focu
   ui.props.draft=helpers.emptyVipDraft();ui.render();assert.equal(dock(),undefined);
 });
 
-test('every dancer filter counts its matching results and updates with search, eligibility, favorites and selection', () => {
+test('every dancer filter counts its matching results and updates with search, eligibility, follows and selection', () => {
   const roster=[
-    {id:'aria',stage_name:'Aria',canRequest:true,working_now:true,favorite:true,following:true,previouslyRequested:true},
+    {id:'aria',stage_name:'Aria',canRequest:true,working_now:true,following:true,previouslyRequested:true},
     {id:'nova',stage_name:'Nova',canRequest:true,working_now:false,following:true},
-    {id:'past',stage_name:'Past dancer',canRequest:false,working_now:false,favorite:true,previouslyRequested:true},
-    {id:'elsewhere',stage_name:'Elsewhere',canRequest:false,working_now:false,favorite:true,following:true},
+    {id:'past',stage_name:'Past dancer',canRequest:false,working_now:false,previouslyRequested:true},
+    {id:'elsewhere',stage_name:'Elsewhere',canRequest:false,working_now:false,following:true},
   ];
-  const labels=['This club','Favorites','Following','Requested before','Working now','Selected'];
+  const labels=['This club','Following','Requested before','Working now','Selected'];
   const ui=plannerHarness({dancers:roster});
   const counts=()=>labels.map(label=>ui.nodes(ui.button(label)).find(node=>node.props?.className==='vip-filter-count').props.children);
-  assert.deepEqual(counts(),[3,3,3,2,1,0]);
+  assert.deepEqual(counts(),[3,3,2,1,0]);
   for(const label of labels){
     const count=ui.nodes(ui.button(label)).find(node=>node.props?.className==='vip-filter-count').props.children;
     assert.equal(ui.button(label).props['aria-label'],`${label}, ${count} ${count===1?'dancer':'dancers'}`);
     ui.filter(label);assert.equal(ui.nodes().filter(node=>node.type==='article').length,count);
   }
-  ui.filter('This club');ui.select('aria');assert.deepEqual(counts(),[3,3,3,2,1,1]);
-  ui.search(' aria ');assert.deepEqual(counts(),[1,1,1,1,1,1]);
+  ui.filter('This club');ui.select('aria');assert.deepEqual(counts(),[3,3,2,1,1]);
+  ui.search(' aria ');assert.deepEqual(counts(),[1,1,1,1,1]);
   ui.search('');ui.nodes().find(node=>node.props?.type==='checkbox').props.onChange({target:{checked:true}});ui.render();
-  assert.deepEqual(counts(),[2,1,2,1,1,1]);
-  ui.props.dancers=roster.map(dancer=>({...dancer,favorite:false}));ui.render();
-  assert.deepEqual(counts(),[2,0,2,1,1,1]);
-  ui.props.dancers=roster.map(dancer=>({...dancer,favorite:false,following:false}));ui.render();
-  assert.deepEqual(counts(),[2,0,0,1,1,1]);
-  assert.equal(ui.button('Favorites').props.disabled,false,'empty collections remain available');
+  assert.deepEqual(counts(),[2,2,1,1,1]);
+  ui.props.dancers=roster.map(dancer=>({...dancer,following:false}));ui.render();
+  assert.deepEqual(counts(),[2,0,1,1,1]);
+  assert.equal(ui.button('Following').props.disabled,false,'empty collections remain available');
   ui.props.busy=true;ui.render();assert.ok(labels.every(label=>ui.button(label).props.disabled));
 });

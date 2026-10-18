@@ -95,12 +95,12 @@ test('dancer search combines stage names and current-work filters while preservi
   const draft = { selected: ['dancer-2', 'removed'], date: '2027-01-15', time: '21:30' };
   assert.deepEqual(helpers.reconcileVipDraft(draft, dancers), { ...draft, selected: ['dancer-2'] });
 });
-test('favorite and previously-requested categories combine with search independently of selections', () => {
-  const roster = dancers.map((dancer, i) => ({ ...dancer, favorite: i !== 2, previouslyRequested: i !== 0 }));
-  assert.deepEqual(helpers.filterVipDancers(roster, '', 'favorites', ['dancer-3']).map(d => d.id), ['dancer-1', 'dancer-2']);
+test('following and previously-requested categories combine with search independently of selections', () => {
+  const roster = dancers.map((dancer, i) => ({ ...dancer, following: i !== 2, previouslyRequested: i !== 0 }));
+  assert.deepEqual(helpers.filterVipDancers(roster, '', 'following', ['dancer-3']).map(d => d.id), ['dancer-1', 'dancer-2']);
   assert.deepEqual(helpers.filterVipDancers(roster, '', 'previous', []).map(d => d.id), ['dancer-3', 'dancer-2']);
   assert.deepEqual(helpers.filterVipDancers(roster, '  nov ', 'previous', ['dancer-1']).map(d => d.id), ['dancer-2']);
-  assert.equal(helpers.filterVipDancers(roster, 'Sapphire', 'favorites', ['dancer-3']).length, 0);
+  assert.equal(helpers.filterVipDancers(roster, 'Sapphire', 'following', ['dancer-3']).length, 0);
 });
 test('VIP sections retain independent venue drafts, support deep links, and reset pagination on status changes', async () => {
   const ui = dashboardHarness({ hash: '#vip-account' }); await ui.settle();
@@ -169,7 +169,7 @@ test('switching venues after an uncertain submission preserves each venue’s re
 test('planner labels current availability honestly, shows venue-local time, and prevents adding an eleventh dancer', () => {
   const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers }).default;
   const roster = Array.from({ length: 11 }, (_, i) => ({ id: String(i), stage_name: `Dancer ${i}`, working_now: i === 0, photoUrl: i === 0 ? '/api/media/dancer-photo?path=approved.jpg' : null }));
-  const html = renderToStaticMarkup(React.createElement(Planner, { venue: venues[0], dancers: roster, draft: { ...helpers.emptyVipDraft(), selected: roster.slice(0, 10).map(d => d.id) }, onChange() {}, onSubmit: async () => {}, onFavorite: async () => {}, favoritePending: [], busy: false }));
+  const html = renderToStaticMarkup(React.createElement(Planner, { venue: venues[0], dancers: roster, draft: { ...helpers.emptyVipDraft(), selected: roster.slice(0, 10).map(d => d.id) }, onChange() {}, onSubmit: async () => {}, onFollow: async () => {}, followPending: [], busy: false }));
   assert.match(html, /America\/Los Angeles time/); assert.match(html, /Affiliated · off shift/);
   assert.match(html, /Availability for your visit is confirmed by the venue/);
   assert.equal((html.match(/type="checkbox" disabled=""/g) || []).length, 1);
@@ -178,66 +178,66 @@ test('planner labels current availability honestly, shows venue-local time, and 
   assert.match(html, /loading="lazy"/); assert.equal((html.match(/class="vip-avatar"[^>]*><img /g) || []).length, 1);
 });
 
-test('VIP favorites save, survive section reloads, and remove without changing the visit draft', async () => {
+test('VIP follows save, survive section reloads, and remove without changing the visit draft', async () => {
   const saved = new Set();
   const ui = dashboardHarness({ hash: '#vip-plan', request: async (url, options) => {
-    if (url === '/api/customer/favorites') {
-      const { dancerId, favorite } = JSON.parse(options.body);
-      if (favorite) saved.add(dancerId); else saved.delete(dancerId);
-      return { ok: true, favorite };
+    if (url === '/api/customer/follows') {
+      const { dancerId, following } = JSON.parse(options.body);
+      if (following) saved.add(dancerId); else saved.delete(dancerId);
+      return { ok: true, following };
     }
-    return state(venues[0].id, { dancers: dancers.map(dancer => ({ ...dancer, favorite: saved.has(dancer.id), profileHref: `/dancers/${dancer.id}` })) });
+    return state(venues[0].id, { dancers: dancers.map(dancer => ({ ...dancer, following: saved.has(dancer.id), profileHref: `/dancers/${dancer.id}` })) });
   } });
   await ui.settle();
   const draft = { selected: ['dancer-2'], date: '2027-01-15', time: '21:30' };
   ui.planner().props.onChange(draft); ui.render();
-  await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
-  assert.equal(ui.planner().props.dancers[0].favorite, true);
+  await ui.planner().props.onFollow(ui.planner().props.dancers[0]); await ui.settle();
+  assert.equal(ui.planner().props.dancers[0].following, true);
   assert.deepEqual(ui.planner().props.draft, draft);
   ui.navigate('requests'); await ui.settle(); ui.navigate('plan'); await ui.settle();
-  assert.equal(ui.planner().props.dancers[0].favorite, true);
-  await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
-  assert.equal(ui.planner().props.dancers[0].favorite, false);
+  assert.equal(ui.planner().props.dancers[0].following, true);
+  await ui.planner().props.onFollow(ui.planner().props.dancers[0]); await ui.settle();
+  assert.equal(ui.planner().props.dancers[0].following, false);
   assert.deepEqual(ui.planner().props.draft, draft);
   assert.deepEqual(ui.calls.filter(call => call.options.method === 'POST').map(call => JSON.parse(call.options.body)), [
-    { dancerId: 'dancer-1', favorite: true }, { dancerId: 'dancer-1', favorite: false },
+    { dancerId: 'dancer-1', following: true }, { dancerId: 'dancer-1', following: false },
   ]);
   ui.unmount();
 });
 
-test('favorite failures remain retryable and duplicate clicks cannot send competing writes', async () => {
-  let rejectFavorite;
+test('following failures remain retryable and duplicate clicks cannot send competing writes', async () => {
+  let rejectFollow;
   const ui = dashboardHarness({ hash: '#vip-plan', request: (url, options) => options.method === 'POST'
-    ? new Promise((_, reject) => { rejectFavorite = reject; }) : Promise.resolve(state()) });
+    ? new Promise((_, reject) => { rejectFollow = reject; }) : Promise.resolve(state()) });
   await ui.settle();
-  const request = ui.planner().props.onFavorite(dancers[0]); ui.render();
-  assert.deepEqual(Array.from(ui.planner().props.favoritePending), ['dancer-1']);
-  await ui.planner().props.onFavorite(dancers[0]);
+  const request = ui.planner().props.onFollow(dancers[0]); ui.render();
+  assert.deepEqual(Array.from(ui.planner().props.followPending), ['dancer-1']);
+  await ui.planner().props.onFollow(dancers[0]);
   assert.equal(ui.calls.filter(call => call.options.method === 'POST').length, 1);
-  rejectFavorite(new Error('Could not save favorite')); await request; await ui.settle();
-  assert.match(renderToStaticMarkup(ui.tree()), /Could not save favorite/);
-  assert.notEqual(ui.planner().props.dancers[0].favorite, true);
-  assert.equal(ui.planner().props.favoritePending.length, 0);
+  rejectFollow(new Error('Could not save following')); await request; await ui.settle();
+  assert.match(renderToStaticMarkup(ui.tree()), /Could not save following/);
+  assert.notEqual(ui.planner().props.dancers[0].following, true);
+  assert.equal(ui.planner().props.followPending.length, 0);
   ui.unmount();
 });
 
-test('late favorite responses are ignored after an account change and unmount aborts them', async () => {
-  let resolveFavorite;
+test('late following responses are ignored after an account change and unmount aborts them', async () => {
+  let resolveFollow;
   const ui = dashboardHarness({ hash: '#vip-plan', request: (_url, options) => options.method === 'POST'
-    ? new Promise(resolve => { resolveFavorite = resolve; }) : Promise.resolve(state()) });
+    ? new Promise(resolve => { resolveFollow = resolve; }) : Promise.resolve(state()) });
   await ui.settle();
-  const request = ui.planner().props.onFavorite(dancers[0]); ui.session({ id: 'different-account' });
-  resolveFavorite({ favorite: true }); await request; await ui.settle();
-  assert.notEqual(ui.planner().props.dancers[0].favorite, true);
+  const request = ui.planner().props.onFollow(dancers[0]); ui.session({ id: 'different-account' });
+  resolveFollow({ following: true }); await request; await ui.settle();
+  assert.notEqual(ui.planner().props.dancers[0].following, true);
   ui.session(guest);
-  const second = ui.planner().props.onFavorite(dancers[0]); ui.unmount();
+  const second = ui.planner().props.onFollow(dancers[0]); ui.unmount();
   assert.equal(ui.calls.at(-1).options.signal.aborted, true);
-  resolveFavorite({ favorite: true }); await second;
+  resolveFollow({ following: true }); await second;
 });
 
-test('VIP hearts toggle only favorites and preserve public follows and working alert preferences', async () => {
-  for (const favorite of [false, true]) {
-    let saved = { ...dancers[0], favorite, following: true, workingAlertsEnabled: true };
+test('VIP follow controls use the public follow endpoint without writing notification preferences', async () => {
+  for (const following of [false, true]) {
+    let saved = { ...dancers[0], following };
     const ui = dashboardHarness({ hash: '#vip-plan', request: async (url, options) => {
       if (options.method === 'POST') {
         const input = JSON.parse(options.body); saved = { ...saved, ...input }; return input;
@@ -245,70 +245,69 @@ test('VIP hearts toggle only favorites and preserve public follows and working a
       return state(venues[0].id, { dancers: [saved] });
     } });
     await ui.settle();
-    await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
-    assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), !favorite);
+    await ui.planner().props.onFollow(ui.planner().props.dancers[0]); await ui.settle();
+    assert.equal(helpers.isVipFollowing(ui.planner().props.dancers[0]), !following);
     const writes = ui.calls.filter(call => call.options.method === 'POST');
-    assert.deepEqual(writes.map(call => call.url), ['/api/customer/favorites']);
-    assert.deepEqual(JSON.parse(writes.at(-1).options.body), { dancerId: saved.id, favorite: !favorite });
+    assert.deepEqual(writes.map(call => call.url), ['/api/customer/follows']);
+    assert.deepEqual(JSON.parse(writes.at(-1).options.body), { dancerId: saved.id, following: !following });
     ui.navigate('requests'); await ui.settle(); ui.navigate('plan'); await ui.settle();
-    assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), !favorite);
-    await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
-    assert.equal(ui.planner().props.dancers[0].favorite, favorite);
-    assert.equal(ui.planner().props.dancers[0].following, true);
-    assert.equal(ui.planner().props.dancers[0].workingAlertsEnabled, true);
-    assert.equal(ui.calls.at(-1).url, '/api/customer/favorites'); ui.unmount();
+    assert.equal(helpers.isVipFollowing(ui.planner().props.dancers[0]), !following);
+    await ui.planner().props.onFollow(ui.planner().props.dancers[0]); await ui.settle();
+    assert.equal(ui.planner().props.dancers[0].following, following);
+    assert.ok(writes.every(call => !call.url.includes("preferences")));
+    assert.equal(ui.calls.at(-1).url, '/api/customer/follows'); ui.unmount();
   }
 });
 
-test('failed favorite removals preserve all saved preferences and retry only the favorite write', async () => {
+test('failed following removals preserve all saved preferences and retry only the following write', async () => {
   let fail = true;
   const ui = dashboardHarness({ hash: '#vip-plan', request: async (url, options) => {
-    if (url === '/api/customer/favorites') { if (fail) throw new Error('Could not remove dancer'); return { favorite: false }; }
-    return state(venues[0].id, { dancers: [{ ...dancers[0], favorite: true, following: true }] });
+    if (url === '/api/customer/follows') { if (fail) throw new Error('Could not remove dancer'); return { following: false }; }
+    return state(venues[0].id, { dancers: [{ ...dancers[0], following: true }] });
   } });
   await ui.settle();
-  await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
-  assert.equal(ui.planner().props.dancers[0].favorite, true);
-  assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), true);
-  assert.equal(ui.planner().props.favoritePending.length, 0);
+  await ui.planner().props.onFollow(ui.planner().props.dancers[0]); await ui.settle();
+  assert.equal(ui.planner().props.dancers[0].following, true);
+  assert.equal(helpers.isVipFollowing(ui.planner().props.dancers[0]), true);
+  assert.equal(ui.planner().props.followPending.length, 0);
   assert.match(renderToStaticMarkup(ui.tree()), /Could not remove dancer/);
   fail = false;
-  await ui.planner().props.onFavorite(ui.planner().props.dancers[0]); await ui.settle();
-  assert.equal(helpers.isVipFavorite(ui.planner().props.dancers[0]), false);
+  await ui.planner().props.onFollow(ui.planner().props.dancers[0]); await ui.settle();
+  assert.equal(helpers.isVipFollowing(ui.planner().props.dancers[0]), false);
   assert.deepEqual(ui.calls.filter(call => call.options.method === 'POST').map(call => call.url),
-    ['/api/customer/favorites', '/api/customer/favorites']);
-  assert.equal(ui.planner().props.dancers[0].following, true);
+    ['/api/customer/follows', '/api/customer/follows']);
+  assert.equal(ui.planner().props.dancers[0].following, false);
   ui.unmount();
 });
 
-test('combined favorite removals stop before a second write if the account changes or the dashboard unmounts', async () => {
+test('follow removals never issue a second write if the account changes or the dashboard unmounts', async () => {
   for (const unmount of [false, true]) {
-    let resolveFavorite;
+    let resolveFollow;
     const ui = dashboardHarness({ hash: '#vip-plan', request: (url, options) => options.method === 'POST'
-      ? new Promise(resolve => { resolveFavorite = resolve; })
-      : Promise.resolve(state(venues[0].id, { dancers: [{ ...dancers[0], favorite: true, following: true }] })) });
+      ? new Promise(resolve => { resolveFollow = resolve; })
+      : Promise.resolve(state(venues[0].id, { dancers: [{ ...dancers[0], following: true }] })) });
     await ui.settle();
-    const pending = ui.planner().props.onFavorite(ui.planner().props.dancers[0]);
+    const pending = ui.planner().props.onFollow(ui.planner().props.dancers[0]);
     if (unmount) ui.unmount(); else ui.session({ id: 'other-account' });
-    resolveFavorite({ favorite: false }); await pending;
+    resolveFollow({ following: false }); await pending;
     assert.equal(ui.calls.filter(call => call.options.method === 'POST').length, 1);
     if (!unmount) ui.unmount();
   }
 });
 
-test('profile links, selection checkboxes, and favorite buttons are independent card controls', async () => {
-  let draft = helpers.emptyVipDraft(); const favorites = [];
+test('profile links, selection checkboxes, and following buttons are independent card controls', async () => {
+  let draft = helpers.emptyVipDraft(); const follows = [];
   const Planner = compileVip('app/vip/VipPlan.tsx', { react: { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} },
     '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers }).default;
   const roster = dancers.map(dancer => ({ ...dancer, profileHref: `/dancers/${dancer.id}` }));
   const props = { venue: venues[0], dancers: roster, draft, onChange: next => { draft = next; }, onSubmit: async () => {},
-    onFavorite: async dancer => { favorites.push(dancer.id); }, favoritePending: [], busy: false };
+    onFollow: async dancer => { follows.push(dancer.id); }, followPending: [], busy: false };
   const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : [];
   const tree = Planner(props), cards = nodes(tree).filter(node => node.type === 'article');
   assert.equal(cards.length, 3); assert.equal(nodes(tree).some(node => node.type === 'textarea'), false);
   const card = cards[0], link = nodes(card).find(node => node.type === 'a');
   const checkbox = nodes(card).find(node => node.props?.type === 'checkbox');
-  const favorite = nodes(card).find(node => node.type === 'button');
+  const following = nodes(card).find(node => node.type === 'button');
   const profileUrl = new URL(link.props.href, 'https://mydancr.test');
   assert.equal(profileUrl.pathname, '/dancers/dancer-1');
   assert.equal(profileUrl.searchParams.get('return_to'), '/vip?venueId=venue-1#vip-plan');
@@ -317,9 +316,9 @@ test('profile links, selection checkboxes, and favorite buttons are independent 
   assert.ok(nodes(link).some(node => node.props?.children === 'Open profile'));
   assert.equal(nodes(link).some(node => node.type === 'button' || node.type === 'input'), false);
   assert.equal(card.props.onClick, undefined); assert.equal(link.props.onClick, undefined);
-  await favorite.props.onClick(); assert.deepEqual(favorites, ['dancer-1']); assert.equal(draft.selected.length, 0);
+  await following.props.onClick(); assert.deepEqual(follows, ['dancer-1']); assert.equal(draft.selected.length, 0);
   checkbox.props.onChange({ target: { checked: true } }); assert.deepEqual(Array.from(draft.selected), ['dancer-1']);
-  assert.equal(favorites.length, 1);
+  assert.equal(follows.length, 1);
 });
 
 test('VIP overview and account hide venue nicknames and offer no nickname editor, including after club switches', async () => {

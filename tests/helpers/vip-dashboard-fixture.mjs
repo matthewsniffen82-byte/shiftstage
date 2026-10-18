@@ -61,12 +61,12 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
   const RequestCards = compileVip('app/vip/VipRequests.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-calendar': calendar }).default;
   const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': dashboard,
     '@/app/components/NotificationIcon': { __esModule: true, default: 'svg' } }).default;
-  const { VipWorkingFavorites } = compileVip('app/vip/VipMyDancers.tsx', { '@/src/lib/dancr/vip-dashboard': dashboard });
+  const { VipWorkingFollowing } = compileVip('app/vip/VipMyDancers.tsx', { '@/src/lib/dancr/vip-dashboard': dashboard });
   const Component = compileVip('app/vip/VipDashboard.tsx', {
     react, 'next/link': { __esModule: true, default: 'a' }, 'next/dynamic': { __esModule: true, default: () => Planner },
     '@/app/dashboard/dashboard-session': { readSession: () => ({ account: currentAccount }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '@/src/lib/dancr/vip-dashboard': dashboard, './VipRequests': { __esModule: true, default: RequestCards }, './VipAccountPanel': { __esModule: true, default: 'vip-account-settings' },
-    './VipMyDancers': { __esModule: true, VipWorkingFavorites },
+    './VipMyDancers': { __esModule: true, VipWorkingFollowing },
     '@/app/dashboard/DashboardShared': { NotificationPanel: 'vip-notifications' },
     '@/src/lib/dancr/vip-draft-storage': draftStorage,
     '@/src/lib/dancr/browser-session': { rememberVipDashboard: (accountId, venueId) => vipNavigation.push({ accountId, venueId }) },
@@ -83,7 +83,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
   render();
   return { calls, writes, vipNavigation, nodes, render, settle, navigate, storage, intervals, tree: () => tree,
     planner: () => nodes().find(node => node.type === Planner),
-    workingFavorites: () => nodes().find(node => node.type === VipWorkingFavorites),
+    workingFollowing: () => nodes().find(node => node.type === VipWorkingFollowing),
     requests: () => nodes().find(node => node.type === RequestCards),
     advance(ms) { now += ms; },
     event(name) { listeners.get(name)?.(); render(); },
