@@ -1,8 +1,8 @@
-/* Keep the venue-style date buttons inside the shared date-and-club filter box. */
+/* Keep the venue-style date buttons together in their own filter box. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); box-sizing: border-box; width: 100%;
-  min-width: 0; max-width: 100%; gap: 3px; padding: 4px; border: 0; border-radius: 11px 11px 0 0;
-  background: transparent;
+  min-width: 0; max-width: 100%; gap: 3px; padding: 4px; border: 1px solid #39313f; border-radius: 12px;
+  background: linear-gradient(#100e15, #100e15);
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button {
   --results-period-face: #1b1922;
@@ -137,15 +137,15 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar {
   width: calc(100% + var(--dancer-results-toolbar-outset) + var(--dancer-results-toolbar-outset));
   max-width: none; margin-inline: calc(0px - var(--dancer-results-toolbar-outset));
-  padding: 0; gap: 0; border: 1px solid #39313f; border-radius: 12px;
-  background: linear-gradient(#100e15, #100e15);
+  padding: 0; gap: 8px; border: 0; border-radius: 0;
+  background: transparent;
 }
-/* The club row shares the outer frame; its native picker covers the whole row. */
+/* The club picker has its own frame, with the native picker covering the row. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club {
   position:relative; box-sizing:border-box; grid-template-columns:auto minmax(0,1fr); gap:12px;
   width:100%;
   min-height:44px; margin:0; padding:10px 34px 10px 12px;
-  border:0; border-top:1px solid #2e2835; border-radius:0 0 11px 11px; background:transparent;
+  border:1px solid #39313f; border-radius:12px; background:linear-gradient(#100e15,#100e15);
   color:#a9a0b4; font-size:12px !important; letter-spacing:normal !important; text-transform:none; font-weight:500 !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club-name {
