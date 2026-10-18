@@ -2061,6 +2061,14 @@ html body.dancr-button-system > .app main.stack > section.stack
   stroke-width: 2 !important;
 }
 
+/* Public grid pins use the inbox lavender; caption text and status stay neutral
+ * and green respectively. Scope through the photo cards to exclude dashboards. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results:is(.home-dancer-grid, .venue-profile-overlay)
+  .home-dancer-grid-card.is-compact-directory .home-dancer-grid-venue svg {
+  color: #c4a3f1 !important;
+}
+
 /* Header inboxes use one compact surface for alerts and saved admission passes. */
 html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) {
   box-sizing: border-box;
