@@ -52,6 +52,11 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 .dancer-score-category > p, .dancer-score-category > small { font-size: 12px; line-height: 1.5; }
 .dancer-score-category > small { display: block; margin-bottom: 10px; color: var(--mydancr-dashboard-muted); }
 .dancer-score-category > summary:focus-visible { outline: 2px solid #c4a5f5; outline-offset: 2px; border-radius: 6px; }
+body.dancr-button-system #dancer-dashboard .dancer-score-help { margin-top:12px; padding:0; border:0; border-top:1px solid var(--mydancr-dashboard-border); background:none; }
+body.dancr-button-system #dancer-dashboard .dancer-score-help > summary { display:list-item; box-sizing:border-box; min-height:44px; padding:12px 0; cursor:pointer; list-style:disclosure-closed inside; color:#d0ccd7; font-size:12px; font-weight:600; line-height:1.5; }
+body.dancr-button-system #dancer-dashboard .dancer-score-help[open] > summary { list-style-type:disclosure-open; }
+body.dancr-button-system #dancer-dashboard .dancer-score-help > summary:focus-visible { outline:2px solid #c4a5f5; outline-offset:2px; border-radius:6px; }
+body.dancr-button-system #dancer-dashboard .dancer-score-help > p { margin:0 0 10px; }
 
 /* Follow the measured dashboard navigation, including wrapped mobile labels. */
 body.dancr-button-system #dancer-dashboard .dancer-analytics-toolbar {

@@ -22,22 +22,27 @@ function render(status,error=false) {
   return renderToStaticMarkup(exports.DancerDiscoveryBoosts());
 }
 
-test('scorecard explains 14-day placement beside the score and preserves 30-day activity history',()=>{
+test('scorecard keeps placement guidance visible and scoring rules collapsed',()=>{
   const html=render({eligible:true,score:50,scorecard:card});
   assert.equal((html.match(/class="dancer-score-category"/g)||[]).length,5);
   for(const key of scoring.DANCER_SCORE_CATEGORIES) assert.ok(html.includes(scoring.DANCER_SCORE_LABELS[key]));
-  assert.match(html,/Rolling 14 days · Club A/);assert.match(html,/Early data/);assert.match(html,/50\/100/);
-  assert.match(html,/rolling 14-day score determines your default placement in dancer grids, internal rosters and Dancer TV/);
-  assert.ok(html.indexOf('Higher score, higher visibility.')>html.indexOf('Overall Performance:'));
-  assert.ok(html.indexOf('Higher score, higher visibility.')<html.indexOf('class="dancer-score-categories"'));
-  assert.match(html,/30-day history/);assert.doesNotMatch(html,/last 30 days/i);
-  assert.match(html,/filters above apply to your activity totals/);assert.match(html,/missing categories are excluded/);
+  assert.match(html,/Last 14 days · Club A/);assert.match(html,/Early data/);assert.match(html,/50\/100/);
+  assert.match(html,/Your score helps determine your position in dancer grids, club rosters and Dancer TV/);
+  assert.ok(html.indexOf('Higher scores, higher visibility.')>html.indexOf('Overall Performance:'));
+  assert.ok(html.indexOf('Higher scores, higher visibility.')<html.indexOf('class="dancer-score-categories"'));
+  const help=html.match(/<details class="dancer-score-help">([\s\S]*?)<\/details>/)?.[1];
+  assert.ok(help,'scoring explanation is inside a closed disclosure');
+  assert.match(help,/<summary>How scoring works<\/summary>/);
+  for(const rule of [/last 14 days/,/30-day history/,/filters above only change activity totals/,/Missing categories are excluded/,/Customer filters and selected videos/,/Scores do not measure earnings/]) assert.match(help,rule);
+  assert.doesNotMatch(html,/Your overall score appears once 3 categories have data/);
+  assert.doesNotMatch(html,/last 30 days/i);
   assert.match(html,/staff approval does not improve/);assert.match(html,/check out before leaving/);
 });
 
 test('missing scores and service failures stay unavailable rather than showing fabricated zeros',()=>{
   const missing=render({eligible:false,score:null,scorecard:null});
   assert.match(missing,/Overall Performance: —/);assert.match(missing,/approved and public/);
+  assert.match(missing,/Your overall score appears once 3 categories have data/);
   assert.equal((missing.match(/class="dancer-score-category"/g)||[]).length,5);assert.doesNotMatch(missing,/0\/100/);
   assert.match(render(null),/role="status"/);
   const failed=render(null,true);assert.match(failed,/role="alert"/);assert.match(failed,/Try again/);assert.doesNotMatch(failed,/dancer-score-category/);
