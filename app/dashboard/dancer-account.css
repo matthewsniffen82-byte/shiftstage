@@ -1,5 +1,18 @@
 /* Only the approved dancer Account destination uses this compact layout. */
 body.dancr-button-system #dancer-dashboard #dancer-destination-account { min-width: 0; gap: 8px; letter-spacing: 0; }
+body.dancr-button-system #dancer-dashboard #dancer-destination-account .dancer-notification-priority {
+  display: grid; min-width: 0; gap: 12px; margin-bottom: 8px; padding: 16px;
+  border: 1px solid #4a365f; border-radius: 16px; background: #100c17;
+}
+body.dancr-button-system #dancer-dashboard #dancer-destination-account .dancer-notification-priority-heading { display: flex; align-items: flex-start; gap: 10px; }
+body.dancr-button-system #dancer-dashboard #dancer-destination-account .dancer-notification-priority-heading > div { display: grid; min-width: 0; gap: 5px; }
+body.dancr-button-system #dancer-dashboard #dancer-destination-account .dancer-notification-priority h2 { font-size: 20px !important; }
+body.dancr-button-system #dancer-dashboard #dancer-destination-account .dancer-notification-priority-icon { display: grid; place-items: center; flex: 0 0 28px; color: #c4a3f1; }
+body.dancr-button-system #dancer-dashboard #dancer-destination-account .dancer-notification-priority-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+body.dancr-button-system #dancer-dashboard #dancer-destination-account .dancer-notification-priority p { font-size: 13px; color: #c5bfce; }
+body.dancr-button-system #dancer-dashboard #dancer-destination-account button.dancer-notification-priority-action { width: 100% !important; min-height: 48px !important; padding: 10px 14px !important; border-radius: 10px !important; font-size: 15px !important; }
+body.dancr-button-system #dancer-dashboard #dancer-destination-account .dancer-notification-email-note { display: grid; gap: 5px; padding-top: 12px; border-top: 1px solid #382f46; }
+body.dancr-button-system #dancer-dashboard #dancer-destination-account .dancer-notification-email-note h3 { font-size: 14px !important; }
 body.dancr-button-system #dancer-dashboard #dancer-destination-account > .dashboard-section {
   margin: 0 !important; padding: 0 !important; border: 0 !important; border-bottom: 1px solid #343139 !important;
   border-radius: 0 !important; background: transparent !important; box-shadow: none !important;

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { DANCER_ACTIVITY_ALERTS, type DancerNotificationKey, type DancerNotificationSettings } from "@/src/lib/dancr/dancer-notification-preferences";
 import { readSession, requestDashboardJson } from "./dashboard-session";
 
-export default function DancerNotificationSettings() {
+export default function DancerNotificationSettings({ showPhoneDelivery = true }: { showPhoneDelivery?: boolean }) {
   const [settings, setSettings] = useState<DancerNotificationSettings | null>(null);
   const [saving, setSaving] = useState<DancerNotificationKey | null>(null);
   const [status, setStatus] = useState("");
@@ -77,12 +77,12 @@ export default function DancerNotificationSettings() {
         </div>)}
       </div>
     </> : status ? <button className="dancer-preferences-action" type="button" onClick={() => setAttempt(value => value + 1)}>Try again</button> : <p role="status">Loading preferences…</p>}
-    <div className="dancer-preferences-delivery">
+    {showPhoneDelivery ? <div className="dancer-preferences-delivery">
       <h3>Phone notifications</h3>
       <p>Manage push notifications on this device.</p>
       <p>Table requests include the table number and club and are also sent to your account email. Turn on notifications for your email app in your phone&apos;s settings.</p>
       <button className="dancer-preferences-action" type="button" data-push-settings>Manage phone notifications</button>
-    </div>
+    </div> : null}
     <p className="dancer-preferences-essential">Table requests, club access, review decisions, account updates, and support replies stay on.</p>
     {status ? <p role="status">{status}</p> : null}
   </article>;
