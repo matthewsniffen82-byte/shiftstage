@@ -503,19 +503,20 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   box-shadow: none !important;
 }
 
+/* Keep secondary profile icons quiet beside the portrait and purple offer. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   :is(.modal-actions, .live-actions).profile-actions-compact
   :is(#followBtn, #goingBtn, .profile-action-icon-control):not(:disabled):not([aria-disabled="true"])
   :is(.action-icon, .profile-action-icon-frame) > svg {
-  color: #a78bfa !important;
+  color: var(--profile-secondary-text, #b4bac5) !important;
   filter: none !important;
 }
 
-/* Color only the venue pin, preserving status colors, labels, and chevrons. */
+/* Match the venue pin to the secondary icons; keep Working now green. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   :is(.profile-venue-destination, .profile-working-destination, .profile-upcoming-destination)
   :is(.venue-dot, .venue-dot > svg, .profile-venue-pin) {
-  color: #a78bfa !important;
+  color: var(--profile-secondary-text, #b4bac5) !important;
   stroke: currentColor !important;
   filter: none !important;
   box-shadow: none !important;
