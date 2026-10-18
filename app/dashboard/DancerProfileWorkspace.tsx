@@ -6,7 +6,6 @@ import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEdi
 import { dancerPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
-import DancerInternalMainPhotoPicker from "./DancerInternalMainPhotoPicker";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import type { DancerIdentityDraft, LoadState } from "./dashboard-types";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
@@ -265,7 +264,6 @@ export default function DancerProfileWorkspace({
             </> : null;
           }}
         />
-        {!onboarding && approvedPhotos.length > 1 ? <DancerInternalMainPhotoPicker photos={photos} disabled={busy} onProfileChange={onProfileChange} /> : null}
       </section>
       <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
         <DancerProfileMediaUploads compact expanded mediaType="videos" photos={[]} videos={uploadedVideos.filter(video => video.status === "approved").map(video => ({ ...video, imageUrl: video.posterUrl }))}
