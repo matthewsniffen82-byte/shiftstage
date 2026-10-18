@@ -22,7 +22,9 @@ export async function GET(request: Request) {
     if (!account || account.role !== "dancer" || account.accountState !== "active") {
       return NextResponse.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
     }
-    const requestedPeriod = new URL(request.url).searchParams.get("period");
+    const params = new URL(request.url).searchParams;
+    const bootstrapOnly = params.get("view") === "bootstrap";
+    const requestedPeriod = params.get("period");
     if (requestedPeriod !== null && requestedPeriod !== "auto" && requestedPeriod !== "shift" && requestedPeriod !== "tonight" && requestedPeriod !== "7d" && requestedPeriod !== "30d" && requestedPeriod !== "all") {
       return NextResponse.json({ ok: false, error: "Choose Current shift, Tonight, 7 days, 30 days or All time." }, { status: 400 });
     }
@@ -45,10 +47,12 @@ export async function GET(request: Request) {
         console.warn("CUSTOMER_ROSTER_NOTIFICATION_FAILED", safeErrorMetadata(notificationError));
       });
     }
-    // Keep the response used by older shell clients stable. The current
-    // dashboard explicitly requests a period and skips retired deal metrics.
+    // Opening the dashboard must never start or wait for optional reports.
+    // Results load independently after the verified profile is available.
+    // Keep report responses stable for older clients that still request them.
+    const includeLegacyReports = !bootstrapOnly && requestedPeriod === null;
     const [analytics, deals, nfc] = await Promise.all([
-      requestedPeriod === null
+      bootstrapOnly ? Promise.resolve(null) : requestedPeriod === null
         ? getOwnDancerDashboardAnalytics(client, user.id, admin)
         : getOwnDancerAudienceAnalytics(admin, user.id, dancerAnalyticsPeriod(requestedPeriod)).catch((analyticsError) => {
           // Results retry independently; a report failure must not hide profile
@@ -56,7 +60,7 @@ export async function GET(request: Request) {
           console.warn("DANCER_DASHBOARD_ANALYTICS_UNAVAILABLE", safeErrorMetadata(analyticsError));
           return null;
         }),
-      requestedPeriod === null ? getDancerDealMetrics(client, user.id, admin) : Promise.resolve(null),
+      includeLegacyReports ? getDancerDealMetrics(client, user.id, admin) : Promise.resolve(null),
       getDancerNfcDashboardState(admin, user.id),
     ]);
 
@@ -64,7 +68,7 @@ export async function GET(request: Request) {
       ok: true,
       agreement,
       analytics,
-      ...(requestedPeriod === null ? { deals } : {}),
+      ...(includeLegacyReports ? { deals } : {}),
       nfc: {
         ...nfc,
         enrollment: nfc.enrollment || nfcEnrollment || null,

@@ -18,13 +18,14 @@ function setup(t, fresh = true, account) {
   t.mock.method(console, "warn", () => {});
 }
 
-test("the real dashboard opens before background reports, support and referral access finish", async t => {
+test("the dashboard requests only access state before opening and leaves reports to their panels", async t => {
   setup(t);
-  const background = deferred(), ready = deferred(), updates = [];
+  const background = deferred(), ready = deferred(), updates = [], paths = [];
   const agreement = { required: true, accepted: false, version: DANCER_AGREEMENT_VERSION, acceptedAt: null };
   globalThis.fetch = async path => {
+    paths.push(path);
     if (path === "/api/account") return response({ account: { role: "dancer" } });
-    if (path === "/api/dancer/dashboard?period=auto") return response({ agreement, nfc: { activated: true }, finance: { connected: true } });
+    if (path === "/api/dancer/dashboard?view=bootstrap") return response({ agreement, nfc: { activated: true }, finance: { connected: true } });
     if (path === "/api/dancer/profile") return response({ profile: { stage_name: "Stacy", status: "approved" } });
     await background.promise;
     return response({ threads: [{ id: "support-1" }], report: { rank: 2 }, events: [{ id: "event-1" }], reviews: [{ id: "review-1" }], access: { active: true } });
@@ -39,6 +40,10 @@ test("the real dashboard opens before background reports, support and referral a
   assert.equal(updates[0].data.nfc.activated, true);
   assert.equal(updates[0].data.finance.connected, true);
   assert.deepEqual(updates[0].data.agreement, agreement);
+  assert.equal(updates[0].data.analytics, null);
+  assert.equal(updates[0].data.deals, null);
+  assert.ok(paths.includes("/api/dancer/dashboard?view=bootstrap"));
+  assert.ok(!paths.some(path => path.includes("period=") || path.includes("/analytics")));
   background.resolve();
   await loading;
   assert.equal(updates.length, 4);
@@ -52,12 +57,12 @@ test("first-tap activation finishes before fetching the profile, and account ver
   globalThis.fetch = async path => {
     paths.push(path);
     if (path === "/api/account") { await account.promise; return response({ account: { role: "dancer" } }); }
-    if (path === "/api/dancer/dashboard?period=auto") await activation.promise;
+    if (path === "/api/dancer/dashboard?view=bootstrap") await activation.promise;
     return response(path === "/api/dancer/profile" ? { profile: { status: "approved" } } : {});
   };
   const loading = loadDancerDashboard(new AbortController().signal, (panel, data) => updates.push({ panel, data }));
   await settle();
-  assert.ok(paths.includes("/api/account") && paths.includes("/api/dancer/dashboard?period=auto"));
+  assert.ok(paths.includes("/api/account") && paths.includes("/api/dancer/dashboard?view=bootstrap"));
   assert.ok(!paths.includes("/api/dancer/profile"));
   activation.resolve();
   await settle();
@@ -84,7 +89,7 @@ test("an expiring session refreshes before any dancer panels start", async t => 
   assert.ok(paths.includes("/api/dancer/profile"));
 });
 
-for (const failedPath of ["/api/account", "/api/dancer/dashboard?period=auto", "/api/dancer/profile"]) {
+for (const failedPath of ["/api/account", "/api/dancer/dashboard?view=bootstrap", "/api/dancer/profile"]) {
   test(`a failed ${failedPath} never presents an incomplete or approved dashboard`, async t => {
     setup(t);
     const controller = new AbortController(), updates = [];
@@ -113,7 +118,7 @@ test("closing during loading discards late responses", async t => {
 test("background failures cannot block a valid dashboard", async t => {
   setup(t);
   const updates = [];
-  globalThis.fetch = async path => ["/api/account", "/api/dancer/dashboard?period=auto", "/api/dancer/profile"].includes(path)
+  globalThis.fetch = async path => ["/api/account", "/api/dancer/dashboard?view=bootstrap", "/api/dancer/profile"].includes(path)
     ? response({ profile: { stage_name: "Stacy" } })
     : new Response(JSON.stringify({ ok: false }), { status: 503 });
   await loadDancerDashboard(new AbortController().signal, panel => updates.push(panel));
@@ -144,7 +149,7 @@ for (const result of ["denied", "stale-success"]) test(`paused controls do not w
   const gate = deferred(), updates = [];
   globalThis.fetch = async path => {
     if (path === "/api/account") return response({ account: pausedAccount });
-    if (path === "/api/dancer/dashboard?period=auto") {
+    if (path === "/api/dancer/dashboard?view=bootstrap") {
       await gate.promise;
       return result === "denied" ? dancerDenied() : response({ finance: { connected: true } });
     }

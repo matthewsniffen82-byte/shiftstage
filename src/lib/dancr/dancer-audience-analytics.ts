@@ -32,7 +32,9 @@ export async function getOwnDancerAudienceAnalytics(
     .select("id, venue_id, checked_in_at, location_verification_expires_at, timezone, venues(name)")
     .eq("dancer_id", dancerId).eq("location_status", "club_confirmed")
     .is("checked_out_at", null).neq("status", "cancelled")
-    .lte("checked_in_at", now.toISOString()).gt("location_verification_expires_at", now.toISOString())
+    // Reports use [start, end); an exact-instant check-in has no elapsed range
+    // yet. Use the normal history until the next read can include that shift.
+    .lt("checked_in_at", now.toISOString()).gt("location_verification_expires_at", now.toISOString())
     .order("checked_in_at", { ascending: false }).limit(1).maybeSingle();
   if (active.error) throw active.error;
   const venue = Array.isArray(active.data?.venues) ? active.data.venues[0] : active.data?.venues;

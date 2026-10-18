@@ -140,6 +140,25 @@ test('older cached audience-only payloads refresh instead of inventing missing r
   assert.equal(ui.calls.length,1);assert.match(ui.html(),/Loading results/);assert.doesNotMatch(ui.html(),/Table requests/);ui.close();
 });
 
+for (const compact of [false, true]) test(`independent ${compact ? 'overview' : 'Results'} reports handle initial failure and retry without sign-in or fake counts`, async () => {
+  const ui = fixture(null, { compact });
+  try {
+    assert.equal(ui.calls.length, 1);
+    assert.equal(ui.calls[0].url, '/api/dancer/analytics?period=auto');
+    assert.match(ui.html(), compact ? /Loading activity/ : /Loading results/);
+    ui.calls[0].reject(new Error('Invalid dancer analytics window'));
+    await ui.settle();
+    assert.match(ui.html(), /Unable to load results/);
+    assert.doesNotMatch(ui.html(), /Sign in|Table requests|>0</);
+    ui.button(compact ? 'Retry' : 'Try again').props.onClick(); ui.render();
+    assert.equal(ui.calls.length, 2);
+    ui.calls[1].resolve({ analytics: data('7d') });
+    await ui.settle();
+    assert.match(ui.html(), /Table requests/);
+    assert.doesNotMatch(ui.html(), /Unable to load results|Loading activity|Loading results/);
+  } finally { ui.close(); }
+});
+
 test('Tonight loads its own results, updates headings and hides prior-period comparisons',async()=>{
   const ui=fixture();
   const group=ui.nodes().find(node=>node.props?.['aria-label']==='Analytics period');

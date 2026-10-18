@@ -56,6 +56,7 @@ function database(rows, failTable) {
   const calls = [];
   return { calls, async rpc(name, params) {
     calls.push({ table: name, params, fields: "" });
+    assert.ok(Date.parse(params.p_since) < Date.parse(params.p_until), "analytics RPCs require a positive date range");
     if (name === "get_dancer_activity_trend") {
       assert.equal(params.p_dancer_id, "mine");
       if (failTable === name) return { error: new Error("trend unavailable") };
@@ -284,26 +285,36 @@ test("All time starts at profile creation with full timestamp precision and no p
   await assert.rejects(service.getOwnDancerAudienceAnalytics(database(rows, "get_dancer_activity_trend"), "owner", "all", now), /trend unavailable/);
 });
 
-function routes({ denied = false, analyticsUnavailable = false, activationUnavailable = false } = {}) {
-  const calls = [], admin = { admin: true };
+function routes({ denied = false, analyticsUnavailable = false, activationUnavailable = false,
+  reportsPending = false, coreFailure, userId = "authenticated-owner",
+  account = { role: "dancer", accountState: "active" }, accepted = true,
+  ageVerification = { required: false } } = {}) {
+  const calls = [], coreCalls = [], admin = { admin: true };
+  const core = (stage, value) => {
+    coreCalls.push(stage);
+    if (coreFailure === stage) throw new Error(`${stage} unavailable.`);
+    return value;
+  };
   const dependencies = {
     "next/server": { NextResponse: Response },
     "@/src/lib/api": { apiError: error => Response.json({ ok: false, error: error.message }, { status: 401 }) },
-    "@/src/lib/dancr/auth": { getAccountByUserId: async () => ({ role: "dancer", accountState: "active" }) },
-    "@/src/lib/dancr/ondato": { getDancerAgeVerification: async () => ({ required: false }) },
-    "@/src/lib/dancr/dancer-agreement": { getDancerAgreementAccess: async () => ({ accepted: true }) },
+    "@/src/lib/dancr/auth": { getAccountByUserId: async (_client, owner) => { assert.equal(owner, userId); return core("account", account); } },
+    "@/src/lib/dancr/ondato": { getDancerAgeVerification: async (_client, owner) => { assert.equal(owner, userId); return core("age", ageVerification); } },
+    "@/src/lib/dancr/dancer-agreement": { getDancerAgreementAccess: async () => core("agreement", { accepted }) },
     "@/src/lib/dancr/customer-follow-notifications": { broadcastFollowedClubRosterAddition: async () => {} },
-    "@/src/lib/dancr/nfc": { finalizePendingDancerNfcEnrollment: async () => {
+    "@/src/lib/dancr/nfc": { finalizePendingDancerNfcEnrollment: async (_client, options) => {
+      assert.equal(options.dancerUserId, userId);
       if (activationUnavailable) throw new Error("Activation unavailable.");
-      return null;
-    }, getDancerNfcDashboardState: async () => ({ affiliations: [] }) },
+      return core("activation", null);
+    }, getDancerNfcDashboardState: async (_client, owner) => { assert.equal(owner, userId); return core("nfc", { affiliations: [] }); } },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
-    "@/src/lib/dancr/deals": { getDancerDealMetrics: async () => { calls.push("legacy-deals"); return { redeemed: 1 }; } },
-    "@/src/lib/dancr/dancer": { getOwnDancerDashboardAnalytics: async () => { calls.push("legacy-analytics"); return { profileViews30Days: 50 }; } },
+    "@/src/lib/dancr/deals": { getDancerDealMetrics: async () => { calls.push("legacy-deals"); return reportsPending ? new Promise(() => {}) : { redeemed: 1 }; } },
+    "@/src/lib/dancr/dancer": { getOwnDancerDashboardAnalytics: async () => { calls.push("legacy-analytics"); return reportsPending ? new Promise(() => {}) : { profileViews30Days: 50 }; } },
     "@/src/lib/dancr/dancer-audience-analytics": {
       dancerAnalyticsPeriod: service.dancerAnalyticsPeriod,
-      getOwnDancerAudienceAnalytics: async (client, userId, period) => {
-        assert.equal(client, admin); assert.equal(userId, "authenticated-owner"); calls.push(period);
+      getOwnDancerAudienceAnalytics: async (client, owner, period) => {
+        assert.equal(client, admin); assert.equal(owner, userId); calls.push(period);
+        if (reportsPending) return new Promise(() => {});
         if (analyticsUnavailable) throw new Error("Analytics unavailable.");
         return { period };
       },
@@ -312,11 +323,55 @@ function routes({ denied = false, analyticsUnavailable = false, activationUnavai
     "@/src/lib/supabase/request": { createRequestSupabaseContext: async (_request, access) => {
       if (access) assert.equal(access.role, "dancer");
       if (denied) throw new Error("Sign in required.");
-      return { client: {}, user: { id: "authenticated-owner" } };
+      return { client: {}, user: { id: userId } };
     } },
   };
-  return { calls, analytics: compile("../app/api/dancer/analytics/route.ts", dependencies), dashboard: compile("../app/api/dancer/dashboard/route.ts", dependencies) };
+  return { calls, coreCalls, analytics: compile("../app/api/dancer/analytics/route.ts", dependencies), dashboard: compile("../app/api/dancer/dashboard/route.ts", dependencies) };
 }
+
+for (const period of ["", "&period=auto"]) {
+  test(`bootstrap opens without starting stalled reports, including ${period || "legacy defaults"}`, { timeout: 2000 }, async () => {
+    const route = routes({ reportsPending: true, userId: "another-owner" });
+    const response = await route.dashboard.GET(new Request(`https://mydancr.test/api/dancer/dashboard?view=bootstrap${period}&dancerId=someone-else`));
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(data.ok, true);
+    assert.equal(data.analytics, null);
+    assert.ok(!Object.hasOwn(data, "deals"));
+    assert.deepEqual(data.nfc, { affiliations: [], enrollment: null });
+    assert.equal(data.agreement.accepted, true);
+    assert.deepEqual(route.calls, []);
+    assert.deepEqual(route.coreCalls, ["account", "age", "agreement", "activation", "nfc"]);
+    assert.equal(response.headers.get("cache-control"), "private, no-store");
+  });
+}
+
+test("bootstrap cannot bypass authentication, account restrictions or failed access checks", async () => {
+  for (const options of [
+    { denied: true }, { account: null }, { account: { role: "venue", accountState: "active" } },
+    { account: { role: "dancer", accountState: "disabled" } }, { account: { role: "dancer", accountState: "deleted" } },
+    ...["account", "age", "agreement", "activation", "nfc"].map(coreFailure => ({ coreFailure })),
+  ]) {
+    const route = routes(options);
+    const response = await route.dashboard.GET(new Request("https://mydancr.test/api/dancer/dashboard?view=bootstrap"));
+    assert.equal(response.ok, false);
+    assert.equal((await response.json()).ok, false);
+    assert.deepEqual(route.calls, []);
+  }
+});
+
+test("bootstrap retains onboarding gates instead of activating unverified or unsigned profiles", async () => {
+  for (const options of [{ accepted: false }, { ageVerification: { required: true, status: "pending" } }]) {
+    const route = routes(options);
+    const response = await route.dashboard.GET(new Request("https://mydancr.test/api/dancer/dashboard?view=bootstrap"));
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(data.agreement.accepted, options.accepted ?? true);
+    assert.equal(data.nfc.enrollment, null);
+    assert.ok(!route.coreCalls.includes("activation"));
+    assert.deepEqual(route.calls, []);
+  }
+});
 
 test("a report failure leaves the verified dancer dashboard available without inventing results", async () => {
   const route = routes({ analyticsUnavailable: true });
@@ -384,6 +439,37 @@ function liveShift(overrides={}) {
     checked_in_at:'2026-09-23T10:00:00.000Z',checked_out_at:null,status:'scheduled',location_status:'club_confirmed',
     location_verification_expires_at:'2026-09-23T16:00:00.000Z',...overrides};
 }
+
+test("a check-in at the read instant never submits an empty analytics window", async () => {
+  const rows = fixture(); rows.shifts = [liveShift({ checked_in_at: now.toISOString() })];
+  for (const period of ["auto", "shift"]) {
+    const immediate = await service.getOwnDancerAudienceAnalytics(database(rows), "owner", period, now);
+    assert.equal(immediate.period, "7d");
+    assert.equal(immediate.activeShift, null);
+    const elapsed = await service.getOwnDancerAudienceAnalytics(database(rows), "owner", period, new Date(now.getTime() + 1));
+    assert.equal(elapsed.period, "shift");
+    assert.equal(elapsed.periodStart, now.toISOString());
+  }
+});
+
+test("long-running shifts preserve the exact check-in timestamp for both report RPCs", async () => {
+  const rows = fixture(), startedAt = "2026-07-23T02:00:00.123456Z";
+  rows.shifts = [liveShift({ checked_in_at: startedAt })];
+  const db = database(rows);
+  const result = await service.getOwnDancerAudienceAnalytics(db, "owner", "auto", now);
+  assert.equal(result.period, "shift");
+  assert.equal(result.periodStart, startedAt);
+  for (const call of db.calls.filter(call => call.params)) assert.equal(call.params.p_since, startedAt);
+});
+
+test("new profiles and clock skew still produce a positive All time window", async () => {
+  for (const createdAt of [now.toISOString(), new Date(now.getTime() + 1000).toISOString()]) {
+    const rows = fixture(); rows.dancer_profiles[0].created_at = createdAt;
+    const result = await service.getOwnDancerAudienceAnalytics(database(rows), "owner", "all", now);
+    assert.ok(Date.parse(result.periodStart) < Date.parse(result.periodEnd));
+    assert.equal(result.performance.previous, null);
+  }
+});
 
 test('automatic analytics uses actual check-in time across midnight and scopes requests to that club',async()=>{
   const rows=fixture();const startedAt='2026-09-23T02:00:00.000Z';

@@ -24,7 +24,9 @@ export async function loadDancerDashboard(
   const loadProfile = async () => {
     // Finalize any saved first tap before reading the profile. Otherwise an
     // activated dancer could briefly be sent back through onboarding.
-    const secondary = await requestDashboardJson("/api/dancer/dashboard?period=auto", {
+    // Only activation and access state belong in this request. Reporting has
+    // its own loading/error/retry state inside the analytics panels.
+    const secondary = await requestDashboardJson("/api/dancer/dashboard?view=bootstrap", {
       cache: "no-store", signal, timeoutMs: 15000,
     });
     if (signal.aborted) return null;
