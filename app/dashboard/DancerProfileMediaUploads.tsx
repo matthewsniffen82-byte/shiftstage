@@ -260,9 +260,10 @@ export default function DancerProfileMediaUploads({
         );
       })}
       {!compact || isApproved ? <p className="profile-upload-visibility" role="status" aria-live="polite">
-        {isApproved
-          ? isPublic ? "Approved uploads appear on your profile." : "Uploads stay saved. Turn off incognito to show approved media on your profile."
-          : "Uploaded photos and videos will appear on your profile after review and completion of your profile setup."}
+        {isApproved ? <>
+          <span aria-hidden={!isPublic}>Approved uploads appear on your profile.</span>
+          <span aria-hidden={isPublic}>Uploads stay saved. Hidden while incognito.</span>
+        </> : "Uploaded photos and videos will appear on your profile after review and completion of your profile setup."}
       </p> : null}
       {activePreview && previewItem ? <DancerMediaViewer key={`${activePreview.kind}:${activePreview.id}`} kind={activePreview.kind} label={activePreview.label} imageUrl={previewItem.imageUrl} videoUrl={previewItem.videoUrl} onClose={() => setActivePreview(null)} /> : null}
       <style>{`
@@ -290,7 +291,10 @@ export default function DancerProfileMediaUploads({
         .profile-upload-items small { color:#d4c3e9; font-size:11px; line-height:1.35; }
         .profile-upload-items small.is-ready { color:#8ce4b2; }
         .profile-upload-group > p { margin:0; color:#c9c3d2; font-size:12px; line-height:1.5; }
-        .dancer-profile-media-uploads .profile-upload-visibility { box-sizing:border-box; width:100%; margin:4px 0 16px; padding:14px 12px 0; border-top:1px solid #d5baff20; color:#c9c3d2; font-size:12px; line-height:1.5; text-align:center; text-wrap:pretty; }
+        .dancer-profile-media-uploads .profile-upload-visibility { box-sizing:border-box; display:grid; width:100%; margin:4px 0 16px; padding:14px 12px 0; border-top:1px solid #d5baff20; color:#c9c3d2; font-size:12px; line-height:1.5; text-align:center; text-wrap:pretty; }
+        /* Measure both messages in the same cell so toggling cannot resize the gallery. */
+        .profile-upload-visibility > span { grid-area:1 / 1; }
+        .profile-upload-visibility > span[aria-hidden="true"] { visibility:hidden; }
         .dancer-profile-media-uploads .profile-upload-retry { min-height:44px; padding:6px 0; border:0; background:transparent; color:#fff; font:inherit; text-decoration:underline; cursor:pointer; }
         .dancer-profile-media-uploads button:focus-visible { outline:2px solid #fff; outline-offset:3px; }
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-entry { min-height:78px !important; padding:14px 16px !important; border-radius:16px !important; background:linear-gradient(120deg,#221333,#100d18) !important; box-shadow:none !important; }

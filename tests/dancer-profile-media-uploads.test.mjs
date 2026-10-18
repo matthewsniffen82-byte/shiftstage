@@ -165,10 +165,12 @@ test("every photo and video has three-dot options with an approval-aware pin act
 });
 
 test("saved media visibility copy respects profile approval and incognito", () => {
-  assert.match(render({ isApproved: true, isPublic: true }), /Approved uploads appear on your profile/);
+  const visible = render({ isApproved: true, isPublic: true });
+  assert.match(visible, /<span aria-hidden="false">Approved uploads appear on your profile\.<\/span>/);
+  assert.match(visible, /<span aria-hidden="true">Uploads stay saved\. Hidden while incognito\.<\/span>/);
   const hidden = render({ isApproved: true, isPublic: false });
-  assert.match(hidden, /Uploads stay saved. Turn off incognito/);
-  assert.doesNotMatch(hidden, /Approved uploads appear on your profile/);
+  assert.match(hidden, /<span aria-hidden="false">Uploads stay saved\. Hidden while incognito\.<\/span>/);
+  assert.match(hidden, /<span aria-hidden="true">Approved uploads appear on your profile\.<\/span>/);
 });
 
 test("all saved gallery photos use ordinary photo labels including legacy primary photos", () => {

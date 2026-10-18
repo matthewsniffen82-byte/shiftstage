@@ -67,13 +67,16 @@ body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing :is(.visib
   line-height: 1.4;
 }
 body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .visibility-controls {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 124px minmax(0, 1fr);
   align-items: center;
   justify-content: space-between;
   gap: 6px 8px;
 }
 body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .visibility-state {
+  box-sizing: border-box;
+  width: 100%;
+  justify-content: center;
   min-height: 28px;
   padding: 3px 8px;
   gap: 6px;
@@ -105,6 +108,14 @@ body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing :is(.visib
   font-size: 12px !important;
   font-weight: 600 !important;
   line-height: 1.25;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .visibility-toggle {
+  width: 100%;
+  min-height: 44px !important;
+  flex-wrap: nowrap;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .visibility-status {
+  min-block-size: 1.4em;
 }
 body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .share-actions {
   gap: 6px !important;

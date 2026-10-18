@@ -321,7 +321,7 @@ function DancerVisibilityPanel({
     const nextPublic = !isPublic;
     setIsSaving(true);
     setHasSaved(false);
-    setStatus(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from the site...");
+    setStatus("Saving visibility…");
     try {
       const data = await requestDancerProfileVisibilityJson({
         method: "PATCH",
@@ -342,8 +342,8 @@ function DancerVisibilityPanel({
       setHasSaved(true);
       setStatus(
         savedPublic
-          ? "Incognito is off. Your content is visible again."
-          : "Incognito is on. Your content is hidden from the site and stays saved.",
+          ? "Saved. Profile is public."
+          : "Saved. Profile is hidden.",
       );
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted && requestId === visibilitySequenceRef.current) {
@@ -366,12 +366,12 @@ function DancerVisibilityPanel({
           <span aria-hidden="true">·</span>
           <b>{isPublic ? "Visible" : "Hidden"}</b>
         </div>
-        <button className="visibility-toggle" data-action-state={isSaving ? "saving" : hasSaved ? "success" : "idle"} type="button" onClick={toggleVisibility} disabled={isSaving}>
-          {isSaving ? "Saving…" : <><span>{isPublic ? "Go incognito" : "Make profile public"}</span>{hasSaved ? <small className="dashboard-button-confirmation">✓ Saved</small> : null}</>}
+        <button className="visibility-toggle" data-action-state={isSaving ? "saving" : hasSaved ? "success" : "idle"} type="button" onClick={toggleVisibility} disabled={isSaving} aria-busy={isSaving}>
+          <span>{isSaving ? "Saving…" : isPublic ? "Go incognito" : "Make profile public"}</span>
         </button>
       </div>
       <p>Incognito hides your profile and content. Everything stays saved.</p>
-      {status ? <p className="visibility-status" role="status" aria-live="polite">{status}</p> : null}
+      <p className="visibility-status" role="status" aria-live="polite">{status}</p>
     </article>
   );
 }
