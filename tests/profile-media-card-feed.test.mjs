@@ -190,7 +190,7 @@ test("normal cards fill their frames while expanded cards follow the complete me
   assert.match(css, /\.is-media-fullscreen :is\(\.profile-photo-viewer-slide, \.profile-tv-viewer-slide, \.profile-media-viewer-slide\) \{[^}]*height: auto !important;[^}]*min-height: 0 !important;[^}]*max-height: none !important/);
   assert.match(css, /\.is-media-fullscreen[^}]*height: auto !important;[^}]*aspect-ratio: var\(--profile-media-card-ratio, 9 \/ 16\);[^}]*object-fit: contain !important/);
   assert.match(css, /\.is-media-fullscreen \.profile-photo-viewer-slide-image \{ background-size: contain !important/);
-  assert.match(css, /\.is-media-fullscreen :is\(\.profile-photo-viewer-image, \.profile-tv-viewer-stage, \.profile-media-viewer-stage\) \{[^}]*padding: 0 0 calc\(104px \+ env\(safe-area-inset-bottom, 0px\)\) !important/);
+  assert.match(css, /\.is-media-fullscreen :is\(\.profile-photo-viewer-image, \.profile-tv-viewer-stage, \.profile-media-viewer-stage\) \{[^}]*padding: 0 0 env\(safe-area-inset-bottom, 0px\) !important/);
   assert.match(css, /\[data-media-controls="below"\][^{]*viewer-footer\) \{[^}]*position: relative !important/);
   assert.match(css, /\[data-media-controls="below"\][^{]*viewer-actions\) \{[^}]*display: flex !important/);
   assert.match(css, /background: #000 !important/);
