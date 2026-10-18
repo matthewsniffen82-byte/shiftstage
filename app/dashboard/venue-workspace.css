@@ -8,11 +8,11 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-tonight-overview .venue-section-heading { flex-wrap:wrap; gap:6px; }
 .venue-tonight-overview .venue-section-heading>span { color:#b8adc7; font-size:12px; }
 .venue-queue-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
-.venue-queue-grid>a { display:grid; align-content:start; gap:5px; padding:12px; border:1px solid #44374f; border-radius:12px; background:linear-gradient(#17111f,#100d17); text-decoration:none; color:#f7f4fc; }
+.venue-queue-grid>a { display:grid; align-content:start; gap:5px; padding:12px; border:1px solid #44374f; border-radius:12px; background:linear-gradient(#100c17,#100c17); text-decoration:none; color:#f7f4fc; }
 .venue-queue-grid>a>span { font-size:13px; font-weight:600; }
 .venue-queue-grid strong { font-size:25px; line-height:1.2; font-variant-numeric:tabular-nums; }
 .venue-queue-grid small { font-size:11px; color:#bfb2ce; line-height:1.4; }
-.venue-attention { display:grid; gap:6px; padding:12px; border:1px solid #58406f; border-radius:12px; background:#130c1d; }
+.venue-attention { display:grid; gap:6px; padding:12px; border:1px solid #58406f; border-radius:12px; background:#100c17; }
 .venue-attention h3 { margin:0 0 4px; font-size:15px; }
 .venue-attention>a { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:44px; padding:5px 0; color:#f1e7ff; text-decoration:none; border-bottom:1px solid #ffffff12; }
 .venue-attention strong { flex-shrink:0; color:#d5b5fa; font-size:12px; }
@@ -26,9 +26,9 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-ride-actions>label { flex:1 1 140px; }
 .venue-ride-filter { max-width:340px; margin:12px 0; }
 .venue-contact-badges { display:flex; flex-wrap:wrap; gap:5px; margin:7px 0; }
-.venue-contact-badges>span { padding:4px 7px; border:1px solid #59426b; background:#201429; border-radius:7px; color:#e0c8f3; font-size:11px; }
+.venue-contact-badges>span { padding:4px 7px; border:1px solid #59426b; background:#22152f; border-radius:7px; color:#e0c8f3; font-size:11px; }
 .venue-guest-record>details>summary { min-height:44px; display:flex; align-items:center; cursor:pointer; font-size:12px; color:#d7bbed; }
-.venue-vip-management,.venue-setup-checklist { margin:14px 0; padding:12px; border:1px solid #44364f; border-radius:12px; background:#100d16; }
+.venue-vip-management,.venue-setup-checklist { margin:14px 0; padding:12px; border:1px solid #44364f; border-radius:12px; background:#100c17; }
 .venue-vip-management>summary,.venue-setup-checklist>summary { display:flex; justify-content:space-between; align-items:center; min-height:44px; gap:12px; cursor:pointer; color:#efe6fa; font-size:15px; font-weight:600; }
 .venue-vip-management>summary::after,.venue-setup-checklist>summary::after { content:"+"; margin-left:auto; }
 .venue-vip-management[open]>summary::after,.venue-setup-checklist[open]>summary::after { content:"−"; }
@@ -46,7 +46,7 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-roster-menu>summary { display:grid; place-items:center; width:44px; height:44px; list-style:none; cursor:pointer; color:#d2bfdc; }
 .venue-roster-menu>summary::-webkit-details-marker { display:none; }
 .venue-roster-menu[open] { z-index:12; }
-.venue-roster-menu>div { position:absolute; right:0; top:100%; width:150px; padding:4px; border:1px solid #56405d; border-radius:10px; background:#100b16; box-shadow:0 6px 20px #0009; }
+.venue-roster-menu>div { position:absolute; right:0; top:100%; width:150px; padding:4px; border:1px solid #56405d; border-radius:10px; background:#100c17; box-shadow:0 6px 20px #0009; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-result-outcomes { margin:12px 0; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-command-primary.venue-workspace-summary { display:none; }
 @media(max-width:520px) {

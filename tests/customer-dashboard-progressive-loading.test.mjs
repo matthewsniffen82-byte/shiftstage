@@ -23,6 +23,8 @@ function renderCustomerDashboard(initialState = {}, deviceSavedDeals = []) {
       return React.useState(index === 0 ? initialState : index === 3 ? deviceSavedDeals : value);
     } };
     if (name.endsWith('/customer-device-deals')) return deviceDeals;
+    if (name.endsWith('/customer-night')) return require('../src/lib/dancr/customer-night.ts');
+    if (name === './customer-dashboard-view') return require('../app/dashboard/customer-dashboard-view.ts');
     if (name === 'react/jsx-runtime') return require(name);
     if (name === 'next/link') return { default: ({ children, href }) => React.createElement('a', { href }, children) };
     if (name === 'next/dynamic') return { default: () => () => null };
@@ -51,6 +53,12 @@ test('an expired session still offers sign-in and hides protected dashboard sect
   assert.doesNotMatch(html, /Followed Dancers|Saved Club Deals/);
 });
 
+test('cached Agent access cannot expose the removed dashboard shortcut', () => {
+  const html = renderCustomerDashboard({ account: { role: 'customer' }, agentAccess: { active: true } });
+  assert.doesNotMatch(html, /dashboard\/agent|agent-dashboard-shortcut|Open agent dashboard/);
+  assert.match(html, /My Night/);
+});
+
 test('a followed profile becoming unavailable retains its saved follow and removal control', () => {
   const html = renderCustomerDashboard({ saved: { follows: [{ dancerId: 'temporarily-unavailable', dancer: null }] } });
   assert.match(html, /Unavailable dancer/);
@@ -76,7 +84,8 @@ for (const [label, state] of [
     assert.match(html, /Skip the line/);
     assert.equal((html.match(/Saved on this device/g) || []).length, 2);
     assert.match(html, /saved-deal-head[\s\S]*?<strong>2<\/strong>/);
-    assert.match(html, /href="\/\?city=Las%20Vegas&amp;venue=silver-circuit"/);
+    assert.match(html, /href="\/deals\/transportation\/one"/);
+    assert.match(html, /href="\/deals\/transportation\/two"/);
     assert.doesNotMatch(html, /No saved Club Deals yet|No longer available/);
     if (!state.saved && !state.savedError) assert.match(html, /Loading followed dancers/);
     if (state.savedError) assert.match(html, /Account saves could not be loaded/);
@@ -95,13 +104,14 @@ function setup(t) {
 }
 const response = (data) => new Response(JSON.stringify({ ok: true, ...data }));
 
-test('account and saved activity publish while support and referral access are still pending', async (t) => {
+test('account and saved activity publish while support is still pending', async (t) => {
   setup(t);
   const controller = new AbortController();
   const updates = [];
   let savedReady;
   const ready = new Promise(resolve => { savedReady = resolve; });
   globalThis.fetch = async (path, { signal }) => {
+    assert.ok(!String(path).startsWith('/api/agent/'), 'removed Agent dashboard must not load referral access');
     if (path === '/api/account') return response({ account: { role: 'customer' } });
     if (path === '/api/customer/saved') return response({ saved: { follows: [{ dancerId: 'test-dancer' }] } });
     return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason), { once: true }));

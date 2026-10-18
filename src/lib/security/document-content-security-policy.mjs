@@ -25,7 +25,7 @@ export const contentSecurityPolicy = [
 const privateDocumentPaths = new Set([
   "/admin", "/admin/operations",
   "/dashboard/dancer", "/dashboard/dancer/tv",
-  "/dashboard/venue", "/dashboard/agent",
+  "/dashboard/venue",
   "/dashboard/customer", "/dashboard/customer/saved", "/dashboard/customer/offers",
   "/dashboard/vip", "/vip",
   "/internal", "/internal/follow-return",

@@ -39,7 +39,7 @@ import { DASHBOARD_SESSION_KEY as SESSION_KEY, DashboardDataRequestError, dashbo
 import type { DashboardRole, CustomerDashboardSection, LoadState, CustomerSavedState } from "./dashboard-types";
 import { dashboardName, SupportInboxPanel, DashboardLoadingState, InfoPanel, DashboardSection, NotificationPanel, AccountControlsPanel, AccountSummaryPanel } from "./DashboardShared";
 import { DashboardStyles } from "./DashboardStyles";
-import { AgentDashboardShortcut, CustomerWelcomeCard, CustomerPanel, CustomerPreferencesPanel } from "./CustomerDashboardPanels";
+import { CustomerWelcomeCard, CustomerPanel, CustomerPreferencesPanel } from "./CustomerDashboardPanels";
 import dynamic from "next/dynamic";
 const VenuePanel = dynamic(() => import("./VenueDashboardPanels").then(module => module.VenuePanel));
 
@@ -253,14 +253,11 @@ export default function DashboardClient({
               publication: summary.publication || null,
             }));
             // Opening the controls starts the existing live refresh. Support
-            // and agent access can finish independently of this summary.
+            // can finish independently of this summary.
             setIsLoading(false);
           }),
           requestOptionalPanel("/api/support", { threads: [] }).then((support) => {
             if (!cancelled) setState((current) => ({ ...current, supportThreads: support.threads || [] }));
-          }),
-          requestOptionalPanel("/api/agent/commissions?access=1", { access: { active: false } }).then((agentAccess) => {
-            if (!cancelled) setState((current) => ({ ...current, agentAccess: agentAccess.access || null }));
           }),
         ]);
       } catch (error) {
@@ -555,7 +552,6 @@ export default function DashboardClient({
         <DashboardLoadingState role={role} />
       ) : !state.error && (role === "customer" || !isLoading) ? (
         <section className={`dashboard-grid ${role}-dashboard-grid`}>
-          {!dancerAccountPaused && !venueAccountPaused && state.agentAccess?.active ? <AgentDashboardShortcut /> : null}
           {role === "customer" ? (
             <>
               {state.savedError ? (

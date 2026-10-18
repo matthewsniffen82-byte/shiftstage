@@ -6,7 +6,7 @@ import {
   storedSessionIsFresh,
 } from "./dashboard-session.ts";
 
-type DancerPanel = "ready" | "supportThreads" | "reviews" | "agentAccess";
+type DancerPanel = "ready" | "supportThreads" | "reviews";
 
 export async function loadDancerDashboard(
   signal: AbortSignal,
@@ -59,7 +59,7 @@ export async function loadDancerDashboard(
       if (account?.role === "dancer" && account.accountState === "disabled") {
         update("ready", {
           account, profile: null, analytics: null, deals: null, finance: null,
-          affiliations: [], nfc: null, agentAccess: null,
+          affiliations: [], nfc: null,
         });
         return;
       }
@@ -71,6 +71,5 @@ export async function loadDancerDashboard(
     // activation state. They must not delay opening its controls.
     optional("/api/support", "supportThreads", "threads"),
     optional("/api/dancer/reviews", "reviews", "reviews"),
-    optional("/api/agent/commissions?access=1", "agentAccess", "access"),
   ]);
 }

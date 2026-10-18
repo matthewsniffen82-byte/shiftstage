@@ -49,7 +49,6 @@ const [dashboard, dashboardSession, venueTvPanel, venueTeamPanel, venueNfcPanel,
   readFile(new URL("../app/dashboard/venue/page.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
 ]);
-const agentDashboard = await readFile(new URL("../app/dashboard/agent/AgentDashboardClient.tsx", import.meta.url), "utf8");
 const dancerPhotoRoute = await readFile(new URL("../app/api/dancer/photos/route.ts", import.meta.url), "utf8");
 
 test("customer, dancer, and venue use the same routed dashboard client", () => {
@@ -1846,13 +1845,6 @@ test("sales agent commission actions use the shared refresh-aware session bounda
 
   assert.match(dashboardSession, /function requestAgentCommissionsJson/);
   assert.match(dashboardSession, /function requestAgentCommissionStatement/);
-  assert.match(agentDashboard, /requestAgentCommissionsJson/);
-  assert.match(agentDashboard, /requestAgentCommissionStatement/);
-  assert.match(agentDashboard, /const dashboardRequestSequenceRef = useRef\(0\);/);
-  assert.equal((agentDashboard.match(/signal: controller\.signal/g) || []).length, 2);
-  assert.match(agentDashboard, /requestId !== dashboardRequestSequenceRef\.current/);
-  assert.match(agentDashboard, /mountedRef\.current = false;[\s\S]*?dashboardRequestSequenceRef\.current \+= 1;[\s\S]*?dashboardRequestAbortRef\.current\?\.abort\(\);/);
-  assert.doesNotMatch(agentDashboard, /fetch\(|readBrowserAccessToken|authorization: `Bearer/);
 });
 
 test("dancer dashboard subpanels use the shared role-aware session boundary", () => {

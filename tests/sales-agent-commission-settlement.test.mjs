@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [migration, referralMigration, salesAgentService, venueSignupService, agentSync, financeAutomation, adminRoute, agentRoute, adminPanel, adminDashboard, agentDashboard, liveApp, clubJoinPage] = await Promise.all([
+const [migration, referralMigration, salesAgentService, venueSignupService, agentSync, financeAutomation, adminRoute, agentRoute, adminPanel, adminDashboard, liveApp, clubJoinPage] = await Promise.all([
   readFile(new URL("../supabase/migrations/202608220003_agent_commission_nats_settlement.sql", import.meta.url), "utf8"),
   readFile(new URL("../supabase/migrations/202608220004_agent_referral_onboarding.sql", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/sales-agents.ts", import.meta.url), "utf8"),
@@ -13,7 +13,6 @@ const [migration, referralMigration, salesAgentService, venueSignupService, agen
   readFile(new URL("../app/api/agent/commissions/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminSalesAgentPanel.tsx", import.meta.url), "utf8"),
   readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8"),
-  readFile(new URL("../app/dashboard/agent/AgentDashboardClient.tsx", import.meta.url), "utf8"),
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/clubs/join/page.tsx", import.meta.url), "utf8"),
 ]);
@@ -46,8 +45,6 @@ test("agent commissions cannot become payable until the related club receivable 
   assert.match(migration, /set status = 'payable', venue_payment_received_at = v_now, payable_at = v_now/);
   assert.match(migration, /create or replace function public\.apply_club_invoice_payment/);
   assert.match(migration, /commission\.status = 'pending_venue_payment'/);
-  assert.match(agentDashboard, /Waiting on club payment/);
-  assert.match(agentDashboard, /clubs never receive payouts/);
 });
 
 test("NATS agent exports are durable, service-only, and included in finance automation", () => {
@@ -67,7 +64,6 @@ test("admin and agent surfaces require authenticated server boundaries and expos
   assert.match(adminPanel, /requestAdminJson/);
   assert.doesNotMatch(adminPanel, /fetch\("\/api\/admin\/sales-agents|readAdminAccessToken/);
   assert.doesNotMatch(adminPanel, /type="file"|NATS_API_KEY|api-username|api-key/);
-  assert.match(agentDashboard, /MyDancr stores only your verified account connection and commission history/);
   assert.match(salesAgentService, /function getPublicNatsRuntimeConfig/);
   const publicConfig = salesAgentService.match(/function getPublicNatsRuntimeConfig\(\)[\s\S]*?\n}/)?.[0] || "";
   assert.doesNotMatch(publicConfig, /apiKey|apiUsername|baseUrl/);
@@ -93,9 +89,6 @@ test("each approved agent receives an unguessable club referral link", () => {
   assert.match(referralMigration, /sales_agents_referral_code_check/);
   assert.match(referralMigration, /sales_agents_referral_code_idx/);
   assert.match(salesAgentService, /referralUrl: `\$\{publicAppUrl\(\)\}\/clubs\/join\?agent=\$\{encodeURIComponent\(agent\.referral_code\)\}`/);
-  assert.match(agentDashboard, /Share club link/);
-  assert.match(agentDashboard, /Copy link/);
-  assert.match(agentDashboard, /navigator\.share/);
   assert.match(clubJoinPage, /venueRequest=1&agent=/);
 });
 
@@ -123,16 +116,9 @@ test("the real club request carries the agent token without exposing commission 
   assert.doesNotMatch(liveApp, /agentCommissionCents: pendingVenueAgentReferralCode/);
 });
 
-test("agent dashboard reports the referral pipeline, immutable agreements, and real commission states", () => {
+test("agent services retain referral and commission records after dashboard removal", () => {
   assert.match(salesAgentService, /from\("venue_signup_requests"\)/);
   assert.match(salesAgentService, /pendingReferralCount/);
   assert.match(salesAgentService, /liveReferredVenueCount/);
-  assert.match(agentDashboard, /Clubs you introduced/);
-  assert.match(agentDashboard, /Confirmed club attribution/);
-  assert.match(agentDashboard, /Commission ledger/);
-  assert.match(agentDashboard, /Download statement/);
   assert.match(agentRoute, /session: authContext\.session \|\| null/);
-  assert.match(agentDashboard, /requestAgentCommissionsJson/);
-  assert.match(agentDashboard, /requestAgentCommissionStatement/);
-  assert.doesNotMatch(agentDashboard, /fetch\("\/api\/agent\/commissions/);
 });

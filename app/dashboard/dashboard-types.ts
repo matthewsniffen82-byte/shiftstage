@@ -144,7 +144,6 @@ export type LoadState = {
   nfc?: Record<string, unknown> | null;
   venueAccess?: { role?: string; permissions?: string[] } | null;
   referralFee?: Record<string, unknown> | null;
-  agentAccess?: { active?: boolean } | null;
   publication?: Record<string, unknown> | null;
   refreshedAt?: string | null;
   error?: string;

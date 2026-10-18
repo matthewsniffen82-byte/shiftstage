@@ -5,12 +5,12 @@
 .admin-guest-operations :is(select,input) { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 12px; color: #fff; background: #1b1624; border: 1px solid #655572; border-radius: 9px; font: inherit; }
 .admin-guest-venue { max-width: 520px; }
 .admin-guest-operations > nav { display: flex; flex-wrap: wrap; gap: 7px; margin: 18px 0; }
-body.dancr-button-system .admin-guest-operations > nav button[aria-pressed="true"] { border-color: #b49cdd !important; background: #38244f !important; color: #fff !important; }
+body.dancr-button-system .admin-guest-operations > nav button[aria-pressed="true"] { border-color: #b49cdd !important; background: #22152f !important; color: #fff !important; }
 .admin-guest-operations button { min-height: 44px; }
 .admin-guest-help { color: #c5bacf; line-height: 1.55; }
 .admin-guest-error { color: #ffa5b5; }
 .admin-guest-records { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 16px; }
-.admin-guest-records > article { padding: 18px; border: 1px solid #3c3448; border-radius: 14px; background: #191320; overflow-wrap: anywhere; min-width: 0; }
+.admin-guest-records > article { padding: 18px; border: 1px solid #3c3448; border-radius: 14px; background: #100c17; overflow-wrap: anywhere; min-width: 0; }
 .admin-guest-record-heading > span { border: 1px solid #5a4c6e; padding: 4px 9px; border-radius: 20px; font-size: 12px; color: #ddd1ee; }
 .admin-guest-records dl { display: grid; gap: 10px; margin: 14px 0; }
 .admin-guest-records dl > div { display: grid; grid-template-columns: minmax(85px,.65fr) minmax(0,1.35fr); gap: 10px; }

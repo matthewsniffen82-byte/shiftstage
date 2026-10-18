@@ -304,7 +304,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin:14px 0;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts > div {
-  display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid #3c3049; border-radius:12px; background:#15101c;
+  display:flex; flex-direction:column; gap:8px; padding:12px; border:1px solid #3c3049; border-radius:12px; background:#100c17;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts dt { color:#c8bfd1; font-size:12px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts dd { margin:0; font-size:24px; font-weight:700; color:#fff; }
@@ -345,7 +345,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-club-preview-card span { font-size:12px; color:#d5c8de; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-preview-card-example summary { min-height:44px; cursor:pointer; color:#decbef; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer {
-  position:sticky; bottom:calc(10px + env(safe-area-inset-bottom, 0px)); z-index:3; padding:12px; border:1px solid #614879; border-radius:12px; background:#17111f; box-shadow:0 5px 24px #0008;
+  position:sticky; bottom:calc(10px + env(safe-area-inset-bottom, 0px)); z-index:3; padding:12px; border:1px solid #614879; border-radius:12px; background:#100c17; box-shadow:0 5px 24px #0008;
 }
 /* Setup starts with the fields; keep guidance and status close to their controls. */
 /* Match the public directory: three columns, shared gaps and page gutters.
@@ -445,7 +445,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   margin-top:0;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-footer {
-  position:static; padding:0; gap:6px; border:0; border-radius:10px; background:#17111f; box-shadow:none;
+  position:static; padding:0; gap:6px; border:0; border-radius:10px; background:#100c17; box-shadow:none;
 }
 /* Each uploader has its own section, with its saved media directly underneath. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-section-uploader {

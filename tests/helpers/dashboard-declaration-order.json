@@ -113,10 +113,6 @@
   },
   {
     "file": "CustomerDashboardPanels.tsx",
-    "name": "AgentDashboardShortcut"
-  },
-  {
-    "file": "CustomerDashboardPanels.tsx",
     "name": "CustomerWelcomeCard"
   },
   {
@@ -170,6 +166,10 @@
   {
     "file": "CustomerDashboardPanels.tsx",
     "name": "SavedVenueLogo"
+  },
+  {
+    "file": "CustomerDashboardPanels.tsx",
+    "name": "VenueCardIcon"
   },
   {
     "file": "CustomerDashboardPanels.tsx",

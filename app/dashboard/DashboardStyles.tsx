@@ -49,12 +49,6 @@ export function DashboardStyles() {
       h2 { margin: 0; font-size: 22px; }
       p { margin: 0; color: #cfc5de; font-size: 18px; line-height: 1.6; max-width: 58ch; }
       .dashboard-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mydancr-dashboard-gap); }
-      .agent-dashboard-shortcut { grid-column: 1 / -1; min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 18px; border: 1px solid rgba(126,234,255,.24); border-radius: var(--mydancr-dashboard-radius); color: #fff; background: linear-gradient(115deg, rgba(18,105,125,.18), rgba(48,22,91,.18)); text-decoration: none; }
-      .agent-dashboard-shortcut span { display: grid; gap: 4px; }
-      .agent-dashboard-shortcut small { color: #7eeaff; font-size: 11px; font-weight: 900; letter-spacing: .13em; text-transform: uppercase; }
-      .agent-dashboard-shortcut strong { font-size: 18px; }
-      .agent-dashboard-shortcut b { color: #d9d2e9; font-size: 13px; white-space: nowrap; }
-      .agent-dashboard-shortcut:focus-visible { outline: 2px solid #7eeaff; outline-offset: 3px; }
       .customer-welcome-card { position: relative; grid-column: 1 / -1; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; align-items: start; gap: 14px; padding: 18px; border: 1px solid rgba(167,139,250,.3); border-radius: 16px; background: linear-gradient(135deg, rgba(76,29,149,.2), rgba(255,255,255,.035)); box-shadow: inset 3px 0 0 rgba(139,92,246,.72); }
       .customer-welcome-lock { width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.13); border-radius: 50%; color: #ddd6fe; background: rgba(255,255,255,.055); }
       .customer-welcome-lock svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }

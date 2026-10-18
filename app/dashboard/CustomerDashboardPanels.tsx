@@ -87,14 +87,6 @@ function groupFollowedVenuesByCity(items: CustomerVenueFollow[]) {
 }
 
 
-export function AgentDashboardShortcut() {
-  return <Link className="agent-dashboard-shortcut" href="/dashboard/agent">
-    <span><small>Venue partnerships</small><strong>Club referrals & commissions</strong></span>
-    <b>Open agent dashboard →</b>
-  </Link>;
-}
-
-
 export function CustomerWelcomeCard({ accountKey, show }: { accountKey: string; show: boolean }) {
   const [visible, setVisible] = useState(show);
   const storageKey = `mydancr:customer-welcome-dismissed:${accountKey}`;

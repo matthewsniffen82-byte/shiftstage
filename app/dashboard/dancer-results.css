@@ -23,8 +23,8 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   pointer-events: none;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button[aria-pressed="true"] {
-  --results-period-face: #30223f;
-  --results-period-edge: #9470bc;
+  --results-period-face: #22152f;
+  --results-period-edge: #5a4075;
   color: #fff !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button:focus-visible {
@@ -185,7 +185,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   .dancer-analytics-content > ul > li
 ) {
   box-sizing:border-box; min-width:0; border:1px solid #3c3049; border-radius:10px;
-  background:#15101c; box-shadow:none; overflow-wrap:anywhere;
+  background:#100c17; box-shadow:none; overflow-wrap:anywhere;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-audience > dl {
   display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:12px 0;
@@ -244,7 +244,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   border-radius:10px !important; background:linear-gradient(#1b1922,#1b1922) !important; box-shadow:none !important;
   font-size:12px !important; font-weight:600 !important; line-height:1.35; white-space:nowrap;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button[aria-pressed="true"] { background:linear-gradient(#30223f,#30223f) !important; border-color:#9470bc !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button[aria-pressed="true"] { background:linear-gradient(#22152f,#22152f) !important; border-color:#5a4075 !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button::before,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button::after,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-count::before,
@@ -268,7 +268,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 }
 
 /* The native modal stays above both sticky bars and restores focus on close. */
-dialog.dancer-request-dialog { box-sizing:border-box; width:min(520px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); margin:auto; padding:16px; border:1px solid #645778; border-radius:16px; background:#100d18; color:#f4f3f7; overflow:auto; }
+dialog.dancer-request-dialog { box-sizing:border-box; width:min(520px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); margin:auto; padding:16px; border:1px solid #645778; border-radius:16px; background:#100c17; color:#f4f3f7; overflow:auto; }
 .dancer-request-dialog::backdrop { background:#000c; }
 .dancer-request-dialog > header, .dancer-request-dialog > footer { display:flex; align-items:center; justify-content:space-between; gap:8px; }
 body.dancr-button-system #dancer-dashboard .dancer-request-dialog h2 { margin:0; font-size:18px; }
@@ -280,7 +280,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   border-radius:9px !important; background:linear-gradient(#1b1922,#1b1922) !important; color:#f4f3f7 !important;
   box-shadow:none !important; font-size:12px !important; font-weight:600 !important; line-height:1.4;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button[aria-pressed="true"] { background:linear-gradient(#30223f,#30223f) !important; border-color:#9470bc !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button[aria-pressed="true"] { background:linear-gradient(#22152f,#22152f) !important; border-color:#5a4075 !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button:disabled { opacity:.45; cursor:default; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button::before,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-request-dialog button::after { display:none !important; }

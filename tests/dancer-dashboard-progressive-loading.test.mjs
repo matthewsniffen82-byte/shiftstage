@@ -44,9 +44,10 @@ test("the dashboard requests only access state before opening and leaves reports
   assert.equal(updates[0].data.deals, null);
   assert.ok(paths.includes("/api/dancer/dashboard?view=bootstrap"));
   assert.ok(!paths.some(path => path.includes("period=") || path.includes("/analytics")));
+  assert.ok(!paths.some(path => path.startsWith("/api/agent/")), "removed Agent dashboard must not load referral access");
   background.resolve();
   await loading;
-  assert.equal(updates.length, 4);
+  assert.equal(updates.length, 3);
   assert.equal(updates.find(update => update.panel === "supportThreads").data[0].id, "support-1");
   assert.ok(!updates.some(update => update.panel === "weeklyReport" || update.panel === "rankingEvents"));
 });

@@ -6,9 +6,9 @@ import {
   requestOptionalDashboardJson,
 } from "./dashboard-session.ts";
 
-type CustomerPanel = "account" | "accountError" | "saved" | "savedError" | "profile" | "support" | "agentAccess" | "redirect";
+type CustomerPanel = "account" | "accountError" | "saved" | "savedError" | "profile" | "support" | "redirect";
 
-// Publish each result as it arrives. Support and referral access must never
+// Publish each result as it arrives. Support must never
 // hold the guest's account and followed profiles behind a full-page skeleton.
 export async function loadCustomerDashboard(
   signal: AbortSignal,
@@ -47,6 +47,5 @@ export async function loadCustomerDashboard(
     }),
     optional("/api/customer/profile", "profile", "profile"),
     optional("/api/support", "support", "threads"),
-    optional("/api/agent/commissions?access=1", "agentAccess", "access"),
   ]);
 }

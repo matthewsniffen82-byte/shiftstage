@@ -116,7 +116,7 @@ body.dancr-button-system .ir-staff :where(button, .ir-button, .ir-secondary, .ir
 }
 
 body.dancr-button-system .ir-staff :is(.ir-link-form > button, .ir-request .ir-actions > button:first-child, .ir-button) {
-  --ir-control-face: #201333;
+  --ir-control-face: #22152f;
   --ir-control-edge: #745696;
 }
 
@@ -130,7 +130,7 @@ body.dancr-button-system .ir-staff .ir-profile-link::before { content: none; }
 body.dancr-button-system .ir-staff :is(button, a, input, select):focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px; }
 body.dancr-button-system .ir-staff button:disabled { opacity: .5 !important; }
 
-body .ir-staff .ir-notice { margin: 10px 0; padding: 10px 12px; border-color: #745696; border-radius: 10px; background: #160e24; font-size: 12px; }
+body .ir-staff .ir-notice { margin: 10px 0; padding: 10px 12px; border-color: #745696; border-radius: 10px; background: #100c17; font-size: 12px; }
 body .ir-staff .ir-empty { margin: 8px 0 0; padding: 16px 12px; border-color: #34343c; border-radius: 10px; }
 body .ir-staff .ir-empty h3 { margin: 0; font-size: 15px; line-height: 1.4; }
 body .ir-staff .ir-empty p { margin-bottom: 0; }
