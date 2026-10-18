@@ -20,16 +20,16 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit {
   gap:8px !important;
 }
-/* Give the entire Create profile frame the public gallery's width plus an 8px
-   inset on each side. Its 1px border and 7px padding contain the media fully. */
+/* Keep the gallery as wide as the public profile, with a 6px frame inset.
+   Its border and padding fit inside the viewport even with the wider gallery. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-profile-media {
-  --builder-gallery-width:calc(min(100vw,var(--profile-shell-max-width,1180px)) - 2 * var(--dancer-discovery-content-gutter,12px));
-  --builder-frame-width:calc(var(--builder-gallery-width) + 16px);
+  --builder-gallery-width:calc(min(100vw,var(--profile-shell-max-width,1180px)) - 2 * var(--dancer-discovery-content-gutter,6px));
+  --builder-frame-width:calc(var(--builder-gallery-width) + 12px);
   box-sizing:border-box; width:var(--builder-frame-width); max-width:none; justify-self:center;
   margin-inline:calc((100% - var(--builder-frame-width)) / 2); border-width:1px !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-profile-media-panel {
-  box-sizing:border-box; width:100%; min-width:0; padding:8px 7px !important;
+  box-sizing:border-box; width:100%; min-width:0; padding:8px 5px !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit > .dancer-workspace-card,
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-profile-media-area > .dancer-workspace-card {
@@ -90,10 +90,10 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .profile-upload-group > header strong { font-size:16px; }
 
 /* The enclosing frame now provides the public profile's actual gallery width.
-   Both media types fill it normally with three columns, 10px gaps, and 9:16
+   Both media types fill it normally with three columns, shared gaps, and 9:16
    frames; no negative gallery margins or overflow beyond the builder border. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] :is(.profile-upload-items,.dancer-profile-inline-preview .profile-media-grid) {
-  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; gap:10px;
+  display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; gap:var(--dancr-media-grid-gap,6px);
   box-sizing:border-box; width:100%; min-width:0; min-height:0; max-width:100%; margin:0;
   padding:0; overflow:visible;
 }

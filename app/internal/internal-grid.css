@@ -1,5 +1,10 @@
 /* Match the public directory's portrait rhythm and clean card edges. */
 body .ir-shell { color-scheme: only dark; }
+@media (max-width: 720px) {
+  body .ir-shell:not(.ir-embedded):has(.ir-directory-grid) {
+    padding-inline: var(--dancer-discovery-content-gutter, 6px);
+  }
+}
 body .ir-shell .ir-directory-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

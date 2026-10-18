@@ -1876,10 +1876,30 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   text-align: left;
 }
 
-/* The final grid rule must preserve the same ten-pixel gaps as profile media. */
+/* Give portrait cards and media more room without changing their column counts
+   or aspect ratios. Keep this shared across discovery, dashboards and uploads. */
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,
-html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
-  gap: 10px !important;
+html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid,
+html body.dancr-button-system :is(
+  .venue-dancer-grid:not(.venue-performance-cards),
+  .ir-directory-grid,
+  .vip-dancers,
+  .customer-followed-dancer-grid,
+  .customer-favorite-club-grid,
+  .customer-saved-card-grid,
+  #results.venue-card-grid,
+  #results.card-grid:not(.home-discovery-feed):not(.home-tv-feed),
+  #dashTonightList.card-grid,
+  #dashFollowedList.card-grid,
+  #modalGallery,
+  .profile-media-grid,
+  .profile-upload-items,
+  .photo-upload-grid,
+  .dancer-photo-review-grid,
+  .submission-media-grid,
+  .internal-main-photo-options
+) {
+  gap: var(--dancr-media-grid-gap, 6px) !important;
 }
 
 /* Continue the discovery backdrop through venue details and dancer profiles.

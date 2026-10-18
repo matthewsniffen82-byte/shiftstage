@@ -348,20 +348,10 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   position:sticky; bottom:calc(10px + env(safe-area-inset-bottom, 0px)); z-index:3; padding:12px; border:1px solid #614879; border-radius:12px; background:#17111f; box-shadow:0 5px 24px #0008;
 }
 /* Setup starts with the fields; keep guidance and status close to their controls. */
-/* Match the public directory: three columns, two 10px gaps, and the same page gutters.
+/* Match the public directory: three columns, shared gaps and page gutters.
    Apply dimensions to the frames so empty, pending, and approved photos never resize. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] {
-  --setup-main-photo-width: calc((min(100vw, 1440px) - 88px) / 3);
-}
-@media (max-width:899px) {
-  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] {
-    --setup-main-photo-width: calc((100vw - 56px) / 3);
-  }
-}
-@media (max-width:720px) {
-  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] {
-    --setup-main-photo-width: calc((100vw - 44px) / 3);
-  }
+  --setup-main-photo-width: calc((min(100vw, var(--profile-shell-max-width, 1180px)) - 2 * var(--dancer-discovery-content-gutter, 6px) - 2 * var(--dancr-media-grid-gap, 6px)) / 3);
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding],
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit {

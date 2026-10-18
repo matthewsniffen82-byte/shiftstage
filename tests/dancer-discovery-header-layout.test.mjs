@@ -16,10 +16,10 @@ test("dancer discovery reuses canonical state and shared discovery-control dimen
 
 test("directory heading, dynamic total, and segmented filters are compact and accessible", () => {
   assert.match(liveShell, /href="\/outputs\/dancr-aesthetic\.css"/);
-  assert.match(liveShell, /: `\$\{resultCount\} dancer\$\{resultCount === 1 \? "" : "s"\}`/);
+  assert.match(liveShell, /: `\$\{resultCount\} dancer\$\{resultCount === 1 \? "" : "s"\}\$\{hasMoreDiscovery\(city\) \? " loaded" : ""\}`/);
   assert.match(liveShell, /class="dancer-directory-filters[^\n]+role="tablist" aria-label="Filter dancers"/);
   assert.match(liveShell, /role="tab"[\s\S]*?aria-controls="results"[\s\S]*?aria-selected="\$\{active\}"/);
-  assert.match(liveShell, /dancer-directory-filter-count">\$\{counts\[filter\.id\]\}<\/span>/);
+  assert.match(liveShell, /dancer-directory-filter-count">\$\{countKnown \? counts\[filter\.id\] : ""\}\$\{countKnown && hasMoreDiscovery\(city\) \? "\+" : ""\}<\/span>/);
   assert.match(aesthetic, /#tabTitle \{[\s\S]*?font-size: clamp\(20px, 5\.35vw, 24px\)/);
   assert.match(aesthetic, /#tabCount \{[\s\S]*?border: 0 !important;[\s\S]*?background: transparent !important/);
   assert.match(aesthetic, /\.dancer-directory-filters \{[\s\S]*?width: 100%;[\s\S]*?gap: 2px !important;[\s\S]*?padding: 0;[\s\S]*?border: 0;[\s\S]*?background: transparent;/);
@@ -31,7 +31,7 @@ test("directory heading, dynamic total, and segmented filters are compact and ac
 });
 
 test("discovery controls, summary, heading, tabs, and cards share one master gutter", () => {
-  assert.match(aesthetic, /--dancer-discovery-content-gutter: 12px/);
+  assert.match(aesthetic, /--dancer-discovery-content-gutter: 6px/);
   assert.match(
     aesthetic,
     /> :is\(\.home-discovery-controls, \.home-live-summary, section\.stack\) \{[\s\S]*?width: calc\(100% - \(2 \* var\(--dancer-discovery-content-gutter\)\)\) !important;[\s\S]*?margin-inline: var\(--dancer-discovery-content-gutter\) !important/,
@@ -85,7 +85,7 @@ test("narrow and long-label safeguards keep controls and counts collision-free",
   assert.match(aesthetic, /:is\(\.city-picker-trigger-value, #citySelect\) \{[\s\S]*?text-overflow: ellipsis;[\s\S]*?white-space: nowrap/);
   assert.match(aesthetic, /@media \(max-width: 360px\) \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 104px/);
   assert.match(aesthetic, /#tabCount \{[\s\S]*?white-space: nowrap/);
-  assert.match(liveShell, /const empty = counts\[filter\.id\] === 0/);
+  assert.match(liveShell, /const empty = countKnown && counts\[filter\.id\] === 0/);
   assert.match(liveShell, /empty \? " is-empty" : ""/);
 });
 

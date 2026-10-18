@@ -27,6 +27,12 @@ test("venue roster and request grids match the homepage's columns and spacing at
   }
   assert.equal(actual.width, "100%");
   assert.equal(actual["min-width"], "0");
+  const sharedSpacing = homeFinishes.nodes.find(rule => rule.type === "rule" && rule.selector.includes(".venue-dancer-grid:not(.venue-performance-cards)"));
+  assert.ok(sharedSpacing?.selector.includes(homeGrid), "public and dashboard grids share the final spacing rule");
+  assert.ok(sharedSpacing.selector.includes(".profile-upload-items"), "media uploads use the same spacing");
+  const gap = sharedSpacing.nodes.find(node => node.prop === "gap");
+  assert.equal(gap.value, "var(--dancr-media-grid-gap, 6px)");
+  assert.ok(gap.important, "override legacy grid gaps consistently");
   venue.walkRules(rule => {
     if (rule.selector !== "body .venue-dancer-grid") return;
     assert.equal(rule.parent.type, "root", "no two/four-column breakpoint overrides");
