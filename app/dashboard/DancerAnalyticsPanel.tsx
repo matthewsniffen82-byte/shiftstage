@@ -11,6 +11,12 @@ const number = (value: number) => new Intl.NumberFormat("en-US").format(value);
 const channels = { internal: "In club", vip: "VIP", external: "Public site" } as const;
 const periods = { shift: "This shift", tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
 const dateLabel = (value: string, timezone = "America/Los_Angeles") => new Date(value).toLocaleDateString("en-US", { timeZone: timezone, month: "short", day: "numeric", year: "numeric" });
+function dateRangeLabel(start: string, end: string, timezone: string) {
+  const from = dateLabel(start, timezone), to = dateLabel(end, timezone);
+  return from === to ? from : `${from} – ${to}`;
+}
+const timezoneLabel = (value: string, timezone: string) => new Intl.DateTimeFormat("en-US", { timeZone: timezone, timeZoneName: "short" })
+  .formatToParts(new Date(value)).find(part => part.type === "timeZoneName")?.value || timezone.replaceAll("_", " ");
 
 function readAnalytics(value: unknown): DancerAudienceAnalytics | null {
   if (!value || typeof value !== "object") return null;
@@ -97,15 +103,15 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
         {([activeShift ? "shift" : "tonight", "7d", "30d", "all"] as const).map(value => <button key={value} type="button" aria-pressed={period === value}
           onClick={() => { setError(""); setSelection(value); setShiftLimit(5); setContentLimit(3); }}>{periods[value]}</button>)}
       </div>
-      <label className="dancer-results-club">Requests and shifts at
-        <select value={period === "shift" ? current?.activeShift?.venueId || "" : clubs.some(item => item.id === clubId) ? clubId : ""} disabled={loading || period === "shift"} onChange={event => { setClubId(event.target.value); setShiftLimit(5); }}>
+      <label className="dancer-results-club"><span>Club</span>
+        <select aria-label="Club for requests and shifts" value={period === "shift" ? current?.activeShift?.venueId || "" : clubs.some(item => item.id === clubId) ? clubId : ""} disabled={loading || period === "shift"} onChange={event => { setClubId(event.target.value); setShiftLimit(5); }}>
           {period !== "shift" && <option value="">All clubs</option>}
           {period === "shift" && current?.activeShift && !clubs.some(item => item.id === current.activeShift!.venueId) && <option value={current.activeShift.venueId}>{current.activeShift.venueName}</option>}
           {clubs.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
         </select>
       </label>
-      {current && <p className="dancer-results-range">{period === "shift" ? <>Since check-in · {new Date(current.periodStart).toLocaleString("en-US", { timeZone: current.timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</> : <>{dateLabel(current.periodStart, current.timezone)} – {dateLabel(current.periodEnd, current.timezone)}</>}<span>{current.timezone.replaceAll("_", " ")}{period === "tonight" || period === "shift" ? " · so far" : ""}</span></p>}
     </div>
+    {current && <p className="dancer-results-range"><span className="dancer-results-range-dates">{period === "shift" ? <>Since check-in · {new Date(current.periodStart).toLocaleString("en-US", { timeZone: current.timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</> : dateRangeLabel(current.periodStart, current.periodEnd, current.timezone)}</span><span title={current.timezone.replaceAll("_", " ")}>{timezoneLabel(current.periodEnd, current.timezone)}{period === "tonight" || period === "shift" ? " · so far" : ""}</span></p>}
     {loading && <p role="status">Loading results…</p>}
     {error && <div className="dancer-analytics-error" role="alert"><p>{error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Try again</button></div>}
     {current && performance && selected && <>

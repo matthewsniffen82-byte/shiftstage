@@ -1,8 +1,8 @@
 /* Match the venue Results range bar above the shared dancer button skin. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period {
   display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%;
-  gap: 3px; padding: 3px; border: 1px solid #34343c; border-radius: 10px;
-  background: #19191f;
+  min-width: 0; max-width: 100%; gap: 4px; padding: 0; border: 0; border-radius: 10px;
+  background: transparent;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button {
   --results-period-face: #1b1922;
@@ -50,13 +50,15 @@ body.dancr-button-system #dancer-dashboard .dancer-analytics-toolbar {
   position: sticky;
   top: calc(max(var(--mydancr-preview-banner-offset, 0px), var(--mydancr-demo-banner-height, 0px), env(safe-area-inset-top, 0px)) + var(--dancer-dashboard-nav-height, 94px) + 6px);
   z-index: 30; align-self: start; display: grid; grid-template-columns: minmax(0, 1fr);
-  justify-content: stretch; align-items: start; min-width: 0; gap: 8px;
+  justify-content: stretch; align-items: start; justify-self: stretch;
+  box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; margin: 0; gap: 8px;
   padding: 10px; border: 1px solid #45404d; border-radius: 12px; background: #0c0a10;
   box-shadow: 0 4px 12px #0004;
 }
 body.dancr-button-system #dancer-dashboard .dancer-results-club { grid-template-columns: auto minmax(0, 1fr); align-items: center; width: 100%; min-width: 0; max-width: none; gap: 10px; margin: 0; }
-body.dancr-button-system #dancer-dashboard .dancer-results-range { margin: 0; color: #d0ccd7; font-size: 12px; line-height: 1.4; }
-.dancer-results-range > span { display: block; color: #aaa4b5; font-size: 11px; }
+body.dancr-button-system #dancer-dashboard .dancer-results-range { display: flex; flex-wrap: wrap; gap: 2px 8px; min-width: 0; margin: 0; color: #d0ccd7; font-size: 12px; line-height: 1.4; }
+.dancer-results-range > span { min-width: 0; overflow-wrap: anywhere; color: #aaa4b5; font-size: 11px; }
+.dancer-results-range > .dancer-results-range-dates { color: inherit; font-size: inherit; }
 body.dancr-button-system #dancer-dashboard .dancer-analytics-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 body.dancr-button-system #dancer-dashboard .dancer-analytics-metric { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; padding: 12px; }
 body.dancr-button-system #dancer-dashboard .dancer-analytics-metric > span { padding-right: 28px; font-size: 13px; color: #d0ccd7; }
@@ -110,11 +112,11 @@ body.dancr-button-system #dancer-dashboard .dancer-analytics-content-copy > smal
 }
 
 /* Match the compact overview without shrinking the metric info hit targets. */
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics { gap:10px; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar { padding:8px; gap:6px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics { width:100%; max-width:100%; min-width:0; gap:10px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar { padding:6px; gap:6px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar > .dancer-analytics-period > button { min-height:36px !important; padding:4px 2px !important; font-size:12px !important; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club { grid-template-columns:auto minmax(0,1fr); gap:8px; font-size:11px; letter-spacing:normal; font-weight:500; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club select { min-height:38px !important; padding:6px 9px !important; font-size:16px !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club { grid-template-columns:auto minmax(0,1fr); gap:8px; padding:0 2px; font-size:12px !important; letter-spacing:normal !important; text-transform:none; font-weight:500 !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club select { width:100%; max-width:100%; min-width:0; min-height:38px !important; padding:6px 9px !important; font-size:16px !important; font-weight:500 !important; text-overflow:ellipsis; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-range { font-size:11px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-metric { padding:10px; gap:3px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-metric > span { font-size:12px; font-weight:550; }

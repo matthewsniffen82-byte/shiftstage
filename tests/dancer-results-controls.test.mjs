@@ -180,3 +180,24 @@ test('incorrect period responses never display under a new selection',async()=>{
   ui.calls[0].resolve({analytics:data('7d')});await ui.settle();
   assert.match(ui.html(),/Unable to load results/);assert.doesNotMatch(ui.html(),/Oct 5, 2026/);ui.close();
 });
+
+
+test('compact sticky controls keep date details outside the pinned box and collapse same-day ranges',async()=>{
+  const ui=fixture();ui.button('Tonight').props.onClick();ui.render();
+  const tonight=data('tonight');tonight.timezone='America/Los_Angeles';
+  tonight.periodStart='2026-10-17T07:01:00Z';tonight.periodEnd='2026-10-18T03:00:00Z';
+  ui.calls[0].resolve({analytics:tonight});await ui.settle();
+  const toolbar=ui.nodes().find(node=>node.props?.className==='dancer-analytics-toolbar');
+  assert.equal(ui.nodes(toolbar).filter(node=>node.type==='button').length,4);
+  assert.equal(ui.nodes(toolbar).find(node=>node.type==='select').props['aria-label'],'Club for requests and shifts');
+  assert.equal(ui.nodes(toolbar).find(node=>node.props?.className==='dancer-results-range'),undefined);
+  const range=()=>renderToStaticMarkup(ui.nodes().find(node=>node.props?.className==='dancer-results-range'));
+  assert.equal(range().match(/Oct 17, 2026/g)?.length,1);
+  assert.match(range(),/PDT · so far/);assert.doesNotMatch(range(),/ – /);
+  ui.button('30 days').props.onClick();ui.render();
+  const month=data('30d');month.timezone='America/Los_Angeles';
+  month.periodStart='2026-10-17T07:01:00Z';month.periodEnd='2026-11-16T09:00:00Z';
+  ui.calls[1].resolve({analytics:month});await ui.settle();
+  assert.match(range(),/Oct 17, 2026 – Nov 16, 2026/);assert.match(range(),/>PST</);
+  assert.doesNotMatch(range(),/so far/);ui.close();
+});
