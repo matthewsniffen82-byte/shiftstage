@@ -457,12 +457,6 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-footer {
   position:static; padding:0; gap:6px; border:0; border-radius:10px; background:#17111f; box-shadow:none;
 }
-@media (max-width:600px) {
-  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts { grid-template-columns:repeat(2,minmax(0,1fr)); }
-  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-daily-card { padding:14px; }
-  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer { gap:6px; }
-  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-workspace-footer > span { font-size:11px; }
-}
 /* Each uploader has its own section, with its saved media directly underneath. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-section-uploader {
   min-width:0; margin-bottom:12px;
@@ -472,4 +466,10 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-main-photo .dancer-main-photo-copy > :is(h3,p:not(.dancer-main-photo-status)) {
   display:none;
+}
+@media (max-width:600px) {
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-counts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-daily-card { padding:14px; }
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .dancer-workspace-footer { gap:6px; }
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-workspace-footer > span { font-size:11px; }
 }
