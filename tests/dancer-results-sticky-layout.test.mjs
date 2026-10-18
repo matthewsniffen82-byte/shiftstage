@@ -14,10 +14,10 @@ function values(selector) {
   return result;
 }
 
-test("Results sticks four pixels below the measured nav with safe-area and banner clearance", () => {
+test("Results sticks two pixels below the measured nav with safe-area and banner clearance", () => {
   const toolbar = values(prefix);
   assert.equal(toolbar.position, "sticky");
-  assert.equal(toolbar["--dancer-results-sticky-gap"], "4px");
+  assert.equal(toolbar["--dancer-results-sticky-gap"], "2px");
   assert.equal(toolbar.top, "calc(max(var(--mydancr-preview-banner-offset, 0px), var(--mydancr-demo-banner-height, 0px), env(safe-area-inset-top, 0px)) + var(--dancer-dashboard-nav-height, 94px) + var(--dancer-results-sticky-gap))");
   assert.equal(toolbar["z-index"], "30");
 });

@@ -60,12 +60,12 @@ body.dancr-button-system #dancer-dashboard .dancer-score-help > p { margin:0 0 1
 
 /* Follow the measured dashboard navigation, including wrapped mobile labels. */
 body.dancr-button-system #dancer-dashboard .dancer-analytics-toolbar {
-  --dancer-results-sticky-gap: 4px;
+  --dancer-results-sticky-gap: 2px;
   position: sticky;
   top: calc(max(var(--mydancr-preview-banner-offset, 0px), var(--mydancr-demo-banner-height, 0px), env(safe-area-inset-top, 0px)) + var(--dancer-dashboard-nav-height, 94px) + var(--dancer-results-sticky-gap));
   z-index: 30; align-self: start; display: grid; grid-template-columns: minmax(0, 1fr);
   justify-content: stretch; align-items: start; justify-self: stretch;
-  box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; margin: 0; gap: 8px;
+  box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; margin: 0; gap: 4px;
   padding: 0; border: 0; border-radius: 10px; background: #050507;
   box-shadow: none;
 }
@@ -137,7 +137,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar {
   width: calc(100% + var(--dancer-results-toolbar-outset) + var(--dancer-results-toolbar-outset));
   max-width: none; margin-inline: calc(0px - var(--dancer-results-toolbar-outset));
-  padding: 0; gap: 8px; border: 0; border-radius: 0;
+  padding: 0; gap: 4px; border: 0; border-radius: 0;
   background: transparent;
 }
 /* The club picker has its own frame, with the native picker covering the row. */
