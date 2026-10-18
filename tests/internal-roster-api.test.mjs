@@ -40,7 +40,7 @@ function fixture({members=true,active=true,staff=true,kind='table',choice=null,p
  vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,require(name){if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
  vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,performance,fetch:fetchMedia,require(name){if(name.endsWith('performance-placement'))return {orderByPerformance:async(_admin,rows,identity)=>{calls.push({name:'performancePlacement',identities:rows.map(identity)});return [...rows].reverse();}};if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-push'))return {deliverInternalRequestPush:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestPush',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-media-delivery'))return {serveInternalMedia:(request,options)=>serveInternalMedia(request,{...options,fetch:fetchMedia})};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
  async function get(path=[],query='',auth='',headers={}){return route.GET(new Request('https://example.invalid/api/internal/'+path.join('/')+query,{headers:{...headers,...(auth?{authorization:'Bearer '+auth}:{})}}),{params:Promise.resolve({path})});}
- return {calls,get,post:async(body={},path=[],auth='staff')=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
+ return {tables,calls,get,post:async(body={},path=[],auth='staff')=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
 }
 
 for (const status of ['pending','acknowledged','cancelled']) test(`table guests can cancel only their exact ${status} request and retry safely`,async()=>{
@@ -250,7 +250,7 @@ test('only successful table requests schedule push for the saved request identit
 
 for(const [label,options,expected] of [
  ['existing dancers use approved primary',{},6],
- ['chosen gallery photo overrides public primary',{choice:10},10],
+ ['legacy roster choice cannot override the shared main photo',{choice:10},6],
  ['foreign choice falls back to own primary',{choice:7},6],
  ['rejected selection falls back to approved gallery',{choice:6,photoStatus:'rejected'},10],
  ['pending selection falls back to approved gallery',{choice:6,photoStatus:'pending'},10],
@@ -270,4 +270,17 @@ test('internal and venue roster grids apply score order only after authorization
  }
  const denied=fixture({active:false,members:rows});assert.equal((await denied.get(['link',id(3)])).status,404);
  assert.equal(denied.calls.some(c=>c.name==='performancePlacement'),false);
+});
+
+// Keep the same legacy choice while the dancer changes the shared main photo.
+test('roster cards follow main photo changes and never publish rejected or foreign photos',async()=>{
+ const f=fixture({choice:10});
+ const displayed=async()=> (await (await f.get(['link',id(3)])).json()).dancers[0].mainPhotoId;
+ assert.equal(await displayed(),id(6));
+ for(const photo of f.tables.dancer_photos) photo.is_primary=photo.id===id(10);
+ assert.equal(await displayed(),id(10));
+ f.tables.dancer_photos.find(p=>p.id===id(10)).review_status='rejected';
+ assert.equal(await displayed(),id(6));
+ f.tables.dancer_photos.find(p=>p.id===id(6)).review_status='pending';
+ assert.equal(await displayed(),null);
 });

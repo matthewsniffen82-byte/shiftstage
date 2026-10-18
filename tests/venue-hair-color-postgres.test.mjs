@@ -26,6 +26,7 @@ before(async () => {
 after(async () => db?.close());
 beforeEach(async () => db.exec('begin'));
 afterEach(async () => db.exec('rollback; reset role'));
+const sharedMainPhotoMigration = readFileSync(new URL('../supabase/migrations/20261018024037_shared_dancer_main_photo.sql', import.meta.url), 'utf8').replace(/^(?:begin|commit);\r?$/gm, '');
 async function photo(n, primary = true, status = 'approved', dancer = 1) {
   await db.query('insert into dancer_photos values($1,$2,$3,$4,$5,$6)', [id(n),id(dancer),`${dancer}/${n}.jpg`,primary,n,status]);
 }
@@ -59,7 +60,7 @@ test('approved main choices enqueue once; pending media is never analyzed', asyn
   assert.equal((await db.query('select count(*)::int n from dancer_hair_color_periods where analysis_id is not null')).rows[0].n,2);
 });
 
-test('internal selection is independent and removing public main stays empty', async () => {
+test('legacy internal selection is independent before the shared main photo migration', async () => {
   await photo(100); await photo(101,false);
   await db.query('insert into dancer_internal_main_photos values($1,$2)',[id(1),id(101)]);
   assert.equal((await current('internal')).photo_id,id(101));
@@ -67,6 +68,28 @@ test('internal selection is independent and removing public main stays empty', a
   await db.query('update dancer_photos set is_primary=false where id=$1',[id(100)]);
   assert.equal((await current()).analysis_id,null);
   assert.equal((await current('internal')).photo_id,id(101));
+});
+
+test('shared main migration retires legacy overrides without rewriting historical analytics', async () => {
+  await photo(100); await photo(101,false);
+  await db.query('insert into dancer_internal_main_photos values($1,$2)',[id(1),id(101)]);
+  const previous = await current('internal');
+  assert.equal(previous.photo_id,id(101));
+  await db.exec(sharedMainPhotoMigration);
+  assert.equal((await current('internal')).photo_id,id(100));
+  assert.equal((await current()).photo_id,id(100));
+  const historical = (await db.query('select * from dancer_hair_color_periods where id=$1',[previous.id])).rows[0];
+  assert.ok(historical.ended_at); assert.equal(historical.analysis_id,previous.analysis_id);
+  assert.equal((await db.query('select count(*)::int n from dancer_photos')).rows[0].n,2);
+  await db.query('update dancer_photos set is_primary=(id=$1) where dancer_id=$2',[id(101),id(1)]);
+  assert.equal((await current('internal')).photo_id,id(101));
+  assert.equal((await current()).photo_id,id(101));
+  await db.query('update dancer_internal_main_photos set photo_id=$1 where dancer_id=$2',[id(100),id(1)]);
+  assert.equal((await current('internal')).photo_id,id(101));
+  await db.query("update dancer_photos set review_status='rejected' where id=$1",[id(101)]);
+  assert.equal((await current('internal')).photo_id,id(100));
+  await db.exec('set role authenticated');
+  await assert.rejects(db.query('select refresh_dancer_hair_color_periods($1)',[id(1)]),{code:'42501'});
 });
 
 test('replacing or cropping the same photo creates a new version and preserves the old estimate', async () => {

@@ -7,7 +7,6 @@ import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
-import DancerInternalMainPhotoPicker from "./DancerInternalMainPhotoPicker";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import { requestDancerMediaPin } from "./dashboard-session";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
@@ -604,7 +603,6 @@ export function DancerPhotoPanel({
           })}
         </div>
       ) : null}
-      {!uploadOnly ? <DancerInternalMainPhotoPicker key={String(profile?.id || "new-profile")} photos={photos} disabled={photoActionBusy} onProfileChange={onProfileChange} /> : null}
       {!uploadOnly && approvedPhotos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>

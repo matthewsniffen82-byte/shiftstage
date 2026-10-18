@@ -186,7 +186,7 @@ export default function DancerProfileWorkspace({
   const requiredPhotos = <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label="Main photo and automatic avatar">
     <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
       <h4 id="dancer-main-upload-title">Main photo</h4>
-      <p className="dancer-photo-guidance">Upload once for your dancer card and avatar.</p>
+      <p className="dancer-photo-guidance">Shown on your public dancer card and the club’s internal roster, wherever you choose to appear. Your avatar is created from this photo.</p>
       {mainPhotoContent}
     </div>
     <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">

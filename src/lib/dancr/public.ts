@@ -92,8 +92,8 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string, af
     ), cityName))
     .eq("is_public", true)
     .eq("dancer_photos.review_status", "approved")
-    .order("is_pinned", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
     .order("is_primary", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
+    .order("is_pinned", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
     .order("sort_order", { referencedTable: "dancer_photos", ascending: true, nullsFirst: true })
     .order("id", { referencedTable: "dancer_photos", ascending: true })
     .limit(PUBLIC_PROFILE_MEDIA_LIMIT, { referencedTable: "dancer_photos" })
@@ -162,8 +162,8 @@ export async function getTonightShifts(client: DancrClient, city: string, now = 
     .ilike("city", cityName))
     .eq("is_public", true)
     .eq("dancer_photos.review_status", "approved")
-    .order("is_pinned", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
     .order("is_primary", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
+    .order("is_pinned", { referencedTable: "dancer_photos", ascending: false, nullsFirst: false })
     .order("sort_order", { referencedTable: "dancer_photos", ascending: true, nullsFirst: true })
     .order("id", { referencedTable: "dancer_photos", ascending: true })
     .limit(PUBLIC_PROFILE_MEDIA_LIMIT, { referencedTable: "dancer_photos" })
@@ -421,7 +421,9 @@ function buildDancerCard(
   const venue = Array.isArray(shift?.venues) ? shift.venues[0] : shift?.venues;
   const score = Array.isArray(row.trending_scores) ? row.trending_scores[0] : row.trending_scores;
   const approvedPhotos = approvedDancerPhotoSources(client, row);
-  const primaryPhoto = approvedPhotos[0] || null;
+  // Gallery pins affect gallery order, never the shared public/club main photo.
+  const primaryPhoto = [...approvedPhotos].sort((left, right) =>
+    Number(right.isPrimary) - Number(left.isPrimary) || left.sortOrder - right.sortOrder || left.id.localeCompare(right.id))[0] || null;
   const dedicatedAvatar = responsivePublicImage(
     client,
     "dancer-photos",
@@ -590,6 +592,8 @@ function approvedDancerPhotoSources(client: DancrClient, row: any) {
       id: String(photo.id || ""),
       likeCount: safeMetricCount(photo.like_count),
       isPinned: photo.is_pinned === true,
+      isPrimary: photo.is_primary === true,
+      sortOrder: Number(photo.sort_order || 0),
     }] : [];
   });
 }

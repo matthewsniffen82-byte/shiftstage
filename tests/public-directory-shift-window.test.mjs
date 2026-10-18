@@ -210,6 +210,7 @@ test("gallery eligibility and primary/pin ordering precede the bounded photo win
   const ids = Array.from(result.dancers[0].galleryPhotoIds);
   assert.equal(ids.length, 50);
   assert.deepEqual(ids.slice(0, 3), ["pinned", "primary", "ordinary-00"]);
+  assert.equal(result.dancers[0].primaryPhotoUrl, "https://synthetic.invalid/primary");
   assert.equal(ids.some(id => id.startsWith("hidden")), false);
   assert.equal(f.queries[0]["dancer_photos.limit"], "50");
 });
@@ -220,6 +221,16 @@ test("the dedicated tonight query filters hidden venues before its shift window"
   assert.equal((await f.tonight())[0].shiftId, "valid");
   assert.equal(f.queries[0]["shifts.limit"], "50");
   assert.match(f.queries[0].select, /venues!inner\(/);
+});
+
+test("a full pinned gallery cannot displace the shared main photo from public cards", async () => {
+  const gallery = Array.from({length:70}, (_, i) => ({id:`pin-${i}`,storage_path:`pin-${i}`,is_pinned:true,is_primary:false,sort_order:i,review_status:'approved'}));
+  gallery.push({id:'main',storage_path:'main',is_primary:true,is_pinned:false,sort_order:100,review_status:'approved'});
+  const f = fixture([], {profiles:[{...profile,dancer_photos:gallery}]});
+  const result = await f.get();
+  assert.equal(result.dancers[0].primaryPhotoUrl,'https://synthetic.invalid/main');
+  assert.ok(result.dancers[0].galleryPhotoIds.includes('main'));
+  assert.ok(result.dancers[0].galleryPhotoIds[0].startsWith('pin-'));
 });
 
 test("native PostgreSQL excludes infinite expiry/end before taking a directory window", async () => {
