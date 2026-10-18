@@ -118,6 +118,9 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
           onClick={() => { setError(""); setSelection(value); setShiftLimit(5); setContentLimit(3); }}>{periods[value]}</button>)}
       </div>
       <label className="dancer-results-club"><span>Club</span>
+        <span className="dancer-results-club-name" aria-hidden="true">{period === "shift"
+          ? current?.activeShift?.venueName || activeShift?.venueName || "Current club"
+          : clubs.find(item => item.id === clubId)?.name || "All clubs"}</span>
         <select aria-label="Club for requests and shifts" value={period === "shift" ? current?.activeShift?.venueId || "" : clubs.some(item => item.id === clubId) ? clubId : ""} disabled={loading || period === "shift"} onChange={event => { setClubId(event.target.value); setShiftLimit(5); }}>
           {period !== "shift" && <option value="">All clubs</option>}
           {period === "shift" && current?.activeShift && !clubs.some(item => item.id === current.activeShift!.venueId) && <option value={current.activeShift.venueId}>{current.activeShift.venueName}</option>}

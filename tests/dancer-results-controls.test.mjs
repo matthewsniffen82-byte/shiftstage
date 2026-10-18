@@ -112,8 +112,10 @@ test('four growth cards use two equal columns on mobile and four on desktop',()=
 
 test('club filtering updates request cards and recorded shifts while audience remains explicitly global',()=>{
   const ui=fixture();assert.match(ui.html(),/<strong>10<\/strong>/);
+  assert.match(ui.html(),/class="dancer-results-club-name" aria-hidden="true">All clubs<\/span>/);
   ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-a'}});ui.render();
   const html=ui.html();assert.match(html,/<strong>3<\/strong>/);assert.doesNotMatch(html,/7 requests/);
+  assert.match(html,/class="dancer-results-club-name" aria-hidden="true">Club A<\/span>/);
   assert.match(html,/Working-alert subscribers<\/dt><dd>12/);assert.match(html,/Current totals across all clubs/);assert.match(html,/VIP alert subscribers at Club A/);
   ui.button('VIP').props.onClick();ui.render();assert.match(ui.html(),/Confirmed<\/dt><dd>2/);
   ui.button('Public site').props.onClick();ui.render();assert.match(ui.html(),/Club entries attributed to you<\/dt><dd>1/);
@@ -245,6 +247,7 @@ test('checked-in dashboards default to actual shift dates and the current club',
   assert.equal(ui.button('Tonight'),undefined);
   const club=ui.nodes().find(node=>node.type==='select');
   assert.equal(club.props.value,'club-a');assert.equal(club.props.disabled,true);
+  assert.match(ui.html(),/class="dancer-results-club-name" aria-hidden="true">Club A<\/span>/);
   assert.match(ui.html(),/Since check-in/);assert.match(ui.html(),/This shift so far/);
   assert.doesNotMatch(ui.html(),/vs prior|No change/);ui.close();
   const compact=fixture(checkedIn(),{compact:true});
