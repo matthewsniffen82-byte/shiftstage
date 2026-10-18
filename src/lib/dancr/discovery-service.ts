@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { getServerEnv } from "../server-env";
 import { getBearerToken } from "../supabase/request";
 import { PublicApiError } from "../api-error-policy";
-import { rankDiscovery, type RankingCandidate, type RankingSurface } from "./discovery-ranking";
+import { pinStarInGrid, rankDiscovery, type RankingCandidate, type RankingSurface } from "./discovery-ranking";
 import { isAllMyDancrCities } from "./markets";
 import { enforcePublicRequestRateLimit } from "./public-request-rate-limit";
 import { getDirectoryCandidates, getTvRankingCandidates } from "./directory-candidates";
@@ -44,8 +44,8 @@ export function parseRankedCursor(value: string) {
 }
 
 export async function discoverySnapshot(admin: SupabaseClient, context: DiscoveryContext, scope: Scope, cursor = "") {
-  // Old discovery snapshots must not retain the retired ranking algorithm.
-  const scopeHash = createHash("sha256").update(JSON.stringify([PLACEMENT_VERSION, scope.surface, scope.city.toLowerCase(), scope.venueId || "", scope.filter || "for-you", scope.selectedVideoId || "", ...(scope.directory || scope.surface === "tv" ? ["global-discovery-v1"] : []), ...(scope.gridPage ? [scope.gridPage] : [])])).digest("hex");
+  // Refresh grid snapshots that predate Star's pin, without disrupting TV sessions.
+  const scopeHash = createHash("sha256").update(JSON.stringify([PLACEMENT_VERSION, scope.surface, scope.city.toLowerCase(), scope.venueId || "", scope.filter || "for-you", scope.selectedVideoId || "", ...(scope.directory || scope.surface === "tv" ? ["global-discovery-v1"] : []), ...(scope.gridPage ? [scope.gridPage] : []), ...(scope.surface === "grid" ? ["grid-star-pin-v1"] : [])])).digest("hex");
   const parsed = cursor ? parseRankedCursor(cursor) : null;
   if (cursor && !parsed) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery cursor.", 400);
   let query = admin.from("discovery_sessions").select("id,ordered_ids,expires_at")
@@ -132,7 +132,7 @@ async function getFollowingDancers(admin: SupabaseClient, userId: string) {
 }
 
 export async function rankPublicGrid<T extends { id: string; venueId?: string | null }>(admin: SupabaseClient, context: DiscoveryContext | null, city: string, rows: T[], pageKey?: string): Promise<(T & { discovery?: DiscoveryPlacement })[]> {
-  if (!context) return orderByPerformance(admin, rows, row => ({ dancerId: row.id, venueId: row.venueId }), row => row.id);
+  if (!context) return pinStarInGrid(await orderByPerformance(admin, rows, row => ({ dancerId: row.id, venueId: row.venueId }), row => row.id));
   if (!rows.length) return [];
   // A batch must never reuse another page's IDs or exclude newly eligible rows.
   const gridPage = pageKey === undefined ? undefined : createHash("sha256")

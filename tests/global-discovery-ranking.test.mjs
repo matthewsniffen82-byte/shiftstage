@@ -19,6 +19,35 @@ function directoryFixture(candidates) {
   return { ...f, hidden, cardReads, directory };
 }
 
+test('Star stays first before pagination, with no duplicates and normal eligibility filters', async () => {
+  const starId = '70e50bad-b7be-45ad-bc7a-64f1cba6b5e2';
+  const star = row(300, { id: starId, dancerId: starId, performanceScore: 0,
+    availableUntil: new Date(Date.now() + 3600000).toISOString(), venueId: id(8000) });
+  const others = Array.from({ length: 210 }, (_, i) => row(i + 1, { performanceScore: 210 - i }));
+  const f = directoryFixture([...others, star]);
+  const first = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas' });
+  assert.equal(first.dancers[0].id, starId);
+  assert.equal(first.dancers[0].discovery.position, 0);
+  assert.deepEqual(f.cardReads[0], [starId, ...others.slice(0, 99).map(r => r.id)]);
+  const seen = Array.from(first.dancers, r => r.id);
+  let cursor = pagination.parseDiscoveryCursor(first.nextCursor, 'Vegas');
+  do {
+    const page = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', cursor });
+    seen.push(...page.dancers.map(r => r.id));
+    cursor = pagination.parseDiscoveryCursor(page.nextCursor, 'Vegas');
+  } while (cursor);
+  assert.deepEqual(seen, [starId, ...others.map(r => r.id)]);
+  for (const options of [{ city: 'Miami' }, { filter: 'not_now' }, { venueId: id(8001) }]) {
+    const page = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', ...options });
+    assert.ok(page.dancers.every(r => r.id !== starId));
+  }
+  f.hidden.add(starId);
+  const hidden = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas' });
+  assert.equal(hidden.dancers[0].id, others[0].id);
+  assert.equal(hidden.dancers.length, 100);
+  assert.ok(hidden.dancers.every(r => r.id !== starId));
+});
+
 test('the actual directory page ranks all 5,207 dancers before fetching only the top 100 cards', async () => {
   const candidates = Array.from({ length: 5207 }, (_, i) => row(i + 1, { performanceScore: i }));
   const f = directoryFixture(candidates), seen = [];

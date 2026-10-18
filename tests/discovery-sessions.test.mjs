@@ -2,6 +2,46 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {randomUUID,createHash} from 'node:crypto';
 import {fixture,row,id,compile} from './helpers/discovery-fixture.mjs';
+import {DANCER_PLACEMENT_PERIOD,DANCER_SCORE_VERSION} from '../src/lib/dancr/venue-dancer-scores.ts';
+
+test('Star is pinned for guest and account grids without changing scores or TV order', async () => {
+ const starId='70e50bad-b7be-45ad-bc7a-64f1cba6b5e2';
+ const star=row(3,{id:starId,dancerId:starId,performanceScore:0});
+ const candidates=[row(1,{performanceScore:90}),row(2,{performanceScore:60}),star];
+ const f=fixture(candidates),cards=candidates.map(r=>({id:r.id}));
+ const original=structuredClone(candidates);
+ for(const token of ['', 'valid']) {
+  const c=await f.service.discoveryContext(f.admin,f.request(id(50),id(51),token));
+  assert.deepEqual(Array.from(await f.service.rankPublicGrid(f.admin,c,'Vegas',cards),r=>r.id),[starId,id(1),id(2)]);
+  const tv=await f.service.discoverySnapshot(f.admin,c,{surface:'tv',city:'Vegas'});
+  assert.deepEqual(Array.from(tv.snapshot.ordered_ids),[id(1),id(2),starId]);
+ }
+ assert.deepEqual(Array.from(await f.service.rankPublicGrid(f.admin,null,'Vegas',cards),r=>r.id),[starId,id(1),id(2)]);
+ assert.deepEqual(candidates,original);
+});
+
+test('un-pinned grid snapshots refresh while existing TV snapshots remain usable', async () => {
+ for(const surface of ['grid','tv']) {
+  const starId='70e50bad-b7be-45ad-bc7a-64f1cba6b5e2';
+  const f=fixture([row(1,{performanceScore:90}),row(2,{id:starId,dancerId:starId,performanceScore:0})]);
+  const c=await f.service.discoveryContext(f.admin,f.request());
+  const scopeHash=createHash('sha256').update(JSON.stringify([
+   `performance-${DANCER_SCORE_VERSION}-${DANCER_PLACEMENT_PERIOD}`,surface,'vegas','','for-you','','global-discovery-v1',
+  ])).digest('hex');
+  f.data.discovery_sessions.push({id:id(80),viewer_hash:c.viewerHash,visit_id:c.visitId,scope_hash:scopeHash,surface,
+   ordered_ids:[id(1),starId],expires_at:new Date(Date.now()+3600000).toISOString()});
+  const scope={surface,city:'Vegas',directory:surface==='grid'};
+  const {snapshot}=await f.service.discoverySnapshot(f.admin,c,scope);
+  if(surface==='grid') {
+   assert.notEqual(snapshot.id,id(80));
+   assert.deepEqual(Array.from(snapshot.ordered_ids),[starId,id(1)]);
+   await assert.rejects(f.service.discoverySnapshot(f.admin,c,scope,`rank1:${id(80)}:1`),/expired/);
+  } else {
+   assert.equal(snapshot.id,id(80));
+   assert.equal((await f.service.discoverySnapshot(f.admin,c,scope,`rank1:${id(80)}:1`)).offset,1);
+  }
+ }
+});
 
 test('identity is hashed, invalid session headers reject, and expired login remains a guest',async()=>{
  const f=fixture(); const guest=await f.service.discoveryContext(f.admin,f.request());
