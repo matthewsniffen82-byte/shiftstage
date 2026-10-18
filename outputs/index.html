@@ -34952,7 +34952,8 @@
             radial-gradient(circle at 20% 82%, rgba(139,92,246,.17), transparent 42%),
             linear-gradient(145deg,#111118,#07070b);
         }
-        .home-discovery-loading.is-dancers {
+        .home-discovery-loading.is-dancers,
+        .home-discovery-loading.is-venues {
           box-sizing: border-box;
           display: flex;
           align-items: center;
@@ -61618,9 +61619,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       }
       return `
         <section class="home-discovery-loading is-venues" role="status" aria-label="${loadingLabel}" aria-live="polite" aria-busy="true">
-        <span class="home-discovery-loading-card" aria-hidden="true">
-          <span class="home-discovery-loading-copy"><span></span><span></span><span></span></span>
-        </span>
+          <span class="home-discovery-loading-spinner" aria-hidden="true"></span>
+          <span>${loadingLabel}…</span>
         </section>
       `;
     }

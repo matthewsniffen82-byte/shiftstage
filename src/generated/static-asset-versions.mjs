@@ -26,7 +26,7 @@ export const staticAssetVersions = {
   "/outputs/dancr-hero.webp": "04a290c3af4ad444",
   "/outputs/live-shell.css": "edc3933ec60339ca",
   "/outputs/dancr-aesthetic.css": "82e02620209893ba",
-  "/outputs/live-shell-overrides.css": "8a37e03f74cc71d1",
+  "/outputs/live-shell-overrides.css": "7f1fb987bad245a9",
   "/outputs/mydancr-logo-current.png": "e7f5af001692cb08",
   "/outputs/mydancr-logo.png": "4b6b66793bf7a63d",
   "/profile-media-owner-controls.css": "23f95b3a66febb0a",

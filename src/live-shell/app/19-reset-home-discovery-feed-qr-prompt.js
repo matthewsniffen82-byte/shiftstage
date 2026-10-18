@@ -641,9 +641,8 @@
       }
       return `
         <section class="home-discovery-loading is-venues" role="status" aria-label="${loadingLabel}" aria-live="polite" aria-busy="true">
-        <span class="home-discovery-loading-card" aria-hidden="true">
-          <span class="home-discovery-loading-copy"><span></span><span></span><span></span></span>
-        </span>
+          <span class="home-discovery-loading-spinner" aria-hidden="true"></span>
+          <span>${loadingLabel}…</span>
         </section>
       `;
     }

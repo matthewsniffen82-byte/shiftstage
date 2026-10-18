@@ -25,7 +25,8 @@
             radial-gradient(circle at 20% 82%, rgba(139,92,246,.17), transparent 42%),
             linear-gradient(145deg,#111118,#07070b);
         }
-        .home-discovery-loading.is-dancers {
+        .home-discovery-loading.is-dancers,
+        .home-discovery-loading.is-venues {
           box-sizing: border-box;
           display: flex;
           align-items: center;
