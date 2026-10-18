@@ -1697,6 +1697,25 @@ html body.dancr-button-system > .app > header #brandHome.brand {
   }
 }
 
+/* Guest actions keep their gray surfaces with the shared violet accents. */
+html body.dancr-button-system > .app > header .topbar
+  :is(#accountBtn:not(.account-icon-btn), #guestMenuBtn) {
+  border-color: #4a365f !important;
+}
+html body.dancr-button-system > .app > header .topbar #guestMenuBtn svg {
+  color: #c4a3f1 !important;
+}
+html body.dancr-button-system > .app > header .topbar
+  :is(#accountBtn:not(.account-icon-btn), #guestMenuBtn):is([aria-expanded="true"], :focus-visible) {
+  border-color: #a78bfa !important;
+}
+@media (hover: hover) {
+  html body.dancr-button-system > .app > header .topbar
+    :is(#accountBtn:not(.account-icon-btn), #guestMenuBtn):hover {
+    border-color: #5a4075 !important;
+  }
+}
+
 /* The 36px faces sit inside full 44px targets. */
 html body.dancr-button-system > .app > header
   :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
@@ -1850,14 +1869,6 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   --discovery-control-edge: #48755c;
   color: var(--dancr-color-live) !important;
 }
-@media (hover: hover) {
-  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
-    > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected="false"]:hover {
-    --discovery-control-face: #202027;
-    --discovery-control-edge: #6a6673;
-    color: #f5f3f8 !important;
-  }
-}
 /* Match iPhone status-button fills to the dark Android reference. */
 @supports (-webkit-touch-callout: none) {
   html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
@@ -1872,13 +1883,22 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   }
 }
 
-/* Status controls reuse the inbox fills on every platform; live status stays green. */
+/* Both inactive status controls share an inbox-dark face and readable labels. */
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
-  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="not_now"][aria-selected] {
-  --discovery-control-face: #000;
-  --discovery-control-edge: #32283f;
-  color: #bdb5c9 !important;
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter][aria-selected="false"]:not(:disabled):not([aria-disabled="true"]) {
+  --discovery-control-face: #08070e;
+  --discovery-control-edge: #4a365f;
+  color: #d4cedf !important;
 }
+@media (hover: hover) {
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter][aria-selected="false"]:not(:disabled):not([aria-disabled="true"]):hover {
+    --discovery-control-face: #100c17;
+    --discovery-control-edge: #5a4075;
+    color: #f5f3f8 !important;
+  }
+}
+/* Selected status colors stay distinct from the shared inactive appearance. */
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="not_now"][aria-selected="true"] {
   --discovery-control-face: #22152f;
