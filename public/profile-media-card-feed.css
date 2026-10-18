@@ -738,7 +738,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
     :is(.home-tv-feed-actions > .home-tv-feed-action, .home-tv-feed-full-view-close, .profile-media-card-back, .profile-photo-viewer-actions > button, .profile-tv-viewer-actions > button, .profile-media-viewer-actions > button):not(:disabled):not([aria-disabled="true"]) {
     --public-media-icon-color: #c4a3f1;
     border-color: #4a365f !important;
-    background: rgba(16, 12, 23, .68) !important;
+    background: rgba(16, 12, 23, .45) !important;
     color: #f5f2fa !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, .24) !important;
   }
