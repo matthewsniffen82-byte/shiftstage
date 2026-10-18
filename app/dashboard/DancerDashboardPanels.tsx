@@ -18,6 +18,7 @@ import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerOnboardingCommand } from "./DancerProfileEditor";
 import DancerProfileWorkspace from "./DancerProfileWorkspace";
 import DancerDashboardWorkspace from "./DancerDashboardWorkspace";
+import "./dancer-visibility-sharing.css";
 // Keep role-specific tools out of every customer's initial JavaScript. Editors
 // load when mounted; the visible role's core tools warm while its data loads.
 const DancerNfcPanel = dynamic(() => import("./DancerNfcPanel"));
@@ -151,7 +152,7 @@ export function DancerPanel({
     draftIdentity, profile, onProfileChange, isPublic, uploadBusy: mainBusy || photosBusy || videoBusy, onBusyChange: setEditorBusy };
   const visibilityAndSharing = <section className="dancer-workspace-card" id="dancer-visibility-sharing" aria-label="Visibility and sharing">
     <h3>Visibility & sharing</h3>
-    <DashboardSection id="dancer-visibility" title="Profile visibility" description="Choose whether your public profile is visible." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /></DashboardSection>
+    <DashboardSection id="dancer-visibility" title="Profile visibility" description="Show or hide your public profile." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /></DashboardSection>
     <DashboardSection id="dancer-share" title="Share profile" description="Copy your public profile link." icon={<DancerDashboardIcon section="profile" />} toggleAffordance="chevron"><DancerSharePanel profile={profile} /></DashboardSection>
   </section>;
   const accountTools = <>

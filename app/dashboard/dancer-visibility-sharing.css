@@ -1,0 +1,51 @@
+/* Compact disclosures inside the profile editor, with full-width touch targets. */
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing {
+  display: grid;
+  gap: 6px;
+  padding: 12px !important;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing > h3 {
+  margin: 0 0 2px;
+  font-size: 16px !important;
+  line-height: 1.3;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing > .dashboard-section {
+  padding: 0 !important;
+  border-radius: 10px !important;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing > .dashboard-section > summary {
+  box-sizing: border-box;
+  min-height: 56px;
+  grid-template-columns: 28px minmax(0, 1fr) 16px;
+  gap: 8px;
+  padding: 8px 10px !important;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .dancer-dashboard-section-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .dancer-dashboard-section-icon svg {
+  width: 16px;
+  height: 16px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .venue-dashboard-section-copy {
+  min-width: 0;
+  gap: 2px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .venue-dashboard-section-copy > strong {
+  font-size: 14px;
+  line-height: 1.3;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .venue-dashboard-section-copy > span:last-child {
+  font-size: 12px;
+  line-height: 1.35;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .venue-dashboard-section-toggle {
+  width: 16px;
+  height: 16px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing > .dashboard-section > .venue-dashboard-section-body {
+  padding: 10px !important;
+  gap: 8px;
+}
