@@ -34,7 +34,7 @@
         profilePhotoViewerScrollFrame = 0;
         if (profilePhotoViewer.hidden || profilePhotoViewerImage.clientHeight <= 0) return;
         const activePhotoIndex = profilePhotoCardScrollIndex(
-          profilePhotoViewerImage.scrollTop,
+          profilePhotoViewerImage.scrollTop + profileMediaCardScrollInset(profilePhotoViewerImage),
           [...profilePhotoViewerImage.querySelectorAll("[data-profile-photo-viewer-index]")].map((slide) => slide.offsetTop),
           profilePhotoViewerImage.clientHeight,
           profilePhotoViewerImage.scrollHeight

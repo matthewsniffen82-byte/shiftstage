@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
+import postcss from "postcss";
 
 const live = fs.readFileSync("outputs/index.html", "utf8");
 const carousel = fs.readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "utf8");
@@ -32,8 +33,8 @@ test("both profile entry points share TV video sizing and screen-filling photo c
   }
   assert.match(css, /--profile-media-card-height: var\(--dancr-scroll-card-height\)/);
   assert.match(live, /\.home-tv-feed-slide \{[^}]*height: var\(--dancr-scroll-card-height\);[^}]*min-height: var\(--dancr-scroll-card-height\);[^}]*max-height: var\(--dancr-scroll-card-height\)/);
-  assert.match(css, /--profile-media-card-gap: 10px/);
-  assert.match(css, /@media \(max-width: 720px\)[^]*?--profile-media-card-gap: 10px/);
+  assert.match(css, /--profile-media-card-gap: 16px/);
+  assert.match(css, /@media \(max-width: 720px\)[^]*?--profile-media-card-gap: 12px/);
   assert.match(css, /scroll-snap-type: none !important/);
   assert.match(css, /scroll-snap-align: none !important/);
   assert.match(css, /scroll-snap-stop: normal !important/);
@@ -60,7 +61,7 @@ test("profile media opens at normal size and expands only from its control", () 
 });
 
 test("card offsets keep the correct selection through gaps and thirty-item galleries", () => {
-  for (const [height, gap, inset] of [[520, 10, 72], [732, 10, 72], [760, 10, 92], [844, 0, 0]]) {
+  for (const [height, gap, inset] of [[520, 12, 72], [732, 16, 72], [760, 12, 92], [844, 0, 0]]) {
     const offsets = Array.from({ length: 30 }, (_, i) => inset + i * (height + gap));
     for (let index = 0; index < offsets.length; index += 1) {
       const top = offsets[index] - inset;
@@ -122,6 +123,12 @@ test("taller shared phone cards leave only a small neighboring-card peek", () =>
   }
   assert.match(live, /\.home-tv-feed-loading \{[^}]*height: var\(--dancr-scroll-card-height\);[^}]*min-height: var\(--dancr-scroll-card-height\);[^}]*max-height: var\(--dancr-scroll-card-height\)/);
   assert.match(fs.readFileSync("public/profile-photo-crop.js", "utf8"), /height:var\(--profile-media-card-height\)/);
+  const tvMobile = fs.readFileSync("src/live-shell/styles/override-styles-03-home-discovery-empty-action-is-secondary-hover-home-discovery-em.css", "utf8");
+  const tvGap = tvMobile.match(/#results\.home-tv-feed \{[^}]*gap: (\d+)px !important/);
+  assert.equal(gap, Number(tvGap?.[1]), "regular cards use the TV feed's mobile gap");
+  const tvSnap = tvMobile.match(/html\.home-tv-page-snap \{[^}]*scroll-snap-type: ([^;]+)/)?.[1];
+  const profileSnap = mobile.match(/\.profile-media-card-feed:not\(\.is-media-fullscreen\) :is\([^}]*scroll-snap-type: ([^;!]+) !important/)?.[1];
+  assert.equal(profileSnap, tvSnap, "regular phone cards use TV's gentle snapping, distinct from immersive paging");
 });
 
 test("mixed-height photo feeds select the visible card and can reach a short final photo", () => {
@@ -132,6 +139,8 @@ test("mixed-height photo feeds select the visible card and can reach a short fin
   assert.equal(context.profilePhotoCardScrollIndex(1284, offsets, 700, 2130), 1);
   assert.equal(context.profilePhotoCardScrollIndex(1430, offsets, 700, 2130), 3);
   assert.equal(context.profilePhotoCardScrollIndex(0, [], 700, 700), 0);
+  assert.equal(context.profilePhotoCardScrollIndex(1284 - 12 + 12, offsets, 700, 2130), 1, "a card snapped below the top inset stays selected");
+  assert.match(live, /profilePhotoViewerImage\.scrollTop \+ profileMediaCardScrollInset\(profilePhotoViewerImage\)/);
   assert.match(carousel, /viewerKind === "photo"[^]*?profilePhotoCardScrollIndex\(scrollTop, slides\.map/);
 });
 
@@ -186,16 +195,43 @@ test("one in-flow header scrolls away, with no header padding repeated on later 
   assert.match(functionSource("mountProfileMediaCardHeader"), /host\.prepend\(header\)/);
 });
 
-test("normal cards fill their frames while expanded cards follow the complete media", () => {
-  assert.match(css, /\.profile-photo-viewer-slide-image \{[^}]*background-size: cover !important;[^}]*background-position: center !important;[^}]*background-repeat: no-repeat !important/);
-  assert.match(css, /> :is\(img, video\) \{[^}]*object-fit: cover !important;[^}]*object-position: center !important/);
-  assert.match(css, /\.is-media-fullscreen :is\(\.profile-photo-viewer-slide, \.profile-tv-viewer-slide, \.profile-media-viewer-slide\) \{[^}]*height: auto !important;[^}]*min-height: 0 !important;[^}]*max-height: none !important/);
-  assert.match(css, /\.is-media-fullscreen[^}]*height: auto !important;[^}]*aspect-ratio: var\(--profile-media-card-ratio, 9 \/ 16\);[^}]*object-fit: contain !important/);
-  assert.match(css, /\.is-media-fullscreen \.profile-photo-viewer-slide-image \{ background-size: contain !important/);
-  assert.match(css, /\.is-media-fullscreen :is\(\.profile-photo-viewer-image, \.profile-tv-viewer-stage, \.profile-media-viewer-stage\) \{[^}]*padding: 0 0 env\(safe-area-inset-bottom, 0px\) !important/);
-  assert.match(css, /\[data-media-controls="below"\][^{]*viewer-footer\) \{[^}]*position: relative !important/);
-  assert.match(css, /\[data-media-controls="below"\][^{]*viewer-actions\) \{[^}]*display: flex !important/);
-  assert.match(css, /background: #000 !important/);
+test("expanded photos and videos use TV's full-viewport paging and overlay controls for every media shape", () => {
+  const root = postcss.parse(css);
+  const tv = postcss.parse(fs.readFileSync("src/live-shell/styles/override-styles-01-main-stack-main-stack.css", "utf8"));
+  const values = (tree, match) => {
+    const rule = tree.nodes.find(node => node.type === "rule" && match(node.selector));
+    assert.ok(rule, "expected layout rule");
+    return Object.fromEntries(rule.nodes.filter(node => node.type === "decl").map(node => [node.prop, node.value]));
+  };
+  const full = ".profile-media-card-feed.is-media-fullscreen";
+  const variables = values(root, selector => selector === full);
+  const stage = values(root, selector => selector === `${full} :is(.profile-photo-viewer-image, .profile-tv-viewer-stage, .profile-media-viewer-stage)`);
+  const slide = values(root, selector => selector === `${full} :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide)`);
+  const tvStage = values(tv, selector => selector.endsWith("#results.home-tv-feed.is-fullscreen-feed"));
+  const tvSlide = values(tv, selector => selector.endsWith("#results.home-tv-feed.is-fullscreen-feed > .home-tv-feed-slide"));
+  assert.equal(variables["--profile-media-card-height"], tvSlide.height);
+  assert.equal(variables["--profile-media-card-height"], "100dvh");
+  assert.equal(slide.height, "var(--profile-media-card-height)");
+  assert.equal(slide["min-height"], slide.height);
+  for (const property of ["margin", "border-radius", "scroll-snap-align", "scroll-snap-stop", "box-shadow"]) {
+    assert.equal(slide[property], tvSlide[property], property);
+  }
+  assert.equal(variables["--profile-media-card-gap"], "0px");
+  assert.equal(stage.padding, tvStage.padding);
+  assert.equal(stage["scroll-snap-type"], tvStage["scroll-snap-type"]);
+  const media = values(root, selector => selector.startsWith(full) && selector.endsWith("> :is(img, video, .profile-photo-viewer-slide-image)"));
+  const tvMedia = values(tv, selector => selector === ".home-tv-feed-video");
+  for (const property of ["position", "inset", "width", "height", "object-fit"]) {
+    assert.equal(media[property], tvMedia[property], property);
+  }
+  assert.equal(media["aspect-ratio"], "auto", "source proportions must not resize the viewport card");
+  assert.doesNotMatch(css, /data-media-controls|var\(--profile-media-card-ratio/);
+  const footer = values(root, selector => selector === ".profile-media-card-feed :is(.profile-photo-viewer-footer, .profile-tv-viewer-footer, .profile-media-viewer-footer)");
+  const actions = values(root, selector => selector === ".profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions)");
+  assert.equal(footer.position, "absolute");
+  assert.equal(footer.inset, "0");
+  assert.equal(actions.position, "absolute");
+  assert.equal(actions.display, "grid", "actions remain a vertical overlay instead of moving below wide photos");
 });
 
 test("each media card has a back arrow that closes only its own viewer", () => {
