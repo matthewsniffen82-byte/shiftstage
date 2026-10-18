@@ -8,18 +8,17 @@ const carousel = fs.readFileSync("app/dancers/[slug]/DancerPhotoCarousel.tsx", "
 const css = fs.readFileSync("public/profile-media-card-feed.css", "utf8");
 const source = (name) => live.match(new RegExp("    (?:async )?function " + name + "\\([^]*?\\n    \\}"))?.[0];
 
-test("every photo owns persistent controls with its own like, share, report, and navigation targets", () => {
+test("every photo owns persistent controls with its own like, share, report, and fullscreen targets", () => {
   const controls = source("mountProfilePhotoCardControls");
   assert.match(controls, /cloneNode\(true\)/);
   assert.match(controls, /removeAttribute\("id"\)/);
-  assert.match(controls, /scrollProfilePhotoViewerTo\(index - 1\)/);
-  assert.match(controls, /scrollProfilePhotoViewerTo\(index \+ 1\)/);
+  assert.match(controls, /setProfilePhotoFullscreen\(!profilePhotoViewer\.classList\.contains\("is-media-fullscreen"\), index\)/);
   assert.match(controls, /togglePublicMediaLike\("photo", String\(item.id \|\| ""\), status\)/);
   assert.match(controls, /shareProfilePhoto\(index, status\)/);
   assert.match(controls, /targetType, targetId/);
   assert.doesNotMatch(source("syncProfilePhotoViewerPosition"), /mountProfileMediaCardControls/);
   assert.match(css, /#profilePhotoViewer\.profile-media-card-feed \[data-profile-photo-control-template\] \{\s*display: none !important/);
-  assert.match(carousel, /\{renderViewerControls\(item, index\)\}\s*<\/section>/);
+  assert.match(carousel, /\{renderViewerControls\(item, index, openDeal\)\}\s*<\/section>/);
   assert.doesNotMatch(carousel, /createPortal|viewerControlsHost/);
   assert.match(carousel, /toggleMediaLike\(item.kind, item.id\)/);
   assert.match(carousel, /shareViewerItem\(item, index\)/);

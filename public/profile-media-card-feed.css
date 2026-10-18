@@ -388,6 +388,11 @@ html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer
   .profile-media-card-feed {
     --profile-media-card-gap: 10px;
   }
+  /* These viewers scroll independently of the page. Leave room after the last
+     card for the bottom navigation, its offset, and the phone's safe area. */
+  .profile-media-card-feed:not(.is-media-fullscreen) :is(.profile-photo-viewer-image, .profile-tv-viewer-stage, .profile-media-viewer-stage) {
+    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
+  }
   .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) {
     right: calc(9px + env(safe-area-inset-right, 0px)) !important;
   }
