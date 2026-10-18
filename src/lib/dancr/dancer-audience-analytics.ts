@@ -81,7 +81,7 @@ export async function getOwnDancerAudienceAnalytics(
     return { value, previous };
   };
 
-  const [profileViews, socialLinkTaps, followers, totalFollowers, photoLikes, videoLikes, videoViews, ranking, performanceResult, trendResult] = await Promise.all([
+  const [profileViews, socialLinkTaps, followers, totalFollowers, photoLikes, videoLikes, videoViews, previousVideoViews, ranking, performanceResult, trendResult] = await Promise.all([
     comparedCount("profile_views", "viewed_at"),
     comparedCount("social_clicks", "clicked_at"),
     count("follows", "created_at", start, end),
@@ -89,6 +89,7 @@ export async function getOwnDancerAudienceAnalytics(
     groupedMediaActivity(admin, dancerId, "photo", "likes", start, end),
     groupedMediaActivity(admin, dancerId, "video", "likes", start, end),
     groupedMediaActivity(admin, dancerId, "video", "views", start, end),
+    canCompare ? groupedMediaActivity(admin, dancerId, "video", "views", previousStart, start) : Promise.resolve(null),
     admin.from("trending_scores").select("rank").eq("dancer_id", dancerId).maybeSingle(),
     admin.rpc("get_dancer_performance_analytics", { p_dancer_id: dancerId, p_since: start, p_until: end }),
     admin.rpc("get_dancer_activity_trend", { p_dancer_id: dancerId, p_since: start, p_until: end }),
@@ -147,6 +148,10 @@ export async function getOwnDancerAudienceAnalytics(
   return {
     period, activeShift, periodStart: start, periodEnd: end, timezone: timeZone, profileCreatedAt: profile.created_at,
     trend: trendResult.data, profileViews, socialLinkTaps,
+    videoViews: {
+      value: [...videoViews.values()].reduce((sum, value) => sum + value, 0),
+      previous: previousVideoViews ? [...previousVideoViews.values()].reduce((sum, value) => sum + value, 0) : null,
+    },
     // Likes and follows can be removed. Their timestamps support period totals,
     // but the current rows cannot reconstruct a reliable historical comparison.
     newFollowers: { value: followers, previous: null },

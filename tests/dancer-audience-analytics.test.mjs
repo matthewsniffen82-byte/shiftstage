@@ -115,6 +115,7 @@ test("7-day analytics scope every metric to the owner, use disjoint periods, and
   assert.equal(result.contentLikes.value, 1006);
   assert.equal(result.contentLikes.previous, null);
   assert.equal(result.newFollowers.previous, null);
+  assert.deepEqual({ ...result.videoViews }, { value: 1, previous: 1 });
   assert.equal(result.audience.totalFollowers, 2);
   assert.equal(result.audience.workingNowSubscribers, 1);
   assert.equal(result.currentRank, 4);
@@ -126,12 +127,43 @@ test("7-day analytics scope every metric to the owner, use disjoint periods, and
   assert.ok(!JSON.stringify(result).includes("other/photo"));
 });
 
+test("video totals page all owned engaged views, not just the six top videos", async () => {
+  const rows = fixture();
+  rows.mydancr_tv_videos.push(...Array.from({ length: 7 }, (_, i) => ({ id: `extra-${i}`, dancer_id: "mine" })),
+    { id: "private-video", dancer_id: "other" });
+  rows.mydancr_tv_events = [
+    ...Array.from({ length: 1005 }, (_, i) => ({ id: `current-${String(i).padStart(5, "0")}`, video_id: `extra-${i % 7}`, event_type: "engaged_view", occurred_at: daysAgo(7) })),
+    ...Array.from({ length: 1001 }, (_, i) => ({ id: `previous-${String(i).padStart(5, "0")}`, video_id: "video-1", event_type: "engaged_view", occurred_at: daysAgo(14) })),
+    { id: "private", video_id: "private-video", event_type: "engaged_view", occurred_at: daysAgo(1) },
+    { id: "impression", video_id: "video-1", event_type: "impression", occurred_at: daysAgo(1) },
+    { id: "completed", video_id: "video-1", event_type: "completed_view", occurred_at: daysAgo(1) },
+    { id: "too-old", video_id: "video-1", event_type: "engaged_view", occurred_at: daysAgo(15) },
+    { id: "end", video_id: "video-1", event_type: "engaged_view", occurred_at: now.toISOString() },
+  ];
+  const db = database(rows);
+  const result = await service.getOwnDancerAudienceAnalytics(db, "owner", "7d", now);
+  assert.deepEqual({ ...result.videoViews }, { value: 1005, previous: 1001 });
+  const topVideos = result.topContent.filter(item => item.kind === "video");
+  assert.equal(topVideos.length, 6);
+  assert.ok(topVideos.reduce((sum, item) => sum + item.views, 0) < result.videoViews.value);
+  const viewQueries = db.calls.filter(call => call.table === "mydancr_tv_events");
+  assert.equal(viewQueries.filter(call => call.offset === 1000).length, 2);
+  for (const query of viewQueries) {
+    assert.equal(query.order, "id");
+    assert.ok(query.fields.includes("mydancr_tv_videos!inner(dancer_id)"));
+    assert.ok(query.filters.some(([key, op, value]) => key === "mydancr_tv_videos.dancer_id" && op === "eq" && value === "mine"));
+    assert.ok(query.filters.some(([key, op, value]) => key === "event_type" && op === "eq" && value === "engaged_view"));
+    assert.doesNotMatch(query.fields, /visitor|session|viewer/);
+  }
+});
+
 test("30-day analytics use a matching prior 30 days and update content rankings", async () => {
   const result = await service.getOwnDancerAudienceAnalytics(database(fixture()), "owner", "30d", now);
   assert.equal(result.periodStart, daysAgo(30));
   assert.equal(result.profileViews.value, 5);
   assert.equal(result.profileViews.previous, 1);
   assert.equal(result.contentLikes.value, 1007);
+  assert.deepEqual({ ...result.videoViews }, { value: 2, previous: 0 });
   assert.equal(result.topContent.find(item => item.kind === "video").views, 2);
 });
 
@@ -157,6 +189,7 @@ test("Tonight scopes activity and the performance RPC to the dancer's local wind
   assert.equal(result.socialLinkTaps.value, 1);
   assert.equal(result.newFollowers.value, 1);
   assert.equal(result.contentLikes.value, 1);
+  assert.deepEqual({ ...result.videoViews }, { value: 1, previous: null });
   assert.equal(result.topContent.find(item => item.kind === "video").views, 1);
   assert.equal(result.profileViews.previous, null);
   assert.equal(result.performance.previous, null);
@@ -189,6 +222,7 @@ test("a new account does not compare against time before the profile existed", a
   const result = await service.getOwnDancerAudienceAnalytics(database(rows), "owner", "7d", now);
   assert.equal(result.profileViews.previous, null);
   assert.equal(result.socialLinkTaps.previous, null);
+  assert.equal(result.videoViews.previous, null);
   assert.equal(result.performance.previous, null);
 });
 
@@ -197,6 +231,7 @@ test("missing ownership fails before reading activity, and query failures are no
   await assert.rejects(service.getOwnDancerAudienceAnalytics(db, "unknown", "7d", now), /profile not found/);
   assert.equal(db.calls.length, 1);
   await assert.rejects(service.getOwnDancerAudienceAnalytics(database(fixture(), "media_likes"), "owner", "7d", now), /database unavailable/);
+  await assert.rejects(service.getOwnDancerAudienceAnalytics(database(fixture(), "mydancr_tv_events"), "owner", "7d", now), /database unavailable/);
   await assert.rejects(service.getOwnDancerAudienceAnalytics(database(fixture(), "get_dancer_performance_analytics"), "owner", "7d", now), /performance unavailable/);
 });
 
@@ -207,6 +242,7 @@ test("empty activity returns real zeroes with no invented rank or top content", 
   assert.equal(result.currentRank, null);
   assert.equal(result.topContent.length, 0);
   assert.equal(result.profileViews.value, 0);
+  assert.deepEqual({ ...result.videoViews }, { value: 0, previous: 0 });
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
   assert.match(html, /Your results will appear here/);
   assert.doesNotMatch(html, /Unranked|City rank|Club Deal|Cashier|Weekly results|milestones/);
@@ -218,10 +254,10 @@ test("results lead with four demand cards and retain audience growth, content an
   result.contentLikes = { value: 5, previous: 10 };
   result.socialLinkTaps = { value: 5, previous: 10 };
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
-  assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 7);
+  assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 8);
   for (const text of ["Table requests", "VIP requests", "Returning VIP requesters", "Verified entries", "New followers", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
   assert.ok(html.indexOf("Table requests") < html.indexOf("Profile views"));
-  for (const text of ["Profile views", "New followers", "Content likes", "Your audience", "Top content", "City activity rank #4", "Your performance score", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
+  for (const text of ["Profile views", "New followers", "Content likes", "Video views", "Your audience", "Top content", "City activity rank #4", "Your performance score", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /Social link taps|Infinity|NaN|Unranked/);
 });
 
@@ -242,6 +278,7 @@ test("All time starts at profile creation with full timestamp precision and no p
   assert.equal(result.profileViews.previous, null);
   assert.equal(result.performance.previous, null);
   assert.equal(result.newFollowers.value, 2);
+  assert.deepEqual({ ...result.videoViews }, { value: 2, previous: null });
   assert.equal(result.trend.length, 1);
   assert.equal(db.calls.find(call => call.table === "get_dancer_performance_analytics").params.p_since, result.periodStart);
   await assert.rejects(service.getOwnDancerAudienceAnalytics(database(rows, "get_dancer_activity_trend"), "owner", "all", now), /trend unavailable/);
@@ -326,6 +363,7 @@ function liveShift(overrides={}) {
 test('automatic analytics uses actual check-in time across midnight and scopes requests to that club',async()=>{
   const rows=fixture();const startedAt='2026-09-23T02:00:00.000Z';
   rows.shifts=[liveShift({checked_in_at:startedAt})];
+  rows.mydancr_tv_events.push({id:'shift-view',video_id:'video-1',event_type:'engaged_view',occurred_at:startedAt});
   rows.profile_views=[{dancer_id:'mine',viewed_at:'2026-09-23T01:59:59.999Z'},
     {dancer_id:'mine',viewed_at:startedAt},{dancer_id:'mine',viewed_at:'2026-09-23T09:00:00.000Z'},
     {dancer_id:'other',viewed_at:startedAt}];
@@ -336,6 +374,7 @@ test('automatic analytics uses actual check-in time across midnight and scopes r
   assert.equal(result.period,'shift');assert.equal(result.periodStart,startedAt);
   assert.equal(result.timezone,'America/New_York');assert.equal(result.activeShift.venueName,'Club A');
   assert.equal(result.profileViews.value,2);assert.equal(result.profileViews.previous,null);
+  assert.deepEqual({...result.videoViews},{value:1,previous:null});
   assert.equal(result.performance.current.tableRequests,4);assert.equal(result.performance.previous,null);
   assert.equal(result.performance.clubs.length,1);assert.equal(result.performance.shifts.length,1);
   assert.equal(result.performance.roster,rows.performanceClubs[0].roster);

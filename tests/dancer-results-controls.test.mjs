@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 const require = createRequire(import.meta.url);
 const counts = (requests=0) => Object.fromEntries(['tableRequests','tablePending','tableAcknowledged','tableCompleted','tableCancelled','vipRequests','vipPending','vipConfirmed','vipDeclined','vipCancelled','repeatVips'].map(key=>[key,key==='tableRequests'?requests:0]));
-const data = period => ({ period,activeShift:null,periodStart:'2026-10-05T00:00:00Z',periodEnd:'2026-10-12T00:00:00Z',timezone:'UTC',profileCreatedAt:'2026-08-01T00:00:00Z',trend:[{start:'2026-10-05T00:00:00Z',end:'2026-10-06T00:00:00Z',views:3,followers:2,requests:10}],profileViews:{value:3,previous:1},newFollowers:{value:2,previous:null},contentLikes:{value:1,previous:null},socialLinkTaps:{value:0,previous:0},audience:{totalFollowers:20,workingNowSubscribers:12},topContent:[],currentRank:null,
+const data = period => ({ period,activeShift:null,periodStart:'2026-10-05T00:00:00Z',periodEnd:'2026-10-12T00:00:00Z',timezone:'UTC',profileCreatedAt:'2026-08-01T00:00:00Z',trend:[{start:'2026-10-05T00:00:00Z',end:'2026-10-06T00:00:00Z',views:3,followers:2,requests:10}],profileViews:{value:3,previous:1},newFollowers:{value:2,previous:null},contentLikes:{value:1,previous:null},videoViews:{value:0,previous:0},socialLinkTaps:{value:0,previous:0},audience:{totalFollowers:20,workingNowSubscribers:12},topContent:[],currentRank:null,
   performance:{current:counts(10),previous:counts(5),external:{claims:2,admissions:1},alerts:{total:12,vip:4},workTrackingStartedAt:'2026-10-10T00:00:00Z',
     clubs:[{id:'club-a',name:'Club A',timezone:'UTC',current:{...counts(3),vipConfirmed:2,vipRequests:2},previous:counts(1),external:{claims:2,admissions:1},vipSubscribers:4},
       {id:'club-b',name:'Club B',timezone:'UTC',current:counts(7),previous:counts(4),external:{claims:0,admissions:0},vipSubscribers:0}],
@@ -38,20 +38,47 @@ function fixture(initial=data('7d'), props={}) {
     async settle(){await new Promise(resolve=>setImmediate(resolve));render();},close(){slots.forEach(slot=>slot?.cleanup?.());}};
 }
 
-test('audience growth shows only the three supported metrics, even with historical social taps',()=>{
+test('audience growth shows four supported metrics, even with historical social taps',()=>{
   const initial=data('7d');initial.socialLinkTaps={value:99,previous:50};
   const ui=fixture(initial);
   const growth=ui.nodes().find(node=>node.props?.className==='dancer-analytics-metrics dancer-results-growth');
-  assert.deepEqual(Array.from(growth.props.children,node=>node.props.label),['New followers','Profile views','Content likes']);
+  assert.deepEqual(Array.from(growth.props.children,node=>node.props.label),['New followers','Profile views','Content likes','Video views']);
+  assert.equal(growth.props.children[3].props.metric,initial.videoViews);
   assert.doesNotMatch(ui.html(),/Social link taps/);ui.close();
 });
 
 test('retired social taps do not hide the empty results state',()=>{
   const initial=data('7d');
-  for(const key of ['profileViews','newFollowers','contentLikes'])initial[key]={value:0,previous:0};
+  for(const key of ['profileViews','newFollowers','contentLikes','videoViews'])initial[key]={value:0,previous:0};
   initial.socialLinkTaps={value:99,previous:50};
   initial.performance.current=counts();initial.performance.alerts={total:0,vip:0};initial.performance.external.admissions=0;
   const ui=fixture(initial);assert.match(ui.html(),/Your results will appear here/);ui.close();
+});
+
+test('video-only activity counts as results and stays global when filtering clubs',()=>{
+  const initial=data('7d');
+  for(const key of ['profileViews','newFollowers','contentLikes'])initial[key]={value:0,previous:0};
+  initial.performance.current=counts();initial.performance.alerts={total:0,vip:0};initial.performance.external.admissions=0;
+  initial.videoViews={value:1234,previous:617};
+  const ui=fixture(initial);
+  assert.doesNotMatch(ui.html(),/Your results will appear here/);
+  const video=()=>ui.nodes().find(node=>node.props?.label==='Video views');
+  assert.match(renderToStaticMarkup(video()),/<strong>1,234<\/strong>/);
+  assert.match(renderToStaticMarkup(video()),/\+100% vs prior 7 days/);
+  assert.match(renderToStaticMarkup(video()),/About Video views/);
+  ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-b'}});ui.render();
+  assert.equal(video().props.metric.value,1234);assert.equal(ui.calls.length,0);ui.close();
+});
+
+test('cached or malformed video totals refresh instead of displaying invented numbers',async()=>{
+  for(const metric of [undefined,null,{}, {value:-1,previous:0},{value:NaN,previous:0},{value:0,previous:-1}]) {
+    const initial=data('7d');initial.videoViews=metric;
+    const ui=fixture(initial);
+    assert.equal(ui.calls.length,1);assert.equal(ui.calls[0].url,'/api/dancer/analytics?period=auto');
+    assert.match(ui.html(),/Loading results/);assert.doesNotMatch(ui.html(),/>Video views</);
+    ui.calls[0].resolve({analytics:data('7d')});await ui.settle();
+    assert.equal(ui.nodes().find(node=>node.props?.label==='Video views').props.metric.value,0);ui.close();
+  }
 });
 
 test('headlines promote verified entries and returning requesters without duplicating followers',()=>{
@@ -75,12 +102,12 @@ test('check-in summary follows club selection and short shifts show early data i
   assert.match(ui.html(),/Checkout accuracy<\/dt><dd>—/);assert.match(ui.html(),/after an eligible visit ends/);ui.close();
 });
 
-test('three growth cards fill the row on desktop without leaving an empty mobile grid cell',()=>{
+test('four growth cards use two equal columns on mobile and four on desktop',()=>{
   const css=readFileSync(new URL('../app/dashboard/dancer-results.css',import.meta.url),'utf8');
-  assert.match(css,/\.dancer-results-growth > :last-child \{ grid-column: 1 \/ -1; \}/);
+  assert.match(css,/\.dancer-analytics-metrics \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); gap: 8px; \}/);
   const desktop=css.slice(css.indexOf('@media (min-width: 860px)'),css.indexOf('@media (max-width: 400px)'));
-  assert.match(desktop,/\.dancer-results-growth \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
-  assert.match(desktop,/\.dancer-results-growth > :last-child \{ grid-column: auto; \}/);
+  assert.match(desktop,/\.dancer-analytics-metrics \{ grid-template-columns: repeat\(4, minmax\(0, 1fr\)\); \}/);
+  assert.doesNotMatch(css,/\.dancer-results-growth[^{}]*\{[^}]*grid-(?:column|template-columns)/);
 });
 
 test('club filtering updates request cards and recorded shifts while audience remains explicitly global',()=>{
@@ -120,12 +147,13 @@ test('Tonight loads its own results, updates headings and hides prior-period com
   assert.equal(ui.button('Tonight').props['aria-pressed'],true);
   assert.match(ui.html(),/Loading results/);
   assert.doesNotMatch(ui.html(),/Table requests/);
-  const tonight=data('tonight');tonight.performance.current=counts(2);
+  const tonight=data('tonight');tonight.performance.current=counts(2);tonight.videoViews={value:17,previous:null};
   ui.calls[0].resolve({analytics:tonight});await ui.settle();
   const html=ui.html();
   assert.match(html,/Your results: Tonight/);
   assert.match(html,/Tonight so far/);
   assert.match(html,/All clubs · Tonight/);
+  assert.equal(ui.nodes().find(node=>node.props?.label==='Video views').props.metric.value,17);
   assert.doesNotMatch(html,/Last 7 days|Last 30 days|vs prior|No change/);
   ui.button('7 days').props.onClick();ui.render();
   assert.match(ui.html(),/Last 7 days/);assert.equal(ui.calls.length,1);ui.close();
@@ -136,9 +164,11 @@ test('All time keeps the club selection, uses its own dates and never shows a pr
   ui.button('All time').props.onClick();ui.render();
   assert.equal(ui.calls[0].url,'/api/dancer/analytics?period=all');
   const all=data('all');all.periodStart=all.profileCreatedAt;
+  all.videoViews={value:4200,previous:null};
   ui.calls[0].resolve({analytics:all});await ui.settle();
   assert.equal(ui.nodes().find(node=>node.type==='select').props.value,'club-a');
   assert.match(ui.html(),/Aug 1, 2026/);assert.match(ui.html(),/All recorded activity/);
+  assert.equal(ui.nodes().find(node=>node.props?.label==='Video views').props.metric.value,4200);
   assert.doesNotMatch(ui.html(),/vs prior|No change|Last 7 days/);ui.close();
 });
 

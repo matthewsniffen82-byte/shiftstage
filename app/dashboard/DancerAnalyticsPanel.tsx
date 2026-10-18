@@ -24,6 +24,8 @@ function readAnalytics(value: unknown): DancerAudienceAnalytics | null {
   if (!value || typeof value !== "object") return null;
   const data = value as DancerAudienceAnalytics;
   return Object.hasOwn(periods, data.period) && data.profileViews && data.audience && Array.isArray(data.topContent) && Array.isArray(data.trend)
+    && data.videoViews && Number.isFinite(data.videoViews.value) && data.videoViews.value >= 0
+    && (data.videoViews.previous === null || (Number.isFinite(data.videoViews.previous) && data.videoViews.previous >= 0))
     && Number.isFinite(Date.parse(data.periodStart)) && Number.isFinite(Date.parse(data.periodEnd))
     && data.performance?.current && data.performance.alerts && Array.isArray(data.performance.clubs) && Array.isArray(data.performance.shifts) ? data : null;
 }
@@ -93,7 +95,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
       label: `${activityLabel} · ${period === "shift" ? current.activeShift?.venueName : club?.name || "All clubs"}`,
     });
   };
-  const hasActivity = current && ([current.profileViews, current.newFollowers, current.contentLikes].some(metric => metric.value > 0)
+  const hasActivity = current && ([current.profileViews, current.newFollowers, current.contentLikes, current.videoViews].some(metric => metric.value > 0)
     || performance!.current.tableRequests > 0 || performance!.current.vipRequests > 0 || performance!.external.admissions > 0 || performance!.alerts.total > 0);
 
   if (compact) return <section className="dancer-daily-card dancer-activity-summary" aria-label="Recent activity" aria-busy={loading}>
@@ -196,6 +198,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
           <EngagementCard label="New followers" metric={current.newFollowers} period={period} title="People who followed during this period and still follow you. Removed follows are not retained, so a reliable previous-period comparison is unavailable." />
           <EngagementCard label="Profile views" metric={current.profileViews} period={period} />
           <EngagementCard label="Content likes" metric={current.contentLikes} period={period} title="Likes added during this period that have not been removed." />
+          <EngagementCard label="Video views" metric={current.videoViews} period={period} title="Recorded engaged views of your videos during this period." />
         </div>
         {current.currentRank ? <p className="dancer-results-note">City activity rank #{number(current.currentRank)}</p> : null}
       </section>
