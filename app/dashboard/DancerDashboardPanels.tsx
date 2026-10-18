@@ -60,6 +60,7 @@ export function DancerPanel({
   const [photosBusy, setPhotosBusy] = useState(false);
   const [videoBusy, setVideoBusy] = useState(false);
   const [editorRequested, setEditorRequested] = useState(0);
+  const [presenceKey, setPresenceKey] = useState<string>();
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
   const [draftIdentity, setDraftIdentity] = useState(() => ({
@@ -173,7 +174,7 @@ export function DancerPanel({
       {accountContent}
     </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested}
       overview={<>
-        <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager /></section></DancerAgeVerificationGate>
+        <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager onPresenceChange={setPresenceKey} /></section></DancerAgeVerificationGate>
         <section className="dancer-daily-card" id="dancer-overview">
           <header><div><h2>Your profile</h2><p>Public visibility is separate from your club check-in.</p></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{isPublic ? "Public" : "Hidden"}</span></header>
           {hasPendingAvatar || hasPendingPhotos || hasRejectedMedia || !isPublic ? <section className="dancer-attention-note" aria-label="Profile attention">
@@ -182,12 +183,12 @@ export function DancerPanel({
             {hasPendingAvatar || hasPendingPhotos ? <p>New photos are being checked. Approved photos stay in place. <a href="#dancer-profile-media-library">View review status</a></p> : null}
             {!isPublic ? <p>Your public profile is hidden. <a href="#dancer-visibility">Manage visibility</a></p> : null}
           </section> : null}
-          <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button><a href="#dancer-share">Share profile</a>{isPublic && profile?.slug ? <Link href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer">View public profile</Link> : null}</div>
+          <div className="dancer-overview-actions"><button className="dancer-workspace-save" type="button" onClick={() => setEditorRequested(value => value + 1)}>Edit profile</button><a href="#dancer-share">Share profile</a>{isPublic && profile?.slug ? <Link href={`/dancers/${encodeURIComponent(String(profile.slug))}`} target="_blank" rel="noopener noreferrer" aria-label="View public profile">View profile</Link> : null}</div>
         </section>
-        <DancerAgeVerificationGate loadingLabel="Loading results…"><DancerAnalyticsPanel compact initialAnalytics={analytics} /></DancerAgeVerificationGate>
+        <DancerAgeVerificationGate loadingLabel="Loading results…"><DancerAnalyticsPanel compact initialAnalytics={analytics} presenceKey={presenceKey} /></DancerAgeVerificationGate>
       </>}
       profile={<DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} visibilityContent={visibilityAndSharing} />}
-      results={<DancerAgeVerificationGate loadingLabel="Loading results…"><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} /></section></DancerAgeVerificationGate>}
+      results={<DancerAgeVerificationGate loadingLabel="Loading results…"><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} presenceKey={presenceKey} /></section></DancerAgeVerificationGate>}
       account={accountTools}
     />}
   </>;

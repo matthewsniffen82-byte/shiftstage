@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 const require = createRequire(import.meta.url);
 const counts = (requests=0) => Object.fromEntries(['tableRequests','tablePending','tableAcknowledged','tableCompleted','tableCancelled','vipRequests','vipPending','vipConfirmed','vipDeclined','vipCancelled','repeatVips'].map(key=>[key,key==='tableRequests'?requests:0]));
-const data = period => ({ period,periodStart:'2026-10-05T00:00:00Z',periodEnd:'2026-10-12T00:00:00Z',timezone:'UTC',profileCreatedAt:'2026-08-01T00:00:00Z',trend:[{start:'2026-10-05T00:00:00Z',end:'2026-10-06T00:00:00Z',views:3,followers:2,requests:10}],profileViews:{value:3,previous:1},newFollowers:{value:2,previous:null},contentLikes:{value:1,previous:null},socialLinkTaps:{value:0,previous:0},audience:{totalFollowers:20,workingNowSubscribers:12},topContent:[],currentRank:null,
+const data = period => ({ period,activeShift:null,periodStart:'2026-10-05T00:00:00Z',periodEnd:'2026-10-12T00:00:00Z',timezone:'UTC',profileCreatedAt:'2026-08-01T00:00:00Z',trend:[{start:'2026-10-05T00:00:00Z',end:'2026-10-06T00:00:00Z',views:3,followers:2,requests:10}],profileViews:{value:3,previous:1},newFollowers:{value:2,previous:null},contentLikes:{value:1,previous:null},socialLinkTaps:{value:0,previous:0},audience:{totalFollowers:20,workingNowSubscribers:12},topContent:[],currentRank:null,
   performance:{current:counts(10),previous:counts(5),external:{claims:2,admissions:1},alerts:{total:12,vip:4},workTrackingStartedAt:'2026-10-10T00:00:00Z',
     clubs:[{id:'club-a',name:'Club A',timezone:'UTC',current:{...counts(3),vipConfirmed:2,vipRequests:2},previous:counts(1),external:{claims:2,admissions:1},vipSubscribers:4},
       {id:'club-b',name:'Club B',timezone:'UTC',current:counts(7),previous:counts(4),external:{claims:0,admissions:0},vipSubscribers:0}],
@@ -16,7 +16,7 @@ const data = period => ({ period,periodStart:'2026-10-05T00:00:00Z',periodEnd:'2
       {id:'shift-b',venueId:'club-b',venueName:'Club B',timezone:'UTC',startedAt:'2026-10-11T00:00:00Z',endedAt:'2026-10-11T03:00:00Z',hours:3,requests:7}]}});
 
 // Hook-driven component events with mocked data, never a browser journey.
-function fixture(initial=data('7d')) {
+function fixture(initial=data('7d'), props={}) {
   const slots=[],calls=[];let cursor=0,dirty=true,effects=[],tree;
   const react={
     useState(initial){const i=cursor++;slots[i]??={value:typeof initial==='function'?initial():initial};return [slots[i].value,next=>{const value=typeof next==='function'?next(slots[i].value):next;if(!Object.is(value,slots[i].value)){slots[i].value=value;dirty=true;}}];},
@@ -32,9 +32,9 @@ function fixture(initial=data('7d')) {
   const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerAnalyticsPanel.tsx',import.meta.url),'utf8'),{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
   }).outputText,{exports,AbortController,require:name=>{assert.ok(name in imports,name);return imports[name];}});
-  function render(){dirty=true;for(let i=0;dirty&&i<20;i++){cursor=0;effects=[];dirty=false;tree=exports.DancerAnalyticsPanel({initialAnalytics:initial});effects.forEach(run=>run());}assert.equal(dirty,false);}
+  function render(){dirty=true;for(let i=0;dirty&&i<20;i++){cursor=0;effects=[];dirty=false;tree=exports.DancerAnalyticsPanel({initialAnalytics:initial,...props});effects.forEach(run=>run());}assert.equal(dirty,false);}
   function nodes(node=tree){return node&&typeof node==='object'?[node,...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)]:[];}
-  render();return {calls,nodes,render,html:()=>renderToStaticMarkup(tree),button:label=>nodes().find(node=>node.type==='button'&&node.props.children===label),
+  render();return {calls,nodes,render,setProps(next){props={...props,...next};render();},html:()=>renderToStaticMarkup(tree),button:label=>nodes().find(node=>node.type==='button'&&node.props.children===label),
     async settle(){await new Promise(resolve=>setImmediate(resolve));render();},close(){slots.forEach(slot=>slot?.cleanup?.());}};
 }
 
@@ -121,4 +121,62 @@ test('chart switches between recorded metrics, with accessible numbers for empty
   assert.match(ui.html(),/View chart numbers/);assert.doesNotMatch(ui.html(),/NaN|Infinity/);ui.close();
   const initial=data('7d');initial.trend[0].views=0;
   const zero=fixture(initial);assert.match(zero.html(),/Views trend across all clubs: 0 total, peak 0/);zero.close();
+});
+
+const checkedIn = () => {
+  const result=data('shift');
+  result.activeShift={id:'live-shift',venueId:'club-a',venueName:'Club A',startedAt:'2026-10-11T23:30:00Z',expiresAt:'2026-10-12T05:30:00Z'};
+  result.periodStart=result.activeShift.startedAt;
+  result.performance.current=counts(3);
+  result.performance.clubs=result.performance.clubs.slice(0,1);
+  result.performance.shifts=result.performance.shifts.slice(0,1);
+  return result;
+};
+
+test('checked-in dashboards default to actual shift dates and the current club',()=>{
+  const ui=fixture(checkedIn());
+  assert.equal(ui.calls.length,0);
+  assert.equal(ui.button('This shift').props['aria-pressed'],true);
+  assert.equal(ui.button('Tonight'),undefined);
+  const club=ui.nodes().find(node=>node.type==='select');
+  assert.equal(club.props.value,'club-a');assert.equal(club.props.disabled,true);
+  assert.match(ui.html(),/Since check-in/);assert.match(ui.html(),/This shift so far/);
+  assert.doesNotMatch(ui.html(),/vs prior|No change/);ui.close();
+  const compact=fixture(checkedIn(),{compact:true});
+  assert.match(compact.html(),/Your shift/);assert.match(compact.html(),/This shift · Club A/);
+  assert.match(compact.html(),/<dd>3<\/dd>/);compact.close();
+});
+
+test('ending a shift fetches fresh seven-day activity instead of reusing the opening snapshot',async()=>{
+  const ui=fixture(data('7d'),{compact:true});
+  ui.setProps({presenceKey:'live-shift'});
+  assert.equal(ui.calls[0].url,'/api/dancer/analytics?period=auto');
+  ui.calls[0].resolve({analytics:checkedIn()});await ui.settle();
+  assert.match(ui.html(),/Your shift/);
+  ui.setProps({presenceKey:'off'});
+  assert.equal(ui.calls[1].url,'/api/dancer/analytics?period=auto');
+  assert.doesNotMatch(ui.html(),/<dd>3<\/dd>/);
+  const latest=data('7d');latest.performance.current=counts(18);
+  ui.calls[1].resolve({analytics:latest});await ui.settle();
+  assert.match(ui.html(),/Last 7 days · all clubs/);assert.match(ui.html(),/<dd>18<\/dd>/);ui.close();
+});
+
+test('manual ranges remain selectable while checked in and shift expiry returns seven days',async()=>{
+  const ui=fixture(checkedIn());
+  ui.button('30 days').props.onClick();ui.render();
+  assert.ok(ui.button('This shift'));
+  const month=data('30d');month.activeShift=checkedIn().activeShift;
+  ui.calls[0].resolve({analytics:month});await ui.settle();
+  assert.equal(ui.nodes().find(node=>node.type==='select').props.disabled,false);
+  ui.button('This shift').props.onClick();ui.render();
+  ui.setProps({presenceKey:'off'});
+  ui.calls.at(-1).resolve({analytics:data('7d')});await ui.settle();
+  assert.equal(ui.button('7 days').props['aria-pressed'],true);
+  assert.ok(ui.button('Tonight'));assert.doesNotMatch(ui.html(),/This shift so far/);ui.close();
+});
+
+test('incorrect period responses never display under a new selection',async()=>{
+  const ui=fixture();ui.button('All time').props.onClick();ui.render();
+  ui.calls[0].resolve({analytics:data('7d')});await ui.settle();
+  assert.match(ui.html(),/Unable to load results/);assert.doesNotMatch(ui.html(),/Oct 5, 2026/);ui.close();
 });

@@ -1,4 +1,5 @@
-export type DancerAnalyticsPeriod = "tonight" | "7d" | "30d" | "all";
+export type DancerAnalyticsPeriod = "shift" | "tonight" | "7d" | "30d" | "all";
+export type DancerAnalyticsSelection = DancerAnalyticsPeriod | "auto";
 
 export type DancerActivityPoint = {
   start: string;
@@ -24,6 +25,7 @@ export type DancerTopContent = {
 
 export type DancerAudienceAnalytics = {
   period: DancerAnalyticsPeriod;
+  activeShift: { id: string; venueId: string; venueName: string; startedAt: string; expiresAt: string } | null;
   periodStart: string;
   periodEnd: string;
   timezone: string;

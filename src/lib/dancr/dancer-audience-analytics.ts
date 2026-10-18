@@ -1,15 +1,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { dancerPhotoDeliveryUrl, dancerVideoDeliveryUrl } from "./media-delivery-url.ts";
 import { getTonightWindow } from "./schedule.ts";
-import type { DancerAnalyticsPeriod, DancerAudienceAnalytics, DancerTopContent, DancerPerformanceAnalytics } from "./dancer-analytics-types.ts";
+import type { DancerAnalyticsSelection, DancerAudienceAnalytics, DancerTopContent, DancerPerformanceAnalytics } from "./dancer-analytics-types.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const PAGE_SIZE = 1000;
 
-export function dancerAnalyticsPeriod(value: string | null): DancerAnalyticsPeriod {
+export function dancerAnalyticsPeriod(value: string | null): DancerAnalyticsSelection {
   if (value === null || value === "7d") return "7d";
-  if (value === "tonight" || value === "30d" || value === "all") return value;
-  throw new Error("Choose Tonight, 7 days, 30 days or All time.");
+  if (value === "auto" || value === "shift" || value === "tonight" || value === "30d" || value === "all") return value;
+  throw new Error("Choose Current shift, Tonight, 7 days, 30 days or All time.");
 }
 
 // The caller authenticates the dancer. Resolve ownership before using the admin
@@ -17,7 +17,7 @@ export function dancerAnalyticsPeriod(value: string | null): DancerAnalyticsPeri
 export async function getOwnDancerAudienceAnalytics(
   admin: SupabaseClient,
   userId: string,
-  period: DancerAnalyticsPeriod = "7d",
+  requestedPeriod: DancerAnalyticsSelection = "7d",
   now = new Date(),
 ): Promise<DancerAudienceAnalytics> {
   const { data: profile, error } = await admin.from("dancer_profiles")
@@ -26,6 +26,21 @@ export async function getOwnDancerAudienceAnalytics(
   if (!profile) throw new Error("Dancer profile not found.");
 
   const dancerId = String(profile.id);
+  // Resolve the live check-in on the server, scoped to the authenticated owner.
+  // Scheduled start times and the calendar's Tonight window are not shift starts.
+  const active = await admin.from("shifts")
+    .select("id, venue_id, checked_in_at, location_verification_expires_at, timezone, venues(name)")
+    .eq("dancer_id", dancerId).eq("location_status", "club_confirmed")
+    .is("checked_out_at", null).neq("status", "cancelled")
+    .lte("checked_in_at", now.toISOString()).gt("location_verification_expires_at", now.toISOString())
+    .order("checked_in_at", { ascending: false }).limit(1).maybeSingle();
+  if (active.error) throw active.error;
+  const venue = Array.isArray(active.data?.venues) ? active.data.venues[0] : active.data?.venues;
+  const activeShift = active.data ? {
+    id: String(active.data.id), venueId: String(active.data.venue_id), venueName: String(venue?.name || "Current club"),
+    startedAt: String(active.data.checked_in_at), expiresAt: String(active.data.location_verification_expires_at),
+  } : null;
+  const period = requestedPeriod === "auto" || requestedPeriod === "shift" ? (activeShift ? "shift" : "7d") : requestedPeriod;
   const duration = (period === "30d" ? 30 : 7) * DAY_MS;
   const end = now.toISOString();
   let start = new Date(now.getTime() - duration).toISOString();
@@ -37,6 +52,10 @@ export async function getOwnDancerAudienceAnalytics(
     timeZone = venue.data?.timezone || timeZone;
   }
   if (period === "all") start = Date.parse(profile.created_at) < now.getTime() ? profile.created_at : new Date(now.getTime() - 1).toISOString();
+  if (period === "shift" && activeShift) {
+    start = activeShift.startedAt;
+    timeZone = active.data?.timezone || timeZone;
+  }
   if (period === "tonight") {
     start = getTonightWindow(timeZone, now).startsAt;
     // Keep the preceding window until the shared 00:01 rollover has elapsed.
@@ -45,7 +64,7 @@ export async function getOwnDancerAudienceAnalytics(
     }
   }
   const previousStart = new Date(now.getTime() - duration * 2).toISOString();
-  const canCompare = period !== "tonight" && period !== "all" && new Date(profile.created_at).getTime() <= Date.parse(previousStart);
+  const canCompare = period !== "shift" && period !== "tonight" && period !== "all" && new Date(profile.created_at).getTime() <= Date.parse(previousStart);
 
   const count = async (table: string, dateColumn?: string, from?: string, to?: string) => {
     let query = admin.from(table).select("*", { count: "exact", head: true }).eq("dancer_id", dancerId);
@@ -86,6 +105,13 @@ export async function getOwnDancerAudienceAnalytics(
     performance.previous = null;
     performance.clubs = performance.clubs.map(club => ({ ...club, previous: null }));
   }
+  if (period === "shift" && activeShift) {
+    const club = performance.clubs.find(item => item.id === activeShift.venueId);
+    performance.current = club?.current || Object.fromEntries(Object.keys(performance.current).map(key => [key, 0])) as typeof performance.current;
+    performance.external = club?.external || { claims: 0, admissions: 0 };
+    performance.clubs = performance.clubs.filter(item => item.id === activeShift.venueId);
+    performance.shifts = performance.shifts.filter(item => item.venueId === activeShift.venueId);
+  }
 
   const candidates = [
     ...[...photoLikes].map(([id, likes]) => ({ id, kind: "photo" as const, likes, views: null })),
@@ -118,7 +144,7 @@ export async function getOwnDancerAudienceAnalytics(
   for (const item of content) if (item) topContent.push(item);
 
   return {
-    period, periodStart: start, periodEnd: end, timezone: timeZone, profileCreatedAt: profile.created_at,
+    period, activeShift, periodStart: start, periodEnd: end, timezone: timeZone, profileCreatedAt: profile.created_at,
     trend: trendResult.data, profileViews, socialLinkTaps,
     // Likes and follows can be removed. Their timestamps support period totals,
     // but the current rows cannot reconstruct a reliable historical comparison.

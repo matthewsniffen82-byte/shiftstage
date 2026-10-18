@@ -63,19 +63,23 @@ function database(rows, failTable) {
     if (failTable === name) return { error: new Error("performance unavailable") };
     const counts = Object.fromEntries(["tableRequests","tablePending","tableAcknowledged","tableCompleted","tableCancelled","vipRequests","vipPending","vipConfirmed","vipDeclined","vipCancelled","repeatVips"].map(key=>[key,0]));
     return { data: { current: counts, previous: { ...counts }, external: { claims: 0, admissions: 0 },
-      alerts: { total: rows.follows?.length ? 1 : 0, vip: 0 }, clubs: [], shifts: [], workTrackingStartedAt: null } };
+      alerts: { total: rows.follows?.length ? 1 : 0, vip: 0 }, clubs: rows.performanceClubs || [], shifts: rows.performanceShifts || [], workTrackingStartedAt: null } };
   }, from(table) {
     const call = { table, filters: [], fields: "", options: {}, offset: 0, end: 999, single: false };
     calls.push(call);
     const query = {
       select(fields, options = {}) { call.fields = fields; call.options = options; return query; },
       eq(key, value) { call.filters.push([key, "eq", value]); return query; },
+      is(key, value) { call.filters.push([key, "eq", value]); return query; },
+      neq(key, value) { call.filters.push([key, "neq", value]); return query; },
+      gt(key, value) { call.filters.push([key, "gt", value]); return query; },
+      lte(key, value) { call.filters.push([key, "lte", value]); return query; },
       ilike(key, value) { call.filters.push([key, "ilike", value]); return query; },
       gte(key, value) { call.filters.push([key, "gte", value]); return query; },
       lt(key, value) { call.filters.push([key, "lt", value]); return query; },
       range(offset, end) { call.offset = offset; call.end = end; return query; },
       limit(value) { call.end = value - 1; return query; },
-      order(key) { call.order = key; return query; },
+      order(key, {ascending=true}={}) { call.order = key; call.ascending=ascending; return query; },
       maybeSingle() { call.single = true; return query; },
       then(resolve, reject) {
         if (table === failTable) return Promise.resolve({ error: new Error("database unavailable") }).then(resolve, reject);
@@ -86,10 +90,10 @@ function database(rows, failTable) {
             const foreignKey = parent === "dancer_photos" ? "photo_id" : "video_id";
             actual = rows[parent]?.find(item => item.id === row[foreignKey])?.[field];
           }
-          return op === "ilike" ? String(actual).toLowerCase() === value.toLowerCase() : op === "eq" ? actual === value : op === "gte" ? actual >= value : actual < value;
+          return op === "ilike" ? String(actual).toLowerCase() === value.toLowerCase() : op === "eq" ? actual === value : op === "neq" ? actual !== value : op === "gt" ? actual > value : op === "lte" ? actual != null && actual <= value : op === "gte" ? actual >= value : actual < value;
         }));
         const count = data.length;
-        if (call.order) data = [...data].sort((a, b) => String(a[call.order]).localeCompare(String(b[call.order])));
+        if (call.order) data = [...data].sort((a, b) => (call.ascending ? 1 : -1) * String(a[call.order]).localeCompare(String(b[call.order])));
         data = data.slice(call.offset, call.end + 1);
         return Promise.resolve({ data: call.options.head ? null : call.single ? data[0] || null : data, count, error: null }).then(resolve, reject);
       },
@@ -307,5 +311,57 @@ for (const endpoint of ["analytics", "dashboard"]) {
     assert.equal(data.analytics.profileViews30Days, 50);
     assert.ok(route.calls.includes("legacy-analytics"));
     if (endpoint === "dashboard") assert.equal(data.deals.redeemed, 1);
+  });
+}
+
+function liveShift(overrides={}) {
+  return {id:'shift-live',dancer_id:'mine',venue_id:'club-a',venues:{name:'Club A'},timezone:'America/New_York',
+    checked_in_at:'2026-09-23T10:00:00.000Z',checked_out_at:null,status:'scheduled',location_status:'club_confirmed',
+    location_verification_expires_at:'2026-09-23T16:00:00.000Z',...overrides};
+}
+
+test('automatic analytics uses actual check-in time across midnight and scopes requests to that club',async()=>{
+  const rows=fixture();const startedAt='2026-09-23T02:00:00.000Z';
+  rows.shifts=[liveShift({checked_in_at:startedAt})];
+  rows.profile_views=[{dancer_id:'mine',viewed_at:'2026-09-23T01:59:59.999Z'},
+    {dancer_id:'mine',viewed_at:startedAt},{dancer_id:'mine',viewed_at:'2026-09-23T09:00:00.000Z'},
+    {dancer_id:'other',viewed_at:startedAt}];
+  rows.performanceClubs=[{id:'club-a',name:'Club A',current:{tableRequests:4,vipRequests:2,repeatVips:1},external:{claims:1,admissions:0}},
+    {id:'club-b',name:'Club B',current:{tableRequests:90},external:{claims:20,admissions:10}}];
+  rows.performanceShifts=[{venueId:'club-a',id:'mine'},{venueId:'club-b',id:'elsewhere'}];
+  const db=database(rows),result=await service.getOwnDancerAudienceAnalytics(db,'owner','auto',now);
+  assert.equal(result.period,'shift');assert.equal(result.periodStart,startedAt);
+  assert.equal(result.timezone,'America/New_York');assert.equal(result.activeShift.venueName,'Club A');
+  assert.equal(result.profileViews.value,2);assert.equal(result.profileViews.previous,null);
+  assert.equal(result.performance.current.tableRequests,4);assert.equal(result.performance.previous,null);
+  assert.equal(result.performance.clubs.length,1);assert.equal(result.performance.shifts.length,1);
+  for(const rpc of db.calls.filter(call=>call.params)) assert.equal(rpc.params.p_since,startedAt);
+  assert.ok(db.calls.find(call=>call.table==='shifts').filters.some(([key,op,value])=>key==='dancer_id'&&value==='mine'));
+});
+
+test('off-shift, expired, checked-out, cancelled and other-owner sessions fall back to seven days',async()=>{
+  for(const shifts of [[],[liveShift({dancer_id:'other'})],[liveShift({checked_out_at:'2026-09-23T11:00:00.000Z'})],
+    [liveShift({status:'cancelled'})],[liveShift({location_status:'unverified'})],
+    [liveShift({location_verification_expires_at:now.toISOString()})],[liveShift({checked_in_at:'2026-09-23T13:00:00.000Z'})]]) {
+    const rows=fixture();rows.shifts=shifts;
+    for(const selection of ['auto','shift']) {
+      const result=await service.getOwnDancerAudienceAnalytics(database(rows),'owner',selection,now);
+      assert.equal(result.period,'7d');assert.equal(result.activeShift,null);assert.equal(result.periodStart,daysAgo(7));
+    }
+  }
+});
+
+test('shift lookup failures surface as errors and explicit historical ranges stay intact while working',async()=>{
+  await assert.rejects(service.getOwnDancerAudienceAnalytics(database(fixture(),'shifts'),'owner','auto',now),/database unavailable/);
+  const rows=fixture();rows.shifts=[liveShift()];
+  const result=await service.getOwnDancerAudienceAnalytics(database(rows),'owner','30d',now);
+  assert.equal(result.period,'30d');assert.equal(result.periodStart,daysAgo(30));assert.equal(result.activeShift.id,'shift-live');
+});
+
+for(const endpoint of ['analytics','dashboard']) for(const period of ['auto','shift']) {
+  test(endpoint+' accepts '+period+' while retaining authenticated ownership and private caching',async()=>{
+    const route=routes();const response=await route[endpoint].GET(new Request('https://mydancr.test/api/dancer/'+endpoint+'?period='+period+'&dancerId=someone-else'));
+    assert.equal(response.status,200);assert.deepEqual(route.calls,[period]);
+    assert.equal(response.headers.get('cache-control'),'private, no-store');
   });
 }

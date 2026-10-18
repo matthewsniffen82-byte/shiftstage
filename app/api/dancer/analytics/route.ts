@@ -12,8 +12,8 @@ export async function GET(request: Request) {
   try {
     const { client, user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const requestedPeriod = new URL(request.url).searchParams.get("period");
-    if (requestedPeriod !== null && requestedPeriod !== "tonight" && requestedPeriod !== "7d" && requestedPeriod !== "30d" && requestedPeriod !== "all") {
-      return NextResponse.json({ ok: false, error: "Choose Tonight, 7 days, 30 days or All time." }, { status: 400 });
+    if (requestedPeriod !== null && requestedPeriod !== "auto" && requestedPeriod !== "shift" && requestedPeriod !== "tonight" && requestedPeriod !== "7d" && requestedPeriod !== "30d" && requestedPeriod !== "all") {
+      return NextResponse.json({ ok: false, error: "Choose Current shift, Tonight, 7 days, 30 days or All time." }, { status: 400 });
     }
     const admin = createAdminSupabaseClient();
     const analytics = requestedPeriod === null

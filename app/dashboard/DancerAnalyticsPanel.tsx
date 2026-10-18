@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { DancerAnalyticsPeriod, DancerAudienceAnalytics, DancerEngagementMetric, DancerRequestCounts } from "@/src/lib/dancr/dancer-analytics-types";
+import type { DancerAnalyticsPeriod, DancerAnalyticsSelection, DancerAudienceAnalytics, DancerEngagementMetric, DancerRequestCounts } from "@/src/lib/dancr/dancer-analytics-types";
 import { requestDashboardJson } from "./dashboard-session";
 import { DancerDiscoveryBoosts } from "./DancerDiscoveryBoosts";
 import { DancerResultsTrend } from "./DancerResultsTrend";
@@ -9,7 +9,7 @@ import "./dancer-results.css";
 
 const number = (value: number) => new Intl.NumberFormat("en-US").format(value);
 const channels = { internal: "In club", vip: "VIP", external: "Public site" } as const;
-const periods = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
+const periods = { shift: "This shift", tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
 const dateLabel = (value: string, timezone = "America/Los_Angeles") => new Date(value).toLocaleDateString("en-US", { timeZone: timezone, month: "short", day: "numeric", year: "numeric" });
 
 function readAnalytics(value: unknown): DancerAudienceAnalytics | null {
@@ -20,9 +20,14 @@ function readAnalytics(value: unknown): DancerAudienceAnalytics | null {
     && data.performance?.current && data.performance.alerts && Array.isArray(data.performance.clubs) && Array.isArray(data.performance.shifts) ? data : null;
 }
 
-export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { initialAnalytics?: Record<string, unknown> | null; compact?: boolean }) {
+const matchesSelection = (data: DancerAudienceAnalytics | null, selection: DancerAnalyticsSelection) => Boolean(data && (
+  selection === "auto" ? Object.hasOwn(data, "activeShift") && data.period === (data.activeShift ? "shift" : "7d")
+    : data.period === selection || (selection === "shift" && data.period === "7d" && data.activeShift === null)
+));
+
+export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presenceKey }: { initialAnalytics?: Record<string, unknown> | null; compact?: boolean; presenceKey?: string }) {
   const initial = readAnalytics(initialAnalytics);
-  const [period, setPeriod] = useState<DancerAnalyticsPeriod>("7d");
+  const [selection, setSelection] = useState<DancerAnalyticsSelection>("auto");
   const [analytics, setAnalytics] = useState(initial);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
@@ -32,34 +37,39 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
   const [contentLimit, setContentLimit] = useState(3);
   const [trendMetric, setTrendMetric] = useState<"views" | "followers" | "requests">("views");
   const [clubs, setClubs] = useState(initial?.performance.clubs || []);
+  const [activeShift, setActiveShift] = useState(initial?.activeShift || null);
 
   useEffect(() => {
     const initial = readAnalytics(initialAnalytics);
-    if (initial?.period === period && retry === 0) {
-      setAnalytics(initial); setClubs(initial.performance.clubs); setError(""); return;
+    // After the live check-in manager responds, always refresh from the server.
+    // An earlier seven-day snapshot must not reappear after a shift ends.
+    if (initial && matchesSelection(initial, selection) && retry === 0 && presenceKey === undefined) {
+      setAnalytics(initial); setClubs(initial.performance.clubs); setActiveShift(initial.activeShift); setError(""); return;
     }
     const controller = new AbortController();
     setAnalytics(null); setError("");
-    void requestDashboardJson(`/api/dancer/analytics?period=${period}`, {
+    void requestDashboardJson(`/api/dancer/analytics?period=${selection}`, {
       cache: "no-store", expectedRole: "dancer", signal: controller.signal, timeoutMs: 15000,
       fallbackMessage: "Unable to load results. Try again.",
     }).then(result => {
       if (controller.signal.aborted) return;
       const next = readAnalytics(result.analytics);
-      if (!next || next.period !== period) throw new Error("Results period could not be confirmed.");
+      if (!next || !matchesSelection(next, selection)) throw new Error("Results period could not be confirmed.");
       setAnalytics(next);
       setClubs(next.performance.clubs);
+      setActiveShift(next.activeShift);
     }).catch(() => {
       if (!controller.signal.aborted) setError("Unable to load results. Try again.");
     });
     return () => controller.abort();
-  }, [initialAnalytics, period, retry]);
+  }, [initialAnalytics, selection, retry, presenceKey]);
 
-  const current = analytics?.period === period ? analytics : null;
-  const periodLabel = period === "tonight" || period === "all" ? periods[period] : `Last ${periods[period]}`;
+  const current = matchesSelection(analytics, selection) ? analytics : null;
+  const period = current?.period || (selection === "auto" ? initial?.activeShift ? "shift" : "7d" : selection);
+  const periodLabel = period === "shift" || period === "tonight" || period === "all" ? periods[period] : `Last ${periods[period]}`;
   const loading = !current && !error;
   const performance = current?.performance;
-  const club = performance?.clubs.find(item => item.id === clubId);
+  const club = performance?.clubs.find(item => item.id === (period === "shift" ? current?.activeShift?.venueId : clubId));
   const selected = club || performance;
   const shifts = performance?.shifts.filter(shift => !club || shift.venueId === club.id) || [];
   const requestMetric = (key: keyof DancerRequestCounts): DancerEngagementMetric => ({
@@ -69,13 +79,13 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
     || performance!.current.tableRequests > 0 || performance!.current.vipRequests > 0 || performance!.alerts.total > 0);
 
   if (compact) return <section className="dancer-daily-card dancer-activity-summary" aria-label="Recent activity" aria-busy={loading}>
-    <header><div><h2>Recent activity</h2><p>Last 7 days · all clubs</p></div><a href="#dancer-results">View results</a></header>
+    <header><div><h2>{period === "shift" ? "Your shift" : "Recent activity"}</h2><p>{periodLabel} · {current?.period === "shift" ? current.activeShift?.venueName : "all clubs"}</p></div><a href="#dancer-results">View results</a></header>
     {loading ? <p role="status">Loading activity…</p> : error ? <p role="alert">{error} <button type="button" onClick={() => setRetry(value => value + 1)}>Retry</button></p> : current && performance ? <>
       <dl className="dancer-activity-counts">
         <div><dt>Table requests</dt><dd>{number(performance.current.tableRequests)}</dd></div>
         <div><dt>VIP requests</dt><dd>{number(performance.current.vipRequests)}</dd></div>
         <div><dt>Repeat VIPs</dt><dd>{number(performance.current.repeatVips)}</dd></div>
-        <div><dt>New followers</dt><dd>{number(current.newFollowers.value)}</dd></div>
+        <div><dt>New followers{period === "shift" ? " · all clubs" : ""}</dt><dd>{number(current.newFollowers.value)}</dd></div>
       </dl>
       <p className="dancer-results-note">Requests show interest; they do not confirm a visit.</p>
     </> : null}
@@ -84,16 +94,17 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
   return <div className="dancer-analytics" aria-busy={loading}>
     <div className="dancer-analytics-toolbar">
       <div className="dancer-analytics-period" role="group" aria-label="Analytics period">
-        {(["tonight", "7d", "30d", "all"] as const).map(value => <button key={value} type="button" aria-pressed={period === value}
-          onClick={() => { setError(""); setPeriod(value); setShiftLimit(5); setContentLimit(3); }}>{periods[value]}</button>)}
+        {([activeShift ? "shift" : "tonight", "7d", "30d", "all"] as const).map(value => <button key={value} type="button" aria-pressed={period === value}
+          onClick={() => { setError(""); setSelection(value); setShiftLimit(5); setContentLimit(3); }}>{periods[value]}</button>)}
       </div>
       <label className="dancer-results-club">Requests and shifts at
-        <select value={clubs.some(item => item.id === clubId) ? clubId : ""} disabled={loading} onChange={event => { setClubId(event.target.value); setShiftLimit(5); }}>
-          <option value="">All clubs</option>
+        <select value={period === "shift" ? current?.activeShift?.venueId || "" : clubs.some(item => item.id === clubId) ? clubId : ""} disabled={loading || period === "shift"} onChange={event => { setClubId(event.target.value); setShiftLimit(5); }}>
+          {period !== "shift" && <option value="">All clubs</option>}
+          {period === "shift" && current?.activeShift && !clubs.some(item => item.id === current.activeShift!.venueId) && <option value={current.activeShift.venueId}>{current.activeShift.venueName}</option>}
           {clubs.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
         </select>
       </label>
-      {current && <p className="dancer-results-range">{dateLabel(current.periodStart, current.timezone)} – {dateLabel(current.periodEnd, current.timezone)}<span>{current.timezone.replaceAll("_", " ")}{period === "tonight" ? " · so far" : ""}</span></p>}
+      {current && <p className="dancer-results-range">{period === "shift" ? <>Since check-in · {new Date(current.periodStart).toLocaleString("en-US", { timeZone: current.timezone, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</> : <>{dateLabel(current.periodStart, current.timezone)} – {dateLabel(current.periodEnd, current.timezone)}</>}<span>{current.timezone.replaceAll("_", " ")}{period === "tonight" || period === "shift" ? " · so far" : ""}</span></p>}
     </div>
     {loading && <p role="status">Loading results…</p>}
     {error && <div className="dancer-analytics-error" role="alert"><p>{error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Try again</button></div>}
@@ -175,8 +186,8 @@ function Detail({ label, value }: { label: string; value: number }) {
 
 function EngagementCard({ label, metric, period, title, scope }: { label: string; metric: DancerEngagementMetric; period: DancerAnalyticsPeriod; title?: string; scope?: string }) {
   const days = period === "30d" ? 30 : 7;
-  const difference = period === "tonight" || period === "all" || metric.previous === null ? null : metric.value - metric.previous;
-  const trend = period === "all" ? "All recorded activity" : period === "tonight" ? "Tonight so far" : difference === null ? `Last ${days} days · comparison unavailable`
+  const difference = period === "shift" || period === "tonight" || period === "all" || metric.previous === null ? null : metric.value - metric.previous;
+  const trend = period === "shift" ? "This shift so far" : period === "all" ? "All recorded activity" : period === "tonight" ? "Tonight so far" : difference === null ? `Last ${days} days · comparison unavailable`
     : difference === 0 ? "No change"
     : metric.previous === 0 ? `+${number(difference)} vs prior ${days} days`
     : `${difference > 0 ? "+" : "−"}${number(Math.round(Math.abs(difference) / metric.previous! * 100))}% vs prior ${days} days`;

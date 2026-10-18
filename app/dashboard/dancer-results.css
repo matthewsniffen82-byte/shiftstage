@@ -108,3 +108,15 @@ body.dancr-button-system #dancer-dashboard .dancer-analytics-content-copy > smal
   body.dancr-button-system #dancer-dashboard .dancer-results-shifts dl { grid-column: 1; grid-row: auto; }
   body.dancr-button-system #dancer-dashboard .dancer-results-shifts dl > div { text-align: left; }
 }
+
+/* Match the compact overview without shrinking the metric info hit targets. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics { gap:10px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar { padding:8px; gap:6px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar > .dancer-analytics-period > button { min-height:36px !important; padding:4px 2px !important; font-size:12px !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club { grid-template-columns:auto minmax(0,1fr); gap:8px; font-size:11px; letter-spacing:normal; font-weight:500; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club select { min-height:38px !important; padding:6px 9px !important; font-size:16px !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-range { font-size:11px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-metric { padding:10px; gap:3px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-metric > span { font-size:12px; font-weight:550; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-metric > strong { font-size:26px; font-weight:650; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-metric > small { font-size:10px; line-height:1.3; }

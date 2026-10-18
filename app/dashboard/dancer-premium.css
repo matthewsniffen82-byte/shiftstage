@@ -230,3 +230,25 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-inline-preview .profile-media-tabs { margin-top:0; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-identity-form label { align-content:start; }
 @media(max-width:600px) { body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-avatar-source-grid { width:100% !important; min-width:0; } body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-avatar-source-grid .photo-source-action { min-width:0; } body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-avatar-upload-controls > button { width:100%; } }
+
+/* Compact daily workflow: align actions and remove the redundant check-in frame. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer :is(#dancer-schedule,#dancer-overview,#dancer-performance,.dancer-activity-summary) { padding:12px !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer :is(#dancer-schedule,#dancer-overview,#dancer-performance,.dancer-activity-summary) > header { gap:8px; margin-bottom:10px; align-items:flex-start; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer :is(#dancer-schedule,#dancer-overview,#dancer-performance,.dancer-activity-summary) h2 { font-size:20px !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer :is(#dancer-overview,#dancer-performance,.dancer-activity-summary) > header p { margin-top:4px; font-size:12px; line-height:1.4; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-overview .dancer-visibility-badge { flex-shrink:0; padding:4px 7px; font-size:11px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-overview .dancer-overview-actions { display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); align-items:stretch; gap:6px; max-width:480px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-overview .dancer-overview-actions > :is(button,a) { display:flex; align-items:center; justify-content:center; min-width:0; min-height:36px !important; margin:0; padding:6px 4px !important; border-radius:8px !important; font-size:12px !important; font-weight:600 !important; line-height:1.3; text-align:center; text-decoration:none; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule .shift-panel { display:grid; gap:6px; margin:0; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule .shift-checkin-card { padding:10px; gap:8px; border-radius:10px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule .shift-checkin-card > span > strong { font-size:16px; line-height:1.3; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule .shift-checkin-card small { font-size:12px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule .shift-checkin-card > button { min-height:36px !important; padding:6px 10px !important; font-size:12px !important; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule .dancer-schedule-help { margin:0; border:0; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule .dancer-schedule-help > summary { min-height:36px; font-size:12px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary > header > a { display:inline-flex; align-items:center; flex-shrink:0; min-height:36px; font-size:12px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts { gap:6px; margin:8px 0; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts > div { gap:4px; padding:9px 10px; border-radius:10px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts dt { font-size:11px; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts dd { font-size:23px; line-height:1.2; font-weight:650; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-results-note { margin:8px 0 0; font-size:11px; line-height:1.4; }

@@ -16,7 +16,7 @@ import {
 
 type ShiftRow = Record<string, any>;
 
-export default function DancerShiftManager() {
+export default function DancerShiftManager({ onPresenceChange }: { onPresenceChange?: (key: string) => void } = {}) {
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [status, setStatus] = useState("");
@@ -81,6 +81,10 @@ export default function DancerShiftManager() {
     [shifts],
   );
   const demoManagedActiveShift = activeShift?.shift_source === "demo_locked";
+  const presenceKey = activeShift ? `${activeShift.id}:${activeShift.checked_in_at}:${activeShift.location_verification_expires_at}` : "off";
+  useEffect(() => {
+    if (hasLoaded) onPresenceChange?.(presenceKey);
+  }, [hasLoaded, presenceKey, onPresenceChange]);
   const latestNfcShift = useMemo(
     () => shifts
       .filter((shift) => Boolean(shift.nfc_last_tapped_at || shift.nfcLastTappedAt))
@@ -107,6 +111,7 @@ export default function DancerShiftManager() {
         fallbackMessage: "Unable to end Working Now.",
       });
       if (!mountedRef.current) return;
+      setShifts(current => current.map(shift => shift.id === activeShift.id ? { ...shift, checked_out_at: new Date().toISOString() } : shift));
       setWorkingNowStatusKind("success");
       setWorkingNowStatus("Working Now ended. Guests no longer see you in Working Now.");
       try {
