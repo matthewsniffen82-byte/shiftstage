@@ -150,4 +150,6 @@ test("the classic shell and routed profile share the same fullscreen controller"
   assert.match(carousel, /import mediaFullscreen[^;]+@\/public\/profile-media-fullscreen/);
   assert.match(carousel, /mediaFullscreen.createController\(surface/);
   assert.match(carousel, /controller.dispose\(\)/);
+  assert.equal(fs.existsSync("public/profile-media-fullscreen.d.ts"), false, "declarations must not be published as public assets");
+  assert.match(fs.readFileSync("src/types/profile-media-fullscreen.d.ts", "utf8"), /declare module "@\/public\/profile-media-fullscreen"/);
 });
