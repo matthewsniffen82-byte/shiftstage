@@ -1,6 +1,7 @@
 "use client";
 import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import VenueNotificationSettings from "./VenueNotificationSettings";
+import DashboardPhoneNotifications from "./DashboardPhoneNotifications";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -101,9 +102,6 @@ export function VenuePanel({
   const connectedVenueId = profile?.id;
   const { operations, error: operationsError } = useVenueOperations(connectedVenueId, refreshedAt);
   const liveDataReady = Boolean(refreshedAt);
-  useEffect(() => {
-    if (connectedVenueId) offerPushNotifications("venue-dashboard");
-  }, [connectedVenueId]);
   const [activeWorkspace, setActiveWorkspace] = useState<VenueWorkspace>(() => {
     const sectionId = typeof window === "undefined" ? "" : window.location.hash.replace(/^#/, "");
     return venueWorkspaceForSection(sectionId) || (venueAccess?.role === "staff" ? "tonight" : initialVenueWorkspace(profile?.isActive === true));
@@ -337,6 +335,7 @@ export function VenuePanel({
         aria-labelledby="venue-workspace-tonight-tab"
       >
         {(activeWorkspace === "tonight" || openedWorkspaces.includes("tonight")) && <>
+        <DashboardPhoneNotifications role="venue" overview refreshKey={notificationRevision} />
         <VenueTonightOverview operations={operations} error={operationsError} working={liveDataReady ? workingNow.length : null}
           manager={venueRole === "owner" || venueRole === "manager"} published={isPublished} reviewReady={isAwaitingVenueReview} onOpen={openVenueSection} />
         <VenueGuestsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} role={venueRole}

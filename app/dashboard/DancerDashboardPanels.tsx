@@ -19,7 +19,7 @@ import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerOnboardingCommand } from "./DancerProfileEditor";
 import DancerProfileWorkspace from "./DancerProfileWorkspace";
 import DancerDashboardWorkspace from "./DancerDashboardWorkspace";
-import DancerPhoneNotifications from "./DancerPhoneNotifications";
+import DashboardPhoneNotifications from "./DashboardPhoneNotifications";
 import "./dancer-visibility-sharing.css";
 // Keep role-specific tools out of every customer's initial JavaScript. Editors
 // load when mounted; the visible role's core tools warm while its data loads.
@@ -50,9 +50,11 @@ export function DancerPanel({
   profile?: LoadState["profile"];
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
-  useEffect(() => { offerPushNotifications("dancer-dashboard"); }, []);
   const isApproved = effectiveStatus === "approved";
   const agreementReviewRequired = agreement?.required === true && !agreement.accepted;
+  useEffect(() => {
+    if (!isApproved || agreementReviewRequired) offerPushNotifications("dancer-dashboard");
+  }, [isApproved, agreementReviewRequired]);
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
   const isVenueApproved = Boolean(profile?.venue_approved_at || profile?.venueApprovedAt)
     || affiliations.some((item) => item.status === "active");
@@ -160,7 +162,7 @@ export function DancerPanel({
     <DashboardSection id="dancer-share" title="Share profile" description="Copy your public profile link." icon={<DancerDashboardIcon section="profile" />} toggleAffordance="chevron"><DancerSharePanel profile={profile} /></DashboardSection>
   </section>;
   const accountTools = <>
-    <DancerPhoneNotifications />
+    <DashboardPhoneNotifications />
     <DashboardSection id="dancer-connected-clubs" title="Connected clubs" description="Your club access and check-in tags." icon={<DancerDashboardIcon section="schedule" />} toggleAffordance="chevron">
       <DancerNfcPanel compactAuthorized initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />
     </DashboardSection>
@@ -176,6 +178,7 @@ export function DancerPanel({
       {accountContent}
     </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested}
       overview={<>
+        <DashboardPhoneNotifications overview />
         <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager onPresenceChange={setPresenceKey} /></section></DancerAgeVerificationGate>
         <section className="dancer-daily-card" id="dancer-overview">
           <header><div><h2>Your profile</h2><p>Public visibility is separate from your club check-in.</p></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{isPublic ? "Public" : "Hidden"}</span></header>

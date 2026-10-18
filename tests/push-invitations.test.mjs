@@ -54,9 +54,9 @@ test("page entry loads no device module, configuration or permission prompt", ()
   const f = fixture(); assert.equal(f.nodes.length, 0); assert.equal(f.calls.length, 0);
 });
 
-test("entering the dancer dashboard offers notification setup before either onboarding or the approved workspace", () => {
+test("only onboarding uses the automatic dancer invitation; the approved workspace has an inline prompt", () => {
   const panel = readFileSync(new URL("../app/dashboard/DancerDashboardPanels.tsx", import.meta.url), "utf8");
-  assert.match(panel, /useEffect\(\(\) => \{ offerPushNotifications\("dancer-dashboard"\); \}, \[\]\)/);
+  assert.match(panel, /if \(!isApproved \|\| agreementReviewRequired\) offerPushNotifications\("dancer-dashboard"\)/);
   assert.ok(panel.indexOf('offerPushNotifications("dancer-dashboard")') < panel.indexOf('<DancerOnboardingCommand'));
 });
 for (const [role, moment, words] of [
