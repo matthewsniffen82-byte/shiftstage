@@ -211,6 +211,29 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   flex-shrink:0; margin:0;
 }
 
+/* Current audience and period activity share one section; the chart is optional. */
+body.dancr-button-system #dancer-dashboard .dancer-audience-heading-row {
+  display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:4px 12px;
+}
+body.dancr-button-system #dancer-dashboard :is(.dancer-audience-heading-row > h4, .dancer-audience-activity-heading) {
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; margin:0;
+  color:#f2edf8; font-size:13px; font-weight:600; line-height:1.4;
+}
+body.dancr-button-system #dancer-dashboard .dancer-analytics-audience > .dancer-audience-activity-heading { margin:16px 0 8px; }
+body.dancr-button-system #dancer-dashboard .dancer-audience-activity-heading > small { color:#bcb6c6; font-size:11px; font-weight:400; }
+body.dancr-button-system #dancer-dashboard .dancer-audience-heading-row > .dancer-results-info { flex:0 0 44px; }
+body.dancr-button-system #dancer-dashboard .dancer-audience-heading-row > .dancer-results-info > summary { justify-content:center; width:44px; padding:0; }
+body.dancr-button-system #dancer-dashboard .dancer-audience-heading-row:has(.dancer-results-info[open]) > .dancer-results-info { flex-basis:100%; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-audience > .dancer-audience-counts { margin:0; }
+body.dancr-button-system #dancer-dashboard .dancer-audience-trend { min-width:0; margin:12px 0 0; padding:0; border:0; border-top:1px solid #332b3d; background:none; box-shadow:none; }
+body.dancr-button-system #dancer-dashboard .dancer-audience-trend > summary {
+  box-sizing:border-box; display:list-item; min-height:44px; padding:12px 0;
+  list-style:disclosure-closed inside; color:#d0ccd7; font-size:12px; font-weight:600; line-height:1.4; cursor:pointer;
+}
+body.dancr-button-system #dancer-dashboard .dancer-audience-trend[open] > summary { list-style-type:disclosure-open; }
+body.dancr-button-system #dancer-dashboard .dancer-audience-trend > summary:focus-visible { outline:2px solid #c4a5f5; outline-offset:2px; border-radius:6px; }
+body.dancr-button-system #dancer-dashboard .dancer-audience-trend > .dancer-results-trend { margin-top:0; }
+
 /* Compact channels share the range controls' solid face and equal columns. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels { padding:0; border:0; background:none; margin:0 0 8px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button {

@@ -185,24 +185,28 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
         {shifts.length > shiftLimit && <button className="dancer-results-more" type="button" onClick={() => setShiftLimit(value => value + 10)}>Show more shifts</button>}
       </section>
       <section className="dancer-analytics-audience" aria-labelledby="dancer-audience-heading">
-        <h3 id="dancer-audience-heading">Your audience <small>Across all clubs</small></h3>
-        <dl className="dancer-audience-counts">
+        <h3 id="dancer-audience-heading">Audience &amp; engagement <small>Across all clubs</small></h3>
+        <div className="dancer-audience-heading-row">
+          <h4 id="dancer-audience-current-heading">Current audience</h4>
+          <ResultsInfo label="Your audience">Current totals across all clubs. Following on profiles and in VIP uses the same subscription. Muted working alerts and inactive accounts are excluded from the alert total. VIP subscribers are included in that total.</ResultsInfo>
+        </div>
+        <dl className="dancer-audience-counts" aria-labelledby="dancer-audience-current-heading">
           <Detail label="Total followers" value={current.audience.totalFollowers} />
           <Detail label="Working-alert subscribers" value={performance.alerts.total} />
           <Detail label="Including active VIPs" value={performance.alerts.vip} />
           {club && <Detail label={`VIP alert subscribers at ${club.name}`} value={club.vipSubscribers} />}
         </dl>
-        <ResultsInfo label="Your audience">Current totals across all clubs. Following on profiles and in VIP uses the same subscription. Muted working alerts and inactive accounts are excluded from the alert total. VIP subscribers are included in that total.</ResultsInfo>
-      </section>
-      <section className="dancer-analytics-audience" aria-labelledby="dancer-growth-heading">
-        <h3 id="dancer-growth-heading">Audience growth <small>All clubs · {periodLabel}</small></h3>
-        <DancerResultsTrend points={current.trend} metric={trendMetric} onMetricChange={setTrendMetric} timezone={current.timezone} />
-        <div className="dancer-analytics-metrics dancer-results-growth">
+        <h4 id="dancer-audience-activity-heading" className="dancer-audience-activity-heading">Activity <small>{periodLabel}</small></h4>
+        <div className="dancer-analytics-metrics dancer-results-growth" role="group" aria-labelledby="dancer-audience-activity-heading">
           <EngagementCard label="New followers" metric={current.newFollowers} period={period} title="People who followed during this period and still follow you. Removed follows are not retained, so a reliable previous-period comparison is unavailable." />
           <EngagementCard label="Profile views" metric={current.profileViews} period={period} />
           <EngagementCard label="Content likes" metric={current.contentLikes} period={period} title="Likes added during this period that have not been removed." />
           <EngagementCard label="Video views" metric={current.videoViews} period={period} title="Recorded engaged views of your videos during this period." />
         </div>
+        <details className="dancer-audience-trend">
+          <summary>Trend chart</summary>
+          <DancerResultsTrend points={current.trend} metric={trendMetric} onMetricChange={setTrendMetric} timezone={current.timezone} />
+        </details>
         {current.currentRank ? <p className="dancer-results-note">City activity rank #{number(current.currentRank)}</p> : null}
       </section>
       <section className="dancer-analytics-content" aria-labelledby="dancer-content-heading">
