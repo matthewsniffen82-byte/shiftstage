@@ -314,9 +314,23 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-attention-note { display:grid; gap:8px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-attention-note h3 { margin:0; font-size:15px; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-editor-shortcuts { display:flex; gap:6px; flex-wrap:wrap; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-editor-shortcuts button {
-  min-height:44px !important; padding:8px 12px !important; border:1px solid #44354f !important; border-radius:10px !important; background:#17121d !important; color:#e5dced !important; font-size:12px !important;
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-editor-shortcuts {
+  display:flex; flex-wrap:wrap; align-items:stretch; gap:6px; min-width:0; margin:0;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-editor-shortcuts > button {
+  display:inline-flex; align-items:center; justify-content:center; min-width:0; max-width:100%;
+  min-height:36px !important; padding:6px 8px !important; border:1px solid #44354f !important; border-radius:8px !important;
+  background:#17121d !important; color:#e5dced !important; box-shadow:none !important;
+  font-size:12px !important; font-weight:600 !important; line-height:1.25 !important; letter-spacing:normal !important;
+  white-space:normal; text-align:center;
+}
+@media (max-width:600px) {
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-editor-shortcuts {
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+  }
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-editor-shortcuts > button:last-child {
+    grid-column:span 2;
+  }
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-save-hint { color:#bfb4cb; font-size:12px; line-height:1.5; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace [id] { scroll-margin-top:20px; }
