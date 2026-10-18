@@ -512,6 +512,14 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   filter: none !important;
 }
 
+/* Make selected Going easy to spot without brightening the button face. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+  :is(.modal-actions, .live-actions).profile-actions-compact
+  :is(#goingBtn, .profile-action-going)[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"])
+  :is(.action-icon, .profile-action-icon-frame) > svg {
+  color: #fff !important;
+}
+
 /* Match the venue pin to the secondary icons; keep Working now green. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
   :is(.profile-venue-destination, .profile-working-destination, .profile-upcoming-destination)
