@@ -1,4 +1,12 @@
-export type DancerAnalyticsPeriod = "tonight" | "7d" | "30d";
+export type DancerAnalyticsPeriod = "tonight" | "7d" | "30d" | "all";
+
+export type DancerActivityPoint = {
+  start: string;
+  end: string;
+  views: number;
+  followers: number;
+  requests: number;
+};
 
 export type DancerEngagementMetric = {
   value: number;
@@ -18,6 +26,9 @@ export type DancerAudienceAnalytics = {
   period: DancerAnalyticsPeriod;
   periodStart: string;
   periodEnd: string;
+  timezone: string;
+  profileCreatedAt: string;
+  trend: DancerActivityPoint[];
   profileViews: DancerEngagementMetric;
   newFollowers: DancerEngagementMetric;
   contentLikes: DancerEngagementMetric;
@@ -37,6 +48,6 @@ export type DancerPerformanceAnalytics = {
   alerts: { total: number; vip: number };
   clubs: { id: string; name: string; timezone: string; current: DancerRequestCounts; previous: DancerRequestCounts | null;
     external: { claims: number; admissions: number }; vipSubscribers: number }[];
-  shifts: { id: string; venueId: string; venueName: string; timezone: string; startedAt: string; endedAt: string; hours: number; requests: number }[];
+  shifts: { id: string; venueId: string; venueName: string; timezone: string; startedAt: string; endedAt: string; hours: number; requests: number; partial?: boolean }[];
   workTrackingStartedAt: string | null;
 };

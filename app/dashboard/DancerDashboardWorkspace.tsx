@@ -25,10 +25,20 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
   const [active, setActive] = useState<Destination>("overview");
   const [visited, setVisited] = useState<Destination[]>(["overview"]);
   const panel = useRef<HTMLDivElement>(null);
+  const navigation = useRef<HTMLElement>(null);
   const activeRef = useRef(active);
   const busyRef = useRef(busy);
   activeRef.current = active;
   busyRef.current = busy;
+  useEffect(() => {
+    const nav = navigation.current;
+    if (!nav || typeof ResizeObserver === "undefined") return;
+    const measure = () => nav.parentElement?.style.setProperty("--dancer-dashboard-nav-height", `${nav.getBoundingClientRect().height}px`);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(nav);
+    return () => observer.disconnect();
+  }, []);
   const content = { overview, profile, results, account };
   const select = (id: Destination) => {
     if (busyRef.current) return;
@@ -59,7 +69,7 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
     window.history.replaceState(null, "", "#dancer-profile");
   }, [editorRequested]);
   return <div className="dancer-dashboard-workspace">
-    <nav className="dancer-dashboard-nav" aria-label="Dancer dashboard">
+    <nav ref={navigation} className="dancer-dashboard-nav" aria-label="Dancer dashboard">
       {destinations.map(item => <button key={item.id} type="button" aria-current={active === item.id ? "page" : undefined} aria-controls={`dancer-destination-${item.id}`} disabled={busy} onClick={() => {
         select(item.id);
         window.history.replaceState(null, "", `#dancer-${item.id}`);

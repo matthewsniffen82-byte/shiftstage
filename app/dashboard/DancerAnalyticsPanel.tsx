@@ -4,16 +4,19 @@ import { useEffect, useState } from "react";
 import type { DancerAnalyticsPeriod, DancerAudienceAnalytics, DancerEngagementMetric, DancerRequestCounts } from "@/src/lib/dancr/dancer-analytics-types";
 import { requestDashboardJson } from "./dashboard-session";
 import { DancerDiscoveryBoosts } from "./DancerDiscoveryBoosts";
+import { DancerResultsTrend } from "./DancerResultsTrend";
 import "./dancer-results.css";
 
 const number = (value: number) => new Intl.NumberFormat("en-US").format(value);
-const channels = { internal: "Internal", vip: "VIP", external: "External" } as const;
-const periods = { tonight: "Tonight", "7d": "7 days", "30d": "30 days" } as const;
+const channels = { internal: "In club", vip: "VIP", external: "Public site" } as const;
+const periods = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
+const dateLabel = (value: string, timezone = "America/Los_Angeles") => new Date(value).toLocaleDateString("en-US", { timeZone: timezone, month: "short", day: "numeric", year: "numeric" });
 
 function readAnalytics(value: unknown): DancerAudienceAnalytics | null {
   if (!value || typeof value !== "object") return null;
   const data = value as DancerAudienceAnalytics;
-  return (data.period === "tonight" || data.period === "7d" || data.period === "30d") && data.profileViews && data.audience && Array.isArray(data.topContent)
+  return Object.hasOwn(periods, data.period) && data.profileViews && data.audience && Array.isArray(data.topContent) && Array.isArray(data.trend)
+    && Number.isFinite(Date.parse(data.periodStart)) && Number.isFinite(Date.parse(data.periodEnd))
     && data.performance?.current && data.performance.alerts && Array.isArray(data.performance.clubs) && Array.isArray(data.performance.shifts) ? data : null;
 }
 
@@ -26,11 +29,14 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
   const [clubId, setClubId] = useState("");
   const [channel, setChannel] = useState<keyof typeof channels>("internal");
   const [shiftLimit, setShiftLimit] = useState(5);
+  const [contentLimit, setContentLimit] = useState(3);
+  const [trendMetric, setTrendMetric] = useState<"views" | "followers" | "requests">("views");
+  const [clubs, setClubs] = useState(initial?.performance.clubs || []);
 
   useEffect(() => {
     const initial = readAnalytics(initialAnalytics);
     if (initial?.period === period && retry === 0) {
-      setAnalytics(initial); setError(""); return;
+      setAnalytics(initial); setClubs(initial.performance.clubs); setError(""); return;
     }
     const controller = new AbortController();
     setAnalytics(null); setError("");
@@ -42,6 +48,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
       const next = readAnalytics(result.analytics);
       if (!next || next.period !== period) throw new Error("Results period could not be confirmed.");
       setAnalytics(next);
+      setClubs(next.performance.clubs);
     }).catch(() => {
       if (!controller.signal.aborted) setError("Unable to load results. Try again.");
     });
@@ -49,7 +56,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
   }, [initialAnalytics, period, retry]);
 
   const current = analytics?.period === period ? analytics : null;
-  const periodLabel = period === "tonight" ? "Tonight" : `Last ${periods[period]}`;
+  const periodLabel = period === "tonight" || period === "all" ? periods[period] : `Last ${periods[period]}`;
   const loading = !current && !error;
   const performance = current?.performance;
   const club = performance?.clubs.find(item => item.id === clubId);
@@ -77,24 +84,25 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
   return <div className="dancer-analytics" aria-busy={loading}>
     <div className="dancer-analytics-toolbar">
       <div className="dancer-analytics-period" role="group" aria-label="Analytics period">
-        {(["tonight", "7d", "30d"] as const).map(value => <button key={value} type="button" aria-pressed={period === value}
-          onClick={() => { setError(""); setPeriod(value); setShiftLimit(5); }}>{periods[value]}</button>)}
+        {(["tonight", "7d", "30d", "all"] as const).map(value => <button key={value} type="button" aria-pressed={period === value}
+          onClick={() => { setError(""); setPeriod(value); setShiftLimit(5); setContentLimit(3); }}>{periods[value]}</button>)}
       </div>
+      <label className="dancer-results-club">Requests and shifts at
+        <select value={clubs.some(item => item.id === clubId) ? clubId : ""} disabled={loading} onChange={event => { setClubId(event.target.value); setShiftLimit(5); }}>
+          <option value="">All clubs</option>
+          {clubs.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
+        </select>
+      </label>
+      {current && <p className="dancer-results-range">{dateLabel(current.periodStart, current.timezone)} – {dateLabel(current.periodEnd, current.timezone)}<span>{current.timezone.replaceAll("_", " ")}{period === "tonight" ? " · so far" : ""}</span></p>}
     </div>
     {loading && <p role="status">Loading results…</p>}
     {error && <div className="dancer-analytics-error" role="alert"><p>{error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Try again</button></div>}
     {current && performance && selected && <>
-      <label className="dancer-results-club">Requests and shifts at
-        <select value={club?.id || ""} onChange={event => { setClubId(event.target.value); setShiftLimit(5); }}>
-          <option value="">All clubs</option>
-          {performance.clubs.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
-        </select>
-      </label>
       <div className="dancer-analytics-metrics" aria-label={`Your results: ${periodLabel}`}>
         <EngagementCard label="Table requests" metric={requestMetric("tableRequests")} period={period} title="Table requests submitted for you during this period, including cancelled requests." />
         <EngagementCard label="VIP requests" metric={requestMetric("vipRequests")} period={period} title="Submitted VIP visit requests that included you, counted once per request." />
         <EngagementCard label="Repeat VIPs" metric={requestMetric("repeatVips")} period={period} title="Unique VIPs who requested you during this period and had an earlier request for you at the same club." />
-        <div className="dancer-analytics-metric"><span>Working alerts</span><strong>{number(performance.alerts.total)}</strong><small>Unique subscribers · current total across all clubs</small></div>
+        <EngagementCard label="New followers" metric={current.newFollowers} period={period} scope="All clubs" title="People who followed during this period and still follow you. Removed follows are not retained, so a reliable previous-period comparison is unavailable." />
       </div>
       {!hasActivity && <p className="dancer-analytics-empty">Your results will appear here as guests follow or request you.</p>}
       <section className="dancer-analytics-audience" aria-labelledby="dancer-request-details-heading">
@@ -106,22 +114,24 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
         {channel === "internal" && <><dl>
           <Detail label="Pending" value={selected.current.tablePending} /><Detail label="Acknowledged" value={selected.current.tableAcknowledged} />
           <Detail label="Marked complete by staff" value={selected.current.tableCompleted} /><Detail label="Cancelled" value={selected.current.tableCancelled} />
-        </dl><p className="dancer-results-note">Current status of table requests submitted during this period.</p></>}
+        </dl><ResultsInfo label="In-club requests">Current status of table requests submitted during this period. A request shows interest; only staff can mark it complete.</ResultsInfo></>}
         {channel === "vip" && <><dl>
           <Detail label="Pending" value={selected.current.vipPending} /><Detail label="Confirmed" value={selected.current.vipConfirmed} />
           <Detail label="Declined" value={selected.current.vipDeclined} /><Detail label="Cancelled" value={selected.current.vipCancelled} />
-        </dl><p className="dancer-results-note">Submitted visit requests that included you. Confirmation records the club’s acceptance; arrival is recorded separately. Each repeat VIP is counted once, even across multiple requests.</p></>}
+        </dl><ResultsInfo label="VIP requests">Submitted visit requests that included you. Confirmation records the club’s acceptance; arrival is recorded separately. Each repeat VIP is counted once, even across multiple requests.</ResultsInfo></>}
         {channel === "external" && <><dl>
           <Detail label="Passes attributed to you" value={selected.external.claims} /><Detail label="Club entries attributed to you" value={selected.external.admissions} />
-        </dl><p className="dancer-results-note">Passes claimed and admission passes redeemed during this period. Club entries measure admission to the venue.</p></>}
+        </dl><ResultsInfo label="Public-site results">Passes claimed and admission passes redeemed during this period. Club entries measure admission to the venue.</ResultsInfo></>}
       </section>
       <section className="dancer-analytics-audience" aria-labelledby="dancer-shift-results-heading">
         <h3 id="dancer-shift-results-heading">Results by shift <small>Recorded working time</small></h3>
-        <p>Table requests received while you were recorded as working. Times use each club’s timezone.</p>
-        {performance.workTrackingStartedAt && <p className="dancer-results-note">Working-time recording began {new Date(performance.workTrackingStartedAt).toLocaleDateString()}. Only the recorded portion of each shift is shown.</p>}
+        <ResultsInfo label="Shift comparisons">Table requests received during recorded working time, in each club’s timezone. Requests per hour uses that recorded time. Partial recording includes shifts clipped by this date range or still in progress; rates appear after at least 0.1 recorded hours. {performance.workTrackingStartedAt && `Working-time recording began ${dateLabel(performance.workTrackingStartedAt, current.timezone)}.`}</ResultsInfo>
         {shifts.length ? <ul className="dancer-results-shifts">{shifts.slice(0, shiftLimit).map(shift => <li key={`${shift.venueId}:${shift.id}`}>
           <div><strong>{shift.venueName}</strong><time dateTime={shift.startedAt}>{new Date(shift.startedAt).toLocaleString(undefined, { timeZone: shift.timezone || "UTC", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></div>
-          <div><strong>{number(shift.requests)} {shift.requests === 1 ? "request" : "requests"}</strong><small>{shift.hours < 0.1 ? "Under 0.1" : shift.hours.toFixed(1)} recorded hours</small></div>
+          {shift.partial && <span className="dancer-results-partial">Partial recording</span>}
+          <dl><div><dt>Hours</dt><dd>{shift.hours < 0.1 ? "<0.1" : shift.hours.toFixed(1)}</dd></div>
+            <div><dt>Requests</dt><dd>{number(shift.requests)}</dd></div>
+            <div><dt>Req/hr</dt><dd>{shift.hours >= 0.1 ? (shift.requests / shift.hours).toFixed(1) : "—"}</dd></div></dl>
         </li>)}</ul> : <p className="dancer-results-note">No working time recorded for this period.</p>}
         {shifts.length > shiftLimit && <button className="dancer-results-more" type="button" onClick={() => setShiftLimit(value => value + 10)}>Show more shifts</button>}
       </section>
@@ -133,10 +143,11 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
           <Detail label="Including active VIPs" value={performance.alerts.vip} />
           {club && <Detail label={`VIP alert subscribers at ${club.name}`} value={club.vipSubscribers} />}
         </dl>
-        <p className="dancer-results-note">Following on profiles and in VIP uses the same subscription. Muted working alerts and inactive accounts are excluded from the alert total. VIP subscribers are included in that total.</p>
+        <ResultsInfo label="Your audience">Current totals across all clubs. Following on profiles and in VIP uses the same subscription. Muted working alerts and inactive accounts are excluded from the alert total. VIP subscribers are included in that total.</ResultsInfo>
       </section>
       <section className="dancer-analytics-audience" aria-labelledby="dancer-growth-heading">
         <h3 id="dancer-growth-heading">Audience growth <small>All clubs · {periodLabel}</small></h3>
+        <DancerResultsTrend points={current.trend} metric={trendMetric} onMetricChange={setTrendMetric} timezone={current.timezone} />
         <div className="dancer-analytics-metrics dancer-results-growth">
           <EngagementCard label="New followers" metric={current.newFollowers} period={period} title="People who followed during this period and still follow you." />
           <EngagementCard label="Profile views" metric={current.profileViews} period={period} />
@@ -147,10 +158,11 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false }: { in
       </section>
       <section className="dancer-analytics-content" aria-labelledby="dancer-content-heading">
         <h3 id="dancer-content-heading">Top content <small>{periodLabel} · by likes and video views</small></h3>
-        {current.topContent.length ? <ul>{current.topContent.map((item, index) => <li key={`${item.kind}:${item.id}`}>
+        {current.topContent.length ? <ul>{current.topContent.slice(0, contentLimit).map((item, index) => <li key={`${item.kind}:${item.id}`}>
           <span className="dancer-analytics-thumbnail">{item.thumbnailUrl ? <img src={item.thumbnailUrl} alt={item.kind === "photo" ? `Top photo ${index + 1}` : "Video thumbnail"} loading="lazy" /> : <span aria-hidden="true">{item.kind === "video" ? "▶" : "♡"}</span>}</span>
           <span className="dancer-analytics-content-copy"><strong>{item.label}</strong><small>{number(item.likes)} {item.likes === 1 ? "like" : "likes"}{item.views !== null ? ` · ${number(item.views)} ${item.views === 1 ? "video view" : "video views"}` : ""}</small></span>
         </li>)}</ul> : <p>Content activity will appear here.</p>}
+        {current.topContent.length > contentLimit && <button className="dancer-results-more" type="button" onClick={() => setContentLimit(value => value + 3)}>Show more content</button>}
       </section>
       <DancerDiscoveryBoosts />
     </>}
@@ -161,15 +173,21 @@ function Detail({ label, value }: { label: string; value: number }) {
   return <div><dt>{label}</dt><dd>{number(value)}</dd></div>;
 }
 
-function EngagementCard({ label, metric, period, title }: { label: string; metric: DancerEngagementMetric; period: DancerAnalyticsPeriod; title?: string }) {
+function EngagementCard({ label, metric, period, title, scope }: { label: string; metric: DancerEngagementMetric; period: DancerAnalyticsPeriod; title?: string; scope?: string }) {
   const days = period === "30d" ? 30 : 7;
-  const difference = period === "tonight" || metric.previous === null ? null : metric.value - metric.previous;
-  const trend = period === "tonight" ? "Tonight so far" : difference === null ? `Last ${days} days`
+  const difference = period === "tonight" || period === "all" || metric.previous === null ? null : metric.value - metric.previous;
+  const trend = period === "all" ? "All recorded activity" : period === "tonight" ? "Tonight so far" : difference === null ? `Last ${days} days · comparison unavailable`
     : difference === 0 ? "No change"
     : metric.previous === 0 ? `+${number(difference)} vs prior ${days} days`
     : `${difference > 0 ? "+" : "−"}${number(Math.round(Math.abs(difference) / metric.previous! * 100))}% vs prior ${days} days`;
-  return <div className="dancer-analytics-metric" title={title}>
+  return <div className="dancer-analytics-metric">
     <span>{label}</span><strong>{number(metric.value)}</strong>
+    {scope && <small>{scope}</small>}
     <small className={difference !== null && difference > 0 ? "positive" : difference !== null && difference < 0 ? "negative" : undefined}>{trend}</small>
+    {title && <ResultsInfo label={label}>{title}</ResultsInfo>}
   </div>;
+}
+
+function ResultsInfo({ label, children }: { label: string; children: React.ReactNode }) {
+  return <details className="dancer-results-info"><summary aria-label={`About ${label}`}><span aria-hidden="true">ⓘ</span></summary><p>{children}</p></details>;
 }

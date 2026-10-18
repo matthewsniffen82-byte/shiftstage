@@ -8,11 +8,11 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 const require = createRequire(import.meta.url);
 const counts = (requests=0) => Object.fromEntries(['tableRequests','tablePending','tableAcknowledged','tableCompleted','tableCancelled','vipRequests','vipPending','vipConfirmed','vipDeclined','vipCancelled','repeatVips'].map(key=>[key,key==='tableRequests'?requests:0]));
-const data = period => ({ period,profileViews:{value:3,previous:1},newFollowers:{value:2,previous:null},contentLikes:{value:1,previous:null},socialLinkTaps:{value:0,previous:0},audience:{totalFollowers:20,workingNowSubscribers:12},topContent:[],currentRank:null,
+const data = period => ({ period,periodStart:'2026-10-05T00:00:00Z',periodEnd:'2026-10-12T00:00:00Z',timezone:'UTC',profileCreatedAt:'2026-08-01T00:00:00Z',trend:[{start:'2026-10-05T00:00:00Z',end:'2026-10-06T00:00:00Z',views:3,followers:2,requests:10}],profileViews:{value:3,previous:1},newFollowers:{value:2,previous:null},contentLikes:{value:1,previous:null},socialLinkTaps:{value:0,previous:0},audience:{totalFollowers:20,workingNowSubscribers:12},topContent:[],currentRank:null,
   performance:{current:counts(10),previous:counts(5),external:{claims:2,admissions:1},alerts:{total:12,vip:4},workTrackingStartedAt:'2026-10-10T00:00:00Z',
     clubs:[{id:'club-a',name:'Club A',timezone:'UTC',current:{...counts(3),vipConfirmed:2,vipRequests:2},previous:counts(1),external:{claims:2,admissions:1},vipSubscribers:4},
       {id:'club-b',name:'Club B',timezone:'UTC',current:counts(7),previous:counts(4),external:{claims:0,admissions:0},vipSubscribers:0}],
-    shifts:[{id:'shift-a',venueId:'club-a',venueName:'Club A',timezone:'UTC',startedAt:'2026-10-11T00:00:00Z',endedAt:'2026-10-11T03:00:00Z',hours:3,requests:3},
+    shifts:[{id:'shift-a',venueId:'club-a',venueName:'Club A',timezone:'UTC',startedAt:'2026-10-11T00:00:00Z',endedAt:'2026-10-11T03:00:00Z',hours:3,requests:3,partial:true},
       {id:'shift-b',venueId:'club-b',venueName:'Club B',timezone:'UTC',startedAt:'2026-10-11T00:00:00Z',endedAt:'2026-10-11T03:00:00Z',hours:3,requests:7}]}});
 
 // Hook-driven component events with mocked data, never a browser journey.
@@ -24,6 +24,11 @@ function fixture(initial=data('7d')) {
   };
   const imports={react,'react/jsx-runtime':require('react/jsx-runtime'),'./dancer-results.css':{},'./DancerDiscoveryBoosts':{DancerDiscoveryBoosts:()=>null},
     './dashboard-session':{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>calls.push({url,options,resolve,reject}))}};
+  const trendExports = {};
+  vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerResultsTrend.tsx',import.meta.url),'utf8'),{
+    compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
+  }).outputText,{exports:trendExports,require});
+  imports['./DancerResultsTrend'] = trendExports;
   const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerAnalyticsPanel.tsx',import.meta.url),'utf8'),{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
   }).outputText,{exports,AbortController,require:name=>{assert.ok(name in imports,name);return imports[name];}});
@@ -37,9 +42,9 @@ test('club filtering updates request cards and recorded shifts while audience re
   const ui=fixture();assert.match(ui.html(),/<strong>10<\/strong>/);
   ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-a'}});ui.render();
   const html=ui.html();assert.match(html,/<strong>3<\/strong>/);assert.doesNotMatch(html,/7 requests/);
-  assert.match(html,/12<\/strong>/);assert.match(html,/current total across all clubs/);assert.match(html,/VIP alert subscribers at Club A/);
+  assert.match(html,/Working-alert subscribers<\/dt><dd>12/);assert.match(html,/Current totals across all clubs/);assert.match(html,/VIP alert subscribers at Club A/);
   ui.button('VIP').props.onClick();ui.render();assert.match(ui.html(),/Confirmed<\/dt><dd>2/);
-  ui.button('External').props.onClick();ui.render();assert.match(ui.html(),/Club entries attributed to you<\/dt><dd>1/);
+  ui.button('Public site').props.onClick();ui.render();assert.match(ui.html(),/Club entries attributed to you<\/dt><dd>1/);
   assert.equal(ui.calls.length,0);ui.close();
 });
 
@@ -49,11 +54,11 @@ test('period changes hide stale results, abort older reads and retain the select
   periodButton('30').props.onClick();ui.render();assert.equal(ui.calls.length,1);assert.match(ui.html(),/Loading results/);assert.doesNotMatch(ui.html(),/7 requests/);
   periodButton('7').props.onClick();ui.render();assert.equal(ui.calls[0].options.signal.aborted,true);
   ui.calls[0].resolve({analytics:data('30d')});await ui.settle();
-  assert.equal(ui.nodes().find(node=>node.type==='select').props.value,'club-b');assert.match(ui.html(),/7 requests/);
+  assert.equal(ui.nodes().find(node=>node.type==='select').props.value,'club-b');assert.match(ui.html(),/<dd>7<\/dd>/);
   periodButton('30').props.onClick();ui.render();ui.calls[1].reject(new Error('No access'));await ui.settle();
-  assert.match(ui.html(),/Unable to load results/);assert.doesNotMatch(ui.html(),/Working alerts/);
+  assert.match(ui.html(),/Unable to load results/);assert.doesNotMatch(ui.html(),/Working-alert subscribers/);
   ui.button('Try again').props.onClick();ui.render();ui.calls[2].resolve({analytics:data('30d')});await ui.settle();
-  assert.equal(ui.nodes().find(node=>node.type==='select').props.value,'club-b');assert.match(ui.html(),/Working alerts/);ui.close();
+  assert.equal(ui.nodes().find(node=>node.type==='select').props.value,'club-b');assert.match(ui.html(),/Working-alert subscribers/);ui.close();
 });
 
 test('older cached audience-only payloads refresh instead of inventing missing request counts',()=>{
@@ -64,7 +69,7 @@ test('older cached audience-only payloads refresh instead of inventing missing r
 test('Tonight loads its own results, updates headings and hides prior-period comparisons',async()=>{
   const ui=fixture();
   const group=ui.nodes().find(node=>node.props?.['aria-label']==='Analytics period');
-  assert.deepEqual(Array.from(group.props.children,button=>button.props.children),['Tonight','7 days','30 days']);
+  assert.deepEqual(Array.from(group.props.children,button=>button.props.children),['Tonight','7 days','30 days','All time']);
   ui.button('Tonight').props.onClick();ui.render();
   assert.equal(ui.calls[0].url,'/api/dancer/analytics?period=tonight');
   assert.equal(ui.button('Tonight').props['aria-pressed'],true);
@@ -79,4 +84,41 @@ test('Tonight loads its own results, updates headings and hides prior-period com
   assert.doesNotMatch(html,/Last 7 days|Last 30 days|vs prior|No change/);
   ui.button('7 days').props.onClick();ui.render();
   assert.match(ui.html(),/Last 7 days/);assert.equal(ui.calls.length,1);ui.close();
+});
+
+test('All time keeps the club selection, uses its own dates and never shows a prior-period comparison',async()=>{
+  const ui=fixture();ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-a'}});ui.render();
+  ui.button('All time').props.onClick();ui.render();
+  assert.equal(ui.calls[0].url,'/api/dancer/analytics?period=all');
+  const all=data('all');all.periodStart=all.profileCreatedAt;
+  ui.calls[0].resolve({analytics:all});await ui.settle();
+  assert.equal(ui.nodes().find(node=>node.type==='select').props.value,'club-a');
+  assert.match(ui.html(),/Aug 1, 2026/);assert.match(ui.html(),/All recorded activity/);
+  assert.doesNotMatch(ui.html(),/vs prior|No change|Last 7 days/);ui.close();
+});
+
+test('shift rows show per-hour comparisons, mark partial recording and avoid rates for tiny durations',()=>{
+  const initial=data('7d');initial.performance.shifts[1].hours=0;
+  const ui=fixture(initial),html=ui.html();
+  assert.match(html,/Partial recording/);assert.match(html,/Req\/hr<\/dt><dd>1.0/);
+  assert.match(html,/Req\/hr<\/dt><dd>—/);assert.doesNotMatch(html,/Infinity|NaN/);ui.close();
+});
+
+test('top content expands progressively and resets on a range change',()=>{
+  const initial=data('7d');initial.topContent=Array.from({length:6},(_,i)=>({id:`photo-${i}`,kind:'photo',label:`Content ${i+1}`,thumbnailUrl:null,likes:10-i,views:null}));
+  const ui=fixture(initial);assert.match(ui.html(),/Content 3/);assert.doesNotMatch(ui.html(),/Content 4/);
+  ui.button('Show more content').props.onClick();ui.render();assert.match(ui.html(),/Content 6/);
+  assert.equal(ui.button('Show more content'),undefined);
+  ui.button('30 days').props.onClick();ui.render();ui.button('7 days').props.onClick();ui.render();
+  assert.doesNotMatch(ui.html(),/Content 4/);assert.ok(ui.button('Show more content'));ui.close();
+});
+
+test('chart switches between recorded metrics, with accessible numbers for empty and single-point series',()=>{
+  const ui=fixture();
+  const chart=ui.nodes().find(node=>node.props?.onMetricChange);
+  chart.props.onMetricChange('requests');ui.render();assert.match(ui.html(),/Requests trend across all clubs: 10 total/);
+  chart.props.onMetricChange('followers');ui.render();assert.match(ui.html(),/Followers trend across all clubs: 2 total/);
+  assert.match(ui.html(),/View chart numbers/);assert.doesNotMatch(ui.html(),/NaN|Infinity/);ui.close();
+  const initial=data('7d');initial.trend[0].views=0;
+  const zero=fixture(initial);assert.match(zero.html(),/Views trend across all clubs: 0 total, peak 0/);zero.close();
 });

@@ -8,8 +8,8 @@ const PAGE_SIZE = 1000;
 
 export function dancerAnalyticsPeriod(value: string | null): DancerAnalyticsPeriod {
   if (value === null || value === "7d") return "7d";
-  if (value === "tonight" || value === "30d") return value;
-  throw new Error("Choose Tonight, a 7-day or 30-day analytics period.");
+  if (value === "tonight" || value === "30d" || value === "all") return value;
+  throw new Error("Choose Tonight, 7 days, 30 days or All time.");
 }
 
 // The caller authenticates the dancer. Resolve ownership before using the admin
@@ -29,14 +29,15 @@ export async function getOwnDancerAudienceAnalytics(
   const duration = (period === "30d" ? 30 : 7) * DAY_MS;
   const end = now.toISOString();
   let start = new Date(now.getTime() - duration).toISOString();
+  let timeZone = "America/Los_Angeles";
+  if (profile.city?.trim()) {
+    const venue = await admin.from("venues").select("timezone")
+      .ilike("city", profile.city.trim()).eq("is_active", true).order("name").limit(1).maybeSingle();
+    if (venue.error) throw venue.error;
+    timeZone = venue.data?.timezone || timeZone;
+  }
+  if (period === "all") start = Date.parse(profile.created_at) < now.getTime() ? profile.created_at : new Date(now.getTime() - 1).toISOString();
   if (period === "tonight") {
-    let timeZone = "America/Los_Angeles";
-    if (profile.city?.trim()) {
-      const venue = await admin.from("venues").select("timezone")
-        .ilike("city", profile.city.trim()).eq("is_active", true).order("name").limit(1).maybeSingle();
-      if (venue.error) throw venue.error;
-      timeZone = venue.data?.timezone || timeZone;
-    }
     start = getTonightWindow(timeZone, now).startsAt;
     // Keep the preceding window until the shared 00:01 rollover has elapsed.
     if (Date.parse(start) >= now.getTime()) {
@@ -44,7 +45,7 @@ export async function getOwnDancerAudienceAnalytics(
     }
   }
   const previousStart = new Date(now.getTime() - duration * 2).toISOString();
-  const canCompare = period !== "tonight" && new Date(profile.created_at).getTime() <= Date.parse(previousStart);
+  const canCompare = period !== "tonight" && period !== "all" && new Date(profile.created_at).getTime() <= Date.parse(previousStart);
 
   const count = async (table: string, dateColumn?: string, from?: string, to?: string) => {
     let query = admin.from(table).select("*", { count: "exact", head: true }).eq("dancer_id", dancerId);
@@ -61,7 +62,7 @@ export async function getOwnDancerAudienceAnalytics(
     return { value, previous };
   };
 
-  const [profileViews, socialLinkTaps, followers, totalFollowers, photoLikes, videoLikes, videoViews, ranking, performanceResult] = await Promise.all([
+  const [profileViews, socialLinkTaps, followers, totalFollowers, photoLikes, videoLikes, videoViews, ranking, performanceResult, trendResult] = await Promise.all([
     comparedCount("profile_views", "viewed_at"),
     comparedCount("social_clicks", "clicked_at"),
     count("follows", "created_at", start, end),
@@ -71,9 +72,12 @@ export async function getOwnDancerAudienceAnalytics(
     groupedMediaActivity(admin, dancerId, "video", "views", start, end),
     admin.from("trending_scores").select("rank").eq("dancer_id", dancerId).maybeSingle(),
     admin.rpc("get_dancer_performance_analytics", { p_dancer_id: dancerId, p_since: start, p_until: end }),
+    admin.rpc("get_dancer_activity_trend", { p_dancer_id: dancerId, p_since: start, p_until: end }),
   ]);
   if (ranking.error) throw ranking.error;
   if (performanceResult.error) throw performanceResult.error;
+  if (trendResult.error) throw trendResult.error;
+  if (!Array.isArray(trendResult.data)) throw new Error("Activity trend could not be loaded.");
   const performance = performanceResult.data as DancerPerformanceAnalytics | null;
   if (!performance?.current || !performance.alerts || !Array.isArray(performance.clubs) || !Array.isArray(performance.shifts)) {
     throw new Error("Dancer performance could not be loaded.");
@@ -89,11 +93,11 @@ export async function getOwnDancerAudienceAnalytics(
       id, kind: "video" as const, likes: videoLikes.get(id) || 0, views: videoViews.get(id) || 0,
     })),
   ].sort((a, b) => b.likes - a.likes || (b.views || 0) - (a.views || 0) || a.id.localeCompare(b.id));
-  // Include both media types when they have activity, keeping the list short.
+  // Include both media types and let the panel progressively reveal the list.
   const selected = [
-    ...candidates.filter(item => item.kind === "photo").slice(0, 2),
-    ...candidates.filter(item => item.kind === "video").slice(0, 2),
-  ];
+    ...candidates.filter(item => item.kind === "photo").slice(0, 6),
+    ...candidates.filter(item => item.kind === "video").slice(0, 6),
+  ].sort((a, b) => b.likes - a.likes || (b.views || 0) - (a.views || 0) || a.id.localeCompare(b.id));
   const topContent: DancerTopContent[] = [];
   const content = await Promise.all(selected.map(async item => {
     const table = item.kind === "photo" ? "dancer_photos" : "mydancr_tv_videos";
@@ -114,7 +118,8 @@ export async function getOwnDancerAudienceAnalytics(
   for (const item of content) if (item) topContent.push(item);
 
   return {
-    period, periodStart: start, periodEnd: end, profileViews, socialLinkTaps,
+    period, periodStart: start, periodEnd: end, timezone: timeZone, profileCreatedAt: profile.created_at,
+    trend: trendResult.data, profileViews, socialLinkTaps,
     // Likes and follows can be removed. Their timestamps support period totals,
     // but the current rows cannot reconstruct a reliable historical comparison.
     newFollowers: { value: followers, previous: null },

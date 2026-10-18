@@ -23,8 +23,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: "Active dancer account required." }, { status: 403 });
     }
     const requestedPeriod = new URL(request.url).searchParams.get("period");
-    if (requestedPeriod !== null && requestedPeriod !== "tonight" && requestedPeriod !== "7d" && requestedPeriod !== "30d") {
-      return NextResponse.json({ ok: false, error: "Choose Tonight, a 7-day or 30-day analytics period." }, { status: 400 });
+    if (requestedPeriod !== null && requestedPeriod !== "tonight" && requestedPeriod !== "7d" && requestedPeriod !== "30d" && requestedPeriod !== "all") {
+      return NextResponse.json({ ok: false, error: "Choose Tonight, 7 days, 30 days or All time." }, { status: 400 });
     }
     const admin = createAdminSupabaseClient();
     const ageVerification = await getDancerAgeVerification(admin, user.id);

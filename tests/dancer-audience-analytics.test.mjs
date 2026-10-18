@@ -23,6 +23,7 @@ const service = compile("../src/lib/dancr/dancer-audience-analytics.ts", {
   },
 });
 const { DancerAnalyticsPanel } = compile("../app/dashboard/DancerAnalyticsPanel.tsx", { "./dashboard-session": {},
+  "./DancerResultsTrend": compile("../app/dashboard/DancerResultsTrend.tsx"),
   "./dancer-results.css": {},
   "./DancerDiscoveryBoosts": compile("../app/dashboard/DancerDiscoveryBoosts.tsx", {"./dashboard-session":{}}) });
 const now = new Date("2026-09-23T12:00:00Z");
@@ -53,6 +54,11 @@ function database(rows, failTable) {
   const calls = [];
   return { calls, async rpc(name, params) {
     calls.push({ table: name, params, fields: "" });
+    if (name === "get_dancer_activity_trend") {
+      assert.equal(params.p_dancer_id, "mine");
+      if (failTable === name) return { error: new Error("trend unavailable") };
+      return { data: [{ start: params.p_since, end: params.p_until, views: 2, followers: 1, requests: 0 }] };
+    }
     assert.equal(name, "get_dancer_performance_analytics"); assert.equal(params.p_dancer_id, "mine");
     if (failTable === name) return { error: new Error("performance unavailable") };
     const counts = Object.fromEntries(["tableRequests","tablePending","tableAcknowledged","tableCompleted","tableCancelled","vipRequests","vipPending","vipConfirmed","vipDeclined","vipCancelled","repeatVips"].map(key=>[key,0]));
@@ -206,17 +212,32 @@ test("results lead with four demand cards and retain audience growth, content an
   result.socialLinkTaps = { value: 5, previous: 10 };
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
   assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 8);
-  for (const text of ["Table requests", "VIP requests", "Repeat VIPs", "Working alerts", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
+  for (const text of ["Table requests", "VIP requests", "Repeat VIPs", "New followers", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
   assert.ok(html.indexOf("Table requests") < html.indexOf("Profile views"));
   for (const text of ["Profile views", "New followers", "Content likes", "Social link taps", "Your audience", "Top content", "City activity rank #4", "Your discovery placement", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
-  assert.doesNotMatch(html, /Infinity|NaN|<details|Unranked/);
+  assert.doesNotMatch(html, /Infinity|NaN|Unranked/);
 });
 
 test("only supported analytics periods are accepted", () => {
   assert.equal(service.dancerAnalyticsPeriod(null), "7d");
   assert.equal(service.dancerAnalyticsPeriod("tonight"), "tonight");
   assert.equal(service.dancerAnalyticsPeriod("30d"), "30d");
-  assert.throws(() => service.dancerAnalyticsPeriod("365d"), /7-day or 30-day/);
+  assert.equal(service.dancerAnalyticsPeriod("all"), "all");
+  assert.throws(() => service.dancerAnalyticsPeriod("365d"), /All time/);
+});
+
+test("All time starts at profile creation with full timestamp precision and no prior comparisons", async () => {
+  const rows = fixture(); rows.dancer_profiles[0].created_at = "2026-06-25T12:00:00.123456Z";
+  const db = database(rows);
+  const result = await service.getOwnDancerAudienceAnalytics(db, "owner", "all", now);
+  assert.equal(result.periodStart, rows.dancer_profiles[0].created_at);
+  assert.equal(result.profileViews.value, 6);
+  assert.equal(result.profileViews.previous, null);
+  assert.equal(result.performance.previous, null);
+  assert.equal(result.newFollowers.value, 2);
+  assert.equal(result.trend.length, 1);
+  assert.equal(db.calls.find(call => call.table === "get_dancer_performance_analytics").params.p_since, result.periodStart);
+  await assert.rejects(service.getOwnDancerAudienceAnalytics(database(rows, "get_dancer_activity_trend"), "owner", "all", now), /trend unavailable/);
 });
 
 function routes({ denied = false } = {}) {
@@ -247,6 +268,14 @@ function routes({ denied = false } = {}) {
 }
 
 for (const endpoint of ["analytics", "dashboard"]) {
+  test(`${endpoint} accepts All time for the authenticated dancer only`, async () => {
+    const route = routes();
+    const response = await route[endpoint].GET(new Request(`https://mydancr.test/api/dancer/${endpoint}?period=all&dancerId=someone-else`));
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).analytics.period, "all");
+    assert.deepEqual(route.calls, ["all"]);
+    assert.equal(response.headers.get("cache-control"), "private, no-store");
+  });
   test(`${endpoint} accepts Tonight without changing ownership or cache protection`, async () => {
     const route = routes();
     const response = await route[endpoint].GET(new Request(`https://mydancr.test/api/dancer/${endpoint}?period=tonight&dancerId=someone-else`));
