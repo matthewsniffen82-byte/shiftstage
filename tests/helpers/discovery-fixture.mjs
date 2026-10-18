@@ -3,6 +3,7 @@ import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import {createHash,createHmac,randomUUID} from 'node:crypto';
+import {DANCER_PLACEMENT_PERIOD,DANCER_SCORE_VERSION} from '../../src/lib/dancr/venue-dancer-scores.ts';
 
 export const id=n=>'92000000-0000-4000-8000-'+String(n).padStart(12,'0');
 export class PublicApiError extends Error {constructor(code,message,status){super(message);this.code=code;this.status=status;}}
@@ -49,7 +50,7 @@ export function fixture(candidates=[row(1),row(2)]) {
  const limiter={PublicRequestRateLimitError,enforcePublicRequestRateLimit:async()=>{if(blocked)throw new PublicRequestRateLimitError();}};
  const service=compile('src/lib/dancr/discovery-service.ts',{'server-only':{},'node:crypto':{createHash,createHmac},
   '../server-env':{getServerEnv:()=> 'synthetic-test-secret'},'../supabase/request':{getBearerToken:req=>req.headers.get('authorization')?.replace('Bearer ','')||null},
-  '../api-error-policy':{PublicApiError},'./performance-placement':{PLACEMENT_VERSION:'performance-4-30d',
+  '../api-error-policy':{PublicApiError},'./performance-placement':{PLACEMENT_VERSION:`performance-${DANCER_SCORE_VERSION}-${DANCER_PLACEMENT_PERIOD}`,
    getPerformancePlacementScores:async(_admin,rows)=>rows.map(row=>candidates.find(c=>c.dancerId===row.dancerId)?.performanceScore ?? null),
    orderByPerformance:async(_admin,rows)=>[...rows].sort((a,b)=>(candidates.find(c=>c.dancerId===b.id)?.performanceScore ?? -1)-(candidates.find(c=>c.dancerId===a.id)?.performanceScore ?? -1)||a.id.localeCompare(b.id))},
   './directory-candidates':compile('src/lib/dancr/directory-candidates.ts',{'./markets':{isAllMyDancrCities:city=>city==='All cities'}}),

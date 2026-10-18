@@ -2,9 +2,9 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerPerformance } from "./venue-analytics";
 import type { DancerPlacementScorecard } from "./dancer-analytics-types";
-import { DANCER_SCORE_VERSION, scoreVenueDancers } from "./venue-dancer-scores";
+import { DANCER_PLACEMENT_DAYS, DANCER_PLACEMENT_PERIOD, DANCER_SCORE_VERSION, scoreVenueDancers } from "./venue-dancer-scores";
 
-export const PLACEMENT_PERIOD = "30d";
+export const PLACEMENT_PERIOD = DANCER_PLACEMENT_PERIOD;
 export const PLACEMENT_VERSION = `performance-${DANCER_SCORE_VERSION}-${PLACEMENT_PERIOD}`;
 type Identity = { dancerId: string; venueId?: string | null };
 const DAY = 86_400_000;
@@ -16,10 +16,11 @@ function venueScores(admin: SupabaseClient, venueId: string, now: number) {
   const key = `${PLACEMENT_VERSION}:${venueId}`;
   const cached = scoreCache.get(key);
   if (cached && cached.expires > now) return cached.scores;
+  const periodStart = new Date(now - DANCER_PLACEMENT_DAYS * DAY).toISOString();
   const scores = (async () => {
     const { data, error } = await admin.rpc("get_venue_performance_analytics", {
       p_venue_id: venueId,
-      p_since: new Date(now - 30 * DAY).toISOString(),
+      p_since: periodStart,
       p_until: new Date(now).toISOString(),
       p_tonight_since: new Date(now - DAY).toISOString(),
       p_tonight_until: new Date(now).toISOString(),
@@ -29,7 +30,7 @@ function venueScores(admin: SupabaseClient, venueId: string, now: number) {
     // Score the full cohort, exactly as the venue dashboard does, before
     // applying public eligibility, filters or pagination.
     return new Map(scoreVenueDancers(data.performance.dancers as DancerPerformance[], PLACEMENT_PERIOD)
-      .map(row => [row.dancer.id, { venueId, periodStart: new Date(now - 30 * DAY).toISOString(), periodEnd: new Date(now).toISOString(),
+      .map(row => [row.dancer.id, { venueId, periodStart, periodEnd: new Date(now).toISOString(),
         scores: Object.fromEntries(Object.entries(row.scores).map(([key, score]) => [key,
           { value: score.value, reason: score.reason, confidence: score.confidence, evidence: score.evidence }])) as DancerPlacementScorecard["scores"],
       }]));

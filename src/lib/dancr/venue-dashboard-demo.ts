@@ -1,5 +1,4 @@
 import type { DancerPerformance, VenuePerformanceCounts, VenueValueReport, VenueAutomaticPeriod } from "./venue-analytics";
-import type { DancerScorePeriod } from "./venue-dancer-scores";
 import type { VenueOperations } from "./venue-operations";
 import type { HairColor } from "./hair-color";
 import type { VenueDancerAffiliation } from "./venue-roster";
@@ -47,7 +46,7 @@ export type DemoRosterDancer = { id: string; name: string; working: boolean; pho
 const DAY = 86_400_000;
 
 /** Entirely synthetic, deterministic data. No database, notifications, credentials or redeemable tokens. */
-export function createVenueDashboardDemo(period: DancerScorePeriod, now: Date, photos: Array<{ name: string; url: string; dancerId?: string }> = []) {
+export function createVenueDashboardDemo(period: keyof typeof DEMO_PERIODS, now: Date, photos: Array<{ name: string; url: string; dancerId?: string }> = []) {
   const end = now.toISOString();
   const ago = (hours: number) => new Date(now.getTime() - hours * 3_600_000).toISOString();
   const trackingStartedAt = new Date(now.getTime() - 180 * DAY).toISOString();

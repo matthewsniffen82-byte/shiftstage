@@ -1,7 +1,9 @@
 import type { DancerPerformance } from "./venue-analytics";
 import type { VenueDashboardAnalytics } from "./types";
 
-export type DancerScorePeriod = VenueDashboardAnalytics["period"];
+export type DancerScorePeriod = VenueDashboardAnalytics["period"] | "14d";
+export const DANCER_PLACEMENT_DAYS = 14;
+export const DANCER_PLACEMENT_PERIOD = "14d";
 export const DANCER_SCORE_LABELS = {
   overall: "Overall Performance", checkIns: "Check-in Activity", internal: "Internal Table Requests",
   vip: "VIP Requests", profile: "Profile Interest", conversions: "Verified Entry Conversions",
@@ -18,6 +20,8 @@ export const DANCER_SCORE_MIN_PEERS = 3;
 export const DANCER_SCORE_MINIMUMS = {
   tonight: { hours: 1, requests: 3, claims: 3, actions: 10 },
   "7d": { hours: 2, requests: 5, claims: 5, actions: 20 },
+  // Placement uses a shorter window with the existing evidence requirements.
+  "14d": { hours: 4, requests: 10, claims: 10, actions: 30 },
   "30d": { hours: 4, requests: 10, claims: 10, actions: 30 },
   all: { hours: 4, requests: 10, claims: 10, actions: 30 },
 } as const;

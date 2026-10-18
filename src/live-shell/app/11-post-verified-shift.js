@@ -177,7 +177,7 @@
     }
 
     function venueLineupMarkup(venue, city, options = {}) {
-      // Public discovery already orders dancers by the venue's 30-day Overall
+      // Public discovery already orders dancers by the venue's rolling Overall
       // Performance score. Keep that order when selecting the live top five.
       const liveProfiles = (Array.isArray(options.profiles)
         ? options.profiles

@@ -1,5 +1,5 @@
 // Eligibility is checked before ranking. The only placement signal is the
-// venue dashboard's rolling 30-day Overall Performance score.
+// rolling 14-day Overall Performance score, using the venue dashboard's formula.
 export type RankingSurface = "grid" | "tv";
 export type RankingBucket = { impressions: number; actions: number; engaged: number; completed: number };
 export type RankingCandidate = {

@@ -143,7 +143,7 @@ test('partial overall rescales available weights and shows coverage without awar
 });
 
 test('period minimums and early-data labels prevent tiny samples from being ranked', () => {
-  for (const period of ['tonight', '7d', '30d', 'all']) {
+  for (const period of ['tonight', '7d', '14d', '30d', 'all']) {
     const min = DANCER_SCORE_MINIMUMS[period];
     const rows = peers().map(row => ({ ...row,
       internal: { ...row.internal, checkedInHours: min.hours, rosterTrackedHours: min.hours, requests: min.requests, requestsDuringHours: min.requests },

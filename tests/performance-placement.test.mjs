@@ -13,7 +13,7 @@ const now=Date.parse('2026-10-12T14:00:00Z');
 function fixture(reports, affiliations=[]) {
  const calls=[];let fail=false;
  const admin={
-  async rpc(name,args){calls.push({name,args});return {data:fail?null:{performance:{dancers:reports[args.p_venue_id]||[]}},error:fail?new Error('report unavailable'):null};},
+  async rpc(name,args){calls.push({name,args});const report=reports[args.p_venue_id];return {data:fail?null:{performance:{dancers:typeof report==='function'?report(args):report||[]}},error:fail?new Error('report unavailable'):null};},
   from(table){assert.equal(table,'venue_dancer_affiliations');let rows=[...affiliations];const q={
    select(){return q;},in(k,v){rows=rows.filter(r=>v.includes(r[k]));return q;},eq(k,v){rows=rows.filter(r=>r[k]===v);return q;},
    order(k){if(k==='approved_at')rows.sort((a,b)=>String(b[k]).localeCompare(String(a[k])));return q;},
@@ -23,14 +23,16 @@ function fixture(reports, affiliations=[]) {
  const service=compile('src/lib/dancr/performance-placement.ts',{'server-only':{},'./venue-dancer-scores':scoring});
  return {admin,service,calls,fail(value){fail=value;}};
 }
-test('placement uses the exact dashboard score over the full venue cohort, never the filtered grid',async()=>{
+test('placement uses a rolling 14-day window and the shared formula over the full venue cohort',async()=>{
  const report=[dancer('a',18),dancer('b',2),dancer('private-peer',10)];
  const f=fixture({club:report});
  const scores=await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'b',venueId:'club'},{dancerId:'a',venueId:'club'}],now);
- const dashboard=scoring.scoreVenueDancers(report,'30d');
+ const dashboard=scoring.scoreVenueDancers(report,'14d');
+ assert.equal(f.service.PLACEMENT_PERIOD,'14d');
+ assert.equal(f.service.PLACEMENT_VERSION,`performance-${scoring.DANCER_SCORE_VERSION}-14d`);
  assert.deepEqual(Array.from(scores),[dashboard[1].scores.overall.value,dashboard[0].scores.overall.value]);
  assert.equal(f.calls.length,1);assert.equal(f.calls[0].name,'get_venue_performance_analytics');
- assert.equal(f.calls[0].args.p_since,new Date(now-30*86400000).toISOString());
+ assert.equal(f.calls[0].args.p_since,new Date(now-14*86400000).toISOString());
  assert.equal(f.calls[0].args.p_until,new Date(now).toISOString());
  assert.equal(Date.parse(f.calls[0].args.p_tonight_until)-Date.parse(f.calls[0].args.p_tonight_since),86400000);
 });
@@ -41,7 +43,7 @@ test('explicit club wins; otherwise only the most recent active affiliation supp
  {id:'3',dancer_id:'a',venue_id:'revoked',status:'revoked',approved_at:'2026-10-12'}];
  const f=fixture({club:report,other},affiliations);
  const result=await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a'},{dancerId:'a',venueId:'other'},{dancerId:'new'}],now);
- assert.deepEqual(Array.from(result),[scoring.scoreVenueDancers(report,'30d')[0].scores.overall.value,scoring.scoreVenueDancers(other,'30d')[0].scores.overall.value,null]);
+ assert.deepEqual(Array.from(result),[scoring.scoreVenueDancers(report,'14d')[0].scores.overall.value,scoring.scoreVenueDancers(other,'14d')[0].scores.overall.value,null]);
  assert.deepEqual(f.calls.map(c=>c.args.p_venue_id).sort(),['club','other']);
 });
 test('duplicate dancers and concurrent requests share a report; scores refresh after one minute',async()=>{
@@ -71,8 +73,9 @@ test('ordered public cards contain no private scores or report fields and unscor
 test('own scorecards match every venue category while omitting other dancer identities and raw reports',async()=>{
  const cohort=[dancer('a',18),dancer('b',2),dancer('private-peer',10)],f=fixture({club:cohort});
  const [card]=await f.service.getPerformancePlacementScorecards(f.admin,[{dancerId:'a',venueId:'club'}],now);
- const expected=scoring.scoreVenueDancers(cohort,'30d')[0].scores;
+ const expected=scoring.scoreVenueDancers(cohort,'14d')[0].scores;
  assert.equal(card.venueId,'club');assert.equal(card.periodEnd,new Date(now).toISOString());
+ assert.equal(card.periodStart,new Date(now-14*86400000).toISOString());
  for(const key of ['overall',...scoring.DANCER_SCORE_CATEGORIES]) {
    assert.equal(card.scores[key].value,expected[key].value);assert.equal(card.scores[key].confidence,expected[key].confidence);
    assert.equal(card.scores[key].evidence,expected[key].evidence);assert.equal(card.scores[key].details,undefined);
@@ -80,4 +83,25 @@ test('own scorecards match every venue category while omitting other dancer iden
  assert.doesNotMatch(JSON.stringify(card),/Private|private-peer|profileClaims|dancer_id|customer_id/);
  assert.equal((await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a',venueId:'club'}],now))[0],card.scores.overall.value);
  assert.equal(f.calls.length,1);
+});
+
+test('recent performance changes placement when older activity falls outside 14 days',async()=>{
+ const day=86400000;
+ const claims={a:[{at:now-20*day,count:100,redeemed:100},{at:now-2*day,count:20,redeemed:0}],
+  b:[{at:now-20*day,count:100,redeemed:0},{at:now-2*day,count:20,redeemed:20}],
+  c:[{at:now-2*day,count:20,redeemed:10}]};
+ const report=({p_since,p_until})=>Object.entries(claims).map(([id,events])=>{
+  const included=events.filter(event=>event.at>=Date.parse(p_since)&&event.at<Date.parse(p_until));
+  return {...dancer(id),results:{profileClaims:included.reduce((sum,event)=>sum+event.count,0),
+   profileCohortConversions:included.reduce((sum,event)=>sum+event.redeemed,0)}};
+ });
+ const month=scoring.scoreVenueDancers(report({p_since:new Date(now-30*day).toISOString(),p_until:new Date(now).toISOString()}),'30d');
+ assert.ok(month[0].scores.overall.value>month[1].scores.overall.value);
+ const f=fixture({club:report});
+ const cards=await f.service.getPerformancePlacementScorecards(f.admin,[{dancerId:'a',venueId:'club'},{dancerId:'b',venueId:'club'}],now);
+ assert.equal(cards[0].scores.conversions.value,0);assert.equal(cards[1].scores.conversions.value,100);
+ assert.ok(cards[1].scores.overall.value>cards[0].scores.overall.value);
+ // The window rolls with the current time rather than resetting on a calendar boundary.
+ await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a',venueId:'club'}],now+day);
+ assert.equal(f.calls.at(-1).args.p_since,new Date(now-13*day).toISOString());
 });

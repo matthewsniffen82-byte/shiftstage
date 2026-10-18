@@ -1,6 +1,8 @@
 # Discovery ranking
 
-The dancer directory and MyDancrTV rank all eligible candidates in the requested city before pagination. Neither feed has a total profile, video, or page-count cap. The default order is the venue dashboard's rolling 30-day Overall Performance score, descending; ties use dancer ID, then video ID. Scores use each venue's full analytics cohort, not the current page or public subset. Unscored dancers follow scored dancers. No profile is hard-coded above the score order.
+The dancer directory and MyDancrTV rank all eligible candidates in the requested city before pagination. Neither feed has a total profile, video, or page-count cap. The default order is the rolling 14-day Overall Performance score, descending, using the venue dashboard's category formula; ties use dancer ID, then video ID. Scores use each venue's full analytics cohort, not the current page or public subset. Internal rosters use the same 14-day window for their club. Unscored dancers follow scored dancers. No profile is hard-coded above the score order.
+
+Placement includes activity from exactly 14 days before calculation through the calculation time. The five category weights and previous placement evidence minimums are retained. Early data remains labelled in the private dancer scorecard. The 30-day analytics/history options remain available and do not change placement. The placement period is part of the snapshot version, so previous 30-day ordering cannot be reused after deployment.
 
 The server reads lightweight candidate identities through service-only, UUID-keyset RPCs in batches of 1,000 until an empty batch. It then calculates the complete order and saves a private, two-hour snapshot. Only the requested page receives full cards, photos, metrics, or playback data: up to 100 directory cards or 24 TV videos per request. These are request sizes, not total discovery limits. Venue score reports are shared in a one-minute in-process cache.
 

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import type { DancerPlacementScorecard } from "@/src/lib/dancr/dancer-analytics-types";
-import { DANCER_SCORE_CATEGORIES, DANCER_SCORE_LABELS, DANCER_SCORE_WEIGHTS } from "@/src/lib/dancr/venue-dancer-scores";
+import { DANCER_PLACEMENT_DAYS, DANCER_SCORE_CATEGORIES, DANCER_SCORE_LABELS, DANCER_SCORE_WEIGHTS } from "@/src/lib/dancr/venue-dancer-scores";
 
 type Boosts = { eligible: boolean; score: number | null; scorecard: DancerPlacementScorecard | null };
 const guidance = {
@@ -28,10 +28,11 @@ export function DancerDiscoveryBoosts() {
   },[retry]);
   const card = status?.scorecard;
   return <section className="dancer-analytics-audience" aria-labelledby="discovery-boosts-heading">
-    <h3 id="discovery-boosts-heading">Your performance score <small>Last 30 days{card?.venueName ? ` · ${card.venueName}` : ""}</small></h3>
+    <h3 id="discovery-boosts-heading">Your performance score <small>Rolling {DANCER_PLACEMENT_DAYS} days{card?.venueName ? ` · ${card.venueName}` : ""}</small></h3>
     {error ? <p role="alert">Your score is temporarily unavailable. <button type="button" onClick={()=>setRetry(value=>value+1)}>Try again</button></p>
       : !status ? <p role="status">Loading performance score…</p> : <>
         <p><strong>Overall Performance: {card?.scores.overall.value == null ? "—" : `${card.scores.overall.value}/100`}</strong>{card?.scores.overall.confidence === "early" ? " · Early data" : ""}</p>
+        <p className="dancer-results-note"><strong>Higher score, higher visibility.</strong> Your rolling {DANCER_PLACEMENT_DAYS}-day score determines your default placement in dancer grids, internal rosters and Dancer TV. Customer filters and selected videos can change what appears first.</p>
         <p className="dancer-results-note">{card?.scores.overall.reason || card?.scores.overall.evidence || "More recorded activity is needed before a score is available."}</p>
         <div className="dancer-score-categories">{DANCER_SCORE_CATEGORIES.map(key => {
           const score = card?.scores[key];
@@ -40,9 +41,10 @@ export function DancerDiscoveryBoosts() {
             <p>{guidance[key]}</p><small>Overall score weight: {DANCER_SCORE_WEIGHTS[key]}%</small>
           </details>;
         })}</div>
-        <p className="dancer-results-note">This score always uses the last 30 days at the club shown on your card, or your most recent active club affiliation. The filters above apply to your activity totals. The club dashboard uses the same calculation. At least three categories are required; missing categories are excluded and the remaining weights adjust.</p>
+        <p className="dancer-results-note">This score uses the last {DANCER_PLACEMENT_DAYS} days at the club shown on your card, or your most recent active club affiliation. Internal rosters use that club’s score. The filters above apply to your activity totals, including your 30-day history.</p>
+        <p className="dancer-results-note">The category weights match the club dashboard. At least three categories are required; missing categories are excluded and the remaining weights adjust. Early data means more activity is needed for a reliable score.</p>
         {!status.eligible && <p className="dancer-results-note">Your profile must be approved and public to appear in discovery.</p>}
       </>}
-    <p className="dancer-results-note">Higher Overall Performance scores improve placement in public grids, internal rosters and Dancer TV. Internal rosters use that club’s score. Scores do not measure earnings or confirmed service completion.</p>
+    <p className="dancer-results-note">Scores do not measure earnings or confirmed service completion.</p>
   </section>;
 }

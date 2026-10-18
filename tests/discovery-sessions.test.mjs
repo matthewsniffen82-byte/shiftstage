@@ -69,6 +69,21 @@ test('new snapshots are rate limited but an existing snapshot remains readable',
  await assert.rejects(f.service.discoverySnapshot(f.admin,c,{surface:'tv',city:'Miami'}));
 });
 
+test('the 14-day placement version invalidates snapshots and cursors from the 30-day window',async()=>{
+ for(const surface of ['grid','tv']) {
+  const f=fixture([row(1,{performanceScore:20}),row(2,{performanceScore:80})]);
+  const c=await f.service.discoveryContext(f.admin,f.request());
+  const scopeHash=createHash('sha256').update(JSON.stringify(['performance-4-30d',surface,'vegas','','for-you','',...(surface==='tv'?['global-discovery-v1']:[])])).digest('hex');
+  f.data.discovery_sessions.push({id:id(80),viewer_hash:c.viewerHash,visit_id:c.visitId,scope_hash:scopeHash,surface,
+   ordered_ids:[id(1),id(2)],expires_at:new Date(Date.now()+3600000).toISOString()});
+  const scope={surface,city:'Vegas'};
+  const current=await f.service.discoverySnapshot(f.admin,c,scope);
+  assert.notEqual(current.snapshot.id,id(80));
+  assert.deepEqual(Array.from(current.snapshot.ordered_ids),[id(2),id(1)]);
+  await assert.rejects(f.service.discoverySnapshot(f.admin,c,scope,`rank1:${id(80)}:1`),/expired/);
+ }
+});
+
 test('public grids and TV share score order for guests and accounts, and a new visit sees updated scores',async()=>{
  const candidates=[row(1,{performanceScore:20}),row(2,{performanceScore:85}),row(3,{performanceScore:60})],f=fixture(candidates);
  const cards=candidates.map(row=>({id:row.id}));

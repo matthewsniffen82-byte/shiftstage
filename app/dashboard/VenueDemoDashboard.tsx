@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent, type
 import { createVenueDashboardDemo, DEMO_PERIODS, type DemoRecord, type DemoRosterDancer } from "@/src/lib/dancr/venue-dashboard-demo";
 import type { VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import { VenueRosterProfileButton } from "../internal/InternalRoster";
-import type { DancerScorePeriod } from "@/src/lib/dancr/venue-dancer-scores";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import VenueTonightOverview from "./VenueTonightOverview";
 import VenueSetupChecklist from "./VenueSetupChecklist";
@@ -63,7 +62,7 @@ function SampleList({ rows }: { rows: Array<{ name: string; status: string; deta
 export default function VenueDemoDashboard({ workingNow, affiliations = [], onOpenTableQrCodes }: { workingNow: Array<Record<string, unknown>>; affiliations?: Array<Record<string, unknown>>; onOpenTableQrCodes?: () => void }) {
   const [workspace, setWorkspace] = useState<Workspace>("tonight");
   const [guestTab, setGuestTab] = useState<GuestTab>("venue-guest-list");
-  const [period, setPeriod] = useState<DancerScorePeriod>("30d");
+  const [period, setPeriod] = useState<keyof typeof DEMO_PERIODS>("30d");
   const [snapshot] = useState(() => new Date());
   const [rosterSearch, setRosterSearch] = useState("");
   const [workingOnly, setWorkingOnly] = useState(false);
@@ -114,7 +113,7 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onOp
     </nav>
     {workspace === "business" && <div className="venue-analytics-period" role="group" aria-label="Analytics period">
       {Object.entries(DEMO_PERIODS).map(([id, label]) => <button key={id} type="button" className={period === id ? "active" : ""}
-        aria-pressed={period === id} onClick={() => setPeriod(id as DancerScorePeriod)}>{label}</button>)}
+        aria-pressed={period === id} onClick={() => setPeriod(id as keyof typeof DEMO_PERIODS)}>{label}</button>)}
     </div>}
     </div>
     <section id="demo-tonight" role="tabpanel" aria-labelledby="demo-tonight-tab" hidden={workspace !== "tonight"}>

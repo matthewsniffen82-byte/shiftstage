@@ -10,7 +10,7 @@ import * as scoring from '../src/lib/dancr/venue-dancer-scores.ts';
 import {compile} from './helpers/discovery-fixture.mjs';
 
 const require=createRequire(import.meta.url);
-const card={venueId:'club-a',venueName:'Club A',periodStart:'2026-09-18T00:00:00Z',periodEnd:'2026-10-18T00:00:00Z',
+const card={venueId:'club-a',venueName:'Club A',periodStart:'2026-10-04T00:00:00Z',periodEnd:'2026-10-18T00:00:00Z',
   scores:Object.fromEntries(['overall',...scoring.DANCER_SCORE_CATEGORIES].map(key=>[key,{value:50,reason:null,confidence:'early',evidence:'Recorded activity'}]))};
 function render(status,error=false) {
   const exports={};let slot=0;
@@ -22,11 +22,15 @@ function render(status,error=false) {
   return renderToStaticMarkup(exports.DancerDiscoveryBoosts());
 }
 
-test('scorecard shows all five category scores, their guidance and a fixed club/30-day scope',()=>{
+test('scorecard explains 14-day placement beside the score and preserves 30-day activity history',()=>{
   const html=render({eligible:true,score:50,scorecard:card});
   assert.equal((html.match(/class="dancer-score-category"/g)||[]).length,5);
   for(const key of scoring.DANCER_SCORE_CATEGORIES) assert.ok(html.includes(scoring.DANCER_SCORE_LABELS[key]));
-  assert.match(html,/Last 30 days · Club A/);assert.match(html,/Early data/);assert.match(html,/50\/100/);
+  assert.match(html,/Rolling 14 days · Club A/);assert.match(html,/Early data/);assert.match(html,/50\/100/);
+  assert.match(html,/rolling 14-day score determines your default placement in dancer grids, internal rosters and Dancer TV/);
+  assert.ok(html.indexOf('Higher score, higher visibility.')>html.indexOf('Overall Performance:'));
+  assert.ok(html.indexOf('Higher score, higher visibility.')<html.indexOf('class="dancer-score-categories"'));
+  assert.match(html,/30-day history/);assert.doesNotMatch(html,/last 30 days/i);
   assert.match(html,/filters above apply to your activity totals/);assert.match(html,/missing categories are excluded/);
   assert.match(html,/staff approval does not improve/);assert.match(html,/check out before leaving/);
 });
@@ -49,7 +53,7 @@ function routeFixture({denied=false,eligible=true,failed=false}={}) {
     'next/server':{NextResponse:Response},'@/src/lib/api':{apiError:error=>Response.json({ok:false,error:error.message},{status:denied?401:503})},
     '@/src/lib/supabase/request':{createRequestSupabaseContext:async(_request,access)=>{assert.equal(access.role,'dancer');if(denied)throw new Error('No access');return {user:{id:'owner'}};}},
     '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>admin},'@/src/lib/dancr/discovery-service':{readRankingCandidates:rows=>rows},
-    '@/src/lib/dancr/performance-placement':{PLACEMENT_PERIOD:'30d',getPerformancePlacementScorecards:async(client,identities)=>{
+    '@/src/lib/dancr/performance-placement':{PLACEMENT_PERIOD:scoring.DANCER_PLACEMENT_PERIOD,getPerformancePlacementScorecards:async(client,identities)=>{
       assert.equal(client,admin);assert.equal(identities.length,1);assert.equal(identities[0].dancerId,'mine');
       if(failed)throw new Error('Unavailable');return [card];
     }},
@@ -64,6 +68,7 @@ test('score endpoint resolves ownership and exposes only the signed-in dancer ev
     assert.equal(response.status,200);assert.equal(response.headers.get('cache-control'),'private, no-store');
     assert.deepEqual(calls[0],{table:'dancer_profiles',filters:[['user_id','owner']]});
     const data=await response.json();assert.equal(data.eligible,eligible);assert.equal(data.score,50);assert.equal(data.scorecard.venueName,'Club A');
+    assert.equal(data.period,'14d');
     assert.doesNotMatch(JSON.stringify(data),/other|secret-club|user_id/);
   }
 });
