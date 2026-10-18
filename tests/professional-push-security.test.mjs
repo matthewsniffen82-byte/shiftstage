@@ -99,6 +99,18 @@ test("retired pickup chats never send external alerts", async () => {
   assert.equal(f.calls.length, 0);
 });
 
+test("dancer table push includes club and table, opens the dancer inbox and expires promptly", async () => {
+  const f = deliveryFixture("dancer");
+  await f.deliverNotificationRows(f.client, [{ recipient_id: ownId, deliveryId: "dancer-table-push",
+    notification_type: "support_message", title: "New table request", body: "Table 12 at Echo House requested you.",
+    payload: { kind: "dancer_table_request" },
+  }], { email: false });
+  assert.equal(f.calls[0].url, "https://example.test/dashboard/dancer#dancer-notifications");
+  assert.equal(f.calls[0].ttl, 60);
+  assert.equal(f.calls[0].deliveryId, "dancer-table-push");
+  assert.equal(f.calls[0].body, "Table 12 at Echo House requested you.");
+});
+
 function notificationRoute(authenticated = true) {
   return compile("app/api/notifications/route.ts", {
     "next/server": { NextResponse: { json: (value, init) => Response.json(value, init) } },

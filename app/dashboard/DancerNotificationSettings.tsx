@@ -80,9 +80,10 @@ export default function DancerNotificationSettings() {
     <div className="dancer-preferences-delivery">
       <h3>Phone notifications</h3>
       <p>Manage push notifications on this device.</p>
+      <p>Table requests include the table number and club and are also sent to your account email. Turn on notifications for your email app in your phone&apos;s settings.</p>
       <button className="dancer-preferences-action" type="button" data-push-settings>Manage phone notifications</button>
     </div>
-    <p className="dancer-preferences-essential">Club access, review decisions, account updates, and support replies stay on.</p>
+    <p className="dancer-preferences-essential">Table requests, club access, review decisions, account updates, and support replies stay on.</p>
     {status ? <p role="status">{status}</p> : null}
   </article>;
 }

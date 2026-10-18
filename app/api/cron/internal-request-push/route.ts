@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { authorizeCronRequest } from "@/src/lib/dancr/cron-auth";
-import { deliverInternalRequestPush } from "@/src/lib/dancr/internal-request-push";
+import { deliverInternalRequestAlerts } from "@/src/lib/dancr/internal-request-alerts";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   const unauthorized = authorizeCronRequest(request);
   if (unauthorized) return unauthorized;
   try {
-    const result = await deliverInternalRequestPush(createAdminSupabaseClient());
+    const result = await deliverInternalRequestAlerts(createAdminSupabaseClient());
     return NextResponse.json({ ok: result.configured, ...result }, { status: result.configured ? 200 : 503, headers: { "cache-control": "no-store" } });
   } catch {
     console.warn("INTERNAL_REQUEST_PUSH_WORKER_FAILED");

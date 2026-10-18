@@ -283,9 +283,9 @@ test("expanded profile status stays visible and uses compact non-repeating contr
 });
 
 test("profile visibility is one compact control and tap access stays behind Manage", () => {
-  assert.match(dashboard, /<h2>Profile visibility<\/h2>/);
+  assert.match(dashboard, /aria-label="Profile visibility controls"/);
   assert.match(dashboard, /className="visibility-state"[\s\S]*?"Public" : "Incognito"[\s\S]*?aria-hidden="true">·[\s\S]*?"Visible" : "Hidden"/);
-  assert.match(dashboard, /Your profile is public\./);
+  assert.match(dashboard, /Incognito is off\. Your content is visible again\./);
   assert.match(dashboard, /Your content is hidden from the site and stays saved\./);
   assert.match(dashboard, /className="visibility-toggle"[\s\S]*?"Go incognito" : "Make profile public"/);
   assert.match(dashboard, /\.visibility-panel button\.visibility-toggle \{ width: fit-content; min-height: 44px;[^}]*border-radius: 999px; font-size: 11px;/);

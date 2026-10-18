@@ -135,6 +135,7 @@ test('legacy deep links select their destination and profile contents remain mou
 
 test('Edit profile still opens the editor from the overview', () => {
   const ui = harness('app/dashboard/DancerDashboardWorkspace.tsx', { overview: 'Overview content', profile: 'Profile editor', editorRequested: 0 });
+  assert.equal(ui.exports.dancerDashboardDestination('#dancer-notifications'), 'account');
   assert.equal(ui.nodes().find(n => n.props?.id === 'dancer-destination-profile').props.hidden, true);
   ui.update({ editorRequested: 1 });
   const panel = ui.nodes().find(n => n.props?.id === 'dancer-destination-profile');

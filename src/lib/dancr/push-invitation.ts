@@ -1,4 +1,4 @@
-export type PushInvitationMoment = "customer-follow" | "dancer-review" | "dancer-shift" | "venue-dashboard" | "venue-live" | "settings";
+export type PushInvitationMoment = "customer-follow" | "dancer-review" | "dancer-shift" | "dancer-dashboard" | "venue-dashboard" | "venue-live" | "settings";
 
 declare global {
   interface Window { mydancrPushInvitationsInstalled?: boolean; mydancrPendingPushInvitation?: PushInvitationMoment }

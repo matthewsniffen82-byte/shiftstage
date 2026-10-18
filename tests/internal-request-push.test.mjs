@@ -46,7 +46,7 @@ test('scheduled delivery requires the cron secret and reports missing provider c
     if(name==='next/server')return {NextResponse:{json:Response.json}};
     if(name.endsWith('cron-auth'))return auth;
     if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>({})};
-    if(name.endsWith('internal-request-push'))return {deliverInternalRequestPush:async()=>{invoked++;return {configured,sent:0,skipped:0,retry:0};}};
+    if(name.endsWith('internal-request-alerts'))return {deliverInternalRequestAlerts:async()=>{invoked++;return {configured,sent:0,skipped:0,retry:0};}};
     throw Error(name);
   }});
   for(const authorization of ['', 'Bearer wrong'])assert.equal((await route.GET(new Request('https://example.test/worker',{headers:{authorization}}))).status,401);

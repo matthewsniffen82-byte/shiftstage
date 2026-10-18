@@ -53,9 +53,16 @@ function fixture({ role = "customer", configured = true, enabled = false, suppor
 test("page entry loads no device module, configuration or permission prompt", () => {
   const f = fixture(); assert.equal(f.nodes.length, 0); assert.equal(f.calls.length, 0);
 });
+
+test("entering the dancer dashboard offers notification setup before either onboarding or the approved workspace", () => {
+  const panel = readFileSync(new URL("../app/dashboard/DancerDashboardPanels.tsx", import.meta.url), "utf8");
+  assert.match(panel, /useEffect\(\(\) => \{ offerPushNotifications\("dancer-dashboard"\); \}, \[\]\)/);
+  assert.ok(panel.indexOf('offerPushNotifications("dancer-dashboard")') < panel.indexOf('<DancerOnboardingCommand'));
+});
 for (const [role, moment, words] of [
   ["customer", "customer-follow", /favorites/],
   ["dancer", "dancer-review", /profile/], ["dancer", "dancer-shift", /account/],
+  ["dancer", "dancer-dashboard", /table request/],
   ["venue", "venue-dashboard", /venue/], ["venue", "venue-live", /live/],
 ]) test(`${moment} offers context without requesting browser permission`, async () => {
   const f = fixture({ role }); await f.offer(moment);
@@ -64,6 +71,28 @@ for (const [role, moment, words] of [
   assert.equal(f.buttons()[1].textContent, "Not now");
   assert.ok(!f.calls.includes("permission"));
 });
+test("dancer dashboard invitation persists email guidance after enabling and never changes customer settings", async () => {
+  const f = fixture({ role: "dancer" }); await f.offer("dancer-dashboard");
+  assert.match(f.card().children[3].textContent, /table number and club.*email app.*phone's settings/);
+  assert.ok(!f.calls.includes("permission"));
+  await f.buttons()[0].onclick();
+  assert.ok(f.calls.includes("subscription"));
+  assert.ok(!f.calls.some(call => /notification-settings|customer\/profile/.test(call.url || "")));
+  assert.match(f.card().children[3].textContent, /account email/);
+  f.buttons()[1].onclick();
+  f.advance(1500); await f.offer("dancer-dashboard"); assert.equal(f.nodes.length, 0);
+});
+for (const options of [{ enabled: true }, { configured: false }, { permission: "denied", support: "Push is blocked. Allow notifications in site settings." }, { support: "Add MyDancr to your Home Screen." }]) {
+  test(`dancers still get email guidance when push needs no enrollment: ${JSON.stringify(options)}`, async () => {
+    const f = fixture({ role: "dancer", ...options }); await f.offer("dancer-dashboard");
+    assert.match(f.card().children[3].textContent, /account email/);
+    assert.ok(!f.calls.includes("permission"));
+    if (options.enabled || options.configured === false) assert.equal(f.buttons().length, 1);
+    else assert.equal(f.buttons()[0].disabled, true);
+    f.buttons().at(-1).onclick(); await f.offer("dancer-dashboard"); assert.equal(f.nodes.length, 0);
+  });
+}
+
 test("only an explicit tap enrolls; customer preference saves after subscription confirmation", async () => {
   const f = fixture(); await f.offer("customer-follow");
   await f.buttons()[0].onclick();

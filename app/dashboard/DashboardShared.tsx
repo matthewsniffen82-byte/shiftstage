@@ -132,6 +132,21 @@ export function NotificationPanel({
 
   useEffect(() => { void loadNotifications(); }, [loadNotifications, refreshKey]);
 
+  useEffect(() => {
+    if (!dancerMode) return;
+    const refresh = () => {
+      if (document.visibilityState === "visible" && !loadAbortRef.current) void loadNotifications();
+    };
+    const timer = window.setInterval(refresh, 15_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [dancerMode, loadNotifications]);
+
   function beginNotificationAction() {
     if (!mountedRef.current || actionInFlightRef.current) return null;
     actionInFlightRef.current = true;
@@ -221,7 +236,7 @@ export function NotificationPanel({
   const unreadCount = notifications.filter((item) => !item.readAt).length;
 
   return (
-    <article className="info-panel notification-panel" id={panelId ?? (customerMode ? "customer-alerts" : undefined)} tabIndex={customerMode ? -1 : undefined}>
+    <article className="info-panel notification-panel" id={panelId ?? (customerMode ? "customer-alerts" : dancerMode ? "dancer-notifications" : undefined)} tabIndex={customerMode || dancerMode ? -1 : undefined}>
       <div className="notification-title-row">
         <div>
           {customerMode && !vipMode ? <span>Updates that matter</span> : null}
@@ -821,6 +836,7 @@ function notificationCategory(notification: Record<string, unknown>) {
     ? notification.payload as Record<string, unknown>
     : {};
   if (payload.kind === "followed_club_deal_published") return "Club Deal";
+  if (payload.kind === "dancer_table_request") return "Table request";
   if (payload.kind === "vip_request" || payload.kind === "vip_request_status" || payload.kind === "vip_nickname_changed" || payload.kind === "vip_dancer_request") return "VIP";
   if (payload.kind === "followed_club_roster_addition") return "Club";
   if (type.includes("shift")) return "Schedule";

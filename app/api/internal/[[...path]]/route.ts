@@ -2,7 +2,7 @@ import { after, NextResponse } from "next/server";
 import { orderByPerformance } from "@/src/lib/dancr/performance-placement";
 import { cancelInternalRequest } from "@/src/lib/dancr/internal-request-cancel";
 import { deliverInternalCancellationPush } from "@/src/lib/dancr/internal-request-cancellation-push";
-import { deliverInternalRequestPush } from "@/src/lib/dancr/internal-request-push";
+import { deliverInternalRequestAlerts } from "@/src/lib/dancr/internal-request-alerts";
 import { internalMainPhotos } from "@/src/lib/dancr/internal-main-photo";
 import { serveInternalMedia } from "@/src/lib/dancr/internal-media-delivery";
 import { internalOpenRequests, internalRequestsTonight, internalTableRequestStates } from "@/src/lib/dancr/internal-request-activity";
@@ -157,7 +157,7 @@ export async function POST(request: Request, context: Context) {
       const { data, error } = await admin.rpc("internal_roster_request", { p_token: path[1], p_dancer: body.dancerId, p_key: body.requestKey });
       if (error) throw error;
       if (isInternalUuid(data?.id)) after(async () => {
-        try { await deliverInternalRequestPush(createAdminSupabaseClient(), data.id, { deadline: deliveryDeadline }); }
+        try { await deliverInternalRequestAlerts(createAdminSupabaseClient(), data.id, { deadline: deliveryDeadline }); }
         catch { console.warn("INTERNAL_REQUEST_PUSH_DEFERRED_TO_WORKER"); }
       });
       return json({ ok: true, receipt: data });

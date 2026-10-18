@@ -32,6 +32,19 @@ test("club SMS without OneSignal configuration performs no provider request", as
   assert.equal(service.calls.length, 0);
 });
 
+test("dancer table emails use the stored account email, correct deep link and a stable provider idempotency key", async () => {
+  const service = load(() => new Response(null, { status: 202 }));
+  const delivery = { ...row, deliveryId: "table-email-job", title: "New table request", body: "Table 12 at <Echo House> requested you.", payload: { kind: "dancer_table_request" } };
+  assert.equal((await service.deliverNotificationRows(service.client, [delivery], { push: false })).email, 1);
+  const { init } = service.calls[0], payload = JSON.parse(init.body);
+  assert.equal(payload.to, recipient.email);
+  assert.equal(init.headers["Idempotency-Key"], "notification/table-email-job");
+  assert.match(payload.text, /Table 12 at <Echo House>/);
+  assert.match(payload.text, /dashboard\/dancer#dancer-notifications/);
+  assert.match(payload.html, /&lt;Echo House&gt;/);
+  assert.doesNotMatch(payload.html, /<Echo House>/);
+});
+
 function load(respond, { configured = true, smsConfigured = true, signal = new AbortController().signal } = {}) {
   const calls = [], logs = [], budgets = [], exports = {};
   vm.runInNewContext(compiled, {

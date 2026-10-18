@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { publishDancerVisibility } from "@/src/lib/dancr/publish-dancer-visibility";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
 import { readSession, requestDancerProfileJson, requestDancerProfileVisibilityJson } from "./dashboard-session";
 import type { LoadState, DancerPhotoItem, DancerIdentityDraft, DancerProfileEditorSaveRequest } from "./dashboard-types";
@@ -48,6 +49,7 @@ export function DancerPanel({
   profile?: LoadState["profile"];
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
+  useEffect(() => { offerPushNotifications("dancer-dashboard"); }, []);
   const isApproved = effectiveStatus === "approved";
   const agreementReviewRequired = agreement?.required === true && !agreement.accepted;
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;

@@ -143,7 +143,7 @@ async function deliverPushNotifications(client: DancrClient, rows: NotificationD
   let delivered = 0;
   for (const row of rows) {
     const shuttleRequest = (row.payload as Record<string, unknown> | null)?.kind === "club_shuttle_request";
-    const tableRequest = (row.payload as Record<string, unknown> | null)?.kind === "internal_table_request";
+    const tableRequest = ["internal_table_request", "dancer_table_request"].includes(String((row.payload as Record<string, unknown> | null)?.kind));
     if (await deliverWebPush(client, row.recipient_id, {
       title: row.title,
       body: shuttleRequest ? "New free shuttle request. Open your venue dashboard to contact the guest and confirm pickup." : row.body,
@@ -175,6 +175,8 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        ...(row.deliveryId && (row.payload as Record<string, unknown> | null)?.kind === "dancer_table_request"
+          ? { "Idempotency-Key": `notification/${row.deliveryId}` } : {}),
       },
       body: JSON.stringify({
         from,
@@ -278,6 +280,7 @@ function notificationActionUrl(row: NotificationDeliveryRow) {
   if (!baseUrl) return "";
   if (payload.kind === "club_shuttle_request") return `${baseUrl}/dashboard/venue#venue-pickups`;
   if (payload.kind === "internal_table_request") return `${baseUrl}/dashboard/venue#table-requests`;
+  if (payload.kind === "dancer_table_request") return `${baseUrl}/dashboard/dancer#dancer-notifications`;
   if (payload.kind === "vip_request" || payload.kind === "vip_request_updated" || payload.kind === "vip_nickname_changed") return `${baseUrl}/dashboard/venue#venue-vip`;
   if (payload.kind === "vip_request_status") return `${baseUrl}/vip`;
   if (payload.kind === "vip_dancer_request") return `${baseUrl}/dashboard/dancer#dancer-account`;

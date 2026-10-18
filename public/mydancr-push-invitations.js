@@ -9,6 +9,7 @@
     "customer-follow": ["customer", "Keep up with your favorites", "Get notified when dancers you follow are working and when your favorite clubs post deals."],
     "dancer-review": ["dancer", "Know when your profile is ready", "Get notified when your profile is approved or needs an update."],
     "dancer-shift": ["dancer", "Keep up with your dancer account", "Get profile updates and important account alerts while you’re away from MyDancr."],
+    "dancer-dashboard": ["dancer", "Don't miss a table request", "Enable phone notifications for table requests, including the table number and club."],
     "venue-dashboard": ["venue", "Keep your venue up to date", "Get notified when your venue page is ready for review and when requests need your attention."],
     "venue-live": ["venue", "Your venue is live", "Enable notifications for customer pickup requests and important venue updates."],
     settings: ["", "Push notifications", "Manage notifications on this device."],
@@ -33,6 +34,7 @@
   function eligible(moment, id) {
     if (moment === "settings") return true;
     const saved = history(id);
+    if (moment === "dancer-dashboard") return !saved[moment];
     const cooldown = 24 * 60 * 60_000;
     return !saved[moment] && !(saved.dismissedAt && Date.now() - saved.dismissedAt < cooldown);
   }
@@ -61,24 +63,25 @@
   }
   async function offer(moment) {
     const copy = moments[moment], auth = session(), id = identity(auth);
+    const dancerDashboard = moment === "dancer-dashboard";
     if (!copy || !id || !["customer", "dancer", "venue"].includes(auth.account.role)
       || (copy[0] && copy[0] !== auth.account.role) || !eligible(moment, id) || loading || current || !deviceUrl) return;
-    if (moment !== "settings" && window.Notification?.permission === "denied") return;
+    if (moment !== "settings" && !dancerDashboard && window.Notification?.permission === "denied") return;
     loading = true;
     try {
       devicePromise ||= import(deviceUrl).catch(error => { devicePromise = null; throw error; });
       const device = await devicePromise;
       const enabled = await device.customerPushDeviceEnabled(auth.account.id);
       assertAccount(id);
-      if (enabled && moment !== "settings") return;
+      if (enabled && moment !== "settings" && !dancerDashboard) return;
       const result = await request("/api/notifications", id);
       if (result.pushUserId !== auth.account.id) return;
       const delivery = result.notificationDelivery || {};
       const support = device.customerPushSupportMessage();
       // No promotional invitation for a channel that cannot currently enroll.
-      if (!delivery.pushAvailable && moment !== "settings") return;
-      if (support && !/Home Screen/.test(support) && moment !== "settings") return;
-      const historyMoment = support ? `${moment}:installation` : moment;
+      if (!delivery.pushAvailable && moment !== "settings" && !dancerDashboard) return;
+      if (support && !/Home Screen/.test(support) && moment !== "settings" && !dancerDashboard) return;
+      const historyMoment = support && !dancerDashboard ? `${moment}:installation` : moment;
       if (moment !== "settings" && history(id)[historyMoment]) return;
       assertAccount(id);
       const card = document.createElement("section");
@@ -133,8 +136,13 @@
           } else close();
         } finally { if (current === active) dismiss.disabled = false; }
       };
-      if (enabled || delivery.pushAvailable) actions.append(enable);
+      if ((enabled || delivery.pushAvailable) && !(dancerDashboard && enabled)) actions.append(enable);
       actions.append(dismiss); card.append(heading, message, actions);
+      if (dancerDashboard || (moment === "settings" && auth.account.role === "dancer")) {
+        const email = document.createElement("p");
+        email.textContent = "Table requests are also emailed to your account email, with the table number and club. Turn on notifications for your email app in your phone's settings.";
+        card.append(email);
+      }
       document.body.append(card);
       current = { card, id };
       remember(id, historyMoment);
