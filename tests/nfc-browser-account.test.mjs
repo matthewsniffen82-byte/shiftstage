@@ -31,10 +31,17 @@ const policy = load("src/lib/api-error-policy.ts", {
   "./dancr/phone-tap-copy.ts": load("src/lib/dancr/phone-tap-copy.ts", {}),
   "./dancr/payout-copy.ts": load("src/lib/dancr/payout-copy.ts", {}),
 });
-const marker = load("src/lib/dancr/nfc-browser-account.ts", {
-  "server-only": {},
-  "@/src/lib/server-env": { getServerEnv: () => "test-only-signing-key" },
-});
+const testNow = Date.parse("2026-10-17T12:00:00.000Z");
+function browserMarker(config = null, now = testNow) {
+  return load("src/lib/dancr/nfc-browser-account.ts", {
+    "server-only": {},
+    "@/src/lib/server-env": {
+      getServerEnv: () => "test-only-signing-key",
+      getOptionalServerEnv: () => config,
+    },
+  }, { Date: class extends Date { static now() { return now; } } });
+}
+const marker = browserMarker();
 const userA = "11111111-1111-4111-8111-111111111111";
 const userB = "22222222-2222-4222-8222-222222222222";
 const sessionId = "33333333-3333-4333-8333-333333333333";
@@ -50,7 +57,7 @@ function request(cookie = "", body) {
   });
 }
 
-function fixture({ userId = userA, type = "dressing_room", role = "dancer", fail = false, signedIn = true, pending = false } = {}) {
+function fixture({ userId = userA, type = "dressing_room", role = "dancer", accountState = "active", fail = false, signedIn = true, pending = false, browser = marker, accessError = null } = {}) {
   const calls = [];
   const tag = { id: "tag-id", type, venueId: "venue-id", venue: { name: "Test club" } };
   const route = load("app/api/nfc/[token]/route.ts", {
@@ -81,13 +88,14 @@ function fixture({ userId = userA, type = "dressing_room", role = "dancer", fail
     "@/src/lib/supabase/request": {
       createRequestSupabaseContext: async () => {
         if (!signedIn) throw new Error("Sign in required.");
+        if (accessError) throw accessError;
         return { user: { id: userId }, client: {
-          from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role, account_state: "active" } }) }) }) }),
+          from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role, account_state: accountState } }) }) }) }),
         } };
       },
     },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
-    "@/src/lib/dancr/nfc-browser-account": marker,
+    "@/src/lib/dancr/nfc-browser-account": browser,
   });
   return { ...route, calls };
 }
@@ -134,6 +142,65 @@ test("a different account is blocked before enrollment or check-in and cannot re
   assert.equal(result.status, 409);
   assert.equal((await result.json()).code, "NFC_BROWSER_ACCOUNT_CONFLICT");
   assert.deepEqual(route.calls, []);
+  assert.equal(result.headers.get("set-cookie"), null);
+});
+
+const bypassExpiresAt = "2026-10-17T14:00:00.000Z";
+const bypassConfig = JSON.stringify({ userId: userB, expiresAt: bypassExpiresAt });
+
+test("temporary bypass applies only to its configured account and expires at the deadline", () => {
+  const browser = browserMarker(bypassConfig);
+  assert.equal(browser.hasTemporaryNfcBrowserAccountBypass(userB), true);
+  assert.equal(browser.hasTemporaryNfcBrowserAccountBypass(userA), false);
+  for (const now of [Date.parse(bypassExpiresAt), Date.parse(bypassExpiresAt) + 1]) {
+    assert.equal(browserMarker(bypassConfig, now).hasTemporaryNfcBrowserAccountBypass(userB), false);
+  }
+});
+
+test("missing or malformed bypass configuration fails closed", () => {
+  for (const config of [null, "", "bad json", "null", "true", "[]", "{}",
+    JSON.stringify({ userId: userB }), JSON.stringify({ expiresAt: bypassExpiresAt }),
+    JSON.stringify({ userId: userB, expiresAt: 9999999999999 }),
+    JSON.stringify({ userId: userB, expiresAt: "invalid" })]) {
+    assert.equal(browserMarker(config).hasTemporaryNfcBrowserAccountBypass(userB), false, String(config));
+  }
+});
+
+test("temporary exception permits the test account without replacing the original browser link", async () => {
+  const route = fixture({ userId: userB, browser: browserMarker(bypassConfig) });
+  const result = await route.POST(request(cookieA, { sessionId }), context);
+  assert.equal(result.status, 200);
+  assert.deepEqual(route.calls, ["dancer"]);
+  assert.ok(result.headers.get("set-cookie").startsWith(cookieA));
+});
+
+test("expired or other-account exceptions cannot authorize a mismatched browser", async () => {
+  for (const browser of [browserMarker(bypassConfig, Date.parse(bypassExpiresAt)),
+    browserMarker(JSON.stringify({ userId: userA, expiresAt: bypassExpiresAt }))]) {
+    const route = fixture({ userId: userB, browser });
+    const result = await route.POST(request(cookieA, { sessionId, userId: userA, bypass: true }), context);
+    assert.equal(result.status, 409);
+    assert.deepEqual(route.calls, []);
+    assert.equal(result.headers.get("set-cookie"), null);
+  }
+});
+
+test("temporary exception preserves authentication, account and verification gates", async () => {
+  for (const options of [{ signedIn: false }, { role: "customer" }, { accountState: "suspended" },
+    { accessError: new Error("Age verification required.") },
+    { accessError: new Error("Dancer Agreement required.") }]) {
+    const route = fixture({ userId: userB, browser: browserMarker(bypassConfig), ...options });
+    const result = await route.POST(request(cookieA, { sessionId }), context);
+    assert.ok(result.status >= 400);
+    assert.deepEqual(route.calls, []);
+    assert.equal(result.headers.get("set-cookie"), null);
+  }
+});
+
+test("temporary exception does not swallow a check-in failure or overwrite the browser link", async () => {
+  const route = fixture({ userId: userB, browser: browserMarker(bypassConfig), fail: true });
+  const result = await route.POST(request(cookieA, { sessionId }), context);
+  assert.ok(result.status >= 400);
   assert.equal(result.headers.get("set-cookie"), null);
 });
 

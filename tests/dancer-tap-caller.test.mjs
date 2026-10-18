@@ -51,6 +51,7 @@ function harness(options={}){
   if(name.endsWith('safe-error-metadata'))return {safeErrorMetadata};
   if(name.endsWith('/nfc'))return {...service,async resolveNfcTag(){steps.push('tag');return options.inactive?null:tag;}};
   if(name.endsWith('nfc-browser-account'))return {
+   hasTemporaryNfcBrowserAccountBypass:()=>false,
    readNfcBrowserAccountToken:()=>options.browserLinked?'synthetic-browser-binding':null,nfcBrowserAccountMatches:()=>!options.browserConflict,
    nfcBrowserAccountConflict:()=>Response.json({ok:false,error:'Different browser account.'},{status:409}),createNfcBrowserAccountToken:()=>{if(options.tokenFailure)throw new Error('private signing failure');return 'synthetic-browser-binding';},
    rememberNfcBrowserAccount(response){cookies.push(true);return response;},

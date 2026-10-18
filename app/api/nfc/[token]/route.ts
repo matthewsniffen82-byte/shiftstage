@@ -23,6 +23,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import {
   createNfcBrowserAccountToken,
+  hasTemporaryNfcBrowserAccountBypass,
   nfcBrowserAccountConflict,
   nfcBrowserAccountMatches,
   readNfcBrowserAccountToken,
@@ -106,7 +107,8 @@ export async function POST(request: Request, context: RouteContext) {
         return NextResponse.json({ ok: false, error: "Sign in with an active dancer account to use this tag." }, { status: 403 });
       }
       const browserAccountToken = readNfcBrowserAccountToken(request);
-      if (browserAccountToken && !nfcBrowserAccountMatches(browserAccountToken, user.id)) {
+      if (browserAccountToken && !nfcBrowserAccountMatches(browserAccountToken, user.id)
+        && !hasTemporaryNfcBrowserAccountBypass(user.id)) {
         return nfcBrowserAccountConflict();
       }
       // Prepare before mutations, but save only after a successful dancer tap.

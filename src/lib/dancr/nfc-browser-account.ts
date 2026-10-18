@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getServerEnv } from "@/src/lib/server-env";
+import { getOptionalServerEnv, getServerEnv } from "@/src/lib/server-env";
 
 // A browser deterrent, never a login credential or proof of a physical device.
 export const NFC_BROWSER_ACCOUNT_COOKIE = "mydancr_nfc_account_v1";
@@ -36,6 +36,23 @@ export function nfcBrowserAccountMatches(token: string, userId: string) {
   const expected = createNfcBrowserAccountToken(userId);
   return token.length === expected.length
     && timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+}
+
+// Server-configured testing exception for an authenticated account only. It never
+// replaces the original browser link or bypasses any other check-in requirement.
+export function hasTemporaryNfcBrowserAccountBypass(userId: string) {
+  const raw = getOptionalServerEnv("NFC_BROWSER_ACCOUNT_TEST_BYPASS");
+  if (!raw) return false;
+  try {
+    const config: unknown = JSON.parse(raw);
+    if (!config || typeof config !== "object" || !("userId" in config)
+      || config.userId !== userId || !("expiresAt" in config)
+      || typeof config.expiresAt !== "string") return false;
+    const expiresAt = Date.parse(config.expiresAt);
+    return Number.isFinite(expiresAt) && Date.now() < expiresAt;
+  } catch {
+    return false;
+  }
 }
 
 export function rememberNfcBrowserAccount(response: NextResponse, token: string) {
