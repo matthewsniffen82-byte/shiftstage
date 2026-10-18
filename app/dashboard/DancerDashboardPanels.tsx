@@ -356,20 +356,18 @@ function DancerVisibilityPanel({
   }
 
   return (
-    <article className={`info-panel visibility-panel ${isPublic ? "" : "is-incognito"}`}>
-      <h2>Profile visibility</h2>
-      <div className="visibility-copy">
+    <article className={`info-panel visibility-panel ${isPublic ? "" : "is-incognito"}`} aria-label="Profile visibility controls">
+      <div className="visibility-controls">
         <div className="visibility-state" aria-label={`Profile visibility: ${isPublic ? "Public, visible" : "Incognito, hidden"}`}>
           <strong>{isPublic ? "Public" : "Incognito"}</strong>
           <span aria-hidden="true">·</span>
           <b>{isPublic ? "Visible" : "Hidden"}</b>
         </div>
-        <p>{isPublic ? "Your profile is public." : "Your content is hidden from the site and stays saved."}</p>
-        <p>Incognito temporarily hides your profile and all your content. Turn it off to show everything again.</p>
+        <button className="visibility-toggle" data-action-state={isSaving ? "saving" : hasSaved ? "success" : "idle"} type="button" onClick={toggleVisibility} disabled={isSaving}>
+          {isSaving ? "Saving…" : <><span>{isPublic ? "Go incognito" : "Make profile public"}</span>{hasSaved ? <small className="dashboard-button-confirmation">✓ Saved</small> : null}</>}
+        </button>
       </div>
-      <button className="visibility-toggle" data-action-state={isSaving ? "saving" : hasSaved ? "success" : "idle"} type="button" onClick={toggleVisibility} disabled={isSaving}>
-        {isSaving ? "Saving…" : <><span>{isPublic ? "Go incognito" : "Make profile public"}</span>{hasSaved ? <small className="dashboard-button-confirmation">✓ Saved</small> : null}</>}
-      </button>
+      <p>Incognito hides your profile and content. Everything stays saved.</p>
       {status ? <p className="visibility-status" role="status" aria-live="polite">{status}</p> : null}
     </article>
   );
@@ -789,17 +787,11 @@ function DancerSharePanel({ profile }: { profile?: LoadState["profile"] }) {
   }
 
   return (
-    <article className="info-panel share-panel" aria-labelledby="dancer-share-heading">
-      <div className="share-panel-head">
-        <div>
-          <h2 id="dancer-share-heading">Your public profile</h2>
-        </div>
-      </div>
+    <article className="info-panel share-panel" aria-label="Profile sharing">
       {slug ? (
         <div className="share-grid">
           <div className="share-link-row">
             <span>
-              <small>Your MyDancr link</small>
               <strong>mydancr.com/dancers/{slug}</strong>
             </span>
           </div>

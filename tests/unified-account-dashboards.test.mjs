@@ -588,8 +588,9 @@ test("dancer profile requests use one role-aware dashboard boundary", async () =
   assert.doesNotMatch(dashboard, /fetch\("\/api\/dancer\/profile\/visibility"/);
 });
 
-test("dancer visibility prevents duplicate and stale privacy changes", () => {
-  const visibilityPanel = dashboard.match(/function DancerVisibilityPanel[\s\S]*?function DancerLockedAnalyticsPanel/)?.[0] || "";
+test("dancer visibility prevents duplicate and stale privacy changes", async () => {
+  const panels = await readFile(new URL("../app/dashboard/DancerDashboardPanels.tsx", import.meta.url), "utf8");
+  const visibilityPanel = panels.match(/function DancerVisibilityPanel[\s\S]*?function DancerSetupPanel/)?.[0] || "";
   assert.match(visibilityPanel, /const mountedRef = useRef\(false\);/);
   assert.match(visibilityPanel, /const visibilitySequenceRef = useRef\(0\);/);
   assert.match(visibilityPanel, /const visibilityAbortRef = useRef<AbortController \| null>\(null\);/);

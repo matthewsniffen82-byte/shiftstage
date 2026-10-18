@@ -49,3 +49,71 @@ body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing > .dashboa
   padding: 10px !important;
   gap: 8px;
 }
+/* The disclosure already supplies a heading and border, so its contents stay flat. */
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing :is(.visibility-panel, .share-panel) {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  padding: 0 !important;
+  gap: 8px;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing :is(.visibility-panel, .share-panel) p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .visibility-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 8px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .visibility-state {
+  min-height: 28px;
+  padding: 3px 8px;
+  gap: 6px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .visibility-state strong {
+  font-size: 12px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .visibility-state b {
+  font-size: 10px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .share-grid {
+  min-width: 0;
+  gap: 8px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .share-link-row {
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .share-link-row strong {
+  font-size: 12px;
+  line-height: 1.4;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing :is(.visibility-toggle, .share-actions > button, .share-actions > a) {
+  min-width: 0;
+  max-width: 100%;
+  min-height: 40px !important;
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  line-height: 1.25;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .share-actions {
+  gap: 6px !important;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .share-actions > a {
+  gap: 6px;
+  white-space: nowrap;
+}
+body.dancr-button-system #dancer-dashboard #dancer-visibility-sharing .share-open-profile-button svg {
+  width: 12px;
+  height: 12px;
+}
