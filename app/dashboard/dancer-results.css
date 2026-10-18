@@ -191,7 +191,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 /* Compact channels share the range controls' solid face and equal columns. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels { padding:0; border:0; background:none; margin:0 0 8px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-channels > button {
-  min-width:0; min-height:36px !important; padding:6px 4px !important; border:1px solid transparent !important;
+  min-width:0; min-height:36px !important; padding:6px 4px !important; border:1px solid #50435f !important;
   border-radius:10px !important; background:linear-gradient(#1b1922,#1b1922) !important; box-shadow:none !important;
   font-size:12px !important; font-weight:600 !important; line-height:1.35; white-space:nowrap;
 }
