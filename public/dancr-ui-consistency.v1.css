@@ -1703,7 +1703,7 @@ html body.dancr-button-system > .app > header .topbar
   border-color: #4a365f !important;
 }
 html body.dancr-button-system > .app > header .topbar #guestMenuBtn svg {
-  color: #c4a3f1 !important;
+  color: #fff !important;
 }
 html body.dancr-button-system > .app > header .topbar
   :is(#accountBtn:not(.account-icon-btn), #guestMenuBtn):is([aria-expanded="true"], :focus-visible) {
