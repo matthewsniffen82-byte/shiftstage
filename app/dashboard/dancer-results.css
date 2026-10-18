@@ -49,11 +49,12 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system #dancer-dashboard .dancer-analytics-toolbar {
   position: sticky;
   top: calc(max(var(--mydancr-preview-banner-offset, 0px), var(--mydancr-demo-banner-height, 0px), env(safe-area-inset-top, 0px)) + var(--dancer-dashboard-nav-height, 94px) + 6px);
-  z-index: 30; align-self: start; display: grid; gap: 8px;
+  z-index: 30; align-self: start; display: grid; grid-template-columns: minmax(0, 1fr);
+  justify-content: stretch; align-items: start; min-width: 0; gap: 8px;
   padding: 10px; border: 1px solid #45404d; border-radius: 12px; background: #0c0a10;
   box-shadow: 0 4px 12px #0004;
 }
-body.dancr-button-system #dancer-dashboard .dancer-results-club { grid-template-columns: auto minmax(0, 1fr); align-items: center; max-width: none; gap: 10px; margin: 0; }
+body.dancr-button-system #dancer-dashboard .dancer-results-club { grid-template-columns: auto minmax(0, 1fr); align-items: center; width: 100%; min-width: 0; max-width: none; gap: 10px; margin: 0; }
 body.dancr-button-system #dancer-dashboard .dancer-results-range { margin: 0; color: #d0ccd7; font-size: 12px; line-height: 1.4; }
 .dancer-results-range > span { display: block; color: #aaa4b5; font-size: 11px; }
 body.dancr-button-system #dancer-dashboard .dancer-analytics-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
