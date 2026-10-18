@@ -31,7 +31,7 @@ export function DancerDiscoveryBoosts() {
     <h3 id="discovery-boosts-heading">Your performance score <small>Rolling {DANCER_PLACEMENT_DAYS} days{card?.venueName ? ` · ${card.venueName}` : ""}</small></h3>
     {error ? <p role="alert">Your score is temporarily unavailable. <button type="button" onClick={()=>setRetry(value=>value+1)}>Try again</button></p>
       : !status ? <p role="status">Loading performance score…</p> : <>
-        <p><strong>Overall Performance: {card?.scores.overall.value == null ? "—" : `${card.scores.overall.value}/100`}</strong>{card?.scores.overall.confidence === "early" ? " · Early data" : ""}</p>
+        <p className="dancer-score-overall"><strong>Overall Performance: {card?.scores.overall.value == null ? "—" : `${card.scores.overall.value}/100`}</strong>{card?.scores.overall.confidence === "early" ? " · Early data" : ""}</p>
         <p className="dancer-results-note"><strong>Higher score, higher visibility.</strong> Your rolling {DANCER_PLACEMENT_DAYS}-day score determines your default placement in dancer grids, internal rosters and Dancer TV. Customer filters and selected videos can change what appears first.</p>
         <p className="dancer-results-note">{card?.scores.overall.reason || card?.scores.overall.evidence || "More recorded activity is needed before a score is available."}</p>
         <div className="dancer-score-categories">{DANCER_SCORE_CATEGORIES.map(key => {

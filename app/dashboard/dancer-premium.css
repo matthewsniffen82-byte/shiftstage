@@ -247,8 +247,8 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule .dancer-schedule-help { margin:0; border:0; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-schedule .dancer-schedule-help > summary { min-height:36px; font-size:12px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary > header > a { display:inline-flex; align-items:center; flex-shrink:0; min-height:36px; font-size:12px; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts { gap:12px; margin:8px 0; }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts > div { gap:4px; padding:8px 0; border:0; border-radius:0; background:none; box-shadow:none; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts { gap:8px; margin:8px 0; }
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts > div { gap:4px; padding:9px 10px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts dt { font-size:11px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-activity-counts dd { font-size:23px; line-height:1.2; font-weight:650; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-activity-summary .dancer-results-note { margin:8px 0 0; font-size:11px; line-height:1.4; }
