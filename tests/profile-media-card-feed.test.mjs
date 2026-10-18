@@ -101,7 +101,7 @@ test("photo cards fill the available width and height without changing video siz
   }
 });
 
-test("photo cards use the same height as regular TV cards", () => {
+test("normal photo cards use the same height as regular TV cards", () => {
   assert.doesNotMatch(css, /--profile-photo-card-height-limit/);
   assert.doesNotMatch(css, /--profile-photo-card-ratio|--profile-photo-card-control-space|data-photo-shape/);
   assert.match(css, /height: var\(--profile-media-card-height\) !important/);
@@ -184,12 +184,15 @@ test("one in-flow header scrolls away, with no header padding repeated on later 
   assert.match(functionSource("mountProfileMediaCardHeader"), /host\.prepend\(header\)/);
 });
 
-test("profile photos and videos use edge-to-edge fill with centered cropping", () => {
+test("normal cards fill their frames while expanded cards follow the complete media", () => {
   assert.match(css, /\.profile-photo-viewer-slide-image \{[^}]*background-size: cover !important;[^}]*background-position: center !important;[^}]*background-repeat: no-repeat !important/);
   assert.match(css, /> :is\(img, video\) \{[^}]*object-fit: cover !important;[^}]*object-position: center !important/);
-  assert.doesNotMatch(css, /(?:object-fit|background-size): contain/);
-  assert.match(css, /\.is-media-fullscreen[^}]*object-fit: cover !important/);
-  assert.match(css, /\.is-media-fullscreen \.profile-photo-viewer-slide-image \{ background-size: cover !important/);
+  assert.match(css, /\.is-media-fullscreen :is\(\.profile-photo-viewer-slide, \.profile-tv-viewer-slide, \.profile-media-viewer-slide\) \{[^}]*height: auto !important;[^}]*min-height: 0 !important;[^}]*max-height: none !important/);
+  assert.match(css, /\.is-media-fullscreen[^}]*height: auto !important;[^}]*aspect-ratio: var\(--profile-media-card-ratio, 9 \/ 16\);[^}]*object-fit: contain !important/);
+  assert.match(css, /\.is-media-fullscreen \.profile-photo-viewer-slide-image \{ background-size: contain !important/);
+  assert.match(css, /\.is-media-fullscreen :is\(\.profile-photo-viewer-image, \.profile-tv-viewer-stage, \.profile-media-viewer-stage\) \{[^}]*padding: 0 0 calc\(104px \+ env\(safe-area-inset-bottom, 0px\)\) !important/);
+  assert.match(css, /\[data-media-controls="below"\][^{]*viewer-footer\) \{[^}]*position: relative !important/);
+  assert.match(css, /\[data-media-controls="below"\][^{]*viewer-actions\) \{[^}]*display: flex !important/);
   assert.match(css, /background: #000 !important/);
 });
 

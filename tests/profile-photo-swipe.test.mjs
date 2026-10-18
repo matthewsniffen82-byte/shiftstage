@@ -108,7 +108,7 @@ test("a tapped profile photo or video is the first card shown", () => {
 
 test("opening the card feed cannot reset a clicked profile video to the first item", () => {
   const resolverSource = liveApp.match(
-    /function profileTvViewerScrollTarget\(openingIndexValue, scrollTop, clientHeight, offsets = \[\], inset = 0\) \{[\s\S]*?\n    \}/,
+    /function profileTvViewerScrollTarget\(openingIndexValue, scrollTop, clientHeight, offsets = \[\], inset = 0, scrollHeight = Infinity\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
   assert.ok(resolverSource, "the profile video opening-index resolver must exist");
   const resolveScrollTarget = Function(

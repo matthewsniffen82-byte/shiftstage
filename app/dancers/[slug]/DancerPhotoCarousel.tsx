@@ -253,6 +253,7 @@ export function DancerPhotoCarousel({
     if (viewerKind === "photo") {
       return profilePhotoCardScrollIndex(scrollTop, slides.map((slide) => slide.offsetTop), feed.clientHeight, feed.scrollHeight);
     }
+    if (scrollTop > 0 && scrollTop + feed.clientHeight >= feed.scrollHeight - 1) return slides.length - 1;
     return slides.reduce((closestIndex, slide, index) => (
       Math.abs(slide.offsetTop - scrollTop) <
       Math.abs(slides[closestIndex].offsetTop - scrollTop)
@@ -1003,8 +1004,10 @@ export function DancerPhotoCarousel({
                 className="profile-media-viewer-slide"
                 data-profile-media-viewer-index={index}
                 data-profile-photo-card={item.kind === "photo" ? "true" : undefined}
+                data-media-controls={item.kind === "photo" && item.imageWidth && item.imageHeight
+                  ? item.imageWidth / item.imageHeight >= .8 ? "below" : "overlay" : undefined}
                 style={item.kind === "photo" && item.imageWidth && item.imageHeight ? {
-                  "--profile-photo-card-ratio": `${item.imageWidth} / ${item.imageHeight}`,
+                  "--profile-media-card-ratio": `${item.imageWidth} / ${item.imageHeight}`,
                 } as CSSProperties : undefined}
                 key={`${item.kind}-viewer-${item.id}`}
               >
@@ -1056,6 +1059,10 @@ export function DancerPhotoCarousel({
                     }}
                     onPause={() => handleViewerPlaybackChange(index, true)}
                     onPlay={() => handleViewerPlaybackChange(index, false)}
+                    onLoadedMetadata={(event) => {
+                      const video = event.currentTarget;
+                      sizeProfileMediaCard(video, video.videoWidth, video.videoHeight, "video");
+                    }}
                     onLoadedData={() => {
                       if (index === viewerIndex) setViewerVideoReadyVersion((version) => version + 1);
                     }}
@@ -1096,6 +1103,10 @@ export function DancerPhotoCarousel({
                       draggable={false}
                       loading="eager"
                       onError={markImageUnavailable}
+                      onLoad={(event) => {
+                        const poster = event.currentTarget;
+                        sizeProfileMediaCard(poster, poster.naturalWidth, poster.naturalHeight, "poster");
+                      }}
                       src={Math.abs(index - viewerIndex) <= 2 ? item.posterUrl : undefined}
                     />
                   ) : null}
@@ -1194,18 +1205,22 @@ function profilePhotoCardScrollIndex(scrollTop: number, offsets: number[], viewp
 }
 
 function sizeProfilePhotoCard(image: HTMLImageElement) {
-  const slide = image.closest<HTMLElement>("[data-profile-photo-card]");
+  sizeProfileMediaCard(image, image.naturalWidth, image.naturalHeight);
+}
+
+function sizeProfileMediaCard(media: HTMLElement, width: number, height: number, source = "photo") {
+  const slide = media.closest<HTMLElement>("[data-profile-media-viewer-index]");
   const feed = slide?.closest<HTMLElement>(".profile-media-viewer-stage");
-  const width = image.naturalWidth;
-  const height = image.naturalHeight;
-  if (!slide || !feed || !width || !height) return;
+  if (!slide || !feed || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
+  if (source === "poster" && slide.dataset.mediaRatioSource === "video") return;
+  slide.dataset.mediaRatioSource = source;
   const ratio = `${width} / ${height}`;
-  const anchor = [...feed.querySelectorAll<HTMLElement>("[data-profile-photo-card]")].reverse()
+  if (slide.style.getPropertyValue("--profile-media-card-ratio") === ratio) return;
+  const anchor = [...feed.querySelectorAll<HTMLElement>("[data-profile-media-viewer-index]")].reverse()
     .find((card) => card.offsetTop <= feed.scrollTop + 1);
   const before = anchor?.offsetTop || 0;
-  slide.dataset.photoShape = width > height * 3 ? "panorama" : width > height ? "landscape" : "portrait";
-  if (slide.style.getPropertyValue("--profile-photo-card-ratio") === ratio) return;
-  slide.style.setProperty("--profile-photo-card-ratio", ratio);
+  slide.style.setProperty("--profile-media-card-ratio", ratio);
+  slide.dataset.mediaControls = width / height >= .8 ? "below" : "overlay";
   if (anchor && anchor.offsetTop !== before) feed.scrollTo({ top: feed.scrollTop + anchor.offsetTop - before, behavior: "instant" });
 }
 

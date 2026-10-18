@@ -143,10 +143,13 @@
     let profileTvViewerMuted = false;
     let profileTvPlaybackFeedbackTimer = 0;
 
-    function profileTvViewerScrollTarget(openingIndexValue, scrollTop, clientHeight, offsets = [], inset = 0) {
+    function profileTvViewerScrollTarget(openingIndexValue, scrollTop, clientHeight, offsets = [], inset = 0, scrollHeight = Infinity) {
       const openingIndex = Number(openingIndexValue);
       if (openingIndexValue !== undefined && Number.isInteger(openingIndex)) {
         return { index: Math.max(0, openingIndex), locked: true };
+      }
+      if (offsets.length && scrollTop > 0 && scrollTop + clientHeight >= scrollHeight - 1) {
+        return { index: offsets.length - 1, locked: false };
       }
       return {
         index: offsets.length ? profileMediaCardScrollIndex(scrollTop, offsets, inset)
@@ -258,7 +261,8 @@
             stage.scrollTop,
             stage.clientHeight,
             [...stage.querySelectorAll("[data-profile-tv-viewer-index]")].map((slide) => slide.offsetTop),
-            profileMediaCardScrollInset(stage)
+            profileMediaCardScrollInset(stage),
+            stage.scrollHeight
           );
           if (target.locked) {
             scrollProfileTvViewerTo(target.index, { instant: true });
@@ -314,6 +318,9 @@
         if (posterUrl && Math.abs(index - Number(overlay.dataset.videoIndex || 0)) <= 2) {
           video.poster = posterUrl;
         }
+        video.addEventListener("loadedmetadata", () => {
+          sizeProfileMediaCard(slide, video.videoWidth, video.videoHeight, "video");
+        });
         video.addEventListener("loadeddata", () => {
           if (Number(overlay.dataset.videoIndex || 0) !== index) return;
           overlay.dataset.loadedVideoIndex = String(index);
@@ -333,6 +340,9 @@
         poster.setAttribute("aria-hidden", "true");
         poster.loading = "eager";
         poster.decoding = "async";
+        poster.addEventListener("load", () => {
+          sizeProfileMediaCard(slide, poster.naturalWidth, poster.naturalHeight, "poster");
+        });
         if (video.poster) poster.src = video.poster;
         slide.appendChild(poster);
         appendProfileMediaBackButton(slide, closeProfileTvViewer);
@@ -414,7 +424,10 @@
       }
       overlay.dataset.videoId = String(item.id || "");
       overlay.dataset.videoIndex = String(nextIndex);
-      mountProfileMediaCardControls(overlay, stage?.querySelector(`[data-profile-tv-viewer-index="${nextIndex}"]`));
+      const activeSlide = stage?.querySelector(`[data-profile-tv-viewer-index="${nextIndex}"]`);
+      const slideTopBefore = activeSlide?.offsetTop || 0;
+      const scrollTopBefore = stage?.scrollTop || 0;
+      mountProfileMediaCardControls(overlay, activeSlide);
       if (currentIndex !== nextIndex) delete overlay.dataset.loadedVideoIndex;
       document.getElementById("profileTvViewerStatus").textContent = "";
       preparePublicMediaLikeButton(
@@ -458,6 +471,9 @@
       });
       if (options.scroll !== false && stage) {
         scrollProfileTvViewerTo(nextIndex, options);
+      } else if (stage && activeSlide && activeSlide.offsetTop !== slideTopBefore) {
+        // Moving the controls below a short video must not move that video on screen.
+        stage.scrollTo({ top: scrollTopBefore + activeSlide.offsetTop - slideTopBefore, behavior: "instant" });
       }
       const video = activeProfileTvViewerVideo();
       if (video?.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {

@@ -743,15 +743,21 @@
     }
 
     function sizeProfilePhotoCard(slide, width, height) {
+      sizeProfileMediaCard(slide, width, height);
+    }
+
+    function sizeProfileMediaCard(slide, width, height, source = "photo") {
       if (!slide || !Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) return;
+      if (source === "poster" && slide.dataset.mediaRatioSource === "video") return;
+      slide.dataset.mediaRatioSource = source;
       const ratio = `${width} / ${height}`;
-      if (slide.style.getPropertyValue("--profile-photo-card-ratio") === ratio) return;
-      const feed = profilePhotoViewerImage;
-      const anchor = [...feed.querySelectorAll("[data-profile-photo-card]")].reverse()
+      if (slide.style.getPropertyValue("--profile-media-card-ratio") === ratio) return;
+      const feed = slide.closest(".profile-photo-viewer-image, .profile-tv-viewer-stage");
+      const anchor = [...(feed?.querySelectorAll("[data-profile-photo-card], [data-profile-tv-viewer-index]") || [])].reverse()
         .find((card) => card.offsetTop <= feed.scrollTop + 1);
       const before = anchor?.offsetTop || 0;
-      slide.style.setProperty("--profile-photo-card-ratio", ratio);
-      slide.dataset.photoShape = width > height * 3 ? "panorama" : width > height ? "landscape" : "portrait";
+      slide.style.setProperty("--profile-media-card-ratio", ratio);
+      slide.dataset.mediaControls = width / height >= .8 ? "below" : "overlay";
       if (anchor && anchor.offsetTop !== before) feed.scrollTo({ top: feed.scrollTop + anchor.offsetTop - before, behavior: "instant" });
     }
 
