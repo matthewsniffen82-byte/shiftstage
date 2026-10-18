@@ -29,6 +29,7 @@ const header = compile('export function Header({state, isLoading, role = "dancer
   DancerDashboardAvatar: identity.DancerDashboardAvatar, DashboardCloseButton: () => React.createElement("button", null, "Close"),
   CustomerDashboardAvatar: guestIdentity.CustomerDashboardAvatar,
   DashboardStyles: () => null,
+  VenueDashboardIcon: () => null,
   DashboardSignInRecovery: () => React.createElement("button", null, "Sign in"), retryDashboard: () => {},
 });
 const renderHeader = (state, isLoading, role = "dancer") => renderToStaticMarkup(React.createElement(header.Header, { state, isLoading, role }));
@@ -54,6 +55,17 @@ test("missing identity is an onboarding prompt only after a successful load", ()
   const failed = renderHeader({ error: "Sign in to open this dashboard." }, false);
   assert.match(failed, /<h1>Dancer dashboard<\/h1>/);
   assert.doesNotMatch(failed, /Complete your profile|>CY<|dashboard-identity-status is-live/);
+});
+
+test("data-loading failures offer retry while authentication failures offer sign-in recovery", () => {
+  for (const role of ["dancer", "venue"]) {
+    const failed = renderHeader({ error: "Unable to load dashboard.", signInRequired: false }, false, role);
+    assert.match(failed, />Try again<\/button>/);
+    assert.doesNotMatch(failed, />Sign in<\/button>/);
+    const expired = renderHeader({ error: "Your sign-in expired.", signInRequired: true }, false, role);
+    assert.match(expired, />Sign in<\/button>/);
+    assert.doesNotMatch(expired, />Try again<\/button>/);
+  }
 });
 
 test("club identity uses its saved name and city instead of the manager's account name", () => {

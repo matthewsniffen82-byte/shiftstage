@@ -284,7 +284,7 @@ test("All time starts at profile creation with full timestamp precision and no p
   await assert.rejects(service.getOwnDancerAudienceAnalytics(database(rows, "get_dancer_activity_trend"), "owner", "all", now), /trend unavailable/);
 });
 
-function routes({ denied = false } = {}) {
+function routes({ denied = false, analyticsUnavailable = false, activationUnavailable = false } = {}) {
   const calls = [], admin = { admin: true };
   const dependencies = {
     "next/server": { NextResponse: Response },
@@ -293,13 +293,20 @@ function routes({ denied = false } = {}) {
     "@/src/lib/dancr/ondato": { getDancerAgeVerification: async () => ({ required: false }) },
     "@/src/lib/dancr/dancer-agreement": { getDancerAgreementAccess: async () => ({ accepted: true }) },
     "@/src/lib/dancr/customer-follow-notifications": { broadcastFollowedClubRosterAddition: async () => {} },
-    "@/src/lib/dancr/nfc": { finalizePendingDancerNfcEnrollment: async () => null, getDancerNfcDashboardState: async () => ({ affiliations: [] }) },
+    "@/src/lib/dancr/nfc": { finalizePendingDancerNfcEnrollment: async () => {
+      if (activationUnavailable) throw new Error("Activation unavailable.");
+      return null;
+    }, getDancerNfcDashboardState: async () => ({ affiliations: [] }) },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
     "@/src/lib/dancr/deals": { getDancerDealMetrics: async () => { calls.push("legacy-deals"); return { redeemed: 1 }; } },
     "@/src/lib/dancr/dancer": { getOwnDancerDashboardAnalytics: async () => { calls.push("legacy-analytics"); return { profileViews30Days: 50 }; } },
     "@/src/lib/dancr/dancer-audience-analytics": {
       dancerAnalyticsPeriod: service.dancerAnalyticsPeriod,
-      getOwnDancerAudienceAnalytics: async (client, userId, period) => { assert.equal(client, admin); assert.equal(userId, "authenticated-owner"); calls.push(period); return { period }; },
+      getOwnDancerAudienceAnalytics: async (client, userId, period) => {
+        assert.equal(client, admin); assert.equal(userId, "authenticated-owner"); calls.push(period);
+        if (analyticsUnavailable) throw new Error("Analytics unavailable.");
+        return { period };
+      },
     },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => admin },
     "@/src/lib/supabase/request": { createRequestSupabaseContext: async (_request, access) => {
@@ -310,6 +317,24 @@ function routes({ denied = false } = {}) {
   };
   return { calls, analytics: compile("../app/api/dancer/analytics/route.ts", dependencies), dashboard: compile("../app/api/dancer/dashboard/route.ts", dependencies) };
 }
+
+test("a report failure leaves the verified dancer dashboard available without inventing results", async () => {
+  const route = routes({ analyticsUnavailable: true });
+  const response = await route.dashboard.GET(new Request("https://mydancr.test/api/dancer/dashboard?period=auto"));
+  assert.equal(response.status, 200);
+  const data = await response.json();
+  assert.equal(data.ok, true);
+  assert.equal(data.analytics, null);
+  assert.equal(data.agreement.accepted, true);
+  assert.deepEqual(data.affiliations, []);
+  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  const report = await route.analytics.GET(new Request("https://mydancr.test/api/dancer/analytics?period=auto"));
+  assert.equal((await report.json()).ok, false);
+  const blocked = routes({ activationUnavailable: true });
+  const activation = await blocked.dashboard.GET(new Request("https://mydancr.test/api/dancer/dashboard?period=auto"));
+  assert.equal((await activation.json()).ok, false);
+  assert.deepEqual(blocked.calls, []);
+});
 
 for (const endpoint of ["analytics", "dashboard"]) {
   test(`${endpoint} accepts All time for the authenticated dancer only`, async () => {

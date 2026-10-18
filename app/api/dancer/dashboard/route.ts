@@ -50,7 +50,12 @@ export async function GET(request: Request) {
     const [analytics, deals, nfc] = await Promise.all([
       requestedPeriod === null
         ? getOwnDancerDashboardAnalytics(client, user.id, admin)
-        : getOwnDancerAudienceAnalytics(admin, user.id, dancerAnalyticsPeriod(requestedPeriod)),
+        : getOwnDancerAudienceAnalytics(admin, user.id, dancerAnalyticsPeriod(requestedPeriod)).catch((analyticsError) => {
+          // Results retry independently; a report failure must not hide profile
+          // controls after account, agreement and activation checks succeed.
+          console.warn("DANCER_DASHBOARD_ANALYTICS_UNAVAILABLE", safeErrorMetadata(analyticsError));
+          return null;
+        }),
       requestedPeriod === null ? getDancerDealMetrics(client, user.id, admin) : Promise.resolve(null),
       getDancerNfcDashboardState(admin, user.id),
     ]);

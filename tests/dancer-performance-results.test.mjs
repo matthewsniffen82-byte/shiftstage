@@ -10,6 +10,8 @@ before(async () => {
   await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
     create table app_users(id uuid primary key,role text,account_state text);
     create table dancer_profiles(id uuid primary key,user_id uuid,created_at timestamptz default '2026-08-01');
+    create table shifts(id uuid primary key,dancer_id uuid,checked_in_at timestamptz,checked_out_at timestamptz,
+      location_verification_expires_at timestamptz,location_status text,status text);
     create table profile_views(id uuid primary key default gen_random_uuid(),dancer_id uuid,viewed_at timestamptz);
     create table venues(id uuid primary key,name text,timezone text,owner_user_id uuid,is_active boolean);
     create table internal_roster_requests(id uuid primary key default gen_random_uuid(),venue_id uuid,dancer_id uuid,created_at timestamptz,status text);
@@ -30,6 +32,7 @@ before(async () => {
     add column dancer_check_out_at timestamptz,add column check_in_day date,add column closure_reason text,
     add column both_roster_periods tstzmultirange not null default '{}',add column both_roster_started_at timestamptz;`);
   await db.exec(readFileSync(new URL('../supabase/migrations/20261018055657_dancer_results_roster_activity.sql', import.meta.url), 'utf8'));
+  await db.exec(readFileSync(new URL('../supabase/migrations/20261018163641_dancer_analytics_long_active_shift.sql', import.meta.url), 'utf8'));
 });
 after(async () => db?.close());
 beforeEach(async () => {
@@ -157,6 +160,34 @@ test('empty periods have real zeros; invalid windows and unprivileged RPC calls 
     await assert.rejects(report(),e=>e.code==='42501'); await db.exec('rollback to savepoint permission_check');
   }
   await db.exec('set local role service_role'); assert.equal((await report()).current.tableRequests,0);
+});
+
+test('a long-running active shift keeps its exact reporting window and owner-scoped counts',async()=>{
+  const since='2026-08-26T23:25:10.853Z',until='2026-10-18T16:32:58Z';
+  await db.query("insert into shifts values($1,$2,$3,null,'2099-12-31','club_confirmed','posted')",[id(50),id(10),since]);
+  await db.query("insert into internal_roster_requests(venue_id,dancer_id,created_at,status) values($1,$2,'2026-08-27','pending'),($1,$2,'2026-10-18T16:32:58Z','pending'),($1,$3,'2026-08-27','pending')",[id(20),id(10),id(11)]);
+  await db.exec('set local role service_role');
+  const r=await report(10,since,until);
+  assert.equal(r.current.tableRequests,1);
+  assert.equal(r.clubs.find(club=>club.id===id(20)).current.tableRequests,1);
+  assert.equal(r.current.vipRequests,0);
+});
+
+test('long ranges cannot borrow another dancer shift, a different start, or inactive check-ins',async()=>{
+  const since='2026-08-26T23:25:10.853Z',until='2026-10-18T16:32:58Z';
+  for(const [owner,start,checkout,expires,location,status] of [
+    [11,since,null,'2099-12-31','club_confirmed','posted'],
+    [10,'2026-08-26T23:25:11Z',null,'2099-12-31','club_confirmed','posted'],
+    [10,since,'2026-10-17','2099-12-31','club_confirmed','posted'],
+    [10,since,null,until,'club_confirmed','posted'],
+    [10,since,null,'2099-12-31','self_reported','posted'],
+    [10,since,null,'2099-12-31','club_confirmed','cancelled'],
+  ]) {
+    await db.exec('savepoint invalid_shift');
+    await db.query('insert into shifts values($1,$2,$3,$4,$5,$6,$7)',[id(50),id(owner),start,checkout,expires,location,status]);
+    await assert.rejects(report(10,since,until),error=>error.code==='22023');
+    await db.exec('rollback to savepoint invalid_shift');
+  }
 });
 
 test('All time includes old requests and repeat VIPs once, only at the profile creation boundary',async()=>{

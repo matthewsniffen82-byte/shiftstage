@@ -194,7 +194,7 @@ export default function DashboardClient({
         } catch (error) {
           if (!cancelled) {
             controller.abort();
-            setState((current) => ({ account: current.account, error: dashboardLoadErrorMessage(error) }));
+            setState((current) => ({ account: current.account, error: dashboardLoadErrorMessage(error), signInRequired: error instanceof DashboardDataRequestError && (error.status === 401 || error.status === 403) }));
             setIsLoading(false);
           }
         }
@@ -266,7 +266,7 @@ export default function DashboardClient({
       } catch (error) {
         if (!cancelled) {
           controller.abort();
-          setState((current) => ({ account: current.account, error: dashboardLoadErrorMessage(error) }));
+          setState((current) => ({ account: current.account, error: dashboardLoadErrorMessage(error), signInRequired: error instanceof DashboardDataRequestError && (error.status === 401 || error.status === 403) }));
           setIsLoading(false);
         }
       }
@@ -535,7 +535,7 @@ export default function DashboardClient({
           </div>
         </div>
         {dashboardDescription ? <p className="dashboard-identity-error">{dashboardDescription}</p> : null}
-        {state.error && (role === "venue" || role === "dancer") ? (
+        {state.error && state.signInRequired && (role === "venue" || role === "dancer") ? (
           <DashboardSignInRecovery role={role} onSignedIn={retryDashboard} />
         ) : state.error || state.accountError ? (
           <div className="action-row">
