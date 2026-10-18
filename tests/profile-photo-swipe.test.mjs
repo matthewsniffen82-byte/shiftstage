@@ -154,7 +154,7 @@ test("the profile presents approved photos and dancer-only videos as separate th
   assert.match(publicPhotoCarousel, /className="profile-media-viewer-slide"/);
   assert.match(
     publicPhotoCarousel,
-    /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?data-video-url=\{item.videoUrl\}/,
+    /controlsList="nofullscreen noremoteplayback nodownload"[\s\S]*?data-video-url=\{publicVideoPlaybackUrl\(item\)\}[\s\S]*?data-full-video-url=\{item.videoUrl\}/,
   );
   assert.doesNotMatch(publicPhotoCarousel, /profile-media-feature|inlinePlaying/);
   assert.match(publicPhotoCarousel, /new IntersectionObserver/);
@@ -249,7 +249,8 @@ test("the standalone profile uses a vertical profile-scoped media card feed", ()
   assert.doesNotMatch(publicPhotoCarousel, /requestFullscreen|webkitRequestFullscreen|viewerHasFullscreen/);
   assert.match(publicPhotoCarousel, /const workingNow = viewerStatus === "Working Now"/);
   assert.match(publicPhotoCarousel, /workingNow \? "Working now" : "Not working now"/);
-  assert.match(publicPhotoCarousel, /className="profile-media-position">\{index \+ 1\}\/\{viewerItems\.length\}/);
+  assert.match(publicPhotoCarousel, /aria-label=\{`\$\{stageName\} \$\{item\.kind\} \$\{index \+ 1\} of \$\{viewerItems\.length\}`\}/);
+  assert.doesNotMatch(publicPhotoCarousel, /className="profile-media-position"/);
   assert.doesNotMatch(publicPhotoCarousel, /Scroll up or down · Video/);
   assert.doesNotMatch(publicPhotoCarousel, /viewer\.kind === "photo" \? \(\s*<div className="profile-media-viewer-copy"/);
 });

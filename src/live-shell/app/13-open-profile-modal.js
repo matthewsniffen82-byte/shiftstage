@@ -440,7 +440,7 @@
       followButton.setAttribute("aria-label", `Follow ${overlay.dataset.profileName}`);
       followButton.setAttribute("aria-pressed", "false");
       const profile = findProfile(followButton.dataset.profile);
-      renderProfileMediaIdentity(overlay.querySelector(".profile-tv-viewer-copy"), profile, overlay.dataset.profileName || "Dancer", nextIndex, videos.length, closeProfileTvViewer);
+      renderProfileMediaIdentity(overlay.querySelector(".profile-tv-viewer-copy"), profile, overlay.dataset.profileName || "Dancer", closeProfileTvViewer);
       if (profile) syncHomeFeedActionButtons(profile, profile.city || citySelect.value);
       const viewerVideos = [...overlay.querySelectorAll(".profile-tv-viewer-video")];
       syncProfileTvVideoLoading(overlay, nextIndex);

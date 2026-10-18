@@ -32,8 +32,8 @@ test("both live rails follow TV action order and keep reports in the overflow", 
     assert.doesNotMatch(rail, /report|previous|next/);
   }
   assert.match(carousel, /profile-media-viewer-sound[^]*?<DancerMediaFollowButton[^]*?<MediaLikeButton[^]*?profile-media-viewer-share[^]*?profile-media-control-fullscreen/);
-  assert.match(actions, /mediaFollowAction\.current = \(\) => \{\s*if \(requireCustomerAccount\("follow"\)\) void updateFollow\(\)/);
-  assert.match(actions, /disabled: !savedLoaded \|\| followSaving/);
+  assert.match(actions, /mediaFollowAction\.current = \(\) => \{\s*if \(!preview && requireCustomerAccount\("follow"\)\) void updateFollow\(\)/);
+  assert.match(actions, /disabled: preview \|\| !savedLoaded \|\| followSaving/);
 });
 
 test("sound updates all profile videos and exposes the correct accessible state", () => {
@@ -112,7 +112,7 @@ test("photo rail actions and reports target their own card after scrolling", () 
     openContentReportDialog: (target) => calls.push(["report", target.targetType, target.targetId, target.targetLabel]),
   });
   vm.runInContext(source("mountProfilePhotoCardControls"), context);
-  context.mountProfilePhotoCardControls(slide, { id: "photo-7" }, 7, 30, "Star");
+  context.mountProfilePhotoCardControls(slide, { id: "photo-7" }, 7, "Star");
   const click = (selector) => nodes.get(selector).listeners.click({ preventDefault() {}, stopPropagation() {} });
   click("[data-profile-photo-follow]");
   assert.equal(calls.length, 0, "the account gate prevents unauthenticated follows");

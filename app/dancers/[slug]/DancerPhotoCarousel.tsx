@@ -725,13 +725,13 @@ export function DancerPhotoCarousel({
                     style={{ objectPosition: imageFocalPointCss(viewerAvatar?.focalX, viewerAvatar?.focalY) }} onError={(event) => { event.currentTarget.hidden = true; }} /> : null}
                 </span>
               </span>
-              <span className="profile-media-identity-text"><strong>{stageName}</strong><span className="profile-media-identity-meta">{viewerCity ? <span>{viewerCity}</span> : null}<span className="profile-media-position">{index + 1}/{viewerItems.length}</span></span></span>
+              <span className="profile-media-identity-text"><strong>{stageName}</strong>{viewerCity ? <span className="profile-media-identity-meta">{viewerCity}</span> : null}</span>
             </button>
             <div className="profile-media-context">
               <span className={`profile-media-schedule${workingNow ? " is-now" : ""}`}>{workingNow ? "Working now" : "Not working now"}</span>
               {workingNow && viewerVenue ? <div className="profile-media-club-row">
                 <a className="profile-media-venue" onClick={preview ? event => event.preventDefault() : undefined} href={viewerVenue.href} aria-label={`Open ${viewerVenue.name} club profile`}><VenuePinIcon /><span>{viewerVenue.name}</span></a>
-                {!preview && viewerDeal && openDeal ? <button className="profile-media-entry" type="button" onClick={(event) => openDeal(event.currentTarget)} aria-label={`View free entry for ${viewerVenue.name}`}><EntryQrIcon /><span>Free Entry</span></button> : null}
+                {!preview && viewerDeal && openDeal ? <button className="profile-media-entry" type="button" onClick={(event) => openDeal(event.currentTarget)} aria-label={`View free entry for ${viewerVenue.name}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></button> : null}
               </div> : null}
             </div>
           </div>
@@ -1153,10 +1153,6 @@ function ShareIcon() {
 
 function VenuePinIcon() {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></svg>;
-}
-
-function EntryQrIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="2.5" width="10" height="19" rx="2" /><path d="M7.4 18.5h2.2M15.5 8.2a4.4 4.4 0 0 1 0 7.6M18 5.5a7.5 7.5 0 0 1 0 13" /></svg>;
 }
 
 function ReportIcon() {

@@ -34,14 +34,16 @@ test("live photo and video identity uses verified current presence and preserves
     escapeHtml: (value) => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;"),
     encodeDealPass: (config) => { encodedConfig = config; return "encoded-pass"; },
   });
-  vm.runInContext(["isWorkingTonight", "dancerProfileClubDealConfig", "profileMediaIdentityMarkup"].map(functionSource).join("\n"), context);
-  const html = context.profileMediaIdentityMarkup(profile, "Star", 4, 30);
+  vm.runInContext(["isWorkingTonight", "dancerProfileClubDealConfig", "freeEntryButtonLabel", "profileMediaIdentityMarkup"].map(functionSource).join("\n"), context);
+  const html = context.profileMediaIdentityMarkup(profile, "Star");
   assert.match(html, /data-working-now="true"/);
   assert.match(html, /Working now/);
   assert.match(html, /https:\/\/example.com\/avatar.jpg/);
   assert.match(html, /profile-media-club-row[^]*?Echo House[^]*?Free Entry/);
   assert.match(html, /<a class="profile-media-venue" href="\/venues\/echo-house" aria-label="Open Echo House club profile">/);
-  assert.match(html, /5\/30/);
+  assert.match(html, /<span class="profile-media-identity-meta">Las Vegas<\/span>/);
+  assert.doesNotMatch(html, /profile-media-position/);
+  assert.ok(html.includes(context.freeEntryButtonLabel()), "profile entry uses the same label and cue as TV");
   assert.equal(encodedConfig.sourceType, "dancer_profile");
   assert.equal(encodedConfig.dancerId, "dancer-id");
   assert.equal(encodedConfig.attributionToken, "signed-token");
@@ -51,14 +53,14 @@ test("live photo and video identity uses verified current presence and preserves
     { ...profile, verified: false }, { ...profile, checkedOutAt: "now" },
     { ...profile, workingStatus: "ended" }, { ...profile, internalRoster: true }, null,
   ]) {
-    const hidden = context.profileMediaIdentityMarkup(inactive, "Star", 0, 1);
+    const hidden = context.profileMediaIdentityMarkup(inactive, "Star");
     assert.match(hidden, /Not working now/);
     assert.doesNotMatch(hidden, /data-working-now="true"|profile-media-entry|Echo House/);
   }
-  const noOffer = context.profileMediaIdentityMarkup({ ...profile, activeDeal: null }, "Star", 0, 1);
+  const noOffer = context.profileMediaIdentityMarkup({ ...profile, activeDeal: null }, "Star");
   assert.match(noOffer, /Working now[^]*?Echo House/);
   assert.doesNotMatch(noOffer, /profile-media-entry/);
-  assert.match(context.profileMediaIdentityMarkup(null, '<Star "test">', 0, 1), /&lt;Star &quot;test&quot;/);
+  assert.match(context.profileMediaIdentityMarkup(null, '<Star "test">'), /&lt;Star &quot;test&quot;/);
 });
 
 test("live venue links preserve native navigation through the photo viewer's click guards", () => {
@@ -84,7 +86,7 @@ test("live venue links preserve native navigation through the photo viewer's cli
   const copy = {
     querySelector: (selector) => selector === ".profile-media-venue" ? venue : selector === "[data-profile-media-back]" ? back : null,
   };
-  context.renderProfileMediaIdentity(copy, profile, "Star", 0, 1, () => { backCalls += 1; });
+  context.renderProfileMediaIdentity(copy, profile, "Star", () => { backCalls += 1; });
   assert.equal(copy.innerHTML, "identity markup");
   assert.equal(typeof photoFeed.listeners.click, "function");
   assert.equal(typeof photoViewer.listeners.click, "function");
@@ -105,8 +107,8 @@ test("live venue links preserve native navigation through the photo viewer's cli
   assert.equal(closeCalls, 0);
   back.listeners.click();
   assert.equal(backCalls, 1, "profile back action stays independent");
-  assert.doesNotThrow(() => context.renderProfileMediaIdentity(null, profile, "Star", 0, 1, () => {}));
-  assert.doesNotThrow(() => context.renderProfileMediaIdentity({ querySelector: () => null }, null, "Star", 0, 1, () => {}));
+  assert.doesNotThrow(() => context.renderProfileMediaIdentity(null, profile, "Star", () => {}));
+  assert.doesNotThrow(() => context.renderProfileMediaIdentity({ querySelector: () => null }, null, "Star", () => {}));
 });
 
 function reactControlsContext() {
@@ -122,14 +124,14 @@ function reactControlsContext() {
     jsx: ts.JsxEmit.ReactJSX, module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
   } }).outputText;
   const context = vm.createContext({
-    exports: {}, require, activeMediaReportTarget: () => null, reportedTargets: [], reportSaving: false,
+    exports: {}, require, preview: false, activeMediaReportTarget: () => null, reportedTargets: [], reportSaving: false,
     viewerStatus: "Working Now", viewerCity: "Las Vegas", stageName: "Star", viewerItems: [{}, {}],
     viewerAvatar: { url: "https://example.com/avatar.jpg", focalX: 42, focalY: 36 },
     featuredPhoto: null, viewerVenue: { name: "Echo House", href: "/venues/echo-house" }, viewerDeal: { deal: { id: "deal-id" } },
     closeViewer() {}, imageFocalPointCss: (x, y) => `${x}% ${y}%`,
     inlineMuted: true, mediaLikeStateFor: () => ({ liked: false, likeCount: 0, pending: false }),
     MediaLikeButton: () => null, DancerMediaFollowButton: () => null,
-    ReportIcon: () => null, VenuePinIcon: () => null, EntryQrIcon: () => null, ShareIcon: () => null,
+    ReportIcon: () => null, VenuePinIcon: () => null, ShareIcon: () => null,
     shareStatusIndex: 0, shareStatus: "", viewerFullscreen: false,
   });
   vm.runInContext(compiled, context);
@@ -147,7 +149,11 @@ test("standalone pictures and videos render the same live identity and eligible 
     assert.match(html, /object-position:42% 36%/);
     assert.match(html, /Working now[^]*?Echo House[^]*?Free Entry/);
     assert.match(html, /<a class="profile-media-venue" href="\/venues\/echo-house" aria-label="Open Echo House club profile">/);
-    assert.match(html, /1\/2/);
+    assert.match(html, /<span class="profile-media-identity-meta">Las Vegas<\/span>/);
+    assert.doesNotMatch(html, /profile-media-position/);
+    const labelContext = vm.createContext({});
+    vm.runInContext(functionSource("freeEntryButtonLabel"), labelContext);
+    assert.ok(html.includes(labelContext.freeEntryButtonLabel()), "standalone entry matches TV's label and cue");
     context.viewerStatus = "Not working now";
     assert.doesNotMatch(render(), /data-working-now="true"|Free Entry|Echo House/);
     context.viewerStatus = "Working Now";
