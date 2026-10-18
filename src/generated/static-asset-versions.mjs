@@ -32,7 +32,7 @@ export const staticAssetVersions = {
   "/profile-media-owner-controls.css": "23f95b3a66febb0a",
   "/profile-actions-compact.css": "eeeba9e5abc125d8",
   "/dancer-profile-layout.css": "071775e11b0e6d11",
-  "/profile-media-card-feed.css": "5eab04661766076e",
+  "/profile-media-card-feed.css": "1d31f2ba1139ed8d",
   "/profile-photo-crop.css": "117dfd4225c521ff",
   "/profile-photo-crop.js": "7dbbbeff55a0f58f",
   "/profile-video-crop.js": "067b7b292e74f9bd",

@@ -388,10 +388,10 @@ html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer
   .profile-media-card-feed {
     --profile-media-card-gap: 10px;
   }
-  /* These viewers scroll independently of the page. Leave room after the last
-     card for the bottom navigation, its offset, and the phone's safe area. */
+  /* The dock is hidden while viewing media; keep only the card's end spacing
+     and the phone's safe area after the final card. */
   .profile-media-card-feed:not(.is-media-fullscreen) :is(.profile-photo-viewer-image, .profile-tv-viewer-stage, .profile-media-viewer-stage) {
-    padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
   }
   .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) {
     right: calc(9px + env(safe-area-inset-right, 0px)) !important;
@@ -537,9 +537,9 @@ html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profil
 .profile-media-card-feed .profile-media-control-fullscreen[aria-pressed="true"] .profile-media-control-expand { display: none; }
 .profile-media-card-feed .profile-media-control-fullscreen[aria-pressed="true"] .profile-media-control-collapse { display: block; }
 
-/* Match TV's immersive mode across discovery and standalone profile viewers.
- * The dock returns as soon as the viewer collapses, closes, or unmounts. */
-html body.dancr-button-system:has(.profile-media-card-feed.is-media-fullscreen:not([hidden]))
+/* Hide the dock in normal and expanded media viewers across both profile entry
+ * points. It returns when the viewer closes or unmounts. */
+html body.dancr-button-system:has(.profile-media-card-feed:not([hidden]))
   :is(#discoveryTabs, .global-mobile-bottom-nav, .global-mobile-swipe-indicator) {
   display: none !important;
 }
