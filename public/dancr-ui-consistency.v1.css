@@ -341,10 +341,10 @@ body.dancr-button-system :is(:is(#profileShareChoiceOverlay,#profileQrOverlay),.
 body.dancr-button-system .profile-share-dialog-status { color: #b8b5c6; font-size: 12px; font-weight: 400; }
 body.dancr-button-system .profile-share-dialog-status:empty { display: none; }
 
-/* Discovery utility icons stay neutral across all three feeds. */
+/* Discovery controls echo the notification panel's soft lavender icons. */
 body.dancr-button-system #citySelectButton > .city-picker-trigger-icon,
 body.dancr-button-system #homeFilterToggle > .home-filter-toggle-icon {
-  color: #b4bac5 !important;
+  color: #c4a3f1 !important;
   stroke: currentColor !important;
   filter: none !important;
   box-shadow: none !important;
@@ -1299,7 +1299,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#citySelectButton, #homeFilterToggle) {
   --discovery-control-face: #050507;
-  --discovery-control-edge: #34343c;
+  --discovery-control-edge: #4a365f;
   --discovery-control-inset: 4px;
   height: 44px !important;
   min-height: 44px !important;
@@ -1319,7 +1319,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle > .home-filter-toggle-icon {
   width: 18px !important;
   height: 18px !important;
-  color: #b4bac5 !important;
+  color: #c4a3f1 !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton > .city-picker-chevron {
   width: 12px !important;
@@ -1335,8 +1335,8 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle:is(.has-active-filters, .is-open),
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton[aria-expanded="true"] {
-  --discovery-control-face: #0c0812;
-  --discovery-control-edge: #a78bfa;
+  --discovery-control-face: #160f20;
+  --discovery-control-edge: #9470bc;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters {
   grid-column: 1 / -1;
@@ -1744,12 +1744,13 @@ html body.dancr-button-system > .app > header
   outline-offset: 1px !important;
 }
 
-/* Neutral header icons match the city controls; violet marks active outlines. */
+/* Header utilities reuse the notification palette with faint purple faces. */
 html body.dancr-button-system > .app > header .topbar
   :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
-  --discovery-header-edge: #34343c;
-  color: #b4bac5 !important;
-  border-color: #34343c !important;
+  --discovery-header-face: #160f20;
+  --discovery-header-edge: #4a365f;
+  color: #c4a3f1 !important;
+  border-color: #4a365f !important;
   box-shadow: none !important;
 }
 html body.dancr-button-system > .app > header .topbar
@@ -1759,16 +1760,18 @@ html body.dancr-button-system > .app > header .topbar
 }
 html body.dancr-button-system > .app > header .topbar
   :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(.active, .is-open, [aria-expanded="true"], :focus-visible) {
-  --discovery-header-edge: #a78bfa;
+  --discovery-header-face: #22152f;
+  --discovery-header-edge: #9470bc;
   color: #f8fafc !important;
-  border-color: #a78bfa !important;
+  border-color: #9470bc !important;
 }
 @media (hover: hover) {
   html body.dancr-button-system > .app > header .topbar
     :is(.customer-quick-btn, #accountBtn.account-icon-btn):hover {
-    --discovery-header-edge: #a78bfa;
+    --discovery-header-face: #22152f;
+    --discovery-header-edge: #9470bc;
     color: #f8fafc !important;
-    border-color: #a78bfa !important;
+    border-color: #9470bc !important;
   }
 }
 /* Keep the header-to-hero spacing identical on every discovery landing tab. */
@@ -1784,7 +1787,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton, #homeFilterToggle) {
-  --discovery-control-edge: #303038;
+  --discovery-control-edge: #4a365f;
   font-weight: 600 !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
@@ -1793,7 +1796,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton[aria-expanded="true"], #homeFilterToggle:is(.has-active-filters, .is-open)) {
-  --discovery-control-edge: #a78bfa;
+  --discovery-control-edge: #9470bc;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > #homeLiveSummary {
   display: flex !important;
@@ -1863,6 +1866,14 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
     > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="now"][aria-selected="true"]:not(.is-empty) {
     --discovery-control-face: #08090e;
   }
+}
+
+/* Selected Not Working Now uses violet on every platform; live status stays green. */
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter="not_now"][aria-selected="true"] {
+  --discovery-control-face: #22152f;
+  --discovery-control-edge: #9470bc;
+  color: #f5f3f8 !important;
 }
 
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
