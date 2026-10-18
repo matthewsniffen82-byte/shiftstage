@@ -599,15 +599,14 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > :is(.profile-modal-summary, .profile-titlebar) {
   border-top-left-radius: var(--profile-frame-radius) !important;
 }
-/* Restore the information card's original dark surface beneath its content,
-   while the surrounding page and media gutters keep the discovery violet. */
+/* Match the notification panel's plum surface beneath the profile information. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)::after {
   content: "";
   grid-column: 1 / -1;
   grid-row: 1 / var(--profile-frame-row-end);
   align-self: stretch;
   border-radius: var(--profile-frame-radius);
-  background: #050509;
+  background: #100c17;
   pointer-events: none;
   z-index: -1;
 }
@@ -715,3 +714,79 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-options-panel .profile-header-report-action svg { flex: 0 0 16px; width: 16px !important; height: 16px !important; transform: none !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-options-panel .profile-header-report-action::before,
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-options-panel .profile-header-report-action::after { display: none !important; }
+
+/* Public profile utilities share the inbox palette. Keep admission actions,
+   media controls, and dashboard previews outside these selectors. */
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  .profile-actions-compact :is(#goingBtn, .profile-action-going, .profile-share-action, .profile-share-trigger):not([data-internal-table-request]) {
+  --profile-utility-background: #000 linear-gradient(#000, #000);
+  --profile-utility-border: #4a365f;
+  --profile-utility-hover-background: #22152f linear-gradient(#22152f, #22152f);
+  --profile-utility-hover-border: #5a4075;
+  --profile-action-selected-background: #22152f linear-gradient(#22152f, #22152f);
+  --profile-action-selected-border: #5a4075;
+  --profile-action-selected-shadow: none;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  .profile-actions-compact :is(#goingBtn, .profile-action-going, .profile-share-action, .profile-share-trigger):is(.profile-share-action, .profile-share-trigger) {
+  --profile-utility-background: #22152f linear-gradient(#22152f, #22152f);
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  .profile-actions-compact :is(#followBtn, [data-follow-control="text"], #goingBtn, .profile-action-going, .profile-share-action, .profile-share-trigger):not(:disabled):not([aria-disabled="true"]):not([data-internal-table-request]) {
+  color: #f5f2fa !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  .profile-actions-compact :is(#followBtn, [data-follow-control="text"], #goingBtn, .profile-action-going, .profile-share-action, .profile-share-trigger):not(:disabled):not([aria-disabled="true"]):not([data-internal-table-request])
+  .profile-action-main svg {
+  color: #c4a3f1 !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  .profile-actions-compact :is(#followBtn, [data-follow-control="text"], #goingBtn, .profile-action-going)[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]):not([data-internal-table-request])
+  .profile-action-main svg {
+  color: #fff !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  :is(.profile-modal-city-icon, .profile-venue-pin, .profile-venue-destination svg, .profile-working-destination svg, .profile-upcoming-destination svg) {
+  color: #c4a3f1 !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  :is(.profile-modal-media-tabs, .profile-media-tabs) button .profile-media-tab-icon {
+  color: #b4bac5 !important;
+}
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  :is(.profile-modal-media-tabs, .profile-media-tabs) button.active .profile-media-tab-icon {
+  color: #c4a3f1 !important;
+}
+
+/* Follow and menu faces use the shared control layer; only public profile
+   controls opt into this palette, retaining their existing tap targets. */
+@layer dancr-follow-controls {
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-actions-compact :is(#followBtn, [data-follow-control="text"]) {
+    --follow-control-face: #000;
+    --follow-control-edge: #4a365f;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-actions-compact :is(#followBtn, [data-follow-control="text"])[aria-pressed="true"] {
+    --follow-control-face: #22152f;
+    --follow-control-edge: #5a4075;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-options[data-compact-menu] > summary {
+    color: #c4a3f1 !important;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-options[data-compact-menu] > summary::before {
+    border-color: #4a365f !important;
+    background: linear-gradient(#22152f, #22152f) !important;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-options[data-compact-menu][open] > summary::before {
+    border-color: #5a4075 !important;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-options[data-compact-menu] > .profile-options-panel {
+    border-color: #382f46 !important;
+    background: linear-gradient(#100c17, #100c17) !important;
+  }
+}
