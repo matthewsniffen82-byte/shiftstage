@@ -27,7 +27,9 @@ function readAnalytics(value: unknown): DancerAudienceAnalytics | null {
     && data.videoViews && Number.isFinite(data.videoViews.value) && data.videoViews.value >= 0
     && (data.videoViews.previous === null || (Number.isFinite(data.videoViews.previous) && data.videoViews.previous >= 0))
     && Number.isFinite(Date.parse(data.periodStart)) && Number.isFinite(Date.parse(data.periodEnd))
-    && data.performance?.current && data.performance.alerts && Array.isArray(data.performance.clubs) && Array.isArray(data.performance.shifts) ? data : null;
+    && data.performance?.current && data.performance.alerts && Array.isArray(data.performance.clubs) && Array.isArray(data.performance.shifts)
+    && Number.isFinite(data.performance.vipFollowers) && data.performance.vipFollowers >= 0
+    && data.performance.clubs.every(club => Number.isFinite(club.vipFollowers) && club.vipFollowers >= 0) ? data : null;
 }
 
 const matchesSelection = (data: DancerAudienceAnalytics | null, selection: DancerAnalyticsSelection) => Boolean(data && (
@@ -188,13 +190,13 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
         <h3 id="dancer-audience-heading">Audience &amp; engagement <small>Across all clubs</small></h3>
         <div className="dancer-audience-heading-row">
           <h4 id="dancer-audience-current-heading">Current audience</h4>
-          <ResultsInfo label="Your audience">Current totals across all clubs. Following on profiles and in VIP uses the same subscription. Muted working alerts and inactive accounts are excluded from the alert total. VIP subscribers are included in that total.</ResultsInfo>
+          <ResultsInfo label="Your audience">Current totals across all clubs. VIP followers have active VIP access at a club you are affiliated with and are counted once, even if they turn working alerts off. Working-alert subscribers exclude muted alerts and inactive accounts.</ResultsInfo>
         </div>
         <dl className="dancer-audience-counts" aria-labelledby="dancer-audience-current-heading">
           <Detail label="Total followers" value={current.audience.totalFollowers} />
           <Detail label="Working-alert subscribers" value={performance.alerts.total} />
-          <Detail label="Including active VIPs" value={performance.alerts.vip} />
-          {club && <Detail label={`VIP alert subscribers at ${club.name}`} value={club.vipSubscribers} />}
+          <Detail label="VIP followers" value={performance.vipFollowers} />
+          {club && <Detail label={`VIP followers at ${club.name}`} value={club.vipFollowers} />}
         </dl>
         <h4 id="dancer-audience-activity-heading" className="dancer-audience-activity-heading">Activity <small>{periodLabel}</small></h4>
         <div className="dancer-analytics-metrics dancer-results-growth" role="group" aria-labelledby="dancer-audience-activity-heading">

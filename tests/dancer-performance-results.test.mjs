@@ -33,6 +33,7 @@ before(async () => {
     add column both_roster_periods tstzmultirange not null default '{}',add column both_roster_started_at timestamptz;`);
   await db.exec(readFileSync(new URL('../supabase/migrations/20261018055657_dancer_results_roster_activity.sql', import.meta.url), 'utf8'));
   await db.exec(readFileSync(new URL('../supabase/migrations/20261018163641_dancer_analytics_long_active_shift.sql', import.meta.url), 'utf8'));
+  await db.exec(readFileSync(new URL('../supabase/migrations/20261018184423_dancer_vip_follower_totals.sql', import.meta.url), 'utf8'));
 });
 after(async () => db?.close());
 beforeEach(async () => {
@@ -106,17 +107,51 @@ test('repeat VIPs count unique returning requesters at the same club without cou
   assert.equal(r.clubs.find(c=>c.id===id(21)).current.repeatVips,1);
 });
 
-test('working alerts follow the shared Follow model, honor global mutes and deduplicate active VIP memberships',async()=>{
+test('VIP followers include muted followers while working alerts still honor mutes and both deduplicate memberships',async()=>{
   for(const user of [30,31,32,33,34]) {
     await db.query("insert into app_users values($1,'customer',$2)",[id(user),user===34?'paused':'active']);
     await db.query('insert into follows(customer_id,dancer_id,notifications_enabled) values($1,$2,false)',[id(user),id(10)]);
   }
   await db.query(`insert into customer_profiles values($1,'{"workingNow":false}'),($2,'{"followAlertsEnabled":false}')`,[id(32),id(33)]);
   await db.query('insert into venue_vip_members values($1,$3,true),($1,$4,true),($2,$3,false)',[id(30),id(31),id(20),id(21)]);
+  // Muted VIPs remain followers; a duplicate membership and a paused account
+  // cannot inflate the total or expose another dancer's followers.
+  await db.query('insert into venue_vip_members values($1,$4,true),($1,$4,true),($2,$4,true),($3,$4,true)',[id(32),id(33),id(34),id(20)]);
+  await db.query("insert into app_users values($1,'customer','active')",[id(35)]);
+  await db.query('insert into follows(customer_id,dancer_id) values($1,$2)',[id(35),id(11)]);
+  await db.query('insert into venue_vip_members values($1,$2,true)',[id(35),id(20)]);
   let r=await report(); assert.equal(r.alerts.total,2); assert.equal(r.alerts.vip,1);
+  assert.equal(r.vipFollowers,3);
+  assert.equal(r.clubs[0].vipFollowers,3); assert.equal(r.clubs[1].vipFollowers,1);
   assert.equal(r.clubs[0].vipSubscribers,1); assert.equal(r.clubs[1].vipSubscribers,1);
+  assert.doesNotMatch(JSON.stringify(r),new RegExp(id(32)));
+  assert.equal((await report(11)).vipFollowers,0);
   await db.query('delete from follows where customer_id=$1',[id(30)]);
   r=await report(); assert.equal(r.alerts.total,1); assert.equal(r.alerts.vip,0);
+  assert.equal(r.vipFollowers,2); assert.equal(r.clubs[0].vipFollowers,2); assert.equal(r.clubs[1].vipFollowers,0);
+  await db.query("update customer_profiles set notification_settings='{}'");
+  r=await report(); assert.equal(r.vipFollowers,2); assert.equal(r.alerts.vip,2); assert.equal(r.alerts.total,3);
+});
+
+test('VIP follower counts require current membership and an eligible dancer affiliation at an active club',async()=>{
+  await db.query("insert into app_users values($1,'customer','active')",[id(30)]);
+  await db.query('insert into follows(customer_id,dancer_id) values($1,$2)',[id(30),id(10)]);
+  await db.query('insert into venue_vip_members values($1,$2,true)',[id(30),id(20)]);
+  assert.equal((await report()).vipFollowers,1);
+  for (const change of [
+    "update venue_vip_members set active=false",
+    "update venue_dancer_affiliations set status='inactive'",
+    "update venue_dancer_affiliations set revoked_at=now()",
+    "update venue_dancer_affiliations set reentry_blocked=true",
+    "update venues set is_active=false",
+    "update app_users set account_state='disabled' where role='venue'",
+  ]) {
+    await db.exec('savepoint eligibility');
+    await db.exec(change);
+    const r=await report(); assert.equal(r.vipFollowers,0,change);
+    assert.ok(r.clubs.every(club=>club.vipFollowers===0),change);
+    await db.exec('rollback to savepoint eligibility');
+  }
 });
 
 test('recorded shift intervals merge overlaps, clip to the period and exclude requests outside recorded time',async()=>{

@@ -58,9 +58,10 @@ export type DancerPerformanceAnalytics = {
   previous: DancerRequestCounts | null;
   external: { claims: number; admissions: number };
   alerts: { total: number; vip: number };
+  vipFollowers: number;
   roster?: DancerRosterActivity;
   clubs: { id: string; name: string; timezone: string; current: DancerRequestCounts; previous: DancerRequestCounts | null;
-    external: { claims: number; admissions: number }; vipSubscribers: number; roster?: DancerRosterActivity }[];
+    external: { claims: number; admissions: number }; vipSubscribers: number; vipFollowers: number; roster?: DancerRosterActivity }[];
   shifts: { id: string; venueId: string; venueName: string; timezone: string; startedAt: string; endedAt: string; hours: number; requests: number; partial?: boolean }[];
   workTrackingStartedAt: string | null;
 };

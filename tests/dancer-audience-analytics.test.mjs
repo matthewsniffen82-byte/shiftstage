@@ -66,7 +66,8 @@ function database(rows, failTable) {
     if (failTable === name) return { error: new Error("performance unavailable") };
     const counts = Object.fromEntries(["tableRequests","tablePending","tableAcknowledged","tableCompleted","tableCancelled","vipRequests","vipPending","vipConfirmed","vipDeclined","vipCancelled","repeatVips"].map(key=>[key,0]));
     return { data: { current: counts, previous: { ...counts }, external: { claims: 0, admissions: 0 },
-      alerts: { total: rows.follows?.length ? 1 : 0, vip: 0 }, clubs: rows.performanceClubs || [], shifts: rows.performanceShifts || [], workTrackingStartedAt: null } };
+      alerts: { total: rows.follows?.length ? 1 : 0, vip: 0 }, vipFollowers: 0,
+      clubs: (rows.performanceClubs || []).map(club => ({ vipFollowers: 0, ...club })), shifts: rows.performanceShifts || [], workTrackingStartedAt: null } };
   }, from(table) {
     const call = { table, filters: [], fields: "", options: {}, offset: 0, end: 999, single: false };
     calls.push(call);

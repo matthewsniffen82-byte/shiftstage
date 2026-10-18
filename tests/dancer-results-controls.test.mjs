@@ -9,9 +9,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 const require = createRequire(import.meta.url);
 const counts = (requests=0) => Object.fromEntries(['tableRequests','tablePending','tableAcknowledged','tableCompleted','tableCancelled','vipRequests','vipPending','vipConfirmed','vipDeclined','vipCancelled','repeatVips'].map(key=>[key,key==='tableRequests'?requests:0]));
 const data = period => ({ period,activeShift:null,periodStart:'2026-10-05T00:00:00Z',periodEnd:'2026-10-12T00:00:00Z',timezone:'UTC',profileCreatedAt:'2026-08-01T00:00:00Z',trend:[{start:'2026-10-05T00:00:00Z',end:'2026-10-06T00:00:00Z',views:3,followers:2,requests:10}],profileViews:{value:3,previous:1},newFollowers:{value:2,previous:null},contentLikes:{value:1,previous:null},videoViews:{value:0,previous:0},socialLinkTaps:{value:0,previous:0},audience:{totalFollowers:20,workingNowSubscribers:12},topContent:[],currentRank:null,
-  performance:{current:counts(10),previous:counts(5),external:{claims:2,admissions:1},alerts:{total:12,vip:4},workTrackingStartedAt:'2026-10-10T00:00:00Z',
-    clubs:[{id:'club-a',name:'Club A',timezone:'UTC',current:{...counts(3),vipConfirmed:2,vipRequests:2},previous:counts(1),external:{claims:2,admissions:1},vipSubscribers:4},
-      {id:'club-b',name:'Club B',timezone:'UTC',current:counts(7),previous:counts(4),external:{claims:0,admissions:0},vipSubscribers:0}],
+  performance:{current:counts(10),previous:counts(5),external:{claims:2,admissions:1},alerts:{total:12,vip:4},vipFollowers:8,workTrackingStartedAt:'2026-10-10T00:00:00Z',
+    clubs:[{id:'club-a',name:'Club A',timezone:'UTC',current:{...counts(3),vipConfirmed:2,vipRequests:2},previous:counts(1),external:{claims:2,admissions:1},vipSubscribers:4,vipFollowers:6},
+      {id:'club-b',name:'Club B',timezone:'UTC',current:counts(7),previous:counts(4),external:{claims:0,admissions:0},vipSubscribers:0,vipFollowers:2}],
     shifts:[{id:'shift-a',venueId:'club-a',venueName:'Club A',timezone:'UTC',startedAt:'2026-10-11T00:00:00Z',endedAt:'2026-10-11T03:00:00Z',hours:3,requests:3,partial:true},
       {id:'shift-b',venueId:'club-b',venueName:'Club B',timezone:'UTC',startedAt:'2026-10-11T00:00:00Z',endedAt:'2026-10-11T03:00:00Z',hours:3,requests:7}]}});
 
@@ -116,7 +116,9 @@ test('club filtering updates request cards and recorded shifts while audience re
   ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-a'}});ui.render();
   const html=ui.html();assert.match(html,/<strong>3<\/strong>/);assert.doesNotMatch(html,/7 requests/);
   assert.match(html,/class="dancer-results-club-name" aria-hidden="true">Club A<\/span>/);
-  assert.match(html,/Working-alert subscribers<\/dt><dd>12/);assert.match(html,/Current totals across all clubs/);assert.match(html,/VIP alert subscribers at Club A/);
+  assert.match(html,/Working-alert subscribers<\/dt><dd>12/);assert.match(html,/Current totals across all clubs/);
+  assert.match(html,/VIP followers<\/dt><dd>8/);assert.match(html,/VIP followers at Club A<\/dt><dd>6/);
+  assert.doesNotMatch(html,/Including active VIPs|VIP alert subscribers/);
   ui.button('VIP').props.onClick();ui.render();assert.match(ui.html(),/Confirmed<\/dt><dd>2/);
   ui.button('Public site').props.onClick();ui.render();assert.match(ui.html(),/Club entries attributed to you<\/dt><dd>1/);
   assert.equal(ui.calls.length,0);ui.close();
@@ -138,6 +140,13 @@ test('period changes hide stale results, abort older reads and retain the select
 test('older cached audience-only payloads refresh instead of inventing missing request counts',()=>{
   const initial=data('7d');delete initial.performance;const ui=fixture(initial);
   assert.equal(ui.calls.length,1);assert.match(ui.html(),/Loading results/);assert.doesNotMatch(ui.html(),/Table requests/);ui.close();
+});
+
+test('cached alert-only totals refresh instead of being mislabeled as VIP followers',()=>{
+  const initial=data('7d');delete initial.performance.vipFollowers;
+  const ui=fixture(initial);
+  assert.equal(ui.calls.length,1);assert.match(ui.html(),/Loading results/);
+  assert.doesNotMatch(ui.html(),/VIP followers/);ui.close();
 });
 
 for (const compact of [false, true]) test(`independent ${compact ? 'overview' : 'Results'} reports handle initial failure and retry without sign-in or fake counts`, async () => {
