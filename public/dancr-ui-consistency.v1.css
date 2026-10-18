@@ -2441,3 +2441,59 @@ html body.dancr-button-system > .app main.stack > section.stack
     text-shadow: 0 1px 5px #000 !important;
   }
 }
+
+/* Notification palette for public venue surfaces. Requiring the discovery app
+ * also keeps these rules out of the Saved dashboard's shared card stylesheet. */
+html body.dancr-button-system:has(> .app) > .app main.stack > section.stack
+  > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide,
+html body.dancr-button-system:has(> .app) #results.venue-profile-overlay
+  .venue-detail[role="dialog"] > .venue-hero {
+  background-color: #100c17 !important;
+}
+
+/* Match the existing Follow layer without changing button geometry or the
+ * separate admission action. Android's painted button faces use these too. */
+@layer dancr-follow-controls {
+  html body.dancr-button-system:has(> .app) #results.home-venue-discovery-feed
+    .venue-card-secondary-actions > .venue-card-secondary-action:is(button, a[href]):not(:disabled):not([aria-disabled="true"]),
+  html body.dancr-button-system:has(> .app) #results.venue-profile-overlay .venue-detail
+    .venue-action-stack :is(.venue-address-directions, .follow-venue-btn):not(:disabled):not([aria-disabled="true"]) {
+    --venue-utility-face: #000 !important;
+    --venue-utility-edge: #4a365f !important;
+    --venue-utility-shadow: none !important;
+    background: #000 linear-gradient(var(--venue-utility-face), var(--venue-utility-face)) !important;
+    border-color: var(--venue-utility-edge) !important;
+    color: #f5f2fa !important;
+    box-shadow: none !important;
+  }
+
+  html body.dancr-button-system:has(> .app) #results.home-venue-discovery-feed
+    .venue-card-secondary-actions > .venue-card-secondary-action[data-venue-follow][aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]),
+  html body.dancr-button-system:has(> .app) #results.venue-profile-overlay .venue-detail
+    .venue-action-stack .follow-venue-btn[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) {
+    --venue-utility-face: #22152f !important;
+    --venue-utility-edge: #5a4075 !important;
+  }
+
+  /* Share retains its existing inset face and full tap target. */
+  html body.dancr-button-system:has(> .app) #results.venue-profile-overlay .venue-detail
+    .venue-action-stack .venue-detail-share:not(:disabled):not([aria-disabled="true"]) {
+    --profile-action-background: #22152f linear-gradient(#22152f, #22152f) !important;
+    --profile-action-border: #4a365f !important;
+    --profile-action-shadow: none !important;
+  }
+
+  html body.dancr-button-system:has(> .app) #results.home-venue-discovery-feed
+    .venue-card-secondary-actions > .venue-card-secondary-action:is(button, a[href]):not(:disabled):not([aria-disabled="true"]) :is(.action-icon, svg, svg path),
+  html body.dancr-button-system:has(> .app) #results.venue-profile-overlay .venue-detail
+    .venue-action-stack :is(.venue-address-directions, .follow-venue-btn, .venue-detail-share):not(:disabled):not([aria-disabled="true"]) :is(.action-icon, svg, svg path) {
+    color: #c4a3f1 !important;
+  }
+
+  html body.dancr-button-system:has(> .app) #results.home-venue-discovery-feed
+    .venue-card-secondary-actions > .venue-card-secondary-action[data-venue-follow][aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) :is(.action-icon, svg, svg path),
+  html body.dancr-button-system:has(> .app) #results.venue-profile-overlay .venue-detail
+    .venue-action-stack :is(.follow-venue-btn[aria-pressed="true"], .venue-detail-share.is-confirmed):not(:disabled):not([aria-disabled="true"]) :is(.action-icon, svg, svg path) {
+    color: #fff !important;
+  }
+}
