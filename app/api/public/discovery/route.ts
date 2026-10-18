@@ -143,6 +143,7 @@ export async function GET(request: Request) {
         ok: true,
         city,
         nextCursor: discovery.nextCursor,
+        statusCounts: discovery.statusCounts,
         dancers: rankedDancers.map(withActiveDeal),
         tonightDancers: rankedTonight.map(withActiveDeal),
         venues,

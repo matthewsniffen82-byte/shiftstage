@@ -281,6 +281,22 @@ test("a stalled continuation cannot cause an endless pagination loop", async () 
   assert.equal(ctx.markets.Vegas.pagination.error, true);
 });
 
+test("both status totals survive pagination and failed continuations without leaking across scopes", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  ctx.activeTab = "dancers";
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "working" }], statusCounts: { now: 498, not_now: 31 }, nextCursor: "next" }); await nextPage();
+  requests[1].reject(new Error("offline")); await request;
+  assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, { now: 498, not_now: 31 });
+  request = ctx.loadLiveDiscovery("Vegas", { more: true });
+  requests[2].resolve({ dancers: [{ id: "second" }], nextCursor: null }); await request;
+  assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, { now: 498, not_now: 31 });
+  ctx.dancerDirectoryFilter = "not_now";
+  request = ctx.loadLiveDiscovery("Vegas");
+  requests[3].resolve({ dancers: [], statusCounts: { now: -1, not_now: "unknown" }, nextCursor: null }); await request;
+  assert.equal(ctx.markets.Vegas.pagination.statusCounts, null, 'invalid new-scope totals must not reuse the previous scope');
+});
+
 test("changing directory status or club starts from that filter's globally ranked first page", async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
   ctx.activeTab = "dancers";

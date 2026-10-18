@@ -17,6 +17,15 @@ type Scope = { surface: RankingSurface; city: string; venueId?: string; dancerId
 type Snapshot = { id: string; ordered_ids: string[]; expires_at: string };
 let lastPruned = 0;
 
+function directoryStatusCounts(candidates: RankingCandidate[], venueId?: string, now = Date.now()) {
+  const counts = { now: 0, not_now: 0 };
+  for (const row of candidates) {
+    if (venueId && row.venueId !== venueId) continue;
+    counts[Date.parse(row.availableUntil || "") > now ? "now" : "not_now"] += 1;
+  }
+  return counts;
+}
+
 export async function discoveryContext(admin: SupabaseClient, request: Request, anonymousSession?: string): Promise<DiscoveryContext | null> {
   const hasHeaders = request.headers.has("x-discovery-session") || request.headers.has("x-discovery-visit");
   const session = request.headers.get("x-discovery-session") || (!hasHeaders ? anonymousSession : "") || "";
@@ -55,7 +64,11 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   if (existing.error) throw existing.error;
   if (existing.data && Date.parse(existing.data.expires_at) > Date.now()) {
     if (parsed && parsed.offset > existing.data.ordered_ids.length) throw new PublicApiError("INVALID_REQUEST", "Invalid discovery cursor.", 400);
-    return { snapshot: existing.data as Snapshot, offset: parsed?.offset || 0 };
+    // Counts describe current public presence, independently of the saved ranking.
+    // Only the first page needs totals; continuations retain that response's counts.
+    const statusCounts = scope.directory && !parsed
+      ? directoryStatusCounts(await getDirectoryCandidates(admin, scope.city), scope.venueId) : undefined;
+    return { snapshot: existing.data as Snapshot, offset: parsed?.offset || 0, statusCounts };
   }
   if (parsed) throw new PublicApiError("INVALID_REQUEST", "This feed has expired. Refresh to continue browsing.", 409);
   await enforcePublicRequestRateLimit(admin,{namespace:"discovery_snapshot",request:context.request,subject:context.viewerHash,
@@ -70,6 +83,7 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
   const candidates = scope.directory || scope.surface === "tv" ? candidateResult.data as RankingCandidate[] : readRankingCandidates(candidateResult.data);
   const followingDancers = new Set((dancerFollows.data || []).map(row=>row.dancer_id));
   const now = Date.now();
+  const statusCounts = scope.directory ? directoryStatusCounts(candidates, scope.venueId, now) : undefined;
   const eligible = candidates
     .filter(row => !scope.directory || (!scope.venueId || row.venueId === scope.venueId)
       && (scope.filter !== "now" || Date.parse(row.availableUntil || "") > now)
@@ -101,7 +115,7 @@ export async function discoverySnapshot(admin: SupabaseClient, context: Discover
     const pruned = await admin.rpc("prune_discovery_history");
     if (!pruned.error) lastPruned = now;
   }
-  return { snapshot: saved.data as Snapshot, offset: 0 };
+  return { snapshot: saved.data as Snapshot, offset: 0, statusCounts };
 }
 
 export function readRankingCandidates(value: unknown): RankingCandidate[] {

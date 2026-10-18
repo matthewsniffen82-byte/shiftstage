@@ -124,6 +124,31 @@ test("status tabs count their cards while the heading keeps the whole discovery 
   assert.equal(fixture.writes, writes, "an unchanged refresh must reuse the cards");
 });
 
+test("both filter counts appear from the first scoped response and remain visible when selection changes", () => {
+  for (const filter of ["now", "not_now"]) {
+    const fixture = directoryFixture([{ name: "Loaded dancer", now: filter === "now" }]);
+    fixture.state.dancerDirectoryFilter = filter;
+    fixture.state.discoveryMarket = () => ({ pagination: { filter, statusCounts: { now: 498, not_now: 31 } } });
+    fixture.state.hasMoreDiscovery = () => true;
+    fixture.state.render();
+    assert.deepEqual([...fixture.markup.matchAll(/dancer-directory-filter-count">([^<]+)/g)].map(match => match[1]), ["498", "31"]);
+    assert.match(fixture.markup, /aria-selected="false"[^]*?dancer-directory-filter-count">\d+/);
+  }
+});
+
+test("inactive zero is visible, unknown is not invented, and completed active counts follow the actual cards", () => {
+  const fixture = directoryFixture([{ name: "Working dancer", now: true }]);
+  let statusCounts = { now: 2, not_now: 0 };
+  fixture.state.discoveryMarket = () => ({ pagination: { filter: "now", statusCounts } });
+  const counts = () => [...fixture.markup.matchAll(/dancer-directory-filter-count">([^<]+)/g)].map(match => match[1]);
+  fixture.state.render();
+  assert.deepEqual(counts(), ["1", "0"]);
+  statusCounts = null;
+  fixture.state.hasMoreDiscovery = () => true;
+  fixture.state.render();
+  assert.deepEqual(counts(), ["1+", "…"]);
+});
+
 test("filtered totals handle one or zero dancers without hiding the selected status or masking loading errors", () => {
   const fixture = directoryFixture([{ name: "Future dancer", scheduled: true, now: false }]);
   fixture.state.dancerDirectoryFilter = "not_now";

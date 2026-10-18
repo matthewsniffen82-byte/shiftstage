@@ -48502,9 +48502,10 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
       let dancers = more ? [...previous.dancers] : [];
       let tonightDancers = more ? [...previous.tonightDancers] : [];
       let venues = more ? previous.venues : [];
+      let statusCounts = more ? previous.statusCounts : null;
       const seenCursors = new Set();
       const publishResults = (error = false) => {
-        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, dancers, tonightDancers, venues, nextCursor: cursor, pageCount, loading: false, error };
+        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, dancers, tonightDancers, venues, statusCounts, nextCursor: cursor, pageCount, loading: false, error };
         applyLiveMarket(city, dancers, tonightDancers, venues);
         // Initial club links may resolve only once venue metadata arrives.
         if (citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) liveMarketPendingRefreshes.add(city);
@@ -48542,6 +48543,9 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
           dancers = mergeDiscoveryPageRows(dancers, discovery.dancers);
           tonightDancers = mergeDiscoveryPageRows(tonightDancers, discovery.tonightDancers || []);
           venues = discovery.venues || venues;
+          if (["now", "not_now"].every(key => Number.isSafeInteger(discovery.statusCounts?.[key]) && discovery.statusCounts[key] >= 0)) {
+            statusCounts = { now: discovery.statusCounts.now, not_now: discovery.statusCounts.not_now };
+          }
           cursor = discovery.nextCursor || null;
           pageCount += 1;
         } while (cursor);
@@ -61474,6 +61478,8 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         not_now: profiles.filter((profile) => !isWorkingTonight(profile, city)).length
       };
       const clubSelected = selectedVenueFilter() !== "all";
+      const page = discoveryMarket(city)?.pagination;
+      const partial = hasMoreDiscovery(city);
       const filters = clubSelected ? [{ id: "now", label: "Working Now" }] : [
         { id: "now", label: "Working Now" },
         { id: "not_now", label: "Not Working Now" }
@@ -61482,11 +61488,16 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
         <div class="dancer-directory-filters${clubSelected ? " is-club-specific" : ""}" role="tablist" aria-label="Filter dancers">
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
-            const loadedFilter = discoveryMarket(city)?.pagination?.filter;
-            const countKnown = !loadedFilter || loadedFilter === "all" || loadedFilter === filter.id;
-            const empty = countKnown && counts[filter.id] === 0;
+            const loadedFilter = page?.filter;
+            const localCountKnown = !loadedFilter || loadedFilter === "all" || loadedFilter === filter.id;
+            const total = page?.statusCounts?.[filter.id];
+            const totalKnown = Number.isSafeInteger(total) && total >= 0;
+            const countKnown = localCountKnown || totalKnown;
+            const count = localCountKnown && !partial ? counts[filter.id] : totalKnown ? total : counts[filter.id];
+            const countLabel = countKnown ? `${count}${partial && !totalKnown ? "+" : ""}` : "…";
+            const empty = countKnown && count === 0;
             const statusDot = '<span class="dancer-directory-filter-status" aria-hidden="true"></span>';
-            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${countKnown ? counts[filter.id] : ""}${countKnown && hasMoreDiscovery(city) ? "+" : ""}</span></button>`;
+            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${countLabel}</span></button>`;
           }).join("")}
         </div>
       `;

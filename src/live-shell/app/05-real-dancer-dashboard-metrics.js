@@ -746,9 +746,10 @@
       let dancers = more ? [...previous.dancers] : [];
       let tonightDancers = more ? [...previous.tonightDancers] : [];
       let venues = more ? previous.venues : [];
+      let statusCounts = more ? previous.statusCounts : null;
       const seenCursors = new Set();
       const publishResults = (error = false) => {
-        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, dancers, tonightDancers, venues, nextCursor: cursor, pageCount, loading: false, error };
+        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, dancers, tonightDancers, venues, statusCounts, nextCursor: cursor, pageCount, loading: false, error };
         applyLiveMarket(city, dancers, tonightDancers, venues);
         // Initial club links may resolve only once venue metadata arrives.
         if (citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) liveMarketPendingRefreshes.add(city);
@@ -786,6 +787,9 @@
           dancers = mergeDiscoveryPageRows(dancers, discovery.dancers);
           tonightDancers = mergeDiscoveryPageRows(tonightDancers, discovery.tonightDancers || []);
           venues = discovery.venues || venues;
+          if (["now", "not_now"].every(key => Number.isSafeInteger(discovery.statusCounts?.[key]) && discovery.statusCounts[key] >= 0)) {
+            statusCounts = { now: discovery.statusCounts.now, not_now: discovery.statusCounts.not_now };
+          }
           cursor = discovery.nextCursor || null;
           pageCount += 1;
         } while (cursor);

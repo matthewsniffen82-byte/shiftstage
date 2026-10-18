@@ -388,6 +388,8 @@
         not_now: profiles.filter((profile) => !isWorkingTonight(profile, city)).length
       };
       const clubSelected = selectedVenueFilter() !== "all";
+      const page = discoveryMarket(city)?.pagination;
+      const partial = hasMoreDiscovery(city);
       const filters = clubSelected ? [{ id: "now", label: "Working Now" }] : [
         { id: "now", label: "Working Now" },
         { id: "not_now", label: "Not Working Now" }
@@ -396,11 +398,16 @@
         <div class="dancer-directory-filters${clubSelected ? " is-club-specific" : ""}" role="tablist" aria-label="Filter dancers">
           ${filters.map((filter) => {
             const active = dancerDirectoryFilter === filter.id;
-            const loadedFilter = discoveryMarket(city)?.pagination?.filter;
-            const countKnown = !loadedFilter || loadedFilter === "all" || loadedFilter === filter.id;
-            const empty = countKnown && counts[filter.id] === 0;
+            const loadedFilter = page?.filter;
+            const localCountKnown = !loadedFilter || loadedFilter === "all" || loadedFilter === filter.id;
+            const total = page?.statusCounts?.[filter.id];
+            const totalKnown = Number.isSafeInteger(total) && total >= 0;
+            const countKnown = localCountKnown || totalKnown;
+            const count = localCountKnown && !partial ? counts[filter.id] : totalKnown ? total : counts[filter.id];
+            const countLabel = countKnown ? `${count}${partial && !totalKnown ? "+" : ""}` : "…";
+            const empty = countKnown && count === 0;
             const statusDot = '<span class="dancer-directory-filter-status" aria-hidden="true"></span>';
-            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${countKnown ? counts[filter.id] : ""}${countKnown && hasMoreDiscovery(city) ? "+" : ""}</span></button>`;
+            return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${countLabel}</span></button>`;
           }).join("")}
         </div>
       `;

@@ -1890,6 +1890,11 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   --discovery-control-edge: #4a365f;
   color: #d4cedf !important;
 }
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][aria-selected="false"]
+  > .dancer-directory-filter-count {
+  color: #bdb5c9 !important;
+}
 @media (hover: hover) {
   html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
     > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[role="tab"][data-dancer-directory-filter][aria-selected="false"]:not(:disabled):not([aria-disabled="true"]):hover {

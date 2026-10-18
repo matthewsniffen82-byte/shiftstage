@@ -13,7 +13,7 @@ export async function getRankedDirectoryPage(admin: SupabaseClient, request: Req
   const cookieSession = request.headers.get("cookie")?.match(/(?:^|;\s*)md_directory_placement=([^;]+)/)?.[1];
   const anonymousSession = cookieSession && DISCOVERY_UUID.test(cookieSession) ? cookieSession : randomUUID();
   const context = (await discoveryContext(admin, request, anonymousSession))!;
-  const { snapshot, offset } = await discoverySnapshot(admin, context, {
+  const { snapshot, offset, statusCounts } = await discoverySnapshot(admin, context, {
     surface: "grid", directory: true, city: options.city, filter: options.filter || "all", venueId: options.venueId,
   }, options.cursor);
   const dancers: DirectoryCard[] = [], tonightDancers: DirectoryCard[] = [];
@@ -36,6 +36,6 @@ export async function getRankedDirectoryPage(admin: SupabaseClient, request: Req
   }
   const cookie = !request.headers.has("x-discovery-session") && !request.headers.has("x-discovery-visit")
     ? `md_directory_placement=${anonymousSession}; Path=/api/public; Max-Age=7200; HttpOnly; SameSite=Lax; Secure` : null;
-  return { dancers, tonightDancers, cookie,
+  return { dancers, tonightDancers, cookie, statusCounts,
     nextCursor: next < snapshot.ordered_ids.length ? discoveryCursor(options.city, snapshot.id, next) : null };
 }

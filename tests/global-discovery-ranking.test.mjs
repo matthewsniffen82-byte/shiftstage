@@ -86,6 +86,30 @@ test('working status and club filters find top matches beyond the first global p
   assert.ok(inactive.dancers.every(r => !r.venueId));
 });
 
+test('status totals include both filters, refresh with presence, and respect city and club scope', async () => {
+  const expiry = new Date(Date.now() + 3600000).toISOString();
+  const candidates = [
+    row(1, { availableUntil: expiry, venueId: id(8000) }),
+    row(2), row(3, { availableUntil: new Date(Date.now() - 1000).toISOString() }),
+    row(4, { city: 'Miami', availableUntil: expiry, venueId: id(8001) }),
+  ];
+  const f = directoryFixture(candidates);
+  const totals = async options => {
+    const page = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', ...options });
+    return { ...page.statusCounts };
+  };
+  for (const filter of ['now', 'not_now', 'all']) {
+    assert.deepEqual(await totals({ filter }), { now: 1, not_now: 2 });
+  }
+  assert.deepEqual(await totals({ city: 'All cities' }), { now: 2, not_now: 2 });
+  assert.deepEqual(await totals({ filter: 'now', venueId: id(8000) }), { now: 1, not_now: 0 });
+  candidates[0].availableUntil = null;
+  assert.deepEqual(await totals({ filter: 'now' }), { now: 0, not_now: 3 }, 'reused rankings still refresh status totals');
+  candidates.splice(1, 1);
+  assert.deepEqual(await totals({ filter: 'now' }), { now: 0, not_now: 2 }, 'removed public candidates leave both totals');
+  assert.deepEqual(await totals({ city: 'Empty city' }), { now: 0, not_now: 0 });
+});
+
 test('later visibility revocation is rechecked and backfilled without duplicates', async () => {
   const candidates = Array.from({ length: 220 }, (_, i) => row(i + 1, { performanceScore: 220 - i }));
   const f = directoryFixture(candidates);
