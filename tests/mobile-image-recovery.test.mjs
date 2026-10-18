@@ -4,12 +4,15 @@ import test from "node:test";
 import vm from "node:vm";
 
 const html = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
-const bootstrap = html.slice(html.indexOf("    const STABLE_IMAGE_TIMEOUT_MS"), html.indexOf("    const markets = {"));
+const source = await readFile(new URL("../src/live-shell/app/01-user-agent.js", import.meta.url), "utf8");
+const bootstrap = source.slice(source.indexOf("    const STABLE_IMAGE_TIMEOUT_MS"), source.indexOf("    const markets = {"));
 const transformed = "https://images.supabase.co/storage/v1/render/image/public/dancer-photos/approved.w640.webp?width=320&quality=80";
 
 function harness() {
   const timers = new Map();
   const handlers = new Map();
+  const windowHandlers = new Map();
+  const images = [];
   const observed = new Set();
   const observers = [];
   let tick = 0;
@@ -22,9 +25,9 @@ function harness() {
       this.loading = "eager";
       this.complete = false;
       this.naturalWidth = 0;
-      this.currentSrc = url;
       this.attrs = new Map([["src", url], ["srcset", `${url} 320w`], ["data-image-state", "loading"]]);
       this.requests = [];
+      images.push(this);
     }
     hasAttribute(name) { return this.attrs.has(name); }
     getAttribute(name) { return this.attrs.get(name); }
@@ -33,19 +36,24 @@ function harness() {
     closest() { return this.picture || null; }
     querySelectorAll() { return []; }
     matches() { return false; }
+    get currentSrc() {
+      const candidates = this.picture?.querySelectorAll("source").find(source => source.hasAttribute("srcset"))?.getAttribute("srcset")
+        || this.attrs.get("srcset");
+      return candidates?.split(/\s+/)[0] || this.attrs.get("src") || "";
+    }
     set src(url) {
       this.requests.push(url);
       this.attrs.set("src", url);
-      this.currentSrc = url;
       this.complete = false;
       this.naturalWidth = 0;
     }
   }
   const ctx = vm.createContext({
     URL, HTMLImageElement: Image,
-    document: { body: {}, querySelectorAll: () => [], addEventListener: (type, fn) => handlers.set(type, fn) },
+    document: { body: {}, visibilityState: "visible", querySelectorAll: selector => images.filter(image => image.isConnected
+      && selector === `img[data-image-state="${image.dataset.imageState}"]`), addEventListener: (type, fn) => handlers.set(type, fn) },
     window: {
-      location: { href: "https://www.mydancr.com/" }, addEventListener() {},
+      location: { href: "https://www.mydancr.com/" }, addEventListener: (type, fn) => windowHandlers.set(type, fn),
       setTimeout(fn) { timers.set(++tick, fn); return tick; },
       clearTimeout(id) { timers.delete(id); },
     },
@@ -63,6 +71,7 @@ function harness() {
   vm.runInContext(bootstrap, ctx);
   return {
     ctx, Image, timers, observed, observers,
+    dispatch(type) { windowHandlers.get(type)(); },
     load(image) { image.complete = true; image.naturalWidth = 640; handlers.get("load")({ target: image }); },
     fail(image) { image.complete = true; image.naturalWidth = 0; handlers.get("error")({ target: image }); },
     insert(image) { insertion([{ addedNodes: [image] }]); },
@@ -96,6 +105,111 @@ test("a stalled visible mobile image gets a deadline and a working fallback", ()
   assert.match(image.requests[0], /\/object\/public\//);
   h.load(image);
   assert.equal(image.dataset.imageState, "ready");
+});
+
+test("mobile picture candidates cannot override the authorized photo retry", () => {
+  const h = harness();
+  const path = "owner/approved.r320-640.m640x960.jpg.w320.webp";
+  const endpoint = "https://www.mydancr.com/api/media/dancer-photo?path=" + encodeURIComponent(path);
+  const image = new h.Image(endpoint);
+  const attrs = new Map([["srcset", `${endpoint}&width=160 160w`], ["data-grid-srcset", `${endpoint}&width=160 160w`]]);
+  const source = { hasAttribute: key => attrs.has(key), getAttribute: key => attrs.get(key), removeAttribute: key => attrs.delete(key) };
+  image.picture = { querySelectorAll: () => [source] };
+  image.attrs.set("data-grid-src", endpoint);
+  image.attrs.set("data-grid-srcset", `${endpoint} 320w`);
+  assert.equal(new URL(image.currentSrc).searchParams.get("width"), "160");
+  h.fail(image);
+  assert.equal(attrs.size, 0, "neither live nor deferred picture sources can reselect the broken candidate");
+  assert.equal(image.hasAttribute("data-grid-src"), false);
+  assert.equal(image.hasAttribute("data-grid-srcset"), false);
+  assert.equal(image.currentSrc, image.requests[0]);
+  const retry = new URL(image.currentSrc);
+  assert.equal(retry.pathname, "/api/media/dancer-photo");
+  assert.equal(retry.searchParams.get("path"), path);
+  assert.equal(retry.searchParams.has("width"), false);
+  assert.equal(retry.searchParams.get("image_retry"), "1");
+  h.load(image);
+  assert.equal(image.dataset.imageState, "ready");
+  assert.equal(h.timers.size, 0);
+});
+
+test("authorized image retries preserve preview tokens and video-poster identities", () => {
+  const h = harness();
+  for (const source of [
+    "https://www.mydancr.com/api/media/dancer-photo?path=owner%2Fphoto.jpg&width=320&preview=signed-preview",
+    "https://www.mydancr.com/api/media/dancer-video?id=video-id&poster=1&width=320&preview=signed-preview",
+  ]) {
+    const image = new h.Image(source);
+    const before = new URL(source);
+    const after = new URL(h.ctx.stableImageRetryUrl(image, 2));
+    before.searchParams.delete("width");
+    before.searchParams.set("image_retry", "2");
+    assert.equal(after.href, before.href);
+  }
+  for (const source of [
+    "https://www.mydancr.com/api/media/dancer-video?id=video-id",
+    "https://elsewhere.example/api/media/dancer-photo?path=photo.jpg&preview=signed",
+    "https://www.mydancr.com/other-image?width=320&token=signed",
+  ]) assert.equal(h.ctx.stableImageRetryUrl(new h.Image(source), 1), source);
+});
+
+test("a late successful load cancels a backed-off retry", () => {
+  const h = harness();
+  const image = new h.Image();
+  h.fail(image);
+  h.fail(image);
+  assert.equal(image.requests.length, 1);
+  assert.equal(h.timers.size, 1);
+  h.fail(image);
+  assert.equal(h.timers.size, 1, "duplicate error events do not consume another retry");
+  h.load(image);
+  assert.equal(image.dataset.imageState, "ready");
+  assert.equal(image.requests.length, 1);
+  assert.equal(h.timers.size, 0);
+});
+
+test("reconnection or page restoration gives failed photos one fresh visible retry without a reload loop", () => {
+  for (const event of ["online", "pageshow"]) {
+    const h = harness();
+    const image = new h.Image("https://www.mydancr.com/api/media/dancer-photo?path=owner%2Fphoto.jpg");
+    image.matches = selector => selector === ".home-dancer-grid-photo";
+    h.fail(image); h.fail(image); h.expire(); h.fail(image);
+    assert.equal(image.dataset.imageState, "error");
+    assert.equal(image.requests.length, 2);
+    h.dispatch(event);
+    assert.equal(image.dataset.imageState, "loading");
+    assert.equal(h.observed.has(image), true);
+    assert.equal(h.timers.size, 0, "offscreen recovery waits for visibility");
+    h.visible(image); h.expire();
+    assert.equal(image.requests.length, 3);
+    assert.equal(new URL(image.currentSrc).searchParams.get("image_retry"), "3");
+    h.fail(image);
+    h.dispatch("online"); h.dispatch("pageshow");
+    assert.equal(image.dataset.imageState, "error");
+    assert.equal(image.requests.length, 3);
+    assert.equal(h.timers.size, 0);
+    // A restored, already decoded image must still reveal even after the budget.
+    image.complete = true; image.naturalWidth = 640;
+    h.dispatch("pageshow");
+    assert.equal(image.dataset.imageState, "ready");
+  }
+});
+
+test("detached images and hidden pages never restart failed photo requests", () => {
+  const h = harness();
+  const image = new h.Image();
+  h.fail(image); h.fail(image);
+  image.isConnected = false;
+  h.expire();
+  assert.equal(image.requests.length, 1);
+  assert.equal(h.timers.size, 0);
+  const hidden = new h.Image();
+  h.fail(hidden); h.fail(hidden); h.expire(); h.fail(hidden);
+  h.ctx.document.visibilityState = "hidden";
+  h.dispatch("online"); h.dispatch("pageshow");
+  assert.equal(hidden.dataset.imageState, "error");
+  assert.equal(hidden.requests.length, 2);
+  assert.equal(h.timers.size, 0);
 });
 
 test("offscreen lazy photos stay deferred until they approach the viewport", () => {
@@ -197,6 +311,8 @@ test("unavailable images have bounded retries and removed cards stop requesting"
   const image = new h.Image();
   h.fail(image);
   h.fail(image);
+  assert.equal(image.requests.length, 1, "the second retry backs off");
+  h.expire();
   h.fail(image);
   h.fail(image);
   assert.equal(image.requests.length, 2);

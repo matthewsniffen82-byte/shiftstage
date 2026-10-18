@@ -43329,6 +43329,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     const STABLE_IMAGE_TIMEOUT_MS = 8000;
     const STABLE_IMAGE_MAX_RETRIES = 2;
+    const STABLE_IMAGE_RETRY_DELAY_MS = 1500;
     const stableImageRequests = new WeakMap();
     const stableImageVisibility = typeof IntersectionObserver === "function"
       ? new IntersectionObserver((entries) => {
@@ -43360,7 +43361,7 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     function stableImageRequest(image) {
       let state = stableImageRequests.get(image);
       if (!state) {
-        state = { attempts: 0, timer: null };
+        state = { attempts: 0, limit: STABLE_IMAGE_MAX_RETRIES, timer: null, retryPending: false, resumed: false };
         stableImageRequests.set(image, state);
       }
       return state;
@@ -43369,13 +43370,21 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     function clearStableImageTimer(image) {
       const state = stableImageRequests.get(image);
       if (state?.timer !== null && state?.timer !== undefined) window.clearTimeout(state.timer);
-      if (state) state.timer = null;
+      if (state) { state.timer = null; state.retryPending = false; }
     }
 
     function stableImageRetryUrl(image, attempt) {
       const source = image.currentSrc || image.getAttribute("src");
       if (!source) return "";
       const url = new URL(source, window.location.href);
+      const appOrigin = new URL(window.location.href).origin;
+      if (url.origin === appOrigin && (url.pathname === "/api/media/dancer-photo"
+        || (url.pathname === "/api/media/dancer-video" && url.searchParams.get("poster") === "1"))) {
+        // Keep the authorized endpoint, object and preview capability intact.
+        // Bypass a failed resize and the browser's failed-image URL cache.
+        url.searchParams.delete("width");
+        url.searchParams.set("image_retry", String(attempt));
+      }
       // Retry the same approved, stored image without the resize service. Never
       // rewrite signed/private media URLs or guess a different storage object.
       if (url.protocol === "https:" && url.hostname.endsWith(".supabase.co")) {
@@ -43393,22 +43402,42 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
 
     function retryStableImage(image) {
       const state = stableImageRequest(image);
-      if (!image.isConnected || state.attempts >= STABLE_IMAGE_MAX_RETRIES) return false;
+      if (!image.isConnected || state.attempts >= state.limit) return false;
       let retryUrl;
       try { retryUrl = stableImageRetryUrl(image, state.attempts + 1); } catch { return false; }
       if (!retryUrl) return false;
       state.attempts += 1;
       image.dataset.imageState = "loading";
-      image.removeAttribute("srcset");
-      image.loading = "eager";
-      image.fetchPriority = "auto";
-      image.src = retryUrl;
-      armStableImageTimeout(image);
+      const startRetry = () => {
+        state.timer = null;
+        state.retryPending = false;
+        if (!image.isConnected) return;
+        if (image.complete && image.naturalWidth > 0) { settleStableImage(image); return; }
+        // A picture's source overrides img.src, including during a retry.
+        // Retire every candidate so mobile browsers use the fallback URL.
+        image.closest("picture")?.querySelectorAll("source").forEach((source) => {
+          source.removeAttribute("srcset");
+          source.removeAttribute("data-grid-srcset");
+        });
+        image.removeAttribute("srcset");
+        image.removeAttribute("data-grid-srcset");
+        image.removeAttribute("data-grid-src");
+        image.loading = "eager";
+        image.fetchPriority = "auto";
+        image.src = retryUrl;
+        armStableImageTimeout(image);
+      };
+      if (state.attempts === 1) startRetry();
+      else {
+        state.retryPending = true;
+        state.timer = window.setTimeout(startRetry, STABLE_IMAGE_RETRY_DELAY_MS);
+      }
       return true;
     }
 
     function settleStableImage(image, failed = false) {
       if (!(image instanceof HTMLImageElement) || !image.hasAttribute("data-image-state")) return;
+      if (failed && stableImageRequest(image).retryPending) return;
       clearStableImageTimer(image);
       if (!failed && image.naturalWidth > 0) {
         image.dataset.imageState = "ready";
@@ -43484,6 +43513,26 @@ html.internal-profile-embed .internal-profile-request-status:empty { display: no
     stableImageInsertions.observe(document.body, { childList: true, subtree: true });
     settleCompletedStableImages();
     window.addEventListener("load", () => settleCompletedStableImages(), { once: true });
+    function resumeStableImages() {
+      if (document.visibilityState === "hidden") return;
+      settleCompletedStableImages();
+      document.querySelectorAll('img[data-image-state="error"]').forEach((image) => {
+        const state = stableImageRequest(image);
+        if (!image.isConnected) return;
+        if (image.complete && image.naturalWidth > 0) { settleStableImage(image); return; }
+        if (state.resumed) return;
+        state.resumed = true;
+        // One further attempt after connectivity/page restoration, not a loop.
+        state.limit += 1;
+        image.dataset.imageState = "loading";
+        image.loading = "lazy";
+        const visibility = image.matches(".home-dancer-grid-photo") ? stableGridVisibility : stableImageVisibility;
+        if (visibility) visibility.observe(image);
+        else watchStableImage(image);
+      });
+    }
+    window.addEventListener("online", resumeStableImages);
+    window.addEventListener("pageshow", resumeStableImages);
 
     // Compare rendered content, not unrelated saved state or profile metrics.
     // Keep a clean snapshot so image readiness, fitted logos and focus survive

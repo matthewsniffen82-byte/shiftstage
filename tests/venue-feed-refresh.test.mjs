@@ -144,15 +144,39 @@ test("unchanged data preserves runtime attributes and empty results remove stale
   assert.equal(results.childNodes[0].childNodes[2].childNodes.length, 0);
 });
 
+test("card refreshes retain a recovered picture without reinstating the failed mobile source", () => {
+  const portrait = label => new DomNode("ARTICLE", { "data-public-dancer-id": "dancer" }, [
+    new DomNode("PICTURE", {}, [new DomNode("SOURCE", { srcset: "small.jpg 320w" }),
+      new DomNode("IMG", { src: "photo.jpg", srcset: "photo.jpg 640w", "data-image-state": "loading" })]),
+    new DomNode("SPAN", {}, [text(label)]),
+  ]);
+  const { results, render } = fixture();
+  render(portrait("Working now"));
+  const picture = results.childNodes[0].childNodes[0];
+  const [source, image] = picture.childNodes;
+  source.removeAttribute("srcset");
+  image.removeAttribute("srcset");
+  image.setAttribute("src", "photo.jpg?image_retry=1");
+  image.setAttribute("data-image-state", "ready");
+  render(portrait("Not working now"));
+  assert.equal(results.childNodes[0].childNodes[0], picture);
+  assert.equal(source.hasAttribute("srcset"), false);
+  assert.equal(image.hasAttribute("srcset"), false);
+  assert.equal(image.getAttribute("src"), "photo.jpg?image_retry=1");
+  assert.equal(image.getAttribute("data-image-state"), "ready");
+});
+
 test("Follow request cleanup keeps the newly rendered label on a reused button", async () => {
   const actions = readFileSync(new URL("../src/live-shell/app/22-create-home-tv-landing-preloader.js", import.meta.url), "utf8");
   const handler = actions.slice(actions.indexOf("      const followVenueButton ="), actions.indexOf("      const venueJump ="));
   const button = new DomNode("BUTTON");
+  button.classList = { contains: () => false, toggle() {} };
   button.dataset = { venueFollow: "club-id" };
   button.innerHTML = "Follow";
   const state = {
     event: { target: { closest: () => button }, preventDefault() {}, stopPropagation() {} },
     requireCustomerAccountForProfileAction: () => true,
+    actionButtonLabel: (_icon, label) => label,
     resolveVenueByName: () => ({ id: "club-id", name: "Club", city: "Las Vegas" }),
     followedVenuesByCity: { "Las Vegas": [] }, customerSavedStateVersion: 0,
     getAuthenticatedJson: async () => ({}),
