@@ -38,6 +38,11 @@ test("both profile entry points share TV video sizing and screen-filling photo c
   assert.match(css, /scroll-snap-type: none !important/);
   assert.match(css, /scroll-snap-align: none !important/);
   assert.match(css, /scroll-snap-stop: normal !important/);
+  postcss.parse(css).walkDecls(/^scroll-snap-(type|align)$/, declaration => {
+    if (declaration.value === "none") return;
+    assert.ok(declaration.parent.selector.startsWith(".profile-media-card-feed.is-media-fullscreen "),
+      "snapping must be limited to expanded media, including mobile overrides");
+  });
   assert.match(css, /border-radius: 18px !important/);
   assert.match(css, /overflow-x: hidden !important/);
   assert.doesNotMatch(css, /is-profile-card-expanded/);
@@ -126,9 +131,6 @@ test("taller shared phone cards leave only a small neighboring-card peek", () =>
   const tvMobile = fs.readFileSync("src/live-shell/styles/override-styles-03-home-discovery-empty-action-is-secondary-hover-home-discovery-em.css", "utf8");
   const tvGap = tvMobile.match(/#results\.home-tv-feed \{[^}]*gap: (\d+)px !important/);
   assert.equal(gap, Number(tvGap?.[1]), "regular cards use the TV feed's mobile gap");
-  const tvSnap = tvMobile.match(/html\.home-tv-page-snap \{[^}]*scroll-snap-type: ([^;]+)/)?.[1];
-  const profileSnap = mobile.match(/\.profile-media-card-feed:not\(\.is-media-fullscreen\) :is\([^}]*scroll-snap-type: ([^;!]+) !important/)?.[1];
-  assert.equal(profileSnap, tvSnap, "regular phone cards use TV's gentle snapping, distinct from immersive paging");
 });
 
 test("mixed-height photo feeds select the visible card and can reach a short final photo", () => {
@@ -139,7 +141,6 @@ test("mixed-height photo feeds select the visible card and can reach a short fin
   assert.equal(context.profilePhotoCardScrollIndex(1284, offsets, 700, 2130), 1);
   assert.equal(context.profilePhotoCardScrollIndex(1430, offsets, 700, 2130), 3);
   assert.equal(context.profilePhotoCardScrollIndex(0, [], 700, 700), 0);
-  assert.equal(context.profilePhotoCardScrollIndex(1284 - 12 + 12, offsets, 700, 2130), 1, "a card snapped below the top inset stays selected");
   assert.match(live, /profilePhotoViewerImage\.scrollTop \+ profileMediaCardScrollInset\(profilePhotoViewerImage\)/);
   assert.match(carousel, /viewerKind === "photo"[^]*?profilePhotoCardScrollIndex\(scrollTop, slides\.map/);
 });

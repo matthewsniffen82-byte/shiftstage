@@ -392,12 +392,7 @@ html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer
      and the phone's safe area after the final card. */
   .profile-media-card-feed:not(.is-media-fullscreen) :is(.profile-photo-viewer-image, .profile-tv-viewer-stage, .profile-media-viewer-stage) {
     padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)) !important;
-    scroll-snap-type: y proximity !important;
-    scroll-padding-top: 12px !important;
     scrollbar-width: none;
-  }
-  .profile-media-card-feed:not(.is-media-fullscreen) :is(.profile-media-card-header, .profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide) {
-    scroll-snap-align: start !important;
   }
   .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) {
     right: calc(9px + env(safe-area-inset-right, 0px)) !important;
