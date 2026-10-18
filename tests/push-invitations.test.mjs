@@ -62,7 +62,7 @@ test("entering the dancer dashboard offers notification setup before either onbo
 for (const [role, moment, words] of [
   ["customer", "customer-follow", /favorites/],
   ["dancer", "dancer-review", /profile/], ["dancer", "dancer-shift", /account/],
-  ["dancer", "dancer-dashboard", /table request/],
+  ["dancer", "dancer-dashboard", /miss a request/],
   ["venue", "venue-dashboard", /venue/], ["venue", "venue-live", /live/],
 ]) test(`${moment} offers context without requesting browser permission`, async () => {
   const f = fixture({ role }); await f.offer(moment);
@@ -73,6 +73,8 @@ for (const [role, moment, words] of [
 });
 test("dancer dashboard invitation persists email guidance after enabling and never changes customer settings", async () => {
   const f = fixture({ role: "dancer" }); await f.offer("dancer-dashboard");
+  assert.match(f.card().children[1].textContent, /phone notifications for table and VIP requests/);
+  assert.match(f.card().children[3].textContent, /Table and VIP requests are also sent to your account email/);
   assert.match(f.card().children[3].textContent, /table number and club.*email app.*phone's settings/);
   assert.ok(!f.calls.includes("permission"));
   await f.buttons()[0].onclick();

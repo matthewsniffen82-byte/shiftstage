@@ -38,7 +38,8 @@ test("the priority card explains email delivery and only calls confirmed enrolle
   assert.equal(f.requests[0].id, "dancer-one");
   f.requests[0].resolve(false); await settle();
   assert.match(f.render(), /data-push-settings="true">Enable notifications/);
-  assert.match(f.render(), /Table requests are also sent to your account email, including the table number and club/);
+  assert.match(f.render(), /Get phone notifications for table and VIP requests/);
+  assert.match(f.render(), /Table and VIP requests are also sent to your account email/);
   assert.match(f.render(), /Turn on notifications for your email app/);
   f.events.get("mydancr:push-changed")();
   f.requests[1].resolve(true); await settle();

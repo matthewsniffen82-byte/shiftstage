@@ -9,7 +9,7 @@
     "customer-follow": ["customer", "Keep up with your favorites", "Get notified when dancers you follow are working and when your favorite clubs post deals."],
     "dancer-review": ["dancer", "Know when your profile is ready", "Get notified when your profile is approved or needs an update."],
     "dancer-shift": ["dancer", "Keep up with your dancer account", "Get profile updates and important account alerts while you’re away from MyDancr."],
-    "dancer-dashboard": ["dancer", "Don't miss a table request", "Enable phone notifications for table requests, including the table number and club."],
+    "dancer-dashboard": ["dancer", "Don't miss a request", "Enable phone notifications for table and VIP requests."],
     "venue-dashboard": ["venue", "Keep your venue up to date", "Get notified when your venue page is ready for review and when requests need your attention."],
     "venue-live": ["venue", "Your venue is live", "Enable notifications for customer pickup requests and important venue updates."],
     settings: ["", "Push notifications", "Manage notifications on this device."],
@@ -140,7 +140,7 @@
       actions.append(dismiss); card.append(heading, message, actions);
       if (dancerDashboard || (moment === "settings" && auth.account.role === "dancer")) {
         const email = document.createElement("p");
-        email.textContent = "Table requests are also emailed to your account email, with the table number and club. Turn on notifications for your email app in your phone's settings.";
+        email.textContent = "Table and VIP requests are also sent to your account email. Table alerts include the table number and club; VIP alerts include the club, date, and time. Turn on notifications for your email app in your phone's settings.";
         card.append(email);
       }
       document.body.append(card);
