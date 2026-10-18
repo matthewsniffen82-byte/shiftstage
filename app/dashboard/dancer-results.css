@@ -1,19 +1,19 @@
-/* Match the venue Results range bar above the shared dancer button skin. */
+/* Match the venue Results range bar: one framed rail, 44px controls and inset faces. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period {
-  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%;
-  min-width: 0; max-width: 100%; gap: var(--dashboard-nav-gap, 6px); padding: 0; border: 0; border-radius: 10px;
-  background: transparent;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); box-sizing: border-box; width: 100%;
+  min-width: 0; max-width: 100%; gap: 3px; padding: 3px; border: 1px solid #34343c; border-radius: 10px;
+  background: #19191f;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button {
   --results-period-face: #1b1922;
   --results-period-edge: transparent;
   position: relative; isolation: isolate; display: inline-flex;
   align-items: center; justify-content: center; min-width: 0; min-height: 44px !important;
-  margin: 0; padding: 6px 4px !important; border: 0 !important; border-radius: 10px !important;
+  box-sizing: border-box; margin: 0; padding: 8px 12px !important; border: 0 !important; border-radius: 10px !important;
   background: none !important; color: #f4f3f7 !important;
   box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-  font-size: 13px !important; font-weight: 600 !important; line-height: 1.35;
-  letter-spacing: normal !important; white-space: nowrap; text-shadow: none !important;
+  font-size: 12px !important; font-weight: 600 !important; line-height: 1.35;
+  letter-spacing: normal !important; white-space: normal; text-shadow: none !important;
 }
 /* The venue's separate solid face also avoids Android's automatic gray fill. */
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button::before {
@@ -61,8 +61,8 @@ body.dancr-button-system #dancer-dashboard .dancer-analytics-toolbar {
   z-index: 30; align-self: start; display: grid; grid-template-columns: minmax(0, 1fr);
   justify-content: stretch; align-items: start; justify-self: stretch;
   box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; margin: 0; gap: 8px;
-  padding: 10px; border: 1px solid #45404d; border-radius: 12px; background: #0c0a10;
-  box-shadow: 0 4px 12px #0004;
+  padding: 0; border: 0; border-radius: 10px; background: #050507;
+  box-shadow: none;
 }
 body.dancr-button-system #dancer-dashboard .dancer-results-club { grid-template-columns: auto minmax(0, 1fr); align-items: center; width: 100%; min-width: 0; max-width: none; gap: 10px; margin: 0; }
 body.dancr-button-system #dancer-dashboard .dancer-results-range { display: flex; flex-wrap: wrap; gap: 2px 8px; min-width: 0; margin: 0; color: #d0ccd7; font-size: 12px; line-height: 1.4; }
@@ -135,9 +135,8 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar {
   width: calc(100% + var(--dancer-results-toolbar-outset) + var(--dancer-results-toolbar-outset));
   max-width: none; margin-inline: calc(0px - var(--dancer-results-toolbar-outset));
-  padding: var(--dashboard-nav-inset, 6px); gap: 6px; border-radius: 16px;
+  padding: 0; gap: 6px; border-radius: 10px;
 }
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-analytics-toolbar > .dancer-analytics-period > button { min-height:36px !important; padding:4px 2px !important; font-size:12px !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club { grid-template-columns:auto minmax(0,1fr); gap:8px; padding:0; font-size:12px !important; letter-spacing:normal !important; text-transform:none; font-weight:500 !important; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-club select { width:100%; max-width:100%; min-width:0; min-height:38px !important; padding:6px 9px !important; font-size:16px !important; font-weight:500 !important; text-overflow:ellipsis; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer #dancer-performance .dancer-results-range { font-size:11px; }

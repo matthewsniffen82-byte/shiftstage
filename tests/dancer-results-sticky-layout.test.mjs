@@ -30,6 +30,8 @@ test("tightening the gap preserves the control dimensions and navigation-aligned
   const toolbar = values(compact + ".dancer-analytics-toolbar");
   assert.equal(toolbar.width, "calc(100% + var(--dancer-results-toolbar-outset) + var(--dancer-results-toolbar-outset))");
   assert.equal(toolbar["margin-inline"], "calc(0px - var(--dancer-results-toolbar-outset))");
-  assert.equal(values(compact + ".dancer-analytics-toolbar > .dancer-analytics-period > button")["min-height"], "36px");
+  const periodPrefix = compact.replace("#dancer-performance ", "") + ".dancer-analytics-toolbar > .dancer-analytics-period";
+  assert.equal(values(periodPrefix + " > button")["min-height"], "44px");
+  assert.deepEqual(values(compact + ".dancer-analytics-toolbar > .dancer-analytics-period > button"), {});
   assert.equal(values(compact + ".dancer-results-club select")["min-height"], "38px");
 });
