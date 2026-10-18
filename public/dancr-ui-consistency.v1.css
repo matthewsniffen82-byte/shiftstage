@@ -341,10 +341,10 @@ body.dancr-button-system :is(:is(#profileShareChoiceOverlay,#profileQrOverlay),.
 body.dancr-button-system .profile-share-dialog-status { color: #b8b5c6; font-size: 12px; font-weight: 400; }
 body.dancr-button-system .profile-share-dialog-status:empty { display: none; }
 
-/* Discovery controls share a quiet violet accent across all three feeds. */
+/* Discovery utility icons stay neutral across all three feeds. */
 body.dancr-button-system #citySelectButton > .city-picker-trigger-icon,
 body.dancr-button-system #homeFilterToggle > .home-filter-toggle-icon {
-  color: #a78bfa !important;
+  color: #b4bac5 !important;
   stroke: currentColor !important;
   filter: none !important;
   box-shadow: none !important;
@@ -1319,7 +1319,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle > .home-filter-toggle-icon {
   width: 18px !important;
   height: 18px !important;
-  color: #a78bfa !important;
+  color: #b4bac5 !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton > .city-picker-chevron {
   width: 12px !important;
@@ -1744,11 +1744,11 @@ html body.dancr-button-system > .app > header
   outline-offset: 1px !important;
 }
 
-/* Header utilities match the city controls across all discovery tabs. */
+/* Neutral header icons match the city controls; violet marks active outlines. */
 html body.dancr-button-system > .app > header .topbar
   :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
   --discovery-header-edge: #34343c;
-  color: #a78bfa !important;
+  color: #b4bac5 !important;
   border-color: #34343c !important;
   box-shadow: none !important;
 }
@@ -1760,14 +1760,14 @@ html body.dancr-button-system > .app > header .topbar
 html body.dancr-button-system > .app > header .topbar
   :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(.active, .is-open, [aria-expanded="true"], :focus-visible) {
   --discovery-header-edge: #a78bfa;
-  color: #c4b5fd !important;
+  color: #f8fafc !important;
   border-color: #a78bfa !important;
 }
 @media (hover: hover) {
   html body.dancr-button-system > .app > header .topbar
     :is(.customer-quick-btn, #accountBtn.account-icon-btn):hover {
     --discovery-header-edge: #a78bfa;
-    color: #c4b5fd !important;
+    color: #f8fafc !important;
     border-color: #a78bfa !important;
   }
 }
