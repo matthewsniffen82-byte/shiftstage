@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
+import "./dancer-account.css";
 
 const destinations = [
   { id: "overview", label: "Overview", icon: "status" },
