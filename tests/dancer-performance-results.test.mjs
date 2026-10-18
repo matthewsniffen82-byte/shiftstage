@@ -26,6 +26,10 @@ before(async () => {
     grant select on all tables in schema public to service_role;`);
   await db.exec(readFileSync(new URL('../supabase/migrations/20261012005230_dancer_performance_results.sql', import.meta.url), 'utf8'));
   await db.exec(readFileSync(new URL('../supabase/migrations/20261018032231_dancer_results_trends_all_time.sql', import.meta.url), 'utf8'));
+  await db.exec(`alter table venue_dancer_work_sessions add column dancer_check_in_at timestamptz,
+    add column dancer_check_out_at timestamptz,add column check_in_day date,add column closure_reason text,
+    add column both_roster_periods tstzmultirange not null default '{}',add column both_roster_started_at timestamptz;`);
+  await db.exec(readFileSync(new URL('../supabase/migrations/20261018055657_dancer_results_roster_activity.sql', import.meta.url), 'utf8'));
 });
 after(async () => db?.close());
 beforeEach(async () => {
@@ -42,6 +46,37 @@ async function vip(user, date, {venue=20,dancer=10,status='pending',duplicate=fa
   const choice={id:id(dancer),stage_name:'Private selection'};
   await db.query('insert into venue_vip_requests(venue_id,user_id,created_at,status,dancers) values($1,$2,$3,$4,$5)', [id(venue),id(user),date,status,JSON.stringify(duplicate?[choice,choice]:[choice])]);
 }
+
+test('roster activity merges hours, grades complete dancer checkout days and separates active visits by club',async()=>{
+  for(const [n,venue,start,end,checkout,both,day] of [
+    [100,20,'2026-10-10T20:00Z','2026-10-10T22:00Z',true,'{[2026-10-10T20:00Z,2026-10-10T21:00Z)}','2026-10-10'],
+    [101,20,'2026-10-10T21:00Z','2026-10-10T23:00Z',false,'{}','2026-10-10'],
+    [102,21,'2026-10-11T01:00Z','2026-10-11T03:00Z',true,'{[2026-10-11T01:00Z,2026-10-11T03:00Z)}','2026-10-10'],
+    [103,20,'2026-10-11T23:00Z','2026-10-12T02:00Z',false,'{}','2026-10-11'],
+  ]) await db.query(`insert into venue_dancer_work_sessions(id,venue_id,dancer_id,started_at,expires_at,closed_at,
+    dancer_check_in_at,dancer_check_out_at,check_in_day,closure_reason,both_roster_periods)
+    values($1,$2,$3,$4,$5,case when $6 then $5::timestamptz end,$4,case when $6 then $5::timestamptz end,$8,case when $6 then 'dancer' end,$7)`,
+    [id(n),id(venue),id(10),start,end,checkout,both,day]);
+  const r=await report();
+  assert.deepEqual(r.roster,{checkIns:4,dancerCheckouts:2,recordedHours:6,bothRosterHours:3,checkoutEligibleDays:2,dancerCheckoutDays:1,activeDays:1});
+  assert.equal(r.clubs[0].roster.recordedHours,4);assert.equal(r.clubs[0].roster.dancerCheckoutDays,0);
+  assert.equal(r.clubs[1].roster.recordedHours,2);assert.equal(r.clubs[1].roster.dancerCheckoutDays,1);
+  assert.deepEqual((await report(11)).roster,{checkIns:0,dancerCheckouts:0,recordedHours:0,bothRosterHours:0,checkoutEligibleDays:0,dancerCheckoutDays:0,activeDays:0});
+  assert.equal((await report(10,'2026-08-01','2026-10-12T00:00:00Z')).roster.recordedHours,6);
+});
+
+test('legacy, interrupted and staff-ended visits do not invent dancer checkout credit',async()=>{
+  for(const [n,day,verified,reason,checkout] of [[110,6,false,'staff',false],[111,7,true,'interrupted',false],[112,8,true,'staff',false],[113,9,true,'expired',true]]) {
+    const start=`2026-10-${String(day).padStart(2,'0')}T20:00Z`,end=`2026-10-${String(day).padStart(2,'0')}T22:00Z`;
+    await db.query(`insert into venue_dancer_work_sessions(id,venue_id,dancer_id,started_at,expires_at,closed_at,dancer_check_in_at,dancer_check_out_at,check_in_day,closure_reason)
+      values($1,$2,$3,$4,$5,$5,case when $6 then $4::timestamptz end,case when $8 then $5::timestamptz+interval '1 hour' end,$4::timestamptz::date,$7)`,
+      [id(n),id(20),id(10),start,end,verified,reason,checkout]);
+  }
+  const r=await report();assert.equal(r.roster.recordedHours,8);assert.equal(r.roster.checkIns,3);
+  assert.equal(r.roster.checkoutEligibleDays,2);assert.equal(r.roster.dancerCheckoutDays,0);assert.equal(r.roster.bothRosterHours,0);
+  for(const role of ['anon','authenticated']) for(const fn of ['get_dancer_request_results','get_dancer_performance_analytics'])
+    assert.equal((await db.query('select has_function_privilege($1,$2,\'execute\') allowed',[role,`public.${fn}(uuid,timestamptz,timestamptz)`])).rows[0].allowed,false);
+});
 
 test('request counts have disjoint periods, no API row cap, correct statuses and dancer/club isolation',async()=>{
   await db.query("insert into internal_roster_requests(venue_id,dancer_id,created_at,status) select $1,$2,'2026-10-06','completed' from generate_series(1,1005)",[id(20),id(10)]);

@@ -1,5 +1,10 @@
 export type DancerAnalyticsPeriod = "shift" | "tonight" | "7d" | "30d" | "all";
 export type DancerAnalyticsSelection = DancerAnalyticsPeriod | "auto";
+export type DancerPlacementScorecard = {
+  venueId: string; venueName?: string; periodStart: string; periodEnd: string;
+  scores: Record<import("./venue-dancer-scores").DancerScoreKey,
+    Pick<import("./venue-dancer-scores").DancerScore, "value" | "reason" | "confidence" | "evidence">>;
+};
 
 export type DancerActivityPoint = {
   start: string;
@@ -43,13 +48,18 @@ export type DancerAudienceAnalytics = {
 
 export type DancerRequestCounts = Record<"tableRequests" | "tablePending" | "tableAcknowledged" | "tableCompleted" | "tableCancelled" |
   "vipRequests" | "vipPending" | "vipConfirmed" | "vipDeclined" | "vipCancelled" | "repeatVips", number>;
+export type DancerRosterActivity = {
+  checkIns: number; dancerCheckouts: number; recordedHours: number; bothRosterHours: number;
+  checkoutEligibleDays: number; dancerCheckoutDays: number; activeDays: number;
+};
 export type DancerPerformanceAnalytics = {
   current: DancerRequestCounts;
   previous: DancerRequestCounts | null;
   external: { claims: number; admissions: number };
   alerts: { total: number; vip: number };
+  roster?: DancerRosterActivity;
   clubs: { id: string; name: string; timezone: string; current: DancerRequestCounts; previous: DancerRequestCounts | null;
-    external: { claims: number; admissions: number }; vipSubscribers: number }[];
+    external: { claims: number; admissions: number }; vipSubscribers: number; roster?: DancerRosterActivity }[];
   shifts: { id: string; venueId: string; venueName: string; timezone: string; startedAt: string; endedAt: string; hours: number; requests: number; partial?: boolean }[];
   workTrackingStartedAt: string | null;
 };

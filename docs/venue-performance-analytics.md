@@ -115,6 +115,16 @@ Conversion counts use the redemption date. The claim conversion percentage used 
 
 The additive migration `venue_dancer_results` preserves the previous channel report as `get_venue_performance_channels` and wraps it with these aggregates. All new RPCs are service-only and authorize staff inside the database before writes. Ledgers have RLS and no anonymous or authenticated grants. The new attendance-event trigger is a private definer function; the attendance command is a security invoker with empty search paths.
 
+## Dancer Results
+
+Dancer Results leads with table requests, VIP requests, returning VIP requesters and verified entries. Returning requesters describe repeat request activity, not repeat visits. New followers remain in Audience growth. Shift requests per hour display Early data until one recorded hour is available.
+
+The check-in activity summary follows the selected club and reporting period. It shows dancer check-ins and checkouts, merged recorded hours, hours on both rosters, checkout accuracy and complete checkout days. Accuracy uses the same ended-day rules as venue scoring: all eligible ended visits on a day must have a dancer checkout before expiry. Active visits and historical visits without known checkout provenance do not earn assumed accuracy credit. Recorded hours can include older observed sessions; Both hours require known mode history.
+
+The performance score always uses the last 30 days at the dancer's card club or latest active affiliation. It exposes the same five category scores, confidence and evidence as the venue calculation, with category-specific improvement guidance. Activity filters do not change this score's club or period. Missing categories stay unscored and weights are redistributed; Overall needs at least three categories. The private discovery endpoint returns only the signed-in dancer's score summary, without raw reports or other dancers' details. Public discovery ordering remains unchanged.
+
+Migration `20261018055657_dancer_results_roster_activity.sql` adds roster totals through a service-only invoker wrapper while retaining the existing request report. Production verification confirmed aggregate bounds, club totals and private execution privileges. Supabase advisors reported no new findings. Focused tests cover report windows, checkout provenance, overlapping hours, club scoping, score parity and endpoint ownership; no browser journeys were run.
+
 ## Access and rollout
 
 `get_venue_performance_analytics` wraps the existing subscription analytics RPC without replacing it. It is a service-role-only, security-invoker function with an empty search path. The dashboard authorizes venue access before calling it. New tracking tables have RLS, no public/authenticated grants, and service-role read access only. A non-callable definer trigger maintains the private presence ledger when existing shift commands execute.

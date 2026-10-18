@@ -2,26 +2,47 @@
 
 import { useEffect, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
+import type { DancerPlacementScorecard } from "@/src/lib/dancr/dancer-analytics-types";
+import { DANCER_SCORE_CATEGORIES, DANCER_SCORE_LABELS, DANCER_SCORE_WEIGHTS } from "@/src/lib/dancr/venue-dancer-scores";
 
-type Boosts = { eligible: boolean; score: number | null };
+type Boosts = { eligible: boolean; score: number | null; scorecard: DancerPlacementScorecard | null };
+const guidance = {
+  checkIns: "Check in when you arrive and check out before leaving. Use both rosters when you are available for both in-club requests and public discovery.",
+  internal: "Keep your in-club availability accurate so guests can request you while you are working. This category compares requests per recorded hour.",
+  vip: "Share your profile with interested guests so they can request you again. Selections and returning-requester share count; staff approval does not improve this score.",
+  profile: "Keep your photos and club information current, and share your profile. Recorded guest actions on your club-linked profile contribute here.",
+  conversions: "Share your club-linked profile so interested guests can claim an entry pass. This score improves when those claimed passes are redeemed at the club.",
+};
 export function DancerDiscoveryBoosts() {
   const [status,setStatus] = useState<Boosts | null>(null);
   const [error,setError] = useState(false);
+  const [retry,setRetry] = useState(0);
   useEffect(()=>{
     const controller=new AbortController();
+    setError(false);
     void requestDashboardJson("/api/dancer/discovery",{cache:"no-store",expectedRole:"dancer",signal:controller.signal,
       timeoutMs:15000,fallbackMessage:"Unable to load discovery placement."}).then(result=>{
       if (!controller.signal.aborted) setStatus(result as unknown as Boosts);
     }).catch(()=>{if(!controller.signal.aborted)setError(true);});
     return ()=>controller.abort();
-  },[]);
+  },[retry]);
+  const card = status?.scorecard;
   return <section className="dancer-analytics-audience" aria-labelledby="discovery-boosts-heading">
-    <h3 id="discovery-boosts-heading">Your discovery placement</h3>
-    {error ? <p>Your placement score is temporarily unavailable.</p> : !status ? <p role="status">Loading placement score…</p>
-      : !status.eligible ? <p>Your profile must be approved and public to appear in discovery.</p>
-      : status.score !== null ? <p><strong>Overall Performance: {status.score}/100</strong> · Last 30 days</p>
-      : <p>You need more recorded activity before an Overall Performance score is available.</p>}
-    <p>Higher Overall Performance scores place dancers higher in external grids, internal rosters and Dancer TV. Placement uses the same 30-day score shown in the venue dashboard.</p>
-    <p>Placement uses the club shown on your card, or your most recent active club affiliation when no club is shown. Internal rosters always use that club’s score. Dancers without a score appear after scored dancers.</p>
+    <h3 id="discovery-boosts-heading">Your performance score <small>Last 30 days{card?.venueName ? ` · ${card.venueName}` : ""}</small></h3>
+    {error ? <p role="alert">Your score is temporarily unavailable. <button type="button" onClick={()=>setRetry(value=>value+1)}>Try again</button></p>
+      : !status ? <p role="status">Loading performance score…</p> : <>
+        <p><strong>Overall Performance: {card?.scores.overall.value == null ? "—" : `${card.scores.overall.value}/100`}</strong>{card?.scores.overall.confidence === "early" ? " · Early data" : ""}</p>
+        <p className="dancer-results-note">{card?.scores.overall.reason || card?.scores.overall.evidence || "More recorded activity is needed before a score is available."}</p>
+        <div className="dancer-score-categories">{DANCER_SCORE_CATEGORIES.map(key => {
+          const score = card?.scores[key];
+          return <details key={key} className="dancer-score-category"><summary><span>{DANCER_SCORE_LABELS[key]}</span><strong>{score?.value == null ? "—" : `${score.value}/100`}</strong></summary>
+            <p>{score?.reason || score?.evidence || "More recorded activity is needed."}{score?.confidence === "early" ? " · Early data" : ""}</p>
+            <p>{guidance[key]}</p><small>Overall score weight: {DANCER_SCORE_WEIGHTS[key]}%</small>
+          </details>;
+        })}</div>
+        <p className="dancer-results-note">This score always uses the last 30 days at the club shown on your card, or your most recent active club affiliation. The filters above apply to your activity totals. The club dashboard uses the same calculation. At least three categories are required; missing categories are excluded and the remaining weights adjust.</p>
+        {!status.eligible && <p className="dancer-results-note">Your profile must be approved and public to appear in discovery.</p>}
+      </>}
+    <p className="dancer-results-note">Higher Overall Performance scores improve placement in public grids, internal rosters and Dancer TV. Internal rosters use that club’s score. Scores do not measure earnings or confirmed service completion.</p>
   </section>;
 }

@@ -67,3 +67,17 @@ test('ordered public cards contain no private scores or report fields and unscor
  assert.deepEqual(rows.map(r=>r.id),['new','b','a']);
  assert.doesNotMatch(JSON.stringify(result),/score|Private|internal|external|vip/);
 });
+
+test('own scorecards match every venue category while omitting other dancer identities and raw reports',async()=>{
+ const cohort=[dancer('a',18),dancer('b',2),dancer('private-peer',10)],f=fixture({club:cohort});
+ const [card]=await f.service.getPerformancePlacementScorecards(f.admin,[{dancerId:'a',venueId:'club'}],now);
+ const expected=scoring.scoreVenueDancers(cohort,'30d')[0].scores;
+ assert.equal(card.venueId,'club');assert.equal(card.periodEnd,new Date(now).toISOString());
+ for(const key of ['overall',...scoring.DANCER_SCORE_CATEGORIES]) {
+   assert.equal(card.scores[key].value,expected[key].value);assert.equal(card.scores[key].confidence,expected[key].confidence);
+   assert.equal(card.scores[key].evidence,expected[key].evidence);assert.equal(card.scores[key].details,undefined);
+ }
+ assert.doesNotMatch(JSON.stringify(card),/Private|private-peer|profileClaims|dancer_id|customer_id/);
+ assert.equal((await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a',venueId:'club'}],now))[0],card.scores.overall.value);
+ assert.equal(f.calls.length,1);
+});

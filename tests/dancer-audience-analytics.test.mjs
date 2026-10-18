@@ -6,6 +6,7 @@ import test from "node:test";
 import ts from "typescript";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import * as scoring from "../src/lib/dancr/venue-dancer-scores.ts";
 
 const require = createRequire(import.meta.url);
 function compile(file, dependencies = {}) {
@@ -26,7 +27,7 @@ const { DancerAnalyticsPanel } = compile("../app/dashboard/DancerAnalyticsPanel.
   "./DancerRequestDialog": compile("../app/dashboard/DancerRequestDialog.tsx", {"./dashboard-session":{}}),
   "./DancerResultsTrend": compile("../app/dashboard/DancerResultsTrend.tsx"),
   "./dancer-results.css": {},
-  "./DancerDiscoveryBoosts": compile("../app/dashboard/DancerDiscoveryBoosts.tsx", {"./dashboard-session":{}}) });
+  "./DancerDiscoveryBoosts": compile("../app/dashboard/DancerDiscoveryBoosts.tsx", {"./dashboard-session":{},"@/src/lib/dancr/venue-dancer-scores":scoring}) });
 const now = new Date("2026-09-23T12:00:00Z");
 const daysAgo = days => new Date(now.getTime() - days * 86400000).toISOString();
 function fixture() {
@@ -218,9 +219,9 @@ test("results lead with four demand cards and retain audience growth, content an
   result.socialLinkTaps = { value: 5, previous: 10 };
   const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
   assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 7);
-  for (const text of ["Table requests", "VIP requests", "Repeat VIPs", "New followers", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
+  for (const text of ["Table requests", "VIP requests", "Returning VIP requesters", "Verified entries", "New followers", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
   assert.ok(html.indexOf("Table requests") < html.indexOf("Profile views"));
-  for (const text of ["Profile views", "New followers", "Content likes", "Your audience", "Top content", "City activity rank #4", "Your discovery placement", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
+  for (const text of ["Profile views", "New followers", "Content likes", "Your audience", "Top content", "City activity rank #4", "Your performance score", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /Social link taps|Infinity|NaN|Unranked/);
 });
 
@@ -328,7 +329,7 @@ test('automatic analytics uses actual check-in time across midnight and scopes r
   rows.profile_views=[{dancer_id:'mine',viewed_at:'2026-09-23T01:59:59.999Z'},
     {dancer_id:'mine',viewed_at:startedAt},{dancer_id:'mine',viewed_at:'2026-09-23T09:00:00.000Z'},
     {dancer_id:'other',viewed_at:startedAt}];
-  rows.performanceClubs=[{id:'club-a',name:'Club A',current:{tableRequests:4,vipRequests:2,repeatVips:1},external:{claims:1,admissions:0}},
+  rows.performanceClubs=[{id:'club-a',name:'Club A',current:{tableRequests:4,vipRequests:2,repeatVips:1},external:{claims:1,admissions:0},roster:{checkIns:1,recordedHours:3}},
     {id:'club-b',name:'Club B',current:{tableRequests:90},external:{claims:20,admissions:10}}];
   rows.performanceShifts=[{venueId:'club-a',id:'mine'},{venueId:'club-b',id:'elsewhere'}];
   const db=database(rows),result=await service.getOwnDancerAudienceAnalytics(db,'owner','auto',now);
@@ -337,6 +338,7 @@ test('automatic analytics uses actual check-in time across midnight and scopes r
   assert.equal(result.profileViews.value,2);assert.equal(result.profileViews.previous,null);
   assert.equal(result.performance.current.tableRequests,4);assert.equal(result.performance.previous,null);
   assert.equal(result.performance.clubs.length,1);assert.equal(result.performance.shifts.length,1);
+  assert.equal(result.performance.roster,rows.performanceClubs[0].roster);
   for(const rpc of db.calls.filter(call=>call.params)) assert.equal(rpc.params.p_since,startedAt);
   assert.ok(db.calls.find(call=>call.table==='shifts').filters.some(([key,op,value])=>key==='dancer_id'&&value==='mine'));
 });

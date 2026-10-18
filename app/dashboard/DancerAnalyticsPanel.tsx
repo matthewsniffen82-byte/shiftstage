@@ -80,6 +80,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
   const performance = current?.performance;
   const club = performance?.clubs.find(item => item.id === (period === "shift" ? current?.activeShift?.venueId : clubId));
   const selected = club || performance;
+  const roster = selected?.roster;
   const shifts = performance?.shifts.filter(shift => !club || shift.venueId === club.id) || [];
   const requestMetric = (key: keyof DancerRequestCounts): DancerEngagementMetric => ({
     value: selected!.current[key], previous: selected!.previous?.[key] ?? null,
@@ -93,7 +94,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
     });
   };
   const hasActivity = current && ([current.profileViews, current.newFollowers, current.contentLikes].some(metric => metric.value > 0)
-    || performance!.current.tableRequests > 0 || performance!.current.vipRequests > 0 || performance!.alerts.total > 0);
+    || performance!.current.tableRequests > 0 || performance!.current.vipRequests > 0 || performance!.external.admissions > 0 || performance!.alerts.total > 0);
 
   if (compact) return <section className="dancer-daily-card dancer-activity-summary" aria-label="Recent activity" aria-busy={loading}>
     <header><div><h2>{period === "shift" ? "Your shift" : "Recent activity"}</h2><p>{periodLabel} · {current?.period === "shift" ? current.activeShift?.venueName : "all clubs"}</p></div><a href="#dancer-results">View results</a></header>
@@ -101,8 +102,8 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
       <dl className="dancer-activity-counts">
         <div><dt>Table requests</dt><dd>{number(performance.current.tableRequests)}</dd></div>
         <div><dt>VIP requests</dt><dd>{number(performance.current.vipRequests)}</dd></div>
-        <div><dt>Repeat VIPs</dt><dd>{number(performance.current.repeatVips)}</dd></div>
-        <div><dt>New followers{period === "shift" ? " · all clubs" : ""}</dt><dd>{number(current.newFollowers.value)}</dd></div>
+        <div><dt>Returning VIP requesters</dt><dd>{number(performance.current.repeatVips)}</dd></div>
+        <div><dt>Verified entries</dt><dd>{number(performance.external.admissions)}</dd></div>
       </dl>
       <p className="dancer-results-note">Requests show interest; they do not confirm a visit.</p>
     </> : null}
@@ -130,8 +131,8 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
       <div className="dancer-analytics-metrics" aria-label={`Your results: ${periodLabel}`}>
         <EngagementCard label="Table requests" metric={requestMetric("tableRequests")} period={period} pendingCount={selected.current.tablePending} onView={pending => openRequests("internal", pending)} title="Table requests submitted for you during this period, including cancelled requests." />
         <EngagementCard label="VIP requests" metric={requestMetric("vipRequests")} period={period} pendingCount={selected.current.vipPending} onView={pending => openRequests("vip", pending)} title="Submitted VIP visit requests that included you, counted once per request." />
-        <EngagementCard label="Repeat VIPs" metric={requestMetric("repeatVips")} period={period} title="Unique VIPs who requested you during this period and had an earlier request for you at the same club." />
-        <EngagementCard label="New followers" metric={current.newFollowers} period={period} scope="All clubs" title="People who followed during this period and still follow you. Removed follows are not retained, so a reliable previous-period comparison is unavailable." />
+        <EngagementCard label="Returning VIP requesters" metric={requestMetric("repeatVips")} period={period} title="Unique customers who requested you during this period and had an earlier request for you at the same club. Requests can be cancelled; these are not confirmed repeat visits." />
+        <EngagementCard label="Verified entries" metric={{ value: selected.external.admissions, previous: null }} period={period} title="Admission passes attributed to you and redeemed at the club during this period. Counts entries, not unique guests or purchases." />
       </div>
       {!hasActivity && <p className="dancer-analytics-empty">Your results will appear here as guests follow or request you.</p>}
       <section className="dancer-analytics-audience" aria-labelledby="dancer-request-details-heading">
@@ -147,20 +148,34 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
         {channel === "vip" && <><dl>
           <Detail label="Pending" value={selected.current.vipPending} /><Detail label="Confirmed" value={selected.current.vipConfirmed} />
           <Detail label="Declined" value={selected.current.vipDeclined} /><Detail label="Cancelled" value={selected.current.vipCancelled} />
-        </dl><ResultsInfo label="VIP requests">Submitted visit requests that included you. Confirmation records the club’s acceptance; arrival is recorded separately. Each repeat VIP is counted once, even across multiple requests.</ResultsInfo></>}
+        </dl><ResultsInfo label="VIP requests">Submitted visit requests that included you. Confirmation records the club’s acceptance; arrival is recorded separately. Each returning requester is counted once, even across multiple requests.</ResultsInfo></>}
         {channel === "external" && <><dl>
           <Detail label="Passes attributed to you" value={selected.external.claims} /><Detail label="Club entries attributed to you" value={selected.external.admissions} />
         </dl><ResultsInfo label="Public-site results">Passes claimed and admission passes redeemed during this period. Club entries measure admission to the venue.</ResultsInfo></>}
       </section>
+      <section className="dancer-analytics-audience" aria-labelledby="dancer-check-in-activity-heading">
+        <h3 id="dancer-check-in-activity-heading">Check-in activity <small>{club?.name || "All clubs"} · {periodLabel}</small></h3>
+        {roster ? <>
+          <dl className="dancer-roster-activity">
+            <Detail label="Check-ins" value={roster.checkIns} /><Detail label="Your checkouts" value={roster.dancerCheckouts} />
+            <div><dt>Recorded hours</dt><dd>{roster.recordedHours.toFixed(1)}</dd></div>
+            <div><dt>Hours on both rosters</dt><dd>{roster.bothRosterHours.toFixed(1)}</dd></div>
+            <div><dt>Checkout accuracy</dt><dd>{roster.checkoutEligibleDays > 0 ? `${Math.round(100 * roster.dancerCheckoutDays / roster.checkoutEligibleDays)}%` : "—"}</dd></div>
+            <div><dt>Complete checkout days</dt><dd>{number(roster.dancerCheckoutDays)} / {number(roster.checkoutEligibleDays)}</dd></div>
+          </dl>
+          <p className="dancer-results-note">{roster.activeDays > 0 ? `${number(roster.activeDays)} active club ${roster.activeDays === 1 ? "day is" : "days are"} still in progress. ` : ""}{roster.checkoutEligibleDays === 0 ? "Checkout accuracy appears after an eligible visit ends." : "Accuracy uses ended days with recorded dancer check-ins."}</p>
+        </> : <p className="dancer-results-note">Check-in activity is not available in this report yet.</p>}
+        <ResultsInfo label="Check-in activity">Check-ins and checkouts are your recorded actions. Hours merge overlapping records. Each ended visit needs your own checkout before expiry for that club day to count as complete. Staff checkout and automatic expiry earn no accuracy credit; active visits and older visits without dancer check-in evidence are not graded. Time available on both rosters boosts the activity part of your score.</ResultsInfo>
+      </section>
       <section className="dancer-analytics-audience" aria-labelledby="dancer-shift-results-heading">
         <h3 id="dancer-shift-results-heading">Results by shift <small>Recorded working time</small></h3>
-        <ResultsInfo label="Shift comparisons">Table requests received during recorded working time, in each club’s timezone. Requests per hour uses that recorded time. Partial recording includes shifts clipped by this date range or still in progress; rates appear after at least 0.1 recorded hours. {performance.workTrackingStartedAt && `Working-time recording began ${dateLabel(performance.workTrackingStartedAt, current.timezone)}.`}</ResultsInfo>
+        <ResultsInfo label="Shift comparisons">Table requests received during recorded working time, in each club’s timezone. Requests per hour uses that recorded time. Partial recording includes shifts clipped by this date range or still in progress. Rates appear after at least one recorded hour; shorter samples show Early data. {performance.workTrackingStartedAt && `Working-time recording began ${dateLabel(performance.workTrackingStartedAt, current.timezone)}.`}</ResultsInfo>
         {shifts.length ? <ul className="dancer-results-shifts">{shifts.slice(0, shiftLimit).map(shift => <li key={`${shift.venueId}:${shift.id}`}>
           <div><strong>{shift.venueName}</strong><time dateTime={shift.startedAt}>{new Date(shift.startedAt).toLocaleString(undefined, { timeZone: shift.timezone || "UTC", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></div>
           {shift.partial && <span className="dancer-results-partial">Partial recording</span>}
           <dl><div><dt>Hours</dt><dd>{shift.hours < 0.1 ? "<0.1" : shift.hours.toFixed(1)}</dd></div>
             <div><dt>Requests</dt><dd>{number(shift.requests)}</dd></div>
-            <div><dt>Req/hr</dt><dd>{shift.hours >= 0.1 ? (shift.requests / shift.hours).toFixed(1) : "—"}</dd></div></dl>
+            <div><dt>Req/hr</dt><dd>{shift.hours >= 1 ? (shift.requests / shift.hours).toFixed(1) : "Early data"}</dd></div></dl>
         </li>)}</ul> : <p className="dancer-results-note">No working time recorded for this period.</p>}
         {shifts.length > shiftLimit && <button className="dancer-results-more" type="button" onClick={() => setShiftLimit(value => value + 10)}>Show more shifts</button>}
       </section>
@@ -178,7 +193,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
         <h3 id="dancer-growth-heading">Audience growth <small>All clubs · {periodLabel}</small></h3>
         <DancerResultsTrend points={current.trend} metric={trendMetric} onMetricChange={setTrendMetric} timezone={current.timezone} />
         <div className="dancer-analytics-metrics dancer-results-growth">
-          <EngagementCard label="New followers" metric={current.newFollowers} period={period} title="People who followed during this period and still follow you." />
+          <EngagementCard label="New followers" metric={current.newFollowers} period={period} title="People who followed during this period and still follow you. Removed follows are not retained, so a reliable previous-period comparison is unavailable." />
           <EngagementCard label="Profile views" metric={current.profileViews} period={period} />
           <EngagementCard label="Content likes" metric={current.contentLikes} period={period} title="Likes added during this period that have not been removed." />
         </div>

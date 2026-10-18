@@ -44,6 +44,14 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 .dancer-results-shifts time, .dancer-results-shifts small { color: var(--mydancr-dashboard-muted); font-size: 11px; }
 .dancer-results-shifts li > div:last-child { text-align: right; }
 .dancer-results-more { min-height: 44px; }
+.dancer-score-categories { display: grid; gap: 6px; margin-top: 12px; }
+.dancer-score-category { min-width: 0; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; padding: 0 10px; }
+.dancer-score-category > summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; cursor: pointer; font-size: 13px; }
+.dancer-score-category > summary > span { min-width: 0; overflow-wrap: anywhere; }
+.dancer-score-category > summary > strong { flex: none; font-variant-numeric: tabular-nums; }
+.dancer-score-category > p, .dancer-score-category > small { font-size: 12px; line-height: 1.5; }
+.dancer-score-category > small { display: block; margin-bottom: 10px; color: var(--mydancr-dashboard-muted); }
+.dancer-score-category > summary:focus-visible { outline: 2px solid #c4a5f5; outline-offset: 2px; border-radius: 6px; }
 
 /* Follow the measured dashboard navigation, including wrapped mobile labels. */
 body.dancr-button-system #dancer-dashboard .dancer-analytics-toolbar {

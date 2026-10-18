@@ -50,8 +50,29 @@ test('retired social taps do not hide the empty results state',()=>{
   const initial=data('7d');
   for(const key of ['profileViews','newFollowers','contentLikes'])initial[key]={value:0,previous:0};
   initial.socialLinkTaps={value:99,previous:50};
-  initial.performance.current=counts();initial.performance.alerts={total:0,vip:0};
+  initial.performance.current=counts();initial.performance.alerts={total:0,vip:0};initial.performance.external.admissions=0;
   const ui=fixture(initial);assert.match(ui.html(),/Your results will appear here/);ui.close();
+});
+
+test('headlines promote verified entries and returning requesters without duplicating followers',()=>{
+  const ui=fixture();
+  const headline=ui.nodes().find(node=>node.props?.['aria-label']==='Your results: Last 7 days');
+  assert.deepEqual(Array.from(headline.props.children,node=>node.props.label),['Table requests','VIP requests','Returning VIP requesters','Verified entries']);
+  assert.equal((ui.html().match(/>New followers<\/span>/g)||[]).length,1);
+  ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-b'}});ui.render();
+  const scoped=ui.nodes().find(node=>node.props?.['aria-label']==='Your results: Last 7 days');
+  assert.equal(scoped.props.children[3].props.metric.value,0);ui.close();
+  const compact=fixture(data('7d'),{compact:true});assert.match(compact.html(),/Verified entries/);assert.doesNotMatch(compact.html(),/New followers|Repeat VIPs/);compact.close();
+});
+
+test('check-in summary follows club selection and short shifts show early data instead of inflated hourly rates',()=>{
+  const initial=data('7d');const roster={checkIns:4,dancerCheckouts:2,recordedHours:6,bothRosterHours:3,checkoutEligibleDays:2,dancerCheckoutDays:1,activeDays:1};
+  initial.performance.roster=roster;initial.performance.clubs[0].roster={...roster,checkoutEligibleDays:0,dancerCheckoutDays:0};
+  initial.performance.shifts[0].hours=0.5;initial.performance.shifts[0].requests=20;
+  const ui=fixture(initial);assert.match(ui.html(),/Checkout accuracy<\/dt><dd>50%/);
+  assert.match(ui.html(),/Req\/hr<\/dt><dd>Early data/);assert.doesNotMatch(ui.html(),/<dd>40\.0<\/dd>/);
+  ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-a'}});ui.render();
+  assert.match(ui.html(),/Checkout accuracy<\/dt><dd>—/);assert.match(ui.html(),/after an eligible visit ends/);ui.close();
 });
 
 test('three growth cards fill the row on desktop without leaving an empty mobile grid cell',()=>{
@@ -125,7 +146,7 @@ test('shift rows show per-hour comparisons, mark partial recording and avoid rat
   const initial=data('7d');initial.performance.shifts[1].hours=0;
   const ui=fixture(initial),html=ui.html();
   assert.match(html,/Partial recording/);assert.match(html,/Req\/hr<\/dt><dd>1.0/);
-  assert.match(html,/Req\/hr<\/dt><dd>—/);assert.doesNotMatch(html,/Infinity|NaN/);ui.close();
+  assert.match(html,/Req\/hr<\/dt><dd>Early data/);assert.doesNotMatch(html,/Infinity|NaN/);ui.close();
 });
 
 test('top content expands progressively and resets on a range change',()=>{

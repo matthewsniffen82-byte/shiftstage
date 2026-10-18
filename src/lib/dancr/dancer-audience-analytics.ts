@@ -109,6 +109,7 @@ export async function getOwnDancerAudienceAnalytics(
     const club = performance.clubs.find(item => item.id === activeShift.venueId);
     performance.current = club?.current || Object.fromEntries(Object.keys(performance.current).map(key => [key, 0])) as typeof performance.current;
     performance.external = club?.external || { claims: 0, admissions: 0 };
+    performance.roster = club?.roster;
     performance.clubs = performance.clubs.filter(item => item.id === activeShift.venueId);
     performance.shifts = performance.shifts.filter(item => item.venueId === activeShift.venueId);
   }
