@@ -640,9 +640,9 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role=
     0 8px 16px rgba(0, 0, 0, .32) !important;
 }
 
-/* Match the surrounding shade on the dancer profile's information frame. */
+/* Keep a soft surrounding shade on the venue profile's information frame. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"] > .venue-hero {
-  box-shadow: 0 6px 18px rgba(0, 0, 0, .25) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, .24) !important;
 }
 
 /* Scroll cards and venue details share the same quiet violet outline. */

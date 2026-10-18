@@ -13197,7 +13197,7 @@ html body.dancr-button-system > .app main.stack > section.stack
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   .venue-card-secondary-actions.home-venue-discovery-action-rail > .venue-card-favorite-action[aria-pressed="true"] :is(.action-icon, svg) {
-  color: #c4b5fd !important;
+  color: #f8fafc !important;
 }
 
 html body.dancr-button-system > .app main.stack > section.stack
@@ -14381,7 +14381,7 @@ html body.dancr-button-system #customerNotificationsQuickPanel button:focus-visi
   html body.dancr-button-system #customerNotificationsQuickPanel button:not(:disabled):hover { --notification-control-face: #111116; }
 }
 
-/* Informational venue icons stay neutral; violet indicates a pressable action. */
+/* Venue utility icons stay neutral so the admission offer remains the accent. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-venue-discovery-feed > .home-venue-discovery-slide
   :is(.home-venue-discovery-location, .home-venue-discovery-hours) :is(.venue-dot, svg) {
@@ -14396,15 +14396,15 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-location-section .venue-action-stack :is(.venue-primary-actions, .venue-secondary-actions)
   :is(button, a[href]):not(:disabled):not([aria-disabled="true"])
   :is(.action-icon, .action-icon svg, .action-icon svg path) {
-  --profile-action-icon-color: var(--dancr-color-avatar-ring-violet);
-  color: var(--dancr-color-avatar-ring-violet) !important;
+  --profile-action-icon-color: #b4bac5;
+  color: var(--profile-action-icon-color) !important;
 }
 
-/* A lighter violet keeps the selected icon clear on its filled button. */
+/* A white checkmark keeps the selected Follow state clear. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail
   .venue-location-section .venue-action-stack .venue-secondary-actions
   .follow-venue-btn[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) :is(.action-icon, svg, svg path) {
-  --profile-action-icon-color: #c4b5fd;
+  --profile-action-icon-color: #f8fafc;
   color: var(--profile-action-icon-color) !important;
 }
 
