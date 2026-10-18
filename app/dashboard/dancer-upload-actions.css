@@ -21,6 +21,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
     color: var(--upload-action-ink) !important;
     -webkit-text-fill-color: currentColor !important;
     box-shadow: var(--upload-action-shadow) !important;
+    outline: none !important;
     color-scheme: only dark !important;
     -webkit-appearance: none !important;
     appearance: none !important;
@@ -61,7 +62,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace {
   }
 
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace
-    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):is(:focus-visible, :focus-within) {
+    :is(.photo-source-action, .tv-video-source-action, .dancer-photo-controls-row > button:not(.dancer-photo-options-toggle)):is(:focus-visible, :has(:focus-visible)) {
     outline: 2px solid #dddddd !important;
     outline-offset: 3px !important;
   }
