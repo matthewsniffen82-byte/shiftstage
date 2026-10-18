@@ -14,7 +14,7 @@ const scoreLabels = DANCER_SCORE_LABELS;
 const compactScoreLabels: Record<DancerScoreKey, string> = {
   overall: "Overall", checkIns: "Check-ins", internal: "Tables", vip: "VIP", profile: "Interest", conversions: "Entries",
 };
-const periodLabels = { tonight: "Tonight", "7d": "7 days", "30d": "30 days", all: "All time" } as const;
+const periodLabels: Record<DancerScorePeriod, string> = { tonight: "Tonight", "7d": "7 days", "14d": "14 days", "30d": "30 days", all: "All time" };
 const scoreKeys: DancerScoreKey[] = ["overall", ...DANCER_SCORE_CATEGORIES];
 
 function renderScores(scores: ScoredDancer["scores"], inline = false) {
