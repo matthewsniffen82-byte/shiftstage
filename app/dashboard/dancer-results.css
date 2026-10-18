@@ -1,5 +1,38 @@
-.dancer-analytics-toolbar > .dancer-analytics-period { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; }
-.dancer-analytics-toolbar > .dancer-analytics-period button { min-width: 0; white-space: normal; }
+/* Match the venue Results range bar above the shared dancer button skin. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%;
+  gap: 3px; padding: 3px; border: 1px solid #34343c; border-radius: 10px;
+  background: #19191f;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button {
+  --results-period-face: #1b1922;
+  --results-period-edge: transparent;
+  position: relative; isolation: isolate; display: inline-flex;
+  align-items: center; justify-content: center; min-width: 0; min-height: 44px !important;
+  margin: 0; padding: 6px 4px !important; border: 0 !important; border-radius: 10px !important;
+  background: none !important; color: #f4f3f7 !important;
+  box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  font-size: 13px !important; font-weight: 600 !important; line-height: 1.35;
+  letter-spacing: normal !important; white-space: nowrap; text-shadow: none !important;
+}
+/* The venue's separate solid face also avoids Android's automatic gray fill. */
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button::before {
+  content: ""; position: absolute; inset: 4px 0; z-index: -1;
+  border: 1px solid var(--results-period-edge); border-radius: inherit;
+  background: linear-gradient(var(--results-period-face), var(--results-period-face));
+  pointer-events: none;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button[aria-pressed="true"] {
+  --results-period-face: #30223f;
+  --results-period-edge: #9470bc;
+  color: #fff !important;
+}
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button:focus-visible {
+  outline: 2px solid #c9a4f4 !important; outline-offset: 3px;
+}
+@media (hover: hover) {
+  body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-analytics-toolbar > .dancer-analytics-period > button:not(:disabled):hover::before { filter: brightness(1.15); }
+}
 .dancer-results-club { display: grid; gap: 6px; max-width: 360px; font-size: 12px; color: var(--mydancr-dashboard-muted); }
 .dancer-results-club select { min-height: 44px; width: 100%; min-width: 0; padding: 8px 12px; border: 1px solid #50435f; border-radius: 10px; background: #111015; color: #f5f3ff; font: inherit; }
 .dancer-results-channels { width: fit-content; margin-bottom: 12px; flex-wrap: wrap; }
