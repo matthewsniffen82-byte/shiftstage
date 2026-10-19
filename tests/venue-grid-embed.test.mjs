@@ -11,6 +11,7 @@ import { venueEmbedPolicy, nonEmbedDocumentSource } from "../src/lib/security/ve
 import { versionStaticAssetReferences } from "../src/lib/dancr/static-asset-cache.mjs";
 import { venueEmbedAccent } from "../src/lib/dancr/venue-embed-theme.mjs";
 import { isActiveNfcPresence } from "../src/lib/dancr/shift-presence.ts";
+import * as embedMedia from "../src/lib/dancr/venue-embed-media.mjs";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const { pathToRegexp } = pathToRegexpModule;
@@ -34,6 +35,7 @@ function apiFixture(options = {}) {
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
     "@/src/lib/dancr/public": { getVenueProfile: async (_client, slug) => { assert.equal(slug, location.slug); return options.missing ? null : location; } },
     "@/src/lib/dancr/discovery-pagination": { parseDiscoveryCursor },
+    "@/src/lib/dancr/venue-embed-media.mjs": embedMedia,
     "@/src/lib/dancr/public-request-rate-limit": { PublicRequestRateLimitError: RateLimit },
     "@/src/lib/dancr/public-directory": { getRankedDirectoryPage: async (_client, _request, scope) => {
       calls.push(scope); if (options.error) throw options.error;
@@ -208,6 +210,7 @@ test("embedded profile endpoint rechecks public visibility, venue and current wo
       "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
       "@/src/lib/dancr/public": { getVenueProfile: async () => venue, getDancerProfile: async () => profile },
       "@/src/lib/dancr/shift-presence": { isActiveNfcPresence },
+      "@/src/lib/dancr/venue-embed-media.mjs": embedMedia,
       "@/src/lib/dancr/public-dancer-content": { loadPublicDancerContent: async () => { contentReads++; return { tvVideos: [{ id: "v1", videoUrl: "https://videos.example/approved.mp4" }], secondaryUnavailable: false }; } },
     });
     const response = await route.GET(null, { params: Promise.resolve({ slug: venue.slug, dancerSlug: dancer.slug }) });
@@ -247,4 +250,32 @@ test("normal card click opens the branded embedded profile and stale media clear
   f.node("venue-profile-back").listeners.click(); await settle();
   assert.equal(f.node("venue-directory").hidden, false);
   assert.equal(f.node("venue-profile").hidden, true);
+});
+
+test("embed media URLs preserve exact photo sizes and video IDs without admitting private preview links", () => {
+  assert.equal(embedMedia.venueEmbedMediaUrl("https://www.mydancr.com/api/media/dancer-photo?path=owner%2Fapproved.jpg&width=320"), "/api/public/venue-embed-media/photo?path=owner%2Fapproved.jpg&width=320");
+  assert.equal(embedMedia.venueEmbedMediaUrl("/api/media/dancer-video?id=public-id&poster=1"), "/api/public/venue-embed-media/video?id=public-id&poster=1");
+  assert.equal(embedMedia.venueEmbedMediaUrl("/api/media/dancer-video?id=private-id&preview=capability"), null);
+  assert.equal(embedMedia.venueEmbedMediaSrcSet("/api/media/dancer-photo?path=a&width=160 160w, /api/media/dancer-photo?path=a&width=320 320w"), "/api/public/venue-embed-media/photo?path=a&width=160 160w, /api/public/venue-embed-media/photo?path=a&width=320 320w");
+});
+
+test("the embed media endpoint cannot enter private preview delivery and preserves range/HEAD requests", async () => {
+  const calls = [], anonymous = {}, admin = {};
+  const route = loadTs("app/api/public/venue-embed-media/[kind]/route.ts", {
+    "@/src/lib/dancr/media-delivery": { serveDancerMedia: async (request, kind, deps) => { calls.push({ request, kind, deps }); return new Response(null, { status: 206 }); } },
+    "@/src/lib/dancr/photo-delivery-cache": { PhotoDeliveryCache: class {} },
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => admin },
+    "@/src/lib/supabase/server": { createServerSupabaseClient: () => anonymous },
+    "@/src/lib/env": { getPublicEnv: () => ({ supabaseUrl: "https://storage.example" }) },
+    "@/src/lib/server-env": { getServerEnv: () => "synthetic-server-key" },
+  });
+  for (const kind of ["photo", "video", "other"]) {
+    assert.equal((await route.GET(new Request(`https://www.mydancr.com/api/public/venue-embed-media/${kind}?preview=private-token`), { params: Promise.resolve({ kind }) })).status, 404);
+  }
+  assert.equal(calls.length, 0);
+  const request = new Request("https://www.mydancr.com/api/public/venue-embed-media/video?id=public-id", { method: "HEAD", headers: { range: "bytes=0-99" } });
+  assert.equal((await route.HEAD(request, { params: Promise.resolve({ kind: "video" }) })).status, 206);
+  assert.equal(calls[0].deps.publicClient, anonymous);
+  assert.equal(calls[0].request.method, "HEAD");
+  assert.equal(calls[0].request.headers.get("range"), "bytes=0-99");
 });

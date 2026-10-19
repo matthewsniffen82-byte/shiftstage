@@ -1,6 +1,7 @@
 import "server-only";
 import { NextResponse, type NextRequest } from "next/server";
 import { siteLockPage } from "./site-lock-page";
+import { isPublicVenueEmbedRequest } from "./venue-embed-access.mjs";
 
 export const SITE_ACCESS_COOKIE = "__Host-mydancr_site_access";
 export const SITE_ACCESS_SECONDS = 7 * 24 * 60 * 60;
@@ -33,6 +34,7 @@ export function siteLockEnabled() {
 
 export function bypassSiteLock(request: NextRequest) {
   const path = request.nextUrl.pathname.replace(/\/$/, "") || "/";
+  if (isPublicVenueEmbedRequest(request.method, path)) return true;
   if (path === "/site-unlock") return true;
   // Machine endpoints retain their existing cron/signature authentication.
   if (request.method === "GET" && workerPaths.has(path)) return true;

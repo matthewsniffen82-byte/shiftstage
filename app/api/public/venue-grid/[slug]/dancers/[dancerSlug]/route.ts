@@ -4,6 +4,7 @@ import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
 import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue-embed-media.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,9 +25,9 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     const content = await loadPublicDancerContent(client, profile);
     return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name }, profile: {
       id: profile.id, slug: profile.slug, stageName: profile.stageName, city: profile.city,
-      primaryPhotoUrl: profile.primaryPhotoUrl,
-      photos: profile.photos.map(photo => ({ id: photo.id, imageUrl: photo.imageUrl, imageSrcSet: photo.imageSrcSet })),
-      videos: content.tvVideos.map(video => ({ id: video.id, videoUrl: video.videoUrl, posterUrl: video.posterUrl })),
+      primaryPhotoUrl: venueEmbedMediaUrl(profile.primaryPhotoUrl),
+      photos: profile.photos.map(photo => ({ id: photo.id, imageUrl: venueEmbedMediaUrl(photo.imageUrl), imageSrcSet: venueEmbedMediaSrcSet(photo.imageSrcSet) })),
+      videos: content.tvVideos.map(video => ({ id: video.id, videoUrl: venueEmbedMediaUrl(video.videoUrl), posterUrl: venueEmbedMediaUrl(video.posterUrl) })),
       secondaryUnavailable: content.secondaryUnavailable,
     } }, { headers });
   } catch (error) { return apiError(error, "Unable to load this profile.", 500); }

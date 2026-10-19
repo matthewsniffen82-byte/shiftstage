@@ -67,3 +67,9 @@ profile and other app documents retain their existing framing protections. The
 embed API derives its venue and city on the server and accepts only a scoped
 pagination cursor. It returns only card fields, with no shift deadlines or account
 details. No database migration or per-club provisioning is required.
+
+The site password intentionally permits only these public embeds, their scoped
+data endpoints, their fixed CSS/JS assets, and anonymous approved-media delivery.
+The homepage, dashboards, account pages, original media endpoints and other APIs
+remain gated. Embedded media never accepts private preview tokens and rechecks
+public visibility on every request, including video byte ranges.

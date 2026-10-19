@@ -5,6 +5,7 @@ import { getRankedDirectoryPage } from "@/src/lib/dancr/public-directory";
 import { parseDiscoveryCursor } from "@/src/lib/dancr/discovery-pagination";
 import { PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue-embed-media.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,7 +25,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     const workingIds = new Set(page.tonightDancers.map(dancer => dancer.id));
     const dancers = page.dancers.filter(dancer => dancer.venueId === venue.id && workingIds.has(dancer.id)).map(dancer => ({
       id: dancer.id, slug: dancer.slug, stageName: dancer.stageName,
-      primaryPhotoUrl: dancer.primaryPhotoUrl, primaryPhotoSrcSet: dancer.primaryPhotoSrcSet,
+      primaryPhotoUrl: venueEmbedMediaUrl(dancer.primaryPhotoUrl), primaryPhotoSrcSet: venueEmbedMediaSrcSet(dancer.primaryPhotoSrcSet),
     }));
     return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name }, dancers, nextCursor: page.nextCursor }, { headers });
   } catch (error) {

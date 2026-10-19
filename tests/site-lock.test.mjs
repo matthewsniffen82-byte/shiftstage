@@ -8,6 +8,7 @@ import ts from "typescript";
 import postcss from "postcss";
 import { readBoundedRequestBytes } from "../src/lib/bounded-json-body.ts";
 import * as documentPolicy from "../src/lib/security/document-content-security-policy.mjs";
+import * as venueEmbedAccess from "../src/lib/security/venue-embed-access.mjs";
 
 const { NextRequest, NextResponse } = createRequire(import.meta.url)("next/server");
 const origin = "https://www.mydancr.com";
@@ -33,6 +34,7 @@ function fixture(env = { DANCR_SITE_LOCK_SECRET: "synthetic-private-signing-secr
       require(name) {
         if (name === "server-only") return {};
         if (name === "next/server") return { NextResponse };
+        if (name.endsWith("venue-embed-access.mjs")) return venueEmbedAccess;
         if (name.endsWith("site-lock-page")) return load("src/lib/security/site-lock-page.ts");
         if (name.endsWith("site-lock")) {
           const core = load("src/lib/security/site-lock.ts");
@@ -181,4 +183,19 @@ test("the server setting disables the temporary gate without replacing account a
   const response = await f.middleware(new NextRequest(origin + "/api/customer/profile", { headers: { authorization: "Bearer existing-account" } }));
   assert.equal(response.headers.get("x-middleware-next"), "1");
   assert.deepEqual(f.calls, ["account-auth"]);
+});
+
+test("only the public embed documents, data, approved-media proxy and fixed assets bypass the password", async () => {
+  const f = fixture();
+  for (const path of ["/embed/venues/echo-house?accent=c99842", "/api/public/venue-grid/echo-house", "/api/public/venue-grid/echo-house/dancers/ty", "/api/public/venue-embed-media/photo", "/api/public/venue-embed-media/video", "/dancer-grid-card.js", "/venue-grid-embed.js", "/venue-grid-embed.css", "/outputs/live-shell.css", "/outputs/live-shell-overrides.css", "/outputs/dancr-aesthetic.css", "/dancr-brand-tokens.v1.css", "/dancr-button-system.v1.css", "/dancr-ui-consistency.v1.css"]) {
+    for (const method of ["GET", "HEAD"]) {
+      assert.equal((await f.middleware(new NextRequest(origin + path, { method }))).headers.get("x-middleware-next"), "1", `${method} ${path}`);
+    }
+    assert.equal((await f.middleware(new NextRequest(origin + path, { method: "POST" }))).status, 401, path);
+  }
+  for (const path of ["/embed/venues/echo-house/settings", "/api/public/venue-grid/echo-house/private", "/api/public/venue-embed-media/private", "/api/media/dancer-photo", "/api/media/dancer-video", "/api/public/dancers", "/api/public/discovery", "/api/venue/profile", "/dashboard", "/account", "/dancers/ty", "/outputs/index.html", "/live-shell.js"]) {
+    const response = await f.middleware(new NextRequest(origin + path));
+    assert.equal(response.headers.get("x-middleware-next"), null, path);
+  }
+  assert.deepEqual(f.calls, []);
 });
