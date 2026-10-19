@@ -103,6 +103,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
     return () => window.clearTimeout(timer);
   }, [activeUntil]);
   const demoManagedActiveShift = activeShift?.shift_source === "demo_locked";
+  const rhinoShift = ["260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af", "11fd5e46-d24f-4a02-87f6-2aa18b0876ae"].includes(activeShift?.venue_id);
   const progress = activeShift?.rankingProgress;
   const hasRecordedExternalTime = typeof progress?.externalHours === "number" && Number.isFinite(progress.externalHours) && progress.externalHours >= 0;
   const presenceKey = activeShift ? `${activeShift.id}:${activeShift.checked_in_at}:${activeShift.location_verification_expires_at}:${progress?.visibility || ""}` : "off";
@@ -239,7 +240,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
               <a href="#dancer-performance-ranking">View ranking</a>
             </div> : null}
             {demoManagedActiveShift ? (
-              <button className="shift-demo-managed" type="button" disabled>Demo managed</button>
+              <button className="shift-demo-managed" type="button" disabled>{rhinoShift ? "Automatically managed" : "Demo managed"}</button>
             ) : (
               <button type="button" disabled={saving || switching} onClick={() => {
                 setWorkingNowStatus("");
@@ -251,7 +252,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
             )}
             {demoManagedActiveShift ? (
               <small className="shift-checkin-status" role="status">
-                This demo session stays active automatically.
+                {rhinoShift ? "This session stays active automatically." : "This demo session stays active automatically."}
               </small>
             ) : null}
             {endConfirmationOpen ? (

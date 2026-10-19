@@ -197,19 +197,19 @@ for (const period of ["7d", "30d"]) test(`${period} demo comparisons show numeri
   assert.deepEqual(labels(tree), period === "30d"
     ? ["+18% vs prior period", "+3.6 percentage points vs prior period", "+24% vs prior period", "+17% vs prior period", "+9% vs prior period", "+4.8 percentage points vs prior period"]
     : ["+12% vs prior period", "+2.1 percentage points vs prior period", "+16% vs prior period", "+11% vs prior period", "+6% vs prior period", "+3.2 percentage points vs prior period"]);
-  assert.ok(tree.some(node => node.props.children === "Demo comparison figures"));
+  assert.ok(tree.some(node => node.props.children === "Sample comparison figures"));
   assert.equal(JSON.stringify(demo.report), snapshot);
   const live = render({ ...props, demoComparisons: false });
   assert.ok(labels(live).every(label => label === "Recorded this period"));
-  assert.ok(!live.some(node => node.props.children === "Demo comparison figures"));
+  assert.ok(!live.some(node => node.props.children === "Sample comparison figures"));
   for (const value of ["tonight", "all"]) {
     const other = render({ ...props, period: value });
-    assert.ok(!other.some(node => typeof node.props.children === "string" && /vs prior period|Demo comparison figures/.test(node.props.children)));
+    assert.ok(!other.some(node => typeof node.props.children === "string" && /vs prior period|Sample comparison figures/.test(node.props.children)));
   }
   demo.report.trackingStartedAt = "2026-01-01";
   demo.report.performance.resultsStartedAt = "2026-01-01";
   assert.deepEqual(labels(render(props)), labels(render({ ...props, demoComparisons: false })));
-  assert.ok(!render(props).some(node => node.props.children === "Demo comparison figures"));
+  assert.ok(!render(props).some(node => node.props.children === "Sample comparison figures"));
 });
 
 test("demo comparisons do not invent activity or missing rates", () => {
@@ -227,7 +227,7 @@ test("demo comparisons do not invent activity or missing rates", () => {
   assert.equal(cards.filter(card => nodes(card).some(node => node.props.children === "0% vs prior period")).length, 4);
   demo.report.automatic = undefined;
   const unavailable = render(props);
-  assert.ok(!unavailable.some(node => typeof node.props.children === "string" && /vs prior period|Demo comparison figures/.test(node.props.children)));
+  assert.ok(!unavailable.some(node => typeof node.props.children === "string" && /vs prior period|Sample comparison figures/.test(node.props.children)));
 });
 
 const dancerResults = (overrides = {}) => ({ checkIns: 2, checkOuts: 1, lastCheckInAt: null, lastCheckOutAt: null,

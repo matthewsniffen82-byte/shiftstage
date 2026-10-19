@@ -38,4 +38,7 @@ test('card demo distances are stable and never affect proximity or directions',(
  assert.equal(c.venueDistanceLabel(venue),'Distance unavailable');
  assert.equal(c.venueDistanceLabel({...venue,distanceMiles:2.4},'Las Vegas',true),'2.4 mi');
  assert.equal(c.venueDistanceLabel({...venue,distance:'4.2 mi'},'Las Vegas',true),'4.2 mi');
+ for (const identity of [{slug:'talk-of-the-town'}, {slug:'spearmint-rhino-las-vegas-demo'}, {id:'260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af'}]) {
+  assert.match(c.venueDistanceLabel({...venue,...identity},'Las Vegas',true),/^\d+\.\d mi$/);
+ }
 });

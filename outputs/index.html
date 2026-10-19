@@ -49754,7 +49754,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const key = String(venue?.id || venue?.slug || venue?.name || city);
       let seed = 0;
       for (const character of key) seed = (seed * 31 + character.codePointAt(0)) >>> 0;
-      return `${formatDistanceMiles(1 + (seed % 80) / 10)} (demo)`;
+      const rhino = ["talk-of-the-town", "spearmint-rhino-las-vegas-demo"].includes(venue?.slug)
+        || ["260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af", "11fd5e46-d24f-4a02-87f6-2aa18b0876ae"].includes(venue?.id);
+      return `${formatDistanceMiles(1 + (seed % 80) / 10)}${rhino ? "" : " (demo)"}`;
     }
 
     function compareVenueDistance(left, right, city = selectedCity()) {

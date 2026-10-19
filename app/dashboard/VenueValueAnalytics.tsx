@@ -59,7 +59,7 @@ export default function VenueValueAnalytics({ report, period = "30d", periodStar
   return <div className="venue-value-analytics">
     <div className="venue-results-intro">
       <p className="venue-value-dates">{dateRange}</p>
-      {showDemoComparisons && <p className="venue-value-dates">Demo comparison figures</p>}
+      {showDemoComparisons && <p className="venue-value-dates">Sample comparison figures</p>}
     </div>
     {!automatic && <p role="status">Automatic venue metrics are unavailable. Refresh to try again.</p>}
     <div className="venue-priority-metrics" aria-label="Venue results at a glance">{priority.map(metric)}</div>
