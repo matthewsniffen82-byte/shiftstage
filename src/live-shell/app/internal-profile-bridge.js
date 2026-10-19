@@ -107,7 +107,7 @@
         internalVideos: videos.sort((a, b) => Number(b.isPinned) - Number(a.isPinned)),
         socials: Object.fromEntries(source.socialLinks.map(link => [link.platform, link.url])),
         submittedSocials: [], socialLinks: source.socialLinks,
-        venue: source.venueName, scheduled: working, tonight: working, liveTonight: working,
+        venue: source.venueName, venueSlug: source.venueSlug || "", scheduled: working, tonight: working, liveTonight: working,
         time: working ? "Working now" : "Not working now", locationStatus: working ? "club_confirmed" : "self_reported",
         checkedInAt: working ? external?.checkedInAt || new Date(Date.now() - 1000).toISOString() : "",
         checkedOutAt: "", endedAt: "", workingStatus: working ? "club_confirmed" : "self_reported",

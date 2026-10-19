@@ -6,6 +6,7 @@
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
       const internal = profile.internalRoster === true;
+      profileModal.dataset.venueBrand = profile.venueSlug || "";
       profileModal.dataset.analyticsDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.dataset.publicDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.removeAttribute("data-public-visibility-hidden");
@@ -516,6 +517,7 @@
 
     function openProfileTvViewer(item, profileName, videos, requestedIndex = null) {
       const overlay = profileTvViewer();
+      overlay.dataset.venueBrand = profileModal.dataset.venueBrand || "";
       overlay.dataset.publicDancerId = profileModal.dataset.publicDancerId || "";
       overlay.removeAttribute("data-public-visibility-hidden");
       overlay.profileTvVideos = Array.isArray(videos) ? videos : [item];

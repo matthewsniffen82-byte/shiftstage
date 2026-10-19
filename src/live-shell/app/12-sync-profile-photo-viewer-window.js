@@ -98,6 +98,7 @@
         ? parsedRequestedIndex
         : Number(modalImage?.dataset.activePhotoIndex || 0));
       profilePhotoViewer.style.zIndex = "1600";
+      profilePhotoViewer.dataset.venueBrand = profileModal.dataset.venueBrand || "";
       profilePhotoViewer.hidden = false;
       profilePhotoViewer.dataset.publicDancerId = profileModal.dataset.publicDancerId || "";
       profilePhotoViewer.removeAttribute("data-public-visibility-hidden");

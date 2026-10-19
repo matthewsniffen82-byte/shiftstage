@@ -16,6 +16,7 @@ import "../public/dancr-auth.v1.css";
 import "../public/dancr-checkboxes.v1.css";
 import "../public/third-party-social-link-warning.css";
 import "../public/mydancr-push-invitations.css";
+import "../public/venue-brand-themes.css";
 
 export const metadata: Metadata = {
   title: "mydancr",

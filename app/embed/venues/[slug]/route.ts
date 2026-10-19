@@ -22,7 +22,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-accent="${venueEmbedAccent(new URL(request.url))}">
     <div class="app"><main class="stack"><section id="venue-directory" class="stack" aria-label="Working dancers">
       <div class="venue-embed-heading"><div><h1>Working now</h1><p id="venue-name"></p></div><button id="venue-refresh" type="button">Refresh</button></div>
-      <p class="venue-embed-note">Only participating MyDancr dancers are shown.</p>
+      <p class="venue-embed-note">${slug === "spearmint-rhino-las-vegas-demo" ? "Demo club · Sample dancer roster." : "Only participating MyDancr dancers are shown."}</p>
       <p id="venue-status" role="status">Loading working dancers…</p>
       <div id="results" class="home-dancer-grid home-dancer-three-column" aria-busy="true"></div>
       <button id="venue-more" type="button" hidden>Show more</button>

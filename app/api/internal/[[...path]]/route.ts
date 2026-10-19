@@ -68,7 +68,7 @@ export async function GET(request: Request, context: Context) {
         ...video, has_poster: Boolean(videoPosterStoragePath({ storage_path, moderation_details })),
       }));
       const internalAccent = scope.link ? (await getVenueGuestColors(admin, scope.venueId)).internalAccent : null;
-      return json({ ok: true, profile: { ...results[0].data, internalAccent, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
+      return json({ ok: true, profile: { ...results[0].data, internalAccent, venueSlug: scope.venueSlug, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
     }
     if (["avatar", "photo", "video", "video-poster"].includes(path[0])) {
       const width = url.searchParams.has("width") ? Number(url.searchParams.get("width")) : null;

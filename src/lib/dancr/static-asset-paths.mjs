@@ -4,6 +4,7 @@ export const staticAssetPaths = [
   "/dancer-grid-card.js",
   "/venue-grid-embed.js",
   "/venue-grid-embed.css",
+  "/venue-brand-themes.css",
   "/dancr-account-forms.v1.css",
   "/dancr-ui-consistency.v1.css",
   "/dancr-auth.v1.css",

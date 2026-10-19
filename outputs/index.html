@@ -32284,6 +32284,7 @@
   <link href="/dancr-brand-tokens.v1.css?v=13" rel="stylesheet">
   <link href="/dancr-button-system.v1.css" rel="stylesheet">
   <link href="/outputs/dancr-aesthetic.css" rel="stylesheet">
+  <link href="/venue-brand-themes.css" rel="stylesheet">
   <link href="/dancr-feedback.v1.css?v=2" rel="stylesheet">
   <link href="/dancr-account-forms.v1.css" rel="stylesheet">
   <link href="/dancr-ui-consistency.v1.css" rel="stylesheet">
@@ -43292,7 +43293,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         internalVideos: videos.sort((a, b) => Number(b.isPinned) - Number(a.isPinned)),
         socials: Object.fromEntries(source.socialLinks.map(link => [link.platform, link.url])),
         submittedSocials: [], socialLinks: source.socialLinks,
-        venue: source.venueName, scheduled: working, tonight: working, liveTonight: working,
+        venue: source.venueName, venueSlug: source.venueSlug || "", scheduled: working, tonight: working, liveTonight: working,
         time: working ? "Working now" : "Not working now", locationStatus: working ? "club_confirmed" : "self_reported",
         checkedInAt: working ? external?.checkedInAt || new Date(Date.now() - 1000).toISOString() : "",
         checkedOutAt: "", endedAt: "", workingStatus: working ? "club_confirmed" : "self_reported",
@@ -53846,7 +53847,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       if (venue.id && !venue.isDashboardPreview) recordVenuePageEvent({ venueId: venue.id, eventType: "page_view", source: "venue_page" });
 
       return `
-        <div data-stable-media-key="venue-detail:${escapeOptionValue(venue.id || venue.name)}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
+        <div data-stable-media-key="venue-detail:${escapeOptionValue(venue.id || venue.name)}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_detail" class="venue-detail" data-venue-brand="${escapeOptionValue(venue.slug || "")}" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">
           <article class="venue-hero">
             <button class="close-btn venue-detail-close" type="button" data-close-venue-profile aria-label="Back to previous view from ${escapeHtml(details.name)} club profile">
               <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
@@ -53865,6 +53866,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
                 <div class="venue-identity-block">
                   <div class="venue-identity-copy">
                     <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
+                    ${venue.slug === "spearmint-rhino-las-vegas-demo" ? '<p class="meta">Demo club · Sample dancer roster</p>' : ""}
                     <div class="venue-identity-meta">
                       <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
                       <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
@@ -54580,6 +54582,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         ? parsedRequestedIndex
         : Number(modalImage?.dataset.activePhotoIndex || 0));
       profilePhotoViewer.style.zIndex = "1600";
+      profilePhotoViewer.dataset.venueBrand = profileModal.dataset.venueBrand || "";
       profilePhotoViewer.hidden = false;
       profilePhotoViewer.dataset.publicDancerId = profileModal.dataset.publicDancerId || "";
       profilePhotoViewer.removeAttribute("data-public-visibility-hidden");
@@ -55390,6 +55393,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
       const internal = profile.internalRoster === true;
+      profileModal.dataset.venueBrand = profile.venueSlug || "";
       profileModal.dataset.analyticsDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.dataset.publicDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.removeAttribute("data-public-visibility-hidden");
@@ -55900,6 +55904,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
 
     function openProfileTvViewer(item, profileName, videos, requestedIndex = null) {
       const overlay = profileTvViewer();
+      overlay.dataset.venueBrand = profileModal.dataset.venueBrand || "";
       overlay.dataset.publicDancerId = profileModal.dataset.publicDancerId || "";
       overlay.removeAttribute("data-public-visibility-hidden");
       overlay.profileTvVideos = Array.isArray(videos) ? videos : [item];

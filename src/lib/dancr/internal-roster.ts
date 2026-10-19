@@ -35,11 +35,11 @@ export async function internalScope(client: SupabaseClient, request: Request, to
     if (ownerError) throw ownerError;
     if (!venue || !owner) throw new PublicApiError("NOT_FOUND", "This club link is unavailable.", 404);
     const venueLogoUrl = responsivePublicImage(client, "venue-logo-images", venue.logo_storage_path)?.imageUrl || verifiedVenueLogoUrl(venue.slug);
-    return { venueId: venue.id as string, venueName: venue.name as string, venueLogoUrl, userId: null, role: null, session: null, link };
+    return { venueId: venue.id as string, venueName: venue.name as string, venueSlug: venue.slug as string, venueLogoUrl, userId: null, role: null, session: null, link };
   }
   const auth = await createRequestSupabaseContext(request, { role: "venue" });
   const access = await requireVenueAccess(client, auth.user.id, "view_roster");
-  return { venueId: access.venueId, venueName: access.venueName, userId: auth.user.id, role: access.role, session: auth.session || null, link: null };
+  return { venueId: access.venueId, venueName: access.venueName, venueSlug: access.venueSlug, userId: auth.user.id, role: access.role, session: auth.session || null, link: null };
 }
 
 export function internalError(error: unknown) {

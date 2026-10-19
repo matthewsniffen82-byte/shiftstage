@@ -1,0 +1,92 @@
+/* Location branding stays on the selected club/profile, never on app navigation.
+   Gold palette from spearmintrhinolv.com and its official Las Vegas logo. */
+body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] {
+  --venue-brand-accent: #b8860b;
+  --venue-brand-light: #e8ce82;
+  --dancr-color-brand-primary: #b8860b;
+  --dancr-color-brand-primary-deep: #7f5f18;
+  --dancr-color-brand-primary-light: #e8ce82;
+  --dancr-color-brand-core: #fff5d7;
+  --dancr-color-brand-glow: #7f5f18;
+  --dancr-color-brand-core-soft: rgb(232 206 130 / 18%);
+  --dancr-color-brand-primary-soft: rgb(184 134 11 / 14%);
+  --dancr-color-brand-primary-medium: rgb(184 134 11 / 34%);
+  --dancr-color-brand-primary-strong: rgb(184 134 11 / 72%);
+  --dancr-color-brand-glow-soft: rgb(127 95 24 / 18%);
+  --dancr-color-brand-glow-medium: rgb(127 95 24 / 42%);
+  --dancr-color-avatar-ring-violet: #b8860b;
+  --dancr-shadow-brand-control: 0 2px 8px rgb(184 134 11 / 16%);
+  accent-color: #b8860b;
+}
+body.dancr-button-system :is(#results .venue-detail, #profileBackdrop #profileModal.profile-split-layout, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] {
+  background: #080807 !important;
+  border-color: #665227 !important;
+}
+body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] :is(
+  .venue-hero, .venue-main-photo, .venue-art, .profile-info, .profile-titlebar,
+  .profile-actions-compact, .profile-modal-media-tabs, .profile-media-tabs) {
+  background: #080807 !important;
+  border-color: #665227 !important;
+}
+body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] :is(
+  .profile-modal-city-icon, .profile-venue-pin, .profile-venue-destination svg,
+  .profile-working-destination svg, .profile-action-main svg, .profile-share-trigger svg,
+  .profile-media-tab-icon, .venue-address-directions svg, .venue-detail-share svg,
+  .profile-options > summary, .profile-city svg, .profile-media-tabs button.active) {
+  color: #e8ce82 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] :is(
+  .profile-modal-media-tabs > button.active, .profile-media-tabs button.active)::after {
+  background: #b8860b !important;
+}
+body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] .profile-actions-compact :is(
+  .profile-share-action, .profile-share-trigger, .profile-action-going) {
+  --profile-utility-background: linear-gradient(#211c0e, #211c0e);
+  --profile-utility-border: #665227;
+  --profile-utility-hover-border: #e8ce82;
+  --profile-action-background: linear-gradient(#211c0e, #211c0e) !important;
+  --profile-action-border: #665227 !important;
+}
+body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] :is(
+  .profile-free-entry-action, .profile-media-card-deal, .home-tv-deal-button, .profile-media-entry, .free-entry-cta,
+  .club-deal-launcher-action, .venue-qr-launcher) {
+  --profile-action-background: linear-gradient(#b8860b, #b8860b) !important;
+  --profile-action-border: #e8ce82 !important;
+  background: #b8860b !important;
+  border-color: #e8ce82 !important;
+  color: #050507 !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] :is(button, a):focus-visible {
+  outline-color: #e8ce82 !important;
+}
+@layer dancr-follow-controls {
+  body.dancr-button-system :is(#results .venue-detail, #profileBackdrop #profileModal.profile-split-layout, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"]
+    .venue-action-stack :is(.venue-address-directions, .follow-venue-btn) {
+    --venue-utility-face: #080807 !important;
+    --venue-utility-edge: #665227 !important;
+  }
+  body.dancr-button-system :is(#results .venue-detail, #profileBackdrop #profileModal.profile-split-layout, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"]
+    .venue-action-stack .follow-venue-btn[aria-pressed="true"] {
+    --venue-utility-face: #211c0e !important;
+    --venue-utility-edge: #b8860b !important;
+  }
+  body.dancr-button-system :is(#results .venue-detail, #profileBackdrop #profileModal.profile-split-layout, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"]
+    .venue-action-stack .venue-detail-share {
+    --profile-action-background: linear-gradient(#211c0e, #211c0e) !important;
+    --profile-action-border: #665227 !important;
+  }
+  body.dancr-button-system :is(#results .venue-detail, #profileBackdrop #profileModal.profile-split-layout, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"]
+    .venue-action-stack :is(.venue-address-directions, .follow-venue-btn, .venue-detail-share) :is(.action-icon, svg, svg path) {
+    color: #e8ce82 !important;
+  }
+  body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] :is([data-follow-control="text"], #followBtn, .follow-venue-btn) {
+    --follow-control-edge: #665227;
+    --follow-control-face: #080807;
+  }
+  body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] :is([data-follow-control="text"], #followBtn, .follow-venue-btn)[aria-pressed="true"] {
+    --follow-control-edge: #b8860b;
+    --follow-control-face: #211c0e;
+  }
+}
