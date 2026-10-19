@@ -82,7 +82,7 @@ export default function DancerNotificationSettings({ showPhoneDelivery = true }:
       <p>Manage phone notifications for table and VIP requests on this device.</p>
       <p>Table and VIP requests are also sent to your account email. Turn on notifications for your email app in your phone&apos;s settings.</p>
       <button className="dancer-preferences-action" type="button" data-push-settings>Manage phone notifications</button>
-    </div> : null}
+    </div> : <button className="dancer-preferences-action" type="button" data-push-settings>Manage phone notifications</button>}
     <p className="dancer-preferences-essential">Table and VIP requests, club access, review decisions, account updates, and support replies stay on.</p>
     {status ? <p role="status">{status}</p> : null}
   </article>;

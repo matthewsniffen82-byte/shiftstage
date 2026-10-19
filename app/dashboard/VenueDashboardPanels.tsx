@@ -335,8 +335,8 @@ export function VenuePanel({
         aria-labelledby="venue-workspace-tonight-tab"
       >
         {(activeWorkspace === "tonight" || openedWorkspaces.includes("tonight")) && <>
-        <DashboardPhoneNotifications role="venue" overview refreshKey={notificationRevision} />
         <VenueTonightOverview operations={operations} error={operationsError} working={liveDataReady ? workingNow.length : null}
+          notificationPrompt={<DashboardPhoneNotifications role="venue" refreshKey={notificationRevision} />}
           manager={venueRole === "owner" || venueRole === "manager"} published={isPublished} reviewReady={isAwaitingVenueReview} onOpen={openVenueSection} />
         <VenueGuestsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} role={venueRole}
           operations={operations} refreshKey={refreshedAt} active={activeWorkspace === "tonight"} timezone={String(profile?.timezone || "America/Los_Angeles")} />

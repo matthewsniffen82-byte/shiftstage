@@ -1,10 +1,11 @@
 "use client";
-import type { MouseEvent } from "react";
+import type { MouseEvent, ReactNode } from "react";
 import type { VenueOperations } from "@/src/lib/dancr/venue-operations";
 
-export default function VenueTonightOverview({ operations, error, working, manager, published, reviewReady, onOpen }: {
+export default function VenueTonightOverview({ operations, error, working, manager, published, reviewReady, onOpen, notificationPrompt }: {
   operations: VenueOperations | null; error: string; working: number | null; manager: boolean; published: boolean; reviewReady: boolean;
   onOpen: (event: MouseEvent<HTMLAnchorElement>, id: string) => void;
+  notificationPrompt?: ReactNode;
 }) {
   const queues = [
     { label: "Working now", count: working, id: "venue-working-now", note: "Checked-in dancers" },
@@ -16,6 +17,7 @@ export default function VenueTonightOverview({ operations, error, working, manag
     ] : []),
   ];
   return <section className="venue-tonight-overview" aria-labelledby="venue-tonight-heading">
+    {notificationPrompt}
     <div className="venue-section-heading"><h2 id="venue-tonight-heading">Tonight</h2><span>{operations ? `${operations.admitted} verified pass admissions today` : "Live queues"}</span></div>
     <div className="venue-queue-grid">{queues.map(queue => <a key={queue.id} href={`#${queue.id}`} onClick={event => onOpen(event, queue.id)}><span>{queue.label}</span><strong>{queue.count ?? "—"}</strong><small>{queue.note}</small></a>)}</div>
     {error && <p role="status">{error}</p>}

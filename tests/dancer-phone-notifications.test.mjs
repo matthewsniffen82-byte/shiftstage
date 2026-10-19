@@ -31,21 +31,18 @@ function fixture(props = {}, preferences = async () => ({ userId: "venue-one", s
   return { requests, events, render, mount() { render(); return effect(); }, switchAccount(value) { account = value; } };
 }
 
-test("the priority card explains email delivery and only calls confirmed enrolled devices enabled", async () => {
+test("the overview card explains email delivery and hides only after enrollment is confirmed", async () => {
   const f = fixture();
-  assert.match(f.render(), /Checking phone notifications/);
-  assert.doesNotMatch(f.render(), /Phone notifications are enabled/);
+  assert.equal(f.render(), "");
   const close = f.mount();
   assert.equal(f.requests[0].id, "dancer-one");
   f.requests[0].resolve(false); await settle();
   assert.match(f.render(), /data-push-settings="true">Enable notifications/);
-  assert.match(f.render(), /Get phone notifications for table and VIP requests/);
-  assert.match(f.render(), /Table and VIP requests are also sent to your account email/);
-  assert.match(f.render(), /Turn on notifications for your email app/);
+  assert.match(f.render(), /Get alerts for table and VIP requests/);
+  assert.match(f.render(), /also receive them by email/);
   f.events.get("mydancr:push-changed")();
   f.requests[1].resolve(true); await settle();
-  assert.match(f.render(), /Phone notifications are enabled on this device/);
-  assert.match(f.render(), /data-push-settings="true">Manage notifications/);
+  assert.equal(f.render(), "");
   close();
   assert.equal(f.events.size, 0);
 });
@@ -55,32 +52,34 @@ test("stale device checks and checks for a previous account cannot overwrite the
   f.events.get("focus")();
   f.requests[1].resolve(false); await settle();
   f.requests[0].resolve(true); await settle();
-  assert.match(f.render(), /Phone notifications are off on this device/);
+  assert.match(f.render(), /data-push-settings="true">Enable notifications/);
   f.events.get("pageshow")();
   f.switchAccount({ id: "dancer-two", role: "dancer" });
   f.requests[2].resolve(true); await settle();
-  assert.doesNotMatch(f.render(), /Phone notifications are enabled/);
+  assert.equal(f.render(), "");
   f.events.get("storage")();
   assert.equal(f.requests[3].id, "dancer-two");
   close();
   f.requests[3].resolve(true); await settle();
-  assert.doesNotMatch(f.render(), /Phone notifications are enabled/);
+  assert.equal(f.render(), "");
 });
 
 test("overview setup precedes working tools in both dashboards while Account retains management", () => {
   const panel = readFileSync(new URL("../app/dashboard/DancerDashboardPanels.tsx", import.meta.url), "utf8");
-  assert.match(panel, /overview=\{<>\s*<DashboardPhoneNotifications overview \/>\s*<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"/);
-  assert.match(panel, /const accountTools = <>\s*<DashboardPhoneNotifications \/>/);
+  assert.match(panel, /overview=\{<>\s*<DashboardPhoneNotifications \/>\s*<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"/);
+  assert.doesNotMatch(panel.slice(panel.indexOf("const accountTools"), panel.indexOf("return <>", panel.indexOf("const accountTools"))), /DashboardPhoneNotifications/);
   const venue = readFileSync(new URL("../app/dashboard/VenueDashboardPanels.tsx", import.meta.url), "utf8");
-  assert.match(venue, /<DashboardPhoneNotifications role="venue" overview refreshKey=\{notificationRevision\} \/>\s*<VenueTonightOverview/);
+  assert.match(venue, /<VenueTonightOverview[^>]*notificationPrompt=\{<DashboardPhoneNotifications role="venue" refreshKey=\{notificationRevision\} \/>\}/);
   assert.match(venue, /<VenueNotificationSettings onSaved=\{\(\) => setNotificationRevision/);
   assert.doesNotMatch(venue, /offerPushNotifications\("venue-dashboard"\)/);
   const client = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
   assert.match(client, /<DancerNotificationSettings showPhoneDelivery=\{dancerProfileStatus !== "approved"\} \/>/);
+  const settings = readFileSync(new URL("../app/dashboard/DancerNotificationSettings.tsx", import.meta.url), "utf8");
+  assert.match(settings, /<\/div> : <button[^>]*data-push-settings>Manage phone notifications<\/button>/);
 });
 
 for (const role of ["dancer", "venue"]) test(`${role} overview hides while checking and after enabling, and returns after disabling`, async () => {
-  const f = fixture({ role, overview: true }), close = f.mount();
+  const f = fixture({ role }), close = f.mount();
   assert.equal(f.render(), "");
   f.requests[0].resolve(false); await settle();
   assert.match(f.render(), /data-push-settings="true">Enable notifications/);
@@ -98,7 +97,7 @@ for (const role of ["dancer", "venue"]) test(`${role} overview hides while check
 
 for (const settings of [{ alertsEnabled: false, pushEnabled: true }, { alertsEnabled: true, pushEnabled: false }, null]) {
   test(`an enrolled venue device still needs enabled saved preferences: ${JSON.stringify(settings)}`, async () => {
-    const f = fixture({ role: "venue", overview: true }, async () => {
+    const f = fixture({ role: "venue" }, async () => {
       if (!settings) throw new Error("Temporary failure");
       return { userId: "venue-one", settings };
     }), close = f.mount();
@@ -111,7 +110,7 @@ for (const settings of [{ alertsEnabled: false, pushEnabled: true }, { alertsEna
 
 test("late venue preference responses cannot show another account's status", async () => {
   let respond;
-  const f = fixture({ role: "venue", overview: true }, () => new Promise(resolve => { respond = resolve; }));
+  const f = fixture({ role: "venue" }, () => new Promise(resolve => { respond = resolve; }));
   const close = f.mount();
   f.requests[0].resolve(true); await settle();
   f.switchAccount({ id: "venue-two", role: "venue" });
