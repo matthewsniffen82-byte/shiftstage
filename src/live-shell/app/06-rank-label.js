@@ -929,12 +929,14 @@
     function populateVenueSelect(city = selectedCity()) {
       if (!venueSelect || !discoveryMarket(city)) return;
       const previous = venueSelect.value || "all";
+      const previousVenue = previous === "all" ? null : resolveVenueByName(previous, city);
+      const previousValue = previousVenue?.id || previousVenue?.name || previous;
       const venues = discoveryMarket(city).venues
         .filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue))
         .sort((a, b) => compareVenueDistance(a, b, city));
       const venueOptions = venues.map((venue) => ({
         venue,
-        value: city === ALL_CITIES ? venue.id || venue.name : venue.name,
+        value: venue.id || venue.name,
         label: city === ALL_CITIES && venue.city ? `${venue.name} · ${venue.city}` : venue.name,
         workingNowCount: venueWorkingNowCount(venue, city)
       }));
@@ -942,7 +944,7 @@
         `<option value="all">All clubs</option>`,
         ...venueOptions.map(({ value, label, workingNowCount }) => `<option value="${escapeOptionValue(value)}" data-working-now="${Boolean(workingNowCount)}">${escapeOptionValue(label)}${workingNowCount ? ` · ${workingNowCount} NOW` : ""}</option>`)
       ].join("");
-      venueSelect.value = venueOptions.some((option) => option.value === previous) ? previous : "all";
+      venueSelect.value = venueOptions.some((option) => option.value === previousValue) ? previousValue : "all";
       if (venueSelectOptions) {
         venueSelectOptions.innerHTML = [
           venuePickerOptionMarkup("all", "All clubs", 0, venueSelect.value === "all"),

@@ -49872,12 +49872,14 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     function populateVenueSelect(city = selectedCity()) {
       if (!venueSelect || !discoveryMarket(city)) return;
       const previous = venueSelect.value || "all";
+      const previousVenue = previous === "all" ? null : resolveVenueByName(previous, city);
+      const previousValue = previousVenue?.id || previousVenue?.name || previous;
       const venues = discoveryMarket(city).venues
         .filter((venue) => !venue.hidden && venueWithinSelectedRadius(venue))
         .sort((a, b) => compareVenueDistance(a, b, city));
       const venueOptions = venues.map((venue) => ({
         venue,
-        value: city === ALL_CITIES ? venue.id || venue.name : venue.name,
+        value: venue.id || venue.name,
         label: city === ALL_CITIES && venue.city ? `${venue.name} · ${venue.city}` : venue.name,
         workingNowCount: venueWorkingNowCount(venue, city)
       }));
@@ -49885,7 +49887,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         `<option value="all">All clubs</option>`,
         ...venueOptions.map(({ value, label, workingNowCount }) => `<option value="${escapeOptionValue(value)}" data-working-now="${Boolean(workingNowCount)}">${escapeOptionValue(label)}${workingNowCount ? ` · ${workingNowCount} NOW` : ""}</option>`)
       ].join("");
-      venueSelect.value = venueOptions.some((option) => option.value === previous) ? previous : "all";
+      venueSelect.value = venueOptions.some((option) => option.value === previousValue) ? previousValue : "all";
       if (venueSelectOptions) {
         venueSelectOptions.innerHTML = [
           venuePickerOptionMarkup("all", "All clubs", 0, venueSelect.value === "all"),
@@ -64517,13 +64519,15 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     function resolveVenueByName(venueName, city = citySelect.value) {
       if (venueName === "spearmint-rhino-las-vegas-demo" || venueName === "11fd5e46-d24f-4a02-87f6-2aa18b0876ae") venueName = "talk-of-the-town";
       if (!venueName || !discoveryMarket(city)) return null;
-      const exactVenue = discoveryMarket(city).venues.find((venue) => venue.id === venueName || venue.slug === venueName);
+      const venues = discoveryMarket(city).venues;
+      const exactVenue = venues.find((venue) => venue.id === venueName || venue.slug === venueName);
       if (exactVenue) return exactVenue;
       const normalizedName = String(venueName).trim().toLowerCase();
+      // A renamed club can retain a slug that matches another club's current name.
+      const namedVenue = venues.find((venue) => venue.name.toLowerCase() === normalizedName);
+      if (namedVenue) return namedVenue;
       const normalizedSlug = slugify(venueName);
-      return discoveryMarket(city).venues.find((venue) => (
-        venue.name === venueName ||
-        venue.name.toLowerCase() === normalizedName ||
+      return venues.find((venue) => (
         venue.slug === normalizedSlug ||
         slugify(venue.name) === normalizedSlug
       )) || null;

@@ -226,13 +226,15 @@
     function resolveVenueByName(venueName, city = citySelect.value) {
       if (venueName === "spearmint-rhino-las-vegas-demo" || venueName === "11fd5e46-d24f-4a02-87f6-2aa18b0876ae") venueName = "talk-of-the-town";
       if (!venueName || !discoveryMarket(city)) return null;
-      const exactVenue = discoveryMarket(city).venues.find((venue) => venue.id === venueName || venue.slug === venueName);
+      const venues = discoveryMarket(city).venues;
+      const exactVenue = venues.find((venue) => venue.id === venueName || venue.slug === venueName);
       if (exactVenue) return exactVenue;
       const normalizedName = String(venueName).trim().toLowerCase();
+      // A renamed club can retain a slug that matches another club's current name.
+      const namedVenue = venues.find((venue) => venue.name.toLowerCase() === normalizedName);
+      if (namedVenue) return namedVenue;
       const normalizedSlug = slugify(venueName);
-      return discoveryMarket(city).venues.find((venue) => (
-        venue.name === venueName ||
-        venue.name.toLowerCase() === normalizedName ||
+      return venues.find((venue) => (
         venue.slug === normalizedSlug ||
         slugify(venue.name) === normalizedSlug
       )) || null;
