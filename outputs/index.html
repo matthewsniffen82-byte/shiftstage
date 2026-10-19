@@ -177,8 +177,12 @@
       inset: 0;
       display: grid;
       place-items: center;
-      padding: 24px;
+      /* Keep the label above the independently centered loading circle. */
+      padding: 24px 24px 104px;
       visibility: visible;
+      opacity: 1;
+      -webkit-mask-image: none;
+      mask-image: none;
       color: #f4f2f8;
       background: #030304;
       font: 800 15px/1.35 Manrope, Inter, ui-sans-serif, system-ui, sans-serif;
@@ -200,8 +204,9 @@
       content: "";
       position: fixed;
       z-index: 2147483647;
-      left: 50%;
-      top: calc(50% + 38px);
+      /* Center the whole ring without coupling its position to its rotation. */
+      inset: 0;
+      margin: auto;
       width: 26px;
       height: 26px;
       visibility: visible;
