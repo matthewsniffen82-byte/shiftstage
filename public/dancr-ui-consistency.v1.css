@@ -1931,13 +1931,14 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   text-align: left;
 }
 
-/* Give portrait cards and media more room without changing their column counts
-   or aspect ratios. Keep this shared across discovery, dashboards and uploads. */
+/* Photo and video collections sit edge to edge across discovery, dashboards,
+   galleries and uploads, preserving their column counts and aspect ratios. */
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,
 html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid,
 html body.dancr-button-system :is(
   .venue-dancer-grid:not(.venue-performance-cards),
   .ir-directory-grid,
+  .ir-profile-photos,
   .vip-dancers,
   .customer-followed-dancer-grid,
   .customer-favorite-club-grid,
@@ -1947,20 +1948,22 @@ html body.dancr-button-system :is(
   #dashTonightList.card-grid,
   #dashFollowedList.card-grid,
   #modalGallery,
+  .gallery,
   .profile-media-grid,
   .profile-upload-items,
+  .compact-photo-previews,
+  .video-preview-list,
+  .tv-strip-list,
+  .tv-video-viewer-gallery,
+  .tv-managed-grid,
   .photo-upload-grid,
   .dancer-photo-review-grid,
+  .dancer-saved-photo-choices,
   .submission-media-grid,
+  .admin-full-photos,
   .internal-main-photo-options
 ) {
   gap: var(--dancr-media-grid-gap, 6px) !important;
-}
-
-/* Public dancer portraits sit edge to edge, keeping the existing rounded corners. */
-html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,
-html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
-  --dancr-media-grid-gap: 0px;
 }
 
 /* Continue the discovery backdrop through venue details and dancer profiles.

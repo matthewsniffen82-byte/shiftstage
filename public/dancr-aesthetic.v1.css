@@ -14,7 +14,7 @@
   /* Shared overlay offsets retain safe-area clearance without a banner. */
   --mydancr-preview-banner-height: 0px;
   --dancer-discovery-content-gutter: 6px;
-  --dancr-media-grid-gap: 6px;
+  --dancr-media-grid-gap: 0px;
   --profile-frame-inset: 8px;
   --profile-shell-max-width: 1180px;
   --mydancr-preview-banner-offset: calc(var(--mydancr-preview-banner-height) + env(safe-area-inset-top, 0px));
