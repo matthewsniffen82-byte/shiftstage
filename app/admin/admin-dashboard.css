@@ -95,7 +95,14 @@ body .admin-shell.dashboard-shell-admin .admin-panel-badge { border: 1px solid #
   body .dashboard-shell-admin .admin-workspace-nav button { flex-direction: column; gap: 5px; min-height: 64px; padding: 8px 4px; }
   body .dashboard-shell-admin .admin-workspace-nav button > span { top: 4px; right: 5px; }
 }
-body .dashboard-shell-admin .admin-workspace-nav button > .admin-workspace-count { position: static; min-width: 20px; height: auto; padding: 2px 5px; text-align: center; line-height: 1.3; }
+/* Keep counts readable independently of shared navigation styles and mobile dark rendering. */
+body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-workspace-nav button > .admin-workspace-count {
+  position: static; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  min-width: 20px; height: auto; padding: 2px 5px; border: 1px solid #77568f !important; border-radius: 6px;
+  color: #f5edff !important; -webkit-text-fill-color: #f5edff !important;
+  background: linear-gradient(#2a193d, #2a193d) !important; box-shadow: none !important; text-shadow: none !important;
+  font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.3; white-space: nowrap;
+}
 body .dashboard-shell-admin .attention-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 @media (max-width: 680px) {
   body .dashboard-shell-admin .admin-workspace-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -138,7 +145,6 @@ body .admin-shell.dashboard-shell-admin .admin-feature-note p { margin: 6px 0 0;
 @media (max-width: 680px) {
   body .admin-shell.dashboard-shell-admin .admin-workspace-nav button { font-size: 11px !important; gap: 4px; }
   body .admin-shell.dashboard-shell-admin .admin-workspace-nav button > svg { display: none; }
-  body .admin-shell.dashboard-shell-admin .admin-workspace-nav button > .admin-workspace-count { min-width: 16px; padding: 2px 4px; font-size: 9px; }
   body .admin-shell.dashboard-shell-admin .admin-task-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   body .admin-shell.dashboard-shell-admin .operations-status-line { align-items: flex-start; gap: 8px; }
 }
