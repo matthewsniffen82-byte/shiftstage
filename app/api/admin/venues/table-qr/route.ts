@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import QRCode from "qrcode";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { createTableQrImage } from "@/src/lib/dancr/table-qr-image";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
       if (result.error) throw result.error;
       if (!result.data) throw new PublicApiError("NOT_FOUND", "Active table code not found.", 404);
       const url = new URL(`/internal/club/${result.data.token}`, process.env.NEXT_PUBLIC_SITE_URL || "https://www.mydancr.com").href;
-      const imageDataUrl = await QRCode.toDataURL(url, { width: 600, margin: 4, errorCorrectionLevel: "M" });
+      const imageDataUrl = await createTableQrImage(url, result.data.label);
       return NextResponse.json({ ok: true, venueId, id, imageDataUrl, session }, { headers });
     }
     const { data, error } = await admin.from("internal_roster_links").select(columns)

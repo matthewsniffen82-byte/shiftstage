@@ -94,7 +94,7 @@ function apiFixture({ role = "admin", signedIn = true, missing = false, rpcError
   };
   const route = compile("app/api/admin/venues/table-qr/route.ts", {
     "next/server": { NextResponse: Response },
-    qrcode: { default: { toDataURL: async (url, options) => { calls.push({ qrUrl: url, options }); return "data:image/png;base64,synthetic"; } } },
+    "@/src/lib/dancr/table-qr-image": { createTableQrImage: async (url, label) => { calls.push({ qrUrl: url, label }); return "data:image/png;base64,synthetic"; } },
     "@/src/lib/api": { PublicApiError, apiError: error => { const result = resolveApiError(error, "Failed."); return Response.json(result.body, { status: result.status }); } },
     "@/src/lib/dancr/admin": { requireAdmin: async () => { if (role !== "admin") throw new PublicApiError("FORBIDDEN", "Admin required.", 403); } },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject },
@@ -128,6 +128,7 @@ test("QR download encodes only a saved active table in the authorized club", asy
   const f = apiFixture(); const response = await f.get(id(20), id(80));
   assert.equal(response.status, 200); assert.equal((await response.json()).imageDataUrl, "data:image/png;base64,synthetic");
   assert.equal(f.calls.at(-1).qrUrl, `https://www.mydancr.com/internal/club/${id(90)}`);
+  assert.equal(f.calls.at(-1).label, "Table 1");
   for (const [filter, value] of [["venue_id", id(20)], ["kind", "table"], ["active", true], ["id", id(80)]]) {
     assert.ok(f.calls.some(call => call.filter === filter && call.value === value));
   }
