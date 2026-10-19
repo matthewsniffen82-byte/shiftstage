@@ -8,13 +8,14 @@ import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts"
 import { readBoundedJsonObject } from "../src/lib/bounded-json-body.ts";
 import { createInternalRosterDatabase } from "./helpers/internal-roster-database.mjs";
 import { fixtureId as id } from "./helpers/dancer-tap-database.mjs";
+import { existingTableNumbers, readTableQrRange } from "../app/admin/admin-table-qr-range.ts";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 function compile(path, dependencies, globals = {}) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(read(path), { compilerOptions: { module: ts.ModuleKind.CommonJS,
     jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText,
-  { exports, Request, Response, URL, Date, AbortController, AbortSignal, process: { env: {} }, ...globals,
+  { exports, Request, Response, URL, Date, Error, AbortController, AbortSignal, process: { env: {} }, ...globals,
     require(name) { assert.ok(name in dependencies, name); return dependencies[name]; } });
   return exports;
 }
@@ -168,6 +169,7 @@ test("admin API accepts seeded table row IDs for download, rename and disable", 
 
 function componentFixture(handler) {
   const slots = [], effects = []; let cursor = 0, tree; const requests = [];
+  let nextId = 80;
   const hooks = {
     useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], value => { slots[index] = typeof value === "function" ? value(slots[index]) : value; }]; },
     useRef(initial) { const index = cursor++; if (!(index in slots)) slots[index] = { current: initial }; return slots[index]; },
@@ -177,10 +179,11 @@ function componentFixture(handler) {
   const jsx = (type, props) => ({ type, props });
   const { default: Component } = compile("app/admin/AdminTableQrCodes.tsx", {
     react: hooks, "react/jsx-runtime": { jsx, jsxs: jsx }, "./admin-table-qr.css": {},
+    "./admin-table-qr-range": { existingTableNumbers, readTableQrRange },
     "./admin-session": { isAdminAuthenticationError: error => error.status === 401, requestAdminJson: async (url, options) => {
       requests.push({ url, options }); return handler(url, options, requests.length);
     } },
-  }, { crypto: { randomUUID: () => id(80) }, window: { confirm: () => true, location: { origin: "https://www.mydancr.com" } },
+  }, { crypto: { randomUUID: () => id(nextId++) }, window: { confirm: () => true, location: { origin: "https://www.mydancr.com" } },
     navigator: { clipboard: { writeText: async () => {} } } });
   function render() { cursor = 0; tree = Component({ venueId: id(20), name: "Synthetic club" }); while (effects.length) effects.shift()(); return tree; }
   function nodes(node) { if (!node || typeof node !== "object") return []; return [node, ...[node.props?.children].flat(Infinity).flatMap(child => nodes(child))]; }
@@ -251,4 +254,139 @@ test("creator is mounted in club records while venue provisioning remains forbid
   assert.match(read("app/admin/AdminClient.tsx"), /openedVenues\[venueId\].*<AdminTableQrCodes/);
   assert.match(read("app/api/internal/[[...path]]/route.ts"), /\["link_create", "link_update", "link_revoke"\][\s\S]*Table QR setup is managed by MyDancr Admin/);
   assert.match(read("app/admin/admin-table-qr.css"), /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+});
+
+test("table ranges include both ends, support club numbering, and reject invalid numbers", () => {
+  for (const [first, last, count] of [[201, 210, 10], [201, 211, 11], [501, 501, 1], [1, 10001, 10001], [Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER, 1]]) {
+    assert.deepEqual(readTableQrRange(String(first), String(last)), { range: { start: first, end: last, count }, error: "" });
+  }
+  for (const [first, last] of [["", "210"], ["201", ""], ["211", "201"], ["0", "10"], ["-1", "10"], ["1.5", "3"], ["1e2", "200"], ["201", "Infinity"], ["1", "9007199254740992"]]) {
+    const result = readTableQrRange(first, last);
+    assert.equal(result.range, null); assert.ok(result.error);
+  }
+  assert.equal(readTableQrRange("", "").range, null);
+  const range = readTableQrRange("201", "211").range;
+  assert.deepEqual([...existingTableNumbers(range, [
+    code({ label: " table 201 " }), code({ label: "Table 201" }), code({ label: "Table 202", active: false }),
+    code({ label: "Table 200" }), code({ label: "Table 212" }), code({ label: "Patio 203" }), code({ label: "Table 0204" }),
+  ])], [201]);
+});
+
+async function selectRange(f, first = "201", last = "210") {
+  f.find(node => node.type === "button" && node.props.children === "Number range").props.onClick(); f.render();
+  f.find(node => node.type === "input" && node.props.placeholder === "201").props.onChange({ target: { value: first } });
+  f.find(node => node.type === "input" && node.props.placeholder === "210").props.onChange({ target: { value: last } });
+  f.render();
+}
+const rangeForm = f => f.find(node => node.type === "form" && node.props.className === "admin-table-qr-range");
+const posts = f => f.requests.filter(item => item.options.method === "POST").map(item => JSON.parse(item.options.body));
+
+test("bulk creation previews the count and creates each internal table once, skipping current active labels", async () => {
+  const saved = [code({ id: id(70), label: "Table 201" }), code({ id: id(71), label: "Table 202", active: false })];
+  let reads = 0;
+  const f = componentFixture(async (_url, options) => {
+    if (options.method !== "POST") {
+      // Another admin created this code after the first load; the bulk preflight must see it.
+      if (++reads === 2) saved.push(code({ id: id(72), label: "table 205" }));
+      return { venueId: id(20), links: [...saved] };
+    }
+    const body = JSON.parse(options.body);
+    const link = code({ id: body.id, label: body.label, token: id(200 + saved.length) }); saved.push(link);
+    return { venueId: id(20), link };
+  });
+  try {
+    f.open(); await f.settle(); await selectRange(f);
+    assert.ok(f.find(node => node.type === "button" && node.props.children === "Create 9 QR codes"));
+    const submit = rangeForm(f).props.onSubmit;
+    submit({ preventDefault() {} }); submit({ preventDefault() {} }); await f.settle();
+    assert.deepEqual(posts(f).map(row => row.label), [202, 203, 204, 206, 207, 208, 209, 210].map(number => `Table ${number}`));
+    assert.equal(new Set(posts(f).map(row => row.id)).size, 8);
+    assert.ok(posts(f).every(row => row.venueId === id(20) && row.action === "create"));
+    assert.equal(saved.filter(row => row.active).length, 10);
+    assert.ok(f.find(node => node.props.role === "status" && /8 QR codes created\. 2 existing codes kept\. All tables/.test(node.props.children)));
+    assert.equal(f.find(node => node.type === "button" && node.props.children === "All codes already exist").props.disabled, true);
+    assert.equal(f.find(node => node.type === "button" && node.props.children === "Number range").props.disabled, false);
+  } finally { f.unmount(); }
+});
+
+test("bulk retries keep confirmed codes and reuse the pending table id after a failure", async () => {
+  const saved = []; let fail = true;
+  const f = componentFixture(async (_url, options) => {
+    if (options.method !== "POST") return { venueId: id(20), links: [...saved] };
+    const body = JSON.parse(options.body);
+    if (body.label === "Table 202" && fail) { fail = false; throw new Error("Connection lost"); }
+    const link = code({ id: body.id, label: body.label }); saved.push(link);
+    return { venueId: id(20), link };
+  });
+  try {
+    f.open(); await f.settle(); await selectRange(f, "201", "203");
+    rangeForm(f).props.onSubmit({ preventDefault() {} }); await f.settle();
+    assert.deepEqual(posts(f).map(row => row.label), ["Table 201", "Table 202"]);
+    assert.match(f.find(node => node.props.role === "alert").props.children, /1 QR code confirmed.*Connection lost/);
+    rangeForm(f).props.onSubmit({ preventDefault() {} }); await f.settle();
+    assert.deepEqual(posts(f).map(row => row.label), ["Table 201", "Table 202", "Table 202", "Table 203"]);
+    assert.equal(posts(f)[1].id, posts(f)[2].id);
+    assert.equal(saved.length, 3);
+    assert.equal(f.find(node => node.props.role === "alert"), undefined);
+  } finally { f.unmount(); }
+});
+
+test("bulk retries reconcile a saved table whose response was lost without replacing its QR", async () => {
+  const saved = []; let fail = true;
+  const f = componentFixture(async (_url, options) => {
+    if (options.method !== "POST") return { venueId: id(20), links: [...saved] };
+    const body = JSON.parse(options.body), link = code({ id: body.id, label: body.label }); saved.push(link);
+    if (fail) { fail = false; throw new Error("Response lost"); }
+    return { venueId: id(20), link };
+  });
+  try {
+    f.open(); await f.settle(); await selectRange(f, "201", "202");
+    rangeForm(f).props.onSubmit({ preventDefault() {} }); await f.settle();
+    assert.match(f.find(node => node.props.role === "alert").props.children, /^0 QR codes confirmed/);
+    rangeForm(f).props.onSubmit({ preventDefault() {} }); await f.settle();
+    assert.deepEqual(posts(f).map(row => row.label), ["Table 201", "Table 202"]);
+    assert.equal(saved.length, 2);
+    assert.ok(f.find(node => node.props.role === "status" && /1 QR code created\. 1 existing code kept/.test(node.props.children)));
+  } finally { f.unmount(); }
+});
+
+test("bulk stop finishes the current table and unmount aborts before the next table", async () => {
+  for (const unmount of [false, true]) {
+    let resolveWrite;
+    const f = componentFixture(async (_url, options) => options.method === "POST"
+      ? new Promise(resolve => { resolveWrite = resolve; }) : { venueId: id(20), links: [] });
+    f.open(); await f.settle(); await selectRange(f, "201", "203");
+    rangeForm(f).props.onSubmit({ preventDefault() {} }); await f.settle();
+    assert.equal(posts(f).length, 1);
+    if (unmount) {
+      f.unmount(); assert.equal(f.requests.at(-1).options.signal.aborted, true);
+    } else {
+      f.find(node => node.type === "button" && node.props.children === "Stop after current table").props.onClick(); f.render();
+    }
+    resolveWrite({ venueId: id(20), link: code({ id: posts(f)[0].id, label: "Table 201" }) });
+    await f.settle();
+    assert.equal(posts(f).length, 1);
+    if (!unmount) {
+      assert.ok(f.find(node => node.props.role === "status" && /1 QR code created\. 2 remaining/.test(node.props.children)));
+      f.unmount();
+    }
+  }
+});
+
+test("invalid ranges and unconfirmed bulk responses never continue creating codes", async () => {
+  for (const failure of ["invalid-range", "bad-read", "bad-write", "auth"]) {
+    let reads = 0;
+    const f = componentFixture(async (_url, options) => {
+      if (options.method !== "POST") return { venueId: failure === "bad-read" && ++reads > 1 ? id(21) : id(20), links: [] };
+      if (failure === "auth") throw Object.assign(new Error("Sign in again"), { status: 401 });
+      return { venueId: id(20), link: code({ label: "Wrong table" }) };
+    });
+    try {
+      f.open(); await f.settle(); await selectRange(f, failure === "invalid-range" ? "211" : "201", "203");
+      rangeForm(f).props.onSubmit({ preventDefault() {} }); await f.settle();
+      assert.equal(posts(f).length, ["invalid-range", "bad-read"].includes(failure) ? 0 : 1);
+      if (failure === "auth") assert.equal(rangeForm(f), undefined);
+      if (failure !== "invalid-range") assert.ok(f.find(node => node.props.role === "alert"));
+    } finally { f.unmount(); }
+  }
 });

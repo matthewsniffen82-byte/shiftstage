@@ -9,6 +9,15 @@
 .admin-table-qr .admin-table-qr-create, .admin-table-qr .admin-table-qr-rename { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 8px; padding: 0; }
 .admin-table-qr label { flex: 1 1 180px; min-width: 0; }
 .admin-table-qr input { width: 100%; box-sizing: border-box; }
+.admin-table-qr-mode { display: flex; flex-wrap: wrap; gap: 8px; }
+.venue-manager .admin-table-qr-mode button[aria-pressed="true"] { background: #48218a; border-color: #8057b7; }
+.admin-table-qr .admin-table-qr-range { display: grid; gap: 10px; padding: 0; }
+.admin-table-qr-range-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.admin-table-qr-range-fields label { font-size: 13px; }
+.admin-table-qr-range-preview { color: #ddd0ef; }
+.admin-table-qr-range-preview strong { color: #f7f5fa; }
+.admin-table-qr-range > button { justify-self: start; }
+.admin-table-qr-progress { display: grid; justify-items: start; gap: 8px; padding: 10px; border: 1px solid #5b5564; border-radius: 8px; }
 .admin-table-qr-list { list-style: none; margin: 0; padding: 0; }
 .admin-table-qr-list > li { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid #302d35; }
 .admin-table-qr-identity strong { min-width: 0; overflow-wrap: anywhere; }
