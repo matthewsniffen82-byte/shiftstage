@@ -30,6 +30,9 @@ import AdminTableQrCodes from "./AdminTableQrCodes";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
 import { adminWorkspaceCounts, adminCountLabel } from "./admin-workspace-counts";
+import { adminAttentionItems } from "./admin-attention";
+import { DANCER_PLACEMENT_DAYS, DANCER_SCORE_WEIGHTS, EXTERNAL_RANKING_START_MINUTES } from "@/src/lib/dancr/venue-dancer-scores";
+import { NFC_WORKING_WINDOW_HOURS, NFC_COOLDOWN_HOURS } from "@/src/lib/dancr/shift-presence";
 import {
   clearAdminSession,
   isAdminAuthenticationError,
@@ -83,8 +86,8 @@ const ADMIN_WORKSPACES: Array<{ id: AdminWorkspace; label: string }> = [
   { id: "approvals", label: "Approvals" },
   { id: "people", label: "People" },
   { id: "clubs", label: "Clubs" },
-  { id: "money", label: "Subscriptions" },
-  { id: "more", label: "More" },
+  { id: "money", label: "Billing" },
+  { id: "more", label: "Tools" },
 ];
 
 type AdminDataSection = {
@@ -173,6 +176,7 @@ export default function AdminClient() {
   const [actionNotice, setActionNotice] = useState<AdminActionNotice | null>(null);
   const [openApprovalIds, setOpenApprovalIds] = useState<Record<string, boolean>>({});
   const [workspace, setWorkspace] = useState<AdminWorkspace>("home");
+  const [requestedPanel, setRequestedPanel] = useState("");
   const [loadedWorkspaces, setLoadedWorkspaces] = useState<Partial<Record<AdminWorkspace, boolean>>>({});
   const [loadingWorkspace, setLoadingWorkspace] = useState<AdminWorkspace | null>(null);
   const openApprovalIdsRef = useRef<Record<string, boolean>>({});
@@ -280,7 +284,21 @@ export default function AdminClient() {
     authActionInFlightRef.current = false;
   }
 
-  function openWorkspace(nextWorkspace: AdminWorkspace) {
+  const workspaceReady = Boolean(loadedWorkspaces[workspace]);
+  useEffect(() => {
+    if (!requestedPanel || !workspaceReady || isLoading || state.authRequired) return;
+    const frame = window.requestAnimationFrame(() => {
+      const panel = document.getElementById(requestedPanel);
+      if (!(panel instanceof HTMLDetailsElement)) return;
+      panel.open = true;
+      panel.querySelector("summary")?.focus({ preventScroll: true });
+      panel.scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [requestedPanel, workspace, workspaceReady, isLoading, state.authRequired]);
+
+  function openWorkspace(nextWorkspace: AdminWorkspace, panel = "") {
+    setRequestedPanel(panel);
     setWorkspace(nextWorkspace);
     void loadWorkspaceData(nextWorkspace);
     window.requestAnimationFrame(() => {
@@ -596,10 +614,10 @@ export default function AdminClient() {
       } : current.operations };
     });
   }
-  const clubRequestPanel = <Panel title="Pending club requests" badge={
+  const clubRequestPanel = <Panel id="admin-club-requests" title="Pending club requests" badge={
     (state.warnings || []).some(warning => warning.startsWith("Venue signup requests:"))
       ? "Unavailable" : `${adminCountLabel(pendingClubCount)} awaiting approval`
-  } defaultOpen>
+  }>
     {(state.warnings || []).some(warning => warning.startsWith("Venue signup requests:"))
       ? <p role="status">Club requests could not be loaded. Refresh the dashboard to try again.</p>
       : <VenueSignupRequestQueue
@@ -622,7 +640,7 @@ export default function AdminClient() {
       ? state.error || "Admin sign in required."
       : dashboardWarnings.length
         ? `${dashboardWarnings.length} dashboard ${dashboardWarnings.length === 1 ? "section is" : "sections are"} temporarily unavailable. All other admin tools are ready.`
-        : "Live approvals, venue subscriptions, accounts, activity, and platform health.";
+        : "Review requests, manage people and clubs, and check platform health.";
 
   return (
     <main className="admin-shell dashboard-shell-admin">
@@ -736,7 +754,10 @@ export default function AdminClient() {
             </aside>
           ) : null}
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
-            {ADMIN_WORKSPACES.map((item) => (
+            {ADMIN_WORKSPACES.map((item) => {
+              const count = item.id === "clubs" ? pendingClubCount : workspaceCounts[item.id].value;
+              const showCount = ["approvals", "clubs", "more"].includes(item.id) && (count == null || count > 0);
+              return (
               <button
                 key={item.id}
                 type="button"
@@ -746,13 +767,11 @@ export default function AdminClient() {
               >
                 <AdminDashboardIcon section={item.id} />
                 {item.label}
-                <span className="admin-workspace-count" aria-label={`${adminCountLabel(workspaceCounts[item.id].value)} ${workspaceCounts[item.id].label}`}>
-                  {adminCountLabel(workspaceCounts[item.id].value)}
-                </span>
-                <small className="admin-workspace-count-label">{workspaceCounts[item.id].label}</small>
-                {item.id === "clubs" ? <small className="admin-club-pending">{adminCountLabel(pendingClubCount)} pending approval</small> : null}
+                {showCount ? <span className="admin-workspace-count" aria-label={count == null ? "Count unavailable" : `${adminCountLabel(count)} ${item.id === "clubs" ? "pending approval" : workspaceCounts[item.id].label}`}>
+                  {adminCountLabel(count)}
+                </span> : null}
               </button>
-            ))}
+            ); })}
           </nav>
           {workspace === "home" ? (
             <>
@@ -760,6 +779,7 @@ export default function AdminClient() {
                 operations={state.operations || null}
                 monitoring={state.monitoring || null}
                 onOpenWorkspace={openWorkspace}
+                onRefresh={() => void loadAdmin()}
               />
               <ActivityTimeline operations={state.operations || null} />
             </>
@@ -774,14 +794,14 @@ export default function AdminClient() {
               <WorkspaceHeader
                 eyebrow="Review queues"
                 title="Approvals"
-                description="Review club requests, profiles, media, safety reports, and TV submissions from one focused queue. Open a record only when you are ready to act."
+                description="Choose a queue to review profiles, media, reports or club requests."
               />
               <section className="admin-grid">
                 {clubRequestPanel}
                 <Panel
+                  id="admin-dancer-approvals"
                   title="Dancer approvals"
                   badge={`${pendingDancerApprovalCount} needed`}
-                  defaultOpen
                 >
                   <Metric label="Dancers needing approval" value={String(pendingDancerApprovalCount)} />
                   <Metric label="Profiles in roster" value={String(state.dancerTotal || 0)} />
@@ -820,13 +840,14 @@ export default function AdminClient() {
                     }}
                   />
                 </Panel>
-                <Panel title="Reports" badge={`${state.reports?.length || 0} open`}>
+                <Panel id="admin-reports" title="Reports" badge={`${state.reports?.length || 0} open`}>
                   <ReportManager
                     reports={state.reports || []}
                     onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
                   />
                 </Panel>
                 <Panel
+                  id="admin-photo-review"
                   title="Image moderation"
                   badge={`${state.imageModeration?.filter((item) => String(item.decision) === "review").length || 0} to review`}
                 >
@@ -836,7 +857,7 @@ export default function AdminClient() {
                     onActionConfirmed={confirmAdminAction}
                   />
                 </Panel>
-                <Panel title="MyDancr TV moderation" badge={`${adminCountLabel(state.operations?.attention.videos)} to review`}>
+                <Panel id="admin-tv-review" title="MyDancr TV moderation" badge={`${adminCountLabel(state.operations?.attention.videos)} to review`}>
                   <AdminTvPanel />
                 </Panel>
               </section>
@@ -848,9 +869,8 @@ export default function AdminClient() {
               <WorkspaceHeader
                 eyebrow="Accounts"
                 title="People"
-                description="Find dancers, customers, agents, and admins. Open a person to see their complete record and available actions."
+                description="Find a dancer, review their profile, or manage other accounts."
               />
-              <AccountOverview operations={state.operations || null} />
               <section className="admin-grid">
                 <Panel title="Dancer management" badge={`${adminCountLabel(state.operations?.counts?.dancers)} profiles`} defaultOpen>
                   <DancerDirectory
@@ -876,8 +896,13 @@ export default function AdminClient() {
                 <Panel title="Customer subscriptions" badge={`${state.subscriptions?.length || 0} tracked`}>
                   <ListPreview items={state.subscriptions} empty="No customer subscriptions returned." />
                 </Panel>
+                <Panel title="Recent accounts">
+                  <AccountOverview operations={state.operations || null} />
+                </Panel>
+                <Panel title="Sales agents">
+                  <AdminSalesAgentPanel onActionConfirmed={confirmAdminAction} />
+                </Panel>
               </section>
-              <AdminSalesAgentPanel onActionConfirmed={confirmAdminAction} />
             </>
           ) : null}
 
@@ -886,12 +911,10 @@ export default function AdminClient() {
               <WorkspaceHeader
                 eyebrow="Venue operations"
                 title="Clubs"
-                description="Manage VIP access and visits, guest lists, ride requests, club updates, results, club accounts, published deals, and tap stickers."
+                description="Open a club for its page, deals, table QR codes, colors and website embed."
               />
-              <AdminGuestOperations venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
               <section className="admin-grid">
-                {clubRequestPanel}
-                <Panel title="Club accounts" badge={`${adminCountLabel(state.operations?.counts?.clubs)} managed`} defaultOpen>
+                <Panel id="admin-club-accounts" title="Club accounts" badge={`${adminCountLabel(state.operations?.counts?.clubs)} managed`} defaultOpen>
                   <VenueManager
                     clubDeals={state.clubDeals || []}
                     dealRequests={state.dealRequests || []}
@@ -904,10 +927,15 @@ export default function AdminClient() {
                     onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
                   />
                 </Panel>
+                <Panel id="admin-guest-operations" title="VIP & guest operations">
+                  <AdminGuestOperations venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
+                </Panel>
+                {clubRequestPanel}
                 <Panel title="Deal attribution" badge={`${state.deals?.length || 0} records`}>
                   <DealActivityManager activity={state.deals || []} onActivityChange={(deals) => setState(current => ({ ...current, deals }))} />
                 </Panel>
-                <Panel title="Tap sticker inventory" badge={`${adminCountLabel(state.operations?.counts?.tapStickers)} stickers`}>
+                <Panel id="admin-tap-stickers" title="Tap sticker inventory" badge={`${adminCountLabel(state.operations?.counts?.tapStickers)} stickers`}>
+                  <p>Dressing-room taps start Working Now for {NFC_WORKING_WINDOW_HOURS} hours, followed by a {NFC_COOLDOWN_HOURS}-hour cooldown across clubs. Tapping again does not extend the session. Table QR codes are managed inside each club account.</p>
                   <AdminNfcInventoryPanel />
                 </Panel>
               </section>
@@ -929,11 +957,11 @@ export default function AdminClient() {
             <>
               <WorkspaceHeader
                 eyebrow="Platform tools"
-                title="More"
-                description="Open infrequent operational tools only when needed: support, legal requests, pilot analytics, rankings, and system status."
+                title="Tools"
+                description="Support, copyright cases, rankings, analytics and system checks."
               />
               <section className="admin-grid">
-                <Panel title="Support Inbox" badge={`${state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0} open`} defaultOpen>
+                <Panel id="admin-support" title="Support Inbox" badge={`${state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0} open`}>
                   <AdminSupportInbox
                     threads={state.supportThreads || []}
                     onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
@@ -943,23 +971,22 @@ export default function AdminClient() {
                   <p>Review contact forms sent to venue managers for pickup coordination.</p>
                   <Link className="primary-link" href="/pickups">Open pickup requests →</Link>
                 </Panel>
-                <Panel title="Copyright / DMCA" badge={`${adminCountLabel(state.operations?.attention.dmca)} open`}>
+                <Panel id="admin-dmca" title="Copyright / DMCA" badge={`${adminCountLabel(state.operations?.attention.dmca)} open`}>
                   <AdminDmcaPanel />
                 </Panel>
-                <Panel title="Monitoring" badge={`${Object.keys(state.monitoring || {}).length} checks`}>
+                <Panel id="admin-monitoring" title="Monitoring" badge={`${Object.keys(state.monitoring || {}).length} checks`}>
                   {Object.entries(state.monitoring || {}).slice(0, 6).map(([key, value]) => (
                     <Metric key={key} label={labelize(key)} value={formatValue(value)} />
                   ))}
                   {!state.monitoring ? <Metric label="Status" value="Not checked" /> : null}
                 </Panel>
-                <Panel title="Rankings" badge={`${adminCountLabel(state.operations?.analytics.activeDancers)} approved dancers`}>
+                <Panel id="admin-rankings" title="Rankings" badge={`${adminCountLabel(state.operations?.analytics.activeDancers)} approved dancers`}>
                   <RankingManager />
                 </Panel>
+                <Panel title="Pilot analytics">
+                  <AdminPilotAnalytics venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
+                </Panel>
               </section>
-              <AdminPilotAnalytics
-                venues={state.venues || []}
-                onActionConfirmed={confirmAdminAction}
-              />
             </>
           ) : null}
         </>
@@ -1353,56 +1380,58 @@ function OperationsOverview({
   operations,
   monitoring,
   onOpenWorkspace,
+  onRefresh,
 }: {
   operations: AdminOperationsCenter | null;
   monitoring: Record<string, unknown> | null;
-  onOpenWorkspace: (workspace: AdminWorkspace) => void;
+  onOpenWorkspace: (workspace: AdminWorkspace, panel?: string) => void;
+  onRefresh: () => void;
 }) {
+  const [showAllQueues, setShowAllQueues] = useState(false);
   if (!operations) {
     return (
       <section className="operations-center" aria-live="polite">
-        <Panel title="Live operations" defaultOpen><p className="empty">Live operational data is temporarily unavailable. Use More to inspect the affected connection.</p></Panel>
+        <Panel title="Live operations" defaultOpen><p className="empty">Live operational data is temporarily unavailable. Use Tools to inspect the affected connection.</p><button type="button" onClick={onRefresh}>Refresh overview</button></Panel>
       </section>
     );
   }
 
   const attention = operations.attention;
-  const attentionItems = [
-    ["Dancer profiles", attention.dancerProfiles],
-    ["Photos", attention.photos],
-    ["Videos", attention.videos],
-    ["Social links", attention.socialLinks],
-    ["Reports", attention.reports],
-    ["DMCA", attention.dmca],
-    ["Support", attention.support],
-    ["Venues", attention.venues],
-    ["Club requests", attention.clubRequests],
-  ] as const;
+  const attentionItems = adminAttentionItems(operations).filter(item => showAllQueues || item.value == null || item.value > 0);
+  const overdueUnknown = operations.warnings.some(warning => warning.section.startsWith("Overdue "));
 
   return (
     <section className="operations-center">
       <header className="operations-status-line">
         <div>
-          <span className="eyebrow">Command center</span>
-          <h2>What needs attention now</h2>
+          <h2>Needs attention</h2>
         </div>
-        <span className={attention.overdue ? "health-pill warning" : "health-pill healthy"}>
-          {attention.overdue ? `${attention.overdue} overdue` : "No overdue queues"}
-        </span>
+        <div className="admin-attention-controls">
+          {overdueUnknown || attention.overdue ? <span className="health-pill warning">{overdueUnknown ? "Overdue status unavailable" : `${attention.overdue} overdue`}</span> : null}
+          <button type="button" aria-pressed={showAllQueues} onClick={() => setShowAllQueues(value => !value)}>{showAllQueues ? "Only pending" : "Show all queues"}</button>
+        </div>
       </header>
 
       <div className="attention-grid">
-        {attentionItems.map(([label, value]) => (
-          <button key={label} type="button" onClick={() => onOpenWorkspace(label === "Support" ? "more" : label === "Venues" || label === "Club requests" ? "clubs" : "approvals")}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-            <small>{value === 1 ? "item" : "items"}</small>
+        {attentionItems.map(item => (
+          <button key={item.key} type="button" onClick={() => onOpenWorkspace(item.workspace, item.panel)}>
+            <span>{item.label}</span>
+            <strong>{adminCountLabel(item.value)}</strong>
+            <small>{item.value == null ? "Unavailable" : "Review"}</small>
           </button>
         ))}
       </div>
+      {!attentionItems.length ? <p className="admin-queues-clear" role="status">All queues are clear. Nothing is waiting for review.</p> : null}
+
+      <nav className="admin-task-shortcuts" aria-label="Common admin tasks">
+        <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-club-accounts")}>Table QR codes &amp; embeds <span aria-hidden="true">→</span></button>
+        <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-tap-stickers")}>Tap stickers <span aria-hidden="true">→</span></button>
+        <button type="button" onClick={() => onOpenWorkspace("approvals", "admin-tv-review")}>MyDancrTV <span aria-hidden="true">→</span></button>
+        <button type="button" onClick={() => onOpenWorkspace("more", "admin-rankings")}>Rankings <span aria-hidden="true">→</span></button>
+      </nav>
 
       <div className="operations-layout">
-        <Panel title="VIP & guest operations" badge="Club controls" defaultOpen>
+        <Panel title="VIP & guest operations" badge="Club controls">
           <div className="operations-metric-grid">
             <Metric label="Pending VIP visits" value={adminCountLabel(operations.guests?.pendingVip ?? null)} />
             <Metric label="Active VIP access" value={adminCountLabel(operations.guests?.activeVip ?? null)} />
@@ -1412,7 +1441,7 @@ function OperationsOverview({
             <Metric label="Text update opt-ins" value={adminCountLabel(operations.guests?.textUpdates ?? null)} />
           </div>
           <p>Review visits, manage VIP access, see guest and ride details, withdraw update subscriptions, and compare club results.</p>
-          <button type="button" onClick={() => onOpenWorkspace("clubs")}>Open guest operations →</button>
+          <button type="button" onClick={() => onOpenWorkspace("clubs", "admin-guest-operations")}>Open guest operations →</button>
         </Panel>
         <Panel title="Live operations" badge={`${operations.live.checkedInDancers.length} checked in`}>
           <div className="operations-metric-grid">
@@ -1469,9 +1498,12 @@ function OperationsOverview({
           </div>
         </Panel>
 
-        <SystemHealthSummary monitoring={monitoring} warnings={operations.warnings} onOpenSystem={() => onOpenWorkspace("more")} />
+        <SystemHealthSummary monitoring={monitoring} warnings={operations.warnings} onOpenSystem={() => onOpenWorkspace("more", "admin-monitoring")} />
       </div>
-      <small className="data-freshness">Live data checked {relativeTime(operations.checkedAt)}.</small>
+      <div className="admin-overview-footer">
+        <small className="data-freshness">Live data checked {relativeTime(operations.checkedAt)}.</small>
+        <button type="button" onClick={onRefresh}>Refresh overview</button>
+      </div>
     </section>
   );
 }
@@ -1521,12 +1553,8 @@ function SystemHealthSummary({
 function ActivityTimeline({ operations }: { operations: AdminOperationsCenter | null }) {
   const activity = operations?.activity || [];
   return (
-    <section className="workspace-lead">
-      <header>
-        <span className="eyebrow">Audit trail</span>
-        <h2>Recent admin activity</h2>
-        <p>Recent approvals, moderation decisions, account changes, ranking actions, and legal actions recorded by the production system.</p>
-      </header>
+    <section className="workspace-lead admin-activity-panel">
+      <Panel title="Recent admin activity" badge={`${activity.length} recent`}>
       <div className="activity-timeline">
         {activity.length ? activity.map((item) => (
           <article key={asText(item.id)}>
@@ -1540,6 +1568,7 @@ function ActivityTimeline({ operations }: { operations: AdminOperationsCenter | 
           </article>
         )) : <p className="empty">No admin actions have been recorded yet.</p>}
       </div>
+      </Panel>
     </section>
   );
 }
@@ -1894,13 +1923,21 @@ function RankingManager() {
 
   return (
     <div className="ranking-manager">
+      <div className="admin-feature-note">
+        <strong>Current placement rules</strong>
+        <p>Club rosters, public dancer listings and MyDancrTV use the dancer performance score over {DANCER_PLACEMENT_DAYS} days. External or Both time is the largest factor at {DANCER_SCORE_WEIGHTS.externalTime}%, starting after {EXTERNAL_RANKING_START_MINUTES} recorded minutes.</p>
+        <p>Internal and public visibility still determine where a dancer can appear. Current scores update automatically.</p>
+      </div>
+      <details className="admin-record-section">
+      <summary>Legacy city rankings</summary>
+      <p>This recalculates the older city trending ranks and may send milestone notifications. It does not refresh the current performance score.</p>
       <form onSubmit={recalculate}>
         <label>
           City
           <input value={city} disabled={isWorking} onChange={(event) => setCity(event.target.value)} required />
         </label>
         <button type="submit" disabled={isWorking}>
-          {isWorking ? "Working..." : "Recalculate"}
+          {isWorking ? "Working..." : "Recalculate city ranks"}
         </button>
       </form>
       <div className="ranking-list">
@@ -1912,6 +1949,7 @@ function RankingManager() {
         ))}
       </div>
       {status ? <p>{status}</p> : null}
+      </details>
     </div>
   );
 }
@@ -2980,7 +3018,9 @@ function VenueManager({
                 {isActive ? <button type="button" disabled={controlsBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
               </div>
               {openedVenues[venueId] ? <AdminTableQrCodes key={venueId} venueId={venueId} name={asText(venue.name)} /> : null}
-              {registration.id ? <section className="submission-section" aria-label="Venue registration details">
+              {registration.id ? <details className="admin-record-section">
+                <summary>Original signup details</summary>
+                <section className="submission-section" aria-label="Venue registration details">
                 <h3>Provided during signup</h3>
                 <p className="empty">Original venue submission. The managed page below contains the current public details.</p>
                 <div className="submission-grid">
@@ -2995,7 +3035,9 @@ function VenueManager({
                   {registration.message ? <SubmissionValue label="Signup note" value={registration.message} wide /> : null}
                   <SubmissionValue label="Submitted" value={formatDate(registration.submittedAt)} />
                 </div>
-              </section> : null}
+              </section></details> : null}
+              <details className="admin-record-section" open={!isActive || undefined}>
+              <summary>Club page &amp; deals</summary>
               <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Venue"} managed page`}>
                 <div className="venue-page-admin-heading">
                   <span><small>Managed venue page</small><strong>{reviewLabel}</strong></span>
@@ -3068,7 +3110,13 @@ function VenueManager({
                   {commercialDirty ? <small>{isActive ? "Save the Club Deal and agreement edits in their sections." : "Save the Club Deal and agreement edits in their sections before sending for approval."}</small> : unsavedByVenue[venueId] ? <small>{isActive ? "Save your page changes." : "Save your changes before sending this page for approval."}</small> : !isReady && !isActive ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
                 </div>
               </section>
-              {openedVenues[venueId] ? <AdminVenueColors key={venueId} venueId={venueId} slug={asText(venue.slug)} name={asText(venue.name)} /> : null}
+              </details>
+              <details className="admin-record-section">
+                <summary>Colors &amp; website embed</summary>
+                {openedVenues[venueId] ? <AdminVenueColors key={venueId} venueId={venueId} slug={asText(venue.slug)} name={asText(venue.name)} /> : null}
+              </details>
+              <details className="admin-record-section">
+              <summary>Manager access</summary>
               <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>
                 <span className="eyebrow">Manager access</span>
                 {connectedManager ? (
@@ -3097,6 +3145,7 @@ function VenueManager({
                   </div>
                 )}
               </section>
+              </details>
             </details>
           );
         })}
@@ -4246,6 +4295,7 @@ function AdminDancerFullProfile({
 
       {activeTab === "all" || activeTab === "media" ? <section className="submission-section">
         <h3>Photos ({photos.length})</h3>
+        <p className="submission-empty">The approved main photo also supplies the avatar on public listings and club rosters.</p>
         {photos.length ? (
           <div className="submission-media-grid">
             {photos.map((photo, index) => {
@@ -4435,18 +4485,22 @@ function formatMoneyFromCents(value: unknown) {
 }
 
 function Panel({
+  id,
   title,
   badge,
   defaultOpen = false,
   children,
 }: {
+  id?: string;
   title: string;
   badge?: string;
   defaultOpen?: boolean;
   children: React.ReactNode;
 }) {
+  const [hasOpened, setHasOpened] = useState(defaultOpen);
   return (
-    <details className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"} open={defaultOpen || undefined}>
+    <details id={id} className={title === "Support Inbox" ? "admin-panel support-admin-panel" : "admin-panel"} open={defaultOpen || undefined}
+      onToggle={event => { if (event.target === event.currentTarget && event.currentTarget.open) setHasOpened(true); }}>
       <summary className="admin-panel-head">
         <span className="admin-panel-title"><span className="admin-panel-icon"><AdminDashboardIcon section="panel" /></span><h2>{title}</h2></span>
         <span className="admin-panel-summary-side">
@@ -4454,7 +4508,7 @@ function Panel({
           <span className="admin-panel-chevron" aria-hidden="true"><AdminDashboardIcon section="chevron" /></span>
         </span>
       </summary>
-      <div className="admin-panel-body">{children}</div>
+      <div className="admin-panel-body">{hasOpened || defaultOpen ? children : null}</div>
     </details>
   );
 }

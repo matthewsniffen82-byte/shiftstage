@@ -67,7 +67,7 @@ test('unavailable venue data and an empty roster have different messages', () =>
 test('admin navigation and operational queries do not load retired financial datasets', () => {
   const client = source('app/admin/AdminClient.tsx');
   assert.doesNotMatch(client, /ReferralFeeManager|FinanceManager|settleVenueBalance|previewCommission|\/api\/admin\/(finance|referral-fees)/);
-  assert.match(client, /id: "money", label: "Subscriptions"/);
+  assert.match(client, /id: "money", label: "Billing"/);
   const operations = source('src/lib/dancr/admin-operations.ts');
   assert.doesNotMatch(operations, /deal_revenue_events|commission_events|club_invoices|pendingVenuePaymentCents/);
   const admin = source('src/lib/dancr/admin.ts');

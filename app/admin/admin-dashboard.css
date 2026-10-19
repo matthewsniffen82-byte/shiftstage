@@ -95,15 +95,10 @@ body .admin-shell.dashboard-shell-admin .admin-panel-badge { border: 1px solid #
   body .dashboard-shell-admin .admin-workspace-nav button { flex-direction: column; gap: 5px; min-height: 64px; padding: 8px 4px; }
   body .dashboard-shell-admin .admin-workspace-nav button > span { top: 4px; right: 5px; }
 }
-body .dashboard-shell-admin .admin-workspace-nav button { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; gap: 5px 8px; align-content: center; text-align: left; min-height: 78px; }
-body .dashboard-shell-admin .admin-workspace-nav button > svg { grid-column: 1; grid-row: 1; }
-body .dashboard-shell-admin .admin-workspace-nav button > .admin-workspace-count { position: static; grid-column: 3; grid-row: 1; min-width: 25px; padding: 3px 6px; text-align: center; line-height: 1.3; }
-body .dashboard-shell-admin .admin-workspace-count-label { grid-column: 2 / -1; color: #b8aec8; font-size: 10px; font-weight: 400; }
-body .dashboard-shell-admin .admin-club-pending { grid-column: 1 / -1; color: #e5d5fc; font-size: 10px; font-weight: 550; }
-body .dashboard-shell-admin .attention-grid { grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); }
+body .dashboard-shell-admin .admin-workspace-nav button > .admin-workspace-count { position: static; min-width: 20px; height: auto; padding: 2px 5px; text-align: center; line-height: 1.3; }
+body .dashboard-shell-admin .attention-grid { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
 @media (max-width: 680px) {
-  body .dashboard-shell-admin .admin-workspace-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  body .dashboard-shell-admin .admin-workspace-nav button { padding: 10px 8px; font-size: 12px; }
+  body .dashboard-shell-admin .admin-workspace-nav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 /* Contract setup stays inside the selected club, with independent nested disclosures. */
 body .dashboard-shell-admin .venue-commercial-setup { display: grid; gap: 12px; min-width: 0; margin-block: 16px; }
@@ -111,3 +106,39 @@ body .dashboard-shell-admin .venue-commercial-setup .operations-center { max-wid
 body .dashboard-shell-admin .venue-commercial-setup .admin-panel-chevron { transform: rotate(0); }
 body .dashboard-shell-admin .venue-commercial-setup .admin-panel[open] > .admin-panel-head .admin-panel-chevron { transform: rotate(180deg); }
 body .dashboard-shell-admin .venue-commercial-setup select:disabled { opacity: 1; color: #e1d9eb; }
+
+/* Keep daily actions prominent; open the detailed tools only when needed. */
+body .admin-shell.dashboard-shell-admin .admin-dashboard-head { padding: 14px; gap: 10px; margin-bottom: 12px; border-radius: 14px; }
+body .admin-shell.dashboard-shell-admin .admin-workspace-nav { padding: 6px; gap: 4px; border-radius: 14px; }
+body .admin-shell.dashboard-shell-admin .admin-workspace-nav button { display: flex; flex-direction: row; align-items: center; justify-content: center; gap: 5px; min-height: 44px !important; padding: 6px !important; font-size: 12px !important; }
+body .admin-shell.dashboard-shell-admin .admin-panel { scroll-margin-top: 140px; }
+body .admin-shell.dashboard-shell-admin .admin-panel-head { min-height: 54px; padding: 10px 12px; gap: 8px; }
+body .admin-shell.dashboard-shell-admin .admin-panel-title { min-width: 0; gap: 8px; }
+body .admin-shell.dashboard-shell-admin .admin-panel-title h2 { font-size: 15px !important; }
+body .admin-shell.dashboard-shell-admin .admin-panel-icon { width: 26px; height: 26px; flex-basis: 26px; border-radius: 7px; }
+body .admin-shell.dashboard-shell-admin .admin-panel-icon svg { width: 16px; height: 16px; }
+body .admin-shell.dashboard-shell-admin .admin-panel-body { padding: 12px; }
+body .admin-shell.dashboard-shell-admin .admin-panel-body > :is(.workspace-lead, .operations-center) { padding: 0; margin: 0; border: 0; background: transparent; box-shadow: none; }
+body .admin-shell.dashboard-shell-admin .admin-activity-panel { padding: 0; border: 0; background: transparent; box-shadow: none; }
+body .admin-shell.dashboard-shell-admin .admin-attention-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+body .admin-shell.dashboard-shell-admin .admin-overview-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+body.dancr-button-system .admin-shell.dashboard-shell-admin :is(.admin-attention-controls, .admin-overview-footer) button { min-height: 44px !important; padding: 6px 10px !important; font-size: 12px !important; }
+body .admin-shell.dashboard-shell-admin .attention-grid:empty { display: none; }
+body .admin-shell.dashboard-shell-admin .attention-grid button { min-height: 68px !important; padding: 10px !important; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 8px; text-align: left; }
+body .admin-shell.dashboard-shell-admin .attention-grid strong { grid-column: 2; grid-row: 1 / 3; align-self: center; font-size: 22px; }
+body .admin-shell.dashboard-shell-admin .attention-grid small { grid-column: 1; }
+body .admin-shell.dashboard-shell-admin .admin-queues-clear { margin: 0; padding: 12px; border: 1px solid #467c6255; border-radius: 10px; background: #102119; color: #c4edd8; font-size: 13px; }
+body .admin-shell.dashboard-shell-admin .admin-task-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-task-shortcuts button { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; min-height: 48px !important; padding: 10px !important; border: 1px solid #71518f66 !important; border-radius: 10px !important; background: #21162e !important; color: #e9dcfa !important; font-size: 12px !important; text-align: left; box-shadow: none !important; }
+body .admin-shell.dashboard-shell-admin .admin-record-section { margin: 8px 0; padding: 0; border: 1px solid var(--admin-workspace-line); border-radius: 10px; background: #100c17; }
+body .admin-shell.dashboard-shell-admin .admin-record-section > summary { min-height: 48px; padding: 12px; color: #e9def5; font-size: 14px; font-weight: 600; cursor: pointer; }
+body .admin-shell.dashboard-shell-admin .admin-record-section > :not(summary) { margin: 0; padding: 12px; }
+body .admin-shell.dashboard-shell-admin .admin-feature-note { padding: 12px; border-left: 3px solid #b18ce3; border-radius: 8px; background: #21162e; }
+body .admin-shell.dashboard-shell-admin .admin-feature-note p { margin: 6px 0 0; color: #d5c7e4; font-size: 13px; line-height: 1.5; }
+@media (max-width: 680px) {
+  body .admin-shell.dashboard-shell-admin .admin-workspace-nav button { font-size: 11px !important; gap: 4px; }
+  body .admin-shell.dashboard-shell-admin .admin-workspace-nav button > svg { display: none; }
+  body .admin-shell.dashboard-shell-admin .admin-workspace-nav button > .admin-workspace-count { min-width: 16px; padding: 2px 4px; font-size: 9px; }
+  body .admin-shell.dashboard-shell-admin .admin-task-shortcuts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body .admin-shell.dashboard-shell-admin .operations-status-line { align-items: flex-start; gap: 8px; }
+}

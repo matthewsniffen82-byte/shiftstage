@@ -48,8 +48,8 @@ test("admin UI provides the complete mobile operations workspace", () => {
   assert.match(client, /title="People"/);
   assert.match(client, /title="Clubs"/);
   assert.match(client, /title="Subscriptions"/);
-  assert.match(client, /title="More"/);
-  assert.match(client, /What needs attention now/);
+  assert.match(client, /title="Tools"/);
+  assert.match(client, /Needs attention/);
   assert.match(client, /Live operations/);
   assert.match(client, /Venue subscriptions/);
   assert.match(client, /Growth & engagement/);
