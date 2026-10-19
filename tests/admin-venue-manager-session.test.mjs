@@ -26,7 +26,7 @@ test("admin venue management uses the refresh-aware role-isolated session bounda
     (venueMediaRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length,
     2,
   );
-  assert.equal((venueMediaRoute.match(/session: session \|\| null/g) || []).length, 2);
+  assert.equal((venueMediaRoute.match(/session: session \|\| null/g) || []).length, 3);
   assert.equal(
     (venueClaimCodesRoute.match(/const \{ client, session, user \} = await createRequestSupabaseContext\(request\)/g) || []).length,
     2,

@@ -1,0 +1,28 @@
+.admin-table-qr { margin-top: 12px; border-block: 1px solid #38353e; }
+.admin-table-qr > summary { display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer; color: #f7f5fa; }
+.admin-table-qr > summary::before { content: "+"; width: 16px; color: #bca1e8; text-align: center; }
+.admin-table-qr[open] > summary::before { content: "-"; }
+.admin-table-qr > summary span { margin-left: auto; color: #a5cabb; font-size: 12px; }
+.admin-table-qr-body { display: grid; gap: 12px; padding: 0 0 16px; }
+.admin-table-qr-heading, .admin-table-qr-identity { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.admin-table-qr-heading h3 { margin: 0; font-size: 16px; overflow-wrap: anywhere; }
+.admin-table-qr .admin-table-qr-create, .admin-table-qr .admin-table-qr-rename { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 8px; padding: 0; }
+.admin-table-qr label { flex: 1 1 180px; min-width: 0; }
+.admin-table-qr input { width: 100%; box-sizing: border-box; }
+.admin-table-qr-list { list-style: none; margin: 0; padding: 0; }
+.admin-table-qr-list > li { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid #302d35; }
+.admin-table-qr-identity strong { min-width: 0; overflow-wrap: anywhere; }
+.admin-table-qr-identity > span { flex-shrink: 0; color: #aba5b3; font-size: 12px; }
+.admin-table-qr-identity > span.active { color: #78d9af; }
+.admin-table-qr-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.venue-manager .admin-table-qr button, .admin-table-qr-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; width: auto; padding: 8px 12px; border: 1px solid #5b5564; border-radius: 8px; color: #f7f5fa; background: #2b2831; font: inherit; font-size: 13px; font-weight: 650; text-decoration: none; box-sizing: border-box; cursor: pointer; }
+.venue-manager .admin-table-qr button[type="submit"] { background: #48218a; border-color: #8057b7; }
+.venue-manager .admin-table-qr button.admin-table-qr-disable { color: #f2b3bb; }
+.admin-table-qr button:hover:not(:disabled), .admin-table-qr a:hover { filter: brightness(1.16); }
+.admin-table-qr button:disabled { opacity: .55; cursor: default; }
+.admin-table-qr :is(button, a, summary, input):focus-visible { outline: 2px solid #cab1f0; outline-offset: 3px; }
+.admin-table-qr p { margin: 0; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+@media (max-width: 480px) {
+  .admin-table-qr-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .admin-table-qr-actions :is(a, button) { min-width: 0; white-space: normal; text-align: center; overflow-wrap: anywhere; }
+}

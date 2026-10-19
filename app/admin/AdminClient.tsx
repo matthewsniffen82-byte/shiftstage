@@ -26,6 +26,7 @@ import AdminVenueSubscriptions from "./AdminVenueSubscriptions";
 import AdminTvPanel from "./AdminTvPanel";
 import AdminGuestOperations from "./AdminGuestOperations";
 import AdminVenueColors from "./AdminVenueColors";
+import AdminTableQrCodes from "./AdminTableQrCodes";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
 import { adminWorkspaceCounts, adminCountLabel } from "./admin-workspace-counts";
@@ -2978,6 +2979,7 @@ function VenueManager({
                 <small>{asText(venue.address) || "No address submitted"}</small>
                 {isActive ? <button type="button" disabled={controlsBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
               </div>
+              {openedVenues[venueId] ? <AdminTableQrCodes key={venueId} venueId={venueId} name={asText(venue.name)} /> : null}
               {registration.id ? <section className="submission-section" aria-label="Venue registration details">
                 <h3>Provided during signup</h3>
                 <p className="empty">Original venue submission. The managed page below contains the current public details.</p>
