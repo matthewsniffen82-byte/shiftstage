@@ -75,7 +75,7 @@ test('Overview offers Both for recorded Internal sessions and shows actual exter
   for (const html of [internal,both,renderShift(null,'nfc_presence',false)]) {
     assert.match(html,/External time helps you rank higher everywhere/);
     assert.match(html,/External or Both carries the most weight in your score—<strong>40%<\/strong>/);
-    assert.match(html,/both the club&#x27;s internal roster and public MyDancr listings/);
+    assert.match(html,/higher up on the club&#x27;s internal roster, public MyDancr listings, and the MyDancrTV feed/);
     assert.match(html,/Benefits start after 5 recorded minutes. More external time builds your score/);
   }
   const unknown=renderShift({visibility:'both',externalHours:null});

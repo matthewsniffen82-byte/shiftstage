@@ -179,7 +179,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
 
   const rankingGuidance = <>
     <small><strong>External time helps you rank higher everywhere.</strong></small>
-    <small>Time checked in on External or Both carries the most weight in your score—<strong>{DANCER_SCORE_WEIGHTS.externalTime}%</strong>. Higher scores help you appear higher on both the club&apos;s internal roster and public MyDancr listings.</small>
+    <small>Time checked in on External or Both carries the most weight in your score—<strong>{DANCER_SCORE_WEIGHTS.externalTime}%</strong>. Higher scores help you appear higher up on the club&apos;s internal roster, public MyDancr listings, and the MyDancrTV feed.</small>
     <small>Benefits start after {EXTERNAL_RANKING_START_MINUTES} recorded minutes. More external time builds your score.</small>
   </>;
 

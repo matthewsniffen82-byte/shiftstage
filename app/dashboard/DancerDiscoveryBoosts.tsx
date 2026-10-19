@@ -20,7 +20,7 @@ export function DancerDiscoveryBoosts({ refreshKey = "" }: { refreshKey?: string
   return <section className="dancer-analytics-audience" id="dancer-performance-ranking" aria-labelledby="discovery-boosts-heading">
     <h3 id="discovery-boosts-heading">Your performance score <small>Last {DANCER_PLACEMENT_DAYS} days{card?.venueName ? ` · ${card.venueName}` : ""}</small></h3>
     <p className="dancer-results-note"><strong>External time helps you rank higher everywhere.</strong></p>
-    <p className="dancer-results-note">Time checked in on External or Both carries the most weight in your score—<strong>{DANCER_SCORE_WEIGHTS.externalTime}%</strong>. Higher scores help you appear higher on both the club&apos;s internal roster and public MyDancr listings.</p>
+    <p className="dancer-results-note">Time checked in on External or Both carries the most weight in your score—<strong>{DANCER_SCORE_WEIGHTS.externalTime}%</strong>. Higher scores help you appear higher up on the club&apos;s internal roster, public MyDancr listings, and the MyDancrTV feed.</p>
     <p className="dancer-results-note">Benefits start after {EXTERNAL_RANKING_START_MINUTES} recorded minutes. More external time builds your score.</p>
     {error ? <p role="alert">Your score is temporarily unavailable. <button type="button" onClick={()=>setRetry(value=>value+1)}>Try again</button></p>
       : !status ? <p role="status">Loading performance score…</p> : <>
