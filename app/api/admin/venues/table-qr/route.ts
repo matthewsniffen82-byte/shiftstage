@@ -11,7 +11,8 @@ export const runtime = "nodejs";
 const headers = { "cache-control": "private, no-store" };
 const columns = "id,venue_id,kind,label,token,active,updated_at";
 function uuid(value: unknown) {
-  if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)) {
+  // Seeded database row IDs do not necessarily carry UUID version/variant bits.
+  if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) {
     throw new PublicApiError("INVALID_REQUEST", "Choose a valid venue and table code.", 400);
   }
   return value;

@@ -8,8 +8,9 @@ type TableCode = { id: string; venue_id: string; kind: "table"; label: string; t
 function isTableCode(value: unknown, venueId: string): value is TableCode {
   if (!value || typeof value !== "object") return false;
   const code = value as TableCode;
-  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return code.venue_id === venueId && code.kind === "table" && uuid.test(code.id) && uuid.test(code.token)
+  const rowUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const tokenUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return code.venue_id === venueId && code.kind === "table" && rowUuid.test(code.id) && tokenUuid.test(code.token)
     && typeof code.label === "string" && typeof code.active === "boolean" && typeof code.updated_at === "string";
 }
 

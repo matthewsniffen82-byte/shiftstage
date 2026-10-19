@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import vm from "node:vm";
 import ts from "typescript";
 import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
@@ -18,6 +19,10 @@ function compile(path, dependencies, globals = {}) {
   return exports;
 }
 const code = (overrides = {}) => ({ id: id(80), venue_id: id(20), kind: "table", label: "Table 1", token: id(90), active: true, updated_at: "2026-10-19T00:00:00Z", ...overrides });
+// Match Echo's deterministic row IDs; its separate QR tokens remain random UUIDs.
+const echoTableIds = Array.from({ length: 6 }, (_, i) => createHash("md5")
+  .update(`mydancr-echo-dashboard-v1:table:${i + 1}`).digest("hex")
+  .replace(/^(........)(....)(....)(....)(............)$/, "$1-$2-$3-$4-$5"));
 
 test("admin table QR database enforces ownership, retry safety, labels and atomic revocation", async () => {
   const db = await createInternalRosterDatabase();
@@ -141,6 +146,26 @@ test("API fails closed for bad inputs, conflicts and unconfirmed database writes
   }
 });
 
+test("admin API accepts seeded table row IDs for download, rename and disable", async () => {
+  for (const tableId of echoTableIds) {
+    const f = apiFixture();
+    assert.equal((await f.get(id(20), tableId)).status, 200);
+    assert.equal(f.calls.at(-1).qrUrl, `https://www.mydancr.com/internal/club/${id(90)}`);
+    for (const action of ["rename", "disable"]) {
+      const response = await f.post({ id: tableId, action, label: "Patio", expectedUpdatedAt: code().updated_at });
+      assert.equal(response.status, 200);
+      assert.equal((await response.json()).link.id, tableId);
+      assert.equal(f.calls.at(-1).args.p_venue, id(20));
+      assert.equal(f.calls.at(-1).args.p_actor, id(3));
+    }
+    assert.equal((await apiFixture({ role: "venue" }).post({ id: tableId })).status, 403);
+  }
+  for (const malformed of ["not-a-uuid", `${echoTableIds[0]}/extra`, echoTableIds[0].replace(/-/g, ""), echoTableIds[0].replace(/f/, "g")]) {
+    assert.equal((await apiFixture().post({ id: malformed })).status, 400);
+    assert.equal((await apiFixture().get(id(20), malformed)).status, 400);
+  }
+});
+
 function componentFixture(handler) {
   const slots = [], effects = []; let cursor = 0, tree; const requests = [];
   const hooks = {
@@ -178,6 +203,38 @@ test("admin component loads on demand, creates once and exposes existing roster/
   assert.ok(f.find(node => node.type === "a" && node.props.href === `/internal/club/${id(90)}`));
   assert.equal(f.find(node => node.type === "input").props.value, "");
   f.unmount();
+});
+test("Echo's existing sample tables do not block the create form or a new table", async () => {
+  const existing = echoTableIds.map((tableId, i) => code({ id: tableId, label: `Sample table ${i + 1}`, token: id(100 + i) }));
+  existing.push(code({ id: id(79), label: "Table 1" }));
+  const f = componentFixture(async (_url, options) => {
+    if (options.method !== "POST") return { venueId: id(20), links: existing };
+    const body = JSON.parse(options.body);
+    return { venueId: id(20), link: code({ id: body.id, label: body.label }) };
+  });
+  try {
+    f.open(); await f.settle();
+    assert.equal(f.find(node => node.props.role === "alert"), undefined);
+    for (const row of existing) assert.ok(f.find(node => node.type === "strong" && node.props.children === row.label));
+    const input = f.find(node => node.type === "input");
+    assert.ok(input, "The create form must remain available with all seven existing Echo tables");
+    input.props.onChange({ target: { value: "Table 2" } }); f.render();
+    assert.equal(f.find(node => node.type === "button" && node.props.children === "Create QR code").props.disabled, false);
+    f.find(node => node.type === "form").props.onSubmit({ preventDefault() {} }); await f.settle();
+    assert.ok(f.find(node => node.type === "strong" && node.props.children === "Table 2"));
+    assert.ok(f.find(node => node.props.role === "status" && node.props.children === "Table QR code created."));
+  } finally { f.unmount(); }
+});
+test("accepting seeded row IDs does not accept malformed IDs or QR tokens", async () => {
+  for (const override of [{ id: "bad" }, { id: `${echoTableIds[0]}/extra` }, { token: echoTableIds[0] }, { token: "bad" }, { venue_id: id(21) }, { kind: "display" }]) {
+    const f = componentFixture(async () => ({ venueId: id(20), links: [code({ id: echoTableIds[0], ...override })] }));
+    try {
+      f.open(); await f.settle();
+      assert.ok(f.find(node => node.props.role === "alert"));
+      assert.equal(f.find(node => node.type === "form"), undefined);
+      assert.equal(f.find(node => node.type === "a"), undefined);
+    } finally { f.unmount(); }
+  }
 });
 test("create retry preserves its id and malformed or aborted loads do not expose codes", async () => {
   const f = componentFixture(async (_url, options) => { if (options.method === "POST") throw new Error("Connection lost"); return { venueId: id(20), links: [] }; });
