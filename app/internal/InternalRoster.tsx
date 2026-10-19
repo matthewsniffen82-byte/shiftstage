@@ -514,7 +514,10 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
       if (token && dancerId) showDancerNotice(dancerId, "That profile could not load. Please try again.", true);
       else setNotice("That profile could not load. Please try again.");
     }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }} />
-    {!operationsOnly ? <footer>Powered by MyDancr · {staff ? "Visibility is chosen by each dancer at check-in." : "Availability may change. Club staff coordinate all requests."}</footer> : null}
+    {!operationsOnly ? <footer className="ir-powered-by">
+      <a href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a>
+      <p>{staff ? "Visibility is chosen by each dancer at check-in." : "Availability may change. Club staff coordinate all requests."}</p>
+    </footer> : null}
   </div>;
 }
 

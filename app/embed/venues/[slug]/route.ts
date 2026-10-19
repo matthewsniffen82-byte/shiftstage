@@ -27,11 +27,10 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
       <div id="results" class="home-dancer-grid home-dancer-three-column" aria-busy="true"></div>
       <button id="venue-more" type="button" hidden>Show more</button>
       <noscript>Enable JavaScript to see who is working now.</noscript>
-      <p class="venue-embed-credit">Powered by MyDancr</p>
     </section><section id="venue-profile" hidden tabindex="-1" aria-label="Dancer profile">
       <button id="venue-profile-back" type="button">← Working now</button>
       <p id="venue-profile-status" role="status"></p><div id="venue-profile-content"></div>
-    </section></main></div>
+    </section><footer class="venue-embed-credit"><a href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a></footer></main></div>
     <dialog id="venue-media-dialog" aria-label="Dancer photo or video"><button id="venue-media-close" type="button" aria-label="Close media">Close</button><div id="venue-media-content"></div></dialog>
   </body></html>`;
   return new Response(versionStaticAssetReferences(html), { headers: {
