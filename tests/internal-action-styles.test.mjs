@@ -55,3 +55,23 @@ test('new request stays purple and cancellation styling does not change the requ
   assert.equal(declarations(profile, 'html.internal-profile-embed [data-internal-table-request]:enabled:not([data-request-sent])')['--profile-action-background'], 'linear-gradient(#6d28d9, #6d28d9)');
   assert.match(read('src/live-shell/app/internal-profile-bridge.js'), /confirmed \|\| internalTableRequest.busy \|\| \(sent \? !internalTableRequest.requestId : !profile.scheduled\)/);
 });
+
+test('card feedback floats above its action, stays within each grid edge and has a touch-sized dismiss control', () => {
+  const notice = 'body .ir-shell.ir-guest .ir-dancer-notice';
+  const styles = declarations(grid, notice);
+  assert.equal(styles.position, 'absolute', 'feedback cannot change portrait size or grid spacing');
+  assert.equal(styles.bottom, '52px', 'leave the 44px request button unobstructed');
+  assert.equal(styles.left, '0');
+  assert.equal(styles.width, 'min(240px, calc(100vw - 24px))');
+  const middle = declarations(grid, 'body .ir-shell.ir-guest .ir-dancer:nth-child(3n + 2) .ir-dancer-notice');
+  assert.equal(middle.left, '50%');
+  assert.equal(middle.transform, 'translateX(-50%)');
+  const right = declarations(grid, 'body .ir-shell.ir-guest .ir-dancer:nth-child(3n) .ir-dancer-notice');
+  assert.equal(right.left, 'auto'); assert.equal(right.right, '0');
+  const card = declarations(grid, 'body .ir-shell.ir-guest .ir-directory-grid .ir-dancer[data-has-notice]');
+  assert.equal(card.overflow, 'visible'); assert.equal(card['z-index'], '5');
+  const dismiss = declarations(grid, 'body.dancr-button-system .ir-shell.ir-guest button.ir-dancer-notice-dismiss');
+  assert.equal(dismiss.position, 'absolute');
+  assert.equal(dismiss.width, '44px'); assert.equal(dismiss.height, '44px');
+  assert.equal(dismiss['align-items'], 'center'); assert.equal(dismiss['justify-content'], 'center');
+});

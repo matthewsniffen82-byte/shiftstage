@@ -147,6 +147,7 @@ const alertMessage = app => find(alert(app), node => node.type === "p")?.props.c
 const grid = app => find(app.render(), node => node.props?.className === "ir-grid ir-directory-grid");
 const profile = app => find(app.render(), node => node.type?.name === "ClubProfileDialog")?.props.profile;
 const requestButton = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-table-request");
+const cardNotice = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-dancer-notice");
 const refreshButton = app => find(app.render(), node => node.props?.className === "ir-roster-refresh");
 const refreshMessage = app => find(app.render(), node => node.props?.className === "ir-refresh-message")?.props.children;
 const textContent = tree => typeof tree === "string" || typeof tree === "number" ? String(tree)
@@ -696,7 +697,8 @@ test('a timed-out cancellation reconciles the saved state without claiming cance
   return response({...roster,kind:'table',dancers:[{...dancer,requestStatus:status,requestId:status?'saved-request':null}]});
  });t.after(()=>app.unmount());await app.mount();requestButton(app,dancer.id).props.onClick();
  await app.advance(15000);assert.equal(requestButton(app,dancer.id).props.children,'Request');
- assert.match(find(app.render(),node=>node.props?.className==='ir-notice').props.children,/timed out/);
+ assert.match(textContent(cardNotice(app,dancer.id)),/timed out/);
+ assert.ok(find(cardNotice(app,dancer.id),node=>node.props?.role==='alert'));
 });
 
 test('an older background read cannot bring back a cancelled request',async t=>{
@@ -754,7 +756,97 @@ test("a stalled viewer returns an inline retry message without taking over the r
  find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();
  find(app.render(),node=>node.type?.name==='ClubProfileDialog').props.onError();
  assert.equal(profile(app),null);assert.ok(grid(app));
- assert.equal(find(app.render(),node=>node.props?.className==='ir-notice').props.children,'That profile could not load. Please try again.');
+ assert.equal(find(cardNotice(app,dancer.id),node=>node.type==='p').props.children,'That profile could not load. Please try again.');
+ assert.equal(find(app.render(),node=>node.props?.className==='ir-notice'),undefined);
+});
+
+test('request and cancellation feedback stays at its card and replaces its own expiry timer', async t => {
+  let status = null;
+  const app = harness(async (_url, options) => {
+    if (options.method === 'POST') {
+      status = JSON.parse(options.body).action === 'cancel_request' ? null : 'pending';
+      return response({ ok: true, receipt: { id: 'saved-request', status: status || 'cancelled' } });
+    }
+    return response({ ...roster, kind: 'table', dancers: [{ ...dancer, requestStatus: status, requestId: status ? 'saved-request' : null }, { ...dancer, id: 'other' }] });
+  });
+  t.after(() => app.unmount()); await app.mount();
+  requestButton(app, dancer.id).props.onClick(); await flush();
+  const sent = cardNotice(app, dancer.id);
+  assert.match(textContent(sent), /Request sent to club staff/);
+  assert.equal(find(sent, node => node.type === 'strong').props.children, dancer.stageName);
+  assert.equal(requestButton(app, dancer.id).props['aria-describedby'], find(sent, node => node.props?.role === 'status').props.id);
+  assert.equal(cardNotice(app, 'other'), undefined);
+  assert.equal(find(app.render(), node => node.props?.className === 'ir-notice'), undefined);
+  await app.advance(2000);
+  requestButton(app, dancer.id).props.onClick();
+  assert.equal(cardNotice(app, dancer.id), undefined, 'a new action clears only its previous feedback');
+  await flush();
+  assert.match(textContent(cardNotice(app, dancer.id)), /Request cancelled/);
+  await app.advance(8000);
+  assert.ok(cardNotice(app, dancer.id), 'the previous confirmation timer cannot remove the cancellation message');
+  await app.advance(2000);
+  assert.equal(cardNotice(app, dancer.id), undefined);
+  requestButton(app, dancer.id).props.onClick(); await flush();
+  find(cardNotice(app, dancer.id), node => node.type === 'button').props.onClick();
+  assert.equal(cardNotice(app, dancer.id), undefined, 'confirmations can be dismissed immediately');
+  assert.equal(requestButton(app, dancer.id).props['aria-describedby'], undefined);
+  app.unmount(); assert.equal(app.timers.size, 0);
+});
+
+test('concurrent card feedback never overwrites another dancer or their open profile', async t => {
+  const other = { ...dancer, id: 'other', stageName: 'Other dancer' };
+  const requests = new Map();
+  const app = harness(async (url, options) => {
+    if (options.method === 'POST') {
+      const pending = deferred();
+      requests.set(JSON.parse(options.body).dancerId, pending);
+      return pending.promise;
+    }
+    if (url.includes('/profile/')) return response({ ok: true, profile: { id: other.id } });
+    return response({ ...roster, kind: 'table', dancers: [dancer, other] });
+  });
+  t.after(() => app.unmount()); await app.mount();
+  requestButton(app, dancer.id).props.onClick();
+  requestButton(app, other.id).props.onClick();
+  const otherCard = find(app.render(), node => node.type === 'article' && node.key === other.id);
+  find(otherCard, node => node.props?.className === 'ir-profile-link').props.onClick(); await flush();
+  const dialog = () => find(app.render(), node => node.type?.name === 'ClubProfileDialog');
+  requests.get(other.id).resolve(response({ ok: false, error: 'Please wait before requesting again.' }, 429)); await flush();
+  assert.equal(dialog().props.request.message, 'Please wait before requesting again.');
+  requests.get(dancer.id).resolve(response({ ok: true, receipt: { id: 'request-1', status: 'pending' } })); await flush();
+  assert.match(textContent(cardNotice(app, dancer.id)), /Request sent/);
+  assert.equal(dialog().props.request.message, 'Please wait before requesting again.');
+  assert.ok(find(cardNotice(app, other.id), node => node.props?.role === 'alert'));
+  await app.advance(10000);
+  assert.equal(cardNotice(app, dancer.id), undefined);
+  assert.ok(cardNotice(app, other.id), 'errors remain available after confirmation expiry');
+  requestButton(app, other.id).props.onClick();
+  assert.equal(cardNotice(app, other.id), undefined);
+  assert.equal(dialog().props.request.message, '');
+  requests.get(other.id).resolve(response({ ok: false, error: 'Please try later.' }, 503)); await flush();
+  find(cardNotice(app, other.id), node => node.type === 'button').props.onClick();
+  assert.equal(cardNotice(app, other.id), undefined);
+  assert.equal(dialog().props.request.message, '');
+});
+
+test('profile fetch errors are card-local and access loss clears all card feedback', async t => {
+  let revoked = false;
+  const app = harness(async url => {
+    if (revoked) return response({ ok: false, error: 'This table is no longer available.' }, 410);
+    if (url.includes('/profile/')) return response({ ok: false, error: 'Profile temporarily unavailable.' }, 503);
+    return response({ ...roster, kind: 'table' });
+  });
+  t.after(() => app.unmount()); await app.mount();
+  find(app.render(), node => node.props?.className === 'ir-profile-link').props.onClick(); await flush();
+  assert.match(textContent(cardNotice(app, dancer.id)), /Profile temporarily unavailable/);
+  assert.equal(find(app.render(), node => node.props?.className === 'ir-notice'), undefined);
+  revoked = true;
+  refreshButton(app).props.onClick(); await flush();
+  assert.equal(grid(app), undefined);
+  assert.match(alertMessage(app), /no longer available/);
+  revoked = false;
+  find(alert(app), node => node.type === 'button').props.onClick(); await flush();
+  assert.ok(grid(app)); assert.equal(cardNotice(app, dancer.id), undefined);
 });
 
 test("returning from sign-in reopens only the requested dancer on the authorized roster", async t => {
