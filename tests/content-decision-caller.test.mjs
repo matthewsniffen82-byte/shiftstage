@@ -161,7 +161,7 @@ async function uiHarness(options={}){
  const h=harness(options),photos=[{id:id(101),reviewVersion:await decisionVersion(pg)}],socials=[],feedback={},statuses={},versions={current:{}},ui={},requests=[];
  const context={exports:ui,Error,JSON,isContentReviewVersion,photos,socials,dancerId:id(11),asText:v=>typeof v==="string"?v:"",reasonByKey:{["photo:"+id(101)]:"Later reason"},versionByKeyRef:versions,
   activeActionRef:{current:null},onKeepOpen(){},beginAction:()=>({controller:new AbortController()}),isCurrentAction:()=>true,onActionStarted(){},finishAction(){},setWorkingByKey(){},
-  setFeedbackByKey(fn){Object.assign(feedback,fn(feedback));},setStatusByKey(fn){Object.assign(statuses,fn(statuses));},onSocialReviewed(){},onActionConfirmed(){},
+  setFeedbackByKey(fn){Object.assign(feedback,fn(feedback));},setStatusByKey(fn){Object.assign(statuses,fn(statuses));},onSocialReviewed(){},onActionConfirmed(){},onContentReviewed: options.onContentReviewed,
   async requestAdminJson(_url,input){const payload=JSON.parse(input.body);requests.push(payload);const r=await h.post(payload);if(r.response.status>=400)throw new Error(r.body.error);return options.uiOverride?options.uiOverride(r.body):r.body;},
  };
  vm.runInNewContext(uiCode,context);
@@ -185,4 +185,12 @@ test("actual UI shows notification uncertainty while retaining the confirmed dec
 });
 test("legacy UI without loaded version asks for refresh before sending",async()=>{
  const h=await uiHarness();delete h.photos[0].reviewVersion;await h.click();assert.equal(h.requests.length,0);assert.match(h.feedback["photo:"+id(101)].message,/Refresh/);
+});
+
+test("the unified queue advances only after a verified saved decision",async()=>{
+ const calls=[];
+ let h=await uiHarness({onContentReviewed:(...args)=>calls.push(args),uiOverride:body=>({...body,review:{...body.review,status:undefined}})});
+ await h.click();assert.equal(calls.length,0);
+ h=await uiHarness({onContentReviewed:(...args)=>calls.push(args)});await h.click();assert.equal(calls.length,1);
+ assert.equal(calls[0][0],id(11));assert.equal(calls[0][1],"photo");assert.equal(calls[0][2],id(101));assert.equal(calls[0][3],"approved");
 });

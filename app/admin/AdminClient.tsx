@@ -27,10 +27,14 @@ import AdminTvPanel from "./AdminTvPanel";
 import AdminGuestOperations from "./AdminGuestOperations";
 import AdminVenueColors from "./AdminVenueColors";
 import AdminTableQrCodes from "./AdminTableQrCodes";
+import AdminClubSetupChecklist from "./AdminClubSetupChecklist";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
 import { adminWorkspaceCounts, adminCountLabel } from "./admin-workspace-counts";
 import { adminAttentionItems } from "./admin-attention";
+import { ADMIN_DATA_CHANGED } from "./admin-data-events";
+import { adminReviewQueue, type ReviewTarget, type ReviewKind } from "./admin-review-queue";
+import type { AdminGuestSection } from "@/src/lib/dancr/admin-guest-operations-types";
 import { DANCER_PLACEMENT_DAYS, DANCER_SCORE_WEIGHTS, EXTERNAL_RANKING_START_MINUTES } from "@/src/lib/dancr/venue-dancer-scores";
 import { NFC_WORKING_WINDOW_HOURS, NFC_COOLDOWN_HOURS } from "@/src/lib/dancr/shift-presence";
 import {
@@ -56,6 +60,7 @@ type AdminState = {
   dealRequests?: Array<Record<string, unknown>>;
   supportThreads?: Array<Record<string, unknown>>;
   imageModeration?: Array<Record<string, unknown>>;
+  reviewVideos?: Array<Record<string, unknown>>;
   operations?: AdminOperationsCenter | null;
   authRequired?: boolean;
   warnings?: string[];
@@ -114,9 +119,10 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
       },
       {
         label: "Image moderation",
-        path: "/api/admin/image-moderation?decision=review",
+        path: "/api/admin/image-moderation?decision=review&pageSize=50",
         apply: (data) => ({ imageModeration: data.records || [] }),
       },
+      { label: "Video moderation", path: "/api/admin/tv/videos?status=submitted", apply: data => ({ reviewVideos: data.videos || [] }) },
       { label: "Reports", path: "/api/admin/reports", apply: (data) => ({ reports: data.reports || [] }) },
     ];
   }
@@ -179,6 +185,11 @@ export default function AdminClient() {
   const [requestedPanel, setRequestedPanel] = useState("");
   const [loadedWorkspaces, setLoadedWorkspaces] = useState<Partial<Record<AdminWorkspace, boolean>>>({});
   const [loadingWorkspace, setLoadingWorkspace] = useState<AdminWorkspace | null>(null);
+  const [requestedDancerId, setRequestedDancerId] = useState("");
+  const [guestDestination, setGuestDestination] = useState<{ venueId: string; section: AdminGuestSection; revision: number } | null>(null);
+  const [countRefreshError, setCountRefreshError] = useState("");
+  const [requestedReviewFilter, setRequestedReviewFilter] = useState<ReviewKind | "all">("all");
+  const [requestedClubId, setRequestedClubId] = useState("");
   const openApprovalIdsRef = useRef<Record<string, boolean>>({});
   const mountedRef = useRef(false);
   const dataGenerationRef = useRef(0);
@@ -241,6 +252,52 @@ export default function AdminClient() {
     setActionNotice({ id: Date.now(), message });
   }
 
+  useEffect(() => {
+    let timer: number | undefined;
+    let request: AbortController | null = null;
+    const refreshCounts = () => {
+      request?.abort();
+      window.clearTimeout(timer);
+      timer = window.setTimeout(async () => {
+        if (!readAdminSession()) return;
+        const controller = new AbortController(); request = controller;
+        const generation = dataGenerationRef.current, identity = readBrowserAccountIdentity();
+        try {
+          const data = await requestAdminJson("/api/admin/operations", { cache: "no-store", signal: controller.signal });
+          if (!mountedRef.current || controller.signal.aborted || generation !== dataGenerationRef.current || identity !== readBrowserAccountIdentity()) return;
+          if (!data.operations?.attention) throw new Error("Counts could not be confirmed.");
+          setState(current => ({ ...current, operations: data.operations }));
+          setCountRefreshError("");
+        } catch {
+          if (mountedRef.current && !controller.signal.aborted && generation === dataGenerationRef.current && identity === readBrowserAccountIdentity()) {
+            setCountRefreshError("Counts could not refresh. Your saved changes are still recorded.");
+          }
+        }
+      }, 250);
+    };
+    window.addEventListener(ADMIN_DATA_CHANGED, refreshCounts);
+    return () => { window.removeEventListener(ADMIN_DATA_CHANGED, refreshCounts); window.clearTimeout(timer); request?.abort(); };
+  }, []);
+
+  function openDancerManagement(dancerId: string) {
+    setRequestedDancerId(dancerId);
+    openWorkspace("people");
+  }
+
+  function openClubOperations(venueId: string, section: AdminGuestSection) {
+    setGuestDestination(current => ({ venueId, section, revision: (current?.revision || 0) + 1 }));
+    openWorkspace("clubs", "admin-guest-operations");
+  }
+
+  async function refreshReviewSources(signal: AbortSignal) {
+    const generation = dataGenerationRef.current, identity = readBrowserAccountIdentity();
+    const sections = adminSectionsForWorkspace("approvals").filter(section => ["Dancer approvals", "Image moderation", "Video moderation"].includes(section.label));
+    const results = await Promise.all(sections.map(section => requestAdminJson(section.path, { signal, cache: "no-store" })));
+    if (!mountedRef.current || signal.aborted || generation !== dataGenerationRef.current || identity !== readBrowserAccountIdentity()) return;
+    const update = Object.assign({}, ...results.map((data, index) => sections[index].apply(data)));
+    setState(current => ({ ...current, ...update, warnings: (current.warnings || []).filter(warning => !sections.some(section => warning.startsWith(`${section.label}:`))) }));
+  }
+
   function cancelWorkspaceLoad() {
     workspaceLoadSequenceRef.current += 1;
     const active = workspaceLoadRef.current;
@@ -298,6 +355,10 @@ export default function AdminClient() {
   }, [requestedPanel, workspace, workspaceReady, isLoading, state.authRequired]);
 
   function openWorkspace(nextWorkspace: AdminWorkspace, panel = "") {
+    if (nextWorkspace === "approvals" && ["admin-dancer-approvals", "admin-photo-review", "admin-tv-review"].includes(panel)) {
+      setRequestedReviewFilter(panel === "admin-photo-review" ? "photo" : panel === "admin-tv-review" ? "video" : "all");
+      panel = "admin-review-queue";
+    }
     setRequestedPanel(panel);
     setWorkspace(nextWorkspace);
     void loadWorkspaceData(nextWorkspace);
@@ -414,6 +475,10 @@ export default function AdminClient() {
     setLoadedWorkspaces({});
     setLoadingWorkspace(null);
     setActionNotice(null);
+    setCountRefreshError("");
+    setRequestedDancerId("");
+    setRequestedClubId("");
+    setGuestDestination(null);
     setState({ authRequired: true, error: "Admin session ended. Sign in to continue." });
     setIsSigningIn(false);
     setIsResettingPassword(false);
@@ -598,7 +663,6 @@ export default function AdminClient() {
 
   const needsSignIn = state.authRequired === true;
   const dashboardWarnings = state.warnings || [];
-  const pendingDancerApprovalCount = state.queue?.length || 0;
   const workspaceCounts = adminWorkspaceCounts(state.operations);
   const pendingClubCount = state.operations?.warnings.some(warning => warning.section === "Club signup requests")
     ? null : state.operations?.attention.clubRequests;
@@ -632,6 +696,7 @@ export default function AdminClient() {
       onClaimCodesChange={(venueClaimCodes) => setState(current => ({ ...current, venueClaimCodes }))}
       claimCodes={state.venueClaimCodes || []}
       onActionConfirmed={confirmAdminAction}
+      onContinueSetup={venueId => { setRequestedClubId(venueId); openWorkspace("clubs", "admin-club-accounts"); }}
     />}
   </Panel>;
   const dashboardDescription = isLoading
@@ -773,6 +838,7 @@ export default function AdminClient() {
               </button>
             ); })}
           </nav>
+          {countRefreshError ? <p role="status">{countRefreshError} <button type="button" onClick={() => window.dispatchEvent(new Event(ADMIN_DATA_CHANGED))}>Retry counts</button></p> : null}
           {workspace === "home" ? (
             <>
               <OperationsOverview
@@ -794,71 +860,24 @@ export default function AdminClient() {
               <WorkspaceHeader
                 eyebrow="Review queues"
                 title="Approvals"
-                description="Choose a queue to review profiles, media, reports or club requests."
+                description="Review the next item here. Saved decisions advance the queue automatically."
               />
               <section className="admin-grid">
-                {clubRequestPanel}
-                <Panel
-                  id="admin-dancer-approvals"
-                  title="Dancer approvals"
-                  badge={`${pendingDancerApprovalCount} needed`}
-                >
-                  <Metric label="Dancers needing approval" value={String(pendingDancerApprovalCount)} />
-                  <Metric label="Profiles in roster" value={String(state.dancerTotal || 0)} />
-                  <ApprovalQueue
-                    items={state.queue || []}
-                    openById={openApprovalIds}
-                    onToggleOpen={(dancerId) =>
-                      setApprovalOpen(dancerId, !Boolean(openApprovalIdsRef.current[dancerId]))
-                    }
-                    onKeepOpen={(dancerId) => setApprovalOpen(dancerId, true)}
-                    onSocialReviewed={(dancerId, targetId, status, notes) =>
-                      setState((current) => ({
-                        ...current,
-                        queue: (current.queue || []).map((item) =>
-                          asText(item.id) === dancerId
-                            ? withReviewedSocial(item, targetId, status, notes)
-                            : item
-                        ),
-                      }))
-                    }
-                    onProfileUpdated={(profile) =>
-                      setState((current) => ({
-                        ...current,
-                        queue: (current.queue || []).map((item) =>
-                          asText(item.id) === asText(profile.id) ? { ...item, ...profile } : item
-                        ),
-                      }))
-                    }
-                    onActionConfirmed={confirmAdminAction}
-                    onReviewed={(dancerId) => {
-                      setState((current) => ({
-                        ...current,
-                        queue: (current.queue || []).filter((item) => String(item.id) !== dancerId),
-                      }));
-                      setApprovalOpen(dancerId, false);
-                    }}
-                  />
+                <Panel id="admin-review-queue" title="Review queue" defaultOpen>
+                  <UnifiedReviewQueue profiles={state.queue || []} images={state.imageModeration || []} videos={state.reviewVideos || []}
+                    requestedFilter={requestedReviewFilter}
+                    warnings={(state.warnings || []).filter(warning => /^(Dancer approvals|Image moderation|Video moderation):/.test(warning))}
+                    onRefresh={refreshReviewSources} onActionConfirmed={confirmAdminAction} onManageDancer={openDancerManagement}
+                    onProfilesChange={queue => setState(current => ({ ...current, queue }))}
+                    onImagesChange={imageModeration => setState(current => ({ ...current, imageModeration }))}
+                    onVideosChange={reviewVideos => setState(current => ({ ...current, reviewVideos }))} />
                 </Panel>
+                {clubRequestPanel}
                 <Panel id="admin-reports" title="Reports" badge={`${state.reports?.length || 0} open`}>
                   <ReportManager
                     reports={state.reports || []}
                     onReportsChange={(reports) => setState((current) => ({ ...current, reports }))}
                   />
-                </Panel>
-                <Panel
-                  id="admin-photo-review"
-                  title="Image moderation"
-                  badge={`${state.imageModeration?.filter((item) => String(item.decision) === "review").length || 0} to review`}
-                >
-                  <ImageModerationQueue
-                    records={state.imageModeration || []}
-                    onRecordsChange={(imageModeration) => setState((current) => ({ ...current, imageModeration }))}
-                    onActionConfirmed={confirmAdminAction}
-                  />
-                </Panel>
-                <Panel id="admin-tv-review" title="MyDancr TV moderation" badge={`${adminCountLabel(state.operations?.attention.videos)} to review`}>
-                  <AdminTvPanel />
                 </Panel>
               </section>
             </>
@@ -874,6 +893,7 @@ export default function AdminClient() {
               <section className="admin-grid">
                 <Panel title="Dancer management" badge={`${adminCountLabel(state.operations?.counts?.dancers)} profiles`} defaultOpen>
                   <DancerDirectory
+                    requestedDancerId={requestedDancerId}
                     onActionConfirmed={confirmAdminAction}
                     onProfileUpdated={(profile) => {
                       setState((current) => ({
@@ -922,13 +942,15 @@ export default function AdminClient() {
                     onDealRequestsChange={(dealRequests) => setState(current => ({ ...current, dealRequests }))}
                     onActionConfirmed={confirmAdminAction}
                     venues={state.venues || []}
+                    onOpenOperations={openClubOperations}
+                    requestedClubId={requestedClubId}
                     claimCodes={state.venueClaimCodes || []}
                     onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
                     onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
                   />
                 </Panel>
                 <Panel id="admin-guest-operations" title="VIP & guest operations">
-                  <AdminGuestOperations venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
+                  <AdminGuestOperations key={guestDestination?.revision || 0} initialVenueId={guestDestination?.venueId} initialSection={guestDestination?.section} venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
                 </Panel>
                 {clubRequestPanel}
                 <Panel title="Deal attribution" badge={`${state.deals?.length || 0} records`}>
@@ -1958,10 +1980,13 @@ function ImageModerationQueue({
   records,
   onRecordsChange,
   onActionConfirmed,
+  focused = false, onBusyChange, onReviewed,
 }: {
   records: Array<Record<string, unknown>>;
   onRecordsChange: (records: Array<Record<string, unknown>>) => void;
   onActionConfirmed: (message: string) => void;
+  focused?: boolean; onBusyChange?: (busy: boolean) => void;
+  onReviewed?: (id: string, decision: "approved" | "rejected") => void;
 }) {
   const [filter, setFilter] = useState("review");
   const [notesById, setNotesById] = useState<Record<string, string>>({});
@@ -1975,6 +2000,7 @@ function ImageModerationQueue({
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
   const controlsBusy = isLoading || isMutating;
+  useEffect(() => { onBusyChange?.(controlsBusy); return () => onBusyChange?.(false); }, [controlsBusy, onBusyChange]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -2046,7 +2072,7 @@ function ImageModerationQueue({
     setIsMutating(true);
     setMessage(decision === "approved" ? "Publishing approved photo..." : "Rejecting photo...");
     try {
-      await requestAdminJson("/api/admin/image-moderation", {
+      const data = await requestAdminJson("/api/admin/image-moderation", {
         method: "POST",
         signal: request.controller.signal,
         headers: { "content-type": "application/json" },
@@ -2054,6 +2080,7 @@ function ImageModerationQueue({
         fallbackMessage: "Unable to update moderation record.",
       });
       if (!isCurrentImageModerationAction(request)) return;
+      if (data.record?.id !== recordId || data.record.decision !== decision) throw new Error("The photo decision could not be confirmed. Refresh the queue before trying again.");
       onRecordsChange(records.filter((record) => String(record.id) !== recordId));
       const confirmation =
         decision === "approved"
@@ -2061,6 +2088,7 @@ function ImageModerationQueue({
           : "Picture rejected successfully and removed from private review storage.";
       setMessage(confirmation);
       onActionConfirmed(confirmation);
+      onReviewed?.(recordId, decision);
     } catch (error) {
       if (!isCurrentImageModerationAction(request)) return;
       setMessage(error instanceof Error ? error.message : "Unable to update moderation record. Check your connection and try again.");
@@ -2071,7 +2099,7 @@ function ImageModerationQueue({
 
   return (
     <div className="image-moderation-manager">
-      <div className="image-moderation-filters">
+      <div className="image-moderation-filters" hidden={focused}>
         <select
           value={filter}
           disabled={controlsBusy}
@@ -2454,6 +2482,7 @@ function VenueSignupRequestQueue({
   onVenuesChange,
   onClaimCodesChange,
   onActionConfirmed,
+  onContinueSetup,
 }: {
   requests: Array<Record<string, unknown>>;
   venues: Array<Record<string, unknown>>;
@@ -2462,10 +2491,12 @@ function VenueSignupRequestQueue({
   onVenuesChange: (venues: Array<Record<string, unknown>>) => void;
   onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
   onActionConfirmed: (message: string) => void;
+  onContinueSetup?: (venueId: string) => void;
 }) {
   const [notesByRequest, setNotesByRequest] = useState<Record<string, string>>({});
   const [statusByRequest, setStatusByRequest] = useState<Record<string, string>>({});
   const [busyRequestId, setBusyRequestId] = useState("");
+  const [approvedVenue, setApprovedVenue] = useState<{ id: string; name: string } | null>(null);
   const [issuedAccess, setIssuedAccess] = useState<{
     requestId: string;
     venueName: string;
@@ -2543,6 +2574,7 @@ function VenueSignupRequestQueue({
       onRequestsChange(requests.filter((item) => asText(item.id) !== requestId));
       if (decision === "approved" && data.venue?.id) {
         const venueId = asText(data.venue.id);
+        setApprovedVenue({ id: venueId, name: asText(data.venue.name) || asText(request.venueName) });
         const normalizedVenue = {
           ...data.venue,
           signup_request: data.request || request,
@@ -2617,6 +2649,7 @@ function VenueSignupRequestQueue({
           <button className="secondary" type="button" onClick={() => setIssuedAccess(null)}>Done</button>
         </div>
       ) : null}
+      {approvedVenue && onContinueSetup ? <button type="button" disabled={Boolean(busyRequestId)} onClick={() => onContinueSetup(approvedVenue.id)}>Continue {approvedVenue.name} setup →</button> : null}
       <div className="venue-request-list">
         {requests.map((request) => {
           const requestId = asText(request.id);
@@ -2684,6 +2717,8 @@ function VenueManager({
   claimCodes,
   onVenuesChange,
   onClaimCodesChange,
+  onOpenOperations,
+  requestedClubId = "",
 }: {
   clubDeals: Array<Record<string, unknown>>;
   dealRequests: Array<Record<string, unknown>>;
@@ -2694,6 +2729,8 @@ function VenueManager({
   claimCodes: Array<Record<string, unknown>>;
   onVenuesChange: (venues: Array<Record<string, unknown>>) => void;
   onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
+  onOpenOperations: (venueId: string, section: AdminGuestSection) => void;
+  requestedClubId?: string;
 }) {
   const [openedVenues, setOpenedVenues] = useState<Record<string, boolean>>({});
   const [commercialStates, setCommercialStates] = useState<Record<string, { dirty: boolean; busy: boolean }>>({});
@@ -2706,6 +2743,17 @@ function VenueManager({
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
   const controlsBusy = Boolean(busyVenueId);
+
+  useEffect(() => {
+    if (!requestedClubId) return;
+    setSearchQuery("");
+    setOpenedVenues(current => ({ ...current, [requestedClubId]: true }));
+    const frame = window.requestAnimationFrame(() => {
+      const row = document.getElementById(`admin-club-${requestedClubId}`);
+      if (row instanceof HTMLDetailsElement) { row.open = true; row.scrollIntoView({ block: "start", behavior: "smooth" }); }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [requestedClubId]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -2898,6 +2946,19 @@ function VenueManager({
     return `/?${params.toString()}`;
   }
 
+  function openSetupStep(venueId: string, step: string) {
+    const row = document.getElementById(`admin-club-${venueId}`);
+    const target = row?.querySelector<HTMLElement>(`[data-setup-step="${step}"]`);
+    if (!target) return;
+    const disclosure = target.querySelector("details");
+    if (disclosure) disclosure.open = true;
+    for (let parent: HTMLElement | null = target; parent && parent !== row; parent = parent.parentElement) {
+      if (parent instanceof HTMLDetailsElement) parent.open = true;
+    }
+    target.scrollIntoView({ block: "start", behavior: "smooth" });
+    target.querySelector<HTMLElement>("summary, input, button, a")?.focus({ preventScroll: true });
+  }
+
   async function hideVenue(venue: Record<string, unknown>) {
     const venueId = asText(venue.id);
     const action = beginVenueAction();
@@ -3000,7 +3061,7 @@ function VenueManager({
                   ? "Published"
                   : "MyDancr draft";
           return (
-            <details className="venue-admin-row" key={venueId} onToggle={event => { if (event.currentTarget.open) setOpenedVenues(current => current[venueId] ? current : { ...current, [venueId]: true }); }}>
+            <details className="venue-admin-row" id={`admin-club-${venueId}`} key={venueId} onToggle={event => { if (event.currentTarget.open) setOpenedVenues(current => current[venueId] ? current : { ...current, [venueId]: true }); }}>
               <summary>
                 <span className="venue-admin-identity">
                   <strong>{asText(venue.name) || "Venue"}</strong>
@@ -3013,12 +3074,17 @@ function VenueManager({
                   <span className="venue-disclosure" aria-hidden="true">⌄</span>
                 </span>
               </summary>
+              {openedVenues[venueId] ? <AdminClubSetupChecklist venue={venue} pageReady={requirements.slice(0, 3).every(item => item.complete)} hasDeal={requirements[4].complete} onOpen={step => openSetupStep(venueId, step)} /> : null}
+              <nav className="admin-club-shortcuts" aria-label={`${asText(venue.name)} operations`}>
+                {([["visits", "VIP visits"], ["guests", "Guest list"], ["rides", "Ride requests"], ["results", "Results"]] as const).map(([section, label]) => <button key={section} type="button" disabled={controlsBusy} onClick={() => onOpenOperations(venueId, section)}>{label}</button>)}
+              </nav>
               <div className="venue-admin-actions">
                 <small>{asText(venue.address) || "No address submitted"}</small>
                 {isActive ? <button type="button" disabled={controlsBusy} onClick={() => hideVenue(venue)}>Hide venue</button> : <span>Private workspace · {connectedManager ? "manager connected" : "waiting for manager account"}</span>}
               </div>
-              {openedVenues[venueId] ? <AdminTableQrCodes key={venueId} venueId={venueId} name={asText(venue.name)} /> : null}
-              {registration.id ? <details className="admin-record-section">
+              <div data-setup-step="tables">{openedVenues[venueId] ? <AdminTableQrCodes key={venueId} venueId={venueId} name={asText(venue.name)} /> : null}</div>
+              <div data-setup-step="stickers"><Panel title="Club tap stickers"><AdminNfcInventoryPanel scopedVenueId={venueId} /></Panel></div>
+              {registration.id ? <details className="admin-record-section" data-setup-step="application">
                 <summary>Original signup details</summary>
                 <section className="submission-section" aria-label="Venue registration details">
                 <h3>Provided during signup</h3>
@@ -3036,7 +3102,7 @@ function VenueManager({
                   <SubmissionValue label="Submitted" value={formatDate(registration.submittedAt)} />
                 </div>
               </section></details> : null}
-              <details className="admin-record-section" open={!isActive || undefined}>
+              <details className="admin-record-section" data-setup-step="page" open={!isActive || undefined}>
               <summary>Club page &amp; deals</summary>
               <section className="venue-page-admin-panel" aria-label={`${asText(venue.name) || "Venue"} managed page`}>
                 <div className="venue-page-admin-heading">
@@ -3067,7 +3133,7 @@ function VenueManager({
                   <label>Closes<input name="closesAt" defaultValue={asText(venue.closes_at).slice(0, 5)} readOnly={controlsBusy} type="time" /></label>
                   {isActive ? <small>Save changes to update the live venue page.</small> : null}
                 </form>
-                <div className="venue-page-media-admin">
+                <div className="venue-page-media-admin" data-setup-step="branding">
                   {(["logo", "cover"] as const).map((kind) => {
                     const imageUrl = asText(venue[`${kind}_image_url`]);
                     return (
@@ -3086,7 +3152,7 @@ function VenueManager({
                     );
                   })}
                 </div>
-                {openedVenues[venueId] ? <section className="venue-commercial-setup" aria-label={`${asText(venue.name)} Club Deal and contract`}>
+                {openedVenues[venueId] ? <section className="venue-commercial-setup" data-setup-step="deal" aria-label={`${asText(venue.name)} Club Deal and contract`}>
                   <AdminClubDealManager scopedVenueId={venueId} venues={[venue]} clubDeals={clubDeals} dealRequests={dealRequests}
                     onClubDealsChange={onClubDealsChange} onDealRequestsChange={onDealRequestsChange} onActionConfirmed={onActionConfirmed}
                     onEditorStateChange={state => setCommercialStates(current => ({ ...current, [venueId + ":deal"]: state }))} />
@@ -3094,7 +3160,7 @@ function VenueManager({
                 <ul className="venue-page-requirements">
                   {requirements.map((requirement) => <li className={requirement.complete ? "complete" : ""} key={requirement.label}><span>{requirement.complete ? "✓" : "○"}</span>{requirement.label}</li>)}
                 </ul>
-                <div className="venue-page-workflow-actions">
+                <div className="venue-page-workflow-actions" data-setup-step="publish">
                   <div className="venue-page-workflow-copy">
                     <small>{isActive ? "Published venue page" : "Final Admin review"}</small>
                     <strong>{isActive ? "Save your updates to the live customer page." : "Preview the completed customer experience, then send it to the venue."}</strong>
@@ -3116,7 +3182,7 @@ function VenueManager({
                 {openedVenues[venueId] ? <AdminVenueColors key={venueId} venueId={venueId} slug={asText(venue.slug)} name={asText(venue.name)} /> : null}
               </details>
               <details className="admin-record-section">
-              <summary>Manager access</summary>
+              <summary data-setup-step="access">Manager access</summary>
               <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>
                 <span className="eyebrow">Manager access</span>
                 {connectedManager ? (
@@ -3157,6 +3223,75 @@ function VenueManager({
 
 type ApprovalActionRequest = { controller: AbortController; requestId: number };
 
+function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilter = "all", onProfilesChange, onImagesChange, onVideosChange, onRefresh, onActionConfirmed, onManageDancer }: {
+  profiles: Array<Record<string, unknown>>; images: Array<Record<string, unknown>>; videos: Array<Record<string, unknown>>;
+  warnings: string[]; onProfilesChange: (rows: Array<Record<string, unknown>>) => void;
+  requestedFilter?: ReviewKind | "all";
+  onImagesChange: (rows: Array<Record<string, unknown>>) => void; onVideosChange: (rows: Array<Record<string, unknown>>) => void;
+  onRefresh: (signal: AbortSignal) => Promise<void>; onActionConfirmed: (message: string) => void; onManageDancer: (id: string) => void;
+}) {
+  const [filter, setFilter] = useState<ReviewKind | "all">(requestedFilter);
+  useEffect(() => { setFilter(requestedFilter); }, [requestedFilter]);
+  const [selectedKey, setSelectedKey] = useState("");
+  const [busy, setBusy] = useState(false), [refreshing, setRefreshing] = useState(false), [error, setError] = useState("");
+  const request = useRef<AbortController | null>(null);
+  useEffect(() => () => request.current?.abort(), []);
+  const items = adminReviewQueue(profiles, images, videos);
+  const filtered = items.filter(item => filter === "all" || item.kind === filter);
+  const selected = filtered.find(item => item.key === selectedKey) || filtered[0];
+  const index = selected ? filtered.indexOf(selected) : -1;
+  async function refresh() {
+    request.current?.abort(); const controller = new AbortController(); request.current = controller;
+    setRefreshing(true); setError("");
+    try { await onRefresh(controller.signal); }
+    catch (reason) { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : "Unable to refresh the review queue."); }
+    finally { if (!controller.signal.aborted) setRefreshing(false); }
+  }
+  function reviewedContent(dancerId: string, kind: "photo" | "social_link", targetId: string, status: "approved" | "rejected", notes: string, version: ContentReviewVersion) {
+    onProfilesChange(profiles.map(profile => {
+      if (asText(profile.id) !== dancerId) return profile;
+      const field = kind === "photo" ? "photos" : "socialLinks";
+      return { ...profile, [field]: asRecordArray(profile[field] || profile.social_links).map(row => asText(row.id) === targetId
+        ? { ...row, reviewStatus: status, reviewNotes: notes, reviewVersion: version } : row) };
+    }));
+    setSelectedKey(filtered[index + 1]?.key || "");
+  }
+  return <section className="admin-unified-review" aria-label="Unified approval queue">
+    <div className="admin-review-toolbar">
+      <label>Review<select value={filter} disabled={busy || refreshing} onChange={event => { setFilter(event.target.value as typeof filter); setSelectedKey(""); }}>
+        {([["all", "All items"], ["application", "Applications"], ["photo", "Photos"], ["video", "Videos"], ["social", "Social links"]] as const).map(([id, label]) => <option key={id} value={id}>{label} · {items.filter(item => id === "all" || item.kind === id).length}</option>)}
+      </select></label>
+      <button type="button" disabled={busy || refreshing} onClick={() => void refresh()}>{refreshing ? "Refreshing…" : "Refresh queue"}</button>
+    </div>
+    <p className="admin-info-note">AI moderation and required venue and verification checks still apply. Applications awaiting those checks remain pending.</p>
+    {warnings.length ? <p role="alert">Some review sources are unavailable. Refresh to retry. {warnings.join(" ")}</p> : null}
+    {error ? <p role="alert">{error}</p> : null}
+    {selected ? <>
+      <div className="admin-review-current"><strong>{selected.label}</strong><span>{index + 1} of {filtered.length} loaded items</span></div>
+      <div className="admin-review-toolbar">
+        <button type="button" disabled={busy || refreshing || index <= 0} onClick={() => setSelectedKey(filtered[index - 1].key)}>Previous</button>
+        <button type="button" disabled={busy || refreshing || filtered.length < 2} onClick={() => setSelectedKey(filtered[(index + 1) % filtered.length].key)}>Skip for now</button>
+        {selected.dancerId ? <button type="button" disabled={busy || refreshing} onClick={() => onManageDancer(selected.dancerId!)}>Manage dancer</button> : null}
+      </div>
+      <fieldset disabled={refreshing} className="admin-review-item" key={selected.key}>
+        {selected.source === "submission" ? <ApprovalQueue items={[selected.record]} reviewTarget={selected}
+          openById={{ [selected.dancerId!]: true }} onToggleOpen={() => {}} onKeepOpen={() => {}} onSocialReviewed={() => {}}
+          onContentReviewed={reviewedContent} onBusyChange={setBusy} onManageDancer={onManageDancer}
+          onProfileUpdated={profile => onProfilesChange(profiles.map(row => row.id === profile.id ? { ...row, ...profile } : row))}
+          onReviewed={id => { onProfilesChange(profiles.filter(profile => profile.id !== id)); setSelectedKey(""); }} onActionConfirmed={onActionConfirmed} /> : null}
+        {selected.source === "moderation" ? <ImageModerationQueue records={[selected.record]} focused onBusyChange={setBusy}
+          onRecordsChange={() => {}} onReviewed={(id, decision) => {
+            onImagesChange(images.filter(row => row.id !== id));
+            if (selected.record.image_id) onProfilesChange(profiles.map(profile => ({ ...profile, photos: asRecordArray(profile.photos).map(photo => photo.id === selected.record.image_id ? { ...photo, reviewStatus: decision } : photo) })));
+            setSelectedKey(filtered[index + 1]?.key || ""); if (images.length === 1) void refresh();
+          }} onActionConfirmed={onActionConfirmed} /> : null}
+        {selected.source === "video" ? <AdminTvPanel selectedVideo={selected.record as unknown as import("./AdminTvPanel").AdminTvVideo} onBusyChange={setBusy}
+          onReviewed={(id, status) => { onVideosChange(videos.map(row => row.id === id ? { ...row, status } : row)); setSelectedKey(filtered[index + 1]?.key || ""); if (videos.filter(row => row.status === "submitted").length === 1) void refresh(); }} onActionConfirmed={onActionConfirmed} /> : null}
+      </fieldset>
+    </> : <p role="status">{warnings.length || error ? "Available items have been reviewed. Retry the unavailable sources." : "No pending items in this view. Refresh to check for new submissions."}</p>}
+  </section>;
+}
+
 function ApprovalQueue({
   items,
   openById,
@@ -3166,6 +3301,7 @@ function ApprovalQueue({
   onProfileUpdated,
   onReviewed,
   onActionConfirmed,
+  reviewTarget, onContentReviewed, onBusyChange, onManageDancer,
 }: {
   items: Array<Record<string, unknown>>;
   openById: Record<string, boolean>;
@@ -3175,6 +3311,10 @@ function ApprovalQueue({
   onProfileUpdated: (profile: Record<string, unknown>) => void;
   onReviewed: (dancerId: string) => void;
   onActionConfirmed: (message: string) => void;
+  reviewTarget?: ReviewTarget;
+  onContentReviewed?: (dancerId: string, kind: "photo" | "social_link", targetId: string, status: "approved" | "rejected", notes: string, version: ContentReviewVersion) => void;
+  onBusyChange?: (busy: boolean) => void;
+  onManageDancer?: (id: string) => void;
 }) {
   const [notesById, setNotesById] = useState<Record<string, string>>({});
   const [statusById, setStatusById] = useState<Record<string, string>>({});
@@ -3187,6 +3327,8 @@ function ApprovalQueue({
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
   const controlsBusy = Boolean(actionBusyKey);
+
+  useEffect(() => { onBusyChange?.(controlsBusy); return () => onBusyChange?.(false); }, [controlsBusy, onBusyChange]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -3222,6 +3364,7 @@ function ApprovalQueue({
   if (!items.length) return <p className="empty">No real pending dancer applications.</p>;
 
   async function openFullProfile(item: Record<string, unknown>) {
+    if (onManageDancer) { onManageDancer(asText(item.id)); return; }
     const action = beginApprovalAction();
     if (!action) return;
     setActionBusyKey(`profile:${asText(item.id)}`);
@@ -3334,6 +3477,7 @@ function ApprovalQueue({
                 type="button"
                 disabled={controlsBusy}
                 onClick={() => onToggleOpen(dancerId)}
+                hidden={Boolean(reviewTarget)}
               >
                 {isOpen ? "Hide submission" : "View submission"}
               </button>
@@ -3341,6 +3485,8 @@ function ApprovalQueue({
             {isOpen ? (
               <SubmissionDetails
                 item={item}
+                reviewTarget={reviewTarget}
+                onContentReviewed={onContentReviewed}
                 onKeepOpen={() => onKeepOpen(dancerId)}
                 onSocialReviewed={onSocialReviewed}
                 onActionConfirmed={onActionConfirmed}
@@ -3354,6 +3500,7 @@ function ApprovalQueue({
             {hasPendingItems ? <p className="approval-blocked">Review pending items first: {pendingItems.join(", ")}.</p> : null}
             <textarea
               placeholder="Review notes"
+              hidden={Boolean(reviewTarget && reviewTarget.kind !== "application")}
               rows={2}
               value={notesById[dancerId] || ""}
               disabled={controlsBusy}
@@ -3363,7 +3510,7 @@ function ApprovalQueue({
               <button className="secondary-action" type="button" disabled={controlsBusy} onClick={() => openFullProfile(item)}>
                 View full profile
               </button>
-              <button type="button" onClick={() => rejectProfile(dancerId)} disabled={controlsBusy}>
+              <button type="button" hidden={Boolean(reviewTarget && reviewTarget.kind !== "application")} onClick={() => rejectProfile(dancerId)} disabled={controlsBusy}>
                 {isSaving ? "Saving..." : "Reject profile"}
               </button>
             </div>
@@ -3425,6 +3572,7 @@ function SubmissionDetails({
   isCurrentAction,
   finishAction,
   onActionStarted,
+  reviewTarget, onContentReviewed,
 }: {
   item: Record<string, unknown>;
   onKeepOpen: () => void;
@@ -3435,6 +3583,8 @@ function SubmissionDetails({
   isCurrentAction: (action: ApprovalActionRequest) => boolean;
   finishAction: (action: ApprovalActionRequest) => void;
   onActionStarted: (key: string) => void;
+  reviewTarget?: ReviewTarget;
+  onContentReviewed?: (dancerId: string, kind: "photo" | "social_link", targetId: string, status: "approved" | "rejected", notes: string, version: ContentReviewVersion) => void;
 }) {
   const photos = labelSubmittedPhotos(asRecordArray(item.photos));
   const socials = normalizeSubmissionSocials(item);
@@ -3537,6 +3687,7 @@ function SubmissionDetails({
       }));
       onActionConfirmed(confirmation);
       onKeepOpen();
+      onContentReviewed?.(dancerId, targetType, targetId, savedStatus, notes, data.review.reviewVersion);
     } catch (error) {
       if (!isCurrentAction(action)) return;
       setFeedbackByKey((current) => ({
@@ -3571,11 +3722,11 @@ function SubmissionDetails({
         </div>
       </section>
 
-      <section className="submission-section">
+      <section className="submission-section" hidden={Boolean(reviewTarget && !["photo", "application"].includes(reviewTarget.kind))}>
         <h3>Photos submitted</h3>
         {photos.length ? (
           <div className="submission-media-grid">
-            {photos.map((photo, index) => {
+            {photos.filter(photo => !reviewTarget || reviewTarget.kind === "application" || asText(photo.id) === reviewTarget.id).map((photo, index) => {
               const imageUrl = asText(photo.imageUrl || photo.image_url);
               const storagePath = asText(photo.storagePath || photo.storage_path);
               const photoId = asText(photo.id);
@@ -3631,11 +3782,11 @@ function SubmissionDetails({
         <p className="submission-empty">Approval is based on the dancer&apos;s venue affiliation and profile and media review.</p>
       </section>
 
-      <section className="submission-section">
+      <section className="submission-section" hidden={Boolean(reviewTarget && !["social", "application"].includes(reviewTarget.kind))}>
         <h3>Social links</h3>
         {socials.length ? (
           <div className="submitted-social-review-list">
-            {socials.map((social, index) => {
+            {socials.filter(social => !reviewTarget || reviewTarget.kind === "application" || social.id === reviewTarget.id).map((social, index) => {
               const targetId = asText(social.id);
               const key = `social_link:${targetId}`;
               const status = statusByKey[key] || asText(social.reviewStatus) || "pending";
@@ -3876,10 +4027,12 @@ function DancerDirectory({
   onDeleted,
   onProfileUpdated,
   onActionConfirmed,
+  requestedDancerId = "",
 }: {
   onDeleted: (dancerId: string) => void;
   onProfileUpdated: (profile: Record<string, unknown>) => void;
   onActionConfirmed: (message: string) => void;
+  requestedDancerId?: string;
 }) {
   const [roster, setRoster] = useState<AdminDancerRosterResult | null>(null);
   const [query, setQuery] = useState("");
@@ -3900,11 +4053,12 @@ function DancerDirectory({
   const [lifecycleReason, setLifecycleReason] = useState("");
   const [detailTab, setDetailTab] = useState("overview");
   const [actionBusyKey, setActionBusyKey] = useState("");
+  const [reviewBusy, setReviewBusy] = useState(false);
   const mountedRef = useRef(false);
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
-  const controlsBusy = Boolean(actionBusyKey);
+  const controlsBusy = Boolean(actionBusyKey) || reviewBusy;
   const isDeleting = actionBusyKey.startsWith("delete-profile:");
   const deletingContentKey = actionBusyKey.startsWith("photo:") || actionBusyKey.startsWith("social-link:") ? actionBusyKey : "";
 
@@ -3939,6 +4093,12 @@ function DancerDirectory({
     if (action.requestId === actionSequenceRef.current) actionInFlightRef.current = false;
     if (mountedRef.current && action.requestId === actionSequenceRef.current) setActionBusyKey("");
   }
+
+  useEffect(() => {
+    if (requestedDancerId) void openProfile({ id: requestedDancerId });
+    // The destination is consumed once per requested dancer; edits keep their current tab.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedDancerId]);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query.trim()), 300);
@@ -4191,8 +4351,20 @@ function DancerDirectory({
             {profile ? (
               <>
               <nav className="admin-dancer-tabs" aria-label="Dancer management sections">
-                {[["overview", "Overview"], ["media", "Profile & media"], ["affiliations", "Clubs & shifts"], ["analytics", "Analytics & reports"], ["history", "History"]].map(([id, label]) => <button type="button" key={id} className={detailTab === id ? "active" : ""} disabled={controlsBusy} onClick={() => setDetailTab(id)}>{label}</button>)}
+                {[["overview", "Overview"], ["review", "Review submission"], ["media", "Profile & media"], ["affiliations", "Clubs & shifts"], ["analytics", "Analytics & reports"], ["history", "History"]].map(([id, label]) => <button type="button" key={id} className={detailTab === id ? "active" : ""} disabled={controlsBusy} onClick={() => setDetailTab(id)}>{label}</button>)}
               </nav>
+              {detailTab === "review" ? <ApprovalQueue items={[profile]} openById={{ [selectedId]: true }} onToggleOpen={() => {}} onKeepOpen={() => {}}
+                onBusyChange={setReviewBusy} onManageDancer={() => setDetailTab("overview")}
+                onSocialReviewed={(id, targetId, status, notes) => setProfile(current => current ? withReviewedSocial(current, targetId, status, notes) : current)}
+                onContentReviewed={(id, kind, targetId, status, notes, version) => {
+                  if (asText(profile.id) !== id) return;
+                  const field = kind === "photo" ? "photos" : "socialLinks";
+                  const updated = { ...profile, [field]: asRecordArray(profile[field]).map(row => row.id === targetId ? { ...row, reviewStatus: status, reviewNotes: notes, reviewVersion: version } : row) };
+                  setProfile(updated); onProfileUpdated(updated); setRefreshVersion(value => value + 1);
+                }}
+                onProfileUpdated={updated => { setProfile(updated); onProfileUpdated(updated); }}
+                onReviewed={() => { void openProfile({ id: selectedId }); setRefreshVersion(value => value + 1); }} onActionConfirmed={onActionConfirmed} /> : null}
+              {detailTab !== "review" ?
               <AdminDancerFullProfile
                 profile={profile}
                 activeTab={detailTab}
@@ -4200,7 +4372,7 @@ function DancerDirectory({
                 deletingContentKey={deletingContentKey}
                 onDeletePhoto={(targetId, label) => deleteProfileContent("photo", targetId, label)}
                 onDeleteSocial={(targetId, label) => deleteProfileContent("social-link", targetId, label)}
-              />
+              /> : null}
               </>
             ) : null}
             {profile ? (

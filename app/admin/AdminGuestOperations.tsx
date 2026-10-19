@@ -16,10 +16,11 @@ const filters: Record<AdminGuestSection, string[]> = {
 const statusLabel = (status: string) => ({ generated: "Awaiting admission", redeemed: "Verified admission", email: "Email opt-ins", text: "Text opt-ins" }[status] || status.replace(/^./, letter => letter.toUpperCase()));
 type Confirmation = { row: AdminGuestRow; action: AdminGuestAction; nextStatus?: string };
 
-export default function AdminGuestOperations({ venues, onActionConfirmed }: { venues: Array<Record<string, unknown>>; onActionConfirmed: (message: string) => void }) {
-  const [venueId, setVenueId] = useState("");
-  const [section, setSection] = useState<AdminGuestSection>("visits");
-  const [filter, setFilter] = useState("all"), [offset, setOffset] = useState(0);
+const defaultFilter = (section: AdminGuestSection) => section === "visits" || section === "invitations" ? "pending" : section === "guests" ? "generated" : "all";
+export default function AdminGuestOperations({ venues, onActionConfirmed, initialVenueId = "", initialSection = "visits" }: { venues: Array<Record<string, unknown>>; onActionConfirmed: (message: string) => void; initialVenueId?: string; initialSection?: AdminGuestSection }) {
+  const [venueId, setVenueId] = useState(initialVenueId);
+  const [section, setSection] = useState<AdminGuestSection>(initialSection);
+  const [filter, setFilter] = useState(defaultFilter(initialSection)), [offset, setOffset] = useState(0);
   const [period, setPeriod] = useState<"tonight" | "7d" | "30d">("30d");
   const [loadedData, setData] = useState<AdminGuestData | null>(null);
   const data = loadedData?.venue.id === venueId && loadedData.section === section ? loadedData : null;
@@ -91,14 +92,14 @@ export default function AdminGuestOperations({ venues, onActionConfirmed }: { ve
   }
   const formatTime = (value: string) => new Date(value).toLocaleString(undefined, { timeZone: data?.venue.timezone || "UTC", month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
   const busy = loading || saving;
-  return <section className="admin-guest-operations" id="admin-guest-operations" aria-labelledby="admin-guest-title">
+  return <section className="admin-guest-operations" aria-labelledby="admin-guest-title">
     <header><div><span className="eyebrow">Guest operations</span><h2 id="admin-guest-title">VIP, guests & club results</h2></div>
       <button type="button" disabled={!venueId || busy} onClick={() => void load()}>{loading ? "Loading…" : "Refresh"}</button></header>
     <label className="admin-guest-venue">Club<select value={venueId} disabled={saving} onChange={event => { setVenueId(event.target.value); setOffset(0); }}>
       <option value="">Choose a club</option>{venues.map(venue => <option key={String(venue.id)} value={String(venue.id)}>{String(venue.name || "Club")}{venue.is_active === false ? " · inactive" : ""}</option>)}
     </select></label>
     <nav aria-label="Guest operation sections">{ADMIN_GUEST_SECTIONS.map(id => <button key={id} type="button" aria-pressed={section === id} disabled={saving}
-      onClick={() => { setSection(id); setFilter("all"); setOffset(0); }}>{labels[id]}</button>)}</nav>
+      onClick={() => { setSection(id); setFilter(defaultFilter(id)); setOffset(0); }}>{labels[id]}</button>)}</nav>
     {venueId ? <>
       <div className="admin-guest-filters"><h3>{labels[section]}</h3>
         {filters[section].length > 1 && <label>Status<select value={filter} disabled={saving} onChange={event => { setFilter(event.target.value); setOffset(0); }}>{filters[section].map(value => <option key={value} value={value}>{statusLabel(value)}</option>)}</select></label>}

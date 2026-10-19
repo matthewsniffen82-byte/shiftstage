@@ -134,7 +134,7 @@ test('stale admin records return a clear conflict without leaking database detai
   assert.doesNotMatch(JSON.stringify(body), /PRIVATE_DATABASE_DETAIL/);
 });
 
-function panelFixture(request) {
+function panelFixture(request, initial = {}) {
   const slots = [], calls = [];
   let cursor = 0, effects = [], dirty = true, tree;
   const hooks = {
@@ -152,7 +152,7 @@ function panelFixture(request) {
   }).default;
   function render() {
     dirty = true;
-    for (let i = 0; dirty && i < 20; i++) { dirty = false; cursor = 0; effects = []; tree = Component({ venues: [{ id: id(10), name: 'Club A' }, { id: id(20), name: 'Club B' }], onActionConfirmed() {} }); effects.forEach(fn => fn()); }
+    for (let i = 0; dirty && i < 20; i++) { dirty = false; cursor = 0; effects = []; tree = Component({ venues: [{ id: id(10), name: 'Club A' }, { id: id(20), name: 'Club B' }], onActionConfirmed() {}, ...initial }); effects.forEach(fn => fn()); }
     assert.equal(dirty, false); return tree;
   }
   function nodes(node = tree) { return node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))] : []; }
@@ -164,6 +164,16 @@ function panelFixture(request) {
 }
 const visitData = (venueId = id(10)) => ({ venue: { id: venueId, name: 'Club', timezone: 'UTC', is_active: true }, section: 'visits', hasMore: false,
   rows: [{ id: id(40), name: 'Guest A', status: 'pending', createdAt: '2026-10-11T12:00:00Z', updatedAt: '2026-10-11T12:00:00Z', startsAt: '2026-10-12T19:00:00Z', dancers: ['Aria'] }] });
+
+test('club shortcuts load the selected club and operation with pending work first', async () => {
+  for (const [section, status] of [['visits', 'pending'], ['guests', 'generated'], ['rides', 'all'], ['results', 'all']]) {
+    const ui = panelFixture(async () => ({ ...visitData(id(20)), section }), { initialVenueId: id(20), initialSection: section });
+    await ui.settle();
+    const url = new URL(ui.calls[0].url, 'https://example.test');
+    assert.equal(url.searchParams.get('venueId'), id(20)); assert.equal(url.searchParams.get('section'), section); assert.equal(url.searchParams.get('status'), status);
+    ui.unmount();
+  }
+});
 test('admin panel waits for club selection, rejects late data from a previous club, and cancels reads on unmount', async () => {
   const pending = [];
   const ui = panelFixture(() => new Promise(resolve => pending.push(resolve)));

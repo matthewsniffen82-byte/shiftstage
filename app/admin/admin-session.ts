@@ -7,6 +7,7 @@ import {
   readBrowserAuthSession,
   revokeBrowserAuthSession,
 } from "../../src/lib/dancr/browser-session.ts";
+import { notifyAdminDataChanged } from "./admin-data-events.ts";
 
 export type AdminSessionAccount = {
   role?: string;
@@ -105,6 +106,7 @@ export async function requestAdminJson(
     accessToken: authHeaders.authorization.slice(7),
     refreshToken: authHeaders["x-dancr-refresh-token"],
   });
+  notifyAdminDataChanged(options.method);
   return data;
 }
 

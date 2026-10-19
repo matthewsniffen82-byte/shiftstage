@@ -4,11 +4,9 @@ import test from "node:test";
 
 const adminSource = await readFile(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8");
 
-test("dancer approvals prominently show the live number still needed", () => {
-  assert.match(adminSource, /const pendingDancerApprovalCount = state\.queue\?\.length \|\| 0/);
-  assert.match(adminSource, /title="Dancer approvals"/);
-  assert.match(adminSource, /badge=\{`\$\{pendingDancerApprovalCount\} needed`\}/);
-  assert.match(adminSource, /<Metric label="Dancers needing approval" value=\{String\(pendingDancerApprovalCount\)\}/);
+test("the unified approval queue shows loaded item totals and opens by default", () => {
+  assert.match(adminSource, /id="admin-review-queue" title="Review queue" defaultOpen/);
+  assert.match(adminSource, /of \{filtered.length\} loaded items/);
   assert.match(adminSource, /className="admin-panel-badge"/);
 });
 
@@ -25,8 +23,8 @@ test("content decisions stay visible without collapsing the dancer approval", ()
     adminSource.match(/async function reviewContent[\s\S]*?\r?\n  }\r?\n\r?\n  return \(/)?.[0] || "";
 
   assert.match(adminSource, /const \[openApprovalIds, setOpenApprovalIds\] = useState<Record<string, boolean>>\(\{\}\)/);
-  assert.match(adminSource, /openById=\{openApprovalIds\}/);
-  assert.match(adminSource, /onKeepOpen=\{\(dancerId\) =>/);
+  assert.match(adminSource, /openById=\{\{ \[selected\.dancerId!\]: true \}\}/);
+  assert.match(adminSource, /onContentReviewed=\{reviewedContent\}/);
   assert.match(reviewContent, /onKeepOpen\(\)/);
   assert.match(reviewContent, /setWorkingByKey\(\(current\) => \(\{ \.\.\.current, \[key\]: true \}\)\)/);
   assert.match(reviewContent, /const responseStatus = asText\(data\.review\?\.status\)/);
@@ -36,7 +34,8 @@ test("content decisions stay visible without collapsing the dancer approval", ()
   assert.match(reviewContent, /const confirmation = `\$\{label\} \$\{savedStatus === "approved" \? "approved" : "rejected"\} successfully\.`/);
   assert.match(reviewContent, /setStatusByKey\(\(current\) => \(\{ \.\.\.current, \[key\]: savedStatus \}\)\)/);
   assert.match(reviewContent, /onActionConfirmed\(confirmation\)/);
-  assert.doesNotMatch(reviewContent, /onContentReviewed|loadAdmin/);
+  assert.match(reviewContent, /onContentReviewed\?\.\(dancerId, targetType, targetId, savedStatus, notes, data\.review\.reviewVersion\)/);
+  assert.doesNotMatch(reviewContent, /loadAdmin/);
   assert.doesNotMatch(adminSource, /onRefresh=\{\(\) => loadAdmin/);
   assert.match(adminSource, /disabled=\{!targetId \|\| actionBusy\}/);
   assert.match(adminSource, /<ReviewFeedbackMessage feedback=\{feedback\} \/>/);

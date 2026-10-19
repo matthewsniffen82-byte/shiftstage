@@ -62,7 +62,7 @@ test('queue shortcuts open their matching review tool, including copyright cases
     assert.ok(button, item.label);
     button.props.onClick();
     assert.deepEqual(opened.at(-1), routes[item.key]);
-    assert.ok(source.includes(`id="${item.panel}"`), 'destination exists');
+    assert.ok(source.includes(`id="${item.panel}"`) || (['admin-dancer-approvals', 'admin-photo-review', 'admin-tv-review'].includes(item.panel) && source.includes('panel = "admin-review-queue"')), 'destination exists or routes to the unified queue');
   }
 });
 

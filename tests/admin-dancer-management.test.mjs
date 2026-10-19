@@ -64,7 +64,7 @@ test("the dashboard exposes a compact responsive roster and operational detail t
   assert.match(adminDashboard, /Disabled \/ archived/);
   assert.match(adminDashboard, /Profile & media/);
   assert.match(adminDashboard, /Clubs & shifts/);
-  assert.match(adminDashboard, /Financial history/);
+  assert.match(adminDashboard, /\["review", "Review submission"\]/);
   assert.match(adminDashboard, /Analytics & reports/);
   assert.match(adminDashboard, /Admin account history/);
   assert.match(adminDashboard, /Disable profile/);
@@ -90,7 +90,7 @@ test("approval loading no longer transfers the complete dancer table", () => {
   assert.doesNotMatch(approvalsRoute, /getAdminDancerDirectory/);
   assert.match(approvalsRoute, /count: "exact", head: true/);
   assert.match(approvalsRoute, /dancerTotal: Number\(count \|\| 0\)/);
-  assert.match(adminDashboard, /Profiles in roster/);
+  assert.match(adminDashboard, /<UnifiedReviewQueue profiles=\{state.queue \|\| \[\]\}/);
   assert.match(adminDashboard, /\/api\/admin\/dancers\?/);
 });
 

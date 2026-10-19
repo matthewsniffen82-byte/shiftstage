@@ -9,6 +9,7 @@ import { readBoundedJsonObject } from "../src/lib/bounded-json-body.ts";
 import { createInternalRosterDatabase } from "./helpers/internal-roster-database.mjs";
 import { fixtureId as id } from "./helpers/dancer-tap-database.mjs";
 import { existingTableNumbers, readTableQrRange } from "../app/admin/admin-table-qr-range.ts";
+import { loadTableQrPrintImages, renderTableQrPrintDocument } from "../app/admin/admin-table-qr-print.ts";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 function compile(path, dependencies, globals = {}) {
@@ -181,6 +182,7 @@ function componentFixture(handler) {
   const { default: Component } = compile("app/admin/AdminTableQrCodes.tsx", {
     react: hooks, "react/jsx-runtime": { jsx, jsxs: jsx }, "./admin-table-qr.css": {},
     "./admin-table-qr-range": { existingTableNumbers, readTableQrRange },
+    "./admin-table-qr-print": { loadTableQrPrintImages, renderTableQrPrintDocument },
     "./admin-session": { isAdminAuthenticationError: error => error.status === 401, requestAdminJson: async (url, options) => {
       requests.push({ url, options }); return handler(url, options, requests.length);
     } },

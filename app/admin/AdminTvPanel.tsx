@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
 
-type AdminTvVideo = {
+export type AdminTvVideo = {
   id: string;
   videoUrl: string;
   status: string;
@@ -28,12 +28,15 @@ type ReviewResult = {
   message: string;
 };
 
-export default function AdminTvPanel() {
-  const [videos, setVideos] = useState<AdminTvVideo[]>([]);
+export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfirmed, onBusyChange }: {
+  selectedVideo?: AdminTvVideo; onReviewed?: (id: string, status: string) => void;
+  onActionConfirmed?: (message: string) => void; onBusyChange?: (busy: boolean) => void;
+} = {}) {
+  const [videos, setVideos] = useState<AdminTvVideo[]>(selectedVideo ? [selectedVideo] : []);
   const [filter, setFilter] = useState("all");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!selectedVideo);
   const [workingId, setWorkingId] = useState("");
   const [workingDecision, setWorkingDecision] = useState<"approved" | "rejected" | "retry" | "">("");
   const [reviewResults, setReviewResults] = useState<Record<string, ReviewResult>>({});
@@ -43,6 +46,7 @@ export default function AdminTvPanel() {
   const actionSequenceRef = useRef(0);
   const actionAbortRef = useRef<AbortController | null>(null);
   const actionInFlightRef = useRef(false);
+  useEffect(() => { onBusyChange?.(Boolean(workingId)); return () => onBusyChange?.(false); }, [workingId, onBusyChange]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -57,8 +61,10 @@ export default function AdminTvPanel() {
   }, []);
 
   useEffect(() => {
-    void loadVideos(filter);
-  }, [filter]);
+    if (!selectedVideo) void loadVideos(filter);
+    // Reload only for the selected queue; the request function reads that render's values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter, selectedVideo]);
 
   async function loadVideos(nextFilter: string, { clearStatus = true } = {}) {
     const requestId = loadSequenceRef.current + 1;
@@ -75,7 +81,12 @@ export default function AdminTvPanel() {
         fallbackMessage: "Unable to load video moderation.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
-      setVideos(Array.isArray(data.videos) ? data.videos : []);
+      const rows = Array.isArray(data.videos) ? data.videos : [];
+      setVideos(selectedVideo ? rows.filter((video: AdminTvVideo) => video.id === selectedVideo.id) : rows);
+      if (selectedVideo) {
+        const updated = rows.find((video: AdminTvVideo) => video.id === selectedVideo.id);
+        if (updated && updated.status !== "submitted") onReviewed?.(updated.id, updated.status);
+      }
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
       setStatus(error instanceof Error ? error.message : "Unable to load video moderation.");
@@ -123,6 +134,7 @@ export default function AdminTvPanel() {
         fallbackMessage: "Unable to review video.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
+      if (data.video?.id !== video.id || data.video.status !== decision) throw new Error("The video decision could not be confirmed. Refresh the queue before trying again.");
       setVideos((current) => current.map((item) => item.id === video.id
           ? {
               ...item,
@@ -144,6 +156,8 @@ export default function AdminTvPanel() {
         [video.id]: { decision, message: successMessage },
       }));
       setStatus(successMessage);
+      onActionConfirmed?.(successMessage);
+      onReviewed?.(video.id, decision);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       const errorMessage = error instanceof Error ? error.message : "Unable to review video.";
@@ -193,13 +207,19 @@ export default function AdminTvPanel() {
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       const successMessage = data.message || "Automated safety review completed.";
-      await loadVideos(filter, { clearStatus: false });
+      if (selectedVideo) {
+        if (data.video?.id !== video.id || typeof data.video.status !== "string") throw new Error("The automated review could not be confirmed. Refresh the queue.");
+        setVideos([{ ...video, status: data.video.status, moderationDecision: data.video.moderation_decision,
+          moderationReasonCodes: data.video.moderation_reason_codes, moderationDetails: data.video.moderation_details }]);
+        if (data.video.status !== "submitted") onReviewed?.(video.id, data.video.status);
+      } else await loadVideos(filter, { clearStatus: false });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       setReviewResults((current) => ({
         ...current,
         [video.id]: { decision: "retry", message: successMessage },
       }));
       setStatus(successMessage);
+      onActionConfirmed?.(successMessage);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       const errorMessage = error instanceof Error ? error.message : "Unable to retry automated review.";
@@ -223,7 +243,7 @@ export default function AdminTvPanel() {
   return (
     <div className="admin-tv-panel">
       <AdminTvPanelStyles />
-      <div className="admin-tv-head">
+      <div className="admin-tv-head" hidden={Boolean(selectedVideo)}>
         <div>
           <strong>MyDancr TV moderation</strong>
           <span>

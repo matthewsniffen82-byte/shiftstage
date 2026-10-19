@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { isAdminAuthenticationError, requestAdminJson } from "./admin-session";
 import { existingTableNumbers, readTableQrRange } from "./admin-table-qr-range";
+import { loadTableQrPrintImages, renderTableQrPrintDocument } from "./admin-table-qr-print";
 import "./admin-table-qr.css";
 
 type TableCode = { id: string; venue_id: string; kind: "table"; label: string; token: string; active: boolean; updated_at: string };
@@ -196,6 +197,28 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
       if (!controller.signal.aborted) setBusy(false);
     }
   }
+  async function printAll() {
+    if (!links?.some(code => code.active) || loading || inFlight.current || !lifetime.current) return;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) { setFailed(true); setStatus("Allow the print window, then select Print all again."); return; }
+    printWindow.opener = null;
+    printWindow.document.title = "Preparing table QR signs";
+    printWindow.document.body.textContent = "Preparing all active table signs…";
+    const controller = lifetime.current;
+    inFlight.current = true; setBusy(true); setFailed(false); setStatus("Preparing print signs…");
+    try {
+      const images = await loadTableQrPrintImages(venueId, links, path => requestAdminJson(path, {
+        cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]), fallbackMessage: "Unable to prepare all table signs.",
+      }));
+      if (controller.signal.aborted || printWindow.closed) return;
+      await renderTableQrPrintDocument(printWindow.document, name, images);
+      if (controller.signal.aborted || printWindow.closed) return;
+      printWindow.focus(); printWindow.print(); setStatus(`${images.length} table signs ready to print.`);
+    } catch (error) {
+      if (!printWindow.closed) printWindow.document.body.textContent = "Unable to prepare all signs. Return to the table QR list and try again.";
+      if (!controller.signal.aborted) { setFailed(true); setStatus(error instanceof Error ? error.message : "Unable to print table signs."); }
+    } finally { inFlight.current = false; if (!controller.signal.aborted) setBusy(false); }
+  }
   function submit(event: FormEvent) { event.preventDefault(); void mutate("create"); }
   const sorted = links ? [...links].sort((a, b) => Number(b.active) - Number(a.active) || a.label.localeCompare(b.label, undefined, { numeric: true })) : [];
   const { range, error: rangeError } = readTableQrRange(firstTable, lastTable);
@@ -210,6 +233,8 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
         <div className="admin-table-qr-mode" role="group" aria-label="Create table QR codes">
           <button type="button" aria-pressed={createMode === "single"} disabled={busy || loading} onClick={() => setCreateMode("single")}>Single table</button>
           <button type="button" aria-pressed={createMode === "range"} disabled={busy || loading} onClick={() => setCreateMode("range")}>Number range</button>
+          <button type="button" disabled={busy || loading} onClick={() => { setCreateMode("range"); setFirstTable("1"); setLastTable("20"); }}>Tables 1–20</button>
+          <button type="button" disabled={busy || loading || !links.some(code => code.active)} onClick={() => void printAll()}>Print all</button>
         </div>
         {createMode === "single" ? <form className="admin-table-qr-create" onSubmit={submit}>
           <label>Table label<input value={label} onChange={event => setLabel(event.target.value)} placeholder="Table 1" maxLength={60} required disabled={busy || loading} /></label>

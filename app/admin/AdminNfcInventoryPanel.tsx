@@ -24,10 +24,10 @@ type AdminNfcTag = {
   venue: Pick<VenueOption, "id" | "name" | "slug" | "city" | "state">;
 };
 
-export default function AdminNfcInventoryPanel() {
+export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedVenueId?: string } = {}) {
   const [venues, setVenues] = useState<VenueOption[]>([]);
   const [tags, setTags] = useState<AdminNfcTag[]>([]);
-  const [venueId, setVenueId] = useState("");
+  const [venueId, setVenueId] = useState(scopedVenueId);
   const [type, setType] = useState<AdminNfcTag["type"]>("dressing_room");
   const [label, setLabel] = useState("Dressing room");
   const [status, setStatus] = useState("Loading MyDancr tap sticker inventory…");
@@ -55,8 +55,8 @@ export default function AdminNfcInventoryPanel() {
         fallbackMessage: "Unable to load tap sticker inventory.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
-      setVenues(data.venues || []);
-      setTags(data.tags || []);
+      setVenues((data.venues || []).filter((venue: VenueOption) => !scopedVenueId || venue.id === scopedVenueId));
+      setTags((data.tags || []).filter((tag: AdminNfcTag) => !scopedVenueId || tag.venueId === scopedVenueId));
       setVenueId((current) => current || data.venues?.[0]?.id || "");
       if (clearStatus) setStatus("");
     } catch (error) {
@@ -66,7 +66,7 @@ export default function AdminNfcInventoryPanel() {
       if (loadAbortRef.current === controller) loadAbortRef.current = null;
       if (mountedRef.current && requestId === loadSequenceRef.current) setIsLoading(false);
     }
-  }, []);
+  }, [scopedVenueId]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -173,7 +173,7 @@ export default function AdminNfcInventoryPanel() {
       <p className="admin-nfc-intro">MyDancr owns provisioning. Program, test, label, and lock each physical sticker before it is delivered to the assigned venue.</p>
       <form onSubmit={provision}>
         <label>Assigned venue
-          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={isLoading || isSaving || !venues.length} required>
+          <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={Boolean(scopedVenueId) || isLoading || isSaving || !venues.length} required>
             {venues.map((venue) => (
               <option key={venue.id} value={venue.id}>{venue.name} · {venue.city}{venue.isClaimed ? "" : " · account not claimed"}</option>
             ))}

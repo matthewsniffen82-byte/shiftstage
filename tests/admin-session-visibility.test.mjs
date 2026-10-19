@@ -5,6 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as adminSession from "../app/admin/admin-session.ts";
 import * as browserSession from "../src/lib/dancr/browser-session.ts";
+import * as dataEvents from "../app/admin/admin-data-events.ts";
 
 const source = readFileSync(new URL("../app/admin/AdminClient.tsx", import.meta.url), "utf8");
 const boundary = source.indexOf("  const needsSignIn =");
@@ -45,6 +46,7 @@ function fixture(initial = original) {
         useRef: current => ({ current }), useEffect: effect => effects.push(effect),
       };
       if (name === "./admin-session") return adminSession;
+      if (name === "./admin-data-events") return dataEvents;
       if (name.includes("browser-session")) return browserSession;
       return {};
     },
@@ -114,5 +116,23 @@ test("opening admin while signed in as a customer preserves that account and sen
     assert.equal(f.pending.length, 0);
     assert.equal(f.state().authRequired, true);
     assert.equal(f.stored.get(key), JSON.stringify(newer));
+  } finally { await f.close(); }
+});
+
+test("successful actions refresh counts without resetting workspace data and ignore late results after an account switch", async () => {
+  const f = fixture();
+  try {
+    await f.respond();
+    f.event(dataEvents.ADMIN_DATA_CHANGED); f.event(dataEvents.ADMIN_DATA_CHANGED);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    assert.equal(f.pending.length, 1, 'rapid actions share one count refresh');
+    const request = f.pending.shift(); assert.equal(request.path, '/api/admin/operations');
+    request.resolve(Response.json({ ok: true, operations: { marker: 'updated', attention: { total: 2 } } })); await settle();
+    assert.equal(f.state().operations.marker, 'updated'); assert.equal(f.state().monitoring.marker, 'private-admin-data');
+    f.event(dataEvents.ADMIN_DATA_CHANGED); await new Promise(resolve => setTimeout(resolve, 300));
+    const late = f.pending.shift();
+    f.stored.set(key, JSON.stringify(newer)); f.event('storage', { key });
+    late.resolve(Response.json({ ok: true, operations: { marker: 'late', attention: { total: 1 } } })); await settle();
+    assert.equal(f.state().authRequired, true); assert.equal(f.state().operations, undefined);
   } finally { await f.close(); }
 });
