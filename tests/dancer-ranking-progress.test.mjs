@@ -53,11 +53,11 @@ test('invalid, unauthenticated and conflicting requests do not report success',a
 });
 
 const source=readFileSync('app/dashboard/DancerShiftManager.tsx','utf8');
-function renderShift(progress,sourceType='nfc_presence') {
+function renderShift(progress,sourceType='nfc_presence',active=true) {
   const require=createRequire(import.meta.url),exports={};let slot=0;
   const shift={id:'mine',status:'posted',checked_in_at:new Date(Date.now()-3600000).toISOString(),location_status:'club_confirmed',
     location_verification_expires_at:new Date(Date.now()+3600000).toISOString(),shift_source:sourceType,rankingProgress:progress,venues:{name:'Club A'}};
-  const states=[[shift],true,'',false,false,false,'',''];
+  const states=[active?[shift]:[],true,'',false,false,false,'',''];
   const deps={react:{...React,useState:()=>[states[slot++],()=>{}],useEffect(){},useRef:v=>({current:v}),useMemo:fn=>fn(),useCallback:fn=>fn()},
     'react/jsx-runtime':require('react/jsx-runtime'),'@/src/lib/dancr/shift-presence':presence,
     '@/src/lib/dancr/venue-dancer-scores':scoring,'@/src/lib/dancr/external-ranking-progress':{formatExternalHours},'./dashboard-session':{},
@@ -72,6 +72,12 @@ test('Overview offers Both for recorded Internal sessions and shows actual exter
   const both=renderShift({visibility:'both',externalHours:2.25});
   assert.match(both,/External time this shift: <strong>2h 15m/);assert.match(both,/#dancer-performance-ranking/);
   assert.match(both,/External time is recording/);assert.doesNotMatch(both,/Switch to Both|benefit active/);
+  for (const html of [internal,both,renderShift(null,'nfc_presence',false)]) {
+    assert.match(html,/External time helps you rank higher everywhere/);
+    assert.match(html,/External or Both carries the most weight in your score—<strong>40%<\/strong>/);
+    assert.match(html,/both the club&#x27;s internal roster and public MyDancr listings/);
+    assert.match(html,/Benefits start after 5 recorded minutes. More external time builds your score/);
+  }
   const unknown=renderShift({visibility:'both',externalHours:null});
   assert.match(unknown,/not recorded for this shift/);assert.doesNotMatch(unknown,/time is counting|Switch to Both/);
   assert.doesNotMatch(renderShift({visibility:'internal',externalHours:0},'demo_locked'),/Switch to Both|External time this shift/);

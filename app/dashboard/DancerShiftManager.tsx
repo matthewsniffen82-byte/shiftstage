@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatExternalHours } from "@/src/lib/dancr/external-ranking-progress";
-import { DANCER_SCORE_WEIGHTS } from "@/src/lib/dancr/venue-dancer-scores";
+import { DANCER_SCORE_WEIGHTS, EXTERNAL_RANKING_START_MINUTES } from "@/src/lib/dancr/venue-dancer-scores";
 import { DancerExternalRankingBenefit } from "./DancerExternalRankingBenefit";
 import {
   isActiveNfcPresence,
@@ -177,6 +177,12 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
     }
   }
 
+  const rankingGuidance = <>
+    <small><strong>External time helps you rank higher everywhere.</strong></small>
+    <small>Time checked in on External or Both carries the most weight in your score—<strong>{DANCER_SCORE_WEIGHTS.externalTime}%</strong>. Higher scores help you appear higher on both the club&apos;s internal roster and public MyDancr listings.</small>
+    <small>Benefits start after {EXTERNAL_RANKING_START_MINUTES} recorded minutes. More external time builds your score.</small>
+  </>;
+
   return (
     <article className="info-panel shift-panel" aria-label="Working Now management">
       <section className={`shift-checkin-card${activeShift ? " ready" : ""}`} aria-live="polite">
@@ -196,8 +202,8 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
               ) : null}
             </span>
             {!demoManagedActiveShift ? <div className="shift-ranking-progress">
+              {rankingGuidance}
               <small>External time this shift: <strong>{formatExternalHours(progress?.externalHours)}</strong></small>
-              <small>Your largest ranking factor · {DANCER_SCORE_WEIGHTS.externalTime}%</small>
               {progress?.visibility === "internal" && hasRecordedExternalTime ? <>
                 <p>Help guests discover you while you work. Choose Both to keep internal requests and start earning external ranking credit. This makes your approved profile public.</p>
                 <button type="button" disabled={saving || switching} onClick={() => void switchToBoth()}>{switching ? "Switching…" : "Switch to Both"}</button>
@@ -242,8 +248,8 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
             <span>
               <strong>Not working now</strong>
               <small>Tap the club&apos;s dressing-room sticker to show Working Now.</small>
-              <small>Choose External or Both to earn external ranking credit while you work.</small>
             </span>
+            <div className="shift-ranking-progress">{rankingGuidance}</div>
             {cooldownShift ? (
               <small className="shift-checkin-status" role="status">
                 Cooldown active. Another tap can start Working Now after {formatTime(nfcNextTapAllowedAt(cooldownShift)?.toISOString())}.

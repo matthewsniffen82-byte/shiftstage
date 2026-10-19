@@ -29,11 +29,11 @@ test('scorecard keeps placement guidance visible and scoring rules collapsed',()
   assert.equal((html.match(/class="dancer-score-category"/g)||[]).length,6);
   for(const key of scoring.DANCER_SCORE_CATEGORIES) assert.ok(html.includes(scoring.DANCER_SCORE_LABELS[key]));
   assert.match(html,/Last 14 days · Club A/);assert.match(html,/Early data/);assert.match(html,/50\/100/);
-  assert.match(html,/Your score helps determine your position in dancer grids, club rosters and Dancer TV/);
-  assert.match(html,/External check-in time carries the most weight: 40%/);
+  assert.match(html,/Higher scores help you appear higher on both the club&#x27;s internal roster and public MyDancr listings/);
+  assert.match(html,/Time checked in on External or Both carries the most weight in your score—<strong>40%<\/strong>/);
+  assert.match(html,/Benefits start after 5 recorded minutes. More external time builds your score/);
   assert.match(html,/External and Both count equally/);
-  assert.ok(html.indexOf('Higher scores, higher visibility.')>html.indexOf('Overall Performance:'));
-  assert.ok(html.indexOf('Higher scores, higher visibility.')<html.indexOf('class="dancer-score-categories"'));
+  assert.ok(html.indexOf('External time helps you rank higher everywhere.')<html.indexOf('Overall Performance:'));
   const help=html.match(/<details class="dancer-score-help">([\s\S]*?)<\/details>/)?.[1];
   assert.ok(help,'scoring explanation is inside a closed disclosure');
   assert.match(help,/<summary>How scoring works<\/summary>/);
