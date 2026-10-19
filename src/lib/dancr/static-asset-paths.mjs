@@ -1,6 +1,9 @@
 // Only public, checked-in assets belong here. Never include API or user media URLs.
 export const staticAssetPaths = [
   "/dancer-main-photo.css",
+  "/dancer-grid-card.js",
+  "/venue-grid-embed.js",
+  "/venue-grid-embed.css",
   "/dancr-account-forms.v1.css",
   "/dancr-ui-consistency.v1.css",
   "/dancr-auth.v1.css",

@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { validatePublicSupabaseConfig } from "./src/lib/supabase/public-config.mjs";
 import { validatePublicEnvironment } from "./src/lib/security/public-environment.mjs";
 import { contentSecurityPolicy } from "./src/lib/security/document-content-security-policy.mjs";
+import { nonEmbedDocumentSource } from "./src/lib/security/venue-embed-policy.mjs";
 import {
   createActiveEditProfileScript,
   createRootContentSecurityPolicy,
@@ -31,7 +32,6 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=31536000" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-DNS-Prefetch-Control", value: "off" },
-  { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Permitted-Cross-Domain-Policies", value: "none" },
   { key: "X-XSS-Protection", value: "0" },
 ];
@@ -61,6 +61,10 @@ const nextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: nonEmbedDocumentSource,
+        headers: [{ key: "X-Frame-Options", value: "DENY" }],
       },
       {
         source: "/api/:path*",

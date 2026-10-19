@@ -1,0 +1,92 @@
+/* Only reset page chrome. Cards inherit the exact homepage cascade. */
+html:has(body.venue-grid-embed), html body.venue-grid-embed {
+  min-height: 100%; margin: 0; padding: 0 !important; overflow-x: hidden;
+}
+html body.venue-grid-embed > .app {
+  width: 100%; max-width: none; min-height: 0; margin: 0; padding: 0;
+}
+html body.venue-grid-embed > .app main.stack,
+html body.venue-grid-embed > .app main.stack > section.stack {
+  display: grid !important; width: 100% !important; min-width: 0; max-width: none !important;
+  min-height: 0; gap: 12px; margin: 0 !important; padding: 0 !important;
+}
+html body.venue-grid-embed > .app main.stack > section.stack {
+  padding: 12px var(--dancer-discovery-content-gutter, 6px) !important;
+}
+html body.venue-grid-embed > .app main.stack > section.stack > #results.home-dancer-grid.home-dancer-three-column {
+  padding-bottom: 0 !important; margin-bottom: 0 !important; scroll-padding-bottom: 0;
+}
+html body.venue-grid-embed .venue-embed-heading {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+html body.venue-grid-embed .venue-embed-heading h1 { margin: 0; font-size: 22px; }
+html body.venue-grid-embed p { margin: 0; }
+html body.venue-grid-embed #venue-name { color: #bdb5c9; font-size: 14px; }
+html body.venue-grid-embed :is(.venue-embed-note, .venue-embed-credit, #venue-status) {
+  color: #bdb5c9; font-size: 12px; line-height: 1.5;
+}
+html body.venue-grid-embed #venue-refresh { flex: none; min-height: 44px; padding: 8px 12px; }
+html body.venue-grid-embed #venue-more { justify-self: center; min-height: 44px; }
+html body.venue-grid-embed [hidden] { display: none !important; }
+
+/* The brand lives only on this iframe's body. Public-app tokens are unchanged. */
+html body.venue-grid-embed {
+  --embed-accent: #7c3aed;
+  --embed-accent-text: #fff;
+  --dancr-color-brand-primary: var(--embed-accent);
+  --discovery-backdrop: radial-gradient(ellipse at top, color-mix(in srgb, var(--embed-accent) 14%, #050507), #050507 65%);
+  background: var(--discovery-backdrop) !important;
+}
+html body.venue-grid-embed :is(#venue-refresh, #venue-more, #venue-profile-back, #venue-media-close, .venue-embed-media-tabs button) {
+  border-color: color-mix(in srgb, var(--embed-accent) 65%, #ffffff30) !important;
+  background: color-mix(in srgb, var(--embed-accent) 12%, #08070e) !important;
+  color: #f8fafc !important; box-shadow: none !important;
+}
+html body.venue-grid-embed :is(a, button):focus-visible {
+  outline: 2px solid var(--embed-accent) !important; outline-offset: 3px;
+}
+html body.venue-grid-embed .home-dancer-grid-venue svg { color: var(--embed-accent); stroke: currentColor; }
+html body.venue-grid-embed #venue-profile { padding: 12px var(--dancer-discovery-content-gutter, 6px); }
+html body.venue-grid-embed #venue-profile-back { margin: 0 0 12px; min-height: 44px; }
+html body.venue-grid-embed #venue-profile-status { margin-bottom: 8px; font-size: 13px; color: #cbd5e1; }
+html body.venue-grid-embed #venue-profile-status:empty { display: none; }
+html body.venue-grid-embed .venue-embed-profile-hero {
+  display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr);
+  overflow: hidden; border-radius: 12px; background: #050507;
+}
+html body.venue-grid-embed .venue-embed-profile-copy {
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  gap: 12px; padding: 14px 10px; min-width: 0;
+}
+html body.venue-grid-embed .venue-embed-profile-copy h2 { margin: 0; font-size: clamp(24px, 7vw, 40px); overflow-wrap: anywhere; }
+html body.venue-grid-embed .venue-embed-profile-copy p { font-size: 13px; }
+html body.venue-grid-embed .venue-embed-profile-copy .venue-embed-live { color: #4dec9d; font-weight: 700; }
+html body.venue-grid-embed .venue-embed-portrait { width: 100%; height: 100%; min-height: 300px; aspect-ratio: 9 / 16; object-fit: cover; object-position: center top; }
+html body.venue-grid-embed .venue-embed-primary,
+html body.venue-grid-embed .venue-embed-media-tabs button[aria-pressed="true"] {
+  color: var(--embed-accent-text) !important; -webkit-text-fill-color: var(--embed-accent-text) !important;
+  background: var(--embed-accent) !important; border: 1px solid var(--embed-accent) !important;
+}
+html body.venue-grid-embed .venue-embed-primary {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 44px;
+  padding: 10px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none;
+}
+html body.venue-grid-embed .venue-embed-media-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 12px 0; }
+html body.venue-grid-embed .venue-embed-media-tabs button { min-height: 44px; }
+html body.venue-grid-embed .venue-embed-media-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dancr-media-grid-gap, 6px); }
+html body.venue-grid-embed .venue-embed-media-tile {
+  position: relative; display: block; width: 100%; min-width: 0; min-height: 0; aspect-ratio: 9 / 16;
+  margin: 0; padding: 0 !important; border: 0 !important; border-radius: 8px !important;
+  background: #111118 !important; overflow: hidden; box-shadow: none !important;
+}
+html body.venue-grid-embed .venue-embed-media-tile img { display: block; width: 100%; height: 100%; object-fit: cover; }
+html body.venue-grid-embed .venue-embed-play { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); padding: 10px; border-radius: 50%; background: #050507a8; color: #fff; }
+html body.venue-grid-embed #venue-media-dialog {
+  box-sizing: border-box; width: fit-content; max-width: 94vw; max-height: 94dvh; margin: auto;
+  padding: 8px; border: 1px solid var(--embed-accent); border-radius: 12px; background: #050507;
+}
+html body.venue-grid-embed #venue-media-dialog::backdrop { background: #000c; }
+html body.venue-grid-embed #venue-media-close { display: block; margin: 0 0 8px auto; min-height: 44px; }
+html body.venue-grid-embed #venue-media-content :is(img, video) { display: block; width: auto; height: auto; max-width: min(88vw, 760px); max-height: calc(94dvh - 80px); object-fit: contain; margin: auto; }
+html body.venue-grid-embed > .app main.stack > #venue-directory[hidden],
+html body.venue-grid-embed .venue-embed-media-grid[hidden] { display: none !important; }

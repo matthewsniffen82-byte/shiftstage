@@ -307,9 +307,6 @@
         ? `<span class="home-dancer-grid-city">${escapeHtml(profile.city)}</span>`
         : "";
       city = profileDiscoveryCity(profile, city);
-      const safeName = escapeHtml(profile.name);
-      const profileValue = escapeOptionValue(profile.name);
-      const profileReference = escapeOptionValue(profileReferenceValue(profile));
       const profileHref = profile.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : `#profile-${slugify(profile.name)}`;
       const photoUrl = publicProfilePhotoUrl(profile);
       const photoSrcSet = publicProfilePhotoSrcSet(profile);
@@ -349,21 +346,12 @@
         : status.className === "is-upcoming"
           ? "is-upcoming"
           : "is-open";
-      return `
-        <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}"${discoveryCardAttributes(profile)} class="dancer-card home-dancer-grid-card ${groupClass}${compactDirectory ? " is-compact-directory" : ""}" data-profile="${profileValue}" data-profile-reference="${profileReference}" data-grid-group="${groupClass}" aria-label="${safeName}, ${escapeHtml(scheduleLabel)}">
-          <a class="home-dancer-grid-link" href="${profileHref}" aria-label="Open ${safeName}'s full profile">
-            ${photoMarkup}
-            <span class="home-dancer-grid-copy">
-              <h3 class="home-dancer-grid-name">${safeName}</h3>
-              ${cityMarkup}
-              ${venueMarkup}
-              ${distanceMarkup}
-              <span class="home-dancer-grid-status ${status.className}">${escapeHtml(scheduleLabel)}</span>
-            </span>
-          </a>
-          ${compactDirectory ? "" : homeDancerGridActionsMarkup(profile, city)}
-        </article>
-      `;
+      return window.MydancrDancerGrid.render({
+        id: profile.id, name: profile.name, reference: profileReferenceValue(profile), href: profileHref,
+        discoveryAttributes: discoveryCardAttributes(profile), groupClass, compact: compactDirectory,
+        scheduleLabel, photoMarkup, cityMarkup, venueMarkup, distanceMarkup,
+        actionsMarkup: compactDirectory ? "" : homeDancerGridActionsMarkup(profile, city)
+      });
     }
 
     function spreadDancerGridPhotos(profiles) {

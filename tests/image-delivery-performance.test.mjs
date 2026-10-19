@@ -187,6 +187,7 @@ test("small profile galleries load together while large galleries prioritize the
 
 test("a large dancer directory prioritizes all opening rows without eagerly requesting every photo", () => {
   const context = vm.createContext({
+    window: {},
     ALL_CITIES: "All cities", profileDiscoveryCity: (_, city) => city,
     escapeHtml: String, escapeOptionValue: String, slugify: String,
     profileReferenceValue: profile => profile.id,
@@ -199,6 +200,7 @@ test("a large dancer directory prioritizes all opening rows without eagerly requ
     homeDancerGridScheduleLabel: () => "Not working now",
     discoveryCardAttributes: () => "",
   });
+  vm.runInContext(readFileSync("public/dancer-grid-card.js", "utf8"), context);
   vm.runInContext(shell.match(/function homeDancerGridCard\([^]*?(?=\n    function spreadDancerGridPhotos)/)[0], context);
   const cards = Array.from({length: 500}, (_, index) => context.homeDancerGridCard({id: String(index), name: `Dancer ${index}`}, "Las Vegas", true, index));
   assert.equal(cards.filter(markup => markup.includes('loading="eager" fetchpriority="high"')).length, 12);
