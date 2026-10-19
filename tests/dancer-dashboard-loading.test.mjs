@@ -24,7 +24,7 @@ const headerEnd = source.indexOf("\n      {isLoading &&", headerStart);
 // The header uses identity and loading state; account tools are tested on the complete page below.
 const identityEnd = source.indexOf("  const dancerAccountContent =", start);
 const loadingStart = source.indexOf('  if (role === "dancer" && isLoading && !state.error)', identityEnd);
-const header = compile('export function Header({state, isLoading, role = "dancer"}) {' + source.slice(start, identityEnd) + source.slice(loadingStart, end) + ' return (' + source.slice(headerStart, headerEnd).trim() + ');}', {
+const header = compile('export function Header({state, isLoading, role = "dancer", dancerWorkingNow = false}) {' + source.slice(start, identityEnd) + source.slice(loadingStart, end) + ' return (' + source.slice(headerStart, headerEnd).trim() + ');}', {
   useMemo: fn => fn(), dashboardName: profile => profile?.stage_name || "", homeDiscoveryHref: () => "/", effectiveDancerProfileStatus,
   DancerDashboardAvatar: identity.DancerDashboardAvatar, DashboardCloseButton: () => React.createElement("button", null, "Close"),
   CustomerDashboardAvatar: guestIdentity.CustomerDashboardAvatar,
@@ -32,7 +32,22 @@ const header = compile('export function Header({state, isLoading, role = "dancer
   VenueDashboardIcon: () => null,
   DashboardSignInRecovery: () => React.createElement("button", null, "Sign in"), retryDashboard: () => {},
 });
-const renderHeader = (state, isLoading, role = "dancer") => renderToStaticMarkup(React.createElement(header.Header, { state, isLoading, role }));
+const renderHeader = (state, isLoading, role = "dancer", dancerWorkingNow = false) => renderToStaticMarkup(React.createElement(header.Header, { state, isLoading, role, dancerWorkingNow }));
+
+test("the profile avatar ring follows Working Now independently of public visibility", () => {
+  for (const isPublic of [true, false]) {
+    const state = { profile: { stage_name: "Stacy", status: "approved", verification_status: "approved", avatarPhotoUrl: "/avatar.jpg", is_public: isPublic } };
+    const inactive = renderHeader(state, false);
+    assert.match(inactive, /data-dancer-avatar=""/);
+    assert.match(inactive, /data-dancer-avatar-border=""/);
+    assert.doesNotMatch(inactive, /data-working-now|, working now/);
+    const active = renderHeader(state, false, "dancer", true);
+    assert.match(active, /data-working-now="true"/);
+    assert.match(active, /aria-label="Stacy profile photo, working now"/);
+    assert.doesNotMatch(renderHeader({ ...state, error: "Sign in again" }, false, "dancer", true), /data-working-now/);
+    assert.doesNotMatch(renderHeader({ ...state, account: { accountState: "disabled" } }, false, "dancer", true), /data-working-now/);
+  }
+});
 
 test("initial and cached-account loading states show no placeholder dashboard", () => {
   for (const state of [{}, { account: { displayName: "Account Name", accountState: "approved" } }]) {

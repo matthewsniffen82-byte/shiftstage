@@ -39,6 +39,14 @@ body.dancr-button-system .dashboard-identity-header .vip-refresh { min-height: 4
   body.dancr-button-system .dashboard-identity-header .dashboard-identity-subtitle { font-size: 12px; }
 }
 
+/* Dancer identity uses the same circular border and live ring as their profile. */
+body.dancr-button-system .dashboard-identity-header[data-account-kind="dancer"] .dashboard-identity-avatar > .dancer-dashboard-avatar {
+  overflow: visible; border: 0 !important; border-radius: 50% !important;
+}
+body.dancr-button-system .dashboard-identity-header[data-account-kind="dancer"] .dashboard-identity-avatar > .dancer-dashboard-avatar[data-working-now="true"] {
+  background: var(--dancr-color-avatar-ring-live) !important; box-shadow: var(--dancr-shadow-avatar-live) !important;
+}
+
 /* Give the account dashboards the same navigation face and spacing as VIP.
    Keep each workspace's labels, unread counts, and navigation semantics. */
 body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) {

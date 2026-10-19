@@ -38,6 +38,7 @@ export function DancerPanel({
   analytics,
   nfc,
   onProfileChange,
+  onWorkingNowChange,
   profile,
 }: {
   agreement?: LoadState["agreement"];
@@ -47,6 +48,7 @@ export function DancerPanel({
   analytics?: LoadState["analytics"];
   nfc?: LoadState["nfc"];
   onProfileChange?: (profile: Record<string, unknown>) => void;
+  onWorkingNowChange?: (workingNow: boolean) => void;
   profile?: LoadState["profile"];
 }) {
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
@@ -64,6 +66,10 @@ export function DancerPanel({
   const [videoBusy, setVideoBusy] = useState(false);
   const [editorRequested, setEditorRequested] = useState(0);
   const [presenceKey, setPresenceKey] = useState<string>();
+  const handlePresenceChange = useCallback((key: string) => {
+    setPresenceKey(key);
+    onWorkingNowChange?.(key !== "off");
+  }, [onWorkingNowChange]);
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<string[]>([]);
   const [deletedPhotoStoragePaths, setDeletedPhotoStoragePaths] = useState<string[]>([]);
   const [draftIdentity, setDraftIdentity] = useState(() => ({
@@ -178,7 +184,7 @@ export function DancerPanel({
     </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested}
       overview={<>
         <DashboardPhoneNotifications />
-        <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager onPresenceChange={setPresenceKey} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
+        <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager onPresenceChange={handlePresenceChange} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
         <section className="dancer-daily-card" id="dancer-overview">
           <header><div><h2>Your profile</h2><p>Public visibility is separate from your club check-in.</p></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{isPublic ? "Public" : "Hidden"}</span></header>
           {hasPendingAvatar || hasPendingPhotos || hasRejectedMedia || !isPublic ? <section className="dancer-attention-note" aria-label="Profile attention">

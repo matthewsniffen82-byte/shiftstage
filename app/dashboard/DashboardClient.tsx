@@ -77,6 +77,7 @@ export default function DashboardClient({
   const [venueRefreshStatus, setVenueRefreshStatus] = useState("");
   const [customerAlertCount, setCustomerAlertCount] = useState(0);
   const [customerSupportCount, setCustomerSupportCount] = useState(0);
+  const [dancerWorkingNow, setDancerWorkingNow] = useState(false);
   const venueRefreshAbortRef = useRef<AbortController | null>(null);
   const venueRefreshRequestRef = useRef(0);
   const initialSectionTargetRef = useRef("");
@@ -514,7 +515,7 @@ export default function DashboardClient({
         </div>
         <div className="dashboard-identity-row">
           <div className="dashboard-identity-avatar">
-            {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} /> : null}
+            {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} workingNow={dancerWorkingNow && dancerProfileStatus === "approved" && !state.error && !dancerAccountPaused} /> : null}
             {role === "customer" ? <CustomerDashboardAvatar name={accountDisplayName} /> : null}
             {role === "venue" ? <span className="venue-dashboard-logo" aria-hidden="true">
               {profileDisplayName ? <span>{profileDisplayName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => Array.from(part)[0]).join("").toLocaleUpperCase()}</span> : <VenueDashboardIcon section="venue" />}
@@ -609,6 +610,7 @@ export default function DashboardClient({
                 nfc={state.nfc}
                 profile={state.profile}
                 onProfileChange={updateProfile}
+                onWorkingNowChange={setDancerWorkingNow}
               />}
 
             </>

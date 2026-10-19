@@ -31,6 +31,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
   const [endConfirmationOpen, setEndConfirmationOpen] = useState(false);
   const [workingNowStatus, setWorkingNowStatus] = useState("");
   const [workingNowStatusKind, setWorkingNowStatusKind] = useState<"" | "error" | "success">("");
+  const [presenceClock, setPresenceClock] = useState(() => Date.now());
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
   const loadAbortRef = useRef<AbortController | null>(null);
@@ -75,18 +76,32 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
   }, [load]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === "visible" && !actionPendingRef.current) {
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      setPresenceClock(Date.now());
+      if (!actionPendingRef.current) {
         void load().catch(() => { /* Keep the current status until the next refresh. */ });
       }
-    }, 30_000);
-    return () => window.clearInterval(timer);
+    };
+    const timer = window.setInterval(refresh, 30_000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
   }, [load]);
 
   const activeShift = useMemo(
-    () => shifts.find((shift) => isActiveNfcPresence(shift)) || null,
-    [shifts],
+    () => shifts.find((shift) => isActiveNfcPresence(shift, presenceClock)) || null,
+    [shifts, presenceClock],
   );
+  const activeUntil = activeShift?.location_verification_expires_at || activeShift?.locationVerificationExpiresAt;
+  useEffect(() => {
+    if (!activeUntil) return;
+    // Expire the live ring even if the next network refresh fails.
+    const timer = window.setTimeout(() => setPresenceClock(Date.now()), Math.max(0, Date.parse(activeUntil) - Date.now()));
+    return () => window.clearTimeout(timer);
+  }, [activeUntil]);
   const demoManagedActiveShift = activeShift?.shift_source === "demo_locked";
   const progress = activeShift?.rankingProgress;
   const hasRecordedExternalTime = typeof progress?.externalHours === "number" && Number.isFinite(progress.externalHours) && progress.externalHours >= 0;
@@ -94,6 +109,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
   useEffect(() => {
     if (hasLoaded) onPresenceChange?.(presenceKey);
   }, [hasLoaded, presenceKey, onPresenceChange]);
+  useEffect(() => () => onPresenceChange?.("off"), [onPresenceChange]);
   const latestNfcShift = useMemo(
     () => shifts
       .filter((shift) => Boolean(shift.nfc_last_tapped_at || shift.nfcLastTappedAt))
