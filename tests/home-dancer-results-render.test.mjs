@@ -51,7 +51,7 @@ function directoryFixture(profiles) {
     selectedVenueFilter: () => state.venueFilter, selectedHomeTvVenueFilter: () => null,
     syncHomeDestinationLocation: () => { state.syncedFilter = state.dancerDirectoryFilter; },
     resolveVenueByName: () => null, liveDiscoveryIsLoading: () => state.loading,
-    hasMoreDiscovery: () => false, discoveryMarket: () => null,
+    hasMoreDiscovery: () => false, discoveryMarket: () => null, discoveryDancerCount: () => null,
     discoveryPaginationMarkup: () => "",
     discoveryLocationPhrase: (city) => `in ${city}`,
     isWorkingTonight: (profile) => Boolean(profile.now),

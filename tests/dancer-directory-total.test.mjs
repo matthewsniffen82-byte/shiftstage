@@ -7,10 +7,11 @@ const html = await readFile(new URL("../outputs/index.html", import.meta.url), "
 const renderSource = html.match(/function render\(\) \{[\s\S]*?(?=\n    async function renderHomeTvLaunch)/)[0];
 const sectionsSource = html.match(/function dancerDirectorySections\(profiles, city\) \{[\s\S]*?(?=\n    function homeDancerGridContentKey)/)[0];
 const tabCountsSource = html.match(/function updateTabCounts\(city\) \{[\s\S]*?(?=\n    function updateHomeLiveSummary)/)[0];
+const discoveryCountSource = html.match(/function discoveryDancerCount\(city, tab = "dancers"\) \{[\s\S]*?(?=\n    function discoveryPaginationMarkup)/)[0];
 const noop = () => {};
 const node = () => ({ classList: { toggle: noop, remove: noop }, replaceChildren: noop, closest: () => node() });
 
-function harness({ working = 7, off = 7, venue = "all", loading = false, error = false, more = false } = {}) {
+function harness({ working = 7, off = 7, venue = "all", loading = false, error = false, more = false, statusCounts = null } = {}) {
   const items = Array.from({ length: working + off }, (_, index) => ({ working: index < working }));
   let count;
   let visible;
@@ -27,13 +28,15 @@ function harness({ working = 7, off = 7, venue = "all", loading = false, error =
     deactivateHomeTvFeed: noop, deactivateHomeDiscoveryFeed: noop,
     selectedVenueFilter: () => venue, selectedHomeTvVenueFilter: () => null,
     observeDiscoveryGrid: noop, hasMoreDiscovery: () => more, liveDiscoveryIsLoading: () => loading, getItems: () => items,
+    discoveryMarket: () => ({ pagination: { scopeKey: "scope", filter: "all", statusCounts } }),
+    discoveryRequestScope: () => ({ key: "scope" }),
     discoveryLocationPhrase: () => "in Las Vegas", resolveVenueByName: () => null,
     setHomeTvFeedCount: value => { count = value; },
     homeDiscoveryLoadingStateMarkup: () => "Loading", escapeHtml: value => value,
     dancerDirectoryGroups: profiles => ({ workingNow: profiles.filter(p => p.working), notWorkingNow: profiles.filter(p => !p.working) }),
     renderHomeDancerGrid: (city, profiles) => { visible = context.dancerDirectorySections(profiles, city)[0].profiles.length; },
   });
-  vm.runInContext(`${sectionsSource}\n${tabCountsSource}\n${renderSource}`, context);
+  vm.runInContext(`${sectionsSource}\n${discoveryCountSource}\n${tabCountsSource}\n${renderSource}`, context);
   return {
     navCount: () => dancerTab.innerHTML.match(/class="tab-count">([^<]+)</)?.[1],
     render(filter = "now") {
@@ -76,4 +79,10 @@ test("heading and bottom navigation show the actual complete count above 100", (
   const h = harness({ working: 237, off: 0 });
   assert.deepEqual(h.render(), { count: "237 dancers", visible: 237 });
   assert.equal(h.navCount(), "237");
+});
+
+test("first-page cards show the server's full total while the remaining cards are loading", () => {
+  const h = harness({ working: 100, off: 0, more: true, statusCounts: { now: 498, not_now: 31 } });
+  assert.deepEqual(h.render(), { count: "529 dancers", visible: 100 });
+  assert.equal(h.navCount(), "529");
 });

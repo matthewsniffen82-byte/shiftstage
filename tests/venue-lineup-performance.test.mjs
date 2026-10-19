@@ -5,9 +5,10 @@ import vm from "node:vm";
 
 const source = readFileSync(new URL("../outputs/index.html", import.meta.url), "utf8");
 const venue = { id: "club", name: "Fixture Club", city: "Las Vegas" };
-function fixture(dancers) {
+function fixture(dancers, partial = false) {
   const context = vm.createContext({
     discoveryMarket: () => ({ dancers }),
+    citySelect: { value: venue.city }, hasMoreDiscovery: () => partial,
     isApprovedPublicProfile: row => row.approved !== false,
     withTrendingRank: row => ({ ...row }),
     isWorkingTonight: row => row.working,
@@ -40,6 +41,16 @@ function fixture(dancers) {
 }
 const avatarIds = markup => [...markup.matchAll(/data-venue-dancer-profile[^>]*data-dancer-id="([^"]+)"/g)].map(match => match[1]);
 const dancer = (id, time, extra = {}) => ({ id, name: id, venue: venue.name, working: true, time, ...extra });
+
+test("early club cards do not report a partial roster as empty or complete", () => {
+  for (const dancers of [[], [dancer("first", 0)]]) {
+    for (const render of Object.values(fixture(dancers, true))) {
+      const markup = render();
+      assert.match(markup, /Loading dancers/);
+      assert.doesNotMatch(markup, /No dancers listed now|aria-label="\d+ dancers? working now"/);
+    }
+  }
+});
 
 test("mobile and desktop club circles retain the five highest server-ranked eligible dancers", () => {
   // Public discovery supplies descending Overall Performance order, with its

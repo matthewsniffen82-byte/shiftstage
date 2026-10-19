@@ -524,7 +524,7 @@
         ${dancerDirectoryFilterMarkup(profiles, city)}
         <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
         ${sectionMarkup}
-        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(moreProfiles ? "No matching dancers in the profiles loaded so far. Load more to keep browsing." : emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
+        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(moreProfiles ? "Checking the remaining dancers…" : emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
       `;
       const pagedMarkup = gridMarkup + discoveryPaginationMarkup(city);
       const nextRenderKey = homeDancerGridContentKey(city, pagedMarkup);

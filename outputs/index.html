@@ -44041,6 +44041,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     const venueDiscoveryOrderByCity = new Map();
     const liveMarketRefreshes = new Set();
     const liveMarketPendingRefreshes = new Set();
+    const discoveryScopeCache = new Map();
+    const DISCOVERY_SCOPE_CACHE_TTL_MS = 20000;
+    const DISCOVERY_SCOPE_CACHE_LIMIT = 6;
     let liveDancerAnalytics = null;
     let liveDancerDeals = null;
     let liveDancerWeeklyReport = null;
@@ -48533,6 +48536,21 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const market = discoveryMarket(city);
       if (!market) return;
       const requestedScope = discoveryRequestScope(city);
+      const headers = discoveryRequestHeaders();
+      const identity = JSON.stringify(headers);
+      const cacheKey = JSON.stringify([city, requestedScope.key, identity]);
+      if (options.force && options.cacheBust !== false) discoveryScopeCache.clear();
+      const cached = discoveryScopeCache.get(cacheKey);
+      if (!options.force && !options.more && cached?.expiresAt > Date.now()
+        && market.pagination?.scopeKey !== requestedScope.key
+        && liveMarketState[city] !== "loading" && !liveMarketRefreshes.has(city)) {
+        market.pagination = { ...cached.page, loading: false, error: false };
+        applyLiveMarket(city, cached.page.dancers, cached.page.tonightDancers, cached.page.venues);
+        liveMarketState[city] = "ready";
+        if (citySelect.value === city) render();
+        // Reuse only a recent matching scope, then recheck visibility and presence.
+        return loadLiveDiscovery(city, { force: true, cacheBust: false, background: true });
+      }
       const previous = market.pagination;
       const scopeChanged = Boolean(previous?.scopeKey && previous.scopeKey !== requestedScope.key);
       const more = Boolean(options.more && !scopeChanged);
@@ -48552,8 +48570,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       if (previous) { previous.loading = more; previous.error = false; }
       if (scopeChanged && citySelect.value === city) render();
       if (more && citySelect.value === city) render();
-      const headers = discoveryRequestHeaders();
-      const identity = JSON.stringify(headers);
       // Follow every continuation automatically, including on refresh. The API's
       // batch size must not become the directory's total or require a load-more click.
       let cursor = more ? previous.nextCursor : null;
@@ -48564,8 +48580,11 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       let venues = more ? previous.venues : [];
       let statusCounts = more ? previous.statusCounts : null;
       const seenCursors = new Set();
+      let savedRequested = false;
       const publishResults = (error = false) => {
-        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, dancers, tonightDancers, venues, statusCounts, nextCursor: cursor, pageCount, loading: false, error };
+        const loading = Boolean(cursor && !error);
+        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, dancers, tonightDancers, venues, statusCounts, nextCursor: cursor, pageCount, loading, error };
+        if (loading) liveMarketRefreshes.add(city);
         applyLiveMarket(city, dancers, tonightDancers, venues);
         // Initial club links may resolve only once venue metadata arrives.
         if (citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) liveMarketPendingRefreshes.add(city);
@@ -48575,7 +48594,21 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           if (customerDashboard.classList.contains("show")) renderDashboard();
           if (adminDashboard.classList.contains("show")) renderAdminDashboard();
         }
-        if (isCustomerSession() && !background && !more) void loadLiveCustomerSaved();
+        if (isCustomerSession() && !background && !more && !savedRequested) {
+          savedRequested = true;
+          void loadLiveCustomerSaved();
+        }
+        if (!cursor && !error) {
+          const now = Date.now();
+          discoveryScopeCache.forEach((entry, key) => {
+            if (entry.expiresAt <= now) discoveryScopeCache.delete(key);
+          });
+          discoveryScopeCache.delete(cacheKey);
+          while (discoveryScopeCache.size >= DISCOVERY_SCOPE_CACHE_LIMIT) {
+            discoveryScopeCache.delete(discoveryScopeCache.keys().next().value);
+          }
+          discoveryScopeCache.set(cacheKey, { page: market.pagination, expiresAt: now + DISCOVERY_SCOPE_CACHE_TTL_MS });
+        }
       };
       try {
         do {
@@ -48608,6 +48641,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           }
           cursor = discovery.nextCursor || null;
           pageCount += 1;
+          // First visits can paint cards and begin image loading immediately.
+          // Refreshes keep the complete existing list until its replacement is ready.
+          if (cursor && !keepCurrentResults) publishResults();
         } while (cursor);
         publishResults();
       } catch (error) {
@@ -48664,9 +48700,20 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       return Boolean(page?.nextCursor && (!page.scopeKey || page.scopeKey === discoveryRequestScope(city).key));
     }
 
+    function discoveryDancerCount(city, tab = "dancers") {
+      if (userLocationOutsideMarkets) return null;
+      const page = discoveryMarket(city)?.pagination;
+      if (!page || page.scopeKey !== discoveryRequestScope(city).key || !hasMoreDiscovery(city)) return null;
+      const totals = page.statusCounts;
+      if (!Number.isSafeInteger(totals?.now) || !Number.isSafeInteger(totals?.not_now)) return null;
+      return tab === "tonight" || page.filter === "now" ? totals.now
+        : page.filter === "not_now" ? totals.not_now : totals.now + totals.not_now;
+    }
+
     function discoveryPaginationMarkup(city) {
       const page = discoveryMarket(city)?.pagination;
       if (!hasMoreDiscovery(city)) return "";
+      if (page.loading) return '<div class="dancer-directory-pagination" role="status">Loading remaining dancers…</div>';
       return `<div class="dancer-directory-pagination" aria-live="polite">
         <span>${page.error ? "More dancers could not load. Try again." : "More dancers are available."}</span>
         <button class="home-discovery-empty-action" type="button" data-more-live-discovery="${escapeHtml(city)}"${page.loading ? " disabled" : ""}>${page.loading ? "Loading dancers…" : page.error ? "Try again" : "Load more dancers"}</button>
@@ -53651,6 +53698,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         : venueDancers(city, venue.name))
         .filter((profile) => isWorkingTonight(profile, city));
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
+      if (hasMoreDiscovery(citySelect.value)) {
+        return `<span class="${classPrefix}-lineup is-empty" role="status"><span class="venue-lineup-empty-text">Loading dancers…</span></span>`;
+      }
       if (!liveProfiles.length) {
         return `<span class="${classPrefix}-lineup is-empty"><span class="venue-lineup-empty-text">No dancers listed now</span></span>`;
       }
@@ -61076,15 +61126,15 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const loading = liveDiscoveryIsLoading(city);
       const unavailable = liveMarketState[city] === "error";
       const counts = {
-        tonight: getItems(city, "tonight").length,
-        dancers: getItems(city, "dancers").length,
+        tonight: discoveryDancerCount(city, "tonight") ?? getItems(city, "tonight").length,
+        dancers: discoveryDancerCount(city) ?? getItems(city, "dancers").length,
         venues: getItems(city, "venues").length
       };
       document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
         const tabName = tab.dataset.tab;
         const label = tab.dataset.tabLabel || tab.textContent.trim();
         const liveTab = ["tonight", "dancers", "venues"].includes(tabName);
-        const partial = ["tonight", "dancers"].includes(tabName) && hasMoreDiscovery(city);
+        const partial = ["tonight", "dancers"].includes(tabName) && hasMoreDiscovery(city) && discoveryDancerCount(city, tabName) === null;
         const count = liveTab && (loading || unavailable) ? "..." : `${counts[tabName] ?? 0}${partial ? "+" : ""}`;
         tab.innerHTML = `${homeNavigationIconMarkup(tabName)}<span class="home-nav-label">${label}</span><span class="tab-count">${count}</span>`;
       });
@@ -61674,7 +61724,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         ${dancerDirectoryFilterMarkup(profiles, city)}
         <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
         ${sectionMarkup}
-        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(moreProfiles ? "No matching dancers in the profiles loaded so far. Load more to keep browsing." : emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
+        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(moreProfiles ? "Checking the remaining dancers…" : emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
       `;
       const pagedMarkup = gridMarkup + discoveryPaginationMarkup(city);
       const nextRenderKey = homeDancerGridContentKey(city, pagedMarkup);
@@ -62134,10 +62184,11 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       }
       // The heading describes the whole city/club scope. Status tabs carry
       // their own counts and must not change this total when selected.
-      const resultCount = allItems.length;
+      const dancerTotal = activeTab === "dancers" ? discoveryDancerCount(city) : null;
+      const resultCount = dancerTotal ?? allItems.length;
       const resultCountLabel = activeTab === "venues"
         ? `${resultCount} club${resultCount === 1 ? "" : "s"}`
-        : `${resultCount} dancer${resultCount === 1 ? "" : "s"}${hasMoreDiscovery(city) ? " loaded" : ""}`;
+        : `${resultCount} dancer${resultCount === 1 ? "" : "s"}${hasMoreDiscovery(city) && dancerTotal === null ? " loaded" : ""}`;
       setHomeTvFeedCount(unavailableDiscovery
         ? "Unavailable"
         : loadingDiscovery

@@ -663,6 +663,9 @@
     const venueDiscoveryOrderByCity = new Map();
     const liveMarketRefreshes = new Set();
     const liveMarketPendingRefreshes = new Set();
+    const discoveryScopeCache = new Map();
+    const DISCOVERY_SCOPE_CACHE_TTL_MS = 20000;
+    const DISCOVERY_SCOPE_CACHE_LIMIT = 6;
     let liveDancerAnalytics = null;
     let liveDancerDeals = null;
     let liveDancerWeeklyReport = null;

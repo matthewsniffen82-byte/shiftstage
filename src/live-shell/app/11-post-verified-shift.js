@@ -184,6 +184,9 @@
         : venueDancers(city, venue.name))
         .filter((profile) => isWorkingTonight(profile, city));
       const classPrefix = options.mobile ? "home-venue-discovery" : "venue-card";
+      if (hasMoreDiscovery(citySelect.value)) {
+        return `<span class="${classPrefix}-lineup is-empty" role="status"><span class="venue-lineup-empty-text">Loading dancers…</span></span>`;
+      }
       if (!liveProfiles.length) {
         return `<span class="${classPrefix}-lineup is-empty"><span class="venue-lineup-empty-text">No dancers listed now</span></span>`;
       }

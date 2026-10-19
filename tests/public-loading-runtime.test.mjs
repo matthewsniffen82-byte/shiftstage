@@ -15,6 +15,8 @@ function context(overrides = {}) {
     AbortController, URLSearchParams, console, activeTab: "tv", dancerDirectoryFilter: "now", selectedVenueFilter: () => "all", resolveVenueByName: () => null, discoveryRequestHeaders: () => ({}),
     LIVE_JSON_REQUEST_TIMEOUT_MS: 15,
     PUBLIC_DISCOVERY_REQUEST_RETRIES: 1,
+    discoveryScopeCache: new Map(), DISCOVERY_SCOPE_CACHE_TTL_MS: 20000, DISCOVERY_SCOPE_CACHE_LIMIT: 6,
+    userLocationOutsideMarkets: false,
     window: { setTimeout, clearTimeout },
     ...overrides,
   });
@@ -200,13 +202,68 @@ function pagedDiscoveryFixture() {
 const nextPage = () => new Promise(resolve => setImmediate(resolve));
 const dancerRows = (start, count) => Array.from({ length: count }, (_, index) => ({ id: `dancer-${start + index}` }));
 
-test("directory automatically loads every batch beyond 100 and publishes the complete unique total", async () => {
+test("returning to a recently loaded club list paints it immediately and refreshes without blanking it", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  ctx.activeTab = "venues";
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "all-dancer" }], venues: [{ id: "club" }], nextCursor: null }); await request;
+  ctx.activeTab = "dancers";
+  request = ctx.loadLiveDiscovery("Vegas");
+  requests[1].resolve({ dancers: [{ id: "working-dancer" }], venues: [{ id: "club" }], nextCursor: null }); await request;
+  ctx.activeTab = "venues";
+  request = ctx.loadLiveDiscovery("Vegas");
+  assert.equal(ctx.liveMarketState.Vegas, "ready");
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "all-dancer");
+  assert.equal(ctx.markets.Vegas.venues[0].id, "club");
+  assert.match(requests[2].url, /filter=all/);
+  requests[2].resolve({ dancers: [{ id: "refreshed" }], venues: [], nextCursor: null }); await request;
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "refreshed");
+  assert.equal(ctx.markets.Vegas.venues.length, 0, "removed clubs disappear when revalidation completes");
+});
+
+test("expired, account-mismatched and explicitly invalidated lists are not restored", async () => {
+  for (const reason of ["expired", "account", "invalidated"]) {
+    const { ctx, requests } = pagedDiscoveryFixture();
+    let request = ctx.loadLiveDiscovery("Vegas");
+    requests[0].resolve({ dancers: [{ id: "original" }], nextCursor: null }); await request;
+    if (reason === "expired") ctx.discoveryScopeCache.forEach(entry => { entry.expiresAt = 0; });
+    ctx.activeTab = "dancers";
+    request = ctx.loadLiveDiscovery("Vegas", reason === "invalidated" ? { force: true } : {});
+    requests[1].resolve({ dancers: [{ id: "working" }], nextCursor: null }); await request;
+    if (reason === "account") ctx.discoveryRequestHeaders = () => ({ "x-discovery-session": "new-account" });
+    ctx.activeTab = "venues";
+    request = ctx.loadLiveDiscovery("Vegas");
+    assert.equal(ctx.liveMarketState.Vegas, "loading", reason);
+    assert.equal(ctx.markets.Vegas.dancers.length, 0, reason);
+    requests[2].resolve({ dancers: [{ id: "current" }], nextCursor: null }); await request;
+  }
+});
+
+test("recent list reuse has a bounded in-memory lifetime and size", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  for (let index = 0; index < 8; index += 1) {
+    const city = `City ${index}`;
+    ctx.markets[city] = { dancers: [], venues: [] };
+    ctx.citySelect.value = city;
+    const request = ctx.loadLiveDiscovery(city);
+    requests[index].resolve({ dancers: [{ id: `dancer-${index}` }], nextCursor: null }); await request;
+  }
+  assert.equal(ctx.discoveryScopeCache.size, 6);
+  assert.ok([...ctx.discoveryScopeCache.values()].every(entry => entry.expiresAt <= Date.now() + 20000));
+});
+
+test("first dancer and club cards render before later pages settle while all batches still load automatically", async () => {
   const f = pagedDiscoveryFixture(), { ctx, requests } = f;
   const request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: dancerRows(0, 100), nextCursor: "next" }); await nextPage();
+  requests[0].resolve({ dancers: dancerRows(0, 100), venues: [{ id: "club" }], statusCounts: { now: 237, not_now: 0 }, nextCursor: "next" }); await nextPage();
   assert.match(requests[1].url, /cursor=next/);
-  assert.equal(ctx.liveMarketState.Vegas, "loading", "100 is not presented as the final total");
-  assert.equal(f.renders(), 0);
+  assert.equal(ctx.liveMarketState.Vegas, "ready", "first cards are available without waiting for the rest");
+  assert.equal(ctx.markets.Vegas.dancers.length, 100);
+  assert.equal(ctx.markets.Vegas.venues[0].id, "club");
+  assert.equal(ctx.discoveryDancerCount("Vegas"), 237, "the server's full total is available on the first batch");
+  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Loading remaining dancers/);
+  assert.doesNotMatch(ctx.discoveryPaginationMarkup("Vegas"), /<button/);
+  assert.equal(f.renders(), 1);
   await ctx.loadLiveDiscovery("Vegas", { more: true });
   assert.equal(requests.length, 2, "concurrent calls cannot request the same page twice");
   requests[1].resolve({ dancers: dancerRows(100, 100), nextCursor: "last" }); await nextPage();
@@ -218,7 +275,7 @@ test("directory automatically loads every batch beyond 100 and publishes the com
   assert.equal(ctx.markets.Vegas.pagination.pageCount, 3);
   assert.equal(ctx.hasMoreDiscovery("Vegas"), false);
   assert.equal(ctx.discoveryPaginationMarkup("Vegas"), "");
-  assert.equal(f.renders(), 1);
+  assert.equal(f.renders(), 3);
   assert.equal(f.privateLoads(), 1);
   await ctx.loadLiveDiscovery("Vegas", { more: true });
   assert.equal(requests.length, 3);
@@ -233,7 +290,7 @@ test("a failed next page keeps its cursor and visible cards for retry", async ()
   assert.equal(ctx.markets.Vegas.dancers.length, 1);
   assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Try again/);
   request = ctx.loadLiveDiscovery("Vegas", { more: true });
-  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /disabled/);
+  assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Loading remaining dancers/);
   await ctx.loadLiveDiscovery("Vegas", { more: true });
   assert.equal(requests.length, 3);
   requests[2].resolve({ dancers: [{ id: "middle" }], nextCursor: "last" }); await nextPage();

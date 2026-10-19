@@ -71,10 +71,11 @@
       }
       // The heading describes the whole city/club scope. Status tabs carry
       // their own counts and must not change this total when selected.
-      const resultCount = allItems.length;
+      const dancerTotal = activeTab === "dancers" ? discoveryDancerCount(city) : null;
+      const resultCount = dancerTotal ?? allItems.length;
       const resultCountLabel = activeTab === "venues"
         ? `${resultCount} club${resultCount === 1 ? "" : "s"}`
-        : `${resultCount} dancer${resultCount === 1 ? "" : "s"}${hasMoreDiscovery(city) ? " loaded" : ""}`;
+        : `${resultCount} dancer${resultCount === 1 ? "" : "s"}${hasMoreDiscovery(city) && dancerTotal === null ? " loaded" : ""}`;
       setHomeTvFeedCount(unavailableDiscovery
         ? "Unavailable"
         : loadingDiscovery

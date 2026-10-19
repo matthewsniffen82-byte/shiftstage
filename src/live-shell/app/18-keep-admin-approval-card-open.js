@@ -905,15 +905,15 @@
       const loading = liveDiscoveryIsLoading(city);
       const unavailable = liveMarketState[city] === "error";
       const counts = {
-        tonight: getItems(city, "tonight").length,
-        dancers: getItems(city, "dancers").length,
+        tonight: discoveryDancerCount(city, "tonight") ?? getItems(city, "tonight").length,
+        dancers: discoveryDancerCount(city) ?? getItems(city, "dancers").length,
         venues: getItems(city, "venues").length
       };
       document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
         const tabName = tab.dataset.tab;
         const label = tab.dataset.tabLabel || tab.textContent.trim();
         const liveTab = ["tonight", "dancers", "venues"].includes(tabName);
-        const partial = ["tonight", "dancers"].includes(tabName) && hasMoreDiscovery(city);
+        const partial = ["tonight", "dancers"].includes(tabName) && hasMoreDiscovery(city) && discoveryDancerCount(city, tabName) === null;
         const count = liveTab && (loading || unavailable) ? "..." : `${counts[tabName] ?? 0}${partial ? "+" : ""}`;
         tab.innerHTML = `${homeNavigationIconMarkup(tabName)}<span class="home-nav-label">${label}</span><span class="tab-count">${count}</span>`;
       });
