@@ -1957,6 +1957,12 @@ html body.dancr-button-system :is(
   gap: var(--dancr-media-grid-gap, 6px) !important;
 }
 
+/* Public dancer portraits sit closer together, keeping the existing rounded corners. */
+html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,
+html body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid {
+  --dancr-media-grid-gap: 4px;
+}
+
 /* Continue the discovery backdrop through venue details and dancer profiles.
  * Only the page and gallery surfaces are colored; media and controls retain
  * their own appearance. */

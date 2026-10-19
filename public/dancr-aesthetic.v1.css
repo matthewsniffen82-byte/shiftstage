@@ -13414,8 +13414,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home
   background: linear-gradient(180deg, transparent, rgba(46, 22, 75, .12) 24%, rgba(38, 20, 62, .4) 56%, rgba(21, 11, 37, .68)) !important;
 }
 
-/* Public grids keep a quiet violet edge without changing portrait dimensions.
- * Keyboard focus and hover retain a stronger ring around the profile link. */
+/* Public portraits have clean edges; only keyboard focus draws a visible ring. */
 body.dancr-button-system .home-dancer-grid-link {
   -webkit-tap-highlight-color: transparent;
 }
@@ -13426,7 +13425,7 @@ body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home
   position: absolute;
   inset: 0;
   z-index: 3;
-  border: 1px solid #4a365f;
+  border: 2px solid transparent;
   border-radius: inherit;
   pointer-events: none;
 }
@@ -13441,13 +13440,6 @@ body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:focus-
 body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-link:focus-visible {
   outline: 0 !important;
   box-shadow: none !important;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  body.dancr-button-system #results.home-dancer-grid .home-dancer-grid-link:hover::after,
-  body.dancr-button-system #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-link:hover::after {
-    border-color: var(--dancr-color-avatar-ring-violet);
-  }
 }
 
 /* Keep the venue frame snug around its status and full-size action buttons. */
