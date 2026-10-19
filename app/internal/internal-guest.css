@@ -62,9 +62,9 @@ body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy strong {
   line-height: 1.18; white-space: normal; overflow-wrap: anywhere;
 }
 body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy > span {
-  /* Match the public dancer grid's supporting gray on mobile, too. */
-  color: #b3b5c2 !important;
-  -webkit-text-fill-color: #b3b5c2 !important;
+  /* Keep the profile link readable over portraits, including mobile browsers. */
+  color: #e5e7eb !important;
+  -webkit-text-fill-color: #e5e7eb !important;
   font-size: clamp(9px, 2.5vw, 10px);
   font-weight: 600;
   line-height: 1.3;
@@ -73,7 +73,7 @@ body .ir-shell.ir-guest .ir-directory-grid .ir-dancer-copy > span {
 }
 body .ir-guest .ir-card-request-state {
   position: absolute; z-index: 2; top: 6px; left: 6px; max-width: calc(100% - 12px);
-  box-sizing: border-box; padding: 4px 5px; border: 1px solid rgba(167, 139, 250, .4); border-radius: 6px;
+  box-sizing: border-box; padding: 4px 5px; border: 1px solid rgba(167, 139, 250, .75); border-radius: 6px;
   background: linear-gradient(rgba(22, 16, 31, .94), rgba(12, 10, 18, .94)); color: #eee5fc;
   font-size: clamp(9px, 2.5vw, 10px); font-weight: 600; line-height: 1.25;
 }
