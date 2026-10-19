@@ -28,7 +28,7 @@ const { DancerAnalyticsPanel } = compile("../app/dashboard/DancerAnalyticsPanel.
   "./DancerRequestDialog": compile("../app/dashboard/DancerRequestDialog.tsx", {"./dashboard-session":{}}),
   "./DancerResultsTrend": compile("../app/dashboard/DancerResultsTrend.tsx"),
   "./dancer-results.css": {},
-  "./DancerDiscoveryBoosts": compile("../app/dashboard/DancerDiscoveryBoosts.tsx", {"./dashboard-session":{},"@/src/lib/dancr/venue-dancer-scores":scoring,"@/src/lib/dancr/external-ranking-progress":progress}) });
+  "./DancerDiscoveryBoosts": compile("../app/dashboard/DancerDiscoveryBoosts.tsx", {"./useDancerRankingStatus":{useDancerRankingStatus:()=>({status:null,error:false})},"@/src/lib/dancr/venue-dancer-scores":scoring,"@/src/lib/dancr/external-ranking-progress":progress}) });
 const now = new Date("2026-09-23T12:00:00Z");
 const daysAgo = days => new Date(now.getTime() - days * 86400000).toISOString();
 function fixture() {

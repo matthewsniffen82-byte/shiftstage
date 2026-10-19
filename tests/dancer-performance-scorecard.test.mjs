@@ -14,9 +14,9 @@ const require=createRequire(import.meta.url);
 const card={venueId:'club-a',venueName:'Club A',periodStart:'2026-10-04T00:00:00Z',periodEnd:'2026-10-18T00:00:00Z',
   scores:Object.fromEntries(['overall',...scoring.DANCER_SCORE_CATEGORIES].map(key=>[key,{value:50,reason:null,confidence:'early',evidence:'Recorded activity'}]))};
 function render(status,error=false) {
-  const exports={};let slot=0;
-  const imports={react:{...React,useState:()=>[slot++===0?status:slot===2?error:0,()=>{}],useEffect(){}},
-    'react/jsx-runtime':require('react/jsx-runtime'),'./dashboard-session':{},'@/src/lib/dancr/venue-dancer-scores':scoring,
+  const exports={};
+  const imports={react:{...React,useState:()=>[0,()=>{}]},
+    'react/jsx-runtime':require('react/jsx-runtime'),'./useDancerRankingStatus':{useDancerRankingStatus:()=>({status,error})},'@/src/lib/dancr/venue-dancer-scores':scoring,
     '@/src/lib/dancr/external-ranking-progress':progress};
   vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerDiscoveryBoosts.tsx','utf8'),{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
@@ -37,7 +37,10 @@ test('scorecard keeps placement guidance visible and scoring rules collapsed',()
   const help=html.match(/<details class="dancer-score-help">([\s\S]*?)<\/details>/)?.[1];
   assert.ok(help,'scoring explanation is inside a closed disclosure');
   assert.match(help,/<summary>How scoring works<\/summary>/);
-  for(const rule of [/last 14 days/,/30-day history/,/filters above only change activity totals/,/Missing categories are excluded/,/Customer filters and selected videos/,/Scores do not measure earnings/]) assert.match(help,rule);
+  for(const rule of [/last 14 days/,/30-day history/,/filters above only change activity totals/,/missing categories are excluded/,/Customer filters and selected videos/,/Scores do not measure earnings/]) assert.match(help,rule);
+  assert.match(html,/External ranking benefit active/);
+  assert.match(help,/external time alone contributes up to 40 overall points/);
+  assert.match(help,/new browsing visits/);
   assert.doesNotMatch(html,/Your overall score appears once 3 categories have data/);
   assert.doesNotMatch(html,/last 30 days/i);
   assert.match(html,/staff approval does not improve/);assert.match(html,/check out before leaving/);
@@ -57,10 +60,19 @@ test('external progress stays visible before enough data exists to calculate a s
 test('missing scores and service failures stay unavailable rather than showing fabricated zeros',()=>{
   const missing=render({eligible:false,score:null,scorecard:null});
   assert.match(missing,/Overall Performance: —/);assert.match(missing,/approved and public/);
-  assert.match(missing,/Your overall score appears once 3 categories have data/);
+  assert.match(missing,/Start earning ranking points after 5 recorded external minutes/);
   assert.equal((missing.match(/class="dancer-score-category"/g)||[]).length,6);assert.doesNotMatch(missing,/0\/100/);
   assert.match(render(null),/role="status"/);
   const failed=render(null,true);assert.match(failed,/role="alert"/);assert.match(failed,/Try again/);assert.doesNotMatch(failed,/dancer-score-category/);
+});
+
+test('Results only announces an active benefit for eligible profiles with earned external and overall points',()=>{
+  for (const [eligible,external,overall] of [[false,50,50],[true,0,null],[true,null,20],[true,2,null]]) {
+    const scorecard={...card,scores:{...card.scores,externalTime:{value:external},overall:{value:overall}}};
+    assert.doesNotMatch(render({eligible,score:overall,scorecard}),/External ranking benefit active/);
+  }
+  assert.doesNotMatch(render(null),/External ranking benefit active/);
+  assert.doesNotMatch(render({eligible:true,score:50,scorecard:card},true),/External ranking benefit active/);
 });
 
 function routeFixture({denied=false,eligible=true,failed=false}={}) {

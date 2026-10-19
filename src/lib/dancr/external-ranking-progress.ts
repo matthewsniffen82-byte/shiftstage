@@ -1,3 +1,7 @@
+import type { DancerPlacementScorecard } from "./dancer-analytics-types";
+
+export type DancerRankingStatus = { eligible: boolean; score: number | null; scorecard: DancerPlacementScorecard | null };
+
 /** Display recorded time without rounding up to credit that has not accrued. */
 export function formatExternalHours(hours: number | null | undefined): string {
   if (typeof hours !== "number" || !Number.isFinite(hours) || hours < 0) return "Not recorded yet";
@@ -8,5 +12,13 @@ export function formatExternalHours(hours: number | null | undefined): string {
 
 export function externalTapRankingMessage(receipt: { shiftCheckedIn?: unknown; visibility?: unknown; replayed?: unknown } | null | undefined): string {
   return receipt?.shiftCheckedIn === true && receipt.replayed !== true && (receipt.visibility === "external" || receipt.visibility === "both")
-    ? "Your external time is now counting toward your ranking." : "";
+    ? "External time is now recording. Your ranking benefit starts after 5 recorded external minutes and grows with more time." : "";
+}
+
+/** Confirm earned placement points, never infer a benefit from a selected mode. */
+export function hasExternalRankingBenefit(status: DancerRankingStatus | null | undefined): boolean {
+  const external = status?.scorecard?.scores.externalTime.value;
+  const overall = status?.scorecard?.scores.overall.value;
+  return status?.eligible === true && typeof external === "number" && Number.isFinite(external) && external > 0 && external <= 100
+    && typeof overall === "number" && Number.isFinite(overall) && overall > 0 && overall <= 100;
 }

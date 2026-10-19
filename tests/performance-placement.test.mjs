@@ -57,7 +57,7 @@ test('public placement rewards recorded External-only and Both time equally over
  const result = await f.service.orderByPerformance(f.admin, rows, row => ({ dancerId: row.id, venueId: 'club' }), row => row.id);
  assert.deepEqual(Array.from(result, row => row.id), ['b-external', 'c-both', 'a-internal']);
  const cards = await f.service.getPerformancePlacementScorecards(f.admin, rows.map(row => ({ dancerId: row.id, venueId: 'club' })));
- assert.deepEqual(Array.from(cards, card => card.scores.externalTime.value), [0, 50, 50]);
+ assert.deepEqual(Array.from(cards, card => card.scores.externalTime.value), [0, 67, 67]);
 });
 test('duplicate dancers and concurrent requests share a report; scores refresh after one minute',async()=>{
  const report=[dancer('a',18),dancer('b'),dancer('c')], f=fixture({club:report});
@@ -67,6 +67,18 @@ test('duplicate dancers and concurrent requests share a report; scores refresh a
  report[0].results.profileCohortConversions=0;
  const refreshed=await f.service.getPerformancePlacementScores(f.admin,ids,now+61000);
  assert.equal(f.calls.length,2);assert.ok(refreshed[0]<a[0]);
+});
+
+test('public ordering uses the five-minute benefit before other categories qualify',async()=>{
+ const beginner=(id,hours)=>({id,name:id,internal:{rosterTrackedHours:hours,rosterExternalTrackedHours:hours,rosterExternalHours:hours,
+   rosterBothHours:0,verifiedCheckInDays:1},vip:{},external:{},results:{}});
+ const cohort=[beginner('a-under-five',299/3600),beginner('b-five-minutes',5/60),beginner('c-hour',1)];
+ const f=fixture({club:cohort});
+ const rows=cohort.map(({id})=>({id}));
+ const ordered=await f.service.orderByPerformance(f.admin,rows,row=>({dancerId:row.id,venueId:'club'}),row=>row.id);
+ assert.deepEqual(Array.from(ordered,row=>row.id),['c-hour','b-five-minutes','a-under-five']);
+ const scores=await f.service.getPerformancePlacementScores(f.admin,rows.map(row=>({dancerId:row.id,venueId:'club'})));
+ assert.deepEqual(Array.from(scores),[null,1,8]);
 });
 test('report failures reject and are evicted instead of reviving the retired algorithm',async()=>{
  const f=fixture({club:[dancer('a')]});f.fail(true);
@@ -99,12 +111,12 @@ test('own scorecards match every venue category while omitting other dancer iden
  assert.equal(f.calls.length,1);
 });
 
-test('recorded external hours survive an unavailable score, while unobserved history stays unknown',async()=>{
+test('recorded external hours earn early scores without peers, while unobserved history stays unknown',async()=>{
  const early=dancer('early');Object.assign(early.internal,{rosterTrackedHours:1,rosterExternalTrackedHours:1,rosterExternalHours:0.5});
  const unknown=dancer('unknown');delete unknown.internal.rosterExternalTrackedHours;
  const f=fixture({club:[early,unknown]});
  const cards=await f.service.getPerformancePlacementScorecards(f.admin,[{dancerId:'early',venueId:'club'},{dancerId:'unknown',venueId:'club'}],now);
- assert.equal(cards[0].scores.externalTime.value,null);assert.equal(cards[0].externalHours,0.5);
+ assert.equal(cards[0].scores.externalTime.value,11);assert.equal(cards[0].externalHours,0.5);
  assert.equal(cards[1].externalHours,null);
 });
 

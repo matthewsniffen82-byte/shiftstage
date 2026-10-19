@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatExternalHours } from "@/src/lib/dancr/external-ranking-progress";
 import { DANCER_SCORE_WEIGHTS } from "@/src/lib/dancr/venue-dancer-scores";
+import { DancerExternalRankingBenefit } from "./DancerExternalRankingBenefit";
 import {
   isActiveNfcPresence,
   isNfcPresenceNearExpiry,
@@ -120,7 +121,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
       setShifts(current => current.map(shift => shift.id === activeShift.id
         ? { ...shift, rankingProgress: { ...shift.rankingProgress, visibility: "both" } } : shift));
       setWorkingNowStatusKind("success");
-      setWorkingNowStatus("Both is on. Your external time is now counting toward your ranking. Your shift still ends at the same time.");
+      setWorkingNowStatus("Both is on. External time is now recording. Ranking benefits start after 5 recorded external minutes. Your shift still ends at the same time.");
       try {
         await Promise.all([load(), onVisibilityChange?.()]);
       } catch {
@@ -201,9 +202,10 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
                 <p>Help guests discover you while you work. Choose Both to keep internal requests and start earning external ranking credit. This makes your approved profile public.</p>
                 <button type="button" disabled={saving || switching} onClick={() => void switchToBoth()}>{switching ? "Switching…" : "Switch to Both"}</button>
               </> : hasRecordedExternalTime && (progress?.visibility === "external" || progress?.visibility === "both")
-                ? <small>Your external time is counting toward your ranking.</small>
+                ? <small>External time is recording while you work.</small>
                 : progress && !hasRecordedExternalTime ? <small>External time is not recorded for this shift. Choose External or Both at your next verified club check-in.</small>
                 : <small>Refresh to check your current visibility and recorded time.</small>}
+              <DancerExternalRankingBenefit refreshKey={presenceKey} />
               <a href="#dancer-performance-ranking">View ranking</a>
             </div> : null}
             {demoManagedActiveShift ? (

@@ -12,14 +12,16 @@ export const DANCER_SCORE_CATEGORIES = ["externalTime", "checkIns", "internal", 
 export type DancerScoreCategory = typeof DANCER_SCORE_CATEGORIES[number];
 export type DancerScoreKey = "overall" | DancerScoreCategory;
 export type DancerScoreSort = DancerScoreKey | "name";
-export const DANCER_SCORE_VERSION = "5";
+export const DANCER_SCORE_VERSION = "6";
 export const DANCER_SCORE_WEIGHTS = { externalTime: 40, checkIns: 10, internal: 15, vip: 10, profile: 5, conversions: 20 } as const;
+export const EXTERNAL_RANKING_START_MINUTES = 5;
+export const EXTERNAL_SCORE_REFERENCE_HOURS = 4;
 export const CHECK_IN_SCORE_WEIGHTS = { accuracy: 50, days: 25, hours: 25 } as const;
 export const DANCER_SCORE_MIN_PEERS = 3;
 export const DANCER_SCORE_MINIMUMS = {
   tonight: { hours: 1, requests: 3, claims: 3, actions: 10 },
   "7d": { hours: 2, requests: 5, claims: 5, actions: 20 },
-  // Placement uses a shorter window with the existing evidence requirements.
+  // Other categories retain their evidence requirements in the shorter placement window.
   "14d": { hours: 4, requests: 10, claims: 10, actions: 30 },
   "30d": { hours: 4, requests: 10, claims: 10, actions: 30 },
   all: { hours: 4, requests: 10, claims: 10, actions: 30 },
@@ -92,8 +94,9 @@ export function scoreVenueDancers(dancers: DancerPerformance[], period: DancerSc
     const actionCount = actions.every(action => action.count !== null) ? actions.reduce((sum, action) => sum + action.count!, 0) : null;
     const interest = actionCount !== null ? actions.reduce((sum, action) => sum + action.count! * action.weight, 0) : null;
     const activityEligible = rosterHours !== null && rosterHours >= minimum.hours && checkInDays !== null && checkInDays > 0;
-    const externalEligible = activityEligible && externalTrackedHours !== null && externalTrackedHours >= minimum.hours
-      && externalTrackedHours <= rosterHours! && externalHours !== null && externalHours <= externalTrackedHours
+    const externalEligible = rosterHours !== null && checkInDays !== null && checkInDays > 0
+      && externalTrackedHours !== null && externalTrackedHours > 0
+      && externalTrackedHours <= rosterHours && externalHours !== null && externalHours <= externalTrackedHours
       && bothHours !== null && bothHours <= externalHours;
     const checkInEligible = activityEligible
       && checkInDays !== null && checkInDays > 0
@@ -110,13 +113,11 @@ export function scoreVenueDancers(dancers: DancerPerformance[], period: DancerSc
     return { dancer, hours, rosterHours, externalHours, externalTrackedHours, checkInDays, checkoutDays, accurateDays, activeDays, duringHours, tableRate, vip, vipCustomers, repeat, claims, cohort, actionCount, interest, actions,
       externalEligible, checkInEligible, tableEligible, vipEligible, profileEligible, conversionEligible };
   });
-  const externalPeers = inputs.filter(row => row.externalEligible);
   const checkInPeers = inputs.filter(row => row.checkInEligible);
   const tablePeers = inputs.filter(row => row.tableEligible);
   const vipPeers = inputs.filter(row => row.vipEligible);
   const profilePeers = inputs.filter(row => row.profileEligible);
   const baseline = {
-    externalHours: medianPositive(externalPeers.map(row => row.externalHours!)),
     hours: medianPositive(checkInPeers.map(row => row.rosterHours!)), days: medianPositive(checkInPeers.map(row => row.checkInDays!)),
     tableRate: medianPositive(tablePeers.map(row => row.tableRate!)),
     vip: medianPositive(vipPeers.map(row => row.vip!)), interest: medianPositive(profilePeers.map(row => row.interest!)),
@@ -127,9 +128,11 @@ export function scoreVenueDancers(dancers: DancerPerformance[], period: DancerSc
     const attendancePoints = row.checkInEligible ? Math.min(activityWeight * 100,
       (CHECK_IN_SCORE_WEIGHTS.days * relative(row.checkInDays!, baseline.days)
         + CHECK_IN_SCORE_WEIGHTS.hours * relative(row.rosterHours!, baseline.hours))) : 0;
-    const externalTime = !row.externalEligible ? unavailable(`Needs at least ${minimum.hours} verified checked-in hours with recorded roster mode history.`)
-      : externalPeers.length < DANCER_SCORE_MIN_PEERS ? unavailable(peerReason)
-        : available(relative(row.externalHours!, baseline.externalHours), row.externalTrackedHours! < minimum.hours * 2,
+    // A fixed time curve starts modestly without waiting for peers or demand.
+    // Known time below five external minutes earns no benefit; unknown stays null.
+    const externalStarted = row.externalEligible && row.externalHours! >= EXTERNAL_RANKING_START_MINUTES / 60;
+    const externalTime = !row.externalEligible ? unavailable("Needs verified check-in time with recorded roster mode history.")
+        : available(externalStarted ? relative(row.externalHours!, EXTERNAL_SCORE_REFERENCE_HOURS) : 0, row.externalTrackedHours! < minimum.hours * 2,
           `${display(row.externalHours!)}h on external app (includes Both) · ${display(row.externalTrackedHours!)}h with recorded mode history`);
     // An active first visit has no checkout opportunity yet. Show a provisional activity score without assuming success or failure.
     const checkInValue = row.checkoutDays! > 0
@@ -154,19 +157,23 @@ export function scoreVenueDancers(dancers: DancerPerformance[], period: DancerSc
     const categories = { externalTime, checkIns, internal, vip, profile, conversions };
     const eligible = DANCER_SCORE_CATEGORIES.filter(key => categories[key].value !== null);
     const weight = eligible.reduce((sum, key) => sum + DANCER_SCORE_WEIGHTS[key], 0);
-    const overall = eligible.length < 3 ? unavailable("Needs at least three category scores. Missing categories are never counted as zero.")
-      : available(eligible.reduce((sum, key) => sum + categories[key].value! * DANCER_SCORE_WEIGHTS[key], 0) / weight,
-        eligible.length < DANCER_SCORE_CATEGORIES.length || eligible.some(key => categories[key].confidence === "early"), `${eligible.length} of ${DANCER_SCORE_CATEGORIES.length} categories`);
+    // Before three categories exist, use earned points at their published
+    // weights. External alone can contribute at most 40, never a rescaled 100.
+    const earlyPlacement = eligible.length < 3 && externalStarted;
+    const overallWeight = earlyPlacement ? 100 : weight;
+    const overall = eligible.length < 3 && !earlyPlacement ? unavailable("Needs five recorded external minutes or at least three category scores. Missing categories are never counted as zero.")
+      : available(eligible.reduce((sum, key) => sum + categories[key].value! * DANCER_SCORE_WEIGHTS[key], 0) / overallWeight,
+        eligible.length < DANCER_SCORE_CATEGORIES.length || eligible.some(key => categories[key].confidence === "early"), `${earlyPlacement ? "Early placement · " : ""}${eligible.length} of ${DANCER_SCORE_CATEGORIES.length} categories`);
 
     // Use the scorer's validated inputs and full-club baselines, never the filtered display list.
     if (externalTime.value !== null) externalTime.details = {
       inputs: [
         { label: "External app hours (includes Both)", value: `${display(row.externalHours!)} h` },
-        { label: "Club median external hours", value: `${display(baseline.externalHours)} h` },
+        { label: "Time curve reference", value: `${EXTERNAL_SCORE_REFERENCE_HOURS} h · No peer minimum` },
         { label: "Overall score weight", value: `${DANCER_SCORE_WEIGHTS.externalTime}% · Largest factor` },
         { label: "Hours with recorded mode history", value: `${display(row.externalTrackedHours!)} h` },
       ],
-      calculation: [{ label: "Score · Rounded", value: baseline.externalHours > 0 ? `${relativeFormula(row.externalHours!, baseline.externalHours)} ≈ ${externalTime.value}` : `No recorded external hours ≈ ${externalTime.value}` }],
+      calculation: [{ label: "Score · Rounded", value: externalStarted ? `${relativeFormula(row.externalHours!, EXTERNAL_SCORE_REFERENCE_HOURS)} ≈ ${externalTime.value}` : `Below ${EXTERNAL_RANKING_START_MINUTES} recorded external minutes ≈ 0` }],
     };
     if (checkIns.value !== null) {
       const dayScore = relative(row.checkInDays!, baseline.days);
@@ -236,12 +243,13 @@ export function scoreVenueDancers(dancers: DancerPerformance[], period: DancerSc
       calculation: [{ label: "Score · Rounded", value: `${row.cohort} ÷ ${row.claims} × 100 ≈ ${conversions.value}` }],
     };
     if (overall.value !== null) overall.details = {
-      inputs: DANCER_SCORE_CATEGORIES.map(key => ({ label: categoryLabels[key], value: categories[key].value === null ? "Not scored · Excluded" : `${categories[key].value} × ${precise(DANCER_SCORE_WEIGHTS[key] / weight * 100)}%` })),
-      calculation: [{ label: "Weighted score · Rounded", value: `(${eligible.map(key => `${categories[key].value} × ${DANCER_SCORE_WEIGHTS[key]}`).join(" + ")}) ÷ ${weight} ≈ ${overall.value}` }],
+      inputs: DANCER_SCORE_CATEGORIES.map(key => ({ label: categoryLabels[key], value: categories[key].value === null ? "Not scored · Excluded" : `${categories[key].value} × ${precise(DANCER_SCORE_WEIGHTS[key] / overallWeight * 100)}%` })),
+      calculation: [{ label: earlyPlacement ? "Early placement points · Rounded" : "Weighted score · Rounded", value: `(${eligible.map(key => `${categories[key].value} × ${DANCER_SCORE_WEIGHTS[key]}`).join(" + ")}) ÷ ${overallWeight} ≈ ${overall.value}` }],
     };
     return { dancer: row.dancer, scores: { overall, ...categories }, rank: null, rankedCount: 0 };
   });
-  // Partial and early scores are useful summaries, but not comparable enough to rank.
+  // Public placement uses every available overall score. The venue's formal
+  // comparison rank still requires established scores across all categories.
   const qualified = scored.filter(row => row.scores.overall.confidence === "established").sort((a, b) => b.scores.overall.value! - a.scores.overall.value!);
   if (qualified.length >= DANCER_SCORE_MIN_PEERS) {
     let rank = 1;
