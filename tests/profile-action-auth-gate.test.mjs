@@ -187,7 +187,8 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
 
   for (const source of [livePromptMarkup, actionsSource]) {
     assert.match(source, /Free guest account/i);
-    assert.match(source, /Follow your favorites/);
+    assert.match(source, /Follow dancers/);
+    assert.doesNotMatch(source, /Follow your favorites|save profiles/);
     assert.match(source, /Create free account/);
     assert.match(source, /Already have an account\? <span>Sign in<\/span>/);
     assert.match(source, /guest-account-prompt/);
@@ -199,15 +200,15 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
 
   assert.match(
     livePromptMarkup,
-    /Create a free account to follow dancers, save profiles, and get updates\./,
+    /Create a free account to follow dancers and get updates\./,
   );
   assert.match(
     homeSource,
-    /dataset\?\.feedAction[\s\S]*?Create a free account to follow dancers and get updates\./,
+    /function profileActionAccountMessage[\s\S]*?Create a free account to follow dancers and get updates\./,
   );
   assert.match(
     homeSource,
-    /dataset\?\.accountAction === "venue-follow"[\s\S]*?Create a free account to save clubs, follow favorites, and get updates\./,
+    /dataset\?\.accountAction === "venue-follow"[\s\S]*?Create a free account to follow clubs and get updates\./,
   );
   assert.match(actionsSource, /type AccountAction = "follow";/);
   assert.doesNotMatch(actionsSource, /action === "notify"|requireCustomerAccount\("notify"\)/);

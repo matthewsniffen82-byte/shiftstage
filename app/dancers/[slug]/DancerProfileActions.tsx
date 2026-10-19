@@ -750,7 +750,7 @@ export function DancerProfileActions({
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
             </button>
             <span className="guest-account-eyebrow">FREE GUEST ACCOUNT</span>
-            <h2 id="profile-account-gate-title">Follow your favorites</h2>
+            <h2 id="profile-account-gate-title">Follow dancers</h2>
             <p className="guest-account-message" id="profile-account-gate-message">{accountActionMessage()}</p>
             <div className="guest-account-actions">
               <Link className="guest-account-primary" href="/account?role=customer&mode=signup">Create free account</Link>
@@ -798,5 +798,5 @@ function readConfirmedNotificationCount(data: { notificationCount?: unknown }) {
 }
 
 function accountActionMessage() {
-  return "Create a free account to follow dancers, save profiles, and get updates.";
+  return "Create a free account to follow dancers and get updates.";
 }

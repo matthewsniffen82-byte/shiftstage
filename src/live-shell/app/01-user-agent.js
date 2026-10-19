@@ -454,6 +454,7 @@
     const publicContactStatus = document.getElementById("publicContactStatus");
     const accountRequiredPopover = document.getElementById("accountRequiredPopover");
     const accountRequiredClose = document.getElementById("accountRequiredClose");
+    const accountRequiredTitle = document.getElementById("accountRequiredTitle");
     const accountRequiredMessage = document.getElementById("accountRequiredMessage");
     const accountRequiredCreateLink = document.getElementById("accountRequiredCreateLink");
     const accountRequiredSignInLink = document.getElementById("accountRequiredSignInLink");
@@ -977,20 +978,20 @@
     let accountRequiredReturnTarget = null;
 
     function profileActionAccountMessage(actionButton) {
-      const actionId = actionButton?.id || "";
       if (actionButton?.dataset?.accountAction === "venue-follow") {
-        return "Create a free account to save clubs, follow favorites, and get updates.";
+        return "Create a free account to follow clubs and get updates.";
       }
-      const action = actionButton?.dataset?.feedAction || actionId;
-      if (action === "notify" || action === "notifyBtn") {
-        return "Create a free account to follow dancers and get updates.";
-      }
-      return "Create a free account to follow dancers, save profiles, and get updates.";
+      return "Create a free account to follow dancers and get updates.";
     }
 
     function openAccountRequiredPrompt(actionButton) {
       if (!accountRequiredPopover) return;
       accountRequiredReturnTarget = actionButton || null;
+      if (accountRequiredTitle) {
+        accountRequiredTitle.textContent = actionButton?.dataset?.accountAction === "venue-follow"
+          ? "Follow clubs"
+          : "Follow dancers";
+      }
       if (accountRequiredMessage) {
         accountRequiredMessage.textContent = profileActionAccountMessage(actionButton);
       }
