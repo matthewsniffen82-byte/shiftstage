@@ -19,7 +19,7 @@ class RateError extends Error {retryAfterSeconds=300;}
 class CashierError extends Error {}
 class AttributionError extends Error {}
 function harness(options={}){
- const calls=[],notifications=[],cookies=[],warnings=[],steps=[],service={},route={};
+ const calls=[],notifications=[],warnings=[],steps=[],service={},route={};
  const tag={id:options.tag||id(30),type:'dressing_room',venueId:options.tag===id(31)?id(21):id(20),venue:{id:options.tag===id(31)?id(21):id(20),name:'Synthetic club',slug:'synthetic-club',city:'Las Vegas',state:'NV'}};
  const client={
   async rpc(name,args){
@@ -50,32 +50,26 @@ function harness(options={}){
   if(name.endsWith('deal-redemption-attribution'))return {DealRedemptionAttributionError:AttributionError};
   if(name.endsWith('safe-error-metadata'))return {safeErrorMetadata};
   if(name.endsWith('/nfc'))return {...service,async resolveNfcTag(){steps.push('tag');return options.inactive?null:tag;}};
-  if(name.endsWith('nfc-browser-account'))return {
-   hasTemporaryNfcBrowserAccountBypass:()=>false,
-   readNfcBrowserAccountToken:()=>options.browserLinked?'synthetic-browser-binding':null,nfcBrowserAccountMatches:()=>!options.browserConflict,
-   nfcBrowserAccountConflict:()=>Response.json({ok:false,error:'Different browser account.'},{status:409}),createNfcBrowserAccountToken:()=>{if(options.tokenFailure)throw new Error('private signing failure');return 'synthetic-browser-binding';},
-   rememberNfcBrowserAccount(response){cookies.push(true);return response;},
-  };
   if(name.endsWith('visibility-mode'))return {isVisibilityMode};
   if(name.endsWith('customer-follow-notifications'))return {
    async broadcastFollowedClubRosterAddition(_client,input){notifications.push({kind:'affiliation',input});if(options.notificationFailure)throw new Error('private notification failure');},
    async broadcastFollowedDancerWorkingNow(_client,input){notifications.push({kind:'working',input});if(options.notificationFailure)throw new Error('private notification failure');},
   };return {};
  }});
- return {client,service,calls,notifications,cookies,warnings,steps,async post(extra={},headers={}){
+ return {client,service,calls,notifications,warnings,steps,async post(extra={},headers={}){
   const response=await route.POST(new Request('https://example.invalid/api/nfc/synthetic-token',{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({sessionId:id(50),visibility:'external',...extra})}),{params:Promise.resolve({token:'synthetic-token'})});return {response,body:await response.json()};
  }};
 }
 test('actual endpoint and service use one atomic tap and retain the established response',async()=>{
  const h=harness(),result=await h.post({}, {'x-forwarded-for':'192.0.2.1, 192.0.2.2','user-agent':'Synthetic agent','x-device-fingerprint':'synthetic-device'});
- assert.equal(result.response.status,200);assert.equal(result.body.ok,true);assert.equal(result.body.action,'dancer_check_in');assert.equal(result.body.affiliation.enrollmentStatus,'completed');assert.equal(result.body.affiliation.shiftCheckedIn,true);assert.equal(result.body.affiliation.tapApplied,true);assert.equal(h.calls.length,1);assert.deepEqual(h.steps,['rate','tag','auth']);assert.equal(h.cookies.length,1);assert.equal(h.notifications.length,2);assert.match(result.response.headers.get('cache-control'),/private, no-store/);
+ assert.equal(result.response.status,200);assert.equal(result.body.ok,true);assert.equal(result.body.action,'dancer_check_in');assert.equal(result.body.affiliation.enrollmentStatus,'completed');assert.equal(result.body.affiliation.shiftCheckedIn,true);assert.equal(result.body.affiliation.tapApplied,true);assert.equal(h.calls.length,1);assert.deepEqual(h.steps,['rate','tag','auth']);assert.equal(result.response.headers.get('set-cookie'),null);assert.equal(h.notifications.length,2);assert.match(result.response.headers.get('cache-control'),/private, no-store/);
  assert.deepEqual(JSON.parse(JSON.stringify(h.calls[0].args.p_audit)),{ip_address:'192.0.2.1',user_agent:'Synthetic agent',device_fingerprint:'synthetic-device'});assert.equal(h.calls[0].args.p_dancer_user_id,id(1));assert.equal(h.calls[0].args.p_session_id,id(50));
 });
 test('incomplete setup is rejected without public activation or follow notifications',async()=>{
  await pg.query("update public.dancer_profiles set city='' where id=$1",[id(10)]);const h=harness(),result=await h.post();assert.equal(result.response.status,403);assert.equal(h.calls.length,1);assert.equal(h.notifications.length,0);assert.equal((await tapSnapshot(pg)).shifts.length,0);
 });
 test('an explicit retry after response loss preserves the active window without another Working Now notification',async()=>{
- const h=harness({lost:true}),first=await h.post();assert.equal(first.response.status,503);assert.equal(h.calls.length,1);assert.equal(h.notifications.length,0);assert.equal(h.cookies.length,0);const before=await tapSnapshot(pg),second=await h.post();assert.equal(second.response.status,200);assert.equal(second.body.affiliation.replayed,true);assert.deepEqual((await tapSnapshot(pg)).shifts,before.shifts);assert.equal(h.calls.length,2);assert.equal(h.notifications.length,0);
+ const h=harness({lost:true}),first=await h.post();assert.equal(first.response.status,503);assert.equal(h.calls.length,1);assert.equal(h.notifications.length,0);const before=await tapSnapshot(pg),second=await h.post();assert.equal(second.response.status,200);assert.equal(second.body.affiliation.replayed,true);assert.deepEqual((await tapSnapshot(pg)).shifts,before.shifts);assert.equal(h.calls.length,2);assert.equal(h.notifications.length,0);
 });
 test('retapping a different club cannot change the active session',async()=>{
  const first=await harness().post(),h=harness({tag:id(31)}),result=await h.post({sessionId:id(51)});assert.equal(first.response.status,200);assert.equal(result.response.status,409);assert.equal(h.notifications.filter(n=>n.kind==='working').length,0);
@@ -84,7 +78,7 @@ test('cooldown rejects visibility changes without a new shift',async()=>{
  const first=await tap(pg);await pg.query("update public.shifts set starts_at=now()-interval '7 hours',ends_at=now()-interval '1 hour',checked_in_at=now()-interval '7 hours',last_location_verified_at=now()-interval '7 hours',commission_tracking_started_at=now()-interval '7 hours',nfc_last_tapped_at=now()-interval '7 hours',location_verification_expires_at=now()-interval '1 hour' where id=$1",[first.shiftId]);const h=harness(),result=await h.post();assert.equal(result.response.status,409);assert.equal((await tapSnapshot(pg)).shifts.length,1);assert.equal(h.notifications.length,0);
 });
 test('optional follow notification failures preserve confirmed activation and check-in',async()=>{
- const h=harness({notificationFailure:true}),result=await h.post();assert.equal(result.response.status,200);assert.equal(result.body.affiliation.shiftCheckedIn,true);assert.equal(h.warnings.length,2);assert.equal(h.cookies.length,1);assert.equal((await tapSnapshot(pg)).shifts.length,1);
+ const h=harness({notificationFailure:true}),result=await h.post();assert.equal(result.response.status,200);assert.equal(result.body.affiliation.shiftCheckedIn,true);assert.equal(h.warnings.length,2);assert.equal(result.response.headers.get('set-cookie'),null);assert.equal((await tapSnapshot(pg)).shifts.length,1);
 });
 
 test('internal-only tap returns consent and never emits public follower notifications',async()=>{
@@ -100,7 +94,7 @@ test('unknown future private fields are not returned to the browser',async()=>{
  const h=harness({mutate:data=>({...data,audit:{ip:'private'},private_future:'do not disclose',storage_path:'private-file'})}),result=await h.post();assert.equal(result.response.status,200);assert.doesNotMatch(JSON.stringify(result.body),/private_future|storage_path|do not disclose|private-file/);
 });
 for(const field of ['enrollmentStatus','enrollmentId','venueId','venueName','venueSlug','id','dancerId','dancerUserId','stageName','status','approvedAt','shiftId','workingUntil','nextTapAllowedAt','profileActivated','affiliationActivated','shiftCheckedIn','tapApplied','alreadyWorking','cooldownActive','extended','switchedVenue','visibility','replayed'])test('missing '+field+' receipt cannot report success or broadcast',async()=>{
- const h=harness({mutate:data=>{delete data[field];return data;}}),result=await h.post();assert.equal(result.response.status,503);assert.equal(h.calls.length,1);assert.equal(h.notifications.length,0);assert.equal(h.cookies.length,0);assert.equal((await tapSnapshot(pg)).shifts.length,1);
+ const h=harness({mutate:data=>{delete data[field];return data;}}),result=await h.post();assert.equal(result.response.status,503);assert.equal(h.calls.length,1);assert.equal(h.notifications.length,0);assert.equal((await tapSnapshot(pg)).shifts.length,1);
 });
 for(const kind of ['null','empty','array','foreign-dancer','contradictory-presence','extended-window','false-completion'])test(kind+' receipt is unconfirmed without compensating writes',async()=>{
  const h=harness({mutate:data=>kind==='null'?null:kind==='empty'?{}:kind==='array'?[data]:kind==='foreign-dancer'?{...data,dancerUserId:id(5)}:kind==='contradictory-presence'?{...data,cooldownActive:true}:kind==='extended-window'?{...data,extended:true}:{...data,enrollmentStatus:'pending'}}),result=await h.post();assert.equal(result.response.status,503);assert.equal(h.calls.length,1);assert.equal(h.notifications.length,0);assert.equal((await tapSnapshot(pg)).shifts.length,1);
@@ -111,11 +105,17 @@ for(const [code,status]of [['42501',403],['P0002',404],['40001',409],['22023',40
 test('a thrown transport error returns an unconfirmed tap without leaking details',async()=>{
  const before=await tapSnapshot(pg),h=harness({rpcThrow:true}),result=await h.post();assert.equal(result.response.status,503);assert.equal(h.calls.length,1);assert.deepEqual(await tapSnapshot(pg),before);assert.equal(h.notifications.length,0);assert.doesNotMatch(JSON.stringify([result.body,h.warnings]),/private database failure/);
 });
-for(const [option,status]of [['noAuth',401],['limited',429],['inactive',410],['accountFailure',503],['tokenFailure',500]])test(option+' cannot mutate dancer state',async()=>{
+for(const [option,status]of [['noAuth',401],['limited',429],['inactive',410],['accountFailure',503]])test(option+' cannot mutate dancer state',async()=>{
  const before=await tapSnapshot(pg),h=harness({[option]:true}),result=await h.post();assert.equal(result.response.status,status);assert.equal(h.calls.length,0);assert.deepEqual(await tapSnapshot(pg),before);
 });
-test('a different remembered browser account is rejected before the transaction',async()=>{
- const before=await tapSnapshot(pg),h=harness({browserLinked:true,browserConflict:true}),result=await h.post();assert.equal(result.response.status,409);assert.equal(h.calls.length,0);assert.deepEqual(await tapSnapshot(pg),before);
+test('two authenticated dancers can check in from the same browser without sharing ownership',async()=>{
+ const headers={cookie:'mydancr_nfc_account_v1=retired-browser-reminder'};
+ const first=await harness().post({},headers),h=harness({user:id(5)}),second=await h.post({sessionId:id(51)},headers);
+ assert.equal(first.response.status,200);assert.equal(second.response.status,200);
+ assert.equal(h.calls[0].args.p_dancer_user_id,id(5));
+ const after=await tapSnapshot(pg);
+ assert.deepEqual(after.shifts.map(row=>row.dancer_id).sort(),[id(10),id(11)]);
+ assert.equal(second.response.headers.get('set-cookie'),null);
 });
 for(const user of [id(2),id(3),id(4)])test('non-dancer account '+user+' is rejected before RPC',async()=>{const h=harness({user});assert.equal((await h.post()).response.status,403);assert.equal(h.calls.length,0);});
 test('an oversized body is rejected before authentication or transaction work',async()=>{const h=harness();assert.equal((await h.post({extra:'x'.repeat(5000)})).response.status,413);assert.equal(h.calls.length,0);assert.equal(h.steps.length,0);});
@@ -123,5 +123,5 @@ for(const field of ['tagId','dancerUserId','sessionId'])test('invalid service '+
  const h=harness();await assert.rejects(h.service.registerDancerFromNfc(h.client,{tagId:id(30),dancerUserId:id(1),sessionId:id(50),request:new Request('https://example.invalid'),[field]:'invalid'}),/Invalid phone-tap session/);assert.equal(h.calls.length,0);
 });
 test('a failed shift write rolls back the entire native endpoint operation',async()=>{
- await pg.exec("reset role;create or replace function public.synthetic_tap_failure() returns trigger language plpgsql as $f$begin raise exception 'private shift failure';end;$f$;create trigger synthetic_failure before insert on public.shifts for each row execute function public.synthetic_tap_failure();set role service_role");const before=await tapSnapshot(pg),h=harness(),result=await h.post();assert.equal(result.response.status,503);assert.equal(h.calls.length,1);assert.deepEqual(await tapSnapshot(pg),before);assert.equal(h.notifications.length,0);assert.equal(h.cookies.length,0);
+ await pg.exec("reset role;create or replace function public.synthetic_tap_failure() returns trigger language plpgsql as $f$begin raise exception 'private shift failure';end;$f$;create trigger synthetic_failure before insert on public.shifts for each row execute function public.synthetic_tap_failure();set role service_role");const before=await tapSnapshot(pg),h=harness(),result=await h.post();assert.equal(result.response.status,503);assert.equal(h.calls.length,1);assert.deepEqual(await tapSnapshot(pg),before);assert.equal(h.notifications.length,0);
 });

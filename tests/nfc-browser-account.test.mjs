@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHmac } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
@@ -31,22 +32,14 @@ const policy = load("src/lib/api-error-policy.ts", {
   "./dancr/phone-tap-copy.ts": load("src/lib/dancr/phone-tap-copy.ts", {}),
   "./dancr/payout-copy.ts": load("src/lib/dancr/payout-copy.ts", {}),
 });
-const testNow = Date.parse("2026-10-17T12:00:00.000Z");
-function browserMarker(config = null, now = testNow) {
-  return load("src/lib/dancr/nfc-browser-account.ts", {
-    "server-only": {},
-    "@/src/lib/server-env": {
-      getServerEnv: () => "test-only-signing-key",
-      getOptionalServerEnv: () => config,
-    },
-  }, { Date: class extends Date { static now() { return now; } } });
-}
-const marker = browserMarker();
 const userA = "11111111-1111-4111-8111-111111111111";
 const userB = "22222222-2222-4222-8222-222222222222";
 const sessionId = "33333333-3333-4333-8333-333333333333";
-const tokenA = marker.createNfcBrowserAccountToken(userA);
-const cookieA = `${marker.NFC_BROWSER_ACCOUNT_COOKIE}=${tokenA}`;
+// A valid legacy cookie for account A must no longer prevent account B's tap.
+const digest = value => createHmac('sha256', 'test-only-signing-key').update('mydancr-nfc-browser-account-v1:' + value).digest('hex');
+const accountA = digest('account:' + userA);
+const tokenA = 'v1.' + accountA + '.' + digest('signature:' + accountA);
+const cookieA = 'mydancr_nfc_account_v1=' + tokenA;
 const context = { params: Promise.resolve({ token: "valid-tag-token" }) };
 
 function request(cookie = "", body) {
@@ -57,7 +50,7 @@ function request(cookie = "", body) {
   });
 }
 
-function fixture({ userId = userA, type = "dressing_room", role = "dancer", accountState = "active", fail = false, signedIn = true, pending = false, browser = marker, accessError = null } = {}) {
+function fixture({ userId = userA, type = "dressing_room", role = "dancer", accountState = "active", fail = false, signedIn = true, pending = false, accessError = null } = {}) {
   const calls = [];
   const tag = { id: "tag-id", type, venueId: "venue-id", venue: { name: "Test club" } };
   const route = load("app/api/nfc/[token]/route.ts", {
@@ -78,8 +71,8 @@ function fixture({ userId = userA, type = "dressing_room", role = "dancer", acco
     "@/src/lib/dancr/nfc": {
       resolveNfcTag: async () => tag,
       recordNfcTagScan: async () => {},
-      registerDancerFromNfc: async () => {
-        calls.push("dancer");
+      registerDancerFromNfc: async (_admin, input) => {
+        calls.push(input);
         if (fail) throw new Error("Tap failed");
         return { enrollmentStatus: pending ? "pending" : "completed", shiftCheckedIn: !pending };
       },
@@ -95,143 +88,66 @@ function fixture({ userId = userA, type = "dressing_room", role = "dancer", acco
       },
     },
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
-    "@/src/lib/dancr/nfc-browser-account": browser,
   });
   return { ...route, calls };
 }
 
-test("signed browser reminder matches only its original dancer and contains no user ID", () => {
-  assert.equal(marker.readNfcBrowserAccountToken(request(cookieA)), tokenA);
-  assert.equal(marker.nfcBrowserAccountMatches(tokenA, userA), true);
-  assert.equal(marker.nfcBrowserAccountMatches(tokenA, userB), false);
-  assert.ok(!tokenA.includes(userA));
-  assert.equal(marker.readNfcBrowserAccountToken(request()), null);
-});
-
-test("edited, malformed and unsigned browser reminders cannot impersonate the original account", () => {
-  for (const value of ["garbage", userA, tokenA.slice(0, -1), `${tokenA}.extra`, tokenA.replace(/v1\../, "v1.z"), `${tokenA.slice(0, -1)}${tokenA.endsWith("a") ? "b" : "a"}`]) {
-    assert.equal(marker.readNfcBrowserAccountToken(request(`${marker.NFC_BROWSER_ACCOUNT_COOKIE}=${value}`)), null);
-  }
-});
-
-for (const pending of [false, true]) test(`successful ${pending ? "pending enrollment" : "approval/check-in"} saves a persistent secure browser reminder`, async () => {
-  const route = fixture({ pending });
-  const result = await route.POST(request("", { sessionId }), context);
-  assert.equal(result.status, 200);
-  const cookie = result.headers.get("set-cookie");
-  assert.ok(cookie.startsWith(cookieA));
-  assert.match(cookie, /HttpOnly/i);
-  assert.match(cookie, /Secure/i);
-  assert.match(cookie, /SameSite=lax/i);
-  assert.match(cookie, /Path=\//i);
-  assert.match(cookie, /Max-Age=34560000/i);
-});
-
-test("returning original account can check in using the same saved reminder", async () => {
-  const route = fixture();
-  const result = await route.POST(request(cookieA, { sessionId }), context);
-  assert.equal(result.status, 200);
-  assert.deepEqual(route.calls, ["dancer"]);
-  assert.equal((await result.json()).affiliation.shiftCheckedIn, true);
-  assert.ok(result.headers.get("set-cookie").startsWith(cookieA));
-});
-
-test("a different account is blocked before enrollment or check-in and cannot replace the reminder", async () => {
+for (const cookie of ['', cookieA, 'mydancr_nfc_account_v1=invalid']) test('check-in uses the signed-in dancer regardless of an old browser cookie: ' + (cookie ? 'present' : 'absent'), async () => {
   const route = fixture({ userId: userB });
-  const result = await route.POST(request(cookieA, { sessionId }), context);
-  assert.equal(result.status, 409);
-  assert.equal((await result.json()).code, "NFC_BROWSER_ACCOUNT_CONFLICT");
-  assert.deepEqual(route.calls, []);
-  assert.equal(result.headers.get("set-cookie"), null);
+  const result = await route.POST(request(cookie, { sessionId, dancerUserId: userA, userId: userA }), context);
+  assert.equal(result.status, 200);
+  assert.equal((await result.json()).affiliation.shiftCheckedIn, true);
+  assert.equal(route.calls.length, 1);
+  assert.equal(route.calls[0].dancerUserId, userB);
+  assert.equal(result.headers.get('set-cookie'), null);
 });
 
-const bypassExpiresAt = "2026-10-17T14:00:00.000Z";
-const bypassConfig = JSON.stringify({ userId: userB, expiresAt: bypassExpiresAt });
-
-test("temporary bypass applies only to its configured account and expires at the deadline", () => {
-  const browser = browserMarker(bypassConfig);
-  assert.equal(browser.hasTemporaryNfcBrowserAccountBypass(userB), true);
-  assert.equal(browser.hasTemporaryNfcBrowserAccountBypass(userA), false);
-  for (const now of [Date.parse(bypassExpiresAt), Date.parse(bypassExpiresAt) + 1]) {
-    assert.equal(browserMarker(bypassConfig, now).hasTemporaryNfcBrowserAccountBypass(userB), false);
-  }
+for (const pending of [false, true]) test('successful tap no longer creates a browser account restriction: pending=' + pending, async () => {
+  const route = fixture({ pending });
+  const result = await route.POST(request('', { sessionId }), context);
+  assert.equal(result.status, 200);
+  assert.equal((await result.json()).affiliation.enrollmentStatus, pending ? 'pending' : 'completed');
+  assert.equal(result.headers.get('set-cookie'), null);
 });
 
-test("missing or malformed bypass configuration fails closed", () => {
-  for (const config of [null, "", "bad json", "null", "true", "[]", "{}",
-    JSON.stringify({ userId: userB }), JSON.stringify({ expiresAt: bypassExpiresAt }),
-    JSON.stringify({ userId: userB, expiresAt: 9999999999999 }),
-    JSON.stringify({ userId: userB, expiresAt: "invalid" })]) {
-    assert.equal(browserMarker(config).hasTemporaryNfcBrowserAccountBypass(userB), false, String(config));
-  }
-});
-
-test("temporary exception permits the test account without replacing the original browser link", async () => {
-  const route = fixture({ userId: userB, browser: browserMarker(bypassConfig) });
+test('the formerly linked account can still check in', async () => {
+  const route = fixture({ userId: userA });
   const result = await route.POST(request(cookieA, { sessionId }), context);
   assert.equal(result.status, 200);
-  assert.deepEqual(route.calls, ["dancer"]);
-  assert.ok(result.headers.get("set-cookie").startsWith(cookieA));
+  assert.equal(route.calls[0].dancerUserId, userA);
 });
 
-test("expired or other-account exceptions cannot authorize a mismatched browser", async () => {
-  for (const browser of [browserMarker(bypassConfig, Date.parse(bypassExpiresAt)),
-    browserMarker(JSON.stringify({ userId: userA, expiresAt: bypassExpiresAt }))]) {
-    const route = fixture({ userId: userB, browser });
-    const result = await route.POST(request(cookieA, { sessionId, userId: userA, bypass: true }), context);
-    assert.equal(result.status, 409);
-    assert.deepEqual(route.calls, []);
-    assert.equal(result.headers.get("set-cookie"), null);
-  }
-});
-
-test("temporary exception preserves authentication, account and verification gates", async () => {
-  for (const options of [{ signedIn: false }, { role: "customer" }, { accountState: "suspended" },
-    { accessError: new Error("Age verification required.") },
-    { accessError: new Error("Dancer Agreement required.") }]) {
-    const route = fixture({ userId: userB, browser: browserMarker(bypassConfig), ...options });
-    const result = await route.POST(request(cookieA, { sessionId }), context);
-    assert.ok(result.status >= 400);
-    assert.deepEqual(route.calls, []);
-    assert.equal(result.headers.get("set-cookie"), null);
-  }
-});
-
-test("temporary exception does not swallow a check-in failure or overwrite the browser link", async () => {
-  const route = fixture({ userId: userB, browser: browserMarker(bypassConfig), fail: true });
+for (const options of [{ signedIn: false }, { role: 'customer' }, { accountState: 'suspended' },
+  { accessError: new Error('Age verification required.') }, { accessError: new Error('Dancer Agreement required.') }]) test('removing the browser restriction preserves account and verification checks: ' + JSON.stringify(options), async () => {
+  const route = fixture({ userId: userB, ...options });
   const result = await route.POST(request(cookieA, { sessionId }), context);
   assert.ok(result.status >= 400);
-  assert.equal(result.headers.get("set-cookie"), null);
+  assert.equal(route.calls.length, 0);
+  assert.equal(result.headers.get('set-cookie'), null);
 });
 
-for (const options of [{ fail: true }, { signedIn: false }, { role: "customer" }]) test(`failed or unauthorized tap never binds a browser: ${JSON.stringify(options)}`, async () => {
-  const result = await fixture(options).POST(request("", { sessionId }), context);
+test('a failed check-in still fails without creating a browser restriction', async () => {
+  const result = await fixture({ fail: true }).POST(request(cookieA, { sessionId }), context);
   assert.ok(result.status >= 400);
-  assert.equal(result.headers.get("set-cookie"), null);
+  assert.equal(result.headers.get('set-cookie'), null);
 });
 
-test("a browser reminder alone does not sign a dancer in", async () => {
-  const route = fixture({ signedIn: false });
-  assert.equal((await route.POST(request(cookieA, { sessionId }), context)).status, 401);
-  assert.deepEqual(route.calls, []);
-});
-
-test("retired cashier redemption never changes the dancer browser binding", async () => {
-  const route = fixture({ userId: userB, type: "cashier", signedIn: false });
+test('retired cashier redemption remains unavailable', async () => {
+  const route = fixture({ userId: userB, type: 'cashier', signedIn: false });
   const result = await route.POST(request(cookieA, { sessionId }), context);
   assert.equal(result.status, 410);
-  assert.equal((await result.json()).replacement, "admission_pass");
-  assert.deepEqual(route.calls, []);
-  assert.equal(result.headers.get("set-cookie"), null);
+  assert.equal((await result.json()).replacement, 'admission_pass');
+  assert.equal(route.calls.length, 0);
 });
 
-test("sticker discovery returns only the browser-link flag without disclosing account identity", async () => {
-  for (const type of ["dressing_room", "cashier"]) {
+test('sticker discovery no longer marks the browser as linked to another account', async () => {
+  for (const type of ['dressing_room', 'cashier']) {
     const result = await fixture({ type }).GET(request(cookieA), context);
     const data = await result.json();
-    assert.equal(data.browserAccountLinked, type === "dressing_room");
+    assert.equal(result.status, 200);
+    assert.equal(Object.hasOwn(data, 'browserAccountLinked'), false);
     assert.ok(!JSON.stringify(data).includes(tokenA));
-    assert.match(result.headers.get("cache-control"), /private, no-store/);
-    assert.equal(result.headers.get("set-cookie"), null);
+    assert.match(result.headers.get('cache-control'), /private, no-store/);
+    assert.equal(result.headers.get('set-cookie'), null);
   }
 });

@@ -38,11 +38,7 @@ const agreementVersion = compile(readFileSync(new URL("../src/lib/dancr/dancer-a
 const dancerAgreement = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement.ts", import.meta.url), "utf8"), {
   "../api-error-policy": policy, "./dancer-agreement-version": agreementVersion,
 });
-const nfcBrowserAccount = compile(readFileSync(new URL("../src/lib/dancr/nfc-browser-account.ts", import.meta.url), "utf8"), {
-  "server-only": {},
-  "@/src/lib/server-env": { getServerEnv: () => "test-only-signing-key" },
-});
-const rememberedDancerCookie = `${nfcBrowserAccount.NFC_BROWSER_ACCOUNT_COOKIE}=${nfcBrowserAccount.createNfcBrowserAccountToken("11111111-1111-4111-8111-111111111111")}`;
+const rememberedDancerCookie = "mydancr_nfc_account_v1=retired-browser-reminder";
 const api = { PublicApiError: policy.PublicApiError, apiError(error, fallback) {
   const result = policy.resolveApiError(error, fallback);
   return Response.json(result.body, { status: result.status });
@@ -90,7 +86,6 @@ function authFixture(providerError = null, { role = "customer", authSession = se
     "@/src/lib/dancr/auth": { getAccountByUserId: async (_admin, id) => { accountReads.push(id); return { ...account, role }; } },
     "@/src/lib/dancr/account-profile-recovery": { recoverVerifiedPublicAccount: async (_admin, _user, existing) => existing },
     "@/src/lib/dancr/account-provisioning": { provisionAppAccount: async (_admin, input) => { provisions.push(input); if (provisionError) throw provisionError; } },
-    "@/src/lib/dancr/nfc-browser-account": nfcBrowserAccount,
     "@/src/lib/dancr/account-recovery": { AccountRecoveryRateLimitError: class extends Error {} },
     "@/src/lib/dancr/public-request-rate-limit": { PublicRequestRateLimitError: class extends Error {}, enforcePublicRequestRateLimit: async (_admin, input) => { rateLimits.push(input); } },
     "@/src/lib/dancr/public-app-url": { publicAppUrl: () => "https://mydancr.com" },
