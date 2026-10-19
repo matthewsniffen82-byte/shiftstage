@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { formatExternalHours } from "@/src/lib/dancr/external-ranking-progress";
+import { DANCER_SCORE_WEIGHTS } from "@/src/lib/dancr/venue-dancer-scores";
 import {
   isActiveNfcPresence,
   isNfcPresenceNearExpiry,
@@ -12,15 +14,19 @@ import {
   DashboardDataRequestError,
   requestDancerShiftCheckInJson,
   requestDancerShiftsJson,
+  requestDashboardJson,
 } from "./dashboard-session";
 
 type ShiftRow = Record<string, any>;
 
-export default function DancerShiftManager({ onPresenceChange }: { onPresenceChange?: (key: string) => void } = {}) {
+export default function DancerShiftManager({ onPresenceChange, onVisibilityChange }: {
+  onPresenceChange?: (key: string) => void; onVisibilityChange?: () => Promise<void>;
+} = {}) {
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
   const [status, setStatus] = useState("");
   const [saving, setSaving] = useState(false);
+  const [switching, setSwitching] = useState(false);
   const [endConfirmationOpen, setEndConfirmationOpen] = useState(false);
   const [workingNowStatus, setWorkingNowStatus] = useState("");
   const [workingNowStatusKind, setWorkingNowStatusKind] = useState<"" | "error" | "success">("");
@@ -81,7 +87,9 @@ export default function DancerShiftManager({ onPresenceChange }: { onPresenceCha
     [shifts],
   );
   const demoManagedActiveShift = activeShift?.shift_source === "demo_locked";
-  const presenceKey = activeShift ? `${activeShift.id}:${activeShift.checked_in_at}:${activeShift.location_verification_expires_at}` : "off";
+  const progress = activeShift?.rankingProgress;
+  const hasRecordedExternalTime = typeof progress?.externalHours === "number" && Number.isFinite(progress.externalHours) && progress.externalHours >= 0;
+  const presenceKey = activeShift ? `${activeShift.id}:${activeShift.checked_in_at}:${activeShift.location_verification_expires_at}:${progress?.visibility || ""}` : "off";
   useEffect(() => {
     if (hasLoaded) onPresenceChange?.(presenceKey);
   }, [hasLoaded, presenceKey, onPresenceChange]);
@@ -93,6 +101,42 @@ export default function DancerShiftManager({ onPresenceChange }: { onPresenceCha
     [shifts],
   );
   const cooldownShift = latestNfcShift && isNfcTapCooldownActive(latestNfcShift) ? latestNfcShift : null;
+  async function switchToBoth() {
+    if (!activeShift?.id || actionPendingRef.current) return;
+    actionPendingRef.current = true;
+    setSwitching(true);
+    setEndConfirmationOpen(false);
+    setWorkingNowStatusKind("");
+    setWorkingNowStatus("Switching to Both…");
+    loadSequenceRef.current += 1;
+    loadAbortRef.current?.abort();
+    loadAbortRef.current = null;
+    try {
+      await requestDashboardJson("/api/dancer/shifts/visibility", {
+        method: "PATCH", expectedRole: "dancer", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ shiftId: activeShift.id }), fallbackMessage: "Unable to switch to Both.",
+      });
+      if (!mountedRef.current) return;
+      setShifts(current => current.map(shift => shift.id === activeShift.id
+        ? { ...shift, rankingProgress: { ...shift.rankingProgress, visibility: "both" } } : shift));
+      setWorkingNowStatusKind("success");
+      setWorkingNowStatus("Both is on. Your external time is now counting toward your ranking. Your shift still ends at the same time.");
+      try {
+        await Promise.all([load(), onVisibilityChange?.()]);
+      } catch {
+        if (mountedRef.current) setWorkingNowStatus("Both is on. Refresh the dashboard to update your recorded time and public profile status.");
+      }
+    } catch (error) {
+      if (mountedRef.current) {
+        setWorkingNowStatusKind("error");
+        setWorkingNowStatus(error instanceof Error ? error.message : "Unable to switch to Both.");
+      }
+    } finally {
+      actionPendingRef.current = false;
+      if (mountedRef.current) setSwitching(false);
+    }
+  }
+
   async function endWorkingNow() {
     if (!activeShift?.id || actionPendingRef.current) return;
     actionPendingRef.current = true;
@@ -150,10 +194,22 @@ export default function DancerShiftManager({ onPresenceChange }: { onPresenceCha
                 </small>
               ) : null}
             </span>
+            {!demoManagedActiveShift ? <div className="shift-ranking-progress">
+              <small>External time this shift: <strong>{formatExternalHours(progress?.externalHours)}</strong></small>
+              <small>Your largest ranking factor · {DANCER_SCORE_WEIGHTS.externalTime}%</small>
+              {progress?.visibility === "internal" && hasRecordedExternalTime ? <>
+                <p>Help guests discover you while you work. Choose Both to keep internal requests and start earning external ranking credit. This makes your approved profile public.</p>
+                <button type="button" disabled={saving || switching} onClick={() => void switchToBoth()}>{switching ? "Switching…" : "Switch to Both"}</button>
+              </> : hasRecordedExternalTime && (progress?.visibility === "external" || progress?.visibility === "both")
+                ? <small>Your external time is counting toward your ranking.</small>
+                : progress && !hasRecordedExternalTime ? <small>External time is not recorded for this shift. Choose External or Both at your next verified club check-in.</small>
+                : <small>Refresh to check your current visibility and recorded time.</small>}
+              <a href="#dancer-performance-ranking">View ranking</a>
+            </div> : null}
             {demoManagedActiveShift ? (
               <button className="shift-demo-managed" type="button" disabled>Demo managed</button>
             ) : (
-              <button type="button" disabled={saving} onClick={() => {
+              <button type="button" disabled={saving || switching} onClick={() => {
                 setWorkingNowStatus("");
                 setWorkingNowStatusKind("");
                 setEndConfirmationOpen(true);
@@ -184,6 +240,7 @@ export default function DancerShiftManager({ onPresenceChange }: { onPresenceCha
             <span>
               <strong>Not working now</strong>
               <small>Tap the club&apos;s dressing-room sticker to show Working Now.</small>
+              <small>Choose External or Both to earn external ranking credit while you work.</small>
             </span>
             {cooldownShift ? (
               <small className="shift-checkin-status" role="status">
@@ -194,7 +251,7 @@ export default function DancerShiftManager({ onPresenceChange }: { onPresenceCha
         )}
         {workingNowStatus ? (
           <small className={`shift-checkin-status${workingNowStatusKind ? ` is-${workingNowStatusKind}` : ""}`} role="status" aria-live="polite">
-            {workingNowStatusKind === "success" ? "✓ " : workingNowStatusKind === "error" ? "Unable to end: " : ""}{workingNowStatus}
+            {workingNowStatusKind === "success" ? "✓ " : ""}{workingNowStatus}
           </small>
         ) : null}
       </section>

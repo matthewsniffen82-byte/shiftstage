@@ -23,7 +23,16 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    return noStoreJson({ ok: true, shifts: data || [], venues: [] });
+    // Ranking progress is optional: a failed metrics read must not hide the
+    // active shift or prevent the dancer from checking out.
+    let progress: Array<{ shiftId: string; visibility: string | null; externalHours: number | null }> = [];
+    try {
+      const result = await admin.rpc("get_dancer_shift_ranking_progress", { p_dancer_id: dancer.id });
+      if (!result.error && Array.isArray(result.data)) progress = result.data;
+    } catch { /* Keep shift management available when ranking progress cannot load. */ }
+    return noStoreJson({ ok: true, shifts: (data || []).map((shift: { id: string }) => ({ ...shift,
+      rankingProgress: progress.find(row => row.shiftId === shift.id) || null,
+    })), venues: [] });
   } catch (error) {
     return apiError(error, "Unable to load dancer shifts.");
   }

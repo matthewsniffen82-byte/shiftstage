@@ -2,23 +2,22 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const [shiftRoute, shiftLifecycle, dancerService, checkInRoute] = await Promise.all([
+const [shiftRoute, shiftLifecycle, dancerService, checkInRoute, visibilityRoute] = await Promise.all([
   readFile(new URL("../app/api/dancer/shifts/route.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/shift-lifecycle.ts", import.meta.url), "utf8"),
   readFile(new URL("../src/lib/dancr/dancer.ts", import.meta.url), "utf8"),
   readFile(new URL("../app/api/dancer/shifts/check-in/route.ts", import.meta.url), "utf8"),
+  readFile(new URL("../app/api/dancer/shifts/visibility/route.ts", import.meta.url), "utf8"),
 ]);
 
-test("all production dancer shift mutations use one lifecycle service", () => {
-  const postHandler = shiftRoute.match(/export async function POST[\s\S]*?(?=\nexport async function PATCH)/)?.[0] || "";
-  const patchHandler = shiftRoute.match(/export async function PATCH[\s\S]*?(?=\nasync function getOwnShift)/)?.[0] || "";
-
-  assert.match(shiftRoute, /createScheduledDancerShift/);
-  assert.match(shiftRoute, /recordDancerShiftBroadcast/);
-  assert.match(shiftRoute, /updateOwnedDancerShift/);
-  assert.doesNotMatch(postHandler, /\.from\("shifts"\)[\s\S]*?\.(insert|update|delete|upsert)\(/);
-  assert.doesNotMatch(patchHandler, /\.from\("shifts"\)[\s\S]*?\.(insert|update|delete|upsert)\(/);
+test("retired scheduling cannot write shifts; checkout and visibility use their guarded services", () => {
+  for (const method of ["POST", "PATCH", "DELETE"]) assert.ok(shiftRoute.includes(`export const ${method} = retiredSchedule`));
+  assert.match(shiftRoute, /status: 410/);
+  assert.doesNotMatch(shiftRoute, /\.from\("shifts"\)[\s\S]*?\.(insert|update|delete|upsert)\(/);
   assert.match(checkInRoute, /endDancerShift/);
+  assert.match(visibilityRoute, /rpc\("enable_dancer_shift_both"/);
+  assert.match(visibilityRoute, /p_dancer_user_id: user\.id/);
+  assert.doesNotMatch(visibilityRoute, /\.from\("shifts"\)/);
 });
 
 test("the shift lifecycle fixes creation state and scopes every edit to its dancer", () => {

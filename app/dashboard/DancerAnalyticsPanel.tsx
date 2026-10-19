@@ -219,7 +219,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
         </li>)}</ul> : <p>Content activity will appear here.</p>}
         {current.topContent.length > contentLimit && <button className="dancer-results-more" type="button" onClick={() => setContentLimit(value => value + 3)}>Show more content</button>}
       </section>
-      <DancerDiscoveryBoosts />
+      <DancerDiscoveryBoosts refreshKey={presenceKey} />
     </>}
     {requestWindow && <DancerRequestDialog window={requestWindow} onClose={() => setRequestWindow(null)} />}
   </div>;

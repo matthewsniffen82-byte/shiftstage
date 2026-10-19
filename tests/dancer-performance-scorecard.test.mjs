@@ -7,6 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import {renderToStaticMarkup} from 'react-dom/server';
 import * as scoring from '../src/lib/dancr/venue-dancer-scores.ts';
+import * as progress from '../src/lib/dancr/external-ranking-progress.ts';
 import {compile} from './helpers/discovery-fixture.mjs';
 
 const require=createRequire(import.meta.url);
@@ -15,7 +16,8 @@ const card={venueId:'club-a',venueName:'Club A',periodStart:'2026-10-04T00:00:00
 function render(status,error=false) {
   const exports={};let slot=0;
   const imports={react:{...React,useState:()=>[slot++===0?status:slot===2?error:0,()=>{}],useEffect(){}},
-    'react/jsx-runtime':require('react/jsx-runtime'),'./dashboard-session':{},'@/src/lib/dancr/venue-dancer-scores':scoring};
+    'react/jsx-runtime':require('react/jsx-runtime'),'./dashboard-session':{},'@/src/lib/dancr/venue-dancer-scores':scoring,
+    '@/src/lib/dancr/external-ranking-progress':progress};
   vm.runInNewContext(ts.transpileModule(readFileSync('app/dashboard/DancerDiscoveryBoosts.tsx','utf8'),{
     compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
   }).outputText,{exports,require:name=>{assert.ok(name in imports,name);return imports[name];}});
@@ -39,6 +41,17 @@ test('scorecard keeps placement guidance visible and scoring rules collapsed',()
   assert.doesNotMatch(html,/Your overall score appears once 3 categories have data/);
   assert.doesNotMatch(html,/last 30 days/i);
   assert.match(html,/staff approval does not improve/);assert.match(html,/check out before leaving/);
+});
+
+test('external progress stays visible before enough data exists to calculate a score',()=>{
+  const early={...card,externalHours:2.25,scores:{...card.scores,externalTime:{value:null,confidence:'unavailable',reason:'More recorded activity is needed.'}}};
+  const html=render({eligible:true,score:50,scorecard:early});
+  assert.match(html,/Recorded external time: <strong>2h 15m<\/strong>/);
+  assert.match(html,/Your largest ranking factor · 40%/);
+  assert.match(html,/Building your score/);
+  assert.match(html,/<details class="dancer-score-category" open="">/);
+  assert.doesNotMatch(html,/<strong>0\/100|100% complete|unlocks at/);
+  assert.match(render({eligible:true,score:50,scorecard:{...early,externalHours:null}}),/Not recorded yet/);
 });
 
 test('missing scores and service failures stay unavailable rather than showing fabricated zeros',()=>{

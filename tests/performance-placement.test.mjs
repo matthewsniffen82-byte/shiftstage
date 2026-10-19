@@ -88,6 +88,7 @@ test('own scorecards match every venue category while omitting other dancer iden
  const [card]=await f.service.getPerformancePlacementScorecards(f.admin,[{dancerId:'a',venueId:'club'}],now);
  const expected=scoring.scoreVenueDancers(cohort,'14d')[0].scores;
  assert.equal(card.venueId,'club');assert.equal(card.periodEnd,new Date(now).toISOString());
+ assert.equal(card.externalHours,8);
  assert.equal(card.periodStart,new Date(now-14*86400000).toISOString());
  for(const key of ['overall',...scoring.DANCER_SCORE_CATEGORIES]) {
    assert.equal(card.scores[key].value,expected[key].value);assert.equal(card.scores[key].confidence,expected[key].confidence);
@@ -96,6 +97,15 @@ test('own scorecards match every venue category while omitting other dancer iden
  assert.doesNotMatch(JSON.stringify(card),/Private|private-peer|profileClaims|dancer_id|customer_id/);
  assert.equal((await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a',venueId:'club'}],now))[0],card.scores.overall.value);
  assert.equal(f.calls.length,1);
+});
+
+test('recorded external hours survive an unavailable score, while unobserved history stays unknown',async()=>{
+ const early=dancer('early');Object.assign(early.internal,{rosterTrackedHours:1,rosterExternalTrackedHours:1,rosterExternalHours:0.5});
+ const unknown=dancer('unknown');delete unknown.internal.rosterExternalTrackedHours;
+ const f=fixture({club:[early,unknown]});
+ const cards=await f.service.getPerformancePlacementScorecards(f.admin,[{dancerId:'early',venueId:'club'},{dancerId:'unknown',venueId:'club'}],now);
+ assert.equal(cards[0].scores.externalTime.value,null);assert.equal(cards[0].externalHours,0.5);
+ assert.equal(cards[1].externalHours,null);
 });
 
 test('recent performance changes placement when older activity falls outside 14 days',async()=>{

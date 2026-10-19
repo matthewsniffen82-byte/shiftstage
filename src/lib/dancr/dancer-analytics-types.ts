@@ -2,6 +2,7 @@ export type DancerAnalyticsPeriod = "shift" | "tonight" | "7d" | "30d" | "all";
 export type DancerAnalyticsSelection = DancerAnalyticsPeriod | "auto";
 export type DancerPlacementScorecard = {
   venueId: string; venueName?: string; periodStart: string; periodEnd: string;
+  externalHours: number | null;
   scores: Record<import("./venue-dancer-scores").DancerScoreKey,
     Pick<import("./venue-dancer-scores").DancerScore, "value" | "reason" | "confidence" | "evidence">>;
 };

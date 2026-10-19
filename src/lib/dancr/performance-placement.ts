@@ -31,6 +31,10 @@ function venueScores(admin: SupabaseClient, venueId: string, now: number) {
     // applying public eligibility, filters or pagination.
     return new Map(scoreVenueDancers(data.performance.dancers as DancerPerformance[], PLACEMENT_PERIOD)
       .map(row => [row.dancer.id, { venueId, periodStart, periodEnd: new Date(now).toISOString(),
+        externalHours: typeof row.dancer.internal.rosterExternalHours === "number"
+          && Number.isFinite(row.dancer.internal.rosterExternalHours) && row.dancer.internal.rosterExternalHours >= 0
+          && Number(row.dancer.internal.rosterExternalTrackedHours) > 0
+          ? row.dancer.internal.rosterExternalHours : null,
         scores: Object.fromEntries(Object.entries(row.scores).map(([key, score]) => [key,
           { value: score.value, reason: score.reason, confidence: score.confidence, evidence: score.evidence }])) as DancerPlacementScorecard["scores"],
       }]));

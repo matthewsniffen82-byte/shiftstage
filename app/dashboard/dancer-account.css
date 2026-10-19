@@ -91,3 +91,7 @@ body.dancr-button-system #dancer-dashboard #dancer-destination-account .account-
 @media (max-width: 360px) {
   body.dancr-button-system #dancer-dashboard #dancer-destination-account .customer-credential-options { grid-template-columns: minmax(0, 1fr); }
 }
+.shift-ranking-progress { display: grid; grid-column: 1 / -1; gap: 6px; min-width: 0; width: 100%; }
+.shift-ranking-progress p { margin: 2px 0; }
+.shift-ranking-progress a { justify-self: start; padding: 8px 0; color: var(--mydancr-dashboard-accent, #c4a5f5); text-underline-offset: 3px; }
+.shift-ranking-progress strong { font-variant-numeric: tabular-nums; }

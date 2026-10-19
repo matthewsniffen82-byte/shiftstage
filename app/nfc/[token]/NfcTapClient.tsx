@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PublicClubDeal } from "@/src/lib/dancr/types";
 import NfcIcon from "@/app/components/NfcIcon";
 import { VISIBILITY_OPTIONS, type VisibilityMode } from "@/src/lib/dancr/visibility-mode";
+import { externalTapRankingMessage } from "@/src/lib/dancr/external-ranking-progress";
+import { DANCER_SCORE_WEIGHTS } from "@/src/lib/dancr/venue-dancer-scores";
 import {
   persistRefreshedBrowserAuthSession,
   readBrowserAuthSession,
@@ -204,7 +206,7 @@ export function NfcTapClient({ token }: { token: string }) {
       setPhase("redeemed");
       const successMessage = data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "Club tap confirmed.");
       setStatus(completedDancerTap
-        ? `${successMessage} Opening your live dancer dashboard…`
+        ? `${successMessage} ${externalTapRankingMessage(data.affiliation)} Opening your live dancer dashboard…`
         : state.tag.type === "dressing_room"
           ? "Your physical club tap was saved, but profile activation is not complete yet. Open the dancer dashboard to review the remaining setup requirement."
           : successMessage);
@@ -265,6 +267,7 @@ export function NfcTapClient({ token }: { token: string }) {
             <strong>Choose where you appear</strong>
             <p>{dancerNeedsSignIn ? "Sign in to choose your visibility." : "Select your visibility below."}</p>
             <p>Check-in lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown across all clubs</strong>. Tapping again won&apos;t extend it.</p>
+            <p><strong>Get discovered by guests.</strong> External check-in time is your largest ranking factor: {DANCER_SCORE_WEIGHTS.externalTime}%. Choose External or Both to start recording it. Both keeps you on the internal roster too.</p>
             {!dancerNeedsSignIn ? <fieldset className="nfc-visibility" disabled={isSubmitting}>
               <legend>Show me on</legend>
               {VISIBILITY_OPTIONS.map(option => <label key={option.value}>

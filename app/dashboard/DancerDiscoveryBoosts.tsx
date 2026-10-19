@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import type { DancerPlacementScorecard } from "@/src/lib/dancr/dancer-analytics-types";
 import { DANCER_PLACEMENT_DAYS, DANCER_SCORE_CATEGORIES, DANCER_SCORE_LABELS, DANCER_SCORE_WEIGHTS } from "@/src/lib/dancr/venue-dancer-scores";
+import { formatExternalHours } from "@/src/lib/dancr/external-ranking-progress";
 
 type Boosts = { eligible: boolean; score: number | null; scorecard: DancerPlacementScorecard | null };
 const guidance = {
@@ -14,7 +15,7 @@ const guidance = {
   profile: "Keep your photos and club information current, and share your profile. Recorded guest actions on your club-linked profile contribute here.",
   conversions: "Share your club-linked profile so interested guests can claim an entry pass. This score improves when those claimed passes are redeemed at the club.",
 };
-export function DancerDiscoveryBoosts() {
+export function DancerDiscoveryBoosts({ refreshKey = "" }: { refreshKey?: string } = {}) {
   const [status,setStatus] = useState<Boosts | null>(null);
   const [error,setError] = useState(false);
   const [retry,setRetry] = useState(0);
@@ -26,9 +27,9 @@ export function DancerDiscoveryBoosts() {
       if (!controller.signal.aborted) setStatus(result as unknown as Boosts);
     }).catch(()=>{if(!controller.signal.aborted)setError(true);});
     return ()=>controller.abort();
-  },[retry]);
+  },[retry,refreshKey]);
   const card = status?.scorecard;
-  return <section className="dancer-analytics-audience" aria-labelledby="discovery-boosts-heading">
+  return <section className="dancer-analytics-audience" id="dancer-performance-ranking" aria-labelledby="discovery-boosts-heading">
     <h3 id="discovery-boosts-heading">Your performance score <small>Last {DANCER_PLACEMENT_DAYS} days{card?.venueName ? ` · ${card.venueName}` : ""}</small></h3>
     {error ? <p role="alert">Your score is temporarily unavailable. <button type="button" onClick={()=>setRetry(value=>value+1)}>Try again</button></p>
       : !status ? <p role="status">Loading performance score…</p> : <>
@@ -38,7 +39,12 @@ export function DancerDiscoveryBoosts() {
         {card?.scores.overall.value == null && <p className="dancer-results-note">Your overall score appears once 3 categories have data.</p>}
         <div className="dancer-score-categories">{DANCER_SCORE_CATEGORIES.map(key => {
           const score = card?.scores[key];
-          return <details key={key} className="dancer-score-category"><summary><span>{DANCER_SCORE_LABELS[key]}</span><strong>{score?.value == null ? "—" : `${score.value}/100`}</strong></summary>
+          return <details key={key} className="dancer-score-category" open={key === "externalTime" ? true : undefined}><summary><span>{DANCER_SCORE_LABELS[key]}</span><strong>{score?.value == null ? "—" : `${score.value}/100`}</strong></summary>
+            {key === "externalTime" ? <>
+              <p><strong>Your largest ranking factor · {DANCER_SCORE_WEIGHTS.externalTime}%</strong></p>
+              <p>Recorded external time: <strong>{formatExternalHours(card?.externalHours)}</strong> · Last {DANCER_PLACEMENT_DAYS} days</p>
+              {score?.value == null ? <p><strong>Building your score</strong></p> : null}
+            </> : null}
             <p>{score?.reason || score?.evidence || "More recorded activity is needed."}{score?.confidence === "early" ? " · Early data" : ""}</p>
             <p>{guidance[key]}</p><small>Overall score weight: {DANCER_SCORE_WEIGHTS[key]}%</small>
           </details>;
