@@ -1,0 +1,23 @@
+/* Opt-in and scoped to the guest QR roster; never the staff workspace. */
+body .ir-shell.ir-guest[data-venue-guest-color="custom"] {
+  --dancr-color-brand-primary: var(--venue-guest-accent);
+  --dancr-shadow-brand-control: 0 2px 8px color-mix(in srgb, var(--venue-guest-accent) 12%, transparent);
+}
+body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] :is(button, a):focus-visible {
+  outline-color: color-mix(in srgb, var(--venue-guest-accent) 60%, white) !important;
+}
+body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] button.ir-table-request:enabled:not([data-request-sent]) {
+  --ir-guest-control-edge: var(--venue-guest-accent);
+  color: var(--venue-guest-on-accent) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] button.ir-table-request:enabled:not([data-request-sent])::before {
+  background: linear-gradient(var(--venue-guest-accent), var(--venue-guest-accent)) !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--venue-guest-accent) 12%, transparent);
+}
+body.dancr-button-system .ir-shell.ir-guest[data-venue-guest-color="custom"] button.ir-table-request:enabled:not([data-request-sent]):hover::before { filter: brightness(1.08); }
+body .ir-shell.ir-guest[data-venue-guest-color="custom"] .ir-card-request-state {
+  border-color: color-mix(in srgb, var(--venue-guest-accent) 60%, transparent);
+  background: linear-gradient(color-mix(in srgb, var(--venue-guest-accent) 18%, #08080b), #08080b);
+  color: color-mix(in srgb, var(--venue-guest-accent) 30%, white);
+}

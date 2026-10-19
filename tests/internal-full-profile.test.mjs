@@ -29,7 +29,7 @@ function fixture({ external = true, staff = false, mediaFailure = false } = {}) 
   const market = { dancers: external ? [publicProfile] : [] };
   const context = {
     window: { parent, location: { search: '?internal_profile=' + id(1), origin: 'https://example.invalid' }, addEventListener() {} },
-    document: { documentElement: { classList: { add() {} } }, getElementById() { return null; }, querySelector() { return null; } },
+    document: { body: { dataset: {}, style: { values: {}, setProperty(k,v) { this.values[k]=v; }, removeProperty(k) { delete this.values[k]; } } }, documentElement: { classList: { add() {} } }, getElementById() { return null; }, querySelector() { return null; } },
     URLSearchParams, URL: class extends URL { static createObjectURL() { return 'blob:protected-media'; } static revokeObjectURL() {} }, AbortSignal,
     authSession: staff ? { accessToken: 'test-venue-session' } : null,
     fetch: async (url, options) => { fetches.push({ url, options }); if (mediaFailure) throw new Error("Temporary media outage"); return { ok: true, blob: async () => ({}) }; },
@@ -38,8 +38,25 @@ function fixture({ external = true, staff = false, mediaFailure = false } = {}) 
   };
   vm.runInNewContext(source + '\nthis.bridge={openInternalProfileMessage,closeInternalProfileFrame,startInternalProfileAuth,internalProfileMatches,sendInternalTableRequest,internalProfileRequestActionsMarkup,profile:()=>internalRosterProfile};', context);
   const event = (overrides = {}) => ({ origin: 'https://example.invalid', source: parent, data: { type: 'mydancr:internal-profile-open', profile, token: staff ? '' : id(9), request: staff ? undefined : { tableLabel: 'Table 1', busy: false, message: '' } }, ...overrides });
-  return { bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
+  return { body: context.document.body, bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
 }
+test('table colors stay inside the guest frame, reset cleanly and never style staff profiles', async () => {
+  for (const staff of [true, false]) {
+    const f = fixture({ staff });
+    const event = f.event(); event.data.profile = { ...profile, internalAccent: '#c99842' };
+    await f.bridge.openInternalProfileMessage(event);
+    assert.equal(f.body.dataset.venueGuestColor, staff ? undefined : 'custom');
+    assert.equal(f.body.style.values['--venue-guest-accent'], staff ? undefined : '#c99842');
+    if (!staff) assert.equal(f.body.style.values['--venue-guest-on-accent'], '#050507');
+    await f.bridge.openInternalProfileMessage(f.event());
+    assert.equal(f.body.dataset.venueGuestColor, undefined);
+    assert.equal(f.body.style.values['--venue-guest-accent'], undefined);
+    event.data.profile = { ...profile, internalAccent: 'red;display:none' };
+    await f.bridge.openInternalProfileMessage(event);
+    assert.equal(f.body.dataset.venueGuestColor, undefined);
+  }
+});
+
 test('Internal opens the exact discovery viewer with canonical identity, gallery, videos and socials', async () => {
   const f = fixture(), before = JSON.stringify(f.market);
   await f.bridge.openInternalProfileMessage(f.event());

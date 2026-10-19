@@ -56,3 +56,47 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sen
 html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sent-label::before { content: ""; flex: 0 0 auto; width: 5px; height: 9px; margin-top: -3px; border: solid currentColor; border-width: 0 2px 2px 0; transform: rotate(45deg); }
 html.internal-profile-embed .internal-profile-request-status { margin: 8px 4px 0; color: #b8b5c2; font-size: 12px; line-height: 1.4; text-align: center; }
 html.internal-profile-embed .internal-profile-request-status:empty { display: none; }
+
+/* The saved QR color follows guest profiles only inside this isolated frame. */
+html.internal-profile-embed body[data-venue-guest-color="custom"] {
+  --dancr-color-brand-primary: var(--venue-guest-accent);
+  --dancr-color-brand-primary-deep: color-mix(in srgb, var(--venue-guest-accent) 75%, black);
+  --dancr-color-avatar-ring-violet: var(--venue-guest-accent);
+  --dancr-shadow-brand-control: 0 2px 8px color-mix(in srgb, var(--venue-guest-accent) 12%, transparent);
+}
+html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal
+  .profile-actions-compact [data-internal-table-request]:enabled:not([data-request-sent]) {
+  --profile-action-background: linear-gradient(var(--venue-guest-accent), var(--venue-guest-accent)) !important;
+  --profile-action-border: var(--venue-guest-accent) !important;
+  color: var(--venue-guest-on-accent) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+html.internal-profile-embed body[data-venue-guest-color="custom"] :is(button, a):focus-visible {
+  outline-color: color-mix(in srgb, var(--venue-guest-accent) 60%, white) !important;
+}
+html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
+  :is(.profile-modal-city-icon, .profile-venue-pin, .profile-venue-destination svg, .profile-working-destination svg,
+      .profile-actions-compact .profile-action-main svg, .profile-modal-media-tabs button.active .profile-media-tab-icon) {
+  color: color-mix(in srgb, var(--venue-guest-accent) 60%, white) !important;
+}
+html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
+  .profile-modal-media-tabs > button.active::after { background: var(--venue-guest-accent) !important; }
+html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout
+  .profile-actions-compact :is(.profile-share-action, .profile-share-trigger) {
+  --profile-utility-background: linear-gradient(color-mix(in srgb, var(--venue-guest-accent) 18%, #050507), color-mix(in srgb, var(--venue-guest-accent) 18%, #050507));
+  --profile-utility-border: color-mix(in srgb, var(--venue-guest-accent) 40%, #34343c);
+  --profile-utility-hover-border: var(--venue-guest-accent);
+}
+@layer dancr-follow-controls {
+  html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-actions-compact :is(#followBtn, [data-follow-control="text"]) {
+    --follow-control-edge: color-mix(in srgb, var(--venue-guest-accent) 50%, #34343c);
+  }
+  html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-actions-compact :is(#followBtn, [data-follow-control="text"])[aria-pressed="true"] {
+    --follow-control-face: color-mix(in srgb, var(--venue-guest-accent) 18%, #050507);
+    --follow-control-edge: var(--venue-guest-accent);
+  }
+  html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-options[data-compact-menu] > summary { color: color-mix(in srgb, var(--venue-guest-accent) 60%, white) !important; }
+}

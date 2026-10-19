@@ -4,6 +4,7 @@ import { cancelInternalRequest } from "@/src/lib/dancr/internal-request-cancel";
 import { deliverInternalCancellationPush } from "@/src/lib/dancr/internal-request-cancellation-push";
 import { deliverInternalRequestAlerts } from "@/src/lib/dancr/internal-request-alerts";
 import { internalMainPhotos } from "@/src/lib/dancr/internal-main-photo";
+import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
 import { serveInternalMedia } from "@/src/lib/dancr/internal-media-delivery";
 import { internalOpenRequests, internalRequestsTonight, internalTableRequestStates } from "@/src/lib/dancr/internal-request-activity";
 import { createHash } from "node:crypto";
@@ -66,7 +67,8 @@ export async function GET(request: Request, context: Context) {
       const videos = (results[3].data || []).map(({ storage_path, moderation_details, ...video }) => ({
         ...video, has_poster: Boolean(videoPosterStoragePath({ storage_path, moderation_details })),
       }));
-      return json({ ok: true, profile: { ...results[0].data, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
+      const internalAccent = scope.link ? (await getVenueGuestColors(admin, scope.venueId)).internalAccent : null;
+      return json({ ok: true, profile: { ...results[0].data, internalAccent, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
     }
     if (["avatar", "photo", "video", "video-poster"].includes(path[0])) {
       const width = url.searchParams.has("width") ? Number(url.searchParams.get("width")) : null;
@@ -120,7 +122,8 @@ export async function GET(request: Request, context: Context) {
         if (error) throw error;
         if (data) receipt = { status: Date.parse(data.created_at) > Date.now() - 6 * 3600000 && members.some(d => d.id === data.dancer_id) ? data.status : "cancelled" };
       }
-      return json({ ok: true, venueName: scope.venueName, venueLogoUrl: scope.venueLogoUrl, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id)?.status || null, requestId: tableRequests.get(dancer.id)?.id || null })), receipt });
+      const { internalAccent } = await getVenueGuestColors(admin, scope.venueId);
+      return json({ ok: true, venueName: scope.venueName, venueLogoUrl: scope.venueLogoUrl, internalAccent, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id)?.status || null, requestId: tableRequests.get(dancer.id)?.id || null })), receipt });
     }
     const [linksResult, requests] = await Promise.all([
       admin.from("internal_roster_links").select("id,kind,label,token,active").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),

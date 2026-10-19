@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
+import { venueGuestTheme } from "@/src/lib/dancr/venue-guest-theme";
+import "./internal-guest-colors.css";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
 import VenueGridImage from "../dashboard/VenueGridImage";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
@@ -12,7 +14,7 @@ import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
 type ClubLink = { id: string; kind: "table"; label: string; token: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; dancerName?: string; status: "pending" | "acknowledged"; created_at: string; attendance?: "arrived" | "no_show" | null; attendance_recorded_at?: string | null };
-type Snapshot = { venueName: string; venueLogoUrl?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
+type Snapshot = { venueName: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 
 const ROSTER_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
 // Match the public grid's pinned profile; only reorder dancers in the current roster.
@@ -357,7 +359,9 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
       <span>Loading dancers…</span>
     </div>
   </div>;
-  return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore">
+  return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
+    data-venue-guest-color={!staff && venueGuestTheme(snapshot?.internalAccent) ? "custom" : undefined}
+    style={(!staff ? venueGuestTheme(snapshot?.internalAccent) : undefined) as CSSProperties | undefined}>
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
     {!operationsOnly && (staff || snapshot) ? <header className="ir-header"><div>
       <a className="ir-brand" href={staff ? "/dashboard/venue" : "#"}><span className="mydancr-live-logo">mydanc<span className="violet-r">r</span></span>{staff ? <span>INTERNAL</span> : null}</a>

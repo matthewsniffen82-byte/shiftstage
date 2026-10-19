@@ -1,0 +1,16 @@
+.admin-venue-colors { display: grid; gap: 12px; margin: 16px 0; padding: 16px; border: 1px solid #ffffff20; border-radius: 12px; }
+.admin-venue-colors :is(h3, p) { margin: 0; }
+.admin-venue-colors :is(p, small) { color: #c3bfcd; font-size: 13px; line-height: 1.5; }
+.admin-venue-colors form, .admin-venue-embed-code[open] { display: grid; gap: 12px; }
+.admin-venue-color-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.admin-venue-color-fields fieldset { display: grid; gap: 10px; min-width: 0; margin: 0; padding: 12px; border: 1px solid #ffffff20; border-radius: 10px; }
+.admin-venue-color-fields legend { padding: 0 4px; font-size: 14px; font-weight: 600; }
+.admin-venue-color-inputs { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; }
+.admin-venue-colors .admin-venue-color-inputs input[type="color"] { width: 44px; height: 44px; min-height: 44px; padding: 3px; cursor: pointer; }
+.admin-venue-colors .admin-venue-color-preview { justify-self: start; padding: 9px 16px; border-radius: 8px; background: var(--venue-guest-accent); color: var(--venue-guest-on-accent); font-size: 13px; font-weight: 700; }
+.admin-venue-colors button { width: fit-content; min-height: 44px; }
+.admin-venue-colors [role="alert"] { color: #fda4af; }
+.admin-venue-embed-code summary { cursor: pointer; padding: 10px 0; }
+.admin-venue-embed-code label { display: grid; gap: 6px; min-width: 0; }
+.admin-venue-embed-code :is(input, textarea) { box-sizing: border-box; width: 100%; min-width: 0; font-size: 12px; }
+@media (max-width: 620px) { .admin-venue-color-fields { grid-template-columns: minmax(0, 1fr); } }

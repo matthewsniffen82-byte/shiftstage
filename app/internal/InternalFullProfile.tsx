@@ -5,6 +5,7 @@ import { createInternalFollowReturn } from "@/src/lib/dancr/internal-profile-aut
 
 export type InternalProfile = {
   id: string; slug?: string; stage_name: string; city: string; venueName: string;
+  internalAccent?: string | null;
   workingUntil: string | null; avatarRevision: string;
   requestId?: string | null; requestsTonight: number; requestStatus: "pending" | "acknowledged" | null;
   photos: { id: string; is_primary?: boolean; is_pinned?: boolean; sort_order?: number; like_count?: number }[];

@@ -35,6 +35,7 @@ function apiFixture(options = {}) {
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
     "@/src/lib/dancr/public": { getVenueProfile: async (_client, slug) => { assert.equal(slug, location.slug); return options.missing ? null : location; } },
     "@/src/lib/dancr/discovery-pagination": { parseDiscoveryCursor },
+    "@/src/lib/dancr/venue-guest-colors": { getVenueGuestColors: async (_client, venueId) => { assert.equal(venueId, location.id); return options.colors || { internalAccent: null, embedAccent: null, configured: false }; } },
     "@/src/lib/dancr/venue-embed-media.mjs": embedMedia,
     "@/src/lib/dancr/public-request-rate-limit": { PublicRequestRateLimitError: RateLimit },
     "@/src/lib/dancr/public-directory": { getRankedDirectoryPage: async (_client, _request, scope) => {
@@ -68,6 +69,16 @@ test("unavailable clubs, invalid city cursors and rate limits never fall back to
   const limited = await apiFixture({ error: new RateLimit() }).get();
   assert.equal(limited.status, 429);
   assert.equal(limited.headers.get("retry-after"), "60");
+});
+
+test("saved embed colors exclude the internal color and resetting overrides old links", async () => {
+  const configured = await apiFixture({ colors: { internalAccent: "#ff0000", embedAccent: "#00aaff", configured: true } }).get("?accent=ffffff");
+  const data = await configured.json();
+  assert.equal(data.venue.embedAccent, "#00aaff");
+  assert.equal(JSON.stringify(data).includes("#ff0000"), false);
+  const reset = await apiFixture({ colors: { internalAccent: "#ff0000", embedAccent: null, configured: true } }).get("?accent=ffffff");
+  assert.equal((await reset.json()).venue.embedAccent, "#7c3aed");
+  assert.equal((await (await apiFixture().get()).json()).venue.embedAccent, null);
 });
 
 test("only the exact embed document path is exempt from DENY and gets public-only CSP", async () => {
@@ -138,6 +149,17 @@ function componentFixture() {
   return { window, document, node, requests, timers, styles, respond: fn => { responder = fn; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test("an existing embed adopts saved Admin colors on load and refresh without replacing its link", async () => {
+  const f = componentFixture();
+  f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#00aaff" }, dancers: [dancer], nextCursor: null }));
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  assert.equal(f.styles.get("--embed-accent"), "#00aaff");
+  f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#7c3aed" }, dancers: [dancer], nextCursor: null }));
+  f.timers[0].handler(); await settle();
+  assert.equal(f.styles.get("--embed-accent"), "#7c3aed");
+  assert.ok(f.requests.every(request => request.url.includes(`/venue-grid/${venue.slug}`)));
+});
 
 test("widget paginates without cookies and refreshes all loaded pages with a new placement visit", async () => {
   const f = componentFixture();

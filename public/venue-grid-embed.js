@@ -53,6 +53,7 @@
   }
   function mount(document) {
     applyTheme(document);
+    const legacyAccent = document.body.dataset.accent;
     const results = document.getElementById("results");
     const status = document.getElementById("venue-status");
     const refresh = document.getElementById("venue-refresh");
@@ -170,6 +171,9 @@
         nextCursor = cursor;
         loadedPages = append ? loadedPages + 1 : pages;
         venueName.textContent = venue.name;
+        // Saved Admin colors override old URL accents on every refresh.
+        document.body.dataset.accent = venue.embedAccent || legacyAccent;
+        applyTheme(document);
         render(venue);
         // Cards retain a real public URL for no-JS / modified-click fallbacks.
         results.querySelectorAll(".home-dancer-grid-link").forEach(link => {

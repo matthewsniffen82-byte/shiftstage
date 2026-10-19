@@ -25,6 +25,7 @@ import AdminSalesAgentPanel from "./AdminSalesAgentPanel";
 import AdminVenueSubscriptions from "./AdminVenueSubscriptions";
 import AdminTvPanel from "./AdminTvPanel";
 import AdminGuestOperations from "./AdminGuestOperations";
+import AdminVenueColors from "./AdminVenueColors";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
 import { adminWorkspaceCounts, adminCountLabel } from "./admin-workspace-counts";
@@ -3065,6 +3066,7 @@ function VenueManager({
                   {commercialDirty ? <small>{isActive ? "Save the Club Deal and agreement edits in their sections." : "Save the Club Deal and agreement edits in their sections before sending for approval."}</small> : unsavedByVenue[venueId] ? <small>{isActive ? "Save your page changes." : "Save your changes before sending this page for approval."}</small> : !isReady && !isActive ? <small>Complete every requirement before sending this page to the venue.</small> : !connectedManager && !isActive ? <small>The manager must redeem the approved access code before review can be sent.</small> : null}
                 </div>
               </section>
+              {openedVenues[venueId] ? <AdminVenueColors key={venueId} venueId={venueId} slug={asText(venue.slug)} name={asText(venue.name)} /> : null}
               <section className="venue-access-panel" aria-label={`${asText(venue.name) || "Venue"} access code`}>
                 <span className="eyebrow">Manager access</span>
                 {connectedManager ? (

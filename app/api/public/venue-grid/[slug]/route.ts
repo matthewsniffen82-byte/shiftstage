@@ -6,6 +6,7 @@ import { parseDiscoveryCursor } from "@/src/lib/dancr/discovery-pagination";
 import { PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate-limit";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue-embed-media.mjs";
+import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,7 +28,8 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
       id: dancer.id, slug: dancer.slug, stageName: dancer.stageName,
       primaryPhotoUrl: venueEmbedMediaUrl(dancer.primaryPhotoUrl), primaryPhotoSrcSet: venueEmbedMediaSrcSet(dancer.primaryPhotoSrcSet),
     }));
-    return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name }, dancers, nextCursor: page.nextCursor }, { headers });
+    const { embedAccent, configured } = await getVenueGuestColors(client, venue.id);
+    return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name, embedAccent: configured ? embedAccent || "#7c3aed" : null }, dancers, nextCursor: page.nextCursor }, { headers });
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) return NextResponse.json({ ok: false, error: "Please wait before refreshing." },
       { status: 429, headers: { ...headers, "Retry-After": String(error.retryAfterSeconds) } });
