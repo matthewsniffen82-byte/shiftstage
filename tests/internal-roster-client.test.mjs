@@ -236,7 +236,7 @@ test("failed table loading retains section order and distinguishes unavailable d
   assert.match(textContent(recovered), /No table QR codes yet/);
 });
 
-test("venue dashboard table QR tools precede requests and roster, retaining authorized create and print actions", async t => {
+test("venue dashboard retains saved table QR codes without exposing programming actions", async t => {
   const calls = [];
   const links = [{ id: 'table-1', kind: 'table', label: 'Table 7', token: 'active-table-token' }];
   const app = harness(async (url, options) => {
@@ -252,16 +252,12 @@ test("venue dashboard table QR tools precede requests and roster, retaining auth
   assert.equal(find(qr, node => node.type === 'a' && textContent(node) === 'Open').props.href, '/internal/club/active-table-token');
   assert.equal(find(qr, node => node.type === 'a' && textContent(node) === 'Print QR sign').props.href, '/internal/sign/active-table-token');
   assert.ok(find(qr, node => node.type === 'button' && textContent(node) === 'Copy'));
-  assert.ok(find(qr, node => node.type === 'button' && textContent(node) === 'Revoke'));
+  assert.doesNotMatch(textContent(qr), /Add a table|Create link|Rename table|Save name|Revoke/);
+  assert.match(textContent(qr), /Table QR setup is managed by MyDancr Admin/);
+  assert.equal(find(qr, node => node.type === 'form' || node.type === 'input'), undefined);
   assert.ok(textContent(operations).indexOf('Table QR codes') < textContent(operations).indexOf('Table requests'));
   assert.ok(textContent(operations).indexOf('Table QR codes') < textContent(operations).indexOf('DANCER ROSTER'));
-  find(qr, node => node.type === 'input' && !node.props.name).props.onChange({ target: { value: 'Table 8' } });
-  find(app.render(), node => node.type === 'form' && node.props.className === 'ir-link-form').props.onSubmit({ preventDefault() {} });
-  await flush();
-  const mutation = calls.find(call => call.options.method === 'POST');
-  assert.equal(mutation.url, '/api/internal');
-  assert.equal(mutation.options.headers.authorization, 'Bearer owner-token');
-  assert.deepEqual(JSON.parse(mutation.options.body), { action: 'link_create', label: 'Table 8', kind: 'table' });
+  assert.equal(calls.some(call => call.options.method === 'POST'), false);
 });
 
 test("staff QR tools remain read-only and guest table links never expose venue QR management", async t => {
@@ -277,14 +273,16 @@ test("staff QR tools remain read-only and guest table links never expose venue Q
   assert.equal(find(guest.render(), node => node.props?.id === 'table-qr-codes'), undefined);
 });
 
-test("empty venue table QR tools explain the empty state and allow owners to add a table", async t => {
-  const app = harness(async () => response({ ...roster, role: 'owner', links: [] }), {
+for (const role of ['owner', 'manager', 'staff', undefined]) test(`empty table QR tools defer setup to Admin for ${role || 'unknown'} access`, async t => {
+  const app = harness(async () => response({ ...roster, role, links: [] }), {
     session: { accessToken: 'owner-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true },
   });
   t.after(() => app.unmount()); await app.mount();
   const qr = find(app.render(), node => node.props?.id === 'table-qr-codes');
   assert.match(textContent(qr), /No table QR codes yet/);
-  assert.match(textContent(qr), /Add a table/);
+  assert.match(textContent(qr), /Table QR setup is managed by MyDancr Admin/);
+  assert.doesNotMatch(textContent(qr), /Add a table|Create link|Rename table|Revoke/);
+  assert.equal(find(qr, node => node.type === 'form' || node.type === 'input'), undefined);
 });
 
 test("dashboard QR deep link waits for authorized data, expands and focuses the table tools once", async t => {

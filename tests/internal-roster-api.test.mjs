@@ -224,7 +224,21 @@ test('Internal video playback keeps range streaming and video content type',asyn
  assert.equal(f.calls.find(call=>call.name==='fetch').options.headers.range,'bytes=0-14');
  assert.deepEqual(f.calls.find(call=>call.name==='signMedia'),{name:'signMedia',bucket:'mydancr-tv-videos',path:'private/dancer/video.mp4'});
 });
-test('staff mutations ignore client-supplied actor and club identities',async()=>{const f=fixture();const response=await f.post({action:'link_create',kind:'table',label:'Table 2',actor:id(666),venueId:id(777)});assert.equal(response.status,200);const call=f.calls.find(c=>c.name==='internal_roster_manage');assert.equal(call.args.p_actor,id(4));assert.equal(call.args.p_venue,id(2));});
+test('staff request updates ignore client-supplied actor and club identities',async()=>{const f=fixture();const response=await f.post({action:'request_status',id:id(12),expectedStatus:'pending',status:'acknowledged',actor:id(666),venueId:id(777)});assert.equal(response.status,200);const call=f.calls.find(c=>c.name==='internal_roster_manage');assert.equal(call.args.p_actor,id(4));assert.equal(call.args.p_venue,id(2));});
+
+for (const action of ['link_create', 'link_update', 'link_revoke']) test(`venue sessions cannot ${action} even from an older dashboard`, async () => {
+ const f=fixture();
+ const before=structuredClone(f.tables.internal_roster_links);
+ const response=await f.post({action,id:id(1),kind:'table',label:'Table 2',role:'admin',actor:id(666),venueId:id(777)});
+ assert.equal(response.status,403);
+ assert.match((await response.json()).error,/Table QR setup is managed by MyDancr Admin/);
+ assert.equal(f.calls.some(call=>call.name==='internal_roster_manage'),false);
+ assert.deepEqual(f.tables.internal_roster_links,before);
+ assert.equal((await f.get([], '', 'staff')).status,200,'existing table codes remain available');
+ const guest=fixture();
+ assert.equal((await guest.post({action,id:id(1)},['link',id(3)],'')).status,400);
+ assert.equal(guest.calls.some(call=>call.name==='internal_roster_manage'),false);
+});
 test('table requests require valid identities and revocable table access',async()=>{assert.equal((await fixture().post({dancerId:'invalid',requestKey:id(9)},['link',id(3)],'')).status,400);assert.equal((await fixture({active:false}).post({dancerId:id(5),requestKey:id(9)},['link',id(3)],'')).status,404);});
 
 test('retired entrance-display capabilities cannot open a roster, profile, media, or submit requests', async()=>{

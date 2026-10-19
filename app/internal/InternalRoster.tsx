@@ -108,7 +108,6 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
   const [requestingDancers, setRequestingDancers] = useState<string[]>([]);
   const [confirmedDancers, setConfirmedDancers] = useState<string[]>([]);
   const confirmationTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
-  const [label, setLabel] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [openingProfileId, setOpeningProfileId] = useState("");
   const selectedProfile = useRef("");
@@ -288,7 +287,6 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
         setProfile(current => current && current.id === body.dancerId ? { ...current, requestStatus: status, requestId } : current);
       }
       setNotice(token ? body.action === "cancel_request" ? "Request cancelled." : REQUEST_SENT_NOTICE : "Saved.");
-      setLabel("");
       // The receipt already confirms the guest's request; refresh details quietly.
       if (dancerId) void refresh();
       else await refresh();
@@ -424,9 +422,16 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
       {staff ? <div className="ir-operations"><details className="ir-panel ir-table-tools" id="table-qr-codes" tabIndex={-1} aria-busy={!snapshot && !error || undefined}>
         <summary><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h2v2h-2ZM20 14v6h-6v-2" /></svg>Table QR codes <span>{snapshot ? snapshot.links?.length || 0 : "—"}</span></h2></summary>
         {snapshot ? <>
-        {snapshot.role !== "staff" ? <details className="ir-table-create"><summary>Add a table</summary><form className="ir-link-form" onSubmit={event => { event.preventDefault(); void mutate({ action: "link_create", label, kind: "table" }); }}><label>Table number or name<input value={label} maxLength={60} required onChange={event => setLabel(event.target.value)} /></label><button disabled={busy || !label.trim()}>Create link</button></form></details> : null}
+        <p>Table QR setup is managed by MyDancr Admin.</p>
         {!snapshot.links?.length ? <p>No table QR codes yet.</p> : null}
-        {snapshot.links?.map(link => <article className="ir-link" key={link.id}><div><strong>{link.label}</strong><small>QR active</small>{snapshot.role !== "staff" ? <details className="ir-table-edit"><summary>Rename table</summary><form key={link.label} className="ir-rename-form" onSubmit={event => { event.preventDefault(); const form = new FormData(event.currentTarget); void mutate({ action: "link_update", id: link.id, label: String(form.get("label") || "") }); }}><input name="label" aria-label={`Table number or name for ${link.label}`} defaultValue={link.label} required maxLength={60} /><button disabled={busy}>Save name</button></form></details> : null}</div><div className="ir-actions"><a href={`/internal/club/${link.token}`} target="_blank" rel="noreferrer">Open</a><a href={`/internal/sign/${link.token}`} target="_blank" rel="noreferrer">Print QR sign</a><button className="ir-secondary" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/internal/club/${link.token}`).then(() => setNotice("Club link copied.")).catch(() => setNotice("Open the link and copy its address."))}>Copy</button>{snapshot.role !== "staff" ? <button className="ir-secondary ir-revoke" disabled={busy} onClick={() => { if (window.confirm(`Revoke ${link.label}? Its current QR code and shared link will stop working.`)) void mutate({ action: "link_revoke", id: link.id }); }}>Revoke</button> : null}</div></article>)}
+        {snapshot.links?.map(link => <article className="ir-link" key={link.id}>
+          <div><strong>{link.label}</strong><small>QR active</small></div>
+          <div className="ir-actions">
+            <a href={`/internal/club/${link.token}`} target="_blank" rel="noreferrer">Open</a>
+            <a href={`/internal/sign/${link.token}`} target="_blank" rel="noreferrer">Print QR sign</a>
+            <button className="ir-secondary" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/internal/club/${link.token}`).then(() => setNotice("Club link copied.")).catch(() => setNotice("Open the link and copy its address."))}>Copy</button>
+          </div>
+        </article>)}
         </> : <p role="status">{error ? "Table QR codes unavailable." : "Loading table QR codes…"}</p>}
       </details><section className="ir-panel venue-card-region" id="table-requests" tabIndex={-1} aria-busy={!snapshot && !error || undefined}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot ? snapshot.requests?.length || 0 : "—"}</span></h2>
         {snapshot ? <>

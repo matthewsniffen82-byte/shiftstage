@@ -164,6 +164,10 @@ export async function POST(request: Request, context: Context) {
     }
     if (path.length) return json({ ok: false, error: "Not found." }, 404);
     const scope = await internalScope(admin, request);
+    // Venue sessions can use saved table codes, but programming belongs to Admin.
+    if (["link_create", "link_update", "link_revoke"].includes(String(body.action))) {
+      throw new PublicApiError("FORBIDDEN", "Table QR setup is managed by MyDancr Admin.", 403);
+    }
     if (body.action === "request_attendance") {
       if (!isInternalUuid(body.id) || !["arrived", "no_show"].includes(String(body.attendance)) || body.expectedStatus !== "acknowledged") {
         throw new PublicApiError("INVALID_REQUEST", "Mark the request seen before recording attendance.", 400);
