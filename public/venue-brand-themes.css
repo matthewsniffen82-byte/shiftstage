@@ -42,9 +42,12 @@ body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout
 }
 body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] .profile-actions-compact :is(
   .profile-share-action, .profile-share-trigger, .profile-action-going) {
-  --profile-utility-background: linear-gradient(#211c0e, #211c0e);
-  --profile-utility-border: #665227;
-  --profile-utility-hover-border: #e8ce82;
+  --profile-utility-background: linear-gradient(#211c0e, #211c0e) !important;
+  --profile-utility-border: #665227 !important;
+  --profile-utility-hover-background: linear-gradient(#302712, #302712) !important;
+  --profile-utility-hover-border: #e8ce82 !important;
+  --profile-action-selected-background: linear-gradient(#302712, #302712) !important;
+  --profile-action-selected-border: #b8860b !important;
   --profile-action-background: linear-gradient(#211c0e, #211c0e) !important;
   --profile-action-border: #665227 !important;
 }
@@ -62,6 +65,19 @@ body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout
   outline-color: #e8ce82 !important;
 }
 @layer dancr-follow-controls {
+  /* These controls have their own cascade layer in dancer-profile-layout.css. */
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout[data-venue-brand="spearmint-rhino-las-vegas-demo"]:not(.dancer-profile-preview-shell)
+    :is(.profile-action-main svg, .profile-modal-city-icon, .profile-venue-pin, .profile-venue-destination svg, .profile-working-destination svg, .profile-media-tab-icon) {
+    color: #e8ce82 !important;
+    stroke: currentColor !important;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout[data-venue-brand="spearmint-rhino-las-vegas-demo"]:not(.dancer-profile-preview-shell)
+    .profile-options[data-compact-menu] > summary { color: #e8ce82 !important; }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout[data-venue-brand="spearmint-rhino-las-vegas-demo"]:not(.dancer-profile-preview-shell)
+    .profile-options[data-compact-menu] > .profile-options-panel {
+    border-color: #665227 !important;
+    background: #080807 !important;
+  }
   body.dancr-button-system :is(#results .venue-detail, #profileBackdrop #profileModal.profile-split-layout, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"]
     .venue-action-stack :is(.venue-address-directions, .follow-venue-btn) {
     --venue-utility-face: #080807 !important;
@@ -82,11 +98,11 @@ body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout
     color: #e8ce82 !important;
   }
   body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] :is([data-follow-control="text"], #followBtn, .follow-venue-btn) {
-    --follow-control-edge: #665227;
-    --follow-control-face: #080807;
+    --follow-control-edge: #665227 !important;
+    --follow-control-face: #080807 !important;
   }
   body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell)[data-venue-brand="spearmint-rhino-las-vegas-demo"] :is([data-follow-control="text"], #followBtn, .follow-venue-btn)[aria-pressed="true"] {
-    --follow-control-edge: #b8860b;
-    --follow-control-face: #211c0e;
+    --follow-control-edge: #b8860b !important;
+    --follow-control-face: #211c0e !important;
   }
 }
