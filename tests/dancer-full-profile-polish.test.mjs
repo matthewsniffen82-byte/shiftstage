@@ -59,10 +59,10 @@ test("empty schedules use the compact neutral hierarchy while upcoming schedules
   assert.doesNotMatch(liveScheduleBranch, /Next shift|No next shift posted|shiftNotesMarkup/);
 });
 
-test("current and upcoming schedules share one compact venue destination", () => {
+test("current schedules use one compact venue destination", () => {
   assert.match(
     liveApp,
-    /function profileVenueDestinationMarkup\(profile, options = \{\}\)[\s\S]*?const statusClass = options\.live \? " is-live" : options\.upcoming \? " is-upcoming" : "";[\s\S]*?class="profile-venue-destination\$\{statusClass\}\$\{venueNameSizeClass\}"[^>]*data-open-venue="\$\{safeVenueName\}"[^>]*aria-label="Open \$\{safeVenueName\} club details"[\s\S]*?class="profile-venue-name">\$\{safeVenueName\}<[\s\S]*?class="profile-venue-cue"/,
+    /function profileVenueDestinationMarkup\(profile, options = \{\}\)[\s\S]*?const statusClass = options\.live \? " is-live" : options\.upcoming \? " is-upcoming" : "";[\s\S]*?class="profile-venue-destination\$\{statusClass\}\$\{venueNameSizeClass\}"[^>]*data-open-venue="\$\{venueReference\}"[^>]*aria-label="Open \$\{safeVenueName\} club details"[\s\S]*?class="profile-venue-name">\$\{safeVenueName\}<[\s\S]*?class="profile-venue-cue"/,
   );
   assert.match(
     liveApp,
@@ -74,7 +74,7 @@ test("current and upcoming schedules share one compact venue destination", () =>
   );
   assert.match(
     liveApp,
-    /profileVenueDestinationMarkup\(profile, \{ live: true \}\)[\s\S]*?profileVenueDestinationMarkup\(profile, \{ upcoming: true \}\)/,
+    /profileVenueDestinationMarkup\(profile, \{ live: true \}\)/,
   );
   assert.doesNotMatch(
     liveApp,

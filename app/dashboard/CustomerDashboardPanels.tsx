@@ -754,7 +754,7 @@ function SavedVenueCard({
   const dancers = venue.activity?.workingDancers || [];
   const entryClass = "feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr venue-card-primary-action venue-card-deals-action free-entry-cta";
   return (
-    <article className={`venue home-discovery-feed-slide home-venue-discovery-slide${count ? " has-live-lineup" : ""}`} aria-label={venue.name || "Club"}>
+    <article data-venue-brand={venue.slug} className={`venue home-discovery-feed-slide home-venue-discovery-slide${count ? " has-live-lineup" : ""}`} aria-label={venue.name || "Club"}>
       <div className={`home-venue-discovery-art is-venue-logo-artwork has-venue-logo ${venue.imageUrl ? "has-custom-photo has-venue-cover" : "is-venue-artwork"}`} data-venue-visual-source={venue.imageUrl ? "venue_cover" : "artwork"} style={venue.imageUrl ? { "--custom-photo": `url("${venue.imageUrl}")` } as CSSProperties : undefined}>
         <SavedVenueLogo venue={venue} />
       </div>

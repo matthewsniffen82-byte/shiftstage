@@ -208,7 +208,7 @@
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
       city = venue.city || city;
-      const details = venueDetails(venue, city);
+      const details = venueDetails(venue, city, { demoDistance: true });
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);

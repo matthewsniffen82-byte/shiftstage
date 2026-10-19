@@ -4,14 +4,14 @@
       openUnifiedDashboard("dancer", "dancer-schedule");
     }
 
-    function venueDetails(venue, city) {
+    function venueDetails(venue, city, options = {}) {
       const venueCity = venue.city || city;
       const state = venue.state || stateByCity[venueCity] || "";
       return {
         ...venue,
         city: venueCity,
         state,
-        distanceLabel: venueDistanceLabel(venue, city),
+        distanceLabel: venueDistanceLabel(venue, city, options.demoDistance === true),
         address: venue.address || "",
         hours: venue.hours || ""
       };
@@ -242,7 +242,7 @@
 
     function venueCard(venue) {
       const city = venue.city || citySelect.value;
-      const details = venueDetails(venue, city);
+      const details = venueDetails(venue, city, { demoDistance: true });
       const initials = venueInitials(venue.name);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);

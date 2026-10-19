@@ -562,6 +562,7 @@
 
     function profileVenueDestinationMarkup(profile, options = {}) {
       const safeVenueName = displayText(profile.venue);
+      const venueReference = escapeOptionValue(profile.venueId || profile.venueSlug || profile.venue);
       const venueNameLength = Array.from(String(profile.venue || "").trim()).length;
       const venueNameSizeClass = venueNameLength <= 12
         ? " is-short-name"
@@ -570,7 +571,7 @@
           : " is-long-name";
       const statusClass = options.live ? " is-live" : options.upcoming ? " is-upcoming" : "";
       return `
-        <button class="profile-venue-destination${statusClass}${venueNameSizeClass}" type="button" data-open-venue="${safeVenueName}" aria-label="Open ${safeVenueName} club details">
+        <button class="profile-venue-destination${statusClass}${venueNameSizeClass}" type="button" data-open-venue="${venueReference}" aria-label="Open ${safeVenueName} club details">
           ${venueIconMarkup()}
           <span class="profile-venue-copy"><span class="profile-venue-name">${safeVenueName}</span></span>
           <span class="profile-venue-cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></span>

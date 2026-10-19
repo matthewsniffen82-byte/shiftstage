@@ -49746,8 +49746,15 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       return `${Math.round(miles)} mi`;
     }
 
-    function venueDistanceLabel(venue, city = selectedCity()) {
-      return formatDistanceMiles(venueDistanceMiles(venue, city)) || String(venue?.distance || "").trim() || "Distance unavailable";
+    function venueDistanceLabel(venue, city = selectedCity(), demoFallback = false) {
+      const measured = formatDistanceMiles(venueDistanceMiles(venue, city));
+      if (measured) return measured;
+      if (!demoFallback) return String(venue?.distance || "").trim() || "Distance unavailable";
+      // Display-only sample: never used for nearby filtering, sorting, or directions.
+      const key = String(venue?.id || venue?.slug || venue?.name || city);
+      let seed = 0;
+      for (const character of key) seed = (seed * 31 + character.codePointAt(0)) >>> 0;
+      return `${formatDistanceMiles(1 + (seed % 80) / 10)} (demo)`;
     }
 
     function compareVenueDistance(left, right, city = selectedCity()) {
@@ -53525,14 +53532,14 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       openUnifiedDashboard("dancer", "dancer-schedule");
     }
 
-    function venueDetails(venue, city) {
+    function venueDetails(venue, city, options = {}) {
       const venueCity = venue.city || city;
       const state = venue.state || stateByCity[venueCity] || "";
       return {
         ...venue,
         city: venueCity,
         state,
-        distanceLabel: venueDistanceLabel(venue, city),
+        distanceLabel: venueDistanceLabel(venue, city, options.demoDistance === true),
         address: venue.address || "",
         hours: venue.hours || ""
       };
@@ -53763,7 +53770,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
 
     function venueCard(venue) {
       const city = venue.city || citySelect.value;
-      const details = venueDetails(venue, city);
+      const details = venueDetails(venue, city, { demoDistance: true });
       const initials = venueInitials(venue.name);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
@@ -55045,6 +55052,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
 
     function profileVenueDestinationMarkup(profile, options = {}) {
       const safeVenueName = displayText(profile.venue);
+      const venueReference = escapeOptionValue(profile.venueId || profile.venueSlug || profile.venue);
       const venueNameLength = Array.from(String(profile.venue || "").trim()).length;
       const venueNameSizeClass = venueNameLength <= 12
         ? " is-short-name"
@@ -55053,7 +55061,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           : " is-long-name";
       const statusClass = options.live ? " is-live" : options.upcoming ? " is-upcoming" : "";
       return `
-        <button class="profile-venue-destination${statusClass}${venueNameSizeClass}" type="button" data-open-venue="${safeVenueName}" aria-label="Open ${safeVenueName} club details">
+        <button class="profile-venue-destination${statusClass}${venueNameSizeClass}" type="button" data-open-venue="${venueReference}" aria-label="Open ${safeVenueName} club details">
           ${venueIconMarkup()}
           <span class="profile-venue-copy"><span class="profile-venue-name">${safeVenueName}</span></span>
           <span class="profile-venue-cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></span>
@@ -61418,7 +61426,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
       city = venue.city || city;
-      const details = venueDetails(venue, city);
+      const details = venueDetails(venue, city, { demoDistance: true });
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);

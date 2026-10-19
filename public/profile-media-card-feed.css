@@ -425,7 +425,7 @@ body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-med
   stroke: currentColor !important;
 }
 .profile-media-card-feed :is(.profile-photo-viewer-actions, .profile-tv-viewer-actions, .profile-media-viewer-actions) > button:focus-visible {
-  outline: 2px solid #c4b5fd !important;
+  outline: 2px solid var(--venue-brand-light, #c4b5fd) !important;
   outline-offset: 3px !important;
 }
 .profile-media-card-feed .profile-media-control-follow-status {
@@ -471,16 +471,16 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-control-ov
 .profile-media-card-feed .profile-media-control-overflow::-webkit-details-marker { display: none; }
 .profile-media-card-feed .profile-media-control-overflow::before,
 .profile-media-card-feed .profile-media-control-overflow::after { display: none !important; }
-.profile-media-card-feed .profile-media-control-overflow:focus-visible { outline: 2px solid #c4b5fd; outline-offset: -3px; }
+.profile-media-card-feed .profile-media-control-overflow:focus-visible { outline: 2px solid var(--venue-brand-light, #c4b5fd); outline-offset: -3px; }
 .profile-media-card-feed .profile-media-control-options-panel {
   position: absolute;
   top: calc(100% + 6px);
   right: 0;
   width: 160px;
   padding: 4px;
-  border: 1px solid #403747;
+  border: 1px solid var(--venue-brand-edge, #403747);
   border-radius: 10px;
-  background: #161319;
+  background: var(--venue-brand-surface, #161319);
   box-shadow: 0 8px 24px #0008;
 }
 html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-control-options-panel button {
@@ -511,8 +511,8 @@ html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profil
   backdrop-filter: none !important;
 }
 .profile-media-card-feed .profile-media-control-options-panel :is(svg, .action-icon) { width: 16px !important; height: 16px !important; stroke-width: 1.8; }
-html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-control-options-panel button:hover { background: #292331 !important; }
-.profile-media-card-feed .profile-media-control-options-panel button:focus-visible { outline: 2px solid #a78bfa; }
+html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .profile-media-viewer).profile-media-card-feed .profile-media-control-options-panel button:hover { background: var(--venue-brand-selected-face, #292331) !important; }
+.profile-media-card-feed .profile-media-control-options-panel button:focus-visible { outline: 2px solid var(--venue-brand-light, #a78bfa); }
 .profile-media-card-feed .profile-media-control-options-panel button:disabled { opacity: .5; }
 .profile-media-card-feed .profile-media-control-collapse,
 .profile-media-card-feed .profile-media-control-fullscreen[aria-pressed="true"] .profile-media-control-expand { display: none; }
@@ -722,7 +722,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
   font-weight: 800 !important;
   line-height: .8 !important;
 }
-.profile-media-card-feed :is(.profile-media-identity, .profile-media-venue, .profile-media-entry):focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px; }
+.profile-media-card-feed :is(.profile-media-identity, .profile-media-venue, .profile-media-entry):focus-visible { outline: 2px solid var(--venue-brand-light, #c4b5fd) !important; outline-offset: 3px; }
 .profile-media-card-feed .profile-media-entry:disabled { opacity: .5; cursor: wait; }
 @media (max-width: 720px) {
   html body.dancr-button-system .profile-media-card-feed :is(.profile-photo-viewer-copy, .profile-tv-viewer-copy, .profile-media-viewer-copy) { padding: 64px 0 32px 12px; }
@@ -730,14 +730,14 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
   html body.dancr-button-system .profile-media-card-feed .profile-media-identity strong { font-size: clamp(20px, 5.8vw, 26px); }
 }
 
-/* Public media uses neutral glass fills with notification accent colors.
+/* Public media uses neutral glass fills with club accents when available.
  * The public page gate excludes dashboard previews and the Saved stylesheet export. */
 @layer dancr-follow-controls {
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
     :is(.home-tv-feed-actions > .home-tv-feed-action, .home-tv-feed-full-view-close, .profile-media-card-back, .profile-photo-viewer-actions > button, .profile-tv-viewer-actions > button, .profile-media-viewer-actions > button):not(:disabled):not([aria-disabled="true"]) {
-    --public-media-icon-color: #c4a3f1;
-    border-color: #4a365f !important;
+    --public-media-icon-color: var(--venue-brand-light, #c4a3f1);
+    border-color: var(--venue-brand-edge, #4a365f) !important;
     background: rgba(0, 0, 0, .45) !important;
     color: #f5f2fa !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, .24) !important;
@@ -753,7 +753,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
     :is(.home-tv-feed-follow-action, .profile-media-control-follow)[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) {
     --public-media-icon-color: #fff;
-    border-color: #5a4075 !important;
+    border-color: var(--venue-brand-selected-edge, #5a4075) !important;
     background: rgba(0, 0, 0, .45) !important;
   }
 
@@ -767,7 +767,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
     :is(.home-tv-feed-overflow-action, .profile-media-control-overflow, .home-tv-feed-venue svg, .profile-media-venue svg) {
-    color: #c4a3f1 !important;
+    color: var(--venue-brand-light, #c4a3f1) !important;
   }
 }
 
@@ -776,6 +776,6 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
 html body.dancr-button-system #results.home-tv-feed:not(:is(.is-fullscreen-feed, :fullscreen, :-webkit-full-screen)) > .home-tv-feed-slide,
 html body.dancr-button-system :is(#profilePhotoViewer, #profileTvViewer, .public-profile-shell[data-public-profile-page] .profile-media-viewer).profile-media-card-feed:not(:is(.is-media-fullscreen, :fullscreen, :-webkit-full-screen))
   :is(.profile-photo-viewer-slide, .profile-tv-viewer-slide, .profile-media-viewer-slide) {
-  outline: 1px solid #4a365f !important;
+  outline: 1px solid var(--venue-brand-edge, #4a365f) !important;
   outline-offset: -1px !important;
 }

@@ -803,8 +803,15 @@
       return `${Math.round(miles)} mi`;
     }
 
-    function venueDistanceLabel(venue, city = selectedCity()) {
-      return formatDistanceMiles(venueDistanceMiles(venue, city)) || String(venue?.distance || "").trim() || "Distance unavailable";
+    function venueDistanceLabel(venue, city = selectedCity(), demoFallback = false) {
+      const measured = formatDistanceMiles(venueDistanceMiles(venue, city));
+      if (measured) return measured;
+      if (!demoFallback) return String(venue?.distance || "").trim() || "Distance unavailable";
+      // Display-only sample: never used for nearby filtering, sorting, or directions.
+      const key = String(venue?.id || venue?.slug || venue?.name || city);
+      let seed = 0;
+      for (const character of key) seed = (seed * 31 + character.codePointAt(0)) >>> 0;
+      return `${formatDistanceMiles(1 + (seed % 80) / 10)} (demo)`;
     }
 
     function compareVenueDistance(left, right, city = selectedCity()) {
