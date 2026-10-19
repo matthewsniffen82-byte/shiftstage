@@ -1,3 +1,4 @@
+import { canonicalVenueSlug } from "@/src/lib/dancr/venue-branding";
 import { versionStaticAssetReferences } from "@/src/lib/dancr/static-asset-cache.mjs";
 import { venueEmbedPolicy } from "@/src/lib/security/venue-embed-policy.mjs";
 import { venueEmbedAccent } from "@/src/lib/dancr/venue-embed-theme.mjs";
@@ -5,7 +6,8 @@ import { venueEmbedAccent } from "@/src/lib/dancr/venue-embed-theme.mjs";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request, context: { params: Promise<{ slug: string }> }) {
-  const { slug } = await context.params;
+  const { slug: requestedSlug } = await context.params;
+  const slug = canonicalVenueSlug(requestedSlug);
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 160) return new Response("Club not found.", { status: 404 });
   const html = `<!doctype html><html lang="en"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -22,7 +24,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-accent="${venueEmbedAccent(new URL(request.url))}">
     <div class="app"><main class="stack"><section id="venue-directory" class="stack" aria-label="Working dancers">
       <div class="venue-embed-heading"><div><h1>Working now</h1><p id="venue-name"></p></div><button id="venue-refresh" type="button">Refresh</button></div>
-      <p class="venue-embed-note">${slug === "spearmint-rhino-las-vegas-demo" ? "Demo club · Sample dancer roster." : "Only participating MyDancr dancers are shown."}</p>
+      <p class="venue-embed-note">Only participating MyDancr dancers are shown.</p>
       <p id="venue-status" role="status">Loading working dancers…</p>
       <div id="results" class="home-dancer-grid home-dancer-three-column" aria-busy="true"></div>
       <button id="venue-more" type="button" hidden>Show more</button>

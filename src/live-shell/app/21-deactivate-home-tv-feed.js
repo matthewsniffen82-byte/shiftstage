@@ -713,6 +713,7 @@
       if (previousVideoId) clearHomeTvFeedEngagedTimer(previousVideoId);
       slide.dataset.videoId = String(item.id);
       slide.dataset.publicDancerId = String(item.dancer?.id || "");
+      slide.dataset.venueBrand = item.shift?.isActive ? String(item.venue?.slug || "") : "";
       slide.classList.toggle("has-media-poster", Boolean(item?.posterUrl || item?.poster_url));
       delete slide.dataset.userPaused;
       slide.classList.remove("is-media-unavailable", "is-applauding", "is-autoplay-blocked");

@@ -53782,7 +53782,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         city
       });
       return `
-        <article class="card venue venue-card" data-discovery-key="${venueValue}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
+        <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" class="card venue venue-card" data-discovery-key="${venueValue}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
             <div class="venue-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
               <span class="venue-card-kicker">MyDancr club</span>
@@ -53866,7 +53866,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
                 <div class="venue-identity-block">
                   <div class="venue-identity-copy">
                     <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
-                    ${venue.slug === "spearmint-rhino-las-vegas-demo" ? '<p class="meta">Demo club · Sample dancer roster</p>' : ""}
                     <div class="venue-identity-meta">
                       <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
                       <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
@@ -61448,7 +61447,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         ? `${safeName} logo`
         : `${safeName} monogram`;
       return `
-        <article data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
+        <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="home-venue-discovery-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}" role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>
@@ -61558,7 +61557,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           ? "is-upcoming"
           : "is-open";
       return window.MydancrDancerGrid.render({
-        id: profile.id, name: profile.name, reference: profileReferenceValue(profile), href: profileHref,
+        id: profile.id, venueSlug: profile.venueSlug, name: profile.name, reference: profileReferenceValue(profile), href: profileHref,
         discoveryAttributes: discoveryCardAttributes(profile), groupClass, compact: compactDirectory,
         scheduleLabel, photoMarkup, cityMarkup, venueMarkup, distanceMarkup,
         actionsMarkup: compactDirectory ? "" : homeDancerGridActionsMarkup(profile, city)
@@ -61798,7 +61797,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         ? `<span class="home-discovery-feed-going-count">${tonightInterestCount(profile).toLocaleString()} going</span>`
         : "";
       return `
-        <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="dancer-card home-discovery-feed-slide" data-discovery-key="${profileReference}" data-profile="${profileValue}" data-profile-reference="${profileReference}" aria-label="${safeName}, ${escapeHtml(status.label)}">
+        <article data-venue-brand="${escapeOptionValue(profile.venueSlug || "")}" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="dancer-card home-discovery-feed-slide" data-discovery-key="${profileReference}" data-profile="${profileValue}" data-profile-reference="${profileReference}" aria-label="${safeName}, ${escapeHtml(status.label)}">
           ${portraitMarkup}
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <a class="home-discovery-feed-open-profile" href="${profileHref}" aria-label="Open ${safeName}'s full profile"></a>
@@ -63877,6 +63876,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       if (previousVideoId) clearHomeTvFeedEngagedTimer(previousVideoId);
       slide.dataset.videoId = String(item.id);
       slide.dataset.publicDancerId = String(item.dancer?.id || "");
+      slide.dataset.venueBrand = item.shift?.isActive ? String(item.venue?.slug || "") : "";
       slide.classList.toggle("has-media-poster", Boolean(item?.posterUrl || item?.poster_url));
       delete slide.dataset.userPaused;
       slide.classList.remove("is-media-unavailable", "is-applauding", "is-autoplay-blocked");
@@ -64505,6 +64505,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     }
 
     function resolveVenueByName(venueName, city = citySelect.value) {
+      if (venueName === "spearmint-rhino-las-vegas-demo" || venueName === "11fd5e46-d24f-4a02-87f6-2aa18b0876ae") venueName = "talk-of-the-town";
       if (!venueName || !discoveryMarket(city)) return null;
       const exactVenue = discoveryMarket(city).venues.find((venue) => venue.id === venueName || venue.slug === venueName);
       if (exactVenue) return exactVenue;

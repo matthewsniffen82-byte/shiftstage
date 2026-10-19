@@ -1,3 +1,4 @@
+import { canonicalVenueSlug } from "../src/lib/dancr/venue-branding.ts";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -91,6 +92,7 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
   assert.equal(rules.find(rule => rule.source === nonEmbedDocumentSource).headers[0].value, "DENY");
   const route = loadTs("app/embed/venues/[slug]/route.ts", {
     "@/src/lib/dancr/static-asset-cache.mjs": { versionStaticAssetReferences },
+    "@/src/lib/dancr/venue-branding": { canonicalVenueSlug },
     "@/src/lib/security/venue-embed-policy.mjs": { venueEmbedPolicy },
     "@/src/lib/dancr/venue-embed-theme.mjs": { venueEmbedAccent },
   });
@@ -100,6 +102,8 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
   assert.doesNotMatch(venueEmbedPolicy, /unsafe-inline/);
   const html = await response.text();
   assert.match(html, /data-venue-slug="echo-house"/);
+  const rhino = await route.GET(new Request("https://www.mydancr.com/embed/venues/spearmint-rhino-las-vegas-demo"), { params: Promise.resolve({ slug: "spearmint-rhino-las-vegas-demo" }) });
+  assert.match(await rhino.text(), /data-venue-slug="talk-of-the-town"/);
   assert.match(html, /home-dancer-grid home-dancer-three-column/);
   assert.match(html, /dancer-grid-card\.js/);
   assert.doesNotMatch(html, /live-shell\.js|<form|localStorage/);

@@ -6,7 +6,7 @@ import type { DancerCard, DancerProfile, ShiftSummary, SocialPlatform, VenueSumm
 import { isPublicDancerProfileEligible } from "./profile-approval";
 import { responsivePublicImage } from "./responsive-image";
 import { safeSocialProfileUrl, socialProfileHandle } from "./social-profile-url";
-import { verifiedVenueLogoUrl } from "./venue-branding";
+import { canonicalVenueSlug, verifiedVenueLogoUrl } from "./venue-branding";
 import { isActiveNfcPresence } from "./shift-presence";
 
 type DancrClient = SupabaseClient;
@@ -317,6 +317,7 @@ async function getApprovedDancerPhotos(client: DancrClient, dancerId: string) {
 }
 
 export async function getVenueProfile(client: DancrClient, slug: string): Promise<VenueSummary | null> {
+  slug = canonicalVenueSlug(slug);
   const { data, error } = await client
     .from("venues")
     .select("id, slug, name, city, state, address, latitude, longitude, opens_at, closes_at, cover_image_storage_path, logo_storage_path")

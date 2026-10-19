@@ -237,7 +237,7 @@
         ? `${safeName} logo`
         : `${safeName} monogram`;
       return `
-        <article data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
+        <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" class="venue home-discovery-feed-slide home-venue-discovery-slide${workingNow.length ? " has-live-lineup" : ""}" data-discovery-key="${venueValue}" aria-label="${accessibilityLabel}">
           <div class="home-venue-discovery-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}" role="img" aria-label="${visualLabel}">
             ${logoMarkup || `<span class="home-venue-discovery-monogram">${escapeHtml(initials)}</span>`}
           </div>
@@ -347,7 +347,7 @@
           ? "is-upcoming"
           : "is-open";
       return window.MydancrDancerGrid.render({
-        id: profile.id, name: profile.name, reference: profileReferenceValue(profile), href: profileHref,
+        id: profile.id, venueSlug: profile.venueSlug, name: profile.name, reference: profileReferenceValue(profile), href: profileHref,
         discoveryAttributes: discoveryCardAttributes(profile), groupClass, compact: compactDirectory,
         scheduleLabel, photoMarkup, cityMarkup, venueMarkup, distanceMarkup,
         actionsMarkup: compactDirectory ? "" : homeDancerGridActionsMarkup(profile, city)
@@ -587,7 +587,7 @@
         ? `<span class="home-discovery-feed-going-count">${tonightInterestCount(profile).toLocaleString()} going</span>`
         : "";
       return `
-        <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="dancer-card home-discovery-feed-slide" data-discovery-key="${profileReference}" data-profile="${profileValue}" data-profile-reference="${profileReference}" aria-label="${safeName}, ${escapeHtml(status.label)}">
+        <article data-venue-brand="${escapeOptionValue(profile.venueSlug || "")}" data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="dancer-card home-discovery-feed-slide" data-discovery-key="${profileReference}" data-profile="${profileValue}" data-profile-reference="${profileReference}" aria-label="${safeName}, ${escapeHtml(status.label)}">
           ${portraitMarkup}
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <a class="home-discovery-feed-open-profile" href="${profileHref}" aria-label="Open ${safeName}'s full profile"></a>

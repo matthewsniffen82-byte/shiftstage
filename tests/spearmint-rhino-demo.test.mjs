@@ -17,12 +17,20 @@ before(async()=>{
     insert into public.dancer_age_verification_settings values(true,false);`);
   await pg.exec(read('supabase/migrations/20260929100000_internal_demo_roster.sql'));
   await pg.exec(read('supabase/migrations/20261019212456_spearmint_rhino_demo_roster.sql'));
+  await pg.exec(read('supabase/migrations/20261019034059_venue_guest_colors.sql'));
+  const ledger = read('supabase/migrations/20261011232707_venue_performance_channels.sql').replace(/\r/g,'');
+  await pg.exec(ledger.slice(ledger.indexOf('create table public.venue_dancer_work_sessions'), ledger.indexOf('insert into public.venue_dancer_work_sessions(shift_id,venue_id,dancer_id,started_at,expires_at)\nselect')).replace(/\r/g,''));
+  const accuracy = read('supabase/migrations/20261013024002_dancer_roster_accuracy_scores.sql');
+  await pg.exec(accuracy.slice(accuracy.indexOf('alter table public.venue_dancer_work_sessions'), accuracy.indexOf('revoke all on function public.capture_venue_work_session()')));
+  await pg.exec(`create table public.venue_interactions(id uuid primary key default gen_random_uuid(),venue_id uuid);
+    create table public.venue_page_events(id uuid primary key default gen_random_uuid(),venue_id uuid,event_type text,source text,session_id text,occurred_on date,
+      unique(venue_id,event_type,source,session_id,occurred_on));`);
 });
 beforeEach(async()=>{
   await pg.exec('begin;reset role');
   await pg.query(`insert into auth.users(id,email,raw_app_meta_data,banned_until) values($1,$2,$3,'2099-12-31'),($4,'echo@synthetic.mydancr.invalid','{}','2099-12-31')`,[id(50),slug+'@synthetic.mydancr.invalid',JSON.stringify({dataset_marker:marker}),id(51)]);
   await pg.query("insert into public.app_users(id,role,account_state) values($1,'venue','active'),($2,'venue','active')",[id(50),id(51)]);
-  await pg.query("insert into public.venues(id,name,slug,city,owner_user_id,is_active) values($1,'Rhino',$2,'Las Vegas',$3,false),($4,'Echo House','echo-house','Las Vegas',$5,true)",[id(60),slug,id(50),echo,id(51)]);
+  await pg.query("insert into public.venues(id,name,slug,city,owner_user_id,is_active) values($1,'Rhino',$2,'Las Vegas',$3,false),($4,'Echo House','talk-of-the-town','Las Vegas',$5,true)",[id(60),slug,id(50),echo,id(51)]);
   // Fifty source fixtures means one must remain at Echo after selecting 49.
   for(let index=1;index<=51;index++){
     const isStar=index===51, dancer=isStar?star:id(100+index), shift=isStar?starShift:id(300+index), user=id(200+index);
@@ -86,4 +94,46 @@ test('discovery exception is limited to the disabled demo owner and preserves re
 });
 for(const role of ['anon','authenticated','service_role'])test(role+' cannot call the internal demo exemption directly',async()=>{
   await pg.exec('set role '+role);await assert.rejects(pg.query('select public.is_internal_demo_shift($1)',[starShift]),{code:'42501'});
+});
+
+const consolidate=read('scripts/consolidate-rhino-into-echo.sql').replace(/\bbegin;/,'').replace(/commit;\s*$/,'')
+  .replaceAll('11fd5e46-d24f-4a02-87f6-2aa18b0876ae',id(60)).replaceAll('02b3af5c-779e-4d3c-af08-b70ae0b31de5',id(51));
+async function prepareMerge(){
+  await pg.exec(publish);
+  await pg.query("insert into public.club_deals(venue_id,is_active,payout_type,payout_amount_cents,offer_type,deal_title) values($1,true,'flat',500,'admission','Free admission')",[echo]);
+  await pg.query('insert into public.venue_interactions(venue_id) values($1)',[id(60)]);
+  await pg.query("insert into public.venue_page_events(venue_id,event_type,source,session_id,occurred_on) values($1,'page_view','venue_page','session-same',current_date),($2,'page_view','venue_page','session-same',current_date),($2,'page_view','venue_page','session-other',current_date)",[echo,id(60)]);
+}
+test('consolidation preserves the original account, Free Entry, dancer data, sessions and QR tokens',async()=>{
+  await prepareMerge();
+  const before=(await pg.query('select to_jsonb(d) row from public.dancer_profiles d order by id')).rows;
+  const accounts=(await pg.query('select to_jsonb(u) row from auth.users u order by id')).rows;
+  const deals=(await pg.query('select to_jsonb(d) row from public.club_deals d order by id')).rows;
+  const sessions=(await pg.query('select id,started_at,closed_at,dancer_check_in_at,dancer_check_out_at from public.venue_dancer_work_sessions order by id')).rows;
+  const links=(await pg.query('select id,token from public.internal_roster_links where venue_id=$1',[id(60)])).rows;
+  await pg.exec(consolidate);
+  assert.equal((await roster(echo)).length,51);
+  assert.equal((await roster(id(60))).length,0);
+  assert.equal((await pg.query('select count(*) from public.venue_roster_members($1) where internal_visible and external_visible',[echo])).rows[0].count,51);
+  const venue=(await pg.query('select name,slug,owner_user_id from public.venues where id=$1',[echo])).rows[0];
+  assert.deepEqual(venue,{name:'Spearmint Rhino Las Vegas',slug:'talk-of-the-town',owner_user_id:id(51)});
+  assert.deepEqual((await pg.query('select to_jsonb(d) row from public.dancer_profiles d order by id')).rows,before);
+  assert.deepEqual((await pg.query('select to_jsonb(u) row from auth.users u order by id')).rows,accounts);
+  assert.deepEqual((await pg.query('select to_jsonb(d) row from public.club_deals d order by id')).rows,deals);
+  assert.deepEqual((await pg.query('select id,started_at,closed_at,dancer_check_in_at,dancer_check_out_at from public.venue_dancer_work_sessions order by id')).rows,sessions);
+  assert.deepEqual((await pg.query('select id,token from public.internal_roster_links where venue_id=$1',[echo])).rows,links);
+  assert.equal((await pg.query('select count(*) from public.venue_page_events where venue_id=$1',[echo])).rows[0].count,2);
+  assert.equal((await pg.query('select count(*) from public.venue_interactions where venue_id=$1',[echo])).rows[0].count,1);
+  assert.deepEqual((await pg.query('select internal_accent,embed_accent from public.venue_guest_colors where venue_id=$1',[echo])).rows[0],{internal_accent:'#b8860b',embed_accent:'#b8860b'});
+  await assert.rejects(pg.exec(consolidate),/Expected original active Echo/);
+});
+test('consolidation stops if new operations or a staff removal require review',async()=>{
+  await prepareMerge();
+  await pg.query("insert into public.venue_team_members(venue_id,user_id,status) values($1,$2,'active')",[id(60),id(51)]);
+  await assert.rejects(pg.exec(consolidate),/New source data in venue_team_members/);
+});
+test('consolidation never reverses a later staff removal at Echo',async()=>{
+  await prepareMerge();
+  await pg.query('update public.venue_dancer_affiliations set reentry_blocked=true where venue_id=$1 and dancer_id=$2',[echo,star]);
+  await assert.rejects(pg.exec(consolidate),/Expected 50 original shifts/);
 });

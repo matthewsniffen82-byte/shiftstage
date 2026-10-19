@@ -261,7 +261,7 @@
         city
       });
       return `
-        <article class="card venue venue-card" data-discovery-key="${venueValue}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
+        <article data-venue-brand="${escapeOptionValue(venue.slug || "")}" class="card venue venue-card" data-discovery-key="${venueValue}" data-analytics-venue-id="${escapeOptionValue(venue.isDashboardPreview ? "" : venue.id || "")}" data-analytics-source="venue_scroll_card" aria-label="${safeName} club details" style="--venue-accent:${venueAccent(venue.name)}">
           <a class="venue-card-link" href="${venueHref}" data-open-venue-profile="${venueValue}" aria-label="Open ${safeName}'s full club profile">
             <div class="venue-art is-venue-logo-artwork${logoMarkup ? " has-venue-logo" : ""}${visual.attrs.className}"${visual.attrs.style} data-venue-visual-source="${visual.source}">
               <span class="venue-card-kicker">MyDancr club</span>
@@ -345,7 +345,6 @@
                 <div class="venue-identity-block">
                   <div class="venue-identity-copy">
                     <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
-                    ${venue.slug === "spearmint-rhino-las-vegas-demo" ? '<p class="meta">Demo club · Sample dancer roster</p>' : ""}
                     <div class="venue-identity-meta">
                       <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
                       <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>

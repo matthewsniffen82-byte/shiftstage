@@ -123,7 +123,7 @@ export async function GET(request: Request, context: Context) {
         if (data) receipt = { status: Date.parse(data.created_at) > Date.now() - 6 * 3600000 && members.some(d => d.id === data.dancer_id) ? data.status : "cancelled" };
       }
       const { internalAccent } = await getVenueGuestColors(admin, scope.venueId);
-      return json({ ok: true, venueName: scope.venueName, venueLogoUrl: scope.venueLogoUrl, internalAccent, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id)?.status || null, requestId: tableRequests.get(dancer.id)?.id || null })), receipt });
+      return json({ ok: true, venueName: scope.venueName, venueSlug: scope.venueSlug, venueLogoUrl: scope.venueLogoUrl, internalAccent, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id)?.status || null, requestId: tableRequests.get(dancer.id)?.id || null })), receipt });
     }
     const [linksResult, requests] = await Promise.all([
       admin.from("internal_roster_links").select("id,kind,label,token,active").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),
@@ -131,7 +131,7 @@ export async function GET(request: Request, context: Context) {
     ]);
     if (linksResult.error) throw linksResult.error;
     const links = linksResult.data || [];
-    return json({ ok: true, venueName: scope.venueName, dancers, links, requests, role: scope.role, session: scope.session });
+    return json({ ok: true, venueName: scope.venueName, venueSlug: scope.venueSlug, dancers, links, requests, role: scope.role, session: scope.session });
   } catch (error) {
     const resolved = resolveApiError(internalError(error), "Unable to load the club roster.");
     return json(resolved.body, resolved.status);

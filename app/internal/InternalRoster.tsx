@@ -14,7 +14,7 @@ import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
 type ClubLink = { id: string; kind: "table"; label: string; token: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; dancerName?: string; status: "pending" | "acknowledged"; created_at: string; attendance?: "arrived" | "no_show" | null; attendance_recorded_at?: string | null };
-type Snapshot = { venueName: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
+type Snapshot = { venueName: string; venueSlug?: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 type DancerNotice = { message: string; error: boolean };
 
 const ROSTER_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
@@ -392,6 +392,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
     </div>
   </div>;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
+    data-venue-brand={snapshot?.venueSlug}
     data-venue-guest-color={!staff && venueGuestTheme(snapshot?.internalAccent) ? "custom" : undefined}
     style={(!staff ? venueGuestTheme(snapshot?.internalAccent) : undefined) as CSSProperties | undefined}>
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}

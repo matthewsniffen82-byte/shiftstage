@@ -13,7 +13,6 @@ const VENUE_LOGO_BY_SLUG: Readonly<Record<string, string>> = Object.freeze({
   "sapphire-las-vegas": "/venue-logos/fictional/blue-ember.svg",
   "spearmint-rhino": "/venue-logos/fictional/radiant-room.svg",
   "spearmint-rhino-las-vegas": "/venue-logos/fictional/moonline-social.svg",
-  "talk-of-the-town": "/venue-logos/fictional/echo-house.svg",
   "the-library-gentlemens-club": "/venue-logos/fictional/starlight-club.svg",
   "treasures-las-vegas": "/venue-logos/fictional/aurora-room.svg",
 });
@@ -37,3 +36,8 @@ export function fictionalVenueTravelAddress(venue?: {
 }
 
 export const verifiedVenueLogoSlugs = Object.freeze(Object.keys(VENUE_LOGO_BY_SLUG));
+
+// Preserve the initial Rhino links while retaining the original venue/account ID.
+export function canonicalVenueSlug(slug: string) {
+  return slug === "spearmint-rhino-las-vegas-demo" ? "talk-of-the-town" : slug;
+}

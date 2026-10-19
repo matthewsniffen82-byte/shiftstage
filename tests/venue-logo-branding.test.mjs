@@ -1,3 +1,4 @@
+import { canonicalVenueSlug, isFictionalVenueBranding } from "../src/lib/dancr/venue-branding.ts";
 import assert from "node:assert/strict";
 import { readFile, stat } from "node:fs/promises";
 import test from "node:test";
@@ -19,7 +20,6 @@ const supportedLogos = {
   "sapphire-las-vegas": "fictional/blue-ember.svg",
   "spearmint-rhino": "fictional/radiant-room.svg",
   "spearmint-rhino-las-vegas": "fictional/moonline-social.svg",
-  "talk-of-the-town": "fictional/echo-house.svg",
   "the-library-gentlemens-club": "fictional/starlight-club.svg",
   "treasures-las-vegas": "fictional/aurora-room.svg",
 };
@@ -74,7 +74,7 @@ test("every currently listed Las Vegas venue slug resolves to an original fictio
     assert.doesNotMatch(source, /<script/i);
   }
 
-  assert.equal(new Set(Object.values(supportedLogos)).size, 17);
+  assert.equal(new Set(Object.values(supportedLogos)).size, 16);
   assert.match(branding, /return VENUE_LOGO_BY_SLUG\[normalizedSlug\] \|\| null/);
   assert.doesNotMatch(branding, /"\/venue-logos\/(?!fictional\/)/);
 });
@@ -229,4 +229,12 @@ test("venue scroll cards use one fixed logo stage while detail pages retain cont
     /@media \(max-width: 650px\) \{[\s\S]*?\.venue-detail-logo-shell \{[\s\S]*?left: 50% !important;/,
   );
   assert.doesNotMatch(aesthetic, /home-venue-discovery-logo-shell \{[\s\S]{0,180}border: 1px solid/);
+});
+
+test("Rhino preserves old links and uses its uploaded logo and real travel address", () => {
+  assert.equal(canonicalVenueSlug("spearmint-rhino-las-vegas-demo"), "talk-of-the-town");
+  assert.equal(canonicalVenueSlug("talk-of-the-town"), "talk-of-the-town");
+  assert.equal(canonicalVenueSlug("sapphire-las-vegas"), "sapphire-las-vegas");
+  assert.equal(isFictionalVenueBranding("talk-of-the-town"), false);
+  assert.equal(isFictionalVenueBranding("spearmint-rhino-las-vegas"), true);
 });
