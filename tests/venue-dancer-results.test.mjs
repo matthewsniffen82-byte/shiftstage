@@ -39,6 +39,7 @@ before(async () => {
     create table internal_roster_links(id uuid primary key,venue_id uuid,label text);
     grant select on dancer_channel_preferences,dancer_shift_channels,internal_roster_links to service_role;`);
   await db.exec(read('20261013040600_venue_automatic_results.sql'));
+  await db.exec(read('20261019053609_dancer_external_roster_score_weight.sql'));
   await db.query("insert into app_users values($1,'venue','active'),($2,'venue','active'),($3,'venue','active'),($4,'customer','active')", [id(50),id(51),id(52),id(53)]);
   await db.query('insert into venues(id,owner_user_id) values($1,$2),($3,$4)', [id(1),id(50),id(2),id(52)]);
   await db.query("insert into venue_team_members values($1,$2,'active','staff')", [id(1),id(51)]);
@@ -56,10 +57,10 @@ async function pass(n,{venue=1,dancer=10,source='dancer_profile',status='generat
   await db.query("insert into qr_redemptions(id,venue_id,dancer_id,admission_pass_version,status,generated_at,redeemed_at,redemption_token,expires_at,source_type) values($1,$2,$3,1,$4,now()-interval '2 days',case when $5 then now()-interval '1 day' end,$6,now()+interval '1 day',$7)",[id(n),id(venue),id(dancer),status,redeemed,`pass-${n}`,source]);
 }
 
-async function session(n, { start = '2026-10-10T20:00Z', end = '2026-10-11T02:00Z', day = '2026-10-10', kind = 'dancer', venue = 1, dancer = 10, tracked = true, closed = true, bothPeriods = '{}' } = {}) {
-  await db.query(`insert into venue_dancer_work_sessions(shift_id,venue_id,dancer_id,started_at,expires_at,closed_at,dancer_check_in_at,check_in_day,dancer_check_out_at,closure_reason,both_roster_periods)
-    values($1,$2,$3,$4,$5,case when $8 then $5::timestamptz end,case when $9 then $4::timestamptz end,$6,case when $7='dancer' then $5::timestamptz end,case when $8 then $7 end,$10)`,
-    [id(n),id(venue),id(dancer),start,end,day,kind,closed,tracked,bothPeriods]);
+async function session(n, { start = '2026-10-10T20:00Z', end = '2026-10-11T02:00Z', day = '2026-10-10', kind = 'dancer', venue = 1, dancer = 10, tracked = true, closed = true, bothPeriods = '{}', externalPeriods = '{}' } = {}) {
+  await db.query(`insert into venue_dancer_work_sessions(shift_id,venue_id,dancer_id,started_at,expires_at,closed_at,dancer_check_in_at,check_in_day,dancer_check_out_at,closure_reason,both_roster_periods,external_roster_periods)
+    values($1,$2,$3,$4,$5,case when $8 then $5::timestamptz end,case when $9 then $4::timestamptz end,$6,case when $7='dancer' then $5::timestamptz end,case when $8 then $7 end,$10,$11)`,
+    [id(n),id(venue),id(dancer),start,end,day,kind,closed,tracked,bothPeriods,externalPeriods]);
 }
 async function accuracy(since='2026-10-10T00:00Z', until='2026-10-12T00:00Z') {
   const r = await db.query("select get_venue_performance_analytics($1,$2,$3,$3::timestamptz-interval '12 hours',$3) result",[id(1),since,until]);
@@ -208,6 +209,83 @@ async function modeVisit(n,mode='internal') {
   await db.query('insert into dancer_shift_channels values($1,$2,$3,$4)',[id(n),id(10),id(1),mode]);
 }
 async function modeSession(n) { return (await db.query('select * from venue_dancer_work_sessions where shift_id=$1 order by started_at desc',[id(n)])).rows[0]; }
+
+test('External history includes known Both intervals, merges overlaps and clips to verified visits and period', async () => {
+  await session(740, { bothPeriods: '{[2026-10-10T21:00Z,2026-10-11T00:00Z)}', externalPeriods: '{[2026-10-10T23:00Z,2026-10-11T04:00Z)}' });
+  await session(741, { externalPeriods: '{[2026-10-10T23:00Z,2026-10-11T02:00Z)}' });
+  await session(742, { tracked: false, externalPeriods: '{[2026-10-10T20:00Z,2026-10-11T02:00Z)}' });
+  await session(743, { venue: 2, externalPeriods: '{[2026-10-10T20:00Z,2026-10-11T02:00Z)}' });
+  const result = await accuracy();
+  assert.equal(result.rosterTrackedHours, 6);
+  assert.equal(result.rosterBothHours, 3);
+  assert.equal(result.rosterExternalHours, 5);
+  assert.equal(result.rosterExternalTrackedHours, 5, 'recorded External and old Both intervals prove mode history');
+  assert.equal((await accuracy('2026-10-11T00:00Z', '2026-10-11T01:00Z')).rosterExternalHours, 1);
+  assert.equal((await accuracy('2026-10-10T20:00Z', '2026-10-10T21:00Z')).rosterExternalHours, 0);
+});
+
+test('External timing survives External-to-Both changes and repeat taps, then stops on Internal', async () => {
+  await modeVisit(744, 'external');
+  const first = await modeSession(744);
+  assert.ok(first.external_roster_started_at);
+  assert.equal(first.both_roster_started_at, null);
+  await db.query("update dancer_channel_preferences set visibility='both' where dancer_id=$1", [id(10)]);
+  await db.query("update dancer_shift_channels set visibility='both' where shift_id=$1", [id(744)]);
+  assert.deepEqual((await modeSession(744)).external_roster_started_at, first.external_roster_started_at);
+  await db.query("update shifts set checked_in_at=clock_timestamp() where id=$1", [id(744)]);
+  assert.deepEqual((await modeSession(744)).external_roster_started_at, first.external_roster_started_at);
+  await new Promise(resolve => setTimeout(resolve, 10));
+  await db.query("update dancer_channel_preferences set visibility='internal' where dancer_id=$1", [id(10)]);
+  const stopped = await modeSession(744);
+  assert.equal(stopped.external_roster_started_at, null);
+  assert.notEqual(stopped.external_roster_periods, '{}');
+  await db.query("update dancer_channel_preferences set visibility='external' where dancer_id=$1", [id(10)]);
+  assert.ok((await modeSession(744)).external_roster_started_at);
+  await db.query('delete from dancer_shift_channels where shift_id=$1', [id(744)]);
+  assert.equal((await modeSession(744)).external_roster_started_at, null);
+});
+
+test('External timing requires agreement from both channel settings and is retained after checkout/deletion', async () => {
+  await modeVisit(745);
+  assert.equal((await modeSession(745)).external_roster_started_at, null);
+  await db.query("update dancer_channel_preferences set visibility='external' where dancer_id=$1", [id(10)]);
+  assert.equal((await modeSession(745)).external_roster_started_at, null);
+  await db.query("update dancer_shift_channels set visibility='external' where shift_id=$1", [id(745)]);
+  assert.ok((await modeSession(745)).external_roster_started_at);
+  await new Promise(resolve => setTimeout(resolve, 10));
+  await db.query("update shifts set checked_out_at=clock_timestamp(),ended_reason='manual',location_verification_expires_at=clock_timestamp() where id=$1", [id(745)]);
+  const stopped = await modeSession(745);
+  assert.equal(stopped.external_roster_started_at, null);
+  assert.notEqual(stopped.external_roster_periods, '{}');
+  await db.query('delete from shifts where id=$1', [id(745)]);
+  assert.equal((await modeSession(745)).external_roster_periods, stopped.external_roster_periods);
+  for (const role of ['anon', 'authenticated', 'service_role']) {
+    assert.equal((await db.query("select has_function_privilege($1,'public.capture_venue_external_roster_period()','execute') allowed", [role])).rows[0].allowed, false);
+  }
+});
+
+test('External timing cannot credit unknown past visits or time after expiry', async () => {
+  await session(746);
+  assert.equal((await accuracy()).rosterExternalHours, 0);
+  assert.equal((await accuracy()).rosterExternalTrackedHours, 0, 'unknown history cannot be scored as Internal-only');
+  await modeVisit(747, 'external');
+  assert.equal((await accuracy()).rosterExternalHours, 0);
+  const visit = await modeSession(747);
+  const result = await accuracy(new Date(visit.started_at.getTime() - 3600000).toISOString(), new Date(visit.started_at.getTime() + 14400000).toISOString());
+  assert.ok(result.rosterExternalHours > 1.99 && result.rosterExternalHours <= 2);
+  assert.ok(result.rosterExternalTrackedHours > 1.99 && result.rosterExternalTrackedHours <= 2);
+  assert.equal(result.rosterBothHours, 0);
+  assert.equal(result.dancerCheckoutDays, 0);
+});
+
+test('observed Internal-only time supplies a known zero external score without inventing prior history', async () => {
+  await session(748);
+  await db.query("update venue_dancer_work_sessions set external_roster_observed_at='2026-10-10T22:00Z' where shift_id=$1", [id(748)]);
+  const result = await accuracy();
+  assert.equal(result.rosterTrackedHours, 6);
+  assert.equal(result.rosterExternalTrackedHours, 4);
+  assert.equal(result.rosterExternalHours, 0);
+});
 
 test('mode switches start Both timing when both settings agree, preserve repeat taps and close on either setting change',async()=>{
   await modeVisit(760); assert.equal((await modeSession(760)).both_roster_started_at,null);

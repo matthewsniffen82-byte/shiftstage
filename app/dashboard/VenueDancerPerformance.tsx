@@ -6,13 +6,13 @@ import { VenueRosterProfileButton } from "../internal/InternalRoster";
 import VenueGridImage from "./VenueGridImage";
 import "./venue-dancer-grid.css";
 import {
-  DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS, DANCER_SCORE_LABELS, DANCER_SCORE_CATEGORIES, CHECK_IN_SCORE_WEIGHTS, BOTH_ROSTER_ACTIVITY_BOOST,
+  DANCER_SCORE_MIN_PEERS, DANCER_SCORE_VERSION, DANCER_SCORE_WEIGHTS, DANCER_SCORE_LABELS, DANCER_SCORE_CATEGORIES, CHECK_IN_SCORE_WEIGHTS,
   scoreVenueDancers, sortScoredDancers, type DancerScoreKey, type DancerScorePeriod, type DancerScoreSort, type ScoredDancer,
 } from "@/src/lib/dancr/venue-dancer-scores";
 
 const scoreLabels = DANCER_SCORE_LABELS;
 const compactScoreLabels: Record<DancerScoreKey, string> = {
-  overall: "Overall", checkIns: "Check-ins", internal: "Tables", vip: "VIP", profile: "Interest", conversions: "Entries",
+  overall: "Overall", externalTime: "External time", checkIns: "Check-ins", internal: "Tables", vip: "VIP", profile: "Interest", conversions: "Entries",
 };
 const periodLabels: Record<DancerScorePeriod, string> = { tonight: "Tonight", "7d": "7 days", "14d": "14 days", "30d": "30 days", all: "All time" };
 const scoreKeys: DancerScoreKey[] = ["overall", ...DANCER_SCORE_CATEGORIES];
@@ -56,12 +56,13 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
       <p>Scores are out of 100, based on recorded activity at this club for the selected period.</p>
       <dl>
         <div><dt>{compactScoreLabels.overall}</dt><dd>Weighted average of at least three categories. Missing categories are excluded; remaining weights are rescaled.</dd></div>
-        <div><dt>{compactScoreLabels.checkIns} · {DANCER_SCORE_WEIGHTS.checkIns}%</dt><dd>{CHECK_IN_SCORE_WEIGHTS.accuracy}% checkout accuracy + {CHECK_IN_SCORE_WEIGHTS.days}% relative check-in days + {CHECK_IN_SCORE_WEIGHTS.hours}% relative hours. Both-roster time boosts the days-and-hours portion by {BOTH_ROSTER_ACTIVITY_BOOST * 100}%, prorated by time and capped at 50 points. Internal-only and external-only are equal. Every ended visit needs the dancer&apos;s checkout before expiry for that day&apos;s accuracy credit. Active visits wait; staff checkout and expiry earn none. Without ended visits, activity is provisional; three ended days are needed to leave Early data.</dd></div>
+        <div><dt>{compactScoreLabels.externalTime} · {DANCER_SCORE_WEIGHTS.externalTime}%</dt><dd>Largest ranking factor: recorded external app hours compared with this club&apos;s typical external hours. External-only and Both count equally; overlapping time counts once. Recorded zero hours score zero; unknown history stays unscored.</dd></div>
+        <div><dt>{compactScoreLabels.checkIns} · {DANCER_SCORE_WEIGHTS.checkIns}%</dt><dd>{CHECK_IN_SCORE_WEIGHTS.accuracy}% checkout accuracy + {CHECK_IN_SCORE_WEIGHTS.days}% relative check-in days + {CHECK_IN_SCORE_WEIGHTS.hours}% relative hours. Every ended visit needs the dancer&apos;s checkout before expiry for accuracy credit. Staff checkout and expiry earn none. Active visits are provisional; three ended days are needed to leave Early data.</dd></div>
         <div><dt>{compactScoreLabels.internal} · {DANCER_SCORE_WEIGHTS.internal}%</dt><dd>Requests received per checked-in hour, compared with this club&apos;s typical rate.</dd></div>
         <div><dt>{compactScoreLabels.vip} · {DANCER_SCORE_WEIGHTS.vip}%</dt><dd>80% relative selections + 20% returning-customer share. Customer withdrawals are excluded.</dd></div>
         <div><dt>{compactScoreLabels.profile} · {DANCER_SCORE_WEIGHTS.profile}%</dt><dd>Weighted actions: profile opens 1; club opens, follows and completed shares 2; directions, transport, offer clicks and &quot;I&apos;m Going&quot; 3.</dd></div>
         <div><dt>{compactScoreLabels.conversions} · {DANCER_SCORE_WEIGHTS.conversions}%</dt><dd>Percentage of profile passes claimed in this period and redeemed by period end. Voided passes are excluded.</dd></div>
-        <div><dt>Benchmarks and rank</dt><dd>Relative scores compare qualifying dancers at this club; typical positive activity earns 50 points. Ranking needs all five categories past Early data and at least {DANCER_SCORE_MIN_PEERS} comparable dancers. Ties share a rank.</dd></div>
+        <div><dt>Benchmarks and rank</dt><dd>Relative scores compare qualifying dancers at this club; typical positive activity earns 50 points. Ranking needs all six categories past Early data and at least {DANCER_SCORE_MIN_PEERS} comparable dancers. Ties share a rank.</dd></div>
       </dl>
       <p>Early data means a small or partial sample. Missing data stays unscored. Staff request-status updates do not affect scores. Clicks and requests do not prove attendance or revenue.</p>
       <small>Scoring version {DANCER_SCORE_VERSION}</small>

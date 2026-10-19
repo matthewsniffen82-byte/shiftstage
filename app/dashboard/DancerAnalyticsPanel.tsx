@@ -172,7 +172,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
           </dl>
           <p className="dancer-results-note">{roster.activeDays > 0 ? `${number(roster.activeDays)} active club ${roster.activeDays === 1 ? "day is" : "days are"} still in progress. ` : ""}{roster.checkoutEligibleDays === 0 ? "Checkout accuracy appears after an eligible visit ends." : "Accuracy uses ended days with recorded dancer check-ins."}</p>
         </> : <p className="dancer-results-note">Check-in activity is not available in this report yet.</p>}
-        <ResultsInfo label="Check-in activity">Check-ins and checkouts are your recorded actions. Hours merge overlapping records. Each ended visit needs your own checkout before expiry for that club day to count as complete. Staff checkout and automatic expiry earn no accuracy credit; active visits and older visits without dancer check-in evidence are not graded. Time available on both rosters boosts the activity part of your score.</ResultsInfo>
+        <ResultsInfo label="Check-in activity">Check-ins and checkouts are your recorded actions. Hours merge overlapping records. Each ended visit needs your own checkout before expiry for that club day to count as complete. Staff checkout and automatic expiry earn no accuracy credit; active visits and older visits without dancer check-in evidence are not graded. Recorded external app time, including Both, is the largest separate factor in your performance score.</ResultsInfo>
       </section>
       <section className="dancer-analytics-audience" aria-labelledby="dancer-shift-results-heading">
         <h3 id="dancer-shift-results-heading">Results by shift <small>Recorded working time</small></h3>

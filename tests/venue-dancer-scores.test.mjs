@@ -4,7 +4,7 @@ import { scoreVenueDancers, sortScoredDancers, DANCER_SCORE_CATEGORIES, DANCER_S
 
 const dancer = id => ({ id, name: id,
   internal: { checkedInHours: 8, requests: 20, completed: 8, requestsDuringHours: 20,
-    rosterTrackedHours: 8, rosterBothHours: 0, verifiedCheckInDays: 4, checkoutEligibleDays: 4, dancerCheckoutDays: 4, activeCheckInDays: 0 },
+    rosterTrackedHours: 8, rosterExternalHours: 8, rosterExternalTrackedHours: 8, rosterBothHours: 0, verifiedCheckInDays: 4, checkoutEligibleDays: 4, dancerCheckoutDays: 4, activeCheckInDays: 0 },
   vip: { requests: 25, scoringRequests: 20, scoringUniqueRequesters: 10, scoringRepeatRequesters: 2 },
   external: { dancer_profile: 10, club_page: 10, directions: 10, going: 10, free_entry: 10, transport: 10 },
   results: { checkIns: 2, checkOuts: 1, tableArrived: 8, tableNoShows: 0, tableAttendanceUnrecorded: 2,
@@ -13,11 +13,11 @@ const dancer = id => ({ id, name: id,
 const peers = () => [dancer('a'), dancer('b'), dancer('c')];
 const score = (row, period = '30d') => scoreVenueDancers([row, dancer('b'), dancer('c')], period)[0];
 
-test('five independent categories and overall use the published automatic formulas', () => {
+test('six independent categories and overall use the published automatic formulas', () => {
   for (const row of scoreVenueDancers(peers(), '30d')) {
     assert.deepEqual(Object.keys(row.scores), ['overall', ...DANCER_SCORE_CATEGORIES]);
     assert.deepEqual(Object.fromEntries(Object.entries(row.scores).map(([k, s]) => [k, s.value])),
-      { overall: 53, checkIns: 75, internal: 50, vip: 44, profile: 50, conversions: 50 });
+      { overall: 52, externalTime: 50, checkIns: 75, internal: 50, vip: 44, profile: 50, conversions: 50 });
     assert.equal(row.scores.overall.value, Math.round(DANCER_SCORE_CATEGORIES.reduce((n, k) => n + row.scores[k].value * DANCER_SCORE_WEIGHTS[k], 0) / 100));
     assert.equal(row.rank, 1); assert.equal(row.rankedCount, 3);
   }
@@ -50,28 +50,75 @@ test('active first visits show provisional activity and accuracy needs three end
   Object.assign(row.internal,{checkoutEligibleDays:3,dancerCheckoutDays:3}); assert.equal(score(row).scores.checkIns.confidence,'established');
 });
 
-test('Both earns a prorated 25 percent activity boost without changing checkout accuracy or peer baselines', () => {
-  const rows=peers(); rows[1].internal.rosterBothHours=4; rows[2].internal.rosterBothHours=8;
-  assert.deepEqual(scoreVenueDancers(rows,'30d').map(row=>row.scores.checkIns.value),[75,78,81]);
-  rows[2].internal.dancerCheckoutDays=0;
-  assert.equal(scoreVenueDancers(rows,'30d')[2].scores.checkIns.value,31,'Both cannot supply missing checkout points');
-  assert.match(scoreVenueDancers(rows,'30d')[1].scores.checkIns.evidence,/4h on both rosters/);
+test('External-only and Both have the largest weight and equal time produces equal ranking scores', () => {
+  const rows = peers();
+  rows[0].internal.rosterExternalHours = 0;
+  rows[2].internal.rosterBothHours = 8;
+  const result = scoreVenueDancers(rows, '14d');
+  assert.deepEqual(result.map(row => row.scores.externalTime.value), [0, 50, 50]);
+  assert.deepEqual(result.map(row => row.scores.overall.value), [32, 52, 52]);
+  assert.deepEqual(result.map(row => row.rank), [3, 1, 1]);
+  assert.equal(DANCER_SCORE_WEIGHTS.externalTime, 40);
+  assert.equal(Object.values(DANCER_SCORE_WEIGHTS).reduce((sum, value) => sum + value, 0), 100);
+  assert.ok(DANCER_SCORE_CATEGORIES.filter(key => key !== 'externalTime').every(key => DANCER_SCORE_WEIGHTS[key] < DANCER_SCORE_WEIGHTS.externalTime));
+  assert.deepEqual(result.map(row => row.scores.checkIns.value), [75, 75, 75], 'no extra mode bonus stacks on attendance');
+  rows[1].internal.rosterExternalHours = 4;
+  assert.equal(scoreVenueDancers(rows, '14d')[1].scores.externalTime.value, 40);
+  rows[1].internal.dancerCheckoutDays = 0;
+  const noCheckout = scoreVenueDancers(rows, '14d')[1];
+  assert.equal(noCheckout.scores.externalTime.value, 40);
+  assert.equal(noCheckout.scores.checkIns.value, 25, 'external time supplies no checkout credit');
 });
 
-test('Both bonus stays within the activity allocation, including provisional visits', () => {
-  const row=dancer('a'); Object.assign(row.internal,{rosterTrackedHours:800,rosterBothHours:800,verifiedCheckInDays:400});
-  assert.equal(score(row).scores.checkIns.value,100);
-  row.internal.dancerCheckoutDays=0; assert.equal(score(row).scores.checkIns.value,50);
-  Object.assign(row.internal,{rosterTrackedHours:8,rosterBothHours:8,verifiedCheckInDays:4,checkoutEligibleDays:0,dancerCheckoutDays:0,activeCheckInDays:1});
-  assert.equal(score(row).scores.checkIns.value,63); assert.equal(score(row).scores.checkIns.confidence,'early');
+test('more external hours raise the time score while Internal-only hours do not', () => {
+  const row = dancer('a');
+  assert.equal(score(row).scores.externalTime.value, 50);
+  row.internal.rosterTrackedHours = 16;
+  assert.equal(score(row).scores.externalTime.value, 50);
+  row.internal.rosterExternalHours = 16; row.internal.rosterExternalTrackedHours = 16;
+  assert.equal(score(row).scores.externalTime.value, 67);
+  row.internal.rosterTrackedHours = 800;
+  row.internal.rosterExternalHours = 800; row.internal.rosterExternalTrackedHours = 800;
+  assert.equal(score(row).scores.externalTime.value, 99);
+  Object.assign(row.internal, { rosterTrackedHours: 4, rosterExternalHours: 4, rosterExternalTrackedHours: 4 });
+  assert.equal(score(row).scores.externalTime.confidence, 'early');
 });
 
-test('unknown mode history earns no bonus and invalid mode hours cannot inflate scores', () => {
-  const row=dancer('a'); delete row.internal.rosterBothHours;
-  assert.equal(score(row).scores.checkIns.value,75);
-  for (const invalid of [null,NaN,Infinity,-1,8.01]) {
-    row.internal.rosterBothHours=invalid; assert.equal(score(row).scores.checkIns.value,null);
+test('unknown and invalid External history stays unscored without affecting attendance', () => {
+  for (const invalid of [undefined, null, NaN, Infinity, -1, 8.01]) {
+    const row = dancer('a'); row.internal.rosterExternalHours = invalid;
+    assert.equal(score(row).scores.externalTime.value, null);
+    assert.equal(score(row).scores.checkIns.value, 75);
   }
+  const row = dancer('a');
+  Object.assign(row.internal, { rosterExternalHours: 2, rosterBothHours: 4 });
+  assert.equal(score(row).scores.externalTime.value, null);
+  delete row.internal.rosterBothHours;
+  row.internal.rosterExternalHours = 8;
+  assert.equal(score(row).scores.externalTime.value, 50);
+});
+
+test('recorded zero external time scores zero even when the entire club has zero hours', () => {
+  const rows = peers(); rows.forEach(row => row.internal.rosterExternalHours = 0);
+  for (const result of scoreVenueDancers(rows, '14d')) {
+    assert.equal(result.scores.externalTime.value, 0);
+    assert.equal(result.scores.externalTime.details.calculation[0].value, 'No recorded external hours ≈ 0');
+  }
+});
+
+test('external scoring requires enough known mode history and never converts unknown hours into zero', () => {
+  for (const invalid of [undefined, null, NaN, Infinity, -1, 0, 3.99, 8.01]) {
+    const row = dancer('a');
+    row.internal.rosterExternalTrackedHours = invalid;
+    row.internal.rosterExternalHours = 0;
+    assert.equal(score(row).scores.externalTime.value, null);
+    assert.equal(score(row).scores.checkIns.value, 75);
+  }
+  const row = dancer('a'); row.internal.rosterExternalTrackedHours = 4;
+  assert.equal(score(row).scores.externalTime.value, null, 'external hours cannot exceed observed hours');
+  row.internal.rosterExternalHours = 0;
+  assert.equal(score(row).scores.externalTime.value, 0);
+  assert.equal(score(row).scores.externalTime.confidence, 'early');
 });
 
 test('legacy hours and inconsistent paired counts never invent roster accuracy or suppress table scoring', () => {
@@ -134,9 +181,9 @@ test('partial overall rescales available weights and shows coverage without awar
   const row = dancer('a'); row.vip = {};
   const result = score(row);
   const keys = DANCER_SCORE_CATEGORIES.filter(k => k !== 'vip');
-  const expected = Math.round(keys.reduce((sum, k) => sum + result.scores[k].value * DANCER_SCORE_WEIGHTS[k], 0) / 80);
+  const expected = Math.round(keys.reduce((sum, k) => sum + result.scores[k].value * DANCER_SCORE_WEIGHTS[k], 0) / 90);
   assert.equal(result.scores.overall.value, expected);
-  assert.equal(result.scores.overall.evidence, '4 of 5 categories');
+  assert.equal(result.scores.overall.evidence, '5 of 6 categories');
   assert.equal(result.scores.overall.confidence, 'early'); assert.equal(result.rank, null);
   row.internal = {}; row.results = undefined;
   assert.equal(score(row).scores.overall.value, null);
@@ -146,7 +193,7 @@ test('period minimums and early-data labels prevent tiny samples from being rank
   for (const period of ['tonight', '7d', '14d', '30d', 'all']) {
     const min = DANCER_SCORE_MINIMUMS[period];
     const rows = peers().map(row => ({ ...row,
-      internal: { ...row.internal, checkedInHours: min.hours, rosterTrackedHours: min.hours, requests: min.requests, requestsDuringHours: min.requests },
+      internal: { ...row.internal, checkedInHours: min.hours, rosterTrackedHours: min.hours, rosterExternalHours: min.hours, rosterExternalTrackedHours: min.hours, requests: min.requests, requestsDuringHours: min.requests },
       vip: { scoringRequests: min.requests, scoringUniqueRequesters: 1, scoringRepeatRequesters: 0 },
       external: { dancer_profile: min.actions },
       results: { ...row.results, profileClaims: min.claims, profileCohortConversions: min.claims },
@@ -194,7 +241,6 @@ test('score details expose the actual counts, baselines, weights and rounded cal
   const inputs = key => Object.fromEntries(result[key].details.inputs.map(input => [input.label, input.value]));
   assert.deepEqual(inputs('checkIns'), {
     'Check-in days': '4', 'Tracked hours': '8 h', 'Complete checkout days': '4 of 4 · 100%',
-    'Both-roster hours': '0 h · +0% activity boost',
   });
   assert.deepEqual(inputs('internal'), {
     'Requests while checked in': '20', 'Checked-in hours': '8 h', 'Requests per hour': '2.5', 'Club median per hour': '2.5',
@@ -208,11 +254,11 @@ test('score details expose the actual counts, baselines, weights and rounded cal
     'Weighted action total': '150', 'Club median weighted total': '150',
   });
   assert.deepEqual(inputs('conversions'), { 'Profile passes redeemed': '10 of 20 claimed', 'Conversion rate': '50%' });
-  assert.deepEqual(inputs('overall'), { 'Check-ins': '75 × 15%', Tables: '50 × 25%', VIP: '44 × 20%', Interest: '50 × 10%', Entries: '50 × 30%' });
+  assert.deepEqual(inputs('overall'), { 'External time': '50 × 40%', 'Check-ins': '75 × 10%', Tables: '50 × 15%', VIP: '44 × 10%', Interest: '50 × 5%', Entries: '50 × 20%' });
   assert.equal(result.internal.details.calculation[1].value, '100 × 2.5 ÷ (2.5 + 2.5) ≈ 50');
   assert.equal(result.vip.details.calculation[2].value, '40 + 4 ≈ 44');
   assert.equal(result.checkIns.details.calculation.at(-1).value, '25 + 50 ≈ 75');
-  assert.equal(result.overall.details.calculation[0].value, '(75 × 15 + 50 × 25 + 44 × 20 + 50 × 10 + 50 × 30) ÷ 100 ≈ 53');
+  assert.equal(result.overall.details.calculation[0].value, '(50 × 40 + 75 × 10 + 50 × 15 + 44 × 10 + 50 × 5 + 50 × 20) ÷ 100 ≈ 52');
 });
 
 test('details show only counted actions and cohort redemptions, not unrelated totals', () => {
@@ -232,21 +278,20 @@ test('details show only counted actions and cohort redemptions, not unrelated to
   assert.equal(score(row).scores.conversions.details.calculation[0].value, '0 ÷ 23 × 100 ≈ 0');
 });
 
-test('check-in details account for partial boosts, provisional scores and unknown roster history', () => {
-  const row = dancer('a'); row.internal.rosterBothHours = 4;
-  let details = score(row).scores.checkIns.details;
-  assert.equal(details.inputs.at(-1).value, '4 h · +12.5% activity boost');
-  assert.equal(details.calculation.at(-1).value, '28.125 + 50 ≈ 78');
+test('external time details show recorded hours, baseline and largest weight; active check-ins stay provisional', () => {
+  const row = dancer('a'); row.internal.rosterExternalHours = 4;
+  const time = score(row).scores.externalTime;
+  assert.equal(time.details.inputs[0].value, '4 h');
+  assert.equal(time.details.inputs[1].value, '8 h');
+  assert.equal(time.details.inputs[2].value, '40% · Largest factor');
+  assert.equal(time.details.calculation[0].value, '100 × 4 ÷ (4 + 8) ≈ 33');
   Object.assign(row.internal, { checkoutEligibleDays: 0, dancerCheckoutDays: 0, activeCheckInDays: 1 });
-  details = score(row).scores.checkIns.details;
+  const details = score(row).scores.checkIns.details;
   assert.equal(details.inputs[2].value, 'Pending ended visits');
-  assert.equal(details.calculation.at(-1).label, 'Provisional score · Rounded');
-  assert.equal(details.calculation.at(-1).value, '28.125 ÷ 0.5 ≈ 56');
-  assert.ok(!details.calculation.some(step => step.label.startsWith('Checkout points')));
-  delete row.internal.rosterBothHours;
-  details = score(row).scores.checkIns.details;
-  assert.equal(details.inputs.at(-1).value, 'Not recorded · No boost');
   assert.equal(details.calculation.at(-1).value, '25 ÷ 0.5 ≈ 50');
+  assert.ok(!details.calculation.some(step => step.label.startsWith('Checkout points')));
+  delete row.internal.rosterExternalHours;
+  assert.equal(score(row).scores.externalTime.details, undefined);
 });
 
 test('unscored categories have no invented details and partial overall displays normalized weights', () => {
@@ -254,8 +299,8 @@ test('unscored categories have no invented details and partial overall displays 
   const result = score(row).scores;
   assert.equal(result.vip.details, undefined);
   assert.deepEqual(result.overall.details.inputs.map(input => input.value),
-    ['75 × 18.75%', '50 × 31.25%', 'Not scored · Excluded', '50 × 12.5%', '50 × 37.5%']);
-  assert.equal(result.overall.details.calculation[0].value, '(75 × 15 + 50 × 25 + 50 × 10 + 50 × 30) ÷ 80 ≈ 55');
+    ['50 × 44.4444%', '75 × 11.1111%', '50 × 16.6667%', 'Not scored · Excluded', '50 × 5.5556%', '50 × 22.2222%']);
+  assert.equal(result.overall.details.calculation[0].value, '(50 × 40 + 75 × 10 + 50 × 15 + 50 × 5 + 50 × 20) ÷ 90 ≈ 53');
   row.internal = {}; row.results = undefined; row.external = {};
   assert.ok(Object.values(score(row).scores).every(category => category.details === undefined));
 });

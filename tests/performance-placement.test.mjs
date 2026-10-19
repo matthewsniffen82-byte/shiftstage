@@ -4,7 +4,7 @@ import {compile} from './helpers/discovery-fixture.mjs';
 import * as scoring from '../src/lib/dancr/venue-dancer-scores.ts';
 
 const dancer = (id, conversion=10) => ({id,name:'Private '+id,
- internal:{checkedInHours:8,requests:20,requestsDuringHours:20,rosterTrackedHours:8,rosterBothHours:0,verifiedCheckInDays:4,checkoutEligibleDays:4,dancerCheckoutDays:4,activeCheckInDays:0},
+ internal:{checkedInHours:8,requests:20,requestsDuringHours:20,rosterTrackedHours:8,rosterExternalHours:8,rosterExternalTrackedHours:8,rosterBothHours:0,verifiedCheckInDays:4,checkoutEligibleDays:4,dancerCheckoutDays:4,activeCheckInDays:0},
  vip:{scoringRequests:20,scoringUniqueRequesters:10,scoringRepeatRequesters:2},
  external:{dancer_profile:10,club_page:10,directions:10,going:10,free_entry:10,transport:10},
  results:{profileClaims:20,profileCohortConversions:conversion},
@@ -45,6 +45,19 @@ test('explicit club wins; otherwise only the most recent active affiliation supp
  const result=await f.service.getPerformancePlacementScores(f.admin,[{dancerId:'a'},{dancerId:'a',venueId:'other'},{dancerId:'new'}],now);
  assert.deepEqual(Array.from(result),[scoring.scoreVenueDancers(report,'14d')[0].scores.overall.value,scoring.scoreVenueDancers(other,'14d')[0].scores.overall.value,null]);
  assert.deepEqual(f.calls.map(c=>c.args.p_venue_id).sort(),['club','other']);
+});
+
+test('public placement rewards recorded External-only and Both time equally over Internal-only', async () => {
+ const cohort = [dancer('a-internal'), dancer('b-external'), dancer('c-both')];
+ cohort[1].internal.rosterExternalHours = 8;
+ Object.assign(cohort[2].internal, { rosterExternalHours: 8, rosterExternalTrackedHours: 8, rosterBothHours: 8 });
+ cohort[0].internal.rosterExternalHours = 0;
+ const f = fixture({ club: cohort });
+ const rows = cohort.map(row => ({ id: row.id }));
+ const result = await f.service.orderByPerformance(f.admin, rows, row => ({ dancerId: row.id, venueId: 'club' }), row => row.id);
+ assert.deepEqual(Array.from(result, row => row.id), ['b-external', 'c-both', 'a-internal']);
+ const cards = await f.service.getPerformancePlacementScorecards(f.admin, rows.map(row => ({ dancerId: row.id, venueId: 'club' })));
+ assert.deepEqual(Array.from(cards, card => card.scores.externalTime.value), [0, 50, 50]);
 });
 test('duplicate dancers and concurrent requests share a report; scores refresh after one minute',async()=>{
  const report=[dancer('a',18),dancer('b'),dancer('c')], f=fixture({club:report});

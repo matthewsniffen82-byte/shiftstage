@@ -24,10 +24,12 @@ function render(status,error=false) {
 
 test('scorecard keeps placement guidance visible and scoring rules collapsed',()=>{
   const html=render({eligible:true,score:50,scorecard:card});
-  assert.equal((html.match(/class="dancer-score-category"/g)||[]).length,5);
+  assert.equal((html.match(/class="dancer-score-category"/g)||[]).length,6);
   for(const key of scoring.DANCER_SCORE_CATEGORIES) assert.ok(html.includes(scoring.DANCER_SCORE_LABELS[key]));
   assert.match(html,/Last 14 days · Club A/);assert.match(html,/Early data/);assert.match(html,/50\/100/);
   assert.match(html,/Your score helps determine your position in dancer grids, club rosters and Dancer TV/);
+  assert.match(html,/External check-in time carries the most weight: 40%/);
+  assert.match(html,/External and Both count equally/);
   assert.ok(html.indexOf('Higher scores, higher visibility.')>html.indexOf('Overall Performance:'));
   assert.ok(html.indexOf('Higher scores, higher visibility.')<html.indexOf('class="dancer-score-categories"'));
   const help=html.match(/<details class="dancer-score-help">([\s\S]*?)<\/details>/)?.[1];
@@ -43,7 +45,7 @@ test('missing scores and service failures stay unavailable rather than showing f
   const missing=render({eligible:false,score:null,scorecard:null});
   assert.match(missing,/Overall Performance: —/);assert.match(missing,/approved and public/);
   assert.match(missing,/Your overall score appears once 3 categories have data/);
-  assert.equal((missing.match(/class="dancer-score-category"/g)||[]).length,5);assert.doesNotMatch(missing,/0\/100/);
+  assert.equal((missing.match(/class="dancer-score-category"/g)||[]).length,6);assert.doesNotMatch(missing,/0\/100/);
   assert.match(render(null),/role="status"/);
   const failed=render(null,true);assert.match(failed,/role="alert"/);assert.match(failed,/Try again/);assert.doesNotMatch(failed,/dancer-score-category/);
 });

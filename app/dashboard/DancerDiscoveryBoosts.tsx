@@ -7,7 +7,8 @@ import { DANCER_PLACEMENT_DAYS, DANCER_SCORE_CATEGORIES, DANCER_SCORE_LABELS, DA
 
 type Boosts = { eligible: boolean; score: number | null; scorecard: DancerPlacementScorecard | null };
 const guidance = {
-  checkIns: "Check in when you arrive and check out before leaving. Use both rosters when you are available for both in-club requests and public discovery.",
+  externalTime: "Time checked in on the external app is your largest ranking factor. External and Both count equally. More recorded external hours improve this score; internal-only hours do not count here.",
+  checkIns: "Check in when you arrive and check out before leaving. Accurate checkouts, check-in days and recorded hours contribute to this category.",
   internal: "Keep your in-club availability accurate so guests can request you while you are working. This category compares requests per recorded hour.",
   vip: "Share your profile with interested guests so they can request you again. Selections and returning-requester share count; staff approval does not improve this score.",
   profile: "Keep your photos and club information current, and share your profile. Recorded guest actions on your club-linked profile contribute here.",
@@ -33,6 +34,7 @@ export function DancerDiscoveryBoosts() {
       : !status ? <p role="status">Loading performance score…</p> : <>
         <p className="dancer-score-overall"><strong>Overall Performance: {card?.scores.overall.value == null ? "—" : `${card.scores.overall.value}/100`}</strong>{card?.scores.overall.confidence === "early" ? " · Early data" : ""}</p>
         <p className="dancer-results-note"><strong>Higher scores, higher visibility.</strong> Your score helps determine your position in dancer grids, club rosters and Dancer TV.</p>
+        <p className="dancer-results-note">External check-in time carries the most weight: {DANCER_SCORE_WEIGHTS.externalTime}%. Time on Both counts too.</p>
         {card?.scores.overall.value == null && <p className="dancer-results-note">Your overall score appears once 3 categories have data.</p>}
         <div className="dancer-score-categories">{DANCER_SCORE_CATEGORIES.map(key => {
           const score = card?.scores[key];
