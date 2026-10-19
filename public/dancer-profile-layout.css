@@ -777,12 +777,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > summary::before {
-    border-color: #4a365f !important;
-    background: linear-gradient(#22152f, #22152f) !important;
-  }
-  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
-    .profile-options[data-compact-menu][open] > summary::before {
-    border-color: #5a4075 !important;
+    content: none !important;
+    display: none !important;
   }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > .profile-options-panel {
