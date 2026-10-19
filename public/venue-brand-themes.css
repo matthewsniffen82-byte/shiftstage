@@ -105,7 +105,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-l
 }
 
 /* The club keeps the normal layout and semantic live/liked/status colors. */
-html body.dancr-button-system :is(#results, #customer-dashboard) .venue:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]) {
+html body.dancr-button-system :is(#results, #customer-dashboard) .venue:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]),
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail[role="dialog"]:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]) > .venue-hero {
   outline: 1px solid #b8860b !important;
   outline-offset: -1px !important;
   border-color: #b8860b !important;
