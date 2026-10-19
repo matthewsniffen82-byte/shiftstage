@@ -193,11 +193,19 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
     }
   }
 
-  const rankingGuidance = <>
-    <small><strong>External time helps you rank higher everywhere.</strong></small>
-    <small>Time checked in on External or Both carries the most weight in your score—<strong>{DANCER_SCORE_WEIGHTS.externalTime}%</strong>. Higher scores help you appear higher up on the club&apos;s internal roster, public MyDancr listings, and the MyDancrTV feed.</small>
-    <small>Benefits start after {EXTERNAL_RANKING_START_MINUTES} recorded minutes. More external time builds your score.</small>
-  </>;
+  const rankingGuidance = <div className="shift-ranking-callout">
+    <h3>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+        <path d="m3 17 6-6 4 4 8-10M15 5h6v6" />
+      </svg>
+      Rank higher everywhere
+    </h3>
+    <p>More time on <strong>External</strong> or <strong>Both</strong> helps you rank higher on club rosters, MyDancr and MyDancrTV.</p>
+    <div className="shift-ranking-facts">
+      <span>Starts after {EXTERNAL_RANKING_START_MINUTES} min</span>
+      <span>{DANCER_SCORE_WEIGHTS.externalTime}% of your score</span>
+    </div>
+  </div>;
 
   return (
     <article className="info-panel shift-panel" aria-label="Working Now management">

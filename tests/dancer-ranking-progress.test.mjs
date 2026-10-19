@@ -73,10 +73,11 @@ test('Overview offers Both for recorded Internal sessions and shows actual exter
   assert.match(both,/External time this shift: <strong>2h 15m/);assert.match(both,/#dancer-performance-ranking/);
   assert.match(both,/External time is recording/);assert.doesNotMatch(both,/Switch to Both|benefit active/);
   for (const html of [internal,both,renderShift(null,'nfc_presence',false)]) {
-    assert.match(html,/External time helps you rank higher everywhere/);
-    assert.match(html,/External or Both carries the most weight in your score—<strong>40%<\/strong>/);
-    assert.match(html,/higher up on the club&#x27;s internal roster, public MyDancr listings, and the MyDancrTV feed/);
-    assert.match(html,/Benefits start after 5 recorded minutes. More external time builds your score/);
+    assert.match(html,/Rank higher everywhere/);
+    assert.match(html,/More time on <strong>External<\/strong> or <strong>Both<\/strong>/);
+    assert.match(html,/rank higher on club rosters, MyDancr and MyDancrTV/);
+    assert.match(html,/Starts after 5 min/);
+    assert.match(html,/40% of your score/);
   }
   const unknown=renderShift({visibility:'both',externalHours:null});
   assert.match(unknown,/not recorded for this shift/);assert.doesNotMatch(unknown,/time is counting|Switch to Both/);
