@@ -42,6 +42,7 @@ function fixture(props = {}, preferences = async () => ({ userId: "venue-one", s
     if (name.endsWith("/customer-push")) return {
       customerPushDeviceEnabled: id => new Promise(resolve => requests.push({ id, resolve })),
       customerPushSupportMessage: () => options.support || '',
+      customerPushNeedsHomeScreen: () => Boolean(options.homeScreenRequired),
       async enableCustomerPush(delivery, userId, guard) { calls.push({ enable: userId, delivery }); guard(); await options.enroll?.(); guard(); },
       async disableCustomerPush() { calls.push({ disable: true }); },
     };
@@ -226,7 +227,34 @@ test('failed configuration can be retried without asking permission before it is
   close();
 });
 
-for (const support of ['Add MyDancr to your Home Screen.', 'Push is blocked. Allow notifications in site settings.']) {
+for (const role of ['dancer', 'venue']) test(`${role} iPhone browser offers actionable setup without trying to enroll`, async () => {
+  const options = { homeScreenRequired: true, support: 'Add MyDancr to your Home Screen.' };
+  const f = fixture({ role }, undefined, options), close = f.mount();
+  f.requests[0].resolve(false); await settle();
+  const html = f.render();
+  assert.match(html, /<details[^>]*><summary[^>]*>Set up iPhone \/ iPad notifications<\/summary>/);
+  assert.match(html, /Safari and tap <strong>Share/);
+  assert.match(html, /Add to Home Screen/);
+  assert.match(html, /Open the new MyDancr icon/);
+  assert.match(html, /<strong>Allow/);
+  assert.match(html, /Email alerts do not need this setup/);
+  assert.equal(button(f.tree()), null);
+  assert.equal(f.calls.length, 0, 'Browser setup must not request permission or change delivery settings');
+
+  options.homeScreenRequired = false;
+  options.support = '';
+  f.events.get('pageshow')();
+  f.requests[1].resolve(false); await settle();
+  assert.doesNotMatch(f.render(), /<details/);
+  assert.equal(button(f.tree()).props.disabled, false);
+  button(f.tree()).props.onClick();
+  assert.equal(f.calls.filter(call => call.enable).length, 1, 'The installed app can enable from the original tap');
+  await settle();
+  assert.equal(f.render(), '');
+  close();
+});
+
+for (const support of ['This browser does not support push notifications.', 'Push is blocked. Allow notifications in site settings.']) {
   test(`unsupported enrollment explains the next step inline: ${support}`, async () => {
     const f = fixture({}, undefined, { support }), close = f.mount();
     f.requests[0].resolve(false); await settle();

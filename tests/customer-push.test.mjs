@@ -73,6 +73,7 @@ test("missing configuration and unsupported iPhone browser never request permiss
   await assert.rejects(missing.enableCustomerPush({}, "customer", () => {}), /not available/);
   assert.deepEqual(missing.events, []);
   const iphone = fixture({ userAgent: "iPhone" });
+  assert.equal(iphone.customerPushNeedsHomeScreen(), true);
   await assert.rejects(iphone.enableCustomerPush(delivery, "customer", () => {}), /Home Screen/);
   assert.deepEqual(iphone.events, []);
 });
@@ -92,6 +93,7 @@ for (const device of [
   { userAgent: "Macintosh", platform: "MacIntel", maxTouchPoints: 5, standalone: true },
 ]) test(`supported mobile device enrolls only after explicit permission: ${JSON.stringify(device)}`, async () => {
   const f = fixture(device);
+  assert.equal(f.customerPushNeedsHomeScreen(), false);
   assert.equal(f.customerPushSupportMessage(), "");
   await f.enableCustomerPush(delivery, "customer", () => {});
   assert.equal(f.events[0], "permission");
@@ -100,6 +102,7 @@ for (const device of [
 
 test("iPad desktop browsing gets Home Screen installation steps before requesting permission", async () => {
   const f = fixture({ userAgent: "Macintosh", platform: "MacIntel", maxTouchPoints: 5 });
+  assert.equal(f.customerPushNeedsHomeScreen(), true);
   assert.match(f.customerPushSupportMessage(), /Safari.*Share.*Add to Home Screen.*16\.4/);
   await assert.rejects(f.enableCustomerPush(delivery, "customer", () => {}), /Home Screen/);
   assert.deepEqual(f.events, []);

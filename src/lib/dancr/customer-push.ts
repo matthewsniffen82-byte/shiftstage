@@ -15,11 +15,16 @@ function boundedPush<T>(operation: Promise<T>, milliseconds = 15_000): Promise<T
   });
 }
 
-export function customerPushSupportMessage() {
-  if (typeof window === "undefined") return "";
+export function customerPushNeedsHomeScreen() {
+  if (typeof window === "undefined") return false;
   const appleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true;
-  if (appleMobile && !standalone) {
+  return appleMobile && !standalone;
+}
+
+export function customerPushSupportMessage() {
+  if (typeof window === "undefined") return "";
+  if (customerPushNeedsHomeScreen()) {
     return "Add MyDancr to your Home Screen: in Safari, tap Share, then Add to Home Screen. Open the new MyDancr icon, sign in, and enable notifications. Requires iOS 16.4 or later.";
   }
   if (!window.isSecureContext || !("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
