@@ -8,6 +8,12 @@ html:has(.venue-embed-profile-page), html body:has(.venue-embed-profile-page) {
   --dancr-color-avatar-ring-violet: var(--embed-accent);
   --dancr-shadow-brand-control: 0 2px 8px color-mix(in srgb, var(--embed-accent) 16%, transparent);
 }
+/* Keep location pins in the embed's club color, including media viewers. */
+html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
+  :is(.profile-venue-pin, .profile-modal-city-icon, .profile-media-venue svg) {
+  color: var(--embed-accent) !important;
+  stroke: currentColor !important;
+}
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout {
   min-height: calc(100dvh - 70px) !important; background: #0b0b0d !important;
 }

@@ -428,6 +428,8 @@ test("standard and old live-only Rhino links populate all 22 showcase locations"
     await f.window.MydancrVenueEmbed.mount(f.document);
     assert.equal(f.node("venue-count").textContent, String(location.sampleCount), location.label);
     assert.equal([...f.node("results").innerHTML.matchAll(/data-public-dancer-id=/g)].length, location.sampleCount);
+    assert.match(f.node("results").innerHTML, /<span>Spearmint Rhino<\/span>/);
+    assert.doesNotMatch(f.node("results").innerHTML, /Spearmint Rhino ·/);
     assert.equal(f.node("venue-status").hidden, true);
     assert.match(f.requests[0].url, /\?demo=1$/);
   }
@@ -513,7 +515,8 @@ test("embedded profile uses the full shared component, preserves media and retur
   const result = await render({ demo: "1", location: "boise" });
   assert.equal(result.type, component);
   assert.equal(result.props.profile.city, "Boise");
-  assert.equal(result.props.profile.upcomingShifts[0].venueName, "Spearmint Rhino · Boise, ID");
+  assert.equal(result.props.profile.venueName, "Spearmint Rhino");
+  assert.equal(result.props.profile.upcomingShifts[0].venueName, "Spearmint Rhino");
   assert.equal(result.props.profile.photos.length, source.photos.length);
   assert.equal(result.props.tvVideos[0].videoUrl, "/api/public/venue-embed-media/video?id=v1");
   assert.equal(result.props.returnHref, "/embed/venues/talk-of-the-town?location=boise&demo=1");

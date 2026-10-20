@@ -51,9 +51,9 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
     })),
     ...(demo ? {
       city: location.city,
-      venueName: `Spearmint Rhino · ${location.label}`,
+      venueName: "Spearmint Rhino",
       upcomingShifts: source.upcomingShifts.map(shift => ({
-        ...shift, venueName: `Spearmint Rhino · ${location.label}`,
+        ...shift, venueName: "Spearmint Rhino",
       })),
     } : {}),
   };

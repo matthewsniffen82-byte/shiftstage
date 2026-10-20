@@ -151,7 +151,7 @@
     function render(venue) {
       const option = location();
       const visible = demo && option ? sampleRoster(dancers, option.value, Number(option.dataset.count)) : dancers;
-      const displayVenue = option ? { ...venue, name: `Spearmint Rhino · ${option.textContent.split(" · ")[0]}` } : venue;
+      const displayVenue = option ? { ...venue, name: "Spearmint Rhino" } : venue;
       const query = new URLSearchParams();
       if (option) query.set("location", option.value);
       if (demo) query.set("demo", "1");
