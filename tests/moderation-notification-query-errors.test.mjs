@@ -6,8 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import { safeErrorMetadata } from "../src/lib/security/safe-error-metadata.ts";
 const cases = [
-  ["automatic", "src/lib/dancr/image-moderation.ts", "createAutoRejectedPhotoNotification", "IMAGE_MODERATION_NOTIFICATION_NOT_SAVED"],
-  ["administrator", "app/api/admin/image-moderation/route.ts", "createNeutralNotification", "ADMIN_IMAGE_MODERATION_NOTIFICATION_NOT_SAVED"],
+  ["administrator", "src/lib/dancr/image-review.ts", "createNeutralNotification", "ADMIN_IMAGE_MODERATION_NOTIFICATION_NOT_SAVED"],
 ];
 for (const [label, path, functionName, event] of cases) {
   const source = process.env.NOTIFICATION_BASELINE === "1"

@@ -152,7 +152,7 @@ export default function DancerNfcPanel({
           <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
           <li>Choose Internal only, External only, or Both at each tap. Internal avatar cards open your full approved profile.</li>
         </ul>
-        {!isPublic && !authorized ? <p>Finish profile setup and get your avatar and at least one profile photo approved before activation.</p> : null}
+        {!isPublic && !authorized ? <p>Upload your photos, accept the agreement, and verify your age. Your first tap sends pending media to this club for approval.</p> : null}
       </div>
     </details>
   );
@@ -191,19 +191,19 @@ export default function DancerNfcPanel({
           <div className="dancer-nfc-icon"><NfcIcon /></div>
           <div>
             <span className="eyebrow">{onboarding ? "Club confirmation" : "Dressing-room tap"}</span>
-            <h2>{authorized ? "Profile activated" : pendingEnrollment ? "Tap saved — finish setup" : onboarding ? "Confirm your club" : "Your first tap activates your profile"}</h2>
+            <h2>{authorized ? "Profile activated" : pendingEnrollment ? "Tap saved — awaiting club approval" : onboarding ? "Confirm your club" : "Connect your profile to a club"}</h2>
           </div>
         </div>
         {authorized ? (
           <p className="dancer-nfc-intro">Tap a club&apos;s dressing-room sticker to check in.</p>
         ) : pendingEnrollment ? (
-          <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Finish your profile and required photo approvals to activate.</p>
+          <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. The club can now review your uploads. Your profile activates once the required photos are approved.</p>
         ) : (
-          <p className="dancer-nfc-intro">{onboarding ? "Tap the club’s NFC tag when you arrive to activate your club status." : "Finish your profile, then tap the club’s dressing-room sticker to activate."}</p>
+          <p className="dancer-nfc-intro">{onboarding ? "Tap the club’s NFC tag when you arrive to send your media to its review queue." : "Finish your profile, then tap the club’s dressing-room sticker to activate."}</p>
         )}
 
         {!onboarding ? <ol className="dancer-nfc-guide">
-          {!authorized ? <li><strong>Activate once</strong><span>Your first tap activates your completed profile and checks you in at that club.</span></li> : null}
+          {!authorized ? <li><strong>Activate once</strong><span>Your first tap connects you to the club. Required media approval completes activation.</span></li> : null}
           <li><strong>Check in at any club</strong><span>Tap that club&apos;s dressing-room sticker to connect and show Working Now there.</span></li>
           <li><strong>Choose where you appear</strong><span>Select Internal only, External only, or Both. Your full profile is required for every choice.</span></li>
         </ol> : null}

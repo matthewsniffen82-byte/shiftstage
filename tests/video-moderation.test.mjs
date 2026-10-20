@@ -182,38 +182,20 @@ test("video submission persists exactly approve, human-review, or reject outcome
   assert.match(submitRoute, /after\(async \(\) => \{[\s\S]*?retryMyDancrTvAutomatedModeration/);
   assert.match(submitRoute, /if \(!\("submissionAlreadyAccepted" in video\) \|\| video\.submissionAlreadyAccepted !== true\) \{[\s\S]*?after\(async \(\) =>/);
   assert.match(submitRoute, /\{ deferModeration: true \}/);
-  assert.match(submitRoute, /uploaded successfully and is queued for automatic safety review/);
+  assert.match(submitRoute, /uploaded successfully.*AI checks are running; club approval is required before it goes live/);
   assert.match(tvSource, /moderation_attempt_count: deferModeration \? 0 : 1/);
   assert.match(tvSource, /moderation_started_at: submittedAt/);
   assert.match(tvSource, /const workerId = deferModeration \? null : crypto\.randomUUID\(\)/);
-  assert.match(submitRoute, /passed safety review and will appear whenever your dancer profile is live/);
-  assert.match(submitRoute, /sent to an administrator for human review/);
+  assert.match(submitRoute, /was approved by your club and will appear whenever your dancer profile is live/);
+  assert.match(submitRoute, /saved for your club to review/);
 });
 
-test("temporary demo mode auto-approves without removing the AI moderation path", () => {
-  assert.match(tvSource, /isVideoDemoAutoApproveMode/);
-  assert.match(
-    tvSource,
-    /const demoAutoApprove = isVideoDemoAutoApproveMode\(\)[\s\S]*?\.eq\("status", "uploading"\)[\s\S]*?if \(deferModeration\) return moderating;[\s\S]*?if \(demoAutoApprove\) \{\s*return autoApproveMyDancrTvDemoUpload\(admin, moderating, submittedAt, "moderating"\);/,
-  );
-  assert.match(
-    tvSource,
-    /async function autoApproveMyDancrTvDemoUpload[\s\S]*?demoVideoAutoApprovalValues\(\{[\s\S]*?watermarkApplied/,
-  );
+test("dancer uploads always run AI and wait for club approval, including legacy demo configuration", () => {
+  assert.doesNotMatch(tvSource, /isVideoDemoAutoApproveMode|autoApproveMyDancrTvDemoUpload|autoApprovePendingMyDancrTvDemoVideo/);
+  assert.doesNotMatch(retryRoute, /demoAutoApprove|autoApprovePendingMyDancrTvDemoVideo/);
   assert.match(tvSource, /moderateStoredMyDancrTvVideo/);
-  assert.match(tvSource, /finalizeMyDancrTvAutomatedModeration/);
-  assert.match(
-    nextConfig,
-    /env: \{[\s\S]*?DANCR_VIDEO_MODERATION_MODE:[\s\S]*?process\.env\.DANCR_VIDEO_MODERATION_MODE \|\| "ai"/,
-  );
-  assert.match(
-    retryRoute,
-    /isVideoDemoAutoApproveMode[\s\S]*?\.or\("status.eq.moderating,and\(status.eq.submitted,moderation_attempt_count.lt.3\)"\)[\s\S]*?autoApprovePendingMyDancrTvDemoVideo/,
-  );
-  assert.match(
-    tvSource,
-    /export async function autoApprovePendingMyDancrTvDemoVideo[\s\S]*?\.eq\("status", "submitted"\)[\s\S]*?autoApproveMyDancrTvDemoUpload/,
-  );
+  assert.match(tvSource, /AI checks passed\. Pending club approval/);
+  assert.match(retryRoute, /\.eq\("status", "moderating"\)/);
 });
 
 test("video moderation decisions are durable, recoverable, and visible to dancers and admins", () => {
@@ -239,6 +221,7 @@ test("video moderation decisions are durable, recoverable, and visible to dancer
 });
 
 test("every production video-processing route bundles FFmpeg and admin failures stay private", () => {
+  assert.ok(nextConfig.includes('"/api/venue/media-reviews": ["./node_modules/ffmpeg-static/ffmpeg*"]'));
   assert.match(nextConfig, /"\/api\/admin\/tv\/import": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);
   assert.match(nextConfig, /"\/api\/admin\/tv\/videos": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);
   assert.match(nextConfig, /"\/api\/dancer\/tv\/videos\/\\\\\[id\\\\\]": \["\.\/node_modules\/ffmpeg-static\/ffmpeg\*"\]/);

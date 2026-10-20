@@ -10,7 +10,7 @@ import {createAvatarDatabase,seedAvatarDatabase,avatarDatabaseClient,readAvatarP
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
 
 const source = readFileSync(new URL('../src/lib/dancr/image-moderation.ts', import.meta.url), 'utf8');
-const adminSource = readFileSync(new URL('../app/api/admin/image-moderation/route.ts', import.meta.url), 'utf8');
+const adminSource = readFileSync(new URL('../src/lib/dancr/image-review.ts', import.meta.url), 'utf8');
 const lostResponse = { code: '08006', message: 'synthetic response lost' };
 function loadModule(code, names, dependencies) {
   const exports = {};
@@ -28,7 +28,7 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
   const rows = {
     dancer_profiles: [{ id: 'profile', user_id: 'owner', avatar_storage_path: 'old', avatar_updated_at: '2020-01-01T00:00:00Z' }],
     dancer_photos: existingPhoto ? [{ id: 'old-photo', dancer_id: 'profile', storage_path: 'old', is_primary: primary, sort_order: primary ? 0 : 1 }] : [],
-    image_moderation_records: [{ id: 'review', user_id: 'owner', updated_at: '2020-01-01T00:00:00Z', status: 'moderating', decision: 'review', temporary_storage_path: 'temp', upload_context: avatar ? 'profile_avatar' : 'profile_gallery:1' }],
+    image_moderation_records: [{ id: 'review', user_id: 'owner', updated_at: '2020-01-01T00:00:00Z', status: 'pending_review', decision: 'review', temporary_storage_path: 'temp', upload_context: avatar ? 'profile_avatar' : 'profile_gallery:1' }],
   };
   const mutations = [];
   let failed = false;
@@ -107,21 +107,17 @@ function scenario({ failTable, failOperation, failAfterCommit = true, diagnostic
     responsivePublicImage: (_client, _bucket, path) => ({ imageUrl: path }),
     responsiveImageStoragePaths: path => [path],
     validateAndPrepareDancrImage: async () => ({}),
+    prepareFaceCenteredAvatar: async image => image,
     isProfileAvatarUploadContext: context => context === 'profile_avatar',
     profilePhotoSlotFromUploadContext: () => ({ isPrimary: primary, sortOrder: primary ? 0 : 1 }),
   };
   Object.assign(dependencies, loadGalleryGateway(dependencies), loadAvatarGateway());
-  const functions = loadModule(source, 'approveModeratedUpload', dependencies);
+  const functions = loadModule(source, 'updateModerationRecord', dependencies);
   Object.assign(dependencies, { ...functions, APPROVED_PHOTO_BUCKET: 'dancer-photos' });
   const admin = loadModule(adminSource, 'approveReviewRecord', dependencies);
   return {
     assets, rows, mutations,
-    publish: () => functions.approveModeratedUpload(client, {
-      recordId: 'review', expectedUpdatedAt: '2020-01-01T00:00:00Z', profileId: 'profile', userId: 'owner', image: {}, tempPath: 'temp',
-      uploadContext: avatar ? 'profile_avatar' : 'profile_gallery:1', isAvatar: avatar,
-      isPrimary: primary, sortOrder: primary ? 0 : 1, altText: null,
-      evaluation: { decision: 'approved', reasonCodes: [], categoryScores: {}, providerFlagged: false }, categoryFlags: {},
-    }),
+    publish: () => admin.approveReviewRecord(client, rows.image_moderation_records[0], 'admin', ''),
     adminPublish: () => admin.approveReviewRecord(client, rows.image_moderation_records[0], 'admin', ''),
   };
 }

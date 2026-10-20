@@ -10,7 +10,7 @@ import ts from "typescript";
 
 const requireTest = createRequire(import.meta.url);
 const librarySource = readFileSync(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8");
-const adminSource = readFileSync(new URL("../app/api/admin/image-moderation/route.ts", import.meta.url), "utf8");
+const adminSource = readFileSync(new URL("../src/lib/dancr/image-review.ts", import.meta.url), "utf8");
 const recenterSource = readFileSync(new URL("../app/api/admin/avatars/recenter/route.ts", import.meta.url), "utf8");
 const oldPath = "user/dancer/old.jpg";
 const newPath = "user/dancer/new.jpg";
@@ -37,7 +37,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
   const tables = {
     dancer_profiles: [{ id: "dancer", user_id: "user", slug: "test-dancer", avatar_storage_path: avatar ? oldPath : null, avatar_updated_at: "2020-01-01T00:00:00Z" }],
     dancer_photos: avatar ? [] : [{ id: "old", dancer_id: "dancer", storage_path: oldPath, is_primary: primary, sort_order: primary ? 0 : 1, review_status: "approved" }],
-    image_moderation_records: [{ id: "record", user_id: "user", image_id: null, temporary_storage_path: "temporary", upload_context: avatar ? "profile_avatar" : "profile_gallery:1", updated_at: "2020-01-01T00:00:00Z", decision: "review", status: "moderating" }],
+    image_moderation_records: [{ id: "record", user_id: "user", image_id: null, temporary_storage_path: "temporary", upload_context: avatar ? "profile_avatar" : "profile_gallery:1", updated_at: "2020-01-01T00:00:00Z", decision: "review", status: "pending_review" }],
     admin_actions: [],
   };
   const events = [];
@@ -159,7 +159,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
   };
   const gateway = loadGalleryGateway({ ...responsive, ...watermark, ...retirement });
   const avatarGateway = loadAvatarGateway();
-  const library = load(librarySource, "approveModeratedUpload", {
+  const library = load(librarySource, "updateModerationRecord", {
     "./avatar-publication": avatarGateway,
     "./photo-publication": gateway,
     "./gallery-storage-retirement": retirement,
@@ -168,6 +168,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     "../api-error-policy": requireTest("../src/lib/api-error-policy.ts"),
   });
   const admin = load(adminSource, "approveReviewRecord", {
+    "@/src/lib/dancr/avatar-face": { prepareFaceCenteredAvatar: async image => image },
     "@/src/lib/dancr/avatar-publication": avatarGateway,
     "@/src/lib/dancr/photo-publication": gateway,
     "@/src/lib/dancr/gallery-storage-retirement": retirement,
@@ -179,6 +180,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({ code: "synthetic" }) },
   });
   const recenter = load(recenterSource, "POST", {
+    "@/src/lib/dancr/avatar-face": { prepareFaceCenteredAvatar: async image => image },
     "@/src/lib/dancr/avatar-publication": avatarGateway,
     "@/src/lib/dancr/gallery-storage-retirement": retirement,
     "next/server": { NextResponse: { json: (body, options = {}) => ({ body, status: options.status || 200 }) } },
@@ -195,13 +197,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
   });
   return { files, archived, tables, events, fault,
     recenter: () => recenter.testSubject({ headers: { get: () => "s".repeat(32) } }),
-    run: mode => mode === "admin"
-      ? admin.testSubject(client, { ...tables.image_moderation_records[0] }, "reviewer", "")
-      : library.testSubject(client, { recordId: "record", expectedUpdatedAt: "2020-01-01T00:00:00Z", profileId: "dancer", userId: "user", image: {},
-        tempPath: "temporary", uploadContext: avatar ? "profile_avatar" : "profile_gallery:1",
-        isAvatar: avatar, isPrimary: primary, sortOrder: primary ? 0 : 1, altText: null,
-        evaluation: { decision: "approved", reasonCodes: [], categoryScores: {}, providerFlagged: false }, categoryFlags: {},
-      }),
+    run: () => admin.testSubject(client, { ...tables.image_moderation_records[0] }, "reviewer", ""),
     assertReferencedFilesExist() {
       for (const photo of tables.dancer_photos) assert.ok(files.has(photo.storage_path), `Missing published photo ${photo.id}`);
       for (const profile of tables.dancer_profiles) if (profile.avatar_storage_path) assert.ok(files.has(profile.avatar_storage_path), "Missing published avatar");
@@ -209,7 +205,7 @@ function harness({ avatar = false, primary = false, failure = "", concurrentAvat
   };
 }
 
-for (const mode of ["automatic", "admin"]) {
+for (const mode of ["admin"]) {
   for (const avatar of [false, true]) {
     const kind = avatar ? "avatar" : "photo";
     test(`${mode} ${kind}: successful approval retires the old file only after saving approval`, async () => {
@@ -264,7 +260,7 @@ for (const avatar of [false, true]) {
   for (const failure of ["diagnostic", "diagnostic_throw"]) {
     test(`${failure} cannot reverse a committed ${avatar ? "avatar" : "photo"} approval`, async () => {
       const state = harness({ avatar, failure });
-      const result = await state.run("automatic");
+      const result = await state.run("admin");
       assert.equal(result.decision, "approved");
       assert.equal(state.tables.image_moderation_records[0].decision, "approved");
       state.assertReferencedFilesExist();

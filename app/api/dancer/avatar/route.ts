@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { readBoundedFormData } from "@/src/lib/bounded-form-data";
 import {
@@ -6,7 +6,7 @@ import {
   isAvatarFaceRequiredError,
 } from "@/src/lib/dancr/avatar-face";
 import { deleteOwnDancerAvatar } from "@/src/lib/dancr/dancer";
-import { moderateAndStoreDancerPhoto } from "@/src/lib/dancr/image-moderation";
+import { moderateAndStoreDancerPhoto, scheduleDancerPhotoReview } from "@/src/lib/dancr/image-moderation";
 import { PROFILE_AVATAR_CONTEXT } from "@/src/lib/dancr/photo-slot";
 import { MAX_DANCR_RAW_UPLOAD_BYTES } from "@/src/lib/dancr/image-validation";
 import {
@@ -18,6 +18,7 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 const MAX_AVATAR_UPLOAD_BODY_BYTES = MAX_DANCR_RAW_UPLOAD_BYTES + 64 * 1024;
 
 export async function POST(request: Request) {
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
 
     const result = await moderateAndStoreDancerPhoto(client, admin, {
       file,
+      deferModeration: true,
       userId: user.id,
       isPrimary: false,
       sortOrder: 0,
@@ -51,6 +53,7 @@ export async function POST(request: Request) {
       ipAddress: request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "",
     });
 
+    scheduleDancerPhotoReview(admin, result, after);
     const status = result.decision === "rejected" ? 422 : 200;
     return NextResponse.json({ ok: result.decision !== "rejected", ...result }, { status });
   } catch (error) {

@@ -26,8 +26,8 @@ for (const kind of ['photo', 'video']) {
   test(`${kind} distinguishes technical delays, active checks, missing reasons and final approvals`, () => {
     assert.match(explain(kind, 'review', { reasonCodes: ['OPENAI_TIMEOUT'], message: 'Photo uploaded, but moderation stopped before approval. Diagnostic code: OPENAI_TIMEOUT.' }), /Retry/);
     assert.doesNotMatch(explain(kind, 'review', { reasonCodes: ['OPENAI_TIMEOUT'] }), /OPENAI/);
-    assert.match(explain(kind, 'moderating'), /automatic check is still running/);
-    assert.match(explain(kind, 'submitted'), /specific reason wasn't provided/);
+    assert.match(explain(kind, 'moderating'), /AI checks are running/);
+    assert.match(explain(kind, 'submitted'), /waiting for club approval/);
     assert.match(explain(kind, 'rejected'), /specific reason wasn't saved/);
     assert.equal(explain(kind, 'approved', { reasonCodes: ['multiple_people_detected'], message: 'Old rejection.' }), '');
   });
@@ -46,8 +46,8 @@ test('specific moderator instructions survive automatic review codes', () => {
 });
 
 test('unknown and malformed reasons never invent a violation or expose diagnostics', () => {
-  assert.match(explain('photo', 'review', { reasonCodes: ['new_internal_reason', null, {}] }), /specific reason wasn't provided/);
+  assert.match(explain('photo', 'review', { reasonCodes: ['new_internal_reason', null, {}] }), /waiting for club approval/);
   assert.match(explain('photo', 'rejected', { reasonCodes: 'multiple_people_detected' }), /specific reason wasn't saved/);
   assert.doesNotMatch(explain('photo', 'review', { reasonCodes: ['new_internal_reason'] }), /new_internal_reason/);
-  assert.match(explain('photo', 'review', { reasonCodes: ['provider_not_flagged'] }), /specific reason wasn't provided/);
+  assert.match(explain('photo', 'review', { reasonCodes: ['provider_not_flagged'] }), /waiting for club approval/);
 });

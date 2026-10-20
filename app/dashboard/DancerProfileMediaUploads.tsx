@@ -263,7 +263,7 @@ export default function DancerProfileMediaUploads({
         {isApproved ? <>
           <span aria-hidden={!isPublic}>Approved uploads appear on your profile.</span>
           <span aria-hidden={isPublic}>Uploads stay saved. Hidden while incognito.</span>
-        </> : "Uploaded photos and videos will appear on your profile after review and completion of your profile setup."}
+        </> : "Uploaded photos and videos will appear on your profile after club approval and completion of your profile setup."}
       </p> : null}
       {activePreview && previewItem ? <DancerMediaViewer key={`${activePreview.kind}:${activePreview.id}`} kind={activePreview.kind} label={activePreview.label} imageUrl={previewItem.imageUrl} videoUrl={previewItem.videoUrl} onClose={() => setActivePreview(null)} /> : null}
       <style>{`

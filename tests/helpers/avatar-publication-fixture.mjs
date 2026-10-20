@@ -14,7 +14,7 @@ export function loadAvatarGateway(){
 }
 export function loadAvatarCaller(path,deps={},baseline=false){
  const source=baseline?execFileSync('git',['show','ab90b36f78cf589b2a89711498d920d0ed19b079:'+path],{encoding:'utf8',windowsHide:true}):readFileSync(new URL('../../'+path,import.meta.url),'utf8');
- const extra=path.endsWith('image-moderation.ts')?'\nObject.assign(exports,{approveModeratedUpload,updateModerationRecord,moderationRecordToUploadResponse'+(baseline?',setApprovedDancerAvatar':'')+'});':path.endsWith('admin/image-moderation/route.ts')?'\nObject.assign(exports,{approveReviewRecord,rejectReviewRecord});':path.endsWith('cron/image-moderation/route.ts')?'\nObject.assign(exports,{claimRetryRecord});':'';
- return compile(source+extra,{...loadGalleryGateway(),...loadAvatarGateway(),PROFILE_AVATAR_CONTEXT:'profile_avatar',isProfileAvatarUploadContext:v=>v==='profile_avatar',
+ const extra=path.endsWith('image-moderation.ts')?'\nObject.assign(exports,{updateModerationRecord,moderationRecordToUploadResponse'+(baseline?',approveModeratedUpload,setApprovedDancerAvatar':'')+'});':path.endsWith('admin/image-moderation/route.ts')?'\nObject.assign(exports,{approveReviewRecord,rejectReviewRecord});':path.endsWith('cron/image-moderation/route.ts')?'\nObject.assign(exports,{claimRetryRecord});':'';
+ return compile(source+extra,{...loadGalleryGateway(),...loadAvatarGateway(),prepareFaceCenteredAvatar:async image=>image,PROFILE_AVATAR_CONTEXT:'profile_avatar',isProfileAvatarUploadContext:v=>v==='profile_avatar',
   safeErrorMetadata:()=>({code:'synthetic'}),ACTIVE_IMAGE_MODERATION_STATUSES:['moderating','pending_review'],...deps});
 }

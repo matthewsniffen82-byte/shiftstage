@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { dancerSubmissionMedia } from "@/src/lib/dancr/dancer-submission-media";
 import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
@@ -75,13 +76,13 @@ export default function DancerProfileWorkspace({
   const pendingFace = profile?.pending_avatar_review as Record<string, unknown> | undefined;
   const faceReady = Boolean(profile?.avatarPhotoUrl);
   const approvedCount = approvedProfilePhotoCount(photos);
-  const galleryReady = approvedCount >= MIN_DANCER_ONBOARDING_PHOTOS;
-  const photosReady = faceReady && Boolean(mainPhoto) && galleryReady;
+  const submittedMedia = dancerSubmissionMedia(profile);
+  const galleryReady = submittedMedia.count >= MIN_DANCER_ONBOARDING_PHOTOS;
+  const photosReady = submittedMedia.hasMain && galleryReady;
   const faceState = faceReady ? "Approved" : pendingFace ? mediaReviewLabel("pending", String(pendingFace.status || "pending_review")) : "Required";
   const mainState = mainPhoto ? "Approved" : pendingMain ? mediaReviewLabel(pendingMain.status, pendingMain.moderationStatus) : "Required";
-  const photoBlocker = !mainPhoto ? pendingMain ? `Main photo: ${mainState.toLowerCase()}. Your avatar will update when it is approved.` : "Add your main photo to continue."
-    : !faceReady ? "Refresh your profile to load the avatar from your main photo."
-    : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - approvedCount} more approved profile photo${MIN_DANCER_ONBOARDING_PHOTOS - approvedCount === 1 ? "" : "s"}.` : "";
+  const photoBlocker = !submittedMedia.hasMain ? "Add your main photo to continue."
+    : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"}. Pending uploads count toward setup.` : "";
   const identityHint = draftIdentity.stageName.trim().length < 2 ? "Enter your stage name."
     : !draftIdentity.city.trim() ? "Choose your city." : "";
   const setupHint = identityHint || (step === "details" ? "" : photoBlocker);
@@ -152,7 +153,7 @@ export default function DancerProfileWorkspace({
     showStep(next);
   }
   function revealMissingPhoto() {
-    if (!mainPhoto || !faceReady) openEditorArea("dancer-main-photo");
+    if (!submittedMedia.hasMain) openEditorArea("dancer-main-photo");
     else openEditorArea("dancer-profile-media-library");
   }
 

@@ -25,7 +25,7 @@ const version='2020-01-01T00:00:00Z';
 const claimedVersion='2020-01-01T00:00:01.001Z';
 const legacyRetryClaim=process.env.MYDANCR_AVATAR_SOURCE_BASELINE==='1'||process.env.MYDANCR_PRIVATE_UPLOAD_BASELINE==='1';
 const clearContent={branding:"absent",brandingConfidence:0.99,nudity:'absent',sexualActivity:'absent',decision:'approved',reasonCodes:['safe_adult_promotional_content'],confidence:0.99};
-function scenario({decision='review',concurrentDecision='',providerError=false,providerFailure=null,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',replayStatus='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid',contentAnalysis=clearContent,contentError=false,identityAnalysis={personCount:1,personCountConfidence:0.99,singlePersonOnly:true,referenceMatch:'match',confidence:0.99}}={}) {
+function scenario({decision='review',concurrentDecision='',defer=false,providerError=false,providerFailure=null,providerMessage='provider_timeout',providerStatus=0,faceRejection=false,avatar=false,attemptCount=1,stateResponseLoss='',replayStatus='',retry=false,uploadBucket='',uploadFailure='',receiptKind='valid',contentAnalysis=clearContent,contentError=false,identityAnalysis={personCount:1,personCountConfidence:0.99,singlePersonOnly:true,referenceMatch:'match',confidence:0.99}}={}) {
   const events=[],files=new Set(),record=retry?{
     id:'record',user_id:'owner',upload_context:avatar?'profile_avatar':'profile_gallery:1',temporary_storage_path:'owner/profile/temp.jpg',
     decision:'review',status:'moderating',updated_at:legacyRetryClaim?version:claimedVersion,locked_at:claimedVersion,attempt_count:attemptCount+(legacyRetryClaim?0:1),avatar_expected_path:'avatar',avatar_expected_updated_at:version,
@@ -54,7 +54,7 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
         if(operation==='insert')Object.assign(record,{id:'record',updated_at:version,...value});
         const found=record.id&&filters.every(f=>f(record));
         if(operation==='update'&&found){
-          const fail=stateResponseLoss&&!writeFailed&&value.status==='rejected';
+          const fail=stateResponseLoss&&!writeFailed&&value.status==='pending_review';
           if(fail)writeFailed=true;
           if(fail&&stateResponseLoss==='before')return {data:null,error:transportError};
           Object.assign(record,value);events.push('state:'+value.status);
@@ -127,13 +127,13 @@ function scenario({decision='review',concurrentDecision='',providerError=false,p
   });
   return {record,files,events,transportError,get rpcVersion(){return rpcVersion;},
     run:()=>retry?exports.processImageModerationRetryRecord(client,{...record})
-      :exports.moderateAndStoreDancerPhoto(client,client,{file:new Blob(['synthetic']),userId:'owner',idempotencyKey:'synthetic'}),
+      :exports.moderateAndStoreDancerPhoto(client,client,{file:new Blob(['synthetic']),userId:'owner',idempotencyKey:'synthetic',deferModeration:defer}),
   };
 }
 
 for(const avatar of [false,true])for(const retry of [false,true]){
   const context=(avatar?'avatar':'gallery')+(retry?' retry':' first upload');
-  for(const [personCount,personCountConfidence,expected] of [[2,0.99,'rejected'],[1,0.7,'rejected'],[0,0.99,'rejected']]){
+  for(const [personCount,personCountConfidence,expected] of [[2,0.99,'pending_review'],[1,0.7,'pending_review'],[0,0.99,'pending_review']]){
     test(context+' blocks count '+personCount+' with certainty '+personCountConfidence,async()=>{
       const s=scenario({avatar,retry,decision:'approved',identityAnalysis:{personCount,personCountConfidence,singlePersonOnly:personCount===1,referenceMatch:'match',confidence:0.99}});
       const result=await s.run();
@@ -143,29 +143,29 @@ for(const avatar of [false,true])for(const retry of [false,true]){
       if(personCount===2)assert.ok(result.reasonCodes.includes('multiple_people_detected'));
     });
   }
-  test(context+' rejects nudity even when generic moderation would approve',async()=>{
+  test(context+' holds for admin review: nudity even when generic moderation would approve',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,nudity:'present'}});
     const result=await s.run();
-    assert.equal(result.decision,'rejected');assert.equal(s.record.status,'rejected');
-    assert.ok(result.reasonCodes.includes('nudity_rejected'));assert.match(result.message,/Nudity and sexual activity are not allowed/);
+    assert.equal(result.decision,'pending_review');assert.equal(s.record.status,'pending_review');
+    assert.ok(result.reasonCodes.includes('nudity_rejected'));assert.match(result.message,/Pending club approval/);
     assert.equal(s.record.category_flags.photo_nudity,true);
     assert.ok(s.events.includes('content-check'));assert.equal(s.events.includes('public-upload'),false);
   });
   for(const branding of ['present','uncertain'])test(context+' keeps '+branding+' branding off the public site despite an overall approval',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,branding}});
     const result=await s.run();
-    assert.equal(result.decision,'rejected');
-    assert.equal(s.record.status,'rejected');
+    assert.equal(result.decision,'pending_review');
+    assert.equal(s.record.status,'pending_review');
     assert.equal(s.events.includes('public-upload'),false);
-    if(branding==='uncertain')assert.equal(s.files.size,0);
-    else assert.match(result.message,/Visible branding and logos are not allowed/);
+    assert.ok(result.reasonCodes.includes(branding==='uncertain'?'branding_or_logo_uncertain':'visible_branding_or_logo'));
+    assert.equal(s.files.size,1);
   });
-  test(context+' rejects uncertain clothing coverage',async()=>{
+  test(context+' holds for admin review: uncertain clothing coverage',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,nudity:'uncertain',confidence:0.7}});
     const result=await s.run();
-    assert.equal(result.decision,'rejected');assert.equal(s.record.status,'rejected');
-    assert.ok(result.reasonCodes.includes('photo_approval_not_confirmed'));
-    assert.equal(result.photo,undefined);assert.equal(s.files.size,0);assert.equal(s.events.includes('public-upload'),false);
+    assert.equal(result.decision,'pending_review');assert.equal(s.record.status,'pending_review');
+    assert.equal(s.record.category_flags.ai_recommended_approval,false);
+    assert.equal(result.photo.reviewStatus,'pending');assert.equal(s.files.size,1);assert.equal(s.events.includes('public-upload'),false);
   });
   test(context+' cannot publish after the content classifier fails',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentError:true});
@@ -174,22 +174,22 @@ for(const avatar of [false,true])for(const retry of [false,true]){
     assert.ok(s.files.has(s.record.temporary_storage_path));assert.equal(s.events.includes('public-upload'),false);
   });
   for(const reason of ['contact_or_payment_overlay','sexual_services_or_solicitation','drug_use_or_sales','impersonation_or_deceptive_media']){
-    test(context+' rejects '+reason+' before any public upload',async()=>{
+    test(context+' holds for admin review: '+reason+' before any public upload',async()=>{
       const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,decision:'rejected',reasonCodes:[reason]}});
       const result=await s.run();
-      assert.equal(result.decision,'rejected');assert.equal(s.record.status,'rejected');
+      assert.equal(result.decision,'pending_review');assert.equal(s.record.status,'pending_review');
       assert.ok(result.reasonCodes.includes('photo_policy_'+reason));
       assert.equal(s.record.category_flags['photo_policy_'+reason],true);
       assert.equal(s.events.includes('public-upload'),false);
-      if(reason==='contact_or_payment_overlay')assert.match(result.message,/phone numbers, email addresses, payment handles, external social handles, and QR\/contact overlays/);
+      assert.match(result.message,/Pending club approval/);
     });
   }
-  test(context+' rejects an ambiguous venue logo/contact overlay',async()=>{
+  test(context+' holds for admin review: an ambiguous venue logo/contact overlay',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,decision:'review',reasonCodes:['contact_or_payment_overlay']}});
     const result=await s.run();
-    assert.equal(result.decision,'rejected');assert.equal(s.record.status,'rejected');
-    assert.ok(result.reasonCodes.includes('photo_approval_not_confirmed'));
-    assert.equal(result.photo,undefined);assert.equal(s.files.size,0);assert.equal(s.events.includes('public-upload'),false);
+    assert.equal(result.decision,'pending_review');assert.equal(s.record.status,'pending_review');
+    assert.equal(s.record.category_flags.ai_recommended_approval,false);
+    assert.equal(result.photo.reviewStatus,'pending');assert.equal(s.files.size,1);assert.equal(s.events.includes('public-upload'),false);
   });
   test(context+' cannot publish a legacy response missing the additional policy checks',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{nudity:'absent',sexualActivity:'absent',confidence:0.99}});
@@ -216,41 +216,59 @@ for(const concurrentDecision of ['approved','rejected']){
   });
 }
 for(const stateResponseLoss of ['before','after']){
-  test('private source survives rejection-update response loss '+stateResponseLoss+' commit',async()=>{
+  test('private sources survive pending-review response loss '+stateResponseLoss+' commit',async()=>{
     const s=scenario({stateResponseLoss});
     await assert.rejects(s.run(),error=>error===s.transportError);
-    assert.equal(s.files.size,1);
+    assert.equal(s.files.size,2);
     assert.ok(s.files.has(s.record.temporary_storage_path));
     assert.equal(s.events.some(e=>e.startsWith('remove:')),false);
   });
 }
 for (const avatar of [false,true]) for (const retry of [false,true]) {
-  test((avatar?'avatar':'gallery')+(retry?' retry':' upload')+' rejects a review result before cleaning its private source',async()=>{
+  test((avatar?'avatar':'gallery')+(retry?' retry':' upload')+' holds for admin review: a review result before cleaning its private source',async()=>{
     const s=scenario({avatar,retry});const result=await s.run();
-    assert.equal(result.decision,'rejected');assert.equal(s.record.decision,'rejected');
-    assert.equal(s.record.status,'rejected');assert.equal(result.photo,undefined);
-    assert.ok(result.reasonCodes.includes('photo_approval_not_confirmed'));
-    assert.match(result.message,/wasn't approved/);assert.doesNotMatch(result.message,/awaiting|manual review/i);
-    assert.equal(s.files.size,0);
-    assert.equal(s.events.includes('upload:dancr-image-moderation-review'),false);
-    assert.ok(s.events.indexOf('state:rejected')<s.events.indexOf('remove:dancr-image-moderation-temp'));
+    assert.equal(result.decision,'pending_review');assert.equal(s.record.decision,'review');
+    assert.equal(s.record.status,'pending_review');assert.equal(result.photo.reviewStatus,'pending');
+    assert.equal(s.record.category_flags.ai_recommended_approval,false);
+    assert.match(result.message,/Pending club approval/);
+    assert.equal(s.files.size,1);
+    assert.equal(s.events.includes('upload:dancr-image-moderation-review'),true);
+    assert.ok(s.events.indexOf('state:pending_review')<s.events.indexOf('remove:dancr-image-moderation-temp'));
   });
 }
 for (const avatar of [false,true]) for (const replayStatus of ['pending_review','completed','moderating','moderation_retry','moderation_error']) {
-  test((avatar?'avatar':'gallery')+' duplicate upload preserves '+replayStatus+' outcome without suggesting a review queue',async()=>{
+  test((avatar?'avatar':'gallery')+' duplicate upload preserves '+replayStatus+' outcome in the admin queue',async()=>{
     const s=scenario({avatar,replayStatus});const result=await s.run();
-    assert.equal(result.decision,['pending_review','completed'].includes(replayStatus)?'rejected':replayStatus);
+    assert.equal(result.decision,['pending_review','completed'].includes(replayStatus)?'pending_review':replayStatus);
     assert.doesNotMatch(result.message,/awaiting|manual review/i);
     assert.equal(s.events.length,0);
   });
 }
 
-test('retry publisher uses the advanced claim version and retains media after a publication conflict',async()=>{
-  const s=scenario({retry:true,decision:'approved'});
-  await assert.rejects(s.run(),{status:409});
-  if(legacyRetryClaim)assert.ok(Date.parse(s.rpcVersion)>Date.parse(version));
-  else assert.equal(s.rpcVersion,claimedVersion);
-  assert.ok(s.files.has('owner/profile/temp.jpg'));
+for (const avatar of [false, true]) for (const retry of [false, true]) {
+  for (const decision of ['approved', 'review', 'rejected']) test(`${avatar ? 'avatar' : 'gallery'} ${retry ? 'retry' : 'upload'} keeps AI ${decision} pending club approval`, async () => {
+    const s = scenario({avatar, retry, decision});
+    const result = await s.run();
+    assert.equal(result.decision, 'pending_review');
+    assert.equal(s.record.decision, 'review');
+    assert.equal(s.record.status, 'pending_review');
+    assert.equal(s.record.category_flags.ai_recommended_approval, decision === 'approved');
+    assert.equal(s.record.category_flags.ai_recommended_rejection, decision === 'rejected');
+    assert.equal(s.events.includes('public-upload'), false);
+    assert.equal(s.rpcVersion, undefined);
+    assert.ok(s.files.has(s.record.temporary_storage_path));
+    assert.equal(s.files.size, 1);
+  });
+}
+for (const avatar of [false, true]) test(`${avatar ? 'avatar' : 'gallery'} deferred upload is pending before AI starts`, async () => {
+  const s = scenario({avatar, defer:true, decision:'approved'});
+  const result = await s.run();
+  assert.equal(result.decision, 'moderating');
+  assert.equal(result.photo.reviewStatus, 'pending');
+  assert.equal(s.record.decision, 'review');
+  assert.equal(s.events.includes('content-check'), false);
+  assert.equal(s.events.includes('public-upload'), false);
+  assert.ok(s.files.has(s.record.temporary_storage_path));
 });
 
 const tempBucket='dancr-image-moderation-temp';
@@ -266,9 +284,9 @@ for(const uploadFailure of ['before','after','throw'])test('private upload retai
 });
 for(const receiptKind of ['legacy','valid'])test('private upload accepts exact '+receiptKind+' receipt before completing moderation',async()=>{
   const s=scenario({uploadBucket:tempBucket,receiptKind}),result=await s.run();
-  assert.equal(result.decision,'rejected');assert.equal(s.files.size,0);
-  assert.ok(s.events.indexOf('upload:'+tempBucket)<s.events.indexOf('state:rejected'));
-  assert.ok(s.events.indexOf('state:rejected')<s.events.indexOf('remove:'+tempBucket));
+  assert.equal(result.decision,'pending_review');assert.equal(s.files.size,1);
+  assert.ok(s.events.indexOf('upload:'+tempBucket)<s.events.indexOf('state:pending_review'));
+  assert.ok(s.events.indexOf('state:pending_review')<s.events.indexOf('remove:'+tempBucket));
 });
 
 for(const attemptCount of [1,3,4]){
@@ -293,10 +311,11 @@ for(const attemptCount of [1,3,4]){
   assert.equal(s.events.some(e=>e.startsWith('remove:')),false);assert.equal(s.files.size,1);
  });
 }
-for(const faceRejection of [false,true])test('avatar worker still cleans a confirmed '+(faceRejection?'face':'moderation')+' rejection',async()=>{
- const s=scenario({retry:true,avatar:true,attemptCount:3,decision:'rejected',providerError:faceRejection,faceRejection}),result=await s.run();
- assert.equal(result.decision,'rejected');assert.equal(s.record.decision,'rejected');assert.equal(s.record.status,'rejected');
- assert.equal(s.files.size,0);assert.ok(s.events.indexOf('state:rejected')<s.events.indexOf('remove:'+tempBucket));
+test('avatar worker retains a flagged upload for admin review',async()=>{
+ const s=scenario({retry:true,avatar:true,attemptCount:3,decision:'rejected'}),result=await s.run();
+ assert.equal(result.decision,'pending_review');assert.equal(s.record.decision,'review');
+ assert.equal(s.record.category_flags.ai_recommended_rejection,true);
+ assert.equal(s.files.size,1);assert.ok(s.files.has(s.record.temporary_storage_path));
 });
 
 const privateDiagnostic = 'synthetic-private-token owner@example.invalid /srv/private/query.sql https://example.invalid/object?token=synthetic-private-token';
@@ -335,10 +354,10 @@ for (const avatar of [false, true]) for (const attemptCount of [1, 3]) {
 }
 
 for (const avatar of [false, true]) for (const retry of [false, true]) {
-  test((avatar ? 'avatar' : 'gallery') + (retry ? ' retry' : ' upload') + ' reaches approved publication without an avatar match', async () => {
+  test((avatar ? 'avatar' : 'gallery') + (retry ? ' retry' : ' upload') + ' completes AI review without an avatar match', async () => {
     const s = scenario({ avatar, retry, decision: 'approved', identityAnalysis: { personCount: 1, personCountConfidence: 0.99, singlePersonOnly: true, referenceMatch: 'mismatch', confidence: 0.1 } });
-    await assert.rejects(s.run(), { status: 409 }); // The fixture deliberately conflicts at the publication RPC.
+    assert.equal((await s.run()).decision, 'pending_review');
     assert.ok(s.events.includes('content-check'));
-    assert.ok(s.events.includes('public-upload'), 'a missing or mismatched reference must not prevent approved publication');
+    assert.equal(s.events.includes('public-upload'), false, 'AI must leave publication to the admin');
   });
 }

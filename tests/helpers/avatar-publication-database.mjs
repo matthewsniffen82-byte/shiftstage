@@ -58,7 +58,7 @@ export const avatarRpcArgs={
 };
 export function avatarDatabaseClient(db,{beforeQuery,afterQuery}={}){
  const calls=[],removed=[];
- const client={calls,removed,storage:{from(bucket){return {remove:async paths=>{removed.push({bucket,paths});return {data:paths,error:null};},getPublicUrl:path=>({data:{publicUrl:'https://synthetic.invalid/'+path}})};}},
+ const client={calls,removed,storage:{from(bucket){return {download:async()=>({data:new Blob(["synthetic image"]),error:null}),remove:async paths=>{removed.push({bucket,paths});return {data:paths,error:null};},getPublicUrl:path=>({data:{publicUrl:'https://synthetic.invalid/'+path}})};}},
   async rpc(name,args){
    assert.ok(avatarRpcArgs[name],name);calls.push({name,args:structuredClone(args)});
    try{await beforeQuery?.({name,args});const values=avatarRpcArgs[name].map(k=>typeof args[k]==='object'&&args[k]!==null?JSON.stringify(args[k]):args[k]??null);

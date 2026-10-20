@@ -8,7 +8,7 @@ export function mediaReviewLabel(status: string, moderationStatus = "") {
   if (state === "hidden" || state === "removed") return "Removed";
   if (state === "expired") return "Expired";
   const review = String(moderationStatus || state).trim().toLowerCase();
-  if (["pending_review", "submitted", "review", "completed"].includes(review)) return "Awaiting review";
+  if (["pending_review", "submitted", "review", "completed"].includes(review)) return "Pending club approval";
   if (["error", "moderation_error", "moderation_retry"].includes(review)) return "Review delayed";
   if (["pending", "moderating"].includes(state)) return "Checking";
   return "Check upload status";
@@ -70,7 +70,7 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   if (savedMessage && !genericMessage.test(savedMessage)) return savedMessage;
   if (notes.length) return [...new Set(notes)].join(" ");
   if (rejected) return `This ${kind} wasn't approved, but a specific reason wasn't saved. You can replace it with another ${kind}.`;
-  if (label === "Awaiting review") return `This ${kind} needs a manual check before approval. A more specific reason wasn't provided. You can wait for review or replace it.`;
+  if (label === "Pending club approval") return `This ${kind} is waiting for club approval and is not visible on the site yet.`;
   if (label === "Upload incomplete" || label === "Upload failed") return `The upload didn't finish. Retry or choose another ${kind}.`;
-  return `The automatic check is still running. This ${kind} will stay here until a decision is ready.`;
+  return `AI checks are running. This ${kind} will stay private until your club approves it.`;
 }

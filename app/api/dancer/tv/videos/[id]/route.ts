@@ -107,13 +107,13 @@ const UUID_PATTERN =
 
 function moderationMessage(video: any) {
   if (video?.status === "moderating") {
-    return "Your video uploaded successfully and is queued for automatic safety review.";
+    return "Your video uploaded successfully. AI checks are running; club approval is required before it goes live.";
   }
   if (video?.status === "approved") {
-    return "Your video passed safety review and will appear whenever your dancer profile is live.";
+    return "Your video was approved by your club and will appear whenever your dancer profile is live.";
   }
   if (video?.status === "rejected") {
     return "Your video did not pass MyDancr TV safety review. Review the status below before uploading another video.";
   }
-  return "Your video was checked automatically and sent to an administrator for human review.";
+  return "Your video was checked automatically and saved for your club to review.";
 }

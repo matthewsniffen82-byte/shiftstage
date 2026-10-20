@@ -14,7 +14,7 @@ import {
   profilePhotoSlotKey,
 } from "@/src/lib/dancr/photo-slot";
 import { responsivePublicImage } from "@/src/lib/dancr/responsive-image";
-import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "@/src/lib/dancr/media-limits";
+import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { validateProfilePhotoDeletionInput } from "@/src/lib/dancr/profile-photo-input";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
 import { DancerSignupCityInputError, requireDancerSignupCity } from "@/src/lib/dancr/signup-cities";
@@ -247,7 +247,7 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
   const admin = createAdminSupabaseClient() as any;
   const { data, error } = await admin
     .from("image_moderation_records")
-    .select("id, image_id, final_storage_path, decision, status, reason_codes, review_notes, upload_context, temporary_storage_path, created_at")
+    .select("id, image_id, final_storage_path, decision, status, reason_codes, review_notes, upload_context, temporary_storage_path, photo_publication_mode, replacement_photo_id, created_at")
     .eq("user_id", userId)
     .eq("decision", "review")
     .neq("upload_context", PROFILE_AVATAR_CONTEXT)
@@ -795,26 +795,10 @@ async function submitProfileForReview(
   }
 
   const adminDb = createAdminSupabaseClient() as any;
-  const [setupResult, photosResult] = await Promise.all([
-    adminDb
-      .from("dancer_profiles")
-      .select("avatar_storage_path")
-      .eq("id", dancerId)
-      .maybeSingle(),
-    adminDb
-      .from("dancer_photos")
-      .select("id, review_status")
-      .eq("dancer_id", dancerId),
-  ]);
-  if (setupResult.error) throw setupResult.error;
-  if (photosResult.error) throw photosResult.error;
-
-  if (!String(setupResult.data?.avatar_storage_path || "").trim()) {
-    throw new Error("Upload an avatar that passes moderation before submitting your profile.");
-  }
-  const photos = photosResult.data || [];
-  if (approvedProfilePhotoCount(photos) < MIN_DANCER_ONBOARDING_PHOTOS) {
-    throw new ProfileInputError(`At least ${MIN_DANCER_ONBOARDING_PHOTOS} profile photos must be approved before completing setup.`);
+  const { data: media, error: mediaError } = await adminDb.rpc("dancer_submission_media", { p_dancer_id: dancerId });
+  if (mediaError) throw mediaError;
+  if (!media?.hasMain || Number(media.count) < MIN_DANCER_ONBOARDING_PHOTOS) {
+    throw new ProfileInputError(`Upload a main photo and at least ${MIN_DANCER_ONBOARDING_PHOTOS} profile photos before continuing.`);
   }
 
   await acceptDancerProfileSubmissionAgreement(client, input);

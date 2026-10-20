@@ -176,7 +176,6 @@ export function videoWorkerHarness(db, options = {}) {
     retryOwn: (userId = workerUserId) => tv.queueOwnMyDancrTvReviewRetry(client, userId, workerVideoId),
     submit: (deferModeration = false) => tv.submitMyDancrTvUpload(client, workerUserId, workerVideoId, { deferModeration }),
     retrySubmitted: () => tv.retrySubmittedMyDancrTvAutomatedModeration(client, slotId(2), workerVideoId),
-    demoPending: () => tv.autoApprovePendingMyDancrTvDemoVideo(client, workerVideoId),
     review: () => tv.reviewMyDancrTvVideo(client, slotId(2), workerVideoId, "approved", "Reviewed synthetic video"),
     finish(index, outcome = workerDecision()) { const job = pending[index]; assert.ok(job); if (outcome instanceof Error) job.reject(outcome); else job.resolve(outcome); },
     releaseAll() { released = true; for (const job of pending) job.resolve(workerDecision()); },

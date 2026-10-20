@@ -20,7 +20,7 @@ test("deferred submission acknowledges storage before inspection or AI, then val
   assert.equal(h.inspections.length, 0);
   assert.equal(h.providers.length, 0);
   assert.equal((await workerSnapshot(db)).row.upload_validation_pending, true);
-  assert.equal((await h.retry()).status, "approved");
+  assert.equal((await h.retry()).status, "submitted");
   assert.equal(h.inspections.length, 1);
   assert.equal(h.providers.length, 1);
   assert.equal((await workerSnapshot(db)).row.upload_validation_pending, false);
@@ -40,7 +40,7 @@ test("failed background inspection stays private and manual approval cannot bypa
   await h.retryOwn();
   assert.equal((await workerSnapshot(db)).row.upload_validation_pending, true);
   const recovered = videoWorkerHarness(db);
-  assert.equal((await recovered.retry()).status, "approved");
+  assert.equal((await recovered.retry()).status, "submitted");
   assert.equal(recovered.inspections.length, 1);
 });
 
@@ -60,7 +60,7 @@ test("owner retry queues a pending video and only the claimed worker publishes i
   assert.equal((await h.retryOwn()).status, "moderating");
   assert.equal(h.providers.length, 0);
   await assert.rejects(h.retryOwn(), /wait before retrying/);
-  assert.equal((await h.retry()).status, "approved");
+  assert.equal((await h.retry()).status, "submitted");
   assert.equal(h.providers.length, 1);
 });
 for (const status of ["approved", "rejected", "hidden", "expired", "uploading"]) test(`owner cannot restart ${status} video review`, async () => {
@@ -80,9 +80,9 @@ for (const demo of [false, true]) test(`${demo ? "demo" : "AI"} video review com
   await patchWorker(db, { status: "uploading" });
   const h = videoWorkerHarness(db, { demo, profile: unfinishedProfile });
   assert.equal((await h.submit(true)).status, "moderating");
-  assert.equal((await h.retry()).status, "approved");
-  assert.equal(h.providers.length, demo ? 0 : 1);
-  assert.equal(h.watermarks.length, 1);
+  assert.equal((await h.retry()).status, "submitted");
+  assert.equal(h.providers.length, 1);
+  assert.equal(h.watermarks.length, 0);
   assert.equal(isPublicDancerProfileEligible(unfinishedProfile), false);
 });
 
@@ -94,13 +94,18 @@ test("human video review can approve media while the dancer details are still a 
   assert.equal(isPublicDancerProfileEligible(unfinishedProfile), false);
 });
 
-for (const demo of [false, true]) test(`${demo ? "demo" : "AI"} upload workers give encoding the video processing budget`, async () => {
+for (const demo of [false, true]) test(`${demo ? "legacy demo setting" : "AI setting"} does not publish until human approval`, async () => {
   const h = videoWorkerHarness(db, { demo, beforeWatermarkReturns() {
     const remaining = serverJobRemainingMs();
     assert.ok(remaining > 150_000 && remaining <= VIDEO_PROCESSING_JOB_TIMEOUT_MS);
   } });
-  assert.equal((await h.retry()).status, "approved");
+  assert.equal((await h.retry()).status, "submitted");
+  assert.equal(h.providers.length, 1);
+  assert.equal(h.watermarks.length, 0);
+  assert.equal((await workerSnapshot(db)).row.published_at, null);
+  assert.equal((await h.review()).status, "approved");
   assert.equal(h.watermarks.length, 1);
+  assert.ok((await workerSnapshot(db)).row.reviewed_by);
 });
 
 test("two queued workers race through native compare-and-set but only one starts a provider", async () => {
@@ -112,7 +117,7 @@ test("two queued workers race through native compare-and-set but only one starts
     assert.equal(h.providers.length, 1);
   } finally { h.releaseAll(); outcomes = await Promise.all(jobs); }
   assert.equal(outcomes.filter(outcome => outcome.value === null).length, 1);
-  assert.equal(outcomes.filter(outcome => outcome.value?.status === "approved").length, 1);
+  assert.equal(outcomes.filter(outcome => outcome.value?.status === "submitted").length, 1);
   assert.equal((await workerSnapshot(db)).row.moderation_attempt_count, 1);
 });
 
@@ -140,7 +145,7 @@ test("an interrupted final attempt enters human review without another provider 
   assert.equal(row.published_at, null);
   assert.equal(h.providers.length, 0);
   assert.equal(h.watermarks.length, 0);
-  assert.equal((await h.retrySubmitted()).status, "approved");
+  assert.equal((await h.retrySubmitted()).status, "submitted");
   assert.equal((await workerSnapshot(db)).row.moderation_attempt_count, 4);
 });
 
@@ -169,7 +174,7 @@ for (const outcome of ["approved", "review", "rejected", "provider failure"]) {
       assert.deepEqual(await workerSnapshot(db), expected);
       assert.equal(h.watermarks.length, 0);
       h.finish(1);
-      assert.equal((await newer).value?.status, "approved");
+      assert.equal((await newer).value?.status, "submitted");
     } finally { h.releaseAll(); await Promise.all([older, newer].filter(Boolean)); }
   });
 }
@@ -200,15 +205,14 @@ for (const [name, values] of [
   } finally { h.releaseAll(); await job; }
 });
 
-test("losing ownership during watermark processing cannot publish its late result", async () => {
-  let expected;
-  const h = videoWorkerHarness(db, { async beforeWatermarkReturns() {
-    await patchWorker(db, { moderation_attempt_count: 2, moderation_details: { workerId: foreignWorker } });
-    expected = await workerSnapshot(db);
-  } });
-  assert.equal((await captureWorker(h.retry())).error?.status, 409);
-  assert.equal(h.watermarks.length, 1);
-  assert.deepEqual(await workerSnapshot(db), expected);
+test("AI completion never starts public watermark processing", async () => {
+  const h = videoWorkerHarness(db, { beforeWatermarkReturns() { assert.fail("AI must not publish media"); } });
+  assert.equal((await h.retry()).status, "submitted");
+  assert.equal(h.watermarks.length, 0);
+  const { row } = await workerSnapshot(db);
+  assert.equal(row.published_at, null);
+  assert.equal(row.reviewed_at, null);
+  assert.equal(row.reviewed_by, null);
 });
 
 for (const [name, receipt] of [
@@ -245,7 +249,7 @@ test("an uncertain claim response is never replayed", async () => {
 for (const decision of ["approved", "review", "rejected"]) test(`the current worker can persist ${decision} exactly once`, async () => {
   const h = videoWorkerHarness(db, { decision });
   const result = await h.retry();
-  assert.equal(result.status, decision === "review" ? "submitted" : decision);
+  assert.equal(result.status, "submitted");
   assert.equal(h.providers.length, 1);
   assert.equal(h.calls.filter(call => call.kind === "result").length, 1);
   assert.equal((await workerSnapshot(db)).row.moderation_decision, decision);
@@ -264,7 +268,7 @@ test("queued submission leaves one claimable job for the post-response worker", 
   assert.equal((await h.submit(true)).status, "moderating");
   assert.equal(h.providers.length, 0);
   assert.equal((await workerSnapshot(db)).row.moderation_attempt_count, 0);
-  assert.equal((await h.retry()).status, "approved");
+  assert.equal((await h.retry()).status, "submitted");
   assert.equal(h.providers.length, 1);
 });
 
@@ -298,34 +302,25 @@ test("inline submission receives the same worker ownership boundary", async () =
 test("an administrator retry receives a fresh worker and preserves explicit retry permission", async () => {
   await patchWorker(db, { status: "submitted", moderation_attempt_count: 3, moderation_reason_codes: ["video_moderation_provider_error"] });
   const h = videoWorkerHarness(db);
-  assert.equal((await h.retrySubmitted()).status, "approved");
+  assert.equal((await h.retrySubmitted()).status, "submitted");
   assert.equal((await workerSnapshot(db)).row.moderation_attempt_count, 4);
   assert.equal(h.providers.length, 1);
 });
 
-for (const source of ["inline", "pending"]) test(`demo ${source} publication also rejects a replaced worker`, async () => {
-  await patchWorker(db, { status: source === "inline" ? "uploading" : "submitted" });
-  let expected;
-  const h = videoWorkerHarness(db, { demo: true, async beforeWatermarkReturns() {
-    await patchWorker(db, { moderation_attempt_count: 2, moderation_details: { workerId: foreignWorker } });
-    expected = await workerSnapshot(db);
-  } });
-  const result = await captureWorker(source === "inline" ? h.submit() : h.demoPending());
-  assert.equal(result.error?.status, 409); assert.equal(h.providers.length, 0);
-  assert.deepEqual(await workerSnapshot(db), expected);
-});
-
-for (const source of ["inline", "pending"]) test(`the current demo ${source} worker can publish its own result`, async () => {
-  await patchWorker(db, { status: source === "inline" ? "uploading" : "submitted" });
+test("legacy demo configuration cannot bypass AI or club approval for inline uploads", async () => {
+  await patchWorker(db, { status: "uploading" });
   const h = videoWorkerHarness(db, { demo: true });
-  assert.equal((await (source === "inline" ? h.submit() : h.demoPending())).status, "approved");
-  assert.equal(h.providers.length, 0); assert.equal(h.watermarks.length, 1);
-  assert.equal((await workerSnapshot(db)).row.moderation_attempt_count, 1);
+  assert.equal((await h.submit()).status, "submitted");
+  assert.equal(h.providers.length, 1);
+  assert.equal(h.watermarks.length, 0);
+  assert.equal((await workerSnapshot(db)).row.published_at, null);
 });
 
-for (const demo of [false, true]) test(`a current ${demo ? "demo" : "AI"} worker preserves its watermark failure policy`, async () => {
+for (const demo of [false, true]) test(`admin watermark failure keeps ${demo ? "legacy demo" : "AI"} uploads pending`, async () => {
   const h = videoWorkerHarness(db, { demo, beforeWatermarkReturns() { throw new Error("Synthetic media failure"); } });
-  assert.equal((await h.retry()).status, demo ? "approved" : "submitted");
+  assert.equal((await h.retry()).status, "submitted");
+  await assert.rejects(h.review(), /Synthetic media failure/);
   const { row } = await workerSnapshot(db);
-  assert.ok(row.moderation_reason_codes.includes(demo ? "demo_watermark_processing_failed" : "public_watermark_processing_failed"));
+  assert.equal(row.status, "submitted");
+  assert.equal(row.published_at, null);
 });

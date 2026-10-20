@@ -64,8 +64,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
 
   const results = await Promise.all([
     safeCount("Dancer approvals", () => db.from("dancer_profiles").select("id", { count: "exact", head: true }).eq("status", "pending_review")),
-    safeCount("Photo moderation", () => db.from("image_moderation_records").select("id", { count: "exact", head: true }).eq("decision", "review")),
-    safeCount("Video moderation", () => db.from("mydancr_tv_videos").select("id", { count: "exact", head: true }).eq("status", "submitted")),
+    safeCount("Photo moderation", () => db.from("image_moderation_records").select("id", { count: "exact", head: true }).eq("decision", "review").not("upload_context", "like", "profile_%")),
     safeCount("Social link reviews", () => db.from("approval_reviews").select("id", { count: "exact", head: true }).eq("status", "pending").like("review_type", "social_link:%")),
     safeCount("Content reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
     safeCount("Copyright cases", () => db.from("dmca_cases").select("id", { count: "exact", head: true }).in("status", ["submitted", "needs_information", "disabled", "countered", "court_hold"])),
@@ -74,7 +73,6 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Overdue dancer approvals", () => db.from("dancer_profiles").select("id", { count: "exact", head: true }).eq("status", "pending_review").lt("updated_at", dayAgo)),
     safeCount("Overdue support", () => db.from("support_threads").select("id", { count: "exact", head: true }).eq("status", "open").lt("last_message_at", dayAgo)),
     safeCount("Overdue reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open").lt("created_at", dayAgo)),
-    safeCount("Overdue video moderation", () => db.from("mydancr_tv_videos").select("id", { count: "exact", head: true }).eq("status", "submitted").lt("submitted_at", dayAgo)),
     safeRows("Checked-in dancers", () => db.from("shifts")
       .select("id, status, shift_date, shift_source, starts_at, ends_at, checked_in_at, checked_out_at, location_status, location_verification_expires_at, dancer_profiles(id, stage_name, slug, city), venues(id, name, slug, city)")
       .not("checked_in_at", "is", null)
@@ -124,19 +122,19 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
   ]);
 
   const [
-    dancerProfiles, photos, videos, socialLinks, reports, dmca, support, venues,
-    overdueProfiles, overdueSupport, overdueReports, overdueVideos,
+    dancerProfiles, photos, socialLinks, reports, dmca, support, venues,
+    overdueProfiles, overdueSupport, overdueReports,
     checkedInDancers, activeVenueCount, qrGeneratedToday, qrRedeemedToday, suspiciousQrToday,
     missedCheckIns, totalAccounts, activeDancers, newAccounts7d, profileViews7d,
     profileViews30d, directionRequests7d, newFollows7d, publishedVideos30d, activity, accounts, clubRequests, allClubs, allDancers, tapStickers,
     pendingVip, activeVip, guestList24h, rides24h, emailUpdates, textUpdates,
   ] = results;
 
-  const overdue = count(overdueProfiles) + count(overdueSupport) + count(overdueReports) + count(overdueVideos);
+  const overdue = count(overdueProfiles) + count(overdueSupport) + count(overdueReports);
   const attentionCounts = {
     dancerProfiles: count(dancerProfiles),
     photos: count(photos),
-    videos: count(videos),
+    videos: 0,
     socialLinks: count(socialLinks),
     reports: count(reports),
     dmca: count(dmca),

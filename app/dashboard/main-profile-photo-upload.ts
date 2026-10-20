@@ -73,7 +73,7 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
     });
     assertOwner();
     const decision = String(data.decision || "");
-    if (!["approved", "review", "pending", "moderating", "moderation_retry", "moderation_error", "rejected"].includes(decision)) {
+    if (!["approved", "review", "pending", "pending_review", "moderating", "moderation_retry", "moderation_error", "rejected"].includes(decision)) {
       throw new Error("Unable to confirm your photo upload. Try again.");
     }
     let replacementWarning = "";

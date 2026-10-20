@@ -13,7 +13,8 @@ import { relabelPhotoItems, dancerPhotoItemsFromProfile } from "./DancerPhotoPan
 import DancerAgeVerificationGate, { type DancerAgeVerification } from "./DancerAgeVerificationGate";
 import DancerProfileAgreementReview, { type DancerProfileAgreementInput } from "./DancerProfileAgreementReview";
 import { DANCER_AGREEMENT_VERSION } from "@/src/lib/dancr/dancer-agreement-version";
-import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "@/src/lib/dancr/media-limits";
+import { dancerSubmissionMedia } from "@/src/lib/dancr/dancer-submission-media";
+import { MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
 import DancerIdentityEditor from "./DancerIdentityEditor";
 const DancerProfileMediaUploads = dynamic(() => import("./DancerProfileMediaUploads"));
 
@@ -517,7 +518,8 @@ export function DancerOnboardingCommand({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [expandedStepId, setExpandedStepId] = useState<string | null>(null);
   const [ageVerification, setAgeVerification] = useState<DancerAgeVerification | null>(null);
-  const galleryReady = approvedProfilePhotoCount(dancerPhotoItemsFromProfile(profile)) >= MIN_DANCER_ONBOARDING_PHOTOS;
+  const submissionMedia = dancerSubmissionMedia(profile);
+  const galleryReady = submissionMedia.count >= MIN_DANCER_ONBOARDING_PHOTOS;
   const previouslySubmitted = effectiveStatus === "pending_review" || effectiveStatus === "approved";
   const renewingAgreement = previouslySubmitted && agreementReviewRequired;
   const [reviewAgreement, setReviewAgreement] = useState(renewingAgreement);
@@ -543,11 +545,10 @@ export function DancerOnboardingCommand({
   const profileReady = Boolean(
     persistedStageName
     && persistedCity
-    && avatarUrl
-    && approvedPhotos.some(photo => photo.isPrimary)
+    && submissionMedia.hasMain
     && galleryReady,
   );
-  const submitted = previouslySubmitted && !agreementReviewRequired && (effectiveStatus === "approved" || profileReady);
+  const submitted = previouslySubmitted && !agreementReviewRequired;
   const ageVerified = ageVerification?.status === "verified";
   const ageNotRequired = !ageVerified && ageVerification?.required === false;
   const ageAccessAllowed = ageVerified || ageNotRequired;
@@ -555,7 +556,7 @@ export function DancerOnboardingCommand({
   const agreementNextStep = renewingAgreement ? "Review the updated agreement to continue."
     : "Review and accept the Dancer Agreement to continue to age verification.";
   const setupDetail = profileReady
-    ? "Your details, automatic avatar, and three profile photos are ready."
+    ? "Your uploads are saved. Continue to age verification, then tap at your club for media approval."
     : dancerProfileSetupBlocker({ persistedStageName, persistedCity, avatarUrl, pendingAvatar, approvedPhotos, pendingPhotos, rejectedPhotos });
   const steps = useMemo(() => [
     {
@@ -880,7 +881,6 @@ export function DancerOnboardingCommand({
 function dancerProfileSetupBlocker({
   persistedStageName,
   persistedCity,
-  avatarUrl,
   approvedPhotos,
   pendingPhotos,
   rejectedPhotos,
@@ -894,12 +894,12 @@ function dancerProfileSetupBlocker({
   rejectedPhotos: DancerPhotoItem[];
 }) {
   if (!persistedStageName || !persistedCity) return "Save your stage name and city.";
-  if (!approvedPhotos.some(photo => photo.isPrimary)) return "Choose your main photo.";
-  if (!avatarUrl) return "Refresh your profile to load the avatar from your main photo.";
-  if (approvedProfilePhotoCount(approvedPhotos) < MIN_DANCER_ONBOARDING_PHOTOS) {
-    if (pendingPhotos.length) return `Awaiting review: ${approvedPhotos.length} of ${MIN_DANCER_ONBOARDING_PHOTOS} required profile photos approved. You can add photos while you wait.`;
-    if (rejectedPhotos.length) return "Needs your action: replace photos that were not approved. Three approved profile photos are required.";
-    return `Add ${MIN_DANCER_ONBOARDING_PHOTOS - approvedPhotos.length} more profile ${MIN_DANCER_ONBOARDING_PHOTOS - approvedPhotos.length === 1 ? "photo" : "photos"}.`;
+  const uploads = [...approvedPhotos, ...pendingPhotos];
+  if (!uploads.some(photo => photo.isPrimary)) return "Choose your main photo.";
+  const count = new Set(uploads.map(photo => photo.isPrimary ? "main" : photo.id)).size;
+  if (count < MIN_DANCER_ONBOARDING_PHOTOS) {
+    if (rejectedPhotos.length) return "Replace photos that were not approved. Upload at least three profile photos.";
+    return `Add ${MIN_DANCER_ONBOARDING_PHOTOS - count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - count === 1 ? "" : "s"}. Pending uploads count toward setup.`;
   }
   return "Save the remaining profile changes.";
 }

@@ -354,24 +354,22 @@ function applicationFunctions(record, removed) {
   };
   Object.assign(dependencies,applicationModule('../src/lib/dancr/photo-publication.ts','publishDancerPhoto,cleanPublishedGalleryFiles,galleryReviewVersion,galleryReviewConflict,updatePendingGalleryReview',dependencies));
   Object.assign(dependencies,applicationModule('../src/lib/dancr/photo-publication-intent.ts','resolvePhotoPublicationIntent',dependencies));
-  const library=applicationModule('../src/lib/dancr/image-moderation.ts','approveModeratedUpload,createModerationRecord,updateModerationRecord',dependencies);
+  const library=applicationModule('../src/lib/dancr/image-moderation.ts','createModerationRecord,updateModerationRecord',dependencies);
   Object.assign(dependencies,library);
-  return {...library,resolvePhotoPublicationIntent:dependencies.resolvePhotoPublicationIntent,...applicationModule('../app/api/admin/image-moderation/route.ts','approveReviewRecord,rejectReviewRecord',dependencies)};
+  return {...library,resolvePhotoPublicationIntent:dependencies.resolvePhotoPublicationIntent,...applicationModule('../src/lib/dancr/image-review.ts','approveReviewRecord,rejectReviewRecord',dependencies)};
 }
 
-for(const mode of ['automatic','admin']) {
+for(const mode of ['admin']) {
   test(`${mode} application caller uses the actual transaction and retains media after a lost response`,async()=>{
     const old=await photo(200),record=await review(101,{mode:'replace',replaceId:old.id});
     await pg.query("update image_moderation_records set temporary_storage_path='synthetic-temp' where id=$1",[record.recordId]);
     const {client,removed}=applicationClient({lostResponse:true}),app=applicationFunctions(record,removed);
-    const run=()=>app.approveModeratedUpload(client,{recordId:record.recordId,expectedUpdatedAt:updatedAt,profileId:profile,userId:owner,
-        image:{},tempPath:'synthetic-temp',uploadContext:'profile_gallery:1',isAvatar:false,isPrimary:false,sortOrder:1,altText:null,
-        evaluation:{reasonCodes:[],categoryScores:{},providerFlagged:false},categoryFlags:{}});
     if(mode==='admin') {
       const current=(await allReviews())[0];
+      current.status='pending_review';
       current.updated_at=(await pg.query('select to_jsonb(updated_at) as value from image_moderation_records where id=$1',[record.recordId])).rows[0].value;
       await assert.rejects(app.approveReviewRecord(client,current,reviewer,''),e=>e.code==='08006');
-    }else await assert.rejects(run(),e=>e.code==='08006');
+    }
     assert.equal((await allReviews())[0].decision,'approved');
     assert.equal((await allPhotos()).length,1);assert.equal((await allPhotos())[0].storage_path,record.path);
     assert.deepEqual(removed,[]);

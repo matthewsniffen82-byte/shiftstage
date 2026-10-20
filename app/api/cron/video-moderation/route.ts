@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { authorizeCronRequest } from "@/src/lib/dancr/cron-auth";
 import {
-  autoApprovePendingMyDancrTvDemoVideo,
   retryMyDancrTvAutomatedModeration,
 } from "@/src/lib/dancr/tv";
-import { isVideoDemoAutoApproveMode } from "@/src/lib/dancr/video-moderation-mode";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { VIDEO_PROCESSING_JOB_TIMEOUT_MS, VIDEO_PROCESSING_ROUTE_TIMEOUT_MS, MODERATION_WORKER_STALE_MS, runWithServerJob, serverJobRemainingMs } from "@/src/lib/server-job";
@@ -22,7 +20,6 @@ export async function GET(request: Request) {
 
   const admin = createAdminSupabaseClient();
   const staleBefore = new Date(Date.now() - STALE_AFTER_MS).toISOString();
-  const demoAutoApprove = isVideoDemoAutoApproveMode();
 
   try {
     return await runWithServerJob(async () => {
@@ -30,14 +27,9 @@ export async function GET(request: Request) {
       .from("mydancr_tv_videos")
       .select("id, status, moderation_attempt_count", { count: "exact" })
       .limit(MAX_JOBS_PER_RUN);
-    query = demoAutoApprove
-      ? query
-          .or("status.eq.moderating,and(status.eq.submitted,moderation_attempt_count.lt.3)")
-          .order("submitted_at", { ascending: true, nullsFirst: false })
-      : query
-          .eq("status", "moderating")
-          .lt("moderation_started_at", staleBefore)
-          .order("moderation_started_at", { ascending: true });
+    query = query.eq("status", "moderating")
+      .lt("moderation_started_at", staleBefore)
+      .order("moderation_started_at", { ascending: true });
     const { data: videos, count: eligibleAtStart, error } = await query;
     if (error) throw error;
 
@@ -47,9 +39,7 @@ export async function GET(request: Request) {
         ? 15_000 : VIDEO_PROCESSING_JOB_TIMEOUT_MS;
       if (serverJobRemainingMs() < requiredMs) break;
       try {
-        const result = demoAutoApprove && video.status === "submitted"
-          ? await autoApprovePendingMyDancrTvDemoVideo(admin, video.id)
-          : await retryMyDancrTvAutomatedModeration(admin, video.id);
+        const result = await retryMyDancrTvAutomatedModeration(admin, video.id);
         results.push({
           videoId: video.id,
           ok: Boolean(result),
@@ -58,9 +48,7 @@ export async function GET(request: Request) {
         });
       } catch (error) {
         console.error(JSON.stringify({
-          event: demoAutoApprove
-            ? "mydancr_tv.demo_auto_approval_retry_failed"
-            : "mydancr_tv.ai_moderation_retry_failed",
+          event: "mydancr_tv.ai_moderation_retry_failed",
           videoId: video.id,
           ...safeErrorMetadata(error),
         }));
@@ -74,9 +62,7 @@ export async function GET(request: Request) {
     }, VIDEO_PROCESSING_ROUTE_TIMEOUT_MS);
   } catch (error) {
     console.error(JSON.stringify({
-      event: demoAutoApprove
-        ? "mydancr_tv.demo_auto_approval_cron_failed"
-        : "mydancr_tv.ai_moderation_cron_failed",
+      event: "mydancr_tv.ai_moderation_cron_failed",
       ...safeErrorMetadata(error),
     }));
     return NextResponse.json(

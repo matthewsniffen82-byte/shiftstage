@@ -99,6 +99,7 @@ const nextConfig = {
     "/live-shell-feature.js": ["./outputs/live-shell-tv.js"],
     "/api/admin/tv/import": ["./node_modules/ffmpeg-static/ffmpeg*"],
     "/api/admin/tv/videos": ["./node_modules/ffmpeg-static/ffmpeg*"],
+    "/api/venue/media-reviews": ["./node_modules/ffmpeg-static/ffmpeg*"],
     "/api/dancer/tv/videos/\\[id\\]": ["./node_modules/ffmpeg-static/ffmpeg*"],
     "/api/cron/video-moderation": ["./node_modules/ffmpeg-static/ffmpeg*"],
   },
