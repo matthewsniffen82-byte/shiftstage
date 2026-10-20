@@ -292,13 +292,14 @@ test("Rhino showcase uses only approved public demo dancers and enforces gold", 
   assert.equal(live.dancers.length, 2);
 });
 
-test("Rhino locations have distinct roster sizes and deterministic samples in ranked order", () => {
+test("every Rhino location has 25–80 dancers with distinct, stable roster sizes in ranked order", () => {
   assert.equal(rhino.RHINO_LOCATIONS.length, 22);
   assert.equal(new Set(rhino.RHINO_LOCATIONS.map(row => row.key)).size, 22);
   assert.equal(new Set(rhino.RHINO_LOCATIONS.map(row => row.sampleCount)).size, 22);
   const rows = Array.from({ length: 96 }, (_, i) => ({ id: `dancer-${i}` }));
   const { sampleRoster } = runtime().MydancrVenueEmbed;
   for (const location of rhino.RHINO_LOCATIONS) {
+    assert.ok(Number.isInteger(location.sampleCount) && location.sampleCount >= 25 && location.sampleCount <= 80, location.label);
     const chosen = sampleRoster(rows, location.key, location.sampleCount);
     assert.equal(chosen.length, location.sampleCount);
     assert.deepEqual(Array.from(chosen), Array.from(sampleRoster(rows, location.key, location.sampleCount)));
