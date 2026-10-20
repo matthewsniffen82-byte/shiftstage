@@ -44,17 +44,26 @@ function find(tree, predicate) {
   return [tree.props?.children].flat().map(child => find(child, predicate)).find(Boolean);
 }
 
-test('loading shows only Loading profile text and an accessible exit, without a heading or placeholder photo', () => {
+test('loading shows the homepage-style spinner and Loading profile, without a heading or placeholder photo', () => {
   const render = fixture();
   let closed = 0;
   const props = { profileId: 'one', profile: null, prewarm: true,
     loadingIdentity: { id: 'one', stageName: 'Bailey', photoUrl: 'https://example.invalid/bailey.jpg' }, onClose: () => closed++ };
   const tree = render(props);
   const loading = find(tree, element => element.props?.className === 'ir-profile-loading');
-  assert.equal(find(loading, element => element.props?.role === 'status').props.children, 'Loading profile\u2026');
+  const status = find(loading, element => element.props?.role === 'status');
+  assert.equal(status.props.className, 'ir-profile-loading-status');
+  const [spinner, label] = status.props.children;
+  assert.equal(spinner.props.className, 'ir-profile-loading-spinner');
+  assert.equal(spinner.props['aria-hidden'], 'true');
+  assert.equal(label.props.children, 'Loading profile\u2026');
   assert.equal(find(loading, element => /^h[1-6]$/.test(element.type) || element.type === 'img'), undefined);
   assert.equal(tree.props['aria-label'], 'Bailey\u2019s full profile');
   const close = find(loading, element => element.type === 'button');
+  const navigation = find(loading, element => element.props?.className === 'ir-profile-loading-nav');
+  assert.equal(navigation.type, 'div', 'guest button positioning rules must not apply to the positioned wrapper');
+  assert.equal(navigation.props.children, close);
+  assert.deepEqual(Array.from(loading.props.children, element => element.props.className), ['ir-profile-loading-nav', 'ir-profile-loading-status']);
   assert.equal(close.props['aria-label'], 'Close dancer profile');
   assert.equal(close.props.title, 'Back');
   assert.equal(close.props.children.props['aria-hidden'], 'true');
@@ -73,7 +82,7 @@ test('switching dancers hides the old profile and keeps the same simple guest lo
   const props = { profileId: 'one', profile: null, prewarm: true, onClose() {} };
   find(render(props), element => element.type === 'iframe').props.onReady();
   const tree = render({ ...props, profileId: 'two', token: 'table-token', loadingIdentity: { id: 'two', stageName: 'Star' } });
-  assert.equal(find(tree, element => element.props?.role === 'status').props.children, 'Loading profile\u2026');
+  assert.equal(find(tree, element => element.props?.role === 'status').props.children[1].props.children, 'Loading profile\u2026');
   assert.equal(find(tree, element => element.type === 'h2'), undefined);
   assert.equal(find(tree, element => element.type === 'img'), undefined);
   assert.equal(find(tree, element => element.props?.className === 'ir-profile-loading').props['data-audience'], 'guest');
@@ -81,7 +90,7 @@ test('switching dancers hides the old profile and keeps the same simple guest lo
   assert.equal(find(render({ ...props, profileId: '' }), element => element.props?.className === 'ir-profile-loading'), undefined);
 });
 
-test('loading text stays centered while its touch-sized exit stays in the top corner', () => {
+test('loading stays centered independently of shared button positioning, with a corner exit', () => {
   const css = postcss.parse(readFileSync('app/internal/internal.css', 'utf8'));
   const styles = selector => {
     const rules = [];
@@ -93,13 +102,51 @@ test('loading text stays centered while its touch-sized exit stays in the top co
   const loading = styles(base + ' .ir-profile-loading');
   assert.equal(loading.display, 'grid');
   assert.equal(loading['place-items'], 'center');
-  const close = styles(base + ' button.ir-profile-loading-close');
-  assert.equal(close.position, 'absolute');
+  const navigation = styles(base + ' .ir-profile-loading-nav');
+  assert.equal(navigation.position, 'absolute');
+  assert.match(navigation.top, /safe-area-inset-top/);
+  assert.match(navigation.left, /safe-area-inset-left/);
+  const buttonSelector = 'html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading-nav button.ir-profile-loading-close';
+  const close = styles(buttonSelector);
+  assert.equal(close.position, 'relative', 'relative buttons cannot shift the status out of its center');
   assert.equal(close.width, '44px');
   assert.equal(close.height, '44px');
-  assert.match(close.top, /safe-area-inset-top/);
+  css.walkRules(buttonSelector, rule => {
+    for (const property of ['padding', 'border', 'background', 'box-shadow', 'font-size']) {
+      assert.equal(rule.nodes.find(node => node.prop === property).important, true, property + ' overrides global important button styles');
+    }
+  });
   const guest = base + ' .ir-profile-loading[data-audience="guest"]';
   assert.equal(styles(guest).background, '#0b0b0d');
-  assert.equal(styles(guest + ' p').color, '#b5b5ba');
-  assert.equal(styles(guest + ' button.ir-profile-loading-close:focus-visible')['outline-color'], '#d4d4d8');
+  assert.equal(styles('html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"] .ir-profile-loading-nav button.ir-profile-loading-close:focus-visible')['outline-color'], '#d4d4d8');
+});
+
+test('profile spinner size, spacing and motion match homepage loading and respect reduced motion', () => {
+  const profileCss = postcss.parse(readFileSync('app/internal/internal.css', 'utf8'));
+  const homeCss = postcss.parse(readFileSync('src/live-shell/styles/override-styles-03-home-discovery-empty-action-is-secondary-hover-home-discovery-em.css', 'utf8'));
+  const styles = (css, selector) => {
+    const rules = [];
+    css.walkRules(rule => { if (rule.parent.type === 'root' && rule.selectors.includes(selector)) rules.push(rule); });
+    assert.equal(rules.length, 1, selector);
+    return Object.fromEntries(rules[0].nodes.filter(node => node.type === 'decl').map(node => [node.prop, node.value]));
+  };
+  const base = 'body dialog.ir-full-profile-dialog';
+  const status = styles(profileCss, base + ' .ir-profile-loading-status');
+  const homeStatus = styles(homeCss, '.home-discovery-loading.is-dancers');
+  for (const property of ['display', 'align-items', 'justify-content', 'gap', 'color', 'font-size', 'line-height', 'text-align']) {
+    assert.equal(status[property], homeStatus[property], property);
+  }
+  const spinner = styles(profileCss, base + ' .ir-profile-loading-spinner');
+  const homeSpinner = styles(homeCss, '.home-discovery-loading-spinner');
+  for (const property of ['box-sizing', 'flex', 'width', 'height', 'border', 'border-top-color', 'border-radius']) {
+    assert.equal(spinner[property], homeSpinner[property], property);
+  }
+  assert.equal(spinner.animation.split(' ').slice(1).join(' '), homeSpinner.animation.split(' ').slice(1).join(' '));
+  const reduced = [];
+  profileCss.walkAtRules('media', rule => {
+    if (rule.params.replaceAll(' ', '') !== '(prefers-reduced-motion:reduce)') return;
+    rule.walkRules(base + ' .ir-profile-loading-spinner', rule => reduced.push(rule));
+  });
+  assert.equal(reduced.length, 1);
+  assert.equal(reduced[0].nodes.find(node => node.prop === 'animation').value, 'none');
 });

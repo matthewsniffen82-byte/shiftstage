@@ -20,14 +20,21 @@ body dialog.ir-profile-dialog.ir-full-profile-dialog{position:fixed;inset:0;widt
 body dialog.ir-full-profile-dialog:not([open]){display:block;visibility:hidden;pointer-events:none}
 /* Scope above dashboard defaults so loading keeps a simple status and exit. */
 body dialog.ir-full-profile-dialog .ir-profile-loading{position:absolute;inset:0;z-index:1;display:grid;place-items:center;overflow:auto;padding:64px 24px;background:var(--discovery-backdrop,#1c122b);color:#f7f2ff;font-family:inherit;box-sizing:border-box}
-body dialog.ir-full-profile-dialog .ir-profile-loading p{margin:0;color:#c4b5d7;font-size:14px;line-height:1.5;text-align:center}
-body dialog.ir-full-profile-dialog button.ir-profile-loading-close{position:absolute;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left));display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;margin:0;padding:0;border:0;border-radius:8px;background:transparent;color:inherit;box-shadow:none;font:inherit;font-size:24px;cursor:pointer}
-body dialog.ir-full-profile-dialog button.ir-profile-loading-close:is(:hover,:focus-visible){color:#fff;background:#30223f}
-body dialog.ir-full-profile-dialog button.ir-profile-loading-close:focus-visible{outline:2px solid #c4b5fd;outline-offset:2px}
+body dialog.ir-full-profile-dialog .ir-profile-loading-status{display:flex;align-items:center;justify-content:center;gap:10px;margin:0;color:#d4d4dc;font-size:14px;line-height:1.5;text-align:center}
+body dialog.ir-full-profile-dialog .ir-profile-loading-spinner{box-sizing:border-box;flex:0 0 20px;width:20px;height:20px;border:2px solid #ffffff29;border-top-color:#c4b5fd;border-radius:50%;animation:irProfileLoadingSpin .8s linear infinite}
+/* Position the container, not the button: guest button rules use position:relative. */
+body dialog.ir-full-profile-dialog .ir-profile-loading-nav{position:absolute;top:max(12px,env(safe-area-inset-top));left:max(12px,env(safe-area-inset-left))}
+html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading-nav button.ir-profile-loading-close{position:relative;display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;min-height:44px;margin:0;padding:0!important;border:0!important;border-radius:8px!important;background:transparent!important;color:inherit;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;font:inherit;font-size:24px!important;cursor:pointer}
+html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading-nav button.ir-profile-loading-close::before,
+html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading-nav button.ir-profile-loading-close::after{display:none!important}
+html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading-nav button.ir-profile-loading-close:is(:hover,:focus-visible){color:#fff;background:#30223f!important}
+html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading-nav button.ir-profile-loading-close:focus-visible{outline:2px solid #c4b5fd!important;outline-offset:2px}
 body dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"]{background:#0b0b0d;color:#f5f5f6}
-body dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"] p{color:#b5b5ba}
-body dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"] button.ir-profile-loading-close:is(:hover,:focus-visible){background:#29292e}
-body dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"] button.ir-profile-loading-close:focus-visible{outline-color:#d4d4d8}
+body dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"] .ir-profile-loading-spinner{border-top-color:var(--venue-guest-accent,var(--venue-brand-accent,#d4d4d8))}
+html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"] .ir-profile-loading-nav button.ir-profile-loading-close:is(:hover,:focus-visible){background:#29292e!important}
+html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"] .ir-profile-loading-nav button.ir-profile-loading-close:focus-visible{outline-color:#d4d4d8!important}
+@keyframes irProfileLoadingSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){body dialog.ir-full-profile-dialog .ir-profile-loading-spinner{animation:none}}
 
 /* Internal uses neutral surfaces so each club's accent owns the emphasis.
  * Cover the page gutters, embedded staff roster and profile loading frame. */

@@ -17,8 +17,13 @@ export function ClubProfileDialog({ prewarm = false, publicSlug, publicActions, 
   return (
     <dialog className="ir-profile-dialog ir-full-profile-dialog" ref={profileDialog} onCancel={event => { event.preventDefault(); onClose(); }} aria-label={profile?.stage_name || loadingIdentity?.stageName ? `${profile?.stage_name || loadingIdentity?.stageName}’s full profile` : "Dancer profile"}>
       {profileId && readyId !== profileId ? <div className="ir-profile-loading" data-audience={token ? "guest" : "mydancr"}>
-        <button type="button" className="ir-profile-loading-close" onClick={onClose} aria-label="Close dancer profile" title="Back"><span aria-hidden="true">←</span></button>
-        <p role="status">Loading profile…</p>
+        <div className="ir-profile-loading-nav">
+          <button type="button" className="ir-profile-loading-close" onClick={onClose} aria-label="Close dancer profile" title="Back"><span aria-hidden="true">←</span></button>
+        </div>
+        <div className="ir-profile-loading-status" role="status">
+          <span className="ir-profile-loading-spinner" aria-hidden="true" />
+          <span>Loading profile…</span>
+        </div>
       </div> : null}
       {prewarm || profileId ? <InternalFullProfile key={viewerAttempt} hidden={!!profileId && readyId !== profileId} profileId={profileId} publicSlug={publicSlug} publicActions={publicActions} profile={profile} token={token} request={request} onRequest={onRequest} onCancel={onCancel} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={() => { setReadyId(""); setViewerAttempt(attempt => attempt + 1); (onError || onClose)(); }} onClose={onClose} /> : null}
     </dialog>
