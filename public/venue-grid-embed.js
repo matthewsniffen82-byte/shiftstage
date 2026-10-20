@@ -73,7 +73,7 @@
       panel.hidden = false;
       panel.classList.add("is-open");
       trigger.setAttribute("aria-expanded", "true");
-      (options.find(option => option.dataset.location === select.value) || options[0])?.focus({ preventScroll: true });
+      (options.find(option => option.dataset.location === select.value) || options[0])?.focus();
     }
     trigger.addEventListener("click", () => panel.hidden ? open() : close());
     trigger.addEventListener("keydown", event => {
