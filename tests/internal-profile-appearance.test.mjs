@@ -26,127 +26,122 @@ const code = ts.transpileModule(readFileSync('app/internal/FullProfileDialog.tsx
 }).outputText;
 
 function fixture() {
-  const states = [], exports = {};
-  let index = 0;
+  const states = [], exports = {}, events = [];
+  const dialog = { open: false, showModal() { this.open = true; events.push('show'); }, close() { this.open = false; events.push('close'); } };
+  let index = 0, effect, previousDeps, changed;
   vm.runInNewContext(code, {
     exports,
     require: name => name === 'react' ? {
-      useRef: () => ({ current: null }), useEffect() {},
-      useState: initial => { const i = index++; if (!(i in states)) states[i] = initial; return [states[i], value => { states[i] = typeof value === 'function' ? value(states[i]) : value; }]; },
+      useRef: () => ({ current: dialog }),
+      useEffect(callback, deps) {
+        if (!previousDeps || deps.some((dep, i) => dep !== previousDeps[i])) effect = callback;
+        previousDeps = deps;
+      },
+      useState: initial => {
+        const i = index++;
+        if (!(i in states)) states[i] = initial;
+        return [states[i], value => {
+          const next = typeof value === 'function' ? value(states[i]) : value;
+          if (next !== states[i]) { states[i] = next; changed = true; }
+        }];
+      },
     } : name === 'react/jsx-runtime' ? require(name) : { InternalFullProfile: 'iframe' },
   });
-  return props => { index = 0; return exports.ClubProfileDialog(props); };
+  return { dialog, events, render(props) {
+    let tree, renders = 0;
+    do {
+      index = 0; changed = false; effect = undefined;
+      tree = exports.ClubProfileDialog(props);
+      effect?.();
+      assert.ok(++renders < 10, 'dialog settles without a render loop');
+    } while (changed);
+    return tree;
+  } };
 }
 
-function find(tree, predicate) {
-  if (!tree || typeof tree !== 'object') return undefined;
-  if (predicate(tree)) return tree;
-  return [tree.props?.children].flat().map(child => find(child, predicate)).find(Boolean);
+function viewer(tree) { return tree.props.children; }
+
+for (const audience of ['guest', 'staff', 'customer']) {
+  test(`${audience} keeps the roster visible until its actual profile is ready`, () => {
+    const f = fixture();
+    let ready = 0;
+    const props = { profileId: 'one', profile: audience === 'customer' ? null : { id: 'one', stage_name: 'Bailey' },
+      token: audience === 'guest' ? 'table-token' : undefined,
+      publicSlug: audience === 'customer' ? 'bailey' : undefined, prewarm: true,
+      loadingIdentity: { id: 'one', stageName: 'Bailey', photoUrl: 'https://example.invalid/photo.jpg' },
+      onReady: () => ready++, onClose() {} };
+    const tree = f.render(props);
+    assert.equal(f.dialog.open, false, 'loading cannot create a modal backdrop or block the roster');
+    assert.equal(viewer(tree).type, 'iframe', 'the full viewer is the only dialog content');
+    assert.equal(viewer(tree).props.hidden, true);
+    assert.equal(tree.props['aria-label'], 'Bailey’s full profile');
+    assert.doesNotMatch(JSON.stringify(tree), /Loading profile|ir-profile-loading|spinner/);
+    viewer(tree).props.onReady();
+    assert.equal(viewer(f.render(props)).props.hidden, false);
+    assert.equal(f.dialog.open, true);
+    assert.equal(ready, 1);
+    assert.deepEqual(f.events, ['show']);
+    f.render({ ...props, profile: props.profile && { ...props.profile, requestsTonight: 5 } });
+    assert.deepEqual(f.events, ['show'], 'polling preserves the open profile and scroll position');
+  });
 }
 
-test('loading shows the homepage-style spinner and Loading profile, without a heading or placeholder photo', () => {
-  const render = fixture();
-  let closed = 0;
-  const props = { profileId: 'one', profile: null, prewarm: true,
-    loadingIdentity: { id: 'one', stageName: 'Bailey', photoUrl: 'https://example.invalid/bailey.jpg' }, onClose: () => closed++ };
-  const tree = render(props);
-  const loading = find(tree, element => element.props?.className === 'ir-profile-loading');
-  const status = find(loading, element => element.props?.role === 'status');
-  assert.equal(status.props.className, 'ir-profile-loading-status');
-  const [spinner, label] = status.props.children;
-  assert.equal(spinner.props.className, 'ir-profile-loading-spinner');
-  assert.equal(spinner.props['aria-hidden'], 'true');
-  assert.equal(label.props.children, 'Loading profile\u2026');
-  assert.equal(find(loading, element => /^h[1-6]$/.test(element.type) || element.type === 'img'), undefined);
-  assert.equal(tree.props['aria-label'], 'Bailey\u2019s full profile');
-  const close = find(loading, element => element.type === 'button');
-  const navigation = find(loading, element => element.props?.className === 'ir-profile-loading-nav');
-  assert.equal(navigation.type, 'div', 'guest button positioning rules must not apply to the positioned wrapper');
-  assert.equal(navigation.props.children, close);
-  assert.deepEqual(Array.from(loading.props.children, element => element.props.className), ['ir-profile-loading-nav', 'ir-profile-loading-status']);
-  assert.equal(close.props['aria-label'], 'Close dancer profile');
-  assert.equal(close.props.title, 'Back');
-  assert.equal(close.props.children.props['aria-hidden'], 'true');
-  close.props.onClick();
-  assert.equal(closed, 1);
-  assert.doesNotMatch(JSON.stringify(loading), /Bailey|Dancer profile|Loading details|Requests tonight|Followers|Working now/);
-  const viewer = find(tree, element => element.type === 'iframe');
-  assert.equal(viewer.props.hidden, true);
-  viewer.props.onReady();
-  assert.equal(find(render(props), element => element.props?.className === 'ir-profile-loading'), undefined);
-  assert.equal(find(render(props), element => element.type === 'iframe').props.hidden, false);
+test('switching dancers closes the old dialog until the new profile is ready', () => {
+  const f = fixture(), props = { profileId: 'one', profile: null, prewarm: true, onClose() {} };
+  viewer(f.render(props)).props.onReady(); f.render(props);
+  const next = { ...props, profileId: 'two' };
+  const pending = f.render(next);
+  assert.equal(f.dialog.open, false);
+  assert.equal(viewer(pending).props.hidden, true);
+  viewer(pending).props.onReady(); f.render(next);
+  assert.equal(f.dialog.open, true);
+  assert.deepEqual(f.events, ['show', 'close', 'show']);
+  const back = f.render(props);
+  assert.equal(f.dialog.open, false, 'a previously viewed ID must still wait for current readiness');
+  assert.equal(viewer(back).props.hidden, true);
 });
 
-test('switching dancers hides the old profile and keeps the same simple guest loading status', () => {
-  const render = fixture();
-  const props = { profileId: 'one', profile: null, prewarm: true, onClose() {} };
-  find(render(props), element => element.type === 'iframe').props.onReady();
-  const tree = render({ ...props, profileId: 'two', token: 'table-token', loadingIdentity: { id: 'two', stageName: 'Star' } });
-  assert.equal(find(tree, element => element.props?.role === 'status').props.children[1].props.children, 'Loading profile\u2026');
-  assert.equal(find(tree, element => element.type === 'h2'), undefined);
-  assert.equal(find(tree, element => element.type === 'img'), undefined);
-  assert.equal(find(tree, element => element.props?.className === 'ir-profile-loading').props['data-audience'], 'guest');
-  assert.equal(find(tree, element => element.type === 'iframe').props.hidden, true);
-  assert.equal(find(render({ ...props, profileId: '' }), element => element.props?.className === 'ir-profile-loading'), undefined);
+test('closing or cancelling a pending selection cannot let a late result open a profile', () => {
+  const f = fixture();
+  let closed = 0, prevented = 0;
+  const props = { profileId: 'one', profile: null, prewarm: true, onClose: () => closed++ };
+  const pending = f.render(props);
+  f.render({ ...props, profileId: '' });
+  viewer(pending).props.onReady();
+  const idle = f.render({ ...props, profileId: '' });
+  assert.equal(f.dialog.open, false);
+  assert.equal(viewer(idle).props.hidden, true);
+  assert.deepEqual(f.events, []);
+  const selected = f.render(props);
+  viewer(selected).props.onReady();
+  const opened = f.render(props);
+  opened.props.onCancel({ preventDefault: () => prevented++ });
+  assert.equal(closed, 1); assert.equal(prevented, 1);
+  f.render({ ...props, profileId: '' });
+  assert.equal(f.dialog.open, false);
 });
 
-test('loading stays centered independently of shared button positioning, with a corner exit', () => {
-  const css = postcss.parse(readFileSync('app/internal/internal.css', 'utf8'));
-  const styles = selector => {
-    const rules = [];
-    css.walkRules(rule => { if (rule.selector === selector) rules.push(rule); });
-    assert.equal(rules.length, 1, selector);
-    return Object.fromEntries(rules[0].nodes.filter(node => node.type === 'decl').map(node => [node.prop, node.value]));
-  };
-  const base = 'body dialog.ir-full-profile-dialog';
-  const loading = styles(base + ' .ir-profile-loading');
-  assert.equal(loading.display, 'grid');
-  assert.equal(loading['place-items'], 'center');
-  const navigation = styles(base + ' .ir-profile-loading-nav');
-  assert.equal(navigation.position, 'absolute');
-  assert.match(navigation.top, /safe-area-inset-top/);
-  assert.match(navigation.left, /safe-area-inset-left/);
-  const buttonSelector = 'html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading-nav button.ir-profile-loading-close';
-  const close = styles(buttonSelector);
-  assert.equal(close.position, 'relative', 'relative buttons cannot shift the status out of its center');
-  assert.equal(close.width, '44px');
-  assert.equal(close.height, '44px');
-  css.walkRules(buttonSelector, rule => {
-    for (const property of ['padding', 'border', 'background', 'box-shadow', 'font-size']) {
-      assert.equal(rule.nodes.find(node => node.prop === property).important, true, property + ' overrides global important button styles');
-    }
-  });
-  const guest = base + ' .ir-profile-loading[data-audience="guest"]';
-  assert.equal(styles(guest).background, '#0b0b0d');
-  assert.equal(styles('html body.dancr-button-system dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"] .ir-profile-loading-nav button.ir-profile-loading-close:focus-visible')['outline-color'], '#d4d4d8');
+test('failed loads stay on the roster and a retry uses a fresh hidden viewer', () => {
+  const f = fixture();
+  let errors = 0;
+  const props = { profileId: 'one', profile: null, prewarm: true, onClose() {}, onError: () => errors++ };
+  const pending = f.render(props);
+  viewer(pending).props.onError();
+  const retry = f.render(props);
+  assert.equal(f.dialog.open, false);
+  assert.equal(errors, 1);
+  assert.notEqual(viewer(retry).key, viewer(pending).key);
+  assert.equal(viewer(retry).props.hidden, true);
+  viewer(retry).props.onReady(); f.render(props);
+  assert.equal(f.dialog.open, true);
 });
 
-test('profile spinner size, spacing and motion match homepage loading and respect reduced motion', () => {
-  const profileCss = postcss.parse(readFileSync('app/internal/internal.css', 'utf8'));
-  const homeCss = postcss.parse(readFileSync('src/live-shell/styles/override-styles-03-home-discovery-empty-action-is-secondary-hover-home-discovery-em.css', 'utf8'));
-  const styles = (css, selector) => {
-    const rules = [];
-    css.walkRules(rule => { if (rule.parent.type === 'root' && rule.selectors.includes(selector)) rules.push(rule); });
-    assert.equal(rules.length, 1, selector);
-    return Object.fromEntries(rules[0].nodes.filter(node => node.type === 'decl').map(node => [node.prop, node.value]));
-  };
-  const base = 'body dialog.ir-full-profile-dialog';
-  const status = styles(profileCss, base + ' .ir-profile-loading-status');
-  const homeStatus = styles(homeCss, '.home-discovery-loading.is-dancers');
-  for (const property of ['display', 'align-items', 'justify-content', 'gap', 'color', 'font-size', 'line-height', 'text-align']) {
-    assert.equal(status[property], homeStatus[property], property);
-  }
-  const spinner = styles(profileCss, base + ' .ir-profile-loading-spinner');
-  const homeSpinner = styles(homeCss, '.home-discovery-loading-spinner');
-  for (const property of ['box-sizing', 'flex', 'width', 'height', 'border', 'border-top-color', 'border-radius']) {
-    assert.equal(spinner[property], homeSpinner[property], property);
-  }
-  assert.equal(spinner.animation.split(' ').slice(1).join(' '), homeSpinner.animation.split(' ').slice(1).join(' '));
-  const reduced = [];
-  profileCss.walkAtRules('media', rule => {
-    if (rule.params.replaceAll(' ', '') !== '(prefers-reduced-motion:reduce)') return;
-    rule.walkRules(base + ' .ir-profile-loading-spinner', rule => reduced.push(rule));
-  });
-  assert.equal(reduced.length, 1);
-  assert.equal(reduced[0].nodes.find(node => node.prop === 'animation').value, 'none');
+test('idle prewarming stays hidden without rendering a loading page', () => {
+  const f = fixture();
+  const props = { profile: null, onClose() {} };
+  assert.equal(viewer(f.render(props)), null);
+  const idle = f.render({ ...props, prewarm: true });
+  assert.equal(viewer(idle).type, 'iframe');
+  assert.equal(viewer(idle).props.hidden, true);
+  assert.equal(f.dialog.open, false);
 });

@@ -10,22 +10,21 @@ export function ClubProfileDialog({ prewarm = false, publicSlug, publicActions, 
   const profileDialog = useRef<HTMLDialogElement>(null);
   const [readyId, setReadyId] = useState("");
   const [viewerAttempt, setViewerAttempt] = useState(0);
+  const ready = !!profileId && readyId === profileId;
   useEffect(() => {
-    if (profileId && !profileDialog.current?.open) profileDialog.current?.showModal();
-    if (!profileId) { profileDialog.current?.close(); setReadyId(""); }
-  }, [profile, profileId, readyId]);
+    const dialog = profileDialog.current;
+    // Keep the roster usable while the warm frame prepares the actual profile.
+    // A new selection or a failed load must never reveal an empty/old dialog.
+    if (ready) {
+      if (!dialog?.open) dialog?.showModal();
+    } else {
+      if (dialog?.open) dialog.close();
+      if (readyId) setReadyId("");
+    }
+  }, [ready, readyId]);
   return (
     <dialog className="ir-profile-dialog ir-full-profile-dialog" ref={profileDialog} onCancel={event => { event.preventDefault(); onClose(); }} aria-label={profile?.stage_name || loadingIdentity?.stageName ? `${profile?.stage_name || loadingIdentity?.stageName}’s full profile` : "Dancer profile"}>
-      {profileId && readyId !== profileId ? <div className="ir-profile-loading" data-audience={token ? "guest" : "mydancr"}>
-        <div className="ir-profile-loading-nav">
-          <button type="button" className="ir-profile-loading-close" onClick={onClose} aria-label="Close dancer profile" title="Back"><span aria-hidden="true">←</span></button>
-        </div>
-        <div className="ir-profile-loading-status" role="status">
-          <span className="ir-profile-loading-spinner" aria-hidden="true" />
-          <span>Loading profile…</span>
-        </div>
-      </div> : null}
-      {prewarm || profileId ? <InternalFullProfile key={viewerAttempt} hidden={!!profileId && readyId !== profileId} profileId={profileId} publicSlug={publicSlug} publicActions={publicActions} profile={profile} token={token} request={request} onRequest={onRequest} onCancel={onCancel} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={() => { setReadyId(""); setViewerAttempt(attempt => attempt + 1); (onError || onClose)(); }} onClose={onClose} /> : null}
+      {prewarm || profileId ? <InternalFullProfile key={viewerAttempt} hidden={!ready} profileId={profileId} publicSlug={publicSlug} publicActions={publicActions} profile={profile} token={token} request={request} onRequest={onRequest} onCancel={onCancel} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={() => { setReadyId(""); setViewerAttempt(attempt => attempt + 1); (onError || onClose)(); }} onClose={onClose} /> : null}
     </dialog>
   );
 }
