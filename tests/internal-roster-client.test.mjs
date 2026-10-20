@@ -182,12 +182,12 @@ test("venue table sections reserve their place before the roster while the first
   });
   t.after(() => app.unmount());
   const sectionOrder = tree => find(tree, node => node.props?.className === 'ir-operations').props.children.map(node => node?.props?.id || node);
-  const expectedOrder = ['table-qr-codes', 'table-requests', 'DANCER ROSTER'];
+  const expectedOrder = ['table-requests', 'DANCER ROSTER'];
   assert.deepEqual(Array.from(sectionOrder(app.render())), expectedOrder, 'the first paint already has the final section order');
   await app.mount();
   const loading = app.render();
   assert.deepEqual(Array.from(sectionOrder(loading)), expectedOrder);
-  for (const id of expectedOrder.slice(0, 2)) {
+  for (const id of expectedOrder.slice(0, 1)) {
     const section = find(loading, node => node.props?.id === id);
     assert.equal(section.props['aria-busy'], true);
     assert.match(textContent(find(section, node => node.type === 'h2')), /—$/);
@@ -203,7 +203,7 @@ test("venue table sections reserve their place before the roster while the first
   await flush();
   const loaded = app.render();
   assert.deepEqual(Array.from(sectionOrder(loaded)), expectedOrder);
-  for (const id of expectedOrder.slice(0, 2)) {
+  for (const id of expectedOrder.slice(0, 1)) {
     const section = find(loaded, node => node.props?.id === id);
     assert.equal(section.props['aria-busy'], undefined);
     assert.match(textContent(find(section, node => node.type === 'h2')), /1$/);
@@ -223,23 +223,22 @@ test("failed table loading retains section order and distinguishes unavailable d
   t.after(() => app.unmount()); await app.mount();
   const failed = app.render();
   const operations = find(failed, node => node.props?.className === 'ir-operations');
-  assert.deepEqual(Array.from(operations.props.children, node => node?.props?.id || node), ['table-qr-codes', 'table-requests', 'DANCER ROSTER']);
-  assert.match(textContent(operations), /Table QR codes unavailable/);
+  assert.deepEqual(Array.from(operations.props.children, node => node?.props?.id || node), ['table-requests', 'DANCER ROSTER']);
   assert.match(textContent(operations), /Table requests unavailable/);
   assert.doesNotMatch(textContent(operations), /Loading|No open requests|No table QR codes/);
   assert.equal(find(operations, node => node.props?.['aria-busy'] || node.type === 'form'), undefined);
   find(alert(app), node => node.type === 'button').props.onClick(); await flush();
   assert.equal(alert(app), undefined);
   const recovered = find(app.render(), node => node.props?.className === 'ir-operations');
-  for (const id of ['table-qr-codes', 'table-requests']) {
+  for (const id of ['table-requests']) {
     const heading = find(find(recovered, node => node.props?.id === id), node => node.type === 'h2');
     assert.equal(find(heading, node => node.type === 'span').props.children, 0);
   }
   assert.match(textContent(recovered), /No open requests/);
-  assert.match(textContent(recovered), /No table QR codes yet/);
+  assert.doesNotMatch(textContent(recovered), /Table QR|QR codes|Print/);
 });
 
-test("venue dashboard retains saved table QR codes without exposing programming actions", async t => {
+test("venue dashboard keeps table requests without exposing QR codes or printing", async t => {
   const calls = [];
   const links = [{ id: 'table-1', kind: 'table', label: 'Table 7', token: 'active-table-token' }];
   const app = harness(async (url, options) => {
@@ -248,49 +247,38 @@ test("venue dashboard retains saved table QR codes without exposing programming 
   }, { session: { accessToken: 'owner-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true, roster: 'DANCER ROSTER' } });
   t.after(() => app.unmount()); await app.mount();
   const operations = find(app.render(), node => node.props?.className === 'ir-operations');
-  const qr = operations.props.children[0];
-  assert.equal(qr.type, 'details');
-  assert.equal(qr.props.id, 'table-qr-codes');
-  assert.match(textContent(find(qr, node => node.type === 'summary')), /Table QR codes 1/);
-  assert.equal(find(qr, node => node.type === 'a' && textContent(node) === 'Open').props.href, '/internal/club/active-table-token');
-  assert.equal(find(qr, node => node.type === 'a' && textContent(node) === 'Print QR sign').props.href, '/internal/sign/active-table-token');
-  assert.ok(find(qr, node => node.type === 'button' && textContent(node) === 'Copy'));
-  assert.doesNotMatch(textContent(qr), /Add a table|Create link|Rename table|Save name|Revoke/);
-  assert.match(textContent(qr), /Table QR setup is managed by MyDancr Admin/);
-  assert.equal(find(qr, node => node.type === 'form' || node.type === 'input'), undefined);
-  assert.ok(textContent(operations).indexOf('Table QR codes') < textContent(operations).indexOf('Table requests'));
-  assert.ok(textContent(operations).indexOf('Table QR codes') < textContent(operations).indexOf('DANCER ROSTER'));
+  assert.equal(operations.props.children[0].props.id, 'table-requests');
+  assert.equal(find(operations, node => node.props?.id === 'table-qr-codes'), undefined);
+  assert.equal(find(operations, node => node.type === 'a' && /\/internal\/(sign|club)\//.test(node.props.href)), undefined);
+  assert.doesNotMatch(textContent(operations), /Table QR|Print|Copy|Add a table|Create link|Rename table|Save name|Revoke/);
   assert.equal(calls.some(call => call.options.method === 'POST'), false);
 });
 
-test("staff QR tools remain read-only and guest table links never expose venue QR management", async t => {
+test("standalone staff and guest rosters never expose QR management or printing", async t => {
   const data = { ...roster, role: 'staff', links: [{ id: 'table-1', label: 'Table 7', token: 'active-token' }] };
-  const app = harness(async () => response(data), { session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true } });
+  const app = harness(async () => response(data), { session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined } });
   t.after(() => app.unmount()); await app.mount();
   const qr = find(app.render(), node => node.props?.id === 'table-qr-codes');
-  assert.ok(qr);
-  assert.doesNotMatch(textContent(qr), /Add a table|Rename table|Revoke/);
-  assert.ok(find(qr, node => node.type === 'a' && textContent(node) === 'Print QR sign'));
+  assert.equal(qr, undefined);
+  assert.doesNotMatch(textContent(app.render()), /Print QR|Table QR|Rename table|Revoke/);
   const guest = harness(async () => response({ ...data, kind: 'table' }));
   t.after(() => guest.unmount()); await guest.mount();
   assert.equal(find(guest.render(), node => node.props?.id === 'table-qr-codes'), undefined);
 });
 
-for (const role of ['owner', 'manager', 'staff', undefined]) test(`empty table QR tools defer setup to Admin for ${role || 'unknown'} access`, async t => {
+for (const role of ['owner', 'manager', 'staff', undefined]) test(`QR tools stay absent with no tables for ${role || 'unknown'} access`, async t => {
   const app = harness(async () => response({ ...roster, role, links: [] }), {
     session: { accessToken: 'owner-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true },
   });
   t.after(() => app.unmount()); await app.mount();
   const qr = find(app.render(), node => node.props?.id === 'table-qr-codes');
-  assert.match(textContent(qr), /No table QR codes yet/);
-  assert.match(textContent(qr), /Table QR setup is managed by MyDancr Admin/);
-  assert.doesNotMatch(textContent(qr), /Add a table|Create link|Rename table|Revoke/);
-  assert.equal(find(qr, node => node.type === 'form' || node.type === 'input'), undefined);
+  assert.equal(qr, undefined);
+  assert.doesNotMatch(textContent(app.render()), /Table QR|Print QR|Add a table|Create link|Rename table|Revoke/);
 });
 
-test("dashboard QR deep link waits for authorized data, expands and focuses the table tools once", async t => {
+test("dashboard request deep link waits for authorized data and focuses the requests once", async t => {
   const app = harness(async () => response({ ...roster, role: 'owner', links: [] }), {
-    url: 'https://example.invalid/dashboard/venue#table-qr-codes',
+    url: 'https://example.invalid/dashboard/venue#table-requests',
     session: { accessToken: 'owner-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true },
   });
   t.after(() => app.unmount());
@@ -298,7 +286,7 @@ test("dashboard QR deep link waits for authorized data, expands and focuses the 
   const parent = new app.HTMLDetailsElement();
   let focus = 0; let scroll = 0;
   Object.assign(panel, { parentElement: parent, scrollIntoView: () => { scroll++; }, focus: () => { focus++; } });
-  app.elements.set('table-qr-codes', panel);
+  app.elements.set('table-requests', panel);
   await app.mount();
   assert.equal(focus, 0, 'initial render has no authorized table data');
   app.render(); app.runEffect(1); await app.advance(0);
@@ -308,13 +296,13 @@ test("dashboard QR deep link waits for authorized data, expands and focuses the 
   assert.equal(scroll, 1);
   app.render(); app.runEffect(1); await app.advance(0);
   assert.equal(focus, 1, 'polling must not continually steal focus');
-  app.window.location.hash = '#table-requests';
-  app.listeners.get('hashchange')();
   app.window.location.hash = '#table-qr-codes';
+  app.listeners.get('hashchange')();
+  app.window.location.hash = '#table-requests';
   await app.advance(0);
   assert.equal(focus, 1, 'stale animation frames do not open the previous section');
   app.listeners.get('hashchange')(); await app.advance(0);
-  assert.equal(focus, 2, 'an explicit QR navigation can open the tools again');
+  assert.equal(focus, 2, 'an explicit request navigation can open the section again');
 });
 
 test("staff table requests have a protected avatar and open the matching profile without mutating requests", async t => {

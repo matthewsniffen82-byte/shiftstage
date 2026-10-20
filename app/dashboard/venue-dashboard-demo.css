@@ -10,9 +10,9 @@
 .venue-demo-workspace h2 { font-size:18px; margin:14px 0; }
 .venue-demo-workspace h3 { font-size:15px; margin:14px 0 8px; }
 .venue-demo-workspace > section > section { margin:16px 0; }
-.venue-demo-table-tools { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
-.venue-demo-table-tools > button { min-height:44px; }
-.venue-demo-table-tools > small { color:#a3e3d0; font-size:12px; }
+.venue-demo-internal-tools { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+.venue-demo-internal-tools > button { min-height:44px; }
+.venue-demo-internal-tools > small { color:#a3e3d0; font-size:12px; }
 .venue-demo-workspace details { margin:12px 0; }
 .venue-demo-workspace details > summary { min-height:44px; padding:10px 0; cursor:pointer; }
 .venue-demo-workspace :is(button,summary,input,select):focus-visible { outline:2px solid #d8cafa; outline-offset:3px; }

@@ -1,23 +1,9 @@
-import QRCode from "qrcode";
-import { notFound } from "next/navigation";
-import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
-import { internalScope } from "@/src/lib/dancr/internal-roster";
-import { PrintSign } from "./PrintSign";
+import { redirect } from "next/navigation";
+
 export const dynamic = "force-dynamic";
-export default async function Page({ params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params;
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || "https://www.mydancr.com";
-  const scope = await internalScope(createAdminSupabaseClient(), new Request(origin), token).catch(() => null);
-  if (!scope?.link) notFound();
-  const url = new URL(`/internal/club/${token}`, origin).href;
-  const qr = await QRCode.toDataURL(url, { width: 600, margin: 4, errorCorrectionLevel: "M" });
-  return <main className="ir-sign">
-    <h1>{scope.venueName}</h1>
-    <h2>{scope.link.label}</h2>
-    <img src={qr} alt={`Scan to open ${scope.link.label}`} />
-    <p>See who’s here. Tap an avatar to view her full profile. Send a request to club staff.</p>
-    <footer className="ir-sign-brand"><strong>Powered by Mydancr</strong><a href="https://www.mydancr.com">www.mydancr.com</a></footer>
-    <p className="ir-sign-screen-only"><a href={url}>Open roster</a></p>
-    <PrintSign />
-  </main>;
+
+export default function Page() {
+  // A guest table token grants roster access, never QR generation or printing.
+  // Admin printing now obtains each sign through the authenticated Admin API.
+  redirect("/admin");
 }

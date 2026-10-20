@@ -9,7 +9,7 @@ import { readBoundedJsonObject } from "../src/lib/bounded-json-body.ts";
 import { createInternalRosterDatabase } from "./helpers/internal-roster-database.mjs";
 import { fixtureId as id } from "./helpers/dancer-tap-database.mjs";
 import { existingTableNumbers, readTableQrRange } from "../app/admin/admin-table-qr-range.ts";
-import { loadTableQrPrintImages, renderTableQrPrintDocument } from "../app/admin/admin-table-qr-print.ts";
+import { loadTableQrPrintImages } from "../app/admin/admin-table-qr-print.ts";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 function compile(path, dependencies, globals = {}) {
@@ -134,6 +134,11 @@ test("QR download encodes only a saved active table in the authorized club", asy
     assert.ok(f.calls.some(call => call.filter === filter && call.value === value));
   }
   assert.equal((await apiFixture({ signedIn: false }).get(id(20), id(80))).status, 401);
+  for (const role of ['venue', 'dancer', 'customer']) {
+    const denied = apiFixture({ role });
+    assert.equal((await denied.get(id(20), id(80))).status, 403);
+    assert.equal(denied.calls.some(call => call.qrUrl), false);
+  }
   assert.equal((await apiFixture().get(id(20), "bad")).status, 400);
 });
 test("API fails closed for bad inputs, conflicts and unconfirmed database writes", async () => {
@@ -171,6 +176,7 @@ test("admin API accepts seeded table row IDs for download, rename and disable", 
 
 function componentFixture(handler) {
   const slots = [], effects = []; let cursor = 0, tree; const requests = [];
+  const printJobs = [], printWindows = [];
   let nextId = 80;
   const hooks = {
     useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], value => { slots[index] = typeof value === "function" ? value(slots[index]) : value; }]; },
@@ -182,21 +188,24 @@ function componentFixture(handler) {
   const { default: Component } = compile("app/admin/AdminTableQrCodes.tsx", {
     react: hooks, "react/jsx-runtime": { jsx, jsxs: jsx }, "./admin-table-qr.css": {},
     "./admin-table-qr-range": { existingTableNumbers, readTableQrRange },
-    "./admin-table-qr-print": { loadTableQrPrintImages, renderTableQrPrintDocument },
+    "./admin-table-qr-print": { loadTableQrPrintImages, renderTableQrPrintDocument: async (_doc, name, images) => { printJobs.push({ name, images }); } },
     "./admin-session": { isAdminAuthenticationError: error => error.status === 401, requestAdminJson: async (url, options) => {
       requests.push({ url, options }); return handler(url, options, requests.length);
     } },
-  }, { crypto: { randomUUID: () => id(nextId++) }, window: { confirm: () => true, location: { origin: "https://www.mydancr.com" } },
+  }, { crypto: { randomUUID: () => id(nextId++) }, window: { confirm: () => true, location: { origin: "https://www.mydancr.com" }, open: () => {
+    const popup = { closed: false, document: { body: {} }, focus() {}, print() { this.printed = true; } };
+    printWindows.push(popup); return popup;
+  } },
     navigator: { clipboard: { writeText: async () => {} } } });
   function render() { cursor = 0; tree = Component({ venueId: id(20), name: "Synthetic club" }); while (effects.length) effects.shift()(); return tree; }
   function nodes(node) { if (!node || typeof node !== "object") return []; return [node, ...[node.props?.children].flat(Infinity).flatMap(child => nodes(child))]; }
   const find = predicate => nodes(tree).find(predicate);
   async function settle() { for (let i = 0; i < 3; i++) { await new Promise(resolve => setImmediate(resolve)); render(); } }
   render();
-  return { requests, render, find, settle, open() { tree.props.onToggle({ currentTarget: { open: true } }); render(); },
+  return { requests, printJobs, printWindows, render, find, settle, open() { tree.props.onToggle({ currentTarget: { open: true } }); render(); },
     unmount() { for (const slot of slots) slot?.cleanup?.(); } };
 }
-test("admin component loads on demand, creates once and exposes existing roster/print links", async () => {
+test("admin component loads on demand, creates once and exposes an authenticated print action", async () => {
   let resolveWrite;
   const f = componentFixture(async (_url, options) => options.method === "POST" ? new Promise(resolve => { resolveWrite = resolve; }) : { venueId: id(20), links: [] });
   assert.equal(f.requests.length, 0); f.open(); await f.settle();
@@ -205,9 +214,43 @@ test("admin component loads on demand, creates once and exposes existing roster/
   submit({ preventDefault() {} }); submit({ preventDefault() {} }); await f.settle();
   assert.equal(f.requests.filter(item => item.options.method === "POST").length, 1);
   resolveWrite({ venueId: id(20), link: code() }); await f.settle();
-  assert.ok(f.find(node => node.type === "a" && node.props.href === `/internal/sign/${id(90)}`));
+  assert.ok(f.find(node => node.type === "button" && node.props.children === 'Print QR sign'));
+  assert.equal(f.find(node => node.type === "a" && node.props.href?.startsWith('/internal/sign/')), undefined);
   assert.ok(f.find(node => node.type === "a" && node.props.href === `/internal/club/${id(90)}`));
   assert.equal(f.find(node => node.type === "input").props.value, "");
+  f.unmount();
+});
+
+test("single and bulk printing load only the selected active signs through the Admin API", async () => {
+  const codes = [code(), code({ id: id(81), label: 'Table 2' }), code({ id: id(82), active: false })];
+  const f = componentFixture(async path => {
+    const download = new URL(path, 'https://example.invalid').searchParams.get('download');
+    return download ? { venueId: id(20), id: download, imageDataUrl: 'data:image/png;base64,cXI=' } : { venueId: id(20), links: codes };
+  });
+  f.open(); await f.settle();
+  f.find(node => node.type === 'button' && node.props.children === 'Print QR sign').props.onClick(); await f.settle();
+  assert.equal(f.printJobs.length, 1);
+  assert.deepEqual(f.printJobs[0].images.map(image => image.label), ['Table 1']);
+  assert.equal(f.printWindows[0].printed, true);
+  assert.equal(f.requests.filter(request => request.url.includes('download=')).length, 1);
+  f.find(node => node.type === 'button' && node.props.children === 'Print all').props.onClick(); await f.settle();
+  assert.deepEqual(f.printJobs[1].images.map(image => image.label), ['Table 1', 'Table 2']);
+  assert.equal(f.printWindows[1].printed, true);
+  assert.ok(f.requests.every(request => request.url.startsWith('/api/admin/venues/table-qr')));
+  f.unmount();
+});
+
+test("expired Admin authorization cannot render or print a saved table sign", async () => {
+  const f = componentFixture(async path => {
+    if (path.includes('download=')) throw Object.assign(new Error('Sign in required.'), { status: 401 });
+    return { venueId: id(20), links: [code()] };
+  });
+  f.open(); await f.settle();
+  f.find(node => node.type === 'button' && node.props.children === 'Print QR sign').props.onClick(); await f.settle();
+  assert.equal(f.printJobs.length, 0);
+  assert.equal(f.printWindows[0].printed, undefined);
+  assert.match(f.printWindows[0].document.body.textContent, /Unable to prepare/);
+  assert.equal(f.find(node => node.type === 'button' && node.props.children === 'Print QR sign'), undefined);
   f.unmount();
 });
 test("Echo's existing sample tables do not block the create form or a new table", async () => {

@@ -58,19 +58,11 @@ test("image artwork includes the saved table label and exact requested attributi
   assert.match(markup, />www\.mydancr\.com</);
 });
 
-test("print signs show the current table number, attribution and website, with escaped club text", async () => {
+test("legacy public sign URLs redirect to Admin without generating a QR from the guest token", () => {
+  const redirected = new Error('Admin redirect');
   const Page = load("app/internal/sign/[token]/page.tsx", {
-    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
-    "@/src/lib/dancr/internal-roster": { internalScope: async () => ({ venueName: '<Club & lounge>', link: { label: "Table 211" } }) },
-    "./PrintSign": { PrintSign: () => null },
-    qrcode: { toDataURL: async () => "data:image/png;base64,cXI=" },
+    "next/navigation": { redirect: path => { assert.equal(path, '/admin'); throw redirected; } },
   }).default;
-  const html = renderToStaticMarkup(await Page({ params: Promise.resolve({ token: "synthetic" }) }));
-  assert.match(html, /<h2>Table 211<\/h2>/);
-  assert.match(html, /Powered by Mydancr/);
-  assert.match(html, /href="https:\/\/www\.mydancr\.com">www\.mydancr\.com<\/a>/);
-  assert.match(html, /&lt;Club &amp; lounge&gt;/);
-  const css = read("app/internal/internal.css");
-  assert.match(css, /body:has\(\.ir-sign\)>:not\(\.ir-sign\):not\(:has\(\.ir-sign\)\)/, "Print CSS must keep the layout wrapper containing the sign");
-  assert.match(css, /\.ir-sign button,\.ir-sign-screen-only\{display:none\}/);
+  assert.throws(() => Page({ params: Promise.resolve({ token: 'synthetic' }) }), error => error === redirected);
+  assert.doesNotMatch(read('app/internal/sign/[token]/page.tsx'), /toDataURL|createAdminSupabaseClient|internalScope/);
 });

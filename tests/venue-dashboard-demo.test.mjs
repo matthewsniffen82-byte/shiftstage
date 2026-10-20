@@ -255,38 +255,27 @@ test('demo workspace supports all tabs, period changes, filtering, and real repo
   assert.match(renderToStaticMarkup(rowRender({ rows }, 'DemoRows')), /No sample records match/);
 });
 
-test('Echo House table QR entry leaves demo for recorded data and preserves the dashboard URL', () => {
-  const window = { location: new URL('https://example.invalid/dashboard/venue?tab=venue'), history: { state: { saved: true } } };
-  const replacements = [];
-  window.history.replaceState = (state, title, path) => {
-    replacements.push({ state, title, path });
-    window.location = new URL(path, window.location);
-  };
+test('Echo House internal entry opens the authorized internal roster without QR tools', () => {
+  const navigations = [];
+  const window = { location: { assign: path => navigations.push(path) } };
   const dependencies = { '@/src/lib/dancr/venue-dashboard-demo': demo, 'next/dynamic': { default: () => 'DemoDashboard' } };
   const render = component('app/dashboard/VenueDashboardDemoSwitch.tsx', dependencies, '', { window });
   const props = { profile: echo, workingNow: [], children: React.createElement('LiveDashboard') };
   const sample = nodes(render(props)).find(node => node.type === 'DemoDashboard');
-  sample.props.onOpenTableQrCodes();
-  const tree = nodes(render(props));
-  assert.ok(tree.some(node => node.type === 'LiveDashboard'));
-  assert.ok(!tree.some(node => node.type === 'DemoDashboard'));
-  assert.ok(tree.some(node => node.props.children === 'Recorded data'));
-  assert.equal(tree.find(node => node.type === 'input').props.checked, false);
-  assert.equal(window.location.href, 'https://example.invalid/dashboard/venue?tab=venue#table-qr-codes');
-  assert.equal(replacements[0].state, window.history.state);
-  const reload = component('app/dashboard/VenueDashboardDemoSwitch.tsx', dependencies, '', { window });
-  assert.ok(nodes(reload(props)).some(node => node.type === 'LiveDashboard'), 'QR deep links stay in recorded data on refresh');
+  sample.props.onViewInternal();
+  assert.deepEqual(navigations, ['/internal']);
+  assert.equal(sample.props.onOpenTableQrCodes, undefined);
 });
 
-test('demo table QR entry precedes the roster and explicitly opens recorded tools without sample mutations', () => {
+test('demo View internal entry precedes the roster without exposing printing', () => {
   const render = component('app/dashboard/VenueDemoDashboard.tsx', {
     '@/src/lib/dancr/venue-dashboard-demo': demo, './VenueDashboardIdentity': {}, './VenueTonightOverview': {}, './VenueSetupChecklist': {}, './VenueValueAnalytics': {},
   });
   let opens = 0;
-  const panel = nodes(render({ workingNow: [], onOpenTableQrCodes: () => { opens++; } })).find(node => node.props.id === 'demo-roster');
+  const panel = nodes(render({ workingNow: [], onViewInternal: () => { opens++; } })).find(node => node.props.id === 'demo-roster');
   const entry = panel.props.children[0];
   const button = nodes(entry).find(node => node.type === 'button');
-  assert.equal(button.props.children, 'Table QR codes');
+  assert.equal(button.props.children, 'View internal');
   assert.match(button.props.title, /leaves demo/);
   assert.ok(nodes(entry).some(node => node.props.children === 'Recorded data'));
   button.props.onClick();

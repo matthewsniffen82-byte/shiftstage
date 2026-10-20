@@ -12,7 +12,7 @@ import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrow
 import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-terms";
 
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
-type ClubLink = { id: string; kind: "table"; label: string; token: string };
+type ClubLink = { id: string; label: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; dancerName?: string; status: "pending" | "acknowledged"; created_at: string; attendance?: "arrived" | "no_show" | null; attendance_recorded_at?: string | null };
 type Snapshot = { venueName: string; venueSlug?: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 type DancerNotice = { message: string; error: boolean };
@@ -261,7 +261,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
     let frame = 0;
     const openOperation = () => {
       const sectionId = window.location.hash.slice(1);
-      if (!["table-requests", "table-qr-codes"].includes(sectionId) || openedOperation.current === sectionId) return;
+      if (sectionId !== "table-requests" || openedOperation.current === sectionId) return;
       frame = window.requestAnimationFrame(() => {
         if (window.location.hash.slice(1) !== sectionId) return;
         const panel = document.getElementById(sectionId);
@@ -462,23 +462,9 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
       </section> : null}
       {staff && snapshot.receipt ? <p className="ir-notice" role="status">Your request: <strong>{snapshot.receipt.status === "acknowledged" ? "Seen by club staff" : snapshot.receipt.status}</strong></p> : null}
     </> : null}
-      {/* Keep the table sections ahead of the independently loaded roster,
+      {/* Keep table requests ahead of the independently loaded roster,
           including the first paint. Unknown counts must not appear as zero. */}
-      {staff ? <div className="ir-operations"><details className="ir-panel ir-table-tools" id="table-qr-codes" tabIndex={-1} aria-busy={!snapshot && !error || undefined}>
-        <summary><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h2v2h-2ZM20 14v6h-6v-2" /></svg>Table QR codes <span>{snapshot ? snapshot.links?.length || 0 : "—"}</span></h2></summary>
-        {snapshot ? <>
-        <p>Table QR setup is managed by MyDancr Admin.</p>
-        {!snapshot.links?.length ? <p>No table QR codes yet.</p> : null}
-        {snapshot.links?.map(link => <article className="ir-link" key={link.id}>
-          <div><strong>{link.label}</strong><small>QR active</small></div>
-          <div className="ir-actions">
-            <a href={`/internal/club/${link.token}`} target="_blank" rel="noreferrer">Open</a>
-            <a href={`/internal/sign/${link.token}`} target="_blank" rel="noreferrer">Print QR sign</a>
-            <button className="ir-secondary" onClick={() => void navigator.clipboard.writeText(`${window.location.origin}/internal/club/${link.token}`).then(() => setNotice("Club link copied.")).catch(() => setNotice("Open the link and copy its address."))}>Copy</button>
-          </div>
-        </article>)}
-        </> : <p role="status">{error ? "Table QR codes unavailable." : "Loading table QR codes…"}</p>}
-      </details><section className="ir-panel venue-card-region" id="table-requests" tabIndex={-1} aria-busy={!snapshot && !error || undefined}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot ? snapshot.requests?.length || 0 : "—"}</span></h2>
+      {staff ? <div className="ir-operations"><section className="ir-panel venue-card-region" id="table-requests" tabIndex={-1} aria-busy={!snapshot && !error || undefined}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot ? snapshot.requests?.length || 0 : "—"}</span></h2>
         {snapshot ? <>
         {snapshot.requests?.length ? <div className="venue-dancer-grid" aria-label="Table request cards">{[...snapshot.requests].sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || Date.parse(b.created_at) - Date.parse(a.created_at)).map((item, index) => {
           const dancer = snapshot.dancers.find(row => row.id === item.dancer_id);

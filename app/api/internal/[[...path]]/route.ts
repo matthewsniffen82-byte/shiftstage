@@ -126,7 +126,7 @@ export async function GET(request: Request, context: Context) {
       return json({ ok: true, venueName: scope.venueName, venueSlug: scope.venueSlug, venueLogoUrl: scope.venueLogoUrl, internalAccent, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id)?.status || null, requestId: tableRequests.get(dancer.id)?.id || null })), receipt });
     }
     const [linksResult, requests] = await Promise.all([
-      admin.from("internal_roster_links").select("id,kind,label,token,active").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),
+      admin.from("internal_roster_links").select("id,label").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),
       internalOpenRequests(admin, scope.venueId),
     ]);
     if (linksResult.error) throw linksResult.error;
@@ -167,7 +167,7 @@ export async function POST(request: Request, context: Context) {
     }
     if (path.length) return json({ ok: false, error: "Not found." }, 404);
     const scope = await internalScope(admin, request);
-    // Venue sessions can use saved table codes, but programming belongs to Admin.
+    // Venue sessions manage requests; QR programming and printing belong to Admin.
     if (["link_create", "link_update", "link_revoke"].includes(String(body.action))) {
       throw new PublicApiError("FORBIDDEN", "Table QR setup is managed by MyDancr Admin.", 403);
     }

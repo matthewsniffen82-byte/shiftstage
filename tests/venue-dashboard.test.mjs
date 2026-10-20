@@ -118,7 +118,9 @@ test("venue owners navigate one simplified state-aware workspace without losing 
   assert.match(dashboard, /function initialVenueWorkspace[\s\S]*?return isPublished \? "tonight" : "venue";/);
   assert.match(dashboard, /\["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"\]\.includes\(sectionId\)\) return "tonight"/);
   assert.match(dashboard, /sectionId === "venue-overview"\) return "business"/);
-  assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests", "table-qr-codes"\]\.includes\(sectionId\)\) return "roster"/);
+  assert.match(dashboard, /\["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests"\]\.includes\(sectionId\)\) return "roster"/);
+  assert.match(venuePanel, /permissions\.includes\("view_roster"\)[^\n]*href="\/internal"[^\n]*>View internal/);
+  assert.doesNotMatch(venuePanel, /table-qr-codes|Print QR sign/);
   assert.match(dashboard, /"venue-team", "venue-account", "venue-support"\]\.includes\(sectionId\)\) return "venue"/);
   assert.match(venuePanel, /hidden=\{activeWorkspace !== "roster"\}[\s\S]*?aria-label="Dancers & tables"/);
   assert.doesNotMatch(venuePanel, /<a href="#venue-dancer-roster"/);

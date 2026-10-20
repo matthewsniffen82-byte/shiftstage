@@ -108,6 +108,12 @@ test('cancelled requests leave the staff inbox and guest buttons while replaceme
  assert.equal((await (await f.get(['link',id(3)])).json()).dancers[0].requestId,id(13));
 });
 test('staff roster requires a real signed-in venue session',async()=>{assert.equal((await fixture().get()).status,401);assert.equal((await fixture({staff:false}).get([], '', 'staff')).status,403);});
+
+test('venue roster exposes table labels for requests without QR bearer tokens',async()=>{
+ const data=await (await fixture().get([], '', 'staff')).json();
+ assert.deepEqual(data.links,[{id:id(1),label:'Table 4'}]);
+ assert.equal(JSON.stringify(data).includes(id(3)),false);
+});
 test('staff keep a departed dancer’s request and can record arrival only through their own venue identity',async()=>{
  const saved={id:id(12),venue_id:id(2),link_id:id(1),dancer_id:id(5),status:'acknowledged',attendance:null,created_at:new Date().toISOString()};
  const f=fixture({members:false,requests:[saved]});

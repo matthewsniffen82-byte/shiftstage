@@ -10,11 +10,7 @@ const VenueDemoDashboard = dynamic(() => import("./VenueDemoDashboard"), { loadi
 export default function VenueDashboardDemoSwitch({ profile, workingNow, affiliations = [], children }: {
   profile?: Record<string, unknown> | null; workingNow: Array<Record<string, unknown>>; affiliations?: Array<Record<string, unknown>>; children: ReactNode;
 }) {
-  const [demo, setDemo] = useState(() => typeof window === "undefined" || window.location.hash !== "#table-qr-codes");
-  function openTableQrCodes() {
-    window.history.replaceState(window.history.state, "", "#table-qr-codes");
-    setDemo(false);
-  }
+  const [demo, setDemo] = useState(true);
   if (!isVenueDashboardDemo(profile)) return <>{children}</>;
   return <>
     <aside className="venue-demo-banner" aria-label="Dashboard data source">
@@ -22,6 +18,6 @@ export default function VenueDashboardDemoSwitch({ profile, workingNow, affiliat
         <p>{demo ? "Fictional, read-only samples. No messages, admissions or account changes are sent." : "Showing this venue's saved records. Normal actions are enabled."}</p></div>
       <label><input type="checkbox" role="switch" checked={demo} onChange={event => setDemo(event.target.checked)} />Demo data</label>
     </aside>
-    {demo ? <VenueDemoDashboard workingNow={workingNow} affiliations={affiliations} onOpenTableQrCodes={openTableQrCodes} /> : children}
+    {demo ? <VenueDemoDashboard workingNow={workingNow} affiliations={affiliations} onViewInternal={() => window.location.assign("/internal")} /> : children}
   </>;
 }
