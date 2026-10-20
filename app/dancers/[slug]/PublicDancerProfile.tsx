@@ -29,11 +29,12 @@ export type PublicDancerProfileProps = {
   dealAttributionTokens?: Record<string, string>;
   secondaryUnavailable?: boolean;
   vipReturnHref?: string;
+  venueReturnHref?: string;
   preview?: boolean;
   onClose?: () => void;
 };
 
-export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [], actionVenue = null, dealAttributionTokens = {}, secondaryUnavailable = false, vipReturnHref = "", preview = false, onClose }: PublicDancerProfileProps) {
+export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [], actionVenue = null, dealAttributionTokens = {}, secondaryUnavailable = false, vipReturnHref = "", venueReturnHref = "", preview = false, onClose }: PublicDancerProfileProps) {
   const heroPhoto =
     profile.primaryPhotoUrl || profile.photos[0]?.imageUrl || "";
   const heroPhotoSrcSet =
@@ -87,6 +88,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
             <ProfileCloseButton
               fallbackHref={`/?city=${encodeURIComponent(profile.city)}&view=dancers`}
               vipReturnHref={vipReturnHref}
+              venueReturnHref={venueReturnHref}
               onClose={onClose}
             />
             <details className="profile-options" data-compact-menu>

@@ -21,16 +21,17 @@ export default async function DancerPublicPage({ params, searchParams }: PagePro
   const queryParams = await searchParams;
   const requestedReturn = safeLocalReturnPath(queryParams?.return_to);
   const vipReturnHref = requestedReturn.split(/[?#]/)[0] === "/vip" ? requestedReturn : "";
+  const venueReturnHref = requestedReturn.split(/[?#]/)[0] === "/dashboard/venue" ? requestedReturn : "";
   if (profile.slug !== slug) {
     const query = new URLSearchParams();
     for (const key of ["media", "mediaIndex"]) {
       const value = queryParams?.[key];
       if (typeof value === "string") query.set(key, value);
     }
-    if (vipReturnHref) query.set("return_to", vipReturnHref);
+    if (vipReturnHref || venueReturnHref) query.set("return_to", vipReturnHref || venueReturnHref);
     permanentRedirect(`/dancers/${profile.slug}${query.size ? `?${query}` : ""}`);
   }
 
   const content = await loadPublicDancerContent(client, profile);
-  return <PublicDancerProfile profile={profile} {...content} vipReturnHref={vipReturnHref} />;
+  return <PublicDancerProfile profile={profile} {...content} vipReturnHref={vipReturnHref} venueReturnHref={venueReturnHref} />;
 }

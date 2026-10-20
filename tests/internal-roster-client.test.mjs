@@ -42,6 +42,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   const cleanups = [];
   const persisted = [];
   const replacements = [];
+  const navigations = [];
   const listeners = new Map();
   const documentListeners = new Map();
   const elements = new Map();
@@ -59,7 +60,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   const window = {
     addEventListener: (name, callback) => listeners.set(name, callback),
     removeEventListener: name => listeners.delete(name),
-    location: { hash: new URL(url).hash, href: url }, history: { state: null, replaceState: (_state, _title, path) => replacements.push(path) },
+    location: { hash: new URL(url).hash, href: url, assign: href => navigations.push(href) }, history: { state: null, replaceState: (_state, _title, path) => replacements.push(path) },
     requestAnimationFrame: callback => schedule(callback, 0), cancelAnimationFrame: id => timers.delete(id),
   };
   vm.runInNewContext(code, {
@@ -112,7 +113,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
     return tree;
   };
   return {
-    exports, persisted, timers, render, replacements, listeners, documentListeners, elements, HTMLDetailsElement, window,
+    exports, persisted, timers, render, replacements, navigations, listeners, documentListeners, elements, HTMLDetailsElement, window,
     runEffect: index => { cleanups.push(latestEffects[index]()); },
     focus: () => listeners.get("focus")?.(),
     pageshow: persisted => listeners.get("pageshow")?.({ persisted }),
@@ -311,7 +312,7 @@ test("staff table requests have a protected avatar and open the matching profile
   const calls = [];
   const app = harness(async (url, options) => {
     calls.push({ url, options });
-    if (url.includes('/profile/')) return response({ ok: true, profile: { id: dancer.id, stage_name: dancer.stageName } });
+    if (url.includes('/profile/') || url.startsWith('/api/public/dancers/')) return response({ ok: true, profile: { id: dancer.id, slug: 'actual-dancer', stage_name: dancer.stageName } });
     return response({ ...roster, requests: [{ id: 'request-1', dancer_id: dancer.id, link_id: 'table-1', status: 'pending', created_at: '2026-10-13T03:00:00Z' }], links: [{ id: 'table-1', label: 'Table 7' }] });
   }, { token: undefined, session: { accessToken: 'staff-token', account: { role: 'venue' } }, props: { token: undefined, operationsOnly: true } });
   t.after(() => app.unmount()); await app.mount();
@@ -327,11 +328,10 @@ test("staff table requests have a protected avatar and open the matching profile
   assert.match(textContent(request), /New request/);
   assert.equal(find(request, node => node.type === 'time').props.dateTime, '2026-10-13T03:00:00Z');
   button.props.onClick(); await flush(); await flush();
-  assert.equal(profile(app).id, dancer.id);
+  assert.deepEqual(app.navigations, ['/dancers/actual-dancer?return_to=%2Fdashboard%2Fvenue%23table-requests']);
+  assert.equal(profile(app), undefined);
   assert.ok(calls.some(call => call.url === '/api/internal/profile/' + dancer.id && call.options.headers.authorization === 'Bearer staff-token'));
   assert.ok(calls.every(call => call.options.method === 'GET'));
-  find(app.render(), node => node.type?.name === 'ClubProfileDialog').props.onClose();
-  assert.equal(profile(app), null);
   assert.ok(find(app.render(), node => node.props?.['data-request-id']));
 });
 
@@ -428,6 +428,43 @@ test("roster profile triggers retain clickable custom identity content", async t
   assert.equal(button.props['aria-busy'], false);
 });
 
+for (const outcome of ["available", "private", "wrong-dancer", "account-changed"]) test(`dashboard full profiles verify the exact dancer before navigation: ${outcome}`, async t => {
+  const calls = [];
+  const app = harness(async (url, options) => {
+    calls.push(url);
+    assert.equal(options.headers.authorization, "Bearer staff-token");
+    if (url.startsWith("/api/internal/profile/")) return response({ ok: true, profile: { id: dancer.id, slug: "canonical-dancer" } });
+    assert.equal(url, "/api/public/dancers/canonical-dancer");
+    if (outcome === "private") return response({ ok: false, error: "Dancer profile not found." }, 404);
+    if (outcome === "account-changed") app.setSession({ accessToken: "another-account", account: { role: "venue" } });
+    return response({ ok: true, profile: { id: outcome === "wrong-dancer" ? "someone-else" : dancer.id, slug: "canonical-dancer" } });
+  }, { component: "VenueRosterProfileButton", props: { publicProfile: true },
+    session: { accessToken: "staff-token", account: { role: "venue" } } });
+  t.after(() => app.unmount()); await app.mount();
+  assert.equal(calls.length, 2);
+  assert.equal(profile(app), undefined);
+  assert.deepEqual(app.navigations, outcome === "available" ? ["/dancers/canonical-dancer?return_to=%2Fdashboard%2Fvenue%23table-requests"] : []);
+  if (outcome === "available") {
+    await app.advance(refreshInterval);
+    assert.equal(calls.length, 2, "navigation must not leave a private-profile polling loop behind");
+  } else assert.ok(find(app.render(), node => node.props?.role === "status"));
+});
+
+test("unavailable public profiles leave the venue's live request queue intact", async t => {
+  const app = harness(async url => {
+    if (url.startsWith("/api/public/dancers/")) return response({ ok: false, error: "Not found." }, 404);
+    if (url.startsWith("/api/internal/profile/")) return response({ ok: true, profile: { id: dancer.id, slug: "private-dancer" } });
+    return response({ ...roster, requests: [{ id: "request", dancer_id: dancer.id, status: "pending", created_at: "2026-10-20T03:00:00Z" }] });
+  }, { token: "", props: { operationsOnly: true }, session: { accessToken: "staff-token", account: { role: "venue" } } });
+  t.after(() => app.unmount()); await app.mount();
+  const cards = () => find(app.render(), node => node.props?.["aria-label"] === "Table request cards");
+  find(cards(), node => node.type === "button").props.onClick(); await flush();
+  assert.ok(cards());
+  assert.equal(alert(app), undefined);
+  assert.match(textContent(app.render()), /public profile is unavailable/);
+  assert.deepEqual(app.navigations, []);
+});
+
 test("table QR opens the roster directly with collapsed terms and no consent gate", async t => {
   const calls = [];
   const app = harness(async (url, options) => { calls.push({ url, options }); return response({ ...roster, kind: "table", label: "Table 1" }); });
@@ -503,7 +540,7 @@ test("Rhino dashboard samples show ten distinct authorized dancers without enter
   const calls = [];
   const app = harness(async (url, options) => {
     calls.push({ url, options });
-    if (url.includes("/profile/")) return response({ ok: true, profile: { id: dancers[0].id, stage_name: dancers[0].stageName } });
+    if (url.includes("/profile/") || url.startsWith("/api/public/dancers/")) return response({ ok: true, profile: { id: dancers[0].id, slug: "actual-dancer-1", stage_name: dancers[0].stageName } });
     return response({ ...roster, dancers: [...dancers].reverse().concat(dancers[0]), requests: [{
       id: "real-request", dancer_id: dancers[11].id, link_id: "real-table", status: "pending", created_at: "2026-10-20T03:00:00Z",
     }], links: [{ id: "real-table", label: "VIP 12" }] });
@@ -535,7 +572,8 @@ test("Rhino dashboard samples show ten distinct authorized dancers without enter
   const refreshedCards = find(app.render(), node => node.props?.["aria-label"] === "Table request cards").props.children.filter(card => card.props["data-sample"]);
   assert.deepEqual(refreshedCards.map(card => find(card, node => node.type === "time").props.dateTime), sampleTimes);
   find(samples[0], node => node.type === "button").props.onClick(); await flush();
-  assert.equal(profile(app).id, dancers[0].id, "samples open authorized real profiles");
+  assert.deepEqual(app.navigations, ["/dancers/actual-dancer-1?return_to=%2Fdashboard%2Fvenue%23table-requests"]);
+  assert.equal(profile(app), undefined, "dashboard requests must not mount the Internal profile");
   assert.ok(calls.every(call => call.options.method === "GET"), "samples cannot create requests or notifications");
   find(cards[0], node => node.type === "button" && node.props.children === "Mark seen").props.onClick(); await flush();
   const action = calls.find(call => call.options.method === "POST");

@@ -71,6 +71,19 @@ async function rosterFetch(url: string, token: string | undefined, body?: Record
   }
 }
 
+async function publicDancerDestination(profile: Profile, dancerId: string, signal?: AbortSignal) {
+  if (profile?.id !== dancerId || !profile.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(profile.slug)) {
+    throw new Error("This dancer’s full profile is unavailable.");
+  }
+  const data = await rosterFetch(`/api/public/dancers/${encodeURIComponent(profile.slug)}`, undefined, undefined, signal)
+    .catch(() => { throw new Error("This dancer’s public profile is unavailable. Please try again later."); });
+  if (data.profile?.id !== dancerId || typeof data.profile.slug !== "string"
+    || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.profile.slug)) {
+    throw new Error("This dancer’s full profile could not be confirmed. Refresh and try again.");
+  }
+  return `/dancers/${encodeURIComponent(data.profile.slug)}?return_to=${encodeURIComponent("/dashboard/venue#table-requests")}`;
+}
+
 function ProtectedMedia({ id, kind, token, alt, className, revision, priority = false, lazy = false, grid = false }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string; priority?: boolean; lazy?: boolean; grid?: boolean }) {
   const [url, setUrl] = useState("");
   const [failed, setFailed] = useState(false);
@@ -367,6 +380,11 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     try {
       const data = await rosterFetch(`/api/internal/profile/${dancer.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token);
       if (alive.current && selectedProfile.current === dancer.id) {
+        if (!token && operationsOnly) {
+          const destination = await publicDancerDestination(data.profile, dancer.id);
+          if (alive.current && selectedProfile.current === dancer.id) window.location.assign(destination);
+          return;
+        }
         if (generation === refreshGeneration.current) setProfile(data.profile);
         else void refresh();
       }
@@ -515,12 +533,12 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           {!error ? <div className="venue-dancer-grid" aria-hidden="true"><span className="venue-dancer-card" /><span className="venue-dancer-card" /><span className="venue-dancer-card" /></div> : null}
         </>}
       </section>{roster}</div> : null}
-    <ClubProfileDialog prewarm={!!snapshot && !operationsOnly} profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => {
+    {!staff || !operationsOnly ? <ClubProfileDialog prewarm={!!snapshot && !operationsOnly} profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => {
       const dancerId = selectedProfile.current;
       selectedProfile.current = ""; setProfile(null); setOpeningProfileId("");
       if (token && dancerId) showDancerNotice(dancerId, "That profile could not load. Please try again.", true);
       else setNotice("That profile could not load. Please try again.");
-    }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }} />
+    }} onClose={() => { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }} /> : null}
     {!operationsOnly ? <footer className="ir-powered-by">
       <a href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a>
       <p>{staff ? "Visibility is chosen by each dancer at check-in." : "Availability may change. Club staff coordinate all requests."}</p>
@@ -543,7 +561,7 @@ function ClubProfileDialog({ prewarm = false, profile, profileId = profile?.id |
   );
 }
 
-export function VenueRosterProfileButton({ dancerId, stageName, children, className }: { dancerId: string; stageName: string; children?: ReactNode; className?: string }) {
+export function VenueRosterProfileButton({ dancerId, stageName, children, className, publicProfile = false }: { dancerId: string; stageName: string; children?: ReactNode; className?: string; publicProfile?: boolean }) {
   const [open, setOpen] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState("");
@@ -552,18 +570,26 @@ export function VenueRosterProfileButton({ dancerId, stageName, children, classN
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     let hasProfile = false;
+    let navigating = false;
     const clear = () => { setProfile(null); setOpen(false); };
     const poll = async () => {
       try {
         const data = await rosterFetch('/api/internal/profile/' + dancerId, undefined, undefined, controller.signal);
         if (controller.signal.aborted) return;
+        if (publicProfile) {
+          const destination = await publicDancerDestination(data.profile, dancerId, controller.signal);
+          if (controller.signal.aborted) return;
+          navigating = true;
+          window.location.assign(destination);
+          return;
+        }
         hasProfile = true; setProfile(data.profile); setError("");
       } catch (reason) {
         if (!controller.signal.aborted && (reason instanceof RosterAccessError || !hasProfile)) {
           clear(); setError(reason instanceof Error ? reason.message : "Profile unavailable.");
         }
       } finally {
-        if (!controller.signal.aborted) timer = setTimeout(poll, ROSTER_REFRESH_INTERVAL_MS);
+        if (!controller.signal.aborted && !navigating) timer = setTimeout(poll, ROSTER_REFRESH_INTERVAL_MS);
       }
     };
     const sessionChanged = (event: StorageEvent) => {
@@ -574,6 +600,6 @@ export function VenueRosterProfileButton({ dancerId, stageName, children, classN
     window.addEventListener("storage", sessionChanged);
     void poll();
     return () => { controller.abort(); clearTimeout(timer); window.removeEventListener("storage", sessionChanged); };
-  }, [open, dancerId]);
-  return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={() => setOpen(true)} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}<ClubProfileDialog profile={profile} profileId={open ? dancerId : ""} onClose={() => { setOpen(false); setProfile(null); }} /></div>;
+  }, [open, dancerId, publicProfile]);
+  return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={() => setOpen(true)} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!publicProfile ? <ClubProfileDialog profile={profile} profileId={open ? dancerId : ""} onClose={() => { setOpen(false); setProfile(null); }} /> : null}</div>;
 }

@@ -72,6 +72,16 @@ test('explicit VIP return wins over unrelated same-site history', async () => {
   assert.equal(result.backs, 0);
 });
 
+test('venue request profiles use the canonical full page and return directly to table requests', async () => {
+  const props = await closeProps('/dashboard/venue#table-requests');
+  assert.equal(props.vipReturnHref, '');
+  assert.equal(props.venueReturnHref, '/dashboard/venue#table-requests');
+  const result = navigation(props, { referrer: `${origin}/`, historyLength: 4 });
+  assert.deepEqual(result.assigned, [`${origin}/dashboard/venue#table-requests`]);
+  assert.equal(result.backs, 0);
+  assert.equal(result.button.props['aria-label'], 'Back to venue dashboard');
+});
+
 test('My dancers profile returns reopen the same venue collection', async () => {
   const result = navigation(await closeProps('/vip?venueId=venue-2#vip-dancers'));
   assert.deepEqual(result.assigned, [`${origin}/vip?venueId=venue-2#vip-dancers`]);
@@ -97,21 +107,22 @@ test('ordinary profiles retain browser back and the discovery fallback', async (
 
 test('profile return destinations reject external, malformed and non-dashboard routes', async () => {
   for (const value of ['https://example.com/vip', '//example.com/vip', '/\\example.com/vip', '/%2fexample.com/vip',
-    '/vip/../../auth/callback', '/vip/invite/private-token', '/account', '/v\nip', ['/vip', 'https://example.com']]) {
+    '/vip/../../auth/callback', '/vip/invite/private-token', '/account', '/dashboard/venue/../../account', '/dashboard/venue/settings', '/v\nip', ['/vip', 'https://example.com']]) {
     const props = await closeProps(value);
     assert.equal(props.vipReturnHref, '', String(value));
+    assert.equal(props.venueReturnHref, '', String(value));
     assert.deepEqual(navigation(props).assigned, [`${origin}${fallbackHref}`]);
   }
 });
 
 test('renamed profiles preserve the VIP return alongside shared-media parameters', async () => {
-  for (const requestedReturn of ['/vip?venueId=venue-2#vip-plan', 'https://example.com/vip']) {
+  for (const requestedReturn of ['/vip?venueId=venue-2#vip-plan', '/dashboard/venue#table-requests', 'https://example.com/vip']) {
     await assert.rejects(Page({ params: Promise.resolve({ slug: 'old-aria' }), searchParams: Promise.resolve({
       return_to: requestedReturn, media: 'photo', mediaIndex: '2', unrelated: 'discard',
     }) }), error => {
       const url = new URL(error.href, origin);
       assert.equal(url.pathname, '/dancers/aria');
-      assert.equal(url.searchParams.get('return_to'), requestedReturn.startsWith('/vip') ? requestedReturn : null);
+      assert.equal(url.searchParams.get('return_to'), requestedReturn.startsWith('/') ? requestedReturn : null);
       assert.equal(url.searchParams.get('media'), 'photo');
       assert.equal(url.searchParams.get('mediaIndex'), '2');
       assert.equal(url.searchParams.has('unrelated'), false);
