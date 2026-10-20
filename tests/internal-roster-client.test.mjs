@@ -25,7 +25,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-function harness(fetch, { token = "table-token", session = null, component = "InternalRoster", props = {}, url = "https://example.invalid/internal/club/table-token" } = {}) {
+function harness(fetch, { token = "table-token", session = null, component = "InternalRoster", props = {}, sharedOpen = null, persistRefresh = false, url = "https://example.invalid/internal/club/table-token" } = {}) {
   let now = 0;
   let nextTimer = 0;
   let nextRequestKey = 0;
@@ -75,6 +75,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
       if (name === "react/jsx-runtime") return require(name);
       if (name.endsWith(".css")) return {};
       if (name === "react") return {
+        createContext: () => ({ Provider: "VenueProfileContext" }), useContext: () => sharedOpen,
         useState(initial) {
           const index = stateIndex++;
           if (mounting) states[index] = component === "VenueRosterProfileButton" && index === 0 ? true : initial;
@@ -91,6 +92,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
       if (name === "../dashboard/VenueAdminUtilities") return { default: () => null };
       if (name === "../dashboard/VenueGridImage") return { default: "VenueGridImage" };
       if (name === "./InternalRequestPushSettings") return { InternalRequestPushSettings: () => null };
+      if (name === "./FullProfileDialog") return { ClubProfileDialog: function ClubProfileDialog() {} };
       if (name === "./InternalFullProfile") return { InternalFullProfile: () => null };
       if (name === "@/src/lib/dancr/access-terms") return accessTerms;
       if (name === "@/src/lib/dancr/venue-guest-theme") return guestTheme;
@@ -99,7 +101,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
         BROWSER_AUTH_SESSION_KEY: sessionKey,
         readBrowserAuthSession: () => session,
         isCurrentBrowserSession: expected => expected?.accessToken === session?.accessToken,
-        persistRefreshedBrowserAuthSession: (...args) => persisted.push(args),
+        persistRefreshedBrowserAuthSession: (...args) => { persisted.push(args); if (persistRefresh && args[0]?.accessToken) session = { ...session, ...args[0] }; },
       };
       throw new Error(`Unexpected import: ${name}`);
     },
@@ -114,7 +116,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
   };
   return {
     exports, persisted, timers, render, replacements, navigations, listeners, documentListeners, elements, HTMLDetailsElement, window,
-    runEffect: index => { cleanups.push(latestEffects[index]()); },
+    runEffect: (index, cleanupPrevious = false) => { if (cleanupPrevious) cleanups[index]?.(); cleanups[index] = latestEffects[index](); },
     focus: () => listeners.get("focus")?.(),
     pageshow: persisted => listeners.get("pageshow")?.({ persisted }),
     visibility: value => { document.visibilityState = value; documentListeners.get("visibilitychange")?.(); },
@@ -328,8 +330,8 @@ test("staff table requests have a protected avatar and open the matching profile
   assert.match(textContent(request), /New request/);
   assert.equal(find(request, node => node.type === 'time').props.dateTime, '2026-10-13T03:00:00Z');
   button.props.onClick(); await flush(); await flush();
-  assert.deepEqual(app.navigations, ['/dancers/actual-dancer?return_to=%2Fdashboard%2Fvenue%23table-requests']);
-  assert.equal(profile(app), undefined);
+  assert.deepEqual(app.navigations, []);
+  assert.equal(profile(app).id, dancer.id);
   assert.ok(calls.some(call => call.url === '/api/internal/profile/' + dancer.id && call.options.headers.authorization === 'Bearer staff-token'));
   assert.ok(calls.every(call => call.options.method === 'GET'));
   assert.ok(find(app.render(), node => node.props?.['data-request-id']));
@@ -428,31 +430,25 @@ test("roster profile triggers retain clickable custom identity content", async t
   assert.equal(button.props['aria-busy'], false);
 });
 
-for (const outcome of ["available", "private", "wrong-dancer", "account-changed"]) test(`dashboard full profiles verify the exact dancer before navigation: ${outcome}`, async t => {
+for (const outcome of ["available", "private", "wrong-dancer", "account-changed"]) test(`dashboard profiles open in place after one authorized lookup: ${outcome}`, async t => {
   const calls = [];
   const app = harness(async (url, options) => {
     calls.push(url);
     assert.equal(options.headers.authorization, "Bearer staff-token");
-    if (url.startsWith("/api/internal/profile/")) return response({ ok: true, profile: { id: dancer.id, slug: "canonical-dancer" } });
-    assert.equal(url, "/api/public/dancers/canonical-dancer");
-    if (outcome === "private") return response({ ok: false, error: "Dancer profile not found." }, 404);
+    assert.equal(url, "/api/internal/profile/" + dancer.id);
     if (outcome === "account-changed") app.setSession({ accessToken: "another-account", account: { role: "venue" } });
-    return response({ ok: true, profile: { id: outcome === "wrong-dancer" ? "someone-else" : dancer.id, slug: "canonical-dancer" } });
-  }, { component: "VenueRosterProfileButton", props: { publicProfile: true },
-    session: { accessToken: "staff-token", account: { role: "venue" } } });
+    return response({ ok: true, profile: { id: outcome === "wrong-dancer" ? "someone-else" : dancer.id, slug: outcome === "private" ? "" : "canonical-dancer" } });
+  }, { component: "VenueRosterProfileButton", session: { accessToken: "staff-token", account: { role: "venue" } } });
   t.after(() => app.unmount()); await app.mount();
-  assert.equal(calls.length, 2);
-  assert.equal(profile(app), undefined);
-  assert.deepEqual(app.navigations, outcome === "available" ? ["/dancers/canonical-dancer?return_to=%2Fdashboard%2Fvenue%23table-requests"] : []);
-  if (outcome === "available") {
-    await app.advance(refreshInterval);
-    assert.equal(calls.length, 2, "navigation must not leave a private-profile polling loop behind");
-  } else assert.ok(find(app.render(), node => node.props?.role === "status"));
+  assert.equal(calls.length, 1);
+  assert.deepEqual(app.navigations, []);
+  if (["available", "private"].includes(outcome)) assert.equal(profile(app).id, dancer.id);
+  else { assert.equal(profile(app), null); assert.ok(find(app.render(), node => node.props?.role === "status")); }
 });
 
-test("unavailable public profiles leave the venue's live request queue intact", async t => {
+test("table requests open the authorized full profile in place without a public lookup", async t => {
   const app = harness(async url => {
-    if (url.startsWith("/api/public/dancers/")) return response({ ok: false, error: "Not found." }, 404);
+    assert.ok(!url.startsWith("/api/public/"));
     if (url.startsWith("/api/internal/profile/")) return response({ ok: true, profile: { id: dancer.id, slug: "private-dancer" } });
     return response({ ...roster, requests: [{ id: "request", dancer_id: dancer.id, status: "pending", created_at: "2026-10-20T03:00:00Z" }] });
   }, { token: "", props: { operationsOnly: true }, session: { accessToken: "staff-token", account: { role: "venue" } } });
@@ -461,7 +457,7 @@ test("unavailable public profiles leave the venue's live request queue intact", 
   find(cards(), node => node.type === "button").props.onClick(); await flush();
   assert.ok(cards());
   assert.equal(alert(app), undefined);
-  assert.match(textContent(app.render()), /public profile is unavailable/);
+  assert.equal(profile(app).id, dancer.id);
   assert.deepEqual(app.navigations, []);
 });
 
@@ -576,8 +572,8 @@ test("Rhino dashboard samples show ten distinct authorized dancers without enter
   const refreshedCards = find(app.render(), node => node.props?.["aria-label"] === "Table request cards").props.children.filter(card => card.props["data-sample"]);
   assert.deepEqual(refreshedCards.map(card => find(card, node => node.type === "time").props.dateTime), sampleTimes);
   find(samples[0], node => node.type === "button").props.onClick(); await flush();
-  assert.deepEqual(app.navigations, ["/dancers/actual-dancer-1?return_to=%2Fdashboard%2Fvenue%23table-requests"]);
-  assert.equal(profile(app), undefined, "dashboard requests must not mount the Internal profile");
+  assert.deepEqual(app.navigations, []);
+  assert.equal(profile(app).id, dancers[0].id);
   assert.ok(calls.every(call => call.options.method === "GET"), "samples cannot create requests or notifications");
   find(cards[0], node => node.type === "button" && node.props.children === "Mark seen").props.onClick(); await flush();
   const action = calls.find(call => call.options.method === "POST");
@@ -1380,4 +1376,42 @@ test("an open staff profile also refreshes quietly every 20 minutes and closes o
   assert.ok(profile(app));
   await app.advance(refreshInterval);
   assert.equal(profile(app), null);
+});
+
+test("shared venue cards hand off their existing image without creating per-card viewers", async t => {
+  const selections = [];
+  const app = harness(() => assert.fail("A shared card cannot fetch its own profile"), { component: "VenueRosterProfileButton", sharedOpen: value => selections.push(value) });
+  t.after(() => app.unmount()); await app.mount();
+  const tree = app.render();
+  assert.equal(find(tree, node => node.type?.name === "ClubProfileDialog"), undefined);
+  find(tree, node => node.type === "button").props.onClick({ currentTarget: { querySelector: () => ({ currentSrc: "blob:https://example.invalid/card" }) } });
+  assert.equal(selections[0].id, dancer.id);
+  assert.equal(selections[0].photoUrl, "blob:https://example.invalid/card");
+});
+
+test("one venue viewer opens immediately, cancels a switched dancer and keeps refreshed sessions", async t => {
+  const first = deferred(), calls = [];
+  const app = harness(async (url, options) => {
+    calls.push({ url, options });
+    return url.endsWith("first") ? first.promise : response({ ok: true, profile: { id: "second", stage_name: "Second" }, session: { accessToken: "refreshed" } });
+  }, { component: "VenueProfileProvider", session: { accessToken: "owner", account: { role: "venue" } }, persistRefresh: true });
+  t.after(() => app.unmount()); await app.mount();
+  app.render().props.value({ id: "first", stageName: "First", photoUrl: "card-first" });
+  let tree = app.render(); app.runEffect(0, true);
+  const dialog = () => find(app.render(), node => node.type?.name === "ClubProfileDialog").props;
+  assert.equal(dialog().prewarm, true);
+  assert.equal(dialog().profileId, "first");
+  assert.equal(dialog().profile, null);
+  tree.props.value({ id: "second", stageName: "Second", photoUrl: "card-second" });
+  app.render(); app.runEffect(0, true); await flush();
+  assert.equal(calls[0].options.signal.aborted, true);
+  assert.equal(dialog().profile.id, "second");
+  assert.equal(dialog().profile.initialPhotoUrl, "card-second");
+  first.resolve(response({ ok: true, profile: { id: "first" } })); await flush();
+  assert.equal(dialog().profile.id, "second");
+  app.focus();
+  assert.equal(dialog().profile.id, "second", "Own session refresh does not dismiss the viewer");
+  app.setSession({ accessToken: "different-account", account: { role: "venue" } }); app.focus();
+  assert.equal(dialog().profileId, "");
+  assert.equal(dialog().profile, null);
 });

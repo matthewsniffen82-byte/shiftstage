@@ -134,9 +134,9 @@ test("Club Deal wallet and alerts expose real status, expiry, history, and direc
   assert.match(dashboard, /formatNotificationTimestamp\(notification\.createdAt\)/);
   assert.match(dashboard, /destination \? \([\s\S]*?<DestinationLink[\s\S]*?onClick=\{\(\) => void markRead\(notificationId\)\}/);
   assert.match(dashboard, /No alerts yet[\s\S]*?Browse dancers/);
-  assert.match(dashboard, /How admission passes work/);
-  assert.match(dashboard, /Choose the exact deal[\s\S]*?Show your pass[\s\S]*?Wait for confirmation/);
-  assert.match(dashboard, /QR code to club staff/);
+  assert.match(dashboard, /Using your QR pass/);
+  assert.match(dashboard, /Tap Show QR[\s\S]*?Choose Save to phone[\s\S]*?Club staff verifies/);
+  assert.match(dashboard, /scans the QR to confirm one admission/);
 });
 
 test("new guest confirmation explains private account benefits once", () => {
@@ -185,8 +185,8 @@ test("customer dashboard keeps saved deals separate from cashier redemption acti
   assert.match(dashboard, /<h2>Saved Club Deals<\/h2>/);
   assert.match(dashboard, /Saved deals are private bookmarks\. Saving does not reserve, select, or redeem an offer\./);
   assert.match(dashboard, /<CustomerPassWallet deals=\{saved\.dealRedemptions\}/);
-  assert.match(dashboard, /id="customer-passes" title="Admission passes"/);
-  assert.ok(dashboard.includes('<Link href={`/deals/transportation/${encodeURIComponent(item.dealId)}`}>View deal</Link>'));
+  assert.match(dashboard, /id="customer-passes" title="My QR passes"/);
+  assert.match(dashboard, /className="saved-deal-view" href=\{`\/deals\/transportation\/\$\{encodeURIComponent\(item\.dealId\)\}`\}><span>View deal<\/span>/);
   assert.match(dashboard, />\s*Remove\s*<\/button>/);
   assert.match(dashboard, /"\/api\/customer\/deal-saves"/);
   assert.match(dashboard, /CustomerDirectionsButton/);

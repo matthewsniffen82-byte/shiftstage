@@ -2,6 +2,7 @@
 import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import VenueNotificationSettings from "./VenueNotificationSettings";
 import DashboardPhoneNotifications from "./DashboardPhoneNotifications";
+import { VenueProfileProvider } from "../internal/InternalRoster";
 import VenueWebsiteGrid from "./VenueWebsiteGrid";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -278,7 +279,7 @@ export function VenuePanel({
     ? `/?city=${encodeURIComponent(venueCity)}&venue=${encodeURIComponent(venueSlug)}&venue_preview=1`
     : "";
   return (
-    <>
+    <VenueProfileProvider>
       <div className="venue-workspace-toolbar">
         <nav className="venue-workspace-tabs" aria-label="Venue workspace" role="tablist">
           {([
@@ -633,7 +634,7 @@ export function VenuePanel({
         </>}
       </section>
 
-    </>
+    </VenueProfileProvider>
   );
 }
 

@@ -24,7 +24,7 @@ function DemoDancerIdentity({ dancer, children }: { dancer: DemoRosterDancer; ch
     <span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={dancer.photoUrl} /></span>
     <span className="venue-card-caption"><strong>{dancer.name}</strong>{children}</span>
   </span>;
-  return dancer.profileDancerId ? <VenueRosterProfileButton publicProfile dancerId={dancer.profileDancerId} stageName={dancer.name} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
+  return dancer.profileDancerId ? <VenueRosterProfileButton dancerId={dancer.profileDancerId} stageName={dancer.name} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
     : identity;
 }
 

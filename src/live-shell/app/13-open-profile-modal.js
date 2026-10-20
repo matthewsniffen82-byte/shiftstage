@@ -8,7 +8,7 @@
       const internal = profile.internalRoster === true;
       // Dashboard previews retain the club identity but use MyDancr's palette.
       // Only guest Internal profiles inherit the club theme, including media overlays.
-      profileModal.dataset.venueBrand = internal && !profile.internalGuestProfile ? "" : profile.venueSlug || "";
+      profileModal.dataset.venueBrand = profile.dashboardProfile || (internal && !profile.internalGuestProfile) ? "" : profile.venueSlug || "";
       profileModal.dataset.analyticsDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.dataset.publicDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.removeAttribute("data-public-visibility-hidden");

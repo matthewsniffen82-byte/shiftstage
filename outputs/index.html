@@ -41527,6 +41527,17 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
   border-left-color: #353538;
   background: #171719;
 }
+/* Staff use the full MyDancr profile palette; table guests keep club styling. */
+html.internal-profile-embed body:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) {
+  --discovery-backdrop: #1c122b;
+  background: #1c122b !important;
+}
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) #profileBackdrop {
+  background: #1c122b !important;
+}
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) #profileBackdrop #profileModal.profile-split-layout::after {
+  background: #100c17 !important;
+}
 @layer dancr-follow-controls {
   html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > .profile-options-panel {
@@ -43278,6 +43289,62 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       return internalProfileMedia.get(key);
     }
 
+    // Customer cards use the same warm viewer, but only the public profile API
+    // can supply their content. They never enter the staff media path.
+    async function openPublicProfileMessage(event) {
+      if (internalProfileFrameId !== "viewer" || event.origin !== window.location.origin || event.source !== window.parent
+        || event.data?.type !== "mydancr:public-profile-open"
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(event.data.profileId || "")
+        || typeof event.data.slug !== "string" || !event.data.slug || event.data.slug.length > 200) return;
+      const { profileId, slug } = event.data;
+      const revision = `public:${profileId}:${slug}`;
+      if (internalProfileRevision === revision) return;
+      if (internalProfileTargetId) closeProfileModal();
+      internalProfileTargetId = profileId;
+      internalProfileRevision = revision;
+      const sequence = ++internalProfileLoadSequence;
+      const controller = internalProfileMediaController;
+      const timeout = window.setTimeout(() => controller.abort(), 15000);
+      try {
+        const response = await fetch(`/api/public/dancers/${encodeURIComponent(slug)}`, {
+          cache: "no-store", credentials: "same-origin", signal: controller.signal,
+        });
+        const payload = response.ok ? await response.json() : null;
+        if (sequence !== internalProfileLoadSequence) return;
+        const source = payload?.profile;
+        if (controller.signal.aborted || !payload?.ok || source?.id !== profileId || source.verified !== true) throw new Error("Profile unavailable.");
+        const city = String(source.city || selectedCity()).trim();
+        if (!discoveryMarket(city)) markets[city] = { stats: { dancers: 0, shifts: 0, venues: 0 }, dancers: [], venues: [] };
+        if (![...citySelect.options].some(option => option.value === city)) {
+          const option = document.createElement("option");
+          option.value = city; option.textContent = city; citySelect.append(option);
+        }
+        internalRosterProfile = {
+          ...mapLiveDancer(source, isWorkingTonight(source, city), 0, {}),
+          dashboardProfile: true,
+        };
+        citySelect.value = city;
+        // Start with the confirmed saved state already loaded by the dashboard.
+        // These flags only paint controls; every action still uses its normal API.
+        const actions = event.data.actions || {};
+        setProfileFollowed(city, internalRosterProfile.name, actions.following === true);
+        if (actions.following === true && actions.notificationsEnabled === true) enableProfileNotifications(city, internalRosterProfile.name);
+        else disableProfileNotifications(city, internalRosterProfile.name);
+        goingTonightSavedByProfile[internalRosterProfile.name] = actions.going === true;
+        document.body.dataset.internalProfileAudience = "public";
+        delete document.body.dataset.venueGuestColor;
+        document.body.style.removeProperty("--venue-guest-accent");
+        document.body.style.removeProperty("--venue-guest-on-accent");
+        openProfileModal(profileId);
+        document.documentElement.classList.add("internal-profile-ready");
+        window.parent.postMessage({ type: "mydancr:internal-profile-shown", profileId }, window.location.origin);
+      } catch (error) {
+        if (sequence === internalProfileLoadSequence) throw error;
+      } finally {
+        window.clearTimeout(timeout);
+      }
+    }
+
     async function openInternalProfileMessage(event) {
       if (!internalProfileFrameId || event.origin !== window.location.origin || event.source !== window.parent
         || event.data?.type !== "mydancr:internal-profile-open"
@@ -43289,6 +43356,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       if (internalProfileTargetId && (internalProfileTargetId !== source.id || internalProfileToken !== token)) closeProfileModal();
       internalProfileTargetId = source.id;
       internalProfileToken = token;
+      document.body.dataset.internalProfileAudience = token ? "guest" : "staff";
       // Only a table-token profile may carry a club theme. This document is
       // isolated from the public app and the staff profile preview.
       const guestAccent = token && /^#[0-9a-f]{6}$/i.test(source.internalAccent || "") ? source.internalAccent : "";
@@ -43329,21 +43397,23 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         option.value = city; option.textContent = city; citySelect.append(option);
       }
       const external = discoveryMarket(city)?.dancers?.find(item => item.id === source.id && isApprovedPublicProfile(item));
-      const photoMedia = async photo => ({
-        id: photo.id, imageUrl: await internalProfileMediaUrl("photo", photo.id, token),
+      const photoDetails = (photo, imageUrl) => ({
+        id: photo.id, imageUrl,
         reviewStatus: "approved", isPrimary: photo.is_primary === true,
         isPinned: photo.is_pinned === true, sortOrder: photo.sort_order || 0, likeCount: photo.like_count || 0,
       });
+      const photoMedia = async photo => photoDetails(photo, await internalProfileMediaUrl("photo", photo.id, token));
       const mainPhoto = source.photos.find(photo => photo.is_primary) || source.photos[0];
-      // Open after the two visible images. Galleries and full video downloads
-      // must never hold the whole profile behind a loading spinner.
-      const [avatarPhotoUrl, primaryPhoto] = await Promise.all([
+      // The parent has already authorized this exact profile. Show its identity
+      // immediately; even the main photo must not hold the viewer closed.
+      const visibleMedia = Promise.all([
         internalProfileMediaUrl("avatar", source.id, token, source.avatarRevision, 320),
         mainPhoto ? photoMedia(mainPhoto) : null,
       ]);
-      if (sequence !== internalProfileLoadSequence) return;
       const previous = internalRosterProfile;
-      const photos = previous?.submittedPhotos || (primaryPhoto ? [primaryPhoto] : []);
+      const initialPhotoUrl = typeof source.initialPhotoUrl === "string"
+        && /^(?:https?:\/\/|blob:https?:\/\/)/.test(source.initialPhotoUrl) ? source.initialPhotoUrl : "";
+      const photos = previous?.submittedPhotos || (mainPhoto && initialPhotoUrl ? [photoDetails(mainPhoto, initialPhotoUrl)] : []);
       internalProfileMediaIncomplete = false;
       const working = Date.parse(source.workingUntil || "") > Date.now();
       internalRosterProfile = {
@@ -43353,7 +43423,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,
         metricsUnavailable: previous ? previous.metricsUnavailable : external ? external.metricsUnavailable : true,
-        avatarPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: (photos.find(photo => photo.isPrimary) || photos[0])?.imageUrl || "", mainPhotoSrcSet: "",
+        avatarPhotoUrl: previous?.avatarPhotoUrl || initialPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: (photos.find(photo => photo.isPrimary) || photos[0])?.imageUrl || "", mainPhotoSrcSet: "",
         galleryPhotoUrls: photos.map(photo => photo.imageUrl), galleryPhotoSrcSets: [],
         galleryPhotoIds: photos.map(photo => photo.id), galleryPhotoLikeCounts: photos.map(photo => photo.likeCount),
         galleryPhotoPins: photos.map(photo => photo.isPinned), submittedPhotos: photos,
@@ -43368,12 +43438,13 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         activeDeal: null, activeDeals: [], dealAttributionToken: "", dealAttributionTokens: {},
       };
       const viewed = internalRosterProfile;
-      viewed.internalVideosRequest = Promise.all(source.videos.map(async video => ({
+      // Give the visible images priority over full video downloads.
+      viewed.internalVideosRequest = visibleMedia.then(() => sequence !== internalProfileLoadSequence ? [] : Promise.all(source.videos.map(async video => ({
         id: video.id, videoUrl: await internalProfileMediaUrl("video", video.id, token),
         posterUrl: video.has_poster ? await internalProfileMediaUrl("video-poster", video.id, token) : "",
         caption: video.caption, durationSeconds: video.duration_seconds || 0, likeCount: video.like_count || 0,
         isPinned: video.is_pinned === true, publishedAt: video.published_at,
-      }))).then(videos => {
+      })))).then(videos => {
         if (sequence !== internalProfileLoadSequence) return { ok: false, videos: [] };
         internalProfileMediaIncomplete ||= videos.some((video, index) => !video.videoUrl || (source.videos[index].has_poster && !video.posterUrl));
         viewed.internalVideos = videos.filter(video => video.videoUrl).sort((a, b) => Number(b.isPinned) - Number(a.isPinned));
@@ -43391,6 +43462,15 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       if (!external) void loadInternalProfilePublicMetrics(viewed, sequence);
       document.documentElement.classList.add("internal-profile-ready");
       window.parent.postMessage({ type: "mydancr:internal-profile-shown", profileId: source.id }, window.location.origin);
+      const [avatarPhotoUrl, primaryPhoto] = await visibleMedia;
+      if (sequence !== internalProfileLoadSequence) return;
+      viewed.avatarPhotoUrl = avatarPhotoUrl || initialPhotoUrl;
+      if (primaryPhoto?.imageUrl) {
+        viewed.mainPhotoUrl = primaryPhoto.imageUrl;
+        viewed.submittedPhotos = [primaryPhoto];
+        setModalPhoto(portraitClass(-1), viewed.mainPhotoUrl);
+        setProfileMainPhoto(viewed.mainPhotoUrl, "");
+      }
       const gallery = await Promise.all(source.photos.map(photo => photo.id === mainPhoto?.id ? primaryPhoto : photoMedia(photo)));
       if (sequence !== internalProfileLoadSequence) return;
       internalProfileMediaIncomplete ||= !avatarPhotoUrl || gallery.some(photo => !photo.imageUrl);
@@ -43529,9 +43609,12 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           showToast(event.data.message);
           return;
         }
-        void openInternalProfileMessage(event).catch(() => {
+        const opening = event.data?.type === "mydancr:public-profile-open" ? openPublicProfileMessage(event) : openInternalProfileMessage(event);
+        void opening.catch(() => {
+          const profileId = event.data?.profileId || event.data?.profile?.id;
+          if (profileId !== internalProfileTargetId) return;
           internalProfileRevision = "";
-          window.parent.postMessage({ type: "mydancr:internal-profile-error", profileId: event.data?.profile?.id }, window.location.origin);
+          window.parent.postMessage({ type: "mydancr:internal-profile-error", profileId }, window.location.origin);
         });
       });
       window.addEventListener("pagehide", () => {
@@ -55603,7 +55686,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const internal = profile.internalRoster === true;
       // Dashboard previews retain the club identity but use MyDancr's palette.
       // Only guest Internal profiles inherit the club theme, including media overlays.
-      profileModal.dataset.venueBrand = internal && !profile.internalGuestProfile ? "" : profile.venueSlug || "";
+      profileModal.dataset.venueBrand = profile.dashboardProfile || (internal && !profile.internalGuestProfile) ? "" : profile.venueSlug || "";
       profileModal.dataset.analyticsDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.dataset.publicDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.removeAttribute("data-public-visibility-hidden");

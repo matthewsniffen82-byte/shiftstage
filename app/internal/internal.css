@@ -18,6 +18,11 @@ body .ir-shell.ir-staff.ir-embedded{min-height:0;padding:0;margin:16px 0;backgro
 body dialog.ir-profile-dialog.ir-full-profile-dialog{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#050507;overflow:hidden}.ir-full-profile-frame{display:block;width:100%;height:100%;border:0;background:#050507}
 /* Prepare the full-size viewer behind the roster; reveal only when it is ready. */
 body dialog.ir-full-profile-dialog:not([open]){display:block;visibility:hidden;pointer-events:none}
+.ir-profile-loading{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:#1c122b;color:#f7f2ff;font-family:inherit}
+.ir-profile-loading img{width:112px;height:150px;object-fit:cover;border-radius:16px}
+.ir-profile-loading h2,.ir-profile-loading p{margin:0}
+.ir-profile-loading p{color:#c4b5d7}
+.ir-profile-loading-close{position:absolute;top:max(12px,env(safe-area-inset-top));left:16px;min-height:44px;padding:8px 14px;border:1px solid #675079;border-radius:12px;background:#241831;color:#fff;font:inherit;cursor:pointer}
 
 /* Internal uses neutral surfaces so each club's accent owns the emphasis.
  * Cover the page gutters, embedded staff roster and profile loading frame. */

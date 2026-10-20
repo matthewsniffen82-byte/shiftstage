@@ -12,6 +12,7 @@ import { CustomerDashboardIcon } from "./CustomerDashboardIdentity";
 import { DEVICE_SAVED_DEALS_CHANGED_EVENT, removeDeviceSavedClubDeal } from "@/src/lib/dancr/customer-device-deals";
 import { readSession, requestCustomerProfileJson, requestDashboardJson } from "./dashboard-session";
 import type { CustomerDancerFollow, CustomerSavedState, SavedDancerSummary, SavedShiftSummary, SavedVenueSummary, CustomerVenueFollow, CustomerGoingSignal, LoadState, SavedImageSummary } from "./dashboard-types";
+import { CustomerProfileViewer } from "./CustomerProfileViewer";
 import { customerDirectionsHref, customerDancerHref, customerVenueHref, customerInitials } from "./DashboardShared";
 import { customerDashboardDestination, type CustomerView, type CustomerSavedFilter } from "./customer-dashboard-view";
 import { chooseDiscoveryCity, CUSTOMER_DISCOVERY_CITY_KEY, customerNightSummary } from "@/src/lib/dancr/customer-night";
@@ -458,7 +459,7 @@ export function CustomerPanel({
   } : saved;
   const workingFollows = (saved?.follows || []).filter(item => item.dancer?.slug && item.dancer.nextShift?.status === "posted" && customerShiftLabel(item.dancer.nextShift) === "Working now");
   const night = customerNightSummary(saved, now);
-  return <div className="customer-workspace" ref={workspaceRef}>
+  return <CustomerProfileViewer saved={confirmedSaved} onSavedChange={onSavedChange}><div className="customer-workspace" ref={workspaceRef}>
     <CustomerDashboardNav active={view} onNavigate={navigate} alertCount={alertCount} />
     {actionStatus ? <p className="customer-action-status" role="status">{actionStatus}</p> : null}
     <section id="customer-view-night" className="customer-view" hidden={view !== "night"} aria-label="My Night" tabIndex={-1}>
@@ -501,7 +502,7 @@ export function CustomerPanel({
     </section>
     <section id="customer-view-alerts" className="customer-view" hidden={view !== "alerts"} aria-label="Alerts" tabIndex={-1}>{alertsContent}</section>
     <section id="customer-view-account" className="customer-view" hidden={view !== "account"} aria-label="Account" tabIndex={-1}>{accountContent}</section>
-  </div>;
+  </div></CustomerProfileViewer>;
 }
 
 
@@ -554,7 +555,7 @@ function CustomerNightPanel({
               <div className="customer-night-copy"><h3>{dancer.stageName || "Dancer"}</h3><p className="customer-night-date" data-working={shiftLabel === "Working now" || undefined}>{shiftLabel}</p></div>
             </div>
             <div className="customer-night-controls"><div className="customer-card-actions customer-night-actions">
-              {dancer.slug ? <Link href={customerDancerHref(dancer)}>View profile</Link> : null}
+              {dancer.slug ? <Link href={customerDancerHref(dancer)} prefetch={false} data-profile-id={dancer.id} data-profile-name={dancer.stageName}>View profile</Link> : null}
               <CustomerDirectionsButton dancerId={dancer.id} onDirections={onDirections} pending={Boolean(pendingAction)} venue={venue} />
             </div><details className="customer-card-menu" data-compact-menu name="customer-card-options"><summary className="dashboard-menu-trigger" aria-label={`Manage plan for ${dancer.stageName || "dancer"}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div>
               {venue.slug ? <Link href={customerVenueHref(venue)}>Club page</Link> : null}
@@ -704,7 +705,7 @@ function FollowedDancerGridCard({
     <Link
       aria-label={`Open ${dancerName} profile`}
       className="customer-followed-dancer-tile"
-      href={customerDancerHref(dancer)}
+      href={customerDancerHref(dancer)} prefetch={false} data-profile-id={dancer.id} data-profile-name={dancer.stageName}
     >
       <SavedCardImage
         image={dancer}
@@ -769,7 +770,7 @@ function SavedVenueCard({
       </div>
       <div className="home-venue-discovery-lineup-slot">
         {count ? <span className="home-venue-discovery-lineup" role="group" aria-label={`${count} dancers working now`}>
-          <span className="home-venue-discovery-lineup-avatars">{dancers.slice(0, 5).map(dancer => <Link key={dancer.id} className="home-venue-discovery-lineup-avatar venue-lineup-profile" href={customerDancerHref(dancer)} data-dancer-avatar data-working-now="true" aria-label={`Open ${dancer.stageName}, working now`}>
+          <span className="home-venue-discovery-lineup-avatars">{dancers.slice(0, 5).map(dancer => <Link key={dancer.id} className="home-venue-discovery-lineup-avatar venue-lineup-profile" href={customerDancerHref(dancer)} prefetch={false} data-profile-id={dancer.id} data-profile-name={dancer.stageName} data-dancer-avatar data-working-now="true" aria-label={`Open ${dancer.stageName}, working now`}>
             <span data-dancer-avatar-border aria-hidden="true">
               {dancer.imageUrl ? <img className="venue-lineup-avatar-photo" src={dancer.imageUrl} srcSet={dancer.imageSrcSet || undefined} sizes="32px" width={64} height={64} style={{ objectPosition: `${dancer.imageFocalX ?? 50}% ${dancer.imageFocalY ?? 50}%` }} alt="" loading="lazy" decoding="async" data-image-state="loading" onLoad={event => { event.currentTarget.dataset.imageState = "ready"; }} onError={event => { event.currentTarget.dataset.imageState = "error"; }} /> : null}
               <span className="venue-lineup-avatar-initial">{customerInitials(dancer.stageName || "Dancer")}</span>

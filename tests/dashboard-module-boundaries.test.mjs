@@ -9,7 +9,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import * as deviceDeals from '../src/lib/dancr/customer-device-deals.ts';
 
 const require = createRequire(import.meta.url);
-const files = ['DashboardClient', 'DashboardShared', 'CustomerDashboardPanels', 'VenueDashboardPanels', 'VenueDashboardDemoSwitch', 'DancerDashboardPanels', 'DancerProfileEditor', 'DancerAvatarPanel', 'DancerPhotoPanel', 'DancerShiftsPanel', 'DashboardStyles'];
+const files = ['DashboardClient', 'DashboardShared', 'CustomerDashboardPanels', 'CustomerProfileViewer', 'VenueDashboardPanels', 'VenueDashboardDemoSwitch', 'DancerDashboardPanels', 'DancerProfileEditor', 'DancerAvatarPanel', 'DancerPhotoPanel', 'DancerShiftsPanel', 'DashboardStyles'];
 const source = name => readFileSync(new URL('../app/dashboard/' + name + '.tsx', import.meta.url), 'utf8');
 
 test('dashboard role boundaries stay small and shared controls cannot import role panels', () => {
@@ -53,6 +53,7 @@ async function renderDashboard(role, initialState = {}, loading = true) {
       if (path.endsWith('/venue-dashboard-demo')) return require('../src/lib/dancr/venue-dashboard-demo.ts');
       if (path.endsWith('/customer-night')) return require('../src/lib/dancr/customer-night.ts');
       if (path === './useVenueOperations') return { useVenueOperations: () => ({ operations: null, error: '' }) };
+      if (path === '../internal/InternalRoster') return { VenueProfileProvider: ({ children }) => children };
       if (path.endsWith('/club-deal-presets')) return require('../src/lib/dancr/club-deal-presets.ts');
       if (path === './customer-dashboard-view') return require('../app/dashboard/customer-dashboard-view.ts');
       if (path === './avatar-upload-state') return require('../app/dashboard/avatar-upload-state.ts');

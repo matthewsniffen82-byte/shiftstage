@@ -77,3 +77,18 @@ test('ready, error and close events from old profiles or other frames cannot aff
   f.send({ type: 'mydancr:internal-profile-close', profileId: id });
   assert.equal(f.messages.at(-1).type, 'mydancr:internal-profile-clear');
 });
+
+test('customer profiles reuse the same frame with a public request and matching readiness', () => {
+  const f = fixture(), calls = [];
+  const idle = f.render({ profile: null, onClose() {} });
+  const opened = f.render({ profile: null, profileId: id, publicSlug: 'star', hidden: true,
+    onReady: () => calls.push('ready'), onClose() {} });
+  assert.equal(opened.props.src, idle.props.src);
+  assert.equal(opened.props.style.visibility, 'hidden');
+  assert.deepEqual(JSON.parse(JSON.stringify(f.messages.at(-1))), { type: 'mydancr:public-profile-open', profileId: id, slug: 'star' });
+  f.send({ type: 'mydancr:internal-profile-shown', profileId: otherId });
+  assert.deepEqual(calls, []);
+  f.send({ type: 'mydancr:internal-profile-shown', profileId: id });
+  assert.deepEqual(calls, ['ready']);
+  assert.equal(f.timers.size, 0);
+});

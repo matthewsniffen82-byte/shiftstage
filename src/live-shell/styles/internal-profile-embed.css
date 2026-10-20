@@ -28,6 +28,17 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
   border-left-color: #353538;
   background: #171719;
 }
+/* Staff use the full MyDancr profile palette; table guests keep club styling. */
+html.internal-profile-embed body:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) {
+  --discovery-backdrop: #1c122b;
+  background: #1c122b !important;
+}
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) #profileBackdrop {
+  background: #1c122b !important;
+}
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) #profileBackdrop #profileModal.profile-split-layout::after {
+  background: #100c17 !important;
+}
 @layer dancr-follow-controls {
   html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > .profile-options-panel {

@@ -1,13 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
+import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { venueGuestTheme } from "@/src/lib/dancr/venue-guest-theme";
 import { DEMO_TABLE_REQUEST_COUNT } from "@/src/lib/dancr/venue-dashboard-demo";
 import "./internal-guest-colors.css";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
 import VenueGridImage from "../dashboard/VenueGridImage";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
-import { InternalFullProfile, type InternalProfile as Profile, type InternalRequestAction } from "./InternalFullProfile";
+import type { InternalProfile as Profile } from "./InternalFullProfile";
+import { ClubProfileDialog, type ProfileSelection } from "./FullProfileDialog";
 import "../dashboard/venue-dancer-grid.css";
 import { BROWSER_AUTH_SESSION_KEY, isCurrentBrowserSession, persistRefreshedBrowserAuthSession, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-terms";
@@ -71,17 +72,11 @@ async function rosterFetch(url: string, token: string | undefined, body?: Record
   }
 }
 
-async function publicDancerDestination(profile: Profile, dancerId: string, signal?: AbortSignal) {
-  if (profile?.id !== dancerId || !profile.slug || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(profile.slug)) {
-    throw new Error("This dancer’s full profile is unavailable.");
-  }
-  const data = await rosterFetch(`/api/public/dancers/${encodeURIComponent(profile.slug)}`, undefined, undefined, signal)
-    .catch(() => { throw new Error("This dancer’s public profile is unavailable. Please try again later."); });
-  if (data.profile?.id !== dancerId || typeof data.profile.slug !== "string"
-    || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.profile.slug)) {
-    throw new Error("This dancer’s full profile could not be confirmed. Refresh and try again.");
-  }
-  return `/dancers/${encodeURIComponent(data.profile.slug)}?return_to=${encodeURIComponent("/dashboard/venue#table-requests")}`;
+const VenueProfileContext = createContext<((selection: ProfileSelection) => void) | null>(null);
+
+function selectedCardPhoto(button?: HTMLButtonElement) {
+  const image = button?.querySelector("img");
+  return image?.currentSrc || image?.src || "";
 }
 
 function ProtectedMedia({ id, kind, token, alt, className, revision, priority = false, lazy = false, grid = false }: { id: string; kind: "avatar" | "photo" | "video"; token?: string; alt: string; className?: string; revision?: string; priority?: boolean; lazy?: boolean; grid?: boolean }) {
@@ -116,6 +111,7 @@ function VenueBrandLogo({ url, name }: { url: string; name: string }) {
 }
 
 export function InternalRoster({ token, operationsOnly = false, sampleTableRequests = false, roster }: { token?: string; operationsOnly?: boolean; sampleTableRequests?: boolean; roster?: ReactNode }) {
+  const openVenueProfile = useContext(VenueProfileContext);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -371,7 +367,11 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     void mutate({ action: "cancel_request", dancerId, requestId });
   }
 
-  async function openProfile(dancer: Dancer) {
+  async function openProfile(dancer: Dancer, photoUrl = "") {
+    if (!token && openVenueProfile) {
+      openVenueProfile({ id: dancer.id, stageName: dancer.stageName, photoUrl });
+      return;
+    }
     if (token) dismissDancerNotice(dancer.id);
     else setNotice("");
     setProfile(null); setOpeningProfileId(dancer.id);
@@ -380,11 +380,6 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     try {
       const data = await rosterFetch(`/api/internal/profile/${dancer.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token);
       if (alive.current && selectedProfile.current === dancer.id) {
-        if (!token && operationsOnly) {
-          const destination = await publicDancerDestination(data.profile, dancer.id);
-          if (alive.current && selectedProfile.current === dancer.id) window.location.assign(destination);
-          return;
-        }
         if (generation === refreshGeneration.current) setProfile(data.profile);
         else void refresh();
       }
@@ -460,7 +455,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
         {!staff ? <p className="ir-roster-scope-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p> : null}
         {!staff && refreshMessage ? <p className="ir-refresh-message" data-error={refreshMessage !== "Roster updated." || undefined} role="status">{refreshMessage}</p> : null}
         {dancers.length ? <div className="ir-grid ir-directory-grid">{dancers.map((dancer, index) => <article className={`ir-dancer${snapshot.kind === "table" ? " ir-dancer-requestable" : ""}`} key={dancer.id} data-request-state={!staff ? dancer.requestStatus || undefined : undefined} data-has-notice={!!dancerNotices[dancer.id] || undefined}>
-          <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} aria-describedby={dancerNotices[dancer.id] ? `ir-dancer-notice-${dancer.id}` : undefined} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>
+          <button type="button" className="ir-profile-link" aria-label={`View ${dancer.stageName}’s full profile`} aria-describedby={dancerNotices[dancer.id] ? `ir-dancer-notice-${dancer.id}` : undefined} aria-busy={openingProfileId === dancer.id} onClick={event => void openProfile(dancer, selectedCardPhoto(event?.currentTarget))}>
             {dancer.mainPhotoId ? <ProtectedMedia key={dancer.mainPhotoId} id={dancer.mainPhotoId} revision={dancer.mainPhotoRevision} kind="photo" token={token} priority={index < 3} lazy={index >= 9} className="ir-main-photo" alt={`${dancer.stageName}’s main photo`} /> : <span className="ir-main-photo ir-photo-placeholder">Photo unavailable</span>}
             {!staff && dancer.requestStatus ? <span className="ir-card-request-state">{dancer.requestStatus === "acknowledged" ? "Seen by staff" : "Requested ✓"}</span> : null}
             <span className="ir-dancer-copy"><strong>{dancer.stageName}</strong><span>{openingProfileId === dancer.id ? "Opening…" : "View profile ↗"}</span></span>
@@ -513,7 +508,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
             {dancer ? <ProtectedMedia key={`${dancer.mainPhotoId || dancer.id}:${dancer.mainPhotoRevision || dancer.avatarRevision}`} id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" grid lazy={index >= 12} priority={index < 3} /> : <VenueGridImage />}</span>
             <span className="venue-card-caption"><strong>{dancerName}</strong><small>{item.sample ? `Sample · ${tableLabel}` : tableLabel}</small><span className="venue-card-status" data-state={requestState}>{openingProfileId === dancer?.id ? "Opening…" : requestLabel}</span></span></span>;
           return <article className="venue-dancer-card" data-request-id={item.id} data-sample={item.sample || undefined} key={item.id}><div className="venue-table-request-identity">
-            {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>{identity}</button>
+            {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={event => void openProfile(dancer, selectedCardPhoto(event?.currentTarget))}>{identity}</button>
               : identity}</div>
             <details className="venue-card-menu" name="venue-card-details"><summary className="dashboard-menu-trigger" aria-label={`${tableLabel} request details for ${dancerName}`} title="Request details"><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary>
             <div className="venue-card-popover"><div className="venue-card-details"><strong>{tableLabel} · {dancerName}</strong>
@@ -533,7 +528,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           {!error ? <div className="venue-dancer-grid" aria-hidden="true"><span className="venue-dancer-card" /><span className="venue-dancer-card" /><span className="venue-dancer-card" /></div> : null}
         </>}
       </section>{roster}</div> : null}
-    {!staff || !operationsOnly ? <ClubProfileDialog prewarm={!!snapshot && !operationsOnly} profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => {
+    {!staff || !openVenueProfile ? <ClubProfileDialog prewarm={!!snapshot} profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => {
       const dancerId = selectedProfile.current;
       selectedProfile.current = ""; setProfile(null); setOpeningProfileId("");
       if (token && dancerId) showDancerNotice(dancerId, "That profile could not load. Please try again.", true);
@@ -546,50 +541,50 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   </div>;
 }
 
-function ClubProfileDialog({ prewarm = false, profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { prewarm?: boolean; profile: Profile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
-  const profileDialog = useRef<HTMLDialogElement>(null);
-  const [readyId, setReadyId] = useState("");
-  const [viewerAttempt, setViewerAttempt] = useState(0);
-  useEffect(() => {
-    if (profile && readyId === profileId && !profileDialog.current?.open) profileDialog.current?.showModal();
-    if (!profileId) { profileDialog.current?.close(); setReadyId(""); }
-  }, [profile, profileId, readyId]);
-  return (
-    <dialog className="ir-profile-dialog ir-full-profile-dialog" ref={profileDialog} onCancel={event => { event.preventDefault(); onClose(); }} aria-label={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}>
-      {prewarm || profileId ? <InternalFullProfile key={viewerAttempt} profileId={profileId} profile={profile} token={token} request={request} onRequest={onRequest} onCancel={onCancel} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={() => { setReadyId(""); setViewerAttempt(attempt => attempt + 1); (onError || onClose)(); }} onClose={onClose} /> : null}
-    </dialog>
-  );
+/** One warm discovery viewer serves every dancer card in a venue workspace. */
+export function VenueProfileProvider({ children }: { children: ReactNode }) {
+  const [selection, setSelection] = useState<ProfileSelection | null>(null);
+  const close = useCallback(() => setSelection(null), []);
+  const { profile, error, fail } = useStaffProfile(selection?.id || "", !!selection, close, selection?.photoUrl);
+  return <VenueProfileContext.Provider value={setSelection}>
+    {children}
+    {error ? <p role="status" className="ir-notice">{error}</p> : null}
+    <ClubProfileDialog prewarm profile={profile} profileId={selection?.id || ""} loadingIdentity={selection} onError={fail} onClose={close} />
+  </VenueProfileContext.Provider>;
 }
 
-export function VenueRosterProfileButton({ dancerId, stageName, children, className, publicProfile = false }: { dancerId: string; stageName: string; children?: ReactNode; className?: string; publicProfile?: boolean }) {
-  const [open, setOpen] = useState(false);
+function useStaffProfile(dancerId: string, open: boolean, onClose: () => void, photoUrl = "") {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [error, setError] = useState("");
+  const latest = useRef({ onClose, photoUrl });
+  latest.current = { onClose, photoUrl };
+  const fail = useCallback(() => {
+    setProfile(null); setError("That profile could not load. Please try again."); latest.current.onClose();
+  }, []);
   useEffect(() => {
-    if (!open) { setProfile(null); return; }
+    setProfile(null);
+    if (!open) return;
+    setError("");
+    let session = readBrowserAuthSession();
     const controller = new AbortController();
     let timer: ReturnType<typeof setTimeout>;
     let hasProfile = false;
-    let navigating = false;
-    const clear = () => { setProfile(null); setOpen(false); };
+    const clear = () => { setProfile(null); latest.current.onClose(); };
     const poll = async () => {
       try {
+        if (!session || !isCurrentBrowserSession(session)) throw new RosterAccessError("Your account session changed. Refresh this page.");
         const data = await rosterFetch('/api/internal/profile/' + dancerId, undefined, undefined, controller.signal);
         if (controller.signal.aborted) return;
-        if (publicProfile) {
-          const destination = await publicDancerDestination(data.profile, dancerId, controller.signal);
-          if (controller.signal.aborted) return;
-          navigating = true;
-          window.location.assign(destination);
-          return;
-        }
-        hasProfile = true; setProfile(data.profile); setError("");
+        // rosterFetch validates the previous session before persisting refreshed credentials.
+        session = readBrowserAuthSession();
+        if (data.profile?.id !== dancerId) throw new RosterAccessError("This dancer’s full profile could not be confirmed. Refresh and try again.");
+        hasProfile = true; setProfile({ ...data.profile, initialPhotoUrl: latest.current.photoUrl }); setError("");
       } catch (reason) {
         if (!controller.signal.aborted && (reason instanceof RosterAccessError || !hasProfile)) {
-          clear(); setError(reason instanceof Error ? reason.message : "Profile unavailable.");
+          controller.abort(); clear(); setError(reason instanceof Error ? reason.message : "Profile unavailable.");
         }
       } finally {
-        if (!controller.signal.aborted && !navigating) timer = setTimeout(poll, ROSTER_REFRESH_INTERVAL_MS);
+        if (!controller.signal.aborted) timer = setTimeout(poll, ROSTER_REFRESH_INTERVAL_MS);
       }
     };
     const sessionChanged = (event: StorageEvent) => {
@@ -597,9 +592,25 @@ export function VenueRosterProfileButton({ dancerId, stageName, children, classN
         controller.abort(); clearTimeout(timer); clear();
       }
     };
+    const checkSession = () => {
+      if (!session || !isCurrentBrowserSession(session)) { controller.abort(); clearTimeout(timer); clear(); }
+    };
     window.addEventListener("storage", sessionChanged);
+    window.addEventListener("focus", checkSession);
     void poll();
-    return () => { controller.abort(); clearTimeout(timer); window.removeEventListener("storage", sessionChanged); };
-  }, [open, dancerId, publicProfile]);
-  return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={() => setOpen(true)} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!publicProfile ? <ClubProfileDialog profile={profile} profileId={open ? dancerId : ""} onClose={() => { setOpen(false); setProfile(null); }} /> : null}</div>;
+    return () => { controller.abort(); clearTimeout(timer); window.removeEventListener("storage", sessionChanged); window.removeEventListener("focus", checkSession); };
+  }, [open, dancerId]);
+  // Do not expose the previous dancer for a render while an effect switches IDs.
+  return { profile: open && profile?.id === dancerId ? profile : null, error, fail };
+}
+
+export function VenueRosterProfileButton({ dancerId, stageName, children, className }: { dancerId: string; stageName: string; children?: ReactNode; className?: string }) {
+  const openVenueProfile = useContext(VenueProfileContext);
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  const { profile, error, fail } = useStaffProfile(dancerId, open && !openVenueProfile, close);
+  return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={event => {
+    if (openVenueProfile) openVenueProfile({ id: dancerId, stageName, photoUrl: selectedCardPhoto(event?.currentTarget) });
+    else setOpen(true);
+  }} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!openVenueProfile ? <ClubProfileDialog profile={profile} profileId={open ? dancerId : ""} loadingIdentity={{ id: dancerId, stageName }} onError={fail} onClose={close} /> : null}</div>;
 }
