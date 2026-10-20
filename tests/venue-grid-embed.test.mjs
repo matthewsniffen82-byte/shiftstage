@@ -471,7 +471,7 @@ test("live location selector never borrows dancers for an unconnected location",
 });
 
 test("embedded profile uses the full shared component, preserves media and returns to its location", async () => {
-  const rhinoVenue = { ...venue, slug: rhino.RHINO_VENUE_SLUG };
+  const rhinoVenue = { ...venue, slug: rhino.RHINO_VENUE_SLUG, name: "Spearmint Rhino", address: "3340 S Highland Dr", state: "NV" };
   const source = { ...publicProfile, shiftSource: "demo_locked", upcomingShifts: [{ venueSlug: rhinoVenue.slug, venueName: "Spearmint Rhino" }] };
   let profile = source;
   let contentReads = 0;
@@ -500,6 +500,12 @@ test("embedded profile uses the full shared component, preserves media and retur
   assert.equal(result.props.tvVideos[0].videoUrl, "/api/public/venue-embed-media/video?id=v1");
   assert.equal(result.props.returnHref, "/embed/venues/talk-of-the-town?location=boise&demo=1");
   assert.equal(result.props.accent, "#b8860b");
+  const boiseDirections = new URL(result.props.venueDirectionsHref);
+  assert.equal(boiseDirections.origin + boiseDirections.pathname, "https://www.google.com/maps/dir/");
+  assert.equal(boiseDirections.searchParams.get("api"), "1");
+  assert.equal(boiseDirections.searchParams.get("destination"), "Spearmint Rhino, Boise, ID");
+  const vegas = await render({ location: "las-vegas" });
+  assert.equal(new URL(vegas.props.venueDirectionsHref).searchParams.get("destination"), "Spearmint Rhino, 3340 S Highland Dr, Las Vegas, NV");
   assert.equal(source.city, "Las Vegas");
   for (const demo of [undefined, "0"]) {
     const legacy = await render({ demo, location: "boise" });
@@ -514,7 +520,7 @@ test("embedded profile uses the full shared component, preserves media and retur
   await assert.rejects(render({}), /NOT_FOUND/);
   profile = { ...source, checkedOutAt: new Date().toISOString() };
   await assert.rejects(render({}), /NOT_FOUND/);
-  assert.equal(contentReads, 3);
+  assert.equal(contentReads, 4);
   const client = read("app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx");
   assert.match(client, /<PublicDancerProfile \{\.\.\.props\}/);
   assert.match(client, /\?presence=1/);

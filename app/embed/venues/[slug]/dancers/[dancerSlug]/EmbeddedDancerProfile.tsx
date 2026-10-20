@@ -46,7 +46,7 @@ export default function EmbeddedDancerProfile({ venueSlug, returnHref, accent, .
           anchor.rel = "noopener noreferrer";
         }
       }}>
-      {available ? <PublicDancerProfile {...props} onClose={() => window.location.assign(returnHref)} /> : (
+      {available ? <PublicDancerProfile {...props} embedded onClose={() => window.location.assign(returnHref)} /> : (
         <section className="venue-embed-profile-unavailable">
           <h1>Profile unavailable</h1>
           <p role="status">This dancer may no longer be working here. Return to the grid to see who’s working now.</p>

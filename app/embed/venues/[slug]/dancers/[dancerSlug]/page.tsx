@@ -61,6 +61,12 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
   if (rhino) returnQuery.set("location", location.key);
   if (demo) returnQuery.set("demo", "1");
   const returnHref = `/embed/venues/${slug}${returnQuery.size ? `?${returnQuery}` : ""}`;
+  // Showcase locations share media, but directions must follow the selected
+  // location instead of the Las Vegas venue supplying those sample profiles.
+  const destination = demo && location.key !== "las-vegas"
+    ? `Spearmint Rhino, ${location.label}`
+    : [venue.name, venue.address, venue.city, venue.state].filter(Boolean).join(", ");
+  const venueDirectionsHref = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
   return <EmbeddedDancerProfile
     profile={profile}
     {...content}
@@ -71,6 +77,7 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
     preview={demo}
     venueSlug={slug}
     returnHref={returnHref}
+    venueDirectionsHref={venueDirectionsHref}
     accent={rhino ? RHINO_ACCENT : colors.embedAccent || "#7c3aed"}
   />;
 }

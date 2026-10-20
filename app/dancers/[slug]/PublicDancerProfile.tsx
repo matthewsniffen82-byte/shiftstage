@@ -31,10 +31,12 @@ export type PublicDancerProfileProps = {
   vipReturnHref?: string;
   venueReturnHref?: string;
   preview?: boolean;
+  embedded?: boolean;
+  venueDirectionsHref?: string;
   onClose?: () => void;
 };
 
-export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [], actionVenue = null, dealAttributionTokens = {}, secondaryUnavailable = false, vipReturnHref = "", venueReturnHref = "", preview = false, onClose }: PublicDancerProfileProps) {
+export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [], actionVenue = null, dealAttributionTokens = {}, secondaryUnavailable = false, vipReturnHref = "", venueReturnHref = "", preview = false, embedded = false, venueDirectionsHref, onClose }: PublicDancerProfileProps) {
   const heroPhoto =
     profile.primaryPhotoUrl || profile.photos[0]?.imageUrl || "";
   const heroPhotoSrcSet =
@@ -67,6 +69,8 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
   );
   const dealAttributionToken = activeDeal ? dealAttributionTokens[activeDeal.id] : null;
   const dealSourceType = dancerAttributionEligible ? "dancer_profile" : "club_page";
+  const directionsHref = embedded ? venueDirectionsHref : undefined;
+  const workingVenueHref = directionsHref || (activeShift ? `/venues/${encodeURIComponent(activeShift.venueSlug)}` : "");
 
   return (
     <DancerFollowStateProvider
@@ -133,7 +137,12 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
                 <h1>{profile.stageName}</h1>
               </div>
               <div className="profile-titlebar-context">
-                <span className="profile-titlebar-city">{profile.city}</span>
+                {directionsHref ? (
+                  <a className="profile-titlebar-city" href={directionsHref} target="_blank" rel="noopener noreferrer"
+                    aria-label={`Directions to ${activeShift?.venueName || profile.venueName}`}>
+                    {profile.city}
+                  </a>
+                ) : <span className="profile-titlebar-city">{profile.city}</span>}
               </div>
             </div>
           </div>
@@ -158,9 +167,10 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
 
         <DancerProfileActions
           preview={preview}
+          showSocialActions={!embedded}
           dancerId={profile.id}
           hasClubDeal={Boolean(activeDeal)}
-          shareControl={<ProfileShareButton dancerId={profile.id} stageName={profile.stageName} preview={preview} />}
+          shareControl={embedded ? undefined : <ProfileShareButton dancerId={profile.id} stageName={profile.stageName} preview={preview} />}
           shifts={profile.upcomingShifts.map((shift) => ({
             id: shift.id,
             label: shortShiftLabel(shift.shiftDate || shift.startsAt, shift.timezone),
@@ -175,8 +185,11 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
             <div className="profile-working-head">
               <Link
                 className="profile-working-destination"
-                onClick={preview ? event => event.preventDefault() : undefined}
-                href={`/venues/${encodeURIComponent(activeShift.venueSlug)}`}
+                onClick={preview && !directionsHref ? event => event.preventDefault() : undefined}
+                href={workingVenueHref}
+                target={directionsHref ? "_blank" : undefined}
+                rel={directionsHref ? "noopener noreferrer" : undefined}
+                aria-label={directionsHref ? `Directions to ${activeShift.venueName}` : undefined}
               >
                 <span className="profile-live-state" id="profile-working-title">Working now</span>
                 <span className="profile-working-copy">
@@ -238,6 +251,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
 
         <DancerPhotoCarousel
           preview={preview}
+          showSocialActions={!embedded}
           featured
           dancerId={profile.id}
           prioritizeInitialPhotos
@@ -267,7 +281,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
           viewerStatus={activeShift ? "Working Now" : "Not working now"}
           viewerCity={profile.city}
           viewerAvatar={{ url: avatarPhoto, srcSet: avatarPhotoSrcSet, focalX: avatarPhotoFocalX, focalY: avatarPhotoFocalY }}
-          viewerVenue={activeShift ? { name: activeShift.venueName, href: `/venues/${encodeURIComponent(activeShift.venueSlug)}` } : null}
+          viewerVenue={activeShift ? { name: activeShift.venueName, href: workingVenueHref, directions: Boolean(directionsHref) } : null}
           viewerDeal={activeShift && activeDeal ? {
             deal: activeDeal,
             deals: activeDeals,

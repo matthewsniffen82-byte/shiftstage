@@ -32,6 +32,7 @@ import mediaFullscreen, { type MediaFullscreenController } from "@/public/profil
 type DancerPhotoCarouselProps = {
   dancerId?: string;
   preview?: boolean;
+  showSocialActions?: boolean;
   photos: Array<{
     id: string;
     imageUrl: string;
@@ -58,7 +59,7 @@ type DancerPhotoCarouselProps = {
   viewerStatus?: string;
   viewerCity?: string;
   viewerAvatar?: { url: string; srcSet?: string | null; focalX?: number; focalY?: number };
-  viewerVenue?: { name: string; href: string } | null;
+  viewerVenue?: { name: string; href: string; directions?: boolean } | null;
   viewerDeal?: Pick<ComponentProps<typeof ClubDealCard>, "deal" | "deals" | "venueId" | "venueName" | "sourceType" | "dancerId" | "attributionToken" | "attributionTokens"> | null;
   prioritizeInitialPhotos?: boolean;
   featured?: boolean;
@@ -119,6 +120,7 @@ function orderPinnedMedia<T extends ProfileMedia>(items: T[]): T[] {
 export function DancerPhotoCarousel({
   dancerId,
   preview = false,
+  showSocialActions = true,
   photos,
   videos = [],
   stageName,
@@ -763,7 +765,11 @@ export function DancerPhotoCarousel({
             <div className="profile-media-context">
               <span className={`profile-media-schedule${workingNow ? " is-now" : ""}`}>{workingNow ? "Working now" : "Not working now"}</span>
               {workingNow && viewerVenue ? <div className="profile-media-club-row">
-                <a className="profile-media-venue" onClick={preview ? event => event.preventDefault() : undefined} href={viewerVenue.href} aria-label={`Open ${viewerVenue.name} club profile`}><VenuePinIcon /><span>{viewerVenue.name}</span></a>
+                <a className="profile-media-venue"
+                  onClick={preview && !viewerVenue.directions ? event => event.preventDefault() : undefined}
+                  href={viewerVenue.href} target={viewerVenue.directions ? "_blank" : undefined}
+                  rel={viewerVenue.directions ? "noopener noreferrer" : undefined}
+                  aria-label={viewerVenue.directions ? `Directions to ${viewerVenue.name}` : `Open ${viewerVenue.name} club profile`}><VenuePinIcon /><span>{viewerVenue.name}</span></a>
                 {!preview && viewerDeal && openDeal ? <button className="profile-media-entry" type="button" onClick={(event) => openDeal(event.currentTarget)} aria-label={`View free entry for ${viewerVenue.name}`}><span className="free-entry-label">Free Entry</span><span className="free-entry-cue" aria-hidden="true">›</span></button> : null}
               </div> : null}
             </div>
@@ -783,7 +789,7 @@ export function DancerPhotoCarousel({
                 </svg>
               </button>
             ) : null}
-            <DancerMediaFollowButton stageName={stageName} />
+            {showSocialActions ? <DancerMediaFollowButton stageName={stageName} /> : null}
             {(() => {
               const like = preview ? { liked: false, likeCount: item.likeCount || 0, pending: false } : mediaLikeStateFor(item.kind, item.id);
               return (
@@ -804,14 +810,14 @@ export function DancerPhotoCarousel({
                 />
               );
             })()}
-            <button
+            {showSocialActions ? <button
               aria-label={item.kind === "video" ? "Share this TV video" : "Share this profile photo"}
               className="profile-media-viewer-share"
               onClick={() => void shareViewerItem(item, index)}
               type="button"
             >
               <ShareIcon />
-            </button>
+            </button> : null}
             <button className="profile-media-control-fullscreen" type="button"
               aria-label={viewerFullscreen ? "Exit full-screen media" : "View media full screen"} aria-pressed={viewerFullscreen}
               onClick={() => {

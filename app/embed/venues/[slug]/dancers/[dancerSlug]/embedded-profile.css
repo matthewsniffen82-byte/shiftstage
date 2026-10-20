@@ -11,6 +11,23 @@ html:has(.venue-embed-profile-page), html body:has(.venue-embed-profile-page) {
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout {
   min-height: calc(100dvh - 70px) !important; background: #0b0b0d !important;
 }
+/* Identity, then location and visit actions: no empty social-action row. */
+html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
+  --profile-frame-row-end: 3;
+}
+html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > .profile-tonight-card {
+  grid-row: 2;
+  margin-top: 0 !important;
+}
+html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > .profile-featured-column {
+  grid-row: 1 / 3 !important;
+}
+html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > .profile-media-section {
+  grid-row: 3;
+}
+html body.dancr-button-system .venue-embed-profile-page .profile-tonight-card > .profile-action-status {
+  grid-column: 1 / -1;
+}
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout::after {
   background: #171719 !important;
 }

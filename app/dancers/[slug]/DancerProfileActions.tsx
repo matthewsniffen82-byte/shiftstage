@@ -380,6 +380,7 @@ export function DancerProfileActions({
   children,
   hasClubDeal = false,
   preview = false,
+  showSocialActions = true,
 }: {
   dancerId: string;
   shifts: ShiftAction[];
@@ -387,6 +388,7 @@ export function DancerProfileActions({
   children?: ReactNode;
   hasClubDeal?: boolean;
   preview?: boolean;
+  showSocialActions?: boolean;
 }) {
   const {
     mediaFollowAction,
@@ -675,7 +677,7 @@ export function DancerProfileActions({
 
   return (
     <>
-      <div className={`live-actions profile-actions-compact${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving}>
+      {showSocialActions ? <div className={`live-actions profile-actions-compact${hasLiveActions ? " has-live-shift" : hasScheduledActions ? " has-upcoming-shift" : " is-no-live-shift"}`} aria-label="Guest actions" aria-busy={followSaving || goingSaving}>
         <button
           data-follow-control="text"
           aria-pressed={saved.following}
@@ -700,7 +702,7 @@ export function DancerProfileActions({
           </button>
         )}
         {status ? <span className="profile-action-status" role="status">{status}</span> : null}
-      </div>
+      </div> : null}
       <section
         aria-label="Tonight"
         className={`profile-tonight-card${hasLiveActions ? " is-now" : " is-no-schedule"}${hasClubDeal ? " has-club-deal" : ""}`}
@@ -725,6 +727,7 @@ export function DancerProfileActions({
             </span>
           </button>
         </div>
+        {!showSocialActions && status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </section>
       {accountRequiredAction ? (
         <div
