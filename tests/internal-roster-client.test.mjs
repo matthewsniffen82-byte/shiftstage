@@ -6,6 +6,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as accessTerms from "../src/lib/dancr/access-terms.ts";
 import * as guestTheme from "../src/lib/dancr/venue-guest-theme.ts";
+import { DEMO_TABLE_REQUEST_COUNT } from "../src/lib/dancr/venue-dashboard-demo.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/internal/InternalRoster.tsx", import.meta.url), "utf8");
@@ -92,6 +93,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
       if (name === "./InternalFullProfile") return { InternalFullProfile: () => null };
       if (name === "@/src/lib/dancr/access-terms") return accessTerms;
       if (name === "@/src/lib/dancr/venue-guest-theme") return guestTheme;
+      if (name === "@/src/lib/dancr/venue-dashboard-demo") return { DEMO_TABLE_REQUEST_COUNT };
       if (name === "@/src/lib/dancr/browser-session") return {
         BROWSER_AUTH_SESSION_KEY: sessionKey,
         readBrowserAuthSession: () => session,

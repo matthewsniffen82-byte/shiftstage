@@ -4,6 +4,7 @@ import { createRequire } from "node:module";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import * as demo from "../src/lib/dancr/venue-dashboard-demo.ts";
 
 const require = createRequire(import.meta.url);
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
@@ -20,7 +21,7 @@ const shared = read("app/dashboard/DashboardShared.tsx");
 const { Metric } = compile(shared.slice(shared.indexOf("export function Metric("), shared.indexOf("export function formatVenueReviewHours(")));
 
 // In-memory component events only: no application, browser journey, or network.
-function fixture({ hash = "", ready = true, reducedMotion = false } = {}) {
+function fixture({ hash = "", ready = true, reducedMotion = false, venueProfile } = {}) {
   const slots = [], timers = [], listeners = new Map();
   let cursor = 0, effects = [], dirty = false, tree;
   const react = {
@@ -61,7 +62,7 @@ function fixture({ hash = "", ready = true, reducedMotion = false } = {}) {
     matchMedia: () => ({ matches: reducedMotion }),
   };
   const props = {
-    account: { id: "owner" }, profile: { id: "venue", name: "Test venue", isActive: true },
+    account: { id: "owner" }, profile: venueProfile || { id: "venue", name: "Test venue", isActive: true },
     venueDeals: [{ id: "live-deal", isActive: true }], dealRequests: [], workingNow: [{ id: "shift" }],
     initialAffiliations: [{ id: "affiliation", status: "active" }], venueAccess: { role: "owner", permissions: [] },
     refreshedAt: ready ? "2026-10-07T12:00:00Z" : null, analyticsPeriod: "tonight", isRefreshing: false, refreshStatus: "",
@@ -69,6 +70,7 @@ function fixture({ hash = "", ready = true, reducedMotion = false } = {}) {
   const { VenuePanel } = compile(read("app/dashboard/VenueDashboardPanels.tsx"), {
     "./useVenueOperations": { useVenueOperations: () => ({ operations: { tablePending: 2, vipPending: 3, ridesOpen: 1, guestExpected: 4, admitted: 1 }, error: "" }) },
     "./VenueTonightOverview": { default: Tonight },
+    "@/src/lib/dancr/venue-dashboard-demo": demo,
     react, "next/dynamic": { default: loader => loader.toString().match(/\.\/(\w+)/)[1] },
     "./DashboardShared": { ...fallback, Metric, formatVenueReviewHours: () => "", formatDashboardDate: () => "" },
   }, { window, HashChangeEvent: class { constructor(type) { this.type=type; } }, HTMLDetailsElement: Details, document: { getElementById: id => {
@@ -95,6 +97,7 @@ function fixture({ hash = "", ready = true, reducedMotion = false } = {}) {
   }
   render(); flush();
   return { click, window, roster, rosterSection, deals, nodes,
+    tonight: () => nodes().find(node => node.type === Tonight),
     active: () => nodes().find(node => node.props?.role === "tabpanel" && !node.props.hidden).props.id,
     workingOnly: () => nodes().find(node => node.type === "VenueNfcTagPanel")?.props.workingOnly,
     ready() { props.refreshedAt = "2026-10-07T12:00:00Z"; render(); flush(); },
@@ -147,4 +150,58 @@ test("a roster that mounts after navigation still opens its linked list", () => 
 
 test("metrics without destinations remain display-only", () => {
   assert.equal(Metric({ label: "Other metric", value: "4" }).type, "div");
+});
+
+function tonightView(overrides = {}) {
+  const opened = [];
+  const tree = Tonight({ operations: { tablePending: 0, vipPending: 0, ridesOpen: 0, guestExpected: 4, admitted: 1 },
+    error: "", working: 96, manager: true, published: true, reviewReady: false,
+    onOpen: (_event, id) => opened.push(id), ...overrides });
+  const nodes = node => node && typeof node === "object"
+    ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : [];
+  const queue = nodes(tree).find(node => node.props?.className === "venue-queue-grid");
+  const attention = nodes(tree).find(node => node.props?.className === "venue-attention");
+  return {
+    opened, attention: nodes(attention),
+    metric: id => nodes(queue).find(node => node.type === "a" && node.props.href === `#${id}`),
+    value: id => nodes(nodes(queue).find(node => node.type === "a" && node.props.href === `#${id}`)).find(node => node.type === "strong").props.children,
+    note: id => nodes(nodes(queue).find(node => node.type === "a" && node.props.href === `#${id}`)).find(node => node.type === "small").props.children,
+  };
+}
+
+test("Tonight includes the ten sample table requests without creating live attention items", () => {
+  const view = tonightView({ sampleTableRequestCount: demo.DEMO_TABLE_REQUEST_COUNT });
+  assert.equal(view.value("table-requests"), 10);
+  assert.equal(view.note("table-requests"), "10 sample · 0 live pending");
+  assert.equal(view.value("venue-working-now"), 96);
+  assert.equal(view.value("venue-guest-list"), 4);
+  assert.equal(view.attention.filter(node => node.type === "a").length, 0);
+  view.metric("table-requests").props.onClick({});
+  assert.deepEqual(view.opened, ["table-requests"]);
+});
+
+test("real pending requests add to the display total but remain the only actionable queue count", () => {
+  const view = tonightView({ sampleTableRequestCount: demo.DEMO_TABLE_REQUEST_COUNT,
+    operations: { tablePending: 3, vipPending: 2, ridesOpen: 0, guestExpected: 4, admitted: 1 } });
+  assert.equal(view.value("table-requests"), 13);
+  assert.equal(view.note("table-requests"), "10 sample · 3 live pending");
+  const labels = view.attention.filter(node => node.type === "span").map(node => node.props.children.join(""));
+  assert.deepEqual(labels, ["3 table requests", "2 vip requests"]);
+});
+
+test("normal venue counts and unavailable live counts stay truthful", () => {
+  assert.equal(tonightView().value("table-requests"), 0);
+  assert.equal(tonightView().note("table-requests"), "Pending · last 6 hours");
+  assert.equal(tonightView({ operations: null }).value("table-requests"), "—");
+  const sample = tonightView({ operations: null, sampleTableRequestCount: demo.DEMO_TABLE_REQUEST_COUNT, error: "Unavailable" });
+  assert.equal(sample.value("table-requests"), 10);
+  assert.equal(sample.note("table-requests"), "10 sample · Live count unavailable");
+  assert.equal(sample.attention.filter(node => node.type === "a").length, 0);
+});
+
+test("only the exact Rhino demo venue supplies the shared sample count to Tonight", () => {
+  const profile = { id: "260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af", slug: "talk-of-the-town", isActive: true };
+  assert.equal(fixture({ venueProfile: profile }).tonight().props.sampleTableRequestCount, 10);
+  assert.equal(fixture({ venueProfile: { ...profile, id: "another-venue" } }).tonight().props.sampleTableRequestCount, 0);
+  assert.equal(fixture().tonight().props.sampleTableRequestCount, 0);
 });

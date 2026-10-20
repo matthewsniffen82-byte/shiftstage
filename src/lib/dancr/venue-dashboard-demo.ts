@@ -3,6 +3,8 @@ import type { VenueOperations } from "./venue-operations";
 import type { HairColor } from "./hair-color";
 import type { VenueDancerAffiliation } from "./venue-roster";
 
+export const DEMO_TABLE_REQUEST_COUNT = 10;
+
 // This selects a fictional presentation, never permission to access or write venue data.
 export function isVenueDashboardDemo(profile: Record<string, unknown> | null | undefined) {
   // Echo House retains its original database slug after the fictional rebrand.

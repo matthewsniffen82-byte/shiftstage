@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { venueGuestTheme } from "@/src/lib/dancr/venue-guest-theme";
+import { DEMO_TABLE_REQUEST_COUNT } from "@/src/lib/dancr/venue-dashboard-demo";
 import "./internal-guest-colors.css";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
 import VenueGridImage from "../dashboard/VenueGridImage";
@@ -384,7 +385,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   // Samples use authorized roster identities, but never enter the live request queue.
   const sampleRequests: TableRequestCard[] = staff && operationsOnly && sampleTableRequests
     ? [...new Map(dancers.map(dancer => [dancer.id, dancer])).values()]
-      .sort((a, b) => a.stageName.localeCompare(b.stageName) || a.id.localeCompare(b.id)).slice(0, 10)
+      .sort((a, b) => a.stageName.localeCompare(b.stageName) || a.id.localeCompare(b.id)).slice(0, DEMO_TABLE_REQUEST_COUNT)
       .map((dancer, index) => ({
         id: `demo-table-${dancer.id}`, link_id: "", dancer_id: dancer.id, dancerName: dancer.stageName,
         tableLabel: `Table ${index + 1}`, sample: true,

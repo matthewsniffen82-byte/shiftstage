@@ -18,7 +18,7 @@ const VenueNfcTagPanel = dynamic(() => import("./VenueNfcTagPanel"));
 
 import VenueValueAnalytics from "./VenueValueAnalytics";
 import type { VenueValueReport } from "@/src/lib/dancr/venue-analytics";
-import { isVenueDashboardDemo, withDemoWorkingRoster } from "@/src/lib/dancr/venue-dashboard-demo";
+import { DEMO_TABLE_REQUEST_COUNT, isVenueDashboardDemo, withDemoWorkingRoster } from "@/src/lib/dancr/venue-dashboard-demo";
 import { useVenueOperations } from "./useVenueOperations";
 import VenueTonightOverview from "./VenueTonightOverview";
 import VenueSetupChecklist from "./VenueSetupChecklist";
@@ -338,6 +338,7 @@ export function VenuePanel({
       >
         {(activeWorkspace === "tonight" || openedWorkspaces.includes("tonight")) && <>
         <VenueTonightOverview operations={operations} error={operationsError} working={liveDataReady ? workingNow.length : null}
+          sampleTableRequestCount={isVenueDashboardDemo(profile) ? DEMO_TABLE_REQUEST_COUNT : 0}
           notificationPrompt={<DashboardPhoneNotifications role="venue" refreshKey={notificationRevision} />}
           manager={venueRole === "owner" || venueRole === "manager"} published={isPublished} reviewReady={isAwaitingVenueReview} onOpen={openVenueSection} />
         <VenueGuestsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} role={venueRole}

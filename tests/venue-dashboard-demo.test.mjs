@@ -21,7 +21,7 @@ test('the production Echo House identity gets samples and other venue identities
     assert.equal(demo.isVenueDashboardDemo(profile), false);
   }
   const panel = read('app/dashboard/VenueDashboardPanels.tsx');
-  assert.match(panel, /import \{ isVenueDashboardDemo, withDemoWorkingRoster \} from "@\/src\/lib\/dancr\/venue-dashboard-demo"/);
+  assert.match(panel, /import \{ DEMO_TABLE_REQUEST_COUNT, isVenueDashboardDemo, withDemoWorkingRoster \} from "@\/src\/lib\/dancr\/venue-dashboard-demo"/);
   assert.match(panel, /demoComparisons=\{isVenueDashboardDemo\(profile\)\}/);
 });
 
