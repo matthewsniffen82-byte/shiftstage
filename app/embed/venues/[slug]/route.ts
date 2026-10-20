@@ -31,7 +31,10 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
         </button>
       </div>
     </div>
-    <div class="city-picker-inline" id="citySelectPanel" hidden><div class="venue-picker-options city-picker-options" id="citySelectOptions" role="listbox" aria-labelledby="citySelectLabel"></div></div>
+    <div class="city-picker-inline" id="citySelectPanel" hidden>
+      <div class="venue-picker-options city-picker-options" id="citySelectOptions" role="listbox" aria-labelledby="citySelectLabel"></div>
+      <div class="venue-location-scrollbar" id="venueLocationScrollbar" aria-hidden="true" hidden><span id="venueLocationScrollThumb"></span></div>
+    </div>
   </div>` : "";
   const html = `<!doctype html><html lang="en"><head>
     <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">

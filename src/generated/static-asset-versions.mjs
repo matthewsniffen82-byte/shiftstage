@@ -2,8 +2,8 @@
 export const staticAssetVersions = {
   "/dancer-main-photo.css": "4a961384d5462652",
   "/dancer-grid-card.js": "abde0bd2f891aa23",
-  "/venue-grid-embed.js": "5258fe2c4d222e88",
-  "/venue-grid-embed.css": "68e71ab4cdddd284",
+  "/venue-grid-embed.js": "09828e7ee69ce812",
+  "/venue-grid-embed.css": "3bc0590474475222",
   "/venue-brand-themes.css": "415b3a1e340778b8",
   "/dancr-account-forms.v1.css": "c6d35c16db2ff4d3",
   "/dancr-ui-consistency.v1.css": "60a98bdc947cb298",

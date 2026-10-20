@@ -176,7 +176,7 @@ test("Rhino location picker supports selection, keyboard navigation and dismissi
   let focused, changes = 0;
   const element = () => {
     const attributes = {}, listeners = {}, classes = new Set();
-    const node = { hidden: true, dataset: {}, textContent: "", innerHTML: "", tabIndex: -1,
+    const node = { hidden: true, dataset: {}, style: {}, textContent: "", innerHTML: "", tabIndex: -1,
       classList: { add: name => classes.add(name), remove: name => classes.delete(name) },
       setAttribute: (name, value) => { attributes[name] = value; },
       getAttribute: name => attributes[name],
@@ -200,6 +200,8 @@ test("Rhino location picker supports selection, keyboard navigation and dismissi
   select.addEventListener("change", () => changes++);
   const options = select.options.map(option => Object.assign(element(), { dataset: { location: option.value } }));
   get("citySelectOptions").querySelectorAll = () => options;
+  Object.assign(get("citySelectOptions"), { scrollHeight: 960, clientHeight: 320, scrollTop: 0 });
+  get("venueLocationScrollbar").clientHeight = 320;
   const panel = get("citySelectPanel"), trigger = get("citySelectButton");
   panel.contains = target => target === panel || options.includes(target);
   const click = node => node.dispatchEvent({ type: "click" });
@@ -217,6 +219,13 @@ test("Rhino location picker supports selection, keyboard navigation and dismissi
   assert.equal(panel.hidden, false);
   assert.equal(trigger.getAttribute("aria-expanded"), "true");
   assert.equal(focused, options[0]);
+  assert.equal(get("venueLocationScrollbar").hidden, false);
+  assert.equal(get("venueLocationScrollThumb").style.transform, "translateY(0px)");
+  const thumbHeight = parseFloat(get("venueLocationScrollThumb").style.height);
+  assert.ok(thumbHeight >= 28 && thumbHeight < 320);
+  get("citySelectOptions").scrollTop = 640;
+  get("citySelectOptions").dispatchEvent({ type: "scroll" });
+  assert.equal(get("venueLocationScrollThumb").style.transform, `translateY(${320 - thumbHeight}px)`);
   key(options[0], "ArrowDown");
   assert.equal(focused, options[1]);
   click(options[1]);
@@ -241,6 +250,9 @@ test("Rhino location picker supports selection, keyboard navigation and dismissi
   click(trigger);
   document.dispatchEvent({ type: "focusin", target: element() });
   assert.equal(panel.hidden, true);
+  get("citySelectOptions").scrollHeight = 320;
+  click(trigger);
+  assert.equal(get("venueLocationScrollbar").hidden, true);
 });
 
 test("an existing embed adopts saved Admin colors on load and refresh without replacing its link", async () => {

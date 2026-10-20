@@ -48,6 +48,8 @@
     const label = document.getElementById("citySelectButtonText");
     const panel = document.getElementById("citySelectPanel");
     const list = document.getElementById("citySelectOptions");
+    const scrollbar = document.getElementById("venueLocationScrollbar");
+    const scrollThumb = document.getElementById("venueLocationScrollThumb");
     if (!select?.options?.length || !trigger || !label || !panel || !list) return;
     list.innerHTML = [...select.options].map(option => {
       const count = Number(option.dataset?.count);
@@ -56,6 +58,17 @@
       return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-location="${escape(option.value)}" aria-selected="${option.selected}" tabindex="-1"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${escape(option.textContent.split(" · ")[0])}</span>${stats}</button>`;
     }).join("");
     const options = [...list.querySelectorAll("[data-location]")];
+    function syncScrollbar() {
+      if (!scrollbar || !scrollThumb) return;
+      const range = list.scrollHeight - list.clientHeight;
+      scrollbar.hidden = panel.hidden || range <= 0;
+      if (scrollbar.hidden) return;
+      const height = scrollbar.clientHeight;
+      const thumbHeight = Math.min(height, Math.max(28, height * list.clientHeight / list.scrollHeight));
+      const top = (height - thumbHeight) * Math.max(0, Math.min(1, list.scrollTop / range));
+      scrollThumb.style.height = `${thumbHeight}px`;
+      scrollThumb.style.transform = `translateY(${top}px)`;
+    }
     function sync() {
       label.textContent = select.selectedOptions[0].textContent.split(" · ")[0];
       options.forEach(option => {
@@ -77,7 +90,10 @@
       panel.classList.add("is-open");
       trigger.setAttribute("aria-expanded", "true");
       (options.find(option => option.dataset.location === select.value) || options[0])?.focus();
+      syncScrollbar();
     }
+    list.addEventListener("scroll", syncScrollbar, { passive: true });
+    root.addEventListener?.("resize", syncScrollbar);
     trigger.addEventListener("click", () => panel.hidden ? open() : close());
     trigger.addEventListener("keydown", event => {
       if (!["ArrowDown", "ArrowUp"].includes(event.key)) return;

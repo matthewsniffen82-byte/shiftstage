@@ -123,11 +123,35 @@ html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discove
   color: var(--embed-accent) !important; stroke: currentColor !important;
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel.is-open {
-  border-color: #353538 !important; background: #171719 !important;
+  position: relative; border-color: #353538 !important; background: #171719 !important;
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectOptions {
   max-height: min(360px, 50vh) !important; overflow-y: auto !important;
-  overscroll-behavior: contain; scrollbar-color: var(--embed-accent) #171719;
+  overscroll-behavior: contain; scrollbar-color: var(--embed-accent) #353538;
+  scrollbar-width: thin; scrollbar-gutter: stable;
+}
+html body.venue-grid-embed #citySelectOptions::-webkit-scrollbar { width: 8px; }
+html body.venue-grid-embed #citySelectOptions::-webkit-scrollbar-track { background: #353538; border-radius: 999px; }
+html body.venue-grid-embed #citySelectOptions::-webkit-scrollbar-thumb {
+  min-height: 28px; border: 2px solid #353538; border-radius: 999px; background: var(--embed-accent);
+}
+/* Phone scrollbars fade automatically; keep a position indicator visible there. */
+html body.venue-grid-embed .venue-location-scrollbar {
+  display: none; position: absolute; top: 8px; bottom: 8px; right: 5px; width: 5px;
+  border-radius: 999px; background: #353538; pointer-events: none;
+}
+html body.venue-grid-embed .venue-location-scrollbar span {
+  display: block; width: 100%; border-radius: inherit; background: var(--embed-accent);
+}
+@media (pointer: coarse) {
+  html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel.is-open {
+    padding-right: 16px !important;
+  }
+  html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectOptions {
+    scrollbar-width: none; scrollbar-gutter: auto;
+  }
+  html body.venue-grid-embed #citySelectOptions::-webkit-scrollbar { display: none; }
+  html body.venue-grid-embed .venue-location-scrollbar { display: block; }
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .venue-embed-location-count {
   color: #34d399; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
