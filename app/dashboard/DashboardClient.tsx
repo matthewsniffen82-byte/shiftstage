@@ -503,7 +503,7 @@ export default function DashboardClient({
   }
 
   return (
-    <main data-venue-brand={role === "venue" ? String(state.profile?.slug || "") : undefined} className={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : role === "dancer" ? "dancer-dashboard" : "customer-dashboard"}>
+    <main className={`dashboard-shell dashboard-shell-${role}`} id={role === "venue" ? "venue-dashboard" : role === "dancer" ? "dancer-dashboard" : "customer-dashboard"}>
       {role === "venue" ? <VenueAdminUtilities /> : null}
       <DashboardStyles />
       <section className="dashboard-identity-header" data-account-kind={role} aria-busy={isLoading || undefined}>

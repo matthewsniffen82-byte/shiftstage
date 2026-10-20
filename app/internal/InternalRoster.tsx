@@ -392,7 +392,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
     </div>
   </div>;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
-    data-venue-brand={snapshot?.venueSlug}
+    data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}
     data-venue-guest-color={!staff && venueGuestTheme(snapshot?.internalAccent) ? "custom" : undefined}
     style={(!staff ? venueGuestTheme(snapshot?.internalAccent) : undefined) as CSSProperties | undefined}>
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
