@@ -254,7 +254,8 @@ test("VIP notifications have their own enabled category and honor delivery prefe
   const notification = { notification_type: "support_message", payload: { kind: "vip_request" } };
   assert.equal(preferences.venueNotificationCategory(notification), "vipRequests");
   assert.equal(preferences.venueNotificationEnabled({}, notification), true);
-  assert.equal(preferences.venueNotificationEnabled({}, notification, "emailEnabled"), false);
+  assert.equal(preferences.venueNotificationEnabled({}, notification, "emailEnabled"), true);
+  assert.equal(preferences.venueNotificationEnabled(preferences.venueNotificationMetadataPatch({ emailEnabled: false }), notification, "emailEnabled"), false);
   assert.equal(preferences.venueNotificationEnabled(preferences.venueNotificationMetadataPatch({ vipRequests: false }), notification), false);
 });
 test("request cards show selected dancers, venue timezone, honest pending status and escaped notes", () => {

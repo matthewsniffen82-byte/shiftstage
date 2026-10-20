@@ -17,6 +17,7 @@ import {
   ProfileShareButton,
 } from "./ProfileNavigationActions";
 import { ProfileViewTracker } from "./ProfileViewTracker";
+import VipProfileRequest from "./VipProfileRequest";
 
 import type { ComponentProps } from "react";
 import type { DancerProfile, PublicClubDeal, ShiftSummary, VenueSummary } from "@/src/lib/dancr/types";
@@ -71,6 +72,31 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
   const dealSourceType = dancerAttributionEligible ? "dancer_profile" : "club_page";
   const directionsHref = embedded ? venueDirectionsHref : undefined;
   const workingVenueHref = directionsHref || (activeShift ? `/venues/${encodeURIComponent(activeShift.venueSlug)}` : "");
+  const vipRequest = !preview && !embedded && Boolean(vipReturnHref);
+  const admissionAction = activeShift && activeDeal ? (
+    <div className="profile-tonight-deal">
+      <div className="profile-active-deal has-club-deal" inert={preview || undefined} aria-label="Active Club Deal admission pass">
+        <ClubDealCard
+          deal={activeDeal}
+          deals={activeDeals}
+          venueId={activeShift.venueId}
+          venueName={activeShift.venueName}
+          sourceType={dealSourceType}
+          dancerId={dancerAttributionEligible ? profile.id : null}
+          attributionToken={dealAttributionToken}
+          attributionTokens={dealAttributionTokens}
+          dancerNote={dancerAttributionEligible}
+          presentation="profileCompact"
+          ctaLabel="Free Entry"
+          sectionId="club-deal"
+        />
+      </div>
+    </div>
+  ) : actionShift ? (
+    <div className="profile-tonight-deal">
+      <p className="profile-deal-availability-line">Free entry unavailable</p>
+    </div>
+  ) : null;
 
   return (
     <DancerFollowStateProvider
@@ -170,7 +196,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
           preview={preview}
           showSocialActions={!embedded}
           dancerId={profile.id}
-          hasClubDeal={Boolean(activeDeal)}
+          hasClubDeal={Boolean(activeDeal) || vipRequest}
           shareControl={embedded ? undefined : <ProfileShareButton dancerId={profile.id} stageName={profile.stageName} preview={preview} />}
           shifts={profile.upcomingShifts.map((shift) => ({
             id: shift.id,
@@ -208,36 +234,9 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
           </div>
           )}
 
-          {activeShift && activeDeal ? (
-            <div className="profile-tonight-deal">
-              <div
-                className="profile-active-deal has-club-deal"
-                inert={preview || undefined}
-                aria-label="Active Club Deal admission pass"
-              >
-                <ClubDealCard
-                  deal={activeDeal}
-                  deals={activeDeals}
-                  venueId={activeShift.venueId}
-                  venueName={activeShift.venueName}
-                  sourceType={dealSourceType}
-                  dancerId={dancerAttributionEligible ? profile.id : null}
-                  attributionToken={dealAttributionToken}
-                  attributionTokens={dealAttributionTokens}
-                  dancerNote={dancerAttributionEligible}
-                  presentation="profileCompact"
-                  ctaLabel="Free Entry"
-                  sectionId="club-deal"
-                />
-              </div>
-            </div>
-          ) : actionShift ? (
-            <div className="profile-tonight-deal">
-              <p className="profile-deal-availability-line">
-                {activeShift ? "Free entry unavailable" : "Going tonight? View free entry"}
-              </p>
-            </div>
-          ) : null}
+          {vipRequest ? <VipProfileRequest dancerId={profile.id} stageName={profile.stageName} returnHref={vipReturnHref}>
+            {admissionAction}
+          </VipProfileRequest> : admissionAction}
 
 
           {!activeShift && actionVenue ? (
