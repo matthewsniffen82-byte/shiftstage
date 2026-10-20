@@ -44,8 +44,26 @@ export async function GET(request: Request, context: Context) {
     if (path[0] === "requests") {
       return json({ ok: true, requests: await internalOpenRequests(admin, scope.venueId), session: scope.session });
     }
-    // Staff see their approved affiliated dancers; table links remain internal-shift-only.
-    const members = scope.link ? await internalMembers(admin, scope.venueId) : await venueRosterMembers(admin, scope.venueId);
+    const media = ["avatar", "photo", "video", "video-poster"].includes(path[0]);
+    const width = media && url.searchParams.has("width") ? Number(url.searchParams.get("width")) : null;
+    if (media && width !== null && (![320, 480, 640, 1280].includes(width) || !["avatar", "photo"].includes(path[0]))) return json({ ok: false, error: "Invalid image size." }, 400);
+    const poster = path[0] === "video-poster";
+    const video = path[0] === "video" || poster;
+    let mediaQuery = null;
+    if (media && path[0] !== "avatar") {
+      if (!isInternalUuid(path[1])) return json({ ok: false, error: "Media unavailable." }, 404);
+      mediaQuery = (video
+        ? admin.from("mydancr_tv_videos").select("dancer_id,storage_path,moderation_details")
+        : admin.from("dancer_photos").select("dancer_id,storage_path"))
+        .eq("id", path[1]).eq(video ? "status" : "review_status", "approved");
+      if (video) mediaQuery = mediaQuery.lte("published_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
+    }
+    // Media ownership and current roster eligibility can be read together after scope authorization.
+    const [members, mediaResult] = await Promise.all([
+      scope.link ? internalMembers(admin, scope.venueId) : venueRosterMembers(admin, scope.venueId),
+      mediaQuery?.maybeSingle() ?? null,
+    ]);
+    if (mediaResult?.error) throw mediaResult.error;
     if (path[0] === "profile") {
       if (!members.some(member => member.id === path[1])) return json({ ok: false, error: "This profile is no longer on the club roster." }, 404);
       const results = await Promise.all([
@@ -70,21 +88,10 @@ export async function GET(request: Request, context: Context) {
       const internalAccent = scope.link ? (await getVenueGuestColors(admin, scope.venueId)).internalAccent : null;
       return json({ ok: true, profile: { ...results[0].data, internalAccent, venueSlug: scope.venueSlug, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
     }
-    if (["avatar", "photo", "video", "video-poster"].includes(path[0])) {
-      const width = url.searchParams.has("width") ? Number(url.searchParams.get("width")) : null;
-      if (width !== null && (![320, 480, 640, 1280].includes(width) || !["avatar", "photo"].includes(path[0]))) return json({ ok: false, error: "Invalid image size." }, 400);
+    if (media) {
       let storagePath = members.find(item => item.id === path[1])?.avatar_storage_path;
-      const poster = path[0] === "video-poster";
-      const video = path[0] === "video" || poster;
       if (path[0] !== "avatar") {
-        if (!isInternalUuid(path[1])) return json({ ok: false, error: "Media unavailable." }, 404);
-        let query = video
-          ? admin.from("mydancr_tv_videos").select("dancer_id,storage_path,moderation_details")
-          : admin.from("dancer_photos").select("dancer_id,storage_path");
-        query = query.eq("id", path[1]).eq(video ? "status" : "review_status", "approved");
-        if (video) query = query.lte("published_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
-        const { data, error } = await query.maybeSingle();
-        if (error) throw error;
+        const data = mediaResult?.data;
         storagePath = data && members.some(member => member.id === data.dancer_id)
           ? poster ? videoPosterStoragePath(data) : data.storage_path : null;
       }
@@ -102,8 +109,20 @@ export async function GET(request: Request, context: Context) {
         },
       });
     }
-    const mainPhotos = await internalMainPhotos(admin, members.map(item => item.id));
-    const orderedMembers = await orderByPerformance<(typeof members)[number]>(admin, members, item => ({ dancerId: item.id, venueId: scope.venueId }), item => item.id);
+    const key = url.searchParams.get("requestKey");
+    // These reads share the authorized scope and do not depend on each other.
+    const [mainPhotos, orderedMembers, tableRequests, colors, receiptResult, linksResult, requests] = await Promise.all([
+      internalMainPhotos(admin, members.map(item => item.id)),
+      orderByPerformance<(typeof members)[number]>(admin, members, item => ({ dancerId: item.id, venueId: scope.venueId }), item => item.id),
+      scope.link ? internalTableRequestStates(admin, scope.venueId, scope.link.id) : null,
+      scope.link ? getVenueGuestColors(admin, scope.venueId) : null,
+      scope.link?.kind === "table" && key && isInternalUuid(key)
+        ? admin.from("internal_roster_requests").select("status,dancer_id,created_at").eq("link_id", scope.link.id).eq("request_key", key).maybeSingle() : null,
+      !scope.link ? admin.from("internal_roster_links").select("id,label").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at") : null,
+      !scope.link ? internalOpenRequests(admin, scope.venueId) : null,
+    ]);
+    if (receiptResult?.error) throw receiptResult.error;
+    if (linksResult?.error) throw linksResult.error;
     const dancers = orderedMembers.map(item => {
       const photo = mainPhotos.get(item.id);
       return {
@@ -114,23 +133,12 @@ export async function GET(request: Request, context: Context) {
       };
     });
     if (scope.link) {
-      const tableRequests = await internalTableRequestStates(admin, scope.venueId, scope.link.id);
       let receipt = null;
-      const key = url.searchParams.get("requestKey");
-      if (key && isInternalUuid(key) && scope.link.kind === "table") {
-        const { data, error } = await admin.from("internal_roster_requests").select("status,dancer_id,created_at").eq("link_id", scope.link.id).eq("request_key", key).maybeSingle();
-        if (error) throw error;
-        if (data) receipt = { status: Date.parse(data.created_at) > Date.now() - 6 * 3600000 && members.some(d => d.id === data.dancer_id) ? data.status : "cancelled" };
-      }
-      const { internalAccent } = await getVenueGuestColors(admin, scope.venueId);
-      return json({ ok: true, venueName: scope.venueName, venueSlug: scope.venueSlug, venueLogoUrl: scope.venueLogoUrl, internalAccent, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests.get(dancer.id)?.status || null, requestId: tableRequests.get(dancer.id)?.id || null })), receipt });
+      const data = receiptResult?.data;
+      if (data) receipt = { status: Date.parse(data.created_at) > Date.now() - 6 * 3600000 && members.some(d => d.id === data.dancer_id) ? data.status : "cancelled" };
+      return json({ ok: true, venueName: scope.venueName, venueSlug: scope.venueSlug, venueLogoUrl: scope.venueLogoUrl, internalAccent: colors?.internalAccent ?? null, kind: scope.link.kind, label: scope.link.label, dancers: dancers.map(dancer => ({ ...dancer, requestStatus: tableRequests?.get(dancer.id)?.status || null, requestId: tableRequests?.get(dancer.id)?.id || null })), receipt });
     }
-    const [linksResult, requests] = await Promise.all([
-      admin.from("internal_roster_links").select("id,label").eq("venue_id", scope.venueId).eq("active", true).eq("kind", "table").order("created_at"),
-      internalOpenRequests(admin, scope.venueId),
-    ]);
-    if (linksResult.error) throw linksResult.error;
-    const links = linksResult.data || [];
+    const links = linksResult?.data || [];
     return json({ ok: true, venueName: scope.venueName, venueSlug: scope.venueSlug, dancers, links, requests, role: scope.role, session: scope.session });
   } catch (error) {
     const resolved = resolveApiError(internalError(error), "Unable to load the club roster.");

@@ -26,14 +26,21 @@ export async function venueRosterMembers(client: SupabaseClient, venueId: string
 export async function internalScope(client: SupabaseClient, request: Request, token?: string) {
   if (token !== undefined) {
     if (!isInternalUuid(token)) throw new PublicApiError("NOT_FOUND", "This club link is unavailable.", 404);
-    const { data: link, error } = await client.from("internal_roster_links").select("id,venue_id,kind,label").eq("token", token).eq("active", true).eq("kind", "table").maybeSingle();
+    // Check the link, live club and active owner in one fresh database read.
+    const { data, error } = await client.from("internal_roster_links").select(`id,venue_id,kind,label,
+      venue:venues!internal_roster_links_venue_id_fkey!inner(id,name,slug,logo_storage_path,is_active,
+        owner:app_users!venues_owner_user_id_fkey!inner(id,role,account_state))`)
+      .eq("token", token).eq("active", true).eq("kind", "table").maybeSingle();
     if (error) throw error;
-    if (!link) throw new PublicApiError("NOT_FOUND", "This club link has been revoked or is unavailable.", 404);
-    const { data: venue, error: venueError } = await client.from("venues").select("id,name,slug,logo_storage_path,owner_user_id").eq("id", link.venue_id).eq("is_active", true).maybeSingle();
-    if (venueError) throw venueError;
-    const { data: owner, error: ownerError } = await client.from("app_users").select("id").eq("id", venue?.owner_user_id || "00000000-0000-4000-8000-000000000000").eq("role", "venue").eq("account_state", "active").maybeSingle();
-    if (ownerError) throw ownerError;
-    if (!venue || !owner) throw new PublicApiError("NOT_FOUND", "This club link is unavailable.", 404);
+    type Owner = { id: string; role: string; account_state: string };
+    type Venue = { id: string; name: string; slug: string; logo_storage_path: string | null; is_active: boolean; owner: Owner | Owner[] | null };
+    const row = data as unknown as { id: string; venue_id: string; kind: string; label: string; venue: Venue | Venue[] | null } | null;
+    const venue = Array.isArray(row?.venue) ? row.venue[0] : row?.venue;
+    const owner = Array.isArray(venue?.owner) ? venue.owner[0] : venue?.owner;
+    if (!row || !venue?.is_active || !owner || owner.role !== "venue" || owner.account_state !== "active") {
+      throw new PublicApiError("NOT_FOUND", "This club link has been revoked or is unavailable.", 404);
+    }
+    const link = { id: row.id, venue_id: row.venue_id, kind: row.kind, label: row.label };
     const venueLogoUrl = responsivePublicImage(client, "venue-logo-images", venue.logo_storage_path)?.imageUrl || verifiedVenueLogoUrl(venue.slug);
     return { venueId: venue.id as string, venueName: venue.name as string, venueSlug: venue.slug as string, venueLogoUrl, userId: null, role: null, session: null, link };
   }

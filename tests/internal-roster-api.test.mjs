@@ -3,6 +3,7 @@ import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
+import {setImmediate} from 'node:timers/promises';
 import {serveInternalMedia} from '../src/lib/dancr/internal-media-delivery.ts';
 import ts from 'typescript';
 import {PublicApiError,resolveApiError} from '../src/lib/api-error-policy.ts';
@@ -15,7 +16,7 @@ const compile=file=>ts.transpileModule(readFileSync(new URL('../'+file,import.me
 const responsive={};
 vm.runInNewContext(compile('src/lib/dancr/responsive-image.ts'),{exports:responsive,require:()=>({})});
 const {responsiveImageStoragePaths}=responsive;
-function fixture({members=true,active=true,staff=true,kind='table',choice=null,photoStatus='approved',requests=[],shifts=[],videos=[],photoPath='PRIVATE STORAGE',upstreamHeaders={},upstreamStatus=200}={}){
+function fixture({members=true,active=true,staff=true,kind='table',choice=null,photoStatus='approved',requests=[],shifts=[],videos=[],photoPath='PRIVATE STORAGE',upstreamHeaders={},upstreamStatus=200,beforeRead=async()=>{}}={}){
  const calls=[];
  const tables={
   internal_roster_links:[{id:id(1),venue_id:id(2),token:id(3),active,kind,label:'Table 4'}],
@@ -28,8 +29,32 @@ function fixture({members=true,active=true,staff=true,kind='table',choice=null,p
   mydancr_tv_videos:videos,internal_roster_requests:requests,shifts,
  };
  const admin={
-  from(table){let rows=[...(tables[table]||[])],columns='',patch=null;const q={update(value){patch=value;return q},select(value){columns=value;return q},eq(k,v){rows=rows.filter(r=>r[k]===v);return q},in(k,vs){rows=rows.filter(r=>vs.includes(r[k]));return q},order(k,{ascending=true}={}){rows.sort((a,b)=>(a[k]>b[k]?1:a[k]<b[k]?-1:0)*(ascending?1:-1));return q},limit(n){rows=rows.slice(0,n);return q},gte(k,v){rows=rows.filter(r=>r[k]>=v);return q},gt(k,v){rows=rows.filter(r=>r[k]>v);return q},lt(k,v){rows=rows.filter(r=>r[k]<v);return q},lte(k,v){rows=rows.filter(r=>r[k]<=v);return q},is(k,v){return q.eq(k,v)},not(k,_op,v){rows=rows.filter(r=>r[k]!==v);return q},or(value){if(value.startsWith('expires_at.is.null,expires_at.gt.')){const now=value.slice('expires_at.is.null,expires_at.gt.'.length);rows=rows.filter(r=>r.expires_at==null||r.expires_at>now);}return q},single(){return finish(true)},maybeSingle(){return finish(true)},then(resolve,reject){return finish(false).then(resolve,reject)}};function finish(single){if(patch)rows.forEach(row=>Object.assign(row,patch));const data=rows.map(row=>Object.fromEntries(columns.split(',').filter(key=>key in row).map(key=>[key,row[key]])));return Promise.resolve({data:single?data[0]||null:data,count:rows.length,error:null});}return q;},
-  async rpc(name,args){calls.push({name,args});if(name==='cancel_internal_roster_request'){const row=tables.internal_roster_requests.find(r=>r.id===args.p_request_id&&r.venue_id===args.p_venue_id&&r.link_id===args.p_link_id&&r.dancer_id===args.p_dancer_id);if(!row||!['pending','acknowledged','cancelled'].includes(row.status))return {data:null,error:{code:'40001'}};row.status='cancelled';return {data:{id:row.id,status:row.status},error:null};}return {data:['internal_roster_members','venue_roster_members'].includes(name)?(Array.isArray(members)?members:members?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]):{id:id(9)},error:null};},
+  from(table){
+   let rows=[...(tables[table]||[])],columns='',patch=null;
+   const q={update(value){patch=value;return q},select(value){columns=value;return q},eq(k,v){rows=rows.filter(r=>r[k]===v);return q},in(k,vs){rows=rows.filter(r=>vs.includes(r[k]));return q},order(k,{ascending=true}={}){rows.sort((a,b)=>(a[k]>b[k]?1:a[k]<b[k]?-1:0)*(ascending?1:-1));return q},limit(n){rows=rows.slice(0,n);return q},gte(k,v){rows=rows.filter(r=>r[k]>=v);return q},gt(k,v){rows=rows.filter(r=>r[k]>v);return q},lt(k,v){rows=rows.filter(r=>r[k]<v);return q},lte(k,v){rows=rows.filter(r=>r[k]<=v);return q},is(k,v){return q.eq(k,v)},not(k,_op,v){rows=rows.filter(r=>r[k]!==v);return q},or(value){if(value.startsWith('expires_at.is.null,expires_at.gt.')){const now=value.slice('expires_at.is.null,expires_at.gt.'.length);rows=rows.filter(r=>r.expires_at==null||r.expires_at>now);}return q},single(){return finish(true)},maybeSingle(){return finish(true)},then(resolve,reject){return finish(false).then(resolve,reject)}};
+   async function finish(single){
+    calls.push({name:'read',table,columns});await beforeRead(table,columns);
+    if(patch)rows.forEach(row=>Object.assign(row,patch));
+    const joined=columns.includes('venue:venues!');
+    if(joined){
+     assert.match(columns,/venue:venues!internal_roster_links_venue_id_fkey!inner/);
+     assert.match(columns,/owner:app_users!venues_owner_user_id_fkey!inner/);
+    }
+    const data=rows.flatMap(row=>{
+     const value=Object.fromEntries(columns.split(',').map(key=>key.trim()).filter(key=>key in row).map(key=>[key,row[key]]));
+     if(joined){
+      const venue=tables.venues.find(venue=>venue.id===row.venue_id);
+      const owner=tables.app_users.find(owner=>owner.id===venue?.owner_user_id);
+      if(!venue||!owner)return [];
+      value.venue={...venue,owner:{...owner}};
+     }
+     return [value];
+    });
+    return {data:single?data[0]||null:data,count:data.length,error:null};
+   }
+   return q;
+  },
+  async rpc(name,args){calls.push({name,args});await beforeRead(name);if(name==='cancel_internal_roster_request'){const row=tables.internal_roster_requests.find(r=>r.id===args.p_request_id&&r.venue_id===args.p_venue_id&&r.link_id===args.p_link_id&&r.dancer_id===args.p_dancer_id);if(!row||!['pending','acknowledged','cancelled'].includes(row.status))return {data:null,error:{code:'40001'}};row.status='cancelled';return {data:{id:row.id,status:row.status},error:null};}return {data:['internal_roster_members','venue_roster_members'].includes(name)?(Array.isArray(members)?members:members?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]):{id:id(9)},error:null};},
   storage:{from(bucket){return {createSignedUrl:async(path)=>{calls.push({name:'signMedia',bucket,path});return {data:{signedUrl:'https://storage.invalid/private-signed-link'}};}}}},
  };
  const fetchMedia=async(url,options)=>{calls.push({name:'fetch',url,options});return new Response('synthetic-image',{status:Array.isArray(upstreamStatus)?upstreamStatus.shift():upstreamStatus,headers:{'content-type':'image/jpeg',...upstreamHeaders}});};
@@ -38,10 +63,70 @@ function fixture({members=true,active=true,staff=true,kind='table',choice=null,p
  vm.runInNewContext(compile('src/lib/dancr/internal-request-activity.ts'),{exports:activity,Date,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-main-photo.ts'),{exports:mainPhoto,require(){return {}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,require(name){if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
- vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,performance,fetch:fetchMedia,require(name){if(name.endsWith('venue-guest-colors'))return {getVenueGuestColors:async(_admin,venueId)=>{calls.push({name:'guestColors',venueId});return {internalAccent:'#c99842',embedAccent:'#123456',configured:true}}};if(name.endsWith('performance-placement'))return {orderByPerformance:async(_admin,rows,identity)=>{calls.push({name:'performancePlacement',identities:rows.map(identity)});return [...rows].reverse();}};if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-alerts'))return {deliverInternalRequestAlerts:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestAlerts',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-media-delivery'))return {serveInternalMedia:(request,options)=>serveInternalMedia(request,{...options,fetch:fetchMedia})};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
+ vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,performance,fetch:fetchMedia,require(name){if(name.endsWith('venue-guest-colors'))return {getVenueGuestColors:async(_admin,venueId)=>{calls.push({name:'guestColors',venueId});await beforeRead('guestColors');return {internalAccent:'#c99842',embedAccent:'#123456',configured:true}}};if(name.endsWith('performance-placement'))return {orderByPerformance:async(_admin,rows,identity)=>{calls.push({name:'performancePlacement',identities:rows.map(identity)});await beforeRead('performancePlacement');return [...rows].reverse();}};if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-alerts'))return {deliverInternalRequestAlerts:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestAlerts',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-media-delivery'))return {serveInternalMedia:(request,options)=>serveInternalMedia(request,{...options,fetch:fetchMedia})};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
  async function get(path=[],query='',auth='',headers={}){return route.GET(new Request('https://example.invalid/api/internal/'+path.join('/')+query,{headers:{...headers,...(auth?{authorization:'Bearer '+auth}:{})}}),{params:Promise.resolve({path})});}
  return {tables,calls,get,post:async(body={},path=[],auth='staff')=>route.POST(new Request('https://example.invalid/api/internal',{method:'POST',headers:{authorization:'Bearer '+auth,'content-type':'application/json'},body:JSON.stringify(body)}),{params:Promise.resolve({path})})};
 }
+
+test('table access reads its link, club, and owner together',async()=>{
+ const f=fixture();
+ assert.equal((await f.get(['link',id(3)])).status,200);
+ const accessReads=f.calls.filter(call=>call.name==='read'&&['internal_roster_links','venues','app_users'].includes(call.table));
+ assert.equal(accessReads.length,1);
+ assert.equal(accessReads[0].table,'internal_roster_links');
+});
+
+for(const [label,change] of [
+ ['revoked table',tables=>{tables.internal_roster_links[0].active=false;}],
+ ['inactive club',tables=>{tables.venues[0].is_active=false;}],
+ ['missing club',tables=>{tables.venues.length=0;}],
+ ['missing owner',tables=>{tables.app_users.length=0;}],
+ ['inactive owner',tables=>{tables.app_users[0].account_state='suspended';}],
+ ['wrong owner role',tables=>{tables.app_users[0].role='dancer';}],
+])test(`fresh table access blocks a ${label} after an earlier successful load`,async()=>{
+ const f=fixture();
+ assert.equal((await f.get(['link',id(3)])).status,200);
+ change(f.tables);f.calls.length=0;
+ assert.equal((await f.get(['link',id(3)])).status,404);
+ assert.equal((await f.get(['photo',id(6)],'?token='+id(3))).status,404);
+ assert.equal(f.calls.some(call=>['internal_roster_members','signMedia','fetch'].includes(call.name)),false);
+});
+
+test('roster photos, ranking, request state, receipt, and colors load concurrently',async()=>{
+ const started=[];
+ let release;
+ const gate=new Promise(resolve=>{release=resolve;});
+ const independent=new Set(['dancer_photos','performancePlacement','internal_roster_requests','guestColors']);
+ const f=fixture({beforeRead:async(source,columns)=>{
+  if(independent.has(source)){started.push({source,columns});await gate;}
+ }});
+ const response=f.get(['link',id(3)],'?requestKey='+id(9));
+ try {
+  await setImmediate();
+  assert.deepEqual(new Set(started.map(read=>read.source)),independent);
+  assert.equal(started.filter(read=>read.source==='internal_roster_requests').length,2);
+ } finally { release(); }
+ assert.equal((await response).status,200);
+});
+
+test('media metadata and live roster membership load together before any storage access',async()=>{
+ const started=[];
+ const releases={};
+ const f=fixture({beforeRead:async source=>{
+  if(['dancer_photos','internal_roster_members'].includes(source)){
+   started.push(source);await new Promise(resolve=>{releases[source]=resolve;});
+  }
+ }});
+ const response=f.get(['photo',id(6)],'?token='+id(3)+'&width=320');
+ try {
+  await setImmediate();
+  assert.deepEqual(new Set(started),new Set(['dancer_photos','internal_roster_members']));
+  releases.dancer_photos();await setImmediate();
+  assert.equal(f.calls.some(call=>call.name==='signMedia'||call.name==='fetch'),false);
+ } finally { Object.values(releases).forEach(release=>release()); }
+ assert.equal((await response).status,200);
+ assert.ok(f.calls.some(call=>call.name==='signMedia'));
+});
 
 test('guest colors use only the authorized table club and are absent from staff responses',async()=>{
  const f=fixture();
@@ -269,8 +354,8 @@ test('retired entrance-display capabilities cannot open a roster, profile, media
 });
 test('staff use the unified affiliated roster for private profiles while guests use internal opt-in', async()=>{
  const f=fixture(); assert.equal((await f.get(['profile',id(5)],'', 'staff')).status,200);
- assert.equal(f.calls[0].name,'venue_roster_members');
- await f.get(['profile',id(5)],'?token='+id(3));assert.equal(f.calls[1].name,'internal_roster_members');
+ await f.get(['profile',id(5)],'?token='+id(3));
+ assert.deepEqual(f.calls.filter(call=>['venue_roster_members','internal_roster_members'].includes(call.name)).map(call=>call.name),['venue_roster_members','internal_roster_members']);
 });
 
 test('only successful table requests schedule staff and dancer alerts for the saved request identity',async()=>{
