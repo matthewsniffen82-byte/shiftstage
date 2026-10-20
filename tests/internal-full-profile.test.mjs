@@ -8,6 +8,24 @@ const modalSource = readFileSync(new URL('../src/live-shell/app/13-open-profile-
 const modalIdentity = modalSource.slice(modalSource.indexOf('    function openProfileModal('), modalSource.indexOf('      profileModal.removeAttribute(')) + '\n}';
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
+test('Internal profiles omit Follow and Share without an empty action row; public profiles retain them', () => {
+  const source = readFileSync(new URL('../src/live-shell/app/12-sync-profile-photo-viewer-window.js', import.meta.url), 'utf8');
+  const actions = source.match(/    function liveProfileModalActionsMarkup\([^]*?\n    \}/)?.[0];
+  assert.ok(actions);
+  const context = {
+    selectedCity: () => 'Las Vegas', isFollowingProfile: () => false, isWorkingTonight: () => true,
+    escapeOptionValue: value => value, escapeHtml: value => value,
+    profileActionButtonMarkup: (_icon, label) => label,
+  };
+  vm.runInNewContext(actions, context);
+  for (const internalGuestProfile of [true, false]) {
+    assert.equal(context.liveProfileModalActionsMarkup({ name: 'Aria', internalRoster: true, internalGuestProfile }), '');
+  }
+  const publicActions = context.liveProfileModalActionsMarkup({ name: 'Aria', scheduled: true });
+  assert.match(publicActions, /id="followBtn"/);
+  assert.match(publicActions, /data-profile-share-menu="Aria"/);
+});
+
 test('Internal initializes its viewer without loading the public directory',()=>{
   const startup=readFileSync(new URL('../src/live-shell/app/26-sync-discovery-city-scope.js',import.meta.url),'utf8');
   const branch=startup.slice(startup.lastIndexOf('    if (internalProfileFrameId) {'));

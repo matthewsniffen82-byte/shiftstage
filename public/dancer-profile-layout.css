@@ -17,6 +17,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   background: var(--discovery-backdrop, #1c122b) !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > :not(.profile-featured-column) { grid-column: 1 !important; min-width: 0 !important; }
+/* Internal can group the details without changing the public profile's grid. */
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout > .profile-details-column { display: contents; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > .profile-featured-column {
   grid-column: 2 !important;
   grid-row: 1 / 4 !important;

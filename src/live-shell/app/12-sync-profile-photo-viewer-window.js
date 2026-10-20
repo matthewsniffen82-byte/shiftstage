@@ -768,6 +768,7 @@
     }
 
     function liveProfileModalActionsMarkup(profile, status) {
+      if (profile?.internalRoster === true) return "";
       const city = selectedCity();
       const isFollowed = isFollowingProfile(city, profile.name);
       const isWorkingNow = isWorkingTonight(profile, city);

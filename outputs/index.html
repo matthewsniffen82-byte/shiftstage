@@ -41556,7 +41556,30 @@ html.internal-profile-embed .internal-profile-powered-by a span:last-child {
   text-underline-offset: 3px;
 }
 html.internal-profile-embed #profileBackdrop .profile-modal { min-height: 100dvh; max-height: 100dvh; border-radius: 0; }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics.is-internal dt { width: max-content !important; max-width: none !important; justify-self: center !important; }
+/* Keep Internal details together; the portrait still owns the same frame height. */
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout > .profile-details-column {
+  grid-column: 1 !important;
+  grid-row: 1 / 3;
+  display: flex !important;
+  flex-direction: column;
+  align-self: start;
+  gap: 12px;
+  min-width: 0;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-details-column .profile-activity-metrics.is-internal dt {
+  width: auto !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  overflow-wrap: normal;
+  text-wrap: balance;
+}
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-working-destination > .profile-live-state {
+  margin-bottom: 4px !important;
+}
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-shift-card :is(.profile-venue-name, .profile-working-copy strong) {
+  font-size: clamp(12px, 1.8vw, 18px) !important;
+  line-height: 1.3 !important;
+}
 html.internal-profile-embed .internal-profile-request { width: 100%; }
 /* The table request is the primary Internal action, matching the roster cards.
    Reuse the shared button face so automatic dark mode preserves the violet. */
@@ -43034,44 +43057,46 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           </div>
           <span class="profile-featured-empty">No approved profile photos yet.</span>
         </aside>
-        <div class="profile-modal-summary">
-          <div class="profile-modal-header-controls">
-            <button class="close-btn" id="modalClose" type="button" aria-label="Back to previous view">
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
-            </button>
-            <details class="profile-options" data-compact-menu>
-              <summary aria-label="Profile options" title="Profile options"><span aria-hidden="true">•••</span></summary>
-              <div class="profile-options-panel">
-                <button class="profile-header-report-action" id="reportBtn" type="button" aria-label="Report profile" title="Report profile" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg><span>Report profile</span></button>
-              </div>
-            </details>
-          </div>
-          <div class="profile-modal-person">
-            <div class="profile-modal-avatar-column">
-              <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
-                <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
-                <span data-working-now-indicator aria-hidden="true">NOW</span>
-              </div>
-            </div>
-            <div class="modal-identity-stack">
-              <div class="modal-identity">
-                <div class="profile-modal-name-row" data-follower-label="Followers">
-                    <div class="profile-modal-name-anchor">
-                      <h2 id="modalName">Profile</h2>
-                    </div>
-                  <span class="badge" id="modalStatus">Verified</span>
+        <div class="profile-details-column">
+          <div class="profile-modal-summary">
+            <div class="profile-modal-header-controls">
+              <button class="close-btn" id="modalClose" type="button" aria-label="Back to previous view">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-7 7 7 7M5 12h14"></path></svg>
+              </button>
+              <details class="profile-options" data-compact-menu>
+                <summary aria-label="Profile options" title="Profile options"><span aria-hidden="true">•••</span></summary>
+                <div class="profile-options-panel">
+                  <button class="profile-header-report-action" id="reportBtn" type="button" aria-label="Report profile" title="Report profile" aria-haspopup="dialog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4"></path><path d="M5 5h11l-1.8 3L16 11H5"></path></svg><span>Report profile</span></button>
                 </div>
-                <div class="profile-modal-context">
-                  <svg class="profile-modal-city-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2.4"></circle></svg>
-                  <span class="pill" id="modalCity">Las Vegas</span>
+              </details>
+            </div>
+            <div class="profile-modal-person">
+              <div class="profile-modal-avatar-column">
+                <div class="profile-modal-avatar" id="modalProfileAvatar" data-dancer-avatar role="img" aria-label="Dancer profile photo">
+                  <span id="modalProfileAvatarBorder" data-dancer-avatar-border aria-hidden="true"></span>
+                  <span data-working-now-indicator aria-hidden="true">NOW</span>
                 </div>
               </div>
-              <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
-              <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
+              <div class="modal-identity-stack">
+                <div class="modal-identity">
+                  <div class="profile-modal-name-row" data-follower-label="Followers">
+                      <div class="profile-modal-name-anchor">
+                        <h2 id="modalName">Profile</h2>
+                      </div>
+                    <span class="badge" id="modalStatus">Verified</span>
+                  </div>
+                  <div class="profile-modal-context">
+                    <svg class="profile-modal-city-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.1 7-12A7 7 0 1 0 5 9c0 5.9 7 12 7 12Z"></path><circle cx="12" cy="9" r="2.4"></circle></svg>
+                    <span class="pill" id="modalCity">Las Vegas</span>
+                  </div>
+                </div>
+                <div class="profile-modal-header-metrics" id="modalProfileMetrics"></div>
+                <span class="badge trend modal-rank" id="modalRank" hidden aria-hidden="true"></span>
+              </div>
             </div>
           </div>
+          <div class="modal-body" id="modalBody"></div>
         </div>
-        <div class="modal-body" id="modalBody"></div>
         <section class="profile-modal-media" aria-label="Dancer profile content">
           <div class="profile-media-socials" id="modalMediaSocials" aria-label="External profiles" hidden></div>
           <div class="profile-modal-media-tabs" role="tablist" aria-label="Dancer profile media">
@@ -55545,6 +55570,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     }
 
     function liveProfileModalActionsMarkup(profile, status) {
+      if (profile?.internalRoster === true) return "";
       const city = selectedCity();
       const isFollowed = isFollowingProfile(city, profile.name);
       const isWorkingNow = isWorkingTonight(profile, city);
