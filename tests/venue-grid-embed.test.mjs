@@ -48,6 +48,15 @@ function apiFixture(options = {}) {
   });
   return { calls, get: query => route.GET(new Request(`https://www.mydancr.com/api/public/venue-grid/${location.slug}${query || ""}`), { params: Promise.resolve({ slug: location.slug }) }) };
 }
+function documentRoute() {
+  return loadTs("app/embed/venues/[slug]/route.ts", {
+    "@/src/lib/dancr/static-asset-cache.mjs": { versionStaticAssetReferences },
+    "@/src/lib/dancr/venue-branding": { canonicalVenueSlug },
+    "@/src/lib/dancr/rhino-locations": rhino,
+    "@/src/lib/security/venue-embed-policy.mjs": { venueEmbedPolicy },
+    "@/src/lib/dancr/venue-embed-theme.mjs": { venueEmbedAccent },
+  });
+}
 
 test("embed API locks venue, city and Working Now even when query filters are tampered with", async () => {
   const other = { ...dancer, id: "other", venueId: "another-club" };
@@ -97,13 +106,7 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
   const profileHeaders = rules.find(rule => rule.source === "/embed/venues/:slug/dancers/:dancerSlug").headers;
   assert.match(profileHeaders.find(header => header.key === "Content-Security-Policy").value, /frame-ancestors 'self' https:/);
   assert.equal(profileHeaders.find(header => header.key === "Cache-Control").value, "private, no-store");
-  const route = loadTs("app/embed/venues/[slug]/route.ts", {
-    "@/src/lib/dancr/static-asset-cache.mjs": { versionStaticAssetReferences },
-    "@/src/lib/dancr/venue-branding": { canonicalVenueSlug },
-    "@/src/lib/dancr/rhino-locations": rhino,
-    "@/src/lib/security/venue-embed-policy.mjs": { venueEmbedPolicy },
-    "@/src/lib/dancr/venue-embed-theme.mjs": { venueEmbedAccent },
-  });
+  const route = documentRoute();
   const response = await route.GET(new Request("https://www.mydancr.com/embed/venues/echo-house"), { params: Promise.resolve({ slug: venue.slug }) });
   assert.equal(response.headers.get("content-security-policy"), venueEmbedPolicy);
   assert.match(venueEmbedPolicy, /frame-ancestors 'self' https:/);
@@ -116,6 +119,8 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
   assert.match(rhinoHtml, /value="boise"[^>]+ selected/);
   assert.match(rhinoHtml, /data-demo="true"/);
   assert.match(rhinoHtml, /<h1 aria-live="polite">Working now <span id="venue-count" hidden><\/span><\/h1>/);
+  assert.match(rhinoHtml, /class="venue-embed-heading"[\s\S]*class="venue-embed-credit"[\s\S]*Powered by MyDancr[\s\S]*www\.mydancr\.com[\s\S]*class="home-discovery-controls/);
+  assert.doesNotMatch(rhinoHtml, /<footer/);
   assert.doesNotMatch(rhinoHtml, /Demo ·|Sample dancers|not actual|Not connected yet/);
   assert.match(html, /home-dancer-grid home-dancer-three-column/);
   assert.match(html, /dancer-grid-card\.js/);
@@ -379,6 +384,52 @@ test("every Rhino location has 25–80 dancers with distinct, stable roster size
   assert.notDeepEqual(Array.from(sampleRoster(rows, "boise", 18)), Array.from(sampleRoster(rows, "london", 18)));
 });
 
+test("standard Rhino links preserve the selected location and populate every showcase roster without a demo flag", async () => {
+  const route = documentRoute(), slug = rhino.RHINO_VENUE_SLUG;
+  const params = { params: Promise.resolve({ slug }) };
+  const rows = Array.from({ length: 96 }, (_, i) => ({ ...dancer, id: `dancer-${i}`, slug: `dancer-${i}` }));
+  for (const location of rhino.RHINO_LOCATIONS) {
+    const response = await route.GET(new Request(`https://www.mydancr.com/embed/venues/${slug}?location=${location.key}`), params);
+    assert.equal(response.status, 307);
+    const destination = new URL(response.headers.get("location"));
+    assert.equal(destination.searchParams.get("location"), location.key);
+    assert.equal(destination.searchParams.get("demo"), "1");
+    const html = await (await route.GET(new Request(destination), params)).text();
+    assert.match(html, /data-demo="true"/);
+    assert.equal([...html.matchAll(/<option /g)].length, 22);
+    assert.match(html, new RegExp(`value="${location.key}"[^>]+ selected`));
+    const f = componentFixture();
+    f.document.body.dataset.demo = html.match(/data-demo="([^"]+)"/)[1];
+    f.document.body.dataset.venueSlug = slug;
+    f.node("venue-location").selectedOptions = [{ value: location.key, textContent: location.label,
+      dataset: { count: String(location.sampleCount), venue: location.venueSlug || "" } }];
+    f.respond(() => ({ ok: true, venue: { ...venue, slug }, dancers: rows, nextCursor: null }));
+    await f.window.MydancrVenueEmbed.mount(f.document);
+    assert.equal(f.node("venue-count").textContent, String(location.sampleCount), location.label);
+    assert.equal([...f.node("results").innerHTML.matchAll(/data-public-dancer-id=/g)].length, location.sampleCount);
+    assert.equal(f.node("venue-status").hidden, true);
+    assert.match(f.requests[0].url, /\?demo=1$/);
+  }
+});
+
+test("explicit live embeds list only connected Rhino locations and keep live mode in profile links", async () => {
+  const slug = rhino.RHINO_VENUE_SLUG;
+  const response = await documentRoute().GET(new Request(`https://www.mydancr.com/embed/venues/${slug}?demo=0&location=boise`), { params: Promise.resolve({ slug }) });
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /data-demo="false"/);
+  assert.equal([...html.matchAll(/<option /g)].length, 1);
+  assert.match(html, /value="las-vegas"[^>]+ selected/);
+  assert.doesNotMatch(html, /value="boise"|Not connected yet/);
+  const f = componentFixture();
+  f.document.body.dataset.venueSlug = slug;
+  f.node("venue-location").selectedOptions = [{ value: "las-vegas", textContent: "Las Vegas, NV", dataset: { venue: slug } }];
+  f.respond(() => ({ ok: true, venue: { ...venue, slug }, dancers: [dancer], nextCursor: null }));
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  assert.match(f.node("results").innerHTML, /location=las-vegas&amp;demo=0/);
+  assert.doesNotMatch(f.requests[0].url, /demo=1/);
+});
+
 test("location changes clear old cards and stale requests cannot replace the selected roster", async () => {
   const f = componentFixture();
   f.document.body.dataset.demo = "true";
@@ -446,11 +497,14 @@ test("embedded profile uses the full shared component, preserves media and retur
   await assert.rejects(render({ location: "boise" }), /NOT_FOUND/);
   profile = { ...source, shiftSource: "nfc_presence" };
   await assert.rejects(render({ demo: "1" }), /NOT_FOUND/);
+  const live = await render({ demo: "0" });
+  assert.equal(live.props.returnHref, "/embed/venues/talk-of-the-town?location=las-vegas&demo=0");
+  assert.equal(live.props.preview, false);
   profile = { ...source, venueId: "another-club" };
   await assert.rejects(render({}), /NOT_FOUND/);
   profile = { ...source, checkedOutAt: new Date().toISOString() };
   await assert.rejects(render({}), /NOT_FOUND/);
-  assert.equal(contentReads, 1);
+  assert.equal(contentReads, 2);
   const client = read("app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx");
   assert.match(client, /<PublicDancerProfile \{\.\.\.props\}/);
   assert.match(client, /\?presence=1/);

@@ -136,6 +136,7 @@
       const query = new URLSearchParams();
       if (option) query.set("location", option.value);
       if (demo) query.set("demo", "1");
+      else if (option) query.set("demo", "0");
       const suffix = query.size ? `?${query}` : "";
       const markup = visible.map((dancer, index) => cardMarkup(dancer, displayVenue, index,
         `/embed/venues/${encodeURIComponent(venue.slug)}/dancers/${encodeURIComponent(dancer.slug)}${suffix}`)).join("");

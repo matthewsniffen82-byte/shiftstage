@@ -12,12 +12,19 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 160) return new Response("Club not found.", { status: 404 });
   const url = new URL(request.url);
   const rhino = slug === RHINO_VENUE_SLUG;
+  // Shared Rhino links open the populated showcase; connected live embeds opt in.
+  if (rhino && !["0", "1"].includes(url.searchParams.get("demo") || "")) {
+    url.searchParams.set("demo", "1");
+    return Response.redirect(url, 307);
+  }
   const demo = rhino && url.searchParams.get("demo") === "1";
-  const location = rhinoLocation(url.searchParams.get("location"));
+  const availableLocations = demo ? RHINO_LOCATIONS : RHINO_LOCATIONS.filter(item => "venueSlug" in item);
+  const requestedLocation = rhinoLocation(url.searchParams.get("location"));
+  const location = availableLocations.find(item => item.key === requestedLocation.key) || availableLocations[0];
   const locations = rhino ? `<div class="home-discovery-controls venue-embed-controls">
     <div class="home-city-filter"><label id="citySelectLabel" for="venue-location">Rhino location</label>
-      <div class="home-city-select-shell"><select id="venue-location">${RHINO_LOCATIONS.map(item =>
-    `<option value="${item.key}" data-venue="${"venueSlug" in item ? item.venueSlug : ""}" data-count="${item.sampleCount}"${item.key === location.key ? " selected" : ""}>${item.label}${demo ? "" : "venueSlug" in item ? "" : " · Not connected yet"}</option>`
+      <div class="home-city-select-shell"><select id="venue-location">${availableLocations.map(item =>
+    `<option value="${item.key}" data-venue="${"venueSlug" in item ? item.venueSlug : ""}" data-count="${item.sampleCount}"${item.key === location.key ? " selected" : ""}>${item.label}</option>`
   ).join("")}</select>
         <button class="city-picker-trigger" id="citySelectButton" type="button" aria-haspopup="listbox" aria-controls="citySelectPanel" aria-expanded="false" aria-labelledby="citySelectLabel citySelectButtonText" hidden>
           <svg class="city-picker-trigger-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
@@ -42,14 +49,16 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-demo="${demo}" data-accent="${rhino ? RHINO_ACCENT : venueEmbedAccent(url)}">
     <div class="app"><main class="stack">
-      <div class="venue-embed-heading"><div><p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p><h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1></div><button id="venue-refresh" type="button" aria-label="Refresh working dancers" title="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.4 6.8"></path><path d="M20 4v7h-7"></path></svg></button></div>
+      <div class="venue-embed-heading"><div><p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p><h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1></div><button id="venue-refresh" type="button" aria-label="Refresh working dancers" title="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.4 6.8"></path><path d="M20 4v7h-7"></path></svg></button>
+        <a class="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a>
+      </div>
       ${locations}
       <section id="venue-directory" class="stack" aria-label="Working dancers">
       <p id="venue-status" role="status">Loading working dancers…</p>
       <div id="results" class="home-dancer-grid home-dancer-three-column" aria-busy="true"></div>
       <button id="venue-more" type="button" hidden>Show more</button>
       <noscript>Enable JavaScript to see who is working now.</noscript>
-    </section><footer class="venue-embed-credit"><a href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a></footer></main></div>
+    </section></main></div>
   </body></html>`;
   return new Response(versionStaticAssetReferences(html), { headers: {
     "Content-Type": "text/html; charset=utf-8", "Cache-Control": "private, no-store",

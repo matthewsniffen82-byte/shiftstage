@@ -61,6 +61,7 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
   const returnQuery = new URLSearchParams();
   if (rhino) returnQuery.set("location", location.key);
   if (demo) returnQuery.set("demo", "1");
+  else if (rhino) returnQuery.set("demo", "0");
   const returnHref = `/embed/venues/${slug}${returnQuery.size ? `?${returnQuery}` : ""}`;
   return <EmbeddedDancerProfile
     profile={profile}

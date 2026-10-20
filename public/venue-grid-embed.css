@@ -17,7 +17,8 @@ html body.venue-grid-embed > .app main.stack > section.stack > #results.home-dan
   padding-bottom: 0 !important; margin-bottom: 0 !important; scroll-padding-bottom: 0;
 }
 html body.venue-grid-embed .venue-embed-heading {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 4px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 44px; align-items: center;
+  gap: 2px 12px; padding: 0 4px;
 }
 html body.venue-grid-embed .venue-embed-heading h1 {
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0;
@@ -28,13 +29,13 @@ html body.venue-grid-embed #venue-name { margin-bottom: 2px; color: #b5b5ba; fon
 html body.venue-grid-embed :is(.venue-embed-note, .venue-embed-credit, #venue-status) {
   color: #b5b5ba; font-size: 12px; line-height: 1.5;
 }
-html body.venue-grid-embed .venue-embed-credit { margin: 0; padding: 12px; text-align: center; }
-html body.venue-grid-embed .venue-embed-credit a {
-  display: grid; align-content: center; gap: 4px; width: fit-content; min-height: 44px;
-  margin: 0 auto; color: inherit; text-decoration: none;
+html body.venue-grid-embed .venue-embed-credit {
+  grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center;
+  gap: 0 8px; width: fit-content; min-height: 32px; margin: 0;
+  font-size: 11px; text-decoration: none;
 }
-html body.venue-grid-embed .venue-embed-credit a span:first-child { font-weight: 600; }
-html body.venue-grid-embed .venue-embed-credit a span:last-child { text-decoration: underline; text-underline-offset: 3px; }
+html body.venue-grid-embed .venue-embed-credit span:first-child { font-weight: 600; }
+html body.venue-grid-embed .venue-embed-credit span:last-child { text-decoration: underline; text-underline-offset: 3px; }
 html body.venue-grid-embed #venue-refresh {
   position: relative; isolation: isolate; display: grid; place-items: center;
   flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; padding: 0 !important;
