@@ -162,3 +162,30 @@ test("muted inbox rows cannot hide an older allowed alert behind the page limit"
   assert.deepEqual(reads, [[0, 49], [50, 99]]);
   assert.equal(rows.length, 56);
 });
+
+test("venue table email uses the recipient's on-file email, a stable provider key and the requests dashboard", async () => {
+  const calls = [];
+  const client = { auth: { admin: { getUserById: async () => ({ data: { user: {
+    user_metadata: patchMetadata({ emailEnabled: true, pushEnabled: false }),
+  } }, error: null }) } }, from() {
+    return { select() { return this; }, in() { return this; }, eq: async () => ({ data: [
+      { id: 'venue-manager', role: 'venue', email: 'manager@example.invalid' },
+    ], error: null }) };
+  } };
+  const delivery = compile('src/lib/dancr/notification-delivery.ts', {
+    './venue-notification-preferences': preferences, './customer-notification-preferences': customerPreferences,
+    './web-push-delivery': { deliverWebPush: async () => { assert.fail('email retries must not resend push'); } },
+    './public-app-url': { publicAppUrl: () => 'https://example.invalid' },
+  }, { fetch: async (url, init) => { calls.push({ url, headers: init.headers, body: JSON.parse(init.body) }); return Response.json({ id: '11111111-1111-4111-8111-111111111111' }); } });
+  const row = { ...examples.tableRequests, deliveryId: 'email-delivery', recipient_id: 'venue-manager', title: 'New table request', body: 'Table 12 requested Star.' };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    assert.deepEqual(plain(await delivery.deliverNotificationRows(client, [row], { email: true, push: false })), { email: 1, push: 0 });
+  }
+  assert.equal(calls.length, 2);
+  for (const call of calls) {
+    assert.equal(call.body.to, 'manager@example.invalid');
+    assert.equal(call.headers['Idempotency-Key'], 'notification/email-delivery');
+    assert.match(call.body.text, /dashboard\/venue#table-requests/);
+  }
+  assert.deepEqual(calls[0], calls[1]);
+});

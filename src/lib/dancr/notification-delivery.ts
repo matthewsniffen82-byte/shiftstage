@@ -176,7 +176,7 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        ...(row.deliveryId && (row.payload as Record<string, unknown> | null)?.kind === "dancer_table_request"
+        ...(row.deliveryId && ["dancer_table_request", "internal_table_request"].includes(String((row.payload as Record<string, unknown> | null)?.kind))
           ? { "Idempotency-Key": `notification/${row.deliveryId}` } : {}),
       },
       body: JSON.stringify({

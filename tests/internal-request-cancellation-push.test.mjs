@@ -10,7 +10,7 @@ test("immediate cancellation delivery uses the durable worker with the same requ
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   vm.runInNewContext(code, { exports, require: name => name === "server-only" ? {} : {
-    deliverInternalRequestPush: async (...args) => { calls.push(args); return { retry: 1 }; },
+    deliverInternalRequestAlerts: async (...args) => { calls.push(args); return { retry: 1 }; },
   } });
   const result = await exports.deliverInternalCancellationPush(client, "request", { deadline: 45000 });
   assert.equal(result.retry, 1);

@@ -55,8 +55,9 @@ test('staff failure does not block dancer delivery, and the shared worker report
   vm.runInNewContext(compile('src/lib/dancr/internal-request-alerts.ts'),{exports:service,require:name=>({
     'server-only':{},
     './internal-request-push':{deliverInternalRequestPush:async()=>{calls.push('staff');throw Error('staff failure');}},
+    './internal-request-email':{deliverInternalRequestEmail:async()=>{calls.push('staff-email');return {configured:true,sent:1,skipped:0,retry:0};}},
     './dancer-table-request-alerts':{deliverDancerTableRequestAlerts:async()=>{await Promise.resolve();calls.push('dancer');return {configured:true,sent:1,skipped:0,retry:0};}},
   }[name])});
   await assert.rejects(service.deliverInternalRequestAlerts({}),/staff failure/);
-  assert.deepEqual(calls,['staff','dancer']);
+  assert.deepEqual(calls,['staff','staff-email','dancer']);
 });
