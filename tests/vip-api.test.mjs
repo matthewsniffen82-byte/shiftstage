@@ -99,6 +99,16 @@ test("VIP submission delivers both audience-specific alerts without returning re
   assert.ok(!JSON.stringify(body).includes(id(7)));
 });
 
+test("VIP create and edit explain when a selected dancer is no longer working without delivering alerts", async () => {
+  for (const method of ['POST', 'PUT']) {
+    const { route, calls } = fixture({ rpcError: { code: '40001', message: 'ROSTER_CHANGED' } });
+    const response = await route[method](request({ ...input, expectedUpdatedAt: '2026-10-01T12:00:00Z' }));
+    assert.equal(response.status, 409);
+    assert.match((await response.json()).error, /Only dancers working now at this club can be requested/);
+    assert.equal(calls.some(call => call[0] === 'delivery'), false);
+  }
+});
+
 test("venue confirmation and cancellation deliver VIP and dancer notices without exposing recipients or failing on optional delivery", async () => {
   for (const [expectedStatus, status] of [["pending", "confirmed"], ["confirmed", "cancelled"]]) {
     const notifications = [

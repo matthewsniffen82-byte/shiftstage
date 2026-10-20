@@ -9,7 +9,7 @@ import * as types from '../src/lib/dancr/vip-types.ts';
 const pending = { id: 'request-1', venue_id: venues[0].id, guest_name: 'Jordan', status: 'pending',
   starts_at: '2027-01-16T05:30:00Z', timezone: venues[0].timezone, created_at: '2026-10-01T12:00:00Z', updated_at: '2026-10-02T12:00:00.123456Z',
   dancers: [{ id: 'dancer-1', stageName: 'Aria' }], notes: '', response_note: '' };
-const draft = { selected: ['dancer-2'], date: '2027-02-20', time: '22:00' };
+const draft = { selected: ['dancer-1'], date: '2027-02-20', time: '22:00' };
 const html = ui => renderToStaticMarkup(ui.tree());
 
 test('edit opens the existing request in venue-local time, preserves a separate new draft, and saves to the same ID', async () => {
@@ -38,6 +38,19 @@ test('cancel editing sends nothing and returns to requests; venue switching and 
   ui.requests().props.onEdit(pending); await ui.settle();
   ui.nodes().find(n => n.type === 'select').props.onChange({ target: { value: venues[1].id } }); await ui.settle();
   assert.equal(ui.planner().props.editing, false); assert.equal(ui.planner().props.draft.date, '');
+  ui.unmount();
+});
+
+test('editing drops checked-out dancers and blocks saving an off-shift selection', async () => {
+  const roster = dancers.map(dancer => ({ ...dancer, working_now: false, canRequest: true }));
+  const ui = dashboardHarness({ hash: '#vip-requests', request: async () => state(venues[0].id, { requests: [pending], dancers: roster }) });
+  await ui.settle(); ui.requests().props.onEdit(pending); await ui.settle();
+  assert.equal(ui.planner().props.unavailableSelections, true);
+  assert.deepEqual([...ui.planner().props.draft.selected], []);
+  ui.planner().props.onChange({ ...draft, selected: ['dancer-1'] }); ui.render();
+  await ui.planner().props.onSubmit(); await ui.settle();
+  assert.equal(ui.calls.some(call => call.options.method === 'PUT'), false);
+  assert.match(html(ui), /Only dancers working now at this club can be requested/);
   ui.unmount();
 });
 

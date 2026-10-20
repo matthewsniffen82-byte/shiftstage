@@ -3,6 +3,7 @@ import test from 'node:test';
 import { compileVip, dashboardHarness, guest, venues, state } from './helpers/vip-dashboard-fixture.mjs';
 import * as returnPaths from '../src/lib/dancr/safe-return-path.ts';
 import * as draftStorage from '../src/lib/dancr/vip-draft-storage.ts';
+import * as vipDashboard from '../src/lib/dancr/vip-dashboard.ts';
 
 // Isolated component events and mocked reads; no browser journeys.
 function nodes(node) {
@@ -35,12 +36,13 @@ function harness({ request, account = guest, returnHref = '/vip?venueId=venue-2#
     react,
     '@/src/lib/dancr/safe-return-path': returnPaths,
     '@/src/lib/dancr/vip-draft-storage': draftStorage,
+    '@/src/lib/dancr/vip-dashboard': vipDashboard,
     '@/app/dashboard/dashboard-session': {
       DASHBOARD_SESSION_KEY: 'auth',
       readSession: () => currentAccount ? { accessToken: 'token', account: currentAccount } : null,
       requestDashboardJson: async (url, options) => {
         calls.push({ url, options });
-        return request ? request(url, options) : state('venue-2', { dancers: [{ id: 'dancer-1', canRequest: true }] });
+        return request ? request(url, options) : state('venue-2', { dancers: [{ id: 'dancer-1', canRequest: true, working_now: true }] });
       },
     },
   }, { URL, window: {
@@ -145,20 +147,20 @@ test('open dashboards pick up profile additions, keep Quick Add dancers and subm
   const values = new Map(), storage = storageAdapter(values);
   const dashboard = dashboardHarness({ initialVenueId: 'venue-2', storage: values });
   await dashboard.settle(); dashboard.navigate('plan'); await dashboard.settle();
-  dashboard.planner().props.onChange({ selected: ['dancer-2'], date: '2026-12-05', time: '21:30' });
+  dashboard.planner().props.onChange({ selected: ['dancer-3'], date: '2026-12-05', time: '21:30' });
   dashboard.render();
   const profile = harness({ values }); await profile.settle(); profile.trigger().props.onClick();
   dashboard.event('storage', { key: draftStorage.VIP_DRAFT_PREFIX + guest.id }); await dashboard.settle();
-  assert.deepEqual([...dashboard.planner().props.draft.selected], ['dancer-2', 'dancer-1']);
+  assert.deepEqual([...dashboard.planner().props.draft.selected], ['dancer-3', 'dancer-1']);
   assert.equal(dashboard.planner().props.draft.time, '21:30');
   dashboard.event('storage', { key: draftStorage.VIP_DRAFT_PREFIX + 'another-guest' });
-  assert.deepEqual([...dashboard.planner().props.draft.selected], ['dancer-2', 'dancer-1']);
+  assert.deepEqual([...dashboard.planner().props.draft.selected], ['dancer-3', 'dancer-1']);
   const before = values.get(draftStorage.VIP_DRAFT_PREFIX + guest.id);
   dashboard.event('storage', { key: draftStorage.VIP_DRAFT_PREFIX + guest.id });
   assert.equal(values.get(draftStorage.VIP_DRAFT_PREFIX + guest.id), before, 'identical storage events do not trigger a write loop');
   await dashboard.planner().props.onSubmit(); await dashboard.settle();
   const post = dashboard.calls.find(call => call.options.method === 'POST');
-  assert.deepEqual(JSON.parse(post.options.body).dancerIds, ['dancer-1', 'dancer-2']);
+  assert.deepEqual(JSON.parse(post.options.body).dancerIds, ['dancer-1', 'dancer-3']);
   assert.equal(JSON.parse(post.options.body).localStart, '2026-12-05T21:30');
   assert.deepEqual(draftStorage.readVipWorkspace(storage, guest.id).drafts, {});
 });
@@ -169,7 +171,7 @@ test('dancers added while a group request is being sent remain queued for the ne
   const dashboard = dashboardHarness({ initialVenueId: 'venue-2', hash: '#vip-plan', storage: values,
     request: async (_url, options) => options.method === 'POST' ? new Promise(done => { resolve = done; }) : state('venue-2') });
   await dashboard.settle();
-  dashboard.planner().props.onChange({ selected: ['dancer-2'], date: '2026-12-05', time: '21:30' }); dashboard.render();
+  dashboard.planner().props.onChange({ selected: ['dancer-3'], date: '2026-12-05', time: '21:30' }); dashboard.render();
   const pending = dashboard.planner().props.onSubmit();
   draftStorage.queueVipProfileDancer(storage, guest.id, 'venue-2', 'dancer-1');
   dashboard.event('storage', { key: draftStorage.VIP_DRAFT_PREFIX + guest.id });
@@ -185,6 +187,16 @@ test('unavailable dancers cannot be added to the selected club queue', async () 
   assert.equal(h.trigger().props.disabled, true);
   assert.equal(h.values.size, 0);
   assert.deepEqual(h.navigations, []);
+});
+
+test('off-shift profiles cannot add a dancer even if an older response marks them requestable', async () => {
+  for (const working_now of [false, undefined]) {
+    const h = harness({ request: async () => state('venue-2', { dancers: [{ id: 'dancer-1', canRequest: true, working_now }] }) });
+    await h.settle(); h.trigger().props.onClick();
+    assert.equal(h.trigger().props.disabled, true);
+    assert.equal(h.values.size, 0);
+    h.unmount();
+  }
 });
 
 test('logged-out, non-customer and non-member profiles retain admission', async () => {
@@ -221,7 +233,7 @@ test('membership reads can retry, and unmount cancels a pending read', async () 
   let reads = 0;
   const h = harness({ request: async () => {
     if (++reads === 1) throw Error('Offline');
-    return state('venue-2', { dancers: [{ id: 'dancer-1', canRequest: true }] });
+    return state('venue-2', { dancers: [{ id: 'dancer-1', canRequest: true, working_now: true }] });
   } });
   await h.settle();
   assert.equal(h.trigger().props.disabled, true);

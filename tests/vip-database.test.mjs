@@ -36,6 +36,7 @@ async function fixture() {
     await db.exec(readFileSync(new URL("../supabase/migrations/20261011084450_vip_pending_request_edits.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261011201618_vip_dancer_status_notifications.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261012012535_vip_venue_private_nicknames.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261020223646_vip_working_now_requests.sql", import.meta.url), "utf8"));
     // Match production grants for server-only SECURITY INVOKER request writes.
     await db.exec("grant select on public.app_users,public.venues,public.venue_team_members,public.dancer_profiles to service_role; grant select,insert on public.notifications to service_role");
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
@@ -49,6 +50,7 @@ async function fixture() {
     }
     await db.query("insert into public.venue_dancer_affiliations(venue_id,dancer_id,status) values($1,$2,'active'),($3,$4,'active')", [id(20), id(37), id(21), id(39)]);
     await db.query("insert into public.shifts values($1,$2,'posted',now(),null,'club_confirmed',now()+interval '2 hours')", [id(38), id(20)]);
+    await db.query("insert into public.shifts values($1,$2,'posted',now(),null,'club_confirmed',now()+interval '2 hours')", [id(37), id(20)]);
     await db.exec("set role service_role");
     return db;
   } catch (error) { await db.close(); throw error; }
@@ -300,8 +302,10 @@ test("VIP roster includes off-shift affiliations and current workers, and submis
   const db = await fixture();
   try {
     await invite(db); await accept(db);
+    await adminQuery(db, "update shifts set checked_out_at=now() where dancer_id=$1", [id(37)]);
     const roster = (await db.query("select * from public.vip_eligible_dancers($1)", [id(20)])).rows;
     assert.deepEqual(roster.map(row => [row.id, row.working_now]), [[id(37), false], [id(38), true]]);
+    await denies(submit(db, { dancers: [37] }), "40001");
     await denies(submit(db, { dancers: [39] }), "40001");
     await denies(submit(db, { actor: 6 }), "42501");
     await denies(submit(db, { venue: 21 }), "42501");
@@ -310,6 +314,35 @@ test("VIP roster includes off-shift affiliations and current workers, and submis
     await adminQuery(db, "update public.shifts set location_verification_expires_at=now()-interval '1 second'");
     await denies(submit(db, { dancers: [38] }), "40001");
     assert.equal((await adminQuery(db, "select count(*) from public.venue_vip_requests")).rows[0].count, 0);
+  } finally { await db.close(); }
+});
+
+test("new and edited VIP selections require a current verified check-in at the selected club", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db);
+    const original = (await submit(db)).request;
+    const notices = (await db.query("select count(*)::int n from notifications")).rows[0].n;
+    for (const change of [
+      "checked_out_at=now()",
+      "location_verification_expires_at=now()-interval '1 second'",
+      "checked_in_at=null",
+      "location_status='pending'",
+      "status='cancelled'",
+      `venue_id='${id(21)}'`,
+    ]) {
+      await adminQuery(db, `update shifts set ${change} where dancer_id=$1`, [id(37)]);
+      await denies(submit(db, { request: 91 }), "40001");
+      await denies(edit(db, original), "40001");
+      assert.equal((await db.query("select count(*)::int n from venue_vip_requests")).rows[0].n, 1);
+      assert.equal((await db.query("select count(*)::int n from notifications")).rows[0].n, notices);
+      assert.deepEqual((await db.query("select to_jsonb(r) value from venue_vip_requests r where id=$1", [original.id])).rows[0].value, original);
+      // Retrying an already-saved request does not create a new selection or alert.
+      assert.equal((await submit(db)).notifications.length, 0);
+      await adminQuery(db, "update shifts set checked_out_at=null,checked_in_at=now(),location_verification_expires_at=now()+interval '2 hours',location_status='club_confirmed',status='posted',venue_id=$1 where dancer_id=$2", [id(20), id(37)]);
+    }
+    assert.equal((await edit(db, original)).changed, true);
+    assert.equal((await submit(db, { request: 91 })).request.id, id(91));
   } finally { await db.close(); }
 });
 

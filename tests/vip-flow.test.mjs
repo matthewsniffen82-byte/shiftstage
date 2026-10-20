@@ -117,7 +117,7 @@ test('VIP destinations reject arbitrary return URLs and preserve the activated v
 
 function dataFixture() {
   const calls = [], failures = {};
-  const dancers = [{ id: 'd1', stage_name: 'Aria', working_now: false }, { id: 'd2', stage_name: 'Nova', working_now: true }];
+  const dancers = [{ id: 'd1', stage_name: 'Aria', working_now: true }, { id: 'd2', stage_name: 'Nova', working_now: true }];
   const tables = {
     venue_vip_members: [{ user_id: 'guest', active: true, display_name: 'Guest', venue: { id: venueId, name: 'Invited venue', timezone: 'America/Los_Angeles', is_active: true, owner: { role: 'venue', account_state: 'active' } } }],
     follows: [],
@@ -171,6 +171,16 @@ test('VIP planner includes only eligible dancer photos through the revocable pho
   const result = await service.getVipState(client, 'guest', new URLSearchParams({ view: 'plan' }));
   assert.equal(result.dancers.length, 2); assert.match(result.dancers[0].photoUrl, /^\/api\/media\/dancer-photo\?/);
   assert.equal(result.dancers[1].photoUrl, null); assert.doesNotMatch(JSON.stringify(result), /private\/photo|outsider|preview=/);
+});
+
+test('planner and legacy roster responses exclude off-shift dancers before loading their cards', async () => {
+  for (const view of ['plan', '']) {
+    const f = dataFixture(); f.dancers[0].working_now = false;
+    const result = await f.service.getVipState(f.client, 'guest', new URLSearchParams({ view }));
+    assert.deepEqual(Array.from(result.dancers, row => row.id), ['d2']);
+    assert.equal(result.dancers[0].canRequest, true);
+    assert.doesNotMatch(JSON.stringify(result.dancers), /aria|d1\/avatar/);
+  }
 });
 
 test('VIP follows belong to the guest and older requested dancers belong to the current venue', async () => {

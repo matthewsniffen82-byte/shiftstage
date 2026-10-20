@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { filterVipDancers, isVipFollowing, vipProfileSlug, type VipDraft, type VipDancerFilter } from "@/src/lib/dancr/vip-dashboard";
+import { filterVipDancers, isVipFollowing, isVipRequestable, vipProfileSlug, type VipDraft, type VipDancerFilter } from "@/src/lib/dancr/vip-dashboard";
 import { vipLocalDate, type VipDancer, type VipVenue } from "@/src/lib/dancr/vip-types";
 import { useVipElementHeight } from "./useVipElementHeight";
 
 const dancerFilters: Array<{ id: VipDancerFilter; label: string }> = [
-  { id: "all", label: "This club" }, { id: "following", label: "Following" },
+  { id: "all", label: "Working now" }, { id: "following", label: "Following" },
   { id: "previous", label: "Requested before" },
-  { id: "working", label: "Working now" }, { id: "selected", label: "Selected" },
+  { id: "selected", label: "Selected" },
 ];
 
 // 84px PNG artwork keeps the face and mark together when Samsung dark mode recolors SVGs.
@@ -26,17 +26,15 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
 }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<VipDancerFilter>("all");
-  const [requestableOnly, setRequestableOnly] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(editing);
   const roster = useRef<HTMLElement | null>(null);
   const details = useRef<HTMLElement | null>(null);
   const rosterHeader = useRef<HTMLDivElement | null>(null);
   useVipElementHeight(rosterHeader, roster, "--vip-roster-header-height", !detailsOpen);
-  const scope = requestableOnly ? dancers.filter(dancer => dancer.canRequest !== false) : dancers;
-  const filterResults = dancerFilters.map(item => ({ ...item, dancers: filterVipDancers(scope, search, item.id, draft.selected) }));
+  const filterResults = dancerFilters.map(item => ({ ...item, dancers: filterVipDancers(dancers, search, item.id, draft.selected) }));
   const visible = filterResults.find(item => item.id === filter)!.dancers;
-  const selected = dancers.filter(dancer => dancer.canRequest !== false && draft.selected.includes(dancer.id));
-  const working = dancers.filter(dancer => dancer.working_now).length;
+  const selected = dancers.filter(dancer => isVipRequestable(dancer) && draft.selected.includes(dancer.id));
+  const working = dancers.filter(isVipRequestable).length;
   const remove = (id: string) => onChange({ ...draft, selected: draft.selected.filter(item => item !== id) });
   const stepChanged = useRef(false);
   useEffect(() => {
@@ -50,9 +48,9 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
     <div className="vip-plan-grid">
       <section className="vip-panel vip-roster-panel" ref={roster} id="vip-choose-dancers" tabIndex={-1} hidden={detailsOpen} aria-label="Choose your dancers">
         <div ref={rosterHeader} className="vip-roster-header">
-          <div className="vip-step-heading"><span>1</span><div><h3>Choose your dancers</h3><small>{dancers.filter(dancer => dancer.canRequest !== false).length} at this club · {working} working now</small></div></div>
+          <div className="vip-step-heading"><span>1</span><div><h3>Choose your dancers</h3><small>{working} working now at this club</small></div></div>
           <div className="vip-library-toolbar"><label className="vip-search"><span className="vip-sr-only">Search dancers by stage name</span><input type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search my dancers" disabled={busy} /></label>
-            <label className="vip-library-venue-filter"><input type="checkbox" checked={requestableOnly} disabled={busy} onChange={event => setRequestableOnly(event.target.checked)} />Requestable</label></div>
+          </div>
           <div className="vip-roster-filters" role="group" aria-label="Dancer filters">{filterResults.map(({ id, label, dancers: matches }) => <button key={id} type="button" aria-label={`${label}, ${matches.length} ${matches.length === 1 ? "dancer" : "dancers"}`} aria-pressed={filter === id} onClick={() => setFilter(id)} disabled={busy}><span className="vip-filter-label">{label}</span><span className="vip-filter-count" aria-hidden="true">{matches.length}</span></button>)}</div>
         </div>
         {filter === "previous" && onRequests && <div className="vip-actions"><button type="button" disabled={busy} onClick={onRequests}>View request status →</button></div>}
@@ -60,8 +58,8 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
         <div className="vip-roster-scroll"><fieldset className="vip-dancers" disabled={busy}><legend className="vip-sr-only">Dancers to request</legend>{visible.map(dancer => {
           const checked = draft.selected.includes(dancer.id);
           const following = isVipFollowing(dancer);
-          const unavailable = dancer.canRequest === false;
-          const profile = <><DancerPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><span className="vip-dancer-copy"><strong>{dancer.stage_name}</strong><small className={dancer.working_now ? "vip-working" : ""}>{dancer.working_now ? "● Working now" : unavailable ? dancer.previouslyRequested ? "Previously requested · unavailable" : "Unavailable at this club" : "Affiliated · off shift"}</small><span className="vip-open-profile">{dancer.profileHref ? "Open profile" : "Profile unavailable"}</span></span></>;
+          const unavailable = !isVipRequestable(dancer);
+          const profile = <><DancerPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><span className="vip-dancer-copy"><strong>{dancer.stage_name}</strong><small className="vip-working">● Working now</small><span className="vip-open-profile">{dancer.profileHref ? "Open profile" : "Profile unavailable"}</span></span></>;
           return <article className={`vip-dancer ${checked ? "is-selected" : ""}`} key={dancer.id}>
             {vipProfileSlug(dancer) ? <a className="vip-profile-link" href={`/?profile=${encodeURIComponent(vipProfileSlug(dancer))}`} aria-label={`Open ${dancer.stage_name} profile`} onClick={event => {
               if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
@@ -75,8 +73,8 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
             <button type="button" className="vip-dancer-follow" aria-pressed={following} aria-busy={followPending.includes(dancer.id)} aria-label={`${following ? "Unfollow" : "Follow"} ${dancer.stage_name}`} title={following ? "Following · Unfollow" : "Follow"} disabled={busy || followPending.includes(dancer.id) || (!dancer.profileHref && !following)} onClick={() => void onFollow(dancer)}><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="5" /><path d="M2 21a8 8 0 0 1 13.3-6" /><path d={following ? "m16 19 2 2 4-4" : "M19 16v6m-3-3h6"} /></svg></button>
           </article>;
         })}</fieldset></div>
-        {!visible.length && <div className="vip-empty"><p>{search || requestableOnly ? "No dancers match these filters." : filter === "following" ? "No dancers followed yet. Tap the person-plus icon to follow a dancer." : !dancers.length ? "No dancers at this club yet." : filter === "previous" ? "Dancers you’ve requested at this venue will appear here." : filter === "selected" && !draft.selected.length ? "Select dancers to build your request." : "No dancers match these filters."}</p>{dancers.length > 0 && <button type="button" onClick={() => { setSearch(""); setFilter("all"); setRequestableOnly(false); }}>Show club dancers</button>}</div>}
-        <small className="vip-roster-note">Working now describes current check-in status. Availability for your visit is confirmed by the venue.</small>
+        {!visible.length && <div className="vip-empty"><p>{!working ? "No dancers are working now at this club." : search ? "No working dancers match your search." : filter === "following" ? "None of your followed dancers are working now at this club." : filter === "previous" ? "None of your previously requested dancers are working now at this club." : filter === "selected" ? "No working dancers selected." : "No dancers match these filters."}</p>{working > 0 && <button type="button" onClick={() => { setSearch(""); setFilter("all"); }}>Show working dancers</button>}</div>}
+        <small className="vip-roster-note">Only dancers working now at this club can be requested. Venue confirmation required.</small>
       </section>
       <section className="vip-panel vip-visit-panel" ref={details} id="vip-visit-details" tabIndex={-1} hidden={!detailsOpen} aria-label="Your visit details"><div className="vip-actions vip-back-to-dancers"><button type="button" disabled={busy} aria-controls="vip-choose-dancers" onClick={() => setDetailsOpen(false)}>← Back to dancers</button></div><div className="vip-step-heading"><span>2</span><div><h3>Your visit details</h3><small>{venue.timezone.replaceAll("_", " ")} time</small></div></div>
         <form onSubmit={event => { event.preventDefault(); void onSubmit(); }}>

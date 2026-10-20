@@ -88,25 +88,37 @@ test('invalid filters, inaccessible venues, and data failures cannot appear as s
     await assert.rejects(service.getVipState(db.client, guest.id, new URLSearchParams({ view })), /database unavailable/);
   }
 });
-test('dancer search combines stage names and current-work filters while preserving off-shift selections', () => {
-  assert.deepEqual(helpers.filterVipDancers(dancers, '', 'all', []).map(d => d.id), ['dancer-1', 'dancer-3', 'dancer-2']);
-  assert.deepEqual(helpers.filterVipDancers(dancers, '  NOV ', 'selected', ['dancer-2']).map(d => d.id), ['dancer-2']);
+test('every dancer filter excludes off-shift dancers and stale selections are removed', () => {
+  assert.deepEqual(helpers.filterVipDancers(dancers, '', 'all', []).map(d => d.id), ['dancer-1', 'dancer-3']);
+  assert.deepEqual(helpers.filterVipDancers(dancers, '  NOV ', 'selected', ['dancer-2']).map(d => d.id), []);
   assert.equal(helpers.filterVipDancers(dancers, 'Nova', 'working', []).length, 0);
   const draft = { selected: ['dancer-2', 'removed'], date: '2027-01-15', time: '21:30' };
-  assert.deepEqual(helpers.reconcileVipDraft(draft, dancers), { ...draft, selected: ['dancer-2'] });
+  assert.deepEqual(helpers.reconcileVipDraft(draft, dancers), { ...draft, selected: [] });
+  assert.equal(helpers.isVipRequestable({ working_now: true, canRequest: false }), false);
+  assert.equal(helpers.isVipRequestable({ canRequest: true }), false);
 });
 test('following and previously-requested categories combine with search independently of selections', () => {
   const roster = dancers.map((dancer, i) => ({ ...dancer, following: i !== 2, previouslyRequested: i !== 0 }));
-  assert.deepEqual(helpers.filterVipDancers(roster, '', 'following', ['dancer-3']).map(d => d.id), ['dancer-1', 'dancer-2']);
-  assert.deepEqual(helpers.filterVipDancers(roster, '', 'previous', []).map(d => d.id), ['dancer-3', 'dancer-2']);
-  assert.deepEqual(helpers.filterVipDancers(roster, '  nov ', 'previous', ['dancer-1']).map(d => d.id), ['dancer-2']);
+  assert.deepEqual(helpers.filterVipDancers(roster, '', 'following', ['dancer-3']).map(d => d.id), ['dancer-1']);
+  assert.deepEqual(helpers.filterVipDancers(roster, '', 'previous', []).map(d => d.id), ['dancer-3']);
+  assert.deepEqual(helpers.filterVipDancers(roster, '  nov ', 'previous', ['dancer-1']).map(d => d.id), []);
   assert.equal(helpers.filterVipDancers(roster, 'Sapphire', 'following', ['dancer-3']).length, 0);
+});
+
+test('forged and stale off-shift drafts cannot submit or edit a VIP request', async () => {
+  const ui = dashboardHarness({ hash: '#vip-plan' }); await ui.settle();
+  ui.planner().props.onChange({ selected: ['dancer-1', 'dancer-2'], date: '2027-01-15', time: '21:30' }); ui.render();
+  await ui.planner().props.onSubmit(); await ui.settle();
+  assert.equal(ui.calls.some(call => call.options.method === 'POST' || call.options.method === 'PUT'), false);
+  assert.deepEqual([...ui.planner().props.draft.selected], ['dancer-1']);
+  assert.match(renderToStaticMarkup(ui.tree()), /Only dancers working now at this club can be requested/);
+  ui.unmount();
 });
 test('VIP sections retain independent venue drafts, support deep links, and reset pagination on status changes', async () => {
   const ui = dashboardHarness({ hash: '#vip-account' }); await ui.settle();
   assert.equal(ui.nodes().find(n => n.props?.id === 'vip-panel-account').props.hidden, false);
   ui.navigate('plan'); await ui.settle();
-  const draft = { selected: ['dancer-2'], date: '2027-01-15', time: '21:30' };
+  const draft = { selected: ['dancer-1'], date: '2027-01-15', time: '21:30' };
   ui.planner().props.onChange(draft); ui.render(); ui.navigate('requests'); await ui.settle();
   ui.nodes().find(n => n.type === 'select' && n.props.value === 'all').props.onChange({ target: { value: 'confirmed' } }); await ui.settle();
   assert.match(ui.calls.at(-1).url, /status=confirmed&page=0/);
@@ -129,13 +141,13 @@ test('failed submissions preserve the draft and retry identity; successful retry
     if (options.method === 'POST' && ++attempts === 1) throw new Error('Response lost. Please try again.'); return state();
   } });
   await ui.settle(); ui.navigate('plan'); await ui.settle();
-  const draft = { selected: ['dancer-2'], date: '2027-01-15', time: '21:30' };
+  const draft = { selected: ['dancer-1'], date: '2027-01-15', time: '21:30' };
   ui.planner().props.onChange(draft); ui.render(); await ui.planner().props.onSubmit(); await ui.settle();
   assert.match(renderToStaticMarkup(ui.tree()), /Response lost/); assert.deepEqual(ui.planner().props.draft, draft);
   await ui.planner().props.onSubmit(); await ui.settle();
   const posts = ui.calls.filter(c => c.options.method === 'POST').map(c => JSON.parse(c.options.body));
   assert.equal(posts.length, 2); assert.equal(posts[0].requestId, posts[1].requestId);
-  assert.equal(posts[0].venueId, venues[0].id); assert.deepEqual(posts[0].dancerIds, ['dancer-2']);
+  assert.equal(posts[0].venueId, venues[0].id); assert.deepEqual(posts[0].dancerIds, ['dancer-1']);
   assert.match(ui.calls.at(-1).url, /view=requests.*status=pending/); assert.equal(ui.writes.at(-1), '#vip-requests');
   assert.equal(posts[0].notes, undefined);
   ui.navigate('plan'); await ui.settle(); assert.equal(ui.planner().props.draft.selected.length, 0); assert.equal(ui.planner().props.draft.notes, undefined); ui.unmount();
@@ -157,7 +169,7 @@ test('switching venues after an uncertain submission preserves each venue’s re
     return state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id);
   } });
   await ui.settle(); ui.navigate('plan'); await ui.settle();
-  const draft = { selected: ['dancer-2'], date: '2027-01-15', time: '21:30' };
+  const draft = { selected: ['dancer-1'], date: '2027-01-15', time: '21:30' };
   ui.planner().props.onChange(draft); ui.render(); await ui.planner().props.onSubmit(); await ui.settle();
   const switchVenue = value => ui.nodes().find(n => n.type === 'select' && n.props.value.startsWith('venue-')).props.onChange({ target: { value } });
   switchVenue(venues[1].id); await ui.settle(); ui.planner().props.onChange(draft); ui.render();
@@ -168,10 +180,10 @@ test('switching venues after an uncertain submission preserves each venue’s re
 });
 test('planner labels current availability honestly, shows venue-local time, and prevents adding an eleventh dancer', () => {
   const Planner = compileVip('app/vip/VipPlan.tsx', { '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': helpers }).default;
-  const roster = Array.from({ length: 11 }, (_, i) => ({ id: String(i), stage_name: `Dancer ${i}`, working_now: i === 0, photoUrl: i === 0 ? '/api/media/dancer-photo?path=approved.jpg' : null }));
+  const roster = Array.from({ length: 11 }, (_, i) => ({ id: String(i), stage_name: `Dancer ${i}`, working_now: true, photoUrl: i === 0 ? '/api/media/dancer-photo?path=approved.jpg' : null }));
   const html = renderToStaticMarkup(React.createElement(Planner, { venue: venues[0], dancers: roster, draft: { ...helpers.emptyVipDraft(), selected: roster.slice(0, 10).map(d => d.id) }, onChange() {}, onSubmit: async () => {}, onFollow: async () => {}, followPending: [], busy: false }));
-  assert.match(html, /America\/Los Angeles time/); assert.match(html, /Affiliated · off shift/);
-  assert.match(html, /Availability for your visit is confirmed by the venue/);
+  assert.match(html, /America\/Los Angeles time/); assert.doesNotMatch(html, /Affiliated · off shift/);
+  assert.match(html, /Only dancers working now at this club can be requested/);
   assert.equal((html.match(/type="checkbox" disabled=""/g) || []).length, 1);
   assert.match(html, /aria-label="Remove Dancer 0 from request"/);
   assert.match(html, /src="\/api\/media\/dancer-photo\?path=approved.jpg"/);
@@ -189,7 +201,7 @@ test('VIP follows save, survive section reloads, and remove without changing the
     return state(venues[0].id, { dancers: dancers.map(dancer => ({ ...dancer, following: saved.has(dancer.id), profileHref: `/dancers/${dancer.id}` })) });
   } });
   await ui.settle();
-  const draft = { selected: ['dancer-2'], date: '2027-01-15', time: '21:30' };
+  const draft = { selected: ['dancer-1'], date: '2027-01-15', time: '21:30' };
   ui.planner().props.onChange(draft); ui.render();
   await ui.planner().props.onFollow(ui.planner().props.dancers[0]); await ui.settle();
   assert.equal(ui.planner().props.dancers[0].following, true);
@@ -304,7 +316,7 @@ test('profile links, selection checkboxes, and following buttons are independent
     onFollow: async dancer => { follows.push(dancer.id); }, followPending: [], busy: false };
   const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : [];
   const tree = Planner(props), cards = nodes(tree).filter(node => node.type === 'article');
-  assert.equal(cards.length, 3); assert.equal(nodes(tree).some(node => node.type === 'textarea'), false);
+  assert.equal(cards.length, 2); assert.equal(nodes(tree).some(node => node.type === 'textarea'), false);
   const card = cards[0], link = nodes(card).find(node => node.type === 'a');
   const checkbox = nodes(card).find(node => node.props?.type === 'checkbox');
   const following = nodes(card).find(node => node.type === 'button');

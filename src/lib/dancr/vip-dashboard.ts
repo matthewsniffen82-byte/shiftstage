@@ -20,6 +20,10 @@ export function isVipFollowing(dancer: VipDancer): boolean {
   return dancer.following === true;
 }
 
+export function isVipRequestable(dancer: VipDancer | null | undefined): boolean {
+  return dancer?.working_now === true && dancer.canRequest !== false;
+}
+
 export function vipRequestDraft(request: VipRequest, timeZone = request.timezone): VipDraft {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(request.starts_at));
   const part = (key: string) => parts.find(item => item.type === key)?.value || "";
@@ -34,8 +38,7 @@ export function vipDestination(hash: string): VipDashboardView {
 
 export function filterVipDancers(dancers: VipDancer[], search: string, filter: VipDancerFilter, selected: string[]) {
   const terms = search.trim().toLocaleLowerCase().split(/\s+/).filter(Boolean);
-  return dancers.filter(dancer => (filter !== "working" || dancer.working_now)
-    && (filter !== "all" || dancer.canRequest !== false || dancer.previouslyRequested)
+  return dancers.filter(dancer => isVipRequestable(dancer)
     && (filter !== "selected" || selected.includes(dancer.id))
     && (filter !== "following" || isVipFollowing(dancer))
     && (filter !== "previous" || dancer.previouslyRequested)
@@ -44,6 +47,6 @@ export function filterVipDancers(dancers: VipDancer[], search: string, filter: V
 }
 
 export function reconcileVipDraft(draft: VipDraft, dancers: VipDancer[]) {
-  const ids = new Set(dancers.filter(dancer => dancer.canRequest !== false).map(dancer => dancer.id));
+  const ids = new Set(dancers.filter(isVipRequestable).map(dancer => dancer.id));
   return { ...draft, selected: draft.selected.filter(id => ids.has(id)) };
 }

@@ -86,7 +86,7 @@ test('club dancers include unfollowed off-shift affiliates and past requests but
   const db = database({ roster: [...cards.filter(d => d.canRequest), { id: 'affiliate', stage_name: 'Off-shift affiliate', working_now: false }] });
   const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[0].id }));
   const affiliated = result.dancers.find(d => d.id === 'affiliate');
-  assert.equal(affiliated.canRequest, true); assert.equal(affiliated.working_now, false);
+  assert.equal(affiliated.canRequest, false); assert.equal(affiliated.working_now, false);
   assert.equal(affiliated.following, false); assert.equal(affiliated.previouslyRequested, false);
   assert.ok(result.dancers.some(d => d.id === 'past' && !d.canRequest && d.previouslyRequested));
   assert.ok(!result.dancers.some(d => d.id === 'other-venue'));
@@ -151,7 +151,7 @@ test('overview followed dancer requests preserve draft details and cannot act on
   ui.planner().props.onChange({ selected: ['nova'], date: '2027-02-15', time: '21:30' }); ui.render();
   ui.navigate('overview'); await ui.settle();
   ui.workingFollowing().props.onRequest(cards[0]); await ui.settle();
-  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova', 'aria']);
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['aria']);
   assert.equal(ui.planner().props.draft.date, '2027-02-15'); assert.equal(ui.planner().props.draft.time, '21:30');
   assert.ok(!ui.calls.some(c => c.options.method === 'POST'));
   ui.navigate('overview'); await ui.settle(); refresh = true; ui.advance(16000); ui.event('focus');
@@ -220,11 +220,11 @@ test('My dancers combines both legacy destinations and preserves the current ven
   assert.deepEqual(ui.nodes(nav).filter(node=>node.type==='button').map(node=>ui.nodes(node).find(child=>child.type==='span').props.children),['Overview','My dancers','Requests','Account']);
   ui.planner().props.onChange({ selected: ['nova','aria'], date: '2027-02-15', time: '21:30' }); ui.render();
   ui.navigate('requests'); await ui.settle();ui.navigate('plan');await ui.settle();
-  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova', 'aria']);
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['aria']);
   assert.equal(ui.planner().props.draft.date, '2027-02-15'); assert.equal(ui.planner().props.draft.time, '21:30');
   assert.ok(!ui.calls.some(c => c.options.method === 'POST'));
   ui.hash('#vip-dancers');await ui.settle();
-  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['nova', 'aria']);
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['aria']);
   ui.nodes().find(n => n.type === 'select').props.onChange({ target: { value: venues[1].id } }); await ui.settle();
   assert.deepEqual(Array.from(ui.planner().props.draft.selected), []);
   assert.equal(ui.planner().props.draft.date, ''); ui.unmount();
@@ -247,29 +247,29 @@ test('reloading a draft drops dancers who remain in the library but are unavaila
   await ui.settle();ui.planner().props.onChange({selected:['aria','nova'],date:'2027-02-15',time:'21:30'});ui.render();
   available=false;ui.navigate('overview');await ui.settle();ui.navigate('plan');await ui.settle();
   assert.equal(ui.planner().props.dancers.some(dancer=>dancer.id==='aria'),true);
-  assert.deepEqual(Array.from(ui.planner().props.draft.selected),['nova']);
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected),[]);
   assert.equal(ui.planner().props.draft.date,'2027-02-15');ui.unmount();
 });
 
-test('combined dancer filters preserve follows, request history and unavailable profiles', () => {
+test('combined dancer filters only show working dancers while retaining follow and request history actions', () => {
   const saves=[];
   const ui=plannerHarness({dancers:cards,onFollow:async dancer=>saves.push(dancer.id),onRequests(){}});
   const html=()=>renderToStaticMarkup(ui.tree());
-  assert.match(html(),/Aria/);assert.match(html(),/Nova/);assert.match(html(),/Previously requested · unavailable/);
-  ui.filter('Following');assert.doesNotMatch(html(),/Nova/);assert.equal(ui.nodes().filter(node=>node.type==='article').length,2);
-  ui.filter('This club');
-  const followControl=ui.nodes().find(node=>node.props?.['aria-label']==='Follow Nova');
-  assert.equal(followControl.props['aria-pressed'],false);assert.equal(followControl.props.disabled,false);
+  assert.match(html(),/Aria/);assert.doesNotMatch(html(),/Nova|Past dancer/);
+  ui.filter('Following');assert.doesNotMatch(html(),/Nova/);assert.equal(ui.nodes().filter(node=>node.type==='article').length,1);
+  ui.filter('Working now');
+  const followControl=ui.nodes().find(node=>node.props?.['aria-label']==='Unfollow Aria');
+  assert.equal(followControl.props['aria-pressed'],true);assert.equal(followControl.props.disabled,false);
   const profile=ui.nodes().find(node=>node.type==='a');
   assert.equal(profile.props.href,'/?profile=aria');
-  ui.select('past');assert.equal(ui.props.draft.selected.length,0);
+  assert.equal(ui.nodes().some(node=>node.type==='article' && node.key==='past'),false);
   ui.nodes().find(node=>node.props?.className==='vip-dancer-follow').props.onClick();assert.deepEqual(saves,['aria']);
   ui.nodes().find(node=>node.props?.type==='checkbox').props.onChange({target:{checked:true}});ui.render();
   assert.doesNotMatch(html(),/Past dancer/);
-  ui.search('missing');assert.match(html(),/No dancers match/);
-  ui.button('Show club dancers').props.onClick();ui.render();assert.match(html(),/Nova/);
+  ui.search('missing');assert.match(html(),/No working dancers match/);
+  ui.button('Show working dancers').props.onClick();ui.render();assert.match(html(),/Aria/);
   ui.filter('Requested before');assert.match(html(),/View request status/);assert.doesNotMatch(html(),/Nova/);
-  ui.props.dancers=[];ui.render();assert.match(html(),/No dancers at this club yet/);
+  ui.props.dancers=[];ui.render();assert.match(html(),/No dancers are working now at this club/);
 });
 
 test('choosing dancers and moving between steps keeps filters and visit details without sending early', async () => {

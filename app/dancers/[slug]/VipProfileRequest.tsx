@@ -5,6 +5,7 @@ import { DASHBOARD_SESSION_KEY, readSession, requestDashboardJson } from "@/app/
 import { safeLocalReturnPath } from "@/src/lib/dancr/safe-return-path";
 import type { VipState, VipVenue } from "@/src/lib/dancr/vip-types";
 import { queueVipProfileDancer } from "@/src/lib/dancr/vip-draft-storage";
+import { isVipRequestable } from "@/src/lib/dancr/vip-dashboard";
 import "./vip-profile-request.css";
 
 function dashboardVenue(returnHref: string) {
@@ -56,7 +57,7 @@ export default function VipProfileRequest({ dancerId, stageName, returnHref, chi
         if (controller.signal.aborted || signedInCustomer() !== accountId) return;
         const member = data.venues.find(item => item.id === venueId);
         if (!member || data.selectedVenueId !== venueId) { setFallback(true); return; }
-        setAccess({ accountId, venue: member, available: data.dancers.some(dancer => dancer.id === dancerId && dancer.canRequest === true) });
+        setAccess({ accountId, venue: member, available: data.dancers.some(dancer => dancer.id === dancerId && isVipRequestable(dancer)) });
       }).catch(failure => {
         if (controller.signal.aborted || signedInCustomer() !== accountId) return;
         if (failure?.status === 401 || failure?.status === 403) setFallback(true);
@@ -89,7 +90,7 @@ export default function VipProfileRequest({ dancerId, stageName, returnHref, chi
     {loadError && <div role="alert" className="vip-profile-request-hint">{loadError}
       <button type="button" onClick={() => setRevision(value => value + 1)}>Retry</button>
     </div>}
-    {venue && !access?.available && <p className="vip-profile-request-hint">Unavailable to request at {venue.name}.</p>}
+    {venue && !access?.available && <p className="vip-profile-request-hint">Only dancers working now at {venue.name} can be requested.</p>}
     {error && <p role="alert" className="vip-profile-request-hint">{error}</p>}
     {error && <a className="vip-profile-request-hint" href={queueHref}>Open My dancers →</a>}
   </div>;

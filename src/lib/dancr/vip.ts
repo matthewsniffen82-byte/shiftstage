@@ -32,6 +32,9 @@ export function vipNickname(value: unknown) {
 }
 export function vipError(error: unknown) {
   const code = error && typeof error === "object" && "code" in error ? String(error.code) : "";
+  if (code === "40001" && error && typeof error === "object" && "message" in error && error.message === "ROSTER_CHANGED") {
+    return new PublicApiError("CONFLICT", "Only dancers working now at this club can be requested. Refresh and review your selection.", 409);
+  }
   if (code === "42501") return new PublicApiError("FORBIDDEN", "This account does not have VIP access for this venue. Use the invited customer email.", 403);
   if (code === "P0002") return new PublicApiError("NOT_FOUND", "This invitation, venue, or request is no longer available. Ask the venue for a new invitation if needed.", 404);
   if (code === "40001") return new PublicApiError("CONFLICT", "The request or dancer roster changed. Refresh and try again.", 409);
@@ -100,7 +103,7 @@ export async function getVipState(client: SupabaseClient, userId: string, search
   if (view === "plan") {
     const { data, error } = await client.rpc("vip_eligible_dancers", { p_venue: selected.id });
     if (error) throw error;
-    return { ...base, dancers: await vipDancerCards(client, data || [], userId, selected.id) };
+    return { ...base, dancers: await vipDancerCards(client, (data || []).filter((dancer: VipDancer) => dancer.working_now === true), userId, selected.id) };
   }
   const page = vipPage(search);
   let requestQuery = client.from("venue_vip_requests").select(requestColumns, { count: "exact" }).eq("user_id", userId).eq("venue_id", selected.id);
@@ -111,7 +114,7 @@ export async function getVipState(client: SupabaseClient, userId: string, search
       .order("created_at", { ascending: false }).order("id", { ascending: false }).range(page * 50, page * 50 + 50),
   ]);
   if (roster.error) throw roster.error; if (requests.error) throw requests.error;
-  return { ...base, dancers: roster.data || [], requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
+  return { ...base, dancers: (roster.data || []).filter((dancer: VipDancer) => dancer.working_now === true).map((dancer: VipDancer) => ({ ...dancer, canRequest: true })), requests: requests.data?.slice(0, 50) || [], hasMore: (requests.data?.length || 0) > 50, requestCount: requests.count || 0 };
 }
 
 export async function getVenueVipState(client: SupabaseClient, userId: string, search: URLSearchParams): Promise<VenueVipState> {
@@ -185,7 +188,7 @@ async function vipMyDancers(client: SupabaseClient, userId: string, venueId: str
   return ids.map(id => {
     const profile = profiles.get(id), dancer = eligible.get(id), path = profile?.avatar_storage_path;
     return { id, stage_name: profile?.stage_name || dancer?.stage_name || history.get(id) || "Unavailable dancer",
-      working_now: dancer?.working_now === true, canRequest: eligible.has(id),
+      working_now: dancer?.working_now === true, canRequest: dancer?.working_now === true,
       following: follows.has(id), previouslyRequested: history.has(id),
       // Compatibility for cached VIP clients; Follow is the only subscription.
       workingAlertsEnabled: follows.has(id),
@@ -232,7 +235,7 @@ async function vipDancerCards(client: SupabaseClient, dancers: VipDancer[], user
   return dancers.map(dancer => {
     const profile = publicProfiles.get(dancer.id), path = profile?.avatar_storage_path;
     // The existing photo endpoint checks current anonymous RLS on every image.
-    return { ...dancer, photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null,
+    return { ...dancer, canRequest: dancer.working_now === true, photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null,
       profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
       following: follows.has(dancer.id), previouslyRequested: previous.has(dancer.id) };
   });

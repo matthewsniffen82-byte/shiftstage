@@ -6,7 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { readSession, requestDashboardJson, type DashboardSessionAccount } from "@/app/dashboard/dashboard-session";
-import { emptyVipDraft, isVipFollowing, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, vipProfileSlug, vipRequestDraft, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
+import { emptyVipDraft, isVipFollowing, isVipRequestable, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, vipProfileSlug, vipRequestDraft, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
 import { type VipDancer, type VipDashboardView, type VipRequest, type VipRequestFilter, type VipState, type VipVenue } from "@/src/lib/dancr/vip-types";
 import { addVipDraftDancer, readVipWorkspace, saveVipWorkspace, vipDraftFingerprint, VIP_DRAFT_PREFIX } from "@/src/lib/dancr/vip-draft-storage";
 import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
@@ -133,7 +133,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     // Returning to the app must pick up Follow/Unfollow changes from other tabs.
     const returned = () => update(true);
     window.addEventListener("focus", returned); document.addEventListener("visibilitychange", returned);
-    const timer = window.setInterval(() => { if (["overview", "requests"].includes(viewRef.current)) update(); }, 60000);
+    const timer = window.setInterval(() => { if (["overview", "plan", "requests"].includes(viewRef.current)) update(); }, 60000);
     return () => { window.removeEventListener("focus", returned); document.removeEventListener("visibilitychange", returned); window.clearInterval(timer); };
   }, [account.id, signingOut]);
   useEffect(() => {
@@ -194,11 +194,11 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     if (!venue || locked.current || signingOut) return;
     const next = { ...draft, selected: [...new Set([...draft.selected, ...request.dancers.map(dancer => dancer.id)])].slice(0, 10) };
     setDrafts(previous => ({ ...previous, [venue.id]: next }));
-    setStatus("Previous dancers added to your draft, up to 10. Review the current roster and choose a date and time.");
+    setStatus("Review your previous selection. Only dancers working now at this club can be requested again.");
     navigate("plan");
   }
   function requestDancer(dancer: VipDancer) {
-    if (!venue || locked.current || signingOut || loading || !dancer.canRequest || readSession()?.account?.id !== account.id) return;
+    if (!venue || locked.current || signingOut || loading || !isVipRequestable(dancer) || readSession()?.account?.id !== account.id) return;
     const current = drafts[venue.id] || emptyVipDraft();
     let next: VipDraft;
     try { next = addVipDraftDancer(current, dancer.id); }
@@ -219,7 +219,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     return true;
   }
   function addProfileToQueue() {
-    if (!selectedProfile || !venue || !profileDancer?.canRequest || locked.current || signingOut || loading || !draftsLoaded
+    if (!selectedProfile || !venue || !isVipRequestable(profileDancer) || locked.current || signingOut || loading || !draftsLoaded
       || readSession()?.account?.id !== selectedProfile.accountId) return;
     try {
       const current = activeEdit?.draft || latestDrafts.current[venue.id] || emptyVipDraft();
@@ -284,7 +284,13 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     }
   }
   async function submit() {
-    if (!venue || locked.current) return;
+    if (!venue || locked.current || loading || signingOut || readSession()?.account?.id !== account.id) return;
+    const currentDraft = reconcileVipDraft(draft, data?.dancers || []);
+    if (!currentDraft.selected.length || currentDraft.selected.length !== draft.selected.length) {
+      updateDraft(currentDraft);
+      setError("Only dancers working now at this club can be requested. Review your selection.");
+      return;
+    }
     locked.current = true; setBusy(true); setError(""); setStatus("");
     const controller = new AbortController(); submitAbort.current = controller;
     const expectedAccount = account.id;
@@ -375,7 +381,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <VipWorkingFollowing dancers={data.dancers} onRequest={requestDancer} onBrowse={() => navigate("dancers")} busy={disabled || loading} />
         </div>
         <div className="vip-updates"><NotificationPanel key={account.id} customerMode vipMode panelId="vip-updates" refreshKey={revision} /></div>
-      </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && dancer.canRequest !== false))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFollow={toggleFollow} onOpenProfile={openProfile} followPending={followPending} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled} />
+      </> : view === "plan" ? <VipPlan key={`${venue.id}:${activeEdit?.request.id || "new"}`} editing={!!activeEdit} unavailableSelections={activeEdit?.request.dancers.some(selected => !data.dancers.some(dancer => dancer.id === selected.id && isVipRequestable(dancer)))} onCancelEdit={cancelEditing} venue={venue} dancers={data.dancers} draft={draft} onChange={updateDraft} onSubmit={submit} onFollow={toggleFollow} onOpenProfile={openProfile} followPending={followPending} onRequests={() => { setFilter("all"); setPage(0); navigate("requests"); }} busy={disabled || loading} />
       : <>
         <div className="vip-section-heading"><VipIcon kind="requests" /><div><h2>Your requests</h2><p>View plans and venue responses.</p></div></div>
         <div className="vip-request-toolbar">
@@ -394,8 +400,8 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     <ClubProfileDialog prewarm profile={null} profileId={selectedProfile?.id || ""} publicSlug={selectedProfile?.slug}
       publicActions={selectedProfile?.actions} loadingIdentity={selectedProfile}
       vipRequest={selectedProfile ? { added: draft.selected.includes(selectedProfile.id),
-        disabled: disabled || loading || !draftsLoaded || !profileDancer?.canRequest,
-        message: profileRequestError || (profileDancer?.canRequest === false ? "Unavailable to request at this club." : "") } : undefined}
+        disabled: disabled || loading || !draftsLoaded || !isVipRequestable(profileDancer),
+        message: profileRequestError || (!isVipRequestable(profileDancer) ? "Only dancers working now at this club can be requested." : "") } : undefined}
       onVipRequest={addProfileToQueue} onClose={closeProfile}
       onError={() => { setProfileSelection(null); setError("That profile is unavailable right now. Please try again."); }} />
   </div></main>;

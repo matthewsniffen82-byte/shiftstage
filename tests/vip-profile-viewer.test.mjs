@@ -6,8 +6,8 @@ import { vipProfileSlug } from '../src/lib/dancr/vip-dashboard.ts';
 import { VIP_DRAFT_PREFIX } from '../src/lib/dancr/vip-draft-storage.ts';
 
 const dancers = [
-  { id: '00000000-0000-4000-8000-000000000001', stage_name: 'Aria', profileHref: '/dancers/aria', canRequest: true, following: true },
-  { id: '00000000-0000-4000-8000-000000000002', stage_name: 'Nova', profileHref: '/dancers/nova', canRequest: true },
+  { id: '00000000-0000-4000-8000-000000000001', stage_name: 'Aria', profileHref: '/dancers/aria', canRequest: true, working_now: true, following: true },
+  { id: '00000000-0000-4000-8000-000000000002', stage_name: 'Nova', profileHref: '/dancers/nova', canRequest: true, working_now: true },
 ];
 const harness = () => dashboardHarness({ hash: '#vip-plan', initialVenueId: venues[0].id,
   request: async url => state(new URL(url, 'https://example.test').searchParams.get('venueId') || venues[0].id, { dancers }) });
@@ -92,5 +92,20 @@ test('profile load failure leaves the dashboard usable with its queue intact', a
   assert.equal(ui.profileViewer().props.profileId, '');
   assert.deepEqual([...ui.planner().props.draft.selected], [dancers[1].id]);
   assert.ok(ui.nodes().some(node => typeof node.props?.children === 'string' && /profile is unavailable/.test(node.props.children)));
+  ui.unmount();
+});
+
+test('profile requests disable after a dancer checks out during a dashboard refresh', async () => {
+  let working = true;
+  const ui = dashboardHarness({ hash: '#vip-plan', request: async () => state(venues[0].id, {
+    dancers: dancers.map(dancer => ({ ...dancer, working_now: working })),
+  }) });
+  await ui.settle(); ui.planner().props.onOpenProfile(dancers[0]); ui.render();
+  assert.equal(ui.profileViewer().props.vipRequest.disabled, false);
+  working = false; ui.event('focus'); await ui.settle();
+  assert.equal(ui.profileViewer().props.vipRequest.disabled, true);
+  ui.profileViewer().props.onVipRequest(); ui.render();
+  assert.deepEqual([...ui.planner().props.draft.selected], []);
+  assert.match(ui.profileViewer().props.vipRequest.message, /Only dancers working now/);
   ui.unmount();
 });
