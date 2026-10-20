@@ -31,10 +31,10 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   box-shadow: inset 0 0 0 1px #3a3a40 !important;
   z-index: 11 !important;
 }
-/* Every club shares a neutral card surface; accents stay on its controls.
-   A flat gradient preserves the charcoal in automatic dark-mode browsers. */
+/* Fill the entire information frame, including the space below its controls.
+   Use an image surface because mobile night modes can flatten CSS fills to black. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout[data-venue-brand]:not([data-venue-brand=""]):where(html.internal-profile-embed *, .venue-embed-profile-page *):not(.dancer-profile-preview-shell)::after {
-  background: linear-gradient(#161618, #161618) !important;
+  background: #161618 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Cpath fill='%23161618' d='M0 0h2v2H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout[data-venue-brand]:not([data-venue-brand=""]):where(html.internal-profile-embed *, .venue-embed-profile-page *):not(.dancer-profile-preview-shell) > .profile-featured-column,
 html body.dancr-button-system .ir-shell.ir-guest[data-venue-brand]:not([data-venue-brand=""]) .ir-directory-grid .ir-profile-link {

@@ -6,6 +6,7 @@ import postcss from 'postcss';
 const readCss = path => postcss.parse(readFileSync(new URL('../' + path, import.meta.url), 'utf8'));
 const themes = readCss('public/venue-brand-themes.css');
 const embed = readCss('public/venue-grid-embed.css');
+const embedProfile = readCss('app/embed/venues/[slug]/dancers/[dancerSlug]/embedded-profile.css');
 
 function ruleMatching(css, predicate) {
   const matches = [];
@@ -32,8 +33,14 @@ test('all branded full profiles use a neutral frame and charcoal surface without
   assert.equal(declaration(frame, 'z-index').value, '11');
   assert.deepEqual(frame.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['box-shadow', 'z-index']);
   const surface = ruleMatching(themes, selector => selector === frame.selector.replace('::before', '::after'));
-  assert.equal(declaration(surface, 'background').value, 'linear-gradient(#161618, #161618)');
+  const background = declaration(surface, 'background').value;
+  const image = background.match(/url\("data:image\/svg\+xml,([^"]+)"\)/);
+  assert.ok(image, 'information panel uses an image fill for mobile night modes');
+  assert.match(decodeURIComponent(image[1]), /fill='#161618'/);
+  assert.match(background, /center \/ 100% 100% no-repeat$/);
   assert.equal(declaration(surface, 'background').important, true);
+  const websiteSurface = ruleMatching(embedProfile, selector => selector.endsWith('.public-profile-shell.profile-split-layout::after'));
+  assert.equal(declaration(websiteSurface, 'background').value, background, 'Internal and website profile surfaces stay consistent');
 });
 
 test('embedded dancer cards use the same neutral border without resizing cards', () => {
