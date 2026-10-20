@@ -1,5 +1,5 @@
-import { InternalRoster } from "./InternalRoster";
+import InternalLiveEntry from "./InternalLiveEntry";
 
 export default function Page() {
-  return <InternalRoster />;
+  return <InternalLiveEntry />;
 }

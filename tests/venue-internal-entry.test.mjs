@@ -33,11 +33,10 @@ test('the venue dashboard omits the separate Internal shortcut row', () => {
   assert.equal(entry, undefined);
 });
 
-test('Internal opens the existing authenticated full roster instead of redirecting to dashboard management', () => {
-  const InternalRoster = () => null;
-  const Page = compile(read('app/internal/page.tsx'), { './InternalRoster': { InternalRoster } }).default;
+test('Internal resolves the signed-in club’s actual live table page instead of rendering the staff roster', () => {
+  const InternalLiveEntry = () => null;
+  const Page = compile(read('app/internal/page.tsx'), { './InternalLiveEntry': { default: InternalLiveEntry } }).default;
   const page = Page();
-  assert.equal(page.type, InternalRoster);
-  assert.equal(page.props.operationsOnly, undefined);
-  assert.equal(page.props.token, undefined, 'The page must use venue authentication, not a table capability');
+  assert.equal(page.type, InternalLiveEntry);
+  assert.equal(page.props.token, undefined, 'The entry must resolve the live page using venue authentication');
 });
