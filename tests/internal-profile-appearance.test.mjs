@@ -44,35 +44,62 @@ function find(tree, predicate) {
   return [tree.props?.children].flat().map(child => find(child, predicate)).find(Boolean);
 }
 
-test('opening shows the selected photo and name in the split card while details load, with a working close control', () => {
+test('loading shows only Loading profile text and an accessible exit, without a heading or placeholder photo', () => {
   const render = fixture();
   let closed = 0;
   const props = { profileId: 'one', profile: null, prewarm: true,
     loadingIdentity: { id: 'one', stageName: 'Bailey', photoUrl: 'https://example.invalid/bailey.jpg' }, onClose: () => closed++ };
   const tree = render(props);
-  const card = find(tree, element => element.props?.className === 'ir-profile-loading-card');
-  const [info, photo] = card.props.children;
-  assert.equal(find(info, element => element.type === 'h2').props.children, 'Bailey');
-  assert.equal(find(info, element => element.props?.role === 'status').props.children, 'Loading details…');
-  assert.equal(find(photo, element => element.type === 'img').props.src, props.loadingIdentity.photoUrl);
-  find(info, element => element.type === 'button').props.onClick();
+  const loading = find(tree, element => element.props?.className === 'ir-profile-loading');
+  assert.equal(find(loading, element => element.props?.role === 'status').props.children, 'Loading profile\u2026');
+  assert.equal(find(loading, element => /^h[1-6]$/.test(element.type) || element.type === 'img'), undefined);
+  assert.equal(tree.props['aria-label'], 'Bailey\u2019s full profile');
+  const close = find(loading, element => element.type === 'button');
+  assert.equal(close.props['aria-label'], 'Close dancer profile');
+  assert.equal(close.props.title, 'Back');
+  assert.equal(close.props.children.props['aria-hidden'], 'true');
+  close.props.onClick();
   assert.equal(closed, 1);
-  assert.doesNotMatch(JSON.stringify(card), /Requests tonight|Followers|Working now/, 'do not invent profile data while authorization is pending');
+  assert.doesNotMatch(JSON.stringify(loading), /Bailey|Dancer profile|Loading details|Requests tonight|Followers|Working now/);
   const viewer = find(tree, element => element.type === 'iframe');
   assert.equal(viewer.props.hidden, true);
   viewer.props.onReady();
-  assert.equal(find(render(props), element => element.props?.className === 'ir-profile-loading-card'), undefined);
+  assert.equal(find(render(props), element => element.props?.className === 'ir-profile-loading'), undefined);
   assert.equal(find(render(props), element => element.type === 'iframe').props.hidden, false);
 });
 
-test('switching to another dancer never leaves the previous identity in the loading card', () => {
+test('switching dancers hides the old profile and keeps the same simple guest loading status', () => {
   const render = fixture();
   const props = { profileId: 'one', profile: null, prewarm: true, onClose() {} };
   find(render(props), element => element.type === 'iframe').props.onReady();
   const tree = render({ ...props, profileId: 'two', token: 'table-token', loadingIdentity: { id: 'two', stageName: 'Star' } });
-  assert.equal(find(tree, element => element.type === 'h2').props.children, 'Star');
+  assert.equal(find(tree, element => element.props?.role === 'status').props.children, 'Loading profile\u2026');
+  assert.equal(find(tree, element => element.type === 'h2'), undefined);
   assert.equal(find(tree, element => element.type === 'img'), undefined);
   assert.equal(find(tree, element => element.props?.className === 'ir-profile-loading').props['data-audience'], 'guest');
   assert.equal(find(tree, element => element.type === 'iframe').props.hidden, true);
   assert.equal(find(render({ ...props, profileId: '' }), element => element.props?.className === 'ir-profile-loading'), undefined);
+});
+
+test('loading text stays centered while its touch-sized exit stays in the top corner', () => {
+  const css = postcss.parse(readFileSync('app/internal/internal.css', 'utf8'));
+  const styles = selector => {
+    const rules = [];
+    css.walkRules(rule => { if (rule.selector === selector) rules.push(rule); });
+    assert.equal(rules.length, 1, selector);
+    return Object.fromEntries(rules[0].nodes.filter(node => node.type === 'decl').map(node => [node.prop, node.value]));
+  };
+  const base = 'body dialog.ir-full-profile-dialog';
+  const loading = styles(base + ' .ir-profile-loading');
+  assert.equal(loading.display, 'grid');
+  assert.equal(loading['place-items'], 'center');
+  const close = styles(base + ' button.ir-profile-loading-close');
+  assert.equal(close.position, 'absolute');
+  assert.equal(close.width, '44px');
+  assert.equal(close.height, '44px');
+  assert.match(close.top, /safe-area-inset-top/);
+  const guest = base + ' .ir-profile-loading[data-audience="guest"]';
+  assert.equal(styles(guest).background, '#0b0b0d');
+  assert.equal(styles(guest + ' p').color, '#b5b5ba');
+  assert.equal(styles(guest + ' button.ir-profile-loading-close:focus-visible')['outline-color'], '#d4d4d8');
 });
