@@ -42,7 +42,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-demo="${demo}" data-accent="${rhino ? RHINO_ACCENT : venueEmbedAccent(url)}">
     <div class="app"><main class="stack">
-      <div class="venue-embed-heading"><div><p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p><h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1></div><button id="venue-refresh" type="button" aria-label="Refresh working dancers" title="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"></path><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"></path></svg></button></div>
+      <div class="venue-embed-heading"><div><p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p><h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1></div><button id="venue-refresh" type="button" aria-label="Refresh working dancers" title="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.4 6.8"></path><path d="M20 4v7h-7"></path></svg></button></div>
       ${locations}
       <section id="venue-directory" class="stack" aria-label="Working dancers">
       <p id="venue-status" role="status">Loading working dancers…</p>
