@@ -43,6 +43,71 @@
     const selected = new Set([...rows].sort((a, b) => score(a.id) - score(b.id) || a.id.localeCompare(b.id)).slice(0, count).map(row => row.id));
     return rows.filter(row => selected.has(row.id));
   }
+  function mountLocationPicker(document, select) {
+    const trigger = document.getElementById("citySelectButton");
+    const label = document.getElementById("citySelectButtonText");
+    const panel = document.getElementById("citySelectPanel");
+    const list = document.getElementById("citySelectOptions");
+    if (!select?.options?.length || !trigger || !label || !panel || !list) return;
+    list.innerHTML = [...select.options].map(option =>
+      `<button class="venue-picker-option city-picker-option" type="button" role="option" data-location="${escape(option.value)}" aria-selected="${option.selected}" tabindex="-1"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${escape(option.textContent)}</span></button>`
+    ).join("");
+    const options = [...list.querySelectorAll("[data-location]")];
+    function sync() {
+      label.textContent = select.selectedOptions[0].textContent.split(" · ")[0];
+      options.forEach(option => {
+        const selected = option.dataset.location === select.value;
+        option.setAttribute("aria-selected", String(selected));
+        option.tabIndex = selected ? 0 : -1;
+      });
+    }
+    function close(restoreFocus = false) {
+      sync();
+      panel.hidden = true;
+      panel.classList.remove("is-open");
+      trigger.setAttribute("aria-expanded", "false");
+      if (restoreFocus) trigger.focus({ preventScroll: true });
+    }
+    function open() {
+      sync();
+      panel.hidden = false;
+      panel.classList.add("is-open");
+      trigger.setAttribute("aria-expanded", "true");
+      (options.find(option => option.dataset.location === select.value) || options[0])?.focus({ preventScroll: true });
+    }
+    trigger.addEventListener("click", () => panel.hidden ? open() : close());
+    trigger.addEventListener("keydown", event => {
+      if (!["ArrowDown", "ArrowUp"].includes(event.key)) return;
+      event.preventDefault(); open();
+    });
+    options.forEach((option, index) => {
+      option.addEventListener("click", () => {
+        const changed = select.value !== option.dataset.location;
+        select.value = option.dataset.location;
+        sync(); close(true);
+        if (changed) select.dispatchEvent(new Event("change", { bubbles: true }));
+      });
+      option.addEventListener("keydown", event => {
+        if (event.key === "Escape") { event.preventDefault(); close(true); return; }
+        if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
+        event.preventDefault();
+        const next = event.key === "Home" ? 0 : event.key === "End" ? options.length - 1
+          : (index + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length;
+        options.forEach((item, i) => { item.tabIndex = i === next ? 0 : -1; });
+        options[next].focus();
+      });
+    });
+    document.addEventListener("click", event => {
+      if (!panel.contains(event.target) && !trigger.contains(event.target)) close();
+    });
+    document.addEventListener("focusin", event => {
+      if (!panel.contains(event.target) && !trigger.contains(event.target)) close();
+    });
+    select.addEventListener("change", sync);
+    select.hidden = true;
+    trigger.hidden = false;
+    sync();
+  }
   function mount(document) {
     applyTheme(document);
     const legacyAccent = document.body.dataset.accent;
@@ -59,6 +124,11 @@
     const session = root.crypto.randomUUID();
     let visit = "", nextCursor = null, busy = false, loadedPages = 1, dancers = [], lastMarkup = "", generation = 0;
     function location() { return locations?.selectedOptions?.[0] || null; }
+    function showCount(value = "") {
+      if (!count) return;
+      count.textContent = value;
+      count.hidden = value === "";
+    }
     function render(venue) {
       const option = location();
       const visible = demo && option ? sampleRoster(dancers, option.value, Number(option.dataset.count)) : dancers;
@@ -79,8 +149,8 @@
           if (image.complete) ready();
         });
       }
-      venueName.textContent = displayVenue.name;
-      if (count) count.textContent = `${visible.length}${nextCursor && !demo ? "+" : ""} working now`;
+      venueName.textContent = option ? "Spearmint Rhino" : venue.name;
+      showCount(`${visible.length}${nextCursor && !demo ? "+" : ""}`);
     }
     async function load(append = false) {
       if (busy || (append && !nextCursor)) return;
@@ -90,11 +160,11 @@
       if (!venueSlug) {
         dancers = []; nextCursor = null; loadedPages = 1;
         results.innerHTML = lastMarkup = "";
-        venueName.textContent = `Spearmint Rhino · ${option.textContent.split(" · ")[0]}`;
+        venueName.textContent = "Spearmint Rhino";
         status.textContent = "This location’s roster is not connected yet.";
         status.hidden = false; more.hidden = true;
         refresh.disabled = more.disabled = false;
-        if (count) count.textContent = "";
+        showCount();
         results.setAttribute("aria-busy", "false");
         return;
       }
@@ -134,7 +204,7 @@
         status.textContent = error.message || "Unable to load working dancers. Please refresh.";
         if (!append) {
           dancers = []; nextCursor = null; loadedPages = 1; results.innerHTML = lastMarkup = "";
-          if (count) count.textContent = "";
+          showCount();
         }
       } finally {
         if (requestId === generation) {
@@ -149,12 +219,13 @@
     locations?.addEventListener("change", () => {
       generation++; busy = false; loadedPages = 1; dancers = []; nextCursor = null;
       results.innerHTML = lastMarkup = "";
-      if (count) count.textContent = "";
+      showCount();
       const url = new URL(root.location.href);
       url.searchParams.set("location", locations.value);
       root.history.replaceState(null, "", url);
       return load();
     });
+    mountLocationPicker(document, locations);
     refresh.addEventListener("click", () => load());
     more.addEventListener("click", () => load(true));
     function refreshVisible() { if (!document.hidden) load(); }
@@ -162,6 +233,6 @@
     root.setInterval(refreshVisible, 60000);
     return load();
   }
-  root.MydancrVenueEmbed = Object.freeze({ cardMarkup, sampleRoster, applyTheme, mount });
+  root.MydancrVenueEmbed = Object.freeze({ cardMarkup, sampleRoster, applyTheme, mountLocationPicker, mount });
   if (root.document?.body?.classList.contains("venue-grid-embed")) mount(root.document);
 })(window);

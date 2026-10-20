@@ -115,7 +115,7 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
   assert.match(rhinoHtml, /data-venue-slug="talk-of-the-town"/);
   assert.match(rhinoHtml, /value="boise"[^>]+ selected/);
   assert.match(rhinoHtml, /data-demo="true"/);
-  assert.match(rhinoHtml, /<h1>Working now<\/h1>/);
+  assert.match(rhinoHtml, /<h1 aria-live="polite">Working now <span id="venue-count" hidden><\/span><\/h1>/);
   assert.doesNotMatch(rhinoHtml, /Demo ·|Sample dancers|not actual|Not connected yet/);
   assert.match(html, /home-dancer-grid home-dancer-three-column/);
   assert.match(html, /dancer-grid-card\.js/);
@@ -125,7 +125,7 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
 
 function runtime() {
   const window = { location: { origin: "https://www.mydancr.com" }, crypto: { randomUUID } };
-  const context = vm.createContext({ window, URL, URLSearchParams, AbortSignal });
+  const context = vm.createContext({ window, URL, URLSearchParams, AbortSignal, Event });
   vm.runInContext(read("public/dancer-grid-card.js"), context);
   vm.runInContext(read("public/venue-grid-embed.js"), context);
   return window;
@@ -167,6 +167,72 @@ function componentFixture() {
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 
+test("Rhino location picker supports selection, keyboard navigation and dismissing without changing location", () => {
+  let focused, changes = 0;
+  const element = () => {
+    const attributes = {}, listeners = {}, classes = new Set();
+    const node = { hidden: true, dataset: {}, textContent: "", innerHTML: "", tabIndex: -1,
+      classList: { add: name => classes.add(name), remove: name => classes.delete(name) },
+      setAttribute: (name, value) => { attributes[name] = value; },
+      getAttribute: name => attributes[name],
+      addEventListener(name, handler) { (listeners[name] ||= []).push(handler); },
+      dispatchEvent(event) { (listeners[event.type] || []).forEach(handler => handler(event)); },
+      focus() { focused = node; }, contains(target) { return node === target; },
+    };
+    return node;
+  };
+  const document = element(), nodes = new Map();
+  document.getElementById = id => { if (!nodes.has(id)) nodes.set(id, element()); return nodes.get(id); };
+  const get = document.getElementById;
+  const select = element();
+  select.value = "las-vegas";
+  select.options = [
+    { value: "las-vegas", textContent: "Las Vegas, NV", selected: true },
+    { value: "boise", textContent: "Boise, ID", selected: false },
+    { value: "london", textContent: "London, UK", selected: false },
+  ];
+  Object.defineProperty(select, "selectedOptions", { get: () => select.options.filter(option => option.value === select.value) });
+  select.addEventListener("change", () => changes++);
+  const options = select.options.map(option => Object.assign(element(), { dataset: { location: option.value } }));
+  get("citySelectOptions").querySelectorAll = () => options;
+  const panel = get("citySelectPanel"), trigger = get("citySelectButton");
+  panel.contains = target => target === panel || options.includes(target);
+  const click = node => node.dispatchEvent({ type: "click" });
+  const key = (node, value) => node.dispatchEvent({ type: "keydown", key: value, preventDefault() {} });
+  runtime().MydancrVenueEmbed.mountLocationPicker(document, select);
+  assert.equal(select.hidden, true);
+  assert.equal(trigger.hidden, false);
+  assert.equal(get("citySelectButtonText").textContent, "Las Vegas, NV");
+  click(trigger);
+  assert.equal(panel.hidden, false);
+  assert.equal(trigger.getAttribute("aria-expanded"), "true");
+  assert.equal(focused, options[0]);
+  key(options[0], "ArrowDown");
+  assert.equal(focused, options[1]);
+  click(options[1]);
+  assert.equal(select.value, "boise");
+  assert.equal(changes, 1);
+  assert.equal(get("citySelectButtonText").textContent, "Boise, ID");
+  assert.equal(options[1].getAttribute("aria-selected"), "true");
+  assert.equal(panel.hidden, true);
+  assert.equal(focused, trigger);
+  key(trigger, "ArrowDown");
+  key(options[1], "End");
+  assert.equal(focused, options[2]);
+  key(options[2], "Escape");
+  assert.equal(panel.hidden, true);
+  assert.equal(select.value, "boise");
+  click(trigger);
+  click(options[1]);
+  assert.equal(changes, 1, "Reselecting a location should not reload its roster");
+  click(trigger);
+  document.dispatchEvent({ type: "click", target: element() });
+  assert.equal(panel.hidden, true);
+  click(trigger);
+  document.dispatchEvent({ type: "focusin", target: element() });
+  assert.equal(panel.hidden, true);
+});
+
 test("an existing embed adopts saved Admin colors on load and refresh without replacing its link", async () => {
   const f = componentFixture();
   f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#00aaff" }, dancers: [dancer], nextCursor: null }));
@@ -206,11 +272,14 @@ test("failed refresh clears stale cards and an empty roster never shows another 
   f.respond(() => ({ ok: false, error: "Please refresh." }));
   await f.node("venue-refresh").listeners.click();
   assert.equal(f.node("results").innerHTML, "");
+  assert.equal(f.node("venue-count").hidden, true);
   assert.equal(f.node("venue-more").hidden, true);
   assert.equal(f.node("venue-status").textContent, "Please refresh.");
   f.respond(() => ({ ok: true, venue, dancers: [], nextCursor: null }));
   await f.node("venue-refresh").listeners.click();
   assert.match(f.node("venue-status").textContent, /No participating dancers/);
+  assert.equal(f.node("venue-count").textContent, "0");
+  assert.equal(f.node("venue-count").hidden, false);
   f.respond(() => ({ ok: true, venue: { ...venue, slug: "other-club" }, dancers: [dancer] }));
   await f.node("venue-refresh").listeners.click();
   assert.equal(f.node("results").innerHTML, "");
@@ -275,7 +344,8 @@ test("cards navigate directly to the full embedded profile in the same frame", a
   await f.window.MydancrVenueEmbed.mount(f.document);
   assert.match(f.node("results").innerHTML, /href="\/embed\/venues\/echo-house\/dancers\/ty"/);
   assert.doesNotMatch(f.node("results").innerHTML, /target="_blank"/);
-  assert.equal(f.node("venue-count").textContent, "1+ working now");
+  assert.equal(f.node("venue-count").textContent, "1+");
+  assert.equal(f.node("venue-count").hidden, false);
   const invalid = f.window.MydancrDancerGrid.render({ href: "/embed/venues/echo-house/settings", name: "Ty" });
   assert.match(invalid, /href="#"/);
 });
@@ -324,13 +394,13 @@ test("location changes clear old cards and stale requests cannot replace the sel
   const rows = Array.from({ length: 30 }, (_, i) => ({ ...dancer, id: `dancer-${i}`, slug: `dancer-${i}` }));
   f.respond(() => ({ ok: true, venue, dancers: rows, nextCursor: null }));
   await select.listeners.change();
-  assert.equal(f.node("venue-count").textContent, "18 working now");
+  assert.equal(f.node("venue-count").textContent, "18");
   assert.match(f.node("results").innerHTML, /location=boise&amp;demo=1/);
-  assert.match(f.node("venue-name").textContent, /Boise/);
+  assert.equal(f.node("venue-name").textContent, "Spearmint Rhino");
   finishOld({ ok: true, venue, dancers: [dancer], nextCursor: null });
   await initial;
-  assert.equal(f.node("venue-count").textContent, "18 working now");
-  assert.match(f.node("venue-name").textContent, /Boise/);
+  assert.equal(f.node("venue-count").textContent, "18");
+  assert.equal(f.node("venue-name").textContent, "Spearmint Rhino");
 });
 
 test("live location selector never borrows dancers for an unconnected location", async () => {

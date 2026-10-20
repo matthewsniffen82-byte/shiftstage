@@ -10,18 +10,21 @@ html body.venue-grid-embed > .app main.stack > section.stack {
   display: grid !important; width: 100% !important; min-width: 0; max-width: none !important;
   min-height: 0; gap: 12px; margin: 0 !important; padding: 0 !important;
 }
-html body.venue-grid-embed > .app main.stack > section.stack {
+html body.venue-grid-embed > .app main.stack {
   padding: 12px var(--dancer-discovery-content-gutter, 6px) !important;
 }
 html body.venue-grid-embed > .app main.stack > section.stack > #results.home-dancer-grid.home-dancer-three-column {
   padding-bottom: 0 !important; margin-bottom: 0 !important; scroll-padding-bottom: 0;
 }
 html body.venue-grid-embed .venue-embed-heading {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 4px;
 }
-html body.venue-grid-embed .venue-embed-heading h1 { margin: 0; font-size: 22px; }
+html body.venue-grid-embed .venue-embed-heading h1 {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0;
+  color: #34d399; font-size: 20px; font-weight: 750; line-height: 1.4;
+}
 html body.venue-grid-embed p { margin: 0; }
-html body.venue-grid-embed #venue-name { color: #b5b5ba; font-size: 14px; }
+html body.venue-grid-embed #venue-name { margin-bottom: 2px; color: #b5b5ba; font-size: 12px; font-weight: 600; }
 html body.venue-grid-embed :is(.venue-embed-note, .venue-embed-credit, #venue-status) {
   color: #b5b5ba; font-size: 12px; line-height: 1.5;
 }
@@ -32,7 +35,14 @@ html body.venue-grid-embed .venue-embed-credit a {
 }
 html body.venue-grid-embed .venue-embed-credit a span:first-child { font-weight: 600; }
 html body.venue-grid-embed .venue-embed-credit a span:last-child { text-decoration: underline; text-underline-offset: 3px; }
-html body.venue-grid-embed #venue-refresh { flex: none; min-height: 44px; padding: 8px 12px; }
+html body.venue-grid-embed #venue-refresh {
+  display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 10px;
+  border-color: #353538 !important; border-radius: 10px !important;
+}
+html body.venue-grid-embed #venue-refresh svg {
+  width: 18px; height: 18px; fill: none; stroke: var(--embed-accent); stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
 html body.venue-grid-embed #venue-more { justify-self: center; min-height: 44px; }
 html body.venue-grid-embed [hidden] { display: none !important; }
 
@@ -44,8 +54,10 @@ html body.venue-grid-embed {
   --discovery-backdrop: #0b0b0d;
   background: var(--discovery-backdrop) !important;
 }
-html body.venue-grid-embed :is(#venue-refresh, #venue-more) {
+html body.venue-grid-embed #venue-more {
   border-color: color-mix(in srgb, var(--embed-accent) 65%, #ffffff30) !important;
+}
+html body.venue-grid-embed :is(#venue-refresh, #venue-more) {
   background: #171719 !important;
   color: #f8fafc !important; box-shadow: none !important;
 }
@@ -60,14 +72,56 @@ html body.dancr-button-system.venue-grid-embed > .app main.stack > section.stack
   color: var(--embed-accent) !important;
   stroke: currentColor !important;
 }
-html body.venue-grid-embed .venue-embed-location { display: grid; gap: 6px; color: #b5b5ba; font-size: 13px; }
 html body.venue-grid-embed #venue-location {
   display: block; width: 100%; min-height: 48px; padding: 10px 14px;
   border: 1px solid color-mix(in srgb, var(--embed-accent) 65%, #353538); border-radius: 12px;
   background: #171719; color: #f5f5f6; font: inherit; font-size: 16px;
 }
 html body.venue-grid-embed #venue-location:focus-visible { outline: 2px solid var(--embed-accent); outline-offset: 3px; }
-html body.venue-grid-embed #venue-count { color: #b5b5ba; font-size: 13px; }
+/* Share the homepage city-picker geometry and replace only its purple colors. */
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls {
+  grid-template-columns: minmax(0, 1fr) !important; gap: 4px !important; margin: 0 !important;
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectButton,
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option {
+  --discovery-control-face: #0b0b0d;
+  --discovery-control-edge: color-mix(in srgb, var(--embed-accent) 40%, #353538);
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option {
+  --discovery-control-edge: transparent;
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectButton[aria-expanded="true"],
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option[aria-selected="true"] {
+  --discovery-control-face: color-mix(in srgb, var(--embed-accent) 12%, #0b0b0d);
+  --discovery-control-edge: var(--embed-accent);
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectButton > :is(.city-picker-trigger-icon, .city-picker-chevron) {
+  color: var(--embed-accent) !important; stroke: currentColor !important;
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel.is-open {
+  border-color: #353538 !important; background: #171719 !important;
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectOptions {
+  max-height: min(360px, 50vh) !important; overflow-y: auto !important;
+  overscroll-behavior: contain; scrollbar-color: var(--embed-accent) #171719;
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel .city-picker-option .venue-picker-radio {
+  border-color: #737378 !important;
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel .city-picker-option[aria-selected="true"] .venue-picker-radio {
+  border-color: var(--embed-accent) !important;
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel .city-picker-option[aria-selected="true"] .venue-picker-radio::after {
+  background: var(--embed-accent) !important;
+}
+html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls :is(#citySelectButton, .city-picker-option):focus-visible {
+  outline: 2px solid var(--embed-accent) !important; outline-offset: -2px !important;
+}
+html body.venue-grid-embed #venue-count {
+  display: inline-grid; place-items: center; min-width: 30px; padding: 2px 8px;
+  border: 1px solid #285b45; border-radius: 999px; background: #0d2118;
+  color: #34d399; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;
+}
 html body.venue-grid-embed .home-dancer-grid-card { --venue-accent: var(--embed-accent); }
 html body.venue-grid-embed #results.home-dancer-grid > .home-dancer-grid-card {
   border-color: color-mix(in srgb, var(--embed-accent) 55%, #353538) !important;
