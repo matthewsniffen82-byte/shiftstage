@@ -323,7 +323,7 @@ export function VenuePanel({
             <button type="button" disabled={isRefreshing} onClick={onRefresh}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
           </div>
         </div>
-        {permissions.includes("view_roster") && <Link className="venue-internal-roster-link" href="/internal" prefetch={false}>View internal <span aria-hidden="true">→</span></Link>}
+        {activeWorkspace === "roster" && permissions.includes("view_roster") && <Link className="venue-internal-roster-link" href="/internal" prefetch={false}>View internal <span aria-hidden="true">→</span></Link>}
       </section>
       <hr className="venue-section-divider" />
       {refreshStatus ? <small className="venue-refresh-status" role="status">{refreshStatus}</small> : null}
