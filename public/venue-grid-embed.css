@@ -52,7 +52,14 @@ html body.venue-grid-embed :is(#venue-refresh, #venue-more) {
 html body.venue-grid-embed :is(a, button):focus-visible {
   outline: 2px solid var(--embed-accent) !important; outline-offset: 3px;
 }
-html body.venue-grid-embed .home-dancer-grid-venue svg { color: var(--embed-accent); stroke: currentColor; }
+/* Override the homepage's important lavender pin rule inside website embeds. */
+html body.dancr-button-system.venue-grid-embed > .app main.stack > section.stack
+  > #results.home-dancer-grid .home-dancer-grid-card.is-compact-directory .home-dancer-grid-venue .venue-dot,
+html body.dancr-button-system.venue-grid-embed > .app main.stack > section.stack
+  > #results.home-dancer-grid .home-dancer-grid-card.is-compact-directory .home-dancer-grid-venue .venue-dot svg {
+  color: var(--embed-accent) !important;
+  stroke: currentColor !important;
+}
 html body.venue-grid-embed .venue-embed-location { display: grid; gap: 6px; color: #b5b5ba; font-size: 13px; }
 html body.venue-grid-embed #venue-location {
   display: block; width: 100%; min-height: 48px; padding: 10px 14px;
