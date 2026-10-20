@@ -11,8 +11,7 @@ export default function VenueWebsiteGrid({ slug }: { slug: string }) {
   const rhino = canonical === RHINO_VENUE_SLUG;
   const url = `https://www.mydancr.com/embed/venues/${encodeURIComponent(canonical)}`;
   const previewUrl = rhino ? `${url}?demo=1` : url;
-  const liveUrl = rhino ? `${url}?demo=0` : url;
-  const code = `<iframe src="${liveUrl}" title="Dancers working now" width="100%" height="900" style="border:0;border-radius:16px" loading="lazy" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
+  const code = `<iframe src="${previewUrl}" title="Dancers working now" width="100%" height="900" style="border:0;border-radius:16px" loading="lazy" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
 
   async function copy(value: string, label: string) {
     setManualCopy("");
@@ -31,13 +30,11 @@ export default function VenueWebsiteGrid({ slug }: { slug: string }) {
         <span className="eyebrow">Your website</span>
         <h2 id="venue-website-grid-heading">Website grid</h2>
         <p>The MyDancr dancer grid and full profiles, in your club’s colors.</p>
-        {rhino && <p>Preview Rhino’s locations with sample rosters. The website embed shows connected live rosters only.</p>}
       </div>
       <div className="venue-publication-actions">
         <a href={previewUrl} target="_blank" rel="noopener noreferrer">Preview website grid</a>
         <button type="button" onClick={() => void copy(previewUrl, "Preview link")}>Copy preview link</button>
-        <button type="button" onClick={() => void copy(code, "Embed code")}>{rhino ? "Copy live embed code" : "Copy embed code"}</button>
-        {rhino && <a href={liveUrl} target="_blank" rel="noopener noreferrer">View connected live roster</a>}
+        <button type="button" onClick={() => void copy(code, "Embed code")}>Copy embed code</button>
       </div>
       <p role="status">{status}</p>
       {manualCopy && <textarea aria-label="Website grid text to copy" readOnly value={manualCopy} onFocus={event => event.currentTarget.select()} rows={4} />}

@@ -12,18 +12,16 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 160) return new Response("Club not found.", { status: 404 });
   const url = new URL(request.url);
   const rhino = slug === RHINO_VENUE_SLUG;
-  // Shared Rhino links open the populated showcase; connected live embeds opt in.
-  if (rhino && !["0", "1"].includes(url.searchParams.get("demo") || "")) {
+  // Rhino's embed is a presentation: older live-only links use the same showcase.
+  if (rhino && url.searchParams.get("demo") !== "1") {
     url.searchParams.set("demo", "1");
     return Response.redirect(url, 307);
   }
-  const demo = rhino && url.searchParams.get("demo") === "1";
-  const availableLocations = demo ? RHINO_LOCATIONS : RHINO_LOCATIONS.filter(item => "venueSlug" in item);
-  const requestedLocation = rhinoLocation(url.searchParams.get("location"));
-  const location = availableLocations.find(item => item.key === requestedLocation.key) || availableLocations[0];
+  const demo = rhino;
+  const location = rhinoLocation(url.searchParams.get("location"));
   const locations = rhino ? `<div class="home-discovery-controls venue-embed-controls">
     <div class="home-city-filter"><label id="citySelectLabel" for="venue-location">Rhino location</label>
-      <div class="home-city-select-shell"><select id="venue-location">${availableLocations.map(item =>
+      <div class="home-city-select-shell"><select id="venue-location">${RHINO_LOCATIONS.map(item =>
     `<option value="${item.key}" data-venue="${"venueSlug" in item ? item.venueSlug : ""}" data-count="${item.sampleCount}"${item.key === location.key ? " selected" : ""}>${item.label}</option>`
   ).join("")}</select>
         <button class="city-picker-trigger" id="citySelectButton" type="button" aria-haspopup="listbox" aria-controls="citySelectPanel" aria-expanded="false" aria-labelledby="citySelectLabel citySelectButtonText" hidden>
