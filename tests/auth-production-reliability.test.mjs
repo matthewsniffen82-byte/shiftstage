@@ -30,6 +30,10 @@ const passwordPolicy = compile(readFileSync(new URL("../src/lib/dancr/password-p
 const passwordSetup = compile(readFileSync(new URL("../src/lib/dancr/password-setup.ts", import.meta.url), "utf8"), {
   "../security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
 });
+const vipLogin = compile(readFileSync(new URL("../src/lib/dancr/vip-login.ts", import.meta.url), "utf8"), {
+  "../api-error-policy": policy,
+  "../security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
+});
 const userTermsVersion = compile(readFileSync(new URL("../src/lib/dancr/user-terms-version.ts", import.meta.url), "utf8"));
 const userTerms = compile(readFileSync(new URL("../src/lib/dancr/user-terms.ts", import.meta.url), "utf8"), {
   "../api-error-policy": policy, "./user-terms-version": userTermsVersion,
@@ -51,15 +55,36 @@ const jsonRequest = (method, body, headers = {}) => new Request("https://mydancr
   }),
 });
 
-function authFixture(providerError = null, { role = "customer", authSession = session, authUser = { id: account.id, identities: [{ id: "identity-one", provider: "email" }] }, adminClient = {}, reconcileNewPrivilegedAccount, provisionError } = {}) {
+function authFixture(providerError = null, { role = "customer", authSession = session, authUser = { id: account.id, email: "guest@example.test", identities: [{ id: "identity-one", provider: "email" }] }, adminClient = {}, reconcileNewPrivilegedAccount, provisionError, memberships = [], invitations = [], lookupError = null, cleanupError = null } = {}) {
   const calls = [];
   const provisions = [];
   const rateLimits = [];
   const accountReads = [];
+  const vipQueries = [], revocations = [];
+  const vipClient = {
+    ...adminClient,
+    auth: { ...adminClient.auth, admin: { ...adminClient.auth?.admin, signOut: async (...args) => {
+      revocations.push(args); return { error: cleanupError };
+    } } },
+    from(table) {
+      const steps = [], predicates = [];
+      vipQueries.push({ table, steps });
+      const query = {
+        select: value => { steps.push(["select", value]); return query; },
+        eq: (key, value) => { steps.push(["eq", key, value]); predicates.push(row => row[key] === value); return query; },
+        is: (key, value) => { steps.push(["is", key, value]); predicates.push(row => row[key] === value); return query; },
+        gt: (key, value) => { steps.push(["gt", key, value]); predicates.push(row => row[key] > value); return query; },
+        limit: value => { steps.push(["limit", value]); return query; },
+        maybeSingle: async () => ({ data: (table === "venue_vip_members" ? memberships : invitations).find(row => predicates.every(matches => matches(row))) || null, error: lookupError }),
+      };
+      return query;
+    },
+  };
   const result = { data: { user: authUser, session: authSession }, error: providerError };
-  return { calls, provisions, rateLimits, accountReads, ...compile(authSource, {
+  return { calls, provisions, rateLimits, accountReads, vipQueries, revocations, ...compile(authSource, {
     "@/src/lib/dancr/password-policy": passwordPolicy,
     "@/src/lib/dancr/password-setup": passwordSetup,
+    "@/src/lib/dancr/vip-login": vipLogin,
     "@/src/lib/dancr/user-terms": {
       prepareUserTermsSignup: async (_admin, _email, input) => {
         userTerms.validateUserTermsAcceptance(input);
@@ -80,7 +105,7 @@ function authFixture(providerError = null, { role = "customer", authSession = se
       signInWithPassword: async payload => { calls.push(payload); return result; },
       signUp: async payload => { calls.push(payload); return result; },
     } }) },
-    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => adminClient },
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => role === "customer" ? vipClient : adminClient },
     "@/src/lib/server-env": { getOptionalServerEnv: key => key === "DANCR_ADMIN_SIGNUP_CODE" ? "synthetic-admin-code" : "" },
     "@/src/lib/dancr/new-privileged-account": { reconcileNewPrivilegedAccount },
     "@/src/lib/dancr/auth": { getAccountByUserId: async (_admin, id) => { accountReads.push(id); return { ...account, role }; } },
@@ -92,6 +117,81 @@ function authFixture(providerError = null, { role = "customer", authSession = se
     "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
   }) };
 }
+
+const activeVip = { id: "membership", user_id: account.id, active: true };
+const pendingVip = { id: "invitation", email: "guest@example.test", accepted_at: null, revoked_at: null, expires_at: "2099-01-01T00:00:00Z" };
+const vipLoginInput = { mode: "login", role: "customer", email: "guest@example.test", password: "Unique1!password" };
+
+for (const requestedRole of ["customer", "dancer", "venue"]) test(`VIP cannot sign in through the general ${requestedRole} login`, async () => {
+  let passwordRecords = 0;
+  const f = authFixture(null, { memberships: [activeVip], adminClient: { auth: { admin: {
+    updateUserById: async () => { passwordRecords++; return { data: {}, error: null }; },
+  } } } });
+  const response = await f.POST(jsonRequest("POST", { ...vipLoginInput, role: requestedRole }));
+  const body = await response.json();
+  assert.equal(response.status, 403);
+  assert.match(body.error, /VIP sign-in area at mydancr.com\/vip/);
+  assert.equal(body.ok, false);
+  for (const key of ["session", "account", "user", "passwordLoginComplete"]) assert.equal(body[key], undefined);
+  assert.deepEqual(f.revocations, [["access", "local"]]);
+  assert.equal(passwordRecords, 0);
+  assert.equal(f.vipQueries.length, 1);
+  assert.deepEqual(f.vipQueries[0].steps, [["select", "id"], ["eq", "user_id", account.id], ["eq", "active", true], ["limit", 1]]);
+  assert.match(response.headers.get("cache-control"), /no-store/);
+});
+
+test("pending invited customers use VIP entry before activation, matched to the verified email", async () => {
+  const f = authFixture(null, { invitations: [pendingVip], authUser: { id: account.id, email: "Guest@Example.Test" } });
+  const response = await f.POST(jsonRequest("POST", { ...vipLoginInput, email: "other@example.test" }));
+  assert.equal(response.status, 403);
+  assert.equal(f.vipQueries[1].table, "venue_vip_invitations");
+  assert.ok(f.vipQueries[1].steps.some(step => step[0] === "eq" && step[1] === "email" && step[2] === "guest@example.test"));
+  assert.deepEqual(f.revocations, [["access", "local"]]);
+});
+
+test("inactive memberships, unrelated users and expired or revoked invitations do not classify a regular guest as VIP", async () => {
+  const f = authFixture(null, {
+    memberships: [{ ...activeVip, active: false }, { ...activeVip, user_id: "another-user" }],
+    invitations: [
+      { ...pendingVip, expires_at: "2000-01-01" }, { ...pendingVip, revoked_at: "2026-01-01" },
+      { ...pendingVip, accepted_at: "2026-01-01" }, { ...pendingVip, email: "someone-else@example.test" },
+    ],
+  });
+  const response = await f.POST(jsonRequest("POST", vipLoginInput));
+  assert.equal(response.status, 200); assert.equal((await response.json()).session.accessToken, "access");
+  assert.deepEqual(f.revocations, []);
+});
+
+test("VIP page and password setup can sign in without relying on saved browser VIP preferences", async () => {
+  const f = authFixture(null, { memberships: [activeVip], invitations: [pendingVip] });
+  const response = await f.POST(jsonRequest("POST", { ...vipLoginInput, loginArea: "vip" }));
+  assert.equal(response.status, 200); assert.equal((await response.json()).session.accessToken, "access");
+  assert.deepEqual(f.revocations, []); assert.deepEqual(f.vipQueries, []);
+});
+
+test("incorrect credentials never reveal VIP membership or run the membership query", async () => {
+  const f = authFixture(new AuthApiError("Bad credentials", 400, "invalid_credentials"), { memberships: [activeVip] });
+  const response = await f.POST(jsonRequest("POST", vipLoginInput));
+  assert.equal(response.status, 400); assert.equal((await response.json()).error, "Email or password is incorrect.");
+  assert.deepEqual(f.vipQueries, []); assert.deepEqual(f.revocations, []);
+});
+
+test("VIP lookup outages fail closed and revoke the unissued session", async () => {
+  const f = authFixture(null, { lookupError: new Error("private database detail") });
+  const response = await f.POST(jsonRequest("POST", vipLoginInput));
+  const body = await response.json();
+  assert.equal(response.status, 503); assert.equal(body.session, undefined);
+  assert.match(body.error, /Unable to confirm your sign-in area/); assert.doesNotMatch(body.error, /private database/);
+  assert.deepEqual(f.revocations, [["access", "local"]]);
+});
+
+test("cleanup failures cannot release a rejected VIP session", async () => {
+  const f = authFixture(null, { memberships: [activeVip], cleanupError: new Error("private cleanup error") });
+  const response = await f.POST(jsonRequest("POST", { ...vipLoginInput, loginArea: "/vip" }));
+  const body = await response.json();
+  assert.equal(response.status, 403); assert.equal(body.session, undefined);
+  assert.doesNotMatch(JSON.stringify(body), /access|refresh|private cleanup error/);
+});
 
 test("guest signup refuses absent, unchecked, string and outdated acceptance before creating the identity", async () => {
   for (const consent of [{}, {userTermsAccepted:false}, {userTermsAccepted:"true"}, {userTermsAccepted:true,userTermsVersion:"old"}]) {

@@ -782,6 +782,7 @@ function DashboardSignInRecovery({
         value={password}
       />
       {status ? <p className="venue-sign-in-status" role="status">{status}</p> : null}
+      <p>VIP member? <Link href="/vip">Use VIP sign in</Link>.</p>
       <button className="primary-link" data-sign-in-action disabled={isSubmitting} type="submit">
         {isSubmitting ? "Signing in..." : `Sign in to ${role} dashboard`}
       </button>

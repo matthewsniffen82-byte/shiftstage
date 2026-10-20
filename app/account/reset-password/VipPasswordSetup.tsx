@@ -70,7 +70,7 @@ export default function VipPasswordSetup({ account, invitationPath }: { account:
       }
       if (!signedIn) {
         setProgress("Signing you in…");
-        const login = await request("/api/auth", "POST", { mode: "login", role: "customer", email: account.email, password }, false);
+        const login = await request("/api/auth", "POST", { mode: "login", role: "customer", loginArea: "vip", email: account.email, password }, false);
         if (login.account?.id !== account.id || login.account?.role !== "customer" || login.account?.accountState !== "active"
           || !login.session?.accessToken || !login.session.refreshToken) throw new Error("Unable to confirm your guest sign-in. Please try again.");
         if (!persistBrowserAuthSession({ ...login.session, account: login.account })) throw new Error("Unable to save your sign-in in this browser. Please try again.");

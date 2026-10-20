@@ -97,6 +97,20 @@ for (const returnTo of ["/a/..//outside.example/path", "/a/%2e%2e//outside.examp
 }
 
 for (const definition of definitions) {
+  test(`${definition[0]}: rejected VIP sign-in shows guidance without saving a session or navigating`, async () => {
+    const f = fixture(definition);
+    try {
+      f.requests[0].resolve(Response.json({
+        ok: false, code: "FORBIDDEN",
+        error: "VIP accounts must use the special VIP sign-in area at mydancr.com/vip. Select VIP sign in to continue.",
+      }, { status: 403 }));
+      await f.pending;
+      assert.equal(f.stored.get(key), JSON.stringify(prior));
+      assert.deepEqual(f.navigations, []);
+      assert.equal(f.requests.length, 1, "never revoke an existing browser session");
+      assert.ok(f.statuses.some(status => /VIP sign.in.*mydancr.com\/vip/.test(status)));
+    } finally { await f.close(); }
+  });
   for (const replacement of [newer, null]) {
     test(`${definition[0]}: a delayed sign-in cannot overwrite ${replacement ? "a newer account" : "logout"}`, async () => {
       const f = fixture(definition);

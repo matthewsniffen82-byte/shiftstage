@@ -80,6 +80,23 @@ test('VIP login updates password requirements as typed and hides them on email-o
   ui.close();
 });
 
+test('dedicated VIP sign-in and invitation sign-in identify their login area', async () => {
+  for (const token of ['', 'private-invitation']) {
+    const ui = entryFixture({ token, auth: { account: guest, session: { accessToken: 'vip-session', refreshToken: 'vip-refresh' } } });
+    await ui.settle();
+    if (token) { ui.nodes().find(n => n.props.children === 'I have an account · Sign in').props.onClick(); ui.render(); }
+    ui.nodes().find(n => n.type === 'input' && n.props.type === 'email').props.onChange({ target: { value: guest.email } });
+    ui.nodes().find(n => n.type === 'password-field').props.onChange({ target: { value: 'Valid1!password' } });
+    ui.render();
+    ui.nodes().find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); await ui.settle();
+    const body = JSON.parse(ui.calls.find(c => c.url === '/api/auth').options.body);
+    assert.equal(body.loginArea, 'vip'); assert.equal(body.mode, 'login'); assert.equal(body.role, 'customer');
+    assert.equal(ui.navigations.some(path => path.startsWith('/dashboard/customer')), false);
+    if (!token) assert.ok(ui.nodes().some(n => n.type === 'vip-dashboard'));
+    ui.close();
+  }
+});
+
 test('VIP signup verifies the invited email before collecting any password', async () => {
   const ui = entryFixture({ token: 'private-invitation' }); await ui.settle();
   ui.nodes().find(n => n.props.children === 'I’m new · Create account').props.onClick(); ui.render();

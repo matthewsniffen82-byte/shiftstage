@@ -63,7 +63,7 @@ test('confirmed email is populated and read-only; one submission saves, signs in
   assert.equal(f.calls.length, 0); f.fill(); await f.submit();
   assert.deepEqual(f.calls.map(c => [c.url, c.method]), [['/api/account', 'PATCH'], ['/api/auth', 'POST'], ['/api/vip/invitation', 'PATCH']]);
   assert.deepEqual(JSON.parse(f.calls[0].body), { password });
-  assert.deepEqual(JSON.parse(f.calls[1].body), { mode: 'login', role: 'customer', email: account.email, password });
+  assert.deepEqual(JSON.parse(f.calls[1].body), { mode: 'login', role: 'customer', loginArea: 'vip', email: account.email, password });
   assert.equal(f.calls[0].headers.authorization, 'Bearer email-session'); assert.equal(f.calls[1].headers.authorization, undefined);
   assert.equal(f.calls[2].headers.authorization, 'Bearer password-session');
   const body = JSON.parse(f.calls[2].body);

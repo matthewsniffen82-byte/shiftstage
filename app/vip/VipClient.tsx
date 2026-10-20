@@ -104,7 +104,7 @@ export default function VipClient({ token = "", initialVenueId = "" }: { token?:
       const unchanged = captureBrowserAuthSessionGuard();
       const invitationEmail = token && mode === "signup" ? invitationEmailRequest() : null;
       const response = await fetch(invitationEmail ? "/api/vip/confirmation" : "/api/auth", { method: "POST", headers: { "content-type": "application/json" }, signal: AbortSignal.timeout(25000),
-        body: JSON.stringify(invitationEmail || { mode, role: "customer", email, password, emailRedirectTo: emailRedirect(mode === "reset_password") }) });
+        body: JSON.stringify(invitationEmail || { mode, role: "customer", loginArea: "vip", email, password, emailRedirectTo: emailRedirect(mode === "reset_password") }) });
       const data = await response.json();
       if (!mounted.current) return;
       if (!unchanged()) throw new Error("Your sign-in changed in another window. Refresh to continue.");

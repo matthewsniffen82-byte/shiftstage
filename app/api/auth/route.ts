@@ -34,6 +34,7 @@ import { passwordValidationMessage } from "@/src/lib/dancr/password-policy";
 import { getOptionalServerEnv } from "@/src/lib/server-env";
 import { prepareUserTermsSignup } from "@/src/lib/dancr/user-terms";
 import { recordPasswordSetup } from "@/src/lib/dancr/password-setup";
+import { requireVipLoginArea } from "@/src/lib/dancr/vip-login";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -157,6 +158,14 @@ export async function POST(request: Request) {
 
       const expectedRole = role === "admin" ? "admin" : null;
       const result = await authResponse(data.user.id, expectedRole, data.session, false, data.user);
+      if (result.account.role === "customer") {
+        await requireVipLoginArea(createAdminSupabaseClient(), {
+          userId: data.user.id,
+          verifiedEmail: data.user.email,
+          loginArea: body.loginArea,
+          accessToken: data.session?.access_token,
+        });
+      }
       const passwordLoginComplete = result.account.role === "customer"
         ? await recordPasswordSetup(createAdminSupabaseClient, data.user, { passwordLogin: true }) : undefined;
       return authJson({ ...result, passwordLoginComplete });

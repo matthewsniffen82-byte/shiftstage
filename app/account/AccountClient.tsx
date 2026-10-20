@@ -550,6 +550,8 @@ export default function AccountClient() {
             </>
           ) : null}
 
+          {mode === "login" ? <p>VIP member? <Link href="/vip">Use VIP sign in</Link>.</p> : null}
+
           {mode === "login" && role === "dancer" && existingSessionRole === "admin" ? (
             <p className="session-notice" role="status">
               An admin session is active in this browser. Signing in here will safely switch it to your dancer account{isNfcAuth ? ` and return to ${nfcVenueName}` : ""}.
