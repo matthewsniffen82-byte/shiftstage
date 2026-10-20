@@ -49,9 +49,12 @@
     const panel = document.getElementById("citySelectPanel");
     const list = document.getElementById("citySelectOptions");
     if (!select?.options?.length || !trigger || !label || !panel || !list) return;
-    list.innerHTML = [...select.options].map(option =>
-      `<button class="venue-picker-option city-picker-option" type="button" role="option" data-location="${escape(option.value)}" aria-selected="${option.selected}" tabindex="-1"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${escape(option.textContent)}</span></button>`
-    ).join("");
+    list.innerHTML = [...select.options].map(option => {
+      const count = Number(option.dataset?.count);
+      const stats = Number.isInteger(count) && count >= 0
+        ? `<span class="city-picker-stats venue-embed-location-count">${count} dancers</span>` : "";
+      return `<button class="venue-picker-option city-picker-option" type="button" role="option" data-location="${escape(option.value)}" aria-selected="${option.selected}" tabindex="-1"><span class="venue-picker-radio" aria-hidden="true"></span><span class="venue-picker-option-name">${escape(option.textContent.split(" · ")[0])}</span>${stats}</button>`;
+    }).join("");
     const options = [...list.querySelectorAll("[data-location]")];
     function sync() {
       label.textContent = select.selectedOptions[0].textContent.split(" · ")[0];

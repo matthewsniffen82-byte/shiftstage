@@ -192,9 +192,9 @@ test("Rhino location picker supports selection, keyboard navigation and dismissi
   const select = element();
   select.value = "las-vegas";
   select.options = [
-    { value: "las-vegas", textContent: "Las Vegas, NV", selected: true },
-    { value: "boise", textContent: "Boise, ID", selected: false },
-    { value: "london", textContent: "London, UK", selected: false },
+    { value: "las-vegas", textContent: "Las Vegas, NV · 49 dancers", dataset: { count: "49" }, selected: true },
+    { value: "boise", textContent: "Boise, ID · 78 dancers", dataset: { count: "78" }, selected: false },
+    { value: "london", textContent: "London, UK · 51 dancers", dataset: { count: "51" }, selected: false },
   ];
   Object.defineProperty(select, "selectedOptions", { get: () => select.options.filter(option => option.value === select.value) });
   select.addEventListener("change", () => changes++);
@@ -208,6 +208,11 @@ test("Rhino location picker supports selection, keyboard navigation and dismissi
   assert.equal(select.hidden, true);
   assert.equal(trigger.hidden, false);
   assert.equal(get("citySelectButtonText").textContent, "Las Vegas, NV");
+  for (const option of select.options) {
+    const row = get("citySelectOptions").innerHTML.match(new RegExp(`data-location="${option.value}"[^]*?</button>`))[0];
+    assert.ok(row.includes(`${option.dataset.count} dancers`));
+    assert.equal(row.match(/dancers/g).length, 1);
+  }
   click(trigger);
   assert.equal(panel.hidden, false);
   assert.equal(trigger.getAttribute("aria-expanded"), "true");
@@ -400,6 +405,7 @@ test("standard and old live-only Rhino links populate all 22 showcase locations"
       assert.match(html, /data-demo="true"/);
       assert.equal([...html.matchAll(/<option /g)].length, 22);
       assert.match(html, new RegExp(`value="${location.key}"[^>]+ selected`));
+      assert.ok(html.includes(`>${location.label} · ${location.sampleCount} dancers</option>`));
     }
     const f = componentFixture();
     f.document.body.dataset.demo = html.match(/data-demo="([^"]+)"/)[1];
