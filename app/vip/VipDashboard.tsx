@@ -276,7 +276,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         </div>
       </div>
     </header>
-    <EmailNotificationGuidance accountRole="vip" />
+    <EmailNotificationGuidance accountId={String(account.id || "")} accountRole="vip" />
     <nav ref={navigation} className="vip-dashboard-nav" aria-label="VIP dashboard">
       {VIP_DESTINATIONS.map(item => <button type="button" key={item.id} aria-current={view === item.id ? "page" : undefined} aria-controls={`vip-panel-${item.id}`} disabled={disabled} onClick={() => navigate(item.id)}>
         <VipIcon kind={item.id === "plan" ? "dancers" : item.id} /><span>{item.label}</span>{item.id === "plan" && draft.selected.length > 0 && <span className="vip-draft-dot" aria-label="Unsubmitted visit draft" />}

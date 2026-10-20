@@ -808,7 +808,7 @@ export default function AdminClient() {
         </form>
       ) : (
         <>
-          <EmailNotificationGuidance accountRole="admin" />
+          <EmailNotificationGuidance accountId={String(readBrowserAuthSession()?.account?.id || "")} accountRole="admin" />
           {dashboardWarnings.length ? (
             <aside className="admin-warning" role="status" aria-live="polite">
               <div>

@@ -35,6 +35,25 @@ body.dancr-button-system .email-notification-guidance p {
 }
 body.dancr-button-system .email-notification-guidance p + p { margin-top: 6px; }
 body.dancr-button-system .email-notification-guidance strong { color: #f6f1fc; font-weight: 600; }
+body.dancr-button-system .email-notification-guidance .email-guidance-acknowledge {
+  min-height: 40px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border: 1px solid #8363a8;
+  border-radius: 10px;
+  background: #251a32;
+  color: #f6f1fc;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+body.dancr-button-system .email-notification-guidance .email-guidance-acknowledge:focus-visible {
+  outline: 2px solid #c2a4ed;
+  outline-offset: 3px;
+}
+body.dancr-button-system .email-notification-guidance .email-guidance-acknowledge:disabled { opacity: .65; cursor: wait; }
+body.dancr-button-system .email-notification-guidance .email-guidance-error { margin-top: 8px; color: #fda4af; }
 @media (max-width: 620px) {
   body.dancr-button-system .email-notification-guidance { gap: 10px; padding: 12px; }
 }
