@@ -6,5 +6,5 @@ export const venueEmbedPolicy = [
   "img-src 'self' https: data:", "media-src 'self' https: blob:", "frame-ancestors 'self' https:", "upgrade-insecure-requests",
 ].join("; ");
 
-// Next's path matcher: exclude only the dedicated, one-segment widget document.
-export const nonEmbedDocumentSource = "/:path((?!embed/venues/[^/]+/?$).*)";
+// Only dedicated public widget/profile documents may be framed externally.
+export const nonEmbedDocumentSource = "/:path((?!embed/venues/[^/]+(?:/dancers/[^/]+)?/?$).*)";

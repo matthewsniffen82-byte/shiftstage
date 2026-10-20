@@ -9,7 +9,8 @@
   }
   function render(card) {
     const group = ["is-now", "is-upcoming"].includes(card.groupClass) ? card.groupClass : "is-open";
-    const href = /^(\/dancers\/|#profile-)/.test(card.href) ? card.href : "#";
+    const href = /^(\/dancers\/|#profile-)/.test(card.href)
+      || /^\/embed\/venues\/[a-z0-9-]+\/dancers\/[a-z0-9-]+(?:\?[a-zA-Z0-9%=&._-]*)?$/.test(card.href) ? card.href : "#";
     return `<article data-venue-brand="${escape(card.venueSlug || "")}" data-public-dancer-id="${escape(card.id)}"${card.discoveryAttributes || ""} class="dancer-card home-dancer-grid-card ${group}${card.compact ? " is-compact-directory" : ""}" data-profile="${escape(card.name)}" data-profile-reference="${escape(card.reference)}" data-grid-group="${group}" aria-label="${escape(card.name)}, ${escape(card.scheduleLabel)}">
       <a class="home-dancer-grid-link" href="${escape(href)}"${card.newTab ? ' target="_blank" rel="noopener noreferrer"' : ""} aria-label="Open ${escape(card.name)}'s full profile${card.newTab ? " (opens in a new tab)" : ""}">
         ${card.photoMarkup || ""}

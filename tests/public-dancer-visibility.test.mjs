@@ -40,6 +40,11 @@ test('database failures cannot be mistaken for permission to display content', a
 // Exercise the shipped browser script with deterministic network and timers.
 // The media source and DOM node survive hide/restore; no copies are republished.
 const browserSource = readFileSync(new URL('../public/dancer-content-visibility.js', import.meta.url), 'utf8');
+test('embedded profiles use their own venue presence check without the page reload watcher', () => {
+  assert.doesNotThrow(() => vm.runInNewContext(browserSource, {
+    window: { location: { pathname: '/embed/venues/talk-of-the-town/dancers/ty' } },
+  }));
+});
 function browserFixture() {
   class CustomEvent extends Event { constructor(type, options) { super(type); this.detail = options?.detail; } }
   const video = { paused: false, src: '/api/media/dancer-video?id=saved',
@@ -61,7 +66,7 @@ function browserFixture() {
   let tick = 0;
   const timers = new Map();
   const window = Object.assign(new EventTarget(), {
-    location: { reloads: 0, reload() { this.reloads += 1; } },
+    location: { pathname: '/dancers/ty', reloads: 0, reload() { this.reloads += 1; } },
     setTimeout(callback, delay) { timers.set(++tick, { callback, delay }); return tick; },
     clearTimeout(key) { timers.delete(key); },
   });

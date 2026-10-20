@@ -1,8 +1,8 @@
-/* Club colors belong to Internal rosters and their embedded profile viewers.
+/* Club colors belong to Internal rosters and dedicated website profile viewers.
    Public MyDancr surfaces keep the default app palette, even when they carry
    venue metadata. Website embeds use their separately configured theme.
    Gold palette from spearmintrhinolv.com and its official Las Vegas logo. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) {
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) {
   --venue-brand-accent: #b8860b;
   --venue-accent: #b8860b !important;
   --venue-brand-light: #e8ce82;
@@ -25,7 +25,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-l
   --dancr-shadow-brand-control: 0 2px 8px rgb(184 134 11 / 16%);
   accent-color: #b8860b;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(
   .profile-modal-city-icon, .profile-venue-pin, .profile-venue-destination svg,
   .profile-working-destination svg, .profile-action-main svg, .profile-share-trigger svg,
   .profile-media-tab-icon, .venue-address-directions svg, .venue-detail-share svg,
@@ -33,11 +33,11 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-l
   color: #e8ce82 !important;
   -webkit-text-fill-color: currentColor !important;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(
   .profile-modal-media-tabs > button.active, .profile-media-tabs button.active)::after {
   background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Cpath fill='%23b8860b' d='M0 0h2v2H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat !important;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) .profile-actions-compact :is(
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) .profile-actions-compact :is(
   .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going):not([data-internal-table-request]) {
   --profile-utility-background: linear-gradient(#211c0e, #211c0e) !important;
   --profile-utility-border: #665227 !important;
@@ -48,7 +48,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-l
   --profile-action-background: linear-gradient(#211c0e, #211c0e) !important;
   --profile-action-border: #665227 !important;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(
   .profile-free-entry-action, .profile-media-card-deal, .home-tv-deal-button, .home-tv-feed-deal-action.is-available, .profile-media-entry, .free-entry-cta,
   .club-deal-launcher-action, .venue-qr-launcher) {
   --free-entry-background: linear-gradient(#b8860b, #b8860b) !important;
@@ -60,58 +60,58 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-l
   color: #050507 !important;
   -webkit-text-fill-color: currentColor !important;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(button, a):focus-visible {
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(button, a):focus-visible {
   outline-color: #e8ce82 !important;
 }
 @layer dancr-follow-controls {
   /* These controls have their own cascade layer in dancer-profile-layout.css. */
-  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *):not(.dancer-profile-preview-shell)
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *):not(.dancer-profile-preview-shell)
     :is(.profile-action-main svg, .profile-modal-city-icon, .profile-venue-pin, .profile-venue-destination svg, .profile-working-destination svg, .profile-media-tab-icon) {
     color: #e8ce82 !important;
     stroke: currentColor !important;
   }
-  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *):not(.dancer-profile-preview-shell)
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *):not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > summary { color: #e8ce82 !important; }
-  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *):not(.dancer-profile-preview-shell)
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *):not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > .profile-options-panel {
     border-color: #665227 !important;
     background: #080807 !important;
   }
-  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *)
+  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *)
     :is(.venue-action-stack :is(.venue-address-directions, .follow-venue-btn), .venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow) {
     --venue-utility-face: #080807 !important;
     --venue-utility-edge: #665227 !important;
   }
-  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *)
+  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *)
     :is(.venue-action-stack .follow-venue-btn, .venue-card-secondary-actions > [data-venue-follow], .venue-card-follow)[aria-pressed="true"] {
     --venue-utility-face: #211c0e !important;
     --venue-utility-edge: #b8860b !important;
   }
-  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *)
+  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *)
     .venue-action-stack .venue-detail-share {
     --profile-action-background: linear-gradient(#211c0e, #211c0e) !important;
     --profile-action-border: #665227 !important;
   }
-  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *)
+  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *)
     :is(.venue-action-stack :is(.venue-address-directions, .follow-venue-btn, .venue-detail-share), .venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow) :is(.action-icon, svg, svg path) {
     color: #e8ce82 !important;
   }
-  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is([data-follow-control="text"], #followBtn, .follow-venue-btn) {
+  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is([data-follow-control="text"], #followBtn, .follow-venue-btn) {
     --follow-control-edge: #665227 !important;
     --follow-control-face: #080807 !important;
   }
-  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is([data-follow-control="text"], #followBtn, .follow-venue-btn)[aria-pressed="true"] {
+  html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is([data-follow-control="text"], #followBtn, .follow-venue-btn)[aria-pressed="true"] {
     --follow-control-edge: #b8860b !important;
     --follow-control-face: #211c0e !important;
   }
 }
 
 /* Internal keeps the normal layout and semantic live/liked/status colors. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(.home-dancer-grid-venue svg, .home-discovery-feed-venue svg, .home-tv-feed-venue svg, .venue-card-directions svg, .home-discovery-feed-directions svg, .venue-workspace-tab-icon, .dancer-dashboard-section-icon, .venue-section-icon, .ir-section-title svg) { color: #e8ce82 !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(.free-entry-cta, .club-deal-launcher-action, .home-tv-deal-button)::before { background: #b8860b !important; border-color: #e8ce82 !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(.venue-analytics-period button.active, .venue-command-links a, .venue-refresh-control button, .venue-publication-actions a, .ir-secondary) { border-color: #665227 !important; background: #211c0e !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(.venue-dashboard-logo, .venue-dashboard-section-badge) { border-color: #665227 !important; color: #e8ce82 !important; background: #211c0e !important; }
-html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(.venue-workspace-tabs button, .venue-analytics-period button, .ir-secondary):focus-visible { outline-color: #e8ce82 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(.home-dancer-grid-venue svg, .home-discovery-feed-venue svg, .home-tv-feed-venue svg, .venue-card-directions svg, .home-discovery-feed-directions svg, .venue-workspace-tab-icon, .dancer-dashboard-section-icon, .venue-section-icon, .ir-section-title svg) { color: #e8ce82 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(.free-entry-cta, .club-deal-launcher-action, .home-tv-deal-button)::before { background: #b8860b !important; border-color: #e8ce82 !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(.venue-analytics-period button.active, .venue-command-links a, .venue-refresh-control button, .venue-publication-actions a, .ir-secondary) { border-color: #665227 !important; background: #211c0e !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(.venue-dashboard-logo, .venue-dashboard-section-badge) { border-color: #665227 !important; color: #e8ce82 !important; background: #211c0e !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(.venue-workspace-tabs button, .venue-analytics-period button, .ir-secondary):focus-visible { outline-color: #e8ce82 !important; }
 /* Long club names need their own natural-height row below Working now. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):not(.dancer-profile-preview-shell) .profile-shift-card.schedule-live .schedule-stack { margin-top: 0 !important; }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):not(.dancer-profile-preview-shell) .profile-working-destination > .profile-live-state { margin-bottom: 0 !important; }
@@ -120,12 +120,12 @@ html body.dancr-button-system .ir-shell.ir-staff[data-venue-brand="talk-of-the-t
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout[data-venue-brand="talk-of-the-town"] .profile-shift-card .profile-venue-destination { height: auto !important; max-height: none !important; }
 
 /* The selected gallery image uses the same club accent as Photos / Videos. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) :is(.gallery .thumb.active, .profile-media-grid-item.is-featured, .profile-media-grid-item[data-featured]) { outline-color: #b8860b !important; border-color: #b8860b !important; }
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) :is(.gallery .thumb.active, .profile-media-grid-item.is-featured, .profile-media-grid-item[data-featured]) { outline-color: #b8860b !important; border-color: #b8860b !important; }
 
 /* Going paints its outline on an inset face rather than the button border. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) .profile-actions-compact :is(#goingBtn, .profile-action-going):not([data-internal-table-request])::before {
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) .profile-actions-compact :is(#goingBtn, .profile-action-going):not([data-internal-table-request])::before {
   box-shadow: inset 0 0 0 1px #b8860b !important;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) .profile-actions-compact :is(#goingBtn, .profile-action-going)[aria-pressed="true"]:not([data-internal-table-request])::before {
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *, .venue-embed-profile-page *) .profile-actions-compact :is(#goingBtn, .profile-action-going)[aria-pressed="true"]:not([data-internal-table-request])::before {
   box-shadow: inset 0 0 0 1px #e8ce82 !important;
 }

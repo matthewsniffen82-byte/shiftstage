@@ -67,6 +67,14 @@ const nextConfig = {
         headers: [{ key: "X-Frame-Options", value: "DENY" }],
       },
       {
+        source: "/embed/venues/:slug/dancers/:dancerSlug",
+        headers: [
+          { key: "Content-Security-Policy", value: contentSecurityPolicy.replace("frame-ancestors 'none'", "frame-ancestors 'self' https:") },
+          { key: "Cache-Control", value: "private, no-store" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
+      {
         source: "/api/:path*",
         headers: [
           { key: "Cache-Control", value: "no-store" },

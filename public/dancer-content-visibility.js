@@ -1,5 +1,7 @@
 (() => {
   "use strict";
+  // Website profiles use their venue-scoped presence check without reloading.
+  if (window.location.pathname.startsWith("/embed/venues/")) return;
   const selector = "[data-public-dancer-id]";
   const storageKey = "mydancrDancerVisibilityChangedV1";
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

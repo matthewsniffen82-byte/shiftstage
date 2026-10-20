@@ -7,6 +7,7 @@ import { PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue-embed-media.mjs";
 import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
+import { RHINO_ACCENT, RHINO_VENUE_SLUG } from "@/src/lib/dancr/rhino-locations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,12 +25,14 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     // City, venue and Working Now are derived here, never from iframe query options.
     const page = await getRankedDirectoryPage(client, request, { city: venue.city, venueId: venue.id, filter: "now", cursor });
     const workingIds = new Set(page.tonightDancers.map(dancer => dancer.id));
-    const dancers = page.dancers.filter(dancer => dancer.venueId === venue.id && workingIds.has(dancer.id)).map(dancer => ({
+    const demo = slug === RHINO_VENUE_SLUG && new URL(request.url).searchParams.get("demo") === "1";
+    const dancers = page.dancers.filter(dancer => dancer.venueId === venue.id && workingIds.has(dancer.id)
+      && (!demo || dancer.shiftSource === "demo_locked")).map(dancer => ({
       id: dancer.id, slug: dancer.slug, stageName: dancer.stageName,
       primaryPhotoUrl: venueEmbedMediaUrl(dancer.primaryPhotoUrl), primaryPhotoSrcSet: venueEmbedMediaSrcSet(dancer.primaryPhotoSrcSet),
     }));
     const { embedAccent, configured } = await getVenueGuestColors(client, venue.id);
-    return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name, embedAccent: configured ? embedAccent || "#7c3aed" : null }, dancers, nextCursor: page.nextCursor }, { headers });
+    return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name, embedAccent: slug === RHINO_VENUE_SLUG ? RHINO_ACCENT : configured ? embedAccent || "#7c3aed" : null }, dancers, nextCursor: page.nextCursor }, { headers });
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) return NextResponse.json({ ok: false, error: "Please wait before refreshing." },
       { status: 429, headers: { ...headers, "Retry-After": String(error.retryAfterSeconds) } });

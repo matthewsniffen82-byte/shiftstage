@@ -187,6 +187,13 @@ test("the server setting disables the temporary gate without replacing account a
 
 test("only the public embed documents, data, approved-media proxy and fixed assets bypass the password", async () => {
   const f = fixture();
+  for (const path of ["/embed/venues/echo-house/dancers/ty", "/_next/static/chunks/app/embed/profile.js"]) {
+    assert.equal((await f.middleware(new NextRequest(origin + path))).headers.get("x-middleware-next"), "1", path);
+    assert.equal((await f.middleware(new NextRequest(origin + path, { method: "POST" }))).status, 401, path);
+  }
+  for (const path of ["/embed/venues/echo-house/dancers/ty/settings", "/_next/server/app/dashboard", "/embed/venues/echo-house/account"]) {
+    assert.equal((await f.middleware(new NextRequest(origin + path))).headers.get("x-middleware-next"), null, path);
+  }
   for (const path of ["/embed/venues/echo-house?accent=c99842", "/api/public/venue-grid/echo-house", "/api/public/venue-grid/echo-house/dancers/ty", "/api/public/venue-embed-media/photo", "/api/public/venue-embed-media/video", "/dancer-grid-card.js", "/venue-grid-embed.js", "/venue-grid-embed.css", "/outputs/live-shell.css", "/outputs/live-shell-overrides.css", "/outputs/dancr-aesthetic.css", "/dancr-brand-tokens.v1.css", "/dancr-button-system.v1.css", "/dancr-ui-consistency.v1.css"]) {
     for (const method of ["GET", "HEAD"]) {
       assert.equal((await f.middleware(new NextRequest(origin + path, { method }))).headers.get("x-middleware-next"), "1", `${method} ${path}`);

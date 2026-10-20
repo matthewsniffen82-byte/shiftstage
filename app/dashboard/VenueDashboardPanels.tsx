@@ -2,6 +2,7 @@
 import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import VenueNotificationSettings from "./VenueNotificationSettings";
 import DashboardPhoneNotifications from "./DashboardPhoneNotifications";
+import VenueWebsiteGrid from "./VenueWebsiteGrid";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
@@ -42,7 +43,7 @@ function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"].includes(sectionId)) return "tonight";
   if (sectionId === "venue-overview") return "business";
   if (["venue-working-now", "venue-dancer-roster", "venue-nfc-tags", "table-requests"].includes(sectionId)) return "roster";
-  if (["venue-publication", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
+  if (["venue-publication", "venue-website-grid", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }
 
@@ -546,6 +547,8 @@ export function VenuePanel({
           ) : null}
           {publicationStatus ? <p role="status">{publicationStatus}</p> : null}
         </section>
+
+        {isPublished && venueSlug ? <VenueWebsiteGrid slug={venueSlug} /> : null}
 
         <DashboardSection
           badge={`${activeDealCount} live${dashboardDeals.length > activeDealCount ? ` · ${dashboardDeals.length - activeDealCount} inactive` : ""}`}

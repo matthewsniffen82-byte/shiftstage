@@ -1,4 +1,5 @@
 import { canonicalVenueSlug } from "../src/lib/dancr/venue-branding.ts";
+import * as rhino from "../src/lib/dancr/rhino-locations.ts";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { randomUUID } from "node:crypto";
@@ -18,8 +19,8 @@ const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8"
 const { pathToRegexp } = pathToRegexpModule;
 function loadTs(path, dependencies) {
   const exports = {};
-  const js = ts.transpileModule(read(path), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-  vm.runInNewContext(js, { exports, Request, Response, URL, require(name) {
+  const js = ts.transpileModule(read(path), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
+  vm.runInNewContext(js, { exports, Request, Response, URL, URLSearchParams, require(name) {
     assert.ok(name in dependencies, `Unexpected dependency: ${name}`); return dependencies[name];
   } });
   return exports;
@@ -38,6 +39,7 @@ function apiFixture(options = {}) {
     "@/src/lib/dancr/discovery-pagination": { parseDiscoveryCursor },
     "@/src/lib/dancr/venue-guest-colors": { getVenueGuestColors: async (_client, venueId) => { assert.equal(venueId, location.id); return options.colors || { internalAccent: null, embedAccent: null, configured: false }; } },
     "@/src/lib/dancr/venue-embed-media.mjs": embedMedia,
+    "@/src/lib/dancr/rhino-locations": rhino,
     "@/src/lib/dancr/public-request-rate-limit": { PublicRequestRateLimitError: RateLimit },
     "@/src/lib/dancr/public-directory": { getRankedDirectoryPage: async (_client, _request, scope) => {
       calls.push(scope); if (options.error) throw options.error;
@@ -87,12 +89,18 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
   for (const path of ["/", "/dashboard", "/dancers/ty", "/api/public/venue-grid/echo-house", "/embed/venues/echo-house/settings", "/embed/venues/"]) assert.ok(matcher.test(path), path);
   assert.equal(matcher.test("/embed/venues/echo-house"), false);
   assert.equal(matcher.test("/embed/venues/echo-house/"), false);
+  assert.equal(matcher.test("/embed/venues/echo-house/dancers/ty"), false);
+  assert.ok(matcher.test("/embed/venues/echo-house/dancers/ty/settings"));
   const rules = await nextConfig.headers();
   assert.equal(rules.find(rule => rule.source === "/:path*").headers.some(header => header.key === "X-Frame-Options"), false);
   assert.equal(rules.find(rule => rule.source === nonEmbedDocumentSource).headers[0].value, "DENY");
+  const profileHeaders = rules.find(rule => rule.source === "/embed/venues/:slug/dancers/:dancerSlug").headers;
+  assert.match(profileHeaders.find(header => header.key === "Content-Security-Policy").value, /frame-ancestors 'self' https:/);
+  assert.equal(profileHeaders.find(header => header.key === "Cache-Control").value, "private, no-store");
   const route = loadTs("app/embed/venues/[slug]/route.ts", {
     "@/src/lib/dancr/static-asset-cache.mjs": { versionStaticAssetReferences },
     "@/src/lib/dancr/venue-branding": { canonicalVenueSlug },
+    "@/src/lib/dancr/rhino-locations": rhino,
     "@/src/lib/security/venue-embed-policy.mjs": { venueEmbedPolicy },
     "@/src/lib/dancr/venue-embed-theme.mjs": { venueEmbedAccent },
   });
@@ -102,8 +110,13 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
   assert.doesNotMatch(venueEmbedPolicy, /unsafe-inline/);
   const html = await response.text();
   assert.match(html, /data-venue-slug="echo-house"/);
-  const rhino = await route.GET(new Request("https://www.mydancr.com/embed/venues/spearmint-rhino-las-vegas-demo"), { params: Promise.resolve({ slug: "spearmint-rhino-las-vegas-demo" }) });
-  assert.match(await rhino.text(), /data-venue-slug="talk-of-the-town"/);
+  const rhinoResponse = await route.GET(new Request("https://www.mydancr.com/embed/venues/spearmint-rhino-las-vegas-demo?demo=1&location=boise"), { params: Promise.resolve({ slug: "spearmint-rhino-las-vegas-demo" }) });
+  const rhinoHtml = await rhinoResponse.text();
+  assert.match(rhinoHtml, /data-venue-slug="talk-of-the-town"/);
+  assert.match(rhinoHtml, /value="boise"[^>]+ selected/);
+  assert.match(rhinoHtml, /data-demo="true"/);
+  assert.match(rhinoHtml, /<h1>Working now<\/h1>/);
+  assert.doesNotMatch(rhinoHtml, /Demo ·|Sample dancers|not actual|Not connected yet/);
   assert.match(html, /home-dancer-grid home-dancer-three-column/);
   assert.match(html, /dancer-grid-card\.js/);
   assert.doesNotMatch(html, /live-shell\.js|<form|localStorage/);
@@ -112,7 +125,7 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
 
 function runtime() {
   const window = { location: { origin: "https://www.mydancr.com" }, crypto: { randomUUID } };
-  const context = vm.createContext({ window, URL, AbortSignal });
+  const context = vm.createContext({ window, URL, URLSearchParams, AbortSignal });
   vm.runInContext(read("public/dancer-grid-card.js"), context);
   vm.runInContext(read("public/venue-grid-embed.js"), context);
   return window;
@@ -247,6 +260,9 @@ test("embedded profile endpoint rechecks public visibility, venue and current wo
       assert.equal(body.profile.videos[0].id, "v1");
       assert.equal(body.profile.locationVerificationExpiresAt, undefined);
       assert.equal(response.headers.get("cache-control"), "private, no-store");
+      const presence = await route.GET(new Request(`https://www.mydancr.com/api/public/venue-grid/${venue.slug}/dancers/${dancer.slug}?presence=1`), { params: Promise.resolve({ slug: venue.slug, dancerSlug: dancer.slug }) });
+      assert.deepEqual(await presence.json(), { ok: true });
+      assert.equal(contentReads, 1, "Presence checks must not reload profile media");
     } else {
       assert.equal(response.status, 404);
       assert.equal(contentReads, 0);
@@ -254,30 +270,121 @@ test("embedded profile endpoint rechecks public visibility, venue and current wo
   }
 });
 
-test("normal card click opens the branded embedded profile and stale media clears on recheck", async () => {
+test("cards navigate directly to the full embedded profile in the same frame", async () => {
   const f = componentFixture();
   await f.window.MydancrVenueEmbed.mount(f.document);
-  const link = { closest: () => ({ dataset: { publicDancerId: dancer.id } }) };
-  let prevented = false;
-  f.respond(() => ({ ok: true, venue, profile: { ...publicProfile, videos: [] } }));
-  f.node("results").listeners.click({ target: { closest: () => link }, preventDefault() { prevented = true; } });
-  await settle();
-  assert.equal(prevented, true);
-  assert.equal(f.node("venue-directory").hidden, true);
-  assert.equal(f.node("venue-profile").hidden, false);
-  assert.match(f.node("venue-profile-content").innerHTML, /venue-embed-primary/);
-  assert.match(f.node("venue-profile-content").innerHTML, /data-media-panel="photos"/);
-  assert.equal(f.styles.get("--embed-accent"), "#c99842");
-  assert.ok(f.requests.at(-1).url.endsWith("/echo-house/dancers/ty"));
-  f.respond(() => ({ ok: false, error: "Profile unavailable." }));
-  f.timers[0].handler(); await settle();
-  assert.equal(f.node("venue-profile-content").innerHTML, "");
-  assert.equal(f.node("venue-profile-status").textContent, "Profile unavailable.");
-  f.node("venue-profile-back").listeners.click(); await settle();
-  assert.equal(f.node("venue-directory").hidden, false);
-  assert.equal(f.node("venue-profile").hidden, true);
+  assert.match(f.node("results").innerHTML, /href="\/embed\/venues\/echo-house\/dancers\/ty"/);
+  assert.doesNotMatch(f.node("results").innerHTML, /target="_blank"/);
+  assert.equal(f.node("venue-count").textContent, "1+ working now");
+  const invalid = f.window.MydancrDancerGrid.render({ href: "/embed/venues/echo-house/settings", name: "Ty" });
+  assert.match(invalid, /href="#"/);
 });
 
+test("Rhino showcase uses only approved public demo dancers and enforces gold", async () => {
+  const rhinoVenue = { ...venue, slug: rhino.RHINO_VENUE_SLUG };
+  const sample = { ...dancer, shiftSource: "demo_locked" };
+  const real = { ...dancer, id: "real-checkin", shiftSource: "nfc_presence" };
+  const f = apiFixture({ venue: rhinoVenue, page: { dancers: [sample, real], tonightDancers: [sample, real], nextCursor: null } });
+  const preview = await (await f.get("?demo=1")).json();
+  assert.deepEqual(preview.dancers.map(row => row.id), [sample.id]);
+  assert.equal(preview.venue.embedAccent, "#b8860b");
+  const live = await (await f.get()).json();
+  assert.equal(live.dancers.length, 2);
+});
+
+test("Rhino locations have distinct roster sizes and deterministic samples in ranked order", () => {
+  assert.equal(rhino.RHINO_LOCATIONS.length, 22);
+  assert.equal(new Set(rhino.RHINO_LOCATIONS.map(row => row.key)).size, 22);
+  assert.equal(new Set(rhino.RHINO_LOCATIONS.map(row => row.sampleCount)).size, 22);
+  const rows = Array.from({ length: 96 }, (_, i) => ({ id: `dancer-${i}` }));
+  const { sampleRoster } = runtime().MydancrVenueEmbed;
+  for (const location of rhino.RHINO_LOCATIONS) {
+    const chosen = sampleRoster(rows, location.key, location.sampleCount);
+    assert.equal(chosen.length, location.sampleCount);
+    assert.deepEqual(Array.from(chosen), Array.from(sampleRoster(rows, location.key, location.sampleCount)));
+    const indices = Array.from(chosen, row => rows.indexOf(row));
+    assert.deepEqual(indices, [...indices].sort((a, b) => a - b));
+  }
+  assert.notDeepEqual(Array.from(sampleRoster(rows, "boise", 18)), Array.from(sampleRoster(rows, "london", 18)));
+});
+
+test("location changes clear old cards and stale requests cannot replace the selected roster", async () => {
+  const f = componentFixture();
+  f.document.body.dataset.demo = "true";
+  f.window.location.href = "https://www.mydancr.com/embed/venues/echo-house?demo=1";
+  f.window.history = { replaceState() {} };
+  const select = f.node("venue-location");
+  select.selectedOptions = [{ value: "las-vegas", textContent: "Las Vegas, NV", dataset: { count: "96" } }];
+  let finishOld;
+  f.respond(() => new Promise(resolve => { finishOld = resolve; }));
+  const initial = f.window.MydancrVenueEmbed.mount(f.document);
+  select.value = "boise";
+  select.selectedOptions = [{ value: "boise", textContent: "Boise, ID", dataset: { count: "18" } }];
+  const rows = Array.from({ length: 30 }, (_, i) => ({ ...dancer, id: `dancer-${i}`, slug: `dancer-${i}` }));
+  f.respond(() => ({ ok: true, venue, dancers: rows, nextCursor: null }));
+  await select.listeners.change();
+  assert.equal(f.node("venue-count").textContent, "18 working now");
+  assert.match(f.node("results").innerHTML, /location=boise&amp;demo=1/);
+  assert.match(f.node("venue-name").textContent, /Boise/);
+  finishOld({ ok: true, venue, dancers: [dancer], nextCursor: null });
+  await initial;
+  assert.equal(f.node("venue-count").textContent, "18 working now");
+  assert.match(f.node("venue-name").textContent, /Boise/);
+});
+
+test("live location selector never borrows dancers for an unconnected location", async () => {
+  const f = componentFixture();
+  f.node("venue-location").selectedOptions = [{ value: "boise", textContent: "Boise, ID · Not connected yet", dataset: { venue: "" } }];
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  assert.equal(f.requests.length, 0);
+  assert.equal(f.node("results").innerHTML, "");
+  assert.match(f.node("venue-status").textContent, /not connected/);
+});
+
+test("embedded profile uses the full shared component, preserves media and returns to its location", async () => {
+  const rhinoVenue = { ...venue, slug: rhino.RHINO_VENUE_SLUG };
+  const source = { ...publicProfile, shiftSource: "demo_locked", upcomingShifts: [{ venueSlug: rhinoVenue.slug, venueName: "Spearmint Rhino" }] };
+  let profile = source;
+  let contentReads = 0;
+  const component = "FullSharedEmbeddedProfile";
+  const route = loadTs("app/embed/venues/[slug]/dancers/[dancerSlug]/page.tsx", {
+    "react/jsx-runtime": { jsx: (type, props) => ({ type, props }) },
+    "next/navigation": { notFound: () => { throw new Error("NOT_FOUND"); } },
+    "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
+    "@/src/lib/dancr/public": { getVenueProfile: async () => rhinoVenue, getDancerProfile: async () => profile },
+    "@/src/lib/dancr/shift-presence": { isActiveNfcPresence },
+    "@/src/lib/dancr/venue-branding": { canonicalVenueSlug },
+    "@/src/lib/dancr/rhino-locations": rhino,
+    "@/src/lib/dancr/venue-guest-colors": { getVenueGuestColors: async () => ({ embedAccent: "#ff0000" }) },
+    "@/src/lib/dancr/venue-embed-media.mjs": embedMedia,
+    "@/src/lib/dancr/public-dancer-content": { loadPublicDancerContent: async () => { contentReads++; return { tvVideos: [{ id: "v1", videoUrl: "/api/media/dancer-video?id=v1" }], secondaryUnavailable: false }; } },
+    "./EmbeddedDancerProfile": { default: component, __esModule: true },
+    "@/public/profile-media-owner-controls.css": {}, "@/public/profile-media-card-feed.css": {},
+    "@/public/profile-actions-compact.css": {}, "@/public/dancer-profile-layout.css": {}, "./embedded-profile.css": {},
+  });
+  const render = query => route.default({ params: Promise.resolve({ slug: rhinoVenue.slug, dancerSlug: "ty" }), searchParams: Promise.resolve(query) });
+  const result = await render({ demo: "1", location: "boise" });
+  assert.equal(result.type, component);
+  assert.equal(result.props.profile.city, "Boise");
+  assert.equal(result.props.profile.upcomingShifts[0].venueName, "Spearmint Rhino · Boise, ID");
+  assert.equal(result.props.profile.photos.length, source.photos.length);
+  assert.equal(result.props.tvVideos[0].videoUrl, "/api/public/venue-embed-media/video?id=v1");
+  assert.equal(result.props.returnHref, "/embed/venues/talk-of-the-town?location=boise&demo=1");
+  assert.equal(result.props.accent, "#b8860b");
+  assert.equal(source.city, "Las Vegas");
+  await assert.rejects(render({ location: "boise" }), /NOT_FOUND/);
+  profile = { ...source, shiftSource: "nfc_presence" };
+  await assert.rejects(render({ demo: "1" }), /NOT_FOUND/);
+  profile = { ...source, venueId: "another-club" };
+  await assert.rejects(render({}), /NOT_FOUND/);
+  profile = { ...source, checkedOutAt: new Date().toISOString() };
+  await assert.rejects(render({}), /NOT_FOUND/);
+  assert.equal(contentReads, 1);
+  const client = read("app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx");
+  assert.match(client, /<PublicDancerProfile \{\.\.\.props\}/);
+  assert.match(client, /\?presence=1/);
+  assert.doesNotMatch(client, /location\.reload|router\.refresh/);
+});
 test("embed media URLs preserve exact photo sizes and video IDs without admitting private preview links", () => {
   assert.equal(embedMedia.venueEmbedMediaUrl("https://www.mydancr.com/api/media/dancer-photo?path=owner%2Fapproved.jpg&width=320"), "/api/public/venue-embed-media/photo?path=owner%2Fapproved.jpg&width=320");
   assert.equal(embedMedia.venueEmbedMediaUrl("/api/media/dancer-video?id=public-id&poster=1"), "/api/public/venue-embed-media/video?id=public-id&poster=1");
