@@ -20,7 +20,7 @@ function declaration(rule, property) {
   return found;
 }
 
-test('all branded full profiles use a neutral frame without changing its geometry', () => {
+test('all branded full profiles use a neutral frame and charcoal surface without changing geometry', () => {
   const frame = ruleMatching(themes, selector => selector.endsWith(':not(.dancer-profile-preview-shell)::before'));
   assert.match(frame.selector, /\[data-venue-brand\]:not\(\[data-venue-brand=""\]\)/);
   assert.doesNotMatch(frame.selector, /talk-of-the-town|spearmint-rhino-las-vegas-demo/);
@@ -31,6 +31,9 @@ test('all branded full profiles use a neutral frame without changing its geometr
   assert.equal(stroke.important, true);
   assert.equal(declaration(frame, 'z-index').value, '11');
   assert.deepEqual(frame.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['box-shadow', 'z-index']);
+  const surface = ruleMatching(themes, selector => selector === frame.selector.replace('::before', '::after'));
+  assert.equal(declaration(surface, 'background').value, 'linear-gradient(#161618, #161618)');
+  assert.equal(declaration(surface, 'background').important, true);
 });
 
 test('embedded dancer cards use the same neutral border without resizing cards', () => {
@@ -38,6 +41,7 @@ test('embedded dancer cards use the same neutral border without resizing cards',
   const border = declaration(card, 'border-color');
   assert.equal(border.value, '#3a3a40');
   assert.equal(border.important, true);
+  assert.equal(declaration(card, 'background').value, 'linear-gradient(#161618, #161618)');
   assert.deepEqual(card.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['border-color', 'background', 'box-shadow']);
 });
 

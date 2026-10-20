@@ -44,16 +44,16 @@ html body.dancr-button-system .venue-embed-profile-page .profile-tonight-card > 
   grid-column: 1 / -1;
 }
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout::after {
-  background: #171719 !important;
+  background: linear-gradient(#161618, #161618) !important;
 }
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout::before {
   box-shadow: inset 0 0 0 1px #353538 !important;
 }
 html body.dancr-button-system .venue-embed-profile-page .profile-featured-column {
-  border-left-color: #353538 !important; background: #171719 !important;
+  border-left-color: #353538 !important; background: linear-gradient(#161618, #161618) !important;
 }
 html body.dancr-button-system .venue-embed-profile-page :is(.profile-titlebar, .profile-options-panel, .profile-share-dialog, .profile-account-gate-dialog) {
-  background: #171719 !important; border-color: #353538 !important;
+  background: linear-gradient(#161618, #161618) !important; border-color: #353538 !important;
 }
 .venue-embed-profile-credit { padding: 16px; background: #0b0b0d; color: #b5b5ba; font-size: 12px; text-align: center; }
 .venue-embed-profile-credit a { display: grid; gap: 4px; width: fit-content; min-height: 44px; margin: auto; color: inherit; text-decoration: none; }
@@ -64,6 +64,6 @@ html body.dancr-button-system .venue-embed-profile-page :is(.profile-titlebar, .
 @layer dancr-follow-controls {
   html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > .profile-options-panel {
-    border-color: #353538 !important; background: linear-gradient(#171719, #171719) !important;
+    border-color: #353538 !important; background: linear-gradient(#161618, #161618) !important;
   }
 }
