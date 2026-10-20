@@ -1,5 +1,19 @@
 /* Match the homepage's compact wordmark, using its Manrope font and violet r.
    Override the staff header's badge styles only inside the wordmark. */
+body .ir-shell .ir-brand .ir-brand-caption {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: #b5b5ba;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+body .ir-guest .ir-brand { flex-direction: column; gap: 4px; }
 body .ir-shell .ir-brand .mydancr-live-logo,
 body .ir-shell .ir-brand .mydancr-live-logo .violet-r {
   margin: 0;
@@ -15,6 +29,10 @@ body .ir-shell .ir-brand .mydancr-live-logo .violet-r {
   text-transform: lowercase;
 }
 body .ir-shell .ir-brand .mydancr-live-logo {
+  /* MyDancr's own mark must not inherit a club's accent or glow. */
+  --dancr-color-brand-primary: #7c3aed;
+  --dancr-color-brand-primary-medium: rgba(124, 58, 237, .34);
+  --dancr-color-brand-glow-soft: rgba(49, 46, 129, .18);
   display: inline-block;
   color: #fff;
   white-space: nowrap;
