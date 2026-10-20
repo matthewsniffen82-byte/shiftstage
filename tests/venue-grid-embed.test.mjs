@@ -119,7 +119,7 @@ test("only the exact embed document path is exempt from DENY and gets public-onl
   assert.match(rhinoHtml, /value="boise"[^>]+ selected/);
   assert.match(rhinoHtml, /data-demo="true"/);
   assert.match(rhinoHtml, /<h1 aria-live="polite">Working now <span id="venue-count" hidden><\/span><\/h1>/);
-  assert.match(rhinoHtml, /class="venue-embed-heading"[\s\S]*class="venue-embed-credit"[\s\S]*Powered by MyDancr[\s\S]*www\.mydancr\.com[\s\S]*class="home-discovery-controls/);
+  assert.match(rhinoHtml, /class="venue-embed-heading"[\s\S]*class="venue-embed-credit" href="https:\/\/www\.mydancr\.com" target="_blank" rel="noopener noreferrer"><span>mydancr\.com<\/span><\/a>[\s\S]*class="home-discovery-controls/);
   assert.doesNotMatch(rhinoHtml, /<footer/);
   assert.doesNotMatch(rhinoHtml, /Demo ·|Sample dancers|not actual|Not connected yet/);
   assert.match(html, /home-dancer-grid home-dancer-three-column/);

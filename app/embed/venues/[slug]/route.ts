@@ -51,7 +51,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-demo="${demo}" data-accent="${rhino ? RHINO_ACCENT : venueEmbedAccent(url)}">
     <div class="app"><main class="stack">
       <div class="venue-embed-heading"><div><p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p><h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1></div><button id="venue-refresh" type="button" aria-label="Refresh working dancers" title="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.4 6.8"></path><path d="M20 4v7h-7"></path></svg></button>
-        <a class="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a>
+        <a class="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>mydancr.com</span></a>
       </div>
       ${locations}
       <section id="venue-directory" class="stack" aria-label="Working dancers">
