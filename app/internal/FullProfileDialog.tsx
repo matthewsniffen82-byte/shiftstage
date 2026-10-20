@@ -16,11 +16,17 @@ export function ClubProfileDialog({ prewarm = false, publicSlug, publicActions, 
   }, [profile, profileId, readyId]);
   return (
     <dialog className="ir-profile-dialog ir-full-profile-dialog" ref={profileDialog} onCancel={event => { event.preventDefault(); onClose(); }} aria-label={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}>
-      {profileId && readyId !== profileId ? <div className="ir-profile-loading" role="status">
-        <button type="button" className="ir-profile-loading-close" onClick={onClose} aria-label="Close dancer profile">← Back</button>
-        {loadingIdentity?.photoUrl ? <img src={loadingIdentity.photoUrl} alt="" /> : null}
-        <h2>{loadingIdentity?.stageName || profile?.stage_name || "Dancer profile"}</h2>
-        <p>Loading profile…</p>
+      {profileId && readyId !== profileId ? <div className="ir-profile-loading" data-audience={token ? "guest" : "mydancr"}>
+        <div className="ir-profile-loading-card">
+          <div className="ir-profile-loading-info">
+            <button type="button" className="ir-profile-loading-close" onClick={onClose} aria-label="Close dancer profile">← Back</button>
+            <h2>{loadingIdentity?.stageName || profile?.stage_name || "Dancer profile"}</h2>
+            <p role="status">Loading details…</p>
+          </div>
+          <div className="ir-profile-loading-photo">
+            {loadingIdentity?.photoUrl ? <img src={loadingIdentity.photoUrl} alt="" fetchPriority="high" /> : null}
+          </div>
+        </div>
       </div> : null}
       {prewarm || profileId ? <InternalFullProfile key={viewerAttempt} hidden={!!profileId && readyId !== profileId} profileId={profileId} publicSlug={publicSlug} publicActions={publicActions} profile={profile} token={token} request={request} onRequest={onRequest} onCancel={onCancel} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={() => { setReadyId(""); setViewerAttempt(attempt => attempt + 1); (onError || onClose)(); }} onClose={onClose} /> : null}
     </dialog>

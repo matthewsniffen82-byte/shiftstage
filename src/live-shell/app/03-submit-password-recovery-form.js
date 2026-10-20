@@ -775,6 +775,20 @@
       } : { className: "", style: "" };
     }
 
+    function safeNativePhotoUrl(value) {
+      const trimmed = String(value || "").trim();
+      if (/[\u0000-\u001f\u007f]/.test(trimmed)) return "";
+      if (!trimmed.startsWith("blob:")) return safeExternalHref(trimmed);
+      try {
+        const parsed = new URL(trimmed);
+        // Staff media is fetched with authorization, then displayed through
+        // an object URL. This exception is for images, never navigation links.
+        return parsed.origin !== "null" && parsed.origin === window.location.origin ? parsed.href : "";
+      } catch {
+        return "";
+      }
+    }
+
     function nativeResponsivePhotoAttrs(url, srcSet = "", fallbackWidth = 320) {
       const sources = String(srcSet || "")
         .split(",")
@@ -783,7 +797,7 @@
         .map((match) => ({ url: safeExternalHref(match[1]), width: Number(match[2]) }))
         .filter((source) => source.url && Number.isFinite(source.width))
         .sort((left, right) => left.width - right.width);
-      const fallbackUrl = sources.find((source) => source.width >= fallbackWidth)?.url || sources[sources.length - 1]?.url || safeExternalHref(url);
+      const fallbackUrl = sources.find((source) => source.width >= fallbackWidth)?.url || sources[sources.length - 1]?.url || safeNativePhotoUrl(url);
       if (!fallbackUrl) return "";
       const safeSrcSet = sources
         .map((source) => `${escapeOptionValue(source.url)} ${source.width}w`)

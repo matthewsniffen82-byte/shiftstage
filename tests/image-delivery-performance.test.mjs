@@ -58,7 +58,7 @@ test("main-photo crops and legacy avatars get small candidates of their own appr
 
 test("thumbnail candidates do not downgrade CSS portraits or native fallback images", () => {
   const context = vm.createContext({ safeCssUrl: value => value, safeExternalHref: value => value, escapeOptionValue: value => value });
-  for (const name of ["responsiveCssImageSet", "nativeResponsivePhotoAttrs"]) {
+  for (const name of ["responsiveCssImageSet", "safeNativePhotoUrl", "nativeResponsivePhotoAttrs"]) {
     const source = shell.match(new RegExp("    function " + name + "\\([^]*?\\n    \\}"))?.[0];
     assert.ok(source);
     vm.runInContext(source, context);
@@ -129,6 +129,7 @@ test("club lineup requests stay thumbnail-sized and bounded even with fifty work
   const escape = value => String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll('"', "&quot;");
   const context = vm.createContext({
     isWorkingTonight: () => true, shiftStartMinutes: () => 0,
+    hasMoreDiscovery: () => false, citySelect: { value: "Las Vegas" },
     publicAvatarPhotoUrl: profile => profile.photo,
     publicAvatarPhotoSrcSet: () => "",
     nativeResponsivePhotoAttrs: (url, srcSet, width) => {

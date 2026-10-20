@@ -41508,38 +41508,27 @@ html.internal-profile-embed #discoveryTabs,
 html.internal-profile-embed .preview-banner,
 html.internal-profile-embed .mydancr-preview-banner { display: none !important; }
 html.internal-profile-embed:not(.internal-profile-ready) body { visibility: hidden; }
-/* Override inherited discovery colors on the body, including Android/iOS
-   brightness variants. Club accents and semantic live colors stay independent. */
-html.internal-profile-embed body {
+/* Only table guests use neutral club surfaces. Staff and customer viewers inherit
+   the normal full profile's background, frame, photo divider and menu styling. */
+html.internal-profile-embed body[data-internal-profile-audience="guest"] {
   --discovery-backdrop: #0b0b0d;
   background: #0b0b0d !important;
 }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop {
+html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop {
   background: #0b0b0d !important;
 }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::after {
+html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::after {
   background: #171719;
 }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::before {
+html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::before {
   box-shadow: inset 0 0 0 1px #353538;
 }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout > .profile-featured-column {
+html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop #profileModal.profile-split-layout > .profile-featured-column {
   border-left-color: #353538;
   background: #171719;
 }
-/* Staff use the full MyDancr profile palette; table guests keep club styling. */
-html.internal-profile-embed body:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) {
-  --discovery-backdrop: #1c122b;
-  background: #1c122b !important;
-}
-html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) #profileBackdrop {
-  background: #1c122b !important;
-}
-html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) #profileBackdrop #profileModal.profile-split-layout::after {
-  background: #100c17 !important;
-}
 @layer dancr-follow-controls {
-  html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
+  html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > .profile-options-panel {
     border-color: #353538 !important;
     background: linear-gradient(#171719, #171719) !important;
@@ -46798,6 +46787,20 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       } : { className: "", style: "" };
     }
 
+    function safeNativePhotoUrl(value) {
+      const trimmed = String(value || "").trim();
+      if (/[\u0000-\u001f\u007f]/.test(trimmed)) return "";
+      if (!trimmed.startsWith("blob:")) return safeExternalHref(trimmed);
+      try {
+        const parsed = new URL(trimmed);
+        // Staff media is fetched with authorization, then displayed through
+        // an object URL. This exception is for images, never navigation links.
+        return parsed.origin !== "null" && parsed.origin === window.location.origin ? parsed.href : "";
+      } catch {
+        return "";
+      }
+    }
+
     function nativeResponsivePhotoAttrs(url, srcSet = "", fallbackWidth = 320) {
       const sources = String(srcSet || "")
         .split(",")
@@ -46806,7 +46809,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         .map((match) => ({ url: safeExternalHref(match[1]), width: Number(match[2]) }))
         .filter((source) => source.url && Number.isFinite(source.width))
         .sort((left, right) => left.width - right.width);
-      const fallbackUrl = sources.find((source) => source.width >= fallbackWidth)?.url || sources[sources.length - 1]?.url || safeExternalHref(url);
+      const fallbackUrl = sources.find((source) => source.width >= fallbackWidth)?.url || sources[sources.length - 1]?.url || safeNativePhotoUrl(url);
       if (!fallbackUrl) return "";
       const safeSrcSet = sources
         .map((source) => `${escapeOptionValue(source.url)} ${source.width}w`)

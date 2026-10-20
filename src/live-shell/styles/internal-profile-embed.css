@@ -9,38 +9,27 @@ html.internal-profile-embed #discoveryTabs,
 html.internal-profile-embed .preview-banner,
 html.internal-profile-embed .mydancr-preview-banner { display: none !important; }
 html.internal-profile-embed:not(.internal-profile-ready) body { visibility: hidden; }
-/* Override inherited discovery colors on the body, including Android/iOS
-   brightness variants. Club accents and semantic live colors stay independent. */
-html.internal-profile-embed body {
+/* Only table guests use neutral club surfaces. Staff and customer viewers inherit
+   the normal full profile's background, frame, photo divider and menu styling. */
+html.internal-profile-embed body[data-internal-profile-audience="guest"] {
   --discovery-backdrop: #0b0b0d;
   background: #0b0b0d !important;
 }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop {
+html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop {
   background: #0b0b0d !important;
 }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::after {
+html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::after {
   background: #171719;
 }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::before {
+html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::before {
   box-shadow: inset 0 0 0 1px #353538;
 }
-html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout > .profile-featured-column {
+html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop #profileModal.profile-split-layout > .profile-featured-column {
   border-left-color: #353538;
   background: #171719;
 }
-/* Staff use the full MyDancr profile palette; table guests keep club styling. */
-html.internal-profile-embed body:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) {
-  --discovery-backdrop: #1c122b;
-  background: #1c122b !important;
-}
-html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) #profileBackdrop {
-  background: #1c122b !important;
-}
-html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="public"]) #profileBackdrop #profileModal.profile-split-layout::after {
-  background: #100c17 !important;
-}
 @layer dancr-follow-controls {
-  html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
+  html.internal-profile-embed body.dancr-button-system[data-internal-profile-audience="guest"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > .profile-options-panel {
     border-color: #353538 !important;
     background: linear-gradient(#171719, #171719) !important;

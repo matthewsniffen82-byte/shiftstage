@@ -18,11 +18,20 @@ body .ir-shell.ir-staff.ir-embedded{min-height:0;padding:0;margin:16px 0;backgro
 body dialog.ir-profile-dialog.ir-full-profile-dialog{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#050507;overflow:hidden}.ir-full-profile-frame{display:block;width:100%;height:100%;border:0;background:#050507}
 /* Prepare the full-size viewer behind the roster; reveal only when it is ready. */
 body dialog.ir-full-profile-dialog:not([open]){display:block;visibility:hidden;pointer-events:none}
-.ir-profile-loading{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;background:#1c122b;color:#f7f2ff;font-family:inherit}
-.ir-profile-loading img{width:112px;height:150px;object-fit:cover;border-radius:16px}
-.ir-profile-loading h2,.ir-profile-loading p{margin:0}
-.ir-profile-loading p{color:#c4b5d7}
-.ir-profile-loading-close{position:absolute;top:max(12px,env(safe-area-inset-top));left:16px;min-height:44px;padding:8px 14px;border:1px solid #675079;border-radius:12px;background:#241831;color:#fff;font:inherit;cursor:pointer}
+/* Use the selected card immediately while its authorized details arrive.
+ * Keep these rules scoped above dashboard typography and button defaults. */
+body dialog.ir-full-profile-dialog .ir-profile-loading{position:absolute;inset:0;z-index:1;overflow:auto;padding:calc(8px + env(safe-area-inset-top)) clamp(8px,2vw,24px) 24px;background:var(--discovery-backdrop,#1c122b);color:#f7f2ff;font-family:inherit;box-sizing:border-box}
+body dialog.ir-full-profile-dialog .ir-profile-loading-card{display:grid;grid-template-columns:minmax(0,46fr) minmax(0,54fr);max-width:1180px;min-height:clamp(400px,64vw,760px);margin:0 auto;overflow:hidden;border-radius:20px;background:linear-gradient(#100c17,#100c17);box-shadow:0 0 10px rgba(124,58,237,.08)}
+body dialog.ir-full-profile-dialog .ir-profile-loading-info{display:flex;flex-direction:column;align-items:center;gap:16px;min-width:0;padding:12px clamp(10px,2vw,24px)}
+body dialog.ir-full-profile-dialog .ir-profile-loading h2{margin:0;color:inherit;font-size:clamp(26px,5vw,48px);font-weight:800;line-height:1.1;text-align:center;overflow-wrap:anywhere}
+body dialog.ir-full-profile-dialog .ir-profile-loading p{margin:0;color:#c4b5d7;font-size:14px;line-height:1.5;text-align:center}
+body dialog.ir-full-profile-dialog .ir-profile-loading-photo{position:relative;min-width:0;border-left:1px solid rgba(174,119,255,.24);background:linear-gradient(#181020,#181020)}
+body dialog.ir-full-profile-dialog .ir-profile-loading-photo img{position:absolute;inset:0;display:block;width:100%;height:100%;max-width:none;margin:0;border-radius:0;object-fit:cover}
+body dialog.ir-full-profile-dialog button.ir-profile-loading-close{position:relative;inset:auto;align-self:flex-start;display:inline-flex;align-items:center;justify-content:center;width:auto;min-width:44px;min-height:44px;margin:0;padding:8px;border:0;border-radius:8px;background:transparent;color:#c4b5d7;box-shadow:none;font:inherit;font-size:14px;cursor:pointer}
+body dialog.ir-full-profile-dialog button.ir-profile-loading-close:is(:hover,:focus-visible){color:#fff;background:#30223f}
+body dialog.ir-full-profile-dialog button.ir-profile-loading-close:focus-visible{outline:2px solid #c4b5fd;outline-offset:2px}
+body dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"]{background:#0b0b0d}
+body dialog.ir-full-profile-dialog .ir-profile-loading[data-audience="guest"] .ir-profile-loading-card{background:linear-gradient(#171719,#171719);box-shadow:inset 0 0 0 1px #353538}
 
 /* Internal uses neutral surfaces so each club's accent owns the emphasis.
  * Cover the page gutters, embedded staff roster and profile loading frame. */

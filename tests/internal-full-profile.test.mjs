@@ -53,6 +53,68 @@ function fixture({ external = true, staff = false, mediaFailure = false, generic
   return { context, body: context.document.body, bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
 }
 
+function loadRealGallery(context) {
+  const helpers = {
+    '03-submit-password-recovery-form.js': ['safeExternalHref', 'safeNativePhotoUrl', 'nativeResponsivePhotoAttrs', 'mobileThumbnailSource', 'normalizedReviewStatus', 'portraitClass', 'customPhotoUrl'],
+    '06-rank-label.js': ['escapeOptionValue'],
+    '07-shift-window-for-date.js': ['displayText'],
+    '15-active-support-role.js': ['escapeHtml'],
+    '20-render.js': ['safePublicMediaLikeCount'],
+    '12-sync-profile-photo-viewer-window.js': ['uploadedProfilePhotoUrls', 'profilePhotoSrcSet', 'profilePhotoLikeMetadata', 'profilePhotoGalleryItems', 'profilePhotoThumbMarkup', 'galleryMarkup'],
+  };
+  for (const [file, names] of Object.entries(helpers)) {
+    const source = readFileSync(new URL('../src/live-shell/app/' + file, import.meta.url), 'utf8');
+    for (const name of names) {
+      const fn = source.match(new RegExp('    function ' + name + '\\([^]*?\\n    \\}'))?.[0];
+      assert.ok(fn, name);
+      vm.runInNewContext(fn, context);
+    }
+  }
+}
+
+test('authorized staff object URLs render real gallery images instead of black fallback tiles', async () => {
+  const f = fixture({ staff: true });
+  let objectIndex = 0;
+  const revoked = [];
+  f.context.URL.createObjectURL = () => `blob:https://example.invalid/media-${++objectIndex}`;
+  f.context.URL.revokeObjectURL = url => revoked.push(url);
+  await f.bridge.openInternalProfileMessage(f.event());
+  loadRealGallery(f.context);
+  const viewed = f.bridge.profile();
+  const markup = f.context.galleryMarkup(viewed, 0);
+  assert.equal((markup.match(/<img /g) || []).length, profile.photos.length);
+  assert.doesNotMatch(markup, /<span class="portrait/);
+  for (const photo of viewed.submittedPhotos) {
+    assert.ok(markup.includes(`src="${photo.imageUrl}"`));
+    assert.ok(markup.includes(`data-photo-url="${photo.imageUrl}"`), 'the full photo still opens');
+    assert.equal(f.context.safeExternalHref(photo.imageUrl), '', 'object URLs are never navigation links');
+  }
+  assert.equal(viewed.requestsTonight, profile.requestsTonight);
+  assert.equal(viewed.venue, profile.venueName);
+  assert.equal(viewed.scheduled, true);
+  assert.equal(f.body.dataset.internalProfileAudience, 'staff');
+  const imageUrls = viewed.submittedPhotos.map(photo => photo.imageUrl);
+  f.bridge.closeInternalProfileFrame();
+  await Promise.resolve();
+  for (const url of imageUrls) assert.ok(revoked.includes(url), 'private image URLs are released on close');
+});
+
+test('native photos accept same-origin objects and public images without widening URL or approval rules', () => {
+  const f = fixture(); loadRealGallery(f.context);
+  for (const url of ['blob:https://example.invalid/photo', 'https://images.example/photo.jpg']) {
+    assert.equal(f.context.nativeResponsivePhotoAttrs(url), `src="${url}"`);
+  }
+  for (const url of ['javascript:alert(1)', 'data:text/html,test', 'blob:https://foreign.invalid/photo', 'blob:null/photo', 'blob:invalid', 'blob:https://example.invalid/a\nb']) {
+    assert.equal(f.context.nativeResponsivePhotoAttrs(url), '', url);
+  }
+  assert.equal(f.context.nativeResponsivePhotoAttrs('blob:https://example.invalid/"onerror="bad'), 'src="blob:https://example.invalid/&quot;onerror=&quot;bad"');
+  const pending = { status: 'Verified', photoStatus: 'Approved', mainPhotoUrl: 'blob:https://example.invalid/photo',
+    submittedPhotos: [{ id: 'pending', imageUrl: 'blob:https://example.invalid/photo', reviewStatus: 'pending' }] };
+  assert.equal(f.context.uploadedProfilePhotoUrls(pending).length, 0, 'URL support cannot expose an unapproved photo');
+  assert.match(f.context.nativeResponsivePhotoAttrs('https://images.example/master.jpg', 'https://images.example/320.jpg 320w, https://images.example/640.jpg 640w'),
+    /^src="https:\/\/images.example\/320.jpg" srcset="/, 'public responsive delivery is preserved');
+});
+
 test('customer profiles use one public read, retain public actions and use MyDancr colors', async () => {
   const source = { id: id(1), slug: 'star', stageName: 'Star', city: 'Las Vegas', verified: true, venueSlug: 'spearmint-rhino',
     primaryPhotoUrl: 'https://example.invalid/photo.jpg', locationStatus: 'club_confirmed', locationVerificationExpiresAt: new Date(Date.now() + 60_000).toISOString() };
