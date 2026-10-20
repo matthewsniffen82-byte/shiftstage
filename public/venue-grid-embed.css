@@ -148,7 +148,7 @@ html body.venue-grid-embed #venue-count {
 }
 html body.venue-grid-embed .home-dancer-grid-card { --venue-accent: var(--embed-accent); }
 html body.venue-grid-embed #results.home-dancer-grid > .home-dancer-grid-card {
-  border-color: color-mix(in srgb, var(--embed-accent) 55%, #353538) !important;
+  border-color: #3a3a40 !important;
   background: #171719 !important;
   box-shadow: 0 10px 26px rgb(0 0 0 / 30%) !important;
 }
