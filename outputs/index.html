@@ -41605,6 +41605,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         <div class="content-head discovery-sticky-head">
           <h2 id="tabTitle">Working Now in Las Vegas</h2>
           <div class="count" id="tabCount">0 results</div>
+          <button class="club-refresh-button" id="clubDirectoryRefresh" type="button" data-club-refresh hidden>Refresh</button>
         </div>
         <p class="roster-participation-note venue-directory-roster-note">Only dancers checked in on MyDancr are shown. Additional dancers may be working at each club.</p>
         <div class="list" id="results"></div>
@@ -43938,6 +43939,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     const homeDiscoveryFeedQrPromptsShown = new Set();
     const HOME_DISCOVERY_QR_PROMPT_DELAY_MS = 3000;
     const HOME_DISCOVERY_REFRESH_MS = 30000;
+    let clubRefreshPending = false;
     const PROFILE_NAVIGATION_PREFETCH_TTL_MS = 20 * 1000;
     const PROFILE_NAVIGATION_PREFETCH_LIMIT = 4;
     const profileNavigationPrefetchCache = new Map();
@@ -48653,6 +48655,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           if (cursor && !keepCurrentResults) publishResults();
         } while (cursor);
         publishResults();
+        return true;
       } catch (error) {
         if (identity !== JSON.stringify(discoveryRequestHeaders())
           || citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) {
@@ -48686,6 +48689,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           void loadLiveDiscovery(city, { force: true, cacheBust: true, background: true });
         }
       }
+      return false;
     }
 
     function discoveryRequestScope(city) {
@@ -53819,8 +53823,10 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     }
 
     function venueDancers(city, venueName) {
-      return discoveryMarket(city).dancers
-        .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName)
+      const market = discoveryMarket(city);
+      const venueId = market.venues?.find((venue) => venue.name === venueName)?.id;
+      return market.dancers
+        .filter((profile) => isApprovedPublicProfile(profile) && (venueId && profile.venueId ? profile.venueId === venueId : profile.venue === venueName))
         .map((profile) => withTrendingRank(profile, city));
     }
 
@@ -53847,7 +53853,10 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const activitySections = [
         `
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
-            <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now · ${tonight.length}</span></h3>
+            <div class="venue-roster-heading">
+              <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now · ${tonight.length}</span></h3>
+              ${clubRefreshButtonMarkup()}
+            </div>
             <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
             ${tonight.length
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)
@@ -62156,6 +62165,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       updateTabCounts(city);
       updateHomeLiveSummary(city);
       const expectsVenueProfile = activeTab === "venues" && Boolean(selectedVenueName);
+      const clubDirectoryRefresh = document.getElementById("clubDirectoryRefresh");
+      if (clubDirectoryRefresh) clubDirectoryRefresh.hidden = activeTab !== "venues" || expectsVenueProfile;
+      syncClubRefreshButtons();
       document.body.classList.toggle("venue-full-view-open", expectsVenueProfile);
       results.classList.toggle("venue-profile-overlay", expectsVenueProfile);
       if (activeTab === "tv") {
@@ -64566,6 +64578,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         document.title,
         `${url.pathname}?${url.searchParams.toString()}${url.hash}`
       );
+      // Opening a club must load its scope even if the directory was showing
+      // another club or only dancers who are not working.
+      void loadLiveDiscovery(citySelect.value);
       render();
       syncOverlayScrollLock();
       focusVenueProfileStart(options);
@@ -68743,11 +68758,52 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     if (initialHomeDestinationRequested) {
       focusHomeResults();
     }
-    async function refreshVisibleHomeDiscovery({ bypassCache = false } = {}) {
-      if (document.visibilityState !== "visible") return;
-      await loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
+    function clubRefreshButtonMarkup() {
+      return `<button class="club-refresh-button" type="button" data-club-refresh aria-busy="${clubRefreshPending}"${clubRefreshPending ? " disabled" : ""}>${clubRefreshPending ? "Refreshing…" : "Refresh"}</button>`;
     }
-    window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
+
+    function syncClubRefreshButtons() {
+      document.querySelectorAll("[data-club-refresh]").forEach((button) => {
+        button.disabled = clubRefreshPending;
+        button.setAttribute("aria-busy", String(clubRefreshPending));
+        button.textContent = clubRefreshPending ? "Refreshing…" : "Refresh";
+      });
+    }
+
+    async function refreshClubsManually() {
+      if (clubRefreshPending) return;
+      const city = citySelect.value;
+      if (liveDiscoveryIsLoading(city) || liveMarketRefreshes.has(city)) {
+        showToast("Clubs are already loading. Please wait a moment.");
+        return;
+      }
+      clubRefreshPending = true;
+      syncClubRefreshButtons();
+      try {
+        const refreshed = await refreshVisibleHomeDiscovery({ bypassCache: true });
+        if (citySelect.value === city && activeTab === "venues") {
+          showToast(refreshed ? "Club information refreshed" : "Could not refresh clubs. Please try again.");
+        }
+      } catch {
+        showToast("Could not refresh clubs. Please try again.");
+      } finally {
+        clubRefreshPending = false;
+        syncClubRefreshButtons();
+      }
+    }
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest("[data-club-refresh]")) return;
+      event.preventDefault();
+      void refreshClubsManually();
+    });
+
+    async function refreshVisibleHomeDiscovery({ bypassCache = false, automatic = false } = {}) {
+      if (document.visibilityState !== "visible") return;
+      if (automatic && activeTab === "venues") return;
+      return loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
+    }
+    window.setInterval(() => { void refreshVisibleHomeDiscovery({ automatic: true }); }, HOME_DISCOVERY_REFRESH_MS);
     window.addEventListener("mydancr:public-visibility", (event) => {
       const hiddenIds = event.detail?.hiddenIds || [];
       if (hiddenIds.includes(profileModal.dataset.publicDancerId)) {
@@ -68763,13 +68819,13 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         renderCustomerQuickActions();
-        void refreshVisibleHomeDiscovery({ bypassCache: true });
+        void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
       }
     });
     window.addEventListener("focus", () => {
       if (refreshBrowserAccountView()) return;
       renderCustomerQuickActions();
-      void refreshVisibleHomeDiscovery({ bypassCache: true });
+      void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
     });
     window.addEventListener("storage", (event) => {
       if (event.key === PUBLIC_DISCOVERY_REFRESH_KEY && event.newValue) {
@@ -68788,7 +68844,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       if (refreshBrowserAccountView()) return;
       if (!event.persisted) return;
       consumePublicDiscoveryRefreshRequest();
-      void refreshVisibleHomeDiscovery({ bypassCache: true });
+      void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
       syncDeviceSavedDealPasses();
       renderCustomerQuickActions();
       if (isCustomerSession()) void loadLiveCustomerSaved();

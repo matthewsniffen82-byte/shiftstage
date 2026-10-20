@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import vm from "node:vm";
 
 const profileRoute = await readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8");
 const liveApp = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
+const gridSource = await readFile(new URL("../public/dancer-grid-card.js", import.meta.url), "utf8");
 
 test("legacy venue URLs resolve real production data before redirecting to the canonical in-app profile", () => {
   assert.match(profileRoute, /getVenueProfile\(createAdminSupabaseClient\(\), slug\)/);
@@ -101,8 +103,12 @@ test("venue details reuse the production Dancers grid for dancers working now", 
   assert.doesNotMatch(venueDetail, /profileCard\(|venueUpcomingShiftRow\(|venue-shift-row|venue-shift-list/);
   assert.match(sharedCard, /homeDiscoveryFeedStatus\(profile\)[\s\S]*?homeDancerGridScheduleLabel\(profile, city\)/);
   assert.match(sharedCard, /groupClass = status\.className === "is-now"[\s\S]*?"is-upcoming"[\s\S]*?"is-open"/);
-  assert.match(sharedCard, /class="dancer-card home-dancer-grid-card \$\{groupClass\}/);
-  assert.match(sharedCard, /href="\$\{profileHref\}"[\s\S]*?aria-label="Open \$\{safeName\}'s full profile"/);
+  assert.match(sharedCard, /window\.MydancrDancerGrid\.render\([\s\S]*?href: profileHref,[\s\S]*?groupClass, compact: compactDirectory/);
+  const gridContext = { window: {} };
+  vm.runInNewContext(gridSource, gridContext);
+  const cardMarkup = gridContext.window.MydancrDancerGrid.render({ name: 'Star', href: '/dancers/star', groupClass: 'is-now', compact: true });
+  assert.match(cardMarkup, /class="dancer-card home-dancer-grid-card is-now is-compact-directory"/);
+  assert.match(cardMarkup, /href="\/dancers\/star"[\s\S]*?aria-label="Open Star's full profile"/);
   assert.match(liveApp, /Venue detail uses the exact same compact production profile tiles[\s\S]*?\.venue-dancer-grid \{[\s\S]*?display: grid !important;[\s\S]*?grid-template-columns: repeat\(3, minmax\(0, 1fr\)\) !important;/);
   const venueCardRule = liveApp.match(/\.venue-dancer-grid > \.home-dancer-grid-card \{[^}]*\}/)?.[0] || "";
   assert.match(venueCardRule, /aspect-ratio: 9 \/ 16 !important;/);
@@ -300,7 +306,7 @@ test("venue scroll cards remain separate from the deeper venue detail hierarchy"
 test("venue profiles keep Back inside the card and preserve the shared floating navigation", () => {
   assert.match(
     liveApp,
-    /<div\b[^>]*\bclass="venue-detail" role="dialog" aria-modal="true" aria-labelledby="venueDetailName">/,
+    /<div\b[^>]*\bclass="venue-detail"[^>]* role="dialog" aria-modal="true" aria-labelledby="venueDetailName">/,
   );
   assert.match(
     liveApp,

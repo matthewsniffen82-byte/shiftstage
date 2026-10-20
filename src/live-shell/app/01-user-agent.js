@@ -554,6 +554,7 @@
     const homeDiscoveryFeedQrPromptsShown = new Set();
     const HOME_DISCOVERY_QR_PROMPT_DELAY_MS = 3000;
     const HOME_DISCOVERY_REFRESH_MS = 30000;
+    let clubRefreshPending = false;
     const PROFILE_NAVIGATION_PREFETCH_TTL_MS = 20 * 1000;
     const PROFILE_NAVIGATION_PREFETCH_LIMIT = 4;
     const profileNavigationPrefetchCache = new Map();

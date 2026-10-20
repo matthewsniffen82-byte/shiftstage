@@ -709,11 +709,52 @@
     if (initialHomeDestinationRequested) {
       focusHomeResults();
     }
-    async function refreshVisibleHomeDiscovery({ bypassCache = false } = {}) {
-      if (document.visibilityState !== "visible") return;
-      await loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
+    function clubRefreshButtonMarkup() {
+      return `<button class="club-refresh-button" type="button" data-club-refresh aria-busy="${clubRefreshPending}"${clubRefreshPending ? " disabled" : ""}>${clubRefreshPending ? "Refreshing…" : "Refresh"}</button>`;
     }
-    window.setInterval(() => { void refreshVisibleHomeDiscovery(); }, HOME_DISCOVERY_REFRESH_MS);
+
+    function syncClubRefreshButtons() {
+      document.querySelectorAll("[data-club-refresh]").forEach((button) => {
+        button.disabled = clubRefreshPending;
+        button.setAttribute("aria-busy", String(clubRefreshPending));
+        button.textContent = clubRefreshPending ? "Refreshing…" : "Refresh";
+      });
+    }
+
+    async function refreshClubsManually() {
+      if (clubRefreshPending) return;
+      const city = citySelect.value;
+      if (liveDiscoveryIsLoading(city) || liveMarketRefreshes.has(city)) {
+        showToast("Clubs are already loading. Please wait a moment.");
+        return;
+      }
+      clubRefreshPending = true;
+      syncClubRefreshButtons();
+      try {
+        const refreshed = await refreshVisibleHomeDiscovery({ bypassCache: true });
+        if (citySelect.value === city && activeTab === "venues") {
+          showToast(refreshed ? "Club information refreshed" : "Could not refresh clubs. Please try again.");
+        }
+      } catch {
+        showToast("Could not refresh clubs. Please try again.");
+      } finally {
+        clubRefreshPending = false;
+        syncClubRefreshButtons();
+      }
+    }
+
+    document.addEventListener("click", (event) => {
+      if (!event.target.closest("[data-club-refresh]")) return;
+      event.preventDefault();
+      void refreshClubsManually();
+    });
+
+    async function refreshVisibleHomeDiscovery({ bypassCache = false, automatic = false } = {}) {
+      if (document.visibilityState !== "visible") return;
+      if (automatic && activeTab === "venues") return;
+      return loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
+    }
+    window.setInterval(() => { void refreshVisibleHomeDiscovery({ automatic: true }); }, HOME_DISCOVERY_REFRESH_MS);
     window.addEventListener("mydancr:public-visibility", (event) => {
       const hiddenIds = event.detail?.hiddenIds || [];
       if (hiddenIds.includes(profileModal.dataset.publicDancerId)) {
@@ -729,13 +770,13 @@
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         renderCustomerQuickActions();
-        void refreshVisibleHomeDiscovery({ bypassCache: true });
+        void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
       }
     });
     window.addEventListener("focus", () => {
       if (refreshBrowserAccountView()) return;
       renderCustomerQuickActions();
-      void refreshVisibleHomeDiscovery({ bypassCache: true });
+      void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
     });
     window.addEventListener("storage", (event) => {
       if (event.key === PUBLIC_DISCOVERY_REFRESH_KEY && event.newValue) {
@@ -754,7 +795,7 @@
       if (refreshBrowserAccountView()) return;
       if (!event.persisted) return;
       consumePublicDiscoveryRefreshRequest();
-      void refreshVisibleHomeDiscovery({ bypassCache: true });
+      void refreshVisibleHomeDiscovery({ bypassCache: true, automatic: true });
       syncDeviceSavedDealPasses();
       renderCustomerQuickActions();
       if (isCustomerSession()) void loadLiveCustomerSaved();

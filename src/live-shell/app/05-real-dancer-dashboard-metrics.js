@@ -827,6 +827,7 @@
           if (cursor && !keepCurrentResults) publishResults();
         } while (cursor);
         publishResults();
+        return true;
       } catch (error) {
         if (identity !== JSON.stringify(discoveryRequestHeaders())
           || citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) {
@@ -860,6 +861,7 @@
           void loadLiveDiscovery(city, { force: true, cacheBust: true, background: true });
         }
       }
+      return false;
     }
 
     function discoveryRequestScope(city) {

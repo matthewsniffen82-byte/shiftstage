@@ -287,8 +287,10 @@
     }
 
     function venueDancers(city, venueName) {
-      return discoveryMarket(city).dancers
-        .filter((profile) => isApprovedPublicProfile(profile) && profile.venue === venueName)
+      const market = discoveryMarket(city);
+      const venueId = market.venues?.find((venue) => venue.name === venueName)?.id;
+      return market.dancers
+        .filter((profile) => isApprovedPublicProfile(profile) && (venueId && profile.venueId ? profile.venueId === venueId : profile.venue === venueName))
         .map((profile) => withTrendingRank(profile, city));
     }
 
@@ -315,7 +317,10 @@
       const activitySections = [
         `
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
-            <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now · ${tonight.length}</span></h3>
+            <div class="venue-roster-heading">
+              <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now · ${tonight.length}</span></h3>
+              ${clubRefreshButtonMarkup()}
+            </div>
             <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
             ${tonight.length
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)

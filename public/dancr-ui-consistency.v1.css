@@ -2531,3 +2531,47 @@ html body.dancr-button-system:has(> .app) #results.venue-profile-overlay
     color: #fff !important;
   }
 }
+/* Club data refreshes on request; keep the control beside the list/roster title. */
+html body.dancr-button-system .club-refresh-button:not([hidden]) {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 40px;
+  padding: 8px 12px !important;
+  border: 1px solid var(--venue-brand-edge, #4a365f) !important;
+  border-radius: 12px !important;
+  background: var(--venue-brand-surface, #100c17) !important;
+  color: #f5f3f8 !important;
+  font: inherit;
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  line-height: 1.2;
+  box-shadow: none !important;
+  white-space: nowrap;
+  cursor: pointer;
+}
+html body.dancr-button-system .club-refresh-button[hidden] { display: none !important; }
+html body.dancr-button-system .club-refresh-button:disabled { opacity: .65; cursor: wait; }
+html body.dancr-button-system .club-refresh-button:focus-visible {
+  outline: 2px solid var(--venue-brand-light, #c4b5fd) !important;
+  outline-offset: 2px;
+}
+html body.dancr-button-system #results .venue-roster-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+html body.dancr-button-system #results .venue-roster-heading > .section-title { margin-block: 0 !important; }
+html body.dancr-button-system .content-head:has(> #clubDirectoryRefresh:not([hidden])) {
+  display: flex !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 6px 10px !important;
+}
+html body.dancr-button-system .content-head:has(> #clubDirectoryRefresh:not([hidden])) > #tabTitle {
+  flex: 1 1 180px;
+  min-width: 0;
+}

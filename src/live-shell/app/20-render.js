@@ -21,6 +21,9 @@
       updateTabCounts(city);
       updateHomeLiveSummary(city);
       const expectsVenueProfile = activeTab === "venues" && Boolean(selectedVenueName);
+      const clubDirectoryRefresh = document.getElementById("clubDirectoryRefresh");
+      if (clubDirectoryRefresh) clubDirectoryRefresh.hidden = activeTab !== "venues" || expectsVenueProfile;
+      syncClubRefreshButtons();
       document.body.classList.toggle("venue-full-view-open", expectsVenueProfile);
       results.classList.toggle("venue-profile-overlay", expectsVenueProfile);
       if (activeTab === "tv") {

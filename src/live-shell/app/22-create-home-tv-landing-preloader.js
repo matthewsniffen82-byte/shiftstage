@@ -273,6 +273,9 @@
         document.title,
         `${url.pathname}?${url.searchParams.toString()}${url.hash}`
       );
+      // Opening a club must load its scope even if the directory was showing
+      // another club or only dancers who are not working.
+      void loadLiveDiscovery(citySelect.value);
       render();
       syncOverlayScrollLock();
       focusVenueProfileStart(options);
