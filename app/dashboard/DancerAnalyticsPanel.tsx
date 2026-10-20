@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { DancerAnalyticsPeriod, DancerAnalyticsSelection, DancerAudienceAnalytics, DancerEngagementMetric, DancerRequestCounts } from "@/src/lib/dancr/dancer-analytics-types";
 import { requestDashboardJson } from "./dashboard-session";
-import { DancerDiscoveryBoosts } from "./DancerDiscoveryBoosts";
 import { DancerResultsTrend } from "./DancerResultsTrend";
 import { DancerRequestDialog } from "./DancerRequestDialog";
 import type { DancerRequestChannel, DancerRequestWindow } from "@/src/lib/dancr/dancer-request-types";
@@ -172,7 +171,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
           </dl>
           <p className="dancer-results-note">{roster.activeDays > 0 ? `${number(roster.activeDays)} active club ${roster.activeDays === 1 ? "day is" : "days are"} still in progress. ` : ""}{roster.checkoutEligibleDays === 0 ? "Checkout accuracy appears after an eligible visit ends." : "Accuracy uses ended days with recorded dancer check-ins."}</p>
         </> : <p className="dancer-results-note">Check-in activity is not available in this report yet.</p>}
-        <ResultsInfo label="Check-in activity">Check-ins and checkouts are your recorded actions. Hours merge overlapping records. Each ended visit needs your own checkout before expiry for that club day to count as complete. Staff checkout and automatic expiry earn no accuracy credit; active visits and older visits without dancer check-in evidence are not graded. Recorded external app time, including Both, is the largest separate factor in your performance score.</ResultsInfo>
+        <ResultsInfo label="Check-in activity">Check-ins and checkouts are your recorded actions. Hours merge overlapping records. A complete checkout day means you checked out before your visit expired. Staff checkouts and automatic expiry are shown separately from your own checkouts. Active visits and older visits without recorded check-ins are excluded from checkout accuracy.</ResultsInfo>
       </section>
       <section className="dancer-analytics-audience" aria-labelledby="dancer-shift-results-heading">
         <h3 id="dancer-shift-results-heading">Results by shift <small>Recorded working time</small></h3>
@@ -209,7 +208,6 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
           <summary>Trend chart</summary>
           <DancerResultsTrend points={current.trend} metric={trendMetric} onMetricChange={setTrendMetric} timezone={current.timezone} />
         </details>
-        {current.currentRank ? <p className="dancer-results-note">City activity rank #{number(current.currentRank)}</p> : null}
       </section>
       <section className="dancer-analytics-content" aria-labelledby="dancer-content-heading">
         <h3 id="dancer-content-heading">Top content <small>{periodLabel} · by likes and video views</small></h3>
@@ -219,7 +217,6 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
         </li>)}</ul> : <p>Content activity will appear here.</p>}
         {current.topContent.length > contentLimit && <button className="dancer-results-more" type="button" onClick={() => setContentLimit(value => value + 3)}>Show more content</button>}
       </section>
-      <DancerDiscoveryBoosts refreshKey={presenceKey} />
     </>}
     {requestWindow && <DancerRequestDialog window={requestWindow} onClose={() => setRequestWindow(null)} />}
   </div>;

@@ -15,11 +15,11 @@ test('recorded time uses actual completed minutes and distinguishes unknown from
   for(const [input,expected] of [[null,'Not recorded yet'],[undefined,'Not recorded yet'],[NaN,'Not recorded yet'],[-1,'Not recorded yet'],[0,'0m'],[0.001,'Less than 1 min'],[2.25,'2h 15m'],[1.9999,'1h 59m']])
     assert.equal(formatExternalHours(input),expected);
 });
-test('ranking confirmation requires a confirmed External or Both check-in, never pending, Internal or replayed taps',()=>{
+test('activity confirmation requires a confirmed External or Both check-in, never pending, Internal or replayed taps',()=>{
   for(const visibility of ['external','both']) {
     const message = externalTapRankingMessage({visibility,shiftCheckedIn:true,replayed:false});
-    assert.match(message,/now recording.*after 5 recorded external minutes/);
-    assert.doesNotMatch(message,/benefit active/);
+    assert.match(message,/now recording.*recorded activity in Results/);
+    assert.doesNotMatch(message,/rank|score|weight|benefit/i);
   }
   for(const receipt of [null,{}, {visibility:'internal',shiftCheckedIn:true},{visibility:'both',shiftCheckedIn:false},{visibility:'both',shiftCheckedIn:true,replayed:true}])
     assert.equal(externalTapRankingMessage(receipt),'');
@@ -66,18 +66,18 @@ function renderShift(progress,sourceType='nfc_presence',active=true) {
     {exports,require:name=>{assert.ok(name in deps,name);return deps[name];},Date,Intl});
   return renderToStaticMarkup(exports.default());
 }
-test('Overview offers Both for recorded Internal sessions and shows actual external hours with the ranking link',()=>{
+test('Overview retains visibility controls and hours without ranking disclosures',()=>{
+  const source = readFileSync('app/dashboard/DancerShiftManager.tsx','utf8');
+  for (const [, message] of source.matchAll(/setWorkingNowStatus\("([^"]*)"\)/g)) {
+    assert.doesNotMatch(message, /rank|score|weight|benefit/i);
+  }
   const internal=renderShift({visibility:'internal',externalHours:0});
   assert.match(internal,/Switch to Both/);assert.match(internal,/makes your approved profile public/);assert.match(internal,/End Working Now/);
   const both=renderShift({visibility:'both',externalHours:2.25});
-  assert.match(both,/External time this shift: <strong>2h 15m/);assert.match(both,/#dancer-performance-ranking/);
+  assert.match(both,/External time this shift: <strong>2h 15m/);assert.match(both,/#dancer-performance/);
   assert.match(both,/External time is recording/);assert.doesNotMatch(both,/Switch to Both|benefit active/);
   for (const html of [internal,both,renderShift(null,'nfc_presence',false)]) {
-    assert.match(html,/Rank higher everywhere/);
-    assert.match(html,/More time on <strong>External<\/strong> or <strong>Both<\/strong>/);
-    assert.match(html,/rank higher on club rosters, MyDancr and MyDancrTV/);
-    assert.match(html,/Starts after 5 min/);
-    assert.match(html,/40% of your score/);
+    assert.doesNotMatch(html.replace(/<[^>]*>/g, ""), /rank|score|weight|benefit|Starts after 5 min/i);
   }
   const unknown=renderShift({visibility:'both',externalHours:null});
   assert.match(unknown,/not recorded for this shift/);assert.doesNotMatch(unknown,/time is counting|Switch to Both/);

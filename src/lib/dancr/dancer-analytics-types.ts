@@ -43,7 +43,6 @@ export type DancerAudienceAnalytics = {
   videoViews: DancerEngagementMetric;
   socialLinkTaps: DancerEngagementMetric;
   audience: { totalFollowers: number; workingNowSubscribers: number };
-  currentRank: number | null;
   topContent: DancerTopContent[];
   performance: DancerPerformanceAnalytics;
 };

@@ -6,7 +6,6 @@ import type { PublicClubDeal } from "@/src/lib/dancr/types";
 import NfcIcon from "@/app/components/NfcIcon";
 import { VISIBILITY_OPTIONS, type VisibilityMode } from "@/src/lib/dancr/visibility-mode";
 import { externalTapRankingMessage } from "@/src/lib/dancr/external-ranking-progress";
-import { DANCER_SCORE_WEIGHTS } from "@/src/lib/dancr/venue-dancer-scores";
 import {
   persistRefreshedBrowserAuthSession,
   readBrowserAuthSession,
@@ -257,7 +256,7 @@ export function NfcTapClient({ token }: { token: string }) {
             <strong>Choose where you appear</strong>
             <p>{dancerNeedsSignIn ? "Sign in to choose your visibility." : "Select your visibility below."}</p>
             <p>Check-in lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown across all clubs</strong>. Tapping again won&apos;t extend it.</p>
-            <p><strong>Get discovered by guests.</strong> External check-in time is your largest ranking factor: {DANCER_SCORE_WEIGHTS.externalTime}%. Choose External or Both: your ranking benefit starts after 5 recorded external minutes and grows with more time. No requests or followers needed. Both keeps you on the internal roster too.</p>
+            <p><strong>Choose where guests see you.</strong> External shows you in public MyDancr discovery. Both also includes you on the club’s internal roster.</p>
             {!dancerNeedsSignIn ? <fieldset className="nfc-visibility" disabled={isSubmitting}>
               <legend>Show me on</legend>
               {VISIBILITY_OPTIONS.map(option => <label key={option.value}>

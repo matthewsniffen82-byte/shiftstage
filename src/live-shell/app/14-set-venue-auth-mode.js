@@ -535,7 +535,6 @@
       loadLiveDancerDeals();
       loadLiveDancerWeeklyReport();
       loadLiveDancerBilling();
-      loadLiveDancerRankingEvents();
       loadLiveDancerReviews();
       loadLiveNotifications();
       loadLiveSupportThreads();

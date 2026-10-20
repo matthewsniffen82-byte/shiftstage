@@ -6,8 +6,6 @@ import test from "node:test";
 import ts from "typescript";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import * as scoring from "../src/lib/dancr/venue-dancer-scores.ts";
-import * as progress from "../src/lib/dancr/external-ranking-progress.ts";
 
 const require = createRequire(import.meta.url);
 function compile(file, dependencies = {}) {
@@ -28,7 +26,7 @@ const { DancerAnalyticsPanel } = compile("../app/dashboard/DancerAnalyticsPanel.
   "./DancerRequestDialog": compile("../app/dashboard/DancerRequestDialog.tsx", {"./dashboard-session":{}}),
   "./DancerResultsTrend": compile("../app/dashboard/DancerResultsTrend.tsx"),
   "./dancer-results.css": {},
-  "./DancerDiscoveryBoosts": compile("../app/dashboard/DancerDiscoveryBoosts.tsx", {"./useDancerRankingStatus":{useDancerRankingStatus:()=>({status:null,error:false})},"@/src/lib/dancr/venue-dancer-scores":scoring,"@/src/lib/dancr/external-ranking-progress":progress}) });
+});
 const now = new Date("2026-09-23T12:00:00Z");
 const daysAgo = days => new Date(now.getTime() - days * 86400000).toISOString();
 function fixture() {
@@ -121,7 +119,8 @@ test("7-day analytics scope every metric to the owner, use disjoint periods, and
   assert.deepEqual({ ...result.videoViews }, { value: 1, previous: 1 });
   assert.equal(result.audience.totalFollowers, 2);
   assert.equal(result.audience.workingNowSubscribers, 1);
-  assert.equal(result.currentRank, 4);
+  assert.equal(Object.hasOwn(result, "currentRank"), false);
+  assert.equal(db.calls.some(call => call.table === "trending_scores"), false);
   assert.equal(result.topContent.find(item => item.kind === "video").views, 1);
   assert.equal(result.topContent.find(item => item.kind === "photo").likes, 1005);
   assert.ok(db.calls.some(call => call.table === "media_likes" && call.offset === 1000));
@@ -242,11 +241,12 @@ test("empty activity returns real zeroes with no invented rank or top content", 
   const rows = fixture();
   for (const key of Object.keys(rows)) if (key !== "dancer_profiles") rows[key] = [];
   const result = await service.getOwnDancerAudienceAnalytics(database(rows), "owner", "7d", now);
-  assert.equal(result.currentRank, null);
+  assert.equal(Object.hasOwn(result, "currentRank"), false);
   assert.equal(result.topContent.length, 0);
   assert.equal(result.profileViews.value, 0);
   assert.deepEqual({ ...result.videoViews }, { value: 0, previous: 0 });
-  const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
+  const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: { ...result, currentRank: 4 } }));
+  assert.doesNotMatch(html, /City activity rank|performance score|Overall Performance|score weight|rank higher|How scoring works/i);
   assert.match(html, /Your results will appear here/);
   assert.doesNotMatch(html, /Unranked|City rank|Club Deal|Cashier|Weekly results|milestones/);
 });
@@ -256,11 +256,12 @@ test("results lead with four demand cards and retain audience growth, content an
   result.profileViews = { value: 12, previous: 0 };
   result.contentLikes = { value: 5, previous: 10 };
   result.socialLinkTaps = { value: 5, previous: 10 };
-  const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: result }));
+  const html = renderToStaticMarkup(React.createElement(DancerAnalyticsPanel, { initialAnalytics: { ...result, currentRank: 4 } }));
+  assert.doesNotMatch(html, /City activity rank|performance score|Overall Performance|score weight|rank higher|How scoring works/i);
   assert.equal((html.match(/class="dancer-analytics-metric"/g) || []).length, 8);
   for (const text of ["Table requests", "VIP requests", "Returning VIP requesters", "Verified entries", "New followers", "Results by shift", "Recorded working time", "All clubs"]) assert.ok(html.includes(text), text);
   assert.ok(html.indexOf("Table requests") < html.indexOf("Profile views"));
-  for (const text of ["Profile views", "New followers", "Content likes", "Video views", "Your audience", "Top content", "City activity rank #4", "Your performance score", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
+  for (const text of ["Profile views", "New followers", "Content likes", "Video views", "Your audience", "Top content", "+12 vs prior 7 days", "−50% vs prior 7 days"]) assert.ok(html.includes(text), text);
   assert.doesNotMatch(html, /Social link taps|Infinity|NaN|Unranked/);
 });
 

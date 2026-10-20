@@ -1,77 +1,69 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
+import vm from 'node:vm';
 import ts from 'typescript';
-import { renderToStaticMarkup } from 'react-dom/server';
-import * as progress from '../src/lib/dancr/external-ranking-progress.ts';
-import * as scoring from '../src/lib/dancr/venue-dancer-scores.ts';
 
-const require = createRequire(import.meta.url);
-const status = (external = 2, overall = 1, eligible = true) => ({eligible,score:overall,
-  scorecard:{scores:{externalTime:{value:external},overall:{value:overall}}}});
-function compile(file, deps, globals = {}) {
-  const exports = {};
-  vm.runInNewContext(ts.transpileModule(readFileSync(file,'utf8'), {compilerOptions:{module:ts.ModuleKind.CommonJS,
-    target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText, {exports,AbortController,...globals,
-    require:name=>{assert.ok(name in deps, name);return deps[name];}});
+function compile(file, overrides) {
+  const source = readFileSync(file, 'utf8'), exports = {};
+  const deps = Object.fromEntries([...source.matchAll(/from "([^"]+)"/g)].map(match => [match[1], {}]));
+  Object.assign(deps, overrides);
+  vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText,
+    { exports, Request, Response, URL, require: name => deps[name] });
   return exports;
 }
-function render(value, error = false) {
-  const { DancerExternalRankingBenefit } = compile('app/dashboard/DancerExternalRankingBenefit.tsx',{
-    'react/jsx-runtime':require('react/jsx-runtime'),
-    './useDancerRankingStatus':{useDancerRankingStatus:()=>({status:value,error})},
-    '@/src/lib/dancr/external-ranking-progress':progress,'@/src/lib/dancr/venue-dancer-scores':scoring,
-  });
-  return renderToStaticMarkup(DancerExternalRankingBenefit({refreshKey:'shift'}));
-}
 
-test('Overview confirms actual earned benefit, and never treats hidden, pending or unavailable scores as active',()=>{
-  assert.match(render(status()), /External ranking benefit active/);
-  for (const [external,overall,eligible] of [[0,null,true],[null,20,true],[2,null,true],[2,1,false],[NaN,1,true],[2,Infinity,true],[101,1,true]]) {
-    assert.equal(progress.hasExternalRankingBenefit(status(external,overall,eligible)),false);
-    assert.doesNotMatch(render(status(external,overall,eligible)), /benefit active/);
+test('legacy dancer ranking alerts return no details and still require dancer authorization', async () => {
+  for (const denied of [false, true]) {
+    const route = compile('app/api/dancer/ranking-events/route.ts', {
+      'next/server': { NextResponse: Response },
+      '@/src/lib/api': { apiError: () => Response.json({ ok: false }, { status: 403 }) },
+      '@/src/lib/supabase/request': { createRequestSupabaseContext: async (_request, access) => {
+        assert.equal(access.role, 'dancer'); if (denied) throw new Error('Denied'); return {};
+      } },
+    });
+    const response = await route.GET(new Request('https://example.test/api/dancer/ranking-events'));
+    assert.equal(response.status, denied ? 403 : 200);
+    if (!denied) { assert.deepEqual(await response.json(), { ok: true, events: [] }); assert.match(response.headers.get('cache-control'), /no-store/); }
   }
-  assert.match(render(status(0,null)),/after 5 recorded external minutes/);
-  assert.match(render(status(2,1,false)),/approved and public/);
-  assert.match(render(null),/Checking ranking benefit/);
-  assert.match(render(status(),true),/temporarily unavailable/);
-  assert.doesNotMatch(render(status(),true),/benefit active/);
 });
 
-function hookFixture() {
-  let state = null, effect, cleanup, deps;
-  const requests = [], intervals = new Map(), events = new Map();
-  const document = {visibilityState:'visible',addEventListener:(name,fn)=>events.set(name,fn),removeEventListener:(name)=>events.delete(name)};
-  const hook = compile('app/dashboard/useDancerRankingStatus.ts',{
-    react:{useState:()=>[state,value=>{state=value;}],useEffect:(fn,next)=>{if(!deps||next[0]!==deps[0]){effect=fn;deps=next;}}},
-    './dashboard-session':{requestDashboardJson:(url,options)=>new Promise((resolve,reject)=>requests.push({url,options,resolve,reject}))},
-  },{document,window:{setInterval:(fn,ms)=>{assert.equal(ms,60_000);intervals.set(fn,fn);return fn;},clearInterval:fn=>intervals.delete(fn)}}).useDancerRankingStatus;
-  return {requests,document,intervals,events,render(key='shift'){
-    const value=hook(key);if(effect){cleanup?.();cleanup=effect();effect=null;}return value;
-  },unmount(){cleanup?.();},tick(){for(const fn of intervals.values())fn();},visible(){document.visibilityState='visible';events.get('visibilitychange')?.();}};
-}
-const settle = () => new Promise(resolve=>setImmediate(resolve));
-
-test('minute refresh detects newly earned points, avoids overlapping requests, pauses hidden polling and clears failures',async()=>{
-  const f=hookFixture();assert.equal(f.render().status,null);
-  assert.equal(f.requests.length,1);assert.equal(f.requests[0].options.expectedRole,'dancer');
-  f.tick();assert.equal(f.requests.length,1);
-  f.requests[0].resolve(status(0,null));await settle();assert.equal(progress.hasExternalRankingBenefit(f.render().status),false);
-  f.tick();assert.equal(f.requests.length,2);
-  f.requests[1].resolve(status());await settle();assert.equal(progress.hasExternalRankingBenefit(f.render().status),true);
-  f.document.visibilityState='hidden';f.tick();assert.equal(f.requests.length,2);
-  f.visible();assert.equal(f.requests.length,3);
-  f.requests[2].reject(new Error('Temporary failure'));await settle();assert.equal(f.render().error,true);assert.equal(f.render().status,null);
-  f.tick();f.requests[3].resolve(status());await settle();assert.equal(f.render().error,false);
-  f.unmount();assert.equal(f.intervals.size,0);assert.equal(f.events.size,0);
+test('historical ranking notifications are hidden from dancers while activity alerts and manager notices remain', async () => {
+  for (const role of ['dancer', 'venue']) {
+    const notices = [{ notification_type: 'ranking_milestone' }, { notification_type: 'engagement' }, { notification_type: 'support' }];
+    const route = compile('app/api/notifications/route.ts', {
+      'next/server': { NextResponse: Response },
+      '@/src/lib/api': { apiError: error => { throw error; } },
+      '@/src/lib/supabase/request': { createRequestSupabaseContext: async () => ({ client: {}, user: { id: 'owner' } }) },
+      '@/src/lib/dancr/auth': { getAccountByUserId: async () => ({ role }) },
+      '@/src/lib/dancr/customer-notification-delivery': { notificationPushDelivery: () => ({}) },
+      '@/src/lib/dancr/venue-notification-preferences': { venueNotificationEnabled: () => true },
+      '@/src/lib/dancr/notifications': { getUserNotifications: async (_client, id, _unread, include) => {
+        assert.equal(id, 'owner'); return notices.filter(include);
+      } },
+    });
+    const response = await route.GET(new Request('https://example.test/api/notifications'));
+    const data = await response.json();
+    assert.deepEqual(data.notifications.map(row => row.notification_type), role === 'dancer' ? ['engagement', 'support'] : notices.map(row => row.notification_type));
+  }
 });
 
-test('changing shift hides stale benefit immediately and aborts old reads; late replies after cleanup cannot update state',async()=>{
-  const f=hookFixture();f.render();f.requests[0].resolve(status());await settle();assert.ok(f.render().status);
-  f.tick();const old=f.requests[1];assert.equal(f.render('next-shift').status,null);assert.equal(old.options.signal.aborted,true);
-  old.resolve(status());await settle();assert.equal(f.render('next-shift').status,null);
-  const current=f.requests[2];f.unmount();assert.equal(current.options.signal.aborted,true);
-  current.resolve(status());await settle();assert.equal(f.render('next-shift').status,null);
+test('legacy dancer dashboard keeps analytics without ranking cards or milestone loaders', () => {
+  const shell = readFileSync('src/live-shell/shell.html', 'utf8');
+  const dancer = shell.slice(shell.indexOf('id="dancerAnalyticsSummary"'), shell.indexOf('id="dancerDealSection"'));
+  assert.match(dancer, /Weekly activity report|Social growth/);
+  assert.doesNotMatch(dancer, /rank|score|milestone/i);
+  const render = readFileSync('src/live-shell/app/17-render-dancer-setup.js', 'utf8');
+  assert.doesNotMatch(render, /dancerRankMetrics|dancerRankingNotifications|weeklyRankText|rank movement/i);
+  assert.match(render, /Profile views/); assert.match(render, /New followers/);
+});
+
+test('public cards omit rank badges while club manager score and rank displays remain', () => {
+  const card = readFileSync('src/live-shell/app/11-post-verified-shift.js', 'utf8');
+  const modal = readFileSync('src/live-shell/app/13-open-profile-modal.js', 'utf8');
+  assert.doesNotMatch(card, /card-trend-marker|rank-one-card/);
+  assert.doesNotMatch(modal, /Trending rank|modalTrendRank/);
+  const manager = readFileSync('app/dashboard/VenueDancerPerformance.tsx', 'utf8');
+  assert.match(manager, /venue-score-card-rank/); assert.match(manager, /selected\.rank/);
+  assert.match(manager, /DANCER_SCORE_WEIGHTS/);
 });

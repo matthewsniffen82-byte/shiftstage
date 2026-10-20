@@ -85,7 +85,7 @@ test("older-schema ranking fallback has bounded concurrency", async () => {
   assert.equal(result.size, 5); assert.equal(peak, 2);
 });
 
-test("committed rankings remain successful when notification and audit writes fail", async () => {
+test("committed rankings remain successful when milestone history and audit writes fail", async () => {
   const admin = compile("src/lib/dancr/admin.ts");
   let saved = false;
   const dancer = { id: "dancer", user_id: "user", stage_name: "Dancer", city: "City", trending_scores: { rank: 5 } };
@@ -101,4 +101,22 @@ test("committed rankings remain successful when notification and audit writes fa
   assert.equal(saved, true);
   assert.equal(result.rankings.length, 1);
   assert.equal(result.warnings.length, 2);
+});
+
+test("rank recalculation saves scores and history without creating or sending dancer alerts", async () => {
+  const admin = compile("src/lib/dancr/admin.ts"), writes = [], deliveriesBefore = deliveryCalls;
+  const dancer = { id: "dancer", user_id: "user", stage_name: "Dancer", city: "City", trending_scores: { rank: 5 } };
+  const db = { rpc: async () => ({ data: [{ dancer_id: "dancer", metrics }], error: null }), from(table) {
+    const query = { select() { return query; }, eq() { return query; }, order() { return query; },
+      range: async () => ({ data: [dancer], error: null }),
+      upsert: async rows => { writes.push({ table, rows }); return { error: null }; },
+      insert: async rows => { writes.push({ table, rows }); return { error: null }; },
+    }; return query;
+  } };
+  const result = await admin.recalculateCityRankings(db, "admin", "City");
+  assert.equal(result.rankings.length, 1);
+  assert.ok(writes.some(write => write.table === 'trending_scores'));
+  assert.ok(writes.some(write => write.table === 'ranking_events'));
+  assert.equal(writes.some(write => write.table === 'notifications'), false);
+  assert.equal(deliveryCalls, deliveriesBefore);
 });

@@ -3,7 +3,6 @@ import { apiError } from "@/src/lib/api";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { readRankingCandidates } from "@/src/lib/dancr/discovery-service";
-import { getPerformancePlacementScorecards, PLACEMENT_PERIOD } from "@/src/lib/dancr/performance-placement";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,14 +16,6 @@ export async function GET(request: Request) {
     const result = await admin.rpc("get_discovery_candidates",{p_surface:"grid",p_city:profile.data.city,p_dancer_ids:[profile.data.id]});
     if (result.error) throw result.error;
     const row = readRankingCandidates(result.data).find(candidate => candidate.dancerId === profile.data.id);
-    const [scorecard] = await getPerformancePlacementScorecards(admin,[row || { dancerId: profile.data.id }]);
-    let venueName: string | undefined;
-    if (scorecard) {
-      const venue = await admin.from("venues").select("name").eq("id",scorecard.venueId).single();
-      if (venue.error) throw venue.error;
-      venueName = venue.data.name;
-    }
-    return NextResponse.json({ok:true,eligible:Boolean(row),score:scorecard?.scores.overall.value ?? null,
-      scorecard:scorecard ? {...scorecard,venueName} : null,period:PLACEMENT_PERIOD},{headers:{"Cache-Control":"private, no-store"}});
-  } catch (error) { return apiError(error,"Unable to load discovery placement."); }
+    return NextResponse.json({ok:true,eligible:Boolean(row)},{headers:{"Cache-Control":"private, no-store"}});
+  } catch (error) { return apiError(error,"Unable to load profile visibility."); }
 }

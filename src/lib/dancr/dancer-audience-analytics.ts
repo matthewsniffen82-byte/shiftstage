@@ -83,7 +83,7 @@ export async function getOwnDancerAudienceAnalytics(
     return { value, previous };
   };
 
-  const [profileViews, socialLinkTaps, followers, totalFollowers, photoLikes, videoLikes, videoViews, previousVideoViews, ranking, performanceResult, trendResult] = await Promise.all([
+  const [profileViews, socialLinkTaps, followers, totalFollowers, photoLikes, videoLikes, videoViews, previousVideoViews, performanceResult, trendResult] = await Promise.all([
     comparedCount("profile_views", "viewed_at"),
     comparedCount("social_clicks", "clicked_at"),
     count("follows", "created_at", start, end),
@@ -92,11 +92,9 @@ export async function getOwnDancerAudienceAnalytics(
     groupedMediaActivity(admin, dancerId, "video", "likes", start, end),
     groupedMediaActivity(admin, dancerId, "video", "views", start, end),
     canCompare ? groupedMediaActivity(admin, dancerId, "video", "views", previousStart, start) : Promise.resolve(null),
-    admin.from("trending_scores").select("rank").eq("dancer_id", dancerId).maybeSingle(),
     admin.rpc("get_dancer_performance_analytics", { p_dancer_id: dancerId, p_since: start, p_until: end }),
     admin.rpc("get_dancer_activity_trend", { p_dancer_id: dancerId, p_since: start, p_until: end }),
   ]);
-  if (ranking.error) throw ranking.error;
   if (performanceResult.error) throw performanceResult.error;
   if (trendResult.error) throw trendResult.error;
   if (!Array.isArray(trendResult.data)) throw new Error("Activity trend could not be loaded.");
@@ -159,7 +157,6 @@ export async function getOwnDancerAudienceAnalytics(
     newFollowers: { value: followers, previous: null },
     contentLikes: { value: [...photoLikes.values(), ...videoLikes.values()].reduce((sum, value) => sum + value, 0), previous: null },
     audience: { totalFollowers, workingNowSubscribers: performance.alerts.total },
-    currentRank: Number(ranking.data?.rank) > 0 ? Number(ranking.data?.rank) : null,
     topContent, performance,
   };
 }

@@ -42253,17 +42253,13 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           <summary>
             <span class="dashboard-collapse-title">
               <strong>Dancer analytics</strong>
-              <span id="dancerAnalyticsSummary">Expand to view profile traffic, rank movement, social clicks, notifications, and guest intent.</span>
+              <span id="dancerAnalyticsSummary">Expand to view profile traffic, followers, social clicks, notifications, and guest intent.</span>
             </span>
           </summary>
           <div class="dancer-analytics-body">
             <div class="approved-analytics dancer-impact-card" id="dancerAnalyticsPreviewCard">
               <span class="eyebrow">Monthly impact</span>
               <div class="value-message" id="dancerValueMessage">Posting your schedule brings guests, followers, and direction requests.</div>
-            </div>
-            <div class="approved-analytics">
-              <h3>Current rank</h3>
-              <div class="metric-grid compact-metrics" id="dancerRankMetrics" aria-label="Dancer ranking metrics"></div>
             </div>
             <div class="approved-analytics">
               <h3>Discovery and guest intent</h3>
@@ -42275,9 +42271,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
               <p class="dancer-impact-subcopy" id="dancerCustomerImpactDetail">Direction requests and Going Now signals unlock after approval.</p>
             </div>
             <div class="approved-analytics">
-              <h3>Weekly rank report</h3>
+              <h3>Weekly activity report</h3>
               <div class="value-message" id="dancerWeeklySummary">Your weekly summary will appear after your profile is active.</div>
-              <div class="metric-grid" id="dancerWeeklyMetrics" aria-label="Weekly rank report"></div>
+              <div class="metric-grid" id="dancerWeeklyMetrics" aria-label="Weekly activity report"></div>
             </div>
             <div class="approved-analytics">
               <h3>Club traffic</h3>
@@ -42297,10 +42293,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
               <h3>Advanced analytics</h3>
               <p class="value-message">Search, returning viewers, and conversion detail.</p>
               <div class="metric-grid" id="dancerAdvancedMetrics" aria-label="Advanced analytics"></div>
-            </div>
-            <div class="approved-analytics">
-              <h3>Ranking alerts</h3>
-              <div class="rank-notification-list" id="dancerRankingNotifications">Milestone notifications will appear here.</div>
             </div>
           </div>
         </details>
@@ -48097,18 +48089,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       } catch (error) {
         liveDancerBilling = null;
         reportOptionalDancerLoadError(error, "Could not load billing status", options);
-      }
-    }
-
-    async function loadLiveDancerRankingEvents(options = {}) {
-      if (!isDancerSession()) return;
-      try {
-        const data = await getAuthenticatedJson("/api/dancer/ranking-events");
-        liveDancerRankingEvents = data.events || [];
-        renderDancerSetupWhenEditorIdle();
-      } catch (error) {
-        liveDancerRankingEvents = [];
-        reportOptionalDancerLoadError(error, "Could not load ranking alerts", options);
       }
     }
 
@@ -53924,12 +53904,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
 
     function profileCard(profile, index, options = {}) {
       const isPending = profile.status === "Pending";
-      const isTrending = !isPending && profile.trendRank;
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
-      const trendBadge = "";
-      const trendMarker = isTrending
-        ? `<span class="card-trend-marker" aria-label="Trending rank ${escapeHtml(profile.trendRank)}"><span class="card-trend-symbol" aria-hidden="true">↗</span><span>#${escapeHtml(profile.trendRank)}</span></span>`
-        : "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
       const locationBadge = !isPending ? profileLocationStatusBadge(profile) : "";
@@ -53954,8 +53929,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
           <div class="card-badges">
             ${statusBadge}
-            ${trendBadge}
-            ${trendMarker}
           </div>
           ${options.feedActions && !isPending ? `<span class="card-profile-destination" aria-hidden="true"><svg class="card-profile-symbol" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="15" height="15" rx="3"></rect><circle cx="11" cy="9.5" r="2.25"></circle><path d="M7.25 16c.35-2.15 1.65-3.35 3.75-3.35s3.4 1.2 3.75 3.35"></path></svg><svg class="card-profile-chevron" viewBox="0 0 12 20"><path d="m3 3 6 7-6 7"></path></svg></span>` : ""}
         </div>
@@ -53977,7 +53950,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${escapeHtml(profile.name)}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
           : "";
         return `
-          <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="card dancer-card home-feed-card ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" data-profile="${escapeHtml(profile.name)}">
+          <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="card dancer-card home-feed-card" data-profile="${escapeHtml(profile.name)}">
             <a class="dancer-card-link" href="${escapeHtml(profileHref)}" aria-label="Open ${escapeHtml(profile.name)} profile">
               ${profileCardBody}
             </a>
@@ -53990,7 +53963,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         `;
       }
       return `
-        <a data-public-dancer-id="${escapeOptionValue(isPending ? "" : profile.id || "")}" class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="${escapeHtml(profileHref)}" data-profile="${escapeHtml(profile.name)}" aria-label="${escapeHtml(profile.name)} profile">
+        <a data-public-dancer-id="${escapeOptionValue(isPending ? "" : profile.id || "")}" class="card dancer-card ${isPending ? "pending" : ""}" href="${escapeHtml(profileHref)}" data-profile="${escapeHtml(profile.name)}" aria-label="${escapeHtml(profile.name)} profile">
           ${profileCardBody}
         </a>
       `;
@@ -55802,8 +55775,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         ? exactProfileIndex
         : discoveryMarket(city).dancers.findIndex((item) => item.name === profile.name);
       const isPending = profile.status === "Pending";
-      const profileWithTrend = !isPending && !internal ? withTrendingRank(profile, city) : profile;
-      const modalTrendRank = profileWithTrend.trendRank;
       const status = shiftStatus(profile);
       const modalIsWorkingNow = isWorkingTonight(profile, city);
       const modalHasUpcomingShift = false;
@@ -55842,13 +55813,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       modalRank.hidden = true;
       modalRank.setAttribute("aria-hidden", "true");
       modalRank.removeAttribute("aria-label");
-      if (modalTrendRank) {
-        modalRank.className = "modal-rank card-trend-marker modal-card-trend";
-        modalRank.innerHTML = `<span class="card-trend-symbol" aria-hidden="true">↗</span><span>#${modalTrendRank}</span>`;
-        modalRank.hidden = false;
-        modalRank.removeAttribute("aria-hidden");
-        modalRank.setAttribute("aria-label", `Trending rank ${modalTrendRank}`);
-      }
       initializeProfileMediaLibrary(profile, profileIndex, { preview: isPrivatePreview });
       const photoCount = modalGallery.profilePhotoItems?.length || 0;
       syncProfileMediaTabCounts(photoCount, modalGallery.profileTvVideos.length);
@@ -57370,7 +57334,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       loadLiveDancerDeals();
       loadLiveDancerWeeklyReport();
       loadLiveDancerBilling();
-      loadLiveDancerRankingEvents();
       loadLiveDancerReviews();
       loadLiveNotifications();
       loadLiveSupportThreads();
@@ -59805,14 +59768,11 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         const scheduleConversionRate = Math.round((dashboardMetrics.goingTonightClicks / Math.max(1, dashboardMetrics.scheduleViews30)) * 1000) / 10;
         const searchImpressions = dashboardMetrics.searchAppearances + dashboardMetrics.nearbyViews;
         const strongestClub = dashboardMetrics.clubPerformance.find((club) => club.name === dashboardMetrics.venue) || dashboardMetrics.clubPerformance[0] || { name: dashboardMetrics.venue, avgViews: 0 };
-        const weeklyStartRank = liveMetricNumber(liveDancerWeeklyReport?.startRank, 0);
-        const weeklyEndRank = liveMetricNumber(liveDancerWeeklyReport?.currentRank, 0);
         const weeklyFollowers = liveMetricNumber(liveDancerWeeklyReport?.followersGained, 0);
         const weeklyViews = liveMetricNumber(liveDancerWeeklyReport?.profileViews, 0);
         const weeklyGoing = liveMetricNumber(liveDancerWeeklyReport?.goingSignals, 0);
         const weeklySocialClicks = liveMetricNumber(liveDancerWeeklyReport?.socialClicks, 0);
         const weeklyNotificationOpens = liveMetricNumber(liveDancerWeeklyReport?.notificationOpens, 0);
-        const weeklyRankText = weeklyStartRank || weeklyEndRank ? `${rankLabel(weeklyStartRank)} -> ${rankLabel(weeklyEndRank)}` : "No rank yet";
         const qrOpens = liveDancerDeals?.qrOpens || 0;
         const qrRedeemed = liveDancerDeals?.redeemed || 0;
         const hasTrafficData = dashboardMetrics.profileViews30 || dashboardMetrics.scheduleViews30 || dashboardMetrics.directionRequests30 || highIntentActions || totalSocialClicks;
@@ -59820,12 +59780,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         document.getElementById("dancerValueMessage").innerHTML = hasTrafficData
           ? `We sent <strong>${compactNumber(dashboardMetrics.profileViews30)}</strong> people to your profile, <strong>${compactNumber(dashboardMetrics.scheduleViews30)}</strong> viewed your schedule, and <strong>${compactNumber(dashboardMetrics.directionRequests30)}</strong> requested directions to <strong>${escapeHtml(dashboardMetrics.venue)}</strong> this month.`
           : "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal activity will appear here after guests interact with your profile.";
-        document.getElementById("dancerRankMetrics").innerHTML = [
-          metricCardMarkup(rankLabel(dashboardMetrics.currentRank), `${city} rank`),
-          metricCardMarkup(rankMovementText(dashboardMetrics.rankChangeYesterday), "Rank change this week"),
-          metricCardMarkup(rankLabel(dashboardMetrics.highestRankAchieved), "Highest rank achieved"),
-          metricCardMarkup(rankLabel(dashboardMetrics.bestRankThisWeek), "Best rank this week")
-        ].join("");
         document.getElementById("dancerValueMetrics").innerHTML = [
           metricCardMarkup(compactNumber(dashboardMetrics.profileViews30), "Profile views"),
           metricCardMarkup(compactNumber(dashboardMetrics.newFollowers), "Followers gained"),
@@ -59840,10 +59794,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           ? `Dancr generated ${compactNumber(highIntentActions)} high-intent guest actions for you this month.`
           : "No high-intent guest actions yet. Direction requests and Going Now clicks will appear here.";
         document.getElementById("dancerWeeklySummary").textContent = liveDancerWeeklyReport
-          ? `Monday report: ${weeklyRankText}, ${compactNumber(weeklyFollowers)} new followers, ${compactNumber(weeklyViews)} profile views, and ${compactNumber(weeklyGoing)} Going Now signals.`
-          : "No weekly report data yet. Once guest activity starts, this will show real weekly rank, follower, profile view, social click, and notification data.";
+          ? `Monday report: ${compactNumber(weeklyFollowers)} new followers, ${compactNumber(weeklyViews)} profile views, and ${compactNumber(weeklyGoing)} Going Now signals.`
+          : "No weekly report data yet. Once guest activity starts, this will show real weekly follower, profile view, social click, and notification data.";
         document.getElementById("dancerWeeklyMetrics").innerHTML = [
-          metricCardMarkup(weeklyRankText, "Previous rank -> current rank"),
           metricCardMarkup(compactNumber(weeklyFollowers), "New followers"),
           metricCardMarkup(compactNumber(weeklyViews), "Profile views"),
           metricCardMarkup(compactNumber(weeklyGoing), "Going Now signals"),
@@ -59895,21 +59848,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           metricCardMarkup(`${scheduleConversionRate}%`, "Schedule conversion rate"),
           metricCardMarkup(compactNumber(searchImpressions), "Search impressions")
         ].join("");
-        const rankingNotifications = liveDancerRankingEvents.length
-          ? liveDancerRankingEvents.slice(0, 4).map(liveRankingEventMarkupData)
-          : dashboardMetrics.rankingNotifications;
-        document.getElementById("dancerRankingNotifications").innerHTML = rankingNotifications.length
-          ? rankingNotifications.map(rankingNotificationMarkup).join("")
-          : `<article class="rank-event stable"><span class="rank-event-icon">!</span><span><strong>No ranking milestones yet</strong><p>Real ranking alerts will appear after your profile earns Top 10, moves up 3+ spots, or reaches #1.</p></span></article>`;
       } else if (approved) {
         document.getElementById("dancerValueMessage").textContent =
           "No live analytics yet. Real profile views, schedule views, followers, social clicks, notifications, direction requests, and Club Deal activity will appear here after guests interact with your profile.";
-        document.getElementById("dancerRankMetrics").innerHTML = [
-          metricCardMarkup("No rank yet", `${city} rank`),
-          metricCardMarkup("No change", "Rank change this week"),
-          metricCardMarkup("No rank yet", "Highest rank achieved"),
-          metricCardMarkup("No rank yet", "Best rank this week")
-        ].join("");
         document.getElementById("dancerValueMetrics").innerHTML = [
           metricCardMarkup("0", "Profile views"),
           metricCardMarkup("0", "Followers gained"),
@@ -59920,9 +59861,8 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         ].join("");
         document.getElementById("dancerCustomerImpact").innerHTML = `0 <span>actions</span>`;
         document.getElementById("dancerCustomerImpactDetail").textContent = "No high-intent guest actions yet.";
-        document.getElementById("dancerWeeklySummary").textContent = "No weekly report data yet. Once guest activity starts, this will show real weekly profile and ranking activity.";
+        document.getElementById("dancerWeeklySummary").textContent = "No weekly report data yet. Once guest activity starts, this will show real weekly profile activity.";
         document.getElementById("dancerWeeklyMetrics").innerHTML = [
-          metricCardMarkup("No rank yet", "Previous rank -> current rank"),
           metricCardMarkup("0", "New followers"),
           metricCardMarkup("0", "Profile views"),
           metricCardMarkup("0", "Going Now signals"),
@@ -59967,17 +59907,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           metricCardMarkup("0%", "Schedule conversion rate"),
           metricCardMarkup("0", "Search impressions")
         ].join("");
-        document.getElementById("dancerRankingNotifications").innerHTML =
-          `<article class="rank-event stable"><span class="rank-event-icon">!</span><span><strong>No ranking milestones yet</strong><p>Real ranking alerts will appear after your profile earns Top 10, moves up 3+ spots, or reaches #1.</p></span></article>`;
       } else {
         document.getElementById("dancerValueMessage").textContent =
-          "Analytics unlock after approval. Dancr tracks profile views, schedule views, follower growth, social clicks, ranking movement, notifications, favorites, Going Now clicks, and club direction requests so you can see what brings guests to you.";
-        document.getElementById("dancerRankMetrics").innerHTML = lockedMetricCards([
-          "Current city rank",
-          "Rank change this week",
-          "Highest rank achieved",
-          "Best rank this week"
-        ]);
+          "Analytics unlock after approval. Dancr tracks profile views, schedule views, follower growth, social clicks, notifications, favorites, Going Now clicks, and club direction requests so you can see what brings guests to you.";
         document.getElementById("dancerValueMetrics").innerHTML = lockedMetricCards([
           "Profile views",
           "Followers gained",
@@ -59989,9 +59921,8 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         document.getElementById("dancerCustomerImpact").textContent = "Locked";
         document.getElementById("dancerCustomerImpactDetail").textContent = "High-intent guest actions unlock after approval.";
         document.getElementById("dancerWeeklySummary").textContent =
-          "Your weekly report unlocks after approval and tracks rank movement, followers, profile views, Going Now signals, social clicks, and notification opens.";
+          "Your weekly report unlocks after approval and tracks followers, profile views, Going Now signals, social clicks, and notification opens.";
         document.getElementById("dancerWeeklyMetrics").innerHTML = lockedMetricCards([
-          "Previous rank → current rank",
           "New followers",
           "Profile views",
           "Going Now signals",
@@ -60030,8 +59961,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           "Schedule conversion rate",
           "Search impressions"
         ]);
-        document.getElementById("dancerRankingNotifications").innerHTML =
-          `<article class="rank-event stable"><span class="rank-event-icon">🔒</span><span><strong>Ranking alerts locked</strong><p>Milestone notifications unlock after approval.</p></span></article>`;
       }
       const setupWrap = document.getElementById("setupChecklistWrap");
       const setupToggle = document.getElementById("setupChecklistToggle");
@@ -69215,7 +69144,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       loadLiveDancerAnalytics();
       loadLiveDancerDeals();
       loadLiveDancerWeeklyReport();
-      loadLiveDancerRankingEvents();
     }
     if (!internalProfileFrameId && authSession?.accessToken) loadLiveNotifications();
     if (!internalProfileFrameId && (isCustomerSession() || isDancerSession())) loadLiveSupportThreads();

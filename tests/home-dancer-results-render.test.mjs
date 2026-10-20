@@ -40,6 +40,7 @@ function directoryFixture(profiles) {
     homeDancerGridRenderKey: "", tabTitle: element(), viewAllBtn: element(),
     document: {
       body: element(), querySelectorAll: () => [], createElement: element,
+      getElementById: () => null,
       createTextNode: (text) => ({ textContent: text }),
     },
     window: { requestAnimationFrame() {} },
@@ -65,7 +66,7 @@ function directoryFixture(profiles) {
   };
   for (const name of [
     "syncDiscoveryCityScope", "syncCityPickerSelection", "populateVenueSelect",
-    "updateTabCounts", "updateHomeLiveSummary", "deactivateHomeTvFeed", "deactivateHomeDiscoveryFeed",
+    "updateTabCounts", "updateHomeLiveSummary", "syncClubRefreshButtons", "deactivateHomeTvFeed", "deactivateHomeDiscoveryFeed",
   ]) state[name] = () => {};
   const functions = [
     "dancerGridPosition", "dancerDirectoryGroups", "dancerDirectorySections", "dancerDirectoryFilterMarkup",

@@ -40,8 +40,6 @@
         ? exactProfileIndex
         : discoveryMarket(city).dancers.findIndex((item) => item.name === profile.name);
       const isPending = profile.status === "Pending";
-      const profileWithTrend = !isPending && !internal ? withTrendingRank(profile, city) : profile;
-      const modalTrendRank = profileWithTrend.trendRank;
       const status = shiftStatus(profile);
       const modalIsWorkingNow = isWorkingTonight(profile, city);
       const modalHasUpcomingShift = false;
@@ -80,13 +78,6 @@
       modalRank.hidden = true;
       modalRank.setAttribute("aria-hidden", "true");
       modalRank.removeAttribute("aria-label");
-      if (modalTrendRank) {
-        modalRank.className = "modal-rank card-trend-marker modal-card-trend";
-        modalRank.innerHTML = `<span class="card-trend-symbol" aria-hidden="true">↗</span><span>#${modalTrendRank}</span>`;
-        modalRank.hidden = false;
-        modalRank.removeAttribute("aria-hidden");
-        modalRank.setAttribute("aria-label", `Trending rank ${modalTrendRank}`);
-      }
       initializeProfileMediaLibrary(profile, profileIndex, { preview: isPrivatePreview });
       const photoCount = modalGallery.profilePhotoItems?.length || 0;
       syncProfileMediaTabCounts(photoCount, modalGallery.profileTvVideos.length);

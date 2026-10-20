@@ -283,7 +283,6 @@ export async function getDancerDashboardAnalytics(
     goingSignals,
     socialClicks,
     notifications,
-    trending,
     totalFollowers,
     notificationSubscribers,
     profileViewsToday,
@@ -295,7 +294,6 @@ export async function getDancerDashboardAnalytics(
     countGoingSignals(client, dancerId, since),
     getSocialClickCounts(client, dancerId, since),
     getNotificationCounts(client, dancerId, since),
-    getTrendingSnapshot(client, dancerId),
     countRowsAll(client, "follows", "dancer_id", dancerId),
     countNotificationSubscribers(client, dancerId),
     countRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", today),
@@ -308,10 +306,6 @@ export async function getDancerDashboardAnalytics(
   ]);
 
   return {
-    currentRank: trending.currentRank,
-    highestRank: trending.highestRank,
-    bestRankThisWeek: trending.bestRankThisWeek,
-    rankChangeSinceYesterday: trending.rankChangeSinceYesterday,
     totalFollowers,
     notificationSubscribers,
     profileViewsToday,
@@ -356,7 +350,6 @@ export async function getDancerWeeklyReport(client: DancrClient, dancerId: strin
     goingSignals,
     socialClicks,
     notifications,
-    trending,
     followersGained,
   ] = await Promise.all([
     countRows(client, "profile_views", "dancer_id", dancerId, "viewed_at", since),
@@ -365,15 +358,12 @@ export async function getDancerWeeklyReport(client: DancrClient, dancerId: strin
     countGoingSignals(client, dancerId, since),
     getSocialClickCounts(client, dancerId, since),
     getNotificationCounts(client, dancerId, since),
-    getTrendingSnapshot(client, dancerId),
     countRows(client, "follows", "dancer_id", dancerId, "created_at", since),
   ]);
 
   return {
     periodStart: since.toISOString(),
     periodEnd: periodEnd.toISOString(),
-    startRank: trending.previousRank || trending.currentRank,
-    currentRank: trending.currentRank,
     profileViews,
     followersGained,
     scheduleViews,
@@ -524,23 +514,5 @@ async function getNotificationCounts(client: DancrClient, dancerId: string, sinc
   return {
     sent: data?.length || 0,
     opened: (data || []).filter((row: any) => Boolean(row.read_at)).length,
-  };
-}
-
-async function getTrendingSnapshot(client: DancrClient, dancerId: string) {
-  const { data, error } = await client
-    .from("trending_scores")
-    .select("rank, highest_rank, best_rank_this_week, previous_rank")
-    .eq("dancer_id", dancerId)
-    .maybeSingle();
-
-  if (error) throw error;
-
-  return {
-    currentRank: data?.rank || null,
-    highestRank: data?.highest_rank || null,
-    bestRankThisWeek: data?.best_rank_this_week || null,
-    previousRank: data?.previous_rank || null,
-    rankChangeSinceYesterday: data?.previous_rank && data?.rank ? data.previous_rank - data.rank : null,
   };
 }

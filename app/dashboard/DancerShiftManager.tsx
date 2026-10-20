@@ -2,8 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { formatExternalHours } from "@/src/lib/dancr/external-ranking-progress";
-import { DANCER_SCORE_WEIGHTS, EXTERNAL_RANKING_START_MINUTES } from "@/src/lib/dancr/venue-dancer-scores";
-import { DancerExternalRankingBenefit } from "./DancerExternalRankingBenefit";
 import {
   isActiveNfcPresence,
   isNfcPresenceNearExpiry,
@@ -138,7 +136,7 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
       setShifts(current => current.map(shift => shift.id === activeShift.id
         ? { ...shift, rankingProgress: { ...shift.rankingProgress, visibility: "both" } } : shift));
       setWorkingNowStatusKind("success");
-      setWorkingNowStatus("Both is on. External time is now recording. Ranking benefits start after 5 recorded external minutes. Your shift still ends at the same time.");
+      setWorkingNowStatus("Both is on. External time is now recording. Your shift still ends at the same time.");
       try {
         await Promise.all([load(), onVisibilityChange?.()]);
       } catch {
@@ -194,20 +192,6 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
     }
   }
 
-  const rankingGuidance = <div className="shift-ranking-callout">
-    <h3>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-        <path d="m3 17 6-6 4 4 8-10M15 5h6v6" />
-      </svg>
-      Rank higher everywhere
-    </h3>
-    <p>More time on <strong>External</strong> or <strong>Both</strong> helps you rank higher on club rosters, MyDancr and MyDancrTV.</p>
-    <div className="shift-ranking-facts">
-      <span>Starts after {EXTERNAL_RANKING_START_MINUTES} min</span>
-      <span>{DANCER_SCORE_WEIGHTS.externalTime}% of your score</span>
-    </div>
-  </div>;
-
   return (
     <article className="info-panel shift-panel" aria-label="Working Now management">
       <section className={`shift-checkin-card${activeShift ? " ready" : ""}`} aria-live="polite">
@@ -227,17 +211,15 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
               ) : null}
             </span>
             {!demoManagedActiveShift ? <div className="shift-ranking-progress">
-              {rankingGuidance}
               <small>External time this shift: <strong>{formatExternalHours(progress?.externalHours)}</strong></small>
               {progress?.visibility === "internal" && hasRecordedExternalTime ? <>
-                <p>Help guests discover you while you work. Choose Both to keep internal requests and start earning external ranking credit. This makes your approved profile public.</p>
+                <p>Choose Both to appear on the club roster and in public MyDancr discovery. This makes your approved profile public.</p>
                 <button type="button" disabled={saving || switching} onClick={() => void switchToBoth()}>{switching ? "Switching…" : "Switch to Both"}</button>
               </> : hasRecordedExternalTime && (progress?.visibility === "external" || progress?.visibility === "both")
                 ? <small>External time is recording while you work.</small>
                 : progress && !hasRecordedExternalTime ? <small>External time is not recorded for this shift. Choose External or Both at your next verified club check-in.</small>
                 : <small>Refresh to check your current visibility and recorded time.</small>}
-              <DancerExternalRankingBenefit refreshKey={presenceKey} />
-              <a href="#dancer-performance-ranking">View ranking</a>
+              <a href="#dancer-performance">View activity</a>
             </div> : null}
             {demoManagedActiveShift ? (
               <button className="shift-demo-managed" type="button" disabled>{rhinoShift ? "Automatically managed" : "Demo managed"}</button>
@@ -274,7 +256,6 @@ export default function DancerShiftManager({ onPresenceChange, onVisibilityChang
               <strong>Not working now</strong>
               <small>Tap the club&apos;s dressing-room sticker to show Working Now.</small>
             </span>
-            <div className="shift-ranking-progress">{rankingGuidance}</div>
             {cooldownShift ? (
               <small className="shift-checkin-status" role="status">
                 Cooldown active. Another tap can start Working Now after {formatTime(nfcNextTapAllowedAt(cooldownShift)?.toISOString())}.

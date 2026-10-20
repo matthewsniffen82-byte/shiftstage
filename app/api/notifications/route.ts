@@ -28,7 +28,8 @@ export async function GET(request: Request) {
     const unreadOnly = new URL(request.url).searchParams.get("unread") === "true";
     const account = await getAccountByUserId(client, user.id);
     const notifications = await getUserNotifications(client, user.id, unreadOnly,
-      account?.role === "venue" ? row => venueNotificationEnabled(user.user_metadata, row) : undefined);
+      account?.role === "venue" ? row => venueNotificationEnabled(user.user_metadata, row)
+        : account?.role === "dancer" ? row => row.notification_type !== "ranking_milestone" : undefined);
 
     return NextResponse.json({ ok: true, notifications, pushUserId: user.id, notificationDelivery: notificationPushDelivery(user.id) }, {
       headers: { "cache-control": "private, no-store" },

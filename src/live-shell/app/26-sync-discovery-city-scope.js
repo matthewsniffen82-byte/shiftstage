@@ -809,7 +809,6 @@
       loadLiveDancerAnalytics();
       loadLiveDancerDeals();
       loadLiveDancerWeeklyReport();
-      loadLiveDancerRankingEvents();
     }
     if (!internalProfileFrameId && authSession?.accessToken) loadLiveNotifications();
     if (!internalProfileFrameId && (isCustomerSession() || isDancerSession())) loadLiveSupportThreads();

@@ -12,7 +12,7 @@ export function formatExternalHours(hours: number | null | undefined): string {
 
 export function externalTapRankingMessage(receipt: { shiftCheckedIn?: unknown; visibility?: unknown; replayed?: unknown } | null | undefined): string {
   return receipt?.shiftCheckedIn === true && receipt.replayed !== true && (receipt.visibility === "external" || receipt.visibility === "both")
-    ? "External time is now recording. Your ranking benefit starts after 5 recorded external minutes and grows with more time." : "";
+    ? "External time is now recording. You can see your recorded activity in Results." : "";
 }
 
 /** Confirm earned placement points, never infer a benefit from a selected mode. */

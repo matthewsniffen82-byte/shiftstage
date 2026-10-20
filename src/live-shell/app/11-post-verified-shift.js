@@ -52,12 +52,7 @@
 
     function profileCard(profile, index, options = {}) {
       const isPending = profile.status === "Pending";
-      const isTrending = !isPending && profile.trendRank;
       const statusBadge = isPending ? '<span class="badge pending">Pending</span>' : "";
-      const trendBadge = "";
-      const trendMarker = isTrending
-        ? `<span class="card-trend-marker" aria-label="Trending rank ${escapeHtml(profile.trendRank)}"><span class="card-trend-symbol" aria-hidden="true">↗</span><span>#${escapeHtml(profile.trendRank)}</span></span>`
-        : "";
       const upcomingLabel = upcomingCardLabel(profile);
       const workingTonight = isWorkingTonight(profile);
       const locationBadge = !isPending ? profileLocationStatusBadge(profile) : "";
@@ -82,8 +77,6 @@
         <div class="portrait ${portraitClass(index)}${portraitPhotoAttrs.className}"${portraitPhotoAttrs.style}>
           <div class="card-badges">
             ${statusBadge}
-            ${trendBadge}
-            ${trendMarker}
           </div>
           ${options.feedActions && !isPending ? `<span class="card-profile-destination" aria-hidden="true"><svg class="card-profile-symbol" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="15" height="15" rx="3"></rect><circle cx="11" cy="9.5" r="2.25"></circle><path d="M7.25 16c.35-2.15 1.65-3.35 3.75-3.35s3.4 1.2 3.75 3.35"></path></svg><svg class="card-profile-chevron" viewBox="0 0 12 20"><path d="m3 3 6 7-6 7"></path></svg></span>` : ""}
         </div>
@@ -105,7 +98,7 @@
           ? `<button class="feed-card-action ${isGoing ? "is-active" : ""}" type="button" data-feed-action="going" data-profile="${escapeHtml(profile.name)}" data-shift-state="tonight" aria-pressed="${isGoing}">${homeFeedGoingActionMarkup(profile, isGoing)}</button>`
           : "";
         return `
-          <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="card dancer-card home-feed-card ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" data-profile="${escapeHtml(profile.name)}">
+          <article data-public-dancer-id="${escapeOptionValue(profile.id || "")}" class="card dancer-card home-feed-card" data-profile="${escapeHtml(profile.name)}">
             <a class="dancer-card-link" href="${escapeHtml(profileHref)}" aria-label="Open ${escapeHtml(profile.name)} profile">
               ${profileCardBody}
             </a>
@@ -118,7 +111,7 @@
         `;
       }
       return `
-        <a data-public-dancer-id="${escapeOptionValue(isPending ? "" : profile.id || "")}" class="card dancer-card ${isPending ? "pending" : ""} ${isTrending ? "trending-card" : ""} ${profile.trendRank === 1 ? "rank-one-card" : ""}" href="${escapeHtml(profileHref)}" data-profile="${escapeHtml(profile.name)}" aria-label="${escapeHtml(profile.name)} profile">
+        <a data-public-dancer-id="${escapeOptionValue(isPending ? "" : profile.id || "")}" class="card dancer-card ${isPending ? "pending" : ""}" href="${escapeHtml(profileHref)}" data-profile="${escapeHtml(profile.name)}" aria-label="${escapeHtml(profile.name)} profile">
           ${profileCardBody}
         </a>
       `;

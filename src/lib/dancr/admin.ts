@@ -1131,35 +1131,16 @@ export async function recalculateCityRankings(client: DancrClient, adminId: stri
         old_rank: event.old_rank,
         new_rank: event.new_rank,
         message: event.message,
-        notified_at: event.notified_at,
+        notified_at: null,
       })),
     );
     if (eventError) throw eventError;
 
-    const notificationRows = milestoneRows.map((event: any) => ({
-      recipient_id: event.userId,
-      notification_type: "ranking_milestone" as const,
-      channel: "in_app",
-      title: "Trending ranking update",
-      body: event.message,
-      payload: {
-        dancerId: event.dancer_id,
-        city: event.city,
-        oldRank: event.old_rank,
-        newRank: event.new_rank,
-        eventType: event.event_type,
-      },
-      sent_at: calculatedAt,
-    }));
-
-    const { error: notificationError } = await (client as any).from("notifications").insert(notificationRows);
-
-    if (notificationError) throw notificationError;
-    await deliverNotificationRows(client, notificationRows);
+    // Ranking milestones are retained for operations, never sent to dancers.
   }
   } catch (error) {
-    warnings.push("Rankings were saved, but milestone notifications could not be completed.");
-    console.error("RANKING_NOTIFICATIONS_INCOMPLETE", safeErrorMetadata(error));
+    warnings.push("Rankings were saved, but milestone history could not be completed.");
+    console.error("RANKING_HISTORY_INCOMPLETE", safeErrorMetadata(error));
   }
 
   try {

@@ -965,18 +965,6 @@
       }
     }
 
-    async function loadLiveDancerRankingEvents(options = {}) {
-      if (!isDancerSession()) return;
-      try {
-        const data = await getAuthenticatedJson("/api/dancer/ranking-events");
-        liveDancerRankingEvents = data.events || [];
-        renderDancerSetupWhenEditorIdle();
-      } catch (error) {
-        liveDancerRankingEvents = [];
-        reportOptionalDancerLoadError(error, "Could not load ranking alerts", options);
-      }
-    }
-
     async function loadLiveDancerReviews(options = {}) {
       if (!isDancerSession()) return;
       try {

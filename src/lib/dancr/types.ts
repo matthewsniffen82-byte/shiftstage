@@ -357,10 +357,6 @@ export type ClubDeal = {
 };
 
 export type DancerDashboardAnalytics = {
-  currentRank: number | null;
-  highestRank: number | null;
-  bestRankThisWeek: number | null;
-  rankChangeSinceYesterday: number | null;
   totalFollowers: number;
   notificationSubscribers: number;
   profileViewsToday: number;
@@ -379,8 +375,6 @@ export type DancerDashboardAnalytics = {
 export type DancerWeeklyReport = {
   periodStart: string;
   periodEnd: string;
-  startRank: number | null;
-  currentRank: number | null;
   profileViews: number;
   followersGained: number;
   scheduleViews: number;

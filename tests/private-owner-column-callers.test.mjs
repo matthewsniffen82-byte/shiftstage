@@ -64,7 +64,7 @@ for(const name of ['deleteOwnDancerPhoto','deleteOwnDancerAvatar'])test(name+' r
  const h=clients({missing:true,profileFields:name==='deleteOwnDancerAvatar'?'id, avatar_storage_path, avatar_updated_at':'id'});const args=name==='deleteOwnDancerPhoto'?[h.request,owner,'synthetic-photo',h.server]:[h.request,owner,h.server];
  await assert.rejects(library[name](...args),/profile not found/);assert.equal(h.ownerCalls.length,1);assert.equal(h.privateCalls.length,0);
 });
-const routes=[['analytics',readers[0]],['weekly-report',readers[1]],['ranking-events',readers[2]],['reviews',readers[3]]];
+const routes=[['analytics',readers[0]],['weekly-report',readers[1]],['reviews',readers[3]]];
 for(const[route,reader]of routes)for(const denied of [false,true])test(route+' keeps authenticated identity and authorization before the private lookup; denied='+denied,async()=>{
  let created=0,read=0;const requestClient={},server={};
  const handler=load('app/api/dancer/'+route+'/route.ts',{
