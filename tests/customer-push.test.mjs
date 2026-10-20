@@ -25,9 +25,9 @@ function fixture({ permission = "granted", userAgent = "Edge", standalone = fals
 }
 const delivery = { pushAvailable: true, pushPublicKey: publicKey };
 
-test("Working Now confirmation requires saved alert preferences and a usable delivery channel", async () => {
+test("Working Now confirmation respects defaults and opt-outs and requires a usable delivery channel", async () => {
   const f = fixture();
-  const profile = { userId: "customer", notificationSettings: { pushEnabled: true }, notificationDelivery: delivery };
+  const profile = { userId: "customer", notificationSettings: {}, notificationDelivery: delivery };
   assert.equal(await f.customerWorkingNowAlertsEnabled(profile, "customer"), false);
   await f.enableCustomerPush(delivery, "customer", () => {});
   assert.equal(await f.customerWorkingNowAlertsEnabled(profile, "customer"), true);
@@ -39,6 +39,8 @@ test("Working Now confirmation requires saved alert preferences and a usable del
   f.Notification.permission = "denied";
   assert.equal(await f.customerWorkingNowAlertsEnabled(profile, "customer"), false);
   assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationSettings: { emailEnabled: true }, notificationDelivery: { emailAvailable: true } }, "customer"), true);
+  assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationDelivery: { emailAvailable: true } }, "customer"), true);
+  assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationSettings: { emailEnabled: false }, notificationDelivery: { emailAvailable: true } }, "customer"), false);
   assert.equal(await f.customerWorkingNowAlertsEnabled(null, "customer"), false);
 });
 

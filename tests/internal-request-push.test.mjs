@@ -7,7 +7,7 @@ import * as serverJob from '../src/lib/server-job.ts';
 import { timingSafeEqual } from 'node:crypto';
 import { venueNotificationSettings, venueNotificationMetadataPatch, venueNotificationCategory } from '../src/lib/dancr/venue-notification-preferences.ts';
 
-function fixture({available=true,preferences={pushEnabled:true},sent=1,fail=false}={}){
+function fixture({available=true,preferences={},sent=1,fail=false}={}){
   const calls=[], deliveries=[], service={};let claimed=false;
   const jobs=[{id:'delivery-uuid',lease_id:'lease-uuid',recipient_id:'host-user',table_label:'Table 12',stage_name:'Aster'}];
   const source=ts.transpileModule(readFileSync(new URL('../src/lib/dancr/internal-request-push.ts',import.meta.url),'utf8'),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.CommonJS}}).outputText;
@@ -16,7 +16,7 @@ function fixture({available=true,preferences={pushEnabled:true},sent=1,fail=fals
     './customer-notification-delivery':{notificationPushDelivery:()=>({pushAvailable:available})},
     './notification-delivery':{deliverNotificationRows:async(_client,rows,options)=>{deliveries.push({rows,options});if(fail)throw Error('provider down');return {push:sent};}},
   }[name])});
-  const client={rpc:async(name,args)=>{calls.push({name,args});const data=name==='claim_internal_request_alerts'?(claimed?[]:(claimed=true,jobs)):true;return {data,error:null};},auth:{admin:{getUserById:async()=>({data:{user:{user_metadata:venueNotificationMetadataPatch(preferences)}},error:null})}}};
+  const client={rpc:async(name,args)=>{calls.push({name,args});const data=name==='claim_internal_request_alerts'?(claimed?[]:(claimed=true,jobs)):true;return {data,error:null};},auth:{admin:{getUserById:async()=>({data:{user:{user_metadata:Object.keys(preferences).length?venueNotificationMetadataPatch(preferences):{}}},error:null})}}};
   return {calls,deliveries,run:()=>service.deliverInternalRequestPush(client,'request-uuid')};
 }
 test('table request targets the scoped staff recipient with exact table/dancer copy and no email',async()=>{
@@ -35,7 +35,7 @@ for(const options of [{sent:0},{fail:true}])test('unconfirmed provider delivery 
 });
 test('table requests have their own venue preference instead of support or activity settings',()=>{
   assert.equal(venueNotificationCategory({notification_type:'support_message',payload:{kind:'internal_table_request'}}),'tableRequests');
-  assert.equal(venueNotificationSettings({}).tableRequests,true);assert.equal(venueNotificationSettings({}).pushEnabled,false);
+  assert.equal(venueNotificationSettings({}).tableRequests,true);assert.equal(venueNotificationSettings({}).pushEnabled,true);
 });
 
 test('scheduled delivery requires the cron secret and reports missing provider configuration',async()=>{

@@ -21,6 +21,8 @@ function compile(file, dependencies = {}, globals = {}) {
 }
 const capability = compile("src/lib/dancr/customer-notification-delivery.ts");
 const examples = {
+  tableRequests: { notification_type: "support_message", payload: { kind: "internal_table_request" } },
+  vipRequests: { notification_type: "support_message", payload: { kind: "vip_request" } },
   dancerActivity: { notification_type: "shift_updated" },
   rosterChanges: { notification_type: "venue_affiliation_status" },
   clubDeals: { notification_type: "support_message", payload: { kind: "club_deal_request_updated" } },
@@ -32,21 +34,25 @@ const examples = {
 };
 const patchMetadata = preferences.venueNotificationMetadataPatch;
 
-test("venue categories are independent, master pause preserves choices, and external delivery requires opt-in", () => {
+test("venue notifications default on, categories are independent and master pause preserves choices", () => {
   const all = Object.fromEntries(Object.keys(examples).map(key => [key, true]));
   for (const [key, row] of Object.entries(examples)) {
     const enabled = patchMetadata(all);
     assert.equal(preferences.venueNotificationCategory(row), key);
     assert.equal(preferences.venueNotificationEnabled(enabled, row), true);
-    assert.equal(preferences.venueNotificationEnabled(enabled, row, "emailEnabled"), false);
-    assert.equal(preferences.venueNotificationEnabled(patchMetadata({ ...all, emailEnabled: true }), row, "emailEnabled"), true);
+    for (const channel of ["emailEnabled", "pushEnabled"]) {
+      assert.equal(preferences.venueNotificationEnabled({}, row, channel), true);
+      assert.equal(preferences.venueNotificationEnabled(patchMetadata({ [channel]: false }), row, channel), false);
+    }
     assert.equal(preferences.venueNotificationEnabled(patchMetadata({ ...all, alertsEnabled: false }), row), false);
     const muted = patchMetadata({ ...all, [key]: false });
     assert.equal(preferences.venueNotificationEnabled(muted, row), false);
     for (const [other, otherRow] of Object.entries(examples)) if (other !== key) assert.equal(preferences.venueNotificationEnabled(muted, otherRow), true);
   }
-  assert.equal(preferences.venueNotificationSettings(null).dancerActivity, false);
-  assert.equal(preferences.venueNotificationSettings(null).performance, false);
+  assert.ok(Object.values(preferences.venueNotificationSettings(null)).every(value => value === true));
+  for (const key of Object.keys(preferences.DEFAULT_VENUE_NOTIFICATION_SETTINGS)) {
+    assert.equal(preferences.venueNotificationSettings(patchMetadata({ [key]: false }))[key], false);
+  }
 });
 
 test("security and legal notices remain on even with every optional setting paused", () => {
@@ -58,7 +64,7 @@ test("security and legal notices remain on even with every optional setting paus
 
 test("malformed and unknown settings cannot write account metadata", () => {
   for (const value of [null, [], {}, "off", { role: "admin" }, { security: false }, { emailEnabled: "true" }, { alertsEnabled: 1 }]) assert.throws(() => patchMetadata(value));
-  assert.equal(preferences.venueNotificationSettings({ mydancr_venue_notify_emailEnabled: "true" }).emailEnabled, false);
+  assert.equal(preferences.venueNotificationSettings({ mydancr_venue_notify_emailEnabled: "true" }).emailEnabled, true);
 });
 
 function routeFixture({ denied = false, fail = false, available = true } = {}) {
@@ -116,7 +122,7 @@ test("denied, failed and unavailable-channel writes never report success", async
 
 test("delivery respects per-recipient category and channel preferences and fails closed on lookup errors", async () => {
   const calls = [];
-  let metadata = patchMetadata({ emailEnabled: true, pushEnabled: true });
+  let metadata = {};
   let lookupError = false;
   const client = { auth: { admin: { getUserById: async id => {
     assert.equal(id, "venue-user");
@@ -151,7 +157,7 @@ test("muted inbox rows cannot hide an older allowed alert behind the page limit"
       or() { return this; }, order() { return this; }, range(a, b) { first = a; last = b; reads.push([a, b]); return this; },
       then(resolve) { return Promise.resolve({ data: rows.slice(first, last + 1), error: null }).then(resolve); } };
   } };
-  const result = await service.getUserNotifications(client, "venue-user", false, row => preferences.venueNotificationEnabled({}, row));
+  const result = await service.getUserNotifications(client, "venue-user", false, row => preferences.venueNotificationEnabled(patchMetadata({ dancerActivity: false }), row));
   assert.deepEqual(plain(result.map(row => row.id)), ["visible"]);
   assert.deepEqual(reads, [[0, 49], [50, 99]]);
   assert.equal(rows.length, 56);

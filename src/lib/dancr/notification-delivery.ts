@@ -45,7 +45,7 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
     const { data, error } = await client.from("customer_profiles").select("user_id, notification_settings").in("user_id", customerIds);
     if (error) {
       console.warn("NOTIFICATION_PREFERENCES_UNAVAILABLE");
-      // Missing preferences default to no external delivery for customers.
+      // Do not use defaults when stored preferences could not be read.
     }
     if (!error) for (const profile of data || []) settingsById.set(profile.user_id, profile.notification_settings);
   }
@@ -58,6 +58,7 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
       return venueNotificationEnabled(venueSettingsById.get(recipient.id), row, channel);
     }
     if (recipient.role !== "customer") return true;
+    if (!settingsById.has(recipient.id)) return false;
     const settings = settingsById.get(recipient.id);
     const key = followAlertKey((row.payload as Record<string, unknown> | null)?.kind);
     return customerNotificationSettings(settings)[channel] && (!key || customerFollowAlertEnabled(settings, key));

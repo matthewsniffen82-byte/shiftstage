@@ -40,8 +40,8 @@ export async function customerWorkingNowAlertsEnabled(profile: {
   const settings = profile.notificationSettings || {};
   const delivery = profile.notificationDelivery || {};
   if (settings.followAlertsEnabled === false || settings.workingNow === false) return false;
-  if (settings.emailEnabled === true && delivery.emailAvailable === true) return true;
-  return settings.pushEnabled === true && delivery.pushAvailable === true
+  if (settings.emailEnabled !== false && delivery.emailAvailable === true) return true;
+  return settings.pushEnabled !== false && delivery.pushAvailable === true
     && await customerPushDeviceEnabled(userId);
 }
 

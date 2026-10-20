@@ -24,9 +24,13 @@ function compile(path, overrides = {}, globals = {}) {
 const env = { RESEND_API_KEY: "test-email-key", EMAIL_FROM: "alerts@example.com", NEXT_PUBLIC_ONESIGNAL_APP_ID: "test-app", ONESIGNAL_REST_API_KEY: "test-push-key" };
 const capability = compile("src/lib/dancr/customer-notification-delivery.ts", {"./web-push-config":{webPushConfig:()=>({publicKey:"synthetic-public-key"})}}, { process: { env } });
 
-test("legacy settings retain four in-app alerts while email and push require opt-in", () => {
-  assert.equal(preferences.customerNotificationSettings(null).emailEnabled, false);
-  assert.equal(preferences.customerNotificationSettings({}).pushEnabled, false);
+test("every customer notification defaults on and saved opt-outs are preserved", () => {
+  for (const stored of [null, {}, { followedDancersOnly: true, anyDancerInCity: false }]) {
+    assert.ok(Object.values(preferences.customerNotificationSettings(stored)).every(value => value === true));
+  }
+  for (const key of Object.keys(preferences.DEFAULT_CUSTOMER_NOTIFICATION_SETTINGS)) {
+    assert.equal(preferences.customerNotificationSettings({ [key]: false })[key], false);
+  }
   for (const { key } of preferences.CUSTOMER_FOLLOW_ALERTS) {
     assert.equal(preferences.customerFollowAlertEnabled({}, key), true);
     assert.equal(preferences.customerFollowAlertEnabled({ followAlertsEnabled: false }, key), false);
@@ -42,7 +46,7 @@ test("preference patches reject unknown, empty and non-boolean values", () => {
     assert.throws(() => preferences.parseCustomerNotificationPatch(invalid));
   }
   assert.deepEqual(preferences.parseCustomerNotificationPatch({ clubDeals: false }), { clubDeals: false });
-  assert.equal(preferences.customerNotificationSettings({ emailEnabled: "true" }).emailEnabled, false);
+  assert.equal(preferences.customerNotificationSettings({ emailEnabled: "true" }).emailEnabled, true);
 });
 
 test("capabilities use server configuration and expose only the public Web Push key", () => {
@@ -137,7 +141,7 @@ function deliveryFixture(settings, options = {}) {
   const requests = [];
   const recipients = [{ id: "customer-one", email: "customer@example.com", role: "customer" }, { id: "dancer-one", email: "dancer@example.com", role: "dancer" }];
   const client = { from(table) {
-    const result = table === "app_users" ? { data: recipients } : { data: [{ user_id: "customer-one", notification_settings: settings }], error: options.error };
+    const result = table === "app_users" ? { data: recipients } : { data: options.missing ? [] : [{ user_id: "customer-one", notification_settings: settings }], error: options.error };
     const query = { select() { return query; }, in() { return query; }, eq(column, value) { assert.equal(column, "account_state"); assert.equal(value, "active"); return query; }, then(resolve) { return Promise.resolve(result).then(resolve); } };
     return query;
   } };
@@ -165,9 +169,10 @@ for (const [key, kind] of Object.entries(kinds)) test(key + " opt-out prevents t
 
 test("delivery respects independent channels, master pause, defaults and unavailable preferences", async () => {
   for (const [settings, expected] of [
-    [{}, { email: 0, push: 0 }],
-    [{ emailEnabled: true }, { email: 1, push: 0 }],
-    [{ pushEnabled: true }, { email: 0, push: 1 }],
+    [{}, { email: 1, push: 1 }],
+    [{ pushEnabled: false }, { email: 1, push: 0 }],
+    [{ emailEnabled: false }, { email: 0, push: 1 }],
+    [{ emailEnabled: false, pushEnabled: false }, { email: 0, push: 0 }],
     [{ emailEnabled: true, pushEnabled: true, followAlertsEnabled: false }, { email: 0, push: 0 }],
   ]) {
     const f = deliveryFixture(settings);
@@ -176,6 +181,9 @@ test("delivery respects independent channels, master pause, defaults and unavail
   const failed = deliveryFixture({ emailEnabled: true, pushEnabled: true }, { error: new Error("unavailable") });
   assert.deepEqual(plain(await failed.deliverNotificationRows(failed.client, [row(kinds.workingNow), row(kinds.workingNow, "inactive-account")])), { email: 0, push: 0 });
   assert.equal(failed.requests.length, 0);
+  const missing = deliveryFixture({}, { missing: true });
+  assert.deepEqual(plain(await missing.deliverNotificationRows(missing.client, [row(kinds.workingNow)])), { email: 0, push: 0 });
+  assert.equal(missing.requests.length, 0);
 });
 
 test("customer choices do not suppress transactional email or other account roles", async () => {
@@ -185,13 +193,13 @@ test("customer choices do not suppress transactional email or other account role
   assert.equal((await f.sendTransactionalEmail({ to: "customer@example.com", subject: "Password changed", text: "Test" })).delivered, true);
 });
 
-test("VIP working alerts honor channel opt-ins and master/category mutes, with club-specific links", async () => {
+test("VIP working alerts default on and honor channel and master/category mutes, with club-specific links", async () => {
   const vipRow = { ...row("vip_dancer_working_now"), payload: { kind: "vip_dancer_working_now", venueId: "club-one" } };
-  for (const settings of [{}, { emailEnabled: true, pushEnabled: true, workingNow: false }, { emailEnabled: true, pushEnabled: true, followAlertsEnabled: false }]) {
+  for (const settings of [{ emailEnabled: false, pushEnabled: false }, { workingNow: false }, { followAlertsEnabled: false }]) {
     const f = deliveryFixture(settings);
     assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [vipRow])), { email: 0, push: 0 });
   }
-  const f = deliveryFixture({ emailEnabled: true, pushEnabled: true });
+  const f = deliveryFixture({});
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [vipRow])), { email: 1, push: 1 });
   assert.equal(f.requests[0].body.url, "https://mydancr.com/vip?venueId=club-one#vip-plan");
 });

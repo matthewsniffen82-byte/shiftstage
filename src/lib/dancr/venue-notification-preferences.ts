@@ -16,16 +16,16 @@ export const DEFAULT_VENUE_NOTIFICATION_SETTINGS = {
   alertsEnabled: true,
   vipRequests: true,
   tableRequests: true,
-  dancerActivity: false,
+  dancerActivity: true,
   rosterChanges: true,
   clubDeals: true,
   pickupRequests: true,
   teamAccess: true,
   pageAndMedia: true,
   supportReplies: true,
-  performance: false,
-  emailEnabled: false,
-  pushEnabled: false,
+  performance: true,
+  emailEnabled: true,
+  pushEnabled: true,
 };
 export type VenueNotificationSettings = typeof DEFAULT_VENUE_NOTIFICATION_SETTINGS;
 export type VenueNotificationKey = keyof VenueNotificationSettings;

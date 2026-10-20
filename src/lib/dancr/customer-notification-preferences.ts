@@ -12,8 +12,8 @@ export const DEFAULT_CUSTOMER_NOTIFICATION_SETTINGS = {
   upcomingShifts: true,
   clubDeals: true,
   newDancers: true,
-  emailEnabled: false,
-  pushEnabled: false,
+  emailEnabled: true,
+  pushEnabled: true,
 };
 export type CustomerNotificationSettings = typeof DEFAULT_CUSTOMER_NOTIFICATION_SETTINGS;
 export type CustomerNotificationKey = keyof CustomerNotificationSettings;
