@@ -55,7 +55,7 @@ export default function EmbeddedDancerProfile({ venueSlug, returnHref, accent, .
       )}
       <footer className="venue-embed-profile-credit">
         <a href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer">
-          <span>mydancr.com</span>
+          <span>Powered by mydancr.com</span>
         </a>
       </footer>
     </div>
