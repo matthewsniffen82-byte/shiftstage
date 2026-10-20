@@ -14,6 +14,15 @@ html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #pr
   color: var(--embed-accent) !important;
   stroke: currentColor !important;
 }
+html body.dancr-button-system .venue-embed-profile-page .public-profile-shell .profile-titlebar-city {
+  gap: 5px;
+}
+html body.dancr-button-system .venue-embed-profile-page .public-profile-shell .profile-titlebar-city .profile-venue-pin {
+  flex: 0 0 16px !important; width: 16px !important; height: 16px !important;
+}
+html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout .profile-header-metrics {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout {
   min-height: calc(100dvh - 70px) !important; background: #0b0b0d !important;
 }

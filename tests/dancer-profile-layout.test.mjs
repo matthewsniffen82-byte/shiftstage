@@ -296,7 +296,9 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
   assert.match(profileActions, /className=\{`profile-tonight-card\$\{hasLiveActions \? " is-now" : " is-no-schedule"\}\$\{hasClubDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /className="profile-shift-card profile-working-card is-now"/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
-  assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
+  assert.match(profilePage, /const directionsHref = embedded \? venueDirectionsHref : undefined/);
+  assert.match(profilePage, /const workingVenueHref = directionsHref \|\| \(activeShift \? `\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}` : ""\)/);
+  assert.match(profilePage, /href=\{workingVenueHref\}/);
   assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
   assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);

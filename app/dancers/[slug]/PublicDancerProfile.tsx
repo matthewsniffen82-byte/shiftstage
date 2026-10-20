@@ -140,16 +140,17 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
                 {directionsHref ? (
                   <a className="profile-titlebar-city" href={directionsHref} target="_blank" rel="noopener noreferrer"
                     aria-label={`Directions to ${activeShift?.venueName || profile.venueName}`}>
+                    <VenuePinIcon />
                     {profile.city}
                   </a>
-                ) : <span className="profile-titlebar-city">{profile.city}</span>}
+                ) : <span className="profile-titlebar-city">{embedded ? <VenuePinIcon /> : null}{profile.city}</span>}
               </div>
             </div>
           </div>
           <dl className="profile-header-metrics" aria-label="Profile activity">
-            <div>
+            {!embedded ? <div>
               <DancerFollowerMetric />
-            </div>
+            </div> : null}
             <div>
               <dd><DancerGoingCount /></dd>
               <dt>Going</dt>

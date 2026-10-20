@@ -64,6 +64,14 @@ test("embedded profile removes social controls, keeps visit actions, and links c
       activeDeals: [{ id: "deal-one", venueId: "venue-one" }],
     }));
     assert.doesNotMatch(html, /data-follow-control|aria-label="Share profile"|aria-label="Guest actions"/);
+    const metrics = html.match(/<dl class="profile-header-metrics"[^>]*>([\s\S]*?)<\/dl>/)[1];
+    assert.doesNotMatch(metrics, /Followers/);
+    assert.match(metrics, /<dt>Going<\/dt>/);
+    assert.match(metrics, /<dt>Views today<\/dt>/);
+    assert.equal([...metrics.matchAll(/<div>/g)].length, 2);
+    const city = html.match(/<a class="profile-titlebar-city"[^>]*>([\s\S]*?)<\/a>/)[1];
+    assert.match(city, /<svg aria-hidden="true" class="profile-venue-pin"/);
+    assert.match(city, /Boise/);
     assert.match(html, /Free Entry/);
     assert.match(html, /I’m Going/);
     const mapLinks = html.match(/<a [^>]*href="https:\/\/www\.google\.com\/maps\/dir\/[^"]*"[^>]*>/g);
@@ -82,6 +90,7 @@ test("ordinary public profiles retain Follow, Share and their venue page link", 
   const html = renderToStaticMarkup(h(profileComponent, { profile, tvVideos: [] }));
   assert.match(html, /data-follow-control="text"/);
   assert.match(html, /aria-label="Share profile"/);
+  assert.match(html, /<dt>Followers<\/dt>/);
   assert.match(html, /href="\/venues\/rhino"/);
   assert.doesNotMatch(html, /google\.com\/maps/);
   assert.equal(galleryProps.showSocialActions, true);
