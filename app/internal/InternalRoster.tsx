@@ -14,6 +14,7 @@ import { ACCESS_TERMS_HREF, TABLE_REQUEST_NOTICE } from "@/src/lib/dancr/access-
 type Dancer = { id: string; stageName: string; workingUntil: string; avatarRevision: string; mainPhotoId: string | null; mainPhotoRevision: string; requestStatus?: "pending" | "acknowledged" | null; requestId?: string | null };
 type ClubLink = { id: string; label: string };
 type ClubRequest = { id: string; link_id: string; dancer_id: string; dancerName?: string; status: "pending" | "acknowledged"; created_at: string; attendance?: "arrived" | "no_show" | null; attendance_recorded_at?: string | null };
+type TableRequestCard = ClubRequest & { sample?: true; tableLabel?: string };
 type Snapshot = { venueName: string; venueSlug?: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 type DancerNotice = { message: string; error: boolean };
 
@@ -100,7 +101,7 @@ function VenueBrandLogo({ url, name }: { url: string; name: string }) {
   return <h1 className="ir-venue-identity">{failed ? name : <img className="ir-venue-logo" src={url} alt={name} width={208} height={76} decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />}</h1>;
 }
 
-export function InternalRoster({ token, operationsOnly = false, roster }: { token?: string; operationsOnly?: boolean; roster?: ReactNode }) {
+export function InternalRoster({ token, operationsOnly = false, sampleTableRequests = false, roster }: { token?: string; operationsOnly?: boolean; sampleTableRequests?: boolean; roster?: ReactNode }) {
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -125,6 +126,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
   const alive = useRef(false);
   const openedOperation = useRef("");
   const hasSnapshot = useRef(false);
+  const sampleTime = useRef(Date.now());
   const restoredProfile = useRef(false);
   const base = token ? `/api/internal/link/${encodeURIComponent(token)}` : "/api/internal";
 
@@ -379,6 +381,21 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
 
   const staff = !token;
   const dancers = (snapshot?.dancers || []).slice().sort((a, b) => Number(b.id === STAR_PROFILE_ID) - Number(a.id === STAR_PROFILE_ID));
+  // Samples use authorized roster identities, but never enter the live request queue.
+  const sampleRequests: TableRequestCard[] = staff && operationsOnly && sampleTableRequests
+    ? [...new Map(dancers.map(dancer => [dancer.id, dancer])).values()]
+      .sort((a, b) => a.stageName.localeCompare(b.stageName) || a.id.localeCompare(b.id)).slice(0, 10)
+      .map((dancer, index) => ({
+        id: `demo-table-${dancer.id}`, link_id: "", dancer_id: dancer.id, dancerName: dancer.stageName,
+        tableLabel: `Table ${index + 1}`, sample: true,
+        status: index < 6 ? "pending" : "acknowledged",
+        attendance: index >= 8 ? "arrived" : null,
+        created_at: new Date(sampleTime.current - (index + 1) * 60_000).toISOString(),
+      })) : [];
+  const requestCards: TableRequestCard[] = [
+    ...(snapshot?.requests || []).slice().sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || Date.parse(b.created_at) - Date.parse(a.created_at)),
+    ...sampleRequests,
+  ];
   // Table snapshots already carry each dancer's active request, including after reload.
   // A receipt alone has no dancer identity; never assign it to an unrelated card.
   const tableRequests = staff ? [] : dancers.filter(dancer => dancer.requestStatus);
@@ -464,30 +481,32 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
     </> : null}
       {/* Keep table requests ahead of the independently loaded roster,
           including the first paint. Unknown counts must not appear as zero. */}
-      {staff ? <div className="ir-operations"><section className="ir-panel venue-card-region" id="table-requests" tabIndex={-1} aria-busy={!snapshot && !error || undefined}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot ? snapshot.requests?.length || 0 : "—"}</span></h2>
+      {staff ? <div className="ir-operations"><section className="ir-panel venue-card-region" id="table-requests" tabIndex={-1} aria-busy={!snapshot && !error || undefined}><h2><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 4h16v13H9l-5 4ZM8 8h8M8 12h5" /></svg>Table requests <span>{snapshot ? sampleRequests.length ? `${snapshot.requests?.length || 0} live` : snapshot.requests?.length || 0 : "—"}</span></h2>
         {snapshot ? <>
-        {snapshot.requests?.length ? <div className="venue-dancer-grid" aria-label="Table request cards">{[...snapshot.requests].sort((a, b) => Number(b.status === "pending") - Number(a.status === "pending") || Date.parse(b.created_at) - Date.parse(a.created_at)).map((item, index) => {
+        {sampleRequests.length ? <p className="venue-table-sample-count">{sampleRequests.length} sample requests</p> : null}
+        {requestCards.length ? <div className="venue-dancer-grid" aria-label="Table request cards">{requestCards.map((item, index) => {
           const dancer = snapshot.dancers.find(row => row.id === item.dancer_id);
           const dancerName = item.dancerName || dancer?.stageName || "Dancer";
-          const tableLabel = snapshot.links?.find(link => link.id === item.link_id)?.label || "Table";
+          const tableLabel = item.sample ? item.tableLabel : snapshot.links?.find(link => link.id === item.link_id)?.label || "Table";
           const requestState = item.status === "pending" ? "pending" : item.attendance === "arrived" ? "arrived" : "acknowledged";
           const requestLabel = item.status === "pending" ? "New request" : item.attendance === "arrived" ? "Arrived at table" : "Seen by staff";
           const identity = <span className="venue-card-portrait"><span className="venue-card-photo" aria-hidden="true">
             {dancer ? <ProtectedMedia key={`${dancer.mainPhotoId || dancer.id}:${dancer.mainPhotoRevision || dancer.avatarRevision}`} id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" grid lazy={index >= 12} priority={index < 3} /> : <VenueGridImage />}</span>
-            <span className="venue-card-caption"><strong>{dancerName}</strong><small>{tableLabel}</small><span className="venue-card-status" data-state={requestState}>{openingProfileId === dancer?.id ? "Opening…" : requestLabel}</span></span></span>;
-          return <article className="venue-dancer-card" data-request-id={item.id} key={item.id}><div className="venue-table-request-identity">
+            <span className="venue-card-caption"><strong>{dancerName}</strong><small>{item.sample ? `Sample · ${tableLabel}` : tableLabel}</small><span className="venue-card-status" data-state={requestState}>{openingProfileId === dancer?.id ? "Opening…" : requestLabel}</span></span></span>;
+          return <article className="venue-dancer-card" data-request-id={item.id} data-sample={item.sample || undefined} key={item.id}><div className="venue-table-request-identity">
             {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={() => void openProfile(dancer)}>{identity}</button>
               : identity}</div>
             <details className="venue-card-menu" name="venue-card-details"><summary className="dashboard-menu-trigger" aria-label={`${tableLabel} request details for ${dancerName}`} title="Request details"><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary>
             <div className="venue-card-popover"><div className="venue-card-details"><strong>{tableLabel} · {dancerName}</strong>
+              {item.sample ? <small>Sample request</small> : null}
               <span className="venue-card-status" data-state={requestState}>{requestLabel}</span>
               <small>Received: <time dateTime={item.created_at}>{new Date(item.created_at).toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}</time></small>
-            </div><div className="ir-actions venue-card-actions">
+            </div>{!item.sample ? <div className="ir-actions venue-card-actions">
           {item.status === "pending" || item.attendance === "arrived" ? <button disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: item.status === "pending" ? "acknowledged" : "completed" })}>{item.status === "pending" ? "Mark seen" : "Complete"}</button> : <>
             <button disabled={busy} onClick={() => void mutate({ action: "request_attendance", id: item.id, expectedStatus: item.status, attendance: "arrived" })}>Mark arrived</button>
             <button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_attendance", id: item.id, expectedStatus: item.status, attendance: "no_show" })}>Didn’t arrive at table</button>
           </>}
-          <button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: "cancelled" })}>Dismiss</button></div></div></details></article>;
+          <button className="ir-secondary" disabled={busy} onClick={() => void mutate({ action: "request_status", id: item.id, expectedStatus: item.status, status: "cancelled" })}>Dismiss</button></div> : null}</div></details></article>;
         })}</div> : <p className="ir-empty">No open requests.</p>}
         <InternalRequestPushSettings />
         </> : <>

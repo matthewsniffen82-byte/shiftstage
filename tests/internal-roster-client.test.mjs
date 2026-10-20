@@ -493,6 +493,84 @@ test("staff keep their existing sign-in and loading presentation", async t => {
   assert.equal(find(app.render(), node => node.props?.className === "ir-loading-status"), undefined);
 });
 
+test("Rhino dashboard samples show ten distinct authorized dancers without entering live requests", async t => {
+  const dancers = Array.from({ length: 12 }, (_, index) => ({
+    ...dancer, id: `dancer-${index}`, stageName: `Dancer ${String(index + 1).padStart(2, "0")}`,
+    mainPhotoId: `photo-${index}`, mainPhotoRevision: "revision-1",
+  }));
+  const calls = [];
+  const app = harness(async (url, options) => {
+    calls.push({ url, options });
+    if (url.includes("/profile/")) return response({ ok: true, profile: { id: dancers[0].id, stage_name: dancers[0].stageName } });
+    return response({ ...roster, dancers: [...dancers].reverse().concat(dancers[0]), requests: [{
+      id: "real-request", dancer_id: dancers[11].id, link_id: "real-table", status: "pending", created_at: "2026-10-20T03:00:00Z",
+    }], links: [{ id: "real-table", label: "VIP 12" }] });
+  }, { token: "", session: { accessToken: "staff-token", account: { role: "venue" } },
+    props: { operationsOnly: true, sampleTableRequests: true } });
+  t.after(() => app.unmount()); await app.mount();
+  const section = find(app.render(), node => node.props?.id === "table-requests");
+  const cards = find(section, node => node.props?.["aria-label"] === "Table request cards").props.children;
+  assert.equal(cards.length, 11);
+  assert.equal(cards[0].props["data-request-id"], "real-request", "live requests stay ahead of samples");
+  assert.match(textContent(find(section, node => node.type === "h2")), /1 live/);
+  assert.match(textContent(section), /10 sample requests/);
+  const samples = cards.filter(card => card.props["data-sample"]);
+  assert.equal(samples.length, 10);
+  assert.equal(new Set(samples.map(card => card.props["data-request-id"])).size, 10);
+  samples.forEach((card, index) => {
+    assert.equal(card.props["data-request-id"], `demo-table-${dancers[index].id}`);
+    assert.match(textContent(card), new RegExp(`Sample · Table ${index + 1}`));
+    assert.ok(find(card, node => node.props?.["aria-label"] === `View ${dancers[index].stageName} profile`));
+    assert.equal(find(card, node => node.type?.name === "ProtectedMedia").props.id, dancers[index].mainPhotoId);
+    assert.equal(find(card, node => node.props?.className === "ir-actions venue-card-actions"), undefined);
+    assert.doesNotMatch(textContent(card), /Mark seen|Mark arrived|Complete|Dismiss/);
+  });
+  assert.equal(samples.filter(card => textContent(card).includes("New request")).length, 6);
+  assert.equal(samples.filter(card => textContent(card).includes("Seen by staff")).length, 2);
+  assert.equal(samples.filter(card => textContent(card).includes("Arrived at table")).length, 2);
+  const sampleTimes = samples.map(card => find(card, node => node.type === "time").props.dateTime);
+  await app.advance(60_000);
+  const refreshedCards = find(app.render(), node => node.props?.["aria-label"] === "Table request cards").props.children.filter(card => card.props["data-sample"]);
+  assert.deepEqual(refreshedCards.map(card => find(card, node => node.type === "time").props.dateTime), sampleTimes);
+  find(samples[0], node => node.type === "button").props.onClick(); await flush();
+  assert.equal(profile(app).id, dancers[0].id, "samples open authorized real profiles");
+  assert.ok(calls.every(call => call.options.method === "GET"), "samples cannot create requests or notifications");
+  find(cards[0], node => node.type === "button" && node.props.children === "Mark seen").props.onClick(); await flush();
+  const action = calls.find(call => call.options.method === "POST");
+  assert.equal(JSON.parse(action.options.body).id, "real-request", "live actions still target the actual request");
+});
+
+for (const scenario of [
+  { name: "normal venue dashboard", token: "", props: { operationsOnly: true } },
+  { name: "standalone staff roster", token: "", props: { sampleTableRequests: true } },
+  { name: "guest table roster", token: "table-token", props: { operationsOnly: true, sampleTableRequests: true } },
+]) test(`sample requests stay out of the ${scenario.name}`, async t => {
+  const app = harness(async () => response({ ...roster, requests: [] }), {
+    ...scenario, session: { accessToken: "staff-token", account: { role: "venue" } },
+  });
+  t.after(() => app.unmount()); await app.mount();
+  assert.equal(find(app.render(), node => node.props?.["data-sample"]), undefined);
+  assert.doesNotMatch(textContent(app.render()), /sample requests/);
+});
+
+test("sample cards stay empty without an authorized roster and do not invent dancers", async t => {
+  const app = harness(async () => response({ ...roster, dancers: [], requests: [] }), {
+    token: "", session: { accessToken: "staff-token", account: { role: "venue" } },
+    props: { operationsOnly: true, sampleTableRequests: true },
+  });
+  t.after(() => app.unmount()); await app.mount();
+  assert.equal(find(app.render(), node => node.props?.["data-sample"]), undefined);
+  assert.match(textContent(app.render()), /No open requests/);
+});
+
+test("sample table requests are enabled only by the existing exact demo venue gate", () => {
+  const panels = readFileSync(new URL("../app/dashboard/VenueDashboardPanels.tsx", import.meta.url), "utf8");
+  const nfcPanel = readFileSync(new URL("../app/dashboard/VenueNfcTagPanel.tsx", import.meta.url), "utf8");
+  assert.match(panels, /sampleTableRequests=\{isVenueDashboardDemo\(profile\)\}/);
+  assert.match(nfcPanel, /sampleTableRequests = false/);
+  assert.match(nfcPanel, /<InternalRoster operationsOnly sampleTableRequests=\{sampleTableRequests\}/);
+});
+
 test("saved table requests identify every requested dancer without locking other cards", async t => {
   const dancers = [
     { ...dancer, requestStatus: "pending", requestId: "first" },

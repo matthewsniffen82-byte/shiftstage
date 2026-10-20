@@ -43,6 +43,7 @@ async function settleVenueNfcRequest<T>(request: () => Promise<T>): Promise<Prom
 export default function VenueNfcTagPanel({
   initialAffiliations = EMPTY_ROSTER,
   workingNow = EMPTY_ROSTER,
+  sampleTableRequests = false,
   timeZone,
   workingOnly,
   onWorkingOnlyChange,
@@ -52,6 +53,7 @@ export default function VenueNfcTagPanel({
 }: {
   initialAffiliations?: Array<Record<string, unknown>>;
   workingNow?: Array<Record<string, unknown>>;
+  sampleTableRequests?: boolean;
   timeZone: string;
   workingOnly: boolean;
   onWorkingOnlyChange: (workingOnly: boolean) => void;
@@ -334,7 +336,7 @@ export default function VenueNfcTagPanel({
 
   return (
     <article className="info-panel venue-nfc-panel" id="venue-nfc-tags">
-      <InternalRoster operationsOnly roster={<>
+      <InternalRoster operationsOnly sampleTableRequests={sampleTableRequests} roster={<>
       <details className="venue-nfc-roster" ref={rosterRef}>
         <summary className="venue-nfc-roster-head">
           <VenueDashboardIcon section="roster" />

@@ -362,6 +362,7 @@ export function VenuePanel({
           <VenueNfcTagPanel
             initialAffiliations={initialAffiliations}
             workingNow={workingNow}
+            sampleTableRequests={isVenueDashboardDemo(profile)}
             timeZone={String(profile?.timezone || "America/Los_Angeles")}
             workingOnly={rosterWorkingOnly}
             onWorkingOnlyChange={setRosterWorkingOnly}
