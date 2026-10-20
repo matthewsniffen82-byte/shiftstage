@@ -21,7 +21,7 @@ function declaration(rule, property) {
   return found;
 }
 
-test('all branded full profiles use a neutral frame and charcoal surface without changing geometry', () => {
+test('all branded full profiles use a neutral frame and black information panel without changing geometry', () => {
   const frame = ruleMatching(themes, selector => selector.endsWith(':not(.dancer-profile-preview-shell)::before'));
   assert.match(frame.selector, /\[data-venue-brand\]:not\(\[data-venue-brand=""\]\)/);
   assert.doesNotMatch(frame.selector, /talk-of-the-town|spearmint-rhino-las-vegas-demo/);
@@ -34,10 +34,7 @@ test('all branded full profiles use a neutral frame and charcoal surface without
   assert.deepEqual(frame.nodes.filter(node => node.type === 'decl').map(node => node.prop), ['box-shadow', 'z-index']);
   const surface = ruleMatching(themes, selector => selector === frame.selector.replace('::before', '::after'));
   const background = declaration(surface, 'background').value;
-  const image = background.match(/url\("data:image\/svg\+xml,([^"]+)"\)/);
-  assert.ok(image, 'information panel uses an image fill for mobile night modes');
-  assert.match(decodeURIComponent(image[1]), /fill='#161618'/);
-  assert.match(background, /center \/ 100% 100% no-repeat$/);
+  assert.equal(background, '#000 linear-gradient(#000, #000)');
   assert.equal(declaration(surface, 'background').important, true);
   const websiteSurface = ruleMatching(embedProfile, selector => selector.endsWith('.public-profile-shell.profile-split-layout::after'));
   assert.equal(declaration(websiteSurface, 'background').value, background, 'Internal and website profile surfaces stay consistent');
