@@ -85,7 +85,7 @@ test('signup confirmation preserves the Internal return while ordinary signup ke
     let submit, requested;
     const context = {
       authMode: 'signup', pendingAccountAuthReturnTo: returnTo, citySelect: { value: 'Las Vegas' },
-      document: { getElementById: () => ({ value: 'synthetic', textContent: 'Create guest account', setAttribute() {}, removeAttribute() {}, addEventListener: (_event, fn) => { submit = fn; } }) },
+      document: { getElementById: () => ({ value: 'synthetic', checked: true, dataset: { termsVersion: 'test-current-terms' }, textContent: 'Create guest account', setAttribute() {}, removeAttribute() {}, addEventListener: (_event, fn) => { submit = fn; } }) },
       saveAuthResume: (_role, destination) => destination,
       requestAuth: async payload => { requested = payload; return {}; },
       setCustomerAuthStatus() {}, updateAccountHeader() {}, showToast() {}, startConfirmationResendCooldown() {},

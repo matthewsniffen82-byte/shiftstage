@@ -668,7 +668,7 @@
     }
 
     installReferenceHomeShell();
-    void loadDancerSignupCities();
+    if (!internalProfileFrameId) void loadDancerSignupCities();
     restoreLoggedInSessionState();
     updateAccountHeader();
     const initialProfileParams = new URLSearchParams(window.location.search);
@@ -702,14 +702,14 @@
       selectedVenueName = initialProfileParams.get("venue");
       activeTab = "venues";
     }
-    const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value, {
+    const initialDiscoveryRequest = internalProfileFrameId ? Promise.resolve() : loadLiveDiscovery(citySelect.value, {
       force: consumePublicDiscoveryRefreshRequest()
     });
     const initialVenuePreviewRequest = initialVenuePreviewRequested
       ? Promise.resolve(initialDiscoveryRequest).finally(() => openSharedProfileFromUrl())
       : null;
     try { localStorage.removeItem("mydancrGuestPickupsV1"); localStorage.removeItem("mydancrGuestPickupReadV1"); } catch { /* Storage may be unavailable. */ }
-    render();
+    if (!internalProfileFrameId) render();
     if (initialHomeDestinationRequested) {
       focusHomeResults();
     }
@@ -754,7 +754,7 @@
     });
 
     async function refreshVisibleHomeDiscovery({ bypassCache = false, automatic = false } = {}) {
-      if (document.visibilityState !== "visible") return;
+      if (internalProfileFrameId || document.visibilityState !== "visible") return;
       if (automatic && activeTab === "venues") return;
       return loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
     }
@@ -804,20 +804,19 @@
       renderCustomerQuickActions();
       if (isCustomerSession()) void loadLiveCustomerSaved();
     });
-    if (isCustomerSession()) loadLiveCustomerDashboardData();
-    if (isDancerSession()) {
+    if (!internalProfileFrameId && isCustomerSession()) loadLiveCustomerDashboardData();
+    if (!internalProfileFrameId && isDancerSession()) {
       loadLiveDancerAnalytics();
       loadLiveDancerDeals();
       loadLiveDancerWeeklyReport();
       loadLiveDancerRankingEvents();
     }
-    if (authSession?.accessToken) loadLiveNotifications();
-    if (isCustomerSession() || isDancerSession()) loadLiveSupportThreads();
-    if (isAdminSession()) loadLiveAdminSupportThreads();
-    const restoredAuthResume = restoreAuthConfirmationResume();
+    if (!internalProfileFrameId && authSession?.accessToken) loadLiveNotifications();
+    if (!internalProfileFrameId && (isCustomerSession() || isDancerSession())) loadLiveSupportThreads();
+    if (!internalProfileFrameId && isAdminSession()) loadLiveAdminSupportThreads();
+    const restoredAuthResume = !internalProfileFrameId && restoreAuthConfirmationResume();
     if (internalProfileFrameId) {
       initializeInternalProfileFrame();
-      void initialDiscoveryRequest.then(syncInternalProfilePublicMetrics, () => {});
     } else if (!restoredAuthResume && !handleVenueDancerVerificationDeepLink() && !handleAdminDashboardDeepLink() && !handleVenueDashboardDeepLink() && !handleDancerDashboardDeepLink() && !handleVenueAccessDeepLink() && !handleAccountAccessDeepLink()) {
       if (initialVenuePreviewRequest) void initialVenuePreviewRequest;
       else void initialDiscoveryRequest.catch(() => {}).then(async () => {

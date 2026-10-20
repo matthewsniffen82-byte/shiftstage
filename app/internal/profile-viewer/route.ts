@@ -19,7 +19,7 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop .profile-m
 
 export async function GET(request: Request) {
   const id = new URL(request.url).searchParams.get("internal_profile");
-  if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+  if (id !== "viewer" && (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))) {
     return new Response("Profile unavailable.", { status: 400, headers: { "cache-control": "no-store" } });
   }
   // This is the same public viewer shell, with no dancer data or credentials in

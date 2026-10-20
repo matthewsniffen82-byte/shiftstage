@@ -6,6 +6,9 @@
     let internalProfileRevision = "";
     let internalProfileMediaIncomplete = false;
     let internalProfileLoadSequence = 0;
+    let internalProfileTargetId = "";
+    let internalProfileToken = "";
+    let internalProfileMediaController = new AbortController();
     let internalTableRequest = null;
     let internalProfileActivity = {};
     const internalProfileMedia = new Map();
@@ -26,10 +29,16 @@
         if (!session?.accessToken) return "";
         const headers = { authorization: `Bearer ${session.accessToken}` };
         if (session.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
-        const request = fetch(path, { headers, cache: "no-store", signal: AbortSignal.timeout(15000) })
+        const scope = internalProfileMediaController;
+        const controller = new AbortController();
+        const cancel = () => controller.abort();
+        scope.signal.addEventListener("abort", cancel, { once: true });
+        const timeout = window.setTimeout(cancel, 15000);
+        const request = fetch(path, { headers, cache: "no-store", signal: controller.signal })
           .then(response => { if (!response.ok) throw new Error("Media unavailable."); return response.blob(); })
-          .then(blob => authSession?.accessToken === session.accessToken ? URL.createObjectURL(blob) : "")
-          .catch(() => { internalProfileMedia.delete(key); return ""; });
+          .then(blob => !controller.signal.aborted && authSession?.accessToken === session.accessToken ? URL.createObjectURL(blob) : "")
+          .catch(() => { if (internalProfileMedia.get(key) === request) internalProfileMedia.delete(key); return ""; })
+          .finally(() => { window.clearTimeout(timeout); scope.signal.removeEventListener("abort", cancel); });
         internalProfileMedia.set(key, request);
       }
       return internalProfileMedia.get(key);
@@ -37,10 +46,15 @@
 
     async function openInternalProfileMessage(event) {
       if (!internalProfileFrameId || event.origin !== window.location.origin || event.source !== window.parent
-        || event.data?.type !== "mydancr:internal-profile-open" || event.data?.profile?.id !== internalProfileFrameId) return;
+        || event.data?.type !== "mydancr:internal-profile-open"
+        || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(event.data?.profile?.id || "")
+        || (internalProfileFrameId !== "viewer" && event.data.profile.id !== internalProfileFrameId)) return;
       const source = event.data.profile;
       if (!Array.isArray(source.photos) || !Array.isArray(source.videos) || !Array.isArray(source.socialLinks)) return;
       const token = typeof event.data.token === "string" ? event.data.token : "";
+      if (internalProfileTargetId && (internalProfileTargetId !== source.id || internalProfileToken !== token)) closeProfileModal();
+      internalProfileTargetId = source.id;
+      internalProfileToken = token;
       // Only a table-token profile may carry a club theme. This document is
       // isolated from the public app and the staff profile preview.
       const guestAccent = token && /^#[0-9a-f]{6}$/i.test(source.internalAccent || "") ? source.internalAccent : "";
@@ -63,7 +77,7 @@
       } : null;
       const { requestsTonight, requestStatus, requestId, ...profileContent } = source;
       internalProfileActivity = { requestsTonight, requestStatus, requestId };
-      const revision = JSON.stringify([profileContent, token]);
+      const revision = JSON.stringify([profileContent, token, Date.parse(source.workingUntil || "") > Date.now()]);
       if (internalRosterProfile) {
         internalRosterProfile.requestsTonight = requestsTonight;
         internalRosterProfile.requestStatus = requestStatus;
@@ -73,38 +87,43 @@
       if (revision === internalProfileRevision && !internalProfileMediaIncomplete) return;
       internalProfileRevision = revision;
       const sequence = ++internalProfileLoadSequence;
-      const city = discoveryMarket(source.city) ? source.city : selectedCity();
+      const city = String(source.city || selectedCity()).trim();
+      // A private profile only needs its own city context, not a directory fetch.
+      if (!discoveryMarket(city)) markets[city] = { stats: { dancers: 0, shifts: 0, venues: 0 }, dancers: [], venues: [] };
+      if (![...citySelect.options].some(option => option.value === city)) {
+        const option = document.createElement("option");
+        option.value = city; option.textContent = city; citySelect.append(option);
+      }
       const external = discoveryMarket(city)?.dancers?.find(item => item.id === source.id && isApprovedPublicProfile(item));
-      const [avatarPhotoUrl, photos, videos] = await Promise.all([
+      const photoMedia = async photo => ({
+        id: photo.id, imageUrl: await internalProfileMediaUrl("photo", photo.id, token),
+        reviewStatus: "approved", isPrimary: photo.is_primary === true,
+        isPinned: photo.is_pinned === true, sortOrder: photo.sort_order || 0, likeCount: photo.like_count || 0,
+      });
+      const mainPhoto = source.photos.find(photo => photo.is_primary) || source.photos[0];
+      // Open after the two visible images. Galleries and full video downloads
+      // must never hold the whole profile behind a loading spinner.
+      const [avatarPhotoUrl, primaryPhoto] = await Promise.all([
         internalProfileMediaUrl("avatar", source.id, token, source.avatarRevision, 320),
-        Promise.all(source.photos.map(async photo => ({
-          id: photo.id, imageUrl: await internalProfileMediaUrl("photo", photo.id, token),
-          reviewStatus: "approved", isPrimary: photo.is_primary === true,
-          isPinned: photo.is_pinned === true, sortOrder: photo.sort_order || 0, likeCount: photo.like_count || 0,
-        }))),
-        Promise.all(source.videos.map(async video => ({
-          id: video.id, videoUrl: await internalProfileMediaUrl("video", video.id, token),
-          posterUrl: video.has_poster ? await internalProfileMediaUrl("video-poster", video.id, token) : "",
-          caption: video.caption, durationSeconds: video.duration_seconds || 0, likeCount: video.like_count || 0,
-          isPinned: video.is_pinned === true, publishedAt: video.published_at,
-        }))),
+        mainPhoto ? photoMedia(mainPhoto) : null,
       ]);
       if (sequence !== internalProfileLoadSequence) return;
-      internalProfileMediaIncomplete = !avatarPhotoUrl || photos.some(photo => !photo.imageUrl)
-        || videos.some((video, index) => !video.videoUrl || (source.videos[index].has_poster && !video.posterUrl));
+      const previous = internalRosterProfile;
+      const photos = previous?.submittedPhotos || (primaryPhoto ? [primaryPhoto] : []);
+      internalProfileMediaIncomplete = false;
       const working = Date.parse(source.workingUntil || "") > Date.now();
       internalRosterProfile = {
-        ...external, id: source.id, slug: source.slug || external?.slug || "", name: source.stage_name, city,
+        ...external, ...previous, id: source.id, slug: source.slug || external?.slug || "", name: source.stage_name, city,
         internalRoster: true, status: "Verified", photoStatus: "Approved",
         ...internalProfileActivity,
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,
-        metricsUnavailable: external ? external.metricsUnavailable : true,
+        metricsUnavailable: previous ? previous.metricsUnavailable : external ? external.metricsUnavailable : true,
         avatarPhotoUrl, avatarPhotoSrcSet: "", mainPhotoUrl: (photos.find(photo => photo.isPrimary) || photos[0])?.imageUrl || "", mainPhotoSrcSet: "",
         galleryPhotoUrls: photos.map(photo => photo.imageUrl), galleryPhotoSrcSets: [],
         galleryPhotoIds: photos.map(photo => photo.id), galleryPhotoLikeCounts: photos.map(photo => photo.likeCount),
         galleryPhotoPins: photos.map(photo => photo.isPinned), submittedPhotos: photos,
-        internalVideos: videos.sort((a, b) => Number(b.isPinned) - Number(a.isPinned)),
+        internalVideos: previous?.internalVideos || [],
         socials: Object.fromEntries(source.socialLinks.map(link => [link.platform, link.url])),
         submittedSocials: [], socialLinks: source.socialLinks,
         venue: source.venueName, venueSlug: source.venueSlug || "", scheduled: working, tonight: working, liveTonight: working,
@@ -114,11 +133,77 @@
         locationVerificationExpiresAt: source.workingUntil || "",
         activeDeal: null, activeDeals: [], dealAttributionToken: "", dealAttributionTokens: {},
       };
+      const viewed = internalRosterProfile;
+      viewed.internalVideosRequest = Promise.all(source.videos.map(async video => ({
+        id: video.id, videoUrl: await internalProfileMediaUrl("video", video.id, token),
+        posterUrl: video.has_poster ? await internalProfileMediaUrl("video-poster", video.id, token) : "",
+        caption: video.caption, durationSeconds: video.duration_seconds || 0, likeCount: video.like_count || 0,
+        isPinned: video.is_pinned === true, publishedAt: video.published_at,
+      }))).then(videos => {
+        if (sequence !== internalProfileLoadSequence) return { ok: false, videos: [] };
+        internalProfileMediaIncomplete ||= videos.some((video, index) => !video.videoUrl || (source.videos[index].has_poster && !video.posterUrl));
+        viewed.internalVideos = videos.filter(video => video.videoUrl).sort((a, b) => Number(b.isPinned) - Number(a.isPinned));
+        return { ok: true, videos: viewed.internalVideos };
+      });
       citySelect.value = city;
-      openProfileModal(source.id);
+      if (!previous) openProfileModal(source.id);
+      else {
+        // A roster poll can change likes, request counts or availability. Keep
+        // the selected tab, playing video and scroll position intact.
+        syncInternalProfileDetails(previous, viewed);
+        void loadProfileMyDancrTv(viewed);
+      }
       syncInternalProfilePublicMetrics();
+      if (!external) void loadInternalProfilePublicMetrics(viewed, sequence);
       document.documentElement.classList.add("internal-profile-ready");
-      window.parent.postMessage({ type: "mydancr:internal-profile-shown" }, window.location.origin);
+      window.parent.postMessage({ type: "mydancr:internal-profile-shown", profileId: source.id }, window.location.origin);
+      const gallery = await Promise.all(source.photos.map(photo => photo.id === mainPhoto?.id ? primaryPhoto : photoMedia(photo)));
+      if (sequence !== internalProfileLoadSequence) return;
+      internalProfileMediaIncomplete ||= !avatarPhotoUrl || gallery.some(photo => !photo.imageUrl);
+      viewed.submittedPhotos = gallery;
+      viewed.mainPhotoUrl = (gallery.find(photo => photo.isPrimary) || gallery[0])?.imageUrl || "";
+      if (previous && !previous.mainPhotoUrl && viewed.mainPhotoUrl) {
+        setModalPhoto(portraitClass(-1), viewed.mainPhotoUrl);
+        setProfileMainPhoto(viewed.mainPhotoUrl, "");
+      }
+      viewed.galleryPhotoUrls = gallery.map(photo => photo.imageUrl);
+      viewed.galleryPhotoIds = gallery.map(photo => photo.id);
+      viewed.galleryPhotoLikeCounts = gallery.map(photo => photo.likeCount);
+      viewed.galleryPhotoPins = gallery.map(photo => photo.isPinned);
+      modalGallery.profilePhotoItems = profilePhotoGalleryItems(viewed, -1);
+      modalGallery.profileVisiblePhotoCount = Math.min(modalGallery.profilePhotoItems.length, Math.max(PROFILE_MEDIA_PAGE_SIZE, modalGallery.profileVisiblePhotoCount || 0));
+      renderProfileMediaLibrary();
+      syncProfileMediaTabCounts(modalGallery.profilePhotoItems.length, modalGallery.profileTvVideos?.length || 0);
+      window.requestAnimationFrame(observeProfileMediaSentinel);
+      await viewed.internalVideosRequest;
+    }
+
+    function syncInternalProfileDetails(previous, profile) {
+      const name = document.getElementById("modalName");
+      if (name) name.textContent = profile.name;
+      const city = document.getElementById("modalCity");
+      if (city) city.textContent = profile.city;
+      if (previous.scheduled !== profile.scheduled || previous.venue !== profile.venue || previous.locationVerificationExpiresAt !== profile.locationVerificationExpiresAt) {
+        const body = document.getElementById("modalBody");
+        if (body) body.innerHTML = profileModalGridMarkup(profile, { city: profile.city });
+        document.querySelectorAll(".profile-modal-avatar, .profile-featured-column").forEach(node => { node.dataset.workingNow = String(profile.scheduled); });
+      }
+      syncInternalProfileRequestUi();
+    }
+
+    async function loadInternalProfilePublicMetrics(profile, sequence) {
+      if (!profile.slug) return;
+      try {
+        const response = await fetch(`/api/public/dancers/${encodeURIComponent(profile.slug)}`, { signal: internalProfileMediaController.signal });
+        const payload = response.ok ? await response.json() : null;
+        if (sequence !== internalProfileLoadSequence || payload?.profile?.id !== profile.id) return;
+        Object.assign(internalRosterProfile, {
+          followerCount: payload.profile.followerCount, profileViewsToday: payload.profile.profileViewsToday,
+          metricsUnavailable: payload.profile.metricsUnavailable,
+        });
+        const metrics = document.getElementById("modalProfileMetrics");
+        if (metrics) metrics.innerHTML = profileActivityMetricsMarkup(internalRosterProfile, profile.city);
+      } catch { /* Internal-only profiles can remain unavailable to public metrics. */ }
     }
 
     function syncInternalProfilePublicMetrics() {
@@ -162,10 +247,24 @@
 
     function closeInternalProfileFrame() {
       if (!internalProfileFrameId) return;
+      const profileId = internalProfileTargetId;
       internalProfileLoadSequence += 1;
       internalRosterProfile = null;
       internalTableRequest = null;
-      window.parent.postMessage({ type: "mydancr:internal-profile-close" }, window.location.origin);
+      internalProfileTargetId = "";
+      internalProfileToken = "";
+      internalProfileRevision = "";
+      internalProfileMediaIncomplete = false;
+      internalProfileMediaController.abort();
+      internalProfileMediaController = new AbortController();
+      internalProfileMedia.forEach(promise => { void promise.then(url => { if (url) URL.revokeObjectURL(url); }); });
+      internalProfileMedia.clear();
+      modalGallery.profileTvLoadRequest = null;
+      modalGallery.dataset.profileMediaProfile = "";
+      modalGallery.profileMediaScope = "";
+      modalGallery.profilePhotoItems = [];
+      modalGallery.profileTvVideos = [];
+      if (profileId) window.parent.postMessage({ type: "mydancr:internal-profile-close", profileId }, window.location.origin);
     }
 
     function startInternalProfileAuth(mode) {
@@ -180,19 +279,22 @@
         if (event.target instanceof Element && event.target.closest("[data-internal-table-request]")) sendInternalTableRequest();
       });
       window.addEventListener("message", event => {
+        if (event.origin !== window.location.origin || event.source !== window.parent) return;
+        if (event.data?.type === "mydancr:internal-profile-clear") {
+          closeProfileModal();
+          return;
+        }
         if (event.origin === window.location.origin && event.source === window.parent && event.data?.type === "mydancr:internal-profile-auth-error") {
           showToast(event.data.message);
           return;
         }
         void openInternalProfileMessage(event).catch(() => {
           internalProfileRevision = "";
-          window.parent.postMessage({ type: "mydancr:internal-profile-error" }, window.location.origin);
+          window.parent.postMessage({ type: "mydancr:internal-profile-error", profileId: event.data?.profile?.id }, window.location.origin);
         });
       });
       window.addEventListener("pagehide", () => {
-        internalProfileLoadSequence += 1;
-        internalProfileMedia.forEach(promise => { void promise.then(url => { if (url) URL.revokeObjectURL(url); }); });
-        internalProfileMedia.clear();
+        closeInternalProfileFrame();
       }, { once: true });
       window.parent.postMessage({ type: "mydancr:internal-profile-ready" }, window.location.origin);
     }

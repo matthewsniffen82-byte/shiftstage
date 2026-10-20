@@ -739,6 +739,24 @@ test("opening a profile starts its viewer alongside the API and keeps the roster
  assert.equal(profile(app).id,dancer.id);assert.equal(find(app.render(),node=>node.props?.className==='ir-profile-link').props['aria-busy'],false);
 });
 
+test('the roster warms one viewer after authorization, while individual staff buttons start on demand', async t => {
+  const pending = deferred();
+  const app = harness(() => pending.promise);
+  t.after(() => app.unmount());
+  await app.mount();
+  assert.equal(find(app.render(), node => node.type?.name === 'ClubProfileDialog'), undefined);
+  pending.resolve(response(roster)); await flush();
+  const dialog = find(app.render(), node => node.type?.name === 'ClubProfileDialog');
+  assert.equal(dialog.props.prewarm, true);
+  assert.equal(dialog.props.profile, null);
+  const staff = harness(() => new Promise(() => {}), { component: 'VenueRosterProfileButton', session: { accessToken: 'staff-token', account: { role: 'venue' } } });
+  t.after(() => staff.unmount()); await staff.mount();
+  const loading = find(staff.render(), node => node.type?.name === 'ClubProfileDialog');
+  assert.equal(loading.props.prewarm, undefined);
+  assert.equal(loading.props.profileId, dancer.id);
+  assert.equal(loading.props.profile, null, 'The staff viewer starts alongside its API request');
+});
+
 test("a stalled viewer returns an inline retry message without taking over the roster",async t=>{
  const app=harness(async url=>response(url.includes('/profile/')?{ok:true,profile:{id:dancer.id}}:roster));t.after(()=>app.unmount());await app.mount();
  find(app.render(),node=>node.props?.className==='ir-profile-link').props.onClick();await flush();

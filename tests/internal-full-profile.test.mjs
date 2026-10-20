@@ -6,14 +6,16 @@ import vm from 'node:vm';
 const source = readFileSync(new URL('../src/live-shell/app/internal-profile-bridge.js', import.meta.url), 'utf8');
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
-test('Internal initializes without waiting for public discovery, then refreshes its metrics',async()=>{
+test('Internal initializes its viewer without loading the public directory',()=>{
   const startup=readFileSync(new URL('../src/live-shell/app/26-sync-discovery-city-scope.js',import.meta.url),'utf8');
   const branch=startup.slice(startup.lastIndexOf('    if (internalProfileFrameId) {'));
-  let resolve,ready=0,metrics=0;
-  const initialDiscoveryRequest=new Promise(done=>{resolve=done});
-  vm.runInNewContext(branch,{internalProfileFrameId:id(1),initialDiscoveryRequest,initializeInternalProfileFrame:()=>ready++,syncInternalProfilePublicMetrics:()=>metrics++});
-  assert.equal(ready,1);assert.equal(metrics,0);
-  resolve();await initialDiscoveryRequest;assert.equal(metrics,1);
+  let ready=0;
+  vm.runInNewContext(branch,{internalProfileFrameId:id(1),initializeInternalProfileFrame:()=>ready++});
+  assert.equal(ready,1);
+  const initial=startup.slice(startup.indexOf('    const initialDiscoveryRequest ='),startup.indexOf('    const initialVenuePreviewRequest ='));
+  vm.runInNewContext(initial,{internalProfileFrameId:'viewer',Promise,loadLiveDiscovery:()=>assert.fail('No city-wide discovery in a profile frame')});
+  const refresh=startup.slice(startup.indexOf('    async function refreshVisibleHomeDiscovery('),startup.indexOf('    window.setInterval(',startup.indexOf('    async function refreshVisibleHomeDiscovery(')));
+  vm.runInNewContext(refresh+';refreshVisibleHomeDiscovery();',{internalProfileFrameId:'viewer',loadLiveDiscovery:()=>assert.fail('No background public directory refresh')});
 });
 const profile = {
   id: id(1), slug: 'synthetic-dancer', stage_name: 'Synthetic dancer', city: 'Las Vegas', venueName: 'Synthetic club',
@@ -23,22 +25,27 @@ const profile = {
   videos: [{ id: id(4), caption: 'Synthetic clip', duration_seconds: 12, like_count: 3, has_poster: true }],
   socialLinks: [{ platform: 'instagram', url: 'https://instagram.com/synthetic' }],
 };
-function fixture({ external = true, staff = false, mediaFailure = false } = {}) {
+function fixture({ external = true, staff = false, mediaFailure = false, generic = false, mediaGate = null } = {}) {
   const parent = { postMessage: (...args) => messages.push(args) }, messages = [], opens = [], fetches = [];
   const publicProfile = { id: id(1), name: 'Synthetic dancer', followerCount: 9, goingCount: 2, activeDeal: { id: 'deal' }, mainPhotoUrl: 'public-image', metricsUnavailable: false };
   const market = { dancers: external ? [publicProfile] : [] };
+  const markets = { "Las Vegas": market };
   const context = {
-    window: { parent, location: { search: '?internal_profile=' + id(1), origin: 'https://example.invalid' }, addEventListener() {} },
-    document: { body: { dataset: {}, style: { values: {}, setProperty(k,v) { this.values[k]=v; }, removeProperty(k) { delete this.values[k]; } } }, documentElement: { classList: { add() {} } }, getElementById() { return null; }, querySelector() { return null; } },
-    URLSearchParams, URL: class extends URL { static createObjectURL() { return 'blob:protected-media'; } static revokeObjectURL() {} }, AbortSignal,
+    window: { parent, location: { search: '?internal_profile=' + (generic ? 'viewer' : id(1)), origin: 'https://example.invalid' }, addEventListener() {}, requestAnimationFrame() {}, setTimeout, clearTimeout },
+    document: { body: { dataset: {}, style: { values: {}, setProperty(k,v) { this.values[k]=v; }, removeProperty(k) { delete this.values[k]; } } }, documentElement: { classList: { add() {} } }, getElementById() { return null; }, querySelector() { return null; }, querySelectorAll() { return []; }, createElement() { return {}; } },
+    URLSearchParams, URL: class extends URL { static createObjectURL() { return 'blob:protected-media'; } static revokeObjectURL() {} }, AbortSignal, AbortController,
     authSession: staff ? { accessToken: 'test-venue-session' } : null,
-    fetch: async (url, options) => { fetches.push({ url, options }); if (mediaFailure) throw new Error("Temporary media outage"); return { ok: true, blob: async () => ({}) }; },
-    discoveryMarket: () => market, selectedCity: () => 'Las Vegas', isApprovedPublicProfile: () => true,
-    citySelect: { value: 'Las Vegas' }, openProfileModal: value => opens.push(value), showToast() {}, escapeHtml: value => String(value).replaceAll('<','&lt;').replaceAll('>','&gt;'),
+    fetch: async (url, options) => { fetches.push({ url, options }); if (mediaGate) await mediaGate(url); if (mediaFailure) throw new Error("Temporary media outage"); return { ok: true, blob: async () => ({}) }; },
+    markets, discoveryMarket: city => markets[city], selectedCity: () => 'Las Vegas', isApprovedPublicProfile: () => true,
+    modalGallery: { dataset: {}, profileVisiblePhotoCount: 1 }, PROFILE_MEDIA_PAGE_SIZE: 12,
+    profilePhotoGalleryItems: profile => profile.submittedPhotos, renderProfileMediaLibrary() {}, syncProfileMediaTabCounts() {}, observeProfileMediaSentinel() {},
+    loadProfileMyDancrTv() {}, setModalPhoto() {}, setProfileMainPhoto() {}, portraitClass: ()=>'portrait',
+    closeProfileModal: () => context.bridge.closeInternalProfileFrame(),
+    citySelect: { value: 'Las Vegas', options: [{ value: 'Las Vegas' }], append(option) { this.options.push(option); } }, openProfileModal: value => opens.push(value), showToast() {}, escapeHtml: value => String(value).replaceAll('<','&lt;').replaceAll('>','&gt;'),
   };
   vm.runInNewContext(source + '\nthis.bridge={openInternalProfileMessage,closeInternalProfileFrame,startInternalProfileAuth,internalProfileMatches,sendInternalTableRequest,internalProfileRequestActionsMarkup,profile:()=>internalRosterProfile};', context);
   const event = (overrides = {}) => ({ origin: 'https://example.invalid', source: parent, data: { type: 'mydancr:internal-profile-open', profile, token: staff ? '' : id(9), request: staff ? undefined : { tableLabel: 'Table 1', busy: false, message: '' } }, ...overrides });
-  return { body: context.document.body, bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
+  return { context, body: context.document.body, bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
 }
 test('table colors stay inside the guest frame, reset cleanly and never style staff profiles', async () => {
   for (const staff of [true, false]) {
@@ -84,6 +91,32 @@ test('Internal-only dancers open through the same viewer without joining public 
   assert.equal(f.bridge.internalProfileMatches(id(1)).name, profile.stage_name);
   assert.equal(f.bridge.profile().metricsUnavailable,true);
 });
+
+test('a club in another city opens in its own city without loading a public directory', async () => {
+  const f = fixture(), event = f.event();
+  event.data.profile = { ...profile, city: 'Austin', slug: '' };
+  await f.bridge.openInternalProfileMessage(event);
+  assert.equal(f.bridge.profile().city, 'Austin');
+  assert.equal(f.context.citySelect.value, 'Austin');
+  assert.equal(f.context.markets.Austin.dancers.length, 0);
+  assert.equal(f.fetches.length, 0);
+});
+
+test('only the selected profile public metrics load, without exposing its club token', async () => {
+  const f = fixture({ external: false }), requests = [];
+  f.context.fetch = async (url, options) => {
+    requests.push({ url, options });
+    return { ok: true, json: async () => ({ profile: { id: profile.id, followerCount: 17, profileViewsToday: 42, metricsUnavailable: false } }) };
+  };
+  await f.bridge.openInternalProfileMessage(f.event());
+  assert.equal(requests.length, 1);
+  assert.equal(requests[0].url, '/api/public/dancers/synthetic-dancer');
+  assert.doesNotMatch(JSON.stringify(requests), /token|authorization/);
+  assert.equal(f.bridge.profile().followerCount, 17);
+  assert.equal(f.bridge.profile().profileViewsToday, 42);
+  assert.equal(f.opens.length, 1);
+  assert.equal(f.market.dancers.length, 0);
+});
 test('wrong origin, unrelated frame, or wrong dancer messages are ignored', async () => {
   const f=fixture();
   await f.bridge.openInternalProfileMessage(f.event({origin:'https://untrusted.invalid'}));
@@ -94,6 +127,69 @@ test('wrong origin, unrelated frame, or wrong dancer messages are ignored', asyn
 test('unchanged roster refreshes preserve the open photo/video viewer', async () => {
   const f=fixture(); await f.bridge.openInternalProfileMessage(f.event()); await f.bridge.openInternalProfileMessage(f.event());
   assert.equal(f.opens.length,1);
+});
+
+test('changed likes, names and working status update without reopening or resetting the gallery', async () => {
+  const f = fixture();
+  await f.bridge.openInternalProfileMessage(f.event());
+  f.context.modalGallery.profileVisiblePhotoCount = 30;
+  const updated = f.event();
+  updated.data.profile = { ...profile, stage_name: 'Updated name', workingUntil: null, requestsTonight: 8,
+    photos: profile.photos.map(photo => ({ ...photo, like_count: 10 })) };
+  await f.bridge.openInternalProfileMessage(updated);
+  assert.equal(f.opens.length, 1, 'No openProfileModal call that resets tabs, playback and scroll');
+  assert.equal(f.bridge.profile().name, 'Updated name');
+  assert.equal(f.bridge.profile().scheduled, false);
+  assert.equal(f.bridge.profile().requestsTonight, 8);
+  assert.equal(f.bridge.profile().submittedPhotos[0].likeCount, 10);
+  assert.match(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()), /disabled/);
+});
+
+test('slow gallery and video downloads do not delay showing the staff profile', async () => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const f = fixture({ staff: true, mediaGate: url => url.endsWith(id(3)) || url.endsWith(id(4)) ? gate : undefined });
+  const opening = f.bridge.openInternalProfileMessage(f.event());
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(f.opens, [profile.id]);
+  assert.equal(f.messages.at(-1)[0].type, 'mydancr:internal-profile-shown');
+  assert.equal(f.messages.at(-1)[0].profileId, profile.id);
+  assert.equal(f.bridge.profile().submittedPhotos.length, 1);
+  assert.equal(f.bridge.profile().internalVideos.length, 0);
+  release(); await opening;
+  assert.equal(f.bridge.profile().submittedPhotos.length, 2);
+  assert.equal(f.bridge.profile().internalVideos.length, 1);
+  assert.equal(f.opens.length, 1, 'Appending media must not reopen the profile');
+});
+
+test('closing aborts private downloads and a late result cannot repopulate the reusable viewer', async () => {
+  let release;
+  const gate = new Promise(resolve => { release = resolve; });
+  const f = fixture({ staff: true, generic: true, mediaGate: () => gate });
+  const opening = f.bridge.openInternalProfileMessage(f.event());
+  await new Promise(resolve => setImmediate(resolve));
+  f.bridge.closeInternalProfileFrame();
+  assert.ok(f.fetches.every(request => request.options.signal.aborted));
+  release(); await opening;
+  assert.equal(f.bridge.profile(), null);
+  assert.equal(f.opens.length, 0);
+  await f.bridge.openInternalProfileMessage(f.event());
+  assert.equal(f.bridge.profile().id, profile.id);
+  assert.equal(f.opens.length, 1);
+  const next = f.event(); next.data.profile = { ...profile, id: id(5), slug: '' };
+  await f.bridge.openInternalProfileMessage(next);
+  assert.equal(f.bridge.profile().id, id(5));
+  assert.equal(f.bridge.internalProfileMatches(profile.id), null);
+  assert.deepEqual(f.opens, [profile.id, id(5)]);
+});
+
+test('the reusable viewer still requires its same-origin parent and a valid dancer ID', async () => {
+  const f = fixture({ generic: true });
+  await f.bridge.openInternalProfileMessage(f.event({ origin: 'https://foreign.invalid' }));
+  await f.bridge.openInternalProfileMessage(f.event({ source: {} }));
+  const invalid = f.event(); invalid.data.profile = { ...profile, id: 'invalid' };
+  await f.bridge.openInternalProfileMessage(invalid);
+  assert.equal(f.opens.length, 0);
 });
 test('staff media uses authenticated requests and blob URLs without exposing storage links', async () => {
   const f=fixture({staff:true}); await f.bridge.openInternalProfileMessage(f.event());

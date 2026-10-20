@@ -56,6 +56,13 @@ test("missing or malformed profile IDs do not render a frame", async () => {
   assert.equal(f.renders(), 0);
 });
 
+test("a blank reusable viewer can warm up without receiving any private profile data", async () => {
+  const result = await fixture().get('?internal_profile=viewer');
+  assert.equal(result.status, 200);
+  assert.match(result.headers.get('cache-control'), /no-store/);
+  assert.doesNotMatch(await result.text(), new RegExp(id));
+});
+
 test("an unexpected source framing policy fails closed", async () => {
   const f = fixture("default-src 'self'");
   await assert.rejects(f.get(`?internal_profile=${id}`), /framing policy is unavailable/);
@@ -70,7 +77,7 @@ test("the roster embeds the dedicated viewer without putting its club token in H
     profile: { id, stage_name: "Demo dancer", photos: [], videos: [], socialLinks: [] },
     token: "private-club-capability", onClose() {},
   }));
-  assert.match(markup, new RegExp(`src="/internal/profile-viewer\\?internal_profile=${id}"`));
+  assert.match(markup, /src="\/internal\/profile-viewer\?internal_profile=viewer"/);
   assert.match(markup, /referrerPolicy="no-referrer"/i);
   assert.doesNotMatch(markup, /private-club-capability|token=/);
 });

@@ -700,7 +700,7 @@
     }
 
     function requestProfileTvPayload(profile, city = citySelect.value) {
-      if (profile?.internalRoster) return Promise.resolve({ ok: true, videos: profile.internalVideos || [] });
+      if (profile?.internalRoster) return profile.internalVideosRequest || Promise.resolve({ ok: true, videos: profile.internalVideos || [] });
       if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return Promise.resolve(null);
       const now = Date.now();
       const key = `${city}:${profile.id}`;

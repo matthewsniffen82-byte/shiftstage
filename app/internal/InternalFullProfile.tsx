@@ -22,16 +22,21 @@ export function InternalFullProfile({ profile, profileId = profile?.id || "", to
   const latest = useRef({ profile, token, request, onRequest, onCancel, onReady, onError, onClose });
   latest.current = { profile, token, request, onRequest, onCancel, onReady, onError, onClose };
   const send = useCallback(() => {
+    if (!profileId) {
+      frame.current?.contentWindow?.postMessage({ type: "mydancr:internal-profile-clear" }, window.location.origin);
+      return;
+    }
     if (latest.current.profile?.id !== profileId) return;
     frame.current?.contentWindow?.postMessage({
       type: "mydancr:internal-profile-open", profile: latest.current.profile, token: latest.current.token || "", request: latest.current.request,
     }, window.location.origin);
   }, [profileId]);
   useEffect(() => {
-    const timer = window.setTimeout(() => latest.current.onError?.(), 20000);
+    const timer = profileId ? window.setTimeout(() => latest.current.onError?.(), 20000) : undefined;
     const receive = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== frame.current?.contentWindow) return;
       if (event.data?.type === "mydancr:internal-profile-ready") send();
+      if (!profileId || event.data?.profileId !== profileId) return;
       if (event.data?.type === "mydancr:internal-profile-shown" && latest.current.profile?.id === profileId) {
         window.clearTimeout(timer); latest.current.onReady?.();
       }
@@ -59,5 +64,5 @@ export function InternalFullProfile({ profile, profileId = profile?.id || "", to
   }, [profileId, send]);
   useEffect(() => { send(); }, [profile, token, request, send]);
   return <iframe ref={frame} className="ir-full-profile-frame" title={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}
-    src={`/internal/profile-viewer?internal_profile=${encodeURIComponent(profileId)}`} referrerPolicy="no-referrer" allow="autoplay; fullscreen" />;
+    src="/internal/profile-viewer?internal_profile=viewer" referrerPolicy="no-referrer" allow="autoplay; fullscreen" />;
 }

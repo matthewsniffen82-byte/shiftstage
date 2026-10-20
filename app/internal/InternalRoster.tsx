@@ -495,7 +495,7 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
           {!error ? <div className="venue-dancer-grid" aria-hidden="true"><span className="venue-dancer-card" /><span className="venue-dancer-card" /><span className="venue-dancer-card" /></div> : null}
         </>}
       </section>{roster}</div> : null}
-    <ClubProfileDialog profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => {
+    <ClubProfileDialog prewarm={!!snapshot && !operationsOnly} profile={profile} profileId={openingProfileId || profile?.id} token={token} request={token && snapshot?.kind === "table" ? { tableLabel: snapshot.label || "our table", busy: requestingDancers.includes(profile?.id || ""), confirmed: confirmedDancers.includes(profile?.id || ""), message: dancerNotices[profile?.id || openingProfileId]?.message || "" } : undefined} onRequest={() => { if (profile) requestDancer(profile.id); }} onCancel={() => { if (profile) cancelDancer(profile.id, profile.requestId); }} onReady={() => setOpeningProfileId("")} onError={() => {
       const dancerId = selectedProfile.current;
       selectedProfile.current = ""; setProfile(null); setOpeningProfileId("");
       if (token && dancerId) showDancerNotice(dancerId, "That profile could not load. Please try again.", true);
@@ -508,16 +508,17 @@ export function InternalRoster({ token, operationsOnly = false, roster }: { toke
   </div>;
 }
 
-function ClubProfileDialog({ profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { profile: Profile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
+function ClubProfileDialog({ prewarm = false, profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { prewarm?: boolean; profile: Profile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
   const profileDialog = useRef<HTMLDialogElement>(null);
   const [readyId, setReadyId] = useState("");
+  const [viewerAttempt, setViewerAttempt] = useState(0);
   useEffect(() => {
     if (profile && readyId === profileId && !profileDialog.current?.open) profileDialog.current?.showModal();
     if (!profileId) { profileDialog.current?.close(); setReadyId(""); }
   }, [profile, profileId, readyId]);
   return (
-    <dialog className="ir-profile-dialog ir-full-profile-dialog" ref={profileDialog} onClose={onClose} aria-label={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}>
-      {profileId ? <InternalFullProfile key={profileId} profileId={profileId} profile={profile} token={token} request={request} onRequest={onRequest} onCancel={onCancel} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={onError || onClose} onClose={onClose} /> : null}
+    <dialog className="ir-profile-dialog ir-full-profile-dialog" ref={profileDialog} onCancel={event => { event.preventDefault(); onClose(); }} aria-label={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}>
+      {prewarm || profileId ? <InternalFullProfile key={viewerAttempt} profileId={profileId} profile={profile} token={token} request={request} onRequest={onRequest} onCancel={onCancel} onReady={() => { setReadyId(profileId); onReady?.(); }} onError={() => { setReadyId(""); setViewerAttempt(attempt => attempt + 1); (onError || onClose)(); }} onClose={onClose} /> : null}
     </dialog>
   );
 }
@@ -554,5 +555,5 @@ export function VenueRosterProfileButton({ dancerId, stageName, children, classN
     void poll();
     return () => { controller.abort(); clearTimeout(timer); window.removeEventListener("storage", sessionChanged); };
   }, [open, dancerId]);
-  return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={() => setOpen(true)} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}<ClubProfileDialog profile={profile} onClose={() => { setOpen(false); setProfile(null); }} /></div>;
+  return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={() => setOpen(true)} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}<ClubProfileDialog profile={profile} profileId={open ? dancerId : ""} onClose={() => { setOpen(false); setProfile(null); }} /></div>;
 }
