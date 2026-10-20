@@ -17,46 +17,6 @@ html body.dancr-button-system .vip-profile-request .vip-profile-request-action {
 }
 .vip-profile-request button:disabled { opacity: .6; cursor: default; }
 .vip-profile-request-hint { margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: #c7c0d0; }
-.vip-profile-request-dialog {
-  width: min(440px, calc(100vw - 32px));
-  max-height: calc(100dvh - 48px);
-  margin: auto;
-  padding: 24px;
-  overflow: auto;
-  border: 1px solid #76618e;
-  border-radius: 20px;
-  background: #0b0612;
-  color: #fff;
-}
-.vip-profile-request-dialog::backdrop { background: rgb(0 0 0 / .75); }
-.vip-profile-request-dialog form { display: grid; gap: 16px; }
-.vip-profile-request-dialog h2 { margin: 0; font-size: 24px; line-height: 1.2; }
-.vip-profile-request-dialog p { margin: 0; }
-.vip-profile-request-fields { display: grid; gap: 12px; }
-.vip-profile-request-fields label { display: grid; gap: 6px; font-size: 14px; font-weight: 700; }
-.vip-profile-request-fields input {
-  box-sizing: border-box;
-  width: 100%;
-  min-width: 0;
-  min-height: 48px;
-  padding: 10px;
-  border: 1px solid #76618e;
-  border-radius: 10px;
-  background: #050307;
-  color: #fff;
-  color-scheme: dark;
-  font: inherit;
-}
-.vip-profile-request-controls { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; }
-.vip-profile-request-controls button {
-  min-height: 48px;
-  padding: 10px;
-  border: 1px solid #76618e;
-  border-radius: 12px;
-  background: #0b0612;
-  color: #fff;
-  font: inherit;
-}
-.vip-profile-request-dialog a { color: #d7b8ff; }
-.vip-profile-request-dialog [role="alert"] { color: #ffb7c3; }
-.vip-profile-request :is(button, input, a):focus-visible { outline: 2px solid #cba0ff; outline-offset: 3px; }
+.vip-profile-request a { color: #d7b8ff; }
+.vip-profile-request [role="alert"] { color: #ffb7c3; }
+.vip-profile-request :is(button, a):focus-visible { outline: 2px solid #cba0ff; outline-offset: 3px; }

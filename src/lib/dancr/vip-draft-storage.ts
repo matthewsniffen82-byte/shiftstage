@@ -35,7 +35,32 @@ export function saveVipWorkspace(storage: DraftStorage, accountId: string, works
     const drafts = Object.fromEntries(Object.entries(workspace.drafts).filter(([, draft]) => draft.selected.length || draft.date || draft.time));
     if (!Object.keys(drafts).length) storage.removeItem(VIP_DRAFT_PREFIX + accountId);
     else storage.setItem(VIP_DRAFT_PREFIX + accountId, JSON.stringify({ accountId, savedAt: Date.now(), drafts, retries: workspace.retries }));
-  } catch { /* Private browsing and full storage must not prevent planning a visit. */ }
+    return true;
+  } catch {
+    // Planning can still work in memory when storage is unavailable.
+    return false;
+  }
+}
+
+export function addVipDraftDancer(draft: VipDraft, dancerId: string): VipDraft {
+  if (draft.selected.includes(dancerId)) return draft;
+  if (draft.selected.length >= 10) throw new Error("Your visit already has 10 dancers. Open My dancers to remove one before adding another.");
+  return { ...draft, selected: [...draft.selected, dancerId] };
+}
+
+export function queueVipProfileDancer(storage: DraftStorage, accountId: string, venueId: string, dancerId: string) {
+  // Read at click time so additions made in other profile tabs are retained.
+  try { storage.getItem(VIP_DRAFT_PREFIX + accountId); }
+  catch { throw new Error("Unable to save your selection. Open My dancers and add them there."); }
+  const workspace = readVipWorkspace(storage, accountId);
+  const current = workspace.drafts[venueId] || { selected: [], date: "", time: "" };
+  const next = addVipDraftDancer(current, dancerId);
+  workspace.drafts[venueId] = next;
+  if (next !== current) delete workspace.retries[venueId];
+  if (!saveVipWorkspace(storage, accountId, workspace)) {
+    throw new Error("Unable to save your selection. Open My dancers and add them there.");
+  }
+  return next;
 }
 
 export function vipDraftFingerprint(venueId: string, draft: VipDraft) {

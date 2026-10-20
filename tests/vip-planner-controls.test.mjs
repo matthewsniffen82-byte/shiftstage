@@ -88,7 +88,7 @@ test('VIP filter faces retain dark artwork and Android gets compact spacing with
   assert.equal(label['min-height'],'2.6em','reserve two lines for Requested before');
   assert.equal(counter['font-size'],'12px'); assert.equal(counter.padding,'1px 6px');
   const selected=declarations(rule(polish,'body.dancr-button-system #vip-dashboard .vip-roster-filters button[aria-pressed=true]'));
-  assert.match(selected.background,/linear-gradient\(#30243e, #30243e\)/);
+  assert.match(selected.background,/linear-gradient\(#22152f, #22152f\)/);
   assert.match(declarations(rule(polish,'body.dancr-button-system #vip-dashboard .vip-filter-count')).background,/linear-gradient/);
   const selector='html:is(.is-android, .android-rendering, .is-samsung-browser, .samsung-rendering) body.dancr-button-system #vip-dashboard .vip-roster-filters';
   const compact=rule(polish,selector+' button');

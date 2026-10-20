@@ -88,7 +88,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
     workingFollowing: () => nodes().find(node => node.type === VipWorkingFollowing),
     requests: () => nodes().find(node => node.type === RequestCards),
     advance(ms) { now += ms; },
-    event(name) { listeners.get(name)?.(); render(); },
+    event(name, event) { listeners.get(name)?.(event); render(); },
     visible(value) { document.visibilityState = value ? 'visible' : 'hidden'; },
     tick() { intervals.forEach(callback => callback()); render(); },
     session(account) { currentAccount = account; },

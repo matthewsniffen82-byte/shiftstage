@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import { readSession, requestDashboardJson, type DashboardSessionAccount } from "@/app/dashboard/dashboard-session";
 import { emptyVipDraft, isVipFollowing, reconcileVipDraft, VIP_DESTINATIONS, vipDestination, vipRequestDraft, type VipDraft } from "@/src/lib/dancr/vip-dashboard";
 import { type VipDancer, type VipDashboardView, type VipRequest, type VipRequestFilter, type VipState, type VipVenue } from "@/src/lib/dancr/vip-types";
-import { readVipWorkspace, saveVipWorkspace, vipDraftFingerprint } from "@/src/lib/dancr/vip-draft-storage";
+import { addVipDraftDancer, readVipWorkspace, saveVipWorkspace, vipDraftFingerprint, VIP_DRAFT_PREFIX } from "@/src/lib/dancr/vip-draft-storage";
 import { rememberVipDashboard } from "@/src/lib/dancr/browser-session";
 import VipRequests from "./VipRequests";
 import { VipWorkingFollowing } from "./VipMyDancers";
@@ -54,6 +54,8 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   const locked = useRef(false);
   const submitAbort = useRef<AbortController | null>(null);
   const pendingRequests = useRef<Record<string, { id: string; fingerprint: string }>>({});
+  const latestDrafts = useRef(drafts);
+  latestDrafts.current = drafts;
   const requestScope = `${account.id}|${venueId}|${view}|${view === "requests" ? `${filter}|${page}` : ""}`;
   const requestKey = `${requestScope}|${revision}`;
   const data = response?.key === requestScope ? { ...response.data, dancers: response.data.dancers.map(dancer => {
@@ -77,6 +79,22 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       setDrafts(restored.drafts); pendingRequests.current = restored.retries;
     } catch { /* Storage may be unavailable. Planning still works in memory. */ }
     setDraftsLoaded(true);
+    const syncDrafts = (event: StorageEvent) => {
+      if (event.key !== VIP_DRAFT_PREFIX + account.id || readSession()?.account?.id !== account.id) return;
+      try {
+        window.localStorage.getItem(VIP_DRAFT_PREFIX + account.id);
+        const restored = readVipWorkspace(window.localStorage, String(account.id || ""));
+        pendingRequests.current = restored.retries;
+        // A profile can add a dancer in another tab. Avoid echoing identical
+        // writes back and forth between open dashboards.
+        if (JSON.stringify(latestDrafts.current) !== JSON.stringify(restored.drafts)) {
+          latestDrafts.current = restored.drafts;
+          setDrafts(restored.drafts);
+        }
+      } catch { /* Keep the current queue if storage becomes unavailable. */ }
+    };
+    window.addEventListener("storage", syncDrafts);
+    return () => window.removeEventListener("storage", syncDrafts);
   }, [account.id]);
   useEffect(() => {
     if (draftsLoaded && readSession()?.account?.id === account.id) {
@@ -175,11 +193,10 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   function requestDancer(dancer: VipDancer) {
     if (!venue || locked.current || signingOut || loading || !dancer.canRequest || readSession()?.account?.id !== account.id) return;
     const current = drafts[venue.id] || emptyVipDraft();
-    if (!current.selected.includes(dancer.id) && current.selected.length >= 10) {
-      setError("Your visit already has 10 dancers. Open My dancers to remove one before adding another.");
-      return;
-    }
-    setDrafts(previous => ({ ...previous, [venue.id]: { ...current, selected: [...new Set([...current.selected, dancer.id])] } }));
+    let next: VipDraft;
+    try { next = addVipDraftDancer(current, dancer.id); }
+    catch (failure) { setError(message(failure)); return; }
+    setDrafts(previous => ({ ...previous, [venue.id]: next }));
     setEditing(null); setError("");
     setStatus(`${dancer.stage_name} is in your visit draft. Choose a date and time, then send your request.`);
     navigate("plan");
@@ -250,8 +267,13 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         body: JSON.stringify({ ...input, requestId: pendingRequests.current[venue.id].id }), timeoutMs: 30000, signal: controller.signal });
       if (!mounted.current || controller.signal.aborted || readSession()?.account?.id !== expectedAccount) return;
       delete pendingRequests.current[venue.id];
-      persistDrafts({ ...drafts, [venue.id]: emptyVipDraft() });
-      setDrafts(previous => ({ ...previous, [venue.id]: emptyVipDraft() }));
+      // Only clear dancers that were sent; another profile tab may have added
+      // someone to the queue while this request was in flight.
+      const current = latestDrafts.current[venue.id] || emptyVipDraft();
+      const selected = current.selected.filter(id => !input.dancerIds.includes(id));
+      const next = { ...latestDrafts.current, [venue.id]: selected.length ? { ...current, selected } : emptyVipDraft() };
+      persistDrafts(next);
+      setDrafts(next);
       setStatus(`Request sent to ${venue.name}. Your venue will review your dancers, date, and time.`);
       setFilter("pending"); setPage(0); setView("requests"); setRevision(value => value + 1);
       window.history.replaceState(null, "", "#vip-requests");
