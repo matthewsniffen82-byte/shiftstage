@@ -224,6 +224,24 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-roster-content { padding: 0; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.notification-row, .support-thread, .venue-nfc-dancer, .nfc-tag-row) { padding: 12px !important; border: 1px solid #36303f !important; background: #1b1821 !important; border-radius: 12px !important; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.notification-list, .support-thread-list) { gap: 8px !important; }
+/* Notification links need their own button sizing; inbox rows remain stacked cards. */
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-account .notification-title-row h2 { margin: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-account .notification-settings-button {
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center;
+  width: fit-content; max-width: 100%; min-width: 0; min-height: 44px !important; height: auto;
+  padding: 10px 14px !important; border: 1px solid #50435f !important; border-radius: 10px !important;
+  background: linear-gradient(#1b1922, #1b1922) !important; color: #f5f3f8 !important; box-shadow: none !important;
+  font-size: 13px !important; font-weight: 600 !important; line-height: 1.35; letter-spacing: 0 !important;
+  text-align: center; white-space: normal; overflow-wrap: anywhere; text-decoration: none;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-account .notification-panel .notification-row {
+  display: grid !important; grid-template-columns: minmax(0, 1fr); justify-content: stretch; justify-items: stretch;
+  width: 100%; min-width: 0; gap: 6px !important; text-align: left; white-space: normal; overflow-wrap: anywhere;
+}
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-account .notification-row > strong { min-width: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-account .notification-row > strong > svg { flex-shrink: 0; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-account .notification-row-meta { min-width: 0; width: 100%; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-notification-settings { scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 142px); }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.ir-empty, .venue-value-empty) { min-height: 0 !important; padding: 10px 0 !important; margin: 0 !important; border: 0 !important; background: transparent !important; }
 
 /* Table requests, roster and QR tools sit at the same visual level. */
