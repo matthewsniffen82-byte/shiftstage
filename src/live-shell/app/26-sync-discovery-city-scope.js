@@ -698,6 +698,10 @@
     }
     homeTvFeedLandingPending = initialHomeDestinationRequested && initialHomeDestination === "tv";
     const initialVenuePreviewRequested = initialProfileParams.get("venue_preview") === "1" && Boolean(initialProfileParams.get("venue"));
+    if (!initialVenuePreviewRequested && initialProfileParams.get("venue") && initialProfileCity && discoveryMarket(initialProfileCity)) {
+      selectedVenueName = initialProfileParams.get("venue");
+      activeTab = "venues";
+    }
     const initialDiscoveryRequest = loadLiveDiscovery(citySelect.value, {
       force: consumePublicDiscoveryRefreshRequest()
     });

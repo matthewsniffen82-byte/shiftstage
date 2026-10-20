@@ -12,7 +12,7 @@ const feedSource = functionSource("    async function loadHomeTvFeed(", "    fun
 
 function context(overrides = {}) {
   return createDiscoveryContext({
-    AbortController, URLSearchParams, console, activeTab: "tv", dancerDirectoryFilter: "now", selectedVenueFilter: () => "all", resolveVenueByName: () => null, discoveryRequestHeaders: () => ({}),
+    AbortController, URLSearchParams, console, activeTab: "tv", selectedVenueName: null, dancerDirectoryFilter: "now", selectedVenueFilter: () => "all", resolveVenueByName: () => null, discoveryRequestHeaders: () => ({}),
     LIVE_JSON_REQUEST_TIMEOUT_MS: 15,
     PUBLIC_DISCOVERY_REQUEST_RETRIES: 1,
     discoveryScopeCache: new Map(), DISCOVERY_SCOPE_CACHE_TTL_MS: 20000, DISCOVERY_SCOPE_CACHE_LIMIT: 6,
@@ -201,6 +201,59 @@ function pagedDiscoveryFixture() {
 
 const nextPage = () => new Promise(resolve => setImmediate(resolve));
 const dancerRows = (start, count) => Array.from({ length: count }, (_, index) => ({ id: `dancer-${start + index}` }));
+
+test("opening a club requests only its working roster and preserves visible city cards until it arrives", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "visible" }], venues: [{ id: "club" }], nextCursor: null }); await request;
+  ctx.activeTab = "venues";
+  ctx.selectedVenueName = "club";
+  ctx.resolveVenueByName = () => ({ id: "club" });
+  request = ctx.loadLiveDiscovery("Vegas");
+  assert.match(requests[1].url, /filter=now&venue=club/);
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "visible");
+  await ctx.loadLiveDiscovery("Vegas");
+  assert.equal(ctx.liveMarketPendingRefreshes.size, 0, "opening an already requested scope must not queue it again");
+  requests[1].resolve({ dancers: dancerRows(0, 96), venues: [{ id: "club" }], nextCursor: null }); await request;
+  assert.equal(requests.length, 2, "the 96-dancer club does not download the whole city");
+  assert.equal(ctx.markets.Vegas.dancers.length, 96);
+});
+
+test("a shared club link switches to its roster as soon as metadata resolves, without fetching remaining city pages", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  ctx.activeTab = "venues";
+  ctx.selectedVenueName = "club-slug";
+  ctx.resolveVenueByName = () => ctx.markets.Vegas.venues.find(row => row.slug === "club-slug");
+  const request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "city-card" }], venues: [{ id: "club", slug: "club-slug" }], nextCursor: "city-next" });
+  await request;
+  assert.equal(requests.length, 2);
+  assert.match(requests[1].url, /filter=now&venue=club/);
+  assert.doesNotMatch(requests[1].url, /cursor=/);
+  await ctx.loadLiveDiscovery("Vegas");
+  assert.equal(ctx.liveMarketPendingRefreshes.size, 0);
+  requests[1].resolve({ dancers: dancerRows(0, 100), venues: [{ id: "club", slug: "club-slug" }], nextCursor: "club-next" }); await nextPage();
+  assert.match(requests[2].url, /venue=club&cursor=club-next/);
+  requests[2].resolve({ dancers: dancerRows(100, 37), venues: [{ id: "club", slug: "club-slug" }], nextCursor: null }); await nextPage();
+  assert.equal(ctx.markets.Vegas.dancers.length, 137, "clubs still load every dancer beyond the first 100");
+  assert.equal(requests.length, 3);
+  assert.equal(ctx.liveMarketRefreshes.size, 0);
+});
+
+test("a failed club request settles its loading status after preserving the previous roster", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  const snapshots = [];
+  ctx.activeTab = "venues";
+  ctx.selectedVenueName = "club";
+  ctx.resolveVenueByName = () => ({ id: "club" });
+  ctx.render = () => snapshots.push({ pending: ctx.liveMarketRefreshes.has("Vegas"), count: ctx.markets.Vegas.dancers.length });
+  let request = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: dancerRows(0, 96), nextCursor: null }); await request;
+  request = ctx.loadLiveDiscovery("Vegas", { force: true, background: true });
+  assert.equal(ctx.markets.Vegas.dancers.length, 96);
+  requests[1].reject(new Error("offline")); await request;
+  assert.deepEqual(snapshots.at(-1), { pending: false, count: 96 });
+});
 
 test("returning to a recently loaded club list paints it immediately and refreshes without blanking it", async () => {
   const { ctx, requests } = pagedDiscoveryFixture();

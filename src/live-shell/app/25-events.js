@@ -657,7 +657,6 @@
       homeBottomTv?.setAttribute("aria-current", isTv ? "page" : "false");
       syncHomeDestinationLocation(nextTab);
       render();
-      if (nextTab === "venues") void refreshVisibleHomeDiscovery({ bypassCache: true });
       if (options.scroll !== false) {
         homeResultsSmoothLandingPending = true;
         startHomeDestinationTransition(transitionDirection);

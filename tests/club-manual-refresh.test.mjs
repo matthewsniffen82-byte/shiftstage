@@ -94,6 +94,7 @@ test('club pages render the Refresh control beside the working roster', () => {
     venueDetails: venue => ({ ...venue, city: 'Las Vegas' }), venueOperatingStatus: () => ({}),
     venueVisualAttrs: () => ({ attrs: { className: '', style: '' }, source: 'fixture' }),
     venueLogoMarkup: () => '<img alt="Club logo">', venueDancers: () => [],
+    venueRosterState: () => ({ count: 0, message: '' }),
     isFollowingVenue: () => false, escapeOptionValue: String, escapeHtml: String,
     actionIconMarkup: () => '', recordVenuePageEvent() {}, venueOfferStatusMarkup: () => '',
     venueOfferMarkup: () => '', venueDirectionsMarkup: () => '', actionButtonLabel: () => '',

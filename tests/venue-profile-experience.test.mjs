@@ -26,7 +26,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
     /function venueDetailPage\(venue\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
-  assert.match(venueDetail, /venueDancers\(city, venue\.name\)/);
+  assert.match(venueDetail, /const rosterCity = citySelect\.value;[\s\S]*?venueDancers\(rosterCity, venue\.name, venue\.id\)/);
   assert.match(
     venueDetail,
     /const tonight = localProfiles[\s\S]*?isWorkingTonight\(profile\)/,
@@ -48,7 +48,7 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Distance<\/strong>/);
   assert.doesNotMatch(venueDetail, /details\.description|venue-confirmed shifts|nightlife venue in/);
   assert.doesNotMatch(venueDetail, /<div class="info-tile"><strong>Hours/);
-  assert.match(venueDetail, /<span>Working now · \$\{tonight\.length\}<\/span>/);
+  assert.match(venueDetail, /<span>Working now\$\{roster\.count === null/);
   assert.match(venueDetail, /class="venue-info venue-location-section"[\s\S]*?class="venue-location-actions venue-primary-actions"[\s\S]*?venue-address-directions/);
   assert.doesNotMatch(venueDetail, /rideMarkup|uberRideLinkMarkup/);
   assert.match(aesthetic, /\.venue-primary-actions \{\s+grid-template-columns: minmax\(0, 1fr\) !important;/);

@@ -737,17 +737,21 @@
       const more = Boolean(options.more && !scopeChanged);
       const force = Boolean(options.force || scopeChanged);
       const cacheBust = force && options.cacheBust !== false;
-      const keepCurrentResults = liveMarketState[city] === "ready" && !scopeChanged;
+      // A club can reuse its visible cards from the city directory while its
+      // smaller, club-only roster is fetched. Never blank them on entry.
+      const keepVenueResults = activeTab === "venues" && selectedVenueName && city === citySelect.value;
+      const keepCurrentResults = liveMarketState[city] === "ready" && (!scopeChanged || keepVenueResults);
       const background = Boolean(options.background && keepCurrentResults);
       if (more && !previous?.nextCursor) return;
       if (liveMarketState[city] === "loading" || liveMarketRefreshes.has(city)) {
-        if (cacheBust || scopeChanged) liveMarketPendingRefreshes.add(city);
+        if (options.force && options.cacheBust !== false || market.requestScopeKey !== requestedScope.key) liveMarketPendingRefreshes.add(city);
         return;
       }
       if (!more && !force && keepCurrentResults) return;
+      market.requestScopeKey = requestedScope.key;
       if (keepCurrentResults) liveMarketRefreshes.add(city);
       else liveMarketState[city] = "loading";
-      if (scopeChanged) market.dancers = [];
+      if (scopeChanged && !keepVenueResults) market.dancers = [];
       if (previous) { previous.loading = more; previous.error = false; }
       if (scopeChanged && citySelect.value === city) render();
       if (more && citySelect.value === city) render();
@@ -825,6 +829,12 @@
           // First visits can paint cards and begin image loading immediately.
           // Refreshes keep the complete existing list until its replacement is ready.
           if (cursor && !keepCurrentResults) publishResults();
+          // A shared club link becomes resolvable as soon as venue metadata
+          // arrives. Switch to that roster instead of downloading the city.
+          if (citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) {
+            liveMarketPendingRefreshes.add(city);
+            return;
+          }
         } while (cursor);
         publishResults();
         return true;
@@ -856,9 +866,13 @@
       } finally {
         if (previous) previous.loading = false;
         liveMarketRefreshes.delete(city);
+        delete market.requestScopeKey;
         if (liveMarketPendingRefreshes.delete(city)) {
           if (liveMarketState[city] === "loading") liveMarketState[city] = null;
           void loadLiveDiscovery(city, { force: true, cacheBust: true, background: true });
+        } else if (citySelect.value === city && activeTab === "venues" && selectedVenueName) {
+          // Settle a failed/partial roster after the in-flight flag is cleared.
+          render();
         }
       }
       return false;
@@ -866,9 +880,10 @@
 
     function discoveryRequestScope(city) {
       const directory = activeTab === "dancers" && city === citySelect.value;
-      const venueName = directory ? selectedVenueFilter() : "all";
+      const clubProfile = activeTab === "venues" && city === citySelect.value && selectedVenueName;
+      const venueName = clubProfile || (directory ? selectedVenueFilter() : "all");
       const venue = venueName === "all" ? "" : resolveVenueByName(venueName, city)?.id || "";
-      const filter = directory ? (venue ? "now" : dancerDirectoryFilter) : "all";
+      const filter = clubProfile ? "now" : directory ? (venue ? "now" : dancerDirectoryFilter) : "all";
       return { filter, venue, key: JSON.stringify([filter, venue]) };
     }
 

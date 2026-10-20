@@ -24,7 +24,7 @@ function fixture(city = 'Las Vegas') {
     venueWithinSelectedRadius: () => true, compareVenueDistance: () => 0,
     venueDancers: (_city, name) => name === rhino.name ? [{ working: true }, { working: false }] : [],
     isWorkingTonight: profile => profile.working,
-    activeTab: 'dancers', dancerDirectoryFilter: 'now',
+    activeTab: 'dancers', selectedVenueName: null, dancerDirectoryFilter: 'now',
     URLSearchParams, window: { location: { search: '' } },
   });
   for (const name of ['resolveVenueByName', 'selectedVenueFilter', 'selectedHomeTvVenueFilter',

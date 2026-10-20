@@ -322,6 +322,7 @@
       render();
       const restoredReturnContext = restoreProfileReturnContext(returnContext);
       if (!restoredReturnContext) {
+        void loadLiveDiscovery(citySelect.value);
         syncOverlayScrollLock();
         requestAnimationFrame(() => {
           window.scrollTo({ top: venueProfileSavedScrollY, left: 0, behavior: "auto" });

@@ -286,9 +286,9 @@
       `;
     }
 
-    function venueDancers(city, venueName) {
+    function venueDancers(city, venueName, selectedVenueId = "") {
       const market = discoveryMarket(city);
-      const venueId = market.venues?.find((venue) => venue.name === venueName)?.id;
+      const venueId = selectedVenueId || market.venues?.find((venue) => venue.name === venueName)?.id;
       return market.dancers
         .filter((profile) => isApprovedPublicProfile(profile) && (venueId && profile.venueId ? profile.venueId === venueId : profile.venue === venueName))
         .map((profile) => withTrendingRank(profile, city));
@@ -302,29 +302,46 @@
       `;
     }
 
+    function venueRosterState(venue, city, profiles) {
+      const page = discoveryMarket(city)?.pagination;
+      const matching = page?.scopeKey === JSON.stringify(["now", venue.id]);
+      const complete = matching && !page.nextCursor && !page.error;
+      const pending = liveDiscoveryIsLoading(city) || liveMarketRefreshes.has(city) || Boolean(page?.loading);
+      const total = matching && Number.isSafeInteger(page.statusCounts?.now) && page.statusCounts.now > 0
+        ? page.statusCounts.now : null;
+      return {
+        count: complete ? profiles.length : total,
+        message: complete ? "" : pending ? "Loading dancers…" : "Dancers could not load. Tap Refresh to try again."
+      };
+    }
+
     function venueDetailPage(venue) {
       const city = venue.city || citySelect.value;
       const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const visual = venueVisualAttrs(venue);
       const logoMarkup = venueLogoMarkup(venue, "venue-detail-logo");
-      const localProfiles = venueDancers(city, venue.name);
+      // All cities owns its own paged roster; a city's separate cache may be empty.
+      const rosterCity = citySelect.value;
+      const localProfiles = venueDancers(rosterCity, venue.name, venue.id);
       const tonight = localProfiles
         .filter((profile) => isWorkingTonight(profile))
         .sort((a, b) => dancerGridPosition(a) - dancerGridPosition(b));
+      const roster = venueRosterState(venue, rosterCity, tonight);
       const followsVenue = isFollowingVenue(city, venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
       const activitySections = [
         `
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
             <div class="venue-roster-heading">
-              <h3 class="section-title" id="venue-working-now" aria-label="${tonight.length} ${tonight.length === 1 ? "dancer" : "dancers"} working now at ${escapeHtml(details.name)}"><span>Working now · ${tonight.length}</span></h3>
+              <h3 class="section-title" id="venue-working-now"><span>Working now${roster.count === null ? "" : ` · ${roster.count}`}</span></h3>
               ${clubRefreshButtonMarkup()}
             </div>
             <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
             ${tonight.length
               ? venueDancerGridMarkup(tonight, city, `Working now at ${details.name}`)
-              : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span><span><strong>No dancers are currently checked in on MyDancr.</strong><small>Follow this club for updates.</small></span></div>`}
+              : roster.message ? "" : `<div class="venue-activity-empty is-compact"><span class="venue-activity-empty-icon">${actionIconMarkup("clock")}</span><span><strong>No dancers are currently checked in on MyDancr.</strong><small>Follow this club for updates.</small></span></div>`}
+            ${roster.message ? `<p class="roster-participation-note" role="status">${roster.message}</p>` : ""}
           </section>
         `
       ].filter(Boolean).join("");
