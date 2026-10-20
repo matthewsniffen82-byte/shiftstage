@@ -8,8 +8,7 @@ export default function EmailNotificationGuidance() {
     </svg>
     <div>
       <h2>Email alerts on your phone</h2>
-      <p><strong>Email notifications are already on by default in MyDancr</strong>, unless you turned them off.</p>
-      <p>To see alerts as soon as emails arrive, allow notifications for your email app in your phone&apos;s Settings. In that app, turn on alerts for <strong>the email address you used to sign up for MyDancr</strong>.</p>
+      <p><strong>MyDancr emails are on by default.</strong> Enable your email app&apos;s notifications in phone Settings, then turn on alerts for <strong>your MyDancr signup address</strong> in the app.</p>
     </div>
   </aside>;
 }
