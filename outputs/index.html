@@ -41507,7 +41507,54 @@ html.internal-profile-embed .mobile-bottom-nav,
 html.internal-profile-embed #discoveryTabs,
 html.internal-profile-embed .preview-banner,
 html.internal-profile-embed .mydancr-preview-banner { display: none !important; }
-html.internal-profile-embed:not(.internal-profile-ready) body { visibility: hidden; background: #050507; }
+html.internal-profile-embed:not(.internal-profile-ready) body { visibility: hidden; }
+/* Override inherited discovery colors on the body, including Android/iOS
+   brightness variants. Club accents and semantic live colors stay independent. */
+html.internal-profile-embed body {
+  --discovery-backdrop: #0b0b0d;
+  background: #0b0b0d !important;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop {
+  background: #0b0b0d !important;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::after {
+  background: #171719;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)::before {
+  box-shadow: inset 0 0 0 1px #353538;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout > .profile-featured-column {
+  border-left-color: #353538;
+  background: #171719;
+}
+@layer dancr-follow-controls {
+  html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
+    .profile-options[data-compact-menu] > .profile-options-panel {
+    border-color: #353538 !important;
+    background: linear-gradient(#171719, #171719) !important;
+  }
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout > .internal-profile-powered-by {
+  grid-column: 1 / -1 !important;
+  grid-row: 6;
+  padding: 16px 12px;
+  color: #b5b5ba;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+html.internal-profile-embed .internal-profile-powered-by a {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  color: inherit;
+  text-decoration: none;
+}
+html.internal-profile-embed .internal-profile-powered-by a span:last-child {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 html.internal-profile-embed #profileBackdrop .profile-modal { min-height: 100dvh; max-height: 100dvh; border-radius: 0; }
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-modal-header-metrics .profile-activity-metrics.is-internal dt { width: max-content !important; max-width: none !important; justify-self: center !important; }
 html.internal-profile-embed .internal-profile-request { width: 100%; }
@@ -43462,6 +43509,13 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
 
     function initializeInternalProfileFrame() {
       if (!internalProfileFrameId) return;
+      const profileModal = document.getElementById("profileModal");
+      if (profileModal && !profileModal.querySelector(".internal-profile-powered-by")) {
+        const credit = document.createElement("footer");
+        credit.className = "internal-profile-powered-by";
+        credit.innerHTML = '<a href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a>';
+        profileModal.append(credit);
+      }
       document.addEventListener("click", event => {
         if (event.target instanceof Element && event.target.closest("[data-internal-table-request]")) sendInternalTableRequest();
       });

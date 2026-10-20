@@ -19,21 +19,31 @@ body dialog.ir-profile-dialog.ir-full-profile-dialog{position:fixed;inset:0;widt
 /* Prepare the full-size viewer behind the roster; reveal only when it is ready. */
 body dialog.ir-full-profile-dialog:not([open]){display:block;visibility:hidden;pointer-events:none}
 
-/* A solid discovery surface keeps internal roster gutters violet at any length.
- * The more specific staff selector also covers the embedded dashboard roster. */
+/* Internal uses neutral surfaces so each club's accent owns the emphasis.
+ * Cover the page gutters, embedded staff roster and profile loading frame. */
 html body.dancr-button-system .internal-page-surface:has(.ir-shell),
 html body.dancr-button-system .ir-shell,
 html body.dancr-button-system .ir-shell:is(.ir-staff, .ir-guest) {
-  background: var(--discovery-backdrop, #1c122b) !important;
+  background: #0b0b0d !important;
 }
 
 html body.dancr-button-system .ir-shell .ir-header {
-  background: var(--discovery-header-backdrop, linear-gradient(180deg, #120c1d, #1c122b)) !important;
+  border-color: var(--venue-guest-accent, var(--venue-brand-accent, #353538));
+  background: #171719 !important;
+}
+
+html body.dancr-button-system .ir-shell :is(.ir-panel, .ir-push-settings, .ir-notice, .ir-empty) {
+  border-color: #353538;
+  background: #171719;
+}
+
+html body.dancr-button-system .ir-shell .ir-notice {
+  color: #d4d4d8 !important;
 }
 
 html body.dancr-button-system .ir-profile-dialog,
 html body.dancr-button-system .ir-full-profile-frame {
-  background: var(--discovery-backdrop, #1c122b) !important;
+  background: #0b0b0d !important;
 }
 .ir-profile-control { min-width:0; }
 body .ir-staff button.ir-profile-link.venue-dancer-profile-trigger {

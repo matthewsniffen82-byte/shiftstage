@@ -53,7 +53,7 @@ test("full dancer profiles use a compact identity and honest public activity hea
   const headerIndex = profilePage.indexOf('className="profile-titlebar"');
   const metricsIndex = profilePage.indexOf('className="profile-header-metrics"');
   const actionsIndex = profilePage.indexOf("<DancerProfileActions");
-  const statusIndex = profilePage.indexOf('className={`profile-tonight-card');
+  const statusIndex = profilePage.indexOf('className="profile-shift-card profile-working-card');
   const mediaIndex = profilePage.indexOf("<DancerPhotoCarousel");
   const socialsIndex = profilePage.indexOf("socialContent={profile.socialLinks.length");
   assert.match(profilePage, /className="profile-titlebar"/);
@@ -233,7 +233,8 @@ test("profile actions keep profile controls separate from Tonight travel actions
   assert.match(profileDirections, /source: "dancer_profile"/);
   assert.match(profilePage, /className=\{`profile-tonight-travel-actions\$\{activeShift \? " is-working-now" : " is-upcoming has-venue-deal-link"\}`\}/);
   assert.match(profilePage, /<DancerDirectionsButton dancerId=\{profile\.id\} venue=\{actionVenue\} \/>/);
-  assert.match(profilePage, /profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton[\s\S]*?<UberRideButton[\s\S]*?compact[\s\S]*?source="dancer_profile"[\s\S]*?profile-upcoming-venue-deal[\s\S]*?>Free Entry</);
+  assert.match(profilePage, /!activeShift && actionVenue[\s\S]*?profile-tonight-travel-actions[\s\S]*?<DancerDirectionsButton/);
+  assert.doesNotMatch(profilePage, /<UberRideButton/);
   assert.match(profilePage, /\.profile-tonight-travel-actions:is\(\.is-working-now, \.is-upcoming, \.is-no-schedule\) \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
   assert.match(profilePage, /\.profile-tonight-travel-actions\.is-upcoming\.has-venue-deal-link \{ grid-template-columns: repeat\(3, minmax\(0, 1fr\)\); \}/);
   assert.match(profileActions, /readConfirmedNotificationCount/);
@@ -292,7 +293,7 @@ test("profile action centers stay mathematically balanced across supported phone
 test("only Working Now activates dancer deal attribution while Upcoming links to the venue page", () => {
   assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
-  assert.match(profilePage, /className=\{`profile-tonight-card\$\{activeShift \? " is-now" : ""\}\$\{!activeShift && upcomingShifts\.length \? " is-upcoming" : ""\}\$\{!activeShift && !upcomingShifts\.length \? " is-no-schedule" : ""\}\$\{activeDeal \? " has-club-deal" : ""\}\$\{!activeShift && actionShift \? " has-venue-deal-link" : ""\}`\}/);
+  assert.match(profileActions, /className=\{`profile-tonight-card\$\{hasLiveActions \? " is-now" : " is-no-schedule"\}\$\{hasClubDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /className="profile-shift-card profile-working-card is-now"/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
   assert.match(profilePage, /href=\{`\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}`\}/);
@@ -303,7 +304,7 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
   assert.match(profilePage, /presentation="profileCompact"/);
   assert.match(profilePage, /\) : actionShift \? \([\s\S]*?className="profile-deal-availability-line"[\s\S]*?"Going tonight\? View free entry"/);
   assert.doesNotMatch(profilePage, /className="profile-active-deal is-inactive"|Deals activate after a verified club check-in/);
-  assert.match(liveApp, /const dealMarkup = profile\?\.scheduled[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?: "";/);
+  assert.match(liveApp, /const dealMarkup = !internal && profile\?\.scheduled[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?: "";/);
   assert.match(
     profilePage,
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
@@ -332,12 +333,12 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
   assert.match(liveApp, /<section class="\$\{tonightClasses\}" data-profile-shift-state="\$\{shiftState\}" data-profile-deal-state="\$\{escapeHtml\(dealState\.key\)\}" aria-label="Tonight">[\s\S]*?shiftsMarkup\(profile, status,[\s\S]*?profile-tonight-deal/);
   assert.match(liveApp, /dealMarkup \? `<div class="profile-tonight-deal">\$\{dealMarkup\}<\/div>` : ""[\s\S]*?\$\{travelActionsMarkup\}/);
   assert.match(liveApp, /function dancerProfileUpcomingVenueDealMarkup[\s\S]*?!profile\?\.scheduled \|\| isWorkingTonight\(profile, city\)[\s\S]*?data-upcoming-venue-deal="venue-page"[\s\S]*?<span>Free Entry<\/span><span aria-hidden="true">›<\/span>/);
-  assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?\[directionsMarkup, rideMarkup, venueDealMarkup\]\.filter\(Boolean\)[\s\S]*?profile-tonight-travel-actions/);
+  assert.match(liveApp, /function dancerProfileTonightTravelActionsMarkup[\s\S]*?\[directionsMarkup, venueDealMarkup\]\.filter\(Boolean\)[\s\S]*?profile-tonight-travel-actions/);
   assert.doesNotMatch(
     liveApp.match(/function dancerProfileUpcomingVenueDealMarkup[\s\S]*?function dancerProfileTonightTravelActionsMarkup/)?.[0] || "",
     /data-club-deal-cta|dealAttributionToken|sourceType: "dancer_profile"/,
   );
-  assert.match(profilePage, /data-upcoming-venue-deal="venue-page"[\s\S]*?href=\{`\/venues\/\$\{encodeURIComponent\(actionShift\.venueSlug\)\}`\}[\s\S]*?<span>Free Entry<\/span>/);
+  assert.match(profileDirections, /href=\{`https:\/\/maps\.google\.com\/\?q=\$\{encodeURIComponent\(address\)\}`\}/);
   assert.doesNotMatch(
     profilePage.match(/\{!activeShift && actionShift \? \([\s\S]*?\) : null\}/)?.[0] || "",
     /ClubDealCard|createDancerDealAttributionToken|data-club-deal-cta/,
@@ -390,7 +391,7 @@ test("active full-profile Club Deals render a compact cashier-tap action and use
   assert.doesNotMatch(activeDealMarkup, /Working Now Club Deal|How credit works|No sign-in required/);
   assert.match(
     liveApp,
-    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?offers\.length > 1[\s\S]*?<strong>Free Entry<\/strong>[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?profile-club-deal-nfc-symbol[\s\S]*?<strong>Free Entry<\/strong>/,
+    /async function hydrateProfileClubDealQr\(root\)[\s\S]*?offers\.length > 1[\s\S]*?qrButton\.innerHTML = freeEntryButtonLabel\(\)[\s\S]*?createRevenueDealPass\(config\)[\s\S]*?qrButton\.innerHTML = freeEntryButtonLabel\(\)/,
   );
   assert.doesNotMatch(liveApp, /How to use<\/strong><small>View steps/);
   assert.match(
@@ -456,7 +457,7 @@ test("live dancer essentials stay compact above media and clear the mobile dock"
   );
   assert.match(
     aesthetic,
-    /#profileBackdrop #profileModal \.profile-modal-media \{[\s\S]*?margin: 12px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
+    /#profileBackdrop #profileModal \.profile-modal-media \{[\s\S]*?margin: 8px 0 0 !important;[\s\S]*?padding-bottom: 0 !important;/,
   );
   assert.match(liveApp, /\.profile-header-report-action \{[^}]*min-height: 44px;/);
   assert.match(
@@ -512,7 +513,7 @@ test("Current Shift uses a quieter club row and secondary ride action", () => {
   );
   assert.match(
     uberRideStyles,
-    /\.dancerProfile \{[\s\S]*?border-color: rgba\(226, 232, 240, 0\.18\);[\s\S]*?linear-gradient\(180deg, rgba\(255, 255, 255, 0\.065\), transparent 52%\)[\s\S]*?rgba\(12, 13, 16, 0\.86\);[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, 0\.045\);/,
+    /\.dancerProfile \{[\s\S]*?border-color: var\(--dancr-color-avatar-ring-violet, #8b5cf6\);[\s\S]*?linear-gradient\(180deg, rgba\(255, 255, 255, 0\.065\), transparent 52%\)[\s\S]*?rgba\(12, 13, 16, 0\.86\);[\s\S]*?box-shadow: inset 0 1px 0 rgba\(255, 255, 255, 0\.045\);/,
   );
   assert.match(uberRideStyles, /\.dancerProfile \.icon \{[\s\S]*?rgba\(226, 232, 240, 0\.82\) !important/);
 });
@@ -559,14 +560,14 @@ test("Upcoming Shift mirrors the compact current-shift row with cyan status cues
   );
 });
 
-test("No Schedule uses a compact neutral status strip with unchanged wording", () => {
+test("No Schedule uses a compact status strip with working-alert guidance", () => {
   assert.match(
     aesthetic,
     /profile-tonight-card\.is-no-schedule[\s\S]*?grid-template-columns: minmax\(0, 1fr\) !important;/,
   );
   assert.match(
     liveApp,
-    /class="profile-empty-state">No shift posted<\/span>[\s\S]*?class="profile-empty-copy">[\s\S]*?\$\{emptyScheduleCopy\}/,
+    /class="profile-empty-state">Not working now<\/span>[\s\S]*?class="profile-empty-copy[\s\S]*?\$\{emptyScheduleCopy\}/,
   );
   assert.match(
     liveApp,
@@ -577,7 +578,7 @@ test("No Schedule uses a compact neutral status strip with unchanged wording", (
     /\.profile-tonight-card::before \{[\s\S]*?border: 2px solid rgba\(255,255,255,\.13\);[\s\S]*?\.profile-tonight-card\.is-no-schedule \{[\s\S]*?\.profile-empty-state \{[\s\S]*?letter-spacing: \.075em;/,
   );
   assert.match(aesthetic, /profile-tonight-card > \.schedule-empty,[\s\S]*?profile-schedule-empty \{[\s\S]*?min-height: 28px !important;/);
-  assert.match(profilePage, /<em>Follow \{profile\.stageName\} for updates<\/em>/);
+  assert.match(profilePage, /<DancerWorkingAlertHint stageName=\{profile\.stageName\}/);
   assert.match(liveApp, /if \(!profile\?\.scheduled\) return "";/);
   assert.doesNotMatch(profilePage, /profile-tonight-travel-actions is-no-schedule|Directions unavailable until a shift is posted|Ride unavailable until a shift is posted/);
 });

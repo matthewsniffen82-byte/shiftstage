@@ -38,7 +38,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-l
   background: transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Cpath fill='%23b8860b' d='M0 0h2v2H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal.profile-split-layout, #results .venue-detail, #profilePhotoViewer, #profileTvViewer, .public-profile-shell, #venue-dashboard, .ir-shell, .dancer-card, .venue, .home-tv-feed-slide):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"]):where(.ir-shell, html.internal-profile-embed *) .profile-actions-compact :is(
-  .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going) {
+  .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going):not([data-internal-table-request]) {
   --profile-utility-background: linear-gradient(#211c0e, #211c0e) !important;
   --profile-utility-border: #665227 !important;
   --profile-utility-hover-background: linear-gradient(#302712, #302712) !important;

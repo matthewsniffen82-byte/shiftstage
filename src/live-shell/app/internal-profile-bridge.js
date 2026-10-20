@@ -275,6 +275,13 @@
 
     function initializeInternalProfileFrame() {
       if (!internalProfileFrameId) return;
+      const profileModal = document.getElementById("profileModal");
+      if (profileModal && !profileModal.querySelector(".internal-profile-powered-by")) {
+        const credit = document.createElement("footer");
+        credit.className = "internal-profile-powered-by";
+        credit.innerHTML = '<a href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by MyDancr</span><span>www.mydancr.com</span></a>';
+        profileModal.append(credit);
+      }
       document.addEventListener("click", event => {
         if (event.target instanceof Element && event.target.closest("[data-internal-table-request]")) sendInternalTableRequest();
       });
