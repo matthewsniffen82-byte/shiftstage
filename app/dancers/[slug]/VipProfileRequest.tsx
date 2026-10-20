@@ -73,7 +73,6 @@ export default function VipProfileRequest({ dancerId, stageName, returnHref, chi
     try {
       queueVipProfileDancer(window.localStorage, accountId, venueId, dancerId);
       setQueued(true);
-      window.location.assign(queueHref);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "Unable to add this dancer. Open My dancers and try again.");
       locked.current = false;
@@ -85,13 +84,13 @@ export default function VipProfileRequest({ dancerId, stageName, returnHref, chi
     <button type="button" className="vip-profile-request-action primary-action" disabled={!venue || !access?.available || queued}
       aria-label={`Request ${stageName}`} aria-busy={!venue && !loadError}
       onClick={addToQueue}>
-      <span>{queued ? "Added" : "Request"}</span><span aria-hidden="true">›</span>
+      <span>{queued ? "Added to request queue" : "Request"}</span>{!queued && <span aria-hidden="true">›</span>}
     </button>
     {loadError && <div role="alert" className="vip-profile-request-hint">{loadError}
       <button type="button" onClick={() => setRevision(value => value + 1)}>Retry</button>
     </div>}
     {venue && !access?.available && <p className="vip-profile-request-hint">Unavailable to request at {venue.name}.</p>}
     {error && <p role="alert" className="vip-profile-request-hint">{error}</p>}
-    {(error || queued) && <a className="vip-profile-request-hint" href={queueHref}>Open My dancers →</a>}
+    {error && <a className="vip-profile-request-hint" href={queueHref}>Open My dancers →</a>}
   </div>;
 }

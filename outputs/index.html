@@ -41626,6 +41626,28 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sen
 html.internal-profile-embed .internal-profile-request-status { margin: 8px 4px 0; color: #b8b5c2; font-size: 12px; line-height: 1.4; text-align: center; }
 html.internal-profile-embed .internal-profile-request-status:empty { display: none; }
 
+/* VIP uses the public viewer and adds to the dashboard's existing visit queue. */
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .vip-profile-queue-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 8px;
+  border: 1px solid #8856ce;
+  border-radius: 12px;
+  background: linear-gradient(#34008e, #34008e);
+  color: #fff;
+  font-size: clamp(12px, 2.8vw, 16px);
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: normal;
+  text-wrap: balance;
+  cursor: pointer;
+}
+html.internal-profile-embed #profileModal .vip-profile-queue-action:disabled { opacity: .8; cursor: default; }
+html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visible { outline: 2px solid #cba0ff; outline-offset: 3px; }
+
 /* The saved QR color follows guest profiles only inside this isolated frame. */
 html.internal-profile-embed body[data-venue-guest-color="custom"] {
   --dancr-color-brand-primary: var(--venue-guest-accent);
@@ -43269,6 +43291,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     let internalProfileToken = "";
     let internalProfileMediaController = new AbortController();
     let internalTableRequest = null;
+    let internalVipRequest = null;
     let internalProfileActivity = {};
     const internalProfileMedia = new Map();
 
@@ -43312,10 +43335,18 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         || typeof event.data.slug !== "string" || !event.data.slug || event.data.slug.length > 200) return;
       const { profileId, slug } = event.data;
       const revision = `public:${profileId}:${slug}`;
-      if (internalProfileRevision === revision) return;
+      const vipRequest = event.data.vipRequest;
+      const nextVipRequest = vipRequest && typeof vipRequest.added === "boolean" && typeof vipRequest.disabled === "boolean"
+        ? { added: vipRequest.added, disabled: vipRequest.disabled, message: String(vipRequest.message || "").slice(0, 500) } : null;
+      if (internalProfileRevision === revision) {
+        internalVipRequest = nextVipRequest;
+        syncVipProfileRequestUi();
+        return;
+      }
       if (internalProfileTargetId) closeProfileModal();
       internalProfileTargetId = profileId;
       internalProfileRevision = revision;
+      internalVipRequest = nextVipRequest;
       const sequence = ++internalProfileLoadSequence;
       const controller = internalProfileMediaController;
       const timeout = window.setTimeout(() => controller.abort(), 15000);
@@ -43336,6 +43367,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         internalRosterProfile = {
           ...mapLiveDancer(source, isWorkingTonight(source, city), 0, {}),
           dashboardProfile: true,
+          vipProfile: Boolean(internalVipRequest),
         };
         citySelect.value = city;
         // Start with the confirmed saved state already loaded by the dashboard.
@@ -43556,6 +43588,26 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       </div>`;
     }
 
+    function vipProfileRequestActionsMarkup(profile) {
+      if (!profile?.vipProfile || !internalVipRequest) return "";
+      const label = internalVipRequest.added ? "Added to request queue" : "Request";
+      return `<div class="vip-profile-queue">
+        <button type="button" class="action-btn vip-profile-queue-action" data-vip-profile-request
+          ${internalVipRequest.added || internalVipRequest.disabled ? "disabled" : ""} aria-live="polite">${escapeHtml(label)}</button>
+        <p role="status" class="internal-profile-request-status">${escapeHtml(internalVipRequest.message)}</p>
+      </div>`;
+    }
+
+    function syncVipProfileRequestUi() {
+      const actions = document.querySelector(".vip-profile-queue");
+      if (actions && internalRosterProfile?.vipProfile) actions.outerHTML = vipProfileRequestActionsMarkup(internalRosterProfile);
+    }
+
+    function sendVipProfileRequest() {
+      if (!internalRosterProfile?.vipProfile || !internalVipRequest || internalVipRequest.added || internalVipRequest.disabled) return;
+      window.parent.postMessage({ type: "mydancr:vip-profile-request", profileId: internalRosterProfile.id }, window.location.origin);
+    }
+
     function syncInternalProfileRequestUi() {
       const count = document.getElementById("internalRequestsTonight");
       if (count) count.textContent = Number.isSafeInteger(internalRosterProfile.requestsTonight) && internalRosterProfile.requestsTonight >= 0 ? internalRosterProfile.requestsTonight.toLocaleString() : "—";
@@ -43579,6 +43631,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       internalProfileLoadSequence += 1;
       internalRosterProfile = null;
       internalTableRequest = null;
+      internalVipRequest = null;
       internalProfileTargetId = "";
       internalProfileToken = "";
       internalProfileRevision = "";
@@ -43612,6 +43665,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       }
       document.addEventListener("click", event => {
         if (event.target instanceof Element && event.target.closest("[data-internal-table-request]")) sendInternalTableRequest();
+        if (event.target instanceof Element && event.target.closest("[data-vip-profile-request]")) sendVipProfileRequest();
       });
       window.addEventListener("message", event => {
         if (event.origin !== window.location.origin || event.source !== window.parent) return;
@@ -55518,13 +55572,14 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
       const internal = profile?.internalRoster === true;
-      const dealState = internal ? { key: "hidden" } : dancerClubDealState(profile);
-      const dealMarkup = !internal && profile?.scheduled
+      const vip = profile?.vipProfile === true && !options.preview;
+      const dealState = vip ? { key: "available" } : internal ? { key: "hidden" } : dancerClubDealState(profile);
+      const dealMarkup = vip ? vipProfileRequestActionsMarkup(profile) : !internal && profile?.scheduled
         ? options.preview
           ? profileDealTileMarkup(profile, { preview: true })
           : profileDealTileMarkup(profile)
         : "";
-      const travelActionsMarkup = internal ? "" : dancerProfileTonightTravelActionsMarkup(profile, {
+      const travelActionsMarkup = internal || vip ? "" : dancerProfileTonightTravelActionsMarkup(profile, {
         city,
         preview: Boolean(options.preview)
       });

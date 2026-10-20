@@ -261,7 +261,7 @@ test('combined dancer filters preserve follows, request history and unavailable 
   const followControl=ui.nodes().find(node=>node.props?.['aria-label']==='Follow Nova');
   assert.equal(followControl.props['aria-pressed'],false);assert.equal(followControl.props.disabled,false);
   const profile=ui.nodes().find(node=>node.type==='a');
-  assert.equal(new URL(profile.props.href,'https://example.test').searchParams.get('return_to'),`/vip?venueId=${venues[0].id}#vip-plan`);
+  assert.equal(profile.props.href,'/?profile=aria');
   ui.select('past');assert.equal(ui.props.draft.selected.length,0);
   ui.nodes().find(node=>node.props?.className==='vip-dancer-follow').props.onClick();assert.deepEqual(saves,['aria']);
   ui.nodes().find(node=>node.props?.type==='checkbox').props.onChange({target:{checked:true}});ui.render();

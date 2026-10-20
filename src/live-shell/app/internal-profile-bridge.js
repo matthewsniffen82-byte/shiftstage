@@ -10,6 +10,7 @@
     let internalProfileToken = "";
     let internalProfileMediaController = new AbortController();
     let internalTableRequest = null;
+    let internalVipRequest = null;
     let internalProfileActivity = {};
     const internalProfileMedia = new Map();
 
@@ -53,10 +54,18 @@
         || typeof event.data.slug !== "string" || !event.data.slug || event.data.slug.length > 200) return;
       const { profileId, slug } = event.data;
       const revision = `public:${profileId}:${slug}`;
-      if (internalProfileRevision === revision) return;
+      const vipRequest = event.data.vipRequest;
+      const nextVipRequest = vipRequest && typeof vipRequest.added === "boolean" && typeof vipRequest.disabled === "boolean"
+        ? { added: vipRequest.added, disabled: vipRequest.disabled, message: String(vipRequest.message || "").slice(0, 500) } : null;
+      if (internalProfileRevision === revision) {
+        internalVipRequest = nextVipRequest;
+        syncVipProfileRequestUi();
+        return;
+      }
       if (internalProfileTargetId) closeProfileModal();
       internalProfileTargetId = profileId;
       internalProfileRevision = revision;
+      internalVipRequest = nextVipRequest;
       const sequence = ++internalProfileLoadSequence;
       const controller = internalProfileMediaController;
       const timeout = window.setTimeout(() => controller.abort(), 15000);
@@ -77,6 +86,7 @@
         internalRosterProfile = {
           ...mapLiveDancer(source, isWorkingTonight(source, city), 0, {}),
           dashboardProfile: true,
+          vipProfile: Boolean(internalVipRequest),
         };
         citySelect.value = city;
         // Start with the confirmed saved state already loaded by the dashboard.
@@ -297,6 +307,26 @@
       </div>`;
     }
 
+    function vipProfileRequestActionsMarkup(profile) {
+      if (!profile?.vipProfile || !internalVipRequest) return "";
+      const label = internalVipRequest.added ? "Added to request queue" : "Request";
+      return `<div class="vip-profile-queue">
+        <button type="button" class="action-btn vip-profile-queue-action" data-vip-profile-request
+          ${internalVipRequest.added || internalVipRequest.disabled ? "disabled" : ""} aria-live="polite">${escapeHtml(label)}</button>
+        <p role="status" class="internal-profile-request-status">${escapeHtml(internalVipRequest.message)}</p>
+      </div>`;
+    }
+
+    function syncVipProfileRequestUi() {
+      const actions = document.querySelector(".vip-profile-queue");
+      if (actions && internalRosterProfile?.vipProfile) actions.outerHTML = vipProfileRequestActionsMarkup(internalRosterProfile);
+    }
+
+    function sendVipProfileRequest() {
+      if (!internalRosterProfile?.vipProfile || !internalVipRequest || internalVipRequest.added || internalVipRequest.disabled) return;
+      window.parent.postMessage({ type: "mydancr:vip-profile-request", profileId: internalRosterProfile.id }, window.location.origin);
+    }
+
     function syncInternalProfileRequestUi() {
       const count = document.getElementById("internalRequestsTonight");
       if (count) count.textContent = Number.isSafeInteger(internalRosterProfile.requestsTonight) && internalRosterProfile.requestsTonight >= 0 ? internalRosterProfile.requestsTonight.toLocaleString() : "—";
@@ -320,6 +350,7 @@
       internalProfileLoadSequence += 1;
       internalRosterProfile = null;
       internalTableRequest = null;
+      internalVipRequest = null;
       internalProfileTargetId = "";
       internalProfileToken = "";
       internalProfileRevision = "";
@@ -353,6 +384,7 @@
       }
       document.addEventListener("click", event => {
         if (event.target instanceof Element && event.target.closest("[data-internal-table-request]")) sendInternalTableRequest();
+        if (event.target instanceof Element && event.target.closest("[data-vip-profile-request]")) sendVipProfileRequest();
       });
       window.addEventListener("message", event => {
         if (event.origin !== window.location.origin || event.source !== window.parent) return;

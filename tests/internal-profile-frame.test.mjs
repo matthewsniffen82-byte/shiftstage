@@ -92,3 +92,23 @@ test('customer profiles reuse the same frame with a public request and matching 
   assert.deepEqual(calls, ['ready']);
   assert.equal(f.timers.size, 0);
 });
+
+test('VIP queue actions accept only the active trusted frame and never close the profile', () => {
+  const f = fixture(), calls = [];
+  const props = { profile: null, profileId: id, publicSlug: 'aria',
+    vipRequest: { added: false, disabled: false, message: '' }, onVipRequest: () => calls.push('add'),
+    onClose: () => assert.fail('Request must leave the full profile open') };
+  f.render(props);
+  const data = { type: 'mydancr:vip-profile-request', profileId: id };
+  f.send({ ...data, profileId: otherId }); f.send(data, { source: {} }); f.send(data, { origin: 'https://foreign.invalid' });
+  assert.deepEqual(calls, []);
+  f.send(data); assert.deepEqual(calls, ['add']);
+  for (const vipRequest of [undefined, { added: true, disabled: false }, { added: false, disabled: true }]) {
+    f.render({ ...props, vipRequest }); f.send(data);
+  }
+  assert.deepEqual(calls, ['add']);
+  f.render({ ...props, publicSlug: undefined }); f.send(data);
+  assert.deepEqual(calls, ['add'], 'internal table profiles cannot send VIP selections');
+  f.render({ ...props, profileId: '' }); f.send(data);
+  assert.deepEqual(calls, ['add']);
+});

@@ -69,6 +69,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
     '@/app/dashboard/dashboard-session': { readSession: () => ({ account: currentAccount }), requestDashboardJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
     '@/src/lib/dancr/vip-dashboard': dashboard, './VipRequests': { __esModule: true, default: RequestCards }, './VipAccountPanel': { __esModule: true, default: 'vip-account-settings' },
     './VipMyDancers': { __esModule: true, VipWorkingFollowing },
+    '../internal/FullProfileDialog': { ClubProfileDialog: 'profile-viewer' },
     '@/app/dashboard/DashboardShared': { NotificationPanel: 'vip-notifications' },
     '@/src/lib/dancr/vip-draft-storage': draftStorage,
     '@/src/lib/dancr/browser-session': { rememberVipDashboard: (accountId, venueId) => vipNavigation.push({ accountId, venueId }) },
@@ -85,6 +86,7 @@ export function dashboardHarness({ hash = '', initialVenueId = '', storage = new
   render();
   return { calls, writes, vipNavigation, nodes, render, settle, navigate, storage, intervals, tree: () => tree,
     planner: () => nodes().find(node => node.type === Planner),
+    profileViewer: () => nodes().find(node => node.type === 'profile-viewer'),
     workingFollowing: () => nodes().find(node => node.type === VipWorkingFollowing),
     requests: () => nodes().find(node => node.type === RequestCards),
     advance(ms) { now += ms; },

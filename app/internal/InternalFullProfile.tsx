@@ -16,19 +16,20 @@ export type InternalProfile = {
 
 export type InternalRequestAction = { tableLabel: string; busy: boolean; confirmed?: boolean; message: string };
 export type PublicProfileActions = { following: boolean; notificationsEnabled: boolean; going: boolean };
+export type VipProfileRequestAction = { added: boolean; disabled: boolean; message: string };
 
 /** Host the actual discovery profile viewer; the parent retains roster authorization/polling. */
-export function InternalFullProfile({ hidden = false, publicSlug, publicActions, profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { hidden?: boolean; publicSlug?: string; publicActions?: PublicProfileActions; profile: InternalProfile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
+export function InternalFullProfile({ hidden = false, publicSlug, publicActions, vipRequest, onVipRequest, profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { hidden?: boolean; publicSlug?: string; publicActions?: PublicProfileActions; vipRequest?: VipProfileRequestAction; onVipRequest?: () => void; profile: InternalProfile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
   const frame = useRef<HTMLIFrameElement>(null);
-  const latest = useRef({ profile, token, request, onRequest, onCancel, onReady, onError, onClose });
-  latest.current = { profile, token, request, onRequest, onCancel, onReady, onError, onClose };
+  const latest = useRef({ profile, token, request, vipRequest, onVipRequest, onRequest, onCancel, onReady, onError, onClose });
+  latest.current = { profile, token, request, vipRequest, onVipRequest, onRequest, onCancel, onReady, onError, onClose };
   const send = useCallback(() => {
     if (!profileId) {
       frame.current?.contentWindow?.postMessage({ type: "mydancr:internal-profile-clear" }, window.location.origin);
       return;
     }
     if (publicSlug) {
-      frame.current?.contentWindow?.postMessage({ type: "mydancr:public-profile-open", profileId, slug: publicSlug, actions: publicActions }, window.location.origin);
+      frame.current?.contentWindow?.postMessage({ type: "mydancr:public-profile-open", profileId, slug: publicSlug, actions: publicActions, vipRequest: latest.current.vipRequest }, window.location.origin);
       return;
     }
     if (latest.current.profile?.id !== profileId) return;
@@ -47,6 +48,8 @@ export function InternalFullProfile({ hidden = false, publicSlug, publicActions,
       }
       if (event.data?.type === "mydancr:internal-profile-error") { window.clearTimeout(timer); latest.current.onError?.(); }
       if (event.data?.type === "mydancr:internal-profile-close") latest.current.onClose();
+      if (publicSlug && event.data?.type === "mydancr:vip-profile-request" && latest.current.vipRequest
+        && !latest.current.vipRequest.added && !latest.current.vipRequest.disabled) latest.current.onVipRequest?.();
       if (publicSlug && event.data?.type === "mydancr:internal-profile-auth" && ["signup", "login"].includes(event.data.mode)) {
         const returnTo = `/?profile=${encodeURIComponent(publicSlug)}`;
         window.location.assign(`/account?role=customer&mode=${event.data.mode}&return_to=${encodeURIComponent(returnTo)}`);
@@ -71,7 +74,7 @@ export function InternalFullProfile({ hidden = false, publicSlug, publicActions,
     window.addEventListener("message", receive);
     return () => { window.clearTimeout(timer); window.removeEventListener("message", receive); };
   }, [profileId, publicSlug, send]);
-  useEffect(() => { send(); }, [profile, token, request, send]);
+  useEffect(() => { send(); }, [profile, token, request, vipRequest, send]);
   return <iframe style={hidden ? { visibility: "hidden" } : undefined} ref={frame} className="ir-full-profile-frame" title={profile ? `${profile.stage_name}’s full profile` : "Dancer profile"}
     src="/internal/profile-viewer?internal_profile=viewer" referrerPolicy="no-referrer" allow="autoplay; fullscreen" />;
 }

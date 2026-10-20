@@ -716,13 +716,14 @@
       const status = options.status || shiftStatus(profile);
       const city = options.city || selectedCity();
       const internal = profile?.internalRoster === true;
-      const dealState = internal ? { key: "hidden" } : dancerClubDealState(profile);
-      const dealMarkup = !internal && profile?.scheduled
+      const vip = profile?.vipProfile === true && !options.preview;
+      const dealState = vip ? { key: "available" } : internal ? { key: "hidden" } : dancerClubDealState(profile);
+      const dealMarkup = vip ? vipProfileRequestActionsMarkup(profile) : !internal && profile?.scheduled
         ? options.preview
           ? profileDealTileMarkup(profile, { preview: true })
           : profileDealTileMarkup(profile)
         : "";
-      const travelActionsMarkup = internal ? "" : dancerProfileTonightTravelActionsMarkup(profile, {
+      const travelActionsMarkup = internal || vip ? "" : dancerProfileTonightTravelActionsMarkup(profile, {
         city,
         preview: Boolean(options.preview)
       });

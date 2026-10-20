@@ -66,7 +66,7 @@ function fixture({ external = true, staff = false, mediaFailure = false, generic
     closeProfileModal: () => context.bridge.closeInternalProfileFrame(),
     citySelect: { value: 'Las Vegas', options: [{ value: 'Las Vegas' }], append(option) { this.options.push(option); } }, openProfileModal: value => opens.push(value), showToast() {}, escapeHtml: value => String(value).replaceAll('<','&lt;').replaceAll('>','&gt;'),
   };
-  vm.runInNewContext(source + '\nthis.bridge={openPublicProfileMessage,openInternalProfileMessage,closeInternalProfileFrame,startInternalProfileAuth,internalProfileMatches,sendInternalTableRequest,internalProfileRequestActionsMarkup,profile:()=>internalRosterProfile};', context);
+  vm.runInNewContext(source + '\nthis.bridge={openPublicProfileMessage,openInternalProfileMessage,closeInternalProfileFrame,startInternalProfileAuth,internalProfileMatches,sendInternalTableRequest,internalProfileRequestActionsMarkup,sendVipProfileRequest,vipProfileRequestActionsMarkup,profile:()=>internalRosterProfile};', context);
   const event = (overrides = {}) => ({ origin: 'https://example.invalid', source: parent, data: { type: 'mydancr:internal-profile-open', profile, token: staff ? '' : id(9), request: staff ? undefined : { tableLabel: 'Table 1', busy: false, message: '' } }, ...overrides });
   return { context, body: context.document.body, bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
 }
@@ -153,6 +153,50 @@ test('customer profiles use one public read, retain public actions and use MyDan
     citySelect: { value: source.city }, findProfile: () => f.bridge.profile(), profileModal: modal,
   });
   assert.equal(modal.dataset.venueBrand, '');
+});
+
+test('VIP profiles replace Free Entry with a queue action and update Added without reopening or fetching', async () => {
+  const publicSource = { id: id(1), slug: 'aria', stageName: 'Aria', city: 'Las Vegas', verified: true };
+  const f = fixture({ generic: true, publicPayload: { ok: true, profile: publicSource } });
+  const event = f.event({ data: { type: 'mydancr:public-profile-open', profileId: id(1), slug: 'aria',
+    vipRequest: { added: false, disabled: false, message: '' } } });
+  await f.bridge.openPublicProfileMessage(event);
+  const profile = f.bridge.profile();
+  assert.equal(profile.vipProfile, true);
+  const gridSource = readFileSync('src/live-shell/app/12-sync-profile-photo-viewer-window.js', 'utf8');
+  const grid = gridSource.match(/    function profileModalGridMarkup\([^]*?\n    \}/)[0];
+  vm.runInNewContext(grid, f.context);
+  Object.assign(f.context, {
+    shiftStatus: () => ({}), isWorkingTonight: () => false, shiftsMarkup: () => 'club',
+    profileLocationStatusTile: () => '', liveProfileModalActionsMarkup: () => 'Follow Share',
+    liveProfileGoingActionsMarkup: () => 'Going', dancerClubDealState: () => assert.fail('VIP must not show Free Entry'),
+    profileDealTileMarkup: () => assert.fail('VIP must not render a deal tile'),
+    dancerProfileTonightTravelActionsMarkup: () => assert.fail('No secondary upcoming Free Entry'),
+  });
+  const markup = f.context.profileModalGridMarkup(profile);
+  assert.match(markup, /data-vip-profile-request/); assert.match(markup, />Request<\/button>/);
+  assert.match(markup, /Follow Share/);
+  f.bridge.sendVipProfileRequest();
+  assert.equal(f.messages.at(-1)[0].type, 'mydancr:vip-profile-request');
+  assert.equal(f.messages.at(-1)[0].profileId, id(1));
+  const action = { outerHTML: '' };
+  f.context.document.querySelector = () => action;
+  await f.bridge.openPublicProfileMessage({ ...event, data: { ...event.data, vipRequest: { added: true, disabled: false, message: '' } } });
+  assert.match(action.outerHTML, /Added to request queue/);
+  assert.match(action.outerHTML, /disabled/);
+  assert.equal(f.fetches.length, 1); assert.equal(f.opens.length, 1);
+  assert.equal(f.bridge.profile(), profile, 'keep media and scroll state mounted');
+  const messages = f.messages.length;
+  f.bridge.sendVipProfileRequest(); assert.equal(f.messages.length, messages);
+  await f.bridge.openPublicProfileMessage({ ...event, data: { ...event.data, vipRequest: { added: false, disabled: true, message: '<unavailable>' } } });
+  assert.match(action.outerHTML, /&lt;unavailable&gt;/);
+  f.bridge.sendVipProfileRequest(); assert.equal(f.messages.length, messages);
+  assert.equal(f.messages.some(([message]) => message.type === 'mydancr:internal-profile-close'), false);
+  f.bridge.closeInternalProfileFrame();
+  assert.equal(f.messages.at(-1)[0].type, 'mydancr:internal-profile-close');
+  await f.bridge.openPublicProfileMessage({ ...event, data: { ...event.data, vipRequest: undefined } });
+  assert.equal(f.bridge.profile().vipProfile, false, 'VIP actions must not leak into ordinary customer profiles');
+  assert.equal(f.bridge.vipProfileRequestActionsMarkup(f.bridge.profile()), '');
 });
 
 test('customer viewer rejects private, unverified, mismatched and foreign profile responses', async () => {

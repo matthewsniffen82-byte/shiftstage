@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { filterVipDancers, isVipFollowing, type VipDraft, type VipDancerFilter } from "@/src/lib/dancr/vip-dashboard";
+import { filterVipDancers, isVipFollowing, vipProfileSlug, type VipDraft, type VipDancerFilter } from "@/src/lib/dancr/vip-dashboard";
 import { vipLocalDate, type VipDancer, type VipVenue } from "@/src/lib/dancr/vip-types";
 import { useVipElementHeight } from "./useVipElementHeight";
 
@@ -17,9 +17,10 @@ const selectionIcons = {
   "selected": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFQAAABUCAYAAAAcaxDBAAAACXBIWXMAAAsTAAALEwEAmpwYAAADuUlEQVR4nO2cz0pbQRTG3egrHDB5gnhJrl3Ydl20+9p1WxpcmYiuCq4KKW798wy2EtDspaUPoW4Cuva/Xletq6+ccAticq8mM3Nn5t7zwUEDIZnz48ydOUPmGxsTiUQikUgkEmUlABMAXgN4D2AJwBdPoglgHsArAOMugHwLYAdABP91C+AHgDkbIF8A+I386heA6axgfgZwj/zrnnM1DfMbiqeWKZifUFwtmHhmpk7zq6sr7O7uYmNjA61Wy4vgse7t7fXG/oT+Agh1Ak1cgE5PT9FoNDA5OQki8jJ47M1mE2dnZ2lQf+rcGg3UwcEBqtWqdSCkKWq1Gg4PD9OgzuoAupNUmXmCSXGEYYjz8/MkoN9VYY7HG94+LS4uWk+eDMXSEjd7A8UNzIQKUG7J+nR5een1M5OeCM7t+vo6CeqMClDuzfvEq7ntpMlwdDqdJKDzKkAH1v76+rr1hMlwbG5uJgFtqgBdHfSJa2tr1hMmw8E5JmhVgJIAhVSow1Eul1Gv13vtJv/l1zLlaTSY3Hw87n74daVSkWcojdBKHh8fD1xZ2u22ACVNMFlRFAlQ0gRTgJK+ypQpT/ph8ntkUaJ0mEEQoNvtPgnz5OSkd0Qn2ybKDmahW8/AAMzCAg0MwSwk0MAgzMIBDQzDLBTQIAOYTgItj3DCo3Ofye9V+S6ngFYqlb4TnqOjI6Uks4TpHNB2u6012axhOgc0iiJtSduA6RXQYZK3BdObKT8MBJswnQM6NTWlBMM2TOeAksJ+Mat9pndAaQQ4rsB0FigNOX1tT3MvgNIQlepCZXoBlDRAzRKmF0BJAWrWML0BSiNAtQHTK6DkyD4zV0DpGZVqqzK9BUoplWqzMr0GSvHZKff+d3d3veD/uXW1CdNroORoCFASoLBdhVKhJEBhu9KkQsk+TFmUyB+g7GvUJ762Z7uCyHBsbW0lAW1ovzzLthK2EyZ7l2ffab/ezR4deb7eXSqVcHNzY+R6NxsQDPxk9uiwnTgZipWVlSSYt8qWbrF9WZ/Y8MT2AQZlb5GxrQQzBjqX9On8g7A8QQ3DsPejthS9UQYaQ2UvOCRVKnt0+PxMLZVKWF5exsXFRRrMfS0wY6DTsRlUotijo9Pp9LZUtg2unhs8Vh5zygL0X38AVLUBjaF+QHFV1wrzAdQWiqevRmA+MhVMnf45Eef40SjMB1Br7AWH/Gpf+zPzmWBn2b4syX3MM/HKtK1ta6QIljuql9znxgcqPpla85hnnDC1FolEIpFIJBorjP4BIA8ilvwHJXAAAAAASUVORK5CYII="
 };
 
-export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onFollow, followPending, busy, editing = false, unavailableSelections = false, onCancelEdit, onRequests }: {
+export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onFollow, onOpenProfile, followPending, busy, editing = false, unavailableSelections = false, onCancelEdit, onRequests }: {
   venue: VipVenue; dancers: VipDancer[]; draft: VipDraft; onChange: (draft: VipDraft) => void; onSubmit: () => Promise<void>; busy: boolean;
   onFollow: (dancer: VipDancer) => Promise<void>; followPending: string[];
+  onOpenProfile?: (dancer: VipDancer) => boolean;
   editing?: boolean; unavailableSelections?: boolean; onCancelEdit?: () => void;
   onRequests?: () => void;
 }) {
@@ -62,7 +63,10 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
           const unavailable = dancer.canRequest === false;
           const profile = <><DancerPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><span className="vip-dancer-copy"><strong>{dancer.stage_name}</strong><small className={dancer.working_now ? "vip-working" : ""}>{dancer.working_now ? "● Working now" : unavailable ? dancer.previouslyRequested ? "Previously requested · unavailable" : "Unavailable at this club" : "Affiliated · off shift"}</small><span className="vip-open-profile">{dancer.profileHref ? "Open profile" : "Profile unavailable"}</span></span></>;
           return <article className={`vip-dancer ${checked ? "is-selected" : ""}`} key={dancer.id}>
-            {dancer.profileHref ? <a className="vip-profile-link" href={`${dancer.profileHref}?return_to=${encodeURIComponent(`/vip?venueId=${encodeURIComponent(venue.id)}#vip-plan`)}`} target="_blank" rel="noopener noreferrer" aria-label={`Open ${dancer.stage_name} profile (new tab)`}>{profile}</a> : <div className="vip-profile-link">{profile}</div>}
+            {vipProfileSlug(dancer) ? <a className="vip-profile-link" href={`/?profile=${encodeURIComponent(vipProfileSlug(dancer))}`} aria-label={`Open ${dancer.stage_name} profile`} onClick={event => {
+              if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
+                && onOpenProfile?.(dancer)) event.preventDefault();
+            }}>{profile}</a> : <div className="vip-profile-link">{profile}</div>}
             <label className="vip-dancer-select" title={unavailable ? "Unavailable to request at this club" : checked ? `Remove ${dancer.stage_name} from your visit` : `Add ${dancer.stage_name} to your visit`}><span className="vip-sr-only">Select {dancer.stage_name} for your visit</span><input type="checkbox" checked={checked} disabled={!checked && (unavailable || draft.selected.length >= 10)} onChange={event => {
               if (busy) return;
               if (!event.target.checked) remove(dancer.id);

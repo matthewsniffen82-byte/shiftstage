@@ -127,6 +127,28 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-request-sen
 html.internal-profile-embed .internal-profile-request-status { margin: 8px 4px 0; color: #b8b5c2; font-size: 12px; line-height: 1.4; text-align: center; }
 html.internal-profile-embed .internal-profile-request-status:empty { display: none; }
 
+/* VIP uses the public viewer and adds to the dashboard's existing visit queue. */
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .vip-profile-queue-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 8px;
+  border: 1px solid #8856ce;
+  border-radius: 12px;
+  background: linear-gradient(#34008e, #34008e);
+  color: #fff;
+  font-size: clamp(12px, 2.8vw, 16px);
+  font-weight: 800;
+  line-height: 1.3;
+  white-space: normal;
+  text-wrap: balance;
+  cursor: pointer;
+}
+html.internal-profile-embed #profileModal .vip-profile-queue-action:disabled { opacity: .8; cursor: default; }
+html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visible { outline: 2px solid #cba0ff; outline-offset: 3px; }
+
 /* The saved QR color follows guest profiles only inside this isolated frame. */
 html.internal-profile-embed body[data-venue-guest-color="custom"] {
   --dancr-color-brand-primary: var(--venue-guest-accent);

@@ -79,7 +79,7 @@ test('Following shows followed dancers on or off shift, with no Favorites filter
   assert.ok(ui.nodes().some(n=>n.props?.className==='vip-dancer-select'));
   ui.filter('Following');assert.equal(cards().length,2);
   const profile=ui.nodes().find(n=>n.type==='a'&&n.props.className==='vip-profile-link');
-  assert.equal(profile.props.target,'_blank');assert.match(profile.props.href,/\/dancers\/aria\?return_to=/);
+  assert.equal(profile.props.target,undefined);assert.equal(profile.props.href,'/?profile=aria');
   assert.match(renderToStaticMarkup(ui.tree()),/Affiliated · off shift|Unavailable at this club/);
   ui.search('past');assert.equal(cards().length,1);ui.search('missing');assert.equal(cards().length,0);ui.search('');
   assert.doesNotMatch(renderToStaticMarkup(ui.tree()), /Favorites/);

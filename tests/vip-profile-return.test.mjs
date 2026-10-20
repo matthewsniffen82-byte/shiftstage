@@ -46,7 +46,7 @@ function navigation(props, { referrer = '', historyLength = 1 } = {}) {
   return { assigned, timers, listeners, button, backs };
 }
 
-test('profiles opened from each VIP venue return to that venue planner without referrer or history', async () => {
+test('VIP cards use the homepage profile path and legacy full-page returns still reach the selected venue', async () => {
   const Planner = compileVip('app/vip/VipPlan.tsx', {
     react: { useState: initial => [initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} },
     '@/src/lib/dancr/vip-types': types, '@/src/lib/dancr/vip-dashboard': dashboard,
@@ -55,9 +55,9 @@ test('profiles opened from each VIP venue return to that venue planner without r
     const tree = Planner({ venue, dancers: [{ ...dancers[0], profileHref: '/dancers/aria' }],
       draft: dashboard.emptyVipDraft(), onChange() {}, onSubmit() {}, onFollow() {}, followPending: [], busy: false });
     const link = nodes(tree).find(node => node.type === 'a');
-    assert.equal(link.props.target, '_blank');
-    assert.match(link.props.rel, /noreferrer/);
-    const requestedReturn = new URL(link.props.href, origin).searchParams.get('return_to');
+    assert.equal(link.props.target, undefined);
+    assert.equal(link.props.href, '/?profile=aria');
+    const requestedReturn = `/vip?venueId=${venue.id}#vip-plan`;
     const result = navigation(await closeProps(requestedReturn));
     assert.deepEqual(result.assigned, [`${origin}/vip?venueId=${venue.id}#vip-plan`]);
     assert.equal(result.backs, 0);

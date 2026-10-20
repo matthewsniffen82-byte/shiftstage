@@ -80,7 +80,8 @@ test('profile Request adds to the existing Quick Add queue and preserves visit d
   const workspace = draftStorage.readVipWorkspace(storage, guest.id);
   assert.deepEqual(workspace.drafts['venue-2'], { selected: ['dancer-2', 'dancer-1'], date: '2026-12-05', time: '21:30' });
   assert.deepEqual(workspace.drafts['venue-1'], otherClub);
-  assert.deepEqual(h.navigations, ['/vip?venueId=venue-2#vip-plan']);
+  assert.deepEqual(h.navigations, [], 'stay on the profile until the guest uses Back');
+  assert.equal(h.nodes().some(node => node.props?.children === 'Added to request queue'), true);
   assert.equal(h.calls.length, 1);
   assert.equal(h.calls[0].options.method, undefined, 'the profile never submits a separate request');
   assert.equal(h.nodes().some(node => ['dialog', 'form', 'input'].includes(node.type)), false);
@@ -96,8 +97,8 @@ test('adding from multiple profiles reads the latest queue and never duplicates 
   second.trigger().props.onClick();
   first.trigger().props.onClick();
   assert.deepEqual(draftStorage.readVipWorkspace(storage, guest.id).drafts['venue-2'].selected, ['dancer-2', 'dancer-1']);
-  assert.equal(first.navigations.length, 1);
-  assert.equal(second.navigations.length, 1);
+  assert.equal(first.navigations.length, 0);
+  assert.equal(second.navigations.length, 0);
 });
 
 test('a full queue is preserved, with a link back to change it', async () => {

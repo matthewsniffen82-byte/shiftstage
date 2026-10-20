@@ -309,13 +309,12 @@ test('profile links, selection checkboxes, and following buttons are independent
   const checkbox = nodes(card).find(node => node.props?.type === 'checkbox');
   const following = nodes(card).find(node => node.type === 'button');
   const profileUrl = new URL(link.props.href, 'https://mydancr.test');
-  assert.equal(profileUrl.pathname, '/dancers/dancer-1');
-  assert.equal(profileUrl.searchParams.get('return_to'), '/vip?venueId=venue-1#vip-plan');
-  assert.equal(link.props.target, '_blank');
-  assert.match(link.props.rel, /noopener/);
+  assert.equal(profileUrl.pathname, '/');
+  assert.equal(profileUrl.searchParams.get('profile'), 'dancer-1');
+  assert.equal(link.props.target, undefined);
   assert.ok(nodes(link).some(node => node.props?.children === 'Open profile'));
   assert.equal(nodes(link).some(node => node.type === 'button' || node.type === 'input'), false);
-  assert.equal(card.props.onClick, undefined); assert.equal(link.props.onClick, undefined);
+  assert.equal(card.props.onClick, undefined); assert.equal(typeof link.props.onClick, 'function');
   await following.props.onClick(); assert.deepEqual(follows, ['dancer-1']); assert.equal(draft.selected.length, 0);
   checkbox.props.onChange({ target: { checked: true } }); assert.deepEqual(Array.from(draft.selected), ['dancer-1']);
   assert.equal(follows.length, 1);

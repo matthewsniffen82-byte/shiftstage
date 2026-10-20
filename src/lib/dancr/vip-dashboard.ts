@@ -10,6 +10,12 @@ export type VipDraft = { selected: string[]; date: string; time: string };
 export type VipDancerFilter = "all" | "working" | "selected" | "previous" | "following";
 export const emptyVipDraft = (): VipDraft => ({ selected: [], date: "", time: "" });
 
+export function vipProfileSlug(dancer: VipDancer): string {
+  const match = dancer.profileHref?.match(/^\/dancers\/([^/?#]+)$/);
+  if (!match) return "";
+  try { return decodeURIComponent(match[1]); } catch { return ""; }
+}
+
 export function isVipFollowing(dancer: VipDancer): boolean {
   return dancer.following === true;
 }
