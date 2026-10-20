@@ -114,7 +114,7 @@
       const working = Date.parse(source.workingUntil || "") > Date.now();
       internalRosterProfile = {
         ...external, ...previous, id: source.id, slug: source.slug || external?.slug || "", name: source.stage_name, city,
-        internalRoster: true, status: "Verified", photoStatus: "Approved",
+        internalRoster: true, internalGuestProfile: Boolean(token), status: "Verified", photoStatus: "Approved",
         ...internalProfileActivity,
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,

@@ -43348,7 +43348,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const working = Date.parse(source.workingUntil || "") > Date.now();
       internalRosterProfile = {
         ...external, ...previous, id: source.id, slug: source.slug || external?.slug || "", name: source.stage_name, city,
-        internalRoster: true, status: "Verified", photoStatus: "Approved",
+        internalRoster: true, internalGuestProfile: Boolean(token), status: "Verified", photoStatus: "Approved",
         ...internalProfileActivity,
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,
@@ -55601,7 +55601,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const profile = findProfile(profileReference, { includePending: isPrivatePreview });
       if (!profile) return;
       const internal = profile.internalRoster === true;
-      profileModal.dataset.venueBrand = profile.venueSlug || "";
+      // Dashboard previews retain the club identity but use MyDancr's palette.
+      // Only guest Internal profiles inherit the club theme, including media overlays.
+      profileModal.dataset.venueBrand = internal && !profile.internalGuestProfile ? "" : profile.venueSlug || "";
       profileModal.dataset.analyticsDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.dataset.publicDancerId = isPrivatePreview || internal ? "" : String(profile.id || "");
       profileModal.removeAttribute("data-public-visibility-hidden");

@@ -4,6 +4,8 @@ import test from 'node:test';
 import vm from 'node:vm';
 
 const source = readFileSync(new URL('../src/live-shell/app/internal-profile-bridge.js', import.meta.url), 'utf8');
+const modalSource = readFileSync(new URL('../src/live-shell/app/13-open-profile-modal.js', import.meta.url), 'utf8');
+const modalIdentity = modalSource.slice(modalSource.indexOf('    function openProfileModal('), modalSource.indexOf('      profileModal.removeAttribute(')) + '\n}';
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
 
 test('Internal initializes its viewer without loading the public directory',()=>{
@@ -47,11 +49,21 @@ function fixture({ external = true, staff = false, mediaFailure = false, generic
   const event = (overrides = {}) => ({ origin: 'https://example.invalid', source: parent, data: { type: 'mydancr:internal-profile-open', profile, token: staff ? '' : id(9), request: staff ? undefined : { tableLabel: 'Table 1', busy: false, message: '' } }, ...overrides });
   return { context, body: context.document.body, bridge: context.bridge, event, opens, messages, fetches, market, publicProfile, recover: () => { mediaFailure = false; } };
 }
-test('table colors stay inside the guest frame, reset cleanly and never style staff profiles', async () => {
+test('full staff profiles keep MyDancr colors while guest profiles retain Rhino and custom club themes', async () => {
   for (const staff of [true, false]) {
     const f = fixture({ staff });
-    const event = f.event(); event.data.profile = { ...profile, internalAccent: '#c99842' };
+    const event = f.event(); event.data.profile = { ...profile, venueSlug: 'talk-of-the-town', internalAccent: '#c99842' };
     await f.bridge.openInternalProfileMessage(event);
+    const viewed = f.bridge.profile();
+    const modal = { dataset: { venueBrand: 'talk-of-the-town' } };
+    vm.runInNewContext(modalIdentity + '\nopenProfileModal("selected");', {
+      citySelect: { value: profile.city }, findProfile: () => viewed, profileModal: modal,
+    });
+    assert.equal(modal.dataset.venueBrand, staff ? '' : 'talk-of-the-town');
+    assert.equal(viewed.venueSlug, 'talk-of-the-town', 'Changing colors must preserve the actual club identity');
+    assert.equal(viewed.submittedPhotos.length, profile.photos.length);
+    assert.equal(viewed.internalVideos.length, profile.videos.length);
+    assert.equal(viewed.socials.instagram, profile.socialLinks[0].url);
     assert.equal(f.body.dataset.venueGuestColor, staff ? undefined : 'custom');
     assert.equal(f.body.style.values['--venue-guest-accent'], staff ? undefined : '#c99842');
     if (!staff) assert.equal(f.body.style.values['--venue-guest-on-accent'], '#050507');
