@@ -19,7 +19,7 @@ body .ir-shell.ir-guest {
 body .ir-guest .ir-header {
   margin-bottom: 6px;
   padding: 8px 12px;
-  border: 1px solid rgba(167, 139, 250, .4);
+  border: 1px solid var(--venue-brand-accent, rgba(167, 139, 250, .4));
   border-radius: 14px;
   background: #08080b;
 }
