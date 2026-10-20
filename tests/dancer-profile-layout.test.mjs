@@ -3,6 +3,29 @@ import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
 import postcss from "postcss";
 
+test("grouped profile details stay in the left grid column while photos and media keep their columns", async () => {
+  const [layout, shell] = await Promise.all([
+    readFile(new URL("../public/dancer-profile-layout.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/live-shell/shell.html", import.meta.url), "utf8"),
+  ]);
+  assert.match(shell, /<div class="profile-details-column">\s*<div class="profile-modal-summary">/);
+  assert.match(shell, /<div class="modal-body" id="modalBody"><\/div>\s*<\/div>\s*<section class="profile-modal-media"/);
+  const rules = [];
+  postcss.parse(layout).walkRules(rule => rules.push(rule));
+  const value = (rule, property) => rule?.nodes.find(node => node.prop === property);
+  const grouped = rules.find(rule => rule.selector.endsWith("> .profile-details-column > :is(.profile-modal-summary, .modal-body)"));
+  assert.ok(grouped, "display:contents children need placement on the children themselves");
+  assert.equal(value(grouped, "grid-column")?.value, "1");
+  assert.equal(value(grouped, "grid-column")?.important, true);
+  assert.equal(value(grouped, "min-width")?.value, "0");
+  const photo = rules.find(rule => rule.selector.endsWith("> .profile-featured-column") && value(rule, "grid-column"));
+  assert.equal(value(photo, "grid-column")?.value, "2");
+  const media = rules.find(rule => rule.selector.endsWith(":is(.profile-modal-media, .profile-media-section)") && value(rule, "grid-column"));
+  assert.equal(value(media, "grid-column")?.value, "1 / -1");
+  const curve = rules.find(rule => rule.selectors.some(selector => selector.endsWith("> .profile-details-column > .profile-modal-summary")));
+  assert.equal(value(curve, "border-top-left-radius")?.value, "var(--profile-frame-radius)");
+});
+
 const [
   liveApp,
   profilePage,

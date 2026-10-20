@@ -19,6 +19,12 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > :not(.profile-featured-column) { grid-column: 1 !important; min-width: 0 !important; }
 /* Internal can group the details without changing the public profile's grid. */
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout > .profile-details-column { display: contents; }
+/* display:contents promotes these children to grid items. They need their own
+   column placement; the wrapper's grid-column does not carry through to them. */
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout > .profile-details-column > :is(.profile-modal-summary, .modal-body) {
+  grid-column: 1 !important;
+  min-width: 0 !important;
+}
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout > .profile-featured-column {
   grid-column: 2 !important;
   grid-row: 1 / 4 !important;
@@ -598,7 +604,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   box-shadow: none !important;
 }
 /* The header's backdrop must follow the information frame's upper-left curve. */
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > :is(.profile-modal-summary, .profile-titlebar) {
+html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) > :is(.profile-modal-summary, .profile-titlebar),
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell) > .profile-details-column > .profile-modal-summary {
   border-top-left-radius: var(--profile-frame-radius) !important;
 }
 /* Match the notification panel's plum surface beneath the profile information. */
