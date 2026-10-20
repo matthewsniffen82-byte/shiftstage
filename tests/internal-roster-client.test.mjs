@@ -503,7 +503,11 @@ test("a guest hard reload shows loading progress until the real venue and table 
   assert.equal(find(loaded, node => node.type?.name === "VenueBrandLogo").props.name, roster.venueName);
   const header = find(loaded, node => node.type === "header");
   assert.equal(find(header, node => node.type === "p").props.children, "Table 1");
-  assert.equal(find(header, node => node.type === "a").props.className, "ir-brand");
+  const credit = find(header, node => node.props?.className === "ir-brand");
+  assert.equal(textContent(credit), "Powered by mydancr.com");
+  assert.equal(credit.props.href, "https://www.mydancr.com");
+  assert.equal(credit.props.target, "_blank");
+  assert.equal(credit.props.rel, "noopener noreferrer");
   assert.ok(grid(app));
   assert.ok(refreshButton(app));
 });
