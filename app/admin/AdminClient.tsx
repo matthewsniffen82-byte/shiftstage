@@ -4,6 +4,7 @@ import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
+import EmailNotificationGuidance from "@/app/components/EmailNotificationGuidance";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { BROWSER_AUTH_SESSION_KEY, captureBrowserAuthSessionGuard, readBrowserAuthSession } from "@/src/lib/dancr/browser-session";
 import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
@@ -807,6 +808,7 @@ export default function AdminClient() {
         </form>
       ) : (
         <>
+          <EmailNotificationGuidance />
           {dashboardWarnings.length ? (
             <aside className="admin-warning" role="status" aria-live="polite">
               <div>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
+import EmailNotificationGuidance from "@/app/components/EmailNotificationGuidance";
 import { PasswordField } from "@/app/components/PasswordField";
 import DancerAgreementLink from "@/app/components/DancerAgreementLink";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
@@ -493,6 +494,7 @@ export default function DashboardClient({
         </div>
         <div className="dashboard-identity-copy"><span className="dashboard-identity-label">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
       </section>
+      <EmailNotificationGuidance />
       <article className="info-panel">
         <h2>{state.venueRequest.status === "rejected" ? "Request not approved" : "Waiting for approval"}</h2>
         <p>{state.venueRequest.status === "rejected" ? "Your club request was reviewed and was not approved. Contact support if you need help with the decision." : "Your manager login is saved. We’ll email you when your club is approved. Your dashboard will unlock with this same account—no new password or access code needed."}</p>
@@ -548,6 +550,8 @@ export default function DashboardClient({
           </div>
         ) : null}
       </section>
+
+      {state.account?.id && !state.signInRequired ? <EmailNotificationGuidance /> : null}
 
       {isLoading && !state.error && role !== "customer" ? (
         <DashboardLoadingState role={role} />

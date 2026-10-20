@@ -56,12 +56,12 @@ test("customer, dancer, and venue use the same routed dashboard client", () => {
   assert.match(dancerRoute, /<DashboardClient role="dancer"/);
   assert.match(venueRoute, /<DashboardClient role="venue"/);
   assert.doesNotMatch(dancerRoute, /redirect\(/);
-  assert.match(dashboard, /<main className=\{`dashboard-shell dashboard-shell-\$\{role\}`\}>/);
+  assert.match(dashboard, /<main className=\{`dashboard-shell dashboard-shell-\$\{role\}`\} id=/);
   assert.match(dashboard, /<DashboardLoadingState role=\{role\} \/>/);
 });
 
 test("every role keeps its real tools on one page inside shared collapsible sections", () => {
-  assert.match(dashboard, /function DashboardSection[\s\S]*?<details className=\{`dashboard-section venue-dashboard-section dashboard-section-\$\{emphasis\}`\}/);
+  assert.match(dashboard, /function DashboardSection[\s\S]*?<details name=\{accordionGroup\} className=\{`dashboard-section venue-dashboard-section dashboard-section-\$\{emphasis\}`\}/);
   for (const id of [
     "customer-followed-dancers",
     "customer-followed-clubs",
@@ -70,7 +70,6 @@ test("every role keeps its real tools on one page inside shared collapsible sect
     "customer-alerts",
     "customer-account",
     "dancer-overview",
-    "dancer-profile-media",
     "dancer-schedule",
     "dancer-performance",
     "dancer-account",
@@ -78,6 +77,7 @@ test("every role keeps its real tools on one page inside shared collapsible sect
   ]) {
     assert.match(dashboard, new RegExp(`id="${id}"`));
   }
+  assert.match(dashboard, /<DancerProfileWorkspace/);
   assert.match(dashboard, /function openDashboardSection[\s\S]*?section instanceof HTMLDetailsElement[\s\S]*?section\.open = true/);
 });
 
@@ -504,7 +504,7 @@ test("venue Club Deal requests prevent duplicate and stale submissions", () => {
   assert.match(dealRequests, /signal: controller\.signal/);
   assert.match(dealRequests, /if \(!mountedRef\.current \|\| controller\.signal\.aborted \|\| requestId !== requestSequenceRef\.current\) return;/);
   assert.match(dealRequests, /mountedRef\.current = false;[\s\S]*?requestSequenceRef\.current \+= 1;[\s\S]*?requestAbortRef\.current\?\.abort\(\)/);
-  assert.equal((dealRequests.match(/disabled=\{isRequesting\}/g) || []).length, 4);
+  assert.equal((dealRequests.match(/disabled=\{isRequesting\}/g) || []).length, 6);
 });
 
 test("dashboard sign-in recovery prevents duplicate and stale session replacement", () => {
@@ -662,7 +662,7 @@ test("the retired dancer payout panel exposes no money actions", () => {
   assert.doesNotMatch(dashboard, /function DancerPayoutPanel|action: "request_nats_link"/);
 });
 
-test("dancer and venue statements refresh their role-aware sessions before downloading", async () => {
+test("statement request helpers retain role-aware sessions without restoring retired dashboard finance tools", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;
   const previousFetch = globalThis.fetch;
@@ -766,17 +766,11 @@ test("dancer and venue statements refresh their role-aware sessions before downl
 
   assert.match(dashboardSession, /function requestDancerFinanceStatement/);
   assert.match(dashboardSession, /function requestVenueFinanceStatement/);
-  assert.match(dashboard, /requestVenueFinanceStatement/);
+  assert.doesNotMatch(dashboard, /requestVenueFinanceStatement|function VenueFinanceSummary/);
   assert.doesNotMatch(dashboard, /function downloadDashboardFile|fetch\(path, \{ headers: \{ authorization/);
 
-  const venueFinance = dashboard.match(/function VenueFinanceSummary[\s\S]*?(?=\nfunction CustomerPreferencesPanel)/)?.[0] || "";
   assert.match(dashboardSession, /signal\?: AbortSignal/);
   assert.match(dashboardSession, /const signalOptions = options\.signal \? \{ signal: options\.signal \} : \{\}/);
-  assert.match(venueFinance, /const downloadInFlightRef = useRef\(false\);/);
-  assert.match(venueFinance, /if \(!mountedRef\.current \|\| downloadInFlightRef\.current\) return null;/);
-  assert.match(venueFinance, /requestVenueFinanceStatement\(currentMonth, \{ signal: controller\.signal \}\)/);
-  assert.match(venueFinance, /disabled=\{isDownloading\}/);
-  assert.match(venueFinance, /mountedRef\.current = false;[\s\S]*?downloadSequenceRef\.current \+= 1;[\s\S]*?downloadAbortRef\.current\?\.abort\(\)/);
 });
 
 test("dancer and venue affiliation actions share role-aware refresh boundaries", async () => {
@@ -1074,7 +1068,7 @@ test("customer preference saves use the refresh-aware customer boundary", async 
   assert.match(preferencesPanel, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
 });
 
-test("dancer avatar uploads and removals use the refresh-aware dancer boundary", async () => {
+test("avatar request helpers and the main-photo crop editor use the refresh-aware dancer boundary", async () => {
   const stored = new Map();
   const previousWindow = globalThis.window;
   const previousFetch = globalThis.fetch;
@@ -1158,7 +1152,8 @@ test("dancer avatar uploads and removals use the refresh-aware dancer boundary",
 
   const avatarPanel = dashboard.match(/function DancerAvatarPanel[\s\S]*?function DancerShiftPanel/)?.[0] || "";
   assert.match(dashboardSession, /function requestDancerAvatarJson/);
-  assert.match(avatarPanel, /requestDancerAvatarJson/);
+  assert.match(avatarPanel, /requestDashboardJson\("\/api\/dancer\/avatar\/crop", \{[\s\S]*?expectedRole: "dancer"/);
+  assert.match(avatarPanel, /requestDancerProfileJson\(\{ cache: "no-store", signal: controller\.signal \}\)/);
   assert.doesNotMatch(avatarPanel, /fetch\("\/api\/dancer\/avatar"/);
   assert.doesNotMatch(avatarPanel, /authorization: `Bearer/);
 });
@@ -1199,12 +1194,11 @@ test("dancer gallery photo uploads and deletions preserve refresh and moderation
       refreshToken: "dancer-refresh",
       account: { role: "dancer" },
     }));
-    const photoForm = new FormData();
-    photoForm.set("idempotencyKey", "photo-upload-key");
+    const photoReceipt = JSON.stringify({ uploadId: "reserved-photo-upload" });
     const uploaded = await requestDancerPhotosJson({
       method: "POST",
-      headers: { "idempotency-key": "photo-upload-key" },
-      body: photoForm,
+      headers: { "content-type": "application/json" },
+      body: photoReceipt,
     });
     assert.equal(uploaded.decision, "pending");
     await requestDancerPhotosJson({
@@ -1219,11 +1213,11 @@ test("dancer gallery photo uploads and deletions preserve refresh and moderation
         options: {
           method: "POST",
           headers: {
-            "idempotency-key": "photo-upload-key",
+            "content-type": "application/json",
             authorization: "Bearer dancer-access",
             "x-dancr-refresh-token": "dancer-refresh",
           },
-          body: photoForm,
+          body: photoReceipt,
         },
       },
       {
@@ -1248,7 +1242,7 @@ test("dancer gallery photo uploads and deletions preserve refresh and moderation
       status: 422,
       headers: { "content-type": "application/json" },
     });
-    const rejected = await requestDancerPhotosJson({ method: "POST", body: photoForm });
+    const rejected = await requestDancerPhotosJson({ method: "POST", headers: { "content-type": "application/json" }, body: photoReceipt });
     assert.equal(rejected.decision, "rejected");
   } finally {
     globalThis.fetch = previousFetch;
@@ -1260,7 +1254,7 @@ test("dancer gallery photo uploads and deletions preserve refresh and moderation
   assert.match(photoPanel, /requestDancerPhotosJson/);
   assert.doesNotMatch(photoPanel, /fetch\("\/api\/dancer\/photos"/);
   assert.doesNotMatch(photoPanel, /authorization: `Bearer/);
-  assert.match(dancerPhotoRoute, /const \{ client, user, session \} = await createRequestSupabaseContext\(request, \{ role: "dancer" \}\)/);
+  assert.match(dancerPhotoRoute, /const \{ client, user, session \} = await createRequestSupabaseContext\(request, \{ role: "dancer", allowProfileSetup: true \}\)/);
   assert.match(dancerPhotoRoute, /result, session \}, \{ status \}/);
   assert.match(dancerPhotoRoute, /\{ ok: true, photo, session \}/);
 });
@@ -1493,7 +1487,7 @@ test("venue live refresh uses the current role-aware session and preserves the l
   assert.match(venueRefresh, /venueRefreshRequestRef\.current = requestId;/);
   assert.match(venueRefresh, /signal: controller\.signal/);
   assert.match(venueRefresh, /if \(!isCurrentRequest\(\)\) return;[\s\S]*?setState/);
-  assert.match(venueRefresh, /if \(isCurrentRequest\(\) && showStatus\)/);
+  assert.match(venueRefresh, /catch \(error\) \{\s*if \(isCurrentRequest\(\)\) \{\s*setVenueRefreshStatus/);
   assert.doesNotMatch(venueRefresh, /dashboardAuthHeaders|readOptionalJson/);
   assert.match(venueRefresh, /try \{[\s\S]*?await requestVenueDashboardJson[\s\S]*?setState[\s\S]*?\} catch \(error\)/);
 
