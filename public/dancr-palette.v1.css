@@ -348,7 +348,7 @@
     .admin-preview-close, .club-deal-dialog-close, .club-deal-share-actions button,
     .customer-favorite-club-actions > a,
     .page-panel :is(.ghost, .action-btn.secondary, .view-all, .legal-link),
-    .auth-help-row .forgot-password-link, .venue-auth-tab, .tab:not(.active),
+    .auth-help-row .forgot-password-link, .venue-auth-tab, .tab:not(.active):not(#discoveryTabs > *),
     .utility-menu-dashboard
   ):not(:where(:disabled, [aria-disabled="true"], [aria-pressed="true"], .is-confirmed, .is-sent, [data-action-state="success"])) {
     background: var(--dancr-color-surface) !important;
@@ -413,7 +413,7 @@
     .venue-team-mode button.active, .segmented button.active, .admin-dancer-tabs button.active,
     .earnings-history-tabs button.active, .earnings-filters button.active,
     .venue-deal-list > button.selected, .club-deal-offer-picker button.active,
-    .club-deal-hub-offer.is-selected, .venue-auth-tab.active, .tab.active
+    .club-deal-hub-offer.is-selected, .venue-auth-tab.active, .tab.active:not(#discoveryTabs > *)
   ):not(:disabled):not([aria-disabled="true"]) {
     --venue-control-face: var(--dancr-color-brand-primary) !important;
     --venue-control-edge: var(--dancr-color-brand-primary) !important;
@@ -682,70 +682,9 @@
     color: var(--dancr-color-text-muted) !important;
     stroke: currentColor !important;
   }
+  /* The floating dock keeps its component-owned glass, light icons and violet halo. */
   html body.dancr-button-system
-    :where(.global-mobile-bottom-nav, #discoveryTabs) {
-    background: var(--dancr-color-surface) !important;
-    border-color: var(--dancr-color-border) !important;
-    box-shadow: none !important;
-  }
-  html body.dancr-button-system
-    :where(.global-mobile-bottom-nav a, #discoveryTabs > button) {
-    --mobile-nav-accent: var(--dancr-color-text-muted) !important;
-    --mobile-nav-accent-soft: var(--dancr-color-text-muted) !important;
-    --mobile-nav-active: var(--dancr-color-brand-primary) !important;
-    --home-nav-accent: var(--dancr-color-text-muted) !important;
-    --home-nav-accent-soft: var(--dancr-color-text-muted) !important;
-    --home-nav-active: var(--dancr-color-brand-primary) !important;
-    background: var(--dancr-color-surface) !important;
-    border-color: var(--dancr-color-border) !important;
-    color: var(--dancr-color-text-muted) !important;
-    box-shadow: none !important;
-    filter: none !important;
-    text-shadow: none !important;
-  }
-  html body.dancr-button-system
-    :where(.global-mobile-bottom-nav a.active, #discoveryTabs > button.active) {
-    --home-nav-accent: var(--dancr-color-brand-primary) !important;
-    --home-nav-accent-soft: var(--dancr-color-brand-primary) !important;
-    --mobile-nav-accent: var(--dancr-color-brand-primary) !important;
-    --mobile-nav-accent-soft: var(--dancr-color-brand-primary) !important;
-    background: var(--dancr-color-surface) !important;
-    border-color: transparent !important;
-    color: var(--dancr-color-text-primary) !important;
-  }
-  html body.dancr-button-system :where(.global-mobile-bottom-nav, #discoveryTabs)
-    :where(.global-mobile-nav-icon, .home-nav-icon, .home-bottom-tv-icon, svg) {
-    color: inherit !important;
-    filter: none !important;
-  }
-  html body.dancr-button-system
-    :where(.global-mobile-bottom-nav a.active svg, #discoveryTabs > button.active svg) {
-    color: var(--dancr-color-brand-primary) !important;
-    filter: none !important;
-  }
-  html body.dancr-button-system
-    :where(.mobile-nav-selection-halo, .home-nav-selection-halo) {
-    background: transparent !important;
-    box-shadow: none !important;
-    filter: none !important;
-  }
-  html body.dancr-button-system
-    :where(.mobile-nav-selection-halo, .home-nav-selection-halo)::before {
-    background: transparent !important;
-    box-shadow: none !important;
-    filter: none !important;
-  }
-  html body.dancr-button-system :where(.global-mobile-swipe-indicator) {
-    background: var(--dancr-color-surface) !important;
-    border-color: var(--dancr-color-brand-primary) !important;
-    color: var(--dancr-color-text-primary) !important;
-    box-shadow: none !important;
-  }
-  html body.dancr-button-system :where(.global-mobile-swipe-indicator span) {
-    color: var(--dancr-color-brand-primary) !important;
-  }
-  html body.dancr-button-system
-    :where(button, a, input, select, textarea, summary):focus-visible {
+    :where(button, a, input, select, textarea, summary):focus-visible:not(:where(.global-mobile-bottom-nav *, #discoveryTabs *)) {
     outline-color: var(--dancr-color-brand-primary) !important;
   }
 }

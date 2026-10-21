@@ -87,15 +87,21 @@ test('all dashboard selections and painted mobile control faces use the shared t
   }
 });
 
-test('Working Now keeps its green face while navigation uses one violet and the account shortcut stays charcoal', () => {
+test('Working Now keeps its green face, the floating dock keeps its own paint, and the account shortcut stays charcoal', () => {
   const working = rules.find(rule => rule.selector.includes('.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]'));
   assert.ok(working.selector.includes(':not(.is-empty)'));
   assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-face' && decl.value === 'var(--dancr-color-live-surface-emphasis)'));
   const face = rules.find(rule => rule.selector === 'html body.dancr-button-system :where(.dancer-directory-filter)::before');
   assert.ok(face.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--discovery-control-face)'));
-  const dock = rules.find(rule => rule.selector.includes('.global-mobile-bottom-nav a.active, #discoveryTabs > button.active'));
-  assert.ok(dock.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-color-surface)'));
-  assert.ok(dock.nodes.some(decl => decl.prop === '--mobile-nav-accent' && decl.value === 'var(--dancr-color-brand-primary)'));
+  // Broad tab and focus rules must also exclude the dock, so its original
+  // glass face, inactive silver icons, white active icon and halo can render.
+  const palette = read('public/dancr-palette.v1.css');
+  assert.ok(palette.includes('.tab:not(.active):not(#discoveryTabs > *)'));
+  assert.ok(palette.includes('.tab.active:not(#discoveryTabs > *)'));
+  const nonNavigationPalette = palette
+    .replaceAll(':not(#discoveryTabs > *)', '')
+    .replaceAll(':not(:where(.global-mobile-bottom-nav *, #discoveryTabs *))', '');
+  assert.doesNotMatch(nonNavigationPalette, /global-mobile-(?:bottom-nav|swipe-indicator)|#discoveryTabs|(?:mobile|home)-nav-/);
   const shortcut = rules.find(rule => rule.selector.includes('.utility-menu-dashboard'));
   assert.ok(shortcut.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-color-surface)'));
   assert.doesNotMatch(read('public/dancr-button-system.v1.css'), /#241337|#301a46|#6b4d89|#8b69ab/);
