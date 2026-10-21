@@ -547,10 +547,20 @@
 }
 
 /* The dashboard leads the utility menu; supporting actions remain readable text rows. */
+.dancr-button-system #moreMenuPanel {
+  box-sizing: border-box !important;
+  width: min(248px, calc(100vw - 32px)) !important;
+  gap: 4px !important;
+  padding: 8px !important;
+  border-radius: 18px !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
 .dancr-button-system .utility-menu-panel .utility-menu-item {
   box-sizing: border-box !important;
   min-height: 44px !important;
-  padding: 10px 12px;
+  padding: 10px 12px !important;
   border: 1px solid transparent !important;
   border-radius: 10px !important;
   color: var(--dancr-color-text-primary) !important;
@@ -560,10 +570,51 @@
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   font-family: var(--font-ui) !important;
-  font-weight: 600 !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  line-height: 20px !important;
   letter-spacing: 0 !important;
   transform: none !important;
   filter: none !important;
+}
+
+.dancr-button-system #moreMenuPanel .utility-menu-item:not([hidden]) {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  text-align: left !important;
+}
+
+.dancr-button-system #moreMenuPanel .utility-menu-icon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dancr-button-system #moreMenuPanel .utility-menu-support {
+  gap: 2px !important;
+  margin-top: 0 !important;
+  padding-top: 4px !important;
+  border-top: 0 !important;
+}
+
+.dancr-button-system #moreMenuPanel .utility-menu-section-label {
+  padding: 4px 12px !important;
+  font-size: 10px !important;
+  font-weight: 650 !important;
+  line-height: 12px !important;
+  letter-spacing: .08em !important;
+}
+
+.dancr-button-system #moreMenuPanel .utility-menu-session-end {
+  gap: 0 !important;
+  margin-top: 4px !important;
+  padding-top: 6px !important;
 }
 
 .dancr-button-system .utility-menu-panel #homeScreenInstallBtn {
@@ -589,14 +640,18 @@
 }
 
 .dancr-button-system .utility-menu-panel .utility-menu-dashboard {
+  min-height: 48px !important;
   border-color: var(--dancr-color-border) !important;
   color: var(--dancr-color-text-primary) !important;
   background: var(--dancr-color-surface) !important;
   box-shadow: none !important;
-  font-weight: 700 !important;
+  font-size: 15px !important;
+  font-weight: 650 !important;
 }
 
 .dancr-button-system .utility-menu-panel .utility-menu-dashboard::after {
+  flex: 0 0 auto;
+  margin-left: auto;
   color: #fff;
 }
 

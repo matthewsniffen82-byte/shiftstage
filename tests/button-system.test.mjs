@@ -91,14 +91,14 @@ test("venue-card Free Entry actions use the shared violet glow and retain availa
   );
 });
 
-test("public offers and Internal requests share the dancer profile's soft primary glow", () => {
+test("public offers and Internal requests share the dancer profile's primary shadow setting", () => {
   assert.match(
     liveSource,
     /home-tv-feed-deal-action is-available[\s\S]*?deal\.dataset\.clubDealCta = encodeDealPass/,
   );
   assert.match(
     brandTokens,
-    /--dancr-shadow-brand-control: 0 2px 8px rgba\(124, 58, 237, 0\.1\);/,
+    /--dancr-shadow-brand-control: none;/,
   );
   assert.match(
     dealCardSource,

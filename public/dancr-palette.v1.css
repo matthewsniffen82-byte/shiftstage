@@ -757,6 +757,27 @@
   html body.dancr-button-system :where(.utility-menu-section-label) {
     color: var(--dancr-color-text-muted) !important;
   }
+  /* Account dropdown: a dark card, one clear dashboard shortcut, and quiet
+     support rows. Keep this separate from notification-panel styling. */
+  html body.dancr-button-system :where(#moreMenuPanel) {
+    background: var(--dancr-color-surface-card) linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .45) !important;
+  }
+  html body.dancr-button-system :where(
+    #moreMenuPanel .utility-menu-dashboard,
+    #moreMenuPanel .utility-menu-item:hover,
+    #moreMenuPanel .utility-menu-item:active,
+    #moreMenuPanel .utility-menu-item:focus-visible
+  ) {
+    background: var(--dancr-control-secondary-background) !important;
+    border-color: transparent !important;
+  }
+  html body.dancr-button-system :where(#moreMenuPanel .utility-menu-icon) {
+    color: var(--dancr-color-text-muted) !important;
+  }
+  html body.dancr-button-system :where(#moreMenuPanel .utility-menu-session-end) {
+    border-color: rgba(170, 166, 181, .14) !important;
+  }
   html body.dancr-button-system
     :where(.profile-actions-compact :is(#followBtn, [data-follow-control="text"], .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going), .venue-action-stack :is(.venue-address-directions, .follow-venue-btn), .venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-detail-share):not(:where([aria-pressed="true"], .is-active, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"])) {
     --follow-control-face: var(--dancr-palette-control, var(--dancr-color-surface)) !important;
