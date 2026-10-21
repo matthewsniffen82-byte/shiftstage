@@ -446,7 +446,7 @@ function PublicProfileStyles() {
       .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width: 26px; height: 26px; }
       .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width: 27px; height: 27px; }
       .profile-action-icon-control:is(:hover, :focus-visible):not(:disabled) .profile-action-preview-icon { color: #fff; transform: translate(var(--profile-icon-offset-x), calc(var(--profile-icon-offset-y) - 1px)) scale(1.02); }
-      .profile-action-icon-control.profile-action-going:not(.profile-action-unavailable) .profile-action-preview-icon { color: #a78bfa; background: transparent; box-shadow: none; }
+      .profile-action-icon-control.profile-action-going:not(.profile-action-unavailable) .profile-action-preview-icon { color: var(--dancr-color-icon-accent); background: transparent; box-shadow: none; }
       .profile-action-icon-control:is(.is-selected, .is-going) .profile-action-preview-icon { color: #7cf0b4; background: transparent; box-shadow: none; }
       .live-actions > button.profile-action-icon-control.profile-action-unavailable:disabled { color: #766e7f; background: transparent; opacity: 1; }
       .profile-action-icon-control.profile-action-unavailable .profile-action-preview-icon { border: 0; color: #756d7d; background: transparent; box-shadow: none; }

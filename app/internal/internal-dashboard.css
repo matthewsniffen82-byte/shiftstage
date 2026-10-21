@@ -40,8 +40,8 @@ body .ir-staff .ir-table-tools { grid-column: 1 / -1; }
 body .ir-staff .ir-table-tools > summary { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; list-style: none; color: #f4f3f7; }
 body .ir-staff .ir-table-tools > summary::-webkit-details-marker { display: none; }
 body .ir-staff .ir-table-tools > summary h2 { display: flex; flex: 1; align-items: center; gap: 9px; min-width: 0; margin: 0; font-size: 17px; letter-spacing: 0; }
-body .ir-staff .ir-table-tools > summary h2 svg { flex: 0 0 21px; color: #b697ed; }
-body .ir-staff .ir-table-tools > summary::after { content: "+"; flex: none; color: #b697ed; font-size: 22px; }
+body .ir-staff .ir-table-tools > summary h2 svg { flex: 0 0 21px; color: var(--dancr-color-icon-accent); }
+body .ir-staff .ir-table-tools > summary::after { content: "+"; flex: none; color: var(--dancr-color-icon-accent); font-size: 22px; }
 body .ir-staff .ir-table-tools[open] > summary::after { content: "\2212"; }
 body .ir-staff .ir-table-tools > summary:hover { color: #d8cafa; }
 body .ir-staff :is(.ir-request, .ir-link) { gap: 8px; padding: 10px 0; border-color: #34343c; }

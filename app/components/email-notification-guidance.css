@@ -26,7 +26,7 @@ body.dancr-button-system .email-guidance-heading > svg {
   flex: 0 0 18px;
   width: 18px;
   height: 18px;
-  color: #c2a4ed;
+  color: var(--dancr-color-icon-accent);
 }
 body.dancr-button-system .email-notification-guidance h2 {
   margin: 0;

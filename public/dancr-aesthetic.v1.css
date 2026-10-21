@@ -13370,7 +13370,7 @@ body.dancr-button-system .home-tv-feed-slide:has(.home-tv-feed-scrubber:focus-vi
 
 body.dancr-button-system .dashboard-shell .venue-dashboard-section[data-section-icon] .dancer-dashboard-section-icon {
   border-color: var(--dancr-color-brand-primary-medium);
-  color: #c4b5fd;
+  color: var(--dancr-color-icon-accent);
   background: var(--dancr-color-brand-primary-soft);
 }
 
@@ -14298,7 +14298,7 @@ html body.dancr-button-system #customerNotificationsQuickPanel .customer-notific
   flex: 0 0 20px;
   width: 20px !important;
   height: 20px !important;
-  color: #b99af0 !important;
+  color: var(--dancr-color-icon-accent) !important;
 }
 html body.dancr-button-system #customerNotificationsQuickPanel .customer-notification-title > .action-icon svg {
   width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;

@@ -1164,7 +1164,7 @@ function TvStyles() {
       .tv-card-venue-line { width: fit-content; min-width: 0; max-width: 100%; display: flex; align-items: center; gap: 5px; color: #bdb4cc; font-size: 13px; font-weight: 760; line-height: 1.15; text-decoration: none; text-shadow: 0 2px 10px rgba(0,0,0,.7); }
       .tv-card-stage-link:focus-visible, .tv-card-venue-line:focus-visible { outline: 2px solid #67e8f9; outline-offset: 3px; border-radius: 4px; }
       .tv-card-venue-line svg, .tv-schedule-row svg, .tv-no-shifts-state svg { width: 15px; height: 15px; flex: 0 0 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-      .tv-card-venue-line svg { color: #a78bfa; }
+      .tv-card-venue-line svg { color: var(--dancr-color-icon-accent-small); }
       .tv-card-venue-name { min-width: 0; overflow: hidden; color: #e7d8ff; font-weight: 860; text-overflow: ellipsis; white-space: nowrap; text-shadow: 0 0 12px rgba(168,85,247,.2), 0 2px 10px rgba(0,0,0,.72); }
       .tv-schedule-row, .tv-no-shifts-state { min-width: 0; margin-top: 5px; display: grid; grid-template-columns: 15px minmax(0, 1fr); align-items: center; column-gap: 7px; }
       .tv-schedule-row.is-tonight svg, .tv-card-schedule-text.tonight { color: #86efac; }

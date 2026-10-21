@@ -91,7 +91,7 @@
   flex: 0 0 36px;
   height: 36px;
   border-radius: 10px;
-  color: #c4b5fd;
+  color: var(--dancr-color-icon-accent);
   background: var(--dancr-color-brand-primary-soft, rgba(124, 58, 237, .14));
 }
 

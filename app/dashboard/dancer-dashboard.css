@@ -33,12 +33,12 @@ body .dashboard-shell.dashboard-shell-dancer > .dancer-dashboard-grid { grid-tem
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] { border: 1px solid var(--dancer-workspace-line); border-radius: 18px; background: linear-gradient(115deg, #16131c, #100f15); box-shadow: inset 0 1px 0 #ffffff04; }
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] > summary { min-height: 88px; display: grid; grid-template-columns: 40px minmax(0, 1fr) 20px; align-items: center; gap: 0 13px; padding: 17px 18px; }
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] > summary:hover { background: #ffffff03; }
-.dancer-dashboard-section-icon { grid-column: 1; grid-row: 1 / span 2; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #c5a4f514; border-radius: 12px; color: #c5b4df; background: #b794e60c; }
+.dancer-dashboard-section-icon { grid-column: 1; grid-row: 1 / span 2; width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid #c5a4f514; border-radius: 12px; color: var(--dancr-color-icon-accent); background: #b794e60c; }
 .dancer-dashboard-section-icon svg { width: 21px; height: 21px; fill: none; stroke: currentColor; }
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] .venue-dashboard-section-copy { grid-column: 2; grid-row: 1; gap: 5px; }
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] .venue-dashboard-section-copy > strong { color: var(--dancer-workspace-text); font-family: Inter, ui-sans-serif, system-ui, sans-serif; font-size: 17px; font-weight: 600; line-height: 1.3; letter-spacing: -.025em; }
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] .venue-dashboard-section-copy > span:last-child { color: var(--dancer-workspace-muted); font-size: 12px; font-weight: 400; line-height: 1.5; letter-spacing: 0; }
-body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] .venue-dashboard-section-toggle { grid-column: 3; grid-row: 1 / span 2; width: 20px; height: 20px; border: 0; border-radius: 0; color: #a99cb9; background: transparent; box-shadow: none; }
+body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] .venue-dashboard-section-toggle { grid-column: 3; grid-row: 1 / span 2; width: 20px; height: 20px; border: 0; border-radius: 0; color: var(--dancr-color-icon-accent); background: transparent; box-shadow: none; }
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] .venue-dashboard-section-toggle svg { width: 17px; height: 17px; stroke-width: 1.7; }
 body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-section-icon] .venue-dashboard-section-badge { grid-column: 2; grid-row: 2; justify-self: start; margin-top: 8px; padding: 3px 7px; border: 1px solid #d5b37a26; border-radius: 6px; color: #ddc492; background: #b98b370c; box-shadow: none; font-size: 10px; font-weight: 500; letter-spacing: 0; white-space: normal; }
 body .dashboard-shell.dashboard-shell-dancer #dancer-performance.venue-dashboard-section[data-section-icon] .venue-dashboard-section-badge { border-color: #d5b37a26; color: #ddc492; background: #b98b370c; box-shadow: none; }
@@ -50,7 +50,7 @@ body .dashboard-shell.dashboard-shell-dancer .venue-dashboard-section[data-secti
 .dancer-profile-share-tools > summary { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px solid #ffffff26; border-radius: 14px; background: linear-gradient(135deg, #292330, #1b1822); color: #f7f4fc; font-size: 14px; font-weight: 650; cursor: pointer; list-style: none; box-shadow: inset 0 1px 0 #ffffff08; }
 .dancer-profile-share-tools > summary:hover { border-color: #b999df80; background: #302738; }
 .dancer-share-button-label { display: inline-flex; align-items: center; gap: 10px; }
-.dancer-share-button-label svg { width: 18px; height: 18px; color: #d1b8ed; flex: 0 0 auto; }
+.dancer-share-button-label svg { width: 18px; height: 18px; color: var(--dancr-color-icon-accent); flex: 0 0 auto; }
 .dancer-profile-share-tools[open] > .share-panel { margin-top: 12px; }
 .dancer-profile-share-tools > summary::-webkit-details-marker { display: none; }
 .dancer-profile-share-tools > summary::after { content: ""; width: 6px; height: 6px; margin-right: 5px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }

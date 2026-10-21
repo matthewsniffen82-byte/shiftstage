@@ -167,7 +167,7 @@ body.dancr-button-system .club-transport-card :is(input, textarea, button, a):fo
 }
 /* Shared form and icon primitives also support the ride-only fallback. */
 body:has(> .club-transport-page) { margin: 0; }
-.club-entry-icon { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; color: #b99aea; }
+.club-entry-icon { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; color: var(--dancr-color-icon-accent); }
 .club-entry-icon svg { display: block; width: 24px; height: 24px; }
 .club-entry-toggle-copy { flex: 1; min-width: 0; }
 .club-entry-brand { display: flex; align-items: center; gap: 12px; margin-top: 12px; }

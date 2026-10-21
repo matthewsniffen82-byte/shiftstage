@@ -79,7 +79,10 @@ body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-da
 }
 body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button:focus-visible { outline: 2px solid #c9a4f4 !important; outline-offset: -2px; }
 body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) svg {
-  width: var(--dashboard-nav-icon-size); height: var(--dashboard-nav-icon-size); flex: 0 0 var(--dashboard-nav-icon-size); color: #bc99eb; stroke-width: 1.6;
+  width: var(--dashboard-nav-icon-size); height: var(--dashboard-nav-icon-size); flex: 0 0 var(--dashboard-nav-icon-size); color: var(--dancr-color-icon-accent); stroke-width: 1.6;
+}
+body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button:is([aria-current="page"], [aria-selected="true"]) svg {
+  color: var(--dancr-color-icon-accent-active);
 }
 body.dancr-button-system main.dashboard-shell:is(#customer-dashboard, #dancer-dashboard, #venue-dashboard) nav[aria-label]:is(.customer-workspace-nav, .dancer-dashboard-nav, .venue-workspace-tabs) button > :is(span:not(.customer-nav-count), strong) {
   min-width: 0; color: inherit; font-size: inherit; font-weight: inherit; line-height: inherit; white-space: normal; overflow-wrap: normal;

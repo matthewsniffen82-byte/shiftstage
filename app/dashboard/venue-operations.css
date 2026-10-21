@@ -65,7 +65,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-actio
 .venue-dancer-activity { list-style: none; margin: 0; padding: 0; }
 .venue-dancer-activity li { border-bottom: 1px solid #2c2c34; }
 .venue-dancer-activity summary { display: flex; justify-content: space-between; gap: 12px; align-items: center; min-height: 44px; cursor: pointer; list-style: none; }
-.venue-dancer-activity summary::after { content: "+"; color: #bd9beb; }
+.venue-dancer-activity summary::after { content: "+"; color: var(--dancr-color-icon-accent); }
 .venue-dancer-activity details[open] summary::after { content: "−"; }
 .venue-dancer-activity summary span { margin-left: auto; color: #b3b5c2; font-size: 12px; }
 .venue-dancer-activity dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin: 0 0 10px; }

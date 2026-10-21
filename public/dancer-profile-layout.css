@@ -747,7 +747,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
   .profile-actions-compact :is(#followBtn, [data-follow-control="text"], #goingBtn, .profile-action-going, .profile-share-action, .profile-share-trigger):not(:disabled):not([aria-disabled="true"]):not([data-internal-table-request])
   .profile-action-main svg {
-  color: #c4a3f1 !important;
+  color: var(--dancr-color-icon-accent) !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
   .profile-actions-compact :is(#followBtn, [data-follow-control="text"], #goingBtn, .profile-action-going)[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]):not([data-internal-table-request])
@@ -756,7 +756,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
   :is(.profile-modal-city-icon, .profile-venue-pin, .profile-venue-destination svg, .profile-working-destination svg, .profile-upcoming-destination svg) {
-  color: #c4a3f1 !important;
+  color: var(--dancr-color-icon-accent-small) !important;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
   :is(.profile-modal-media-tabs, .profile-media-tabs) button .profile-media-tab-icon {
@@ -782,7 +782,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > summary {
-    color: #c4a3f1 !important;
+    color: var(--dancr-color-icon-accent) !important;
   }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > summary::before {

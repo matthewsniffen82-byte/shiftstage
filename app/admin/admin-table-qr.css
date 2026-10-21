@@ -1,6 +1,6 @@
 .admin-table-qr { margin-top: 12px; border-block: 1px solid #38353e; }
 .admin-table-qr > summary { display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer; color: #f7f5fa; }
-.admin-table-qr > summary::before { content: "+"; width: 16px; color: #bca1e8; text-align: center; }
+.admin-table-qr > summary::before { content: "+"; width: 16px; color: var(--dancr-color-icon-accent); text-align: center; }
 .admin-table-qr[open] > summary::before { content: "-"; }
 .admin-table-qr > summary span { margin-left: auto; color: #a5cabb; font-size: 12px; }
 .admin-table-qr-body { display: grid; gap: 12px; padding: 0 0 16px; }

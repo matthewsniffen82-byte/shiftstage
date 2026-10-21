@@ -838,7 +838,7 @@ export function DashboardStyles() {
       .venue-deal-editor > summary small, .venue-deal-performance > summary small { color: #94a3b8; font-size: 11px; }
       .venue-deal-editor > summary small { color: #c2bcd0; font-size: 12px; line-height: 1.25; }
       .venue-deal-editor > summary em { padding: 6px 9px; border: 1px solid rgba(196,181,253,.23); border-radius: 999px; color: #ddd6fe; background: rgba(139,92,246,.12); font-size: 11px; font-style: normal; font-weight: 900; white-space: nowrap; }
-      .venue-deal-editor > summary::after, .venue-deal-performance > summary::after { content: "+"; color: #c4b5fd; font-size: 22px; line-height: 1; }
+      .venue-deal-editor > summary::after, .venue-deal-performance > summary::after { content: "+"; color: var(--dancr-color-icon-accent); font-size: 22px; line-height: 1; }
       .venue-deal-editor > summary::after { width: 34px; height: 34px; flex: 0 0 34px; display: grid; place-items: center; border: 1px solid rgba(196,181,253,.45); border-radius: 999px; background: rgba(124,58,237,.26); box-shadow: 0 0 15px rgba(124,58,237,.22); }
       .venue-deal-editor[open] > summary::after, .venue-deal-performance[open] > summary::after { content: "−"; }
       .venue-deal-editor[open] > summary { border-left-color: #c4b5fd; background: rgba(139,92,246,.11); }
@@ -1290,7 +1290,7 @@ export function DashboardStyles() {
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="personPlus"] .profile-action-preview-icon { width:26px; height:26px; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="bell"] .profile-action-preview-icon { width:22px; height:22px; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control .profile-action-icon-frame[data-profile-action-icon="clock"] .profile-action-preview-icon { width:24px; height:24px; }
-      .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control.profile-action-going:not(.profile-action-unavailable) .profile-action-preview-icon { color:#a78bfa; background:transparent; box-shadow:none; }
+      .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control.profile-action-going:not(.profile-action-unavailable) .profile-action-preview-icon { color:var(--dancr-color-icon-accent); background:transparent; box-shadow:none; }
       .dancer-profile-preview-overlay .live-actions > button.profile-action-icon-control.profile-action-unavailable:disabled { color:#766e7f; background:transparent; opacity:1; }
       .dancer-profile-preview-overlay .dancer-profile-preview-actions .profile-action-icon-control.profile-action-unavailable .profile-action-preview-icon { border:0; color:#756d7d; background:transparent; box-shadow:none; }
       .dancer-profile-preview-overlay .profile-action-icon-control .profile-action-requirement { max-width:100%; overflow:hidden; color:#8e8498; font-size:7px; text-overflow:ellipsis; white-space:nowrap; }
@@ -1502,7 +1502,7 @@ export function DashboardStyles() {
       .dashboard-shell-venue .venue-deal-form-actions .danger { border-color: rgba(255,86,108,.3); color: #ffccd3; background: rgba(255,86,108,.12); }
       .dashboard-shell-venue .venue-deal-share-options { border-color: var(--mydancr-dashboard-border); background: rgba(255,255,255,.025); }
       .dashboard-shell-venue .venue-deal-share-options button { border-color: rgba(255,255,255,.14); color: #f8f7fb; background: #17171d; }
-      .dashboard-shell-venue .venue-deal-how > summary::after { color: #c4b5fd; }
+      .dashboard-shell-venue .venue-deal-how > summary::after { color: var(--dancr-color-icon-accent); }
       .dashboard-shell-venue .currency-input { border-color: rgba(255,255,255,.14); background: #16161b; }
       .dashboard-shell-venue .currency-input > span,
       .dashboard-shell-venue .commission-tier-table > strong { color: #d7d5dd; }

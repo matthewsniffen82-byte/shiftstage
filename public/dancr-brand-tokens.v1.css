@@ -32,6 +32,10 @@
   --dancr-color-control-indicator: #8756b8;
   --dancr-color-control-primary: #5f24ac;
   --dancr-color-control-primary-deep: #361366;
+  /* Muted utility icons; tiny pins and selected states keep extra contrast. */
+  --dancr-color-icon-accent: #9f83bd;
+  --dancr-color-icon-accent-small: #b094cc;
+  --dancr-color-icon-accent-active: #c4a3f1;
   --dancr-color-avatar-ring-magenta: #f02bdc;
   --dancr-color-avatar-ring-violet: #8b5cf6;
   --dancr-color-avatar-ring-indigo: #4f46e5;

@@ -242,7 +242,7 @@ body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.pro
   color:#f5f3ff; font-size:14px; font-weight:600; cursor:pointer; list-style:none;
 }
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group) > summary::-webkit-details-marker { display:none; }
-body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group) > summary::after { content:"+"; margin-left:auto; color:#c4b5fd; font-size:20px; }
+body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group) > summary::after { content:"+"; margin-left:auto; color:var(--dancr-color-icon-accent); font-size:20px; }
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group)[open] > summary::after { content:"−"; }
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group) > summary:focus-visible { outline:2px solid #c4b5fd; outline-offset:2px; border-radius:8px; }
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group):not([open]) > :not(summary) { display:none !important; }

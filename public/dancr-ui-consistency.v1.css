@@ -344,7 +344,7 @@ body.dancr-button-system .profile-share-dialog-status:empty { display: none; }
 /* Discovery controls echo the notification panel's soft lavender icons. */
 body.dancr-button-system #citySelectButton > .city-picker-trigger-icon,
 body.dancr-button-system #homeFilterToggle > .home-filter-toggle-icon {
-  color: #c4a3f1 !important;
+  color: var(--dancr-color-icon-accent) !important;
   stroke: currentColor !important;
   filter: none !important;
   box-shadow: none !important;
@@ -1319,7 +1319,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle > .home-filter-toggle-icon {
   width: 18px !important;
   height: 18px !important;
-  color: #c4a3f1 !important;
+  color: var(--dancr-color-icon-accent) !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton > .city-picker-chevron {
   width: 12px !important;
@@ -1479,7 +1479,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters #locationBtn .icon {
   width: 16px !important;
   height: 16px !important;
-  color: #a78bfa !important;
+  color: var(--dancr-color-icon-accent) !important;
 }
 @media (max-width: 720px) {
   html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {
@@ -1772,7 +1772,7 @@ html body.dancr-button-system > .app > header .topbar
   :is(.customer-quick-btn, #accountBtn.account-icon-btn) {
   --discovery-header-face: #22152f;
   --discovery-header-edge: #4a365f;
-  color: #c4a3f1 !important;
+  color: var(--dancr-color-icon-accent) !important;
   border-color: #4a365f !important;
   box-shadow: none !important;
 }
@@ -2100,7 +2100,7 @@ html body.dancr-button-system > .app main.stack > section.stack
 html body.dancr-button-system > .app main.stack > section.stack
   > #results:is(.home-dancer-grid, .venue-profile-overlay)
   .home-dancer-grid-card.is-compact-directory .home-dancer-grid-venue svg {
-  color: #c4a3f1 !important;
+  color: var(--dancr-color-icon-accent-small) !important;
 }
 
 /* Header inboxes use one compact surface for alerts and saved admission passes. */
@@ -2180,7 +2180,7 @@ html body.dancr-button-system header #customerDealsQuickPanel .saved-deal-nfc-sy
   border: 1px solid #4a365f;
   border-radius: 10px;
   background: linear-gradient(#22152f, #22152f);
-  color: #c4a3f1 !important;
+  color: var(--dancr-color-icon-accent) !important;
 }
 html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-title { align-items: center; gap: 12px; }
 html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-title > .action-icon {
@@ -2191,7 +2191,7 @@ html body.dancr-button-system header #customerNotificationsQuickPanel .customer-
   border: 1px solid #4a365f;
   border-radius: 10px;
   background: linear-gradient(#22152f, #22152f);
-  color: #c4a3f1 !important;
+  color: var(--dancr-color-icon-accent) !important;
 }
 html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-date {
   padding-inline-start: 44px;
@@ -2521,7 +2521,7 @@ html body.dancr-button-system:has(> .app) #results.venue-profile-overlay
     .venue-card-secondary-actions > .venue-card-secondary-action:is(button, a[href]):not(:disabled):not([aria-disabled="true"]) :is(.action-icon, svg, svg path),
   html body.dancr-button-system:has(> .app) #results.venue-profile-overlay .venue-detail
     .venue-action-stack :is(.venue-address-directions, .follow-venue-btn, .venue-detail-share):not(:disabled):not([aria-disabled="true"]) :is(.action-icon, svg, svg path) {
-    color: var(--venue-brand-light, #c4a3f1) !important;
+    color: var(--venue-brand-light, var(--dancr-color-icon-accent)) !important;
   }
 
   html body.dancr-button-system:has(> .app) #results.home-venue-discovery-feed
