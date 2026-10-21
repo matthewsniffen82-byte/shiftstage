@@ -1,3 +1,4 @@
+import { refreshButtonModule } from './helpers/refresh-button.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "./helpers/dashboard-test-fs.mjs";
 import { runInNewContext } from "node:vm";
@@ -23,7 +24,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    preparePhotoUpload, runMediaUploadBatch,
+    preparePhotoUpload, runMediaUploadBatch, RefreshButton: refreshButtonModule.default,
     exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, MIN_DANCER_ONBOARDING_PHOTOS: 3, DancerRejectedUploadNotice: "RejectedUploadNotice", DancerUploadDisclosure: "UploadDisclosure", DancerMediaUploadRules: "MediaUploadRules", DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     cropProfilePhoto: (...args) => { crops.push(args); throw new Error("Uploads must not open the manual crop editor."); },
@@ -55,7 +56,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
     }
     assert.equal(dirty, false, "photo updates must settle without looping");
   }
-  function nodes(node = tree) {
+  function nodes(node = tree) { if (node?.type === refreshButtonModule.default) return nodes(node.type(node.props));
     if (!node || typeof node !== "object") return [];
     return [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
   }
@@ -229,10 +230,10 @@ test("mixed batches clear approvals while keeping unresolved photos in selection
   releases[1]({ decision: "rejected", moderationRecordId: "rejected", message: "Choose a solo photo." }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Uploading 0%"]);
   releases[2]({ decision: "review", photo: { id: "review", reviewStatus: "pending" } }); await ui.settle();
-  assert.deepEqual(ui.statuses, ["Not approved", "Awaiting review"]);
+  assert.deepEqual(ui.statuses, ["Not approved", "Pending club approval"]);
   assert.deepEqual(ui.labels, ["second.jpg", "Selected photo 3"]);
   assert.equal(ui.notes[0], "Choose a solo photo.");
-  assert.match(ui.notes[1], /manual check before approval/);
+  assert.match(ui.notes[1], /waiting for club approval/);
   assert.equal(ui.progress.length, 0);
   assert.equal(ui.buttons.filter(button => button.props.children === "Remove").length, 1);
   assert.deepEqual(ui.revoked, []);
@@ -273,12 +274,12 @@ test("a refresh failure preserves completed outcomes and retries only the failed
   ui.select(["first", "second", "third"].map(name => new File([name], `${name}.jpg`, { type: "image/jpeg" })));
   await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Upload failed"]);
-  assert.deepEqual(ui.buttons.filter(button => button.props.className !== "photo-source-action").map(button => button.props.children), ["Refresh library", "Retry", "Remove"]);
+  assert.deepEqual(ui.buttons.filter(button => button.props.className !== "photo-source-action").map(button => button.props["aria-label"] || button.props.children), ["Refresh photo library", "Retry", "Remove"]);
   ui.buttons.find(button => button.props.children === "Retry").props.onClick(); await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Approved"]);
   assert.equal(ui.posts[2].headers["idempotency-key"], ui.posts[3].headers["idempotency-key"]);
   refreshAvailable = true;
-  ui.buttons.find(button => button.props.children === "Refresh library").props.onClick(); await ui.settle();
+  ui.buttons.find(button => button.props["aria-label"] === "Refresh photo library").props.onClick(); await ui.settle();
   assert.deepEqual(ui.statuses, ["Not approved"]);
   assert.equal(ui.posts.length, 4, "refreshing never uploads approved photos again");
   assert.deepEqual(ui.labels, ["second.jpg"]);
@@ -312,7 +313,7 @@ test("saved pending and rejected photos stay above the library with reasons afte
     rejected_photo_reviews: [{ id: 'denied', message: 'Only you can appear in a profile photo.' }],
   } });
   assert.deepEqual(ui.statuses, ['Checking', 'Not approved']);
-  assert.match(ui.notes[0], /automatic check is still running/);
+  assert.match(ui.notes[0], /AI checks are running/);
   assert.equal(ui.notes[1], 'Only you can appear in a profile photo.');
   assert.equal(ui.replacements.length, 1);
   ui.close(); ui.reopen();
@@ -380,7 +381,7 @@ test("a real pending replacement stays checking until the server approves it", a
   ui.select(); await ui.settle();
   assert.deepEqual(ui.statuses, ["Checking", "Approved"]);
   assert.equal(ui.notes.length, 1);
-  assert.match(ui.notes[0], /automatic check is still running/);
+  assert.match(ui.notes[0], /AI checks are running/);
   ui.updateProfile({ dancer_photos: [approved("replacement")] });
   assert.deepEqual(ui.statuses, ["Approved"]);
 });
@@ -430,7 +431,7 @@ test("completed checks awaiting review are distinct from active checks and becom
     dancer_photos: [approved("first", 1)],
     pending_photo_reviews: [{ ...pending("waiting", 2), status: "pending_review" }, { ...pending("checking", 3), status: "moderating" }],
   } });
-  assert.deepEqual(ui.statuses, ["Awaiting review", "Checking", "Approved"]);
+  assert.deepEqual(ui.statuses, ["Pending club approval", "Checking", "Approved"]);
   assert.equal(ui.pinButtons.length, 1, "unapproved uploads do not have library controls");
   ui.updateProfile({ dancer_photos: [approved("first", 1), approved("reviewed", 2)], pending_photo_reviews: [{ ...pending("checking", 3), status: "moderating" }] });
   assert.deepEqual(ui.statuses, ["Checking", "Approved", "Approved"]);

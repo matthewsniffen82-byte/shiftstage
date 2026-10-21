@@ -86,7 +86,7 @@ test("a first main upload appears in the main slot while awaiting approval, incl
     assert.equal(view.button.props['aria-label'], "Replace main photo");
     assert.equal(view.button.props.disabled, false);
     assert.equal(view.crop, undefined);
-    assert.equal(view.badge, 'Awaiting review');
+    assert.equal(view.badge, 'Pending club approval');
     assert.equal(view.status, '');
   }
   ui.update({ dancer_photos: [main] });
@@ -127,7 +127,7 @@ test('choosing another pending main photo preserves the approved replacement ide
 });
 
 test('moderation work and delays use the same labels as the media library', () => {
-  for (const [status, label] of [['moderating', 'Checking'], ['error', 'Review delayed'], ['pending_review', 'Awaiting review']]) {
+  for (const [status, label] of [['moderating', 'Checking'], ['error', 'Review delayed'], ['pending_review', 'Pending club approval']]) {
     assert.equal(fixture({ pending_photo_reviews: [{ ...pending, status }] }).badge, label);
   }
 });

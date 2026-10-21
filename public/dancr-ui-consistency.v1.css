@@ -2577,7 +2577,7 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     color: inherit !important; fill: none !important; stroke: currentColor !important;
     filter: none !important; animation: none !important;
   }
-  body.dancr-button-system .mydancr-refresh-button > svg path { stroke: currentColor !important; }
+  body.dancr-button-system .mydancr-refresh-button > svg path { color: inherit !important; stroke: currentColor !important; }
   body.dancr-button-system .mydancr-refresh-button:focus-visible {
     outline: 2px solid #d4d4d8 !important; outline-offset: 3px !important;
   }

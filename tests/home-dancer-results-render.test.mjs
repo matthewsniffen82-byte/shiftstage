@@ -66,7 +66,7 @@ function directoryFixture(profiles) {
   };
   for (const name of [
     "syncDiscoveryCityScope", "syncCityPickerSelection", "populateVenueSelect",
-    "updateTabCounts", "updateHomeLiveSummary", "syncClubRefreshButtons", "deactivateHomeTvFeed", "deactivateHomeDiscoveryFeed",
+    "updateTabCounts", "updateHomeLiveSummary", "syncDiscoveryRefreshButtons", "deactivateHomeTvFeed", "deactivateHomeDiscoveryFeed",
   ]) state[name] = () => {};
   const functions = [
     "dancerGridPosition", "dancerDirectoryGroups", "dancerDirectorySections", "dancerDirectoryFilterMarkup",

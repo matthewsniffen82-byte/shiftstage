@@ -1,16 +1,9 @@
+import { refreshButtonModule } from './helpers/refresh-button.mjs';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
 import test from 'node:test';
-import vm from 'node:vm';
-import ts from 'typescript';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-const exports = {};
-vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/components/RefreshButton.tsx', import.meta.url), 'utf8'), {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-}).outputText, { exports, require: createRequire(import.meta.url) });
-const RefreshButton = exports.default;
+const RefreshButton = refreshButtonModule.default;
 
 test('icon-only refresh keeps its accessible name, tooltip and action without submitting a form', () => {
   let clicks = 0;

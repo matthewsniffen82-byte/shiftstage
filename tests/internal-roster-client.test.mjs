@@ -1,3 +1,4 @@
+import { refreshButtonModule } from './helpers/refresh-button.mjs';
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -9,10 +10,6 @@ import * as guestTheme from "../src/lib/dancr/venue-guest-theme.ts";
 import { DEMO_TABLE_REQUEST_COUNT } from "../src/lib/dancr/venue-dashboard-demo.ts";
 
 const require = createRequire(import.meta.url);
-const refreshButtonModule = {};
-vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/components/RefreshButton.tsx', import.meta.url), 'utf8'), {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
-}).outputText, { exports: refreshButtonModule, require });
 const source = readFileSync(new URL("../app/internal/InternalRoster.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(`${source}\nexport { rosterFetch, ProtectedMedia };`, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },

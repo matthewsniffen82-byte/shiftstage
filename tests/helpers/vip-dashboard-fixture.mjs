@@ -1,3 +1,4 @@
+import { refreshButtonModule } from './refresh-button.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -15,7 +16,7 @@ export function compileVip(file, dependencies = {}, globals = {}) {
   vm.runInNewContext(ts.transpileModule(fs.readFileSync(file, 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX, esModuleInterop: true },
   }).outputText, { exports, Date, Intl, Error, URLSearchParams, AbortController, crypto: { randomUUID }, console,
-    require: name => dependencies[name] ?? (name === '@/app/components/EmailNotificationGuidance'
+    require: name => dependencies[name] ?? (name === '../components/RefreshButton' ? refreshButtonModule : name === '@/app/components/EmailNotificationGuidance'
       ? compileVip('app/components/EmailNotificationGuidance.tsx')
       : name === './useVipElementHeight'
       ? compileVip('app/vip/useVipElementHeight.ts', { react: dependencies.react ?? require('react') }, globals)

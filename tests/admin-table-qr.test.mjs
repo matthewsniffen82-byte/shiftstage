@@ -1,3 +1,4 @@
+import { refreshButtonModule } from './helpers/refresh-button.mjs';
 import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
@@ -187,6 +188,7 @@ function componentFixture(handler) {
   const jsx = (type, props) => ({ type, props });
   const { default: Component } = compile("app/admin/AdminTableQrCodes.tsx", {
     react: hooks, "react/jsx-runtime": { jsx, jsxs: jsx }, "./admin-table-qr.css": {},
+    "../components/RefreshButton": refreshButtonModule,
     "./admin-table-qr-range": { existingTableNumbers, readTableQrRange },
     "./admin-table-qr-print": { loadTableQrPrintImages, renderTableQrPrintDocument: async (_doc, name, images) => { printJobs.push({ name, images }); } },
     "./admin-session": { isAdminAuthenticationError: error => error.status === 401, requestAdminJson: async (url, options) => {

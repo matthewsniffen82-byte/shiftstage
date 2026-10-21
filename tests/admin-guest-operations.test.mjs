@@ -1,3 +1,4 @@
+import { refreshButtonModule } from './helpers/refresh-button.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -146,7 +147,7 @@ function panelFixture(request, initial = {}) {
       effects.push(() => { previous?.cleanup?.(); slots[i] = { deps, cleanup: fn() }; }); },
   };
   const Component = compile('app/admin/AdminGuestOperations.tsx', { react: hooks, 'next/dynamic': () => 'div',
-    '@/src/lib/dancr/admin-guest-operations-types': types,
+    '@/src/lib/dancr/admin-guest-operations-types': types, '../components/RefreshButton': refreshButtonModule,
     '@/src/lib/dancr/club-deal-transportation': { clubArrivalLabel: value => value },
     './admin-session': { readAdminSession: () => ({ account: { id: id(1) } }), requestAdminJson: (url, options) => { calls.push({ url, options }); return request(url, options); } },
   }).default;
@@ -155,10 +156,10 @@ function panelFixture(request, initial = {}) {
     for (let i = 0; dirty && i < 20; i++) { dirty = false; cursor = 0; effects = []; tree = Component({ venues: [{ id: id(10), name: 'Club A' }, { id: id(20), name: 'Club B' }], onActionConfirmed() {}, ...initial }); effects.forEach(fn => fn()); }
     assert.equal(dirty, false); return tree;
   }
-  function nodes(node = tree) { return node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))] : []; }
+  function nodes(node = tree) { if (node?.type === refreshButtonModule.default) return nodes(node.type(node.props)); return node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))] : []; }
   async function settle() { for (let i = 0; i < 10; i++) { await Promise.resolve(); render(); } }
   const choose = value => { nodes().find(node => node.type === 'select').props.onChange({ target: { value } }); render(); };
-  const click = text => { const button = nodes().find(node => node.type === 'button' && node.props.children === text); assert.ok(button, text); button.props.onClick(); render(); };
+  const click = text => { const button = nodes().find(node => node.type === 'button' && (node.props['aria-label'] || node.props.children) === text); assert.ok(button, text); button.props.onClick(); render(); };
   render();
   return { render, nodes, choose, click, settle, calls, unmount: () => slots.forEach(slot => slot?.cleanup?.()) };
 }
@@ -184,7 +185,7 @@ test('admin panel waits for club selection, rejects late data from a previous cl
   assert.equal(ui.nodes().some(node => node.type === 'article'), false);
   pending[1](visitData(id(20))); await ui.settle();
   assert.equal(ui.nodes().filter(node => node.type === 'article').length, 1);
-  ui.click('Refresh'); ui.unmount(); assert.equal(ui.calls.at(-1).options.signal.aborted, true);
+  ui.click('Refresh guest operations'); ui.unmount(); assert.equal(ui.calls.at(-1).options.signal.aborted, true);
 });
 test('admin decisions require review, submit once, and require refresh after a failed write', async () => {
   let rejectWrite;
@@ -199,6 +200,6 @@ test('admin decisions require review, submit once, and require refresh after a f
   rejectWrite(new Error('Request changed')); await ui.settle();
   assert.equal(ui.nodes().filter(node => node.type === 'article').length, 0);
   assert.ok(ui.nodes().some(node => node.props?.role === 'alert'));
-  assert.equal(ui.nodes().find(node => node.type === 'button' && node.props.children === 'Refresh').props.disabled, false);
+  assert.equal(ui.nodes().find(node => node.type === 'button' && node.props['aria-label'] === 'Refresh guest operations').props.disabled, false);
   ui.unmount();
 });

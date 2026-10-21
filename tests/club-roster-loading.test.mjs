@@ -22,7 +22,7 @@ function fixture(city = 'Las Vegas') {
     venueLogoMarkup: () => '<img alt="Club logo">', isWorkingTonight: () => true, dancerGridPosition: () => 0,
     isApprovedPublicProfile: () => true, withTrendingRank: row => row,
     isFollowingVenue: () => false, escapeOptionValue: String, escapeHtml: String,
-    clubRefreshButtonMarkup: () => '<button>Refresh</button>',
+    discoveryRefreshButtonMarkup: () => '<button>Refresh</button>',
     venueDancerGridMarkup: profiles => `<div data-roster>${profiles.map(row => row.id).join(',')}</div>`,
     actionIconMarkup: () => '', recordVenuePageEvent() {}, venueOfferStatusMarkup: () => '',
     venueOfferMarkup: () => '', venueDirectionsMarkup: () => '', actionButtonLabel: () => '',

@@ -1,3 +1,4 @@
+import { refreshButtonModule } from './helpers/refresh-button.mjs';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
@@ -13,7 +14,7 @@ function extract(path, name, globals) {
   const fn = ast.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === name);
   const exports = {};
   vm.runInNewContext(ts.transpileModule(fn.getText(ast) + `\nexport { ${name} };`, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText,
-    { exports, Error, AbortController, ...globals, require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }) });
+    { exports, Error, AbortController, RefreshButton: refreshButtonModule.default, ...globals, require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }) });
   return exports[name];
 }
 const profile = { id: 'dancer', userId: 'user', stageName: 'Dancer', status: 'pending_review', createdAt: '2026-10-01',
@@ -41,14 +42,14 @@ test('a confirmed review advances to the next item, while busy controls cannot s
   });
   let props = { profiles: [profile], images: [], videos: [], warnings: [], onActionConfirmed: noop, onManageDancer: noop,
     onProfilesChange: rows => { props.profiles = rows; }, onImagesChange: noop, onVideosChange: noop, onRefresh: async () => { throw new Error('Unavailable'); } };
-  const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
+  const nodes = node => node?.type === refreshButtonModule.default ? nodes(node.type(node.props)) : node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
   const render = () => { cursor = 0; return nodes(Component(props)); };
   let tree = render(), review = tree.find(node => node.type === 'ApprovalQueue');
   assert.equal(review.props.reviewTarget.id, 'photo');
   review.props.onBusyChange(true); tree = render();
   assert.equal(tree.find(node => node.props?.children === 'Skip for now').props.disabled, true);
   review.props.onBusyChange(false); tree = render();
-  await tree.find(node => node.props?.children === 'Refresh queue').props.onClick();
+  await tree.find(node => node.props?.['aria-label'] === 'Refresh approval queue').props.onClick();
   await new Promise(resolve => setImmediate(resolve)); tree = render();
   assert.ok(tree.some(node => node.props?.role === 'alert' && node.props.children === 'Unavailable'));
   review = tree.find(node => node.type === 'ApprovalQueue'); assert.equal(review.props.reviewTarget.id, 'photo');
@@ -106,7 +107,7 @@ function reviewComponent(path, name, props, request) {
     useEffect(effect, deps) { const i = cursor++; if (!slots[i] || deps.some((value, j) => value !== slots[i].deps[j])) { const old = slots[i]; slots[i] = { deps }; effects.push(() => { old?.cleanup?.(); slots[i].cleanup = effect(); }); } },
     window: { confirm: () => true }, requestAdminJson: request, AdminTvPanelStyles: 'styles', Link: 'a', canRetryAutomatedReview: () => false, readableReason: value => value,
   });
-  const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
+  const nodes = node => node?.type === refreshButtonModule.default ? nodes(node.type(node.props)) : node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
   function render() { cursor = 0; tree = Component(props); while (effects.length) effects.shift()(); return nodes(tree); }
   return { render, close() { slots.forEach(slot => slot?.cleanup?.()); } };
 }

@@ -1,3 +1,4 @@
+import { refreshButtonModule } from './helpers/refresh-button.mjs';
 import assert from "node:assert/strict";
 import test from "node:test";
 import vm from "node:vm";
@@ -50,6 +51,7 @@ function fixture(component, props, request = async () => ({}), hash = "") {
   };
   const send = (url, options) => { calls.push({ url, options }); return request(url, options); };
   const imports = {
+    "../components/RefreshButton": refreshButtonModule,
     react, "react/jsx-runtime": require("react/jsx-runtime"),
     "next/dynamic": { default: loader => loader.toString().match(/\.\/(\w+)/)[1] },
     "next/link": { default: "a" }, "./venue-guests.css": {}, "./venue-customers.css": {}, "./venue-guest-list.css": {},
@@ -64,7 +66,7 @@ function fixture(component, props, request = async () => ({}), hash = "") {
   }).outputText, { exports, window, document, AbortController, URLSearchParams, Error, require: name => {
     assert.ok(name in imports, name); return imports[name];
   } });
-  function nodes(node = tree) { return node && typeof node === "object" ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : []; }
+  function nodes(node = tree) { if (node?.type === refreshButtonModule.default) return nodes(node.type(node.props)); return node && typeof node === "object" ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : []; }
   function render(next = {}) {
     props = { ...props, ...next }; dirty = true;
     for (let i = 0; dirty && i < 20; i++) { dirty = false; cursor = 0; effects = []; tree = exports.default(props); effects.forEach(run => run()); }
@@ -155,7 +157,7 @@ test("ride details are scoped to the current venue, paginate without duplication
   assert.equal(ui.nodes().filter(node => node.type === "article").length, 2);
   assert.match(ui.calls.at(-1).url, /phoneOffset=1/);
   const count = ui.calls.length; ui.tick(); await ui.settle(); assert.equal(ui.calls.length, count);
-  fail = true; ui.button("Refresh").props.onClick(); await ui.settle();
+  fail = true; ui.button("Refresh ride requests").props.onClick(); await ui.settle();
   assert.equal(ui.nodes().filter(node => node.type === "article").length, 0);
   assert.match(ui.html(), /Access removed/); ui.close(); assert.equal(ui.intervals.size, 0);
 });
@@ -283,7 +285,7 @@ test("failed ride updates retain the recorded status and allow a refresh", async
   const selector = () => ui.nodes().find(n => n.type === "select" && n.props["aria-label"]);
   selector().props.onChange({ target: { value: "arranged" } }); await ui.settle();
   assert.equal(selector().props.value, "contacted"); assert.match(ui.html(), /Another staff member/);
-  assert.equal(ui.button("Refresh").props.disabled, false); ui.close();
+  assert.equal(ui.button("Refresh ride requests").props.disabled, false); ui.close();
 });
 
 test("ride updates clear private guest details when access is lost", async () => {
