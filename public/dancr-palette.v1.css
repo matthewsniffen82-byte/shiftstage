@@ -662,20 +662,21 @@
     color: var(--dancr-color-text-muted) !important;
     stroke: currentColor !important;
   }
-  /* Every location pin uses the brand violet, including Saved and embedded
-     cards. Target pins explicitly so shift clocks keep their status colors. */
+  /* Location icons use the primary-action violet directly so legacy Saved
+     card tokens cannot turn them gray. Keep shift clocks outside this rule. */
   html body.dancr-button-system :where(
     .profile-modal-city-icon, .profile-venue-pin, .profile-city svg,
     .profile-venue-destination svg, .profile-working-destination svg,
     .home-dancer-grid-venue .venue-dot, .home-dancer-grid-venue .venue-dot svg,
     .home-tv-feed-venue svg, .profile-media-venue svg, .ir-dancer-venue svg,
-    .city-picker-trigger-icon, .home-city-select-icon, .tv-card-venue-line svg,
+    .city-picker-trigger-icon, .home-city-select-icon, #locationBtn svg, .tv-card-venue-line svg,
     .profile-directions-button svg, [data-action-icon="pin"], [data-action-icon="pin"] *
   ) {
     color-scheme: only light !important;
-    color: var(--dancr-color-icon-location) !important;
+    color: var(--dancr-color-brand-primary) !important;
     stroke: currentColor !important;
     -webkit-text-fill-color: currentColor !important;
+    filter: none !important;
   }
   html body.dancr-button-system :where(
     .venue-embed-heading h1, .venue-embed-location-count, #venue-count,
