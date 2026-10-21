@@ -1421,35 +1421,63 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#
   border-color: #382f46 !important;
   background: linear-gradient(#100c17, #100c17) !important;
 }
-html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel.is-open {
-  padding: 4px !important;
-}
-html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectOptions {
-  gap: 0 !important;
-}
-html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option {
-  --discovery-control-face: #000;
-  --discovery-control-edge: transparent;
-  grid-template-columns: 16px minmax(0, 1fr) auto !important;
-  gap: 8px !important;
-  padding: 0 10px !important;
-  border-radius: 8px !important;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-}
-html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option[aria-selected="true"] {
-  --discovery-control-face: #22152f;
-  --discovery-control-edge: #5a4075;
-}
-html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel .venue-picker-radio {
-  box-sizing: border-box;
-  width: 16px !important;
-  height: 16px !important;
-  border-width: 1.5px !important;
-}
-html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel .venue-picker-radio::after {
-  width: 8px !important;
-  height: 8px !important;
+/* One frame contains the city list; selection lives in the fill and radio.
+ * Override the shared painted button faces without changing other pickers. */
+@layer dancr-follow-controls.city-picker {
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel.is-open {
+    padding: 0 !important;
+    overflow: hidden !important;
+    border: 1px solid var(--dancr-color-control-border) !important;
+    background: var(--dancr-color-surface-plum) !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectOptions {
+    gap: 0 !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option {
+    --discovery-control-face: var(--dancr-color-surface-plum) !important;
+    grid-template-columns: 16px minmax(0, 1fr) auto !important;
+    gap: 8px !important;
+    padding: 0 12px !important;
+    border-radius: 0 !important;
+    color: #f8fafc !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option::before {
+    border: 0 !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option + .city-picker-option::before {
+    border-top: 1px solid #28232f !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option[aria-selected="true"] {
+    --discovery-control-face: var(--dancr-color-control-selected) !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option:focus-visible {
+    outline: 2px solid var(--dancr-color-icon-location) !important;
+    outline-offset: -3px !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel .city-picker-stats {
+    color: #aaa6b3 !important;
+    font-weight: 500 !important;
+    text-align: right;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel .venue-picker-radio {
+    box-sizing: border-box;
+    width: 16px !important;
+    height: 16px !important;
+    border-width: 1.5px !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel .city-picker-option[aria-selected="true"] .venue-picker-radio {
+    border-color: var(--dancr-color-icon-location) !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel .venue-picker-radio::after {
+    width: 8px !important;
+    height: 8px !important;
+    background: var(--dancr-color-icon-location) !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option:not([aria-selected="true"]):hover {
+    --discovery-control-face: var(--dancr-color-control-plum) !important;
+  }
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {
   gap: 4px 8px !important;
@@ -1554,9 +1582,6 @@ html body.dancr-button-system #distanceSelectDialog .distance-picker-options spa
   min-height: 44px;
 }
 @media (hover: hover) {
-  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option:not([aria-selected="true"]):hover {
-    --discovery-control-face: #111116;
-  }
   html body.dancr-button-system #venueSelectDialog .venue-picker-option:not([aria-selected="true"]):hover {
     --picker-face: #111116;
     --picker-edge: transparent;

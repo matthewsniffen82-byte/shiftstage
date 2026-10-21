@@ -64,7 +64,7 @@ test("fills cannot alter VIP champagne text, geometry, navigation, or primary an
   }
 });
 
-test("unselected discovery controls have neutral outlines without changing selected borders or icons", () => {
+test("unselected discovery controls have neutral outlines while the city list uses its selected fill", () => {
   const idle = rules.find(rule => rule.nodes.some(node => node.prop === '--discovery-control-edge'));
   assert.ok(idle);
   for (const target of [
@@ -82,7 +82,7 @@ test("unselected discovery controls have neutral outlines without changing selec
   postcss.parse(css).walkRules(rule => {
     if (rule.selector.endsWith('.city-picker-option[aria-selected="true"]')) selected.push(rule);
   });
-  assert.ok(selected.some(rule => rule.nodes.some(node => node.prop === '--discovery-control-edge' && node.value === '#5a4075')));
+  assert.ok(selected.some(rule => rule.nodes.some(node => node.prop === '--discovery-control-face' && node.value === 'var(--dancr-color-control-selected)' && node.important)));
 });
 
 test("Saved venue cards include plum surfaces and controls with actual branded context exclusions", () => {
