@@ -513,6 +513,11 @@
   ) {
     --picker-edge: var(--dancr-color-brand-primary) !important;
   }
+  html body.dancr-button-system :where(
+    #venueSelectDialog .venue-picker-option, #distanceSelectDialog .distance-picker-options span
+  ) {
+    --picker-gradient: var(--dancr-control-secondary-background) !important;
+  }
   html body.dancr-button-system :where(#venueSelectDone, #distanceSelectApply) {
     --picker-face: var(--dancr-color-brand-primary) !important;
     --picker-edge: var(--dancr-color-brand-primary) !important;
@@ -565,7 +570,7 @@
   )::before,
   html body.dancr-button-system .dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="false"]::before {
     color-scheme: only light !important;
-    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    background: var(--dancr-control-secondary-background) !important;
   }
   /* The visible mobile face is a separate layer. Paint it directly so it
      cannot keep an old plum gradient while the button backing changes. */
@@ -586,13 +591,13 @@
   /* Not Working keeps its gray fill with a violet border when selected. */
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="true"]) {
     color-scheme: only light !important;
-    --discovery-control-face: var(--dancr-color-control-hover) !important;
+    --discovery-control-face: var(--dancr-color-control-secondary) !important;
     --discovery-control-edge: var(--dancr-color-brand-primary) !important;
     color: var(--dancr-color-text-primary) !important;
   }
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="true"])::before {
     color-scheme: only light !important;
-    background: var(--dancr-color-control-hover) linear-gradient(var(--dancr-color-control-hover), var(--dancr-color-control-hover)) !important;
+    background: var(--dancr-control-secondary-background) !important;
   }
   /* Restore the October 20 Working Now colors without recoloring other live states. */
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]):not(.is-empty) {
@@ -637,13 +642,13 @@
     box-shadow: none !important;
   }
   html body.dancr-button-system :where(#guestMenuBtn, #accountBtn:not(.account-icon-btn)):where(.active, .is-open, [aria-expanded="true"]) {
-    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    background: var(--dancr-control-secondary-background) !important;
   }
   html body.dancr-button-system :where(
     #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn,
     #dancerProfileShareQuickBtn, #customerDealQuickBtn
   ):where(.active, .is-open, [aria-expanded="true"])::before {
-    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    background: var(--dancr-control-secondary-background) !important;
     border-color: var(--dancr-color-brand-primary) !important;
     box-shadow: none !important;
   }
@@ -658,7 +663,7 @@
   }
   html body.dancr-button-system :where(.utility-menu-panel, .customer-quick-panel) {
     color-scheme: only light !important;
-    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    background: var(--dancr-control-secondary-background) !important;
     border-color: var(--dancr-color-border) !important;
     color: var(--dancr-color-text-primary) !important;
   }
@@ -730,7 +735,7 @@
   }
   html body.dancr-button-system
     :where(.mydancr-refresh-button)::before {
-    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    background: var(--dancr-control-secondary-background) !important;
     border-color: var(--dancr-color-border) !important;
   }
   html body.dancr-button-system
@@ -746,13 +751,13 @@
   html body.dancr-button-system
     :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-action-stack :is(.follow-venue-btn, .venue-detail-share, .venue-address-directions)):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"])) {
     color-scheme: only light !important;
-    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    background: var(--dancr-control-secondary-background) !important;
     box-shadow: none !important;
   }
   html body.dancr-button-system
     :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-action-stack :is(.follow-venue-btn, .venue-detail-share, .venue-address-directions)):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"]))::before {
     color-scheme: only light !important;
-    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    background: var(--dancr-control-secondary-background) !important;
     box-shadow: none !important;
   }
   html body.dancr-button-system
@@ -869,7 +874,7 @@
     --discovery-control-face: var(--dancr-color-control-secondary) !important;
   }
   html body.dancr-button-system :where(#citySelectButton, #homeFilterToggle)::before {
-    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    background: var(--dancr-control-secondary-background) !important;
   }
   html body.dancr-button-system :where(
     .profile-actions-compact :is(#followBtn, [data-follow-control="text"], .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going),
@@ -878,9 +883,14 @@
   ):not(:where([aria-pressed="true"], .is-active, .is-following, .is-going, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"])) {
     color-scheme: only light !important;
     --follow-control-face: var(--dancr-color-control-secondary) !important;
-    --profile-utility-background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
-    --profile-action-background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    --profile-utility-background: var(--dancr-control-secondary-background) !important;
+    --profile-action-background: var(--dancr-control-secondary-background) !important;
     --venue-utility-face: var(--dancr-color-control-secondary) !important;
+  }
+  html body.dancr-button-system :where(
+    .profile-actions-compact :is(#followBtn, [data-follow-control="text"])
+  ):not(:where([aria-pressed="true"], .is-active, .is-following, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"]))::before {
+    background: var(--dancr-control-secondary-background) !important;
   }
   /* The floating dock keeps its component-owned glass, light icons and violet halo. */
   html body.dancr-button-system

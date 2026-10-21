@@ -72,7 +72,10 @@
   --dancr-color-surface-translucent: rgba(25, 24, 32, 0.96);
   --dancr-color-surface-subtle: #191820;
   --dancr-color-overlay: rgba(11, 11, 18, 0.88);
-  --dancr-color-control-secondary: #27272f;
+  --dancr-color-control-secondary: #3a3a42;
+  /* Image-backed paint keeps neutral controls visible in Android dark mode.
+     Keep the SVG fill synchronized with the secondary control color above. */
+  --dancr-control-secondary-background: var(--dancr-color-control-secondary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Cpath fill='%233a3a42' d='M0 0h2v2H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
   --dancr-color-control-hover: #24222d;
 
   --dancr-color-border: #35313f;
