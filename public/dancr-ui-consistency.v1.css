@@ -2727,11 +2727,11 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     --dancr-report-edge: var(--dancr-color-control-border) !important;
   }
 
-  /* Discovery's pseudo-elements read the same face variables on mobile. */
+  /* Keep idle discovery outlines neutral; selected and open controls retain violet. */
   html:not(.internal-profile-embed) body.dancr-button-system:not(:has(.ir-shell, .venue-embed-profile-page, :is(#venue-dashboard, .public-profile-shell, .venue-detail):is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), #profileBackdrop.show #profileModal:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"])))
     :is(#citySelectButton:not([aria-expanded="true"]), #homeFilterToggle:not(.has-active-filters):not(.is-open), .city-picker-option:not([aria-selected="true"]), .dancer-directory-filter[aria-selected="false"]):not(:where(:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), :is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]) *)) {
     --discovery-control-face: var(--dancr-color-control-plum) !important;
-    --discovery-control-edge: var(--dancr-color-control-border) !important;
+    --discovery-control-edge: #34343c !important;
   }
 
   html:not(.internal-profile-embed) body.dancr-button-system:not(:has(.ir-shell, .venue-embed-profile-page, :is(#venue-dashboard, .public-profile-shell, .venue-detail):is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), #profileBackdrop.show #profileModal:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"])))

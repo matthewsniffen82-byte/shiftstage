@@ -64,6 +64,27 @@ test("fills cannot alter VIP champagne text, geometry, navigation, or primary an
   }
 });
 
+test("unselected discovery controls have neutral outlines without changing selected borders or icons", () => {
+  const idle = rules.find(rule => rule.nodes.some(node => node.prop === '--discovery-control-edge'));
+  assert.ok(idle);
+  for (const target of [
+    '#citySelectButton:not([aria-expanded="true"])',
+    '#homeFilterToggle:not(.has-active-filters):not(.is-open)',
+    '.city-picker-option:not([aria-selected="true"])',
+    '.dancer-directory-filter[aria-selected="false"]',
+  ]) assert.ok(idle.selector.includes(target), target);
+  assert.deepEqual(idle.nodes.map(node => [node.prop, node.value, node.important]), [
+    ['--discovery-control-face', 'var(--dancr-color-control-plum)', true],
+    ['--discovery-control-edge', '#34343c', true],
+  ]);
+  assert.equal(idle.parent.params, 'dancr-follow-controls');
+  const selected = [];
+  postcss.parse(css).walkRules(rule => {
+    if (rule.selector.endsWith('.city-picker-option[aria-selected="true"]')) selected.push(rule);
+  });
+  assert.ok(selected.some(rule => rule.nodes.some(node => node.prop === '--discovery-control-edge' && node.value === '#5a4075')));
+});
+
 test("Saved venue cards include plum surfaces and controls with actual branded context exclusions", () => {
   const generated = postcss.parse(savedVenueCardStyles([palette.toString()]));
   const cards = [];
