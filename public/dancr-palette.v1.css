@@ -662,6 +662,26 @@
     color: var(--dancr-color-text-muted) !important;
     stroke: currentColor !important;
   }
+  /* Paint venue utility faces directly, including Android's overlay and the
+     compact Follow/Share face, with the same charcoal as discovery controls. */
+  html body.dancr-button-system
+    :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-action-stack :is(.follow-venue-btn, .venue-detail-share, .venue-address-directions)):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"])) {
+    color-scheme: only light !important;
+    background: var(--dancr-color-surface) linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system
+    :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-action-stack :is(.follow-venue-btn, .venue-detail-share, .venue-address-directions)):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"]))::before {
+    color-scheme: only light !important;
+    background: var(--dancr-color-surface) linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system
+    :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-action-stack :is(.follow-venue-btn, .venue-detail-share, .venue-address-directions)):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"], :focus-visible)),
+  html body.dancr-button-system
+    :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-action-stack :is(.follow-venue-btn, .venue-detail-share, .venue-address-directions)):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"], :focus-visible))::before {
+    border-color: transparent !important;
+  }
   /* Venue utilities match dancer-profile labels and secondary icons. Keep
      selected feedback and the separately styled violet location pins. */
   html body.dancr-button-system
