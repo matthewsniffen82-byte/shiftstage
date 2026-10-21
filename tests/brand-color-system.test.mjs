@@ -35,7 +35,7 @@ const requiredTokens = new Map([
   ["--dancr-color-text-secondary", "#aaa6b5"],
   ["--dancr-color-text-muted", "#aaa6b5"],
   ["--dancr-color-border", "#35313f"],
-  ["--dancr-color-info", "#b69aef"],
+  ["--dancr-color-info", "#aaa6b5"],
   ["--dancr-color-verification", "#2563eb"],
   ["--dancr-color-verification-foreground", "#ffffff"],
   ["--dancr-color-verification-outline", "#1d4ed8"],
@@ -76,7 +76,7 @@ test("the exact production palette is centralized in one shared token file", () 
   }
 });
 
-test("legacy beam aliases resolve to the Electric Violet beam and its deep-indigo glow", () => {
+test("legacy beam aliases resolve to the single Electric Violet accent", () => {
   assert.match(
     tokens,
     /--dancr-color-beam-violet: var\(--dancr-color-brand-primary\);/,
@@ -88,13 +88,22 @@ test("legacy beam aliases resolve to the Electric Violet beam and its deep-indig
   assert.doesNotMatch(tokens, /#985fff|#346eff/);
 });
 
+test("UI accents do not introduce lavender icons, indigo glows or plum surface tokens", () => {
+  assert.match(tokens, /--dancr-color-icon-location: #aaa6b5;/);
+  assert.match(tokens, /--dancr-color-icon-accent-active: #f5f3f7;/);
+  assert.match(tokens, /--dancr-color-brand-glow: #7c3aed;/);
+  assert.match(tokens, /--dancr-color-brand-primary-soft: var\(--dancr-color-surface\);/);
+  assert.match(tokens, /--dancr-color-info-surface-glass: var\(--dancr-color-surface-translucent\);/);
+  assert.doesNotMatch(tokens, /#b69aef|#a78bfa|#c4b5fd|#312e81|rgba\(182, 154, 239|rgba\(49, 46, 129/);
+});
+
 test("brand text and status combinations meet normal-text contrast", () => {
   const combinations = [
     ["#f5f3f7", "#7c3aed"],
     ["#f5f3f7", "#0b0b12"],
     ["#aaa6b5", "#191820"],
     ["#aaa6b5", "#0b0b12"],
-    ["#b69aef", "#191820"],
+    ["#f5f3f7", "#28744f"],
     ["#ffffff", "#2563eb"],
     ["#35d09a", "#191820"],
     ["#fbbf24", "#191820"],

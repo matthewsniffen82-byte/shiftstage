@@ -21,34 +21,34 @@
   --dancr-color-brand-core: #f5f3ff;
   --dancr-color-brand-primary: #7c3aed;
   --dancr-color-brand-primary-deep: #7c3aed;
-  --dancr-color-brand-glow: #312e81;
+  --dancr-color-brand-glow: #7c3aed;
   --dancr-color-brand-core-soft: rgba(245, 243, 255, 0.18);
-  --dancr-color-brand-primary-soft: rgba(124, 58, 237, 0.14);
-  --dancr-color-brand-primary-medium: rgba(124, 58, 237, 0.34);
-  --dancr-color-brand-primary-strong: rgba(124, 58, 237, 0.72);
-  --dancr-color-brand-glow-soft: rgba(49, 46, 129, 0.18);
-  --dancr-color-brand-glow-medium: rgba(49, 46, 129, 0.42);
+  --dancr-color-brand-primary-soft: var(--dancr-color-surface);
+  --dancr-color-brand-primary-medium: var(--dancr-color-border);
+  --dancr-color-brand-primary-strong: var(--dancr-color-brand-primary);
+  --dancr-color-brand-glow-soft: transparent;
+  --dancr-color-brand-glow-medium: transparent;
   /* Violet is reserved for primary actions and selected controls. */
   --dancr-color-control-border: #35313f;
   --dancr-color-control-border-soft: #35313f;
   --dancr-color-control-selected: #7c3aed;
-  --dancr-color-control-indicator: #b69aef;
+  --dancr-color-control-indicator: #7c3aed;
   --dancr-color-control-primary: #7c3aed;
   --dancr-color-control-primary-deep: #7c3aed;
   /* Legacy plum names now resolve to the shared charcoal surface. */
   --dancr-color-surface-plum: #191820;
   --dancr-color-control-plum: #191820;
-  /* Muted utility icons; tiny pins and selected states keep extra contrast. */
+  /* Utility and location icons are silver; selected icons are soft white. */
   --dancr-color-icon-accent: #aaa6b5;
   --dancr-color-icon-accent-small: #aaa6b5;
-  --dancr-color-icon-accent-active: #b69aef;
-  --dancr-color-icon-location: #b69aef;
+  --dancr-color-icon-accent-active: #f5f3f7;
+  --dancr-color-icon-location: #aaa6b5;
   --dancr-color-avatar-ring-magenta: #7c3aed;
-  --dancr-color-avatar-ring-violet: #b69aef;
+  --dancr-color-avatar-ring-violet: #7c3aed;
   --dancr-color-avatar-ring-indigo: #7c3aed;
   --dancr-color-avatar-ring-core: #ffffff;
   --dancr-color-avatar-ring-live: #35d09a;
-  --dancr-color-avatar-ring-upcoming: #b69aef;
+  --dancr-color-avatar-ring-upcoming: #aaa6b5;
   --dancr-color-avatar-ring-inactive: #5b5568;
 
   --dancr-color-beam-core: var(--dancr-color-brand-core);
@@ -78,11 +78,11 @@
   --dancr-color-border-subtle: #35313f;
   --dancr-color-border-strong: #5b5568;
 
-  --dancr-color-info: #b69aef;
-  --dancr-color-info-soft: rgba(182, 154, 239, 0.1);
-  --dancr-color-info-medium: rgba(182, 154, 239, 0.34);
-  --dancr-color-info-strong: rgba(182, 154, 239, 0.72);
-  --dancr-color-info-surface-glass: rgba(89, 66, 127, 0.66);
+  --dancr-color-info: #aaa6b5;
+  --dancr-color-info-soft: var(--dancr-color-surface);
+  --dancr-color-info-medium: var(--dancr-color-border);
+  --dancr-color-info-strong: var(--dancr-color-text-muted);
+  --dancr-color-info-surface-glass: var(--dancr-color-surface-translucent);
 
   --dancr-color-verification: #2563eb;
   --dancr-color-verification-foreground: #ffffff;

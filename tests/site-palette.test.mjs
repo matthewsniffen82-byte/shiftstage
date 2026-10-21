@@ -86,3 +86,16 @@ test('all dashboard selections and painted mobile control faces use the shared t
     assert.ok(rules.some(rule => rule.nodes.some(decl => decl.prop === name && decl.value === 'var(--dancr-color-surface)')), name);
   }
 });
+
+test('Working Now keeps its green face while navigation uses one violet and the account shortcut stays charcoal', () => {
+  const working = rules.find(rule => rule.selector.includes('.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]'));
+  assert.ok(working.selector.includes(':not(.is-empty)'));
+  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-face' && decl.value === 'var(--dancr-color-live-surface-emphasis)'));
+  const face = rules.find(rule => rule.selector === 'html body.dancr-button-system :where(.dancer-directory-filter)::before');
+  assert.ok(face.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--discovery-control-face)'));
+  const dock = rules.find(rule => rule.selector.includes('.global-mobile-bottom-nav a.active, #discoveryTabs > button.active'));
+  assert.ok(dock.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-color-brand-primary)'));
+  const shortcut = rules.find(rule => rule.selector.includes('.utility-menu-dashboard'));
+  assert.ok(shortcut.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-color-surface)'));
+  assert.doesNotMatch(read('public/dancr-button-system.v1.css'), /#241337|#301a46|#6b4d89|#8b69ab/);
+});

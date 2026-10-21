@@ -589,9 +589,9 @@
 }
 
 .dancr-button-system .utility-menu-panel .utility-menu-dashboard {
-  border-color: #6b4d89 !important;
-  color: #fff !important;
-  background: linear-gradient(#241337, #241337) !important;
+  border-color: var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: var(--dancr-color-surface) !important;
   box-shadow: none !important;
   font-weight: 700 !important;
 }
@@ -602,8 +602,8 @@
 
 .dancr-button-system .utility-menu-panel .utility-menu-dashboard:hover,
 .dancr-button-system .utility-menu-panel .utility-menu-dashboard:active {
-  border-color: #8b69ab !important;
-  background: linear-gradient(#301a46, #301a46) !important;
+  border-color: var(--dancr-color-border-strong) !important;
+  background: var(--dancr-color-control-hover) !important;
 }
 
 /* Mobile touch controls use one explicit compositor path. Safari otherwise
