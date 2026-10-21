@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { PhonePickupRequest } from "@/src/lib/dancr/pickup-domain";
@@ -84,7 +85,7 @@ export default function PickupDashboardPanel({ refreshKey, venueId, active = tru
   }, [active, venueId, refreshKey, load]);
   return <div className="venue-pickup-preview">
     <header className="venue-section-heading"><h2 className="venue-icon-heading"><VenueDashboardIcon section="pickups" />Ride requests</h2>
-      <button className="venue-utility" type="button" disabled={busy || Boolean(saving) || !venueId} onClick={() => void load()}>{busy ? "Loading…" : "Refresh"}</button></header>
+      <RefreshButton label="Refresh ride requests" busy={busy} className="venue-utility" type="button" disabled={busy || Boolean(saving) || !venueId} onClick={() => void load()} /></header>
     <p>Contact the guest, then update the ride. Statuses are recorded by your team and do not verify club admission.</p>
     <label className="venue-ride-filter">Show rides<select value={queue} disabled={Boolean(saving)} onChange={event => setQueue(event.target.value)}><option value="open">Open · last 48 hours</option><option value="all">All requests</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option></select></label>
     {timezone && <p className="venue-value-note">Times shown in {timezone.replaceAll("_", " ")}.</p>}

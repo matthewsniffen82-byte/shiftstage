@@ -328,7 +328,7 @@
           <section class="venue-activity-section is-working" aria-labelledby="venue-working-now">
             <div class="venue-roster-heading">
               <h3 class="section-title" id="venue-working-now"><span>Working now${roster.count === null ? "" : ` · ${roster.count}`}</span></h3>
-              ${clubRefreshButtonMarkup()}
+              ${discoveryRefreshButtonMarkup()}
             </div>
             <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
             ${tonight.length

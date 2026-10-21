@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import type { VenueCustomer } from "@/src/lib/dancr/venue-customers";
@@ -41,7 +42,7 @@ export default function VenueCustomersPanel({ refreshKey, active, timezone }: { 
   }, [source, active, search]); // eslint-disable-line react-hooks/exhaustive-deps
   return <div className="venue-contacts">
     <header className="venue-section-heading"><h2 id="venue-customers-heading">Contacts</h2>
-      <button className="venue-utility" type="button" disabled={busy} onClick={() => void load()}>{busy ? "Loading…" : "Refresh"}</button></header>
+      <RefreshButton label="Refresh customers" busy={busy} className="venue-utility" type="button" disabled={busy} onClick={() => void load()} /></header>
     <p>Search shared contacts. Email and text badges show active subscriptions to this club.</p>
     <form className="venue-search-form" role="search" onSubmit={event => { event.preventDefault(); setSearch(input.trim()); }}><label>Find a contact<input type="search" maxLength={100} value={input} onChange={event => setInput(event.target.value)} placeholder="Search names" /></label><button type="submit">Search</button>{(input || search) && <button type="button" onClick={() => { setInput(""); setSearch(""); }}>Clear</button>}</form>
     <div className="venue-analytics-period" role="group" aria-label="Contact source">

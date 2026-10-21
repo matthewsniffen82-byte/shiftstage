@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { AdminPilotAnalytics } from "@/src/lib/dancr/pilot-analytics";
@@ -216,9 +217,7 @@ export default function AdminPilotAnalytics({
           <span>End date</span>
           <input type="date" value={endDate} disabled={isSaving} onChange={(event) => setEndDate(event.target.value)} min={startDate} />
         </label>
-        <button type="button" onClick={() => void loadAnalytics()} disabled={isLoading || isSaving || !venueId}>
-          {isLoading ? "Refreshing…" : "Refresh"}
-        </button>
+        <RefreshButton label="Refresh analytics" busy={isLoading} type="button" onClick={() => void loadAnalytics()} disabled={isLoading || isSaving || !venueId} />
       </div>
 
       {error ? <div className="pilot-error" role="alert">{error}</div> : null}

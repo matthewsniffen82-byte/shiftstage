@@ -21,9 +21,9 @@
       updateTabCounts(city);
       updateHomeLiveSummary(city);
       const expectsVenueProfile = activeTab === "venues" && Boolean(selectedVenueName);
-      const clubDirectoryRefresh = document.getElementById("clubDirectoryRefresh");
-      if (clubDirectoryRefresh) clubDirectoryRefresh.hidden = activeTab !== "venues" || expectsVenueProfile;
-      syncClubRefreshButtons();
+      const discoveryRefresh = document.getElementById("discoveryRefresh");
+      if (discoveryRefresh) discoveryRefresh.hidden = !["dancers", "venues"].includes(activeTab) || expectsVenueProfile;
+      syncDiscoveryRefreshButtons();
       document.body.classList.toggle("venue-full-view-open", expectsVenueProfile);
       results.classList.toggle("venue-profile-overlay", expectsVenueProfile);
       if (activeTab === "tv") {

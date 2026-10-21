@@ -44,6 +44,6 @@ test('heading cancels inherited mobile margins and reserves a stable refresh tou
 
 test('heading markup preserves the live count, named refresh control and credit link', () => {
   const route = read('app/embed/venues/[slug]/route.ts');
-  assert.match(route, /class="venue-embed-heading"><div><p id="venue-name">[\s\S]*?<h1 aria-live="polite">Working now <span id="venue-count" hidden><\/span><\/h1><\/div><button id="venue-refresh" type="button" aria-label="Refresh working dancers" title="Refresh">/);
+  assert.match(route, /class="venue-embed-heading"><div><p id="venue-name">[\s\S]*?<h1 aria-live="polite">Working now <span id="venue-count" hidden><\/span><\/h1><\/div><button id="venue-refresh" class="mydancr-refresh-button" type="button" aria-label="Refresh working dancers" title="Refresh working dancers">/);
   assert.match(route, /<a class="venue-embed-credit" href="https:\/\/www\.mydancr\.com"/);
 });

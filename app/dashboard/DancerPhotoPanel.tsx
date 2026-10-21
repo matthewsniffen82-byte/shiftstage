@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { useEffect, useRef, useState } from "react";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
@@ -589,7 +590,7 @@ export function DancerPhotoPanel({
                   {result ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
                     disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(result.id, data)} /> : null}
                   {item?.error ? <em>{item.error}</em> : null}
-                  {result?.status === "approved" ? <span className="photo-queue-actions"><em>Approved. Updating your library.</em><button type="button" disabled={photoActionBusy} onClick={() => void refreshPhotoLibrary()}>Refresh library</button></span> : <span className="photo-queue-actions">
+                  {result?.status === "approved" ? <span className="photo-queue-actions"><em>Approved. Updating your library.</em><RefreshButton label="Refresh photo library" busy={retrying} type="button" disabled={photoActionBusy} onClick={() => void refreshPhotoLibrary()} /></span> : <span className="photo-queue-actions">
                     {item?.error ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
                     <label className="media-review-replace">Replace<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" disabled={photoActionBusy} aria-label={`Replace photo ${selectionNumber}`} onChange={event => {
                       const file = event.target.files?.[0]; event.target.value = "";

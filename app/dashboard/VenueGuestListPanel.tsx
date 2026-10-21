@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DashboardDataRequestError, requestDashboardJson } from "./dashboard-session";
@@ -89,9 +90,7 @@ export default function VenueGuestListPanel({ refreshKey, active = true, timezon
       <h2 className="venue-icon-heading" id="venue-guest-list-heading"><VenueDashboardIcon section="guests" />Guest list
         <span className="venue-guest-count" aria-label={counts ? `${counts[status]} guests in this view` : "Guest count loading"}>{counts ? counts[status].toLocaleString() : "—"}</span>
       </h2>
-      <button className="venue-guest-refresh" type="button" aria-label="Refresh guest list" title="Refresh guest list" disabled={busy} onClick={() => void load()}>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 7v5h-5M20 12a8 8 0 1 0-2.3 5.7" /></svg>
-      </button>
+      <RefreshButton label="Refresh guest list" busy={busy} className="venue-guest-refresh" type="button" disabled={busy} onClick={() => void load()} />
     </header>
     <div className="venue-guest-toolbar">
       <div className="venue-guest-date-controls">

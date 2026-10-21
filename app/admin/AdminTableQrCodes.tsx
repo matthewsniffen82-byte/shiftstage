@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { isAdminAuthenticationError, requestAdminJson } from "./admin-session";
@@ -230,7 +231,7 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
   return <details className="admin-table-qr" onToggle={event => { if (event.currentTarget.open) setOpened(true); }}>
     <summary><strong>Table QR codes</strong>{links ? <span>{links.filter(code => code.active).length} active</span> : null}</summary>
     {opened ? <div className="admin-table-qr-body" aria-label={`${name} table QR codes`}>
-      <div className="admin-table-qr-heading"><h3>{name}</h3><button type="button" disabled={loading || busy} onClick={() => setRevision(value => value + 1)}>Refresh</button></div>
+      <div className="admin-table-qr-heading"><h3>{name}</h3><RefreshButton label="Refresh table QR codes" busy={loading} type="button" disabled={loading || busy} onClick={() => setRevision(value => value + 1)} /></div>
       {loading ? <p role="status">Loading table QR codes...</p> : null}
       {links ? <>
         <div className="admin-table-qr-mode" role="group" aria-label="Create table QR codes">

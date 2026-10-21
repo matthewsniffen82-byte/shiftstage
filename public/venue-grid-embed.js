@@ -183,12 +183,14 @@
         status.textContent = "This location’s roster is not connected yet.";
         status.hidden = false; more.hidden = true;
         refresh.disabled = more.disabled = false;
+        refresh.setAttribute("aria-busy", "false");
         showCount();
         results.setAttribute("aria-busy", "false");
         return;
       }
       busy = true;
       refresh.disabled = more.disabled = true;
+      refresh.setAttribute("aria-busy", "true");
       results.setAttribute("aria-busy", "true");
       if (!append) visit = root.crypto.randomUUID();
       const rows = append ? [...dancers] : [];
@@ -230,6 +232,7 @@
           status.hidden = !status.textContent;
           more.hidden = !nextCursor;
           refresh.disabled = more.disabled = false;
+          refresh.setAttribute("aria-busy", "false");
           results.setAttribute("aria-busy", "false");
           busy = false;
         }

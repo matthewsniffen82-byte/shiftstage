@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -1415,7 +1416,7 @@ function OperationsOverview({
   if (!operations) {
     return (
       <section className="operations-center" aria-live="polite">
-        <Panel title="Live operations" defaultOpen><p className="empty">Live operational data is temporarily unavailable. Use Tools to inspect the affected connection.</p><button type="button" onClick={onRefresh}>Refresh overview</button></Panel>
+        <Panel title="Live operations" defaultOpen><p className="empty">Live operational data is temporarily unavailable. Use Tools to inspect the affected connection.</p><RefreshButton label="Refresh overview" type="button" onClick={onRefresh} /></Panel>
       </section>
     );
   }
@@ -1526,7 +1527,7 @@ function OperationsOverview({
       </div>
       <div className="admin-overview-footer">
         <small className="data-freshness">Live data checked {relativeTime(operations.checkedAt)}.</small>
-        <button type="button" onClick={onRefresh}>Refresh overview</button>
+        <RefreshButton label="Refresh overview" type="button" onClick={onRefresh} />
       </div>
     </section>
   );
@@ -2113,9 +2114,7 @@ function ImageModerationQueue({
           <option value="review">Pending review</option>
           <option value="approved">Approved</option>
         </select>
-        <button type="button" onClick={() => loadQueue()} disabled={controlsBusy}>
-          {isLoading ? "Loading..." : "Refresh"}
-        </button>
+        <RefreshButton label="Refresh photo queue" busy={isLoading} type="button" onClick={() => loadQueue()} disabled={controlsBusy} />
       </div>
       {message ? <p>{message}</p> : null}
       <div className="image-moderation-list">
@@ -3263,7 +3262,7 @@ function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilte
       <label>Review<select value={filter} disabled={busy || refreshing} onChange={event => { setFilter(event.target.value as typeof filter); setSelectedKey(""); }}>
         {([["all", "All items"], ["application", "Applications"], ["photo", "Photos"], ["video", "Videos"], ["social", "Social links"]] as const).map(([id, label]) => <option key={id} value={id}>{label} · {items.filter(item => id === "all" || item.kind === id).length}</option>)}
       </select></label>
-      <button type="button" disabled={busy || refreshing} onClick={() => void refresh()}>{refreshing ? "Refreshing…" : "Refresh queue"}</button>
+      <RefreshButton label="Refresh approval queue" busy={refreshing} type="button" disabled={busy || refreshing} onClick={() => void refresh()} />
     </div>
     <p className="admin-info-note">AI moderation and required venue and verification checks still apply. Applications awaiting those checks remain pending.</p>
     {warnings.length ? <p role="alert">Some review sources are unavailable. Refresh to retry. {warnings.join(" ")}</p> : null}

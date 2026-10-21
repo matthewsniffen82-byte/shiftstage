@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import "../components/dashboard-header.css";
 
@@ -330,7 +331,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     <header className="dashboard-identity-header" data-account-kind="vip">
       <div className="dashboard-identity-back-row">
         <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
-        <button className="vip-refresh" type="button" disabled={disabled || loading} onClick={refresh}><VipIcon kind="refresh" /><span>{loading ? "Refreshing…" : "Refresh"}</span></button>
+        <RefreshButton label="Refresh VIP dashboard" busy={loading} className="vip-refresh" type="button" disabled={disabled || loading} onClick={refresh} />
       </div>
       <div className="dashboard-identity-row">
         <div className="dashboard-identity-avatar"><span className="vip-identity-mark" aria-hidden="true"><VipIcon kind="overview" /></span></div>
@@ -351,7 +352,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
     </nav>
     {status && <div className="vip-feedback vip-row" role="status"><span>{status}</span><button type="button" className="vip-dismiss" onClick={() => setStatus("")} aria-label="Dismiss confirmation">×</button></div>}
     {accountError && <p className="vip-feedback vip-error" role="alert">{accountError}</p>}
-    {error && <div className="vip-feedback vip-error" role="alert"><p>{error}</p><button type="button" disabled={disabled || loading} onClick={refresh}>Try refreshing</button></div>}
+    {error && <div className="vip-feedback vip-error" role="alert"><p>{error}</p><RefreshButton label="Refresh VIP dashboard" busy={loading} type="button" disabled={disabled || loading} onClick={refresh} /></div>}
     {loading && data && <p className="vip-updating" role="status">Updating your lounge…</p>}
     {VIP_DESTINATIONS.map(item => <section key={item.id} id={`vip-panel-${item.id}`} className="vip-destination" aria-label={item.label} hidden={view !== item.id}>
       {view === item.id && (view === "account" ? <div className="vip-account-grid">

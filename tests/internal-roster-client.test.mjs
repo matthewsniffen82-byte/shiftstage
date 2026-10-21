@@ -9,6 +9,10 @@ import * as guestTheme from "../src/lib/dancr/venue-guest-theme.ts";
 import { DEMO_TABLE_REQUEST_COUNT } from "../src/lib/dancr/venue-dashboard-demo.ts";
 
 const require = createRequire(import.meta.url);
+const refreshButtonModule = {};
+vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/components/RefreshButton.tsx', import.meta.url), 'utf8'), {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
+}).outputText, { exports: refreshButtonModule, require });
 const source = readFileSync(new URL("../app/internal/InternalRoster.tsx", import.meta.url), "utf8");
 const code = ts.transpileModule(`${source}\nexport { rosterFetch, ProtectedMedia };`, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
@@ -73,6 +77,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
     window,
     require(name) {
       if (name === "react/jsx-runtime") return require(name);
+      if (name === "../components/RefreshButton") return refreshButtonModule;
       if (name.endsWith(".css")) return {};
       if (name === "react") return {
         createContext: () => ({ Provider: "VenueProfileContext" }), useContext: () => sharedOpen,
@@ -153,7 +158,10 @@ const grid = app => find(app.render(), node => node.props?.className === "ir-gri
 const profile = app => find(app.render(), node => node.type?.name === "ClubProfileDialog")?.props.profile;
 const requestButton = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-table-request");
 const cardNotice = (app, id) => find(find(app.render(), node => node.type === "article" && node.key === id), node => node.props?.className === "ir-dancer-notice");
-const refreshButton = app => find(app.render(), node => node.props?.className === "ir-roster-refresh");
+const refreshButton = app => {
+  const node = find(app.render(), node => node.type === refreshButtonModule.default);
+  return node ? node.type(node.props) : undefined;
+};
 const refreshMessage = app => find(app.render(), node => node.props?.className === "ir-refresh-message")?.props.children;
 const textContent = tree => typeof tree === "string" || typeof tree === "number" ? String(tree)
   : Array.isArray(tree) ? tree.map(textContent).join("") : textContent(tree?.props?.children || "");

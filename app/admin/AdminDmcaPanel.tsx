@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { requestAdminJson } from "./admin-session";
@@ -211,7 +212,7 @@ export default function AdminDmcaPanel() {
     <div className="dmca-admin">
       <div className="dmca-admin-summary">
         <strong>{cases.length} cases shown</strong>
-        <button type="button" disabled={isLoading || Boolean(workingId)} onClick={() => void load({ refreshAgent: false, clearStatus: false })}>Refresh cases</button>
+        <RefreshButton label="Refresh cases" busy={isLoading} type="button" disabled={isLoading || Boolean(workingId)} onClick={() => void load({ refreshAgent: false, clearStatus: false })} />
       </div>
       {!agent.registeredWithCopyrightOffice ? (
         <p className="dmca-agent-warning">
@@ -222,7 +223,7 @@ export default function AdminDmcaPanel() {
 
       <details className="dmca-agent-settings">
         <summary>Copyright agent settings</summary>
-        <button type="button" disabled={isLoading || Boolean(workingId)} onClick={() => void load({ refreshAgent: true, clearStatus: false })}>Reload saved contact details</button>
+        <RefreshButton label="Reload saved contact details" busy={isLoading} type="button" disabled={isLoading || Boolean(workingId)} onClick={() => void load({ refreshAgent: true, clearStatus: false })}>Reload saved contact details</RefreshButton>
         <form key={agentFormVersion} onSubmit={saveAgent}>
           <label>Agent legal name<input name="legalName" defaultValue={agent.legalName || ""} required /></label>
           <label>Organization<input name="organization" defaultValue={agent.organization || ""} /></label>

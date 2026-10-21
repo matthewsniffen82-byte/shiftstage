@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { readSession, requestDashboardJson } from "./dashboard-session";
@@ -113,7 +114,7 @@ export default function VenueVipPanel({ refreshKey, active = true }: { refreshKe
   const counts = { requests: state?.requestCount, members: memberTotal, invitations: state?.invitations.length };
   return <div className="venue-vip">
     <div className="vip-row venue-vip-header"><h2 id="venue-vip-heading">VIP access</h2><div className="vip-actions">
-      <button type="button" className="venue-vip-refresh" aria-label="Refresh VIP access" disabled={busy || loading} onClick={() => { setError(""); void load(page, memberSearch, memberPage, pendingOnly); }}>{loading ? "Refreshing…" : "Refresh"}</button>
+      <RefreshButton label="Refresh VIP access" busy={loading} type="button" className="venue-vip-refresh" disabled={busy || loading} onClick={() => { setError(""); void load(page, memberSearch, memberPage, pendingOnly); }} />
       <button ref={inviteButton} type="button" className="vip-primary" aria-expanded={section === "invitations" && inviteOpen} aria-controls="venue-vip-invite-form" disabled={busy} onClick={openInvitation}>Invite guest</button>
     </div></div>
     <div className="venue-vip-tabs" role="tablist" aria-label="VIP access">

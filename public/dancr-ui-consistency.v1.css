@@ -2531,32 +2531,7 @@ html body.dancr-button-system:has(> .app) #results.venue-profile-overlay
     color: #fff !important;
   }
 }
-/* Club data refreshes on request; keep the control beside the list/roster title. */
-html body.dancr-button-system .club-refresh-button:not([hidden]) {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  min-height: 40px;
-  padding: 8px 12px !important;
-  border: 1px solid var(--venue-brand-edge, #4a365f) !important;
-  border-radius: 12px !important;
-  background: var(--venue-brand-surface, #100c17) !important;
-  color: #f5f3f8 !important;
-  font: inherit;
-  font-size: 13px !important;
-  font-weight: 650 !important;
-  line-height: 1.2;
-  box-shadow: none !important;
-  white-space: nowrap;
-  cursor: pointer;
-}
-html body.dancr-button-system .club-refresh-button[hidden] { display: none !important; }
-html body.dancr-button-system .club-refresh-button:disabled { opacity: .65; cursor: wait; }
-html body.dancr-button-system .club-refresh-button:focus-visible {
-  outline: 2px solid var(--venue-brand-light, #c4b5fd) !important;
-  outline-offset: 2px;
-}
+/* Discovery refresh stays beside the list/roster heading. */
 html body.dancr-button-system #results .venue-roster-heading {
   display: flex;
   align-items: center;
@@ -2565,13 +2540,56 @@ html body.dancr-button-system #results .venue-roster-heading {
   gap: 8px;
 }
 html body.dancr-button-system #results .venue-roster-heading > .section-title { margin-block: 0 !important; }
-html body.dancr-button-system .content-head:has(> #clubDirectoryRefresh:not([hidden])) {
-  display: flex !important;
+html body.dancr-button-system > .app main.stack > section.stack > .content-head:has(> #discoveryRefresh:not([hidden])) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto 44px !important;
   align-items: center !important;
-  flex-wrap: wrap !important;
   gap: 6px 10px !important;
 }
-html body.dancr-button-system .content-head:has(> #clubDirectoryRefresh:not([hidden])) > #tabTitle {
-  flex: 1 1 180px;
+html body.dancr-button-system > .app main.stack > section.stack > .content-head:has(> #discoveryRefresh:not([hidden])) > #tabTitle {
   min-width: 0;
+  white-space: normal !important;
 }
+html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
+
+/* Neutral refresh controls override legacy dashboard and club button skins. */
+@layer dancr-follow-controls {
+  body.dancr-button-system .mydancr-refresh-button {
+    -webkit-appearance: none !important; appearance: none !important;
+    box-sizing: border-box !important; display: inline-flex !important;
+    align-items: center !important; justify-content: center !important; gap: 8px !important;
+    flex: 0 0 auto !important; width: 44px !important; min-width: 44px !important; max-width: 44px !important;
+    height: 44px !important; min-height: 44px !important; max-height: none !important;
+    padding: 0 !important; border: 1px solid #52525b !important; border-radius: 12px !important;
+    color: #e4e4e7 !important; background: #27272a linear-gradient(#27272a, #27272a) !important;
+    box-shadow: none !important; text-shadow: none !important; filter: none !important; transform: none !important;
+    font: inherit; font-size: 13px !important; font-weight: 600 !important; line-height: 1.3 !important;
+    letter-spacing: normal !important; text-transform: none !important; cursor: pointer;
+  }
+  body.dancr-button-system .mydancr-refresh-button.has-label {
+    width: auto !important; max-width: 100% !important; height: auto !important; padding: 10px 12px !important;
+  }
+  body.dancr-button-system .mydancr-refresh-button::before,
+  body.dancr-button-system .mydancr-refresh-button::after { content: none !important; }
+  body.dancr-button-system .mydancr-refresh-button[hidden] { display: none !important; }
+  body.dancr-button-system .mydancr-refresh-button > svg {
+    display: block !important; width: 20px !important; height: 20px !important; flex: 0 0 20px !important;
+    color: inherit !important; fill: none !important; stroke: currentColor !important;
+    filter: none !important; animation: none !important;
+  }
+  body.dancr-button-system .mydancr-refresh-button > svg path { stroke: currentColor !important; }
+  body.dancr-button-system .mydancr-refresh-button:focus-visible {
+    outline: 2px solid #d4d4d8 !important; outline-offset: 3px !important;
+  }
+  body.dancr-button-system .mydancr-refresh-button:disabled { opacity: .6 !important; cursor: default; }
+  body.dancr-button-system .mydancr-refresh-button[aria-busy="true"] { cursor: wait; }
+  body.dancr-button-system .mydancr-refresh-button[aria-busy="true"] > svg { animation: mydancr-refresh-spin .9s linear infinite !important; }
+  @media (hover: hover) {
+    body.dancr-button-system .mydancr-refresh-button:enabled:hover { background: #3f3f46 !important; border-color: #a1a1aa !important; }
+  }
+  body.dancr-button-system .mydancr-refresh-button:enabled:active { background: #18181b !important; }
+  @media (prefers-reduced-motion: reduce) {
+    body.dancr-button-system .mydancr-refresh-button[aria-busy="true"] > svg { animation: none !important; }
+  }
+}
+@keyframes mydancr-refresh-spin { to { transform: rotate(360deg); } }

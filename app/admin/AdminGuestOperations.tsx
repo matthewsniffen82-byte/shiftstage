@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import dynamic from "next/dynamic";
@@ -94,7 +95,7 @@ export default function AdminGuestOperations({ venues, onActionConfirmed, initia
   const busy = loading || saving;
   return <section className="admin-guest-operations" aria-labelledby="admin-guest-title">
     <header><div><span className="eyebrow">Guest operations</span><h2 id="admin-guest-title">VIP, guests & club results</h2></div>
-      <button type="button" disabled={!venueId || busy} onClick={() => void load()}>{loading ? "Loading…" : "Refresh"}</button></header>
+      <RefreshButton label="Refresh guest operations" busy={loading} type="button" disabled={!venueId || busy} onClick={() => void load()} /></header>
     <label className="admin-guest-venue">Club<select value={venueId} disabled={saving} onChange={event => { setVenueId(event.target.value); setOffset(0); }}>
       <option value="">Choose a club</option>{venues.map(venue => <option key={String(venue.id)} value={String(venue.id)}>{String(venue.name || "Club")}{venue.is_active === false ? " · inactive" : ""}</option>)}
     </select></label>

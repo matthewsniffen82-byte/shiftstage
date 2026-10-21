@@ -713,44 +713,48 @@
     if (initialHomeDestinationRequested) {
       focusHomeResults();
     }
-    function clubRefreshButtonMarkup() {
-      return `<button class="club-refresh-button" type="button" data-club-refresh aria-busy="${clubRefreshPending}"${clubRefreshPending ? " disabled" : ""}>${clubRefreshPending ? "Refreshing…" : "Refresh"}</button>`;
+    function discoveryRefreshButtonMarkup() {
+      return `<button class="mydancr-refresh-button" type="button" data-discovery-refresh aria-label="Refresh clubs" title="Refresh clubs" aria-busy="${discoveryRefreshPending}"${discoveryRefreshPending ? " disabled" : ""}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.8L21 8"></path><path d="M21 3v5h-5"></path></svg></button>`;
     }
 
-    function syncClubRefreshButtons() {
-      document.querySelectorAll("[data-club-refresh]").forEach((button) => {
-        button.disabled = clubRefreshPending;
-        button.setAttribute("aria-busy", String(clubRefreshPending));
-        button.textContent = clubRefreshPending ? "Refreshing…" : "Refresh";
+    function syncDiscoveryRefreshButtons() {
+      document.querySelectorAll("[data-discovery-refresh]").forEach((button) => {
+        const label = button.id === "discoveryRefresh" && activeTab === "dancers" ? "Refresh dancers" : "Refresh clubs";
+        button.disabled = discoveryRefreshPending;
+        button.setAttribute("aria-busy", String(discoveryRefreshPending));
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
       });
     }
 
-    async function refreshClubsManually() {
-      if (clubRefreshPending) return;
+    async function refreshDiscoveryManually() {
+      if (internalProfileFrameId || discoveryRefreshPending || !["dancers", "venues"].includes(activeTab)) return;
       const city = citySelect.value;
+      const tab = activeTab;
+      const subject = tab === "dancers" ? "dancers" : "clubs";
       if (liveDiscoveryIsLoading(city) || liveMarketRefreshes.has(city)) {
-        showToast("Clubs are already loading. Please wait a moment.");
+        showToast(`${tab === "dancers" ? "Dancers" : "Clubs"} are already loading. Please wait a moment.`);
         return;
       }
-      clubRefreshPending = true;
-      syncClubRefreshButtons();
+      discoveryRefreshPending = true;
+      syncDiscoveryRefreshButtons();
       try {
         const refreshed = await refreshVisibleHomeDiscovery({ bypassCache: true });
-        if (citySelect.value === city && activeTab === "venues") {
-          showToast(refreshed ? "Club information refreshed" : "Could not refresh clubs. Please try again.");
+        if (citySelect.value === city && activeTab === tab) {
+          showToast(refreshed ? (tab === "dancers" ? "Dancers refreshed" : "Club information refreshed") : `Could not refresh ${subject}. Please try again.`);
         }
       } catch {
-        showToast("Could not refresh clubs. Please try again.");
+        if (citySelect.value === city && activeTab === tab) showToast(`Could not refresh ${subject}. Please try again.`);
       } finally {
-        clubRefreshPending = false;
-        syncClubRefreshButtons();
+        discoveryRefreshPending = false;
+        syncDiscoveryRefreshButtons();
       }
     }
 
     document.addEventListener("click", (event) => {
-      if (!event.target.closest("[data-club-refresh]")) return;
+      if (!event.target.closest("[data-discovery-refresh]")) return;
       event.preventDefault();
-      void refreshClubsManually();
+      void refreshDiscoveryManually();
     });
 
     async function refreshVisibleHomeDiscovery({ bypassCache = false, automatic = false } = {}) {

@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { useEffect, useRef, useState } from "react";
 import NfcIcon from "../components/NfcIcon";
@@ -174,9 +175,7 @@ export default function DancerNfcPanel({
           {visibilitySummary}
           {affiliationRoster}
           {checkInDetails}
-          <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
-            {pendingId === "refresh" ? "Refreshing…" : "Refresh access"}
-          </button>
+          <RefreshButton label="Refresh check-in access" busy={pendingId === "refresh"} className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh} />
           {status ? <p className="dancer-nfc-status" role="status">{status}</p> : null}
         </div>
         <style>{DANCER_NFC_STYLE}</style>
@@ -210,9 +209,9 @@ export default function DancerNfcPanel({
         {visibilitySummary}
         {affiliationRoster}
         {checkInDetails}
-        <button className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
+        <RefreshButton label="Check activation status" busy={pendingId === "refresh"} className="dancer-nfc-refresh" type="button" disabled={Boolean(pendingId)} onClick={refresh}>
           {pendingId === "refresh" ? "Checking…" : "Check activation status"}
-        </button>
+        </RefreshButton>
         {status ? <p className="dancer-nfc-status" role="status">{status}</p> : null}
       </div>
       <style>{DANCER_NFC_STYLE}</style>

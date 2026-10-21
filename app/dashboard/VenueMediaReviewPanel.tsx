@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
@@ -58,7 +59,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   return <section className="venue-media-review" id="venue-media-reviews" aria-labelledby="venue-media-review-title" aria-busy={busy || loading}>
     <header><div><h2 id="venue-media-review-title">Media approvals{count !== null ? ` · ${count}` : ""}</h2>
       <p>Review your dancers’ photos and videos before they appear on the site. New dancers join this queue after their NFC tap.</p></div>
-      <button type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }}>Refresh</button></header>
+      <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
     {message ? <p role="status">{message}</p> : null}
     {loading ? <p role="status">Updating media reviews…</p> : !items.length ? <p>{count ? "No uploads on this page. Go back to see pending media." : "No media waiting for approval."}</p> : null}
     <div className="venue-media-review-grid">

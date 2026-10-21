@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
@@ -57,7 +58,7 @@ function Inbox({ role }: { role: "venue" | "admin" }) {
   return <section className="pickup-card pickup-inbox">
     <VenueAdminUtilities />
     <Link href={role === "admin" ? "/admin" : "/dashboard/venue"}>‹ Dashboard</Link>
-    <header className="pickup-inbox-heading"><h1>Pickup requests</h1><button onClick={() => setRevision(value => value + 1)} disabled={loading}>Refresh</button></header>
+    <header className="pickup-inbox-heading"><h1>Pickup requests</h1><RefreshButton label="Refresh ride requests" busy={loading} onClick={() => setRevision(value => value + 1)} disabled={loading} /></header>
     <p>Call or email guests to arrange and confirm pickup.</p>
     <div className="pickup-period" role="group" aria-label="Pickup period (UTC)">{[["all", "All"], ["today", "Today"], ["7", "7 days"], ["30", "30 days"], ["custom", "Custom"]].map(([value, title]) => <button key={value} type="button" aria-pressed={period === value} disabled={loading} onClick={() => selectPeriod(value)}>{title}</button>)}</div>
     <div className="pickup-filters">

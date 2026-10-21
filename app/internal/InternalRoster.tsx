@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { venueGuestTheme } from "@/src/lib/dancr/venue-guest-theme";
@@ -445,11 +446,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
           <h2>On the floor</h2>
           <div className="ir-roster-controls">
             <span className="ir-live">● {snapshot.dancers.length} {staff ? "checked in" : "available"}</span>
-            {!staff ? <button type="button" className="ir-roster-refresh" aria-label="Refresh dancers and requests" title="Refresh dancers and requests" aria-busy={refreshing} disabled={refreshing} onClick={() => refreshNow.current(true)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.8L21 8" /><path d="M21 3v5h-5" />
-              </svg>
-            </button> : null}
+            {!staff ? <RefreshButton label="Refresh dancers and requests" busy={refreshing} type="button" className="ir-roster-refresh" disabled={refreshing} onClick={() => refreshNow.current(true)} /> : null}
           </div>
         </div>
         {!staff ? <p className="ir-roster-scope-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p> : null}

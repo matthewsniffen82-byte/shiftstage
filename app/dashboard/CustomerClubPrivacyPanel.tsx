@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { readSession, requestDashboardJson } from "./dashboard-session";
 import { CLUB_PRIVACY_CHANGED_EVENT, type CustomerClubPrivacy } from "@/src/lib/dancr/customer-club-privacy";
@@ -65,7 +66,7 @@ export default function CustomerClubPrivacyPanel({ accountId }: { accountId: str
     {open ? <div className="customer-privacy-content">
       <p>Manage shared contact details and updates from each club. Following a club does not subscribe you to emails or texts.</p>
       {busy ? <p role="status">Updating preferences…</p> : null}
-      {error ? <div role="alert"><p>{error}</p><button type="button" disabled={busy} onClick={() => void load()}>Reload preferences</button></div> : null}
+      {error ? <div role="alert"><p>{error}</p><RefreshButton label="Reload preferences" busy={busy} type="button" disabled={busy} onClick={() => void load()}>Reload preferences</RefreshButton></div> : null}
       {status ? <p role="status">{status}</p> : null}
       {loaded ? <>
         <p className="customer-privacy-note">{email ? `Includes email updates for ${email} and preferences linked to this account.` : "Verify your account email to see matching email subscriptions. Linked preferences appear below."}</p>

@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent, type ReactNode } from "react";
 import Link from "next/link";
@@ -755,9 +756,9 @@ function DancerSetupPanel({
             <button className="dancer-profile-save-action primary-action" data-action-state={saveStatus === "saved" ? "success" : saveStatus} aria-busy={saveStatus === "saving"} type="submit" disabled={saveStatus === "saving" || (field !== "stageName" && cityOptionsStatus !== "ready")}>
               {saveStatus === "saving" ? "Saving…" : saveStatus === "saved" ? "✓ Saved" : "Save profile"}
             </button>
-            <button aria-label="Reload saved profile" className="dancer-profile-reload-action" type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
+            <RefreshButton label="Reload saved profile" busy={isResetting} className="dancer-profile-reload-action" type="button" onClick={hardResetProfile} disabled={isResetting || saveStatus === "saving"}>
               {isResetting ? "Reloading..." : "Reload saved"}
-            </button>
+            </RefreshButton>
           </div>
         )}
         {visibleStatus ? (

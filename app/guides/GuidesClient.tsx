@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -101,7 +102,7 @@ export default function GuidesClient() {
     <nav className="guides-topline" aria-label="Page navigation"><Link href={back}>‹ Back to MyDancr</Link><span>TEAM TRAINING</span></nav>
     <header className="guides-heading"><p className="guides-kicker">GET STARTED WITH CONFIDENCE</p><h1>Your role. Your guide.</h1><p>Choose your onboarding guide for training. Keep the one-page cheat sheet handy during your shift.</p></header>
     <section className="guides-access" aria-label="Download access" aria-busy={loading}>
-      {loading ? <p role="status">Checking your guide access…</p> : catalog ? <><p>{catalog.venueName ? `Guides for ${catalog.venueName}` : "Your guide access is ready."}</p><button type="button" onClick={() => void load()} disabled={Boolean(busy)}>Refresh access</button></> : <><p>Sign in to download the guides for your role, then return here.</p><div className="guides-signin"><Link href="/account?role=dancer&mode=login&return_to=%2Fguides">Dancer sign in</Link><Link href="/?venueAccess=1&venueMode=login&return_to=%2Fguides">Club sign in</Link><Link href="/admin">Platform admin</Link><button type="button" onClick={() => void load()}>Check access again</button></div></>}
+      {loading ? <p role="status">Checking your guide access…</p> : catalog ? <><p>{catalog.venueName ? `Guides for ${catalog.venueName}` : "Your guide access is ready."}</p><RefreshButton label="Refresh guide access" busy={loading} type="button" onClick={() => void load()} disabled={Boolean(busy)} /></> : <><p>Sign in to download the guides for your role, then return here.</p><div className="guides-signin"><Link href="/account?role=dancer&mode=login&return_to=%2Fguides">Dancer sign in</Link><Link href="/?venueAccess=1&venueMode=login&return_to=%2Fguides">Club sign in</Link><Link href="/admin">Platform admin</Link><button type="button" onClick={() => void load()}>Check access again</button></div></>}
       {error ? <p className="guides-error" role="alert">{error}</p> : null}
       {catalog && !catalog.documents.length ? <p>Your account has no guide downloads. Club owners and managers can provide staff training; contact your club owner if your access is incorrect.</p> : null}
     </section>

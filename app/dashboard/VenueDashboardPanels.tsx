@@ -1,4 +1,5 @@
 "use client";
+import RefreshButton from "../components/RefreshButton";
 import VenueNotificationSettings from "./VenueNotificationSettings";
 import { VenueProfileProvider } from "../internal/InternalRoster";
 import VenueWebsiteGrid from "./VenueWebsiteGrid";
@@ -322,7 +323,7 @@ export function VenuePanel({
           </div>
           <div className="venue-refresh-control">
             <small>{refreshedAt ? `Updated ${formatRelativeDashboardTime(refreshedAt)}` : "Live data loading"}</small>
-            <button type="button" disabled={isRefreshing} onClick={onRefresh}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
+            <RefreshButton label="Refresh venue dashboard" busy={isRefreshing} type="button" disabled={isRefreshing} onClick={onRefresh} />
           </div>
         </div>
         {activeWorkspace === "roster" && permissions.includes("view_roster") && <Link className="venue-internal-roster-link" href="/internal" prefetch={false}>View internal <span aria-hidden="true">→</span></Link>}
