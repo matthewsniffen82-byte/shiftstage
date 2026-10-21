@@ -70,6 +70,10 @@
     border-color: var(--dancr-color-border) !important;
     box-shadow: none !important;
   }
+  /* The venue information frame uses the same neutral edge as other cards. */
+  html body.dancr-button-system :where(.venue-detail[role="dialog"] > .venue-hero) {
+    border-color: var(--dancr-color-border) !important;
+  }
   html body.dancr-button-system
     :where(.home-dancer-grid-name, .profile-modal-name-row h2, .profile-titlebar h1, .home-tv-feed-name, .tv-card-name) {
     color: var(--dancr-color-text-primary) !important;
