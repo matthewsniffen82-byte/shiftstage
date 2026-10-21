@@ -2606,6 +2606,24 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
   }
 }
 @keyframes mydancr-refresh-spin { to { transform: rotate(360deg); } }
+/* Location pins echo the hero beam with a crisp violet stroke. Club-branded
+ * cards and Internal / embedded profiles retain their existing icon colors. */
+@layer dancr-follow-controls {
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :is(#citySelectButton > .city-picker-trigger-icon, .home-city-select-icon,
+      .venue-dot, .venue-dot svg, .profile-modal-city-icon, .profile-city svg,
+      .profile-venue-pin, [data-action-icon="pin"], [data-action-icon="pin"] svg,
+      .profile-media-venue svg, .home-tv-feed-venue svg, .tv-card-venue-line svg):not(:where(
+        .ir-shell *, .venue-embed-profile-page *,
+        [data-venue-brand*="rhino" i], [data-venue-brand*="rhino" i] *,
+        [data-venue-brand="talk-of-the-town"], [data-venue-brand="talk-of-the-town"] *)) {
+    color: var(--dancr-color-icon-location) !important;
+    stroke: currentColor !important;
+    filter: none !important;
+    box-shadow: none !important;
+  }
+}
+
 /* Extend the sharing palette only to MyDancr-owned surfaces.
  * Branded roots and their descendants are excluded, including portal dialogs on
  * Internal / embedded club pages. Opt-in targets preserve gray controls, primary
