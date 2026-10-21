@@ -84,6 +84,7 @@ function browserFixture({ grid = false } = {}) {
     await value.callback();
   }
   return { card, video, document, window, requests, runCheck,
+    addCard: dancerId => { const added = { ...card, dataset: { publicDancerId: dancerId }, hidden: false }; cards.push(added); return added; },
     removeCard: () => { cards = []; }, mutate: () => mutationCallback(),
     respond: callback => { fetchResponse = callback; },
     save: isPublic => window.dispatchEvent(new CustomEvent('mydancr:dancer-visibility-saved', { detail: { dancerId: id, isPublic } })),
@@ -218,4 +219,80 @@ for (const status of [401, 403]) test(`confirmed access loss (${status}) still h
   f.respond(async () => Response.json({ ok: false }, { status }));
   await f.runCheck();
   assert.equal(f.card.hidden, true);
+});
+
+test('a restored dancer refreshes the grid in place and stays hidden until fresh media arrives', async () => {
+  const f = browserFixture({ grid: true });
+  f.respond(async () => Response.json({ ok: true, visibleIds: [] }));
+  await f.runCheck();
+  const fresh = Promise.withResolvers();
+  f.window.__dancrRefreshPublicGrid = () => fresh.promise;
+  f.respond(async () => Response.json({ ok: true, visibleIds: [id] }));
+  const check = f.runCheck();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(f.card.hidden, true, 'the pre-incognito card must remain hidden');
+  assert.equal(f.window.location.reloads, 0);
+  fresh.resolve([id]);
+  await check;
+  assert.equal(f.card.hidden, false);
+  assert.equal(f.window.location.reloads, 0);
+});
+
+test('failed grid restoration retries without reloading or exposing old content', async () => {
+  const f = browserFixture({ grid: true });
+  f.save(false);
+  f.respond(async () => Response.json({ ok: true, visibleIds: [id] }));
+  f.window.__dancrRefreshPublicGrid = async () => false;
+  await f.runCheck();
+  assert.equal(f.card.hidden, true);
+  assert.equal(f.window.location.reloads, 0);
+  f.window.__dancrRefreshPublicGrid = async () => [id];
+  await f.runCheck();
+  assert.equal(f.card.hidden, false);
+});
+
+test('another incognito toggle wins over an in-flight grid restoration', async () => {
+  const f = browserFixture({ grid: true });
+  f.save(false);
+  f.respond(async () => Response.json({ ok: true, visibleIds: [id] }));
+  const fresh = Promise.withResolvers();
+  f.window.__dancrRefreshPublicGrid = () => fresh.promise;
+  const check = f.runCheck();
+  await new Promise(resolve => setImmediate(resolve));
+  f.save(false);
+  fresh.resolve([id]);
+  await check;
+  assert.equal(f.card.hidden, true);
+  assert.equal(f.window.location.reloads, 0);
+});
+
+test('a restored dancer outside the refreshed filter does not cause endless city refreshes', async () => {
+  const f = browserFixture({ grid: true });
+  f.save(false);
+  f.respond(async () => Response.json({ ok: true, visibleIds: [id] }));
+  let refreshes = 0;
+  f.window.__dancrRefreshPublicGrid = async () => { refreshes++; f.removeCard(); return []; };
+  await f.runCheck();
+  await f.runCheck();
+  assert.equal(refreshes, 1);
+  assert.equal(f.window.location.reloads, 0);
+});
+
+test('confirmed removals apply immediately even while another dancer restoration is stalled', async () => {
+  const f = browserFixture({ grid: true });
+  const otherCard = f.addCard(other);
+  f.respond(async () => Response.json({ ok: true, visibleIds: [other] }));
+  await f.runCheck();
+  assert.equal(otherCard.hidden, false);
+  const fresh = Promise.withResolvers();
+  f.window.__dancrRefreshPublicGrid = () => fresh.promise;
+  f.respond(async () => Response.json({ ok: true, visibleIds: [id] }));
+  const check = f.runCheck();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(otherCard.hidden, true);
+  fresh.resolve(false);
+  await check;
+  assert.equal(f.card.hidden, true);
+  assert.equal(otherCard.hidden, true);
+  assert.equal(f.window.location.reloads, 0);
 });

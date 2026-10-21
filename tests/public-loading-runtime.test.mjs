@@ -202,6 +202,24 @@ function pagedDiscoveryFixture() {
 const nextPage = () => new Promise(resolve => setImmediate(resolve));
 const dancerRows = (start, count) => Array.from({ length: count }, (_, index) => ({ id: `dancer-${start + index}` }));
 
+for (const force of [false, true]) test(`invalidating a loaded grid keeps cards visible while revalidating (force=${force})`, async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  ctx.activeTab = 'dancers';
+  let request = ctx.loadLiveDiscovery('Vegas');
+  requests[0].resolve({ dancers: dancerRows(0, 10), nextCursor: null });
+  await request;
+  const original = ctx.markets.Vegas.dancers;
+  ctx.liveMarketState.Vegas = null;
+  request = ctx.loadLiveDiscovery('Vegas', { force, background: true });
+  assert.equal(ctx.liveMarketState.Vegas, 'ready');
+  assert.equal(ctx.markets.Vegas.dancers, original);
+  assert.equal(ctx.liveMarketRefreshes.has('Vegas'), true);
+  requests[1].reject(new Error('offline'));
+  await request;
+  assert.equal(ctx.liveMarketState.Vegas, 'ready');
+  assert.equal(ctx.markets.Vegas.dancers, original);
+});
+
 test("opening a club requests only its working roster and preserves visible city cards until it arrives", async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
   let request = ctx.loadLiveDiscovery("Vegas");

@@ -31,7 +31,7 @@ function fixture(load = async () => true) {
     refreshBrowserAccountView: () => false, renderCustomerQuickActions() {},
     consumePublicDiscoveryRefreshRequest() {}, syncDeviceSavedDealPasses() {}, isCustomerSession: () => false,
   });
-  for (const name of ['discoveryRefreshButtonMarkup', 'syncDiscoveryRefreshButtons', 'refreshDiscoveryManually', 'refreshVisibleHomeDiscovery']) {
+  for (const name of ['discoveryRefreshButtonMarkup', 'syncDiscoveryRefreshButtons', 'refreshDiscoveryManually', 'refreshVisibleHomeDiscovery', 'refreshRestoredPublicGrid']) {
     vm.runInContext(extract(source, name), context);
   }
   const eventsStart = source.indexOf('    window.setInterval(() => { void refreshVisibleHomeDiscovery(');
@@ -78,6 +78,24 @@ test('failed refreshes offer a retry and never announce success', async () => {
     assert.deepEqual(notices, ['Could not refresh clubs. Please try again.']);
     assert.ok(buttons.every(button => !button.disabled));
     assert.equal(context.discoveryRefreshPending, false);
+  }
+});
+
+test('visibility restoration only releases rows confirmed by a completed refresh of the same grid', async () => {
+  for (const changed of ['none', 'city', 'filter', 'failed']) {
+    const deferred = Promise.withResolvers();
+    const { context } = fixture(() => deferred.promise);
+    context.activeTab = 'dancers';
+    let scope = 'now';
+    context.discoveryRequestScope = () => ({ key: scope });
+    context.discoveryMarket = () => ({ pagination: { dancers: [{ id: 'fresh' }] } });
+    const request = context.refreshRestoredPublicGrid();
+    if (changed === 'city') context.citySelect.value = 'Miami';
+    if (changed === 'filter') scope = 'not_now';
+    deferred.resolve(changed !== 'failed');
+    const result = await request;
+    if (changed === 'none') assert.deepEqual(Array.from(result), ['fresh']);
+    else assert.equal(result, false);
   }
 });
 

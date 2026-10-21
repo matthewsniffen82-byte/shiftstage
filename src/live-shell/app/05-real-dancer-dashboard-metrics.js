@@ -740,16 +740,21 @@
       // A club can reuse its visible cards from the city directory while its
       // smaller, club-only roster is fetched. Never blank them on entry.
       const keepVenueResults = activeTab === "venues" && selectedVenueName && city === citySelect.value;
-      const keepCurrentResults = liveMarketState[city] === "ready" && (!scopeChanged || keepVenueResults);
+      const hasLoadedResults = liveMarketState[city] === "ready" || Boolean(previous?.pageCount)
+        || Boolean(market.dancers?.length || market.venues?.length);
+      const keepCurrentResults = hasLoadedResults && (!scopeChanged || keepVenueResults);
       const background = Boolean(options.background && keepCurrentResults);
       if (more && !previous?.nextCursor) return;
       if (liveMarketState[city] === "loading" || liveMarketRefreshes.has(city)) {
         if (options.force && options.cacheBust !== false || market.requestScopeKey !== requestedScope.key) liveMarketPendingRefreshes.add(city);
         return;
       }
-      if (!more && !force && keepCurrentResults) return;
+      if (!more && !force && keepCurrentResults && liveMarketState[city] === "ready") return;
       market.requestScopeKey = requestedScope.key;
-      if (keepCurrentResults) liveMarketRefreshes.add(city);
+      if (keepCurrentResults) {
+        liveMarketState[city] = "ready";
+        liveMarketRefreshes.add(city);
+      }
       else liveMarketState[city] = "loading";
       if (scopeChanged && !keepVenueResults) market.dancers = [];
       if (previous) { previous.loading = more; previous.error = false; }

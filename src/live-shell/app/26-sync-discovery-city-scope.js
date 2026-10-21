@@ -762,6 +762,17 @@
       if (automatic && activeTab === "venues") return;
       return loadLiveDiscovery(citySelect.value, { force: true, cacheBust: bypassCache, background: true });
     }
+    // The visibility watcher can restore a dancer using fresh directory data
+    // without reloading the page or revealing their old, pre-incognito media.
+    async function refreshRestoredPublicGrid() {
+      if (internalProfileFrameId || !["dancers", "venues"].includes(activeTab)) return null;
+      const city = citySelect.value;
+      const scope = discoveryRequestScope(city).key;
+      const refreshed = await refreshVisibleHomeDiscovery({ bypassCache: true });
+      if (!refreshed || citySelect.value !== city || discoveryRequestScope(city).key !== scope) return false;
+      return (discoveryMarket(city)?.pagination?.dancers || []).map(dancer => dancer.id);
+    }
+    window.__dancrRefreshPublicGrid = refreshRestoredPublicGrid;
     window.setInterval(() => { void refreshVisibleHomeDiscovery({ automatic: true }); }, HOME_DISCOVERY_REFRESH_MS);
     window.addEventListener("mydancr:public-visibility", (event) => {
       const hiddenIds = event.detail?.hiddenIds || [];

@@ -97,12 +97,13 @@ test('early repeated asset failures wait for the body before offering manual rec
   assert.ok(f.nodes.has('dancrShellRecovery'));
 });
 
-test('browser history and foreground restores check a fresh release without constant polling', async () => {
+test('a new deployment never reloads an already loaded page on browser history or foreground return', async () => {
   const f = fixture();
   await f.emit('pageshow', { persisted: false });
   assert.equal(f.requests.length, 0);
   await f.emit('pageshow', { persisted: true });
-  assert.equal(f.navigations.length, 1);
+  assert.equal(f.navigations.length, 0);
+  assert.equal(f.window.__dancrShellUpdateAvailable, 'new-release');
   assert.equal(f.requests[0].url, '/');
   assert.equal(f.requests[0].options.method, 'HEAD');
   assert.equal(f.requests[0].options.cache, 'no-store');
@@ -110,6 +111,12 @@ test('browser history and foreground restores check a fresh release without cons
   await f.emit('visibilitychange', {}, true);
   assert.equal(f.requests.length, 1);
   assert.equal(f.timers.size, 0);
+  f.advance();
+  await f.emit('visibilitychange', {}, true);
+  f.advance();
+  await f.emit('online');
+  assert.equal(f.requests.length, 3);
+  assert.equal(f.navigations.length, 0, 'subsequent checks must also keep the page in place');
 });
 
 test('unchanged releases, lock pages and transient network errors do not reload a usable page', async () => {

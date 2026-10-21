@@ -124,14 +124,39 @@
           apply();
           continue;
         }
-        if (batch.some(id => visible.has(id) && unpublished.has(id))) {
-          // Read the current page again instead of exposing an old snapshot:
-          // the dancer may have edited or removed media while incognito.
-          window.location.reload();
-          return;
+        // Apply confirmed removals before waiting for any restored dancer's
+        // replacement data, which may be slow or unavailable.
+        batch.forEach(id => {
+          if (visible.has(id)) return;
+          unpublished.add(id);
+          if (states.get(id) !== false) hiddenIds.push(id);
+          needsRecheck.delete(id);
+          states.set(id, false);
+        });
+        apply();
+        const returningIds = batch.filter(id => visible.has(id) && unpublished.has(id));
+        if (returningIds.length) {
+          let freshIds = null;
+          try { freshIds = await window.__dancrRefreshPublicGrid?.(); }
+          catch { freshIds = false; }
+          if (generation !== version) return;
+          if (freshIds == null) {
+            // Standalone profiles still need a fresh full profile. Homepage
+            // grids instead publish fresh rows while keeping everyone else visible.
+            window.location.reload();
+            return;
+          }
+          if (freshIds !== false) returningIds.forEach(id => {
+            if (freshIds.includes(id)) unpublished.delete(id);
+            // A fresh directory can confirm that this dancer is outside the
+            // current filter. Don't refetch the whole city every five seconds.
+            else watched.delete(id);
+          });
         }
         batch.forEach(id => {
           const next = visible.has(id);
+          // A failed or superseded grid read cannot reveal pre-incognito media.
+          if (next && unpublished.has(id)) return;
           if (confirmed && !next) unpublished.add(id);
           if (!next && states.get(id) !== false) hiddenIds.push(id);
           if (next && states.get(id) === false) restoredIds.push(id);

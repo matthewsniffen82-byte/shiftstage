@@ -65,7 +65,9 @@ function installLiveShellRecovery(version, recover) {
         method: 'HEAD', cache: 'no-store', credentials: 'same-origin', signal: controller.signal,
       });
       const current = response.headers.get('x-dancr-shell-release');
-      if (response.ok && current && current !== version) recover();
+      // A new deployment does not make an already working page unusable.
+      // Pick it up on the next navigation instead of erasing a loaded grid.
+      if (response.ok && current && current !== version) window.__dancrShellUpdateAvailable = current;
     } catch {
       // A temporary network failure must not discard an otherwise usable page.
     } finally {
