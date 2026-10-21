@@ -6,7 +6,6 @@ import dynamic from "next/dynamic";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { publishDancerVisibility } from "@/src/lib/dancr/publish-dancer-visibility";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
-import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import { DancerDashboardIcon } from "./DancerDashboardIdentity";
 import { readSession, requestDancerProfileJson, requestDancerProfileVisibilityJson } from "./dashboard-session";
 import type { LoadState, DancerPhotoItem, DancerIdentityDraft, DancerProfileEditorSaveRequest } from "./dashboard-types";
@@ -19,7 +18,6 @@ import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerOnboardingCommand } from "./DancerProfileEditor";
 import DancerProfileWorkspace from "./DancerProfileWorkspace";
 import DancerDashboardWorkspace from "./DancerDashboardWorkspace";
-import DashboardPhoneNotifications from "./DashboardPhoneNotifications";
 import "./dancer-visibility-sharing.css";
 // Keep role-specific tools out of every customer's initial JavaScript. Editors
 // load when mounted; the visible role's core tools warm while its data loads.
@@ -54,9 +52,6 @@ export function DancerPanel({
   const effectiveStatus = effectiveDancerProfileStatus(profile, accountState);
   const isApproved = effectiveStatus === "approved";
   const agreementReviewRequired = agreement?.required === true && !agreement.accepted;
-  useEffect(() => {
-    if (!isApproved || agreementReviewRequired) offerPushNotifications("dancer-dashboard");
-  }, [isApproved, agreementReviewRequired]);
   const isPublic = isApproved && profile?.is_public !== false && profile?.isPublic !== false;
   const isVenueApproved = Boolean(profile?.venue_approved_at || profile?.venueApprovedAt)
     || affiliations.some((item) => item.status === "active");
@@ -183,7 +178,6 @@ export function DancerPanel({
       {accountContent}
     </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested}
       overview={<>
-        <DashboardPhoneNotifications />
         <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager onPresenceChange={handlePresenceChange} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
         <section className="dancer-daily-card" id="dancer-overview">
           <header><div><h2>Your profile</h2><p>Public visibility is separate from your club check-in.</p></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{isPublic ? "Public" : "Hidden"}</span></header>

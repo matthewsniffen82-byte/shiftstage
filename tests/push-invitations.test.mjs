@@ -54,10 +54,11 @@ test("page entry loads no device module, configuration or permission prompt", ()
   const f = fixture(); assert.equal(f.nodes.length, 0); assert.equal(f.calls.length, 0);
 });
 
-test("only onboarding uses the automatic dancer invitation; the approved workspace has an inline prompt", () => {
-  const panel = readFileSync(new URL("../app/dashboard/DancerDashboardPanels.tsx", import.meta.url), "utf8");
-  assert.match(panel, /if \(!isApproved \|\| agreementReviewRequired\) offerPushNotifications\("dancer-dashboard"\)/);
-  assert.ok(panel.indexOf('offerPushNotifications("dancer-dashboard")') < panel.indexOf('<DancerOnboardingCommand'));
+test("dashboard entry, profile submission and club publication do not offer phone notification setup", () => {
+  for (const file of ["DancerDashboardPanels.tsx", "DancerProfileEditor.tsx", "VenueDashboardPanels.tsx"]) {
+    const panel = readFileSync(new URL("../app/dashboard/" + file, import.meta.url), "utf8");
+    assert.doesNotMatch(panel, /offerPushNotifications/, file);
+  }
 });
 for (const [role, moment, words] of [
   ["customer", "customer-follow", /favorites/],

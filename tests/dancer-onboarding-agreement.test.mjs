@@ -6,7 +6,8 @@ import vm from "node:vm";
 import ts from "typescript";
 import React from "react";
 import { DANCER_AGREEMENT_VERSION } from "../src/lib/dancr/dancer-agreement-version.ts";
-import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "../src/lib/dancr/media-limits.ts";
+import { MIN_DANCER_ONBOARDING_PHOTOS } from "../src/lib/dancr/media-limits.ts";
+import { dancerSubmissionMedia } from "../src/lib/dancr/dancer-submission-media.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/dashboard/DancerProfileEditor.tsx", import.meta.url), "utf8");
@@ -18,25 +19,26 @@ const receipt = { accepted: true, version: DANCER_AGREEMENT_VERSION };
 function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, save = async () => ({ agreement: receipt }), saveProfile } = {}) {
   const slots = [], effects = [], requests = [], profileSaves = [], events = [], profileChanges = [], exports = {};
   let cursor = 0, controls;
-  const profile = Object.freeze({ id: "saved-profile", stage_name: "Existing", city: "Las Vegas", avatarPhotoUrl: ready ? "saved-avatar" : "", status: effectiveStatus, verification_status: "approved" });
+  const profile = Object.freeze({ id: "saved-profile", stage_name: "Existing", city: "Las Vegas", avatarPhotoUrl: ready ? "saved-avatar" : "", status: effectiveStatus, verification_status: "approved",
+    dancer_photos: ready ? [1, 2, 3].map(id => ({ id: String(id), review_status: "approved", is_primary: id === 1 })) : [] });
   const hooks = {
     useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], value => { slots[i] = typeof value === "function" ? value(slots[i]) : value; }]; },
     useRef(initial) { const i = cursor++; return slots[i] ||= { current: initial }; },
     useMemo: fn => fn(), useEffect: fn => effects.push(fn),
   };
   vm.runInNewContext(code, {
-    ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION, MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount,
+    ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION, MIN_DANCER_ONBOARDING_PHOTOS, dancerSubmissionMedia,
     require: name => require(name),
     window: { location: { search: "" }, localStorage: { removeItem() {}, setItem() {} }, addEventListener() {}, removeEventListener() {}, dispatchEvent: event => events.push(event.type), requestAnimationFrame: fn => fn() },
     document: { getElementById: () => null, querySelector: () => null },
     persistedDancerStageName: p => p.stage_name,
-    dancerPhotoItemsFromProfile: () => ready ? [1,2,3].map(id => ({ id: String(id), status: "approved", isPrimary: id === 1 })) : [],
+    dancerPhotoItemsFromProfile: p => p.dancer_photos.map(photo => ({ id: photo.id, status: photo.review_status, isPrimary: photo.is_primary })),
     DANCER_PHOTOS_KEEP_OPEN_EVENT: "keep-open",
     DancerProfileAgreementReview: "AgreementReview", DancerAgeVerificationGate: "AgeVerification",
     readSession: () => ({ accessToken: "fixture" }),
     requestDashboardJson: async (path, options) => { requests.push({ path, options }); return save(); },
     requestDancerProfileJson: async options => { profileSaves.push(options); return saveProfile ? saveProfile() : { profile: { ...profile, status: "pending_review" } }; },
-    effectiveDancerProfileStatus: p => p.status, offerPushNotifications() {},
+    effectiveDancerProfileStatus: p => p.status,
   });
   function render() {
     cursor = 0;

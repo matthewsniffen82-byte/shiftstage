@@ -1,7 +1,5 @@
 "use client";
-import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 import VenueNotificationSettings from "./VenueNotificationSettings";
-import DashboardPhoneNotifications from "./DashboardPhoneNotifications";
 import { VenueProfileProvider } from "../internal/InternalRoster";
 import VenueWebsiteGrid from "./VenueWebsiteGrid";
 
@@ -190,7 +188,6 @@ export function VenuePanel({
       if (decision === "approved") {
         notifyPublicVenuePublication();
         setNotificationRevision((current) => current + 1);
-        offerPushNotifications("venue-live");
       }
       if (decision === "changes_requested") setReviewNotes("");
       setPublicationStatus(data.message || "Venue page review saved.");
@@ -343,7 +340,6 @@ export function VenuePanel({
         {(activeWorkspace === "tonight" || openedWorkspaces.includes("tonight")) && <>
         <VenueTonightOverview operations={operations} error={operationsError} working={liveDataReady ? workingNow.length : null}
           sampleTableRequestCount={isVenueDashboardDemo(profile) ? DEMO_TABLE_REQUEST_COUNT : 0}
-          notificationPrompt={<DashboardPhoneNotifications role="venue" refreshKey={notificationRevision} />}
           manager={venueRole === "owner" || venueRole === "manager"} published={isPublished} reviewReady={isAwaitingVenueReview} onOpen={openVenueSection} />
         <VenueGuestsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId || "")} role={venueRole}
           operations={operations} refreshKey={refreshedAt} active={activeWorkspace === "tonight"} timezone={String(profile?.timezone || "America/Los_Angeles")} />

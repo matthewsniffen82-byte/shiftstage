@@ -93,14 +93,18 @@ test("stale device checks and checks for a previous account cannot overwrite the
   assert.equal(f.render(), "");
 });
 
-test("overview setup precedes working tools in both dashboards while Account retains management", () => {
+test("dashboard overviews omit phone enrollment cards and keep email guidance", () => {
   const panel = readFileSync(new URL("../app/dashboard/DancerDashboardPanels.tsx", import.meta.url), "utf8");
-  assert.match(panel, /overview=\{<>\s*<DashboardPhoneNotifications \/>\s*<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"/);
-  assert.doesNotMatch(panel.slice(panel.indexOf("const accountTools"), panel.indexOf("return <>", panel.indexOf("const accountTools"))), /DashboardPhoneNotifications/);
+  assert.match(panel, /overview=\{<>\s*<DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"/);
+  assert.doesNotMatch(panel, /DashboardPhoneNotifications/);
   const venue = readFileSync(new URL("../app/dashboard/VenueDashboardPanels.tsx", import.meta.url), "utf8");
-  assert.match(venue, /<VenueTonightOverview[^>]*notificationPrompt=\{<DashboardPhoneNotifications role="venue" refreshKey=\{notificationRevision\} \/>\}/);
+  assert.doesNotMatch(venue, /DashboardPhoneNotifications|notificationPrompt=/);
   assert.match(venue, /<VenueNotificationSettings onSaved=\{\(\) => setNotificationRevision/);
-  assert.doesNotMatch(venue, /offerPushNotifications\("venue-dashboard"\)/);
+  for (const path of ["app/dashboard/DashboardClient.tsx", "app/vip/VipDashboard.tsx", "app/admin/AdminClient.tsx"]) {
+    const shell = readFileSync(new URL("../" + path, import.meta.url), "utf8");
+    assert.match(shell, /<EmailNotificationGuidance /, path);
+    assert.doesNotMatch(shell, /DashboardPhoneNotifications/, path);
+  }
   const client = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
   assert.match(client, /<DancerNotificationSettings showPhoneDelivery=\{dancerProfileStatus !== "approved"\} \/>/);
   const settings = readFileSync(new URL("../app/dashboard/DancerNotificationSettings.tsx", import.meta.url), "utf8");

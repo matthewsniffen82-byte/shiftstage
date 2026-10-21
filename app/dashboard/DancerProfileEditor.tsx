@@ -1,5 +1,4 @@
 "use client";
-import { offerPushNotifications } from "@/src/lib/dancr/push-invitation";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 import dynamic from "next/dynamic";
@@ -737,7 +736,6 @@ export function DancerOnboardingCommand({
       window.localStorage.setItem(storageKey, nextStep);
       setExpandedStepId(nextStep);
       setStatus("Profile submitted. Continue to age verification.");
-      offerPushNotifications("dancer-review");
       window.requestAnimationFrame(() => {
         if (!isCurrentProfileSubmissionAction(requestId, controller)) return;
         document.getElementById(nextStep)?.scrollIntoView({ behavior: "smooth", block: "start" });
