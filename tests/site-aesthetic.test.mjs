@@ -40,7 +40,7 @@ test("the violet page backdrop is one shade darker with device-specific brightne
 test("the live homepage declares its authored dark scheme before CSS loads", () => {
   assert.match(
     liveApp,
-    /<meta name="viewport"[^>]*>\s*<meta name="color-scheme" content="only dark">/,
+    /<meta name="viewport"[^>]*>\s*<meta name="color-scheme" content="dark">/,
   );
   assert.match(liveApp, /:root \{\s*color-scheme: only dark;/);
   assert.doesNotMatch(liveApp, /:root \{\s*color-scheme: dark;/);

@@ -826,7 +826,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     height: 1px;
     /* Preserve the exact brand violet when mobile dark mode recolors CSS paint. */
     background: var(--dancr-color-brand-primary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Cpath fill='%237c3aed' d='M0 0h2v2H0z'/%3E%3C/svg%3E") center / 100% 100% no-repeat !important;
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     pointer-events: none;
     z-index: 2;
     transform: translateX(0);

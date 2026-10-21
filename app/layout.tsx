@@ -55,9 +55,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" style={{ colorScheme: "only dark", backgroundColor: "var(--dancr-color-background, #0b0b12)", color: "var(--dancr-color-text-primary, #f5f3f7)" }} suppressHydrationWarning>
       <head>
-        <meta name="color-scheme" content="only dark" />
+        <meta name="color-scheme" content="dark" />
       </head>
       <Script src={versionedStaticAssetUrl("/mydancr-api-transport.js")} strategy="beforeInteractive" />
       <body className="dancr-button-system" suppressHydrationWarning>

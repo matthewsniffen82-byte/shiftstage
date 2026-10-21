@@ -136,10 +136,11 @@ function callbackHtml(
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="color-scheme" content="dark">
     <meta name="referrer" content="no-referrer">
     <title>Checking your link | MyDancr</title>
     <style>
-      :root { color-scheme: dark; }
+      :root { color-scheme: only dark; background: #050507; }
       * { box-sizing: border-box; }
       body { margin: 0; min-height: 100svh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at 50% 15%, rgba(105, 42, 255, .2), transparent 34%), #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
       main { width: min(100%, 460px); padding: 36px 28px; display: grid; gap: 16px; text-align: center; border: 1px solid rgba(148, 117, 255, .28); border-radius: 28px; background: rgba(10, 8, 17, .96); box-shadow: 0 24px 80px rgba(0, 0, 0, .48), 0 0 42px rgba(107, 51, 255, .12); }

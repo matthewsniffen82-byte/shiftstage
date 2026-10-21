@@ -19,10 +19,10 @@ function measurement({ observer = true, active = true, mounted = true } = {}) {
       disconnect() { disconnected = true; }
     } } : {}),
   };
-  const { useVipElementHeight } = compileVip('app/vip/useVipElementHeight.ts', {
+  const { useVipElementHeight: measureHeight } = compileVip('app/vip/useVipElementHeight.ts', {
     react: { useEffect: callback => { cleanup = callback(); } },
   }, { window });
-  useVipElementHeight({ current: mounted ? element : null }, { current: surface }, '--vip-nav-height', active);
+  measureHeight({ current: mounted ? element : null }, { current: surface }, '--vip-nav-height', active);
   return { values, events, element, observed, disconnected: () => disconnected,
     resize: next => { height = next; resize?.(); }, orientation: next => { height = next; events.get('resize')?.(); },
     cleanup: () => cleanup?.() };

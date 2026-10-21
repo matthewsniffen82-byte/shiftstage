@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 
 function fallback(message: string) {
   return new NextResponse(
-    `<!doctype html><html><head><meta charset="utf-8"><style>html,body{height:100%;margin:0;background:#0b0d13;color:#cde7f4;font:700 14px system-ui;display:grid;place-items:center;text-align:center}</style></head><body>${message}</body></html>`,
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><style>:root{color-scheme:only dark}html,body{height:100%;margin:0;background:#0b0d13;color:#cde7f4;font:700 14px system-ui;display:grid;place-items:center;text-align:center}</style></head><body>${message}</body></html>`,
     {
       status: 200,
       headers: { "Content-Type": "text/html; charset=utf-8" },

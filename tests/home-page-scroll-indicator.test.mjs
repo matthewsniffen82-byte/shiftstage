@@ -14,7 +14,7 @@ function classList() {
     contains: (name) => values.has(name),
     add: (name) => values.add(name),
     remove: (name) => values.delete(name),
-    toggle(name, enabled) { enabled ? values.add(name) : values.delete(name); },
+    toggle(name, enabled) { if (enabled) values.add(name); else values.delete(name); },
   };
 }
 

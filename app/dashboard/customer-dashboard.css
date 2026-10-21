@@ -181,7 +181,7 @@ html body.dancr-button-system #customer-dashboard #customer-view-alerts .custome
 /* Match the plan buttons' Android paint treatment without changing compact menu faces. */
 html body.dancr-button-system #customer-dashboard
   :is(.customer-card-actions > button:not([data-follow-control]), .account-action-button, .support-panel button, .customer-credential-option, .customer-credential-form-actions button, .customer-push-device-button, .customer-privacy-content button) {
-  position: relative; isolation: isolate; color-scheme: only light; -webkit-appearance: none; appearance: none;
+  position: relative; isolation: isolate; color-scheme: only dark; -webkit-appearance: none; appearance: none;
 }
 html:is(.is-android, .android-rendering) body.dancr-button-system #customer-dashboard
   :is(.customer-card-actions > button:not([data-follow-control]), .account-action-button, .support-panel button, .customer-credential-option, .customer-credential-form-actions button, .customer-push-device-button, .customer-privacy-content button)::before {

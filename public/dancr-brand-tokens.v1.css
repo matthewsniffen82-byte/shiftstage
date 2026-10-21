@@ -14,8 +14,13 @@
 /* Declare the site's own dark theme before legacy Android rules can opt the
  * document back into automatic recoloring. High-contrast modes remain native. */
 @layer dancr-palette {
-  :root {
+  :root,
+  :root :where(button, input, select, textarea, option, optgroup, dialog) {
     color-scheme: only dark !important;
+  }
+  :root {
+    background-color: var(--dancr-color-background, #0b0b12);
+    color: var(--dancr-color-text-primary, #f5f3f7);
   }
 }
 

@@ -537,7 +537,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 body.dancr-button-system #profileQrOverlay .profile-qr-frame {
   box-sizing: border-box; width: min(240px,100%); aspect-ratio: 1;
   margin: 4px auto; padding: 12px; border-radius: 12px;
-  color-scheme: only light; background: #fff linear-gradient(#fff,#fff) !important;
+  color-scheme: only dark; background: #fff linear-gradient(#fff,#fff) !important;
   box-shadow: none !important; filter: none !important;
 }
 body.dancr-button-system #profileQrOverlay .profile-qr-overlay-image {
@@ -2082,7 +2082,7 @@ html body.dancr-button-system > .app main.stack > section.stack
   /* Keep name glyphs consistent when mobile browsers recolor linked text. */
   color: var(--dancr-color-text-primary) !important;
   -webkit-text-fill-color: var(--dancr-color-text-primary) !important;
-  color-scheme: only light;
+  color-scheme: only dark;
   font-family: var(--font-ui);
   font-size: clamp(12.5px, calc(3vw + 1.5px), 16.5px);
   font-weight: 700;
@@ -2100,7 +2100,7 @@ html body.dancr-button-system > .app main.stack > section.stack
 html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directory .home-dancer-grid-distance {
   color: #e2e4ec !important;
   -webkit-text-fill-color: currentColor !important;
-  color-scheme: only light;
+  color-scheme: only dark;
   font-size: clamp(7px, 1.8vw, 8px);
   font-weight: 400;
   line-height: 1.2;
@@ -2138,7 +2138,7 @@ html body.dancr-button-system > .app main.stack > section.stack
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.venue-profile-overlay .venue-dancer-grid .home-dancer-grid-venue > .venue-dot svg {
   color: #e2e4ec !important;
-  color-scheme: only light;
+  color-scheme: only dark;
 }
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .home-dancer-grid-venue > .venue-dot,
