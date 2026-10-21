@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import postcss from "postcss";
 
 const liveShell = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 const aesthetic = await readFile(new URL("../public/dancr-aesthetic.v1.css", import.meta.url), "utf8");
+const consistency = postcss.parse(await readFile(new URL("../public/dancr-ui-consistency.v1.css", import.meta.url), "utf8"));
 
 test("dancer discovery reuses canonical state and shared discovery-control dimensions", () => {
   assert.match(liveShell, /document\.body\.classList\.toggle\("dancer-directory-active", activeTab === "dancers"\)/);
@@ -110,4 +112,53 @@ test("expanded discovery filters stay compact and expose truthful reset state", 
   assert.match(aesthetic, /\.home-advanced-filters :is\(#distanceSelect, #venueSelect, \.venue-picker-trigger\) \{[\s\S]*?height: 44px !important;[\s\S]*?max-height: 44px !important;/);
   assert.match(aesthetic, /#locationBtn\.location-btn,[\s\S]*?\.home-filter-reset \{[\s\S]*?height: 44px !important;[\s\S]*?max-height: 44px !important;/);
   assert.match(aesthetic, /#locationBtn\.location-btn \.icon \{[\s\S]*?color: var\(--dancr-color-info\) !important;/);
+});
+
+test("phone dancer headers keep the count below the title and refresh in a separate column", () => {
+  const rules = [];
+  consistency.walkRules((rule) => {
+    if (rule.parent.type === "atrule" && rule.parent.params === "(max-width: 600px)" && rule.selector.includes("body.dancer-directory-active")) rules.push(rule);
+  });
+  const ruleFor = (suffix) => rules.find((rule) => rule.selector.endsWith(suffix));
+  const values = (rule) => Object.fromEntries(rule.nodes.map((node) => [node.prop, node.value]));
+  const head = ruleFor(":has(> #discoveryRefresh:not([hidden]))");
+  assert.ok(head);
+  assert.equal(values(head)["grid-template-columns"], "minmax(0, 1fr) 44px");
+  assert.equal(values(head)["grid-template-areas"], '"title refresh" "count refresh"');
+  assert.equal(values(head).gap, "2px 8px");
+  const title = values(ruleFor(" > #tabTitle"));
+  assert.equal(title["grid-area"], "title");
+  assert.equal(title["font-size"], "22px");
+  assert.equal(title.overflow, "visible");
+  assert.equal(values(ruleFor(" > #tabTitle .tab-title-city"))["white-space"], "normal");
+  const count = values(ruleFor(" > #tabCount"));
+  assert.equal(count["grid-area"], "count");
+  assert.equal(count["align-self"], "start");
+  assert.equal(count["justify-self"], "start");
+  assert.equal(count["white-space"], "normal");
+  const refresh = values(ruleFor(" > #discoveryRefresh"));
+  assert.equal(refresh["grid-area"], "refresh");
+  assert.equal(refresh["align-self"], "center");
+  for (const rule of rules) assert.doesNotMatch(rule.selector, /#results|home-dancer-grid|dancer-directory-filter/, "the grid and its controls stay untouched");
+});
+
+test("dancer introduction has consistent gaps and no floating baseline-aligned count", () => {
+  const prefix = "html body.dancer-directory-active.dancr-button-system > .app main.stack > ";
+  const values = (selector) => {
+    let found;
+    consistency.walkRules((rule) => {
+      if (rule.parent.type === "root" && rule.selector.replace(/\s+/g, " ") === selector) found = rule;
+    });
+    assert.ok(found, selector);
+    return Object.fromEntries(found.nodes.map((node) => [node.prop, node.value]));
+  };
+  assert.equal(values(prefix + "#homeLiveSummary")["margin-block"], "0");
+  assert.equal(values(prefix + "section.stack").gap, "8px");
+  const head = prefix + "section.stack > .content-head.discovery-section-head";
+  assert.equal(values(head)["padding-block"], "0");
+  assert.equal(values(head)["margin-block"], "0");
+  assert.equal(values(head)["align-items"], "center");
+  assert.equal(values(head)["min-height"], "44px");
+  assert.equal(values(head + " > #tabCount")["align-self"], "center");
+  assert.equal(values(head + " > #tabCount").padding, "0");
 });

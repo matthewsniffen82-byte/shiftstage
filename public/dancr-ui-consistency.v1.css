@@ -1867,7 +1867,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > .home-
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > #homeLiveSummary {
   display: flex !important;
-  margin-block: 0 2px !important;
+  margin-block: 0 !important;
 }
 /* Working counts remain in the status tabs; the summary describes the search. */
 html body.dancer-directory-active.dancr-button-system > .app main.stack > #homeLiveSummary
@@ -1875,16 +1875,18 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > #homeL
   display: none !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack {
-  gap: 4px !important;
+  gap: 8px !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > .content-head.discovery-section-head {
   display: flex !important;
   flex-wrap: nowrap !important;
-  align-items: baseline !important;
+  align-items: center !important;
   justify-content: space-between;
   gap: 8px !important;
-  padding-block: 1px 3px !important;
+  min-height: 44px !important;
+  margin-block: 0 !important;
+  padding-block: 0 !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > .content-head.discovery-section-head > #tabTitle {
@@ -1896,7 +1898,10 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > .content-head.discovery-section-head > #tabCount {
   flex: 0 0 auto;
-  align-self: baseline !important;
+  align-self: center !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
   font-size: 11px !important;
   font-weight: 500 !important;
 }
@@ -2629,6 +2634,41 @@ html body.dancr-button-system > .app main.stack > section.stack > .content-head:
   white-space: normal !important;
 }
 html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
+
+/* On phones, keep the count under its heading and reserve a separate refresh target. */
+@media (max-width: 600px) {
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > .content-head.discovery-section-head:has(> #discoveryRefresh:not([hidden])) {
+    grid-template-columns: minmax(0, 1fr) 44px !important;
+    grid-template-areas: "title refresh" "count refresh";
+    gap: 2px 8px !important;
+  }
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > .content-head.discovery-section-head:has(> #discoveryRefresh:not([hidden])) > #tabTitle {
+    grid-area: title;
+    font-size: 22px !important;
+    line-height: 1.2 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > .content-head.discovery-section-head:has(> #discoveryRefresh:not([hidden])) > #tabTitle .tab-title-city {
+    white-space: normal !important;
+  }
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > .content-head.discovery-section-head:has(> #discoveryRefresh:not([hidden])) > #tabCount {
+    grid-area: count;
+    align-self: start !important;
+    justify-self: start;
+    white-space: normal !important;
+  }
+  html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+    > .content-head.discovery-section-head:has(> #discoveryRefresh:not([hidden])) > #discoveryRefresh {
+    grid-area: refresh;
+    align-self: center;
+    justify-self: end;
+  }
+}
 
 /* A compact 32px refresh face retains a full 44px phone tap target. */
 @layer dancr-follow-controls {
