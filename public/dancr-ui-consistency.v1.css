@@ -1480,8 +1480,8 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#
   }
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {
-  gap: 0 8px !important;
-  padding: 6px 6px 0 !important;
+  gap: 8px !important;
+  padding: 6px !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .field {
   gap: 2px !important;
