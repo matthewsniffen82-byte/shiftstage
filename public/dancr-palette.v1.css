@@ -662,6 +662,23 @@
     color: var(--dancr-color-text-muted) !important;
     stroke: currentColor !important;
   }
+  /* Venue utilities match dancer-profile labels and secondary icons. Keep
+     selected feedback and the separately styled violet location pins. */
+  html body.dancr-button-system
+    :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .follow-venue-btn, .venue-detail-share, .venue-address-directions):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"]))
+    :where(span:not(.action-icon, .profile-action-main, [data-action-icon])) {
+    color: var(--dancr-color-text-primary) !important;
+    -webkit-text-fill-color: currentColor !important;
+    text-shadow: none !important;
+  }
+  html body.dancr-button-system
+    :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .follow-venue-btn, .venue-detail-share):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"]))
+    :where(.action-icon, svg, svg *):not(:where([data-action-icon="pin"], [data-action-icon="pin"] *)) {
+    color: var(--profile-secondary-text, #b4bac5) !important;
+    stroke: currentColor !important;
+    -webkit-text-fill-color: currentColor !important;
+    filter: none !important;
+  }
   /* Location icons use the primary-action violet directly so legacy Saved
      card tokens cannot turn them gray. Keep shift clocks outside this rule. */
   html body.dancr-button-system :where(
