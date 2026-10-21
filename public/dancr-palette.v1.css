@@ -723,6 +723,29 @@
     color: var(--dancr-color-text-muted) !important;
     stroke: currentColor !important;
   }
+  /* Filled neutral controls have no contrasting perimeter. Preserve the
+     violet edge for selection/focus, and never target Working Now. */
+  html body.dancr-button-system :where(
+    #citySelectButton, #homeFilterToggle, #distanceSelectButton, #venueSelectButton,
+    #locationBtn, #homeFilterReset, .city-picker-option,
+    .dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="false"],
+    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn,
+    .mydancr-refresh-button
+  ):not(:where([aria-expanded="true"], [aria-selected="true"], [aria-pressed="true"], .active, .is-active, .is-open, .has-active-filters, :focus-visible)) {
+    --discovery-control-edge: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system :where(
+    #citySelectButton, #homeFilterToggle, #distanceSelectButton, #venueSelectButton,
+    #locationBtn, #homeFilterReset, .city-picker-option,
+    .dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="false"],
+    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn,
+    .mydancr-refresh-button
+  ):not(:where([aria-expanded="true"], [aria-selected="true"], [aria-pressed="true"], .active, .is-active, .is-open, .has-active-filters, :focus-visible))::before {
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
   /* The floating dock keeps its component-owned glass, light icons and violet halo. */
   html body.dancr-button-system
     :where(button, a, input, select, textarea, summary):focus-visible:not(:where(.global-mobile-bottom-nav *, #discoveryTabs *)) {
