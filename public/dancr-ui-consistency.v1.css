@@ -2552,42 +2552,52 @@ html body.dancr-button-system > .app main.stack > section.stack > .content-head:
 }
 html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
 
-/* Neutral refresh controls override legacy dashboard and club button skins. */
+/* A compact 32px refresh face retains a full 44px phone tap target. */
 @layer dancr-follow-controls {
   body.dancr-button-system .mydancr-refresh-button {
     -webkit-appearance: none !important; appearance: none !important;
+    position: relative !important; isolation: isolate !important;
     box-sizing: border-box !important; display: inline-flex !important;
-    align-items: center !important; justify-content: center !important; gap: 8px !important;
+    align-items: center !important; justify-content: center !important; gap: 6px !important;
     flex: 0 0 auto !important; width: 44px !important; min-width: 44px !important; max-width: 44px !important;
     height: 44px !important; min-height: 44px !important; max-height: none !important;
-    padding: 0 !important; border: 1px solid #52525b !important; border-radius: 12px !important;
-    color: #e4e4e7 !important; background: #27272a linear-gradient(#27272a, #27272a) !important;
+    padding: 0 !important; border: 0 !important; border-radius: 9px !important;
+    color: #e4e4e7 !important; background: transparent !important;
     box-shadow: none !important; text-shadow: none !important; filter: none !important; transform: none !important;
-    font: inherit; font-size: 13px !important; font-weight: 600 !important; line-height: 1.3 !important;
+    font: inherit; font-size: 12px !important; font-weight: 600 !important; line-height: 1.3 !important;
     letter-spacing: normal !important; text-transform: none !important; cursor: pointer;
   }
   body.dancr-button-system .mydancr-refresh-button.has-label {
-    width: auto !important; max-width: 100% !important; height: auto !important; padding: 10px 12px !important;
+    width: auto !important; max-width: 100% !important; height: auto !important; padding: 8px 12px !important;
   }
-  body.dancr-button-system .mydancr-refresh-button::before,
+  body.dancr-button-system .mydancr-refresh-button::before {
+    content: "" !important; display: block !important; position: absolute !important;
+    inset: 6px !important; z-index: -1 !important; pointer-events: none;
+    box-sizing: border-box !important; width: auto !important; height: auto !important;
+    min-width: 0 !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important;
+    border: 1px solid #52525b !important; border-radius: inherit !important;
+    background: #27272a linear-gradient(#27272a, #27272a) !important;
+    box-shadow: none !important; filter: none !important; transform: none !important;
+  }
+  body.dancr-button-system .mydancr-refresh-button.has-label::before { inset-inline: 4px !important; }
   body.dancr-button-system .mydancr-refresh-button::after { content: none !important; }
   body.dancr-button-system .mydancr-refresh-button[hidden] { display: none !important; }
   body.dancr-button-system .mydancr-refresh-button > svg {
-    display: block !important; width: 20px !important; height: 20px !important; flex: 0 0 20px !important;
+    display: block !important; width: 16px !important; height: 16px !important; flex: 0 0 16px !important;
     color: inherit !important; fill: none !important; stroke: currentColor !important;
     filter: none !important; animation: none !important;
   }
   body.dancr-button-system .mydancr-refresh-button > svg path { color: inherit !important; stroke: currentColor !important; }
   body.dancr-button-system .mydancr-refresh-button:focus-visible {
-    outline: 2px solid #d4d4d8 !important; outline-offset: 3px !important;
+    outline: 2px solid #d4d4d8 !important; outline-offset: -3px !important;
   }
   body.dancr-button-system .mydancr-refresh-button:disabled { opacity: .6 !important; cursor: default; }
   body.dancr-button-system .mydancr-refresh-button[aria-busy="true"] { cursor: wait; }
   body.dancr-button-system .mydancr-refresh-button[aria-busy="true"] > svg { animation: mydancr-refresh-spin .9s linear infinite !important; }
   @media (hover: hover) {
-    body.dancr-button-system .mydancr-refresh-button:enabled:hover { background: #3f3f46 !important; border-color: #a1a1aa !important; }
+    body.dancr-button-system .mydancr-refresh-button:enabled:hover::before { background: #3f3f46 !important; border-color: #a1a1aa !important; }
   }
-  body.dancr-button-system .mydancr-refresh-button:enabled:active { background: #18181b !important; }
+  body.dancr-button-system .mydancr-refresh-button:enabled:active::before { background: #18181b !important; }
   @media (prefers-reduced-motion: reduce) {
     body.dancr-button-system .mydancr-refresh-button[aria-busy="true"] > svg { animation: none !important; }
   }
