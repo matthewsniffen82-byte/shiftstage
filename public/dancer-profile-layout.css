@@ -795,3 +795,43 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     background: linear-gradient(#100c17, #100c17) !important;
   }
 }
+
+/* Photos and Videos share one sliding underline, with no filled tab faces. */
+@layer dancr-palette {
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs),
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) > button,
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) .profile-media-tab-count {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) > button::before,
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) > button::after {
+    content: none !important;
+    display: none !important;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs)::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 50%;
+    height: 1px;
+    background: var(--dancr-color-brand-primary) linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary));
+    color-scheme: only light;
+    pointer-events: none;
+    z-index: 2;
+    transform: translateX(0);
+    transition: transform 220ms ease;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs):has(> button:nth-child(2)[aria-selected="true"])::after {
+    transform: translateX(100%);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs)::after {
+      transition: none;
+    }
+  }
+}

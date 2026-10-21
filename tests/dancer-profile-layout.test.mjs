@@ -323,13 +323,13 @@ test("only Working Now activates dancer deal attribution while Upcoming links to
   assert.match(profilePage, /const workingVenueHref = directionsHref \|\| \(activeShift \? `\/venues\/\$\{encodeURIComponent\(activeShift\.venueSlug\)\}` : ""\)/);
   assert.match(profilePage, /href=\{workingVenueHref\}/);
   assert.match(profilePage, /activeShift\?\.venueId[\s\S]*?getActiveClubDealsForVenue\(client, activeShift\.venueId\)/);
-  assert.match(profilePage, /\{activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
+  assert.match(profilePage, /const admissionAction = activeShift && activeDeal \? \([\s\S]*?className="profile-active-deal has-club-deal"/);
   assert.match(profilePage, /venueId=\{activeShift\.venueId\}[\s\S]*?venueName=\{activeShift\.venueName\}/);
   assert.doesNotMatch(profilePage, /contextLabel=\{`Available tonight at \$\{activeShift\.venueName\}`\}/);
   assert.match(profilePage, /presentation="profileCompact"/);
-  assert.match(profilePage, /\) : actionShift \? \([\s\S]*?className="profile-deal-availability-line"[\s\S]*?"Going tonight\? View free entry"/);
+  assert.match(profilePage, /\) : actionShift \? \([\s\S]*?className="profile-deal-availability-line">Free entry unavailable<\/p>/);
   assert.doesNotMatch(profilePage, /className="profile-active-deal is-inactive"|Deals activate after a verified club check-in/);
-  assert.match(liveApp, /const dealMarkup = !internal && profile\?\.scheduled[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?: "";/);
+  assert.match(liveApp, /const dealMarkup = vip \? vipProfileRequestActionsMarkup\(profile\) : !internal && profile\?\.scheduled[\s\S]*?profileDealTileMarkup\(profile\)[\s\S]*?: "";/);
   assert.match(
     profilePage,
     /const dealSourceType = dancerAttributionEligible \? "dancer_profile" : "club_page"/,
