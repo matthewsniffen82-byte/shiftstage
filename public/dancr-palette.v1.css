@@ -795,6 +795,25 @@
     border-color: transparent !important;
     box-shadow: none !important;
   }
+  /* A subtle charcoal face separates discovery and social controls from the
+     page. Keep their existing edges, tap areas, and confirmed action states. */
+  html body.dancr-button-system :where(#citySelectButton, #homeFilterToggle) {
+    --discovery-control-face: var(--dancr-color-control-secondary) !important;
+  }
+  html body.dancr-button-system :where(#citySelectButton, #homeFilterToggle)::before {
+    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+  }
+  html body.dancr-button-system :where(
+    .profile-actions-compact :is(#followBtn, [data-follow-control="text"], .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going),
+    .venue-card-favorite-action, .venue-card-follow, .follow-venue-btn,
+    .venue-detail-share, .venue-card-share-action
+  ):not(:where([aria-pressed="true"], .is-active, .is-following, .is-going, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"])) {
+    color-scheme: only light !important;
+    --follow-control-face: var(--dancr-color-control-secondary) !important;
+    --profile-utility-background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    --profile-action-background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    --venue-utility-face: var(--dancr-color-control-secondary) !important;
+  }
   /* The floating dock keeps its component-owned glass, light icons and violet halo. */
   html body.dancr-button-system
     :where(button, a, input, select, textarea, summary):focus-visible:not(:where(.global-mobile-bottom-nav *, #discoveryTabs *)) {
