@@ -2824,7 +2824,7 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
   @layer venue-fills {
     html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed):not(:has(.ir-shell, .venue-embed-profile-page))
       :is(.home-venue-discovery-slide, .venue.venue-card, .venue-detail > .venue-hero):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
-      background-color: var(--dancr-color-surface-plum) !important;
+      background-color: var(--dancr-color-surface-card) !important;
       background-image: none !important;
     }
 
