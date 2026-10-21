@@ -64,7 +64,7 @@ test("fills cannot alter VIP champagne text, geometry, navigation, or primary an
   }
 });
 
-test("unselected discovery controls have neutral outlines while the city list uses its selected fill", () => {
+test("unselected discovery controls retain plum fills and muted violet outlines while the city list uses its selected fill", () => {
   const idle = rules.find(rule => rule.nodes.some(node => node.prop === '--discovery-control-edge'));
   assert.ok(idle);
   for (const target of [
@@ -75,7 +75,7 @@ test("unselected discovery controls have neutral outlines while the city list us
   ]) assert.ok(idle.selector.includes(target), target);
   assert.deepEqual(idle.nodes.map(node => [node.prop, node.value, node.important]), [
     ['--discovery-control-face', 'var(--dancr-color-control-plum)', true],
-    ['--discovery-control-edge', '#34343c', true],
+    ['--discovery-control-edge', 'var(--dancr-color-control-border)', true],
   ]);
   assert.equal(idle.parent.params, 'dancr-follow-controls');
   const selected = [];
