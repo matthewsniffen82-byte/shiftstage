@@ -1641,7 +1641,7 @@ html body.dancr-button-system > .app > header {
   padding-block: 4px 0 !important;
   border: 0 !important;
   border-radius: 0 !important;
-  background: var(--discovery-header-backdrop) !important;
+  background: var(--discovery-backdrop) !important;
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
