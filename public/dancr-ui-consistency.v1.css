@@ -1985,6 +1985,10 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   text-align: left;
 }
 
+html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column {
+  --dancr-media-grid-gap: 2px;
+}
+
 /* Photo and video collections keep a minimal gap across discovery, dashboards,
    galleries and uploads, preserving their column counts and aspect ratios. */
 html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column,

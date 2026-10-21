@@ -163,7 +163,7 @@ test("dancer introduction has consistent gaps and no floating baseline-aligned c
   assert.equal(values(head + " > #tabCount").padding, "0");
 });
 
-test("the dancer disclaimer has 12px separation without widening the card gaps", () => {
+test("the dancer disclaimer keeps 12px separation independently of the card gaps", () => {
   const prefix = "html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > ";
   const rules = new Map();
   consistency.walkRules((rule) => {
@@ -179,5 +179,14 @@ test("the dancer disclaimer has 12px separation without widening the card gaps",
   const filterMargin = filters.nodes.find((node) => node.prop === "margin-bottom");
   assert.equal(filterMargin.value, "0", "avoid adding the old filter margin above the disclaimer");
   assert.ok(filterMargin.important);
-  assert.match(aesthetic, /--dancr-media-grid-gap:\s*1px;/, "preserve the existing card spacing");
+});
+
+test("the dancer discovery grid uses 2px gaps without changing other media grids", () => {
+  const selector = "html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column";
+  const grid = consistency.nodes.find((node) => node.type === "rule" && node.selector === selector);
+  assert.ok(grid);
+  assert.deepEqual(Object.fromEntries(grid.nodes.map((node) => [node.prop, node.value])), {
+    "--dancr-media-grid-gap": "2px",
+  }, "only spacing changes, not the columns or card dimensions");
+  assert.match(aesthetic, /--dancr-media-grid-gap:\s*1px;/, "other media collections retain their existing spacing");
 });
