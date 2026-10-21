@@ -162,3 +162,22 @@ test("dancer introduction has consistent gaps and no floating baseline-aligned c
   assert.equal(values(head + " > #tabCount")["align-self"], "center");
   assert.equal(values(head + " > #tabCount").padding, "0");
 });
+
+test("the dancer disclaimer has 12px separation without widening the card gaps", () => {
+  const prefix = "html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack > #results.home-dancer-grid > ";
+  const rules = new Map();
+  consistency.walkRules((rule) => {
+    if (rule.parent.type === "root") rules.set(rule.selector.replace(/\s+/g, " "), rule);
+  });
+  const note = rules.get(prefix + ".roster-participation-note");
+  const filters = rules.get(prefix + ".dancer-directory-filters");
+  assert.ok(note);
+  assert.ok(filters);
+  const margin = note.nodes.find((node) => node.prop === "margin");
+  assert.equal(margin.value, "calc(12px - var(--dancr-media-grid-gap, 6px)) 0");
+  assert.ok(margin.important);
+  const filterMargin = filters.nodes.find((node) => node.prop === "margin-bottom");
+  assert.equal(filterMargin.value, "0", "avoid adding the old filter margin above the disclaimer");
+  assert.ok(filterMargin.important);
+  assert.match(aesthetic, /--dancr-media-grid-gap:\s*1px;/, "preserve the existing card spacing");
+});

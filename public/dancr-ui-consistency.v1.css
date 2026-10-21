@@ -1971,8 +1971,13 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
   background: var(--dancr-color-live) !important;
 }
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
+  > #results.home-dancer-grid > .dancer-directory-filters {
+  margin-bottom: 0 !important;
+}
+html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid > .roster-participation-note {
-  margin: 1px 0 3px !important;
+  /* Include the existing grid gap in the 12px space on either side. */
+  margin: calc(12px - var(--dancr-media-grid-gap, 6px)) 0 !important;
   color: #b3b5c2;
   font-size: 12px;
   font-weight: 400;
