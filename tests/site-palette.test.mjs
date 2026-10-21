@@ -64,6 +64,17 @@ test('select styling removes old gradients and preserves custom dropdown arrows'
   assert.doesNotMatch(arrow.toString(), /linear-gradient/);
 });
 
+test('the account button wrapper stays transparent while the circle and dropdown retain their fills', () => {
+  const wrapperRules = rules.filter(rule => /\.utility-menu(?=[\s,)])/.test(rule.selector));
+  for (const rule of wrapperRules) {
+    const backgrounds = rule.nodes.filter(decl => ['background', 'background-color', 'background-image'].includes(decl.prop));
+    assert.ok(backgrounds.every(decl => ['transparent', 'none'].includes(decl.value)), 'the layout wrapper must not paint a square behind the account circle');
+  }
+  const dropdown = rules.find(rule => rule.selector === 'html body.dancr-button-system :where(.utility-menu-panel, .customer-quick-panel)');
+  assert.ok(dropdown.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-control-secondary-background)'));
+  assert.match(read('public/dancr-ui-consistency.v1.css'), /:is\(\.customer-quick-btn, #accountBtn\.account-icon-btn\)::before \{[\s\S]*?inset: 4px !important;[\s\S]*?border-radius: 50%;[\s\S]*?background: linear-gradient\(var\(--discovery-header-face\), var\(--discovery-header-face\)\) !important;/);
+});
+
 test('primary actions exclude destructive, confirmed, disabled and secondary states', () => {
   const primary = rules.find(rule => rule.selector.includes('input[type="submit"]'));
   assert.ok(primary);
