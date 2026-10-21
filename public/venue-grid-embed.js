@@ -141,6 +141,7 @@
     const demo = document.body.dataset.demo === "true";
     // In-memory identifiers work even when third-party cookies/storage are blocked.
     const session = root.crypto.randomUUID();
+    const watchedImages = new WeakSet();
     let visit = "", nextCursor = null, busy = false, loadedPages = 1, dancers = [], lastMarkup = "", generation = 0;
     function location() { return locations?.selectedOptions?.[0] || null; }
     function showCount(value = "") {
@@ -159,9 +160,11 @@
       const markup = visible.map((dancer, index) => cardMarkup(dancer, displayVenue, index,
         `/embed/venues/${encodeURIComponent(venue.slug)}/dancers/${encodeURIComponent(dancer.slug)}${suffix}`)).join("");
       if (markup !== lastMarkup) {
-        results.innerHTML = markup;
+        grid.update(results, markup);
         lastMarkup = markup;
         results.querySelectorAll("img").forEach(image => {
+          if (watchedImages.has(image)) return;
+          watchedImages.add(image);
           const ready = () => { image.dataset.imageState = image.naturalWidth ? "ready" : "error"; };
           image.addEventListener("load", ready, { once: true });
           image.addEventListener("error", ready, { once: true });
@@ -192,7 +195,7 @@
       refresh.disabled = more.disabled = true;
       refresh.setAttribute("aria-busy", "true");
       results.setAttribute("aria-busy", "true");
-      if (!append) visit = root.crypto.randomUUID();
+      const requestVisit = append ? visit : root.crypto.randomUUID();
       const rows = append ? [...dancers] : [];
       let cursor = append ? nextCursor : null, venue, pages = 0;
       try {
@@ -202,17 +205,22 @@
           if (demo) query.set("demo", "1");
           const response = await root.fetch(`/api/public/venue-grid/${encodeURIComponent(venueSlug)}${query.size ? `?${query}` : ""}`, {
             credentials: "omit", cache: "no-store", signal: AbortSignal.timeout(15000),
-            headers: { "x-discovery-session": session, "x-discovery-visit": visit },
+            headers: { "x-discovery-session": session, "x-discovery-visit": requestVisit },
           });
           const data = await response.json();
           if (requestId !== generation) return;
-          if (!response.ok || !data.ok) throw new Error(data.error || "Unable to load working dancers.");
+          if (!response.ok || !data.ok) {
+            const error = new Error(data.error || "Unable to load working dancers.");
+            error.status = response.status;
+            throw error;
+          }
           if (data.venue.slug !== venueSlug || !Array.isArray(data.dancers)) throw new Error("Unable to confirm this club’s roster.");
           venue = data.venue;
           rows.push(...data.dancers);
           cursor = data.nextCursor;
           pages++;
         } while (!append && cursor && pages < (demo ? 10 : loadedPages));
+        visit = requestVisit;
         dancers = [...new Map(rows.map(dancer => [dancer.id, dancer])).values()];
         nextCursor = demo ? null : cursor;
         loadedPages = append ? loadedPages + 1 : pages;
@@ -223,7 +231,9 @@
       } catch (error) {
         if (requestId !== generation) return;
         status.textContent = error.message || "Unable to load working dancers. Please refresh.";
-        if (!append) {
+        // Network/server failures must not erase an already loaded roster.
+        // Confirmed loss of access or an unavailable club still clears it.
+        if ([401, 403, 404, 410].includes(error.status)) {
           dancers = []; nextCursor = null; loadedPages = 1; results.innerHTML = lastMarkup = "";
           showCount();
         }

@@ -155,6 +155,11 @@ test("embed cards use the shared homepage renderer, escape content and open full
 
 function componentFixture() {
   const window = runtime(), nodes = new Map(), requests = [], timers = [];
+  // DOM reconciliation is exercised separately; this fixture checks network,
+  // pagination, status and location transitions without a browser journey.
+  window.MydancrDancerGrid = { ...window.MydancrDancerGrid, update(container, markup) { container.innerHTML = markup; } };
+  // The embed captures the shared renderer at script evaluation.
+  vm.runInNewContext(read("public/venue-grid-embed.js"), { window, URL, URLSearchParams, AbortSignal, Event });
   const node = id => {
     if (!nodes.has(id)) nodes.set(id, { textContent: "", innerHTML: "", hidden: false, listeners: {},
       focus() {}, close() {}, showModal() {},
@@ -165,7 +170,7 @@ function componentFixture() {
   const document = { hidden: false, body: { dataset: { venueSlug: venue.slug, accent: "#c99842" }, style: { setProperty: (key, value) => styles.set(key, value) } }, getElementById: node, listeners: {},
     addEventListener(event, handler) { this.listeners[event] = handler; } };
   let responder = () => ({ ok: true, venue, dancers: [dancer], nextCursor: "page-two" });
-  window.fetch = async (url, options) => { requests.push({ url, options }); return Response.json(await responder(url, options)); };
+  window.fetch = async (url, options) => { requests.push({ url, options }); const response = await responder(url, options); return response instanceof Response ? response : Response.json(response); };
   window.scrollTo = () => {};
   window.setInterval = (handler, delay) => { timers.push({ handler, delay }); };
   return { window, document, node, requests, timers, styles, respond: fn => { responder = fn; } };
@@ -288,14 +293,16 @@ test("widget paginates without cookies and refreshes all loaded pages with a new
   assert.equal(f.requests.length, 4);
 });
 
-test("failed refresh clears stale cards and an empty roster never shows another club", async () => {
+test("failed refresh keeps the loaded grid, while a confirmed empty roster removes old cards", async () => {
   const f = componentFixture();
   await f.window.MydancrVenueEmbed.mount(f.document);
+  const markup = f.node("results").innerHTML;
+  const count = f.node("venue-count").textContent;
   f.respond(() => ({ ok: false, error: "Please refresh." }));
   await f.node("venue-refresh").listeners.click();
-  assert.equal(f.node("results").innerHTML, "");
-  assert.equal(f.node("venue-count").hidden, true);
-  assert.equal(f.node("venue-more").hidden, true);
+  assert.equal(f.node("results").innerHTML, markup);
+  assert.equal(f.node("venue-count").textContent, count);
+  assert.equal(f.node("venue-more").hidden, false);
   assert.equal(f.node("venue-status").textContent, "Please refresh.");
   f.respond(() => ({ ok: true, venue, dancers: [], nextCursor: null }));
   await f.node("venue-refresh").listeners.click();
@@ -305,6 +312,50 @@ test("failed refresh clears stale cards and an empty roster never shows another 
   f.respond(() => ({ ok: true, venue: { ...venue, slug: "other-club" }, dancers: [dancer] }));
   await f.node("venue-refresh").listeners.click();
   assert.equal(f.node("results").innerHTML, "");
+});
+
+test("automatic refresh keeps every loaded page during slow and partially failed requests", async () => {
+  const f = componentFixture();
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  f.respond(() => ({ ok: true, venue, dancers: [{ ...dancer, id: "two" }], nextCursor: null }));
+  await f.node("venue-more").listeners.click();
+  const markup = f.node("results").innerHTML;
+  const deferred = Promise.withResolvers();
+  f.respond(url => url.includes("cursor=") ? deferred.promise : { ok: true, venue, dancers: [{ ...dancer, id: "new" }], nextCursor: "page-two" });
+  f.timers[0].handler();
+  await settle();
+  assert.equal(f.node("results").innerHTML, markup);
+  deferred.reject(new Error("Connection lost"));
+  await settle();
+  assert.equal(f.node("results").innerHTML, markup);
+  assert.equal(f.node("venue-count").textContent, "2");
+  f.respond(() => ({ ok: true, venue, dancers: [dancer], nextCursor: null }));
+  f.timers[0].handler(); await settle();
+  assert.match(f.node("results").innerHTML, /data-public-dancer-id="one"/);
+  assert.doesNotMatch(f.node("results").innerHTML, /data-public-dancer-id="two"/);
+});
+
+test("pagination remains usable with its original visit after a failed background refresh", async () => {
+  const f = componentFixture();
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  const visit = f.requests[0].options.headers["x-discovery-visit"];
+  f.respond(() => { throw new Error("offline"); });
+  f.timers[0].handler(); await settle();
+  f.respond(() => ({ ok: true, venue, dancers: [{ ...dancer, id: "two" }], nextCursor: null }));
+  await f.node("venue-more").listeners.click();
+  assert.match(f.requests.at(-1).url, /cursor=page-two/);
+  assert.equal(f.requests.at(-1).options.headers["x-discovery-visit"], visit);
+  assert.match(f.node("results").innerHTML, /data-public-dancer-id="one"/);
+  assert.match(f.node("results").innerHTML, /data-public-dancer-id="two"/);
+});
+
+for (const status of [401, 403, 404, 410]) test(`confirmed club/access removal (${status}) clears the embedded grid`, async () => {
+  const f = componentFixture();
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  f.respond(() => Response.json({ ok: false, error: "Unavailable" }, { status }));
+  f.timers[0].handler(); await settle();
+  assert.equal(f.node("results").innerHTML, "");
+  assert.equal(f.node("venue-count").hidden, true);
 });
 
 test("one company accent works across different state/city locations without changing public branding", async () => {

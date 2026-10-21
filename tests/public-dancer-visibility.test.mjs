@@ -45,7 +45,7 @@ test('embedded profiles use their own venue presence check without the page relo
     window: { location: { pathname: '/embed/venues/talk-of-the-town/dancers/ty' } },
   }));
 });
-function browserFixture() {
+function browserFixture({ grid = false } = {}) {
   class CustomEvent extends Event { constructor(type, options) { super(type); this.detail = options?.detail; } }
   const video = { paused: false, src: '/api/media/dancer-video?id=saved',
     pause() { this.paused = true; }, load() {}, querySelectorAll() { return []; },
@@ -53,6 +53,7 @@ function browserFixture() {
     getAttribute() { return this.src; }, removeAttribute() { this.src = null; }, setAttribute(_name, value) { this.src = value; },
   };
   const card = { dataset: { publicDancerId: id }, hidden: false,
+    matches() { return grid; },
     hasAttribute(name) { return name === 'data-public-visibility-hidden' && this.hidden; },
     setAttribute() { this.hidden = true; }, removeAttribute() { this.hidden = false; },
     querySelectorAll() { return [video]; },
@@ -173,4 +174,48 @@ test('a temporary network failure recovers without reloading the page', async ()
   assert.equal(f.card.hidden, false);
   assert.equal(f.video.src, '/api/media/dancer-video?id=saved');
   assert.equal(f.window.location.reloads, 0);
+});
+
+test('grid cards stay visible through tab return, a pending check and a failed check', async () => {
+  const f = browserFixture({ grid: true });
+  await f.runCheck();
+  f.document.visibilityState = 'hidden';
+  f.document.dispatchEvent(new Event('visibilitychange'));
+  assert.equal(f.card.hidden, false);
+  f.document.visibilityState = 'visible';
+  f.document.dispatchEvent(new Event('visibilitychange'));
+  f.mutate();
+  const deferred = Promise.withResolvers();
+  f.respond(() => deferred.promise);
+  const check = f.runCheck();
+  assert.equal(f.card.hidden, false);
+  deferred.reject(new Error('offline'));
+  await check;
+  assert.equal(f.card.hidden, false);
+  assert.equal(f.video.src, '/api/media/dancer-video?id=saved');
+  f.respond(async () => Response.json({ ok: true, visibleIds: [] }));
+  await f.runCheck();
+  assert.equal(f.card.hidden, true, 'confirmed incognito still removes the card');
+  assert.equal(f.video.src, null);
+  f.respond(async () => { throw new Error('offline'); });
+  await f.runCheck();
+  assert.equal(f.card.hidden, true, 'a later failure cannot restore private content');
+  assert.equal(f.window.location.reloads, 0);
+});
+
+test('the first visibility-check failure does not erase an already rendered public grid', async () => {
+  const f = browserFixture({ grid: true });
+  f.respond(async () => Response.json({ ok: false }, { status: 503 }));
+  await f.runCheck();
+  assert.equal(f.card.hidden, false);
+  f.save(false);
+  assert.equal(f.card.hidden, true, 'an explicit privacy change takes effect immediately');
+});
+
+for (const status of [401, 403]) test(`confirmed access loss (${status}) still hides grid cards`, async () => {
+  const f = browserFixture({ grid: true });
+  await f.runCheck();
+  f.respond(async () => Response.json({ ok: false }, { status }));
+  await f.runCheck();
+  assert.equal(f.card.hidden, true);
 });

@@ -22,6 +22,10 @@
     return [...document.querySelectorAll(selector)].filter(element => uuid.test(element.dataset.publicDancerId || ""));
   }
 
+  function isGridCard(element) {
+    return element.matches?.(".dancer-card, .venue-lineup-profile, .customer-followed-dancer-card, .customer-night-card");
+  }
+
   function suspendMedia(root) {
     if (document.fullscreenElement && root.contains(document.fullscreenElement)) void document.exitFullscreen().catch(() => {});
     if (document.pictureInPictureElement && root.contains(document.pictureInPictureElement)) void document.exitPictureInPicture().catch(() => {});
@@ -64,7 +68,11 @@
       const id = element.dataset.publicDancerId.toLowerCase();
       const state = states.get(id);
       if (document.visibilityState === "hidden") needsRecheck.add(id);
-      if (state !== undefined) setVisible(element, !needsRecheck.has(id) && state);
+      // A background check is not a removal. Keep the server-rendered grid
+      // steady; confirmed private IDs still disappear immediately.
+      if (state !== undefined || needsRecheck.has(id)) {
+        setVisible(element, state !== false && (isGridCard(element) || !needsRecheck.has(id)));
+      }
     });
   }
 
@@ -93,16 +101,29 @@
         const batch = ids.slice(start, start + 200);
         let visible = new Set();
         let confirmed = false;
+        let accessDenied = false;
         try {
           const response = await fetch(`/api/public/dancer-visibility?ids=${batch.join(",")}`, {
             cache: "no-store", credentials: "same-origin", signal: controller.signal,
           });
+          accessDenied = response.status === 401 || response.status === 403;
           const data = await response.json();
           if (!response.ok || data.ok !== true || !Array.isArray(data.visibleIds) || data.visibleIds.some(id => !batch.includes(id))) throw new Error("Unavailable");
           visible = new Set(data.visibleIds);
           confirmed = true;
-        } catch { /* Hide content until its public visibility can be confirmed. */ }
+        } catch { /* Retry without turning a network failure into a removal. */ }
         if (generation !== version) return;
+        if (!confirmed) {
+          batch.forEach(id => {
+            needsRecheck.add(id);
+            if (accessDenied) {
+              if (states.get(id) !== false) hiddenIds.push(id);
+              states.set(id, false);
+            }
+          });
+          apply();
+          continue;
+        }
         if (batch.some(id => visible.has(id) && unpublished.has(id))) {
           // Read the current page again instead of exposing an old snapshot:
           // the dancer may have edited or removed media while incognito.
@@ -157,8 +178,8 @@
   function concealUntilChecked() {
     elements().forEach(element => {
       needsRecheck.add(element.dataset.publicDancerId.toLowerCase());
-      setVisible(element, false);
     });
+    apply();
   }
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
