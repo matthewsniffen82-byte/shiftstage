@@ -16,8 +16,8 @@ export const SITE_LOCK_HEADERS = {
 };
 // Only a salted verifier is checked in; the password never enters client code.
 const passwordVerifier = {
-  salt: "b71d1beb9dbf56c98b689d57d24d0f8f5f5719756e640159",
-  hash: "583bc1382e0438f89de53d50f136d8e8234088be0c39de4e51c3a34f27049ae5",
+  salt: "68a4bf138cf6653506e0197adbaf5d5e873e587a8536934a",
+  hash: "50898be3fdbeb8c92e5f0af2581dc1638d7c45729a075c9c772ec9086cab89ea",
   iterations: 210_000,
 };
 const encoder = new TextEncoder();
