@@ -730,13 +730,13 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
   html body.dancr-button-system .profile-media-card-feed .profile-media-identity strong { font-size: clamp(20px, 5.8vw, 26px); }
 }
 
-/* Public media uses neutral glass fills with club accents when available.
+/* Public media icons share the city pin's violet, with club accents when available.
  * The public page gate excludes dashboard previews and the Saved stylesheet export. */
 @layer dancr-follow-controls {
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
     :is(.home-tv-feed-actions > .home-tv-feed-action, .home-tv-feed-full-view-close, .profile-media-card-back, .profile-photo-viewer-actions > button, .profile-tv-viewer-actions > button, .profile-media-viewer-actions > button):not(:disabled):not([aria-disabled="true"]) {
-    --public-media-icon-color: var(--venue-brand-light, var(--dancr-color-icon-accent));
+    --public-media-icon-color: var(--venue-brand-light, var(--dancr-color-icon-location));
     border-color: var(--venue-brand-edge, #4a365f) !important;
     background: rgba(0, 0, 0, .45) !important;
     color: #f5f2fa !important;
@@ -767,7 +767,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
     :is(.home-tv-feed-overflow-action, .profile-media-control-overflow, .home-tv-feed-venue svg, .profile-media-venue svg) {
-    color: var(--venue-brand-light, var(--dancr-color-icon-accent-small)) !important;
+    color: var(--venue-brand-light, var(--dancr-color-icon-location)) !important;
   }
 }
 

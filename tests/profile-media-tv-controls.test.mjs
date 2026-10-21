@@ -141,3 +141,32 @@ test("profile rails retain TV dimensions, spacing and glass material", () => {
   assert.match(css, /background-color: rgba\(18, 18, 28, 0\.38\)/);
   assert.match(css, /backdrop-filter: blur\(16px\) saturate\(1\.18\)/);
 });
+
+test("public media icons match the city violet while preserving branding, text and reaction colors", () => {
+  const root = postcss.parse(css);
+  const rules = [];
+  root.walkRules((rule) => {
+    if (rule.parent.type === "atrule" && rule.parent.params === "dancr-follow-controls") rules.push(rule);
+  });
+  const values = (rule) => Object.fromEntries(rule.nodes.map((node) => [node.prop, node.value]));
+  const normal = rules.find((rule) => values(rule)["--public-media-icon-color"]?.startsWith("var("));
+  assert.ok(normal);
+  assert.equal(values(normal)["--public-media-icon-color"], "var(--venue-brand-light, var(--dancr-color-icon-location))");
+  assert.equal(values(normal).color, "#f5f2fa", "labels and counts keep their neutral text color");
+  assert.equal(values(normal)["border-color"], "var(--venue-brand-edge, #4a365f)");
+  assert.equal(values(normal).background, "rgba(0, 0, 0, .45)");
+  for (const target of ["#results.home-tv-feed", "#profilePhotoViewer.profile-media-card-feed",
+    "#profileTvViewer.profile-media-card-feed", ".public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed",
+    ".home-tv-feed-actions > .home-tv-feed-action", ".profile-photo-viewer-actions > button",
+    ".profile-tv-viewer-actions > button", ".profile-media-viewer-actions > button",
+    ":not(:disabled):not([aria-disabled=\"true\"])"]) assert.ok(normal.selector.includes(target), target);
+  const icons = rules.find((rule) => values(rule).color === "var(--public-media-icon-color)");
+  assert.ok(icons.selector.endsWith(":is(.action-icon, svg)"));
+  assert.ok(icons.nodes.find((node) => node.prop === "color").important);
+  const follow = rules.find((rule) => rule.selector.includes('.profile-media-control-follow)[aria-pressed="true"]'));
+  const like = rules.find((rule) => rule.selector.includes('.profile-media-viewer-like)[aria-pressed="true"]'));
+  assert.equal(values(follow)["--public-media-icon-color"], "#fff");
+  assert.equal(values(like)["--public-media-icon-color"], "#ff304f");
+  const overflow = rules.find((rule) => rule.selector.includes(".profile-media-control-overflow"));
+  assert.equal(values(overflow).color, "var(--venue-brand-light, var(--dancr-color-icon-location))");
+});
