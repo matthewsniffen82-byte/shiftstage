@@ -124,6 +124,7 @@ test("download page renders four role choices with accessible download names bef
   }).outputText, { exports, require(name) {
     if (name === "react" || name === "react/jsx-runtime") return require(name);
     if (name === "next/link") return { default: ({ children, ...props }) => React.createElement("a", props, children) };
+    if (name === "../components/RefreshButton") return { default: ({ children, ...props }) => React.createElement("button", props, children) };
     if (name.endsWith("/operations-guides")) return catalog;
     if (name.includes("dashboard-session") || name.includes("browser-session")) return {};
     throw new Error("Unexpected dependency " + name);

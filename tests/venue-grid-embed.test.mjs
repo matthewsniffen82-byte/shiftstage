@@ -260,11 +260,11 @@ test("Rhino location picker supports selection, keyboard navigation and dismissi
   assert.equal(get("venueLocationScrollbar").hidden, true);
 });
 
-test("an existing embed adopts saved Admin colors on load and refresh without replacing its link", async () => {
+test("an existing embed ignores saved club colors on load and refresh without replacing its link", async () => {
   const f = componentFixture();
   f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#00aaff" }, dancers: [dancer], nextCursor: null }));
   await f.window.MydancrVenueEmbed.mount(f.document);
-  assert.equal(f.styles.get("--embed-accent"), "#00aaff");
+  assert.equal(f.styles.get("--embed-accent"), "#7c3aed");
   f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#7c3aed" }, dancers: [dancer], nextCursor: null }));
   f.timers[0].handler(); await settle();
   assert.equal(f.styles.get("--embed-accent"), "#7c3aed");
@@ -358,22 +358,22 @@ for (const status of [401, 403, 404, 410]) test(`confirmed club/access removal (
   assert.equal(f.node("venue-count").hidden, true);
 });
 
-test("one company accent works across different state/city locations without changing public branding", async () => {
+test("every location and legacy accent URL uses the shared site palette", async () => {
   const locations = [venue, { id: "venue-florida", slug: "company-miami", name: "Company Miami", city: "Miami" }];
   for (const location of locations) {
     const fixture = apiFixture({ venue: location, page: { dancers: [], tonightDancers: [], nextCursor: null } });
     await fixture.get("?accent=c99842&city=WrongCity");
     assert.equal(fixture.calls[0].city, location.city);
     assert.equal(fixture.calls[0].venueId, location.id);
-    assert.equal(venueEmbedAccent(new URL(`https://www.mydancr.com/embed/venues/${location.slug}?accent=c99842`)), "#c99842");
+    assert.equal(venueEmbedAccent(new URL(`https://www.mydancr.com/embed/venues/${location.slug}?accent=c99842`)), "#7c3aed");
   }
   for (const value of ["red", "javascript:alert(1)", "ff0000; color:red", "fff"]) assert.equal(venueEmbedAccent(new URL(`https://example.com/?accent=${encodeURIComponent(value)}`)), "#7c3aed");
   const window = runtime();
-  for (const [accent, foreground] of [["#ffffff", "#050507"], ["#000000", "#ffffff"], ["#c99842", "#050507"]]) {
+  for (const accent of ["#ffffff", "#000000", "#c99842"]) {
     const values = new Map();
     window.MydancrVenueEmbed.applyTheme({ body: { dataset: { accent }, style: { setProperty: (key, value) => values.set(key, value) } } });
-    assert.equal(values.get("--embed-accent"), accent);
-    assert.equal(values.get("--embed-accent-text"), foreground);
+    assert.equal(values.get("--embed-accent"), "#7c3aed");
+    assert.equal(values.get("--embed-accent-text"), "#f5f3f7");
   }
   assert.doesNotMatch(read("public/venue-grid-embed.js"), /localStorage|sessionStorage|postMessage/);
   assert.doesNotMatch(read("src/live-shell/shell.html"), /venue-grid-embed\.css|venue-grid-embed\.js/);

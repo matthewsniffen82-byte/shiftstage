@@ -25,12 +25,12 @@ html body.venue-grid-embed .venue-embed-heading > div { display: contents; }
 html body.venue-grid-embed .venue-embed-heading h1 {
   grid-area: title; min-width: 0;
   display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0;
-  color: #34d399; font-size: 20px; font-weight: 750; line-height: 1.4;
+  color: var(--dancr-color-success); font-size: 20px; font-weight: 750; line-height: 1.4;
 }
 html body.venue-grid-embed p { margin: 0; }
-html body.venue-grid-embed #venue-name { grid-area: name; margin-bottom: 2px; color: #b5b5ba; font-size: 12px; font-weight: 600; }
+html body.venue-grid-embed #venue-name { grid-area: name; margin-bottom: 2px; color: var(--dancr-color-text-muted); font-size: 12px; font-weight: 600; }
 html body.venue-grid-embed :is(.venue-embed-note, .venue-embed-credit, #venue-status) {
-  color: #b5b5ba; font-size: 12px; line-height: 1.5;
+  color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.5;
 }
 html body.venue-grid-embed .venue-embed-credit {
   grid-area: credit; display: flex; flex-wrap: wrap; align-items: center;
@@ -74,19 +74,18 @@ html body.venue-grid-embed #venue-refresh:disabled svg { animation: venue-refres
 html body.venue-grid-embed #venue-more { justify-self: center; min-height: 44px; }
 html body.venue-grid-embed [hidden] { display: none !important; }
 
-/* The brand lives only on this iframe's body. Public-app tokens are unchanged. */
+/* Website embeds share the site palette; older accent values are ignored. */
 html body.venue-grid-embed {
   --embed-accent: #7c3aed;
   --embed-accent-text: #fff;
-  --dancr-color-brand-primary: var(--embed-accent);
-  --discovery-backdrop: #0b0b0d;
+  --discovery-backdrop: var(--dancr-color-background);
   background: var(--discovery-backdrop) !important;
 }
 html body.venue-grid-embed #venue-more {
   border-color: color-mix(in srgb, var(--embed-accent) 65%, #ffffff30) !important;
 }
 html body.venue-grid-embed #venue-more {
-  background: #171719 !important;
+  background: var(--dancr-color-surface) !important;
   color: #f8fafc !important; box-shadow: none !important;
 }
 html body.venue-grid-embed :is(a, button):focus-visible {
@@ -102,47 +101,47 @@ html body.dancr-button-system.venue-grid-embed > .app main.stack > section.stack
 }
 html body.venue-grid-embed #venue-location {
   display: block; width: 100%; min-height: 48px; padding: 10px 14px;
-  border: 1px solid color-mix(in srgb, var(--embed-accent) 65%, #353538); border-radius: 12px;
-  background: #171719; color: #f5f5f6; font: inherit; font-size: 16px;
+  border: 1px solid color-mix(in srgb, var(--embed-accent) 65%, var(--dancr-color-border)); border-radius: 12px;
+  background: var(--dancr-color-surface); color: var(--dancr-color-text-primary); font: inherit; font-size: 16px;
 }
 html body.venue-grid-embed #venue-location:focus-visible { outline: 2px solid var(--embed-accent); outline-offset: 3px; }
-/* Share the homepage city-picker geometry and replace only its purple colors. */
+/* Share the homepage city-picker geometry and palette. */
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls {
   grid-template-columns: minmax(0, 1fr) !important; gap: 4px !important; margin: 0 !important;
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectButton,
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option {
-  --discovery-control-face: #0b0b0d;
-  --discovery-control-edge: color-mix(in srgb, var(--embed-accent) 40%, #353538);
+  --discovery-control-face: var(--dancr-color-background);
+  --discovery-control-edge: color-mix(in srgb, var(--embed-accent) 40%, var(--dancr-color-border));
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option {
   --discovery-control-edge: transparent;
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectButton[aria-expanded="true"],
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option[aria-selected="true"] {
-  --discovery-control-face: color-mix(in srgb, var(--embed-accent) 12%, #0b0b0d);
+  --discovery-control-face: color-mix(in srgb, var(--embed-accent) 12%, var(--dancr-color-background));
   --discovery-control-edge: var(--embed-accent);
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectButton > :is(.city-picker-trigger-icon, .city-picker-chevron) {
   color: var(--embed-accent) !important; stroke: currentColor !important;
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel.is-open {
-  position: relative; border-color: #353538 !important; background: #171719 !important;
+  position: relative; border-color: var(--dancr-color-border) !important; background: var(--dancr-color-surface) !important;
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectOptions {
   max-height: min(360px, 50vh) !important; overflow-y: auto !important;
-  overscroll-behavior: contain; scrollbar-color: var(--embed-accent) #353538;
+  overscroll-behavior: contain; scrollbar-color: var(--embed-accent) var(--dancr-color-border);
   scrollbar-width: thin; scrollbar-gutter: stable;
 }
 html body.venue-grid-embed #citySelectOptions::-webkit-scrollbar { width: 8px; }
-html body.venue-grid-embed #citySelectOptions::-webkit-scrollbar-track { background: #353538; border-radius: 999px; }
+html body.venue-grid-embed #citySelectOptions::-webkit-scrollbar-track { background: var(--dancr-color-border); border-radius: 999px; }
 html body.venue-grid-embed #citySelectOptions::-webkit-scrollbar-thumb {
-  min-height: 28px; border: 2px solid #353538; border-radius: 999px; background: var(--embed-accent);
+  min-height: 28px; border: 2px solid var(--dancr-color-border); border-radius: 999px; background: var(--embed-accent);
 }
 /* Phone scrollbars fade automatically; keep a position indicator visible there. */
 html body.venue-grid-embed .venue-location-scrollbar {
   display: none; position: absolute; top: 8px; bottom: 8px; right: 5px; width: 5px;
-  border-radius: 999px; background: #353538; pointer-events: none;
+  border-radius: 999px; background: var(--dancr-color-border); pointer-events: none;
 }
 html body.venue-grid-embed .venue-location-scrollbar span {
   display: block; width: 100%; border-radius: inherit; background: var(--embed-accent);
@@ -158,7 +157,7 @@ html body.venue-grid-embed .venue-location-scrollbar span {
   html body.venue-grid-embed .venue-location-scrollbar { display: block; }
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .venue-embed-location-count {
-  color: #34d399; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+  color: var(--dancr-color-success); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
   text-align: right; white-space: nowrap;
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectPanel .city-picker-option .venue-picker-radio {
@@ -176,14 +175,14 @@ html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discove
 html body.venue-grid-embed #venue-count {
   display: inline-grid; place-items: center; min-width: 30px; padding: 2px 8px;
   border: 1px solid #285b45; border-radius: 999px; background: #0d2118;
-  color: #34d399; font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;
+  color: var(--dancr-color-success); font-size: 14px; font-weight: 700; font-variant-numeric: tabular-nums;
 }
 html body.venue-grid-embed .home-dancer-grid-card { --venue-accent: var(--embed-accent); }
 html body.venue-grid-embed #results.home-dancer-grid > .home-dancer-grid-card {
-  border-color: #3a3a40 !important;
-  background: linear-gradient(#161618, #161618) !important;
+  border-color: var(--dancr-color-border) !important;
+  background: linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
   box-shadow: 0 10px 26px rgb(0 0 0 / 30%) !important;
 }
 html body.venue-grid-embed .home-dancer-grid-photo:not(.has-custom-photo) {
-  background: linear-gradient(145deg, #222225, #0b0b0d);
+  background: linear-gradient(145deg, #222225, var(--dancr-color-background));
 }

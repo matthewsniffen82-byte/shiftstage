@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import PublicDancerProfile, { type PublicDancerProfileProps } from "@/app/dancers/[slug]/PublicDancerProfile";
 
-export default function EmbeddedDancerProfile({ venueSlug, returnHref, accent, ...props }: PublicDancerProfileProps & {
+export default function EmbeddedDancerProfile({ venueSlug, returnHref, ...props }: PublicDancerProfileProps & {
   venueSlug: string;
   returnHref: string;
   accent: string;
@@ -37,7 +37,7 @@ export default function EmbeddedDancerProfile({ venueSlug, returnHref, accent, .
   }, [venueSlug, props.profile.slug]);
 
   return (
-    <div className="venue-embed-profile-page" style={{ "--embed-accent": accent } as CSSProperties}
+    <div className="venue-embed-profile-page"
       onClickCapture={event => {
         // Account and club pages stay in the main app; never frame private pages.
         const anchor = (event.target as Element).closest<HTMLAnchorElement>("a[href]");

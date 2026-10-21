@@ -122,21 +122,10 @@
       internalProfileTargetId = source.id;
       internalProfileToken = token;
       document.body.dataset.internalProfileAudience = token ? "guest" : "staff";
-      // Only a table-token profile may carry a club theme. This document is
-      // isolated from the public app and the staff profile preview.
-      const guestAccent = token && /^#[0-9a-f]{6}$/i.test(source.internalAccent || "") ? source.internalAccent : "";
-      if (guestAccent) {
-        const channels = guestAccent.slice(1).match(/../g).map(value => parseInt(value, 16) / 255)
-          .map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
-        const light = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722 > .179;
-        document.body.dataset.venueGuestColor = "custom";
-        document.body.style.setProperty("--venue-guest-accent", guestAccent);
-        document.body.style.setProperty("--venue-guest-on-accent", light ? "#050507" : "#ffffff");
-      } else {
-        delete document.body.dataset.venueGuestColor;
-        document.body.style.removeProperty("--venue-guest-accent");
-        document.body.style.removeProperty("--venue-guest-on-accent");
-      }
+      // Every profile uses the site palette, including older table links.
+      delete document.body.dataset.venueGuestColor;
+      document.body.style.removeProperty("--venue-guest-accent");
+      document.body.style.removeProperty("--venue-guest-on-accent");
       internalTableRequest = token && event.data.request ? {
         tableLabel: String(event.data.request.tableLabel || "our table").slice(0, 60),
         busy: event.data.request.busy === true, message: String(event.data.request.message || ""),

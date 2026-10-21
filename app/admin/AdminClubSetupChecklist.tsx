@@ -11,7 +11,7 @@ export function clubSetupSteps(venue: Record<string, unknown>, pageReady: boolea
     { id: "application", label: "Application", complete: true, detail: (venue.signup_request as { id?: string } | null)?.id ? "Approved club workspace" : "Existing club record" },
     { id: "access", label: "Manager access", complete: connected, detail: connected ? "Manager connected" : "Manager account not connected" },
     { id: "page", label: "Club page", complete: pageReady, detail: pageReady ? "Details, phone and hours saved" : "Complete details, phone and hours" },
-    { id: "branding", label: "Branding", complete: Boolean(venue.logo_image_url), detail: venue.logo_image_url ? "Logo uploaded · cover and colors optional" : "Upload the club logo" },
+    { id: "branding", label: "Club images", complete: Boolean(venue.logo_image_url), detail: venue.logo_image_url ? "Logo uploaded · cover optional" : "Upload the club logo" },
     { id: "deal", label: "Club Deal", complete: hasDeal, detail: hasDeal ? "Active deal saved" : "Complete the club deal" },
     { id: "tables", label: "Table QR codes", complete: Boolean(equipment?.tables), detail: equipment ? `${equipment.tables} active table codes` : "Checking saved table codes" },
     { id: "stickers", label: "Tap stickers", complete: Boolean(equipment?.dressing && equipment?.cashier), detail: equipment ? `${equipment.dressing ? "Dressing room assigned" : "Assign dressing room"} · ${equipment.cashier ? "Cashier assigned" : "assign cashier"}. Test physical stickers before delivery.` : "Checking sticker assignments" },

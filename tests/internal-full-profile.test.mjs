@@ -35,7 +35,7 @@ test('Internal initializes its viewer without loading the public directory',()=>
   const initial=startup.slice(startup.indexOf('    const initialDiscoveryRequest ='),startup.indexOf('    const initialVenuePreviewRequest ='));
   vm.runInNewContext(initial,{internalProfileFrameId:'viewer',Promise,loadLiveDiscovery:()=>assert.fail('No city-wide discovery in a profile frame')});
   const refresh=startup.slice(startup.indexOf('    async function refreshVisibleHomeDiscovery('),startup.indexOf('    window.setInterval(',startup.indexOf('    async function refreshVisibleHomeDiscovery(')));
-  vm.runInNewContext(refresh+';refreshVisibleHomeDiscovery();',{internalProfileFrameId:'viewer',loadLiveDiscovery:()=>assert.fail('No background public directory refresh')});
+  vm.runInNewContext(refresh+';refreshVisibleHomeDiscovery();',{window:{},internalProfileFrameId:'viewer',loadLiveDiscovery:()=>assert.fail('No background public directory refresh')});
 });
 const profile = {
   id: id(1), slug: 'synthetic-dancer', stage_name: 'Synthetic dancer', city: 'Las Vegas', venueName: 'Synthetic club',
@@ -237,7 +237,7 @@ test('even slow primary images cannot delay the authorized staff viewer or compe
   release(); await opening;
   assert.ok(f.fetches.some(item => item.url.startsWith('/api/internal/video/')));
 });
-test('full staff profiles keep MyDancr colors while guest profiles retain Rhino and custom club themes', async () => {
+test('staff and guest profiles use MyDancr colors while preserving club identity and profile content', async () => {
   for (const staff of [true, false]) {
     const f = fixture({ staff });
     const event = f.event(); event.data.profile = { ...profile, venueSlug: 'talk-of-the-town', internalAccent: '#c99842' };
@@ -252,9 +252,9 @@ test('full staff profiles keep MyDancr colors while guest profiles retain Rhino 
     assert.equal(viewed.submittedPhotos.length, profile.photos.length);
     assert.equal(viewed.internalVideos.length, profile.videos.length);
     assert.equal(viewed.socials.instagram, profile.socialLinks[0].url);
-    assert.equal(f.body.dataset.venueGuestColor, staff ? undefined : 'custom');
-    assert.equal(f.body.style.values['--venue-guest-accent'], staff ? undefined : '#c99842');
-    if (!staff) assert.equal(f.body.style.values['--venue-guest-on-accent'], '#050507');
+    assert.equal(f.body.dataset.venueGuestColor, undefined);
+    assert.equal(f.body.style.values['--venue-guest-accent'], undefined);
+    assert.equal(f.body.style.values['--venue-guest-on-accent'], undefined);
     await f.bridge.openInternalProfileMessage(f.event());
     assert.equal(f.body.dataset.venueGuestColor, undefined);
     assert.equal(f.body.style.values['--venue-guest-accent'], undefined);

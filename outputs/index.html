@@ -41655,50 +41655,6 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
 }
 html.internal-profile-embed #profileModal .vip-profile-queue-action:disabled { opacity: .8; cursor: default; }
 html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visible { outline: 2px solid #cba0ff; outline-offset: 3px; }
-
-/* The saved QR color follows guest profiles only inside this isolated frame. */
-html.internal-profile-embed body[data-venue-guest-color="custom"] {
-  --dancr-color-brand-primary: var(--venue-guest-accent);
-  --dancr-color-brand-primary-deep: color-mix(in srgb, var(--venue-guest-accent) 75%, black);
-  --dancr-color-avatar-ring-violet: var(--venue-guest-accent);
-  --dancr-shadow-brand-control: 0 2px 8px color-mix(in srgb, var(--venue-guest-accent) 12%, transparent);
-}
-html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal
-  .profile-actions-compact [data-internal-table-request]:enabled:not([data-request-sent]) {
-  --profile-action-background: linear-gradient(var(--venue-guest-accent), var(--venue-guest-accent)) !important;
-  --profile-action-border: var(--venue-guest-accent) !important;
-  color: var(--venue-guest-on-accent) !important;
-  -webkit-text-fill-color: currentColor !important;
-}
-html.internal-profile-embed body[data-venue-guest-color="custom"] :is(button, a):focus-visible {
-  outline-color: color-mix(in srgb, var(--venue-guest-accent) 60%, white) !important;
-}
-html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
-  :is(.profile-modal-city-icon, .profile-venue-pin, .profile-venue-destination svg, .profile-working-destination svg,
-      .profile-actions-compact .profile-action-main svg, .profile-modal-media-tabs button.active .profile-media-tab-icon) {
-  color: color-mix(in srgb, var(--venue-guest-accent) 60%, white) !important;
-}
-html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
-  .profile-modal-media-tabs > button.active::after { background: var(--venue-guest-accent) !important; }
-html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout
-  .profile-actions-compact :is(.profile-share-action, .profile-share-trigger) {
-  --profile-utility-background: linear-gradient(color-mix(in srgb, var(--venue-guest-accent) 18%, #050507), color-mix(in srgb, var(--venue-guest-accent) 18%, #050507));
-  --profile-utility-border: color-mix(in srgb, var(--venue-guest-accent) 40%, #34343c);
-  --profile-utility-hover-border: var(--venue-guest-accent);
-}
-@layer dancr-follow-controls {
-  html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
-    .profile-actions-compact :is(#followBtn, [data-follow-control="text"]) {
-    --follow-control-edge: color-mix(in srgb, var(--venue-guest-accent) 50%, #34343c);
-  }
-  html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
-    .profile-actions-compact :is(#followBtn, [data-follow-control="text"])[aria-pressed="true"] {
-    --follow-control-face: color-mix(in srgb, var(--venue-guest-accent) 18%, #050507);
-    --follow-control-edge: var(--venue-guest-accent);
-  }
-  html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="custom"] #profileBackdrop #profileModal.profile-split-layout:not(.dancer-profile-preview-shell)
-    .profile-options[data-compact-menu] > summary { color: color-mix(in srgb, var(--venue-guest-accent) 60%, white) !important; }
-}
       </style>
 
       <section class="stack" aria-live="polite">
@@ -43403,21 +43359,10 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       internalProfileTargetId = source.id;
       internalProfileToken = token;
       document.body.dataset.internalProfileAudience = token ? "guest" : "staff";
-      // Only a table-token profile may carry a club theme. This document is
-      // isolated from the public app and the staff profile preview.
-      const guestAccent = token && /^#[0-9a-f]{6}$/i.test(source.internalAccent || "") ? source.internalAccent : "";
-      if (guestAccent) {
-        const channels = guestAccent.slice(1).match(/../g).map(value => parseInt(value, 16) / 255)
-          .map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
-        const light = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722 > .179;
-        document.body.dataset.venueGuestColor = "custom";
-        document.body.style.setProperty("--venue-guest-accent", guestAccent);
-        document.body.style.setProperty("--venue-guest-on-accent", light ? "#050507" : "#ffffff");
-      } else {
-        delete document.body.dataset.venueGuestColor;
-        document.body.style.removeProperty("--venue-guest-accent");
-        document.body.style.removeProperty("--venue-guest-on-accent");
-      }
+      // Every profile uses the site palette, including older table links.
+      delete document.body.dataset.venueGuestColor;
+      document.body.style.removeProperty("--venue-guest-accent");
+      document.body.style.removeProperty("--venue-guest-on-accent");
       internalTableRequest = token && event.data.request ? {
         tableLabel: String(event.data.request.tableLabel || "our table").slice(0, 60),
         busy: event.data.request.busy === true, message: String(event.data.request.message || ""),

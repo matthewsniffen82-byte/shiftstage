@@ -45,7 +45,7 @@ test("the warning is an accessible responsive modal and profile social links opt
   assert.match(styles, /@media \(min-width: 430px\)/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
   assert.match(styles, /#mydancrThirdPartySocialWarning \.mydancr-third-party-social-continue/);
-  assert.match(styles, /background: linear-gradient\(135deg, #6d28d9, #4c1d95\) !important/);
+  assert.match(styles, /background: linear-gradient\(135deg, var\(--dancr-color-brand-primary\), var\(--dancr-color-brand-primary\)\) !important/);
   assert.match(socialLinks, /data-third-party-social-link="true"/);
   assert.match(socialLinks, /opens in a new tab after a third-party warning/);
 });

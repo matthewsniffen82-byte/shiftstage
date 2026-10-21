@@ -1,17 +1,14 @@
 /* Shared full public profile layout, with the same neutral surfaces as Internal. */
 html:has(.venue-embed-profile-page), html body:has(.venue-embed-profile-page) {
-  margin: 0; padding: 0 !important; background: #0b0b0d !important;
+  margin: 0; padding: 0 !important; background: var(--dancr-color-background) !important;
 }
 .venue-embed-profile-page {
-  --discovery-backdrop: #0b0b0d;
-  --dancr-color-brand-primary: var(--embed-accent);
-  --dancr-color-avatar-ring-violet: var(--embed-accent);
-  --dancr-shadow-brand-control: 0 2px 8px color-mix(in srgb, var(--embed-accent) 16%, transparent);
+  --discovery-backdrop: var(--dancr-color-background);
 }
-/* Keep location pins in the embed's club color, including media viewers. */
+/* Location pins share the site palette, including media viewers. */
 html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
   :is(.profile-venue-pin, .profile-modal-city-icon, .profile-media-venue svg) {
-  color: var(--embed-accent) !important;
+  color: var(--dancr-color-icon-location) !important;
   stroke: currentColor !important;
 }
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell .profile-titlebar-city {
@@ -24,7 +21,7 @@ html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #pr
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout {
-  min-height: calc(100dvh - 70px) !important; background: #0b0b0d !important;
+  min-height: calc(100dvh - 70px) !important; background: var(--dancr-color-background) !important;
 }
 /* Identity, then location and visit actions: no empty social-action row. */
 html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) {
@@ -44,26 +41,26 @@ html body.dancr-button-system .venue-embed-profile-page .profile-tonight-card > 
   grid-column: 1 / -1;
 }
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout::after {
-  background: #000 linear-gradient(#000, #000) !important;
+  background: var(--dancr-color-surface) !important;
 }
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout::before {
-  box-shadow: inset 0 0 0 1px #353538 !important;
+  box-shadow: inset 0 0 0 1px var(--dancr-color-border) !important;
 }
 html body.dancr-button-system .venue-embed-profile-page .profile-featured-column {
-  border-left-color: #353538 !important; background: linear-gradient(#161618, #161618) !important;
+  border-left-color: var(--dancr-color-border) !important; background: linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
 }
 html body.dancr-button-system .venue-embed-profile-page :is(.profile-titlebar, .profile-options-panel, .profile-share-dialog, .profile-account-gate-dialog) {
-  background: linear-gradient(#161618, #161618) !important; border-color: #353538 !important;
+  background: linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important; border-color: var(--dancr-color-border) !important;
 }
-.venue-embed-profile-credit { padding: 16px; background: #0b0b0d; color: #b5b5ba; font-size: 12px; text-align: center; }
+.venue-embed-profile-credit { padding: 16px; background: var(--dancr-color-background); color: var(--dancr-color-text-muted); font-size: 12px; text-align: center; }
 .venue-embed-profile-credit a { display: grid; gap: 4px; width: fit-content; min-height: 44px; margin: auto; color: inherit; text-decoration: none; }
 .venue-embed-profile-credit span:first-child { font-weight: 600; }
 .venue-embed-profile-credit span:last-child { text-decoration: underline; text-underline-offset: 3px; }
-.venue-embed-profile-unavailable { min-height: 60dvh; padding: 24px; color: #f5f5f6; }
+.venue-embed-profile-unavailable { min-height: 60dvh; padding: 24px; color: var(--dancr-color-text-primary); }
 .venue-embed-profile-unavailable a { display: inline-block; padding: 12px 0; color: var(--embed-accent); }
 @layer dancr-follow-controls {
   html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout:not(.dancer-profile-preview-shell)
     .profile-options[data-compact-menu] > .profile-options-panel {
-    border-color: #353538 !important; background: linear-gradient(#161618, #161618) !important;
+    border-color: var(--dancr-color-border) !important; background: linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
   }
 }

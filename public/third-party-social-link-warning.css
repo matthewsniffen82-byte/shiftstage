@@ -11,7 +11,7 @@
   align-items: end;
   justify-items: center;
   padding: 16px 16px max(16px, env(safe-area-inset-bottom));
-  color: #f8f7ff;
+  color: var(--dancr-color-text-primary);
   color-scheme: dark;
   font-family: inherit;
 }
@@ -35,9 +35,9 @@
   padding: 16px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  border: 1px solid #34343c;
+  border: 1px solid var(--dancr-color-border);
   border-radius: 18px;
-  background: #08080b;
+  background: var(--dancr-color-surface);
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
   isolation: isolate;
   animation: mydancr-third-party-social-enter 180ms ease-out both;
@@ -47,7 +47,7 @@
   width: fit-content;
   margin: 0;
   padding: 0;
-  color: #b8b5c6;
+  color: var(--dancr-color-text-muted);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -66,7 +66,7 @@
 }
 
 .mydancr-third-party-social-copy h2 {
-  color: #ffffff;
+  color: var(--dancr-color-text-primary);
   font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.02em;
@@ -74,7 +74,7 @@
 }
 
 .mydancr-third-party-social-copy p {
-  color: #b8b5c6;
+  color: var(--dancr-color-text-muted);
   font-size: 14px;
   font-weight: 400;
   line-height: 1.45;
@@ -87,13 +87,13 @@
   gap: 8px;
   min-width: 0;
   padding: 10px 12px;
-  border: 1px solid #34343c;
+  border: 1px solid var(--dancr-color-border);
   border-radius: 12px;
-  background: linear-gradient(#060608, #060608);
+  background: linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface));
 }
 
 .mydancr-third-party-social-destination span {
-  color: #b8b5c6;
+  color: var(--dancr-color-text-muted);
   font-size: 12px;
   font-weight: 400;
   line-height: 1.4;
@@ -102,7 +102,7 @@
 .mydancr-third-party-social-destination strong {
   min-width: 0;
   overflow-wrap: anywhere;
-  color: #ffffff;
+  color: var(--dancr-color-text-primary);
   font-size: 14px;
   font-weight: 600;
   line-height: 1.4;
@@ -136,16 +136,16 @@
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-actions button:focus-visible {
-  outline: 2px solid #c4b5fd;
+  outline: 2px solid var(--dancr-color-icon-location);
   outline-offset: 3px;
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-stay {
-  --social-stay-face: #060608;
+  --social-stay-face: var(--dancr-color-surface);
   position: relative;
   isolation: isolate;
-  border: 1px solid #34343c !important;
-  color: #f4f2fb !important;
+  border: 1px solid var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
   background: var(--social-stay-face) linear-gradient(var(--social-stay-face), var(--social-stay-face)) !important;
   box-shadow: none !important;
 }
@@ -163,14 +163,14 @@
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-stay:is(:hover, :focus-visible) {
-  --social-stay-face: #100a1b;
-  border-color: #745696 !important;
+  --social-stay-face: var(--dancr-color-control-hover);
+  border-color: var(--dancr-color-border) !important;
 }
 
 #mydancrThirdPartySocialWarning .mydancr-third-party-social-continue {
-  border: 1px solid #745696 !important;
-  color: #ffffff !important;
-  background: linear-gradient(135deg, #6d28d9, #4c1d95) !important;
+  border: 1px solid var(--dancr-color-border) !important;
+  color: var(--dancr-color-text-primary) !important;
+  background: linear-gradient(135deg, var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important;
   box-shadow: none !important;
 }
 

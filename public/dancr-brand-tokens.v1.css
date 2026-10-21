@@ -43,13 +43,13 @@
   --dancr-color-icon-accent-small: #aaa6b5;
   --dancr-color-icon-accent-active: #b69aef;
   --dancr-color-icon-location: #b69aef;
-  --dancr-color-avatar-ring-magenta: #f02bdc;
-  --dancr-color-avatar-ring-violet: #8b5cf6;
-  --dancr-color-avatar-ring-indigo: #4f46e5;
+  --dancr-color-avatar-ring-magenta: #7c3aed;
+  --dancr-color-avatar-ring-violet: #b69aef;
+  --dancr-color-avatar-ring-indigo: #7c3aed;
   --dancr-color-avatar-ring-core: #ffffff;
   --dancr-color-avatar-ring-live: #35d09a;
   --dancr-color-avatar-ring-upcoming: #b69aef;
-  --dancr-color-avatar-ring-inactive: #334155;
+  --dancr-color-avatar-ring-inactive: #5b5568;
 
   --dancr-color-beam-core: var(--dancr-color-brand-core);
   --dancr-color-beam-violet: var(--dancr-color-brand-primary);

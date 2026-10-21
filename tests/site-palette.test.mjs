@@ -11,7 +11,7 @@ theme.walkRules(rule => rules.push(rule));
 
 test('both rendering systems load the palette and cache its exact version', () => {
   assert.match(read('app/layout.tsx'), /import "\.\.\/public\/dancr-palette\.v1\.css";/);
-  for (const file of ['src/live-shell/shell.html', 'outputs/index.html']) {
+  for (const file of ['src/live-shell/shell.html', 'outputs/index.html', 'app/embed/venues/[slug]/route.ts']) {
     const source = read(file);
     assert.ok(source.indexOf('/dancr-brand-tokens.v1.css') < source.indexOf('/dancr-palette.v1.css'));
     assert.match(source, /<link href="\/dancr-palette\.v1\.css" rel="stylesheet">/);
@@ -20,18 +20,19 @@ test('both rendering systems load the palette and cache its exact version', () =
   assert.match(read('public/dancr-brand-tokens.v1.css'), /@layer dancr-palette, dancr-follow-controls;/);
 });
 
-test('every palette selector excludes actual Internal and embedded contexts', () => {
+test('the shared palette reaches public, Internal and embedded contexts', () => {
   assert.ok(rules.length > 20);
   for (const rule of rules) {
-    assert.match(rule.selector, /^html:not\(\.internal-profile-embed\) body\.dancr-button-system:not\(\.venue-grid-embed\)/);
-    assert.ok(rule.selector.includes(':not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *))') ||
-      rule.selector.includes(':not(:has(.ir-shell, .venue-embed-profile-page))'), rule.selector);
-    assert.doesNotMatch(rule.selector, /data-venue-brand/, 'public venue affiliation is not a branded experience');
+    assert.match(rule.selector, /^html body\.dancr-button-system/);
+    assert.doesNotMatch(rule.selector, /html:not\(\.internal-profile-embed\)|body[^\n]*:not\(\.venue-grid-embed\)|:not\(:where\(\.ir-shell/);
   }
+  const source = read('public/dancr-palette.v1.css');
+  for (const context of ['.internal-page-surface', '.ir-shell', '.venue-embed-profile-page', '.venue-grid-embed']) assert.ok(source.includes(context), context);
+  assert.match(source, /@media screen\s*\{\s*@layer dancr-palette/, 'printed guides and QR codes retain their print palette');
 });
 
 test('the site palette changes paint without changing layout, media, or hero artwork', () => {
-  const paint = new Set(['background', 'background-color', 'background-image', 'color', 'border-color', 'box-shadow', 'text-shadow', 'filter', 'stroke', 'outline-color']);
+  const paint = new Set(['background', 'background-color', 'background-image', 'color', 'border-color', 'box-shadow', 'text-shadow', 'filter', 'stroke', 'outline-color', '-webkit-text-fill-color']);
   theme.walkDecls(decl => {
     assert.ok(decl.prop.startsWith('--') || paint.has(decl.prop), decl.prop);
     assert.equal(decl.important, true);
@@ -42,6 +43,25 @@ test('the site palette changes paint without changing layout, media, or hero art
   const source = read('src/live-shell/shell.html');
   assert.match(source, /dancr-hero-480-10b0c648e5b6\.webp/);
   assert.match(source, /dancr-hero-1280-70c171eee35b\.webp/);
+});
+
+test('legacy club themes and saved preferences cannot inject a different palette', () => {
+  assert.doesNotMatch(read('public/venue-brand-themes.css'), /#[0-9a-f]{3,8}\b|--dancr-color-/i);
+  assert.doesNotMatch(read('app/internal/InternalRoster.tsx'), /venueGuestTheme|data-venue-guest-color/);
+  assert.doesNotMatch(read('src/live-shell/app/internal-profile-bridge.js'), /setProperty\("--venue-guest/);
+  assert.doesNotMatch(read('app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx'), /style=\{\{ "--embed-accent": accent/);
+  assert.doesNotMatch(read('app/admin/AdminVenueColors.tsx'), /type="color"|Save guest colors|\/api\/admin\/venues\/colors/);
+  assert.match(read('app/admin/AdminVenueColors.tsx'), /Copy link/);
+  assert.match(read('app/admin/AdminVenueColors.tsx'), /Copy code/);
+});
+
+test('select styling removes old gradients and preserves custom dropdown arrows', () => {
+  const select = rules.find(rule => rule.selector.includes(':where(select)'));
+  assert.ok(select);
+  assert.ok(!select.nodes.some(decl => ['background', 'background-image'].includes(decl.prop)));
+  const arrow = rules.find(rule => rule.selector.includes('.ir-staff select:not([multiple])'));
+  assert.ok(arrow.nodes.some(decl => decl.prop === 'background-image' && decl.value.startsWith('url(')));
+  assert.doesNotMatch(arrow.toString(), /linear-gradient/);
 });
 
 test('primary actions exclude destructive, confirmed, disabled and secondary states', () => {

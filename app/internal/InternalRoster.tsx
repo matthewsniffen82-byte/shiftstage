@@ -1,10 +1,8 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
 
-import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
-import { venueGuestTheme } from "@/src/lib/dancr/venue-guest-theme";
+import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { DEMO_TABLE_REQUEST_COUNT } from "@/src/lib/dancr/venue-dashboard-demo";
-import "./internal-guest-colors.css";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
 import VenueGridImage from "../dashboard/VenueGridImage";
 import { InternalRequestPushSettings } from "./InternalRequestPushSettings";
@@ -424,9 +422,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     </div>
   </div>;
   return <div className={`ir-shell${staff ? " ir-staff" : " ir-guest"}${operationsOnly ? " ir-embedded" : ""}`} data-global-navigation-swipe="ignore"
-    data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}
-    data-venue-guest-color={!staff && venueGuestTheme(snapshot?.internalAccent) ? "custom" : undefined}
-    style={(!staff ? venueGuestTheme(snapshot?.internalAccent) : undefined) as CSSProperties | undefined}>
+    data-venue-brand={operationsOnly ? undefined : snapshot?.venueSlug}>
     {staff && !operationsOnly ? <VenueAdminUtilities /> : null}
     {!operationsOnly && (staff || snapshot) ? <header className="ir-header"><div>
       <a className="ir-brand" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span className="ir-brand-caption">Powered by mydancr.com</span>{staff ? <span>INTERNAL</span> : null}</a>
