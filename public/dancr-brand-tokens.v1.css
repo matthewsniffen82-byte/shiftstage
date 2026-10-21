@@ -11,9 +11,15 @@
 /* Important palette declarations precede legacy component paint layers. */
 @layer dancr-palette, dancr-follow-controls;
 
-:root {
-  color-scheme: dark;
+/* Declare the site's own dark theme before legacy Android rules can opt the
+ * document back into automatic recoloring. High-contrast modes remain native. */
+@layer dancr-palette {
+  :root {
+    color-scheme: only dark !important;
+  }
+}
 
+:root {
   --dancr-visual-weight-neutral: 84;
   --dancr-visual-weight-brand: 10;
   --dancr-visual-weight-semantic: 6;

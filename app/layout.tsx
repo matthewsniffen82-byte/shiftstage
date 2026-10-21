@@ -50,13 +50,15 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#0b0b12",
-  colorScheme: "dark",
   viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="color-scheme" content="only dark" />
+      </head>
       <Script src={versionedStaticAssetUrl("/mydancr-api-transport.js")} strategy="beforeInteractive" />
       <body className="dancr-button-system" suppressHydrationWarning>
         <script

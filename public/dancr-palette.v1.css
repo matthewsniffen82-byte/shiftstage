@@ -5,6 +5,7 @@
 @media screen {
 @layer dancr-palette {
   html body.dancr-button-system {
+    color-scheme: only dark !important;
     --bg: var(--dancr-color-background) !important;
     --panel: var(--dancr-color-surface) !important;
     --panel-2: var(--dancr-color-surface) !important;
@@ -23,6 +24,7 @@
     :where(.app, .app > main, .dashboard-shell, .admin-shell, .account-shell, .vip-shell, .agent-dashboard, .public-profile-shell, #profileBackdrop, .tv-shell, .tv-studio-page, .operations-guides, .legal-document-shell, .reset-page, .nfc-page, .venue-team-invite-shell, .club-update-page, .club-transport-page, .pickup-page, .deal-claim-page, .deal-pass-page, .redeem-shell, .dmca-shell, .counter-shell, .page-panel, .internal-page-surface, .ir-shell, .ir-full-profile-frame, .venue-embed-profile-page, .venue-embed-profile-credit, .legal-hub, .venue-confirm-page) {
     --discovery-backdrop: var(--dancr-color-background) !important;
     --mydancr-dashboard-panel: var(--dancr-color-surface) !important;
+    color-scheme: only dark !important;
     --mydancr-dashboard-panel-raised: var(--dancr-color-surface) !important;
     --mydancr-dashboard-border: var(--dancr-color-border) !important;
     --mydancr-dashboard-muted: var(--dancr-color-text-muted) !important;
@@ -873,7 +875,7 @@
     box-shadow: none !important;
   }
   /* The shared gray face separates discovery and social controls from the
-     page. Keep their existing edges, tap areas, and confirmed action states. */
+     page. Keep tap areas and confirmed action states owned by the components. */
   html body.dancr-button-system :where(#citySelectButton, #homeFilterToggle) {
     --discovery-control-face: var(--dancr-color-control-secondary) !important;
   }
@@ -892,9 +894,18 @@
     --venue-utility-face: var(--dancr-color-control-secondary) !important;
   }
   html body.dancr-button-system :where(
-    .profile-actions-compact :is(#followBtn, [data-follow-control="text"])
-  ):not(:where([aria-pressed="true"], .is-active, .is-following, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"]))::before {
+    .profile-actions-compact :is(#followBtn, [data-follow-control="text"], .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going)
+  ):not(:where([aria-pressed="true"], .is-active, .is-following, .is-going, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"]))::before {
+    color-scheme: only dark !important;
     background: var(--dancr-control-secondary-background) !important;
+  }
+  /* Dancer utilities use the same filled treatment as venue utilities.
+     Keyboard focus and confirmed states retain their existing indicators. */
+  html body.dancr-button-system :where(
+    .profile-actions-compact :is(#followBtn, [data-follow-control="text"], .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going)
+  ):not(:where([aria-pressed="true"], .is-active, .is-following, .is-going, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"], :focus-visible))::before {
+    border-color: transparent !important;
+    box-shadow: none !important;
   }
   /* The floating dock keeps its component-owned glass, light icons and violet halo. */
   html body.dancr-button-system
