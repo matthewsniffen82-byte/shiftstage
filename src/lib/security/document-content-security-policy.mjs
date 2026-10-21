@@ -23,6 +23,7 @@ export const contentSecurityPolicy = [
 // These pages render per request. Unknown paths use Next's static 404 and
 // must retain its existing policy; a fresh nonce cannot match cached HTML.
 const privateDocumentPaths = new Set([
+  "/guides",
   "/admin", "/admin/operations",
   "/dashboard/dancer", "/dashboard/dancer/tv",
   "/dashboard/venue",

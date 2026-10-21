@@ -625,6 +625,7 @@ export function VenuePanel({
             <NotificationPanel refreshKey={notificationRevision} preferencesHref="#venue-notification-settings" />
             <VenueNotificationSettings onSaved={() => setNotificationRevision(value => value + 1)} />
             {supportThreads ? <SupportInboxPanel initialThreads={supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
+            <article className="info-panel"><h2>Onboarding guides</h2><p>Role guides and one-page cheat sheets for your team.</p><Link className="secondary-action" href="/guides">Open guides</Link></article>
             <AccountControlsPanel
               accountRole="venue"
               accountState={String(account?.accountState || "active")}

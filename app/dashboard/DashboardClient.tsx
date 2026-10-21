@@ -470,6 +470,7 @@ export default function DashboardClient({
       <NotificationPanel dancerMode />
       <DancerNotificationSettings showPhoneDelivery={dancerProfileStatus !== "approved"} />
       <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="dancer-support" />
+      <article className="info-panel"><h2>Onboarding guides</h2><p>Profile setup, uploads and check-ins, with a one-page cheat sheet.</p><a className="secondary-action" href="/guides">Open guides</a></article>
       {dancerProfileStatus === "approved" ? <article className="info-panel dancer-agreement-panel">
         <h2>Dancer Agreement</h2>
         <DancerAgreementLink className="secondary-action">Read agreement</DancerAgreementLink>
