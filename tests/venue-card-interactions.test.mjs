@@ -36,8 +36,8 @@ test("venue cards open the live profile while revenue and customer actions remai
     /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\) \{[\s\S]*?\n    \}/,
   )?.[0] || "";
 
-  assert.match(venueCardRenderer, /<article class="card venue venue-card"/);
-  assert.doesNotMatch(venueCardRenderer, /<a class="card venue venue-card"/);
+  assert.match(venueCardRenderer, /<article [^>]*class="card venue venue-card"/);
+  assert.doesNotMatch(venueCardRenderer, /<a [^>]*class="card venue venue-card"/);
   assert.match(
     venueCardRenderer,
     /<a class="venue-card-link" href="\$\{venueHref\}" data-open-venue-profile="\$\{venueValue\}"/,
@@ -136,4 +136,75 @@ test("the retired venue directory can only open the canonical homepage venue car
     /permanentRedirect\(homeDiscoveryHref\("venues", params\.city\)\)/,
   );
   assert.doesNotMatch(venuesPageSource, /venue-card-main|venue-card-profile|venue-card-deal/);
+});
+
+function venueCardSurfaceFixture({ interactive = "", selectedText = false, hasCard = true, hasControl = true, disabled = false, ariaDisabled = false } = {}) {
+  const source = homeSource.match(/    function handleVenueCardSurfaceClick\(event\) \{[\s\S]*?\n    \}/)?.[0];
+  assert.ok(source);
+  const forwarded = [];
+  const control = {
+    disabled,
+    getAttribute: () => ariaDisabled ? "true" : null,
+    dispatchEvent: (event) => forwarded.push(event),
+  };
+  const card = {
+    contains: () => true,
+    querySelector: (selector) => {
+      assert.equal(selector, "[data-open-venue-profile]");
+      return hasControl ? control : null;
+    },
+  };
+  const target = {
+    closest: (selector) => {
+      if (selector === ".home-venue-discovery-slide, .venue-card") return hasCard ? card : null;
+      return interactive && selector.split(", ").includes(interactive) ? {} : null;
+    },
+  };
+  const handle = vm.runInNewContext(source + "\nhandleVenueCardSurfaceClick", {
+    window: { getSelection: () => ({ isCollapsed: !selectedText, anchorNode: target }) },
+    MouseEvent: class {
+      constructor(type, options) { this.type = type; Object.assign(this, options); }
+    },
+  });
+  const event = { target, button: 0, detail: 1, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; } };
+  return { handle, event, forwarded };
+}
+
+test("clicking a venue card surface forwards one click to its existing Club Page control", () => {
+  const { handle, event, forwarded } = venueCardSurfaceFixture();
+  assert.equal(handle(event), true);
+  assert.equal(event.defaultPrevented, true);
+  assert.equal(forwarded.length, 1);
+  assert.equal(forwarded[0].type, "click");
+  assert.equal(forwarded[0].bubbles, true, "reuse delegated navigation and capture-phase analytics");
+  assert.equal(forwarded[0].cancelable, true);
+  assert.equal(forwarded[0].detail, 1, "pointer taps must not acquire keyboard-only focus treatment");
+  assert.match(homeSource, /results\.addEventListener\("click", async \(event\) => \{[\s\S]*?if \(handleVenueCardSurfaceClick\(event\)\) return;/);
+});
+
+test("card surface navigation leaves nested actions and notices alone", () => {
+  for (const interactive of ['a', 'button', 'input', 'select', 'textarea', 'label', 'summary', '[role="button"]', '[role="link"]', '[contenteditable]', '.home-card-qr-notice']) {
+    const { handle, event, forwarded } = venueCardSurfaceFixture({ interactive });
+    assert.equal(handle(event), false, interactive);
+    assert.equal(event.defaultPrevented, false, interactive);
+    assert.equal(forwarded.length, 0, interactive);
+  }
+});
+
+test("card surface navigation ignores text selection, missing actions and disabled controls", () => {
+  for (const options of [{ selectedText: true }, { hasCard: false }, { hasControl: false }, { disabled: true }, { ariaDisabled: true }]) {
+    const { handle, event, forwarded } = venueCardSurfaceFixture(options);
+    assert.equal(handle(event), false, JSON.stringify(options));
+    assert.equal(event.defaultPrevented, false);
+    assert.equal(forwarded.length, 0);
+  }
+});
+
+test("card surface navigation ignores cancelled, modified and non-primary clicks", () => {
+  for (const overrides of [{ defaultPrevented: true }, { ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }, { button: 2 }]) {
+    const { handle, event, forwarded } = venueCardSurfaceFixture();
+    Object.assign(event, overrides);
+    assert.equal(handle(event), false, JSON.stringify(overrides));
+    assert.equal(forwarded.length, 0);
+  }
 });

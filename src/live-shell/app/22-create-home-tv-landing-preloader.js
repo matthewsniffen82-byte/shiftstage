@@ -341,6 +341,21 @@
       });
     }
 
+    function handleVenueCardSurfaceClick(event) {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return false;
+      const target = event.target;
+      const card = target?.closest?.(".home-venue-discovery-slide, .venue-card");
+      if (!card || target.closest('a, button, input, select, textarea, label, summary, [role="button"], [role="link"], [contenteditable], .home-card-qr-notice')) return false;
+      const selection = window.getSelection();
+      if (selection && !selection.isCollapsed && card.contains(selection.anchorNode)) return false;
+      const profileControl = card.querySelector("[data-open-venue-profile]");
+      if (!profileControl || profileControl.disabled || profileControl.getAttribute("aria-disabled") === "true") return false;
+      event.preventDefault();
+      // Reuse the existing action, including analytics and profile return state.
+      profileControl.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, detail: event.detail, view: window }));
+      return true;
+    }
+
     const handleProfileNavigationIntent = (event) => {
       const target = event.target instanceof Element ? event.target : null;
       prefetchProfileNavigationFromElement(target);
@@ -351,6 +366,7 @@
 
     results.addEventListener("click", async (event) => {
       if (!event.target.closest(".home-tv-feed-actions, .home-tv-feed-tools")) closeHomeTvFeedReportMenus();
+      if (handleVenueCardSurfaceClick(event)) return;
       const emptyStateAction = event.target.closest("[data-home-empty-action]");
       if (emptyStateAction) {
         event.preventDefault();

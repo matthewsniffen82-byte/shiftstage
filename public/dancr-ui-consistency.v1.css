@@ -2035,6 +2035,10 @@ html body.dancr-button-system #profileBackdrop.modal-backdrop.show {
   background: var(--discovery-backdrop) !important;
 }
 
+html body.dancr-button-system #results :is(.home-venue-discovery-slide, .venue-card) {
+  cursor: pointer;
+}
+
 /* Venue cards match the dancer profile information card, inside violet gutters. */
 html body.dancr-button-system > .app main.stack > section.stack
   > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide,

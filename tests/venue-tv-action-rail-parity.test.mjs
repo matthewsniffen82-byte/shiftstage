@@ -14,13 +14,15 @@ test("venue-card secondary actions use compact labels and retain accessible name
   assert.match(venueSlide, /home-venue-discovery-profile-action[\s\S]*?aria-label="Open \$\{safeName\}'s full club profile"[\s\S]*?actionButtonLabel\("clubProfile", "Club Page"\)/);
   assert.match(clubProfileIcon, /M5 20V9l7-4 7 4v11/);
   assert.doesNotMatch(clubProfileIcon, /<circle|\.01/);
-  assert.match(venueSlide, /home-dancer-grid-share[\s\S]*?aria-label="Share \$\{safeName\}'s club profile"[\s\S]*?actionButtonLabel\("share", "Share"\)/);
-  assert.match(venueSlide, /data-venue-follow[\s\S]*?aria-label="\$\{followsVenue \? `Unfollow \$\{safeName\}` : `Follow \$\{safeName\}`\}"[\s\S]*?actionButtonLabel\("heart", followsVenue \? "Saved" : "Favorite"\)/);
+  assert.match(venueSlide, /venueDirectionsMarkup\(\{[\s\S]*?venue-card-directions-action[\s\S]*?\$\{directionsMarkup\}/);
+  assert.doesNotMatch(venueSlide, /data-share-venue/);
+  assert.match(venueSlide, /data-venue-follow[\s\S]*?aria-label="\$\{followsVenue \? `Unfollow \$\{safeName\}` : `Follow \$\{safeName\}`\}"[\s\S]*?actionButtonLabel\(followsVenue \? "check" : "personPlus", followsVenue \? "Following" : "Follow"\)/);
   assert.doesNotMatch(venueSlide, /actionIconMarkup\("clubProfile"\)|actionIconMarkup\("share"\)/);
 });
 
 test("venue cards retain Club Deal availability states while TV renders the action only when active", () => {
-  assert.match(liveShell, /function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?is-available[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)[\s\S]*?is-unavailable[\s\S]*?actionButtonLabel\("qr", "Free Entry"\)/);
+  const venueEntry = liveShell.match(/function homeVenueDiscoveryQrMarkup\(venue\)[\s\S]*?(?=\n    function homeVenueDiscoveryFeedSlide)/)?.[0] || "";
+  assert.match(venueEntry, /is-available[\s\S]*?freeEntryButtonLabel\(\)[\s\S]*?is-unavailable[\s\S]*?freeEntryButtonLabel\(\)/);
   assert.match(liveShell, /function createHomeTvFeedDealButton\(item\)[\s\S]*?createHomeTvFeedActionButton\([\s\S]*?freeEntryButtonLabel\(\)/);
   assert.match(liveShell, /if \(dealState\.key === "available"\)/);
   assert.doesNotMatch(liveShell, /home-tv-feed-deal-count">Deals</);
