@@ -32,6 +32,9 @@
   --dancr-color-control-indicator: #8756b8;
   --dancr-color-control-primary: #5f24ac;
   --dancr-color-control-primary-deep: #361366;
+  /* Opt-in sharing palette; club themes and gray controls keep their own fills. */
+  --dancr-color-surface-plum: #0b0a10;
+  --dancr-color-control-plum: #100b18;
   /* Muted utility icons; tiny pins and selected states keep extra contrast. */
   --dancr-color-icon-accent: #9f83bd;
   --dancr-color-icon-accent-small: #b094cc;
