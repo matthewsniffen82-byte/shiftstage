@@ -251,7 +251,7 @@
   /* The frame owns its curved fill. Painting these grid fragments separately
      would square off its lower corners and create seams beside the photo. */
   html body.dancr-button-system :where(.public-profile-shell, #profileBackdrop #profileModal).profile-split-layout
-    :where(.profile-titlebar, .profile-modal-name-row, .profile-modal-summary, .profile-tonight-card, .modal-body, .modal-identity) {
+    :where(.profile-titlebar, .profile-modal-name-row, .profile-modal-summary, .profile-tonight-card, .profile-working-card, .profile-shift-card.schedule-live, .modal-body, .modal-identity) {
     background: transparent !important;
     box-shadow: none !important;
   }
