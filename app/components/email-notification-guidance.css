@@ -1,13 +1,14 @@
 body.dancr-button-system .email-notification-guidance {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
   width: 100%;
   max-width: 1120px;
   min-width: 0;
-  margin: 0 auto 16px;
-  padding: 14px 16px;
+  margin: 0 auto 10px;
+  padding: 8px 12px;
   border: 1px solid #49355f;
   border-radius: 14px;
   background: #140f1d;
@@ -15,36 +16,45 @@ body.dancr-button-system .email-notification-guidance {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   text-align: left;
 }
-body.dancr-button-system .email-notification-guidance > svg {
-  width: 24px;
-  height: 24px;
+body.dancr-button-system .email-notification-guidance .email-guidance-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+body.dancr-button-system .email-guidance-heading > svg {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
   color: #c2a4ed;
 }
 body.dancr-button-system .email-notification-guidance h2 {
-  margin: 0 0 6px;
+  margin: 0;
   color: #f6f1fc;
-  font-size: 16px;
+  /* Keep this shared notice compact beneath dashboard-wide heading styles. */
+  font-size: 14px !important;
   font-weight: 650;
-  line-height: 1.4;
+  line-height: 1.4 !important;
 }
 body.dancr-button-system .email-notification-guidance p {
+  grid-column: 1 / -1;
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
   overflow-wrap: anywhere;
 }
-body.dancr-button-system .email-notification-guidance p + p { margin-top: 6px; }
 body.dancr-button-system .email-notification-guidance strong { color: #f6f1fc; font-weight: 600; }
 body.dancr-button-system .email-notification-guidance .email-guidance-acknowledge {
-  min-height: 40px;
-  margin-top: 12px;
-  padding: 8px 16px;
+  min-height: 44px;
+  min-width: 64px;
+  margin: 0;
+  padding: 8px 12px;
   border: 1px solid #8363a8;
   border-radius: 10px;
   background: #251a32;
   color: #f6f1fc;
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 650;
   cursor: pointer;
 }
@@ -53,7 +63,4 @@ body.dancr-button-system .email-notification-guidance .email-guidance-acknowledg
   outline-offset: 3px;
 }
 body.dancr-button-system .email-notification-guidance .email-guidance-acknowledge:disabled { opacity: .65; cursor: wait; }
-body.dancr-button-system .email-notification-guidance .email-guidance-error { margin-top: 8px; color: #fda4af; }
-@media (max-width: 620px) {
-  body.dancr-button-system .email-notification-guidance { gap: 10px; padding: 12px; }
-}
+body.dancr-button-system .email-notification-guidance .email-guidance-error { margin-top: 4px; color: #fda4af; }

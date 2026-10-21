@@ -18,11 +18,11 @@ function rememberAcknowledgment(accountId: string) {
 }
 
 const ACCOUNT_ALERT_REASONS = {
-  customer: "Know when followed dancers are working and new club deals appear.",
-  dancer: "Don’t miss table requests, VIP selections, or approval updates.",
-  venue: "Respond quickly to table and VIP requests.",
-  vip: "Stay updated on your VIP requests and confirmed visits.",
-  admin: "Respond promptly to support messages that need your attention.",
+  customer: "Working updates from followed dancers and new club deals.",
+  dancer: "Table requests, VIP selections and approvals.",
+  venue: "Table and VIP requests.",
+  vip: "VIP requests and confirmed visits.",
+  admin: "Support messages needing your attention.",
 };
 
 export default function EmailNotificationGuidance({
@@ -103,21 +103,21 @@ export default function EmailNotificationGuidance({
   if (!accountId || status?.accountId !== accountId || status.acknowledged) return null;
 
   const reason = accountRole === "venue" && clubApplication
-    ? "Stay updated on your club application."
+    ? "Updates on your club application."
     : ACCOUNT_ALERT_REASONS[accountRole];
 
   return <aside className="email-notification-guidance" aria-label="Email alerts">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-      <rect x="3" y="5" width="18" height="14" rx="3" />
-      <path d="m4 7 8 6 8-6" />
-    </svg>
-    <div>
+    <div className="email-guidance-heading">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+        <rect x="3" y="5" width="18" height="14" rx="3" />
+        <path d="m4 7 8 6 8-6" />
+      </svg>
       <h2>Email alerts</h2>
-      <p><strong>{reason}</strong> Emails are on by default. Enable phone alerts in your email app for the address you use with MyDancr.</p>
-      <button className="email-guidance-acknowledge" type="button" disabled={saving} onClick={() => void acknowledge()}>
-        {saving ? "Saving…" : "Got it"}
-      </button>
-      {error ? <p className="email-guidance-error" role="alert">{error}</p> : null}
     </div>
+    <button className="email-guidance-acknowledge" type="button" disabled={saving} onClick={() => void acknowledge()}>
+      {saving ? "Saving…" : "Got it"}
+    </button>
+    <p><strong>{reason}</strong> Email is on by default. Enable alerts in your email app for your MyDancr address.</p>
+    {error ? <p className="email-guidance-error" role="alert">{error}</p> : null}
   </aside>;
 }

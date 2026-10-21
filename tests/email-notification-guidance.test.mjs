@@ -187,8 +187,8 @@ test('another device reads the saved acknowledgment and another account still se
 test('all dashboard types retain their account-specific explanation and acknowledgment control', async () => {
   for (const [accountRole, clubApplication, expected] of [
     ['customer', false, /followed dancers/], ['dancer', false, /VIP selections/],
-    ['venue', false, /table and VIP requests/], ['venue', true, /club application/],
-    ['vip', false, /confirmed visits/], ['admin', false, /support messages/],
+    ['venue', false, /Table and VIP requests/], ['venue', true, /club application/],
+    ['vip', false, /confirmed visits/], ['admin', false, /Support messages/],
   ]) {
     const f = client();
     Object.assign(f.props, { accountRole, clubApplication });
