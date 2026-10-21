@@ -72,6 +72,11 @@
     border-color: var(--dancr-color-border) !important;
     box-shadow: none !important;
   }
+  /* Let the club card surface show through the gaps between its action buttons. */
+  html body.dancr-button-system :where(.home-venue-discovery-slide .venue-card-secondary-actions) {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
   /* The venue information frame uses the same neutral edge as other cards. */
   html body.dancr-button-system :where(.venue-detail[role="dialog"] > .venue-hero) {
     border-color: var(--dancr-color-border) !important;
