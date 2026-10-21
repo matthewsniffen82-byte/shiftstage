@@ -758,14 +758,6 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   :is(.profile-modal-city-icon, .profile-venue-pin, .profile-venue-destination svg, .profile-working-destination svg, .profile-upcoming-destination svg) {
   color: var(--dancr-color-icon-accent-small) !important;
 }
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
-  :is(.profile-modal-media-tabs, .profile-media-tabs) button .profile-media-tab-icon {
-  color: #b4bac5 !important;
-}
-html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell)
-  :is(.profile-modal-media-tabs, .profile-media-tabs) button.active .profile-media-tab-icon {
-  color: #c4a3f1 !important;
-}
 
 /* Follow and menu faces use the shared control layer; only public profile
    controls opt into this palette, retaining their existing tap targets. */
@@ -806,6 +798,19 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
     box-shadow: none !important;
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) > button {
+    color: var(--dancr-color-text-muted) !important;
+    -webkit-text-fill-color: currentColor !important;
+    text-shadow: none !important;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) > button:is(.active, [aria-selected="true"]) {
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) > button :is(.profile-media-tab-icon, .profile-media-tab-label, .profile-media-tab-count) {
+    color: inherit !important;
+    -webkit-text-fill-color: currentColor !important;
+    filter: none !important;
   }
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) > button::before,
   html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell) :is(.profile-modal-media-tabs, .profile-media-tabs) > button::after {
