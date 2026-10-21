@@ -93,9 +93,27 @@ test('all dashboard selections and painted mobile control faces use the shared t
     assert.ok(selected.selector.includes(target), target);
   }
   assert.ok(selected.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-color-brand-primary)'));
-  for (const name of ['--discovery-control-face', '--follow-control-face', '--profile-action-background', '--venue-utility-face']) {
-    assert.ok(rules.some(rule => rule.nodes.some(decl => decl.prop === name && decl.value === 'var(--dancr-color-surface)')), name);
+  for (const [name, token] of [
+    ['--discovery-control-face', '--dancr-palette-surface'],
+    ['--follow-control-face', '--dancr-palette-control'],
+    ['--profile-action-background', '--dancr-palette-control'],
+    ['--venue-utility-face', '--dancr-palette-control'],
+  ]) {
+    assert.ok(rules.some(rule => rule.nodes.some(decl => decl.prop === name && decl.value === `var(${token}, var(--dancr-color-surface))`)), name);
   }
+});
+
+test('dashboard cards and controls have distinct fills without recoloring public or guest pages', () => {
+  const scopes = rules.filter(rule => rule.nodes.some(decl => decl.prop === '--dancr-palette-surface' || decl.prop === '--dancr-palette-control'));
+  assert.equal(scopes.length, 1);
+  assert.equal(scopes[0].selector, 'html body.dancr-button-system:has(:where(.dashboard-shell, .admin-shell, .vip-dashboard-shell, .ir-staff, .agent-dashboard))');
+  assert.ok(scopes[0].nodes.some(decl => decl.prop === '--dancr-palette-surface' && decl.value === 'var(--dancr-color-surface-card)'));
+  assert.ok(scopes[0].nodes.some(decl => decl.prop === '--dancr-palette-control' && decl.value === 'var(--dancr-color-control-secondary)'));
+  // Hidden legacy dashboard IDs exist on discovery, and guest rosters share
+  // ir-shell with staff. Neither is sufficient to opt a page into these fills.
+  assert.doesNotMatch(scopes[0].selector, /#(?:dancer|venue|customer|admin)Dashboard|\.ir-shell|\.ir-guest/);
+  const portal = rules.find(rule => rule.selector.includes('.dancer-request-dialog'));
+  assert.ok(portal.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-palette-surface, var(--dancr-color-surface))'));
 });
 
 test('Working Now uses translucent green, the floating dock keeps its own paint, and the account shortcut stays charcoal', () => {
@@ -117,6 +135,6 @@ test('Working Now uses translucent green, the floating dock keeps its own paint,
     .replaceAll(':not(:where(.global-mobile-bottom-nav *, #discoveryTabs *))', '');
   assert.doesNotMatch(nonNavigationPalette, /global-mobile-(?:bottom-nav|swipe-indicator)|#discoveryTabs|(?:mobile|home)-nav-/);
   const shortcut = rules.find(rule => rule.selector.includes('.utility-menu-dashboard'));
-  assert.ok(shortcut.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-color-surface)'));
+  assert.ok(shortcut.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-palette-control, var(--dancr-color-surface))'));
   assert.doesNotMatch(read('public/dancr-button-system.v1.css'), /#241337|#301a46|#6b4d89|#8b69ab/);
 });
