@@ -73,7 +73,7 @@ for (const options of [{ role: "venue", venueRole: "owner" }, { role: "venue", v
   test(`active ${options.venueRole || options.role} can obtain each guide through checked downloads`, async () => {
     const f = fixture(options);
     const response = await f.get();
-    assert.equal((await response.json()).documents.length, 9);
+    assert.equal((await response.json()).documents.length, 10);
     for (const doc of catalog.GUIDE_DOCUMENTS) {
       const pdf = await f.get(doc.id);
       assert.equal(pdf.status, 200); assert.equal(pdf.headers.get("content-type"), "application/pdf");
@@ -82,7 +82,7 @@ for (const options of [{ role: "venue", venueRole: "owner" }, { role: "venue", v
       assert.equal(pdf.headers.get("x-dancr-session-access"), "synthetic-access");
       assert.match(await pdf.text(), /^%PDF/);
     }
-    assert.equal(f.calls.files.length, 9);
+    assert.equal(f.calls.files.length, 10);
   });
 }
 
@@ -107,7 +107,7 @@ test("unknown IDs and traversal attempts cannot select a filesystem path", async
 });
 
 test("the catalog points to complete PDFs outside the public directory", () => {
-  assert.equal(new Set(catalog.GUIDE_DOCUMENTS.map(d => d.id)).size, 9);
+  assert.equal(new Set(catalog.GUIDE_DOCUMENTS.map(d => d.id)).size, 10);
   for (const doc of catalog.GUIDE_DOCUMENTS) {
     const pdf = readFileSync(new URL(`../output/pdf/mydancr-operations/${doc.file}`, import.meta.url));
     assert.equal(pdf.subarray(0,4).toString(), "%PDF");

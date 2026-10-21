@@ -19,6 +19,7 @@ export const GUIDE_DOCUMENTS: readonly GuideDocument[] = [
   { id: "content-approval-guide", role: "content-approval", kind: "guide", file: "MyDancr_Content_Approval_Onboarding_Guide.pdf" },
   { id: "content-approval-cheat-sheet", role: "content-approval", kind: "cheat-sheet", file: "MyDancr_Content_Approval_Cheat_Sheet.pdf" },
   { id: "operations-manual", role: "master", kind: "manual", file: "MyDancr_Operations_Manual.pdf" },
+  { id: "operations-packet", role: "master", kind: "manual", file: "MyDancr_Complete_Operations_Packet.pdf" },
 ];
 
 export type GuideAccess = { role: string; accountState: string; venueRole?: string | null };
