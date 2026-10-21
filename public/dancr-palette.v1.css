@@ -673,6 +673,10 @@
     border-color: var(--dancr-color-border) !important;
     color: var(--dancr-color-text-primary) !important;
   }
+  /* Header dropdowns use the quieter panel surface, not the gray button face. */
+  html body.dancr-button-system :where(.utility-menu-panel, #customerNotificationsQuickPanel) {
+    background: var(--dancr-color-surface) linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
+  }
   html body.dancr-button-system :where(.utility-menu-panel .utility-menu-item) {
     background: transparent !important;
     border-color: transparent !important;
