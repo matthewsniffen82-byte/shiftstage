@@ -623,6 +623,74 @@
     border-color: var(--dancr-color-border) !important;
     color: var(--dancr-color-text-muted) !important;
   }
+  /* Open header actions keep their gray face and use the brand violet for
+     the active icon and edge. Dropdowns carry the same gray into the menu. */
+  html body.dancr-button-system :where(
+    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn,
+    #dancerProfileShareQuickBtn, #customerDealQuickBtn
+  ):where(.active, .is-open, [aria-expanded="true"]) {
+    color-scheme: only light !important;
+    --discovery-header-face: var(--dancr-color-control-secondary) !important;
+    --discovery-header-edge: var(--dancr-color-brand-primary) !important;
+    border-color: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-brand-primary) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system :where(#guestMenuBtn, #accountBtn:not(.account-icon-btn)):where(.active, .is-open, [aria-expanded="true"]) {
+    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+  }
+  html body.dancr-button-system :where(
+    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn,
+    #dancerProfileShareQuickBtn, #customerDealQuickBtn
+  ):where(.active, .is-open, [aria-expanded="true"])::before {
+    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    border-color: var(--dancr-color-brand-primary) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system :where(
+    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn,
+    #dancerProfileShareQuickBtn, #customerDealQuickBtn
+  ):where(.active, .is-open, [aria-expanded="true"]) :where([data-quick-icon], .action-icon, .account-icon, svg, svg *) {
+    color: var(--dancr-color-brand-primary) !important;
+    stroke: currentColor !important;
+    -webkit-text-fill-color: currentColor !important;
+    filter: none !important;
+  }
+  html body.dancr-button-system :where(.utility-menu-panel, .customer-quick-panel) {
+    color-scheme: only light !important;
+    background: var(--dancr-color-control-secondary) linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html body.dancr-button-system :where(.utility-menu-panel .utility-menu-item) {
+    background: transparent !important;
+    border-color: transparent !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  html body.dancr-button-system :where(
+    .utility-menu-panel .utility-menu-dashboard,
+    .utility-menu-panel .utility-menu-item:hover,
+    .utility-menu-panel .utility-menu-item:focus-visible,
+    .customer-quick-panel .customer-quick-item,
+    .customer-quick-panel .customer-quick-clear,
+    .customer-quick-panel .customer-notification-close
+  ) {
+    color-scheme: only light !important;
+    --notification-control-face: var(--dancr-color-surface) !important;
+    --notification-control-edge: var(--dancr-color-border) !important;
+    background: var(--dancr-color-surface) linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system :where(.utility-menu-support, .utility-menu-session-end) {
+    border-color: var(--dancr-color-border) !important;
+  }
+  html body.dancr-button-system :where(.utility-menu-section-label) {
+    color: var(--dancr-color-text-muted) !important;
+  }
   html body.dancr-button-system
     :where(.profile-actions-compact :is(#followBtn, [data-follow-control="text"], .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going), .venue-action-stack :is(.venue-address-directions, .follow-venue-btn), .venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-detail-share):not(:where([aria-pressed="true"], .is-active, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"])) {
     --follow-control-face: var(--dancr-color-surface) !important;
