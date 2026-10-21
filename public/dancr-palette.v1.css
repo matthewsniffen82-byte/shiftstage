@@ -256,9 +256,9 @@
     border-color: var(--dancr-color-border) !important;
     box-shadow: none !important;
   }
-  /* Keep profile details on the deep background so gray action fills stand out. */
+  /* Dancer information panels share the venue cards' charcoal surface. */
   html body.dancr-button-system :where(.public-profile-shell, #profileBackdrop #profileModal).profile-split-layout::after {
-    background: var(--dancr-color-background) !important;
+    background: var(--dancr-color-surface) !important;
   }
   html body.dancr-button-system :where(.public-profile-shell, #profileBackdrop #profileModal).profile-split-layout::before {
     box-shadow: inset 0 0 0 1px var(--dancr-color-border) !important;
