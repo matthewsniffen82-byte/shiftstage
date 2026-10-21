@@ -231,6 +231,13 @@
             scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
             scrollbar-width: none;
           }
+          /* Reuse the viewport-edge indicator without enabling TV snapping on dancers. */
+          html.home-page-scroll-indicator,
+          html.home-page-scroll-indicator body {
+            scrollbar-width: none;
+          }
+          html.home-page-scroll-indicator::-webkit-scrollbar,
+          html.home-page-scroll-indicator body::-webkit-scrollbar,
           html.home-tv-page-snap::-webkit-scrollbar,
           html.home-tv-page-snap body::-webkit-scrollbar {
             width: 0;
@@ -247,6 +254,9 @@
             pointer-events: none;
           }
           .home-tv-page-scroll-rail[hidden] {
+            display: none !important;
+          }
+          body:is(.overlay-open, .profile-full-view-open, .venue-full-view-open, .home-tv-feed-immersive-open, .public-contact-open) > .home-tv-page-scroll-rail {
             display: none !important;
           }
           .home-tv-page-scroll-thumb {

@@ -610,7 +610,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?venueDetails\(venue, city\)[\s\S]*?venueDancers\(city, venue\.name\)/,
+    /function homeVenueDiscoveryFeedSlide\(venue, index, total, city\)[\s\S]*?venueDetails\(venue, city, \{ demoDistance: true \}\)[\s\S]*?venueDancers\(city, venue\.name\)/,
   );
   assert.match(
     homeSource,
@@ -618,7 +618,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   );
   assert.match(
     homeSource,
-    /home-venue-discovery-location[\s\S]*?details\.distanceLabel[\s\S]*?details\.hours[\s\S]*?displayShiftTime\(details\.hours\)[\s\S]*?accessibilityLabel = workingNow\.length/,
+    /const operatingStatus = venueOperatingStatus\(details\.hours, city\)[\s\S]*?operatingStatus\.hoursLabel[\s\S]*?accessibilityLabel = workingNow\.length[\s\S]*?home-venue-discovery-location[\s\S]*?details\.distanceLabel[\s\S]*?\$\{operatingStatusMarkup\}\$\{hoursMarkup\}/,
   );
   assert.match(
     homeSource,

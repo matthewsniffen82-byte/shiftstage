@@ -35166,6 +35166,13 @@
             scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
             scrollbar-width: none;
           }
+          /* Reuse the viewport-edge indicator without enabling TV snapping on dancers. */
+          html.home-page-scroll-indicator,
+          html.home-page-scroll-indicator body {
+            scrollbar-width: none;
+          }
+          html.home-page-scroll-indicator::-webkit-scrollbar,
+          html.home-page-scroll-indicator body::-webkit-scrollbar,
           html.home-tv-page-snap::-webkit-scrollbar,
           html.home-tv-page-snap body::-webkit-scrollbar {
             width: 0;
@@ -35182,6 +35189,9 @@
             pointer-events: none;
           }
           .home-tv-page-scroll-rail[hidden] {
+            display: none !important;
+          }
+          body:is(.overlay-open, .profile-full-view-open, .venue-full-view-open, .home-tv-feed-immersive-open, .public-contact-open) > .home-tv-page-scroll-rail {
             display: none !important;
           }
           .home-tv-page-scroll-thumb {
@@ -62410,6 +62420,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       const city = citySelect.value;
       homeTvLandingPreload.sync(city);
       document.body.classList.toggle("dancer-directory-active", activeTab === "dancers");
+      queueHomeTvPageScrollIndicatorSync();
       syncCityPickerSelection(city);
       populateVenueSelect(city);
       if (activeTab === "dancers" && selectedVenueFilter() !== "all" && dancerDirectoryFilter !== "now") {
@@ -63334,7 +63345,10 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     }
 
     function syncHomeTvPageScrollIndicator() {
-      if (!document.documentElement.classList.contains("home-tv-page-snap")) {
+      const usesPageIndicator = homeTvFeedUsesSnapViewport() &&
+        (activeTab === "dancers" || document.documentElement.classList.contains("home-tv-page-snap"));
+      document.documentElement.classList.toggle("home-page-scroll-indicator", usesPageIndicator);
+      if (!usesPageIndicator) {
         if (homeTvPageScrollRail) {
           homeTvPageScrollRail.hidden = true;
           homeTvPageScrollRail.classList.remove("is-scrolling");
@@ -63346,6 +63360,8 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
         return;
       }
       ensureHomeTvPageScrollIndicator();
+      // A hidden rail has no measurable height, including on its first render.
+      homeTvPageScrollRail.hidden = false;
       const scroller = document.scrollingElement || document.documentElement;
       const trackHeight = homeTvPageScrollRail.clientHeight;
       const viewportHeight = Math.max(1, document.documentElement.clientHeight || window.innerHeight);
@@ -63375,7 +63391,7 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     }
 
     function markHomeTvPageScrollIndicatorActive() {
-      if (!document.documentElement.classList.contains("home-tv-page-snap")) return;
+      if (!document.documentElement.classList.contains("home-page-scroll-indicator")) return;
       ensureHomeTvPageScrollIndicator();
       homeTvPageScrollRail.classList.add("is-scrolling");
       if (homeTvPageScrollIdleTimer) window.clearTimeout(homeTvPageScrollIdleTimer);

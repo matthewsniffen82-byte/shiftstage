@@ -5,6 +5,7 @@
       const city = citySelect.value;
       homeTvLandingPreload.sync(city);
       document.body.classList.toggle("dancer-directory-active", activeTab === "dancers");
+      queueHomeTvPageScrollIndicatorSync();
       syncCityPickerSelection(city);
       populateVenueSelect(city);
       if (activeTab === "dancers" && selectedVenueFilter() !== "all" && dancerDirectoryFilter !== "now") {
@@ -929,7 +930,10 @@
     }
 
     function syncHomeTvPageScrollIndicator() {
-      if (!document.documentElement.classList.contains("home-tv-page-snap")) {
+      const usesPageIndicator = homeTvFeedUsesSnapViewport() &&
+        (activeTab === "dancers" || document.documentElement.classList.contains("home-tv-page-snap"));
+      document.documentElement.classList.toggle("home-page-scroll-indicator", usesPageIndicator);
+      if (!usesPageIndicator) {
         if (homeTvPageScrollRail) {
           homeTvPageScrollRail.hidden = true;
           homeTvPageScrollRail.classList.remove("is-scrolling");
@@ -941,6 +945,8 @@
         return;
       }
       ensureHomeTvPageScrollIndicator();
+      // A hidden rail has no measurable height, including on its first render.
+      homeTvPageScrollRail.hidden = false;
       const scroller = document.scrollingElement || document.documentElement;
       const trackHeight = homeTvPageScrollRail.clientHeight;
       const viewportHeight = Math.max(1, document.documentElement.clientHeight || window.innerHeight);
@@ -970,7 +976,7 @@
     }
 
     function markHomeTvPageScrollIndicatorActive() {
-      if (!document.documentElement.classList.contains("home-tv-page-snap")) return;
+      if (!document.documentElement.classList.contains("home-page-scroll-indicator")) return;
       ensureHomeTvPageScrollIndicator();
       homeTvPageScrollRail.classList.add("is-scrolling");
       if (homeTvPageScrollIdleTimer) window.clearTimeout(homeTvPageScrollIdleTimer);
