@@ -670,6 +670,39 @@
     box-shadow: none !important;
     filter: none !important;
   }
+  /* The floating dock stays clear; its selected icon carries the brand violet. */
+  @media (max-width: 720px) {
+    html body.dancr-button-system :where(
+      .global-mobile-bottom-nav, #discoveryTabs,
+      .global-mobile-bottom-nav a, #discoveryTabs > button
+    ) {
+      background: transparent !important;
+    }
+    html body.dancr-button-system
+      :where(.global-mobile-bottom-nav a.active, #discoveryTabs > button.active) {
+      border-color: transparent !important;
+    }
+    html body.dancr-button-system
+      :where(.global-mobile-bottom-nav a.active svg, #discoveryTabs > button.active svg) {
+      filter:
+        drop-shadow(0 0 2px var(--dancr-color-brand-primary))
+        drop-shadow(0 0 5px color-mix(in srgb, var(--dancr-color-brand-primary) 58%, transparent))
+        drop-shadow(0 0 9px color-mix(in srgb, var(--dancr-color-brand-primary) 72%, transparent)) !important;
+    }
+    html body.dancr-button-system
+      :where(.mobile-nav-selection-halo, .home-nav-selection-halo)::before {
+      background: radial-gradient(circle,
+        color-mix(in srgb, var(--dancr-color-brand-core) 10%, transparent) 0%,
+        color-mix(in srgb, var(--dancr-color-brand-primary) 34%, transparent) 30%,
+        color-mix(in srgb, var(--dancr-color-brand-primary) 18%, transparent) 56%,
+        color-mix(in srgb, var(--dancr-color-brand-primary) 14%, transparent) 70%,
+        transparent 82%) !important;
+      box-shadow:
+        0 0 8px color-mix(in srgb, var(--dancr-color-brand-primary) 18%, transparent),
+        0 0 16px color-mix(in srgb, var(--dancr-color-brand-primary) 16%, transparent) !important;
+      filter: blur(1.5px) !important;
+    }
+  }
   html body.dancr-button-system
     :where(button, a, input, select, textarea, summary):focus-visible {
     outline-color: var(--dancr-color-brand-primary) !important;
