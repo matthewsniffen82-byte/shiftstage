@@ -1,0 +1,6 @@
+{
+  "mode": "built-in image_gen",
+  "source": "01-violet-wordmark-full-border.png",
+  "output": "01-violet-wordmark-borderless.png",
+  "prompt": "Use case: precise-object-edit. Edit this exact MyDancr wordmark image. Remove the entire violet rounded rectangular border and all its surrounding purple glow from every side, replacing those pixels with the same uninterrupted near-black background. Keep the exact lowercase text 'mydancr', all original letter shapes, the near-white 'mydanc', the violet final 'r', typography, lettering size, spacing, position, and original canvas dimensions. Preserve the black background and do not make it transparent. The finished image contains only the original wordmark on black, with no border, no outline frame, and no residual purple lines or frame glow. No other changes."
+}
