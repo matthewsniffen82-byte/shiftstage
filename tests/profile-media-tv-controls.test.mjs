@@ -142,7 +142,7 @@ test("profile rails retain TV dimensions, spacing and glass material", () => {
   assert.match(css, /backdrop-filter: blur\(16px\) saturate\(1\.18\)/);
 });
 
-test("public media icons match the city violet while preserving branding, text and reaction colors", () => {
+test("public media action icons stay neutral while preserving text and reaction colors", () => {
   const root = postcss.parse(css);
   const rules = [];
   root.walkRules((rule) => {
@@ -151,7 +151,7 @@ test("public media icons match the city violet while preserving branding, text a
   const values = (rule) => Object.fromEntries(rule.nodes.map((node) => [node.prop, node.value]));
   const normal = rules.find((rule) => values(rule)["--public-media-icon-color"]?.startsWith("var("));
   assert.ok(normal);
-  assert.equal(values(normal)["--public-media-icon-color"], "var(--venue-brand-light, var(--dancr-color-icon-location))");
+  assert.equal(values(normal)["--public-media-icon-color"], "var(--dancr-color-text-primary)");
   assert.equal(values(normal).color, "#f5f2fa", "labels and counts keep their neutral text color");
   assert.equal(values(normal).background, "rgba(0, 0, 0, .45)");
   assert.equal(values(normal)["box-shadow"], "0 2px 8px rgba(0, 0, 0, .24)");
@@ -169,7 +169,7 @@ test("public media icons match the city violet while preserving branding, text a
   assert.equal(values(follow).background, "rgba(0, 0, 0, .45)");
   assert.equal(values(like)["--public-media-icon-color"], "#ff304f");
   const overflow = rules.find((rule) => rule.selector.includes(".profile-media-control-overflow"));
-  assert.equal(values(overflow).color, "var(--venue-brand-light, var(--dancr-color-icon-location))");
+  assert.equal(values(overflow).color, "var(--dancr-color-text-primary)");
 });
 
 test("media button borders stay invisible in every state without changing transparency or focus rings", () => {

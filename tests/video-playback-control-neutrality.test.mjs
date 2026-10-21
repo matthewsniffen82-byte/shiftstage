@@ -19,9 +19,9 @@ const liveApp = await readFile(
   "utf8",
 );
 
-test("profile video grids defer playback to native full-screen controls", () => {
+test("profile video grids open the shared viewer and playback controls remain neutral", () => {
   assert.match(profileCarousel, /<img[\s\S]*?src=\{item\.posterUrl\}[\s\S]*?className="profile-media-play"/);
-  assert.match(profileCarousel, /viewerItems\.map\(\(item, index\) =>[\s\S]*?controls[\s\S]*?data-video-url=\{item.videoUrl\}/);
+  assert.match(profileCarousel, /viewerItems\.map\(\(item, index\) =>[\s\S]*?controls=\{false\}[\s\S]*?data-video-url=\{publicVideoPlaybackUrl\(item\)\}[\s\S]*?data-full-video-url=\{item.videoUrl\}/);
   assert.match(profileCarousel, /index === viewerIndex[\s\S]*?video\.play\(\)[\s\S]*?video\.pause\(\)/);
   assert.match(profileCarousel, /videoBufferMode\(index, viewerIndex, allowVideoWarmup, activeReady, video.hasAttribute\("src"\)\)/);
   assert.doesNotMatch(profileCarousel, /profile-media-playback-control|inlinePlaying|toggleInlinePlayback/);
@@ -38,5 +38,5 @@ test("profile video grids defer playback to native full-screen controls", () => 
   assert.match(tvRetryStateRule, /background-image: none !important;/);
   assert.doesNotMatch(tvRetryStateRule, /brand-primary|beam-violet|color-info/);
 
-  assert.match(liveApp, /dancr-aesthetic\.v1\.css\?v=271/);
+  assert.match(liveApp, /<link href="\/outputs\/dancr-aesthetic\.css" rel="stylesheet">/);
 });
