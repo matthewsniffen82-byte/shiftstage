@@ -61940,18 +61940,12 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     function revealDancerGridRows(grid) {
       grid.dancerGridRevealObserver?.disconnect();
       grid.dancerGridRevealObserver = null;
-      window.clearTimeout(grid.dancerGridRevealTimer);
-      grid.dancerGridRevealTimer = null;
-      grid.dancerGridPaintedPhotos ||= new WeakSet();
       const pending = new Set([...grid.children].filter((card) => card.matches(".home-dancer-grid-card")));
       if (!pending.size) return;
       const photosFor = (card) => [...card.querySelectorAll(".home-dancer-grid-photo[data-image-state]")];
       const ready = (card) => photosFor(card).every((photo) => ["ready", "error"].includes(photo.dataset.imageState));
-      // Paint the eagerly requested opening four rows together. Already visible
-      // portraits survive refreshes; only new images join this first paint.
-      const opening = new Set([...pending].slice(0, 12).filter((card) => (
-        photosFor(card).some((photo) => !grid.dancerGridPaintedPhotos.has(photo))
-      )));
+      // Reveal each ready portrait immediately, even if a neighboring image is
+      // slow. Keep its assigned grid position and preserve already visible cards.
       const observer = new MutationObserver(check);
       grid.dancerGridRevealObserver = observer;
 
@@ -61960,28 +61954,19 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
           observer.disconnect();
           return;
         }
-        for (const card of opening) {
-          if (card.parentNode !== grid) opening.delete(card);
-        }
-        if ([...opening].every(ready)) {
-          opening.clear();
-          window.clearTimeout(grid.dancerGridRevealTimer);
-          grid.dancerGridRevealTimer = null;
-        }
         let settled = false;
         for (const card of pending) {
           if (card.parentNode !== grid) {
             pending.delete(card);
             continue;
           }
-          if (opening.has(card) || !ready(card)) {
+          if (!ready(card)) {
             card.setAttribute("data-row-loading", "true");
             card.setAttribute("aria-busy", "true");
             continue;
           }
           card.removeAttribute("data-row-loading");
           card.removeAttribute("aria-busy");
-          photosFor(card).forEach((photo) => grid.dancerGridPaintedPhotos.add(photo));
           pending.delete(card);
           settled = true;
         }
@@ -61995,16 +61980,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
       observer.observe(grid, { childList: true, subtree: true, attributes: true, attributeFilter: ["data-image-state"] });
       settleCompletedStableImages(grid);
       check();
-      if (opening.size) {
-        // A failed connection must not turn the coordinated paint into another
-        // blank-row hang. The image loader continues its bounded recovery.
-        grid.dancerGridRevealTimer = window.setTimeout(() => {
-          if (grid.dancerGridRevealObserver !== observer) return;
-          grid.dancerGridRevealTimer = null;
-          opening.clear();
-          check();
-        }, 1000);
-      }
     }
 
     function renderHomeDancerGrid(city, profiles) {

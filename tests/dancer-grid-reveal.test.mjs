@@ -43,7 +43,6 @@ function harness(children) {
   return {
     grid, observers, timers,
     start() { ctx.revealDancerGridRows(grid); },
-    expire() { const [id, timer] = timers.entries().next().value; timers.delete(id); timer.callback(); },
     update() { observers.filter((observer) => observer.connected).forEach((observer) => observer.callback()); },
     replace(next) {
       grid.children.forEach((child) => { child.parentNode = null; });
@@ -53,18 +52,19 @@ function harness(children) {
   };
 }
 
-test("opening photos paint together as soon as the whole opening batch is ready", async () => {
+test("opening photos appear immediately without waiting for a slow neighbor", async () => {
   const delayed = photo("loading", () => assert.fail("The grid must not decode a loaded photo again"));
   const first = [card(), card(delayed), card()];
   const second = [card(), card(), card()];
   const h = harness([...first, ...second]);
   h.start();
   await flush();
-  assert.equal(loading(first[0]), true);
+  assert.equal(loading(first[0]), false);
   assert.equal(loading(first[1]), true);
   assert.equal(first[1].attributes.get("aria-busy"), "true");
-  assert.equal(loading(first[2]), true);
-  assert.ok(second.every(loading));
+  assert.equal(loading(first[2]), false);
+  assert.ok(second.every((item) => !loading(item)));
+  assert.equal(h.timers.size, 0);
   delayed.dataset.imageState = "ready";
   h.update();
   await flush();
@@ -75,18 +75,15 @@ test("opening photos paint together as soon as the whole opening batch is ready"
   assert.ok(h.observers.every((observer) => !observer.connected));
 });
 
-test("a stalled opening photo has a bounded wait, with headings excluded from the batch", async () => {
+test("a stalled photo never delays ready cards or headings", async () => {
   const delayed = card(photo("loading"));
   const ready = [card(), card()];
   const h = harness([heading(), delayed, heading(), ...ready]);
   h.start();
   await flush();
   assert.equal(loading(delayed), true);
-  assert.ok(ready.every(loading));
-  assert.equal([...h.timers.values()][0].delay, 1000);
-  h.expire();
-  assert.equal(loading(delayed), true);
   assert.ok(ready.every((item) => !loading(item)));
+  assert.equal(h.timers.size, 0);
 });
 
 test("ready and failed photos never wait for an extra decode, even if it would hang", async () => {
@@ -205,14 +202,16 @@ test("removing the first card does not abandon another card's pending photo", ()
   assert.ok(h.observers.every(observer => !observer.connected));
 });
 
-test("failed photos count as settled and do not prevent the opening batch from appearing", () => {
+test("failed photos settle independently while another portrait is still loading", () => {
   const failed = photo("loading"), delayed = photo("loading");
   const cards = [card(failed), card(delayed), card()];
   const h = harness(cards);
   h.start();
   failed.dataset.imageState = "error";
   h.update();
-  assert.ok(cards.every(loading));
+  assert.equal(loading(cards[0]), false);
+  assert.equal(loading(cards[1]), true);
+  assert.equal(loading(cards[2]), false);
   delayed.dataset.imageState = "ready";
   h.update();
   assert.ok(cards.every(item => item.attributes.size === 0));
@@ -230,17 +229,13 @@ test("the opening batch never waits for the hundreds of offscreen photos", () =>
   assert.equal(h.timers.size, 0);
 });
 
-test("a replaced filter cancels the old batch deadline and cannot reveal its new photos", () => {
+test("filter replacement immediately shows cached portraits while new photos keep loading", () => {
   const h = harness([card(photo("loading"))]);
   h.start();
-  const oldDeadline = [...h.timers.values()][0].callback;
   const replacement = [card(), card(photo("loading"))];
   h.replace(replacement);
   h.start();
-  assert.equal(h.timers.size, 1);
-  oldDeadline();
-  assert.ok(replacement.every(loading));
-  h.expire();
+  assert.equal(h.timers.size, 0);
   assert.equal(loading(replacement[0]), false);
   assert.equal(loading(replacement[1]), true);
 });

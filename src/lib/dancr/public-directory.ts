@@ -17,11 +17,14 @@ export async function getRankedDirectoryPage(admin: SupabaseClient, request: Req
     surface: "grid", directory: true, city: options.city, filter: options.filter || "all", venueId: options.venueId,
   }, options.cursor);
   const dancers: DirectoryCard[] = [], tonightDancers: DirectoryCard[] = [];
+  // Fill the opening screen sooner, then load the remaining ranked cards in
+  // larger pages. The snapshot still ranks every eligible dancer up front.
+  const pageSize = offset === 0 ? 24 : 100;
   let next = offset;
   // Recheck visibility and presence now. Backfill removed profiles without
   // changing the saved score order or skipping another eligible dancer.
-  while (dancers.length < 100 && next < snapshot.ordered_ids.length) {
-    const ids = snapshot.ordered_ids.slice(next, next + 100 - dancers.length);
+  while (dancers.length < pageSize && next < snapshot.ordered_ids.length) {
+    const ids = snapshot.ordered_ids.slice(next, next + pageSize - dancers.length);
     const page = await getLiveDancerDiscovery(admin, options.city, null, ids);
     const byId = new Map(page.dancers.map(row => [row.id, row]));
     const tonightById = new Map(page.tonightDancers.map(row => [row.id, row]));

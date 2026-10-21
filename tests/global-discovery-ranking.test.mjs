@@ -28,7 +28,7 @@ test('Star stays first before pagination, with no duplicates and normal eligibil
   const first = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas' });
   assert.equal(first.dancers[0].id, starId);
   assert.equal(first.dancers[0].discovery.position, 0);
-  assert.deepEqual(f.cardReads[0], [starId, ...others.slice(0, 99).map(r => r.id)]);
+  assert.deepEqual(f.cardReads[0], [starId, ...others.slice(0, 23).map(r => r.id)]);
   const seen = Array.from(first.dancers, r => r.id);
   let cursor = pagination.parseDiscoveryCursor(first.nextCursor, 'Vegas');
   do {
@@ -44,11 +44,11 @@ test('Star stays first before pagination, with no duplicates and normal eligibil
   f.hidden.add(starId);
   const hidden = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas' });
   assert.equal(hidden.dancers[0].id, others[0].id);
-  assert.equal(hidden.dancers.length, 100);
+  assert.equal(hidden.dancers.length, 24);
   assert.ok(hidden.dancers.every(r => r.id !== starId));
 });
 
-test('the actual directory page ranks all 5,207 dancers before fetching only the top 100 cards', async () => {
+test('the directory ranks all 5,207 dancers before fetching 24 opening cards and larger continuations', async () => {
   const candidates = Array.from({ length: 5207 }, (_, i) => row(i + 1, { performanceScore: i }));
   const f = directoryFixture(candidates), seen = [];
   let cursor = '';
@@ -57,9 +57,14 @@ test('the actual directory page ranks all 5,207 dancers before fetching only the
     if (!cursor) {
       assert.deepEqual(Array.from(page.dancers.slice(0, 10), r => r.id), candidates.slice(-10).reverse().map(r => r.id));
       assert.equal(f.cardReads.length, 1);
-      assert.equal(f.cardReads[0].length, 100);
+      assert.equal(page.dancers.length, 24);
+      assert.equal(f.cardReads[0].length, 24);
       candidates[0].performanceScore = 999999;
+    } else {
+      assert.equal(page.dancers.length, Math.min(100, candidates.length - seen.length));
     }
+    assert.deepEqual(Array.from(page.dancers, r => r.discovery.position),
+      Array.from({ length: page.dancers.length }, (_, i) => seen.length + i));
     seen.push(...page.dancers.map(r => r.id));
     cursor = pagination.parseDiscoveryCursor(page.nextCursor, 'Vegas');
   } while (cursor);
@@ -79,8 +84,14 @@ test('working status and club filters find top matches beyond the first global p
   }));
   const f = directoryFixture(candidates);
   const working = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', filter: 'now', venueId: id(8000) });
-  assert.equal(working.dancers.length, 100); assert.equal(working.dancers[0].id, id(1200));
-  assert.equal(working.nextCursor, null);
+  assert.equal(working.dancers.length, 24); assert.equal(working.dancers[0].id, id(1200));
+  const continuation = await f.directory.getRankedDirectoryPage(f.admin, f.request(), {
+    city: 'Vegas', filter: 'now', venueId: id(8000), cursor: pagination.parseDiscoveryCursor(working.nextCursor, 'Vegas'),
+  });
+  assert.equal(continuation.dancers.length, 76);
+  assert.equal(continuation.nextCursor, null);
+  assert.deepEqual([...working.dancers, ...continuation.dancers].map(r => r.id),
+    candidates.slice(1100).reverse().map(r => r.id));
   const inactive = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', filter: 'not_now' });
   assert.equal(inactive.dancers[0].id, id(1));
   assert.ok(inactive.dancers.every(r => !r.venueId));
@@ -138,7 +149,8 @@ test('anonymous directory readers get a private cookie and the same ranked conti
   const next = await f.directory.getRankedDirectoryPage(f.admin, new Request('https://example.test', { headers: { cookie: first.cookie.split(';')[0] } }), {
     city: 'Vegas', cursor: pagination.parseDiscoveryCursor(first.nextCursor, 'Vegas'),
   });
-  assert.equal(first.dancers[0].id, id(110)); assert.equal(next.dancers[0].id, id(10));
+  assert.equal(first.dancers[0].id, id(110)); assert.equal(next.dancers[0].id, id(86));
+  assert.equal(next.dancers.length, 86);
   assert.equal(next.nextCursor, null);
 });
 

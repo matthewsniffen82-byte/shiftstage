@@ -305,25 +305,25 @@ test("recent list reuse has a bounded in-memory lifetime and size", async () => 
   assert.ok([...ctx.discoveryScopeCache.values()].every(entry => entry.expiresAt <= Date.now() + 20000));
 });
 
-test("first dancer and club cards render before later pages settle while all batches still load automatically", async () => {
+test("24 opening dancer cards render before larger pages settle while all batches still load automatically", async () => {
   const f = pagedDiscoveryFixture(), { ctx, requests } = f;
   const request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: dancerRows(0, 100), venues: [{ id: "club" }], statusCounts: { now: 237, not_now: 0 }, nextCursor: "next" }); await nextPage();
+  requests[0].resolve({ dancers: dancerRows(0, 24), venues: [{ id: "club" }], statusCounts: { now: 161, not_now: 0 }, nextCursor: "next" }); await nextPage();
   assert.match(requests[1].url, /cursor=next/);
   assert.equal(ctx.liveMarketState.Vegas, "ready", "first cards are available without waiting for the rest");
-  assert.equal(ctx.markets.Vegas.dancers.length, 100);
+  assert.equal(ctx.markets.Vegas.dancers.length, 24);
   assert.equal(ctx.markets.Vegas.venues[0].id, "club");
-  assert.equal(ctx.discoveryDancerCount("Vegas"), 237, "the server's full total is available on the first batch");
+  assert.equal(ctx.discoveryDancerCount("Vegas"), 161, "the server's full total is available on the first batch");
   assert.match(ctx.discoveryPaginationMarkup("Vegas"), /Loading remaining dancers/);
   assert.doesNotMatch(ctx.discoveryPaginationMarkup("Vegas"), /<button/);
   assert.equal(f.renders(), 1);
   await ctx.loadLiveDiscovery("Vegas", { more: true });
   assert.equal(requests.length, 2, "concurrent calls cannot request the same page twice");
-  requests[1].resolve({ dancers: dancerRows(100, 100), nextCursor: "last" }); await nextPage();
+  requests[1].resolve({ dancers: dancerRows(24, 100), nextCursor: "last" }); await nextPage();
   assert.match(requests[2].url, /cursor=last/);
-  requests[2].resolve({ dancers: [{ id: "dancer-0", updated: true }, ...dancerRows(200, 37)], nextCursor: null }); await request;
-  assert.equal(ctx.markets.Vegas.dancers.length, 237);
-  assert.equal(new Set(ctx.markets.Vegas.dancers.map(r => r.id)).size, 237);
+  requests[2].resolve({ dancers: [{ id: "dancer-0", updated: true }, ...dancerRows(124, 37)], nextCursor: null }); await request;
+  assert.equal(ctx.markets.Vegas.dancers.length, 161);
+  assert.equal(new Set(ctx.markets.Vegas.dancers.map(r => r.id)).size, 161);
   assert.equal(ctx.markets.Vegas.dancers[0].updated, true);
   assert.equal(ctx.markets.Vegas.pagination.pageCount, 3);
   assert.equal(ctx.hasMoreDiscovery("Vegas"), false);

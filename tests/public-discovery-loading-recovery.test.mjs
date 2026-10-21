@@ -9,15 +9,17 @@ test("public discovery cannot remain in a permanent loading state", () => {
   assert.match(homeSource, /const PUBLIC_DISCOVERY_REQUEST_RETRIES = 1/);
   assert.match(homeSource, /Promise\.race\(\[\s*fetch\(url,/);
   assert.match(homeSource, /if \(controller\) controller\.abort\(\)/);
+  assert.match(homeSource, /const headers = discoveryRequestHeaders\(\)/);
   assert.match(
     homeSource,
-    /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{\s*headers: discoveryRequestHeaders\(\), cache: "no-store",\s*timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,\s*retries: PUBLIC_DISCOVERY_REQUEST_RETRIES\s*\}\)/,
+    /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{\s*headers, cache: "no-store",\s*timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,\s*retries: PUBLIC_DISCOVERY_REQUEST_RETRIES\s*\}\)/,
   );
   assert.match(homeSource, /liveMarketState\[city\] = hasCurrentResults \? "ready" : "error"/);
 });
 
 test("a transient discovery failure retries without erasing already rendered public content", () => {
-  assert.match(homeSource, /const hasCurrentResults = Boolean\(discoveryMarket\(city\)\?\.dancers\?\.length \|\| discoveryMarket\(city\)\?\.venues\?\.length\)/);
+  assert.match(homeSource, /const market = discoveryMarket\(city\)/);
+  assert.match(homeSource, /const hasCurrentResults = Boolean\(market\.dancers\?\.length \|\| market\.venues\?\.length\)/);
   assert.match(homeSource, /liveMarketState\[city\] = hasCurrentResults \? "ready" : "error"/);
   assert.doesNotMatch(homeSource, /discoveryMarket\(city\)\.dancers = \[\]/);
   assert.doesNotMatch(homeSource, /discoveryMarket\(city\)\.stats\.dancers = 0/);
