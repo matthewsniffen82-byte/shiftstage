@@ -76,7 +76,7 @@ body .dashboard-shell-admin :is(.health-pill, .dancer-roster-badge) { font-weigh
 /* The global button system uses important declarations; keep admin controls in this workspace palette. */
 body.dancr-button-system .dashboard-shell-admin :is(.admin-workspace-nav button, .attention-grid button, .admin-logout, .secondary-action, .quick-links a) { font-family: inherit !important; font-weight: 550 !important; letter-spacing: 0 !important; border-radius: 12px !important; box-shadow: inset 0 1px 0 #ffffff06 !important; }
 body.dancr-button-system .dashboard-shell-admin .admin-workspace-nav button { border: 1px solid transparent !important; color: #b8aec8 !important; background: transparent !important; }
-body.dancr-button-system .dashboard-shell-admin .admin-workspace-nav button.active { border-color: #c5a4f547 !important; color: #f0eaf7 !important; background: linear-gradient(#22152f, #22152f) !important; }
+body.dancr-button-system .dashboard-shell-admin .admin-workspace-nav button.active { border-color: var(--dancr-color-control-border-soft) !important; color: #f0eaf7 !important; background: linear-gradient(var(--dancr-color-control-selected), var(--dancr-color-control-selected)) !important; }
 body.dancr-button-system .dashboard-shell-admin .attention-grid button { border-color: #cfb8ed24 !important; background: linear-gradient(#100c17, #100c17) !important; }
 body.dancr-button-system .dashboard-shell-admin :is(.secondary-action, .quick-links a) { border-color: #c5a4f535 !important; color: #e1d9eb !important; background: #282131 !important; }
 body.dancr-button-system .dashboard-shell-admin .admin-logout { border-color: #ffffff16 !important; color: #c8c0d4 !important; background: #ffffff03 !important; }

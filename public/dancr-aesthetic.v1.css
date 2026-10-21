@@ -13897,7 +13897,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls
 html body.dancr-button-system > .app main.stack > .home-discovery-controls
   :is(#citySelectButton[aria-expanded="true"], #homeFilterToggle:is(.is-open, .has-active-filters)) {
   --discovery-control-face: #160e24;
-  --discovery-control-edge: #745696;
+  --discovery-control-edge: var(--dancr-color-control-border);
 }
 
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
@@ -13915,7 +13915,7 @@ html body.dancer-directory-active.dancr-button-system > .app main.stack > sectio
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
   > #results.home-dancer-grid .dancer-directory-filters > button.dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="true"] {
   --discovery-control-face: #160e24;
-  --discovery-control-edge: #745696;
+  --discovery-control-edge: var(--dancr-color-control-border);
 }
 
 html body.dancer-directory-active.dancr-button-system > .app main.stack > section.stack
@@ -14116,7 +14116,7 @@ html body.dancr-button-system #venueSelectDialog .venue-picker-option {
 html body.dancr-button-system :is(#venueSelectDialog, #distanceSelectDialog)
   :is(.venue-picker-option[aria-selected="true"], .distance-picker-options input:checked + span) {
   --picker-face: #160e24;
-  --picker-edge: #745696;
+  --picker-edge: var(--dancr-color-control-border);
 }
 
 html body.dancr-button-system #venueSelectDialog .venue-picker-radio {
@@ -14197,7 +14197,7 @@ html body.dancr-button-system :is(#dealPassOverlay .deal-pass-actions .deal-pass
 }
 html body.dancr-button-system :is(#dealPassOverlay .deal-pass-actions .deal-pass-action.is-saved, .club-deal-dialog .club-deal-share-actions button.saved) {
   --offer-control-face: #160e24;
-  --offer-control-edge: #745696;
+  --offer-control-edge: var(--dancr-color-control-border);
 }
 body.dancr-button-system :is(#dealPassOverlay .deal-pass-primary-dock .deal-pass-action.primary, .club-deal-dialog .club-deal-checkout-action) {
   border: 1px solid #8153c5 !important;

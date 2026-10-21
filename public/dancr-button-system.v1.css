@@ -345,14 +345,14 @@
   [class*="remove"],
   [class*="reject"]
 ) {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border-color: var(--dancr-color-control-border) !important;
   color: var(--dancr-color-text-primary) !important;
   background:
     linear-gradient(
       132deg,
-      var(--dancr-color-brand-primary) 0%,
-      var(--dancr-color-brand-primary) 54%,
-      var(--dancr-color-brand-primary-deep) 100%
+      var(--dancr-color-control-primary) 0%,
+      var(--dancr-color-control-primary) 54%,
+      var(--dancr-color-control-primary-deep) 100%
   ) !important;
   box-shadow: var(--dancr-shadow-brand-control) !important;
   text-shadow: none !important;
@@ -365,22 +365,18 @@
   a[class*="-btn"],
   a[class$="-action"]
 ):is(.active, [aria-pressed="true"], [aria-selected="true"]) {
-  border-color: var(--dancr-color-brand-primary-strong) !important;
+  border-color: var(--dancr-color-control-border) !important;
   color: var(--dancr-color-text-primary) !important;
   background:
     linear-gradient(
       180deg,
-      var(--dancr-color-white-medium),
+      var(--dancr-color-white-soft),
       transparent 45%,
       transparent
     ),
-    color-mix(
-      in srgb,
-      var(--dancr-color-brand-primary) 18%,
-      var(--dancr-color-surface-translucent)
-    ) !important;
+    var(--dancr-color-control-selected) !important;
   box-shadow:
-    inset 0 0 0 1px var(--dancr-color-brand-primary-medium),
+    inset 0 -2px 0 var(--dancr-color-control-indicator),
     0 12px 30px var(--dancr-color-black-medium) !important;
   text-shadow: none !important;
 }

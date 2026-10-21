@@ -111,10 +111,10 @@ body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboar
 body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .customer-dashboard-utility-links a { min-height: 44px; }
 body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-workspace-tabs button { min-height: 64px; }
 body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-workspace-tabs strong { font-size: 13px; font-weight: 600; line-height: 1.35; white-space: normal; }
-body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.customer-dashboard-nav a,.venue-workspace-tabs button):is(:hover,:focus-visible) { border-color: #a78bfa; background: #292037 !important; }
+body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.customer-dashboard-nav a,.venue-workspace-tabs button):is(:hover,:focus-visible) { border-color: var(--dancr-color-control-border); background: var(--dancr-color-control-selected) !important; }
 body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) .venue-workspace-tabs button.active[aria-selected="true"] {
-  color: #fff !important; border-color: rgba(196,181,253,.45) !important;
-  background: linear-gradient(110deg,#7c3aed,#6d28d9) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.14) !important;
+  color: #fff !important; border-color: var(--dancr-color-control-border) !important;
+  background: linear-gradient(110deg,var(--dancr-color-control-primary),var(--dancr-color-control-primary-deep)) !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.14) !important;
 }
 body.dancr-button-system .dashboard-shell:is(.dashboard-shell-customer,.dashboard-shell-dancer,.dashboard-shell-venue) :is(.customer-dashboard-nav a,.venue-workspace-tabs button,.venue-dashboard-section > summary):focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
 @media (max-width: 620px) {
@@ -159,8 +159,8 @@ body.dancr-button-system #dancer-profile-builder-panel .dancer-profile-editor-mo
 body.dancr-button-system :is(.content-report-form-actions,.public-contact-actions,.dancer-profile-form-actions,.customer-credential-form-actions,.venue-deal-form-actions) { gap: 12px; }
 body.dancr-button-system :is(#publicContactForm,#contentReportForm,#dancer-profile-builder-panel,.dashboard-shell form) button[type="submit"]:not(.secondary):not(.danger):not(.is-sent):not([data-action-state="success"]),
 body.dancr-button-system #dancer-profile-builder-panel .dancer-profile-editor-modal-actions > button {
-  min-height: 50px !important; padding: 12px 16px !important; border: 1px solid rgba(196,181,253,.45) !important; border-radius: 12px !important;
-  color: #fff !important; background: linear-gradient(110deg,#7c3aed,#6d28d9) !important;
+  min-height: 50px !important; padding: 12px 16px !important; border: 1px solid var(--dancr-color-control-border) !important; border-radius: 12px !important;
+  color: #fff !important; background: linear-gradient(110deg,var(--dancr-color-control-primary),var(--dancr-color-control-primary-deep)) !important;
   box-shadow: var(--dancr-shadow-brand-control) !important; font-size: 14px !important; font-weight: 700 !important;
 }
 body.dancr-button-system :is(#contentReportCancel,.public-report-reason-options > button,.dancer-social-link-remove) { min-height: 50px !important; padding: 12px 16px !important; border-radius: 12px !important; font-size: 14px !important; font-weight: 600 !important; }
@@ -357,8 +357,8 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   --profile-utility-background: #050507 linear-gradient(#050507, #050507);
   --profile-utility-border: #34343c;
   --profile-utility-hover-background: #100a1b linear-gradient(#100a1b, #100a1b);
-  --profile-utility-hover-border: #745696;
-  --profile-action-selected-border: #745696;
+  --profile-utility-hover-border: var(--dancr-color-control-border);
+  --profile-action-selected-border: var(--dancr-color-control-border);
   --profile-action-selected-background: #160e24 linear-gradient(#160e24, #160e24);
   --profile-action-selected-shadow: none;
 }
@@ -546,7 +546,7 @@ body.dancr-button-system #profileQrOverlay [data-retry-profile-qr] { margin: 0; 
 body.dancr-button-system #profileQrOverlay #profileQrOpen,
 body.dancr-button-system #profileQrOverlay #profileQrOpen::before {
   border-color: #745696 !important;
-  background: linear-gradient(110deg,#7c3aed,#6d28d9) !important;
+  background: linear-gradient(110deg,var(--dancr-color-control-primary),var(--dancr-color-control-primary-deep)) !important;
 }
 body.dancr-button-system #profileQrOverlay #profileQrOpen:focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px !important; }
 

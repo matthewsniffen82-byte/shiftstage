@@ -25,6 +25,13 @@
   --dancr-color-brand-primary-strong: rgba(124, 58, 237, 0.72);
   --dancr-color-brand-glow-soft: rgba(49, 46, 129, 0.18);
   --dancr-color-brand-glow-medium: rgba(49, 46, 129, 0.42);
+  /* Deeper violet controls keep lavender foregrounds and focus rings readable. */
+  --dancr-color-control-border: #76528f;
+  --dancr-color-control-border-soft: #493556;
+  --dancr-color-control-selected: #1c1327;
+  --dancr-color-control-indicator: #8756b8;
+  --dancr-color-control-primary: #5f24ac;
+  --dancr-color-control-primary-deep: #361366;
   --dancr-color-avatar-ring-magenta: #f02bdc;
   --dancr-color-avatar-ring-violet: #8b5cf6;
   --dancr-color-avatar-ring-indigo: #4f46e5;
