@@ -4,7 +4,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-steps {
   display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px;
-  margin:0; padding:0 0 6px; border-bottom:1px solid #302936;
+  margin:0; padding:0 0 6px; border-bottom:1px solid var(--dancr-color-border);
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-heading {
   display:flex; align-items:center; flex-wrap:wrap; gap:4px 8px; margin:0;
@@ -54,10 +54,10 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   padding:0 !important; margin:0 !important; border:0 !important; background:transparent !important;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .dancer-guided-upload-form {
-  padding:8px; border:1px solid #41364f; border-radius:10px; background:#100a18;
+  padding:8px; border:1px solid var(--dancr-color-border); border-radius:10px; background:var(--dancr-color-surface-card);
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .dancer-builder-upload-entry {
-  margin-top:0 !important; padding-top:8px !important; border-top:1px solid #302936 !important;
+  margin-top:0 !important; padding-top:8px !important; border-top:1px solid var(--dancr-color-border) !important;
 }
 body.dancr-button-system #dancer-dashboard .dancer-builder-card-preview {
   display:grid; justify-items:start; gap:4px; margin:0; color:#bdb5c9; font-size:12px;
@@ -161,12 +161,12 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
   }
   body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button[aria-current='step'],
   body.dancr-button-system #dancer-dashboard .dancer-builder-upload-types > button[aria-pressed='true'] {
-    background:linear-gradient(#20102f,#20102f) !important; border-color:#8b5cf6 !important; color:#f5f3ff !important;
+    background:linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important; border-color:var(--dancr-color-brand-primary) !important; color:#f5f3ff !important;
   }
   body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button > span { color:#bda3f9; font-size:11px; }
   body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button {
-    width:100% !important; min-height:44px !important; padding:8px 10px !important; border:1px solid #8b5cf6 !important;
-    background:linear-gradient(#20102f,#20102f) !important; color:#f5f3ff !important; -webkit-text-fill-color:currentColor !important; box-shadow:none !important;
+    width:100% !important; min-height:44px !important; padding:8px 10px !important; border:1px solid var(--dancr-color-border) !important;
+    background:linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)) !important; color:#f5f3ff !important; -webkit-text-fill-color:currentColor !important; box-shadow:none !important;
   }
   body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button[aria-expanded='true'] {
     background:#292930 !important; border-color:#858590 !important; border-radius:8px !important;
@@ -203,7 +203,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
   }
   body.dancr-button-system #dancer-dashboard .dancer-preview-edit-main img { display:block; width:100%; height:100%; object-fit:cover; object-position:center top; }
   body.dancr-button-system #dancer-dashboard .dancer-preview-edit-main strong {
-    position:absolute; inset:auto 0 0; padding:30px 8px 8px; text-align:left; font-size:14px; background:linear-gradient(transparent,#09070dec);
+    position:absolute; inset:auto 0 0; padding:30px 8px 8px; text-align:left; font-size:14px; background:linear-gradient(transparent,rgba(20, 20, 27, 0.9255));
   }
   body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-types,.dancer-builder-upload-entry) > button::before,
   body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-types,.dancer-builder-upload-entry) > button::after,
@@ -211,7 +211,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
   body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main,.dancer-builder-back)::after { content:none !important; }
   body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-types,.dancer-builder-upload-entry) > button:focus-visible,
   body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main,.dancer-builder-back):focus-visible {
-    outline:2px solid #c4b5fd !important; outline-offset:3px !important;
+    outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:3px !important;
   }
   @media (max-width:899px) {
     body.dancr-button-system #dancer-dashboard button.dancer-preview-edit-main { width:calc((100vw - 56px) / 3) !important; }

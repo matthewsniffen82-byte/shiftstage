@@ -18,7 +18,7 @@ body.dancr-button-system #vip-dashboard .vip-library-history { color: var(--vip-
 body.dancr-button-system #vip-dashboard .vip-library-history button { margin-top: 6px; }
 body.dancr-button-system #vip-dashboard .vip-library-count { color: var(--vip-muted); margin: 8px 0; font-size: 12px; }
 body.dancr-button-system #vip-dashboard .vip-library-grid { max-height: none; overflow: visible; }
-body.dancr-button-system #vip-dashboard .vip-library-photo { width: 64px; height: 80px; flex: none; display: grid; place-items: center; overflow: hidden; border-radius: 8px; background: #29262d; color: var(--vip-gold); }
+body.dancr-button-system #vip-dashboard .vip-library-photo { width: 64px; height: 80px; flex: none; display: grid; place-items: center; overflow: hidden; border-radius: 8px; background: var(--dancr-color-surface-card); color: var(--vip-gold); }
 body.dancr-button-system #vip-dashboard .vip-library-photo img { width: 100%; height: 100%; object-fit: cover; }
 body.dancr-button-system #vip-dashboard .vip-library-card .vip-library-photo { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 0; font-size: 24px; }
 body.dancr-button-system #vip-dashboard .vip-library-request { position: absolute; z-index: 3; top: 0; right: 0; display: grid; place-items: start end; width: min(44px, calc(50% - 5px)) !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; box-sizing: border-box; margin: 0; padding: 5px !important; background: transparent !important; border: 0 !important; box-shadow: none !important; color: #eee3f6 !important; }
@@ -31,7 +31,7 @@ body.dancr-button-system #vip-dashboard .vip-working-list li { display: grid; gr
 body.dancr-button-system #vip-dashboard .vip-working-list .vip-library-photo { width: 48px; height: 60px; }
 body.dancr-button-system #vip-dashboard .vip-working-list h3 { font-size: 14px; letter-spacing: 0; }
 body.dancr-button-system #vip-dashboard .vip-working-list small { display: block; margin-top: 4px; color: #8cd2ac; font-size: 11px; }
-body.dancr-button-system #vip-dashboard .vip-working-list button { min-height: 44px; padding: 8px 10px; font-size: 12px; border-color: #45404b !important; background: #1c191f !important; }
+body.dancr-button-system #vip-dashboard .vip-working-list button { min-height: 44px; padding: 8px 10px; font-size: 12px; border-color: var(--dancr-color-border) !important; background: var(--dancr-color-control-secondary) !important; }
 body.dancr-button-system #vip-dashboard .vip-working-empty { padding: 12px 0; border-block: 1px solid var(--vip-line); }
 @media (max-width: 600px) {
   body.dancr-button-system #vip-dashboard .vip-library-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px; }

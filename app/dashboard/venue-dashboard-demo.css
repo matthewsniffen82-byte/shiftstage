@@ -15,7 +15,7 @@
 .venue-demo-internal-tools > small { color:#a3e3d0; font-size:12px; }
 .venue-demo-workspace details { margin:12px 0; }
 .venue-demo-workspace details > summary { min-height:44px; padding:10px 0; cursor:pointer; }
-.venue-demo-workspace :is(button,summary,input,select):focus-visible { outline:2px solid #d8cafa; outline-offset:3px; }
+.venue-demo-workspace :is(button,summary,input,select):focus-visible { outline:2px solid var(--dancr-color-brand-primary); outline-offset:3px; }
 .venue-demo-records,.venue-demo-roster { margin:12px 0; padding:0; list-style:none; }
 .venue-demo-records > li { padding:12px 0; border-bottom:1px solid #34343c; min-width:0; overflow-wrap:anywhere; font-size:14px; }
 .venue-demo-records > li > div { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px 14px; }

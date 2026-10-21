@@ -23,11 +23,11 @@ export default function AdminVenueSubscriptions({ venues }: { venues?: Array<Rec
     </div>
     <style>{`
       .venue-subscriptions{display:grid;gap:18px}.subscription-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-      .subscription-summary article,.subscription-roster{padding:22px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:#111018}
+      .subscription-summary article,.subscription-roster{padding:22px;border:1px solid rgba(255,255,255,.12);border-radius:18px;background:var(--dancr-color-surface-card)}
       .subscription-summary article>span{font-size:12px;color:#bcb1d0}.subscription-summary strong{display:block;margin-top:8px;font-size:23px;color:#fff}
       .venue-subscriptions p,.subscription-roster li>span{color:#bcb1d0;line-height:1.5}.subscription-roster h2{margin-top:0}
-      .subscription-roster label{display:grid;gap:8px;margin:18px 0}.subscription-roster input{box-sizing:border-box;width:100%;padding:12px;background:#191623;color:white;border:1px solid #53475e;border-radius:10px;font:inherit}
-      .subscription-roster ul{list-style:none;padding:0}.subscription-roster li{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:14px;padding:18px 0;border-top:1px solid #332c40;align-items:center;overflow-wrap:anywhere}
+      .subscription-roster label{display:grid;gap:8px;margin:18px 0}.subscription-roster input{box-sizing:border-box;width:100%;padding:12px;background:var(--dancr-color-control-secondary);color:white;border:1px solid var(--dancr-color-border);border-radius:10px;font:inherit}
+      .subscription-roster ul{list-style:none;padding:0}.subscription-roster li{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:14px;padding:18px 0;border-top:1px solid var(--dancr-color-border);align-items:center;overflow-wrap:anywhere}
       .subscription-roster li div{display:grid;gap:6px}.subscription-roster li div span,.subscription-roster small{color:#a79ab8;font-size:13px}
       @media(max-width:680px){.subscription-summary{grid-template-columns:1fr}.subscription-roster li{grid-template-columns:1fr}.subscription-roster,.subscription-summary article{padding:18px}}
     `}</style>

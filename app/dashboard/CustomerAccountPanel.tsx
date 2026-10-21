@@ -133,22 +133,22 @@ export default function CustomerAccountPanel({ account, accountRole = "customer"
         .customer-account-email > span { color: #aaa4b8; font-size: 12px; }
         .customer-account-email > strong { color: #f5f2fa; font-size: 16px; line-height: 1.4; overflow-wrap: anywhere; }
         .customer-credential-options { display: grid; gap: 9px; }
-        body.dancr-button-system .customer-account-details button.customer-credential-option { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 11px !important; width: 100% !important; min-width: 0 !important; min-height: 54px !important; padding: 11px 13px !important; border: 1px solid rgba(179,125,255,.2) !important; border-radius: 12px !important; background: rgba(139,92,246,.06) !important; color: #f2ebfc !important; box-shadow: none !important; font-size: 14px !important; }
+        body.dancr-button-system .customer-account-details button.customer-credential-option { display: flex !important; align-items: center !important; justify-content: flex-start !important; gap: 11px !important; width: 100% !important; min-width: 0 !important; min-height: 54px !important; padding: 11px 13px !important; border: 1px solid var(--dancr-color-border) !important; border-radius: 12px !important; background: rgba(48, 48, 56, 0.06) !important; color: #f2ebfc !important; box-shadow: none !important; font-size: 14px !important; }
         .customer-credential-icon, .customer-credential-chevron { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
         .customer-credential-icon { color: #c6a5fb; }
         .customer-credential-chevron { margin-left: auto; width: 16px; }
-        .customer-credential-form { display: grid; gap: 14px; margin-top: 16px; padding-top: 18px; border-top: 1px solid rgba(179,125,255,.15); }
+        .customer-credential-form { display: grid; gap: 14px; margin-top: 16px; padding-top: 18px; border-top: 1px solid var(--dancr-color-border); }
         .customer-credential-form h3 { margin: 0; font-size: 17px; }
         .customer-credential-form > p { margin: 0; color: #aaa4b8; font-size: 13px; line-height: 1.5; }
         .customer-credential-form label { display: grid; gap: 8px; font-size: 13px; color: #e3ddea; }
         .customer-credential-field { display: grid; gap: 8px; min-width: 0; }
-        .customer-credential-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 12px; border: 1px solid rgba(179,125,255,.25); border-radius: 10px; background: #0b0911; color: #fff; font-size: 16px; }
-        .customer-credential-form input:focus-visible, .customer-credential-options button:focus-visible { outline: 2px solid #c4a0ff; outline-offset: 2px; }
+        .customer-credential-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 12px; border: 1px solid var(--dancr-color-border); border-radius: 10px; background: var(--dancr-color-control-secondary); color: #fff; font-size: 16px; }
+        .customer-credential-form input:focus-visible, .customer-credential-options button:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 2px; }
         .customer-password-control { position: relative; min-width: 0; }
         .customer-credential-form .customer-password-control input { padding-right: 56px; }
         body.dancr-button-system .customer-password-control button.customer-password-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); display: grid !important; place-items: center; width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 8px !important; background: transparent !important; box-shadow: none !important; color: #c6a5fb !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
         .customer-password-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-        .customer-password-toggle:focus-visible { outline: 2px solid #c4a0ff; outline-offset: -2px; }
+        .customer-password-toggle:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -2px; }
         .customer-credential-form-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 9px; }
         body.dancr-button-system .customer-credential-form-actions > button { min-width: 0 !important; min-height: 46px !important; padding: 10px 12px !important; border-radius: 10px !important; font-size: 13px !important; }
         .customer-credential-feedback { margin: 16px 0 0; color: #b6e6cf; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }

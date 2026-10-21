@@ -273,7 +273,7 @@ export default function DancerProfileMediaUploads({
         .profile-upload-group > header strong { color:#fff; font-size:18px; line-height:1.3; }
         .profile-upload-group > header small { color:#bdb7c9; font-size:12px; }
         .profile-upload-group > header > span { margin-left:auto; color:#c9c3d2; font-size:12px; }
-        .dancer-profile-media-uploads .profile-upload-entry { width:100%; min-width:0; min-height:78px; display:flex; align-items:center; gap:14px; padding:14px 16px; border:1px solid #645778; border-radius:16px; color:#fff; background:linear-gradient(120deg,#221333,#100d18); text-align:left; font:inherit; cursor:pointer; }
+        .dancer-profile-media-uploads .profile-upload-entry { width:100%; min-width:0; min-height:78px; display:flex; align-items:center; gap:14px; padding:14px 16px; border:1px solid var(--dancr-color-border); border-radius:16px; color:#fff; background:linear-gradient(120deg,var(--dancr-color-surface-card),var(--dancr-color-surface-card)); text-align:left; font:inherit; cursor:pointer; }
         .profile-upload-entry > svg { width:28px; height:28px; flex:0 0 28px; fill:none; stroke:#d5baff; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
         .profile-upload-entry > span { min-width:0; display:grid; gap:4px; }
         .profile-upload-entry strong { color:#fff; font-size:16px; line-height:1.2; }
@@ -284,20 +284,20 @@ export default function DancerProfileMediaUploads({
         .profile-upload-preview { position:relative; min-width:0; }
         .profile-upload-menu-caption { display:none; }
         .dancer-profile-media-uploads .profile-upload-items button { width:100%; min-height:44px; display:grid; gap:4px; padding:0; border:0; border-radius:8px; background:transparent; color:#fff; text-align:left; font:inherit; cursor:pointer; }
-        .profile-upload-thumbnail { position:relative; width:100%; height:auto; aspect-ratio:3 / 4; display:grid; place-items:center; overflow:hidden; border:1px solid #40384b; border-radius:8px; background:#15101d; color:#c9c3d2; }
+        .profile-upload-thumbnail { position:relative; width:100%; height:auto; aspect-ratio:3 / 4; display:grid; place-items:center; overflow:hidden; border:1px solid var(--dancr-color-border); border-radius:8px; background:var(--dancr-color-surface-card); color:#c9c3d2; }
         .profile-upload-thumbnail img { width:100%; height:100%; display:block; object-fit:cover; }
         .profile-upload-thumbnail i { position:absolute; inset:50% auto auto 50%; transform:translate(-50%,-50%); display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:#000b; color:#fff; font-size:14px; font-style:normal; }
         .profile-upload-items strong { font-size:12px; line-height:1.3; }
         .profile-upload-items small { color:#d4c3e9; font-size:11px; line-height:1.35; }
         .profile-upload-items small.is-ready { color:#8ce4b2; }
         .profile-upload-group > p { margin:0; color:#c9c3d2; font-size:12px; line-height:1.5; }
-        .dancer-profile-media-uploads .profile-upload-visibility { box-sizing:border-box; display:grid; width:100%; margin:4px 0 16px; padding:14px 12px 0; border-top:1px solid #d5baff20; color:#c9c3d2; font-size:12px; line-height:1.5; text-align:center; text-wrap:pretty; }
+        .dancer-profile-media-uploads .profile-upload-visibility { box-sizing:border-box; display:grid; width:100%; margin:4px 0 16px; padding:14px 12px 0; border-top:1px solid var(--dancr-color-border); color:#c9c3d2; font-size:12px; line-height:1.5; text-align:center; text-wrap:pretty; }
         /* Measure both messages in the same cell so toggling cannot resize the gallery. */
         .profile-upload-visibility > span { grid-area:1 / 1; }
         .profile-upload-visibility > span[aria-hidden="true"] { visibility:hidden; }
         .dancer-profile-media-uploads .profile-upload-retry { min-height:44px; padding:6px 0; border:0; background:transparent; color:#fff; font:inherit; text-decoration:underline; cursor:pointer; }
         .dancer-profile-media-uploads button:focus-visible { outline:2px solid #fff; outline-offset:3px; }
-        body.dancr-button-system .dancer-profile-media-uploads .profile-upload-entry { min-height:78px !important; padding:14px 16px !important; border-radius:16px !important; background:linear-gradient(120deg,#221333,#100d18) !important; box-shadow:none !important; }
+        body.dancr-button-system .dancer-profile-media-uploads .profile-upload-entry { min-height:78px !important; padding:14px 16px !important; border-radius:16px !important; background:linear-gradient(120deg,var(--dancr-color-surface-card),var(--dancr-color-surface-card)) !important; box-shadow:none !important; }
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items button { padding:0 !important; border:0 !important; border-radius:8px !important; background:transparent !important; box-shadow:none !important; }
         .dancer-profile-media-uploads .profile-upload-items .profile-upload-delete,
         body.dancr-button-system .dancer-profile-media-uploads .profile-upload-items .profile-upload-delete { position:absolute; right:2px; bottom:2px; z-index:1; display:grid; place-items:center; width:44px !important; height:44px !important; min-height:44px; margin:0; padding:0 !important; border:0 !important; background:transparent !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; color:#fff !important; }

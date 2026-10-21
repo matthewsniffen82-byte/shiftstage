@@ -460,26 +460,26 @@ export default function VenueNfcTagPanel({
         .venue-nfc-roster:not([open])>.venue-roster-content{display:none}
         .venue-roster-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,180px);gap:12px;align-items:end}
         .venue-roster-sort{display:grid;gap:6px;margin:10px 0 4px;color:#c4b5fd;font-size:12px;font-weight:750}
-        .venue-roster-sort select{width:100%;min-height:44px;box-sizing:border-box;padding:10px 12px;border:1px solid #42394f;border-radius:10px;background:#111118;color:#f8fafc;font:inherit;font-size:16px}
+        .venue-roster-sort select{width:100%;min-height:44px;box-sizing:border-box;padding:10px 12px;border:1px solid var(--dancr-color-border);border-radius:10px;background:#111118;color:#f8fafc;font:inherit;font-size:16px}
         summary.venue-nfc-roster-head{cursor:pointer;list-style:none;min-height:48px}
         summary.venue-nfc-roster-head::-webkit-details-marker{display:none}
         summary.venue-nfc-roster-head>span{flex:1;min-width:140px}
         summary.venue-nfc-roster-head>b{white-space:nowrap}
-        summary.venue-nfc-roster-head::after{content:"";width:8px;height:8px;flex:0 0 8px;border:solid #a78bfa;border-width:0 2px 2px 0;transform:rotate(45deg);margin:0 4px 4px}
+        summary.venue-nfc-roster-head::after{content:"";width:8px;height:8px;flex:0 0 8px;border:solid var(--dancr-color-border);border-width:0 2px 2px 0;transform:rotate(45deg);margin:0 4px 4px}
         .venue-nfc-roster[open]>summary::after{transform:rotate(225deg);margin-top:8px}
-        .venue-nfc-roster-head:focus-visible,.venue-roster-sort select:focus-visible{outline:2px solid #a78bfa;outline-offset:3px}
+        .venue-nfc-roster-head:focus-visible,.venue-roster-sort select:focus-visible{outline:2px solid var(--dancr-color-brand-primary);outline-offset:3px}
         @media(max-width:480px){.venue-roster-controls{grid-template-columns:minmax(0,1fr)}}
         .venue-roster-search{display:grid;gap:6px;margin:10px 0 4px;color:#c4b5fd;font-size:12px;font-weight:750}
-        .venue-roster-search input{width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid #42394f;border-radius:10px;color:#f8fafc;background:#111118;font:inherit;font-size:16px}
-        .venue-roster-search input:focus-visible,.venue-roster-actions a:focus-visible,.venue-roster-stickers summary:focus-visible{outline:2px solid #a78bfa;outline-offset:2px}
+        .venue-roster-search input{width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:10px 12px;border:1px solid var(--dancr-color-border);border-radius:10px;color:#f8fafc;background:#111118;font:inherit;font-size:16px}
+        .venue-roster-search input:focus-visible,.venue-roster-actions a:focus-visible,.venue-roster-stickers summary:focus-visible{outline:2px solid var(--dancr-color-brand-primary);outline-offset:2px}
         .venue-roster-filters{display:flex;flex-wrap:wrap;gap:8px}
         .venue-roster-filters button{display:flex;gap:8px;align-items:center;font-size:12px!important}
-        .venue-roster-filters button[aria-pressed="true"]{border-color:#8b5cf6;background:rgba(124,58,237,.24)}
+        .venue-roster-filters button[aria-pressed="true"]{border-color:var(--dancr-color-brand-primary);background:rgba(124, 58, 237, 0.24)}
         .venue-roster-filters b{font-variant-numeric:tabular-nums;color:#c4b5fd}
         .venue-roster-results{font-size:12px}
         .venue-roster-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
         .venue-roster-actions .venue-end-checkin{min-height:36px;padding:0 10px;font-size:11px;white-space:nowrap}
-        .venue-roster-actions a{display:inline-flex;align-items:center;min-height:36px;padding:0 10px;border:1px solid rgba(167,139,250,.3);border-radius:10px;color:#ddd6fe;font-size:12px;font-weight:750;text-decoration:none}
+        .venue-roster-actions a{display:inline-flex;align-items:center;min-height:36px;padding:0 10px;border:1px solid var(--dancr-color-border);border-radius:10px;color:#ddd6fe;font-size:12px;font-weight:750;text-decoration:none}
         .venue-nfc-dancer-copy .venue-roster-working{color:#6ee7b7;font-weight:750}
         .venue-nfc-dancer-avatar [data-dancer-avatar-border]>img{display:block;width:100%;height:100%;object-fit:cover;object-position:center top}
         .venue-roster-stickers{min-width:0;border-top:1px solid rgba(255,255,255,.1);padding-top:14px}

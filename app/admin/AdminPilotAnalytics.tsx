@@ -433,7 +433,7 @@ const pilotStyles = `
   .pilot-export { flex: 0 0 auto; min-height: 42px; padding: 0 14px; color: #f7f2ff; border: 1px solid rgba(148,229,255,.3); background: rgba(148,229,255,.08); }
   .pilot-filters { display: grid; grid-template-columns: minmax(230px,1.6fr) repeat(2,minmax(150px,.7fr)) auto; align-items: end; gap: 10px; padding: 14px; border: 1px solid rgba(255,255,255,.11); border-radius: 16px; background: #0b0b10; }
   .pilot-filters label, .pilot-report-form label { display: grid; gap: 7px; color: #d8cfeb; font-size: 12px; font-weight: 850; }
-  .pilot-filters input, .pilot-filters select, .pilot-report-form input, .pilot-report-form textarea { width: 100%; min-height: 46px; border-radius: 11px; background: #15141b; }
+  .pilot-filters input, .pilot-filters select, .pilot-report-form input, .pilot-report-form textarea { width: 100%; min-height: 46px; border-radius: 11px; background: var(--dancr-color-control-secondary); }
   .pilot-filters button { min-height: 46px; padding: 0 17px; }
   .pilot-error { padding: 12px 14px; border: 1px solid rgba(255,120,145,.38); border-radius: 12px; color: #ffd9e0; background: rgba(120,18,43,.3); font-weight: 800; }
   .pilot-empty { display: grid; gap: 6px; min-height: 150px; place-content: center; padding: 24px; text-align: center; border: 1px solid rgba(255,255,255,.11); border-radius: 16px; background: #0b0b10; }
@@ -463,7 +463,7 @@ const pilotStyles = `
   .pilot-funnel-row > span { display: flex; justify-content: space-between; gap: 10px; color: #d8cfeb; font-size: 13px; }
   .pilot-funnel-row b { color: #fff; }
   .pilot-funnel-row > i { height: 10px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.06); }
-  .pilot-funnel-row > i > em { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,#7357ff,#35d8ff); }
+  .pilot-funnel-row > i > em { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--dancr-color-surface-card),#35d8ff); }
   .pilot-funnel-row.verified > span strong, .pilot-funnel-row.verified > span b { color: #8dffc4; }
   .pilot-funnel-row.verified > i > em { background: linear-gradient(90deg,#24c97f,#8dffc4); }
   .pilot-intent-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 5px; }
@@ -501,7 +501,7 @@ const pilotStyles = `
   .pilot-methodology li strong { color: #f7f2ff; }
   .pilot-method-note { padding: 12px; border: 1px solid rgba(148,229,255,.18); border-radius: 11px; color: #c9ecf7; background: rgba(148,229,255,.055); font-size: 13px; }
   .pilot-loading { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
-  .pilot-loading span { min-height: 168px; border-radius: 16px; background: linear-gradient(100deg,rgba(255,255,255,.04),rgba(139,92,246,.12),rgba(255,255,255,.04)); background-size: 240% 100%; animation: pilotPulse 1.3s ease-in-out infinite; }
+  .pilot-loading span { min-height: 168px; border-radius: 16px; background: linear-gradient(100deg,rgba(255,255,255,.04),rgba(20, 20, 27, 0.12),rgba(255,255,255,.04)); background-size: 240% 100%; animation: pilotPulse 1.3s ease-in-out infinite; }
   @keyframes pilotPulse { from { background-position: 100% 0; } to { background-position: -100% 0; } }
   @media (max-width: 860px) {
     .pilot-kpis { grid-template-columns: repeat(2,minmax(0,1fr)); }

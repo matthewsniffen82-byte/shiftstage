@@ -148,11 +148,11 @@ test("venue dashboard uses one state-aware four-destination workspace", () => {
   assert.doesNotMatch(routedDashboards, /venue-dashboard-shortcuts/);
   assert.match(
     routedDashboards,
-    /\.dashboard-shell-venue \.venue-deal-form-actions \.primary \{[^}]*?linear-gradient\(135deg, #8b20ef, #6d19d6\)/,
+    /\.dashboard-shell-venue \.venue-deal-form-actions \.primary \{[^}]*?linear-gradient\(var\(--dancr-color-brand-primary\), var\(--dancr-color-brand-primary\)\)/,
   );
   assert.match(
     routedDashboards,
-    /\.dashboard-shell-venue \.venue-deal-builder-step legend > span:first-child \{[^}]*?rgba\(196,122,255,\.8\)[^}]*?linear-gradient\(135deg, #a020f0, #6d19d6\)[^}]*?rgba\(139,92,246,\.36\)/,
+    /\.dashboard-shell-venue \.venue-deal-builder-step legend > span:first-child \{[^}]*?border: 1px solid var\(--dancr-color-border\);[^}]*?linear-gradient\(135deg, var\(--dancr-color-surface-card\), var\(--dancr-color-surface-card\)\)[^}]*?box-shadow: none;/,
   );
   assert.doesNotMatch(aesthetic, /\.dashboard-shell \.venue-deal-panel \{[\s\S]*?success-medium/);
 });

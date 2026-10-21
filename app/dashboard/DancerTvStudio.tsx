@@ -749,7 +749,7 @@ function statusLabel(status: string) {
 function DancerTvStudioStyles() {
   return (
     <style>{`
-      .tv-studio-page { min-height: 100vh; padding: 28px clamp(14px, 4vw, 54px) 60px; background: radial-gradient(circle at 10% 0%, rgba(139,92,246,.22), transparent 26rem), #050507; color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+      .tv-studio-page { min-height: 100vh; padding: 28px clamp(14px, 4vw, 54px) 60px; background: var(--dancr-color-background); color: #f7f2ff; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
       .tv-studio-page > * { max-width: 920px; margin-left: auto; margin-right: auto; }
       .tv-studio-embedded { grid-column: 1 / -1; width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; overflow: hidden; }
       .tv-studio-head { display: flex; align-items: end; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
@@ -761,18 +761,18 @@ function DancerTvStudioStyles() {
       .tv-studio-head p { margin: 0; max-width: 58ch; color: #b9accd; line-height: 1.5; }
       .tv-studio-head .tv-profile-connection { color: #e2d9ef; font-weight: 800; }
       .tv-studio-head > a, .tv-managed-video a { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; padding: 0 15px; border: 1px solid rgba(34,199,255,.38); border-radius: 999px; color: #fff; background: rgba(34,199,255,.08); font-weight: 900; text-decoration: none; white-space: nowrap; }
-      .tv-upload-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 14px; border: 1px solid #49434f; border-radius: 8px; background: #0b0b10; }
+      .tv-upload-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 14px; border: 1px solid var(--dancr-color-border); border-radius: 8px; background: #0b0b10; }
       .tv-upload-form > label { min-width: 0; display: grid; align-content: start; gap: 9px; color: #e8e5ef; font-size: 13px; font-weight: 400; line-height: 1.45; }
       .tv-upload-permissions, .tv-video-source-grid, .tv-upload-requirements, .tv-upload-queue { min-width: 0; max-width: 100%; grid-column: 1 / -1; }
       .tv-upload-permissions { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
       .tv-upload-permissions strong { color: #fff; font-size: 14px; }
       .tv-video-source-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 10px; }
-      .tv-video-source-action { position: relative; min-width: 0; min-height: 44px; height: 100%; display: grid; grid-template-columns: 20px minmax(0,1fr); align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid #706579; border-radius: 8px; color: #f8f5fb; background: linear-gradient(#121016,#121016); box-sizing: border-box; cursor: pointer; appearance: none; -webkit-tap-highlight-color: transparent; text-align: left; font: inherit; }
-      .tv-video-source-action:hover { border-color: #a99db5; background: linear-gradient(#201a28,#201a28); }
-      .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:not(:disabled) { border-color: #a78bfa; color: #fff; background: linear-gradient(#6d28d9,#6d28d9); }
+      .tv-video-source-action { position: relative; min-width: 0; min-height: 44px; height: 100%; display: grid; grid-template-columns: 20px minmax(0,1fr); align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--dancr-color-border); border-radius: 8px; color: #f8f5fb; background: linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)); box-sizing: border-box; cursor: pointer; appearance: none; -webkit-tap-highlight-color: transparent; text-align: left; font: inherit; }
+      .tv-video-source-action:hover { border-color: var(--dancr-color-border-strong); background: linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)); }
+      .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:not(:disabled) { border-color: var(--dancr-color-border); color: #fff; background: linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)); }
       .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:hover:not(:disabled) { background: linear-gradient(#7c3aed,#7c3aed); }
       .tv-video-source-action:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
-      .tv-video-source-action.is-awaiting-permissions { color: #bdb7c8; border-color: #49434f; opacity: 1; }
+      .tv-video-source-action.is-awaiting-permissions { color: #bdb7c8; border-color: var(--dancr-color-border); opacity: 1; }
       .tv-video-source-action:disabled { opacity: .5; cursor: progress; }
       .tv-video-source-input { position: fixed; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); opacity: 0; pointer-events: none; }
       .tv-video-source-icon { width: 20px; height: 20px; display: grid; place-items: center; color: inherit; background: transparent; }
@@ -782,7 +782,7 @@ function DancerTvStudioStyles() {
       .tv-video-source-copy small { color: #aaa2b4; font-size: 10px; line-height: 1.3; }
       .tv-video-source-cta { display: none; }
       .tv-upload-form small { color: #c1bdcc; font-size: 11px; font-weight: 400; }
-      .tv-upload-requirements { display: block; padding-top: 8px; border-top: 1px solid #34313d; line-height: 1.45; overflow-wrap: anywhere; }
+      .tv-upload-requirements { display: block; padding-top: 8px; border-top: 1px solid var(--dancr-color-border); line-height: 1.45; overflow-wrap: anywhere; }
       .tv-upload-queue { display: grid; gap: 10px; }
       .tv-upload-queue-item { min-width: 0; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 10px; border: 1px solid rgba(251,191,36,.38); border-radius: 10px; background: rgba(251,191,36,.07); }
       .tv-upload-queue-item.is-uploading { border-color: rgba(34,211,238,.58); box-shadow: inset 3px 0 0 rgba(34,211,238,.8); }

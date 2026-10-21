@@ -34,8 +34,8 @@ body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue, .dashbo
 body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue, .dashboard-shell-dancer, .dashboard-shell-customer) .venue-dashboard-section[data-section-icon] .dancer-dashboard-section-icon {
   color: #c5c3cd; border-color: var(--dashboard-neutral-border); background: #ffffff04;
 }
-body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue, .dashboard-shell-dancer, .dashboard-shell-customer) .venue-dashboard-section[data-section-icon][open] { border-color: #a78bfa55; }
-body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue, .dashboard-shell-dancer, .dashboard-shell-customer) .venue-dashboard-section[data-section-icon][open] > summary { background: #a78bfa06; }
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue, .dashboard-shell-dancer, .dashboard-shell-customer) .venue-dashboard-section[data-section-icon][open] { border-color: var(--dancr-color-border); }
+body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue, .dashboard-shell-dancer, .dashboard-shell-customer) .venue-dashboard-section[data-section-icon][open] > summary { background: rgba(20, 20, 27, 0.0235); }
 body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue, .dashboard-shell-dancer, .dashboard-shell-customer) :is(.venue-command-status p, .info-panel > p, .venue-publication-panel p, .venue-refresh-control small) {
   color: var(--dashboard-readable-muted); font-size: 13px; line-height: 1.5;
 }
@@ -61,7 +61,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-w
   color: #fff !important; border-color: #676771 !important; background: linear-gradient(#060608, #060608) !important;
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-workspace-tabs button.active[aria-selected="true"], .venue-analytics-period button.active[aria-pressed="true"]) {
-  color: #fff !important; border-color: #745696 !important; background: linear-gradient(#201333, #201333) !important; box-shadow: none !important;
+  color: #fff !important; border-color: var(--dancr-color-brand-primary) !important; background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important; box-shadow: none !important;
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; min-width: 0; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refresh-control small { font-size: 12px; font-weight: 400; }
@@ -69,8 +69,8 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-refre
 
 body.dancr-button-system main.dashboard-shell:is(.dashboard-shell-venue, .dashboard-shell-dancer, .dashboard-shell-customer) .dashboard-primary-action {
   box-sizing: border-box; min-height: 48px; width: 100%; padding: 12px 16px;
-  border: 1px solid #a78bfa80; border-radius: 12px; color: #fff;
-  background: linear-gradient(135deg, #6d28d9, #4c1d95) !important; box-shadow: none !important;
+  border: 1px solid var(--dancr-color-brand-primary); border-radius: 12px; color: #fff;
+  background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important; box-shadow: none !important;
   font-size: 15px; font-weight: 650; text-align: center;
 }
 body .dashboard-shell .dashboard-group-heading {
@@ -84,7 +84,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-picku
   padding: 16px; gap: 6px; border: 1px solid var(--dashboard-neutral-border); border-radius: 14px;
   background: #08080b !important; color: #f4f3f7; text-decoration: none; box-shadow: none;
 }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row.is-latest { border-color: #a78bfa60; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row.is-latest { border-color: var(--dancr-color-border); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row-heading { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row-heading strong { color: #f4f3f7; font-size: 16px; overflow-wrap: anywhere; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row-heading small { color: #c4b5fd; font-size: 12px; }
@@ -155,7 +155,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-agr
   box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 10px;
   color: #f4f3f7; font-size: 12px; font-weight: 600; line-height: 1.3; text-decoration: none;
 }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-agreement-panel > a:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-agreement-panel > a:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer :is(.dancer-profile-share-tools > summary, .visibility-toggle, .shift-checkin-card button:not(.shift-end-confirm), .dancer-profile-editor-launch-button) {
   min-height: 44px; border: 1px solid var(--dashboard-neutral-border) !important;
   border-radius: 12px !important; background: #060608 !important; box-shadow: none !important;
@@ -187,7 +187,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-acc
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-panel :is(.notification-mark-read-button, .notification-clear-button) { border-color: transparent !important; background: transparent !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-list { gap: 6px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-row {
-  box-sizing: border-box; min-width: 0; min-height: 44px; padding: 10px 12px; gap: 3px; border: 1px solid #a78bfa40 !important;
+  box-sizing: border-box; min-width: 0; min-height: 44px; padding: 10px 12px; gap: 3px; border: 1px solid var(--dancr-color-border) !important;
   border-radius: 12px !important; background: #ffffff04 !important; box-shadow: none !important; font-weight: 400 !important; text-align: left;
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .notification-row.read { border-color: var(--dashboard-neutral-border) !important; background: transparent !important; }
@@ -219,14 +219,14 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-acc
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-switch-track {
   box-sizing: border-box; display: block; flex: 0 0 42px; width: 42px; height: 26px; padding: 3px;
-  border: 1px solid #ffffff40; border-radius: 999px; background: #29262f;
+  border: 1px solid #ffffff40; border-radius: 999px; background: var(--dancr-color-surface-card);
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-switch-track > i { display: block; width: 18px; height: 18px; border-radius: 50%; background: #fff; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-switch[aria-checked="true"] .dancer-switch-track { border-color: #a78bfa; background: #6d28d9; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-switch[aria-checked="true"] .dancer-switch-track { border-color: var(--dancr-color-brand-primary); background: var(--dancr-color-surface-card); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-switch[aria-checked="true"] .dancer-switch-track > i { transform: translateX(16px); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-switch-state { white-space: nowrap; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-notification-switch:disabled { opacity: .6; cursor: wait; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account :is(.dancer-notification-settings, .dancer-notification-switch, .notification-settings-button, .dancer-preferences-action):focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account :is(.dancer-notification-settings, .dancer-notification-switch, .notification-settings-button, .dancer-preferences-action):focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preferences-delivery { padding-top: 16px; border-top: 1px solid var(--dashboard-neutral-border); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preferences-delivery h3 { margin: 0; color: #f4f3f7; font-size: 15px; line-height: 1.4; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer #dancer-account .dancer-preferences-action { justify-self: start; }
@@ -244,14 +244,14 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.cust
   background: #060608 !important; box-shadow: none !important;
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-nav a[data-has-plans] {
-  border-color: #a78bfa80 !important; background: #201333 !important;
+  border-color: var(--dancr-color-border) !important; background: var(--dancr-color-surface-card) !important;
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-primary-links a > span:not(.customer-shortcut-icon) { font-size: 13px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-intro { color: #b8b6c2; font-size: 13px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-night-card, .customer-saved-card, .saved-deal-bookmark, .customer-preference-row) {
   border-color: var(--dashboard-neutral-border); background: #0b0b0f; box-shadow: none;
 }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-night-card { border-color: #a78bfa40; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-night-card { border-color: var(--dancr-color-border); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-night-copy p, .customer-night-date, .customer-empty-state p) { color: #b8b6c2; font-size: 13px; line-height: 1.5; }
 
 /* Venue account and support: compact details, readable forms, quiet actions. */
@@ -284,7 +284,7 @@ body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-accoun
 body.dancr-button-system main.dashboard-shell-venue #venue-account .venue-account-role { text-transform: capitalize; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account :is(.notification-title-row, .notification-title-row > div:first-child) { display: flex !important; align-items: center; justify-content: space-between; flex-wrap: wrap; width: 100%; gap: 8px !important; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .notification-toolbar { width: 100%; justify-content: space-between; gap: 6px !important; }
-body.dancr-button-system main.dashboard-shell-venue #venue-account .notification-unread-pill { min-height: 24px; padding: 0 8px; border-color: #74569666; color: #cfc0e5; background: #201333; font-size: 10px; font-weight: 500; }
+body.dancr-button-system main.dashboard-shell-venue #venue-account .notification-unread-pill { min-height: 24px; padding: 0 8px; border-color: var(--dancr-color-border); color: #cfc0e5; background: var(--dancr-color-surface-card); font-size: 10px; font-weight: 500; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account :is(button:not(.notification-row), .notification-clear-button) {
   box-sizing: border-box; min-height: 44px !important; padding: 8px 12px !important; border: 1px solid #34343c !important; border-radius: 10px !important;
   color: #f4f3f7 !important; background: linear-gradient(#060608, #060608) !important; box-shadow: none !important;
@@ -293,7 +293,7 @@ body.dancr-button-system main.dashboard-shell-venue #venue-account :is(button:no
 body.dancr-button-system main.dashboard-shell-venue #venue-account .notification-panel :is(.notification-mark-read-button, .notification-clear-button) { padding-inline: 4px !important; border-color: transparent !important; background: transparent !important; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .notification-list { gap: 8px; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .notification-row {
-  min-width: 0; padding: 10px 12px; border: 1px solid #74569666 !important; border-radius: 10px !important;
+  min-width: 0; padding: 10px 12px; border: 1px solid var(--dancr-color-border) !important; border-radius: 10px !important;
   background: linear-gradient(#08080b, #08080b) !important; box-shadow: none !important; gap: 4px; text-align: left;
 }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .notification-row.read { border-color: #34343c !important; opacity: .8; }
@@ -310,7 +310,7 @@ body.dancr-button-system main.dashboard-shell-venue #venue-account :is(input:not
   box-sizing: border-box; min-width: 0; width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #34343c !important; border-radius: 10px !important;
   color: #f4f3f7 !important; background: linear-gradient(#060608, #060608) !important; box-shadow: none !important; font-size: 16px !important; font-weight: 400; line-height: 1.5;
 }
-body.dancr-button-system main.dashboard-shell-venue #venue-account .support-panel .support-send-button:not(.is-sent) { border-color: #745696 !important; background: linear-gradient(110deg, #7c3aed, #6d28d9) !important; }
+body.dancr-button-system main.dashboard-shell-venue #venue-account .support-panel .support-send-button:not(.is-sent) { border-color: var(--dancr-color-brand-primary) !important; background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-panel .support-send-button.is-sent { border-color: #315642 !important; color: #a7f3d0 !important; background: linear-gradient(#09160f, #09160f) !important; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-thread { gap: 0; padding: 10px; border: 1px solid #34343c !important; border-radius: 10px !important; background: #060608 !important; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-thread > :not(summary) { margin-top: 10px; }
@@ -320,7 +320,7 @@ body.dancr-button-system main.dashboard-shell-venue #venue-account .support-thre
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-thread[open] summary::after { transform: rotate(90deg); }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-thread summary strong { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-message { gap: 4px; padding: 10px; border-color: #ffffff14; background: #08080b; }
-body.dancr-button-system main.dashboard-shell-venue #venue-account .support-message.from-admin { border-color: #74569666; background: #100c17; }
+body.dancr-button-system main.dashboard-shell-venue #venue-account .support-message.from-admin { border-color: var(--dancr-color-border); background: var(--dancr-color-surface-card); }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-message strong { font-size: 12px; font-weight: 600; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .support-message small { font-size: 10px; }
 body.dancr-button-system main.dashboard-shell-venue #venue-account .account-controls-heading { grid-template-columns: 28px minmax(0, 1fr); gap: 8px !important; }
@@ -353,7 +353,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-primary-links a > strong { grid-column: 3; grid-row: 1; min-width: 22px; height: 22px; padding-inline: 5px; font-size: 11px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-utility-links a { min-height: 44px; padding: 6px 10px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-dashboard-nav a, .customer-card-actions a, .customer-card-actions button, .customer-credential-option) { background: linear-gradient(#060608, #060608) !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-nav a[data-has-plans] { background: linear-gradient(#201333, #201333) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-dashboard-nav a[data-has-plans] { background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] { border-radius: 14px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] > summary { min-height: 70px; grid-template-columns: 30px minmax(0, 1fr) auto 16px; gap: 8px; padding: 10px 12px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .venue-dashboard-section[data-section-icon] .dancer-dashboard-section-icon { width: 30px; height: 30px; border-radius: 9px; }
@@ -415,7 +415,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-switch-state { width: 60px; font-size: 10px; line-height: 1.2; text-align: center; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-preference-row > span { gap: 3px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-preference-row strong { font-size: 13px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-preference-master { padding: 8px 10px; border: 1px solid #74569666; border-radius: 10px; background: #100c17; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-preference-master { padding: 8px 10px; border: 1px solid var(--dancr-color-border); border-radius: 10px; background: var(--dancr-color-surface-card); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-delivery-heading { padding-top: 0; border: 0; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-delivery-heading h3 { font-size: 15px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-notification-preferences :is(.customer-alert-preferences-heading, .customer-delivery-heading) p { margin-top: 4px; }
@@ -423,7 +423,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-account-email { gap: 3px; padding: 8px 0 0; border: 0; border-top: 1px solid #ffffff18; border-radius: 0; background: transparent; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-account-email > strong { font-size: 14px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-credential-options { gap: 6px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-customer button.customer-credential-option[aria-expanded="true"] { border-color: #745696 !important; background: linear-gradient(#201333, #201333) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer button.customer-credential-option[aria-expanded="true"] { border-color: var(--dancr-color-border) !important; background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer button.customer-credential-option.is-complete { border-color: #315642 !important; color: #a7f3d0 !important; background: linear-gradient(#09160f, #09160f) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-credential-form { gap: 10px; margin-top: 2px; padding-top: 12px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.customer-credential-form label, .support-panel label, .account-delete-confirmation label) { gap: 6px; color: #c5c3cd !important; font-size: 12px !important; font-weight: 500 !important; letter-spacing: 0 !important; text-transform: none !important; }
@@ -431,7 +431,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.cust
   box-sizing: border-box; min-width: 0; width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #34343c !important; border-radius: 10px !important; color: #f4f3f7 !important; background: linear-gradient(#060608, #060608) !important; box-shadow: none !important; font-size: 16px !important; line-height: 1.5;
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .customer-password-control input { padding-right: 56px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.support-send-button:not(.is-sent), .customer-credential-form-actions button.account-form-primary) { border-color: #745696 !important; background: linear-gradient(110deg, #7c3aed, #6d28d9) !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.support-send-button:not(.is-sent), .customer-credential-form-actions button.account-form-primary) { border-color: var(--dancr-color-brand-primary) !important; background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-panel .support-send-button.is-sent { border-color: #315642 !important; color: #a7f3d0 !important; background: linear-gradient(#09160f, #09160f) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer :is(.support-panel form, .support-thread-list) { gap: 10px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread { gap: 0; padding: 10px; border: 1px solid #34343c !important; border-radius: 10px !important; background: #060608 !important; }
@@ -442,7 +442,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread[open] summary::after { transform: rotate(90deg); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-thread summary strong { font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-message { padding: 10px; background: #08080b; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-message.from-admin { border-color: #74569666; background: #100c17; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-message.from-admin { border-color: var(--dancr-color-border); background: var(--dancr-color-surface-card); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-message strong { font-size: 12px; font-weight: 600; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .support-message small { font-size: 10px; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-customer .account-controls-heading { grid-template-columns: 28px minmax(0, 1fr); gap: 8px !important; }

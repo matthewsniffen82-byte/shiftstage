@@ -73,7 +73,7 @@ body .venue-dancer-grid .venue-card-photo {
   /* Same fixed-size placeholder as the homepage dancer grid. */
   background:
     radial-gradient(circle at 68% 20%, rgba(126,234,255,.1), transparent 34%),
-    radial-gradient(circle at 20% 82%, rgba(139,92,246,.18), transparent 42%),
+    radial-gradient(circle at 20% 82%, rgba(20, 20, 27, 0.18), transparent 42%),
     linear-gradient(145deg, #111118, #07070b);
 }
 body .venue-dancer-grid .venue-card-photo img {
@@ -155,7 +155,7 @@ body .venue-dancer-grid .venue-card-menu > summary::-webkit-details-marker { dis
 /* A small translucent face keeps the dots readable; the touch target stays 44px. */
 body .venue-dancer-grid .venue-card-menu > summary > span { display: grid; place-items: center; width: 24px; height: 20px; border: 0; border-radius: 5px; background: rgba(5, 5, 8, .38); color: #fff; font: 13px/1 Arial, sans-serif; letter-spacing: 0; text-shadow: 0 1px 3px #000; }
 body .venue-dancer-grid .venue-card-menu[open] > summary > span { background: rgba(5, 5, 8, .72); }
-body .venue-dancer-grid .venue-card-menu > summary:focus-visible { outline: 2px solid #d8cafa; outline-offset: -3px; }
+body .venue-dancer-grid .venue-card-menu > summary:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -3px; }
 body .venue-dancer-grid .venue-card-menu > .venue-card-popover {
   position: absolute; top: 30px; right: 0; box-sizing: border-box; width: min(240px, calc(100vw - 48px));
   max-height: min(360px, 60dvh); overflow: auto; overscroll-behavior: contain;
@@ -167,7 +167,7 @@ body .venue-dancer-grid .venue-dancer-card:nth-child(3n + 1) .venue-card-popover
 body .venue-dancer-grid .venue-dancer-card:nth-child(3n + 2) .venue-card-popover { right: auto; left: 50%; transform: translateX(-50%); }
 body .venue-dancer-grid .venue-card-actions:empty { display: none !important; }
 body .venue-dancer-grid .ir-profile-control > small[role="status"] { position: absolute; inset: auto 0 0; z-index: 4; display: block; box-sizing: border-box; max-width: 100%; max-height: 60%; overflow: auto; margin: 0; padding: 8px; background: #101014; overflow-wrap: anywhere; }
-body .venue-dancer-grid button.venue-card-profile:focus-visible { outline: 2px solid #d8cafa !important; outline-offset: -3px; }
+body .venue-dancer-grid button.venue-card-profile:focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: -3px; }
 @media (max-width: 420px) {
   body .venue-dancer-grid .venue-card-caption { padding: 10px 5px 5px; }
 }

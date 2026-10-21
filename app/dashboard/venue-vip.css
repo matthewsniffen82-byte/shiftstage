@@ -50,8 +50,8 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-tabs > button::before { content: none !important; }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-tabs > button[aria-selected="true"] {
-  border-color: #8966c5 !important;
-  background: #17121f !important;
+  border-color: var(--dancr-color-brand-primary) !important;
+  background: var(--dancr-color-brand-primary) !important;
   color: #fff !important;
 }
 
@@ -62,10 +62,10 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
   min-width: 20px;
   min-height: 20px;
   padding: 2px 4px;
-  border: 1px solid #80639b;
+  border: 1px solid var(--dancr-color-border);
   border-radius: 6px;
   /* Match the other venue counts; a flat gradient resists mobile dark-mode recoloring. */
-  background: linear-gradient(#30203f, #30203f) !important;
+  background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)) !important;
   color: #fff !important;
   -webkit-text-fill-color: currentColor !important;
   font-size: 11px;
@@ -89,7 +89,7 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(.venue-vip-tab-panel, .venue-vip-invite)[hidden] { display: none !important; }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(button, summary):focus-visible {
-  outline: 2px solid #b995ff;
+  outline: 2px solid var(--dancr-color-brand-primary);
   outline-offset: 3px;
 }
 
@@ -101,8 +101,8 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
 }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip button.vip-primary {
-  --venue-control-face: #54209a;
-  --venue-control-edge: #9871cd;
+  --venue-control-face: var(--dancr-color-brand-primary);
+  --venue-control-edge: var(--dancr-color-brand-primary);
 }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip :is(p, li) { font-size: 13px; }
@@ -116,8 +116,8 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
 }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-request-filters > button[aria-pressed="true"] {
-  --venue-control-face: #17121f;
-  --venue-control-edge: #8966c5;
+  --venue-control-face: var(--dancr-color-brand-primary);
+  --venue-control-edge: var(--dancr-color-brand-primary);
   color: #fff !important;
 }
 
@@ -204,8 +204,8 @@ html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-she
 }
 
 html body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue #venue-vip .venue-vip-invitation-actions > button {
-  --venue-control-face: #18131f;
-  --venue-control-edge: #50435f;
+  --venue-control-face: var(--dancr-color-control-secondary);
+  --venue-control-edge: var(--dancr-color-border);
   width: 100%;
   min-width: 0;
   min-height: 44px !important;

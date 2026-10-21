@@ -1,9 +1,9 @@
-.venue-media-review { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line, #4b4358); border-radius: 1rem; }
+.venue-media-review { margin-block: 1rem; padding: 1rem; border: 1px solid var(--line, var(--dancr-color-border)); border-radius: 1rem; }
 .venue-media-review > header, .venue-media-review > nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .venue-media-review h2, .venue-media-review h3 { margin: 0 0 .5rem; }
 .venue-media-review p { color: var(--muted, #aaa3b5); }
 .venue-media-review-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
-.venue-media-review-grid article { padding: .75rem; border: 1px solid var(--line, #4b4358); border-radius: .75rem; min-width: 0; }
+.venue-media-review-grid article { padding: .75rem; border: 1px solid var(--line, var(--dancr-color-border)); border-radius: .75rem; min-width: 0; }
 .venue-media-review-grid img, .venue-media-review-grid video { width: 100%; height: 280px; object-fit: contain; background: #000; border-radius: .5rem; margin-bottom: .75rem; }
 .venue-media-review label { display: grid; gap: .35rem; margin-block: .75rem; }
 .venue-media-review textarea { width: 100%; min-height: 70px; }

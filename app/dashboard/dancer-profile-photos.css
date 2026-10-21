@@ -189,7 +189,7 @@ body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target {
     box-sizing:border-box !important; display:grid !important; place-items:center !important;
     min-width:0 !important; max-width:100% !important; margin:0 !important; padding:0 !important;
-    border:1px solid #57515f !important; background:#15121b !important;
+    border:1px solid var(--dancr-color-border) !important; background:var(--dancr-color-control-secondary) !important;
     color:#f5f3ff !important; -webkit-text-fill-color:currentColor !important;
     box-shadow:none !important; transform:none !important; overflow:hidden !important;
     cursor:pointer; touch-action:manipulation;
@@ -217,15 +217,15 @@ body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-
     aspect-ratio:9 / 16 !important; border-radius:8px !important;
   }
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target:focus-visible {
-    outline:2px solid #c4b5fd !important; outline-offset:3px !important;
+    outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:3px !important;
   }
   body.dancr-button-system #dancer-dashboard .dancer-photo-edit-target img {
     width:100% !important; height:100% !important; object-fit:cover;
   }
   body.dancr-button-system #dancer-dashboard button.dancer-saved-photo-choice {
     display:block !important; width:100% !important; min-width:44px !important; height:auto !important;
-    aspect-ratio:3 / 4; padding:0 !important; border:1px solid #70647d !important; border-radius:6px !important;
-    background:#141019 !important; overflow:hidden; box-shadow:none !important;
+    aspect-ratio:3 / 4; padding:0 !important; border:1px solid var(--dancr-color-border) !important; border-radius:6px !important;
+    background:var(--dancr-color-control-secondary) !important; overflow:hidden; box-shadow:none !important;
   }
 }
 body.dancr-button-system #dancer-dashboard .dancer-saved-photo-choices {
@@ -235,7 +235,7 @@ body.dancr-button-system #dancer-dashboard .dancer-saved-photo-choice img { disp
 body.dancr-button-system #dancer-dashboard .dancer-saved-photo-picker > summary { padding:10px 8px; font-size:12px; cursor:pointer; }
 body.dancr-button-system #dancer-dashboard .dancer-upload-picker,
 body.dancr-button-system #dancer-dashboard details.profile-upload-group {
-  min-width:0; border:1px solid #413b49; border-radius:10px; background:#0c0911;
+  min-width:0; border:1px solid var(--dancr-color-border); border-radius:10px; background:var(--dancr-color-surface-card);
 }
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group) > summary {
   display:flex; align-items:center; gap:8px; min-height:44px; padding:10px 12px; box-sizing:border-box;
@@ -244,7 +244,7 @@ body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.pro
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group) > summary::-webkit-details-marker { display:none; }
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group) > summary::after { content:"+"; margin-left:auto; color:var(--dancr-color-icon-accent); font-size:20px; }
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group)[open] > summary::after { content:"−"; }
-body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group) > summary:focus-visible { outline:2px solid #c4b5fd; outline-offset:2px; border-radius:8px; }
+body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group) > summary:focus-visible { outline:2px solid var(--dancr-color-brand-primary); outline-offset:2px; border-radius:8px; }
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group):not([open]) > :not(summary) { display:none !important; }
 body.dancr-button-system #dancer-dashboard :is(.dancer-upload-picker,details.profile-upload-group)[open] > :not(summary) { margin:0 10px 10px; }
 body.dancr-button-system #dancer-dashboard details.profile-upload-group > summary > span { color:#bdb5c9; font-size:12px; font-weight:400; }

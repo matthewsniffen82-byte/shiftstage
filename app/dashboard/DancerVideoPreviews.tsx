@@ -93,7 +93,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
         .video-preview-list { min-width:0; display:flex; gap:10px; overflow-x:auto; margin:0; padding:2px 0 8px; list-style:none; }
         .video-preview-list > li { flex:0 0 112px; min-width:0; display:grid; align-content:start; gap:4px; }
         .video-preview-frame { position:relative; width:112px; aspect-ratio:3 / 4; }
-        .dancer-video-previews .video-preview-open, body.dancr-button-system .dancer-video-previews .video-preview-open { position:relative; width:100%; height:100%; min-height:0; display:grid; place-items:center; overflow:hidden; margin:0; padding:0 !important; border:1px solid #40384b !important; border-radius:8px !important; background:#15101d !important; box-shadow:none !important; color:#fff; cursor:pointer; }
+        .dancer-video-previews .video-preview-open, body.dancr-button-system .dancer-video-previews .video-preview-open { position:relative; width:100%; height:100%; min-height:0; display:grid; place-items:center; overflow:hidden; margin:0; padding:0 !important; border:1px solid var(--dancr-color-border) !important; border-radius:8px !important; background:var(--dancr-color-surface-card) !important; box-shadow:none !important; color:#fff; cursor:pointer; }
         .video-preview-open img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
         .video-preview-play { z-index:1; display:grid; place-items:center; width:32px; height:32px; border-radius:50%; background:#000b; color:#fff; font-size:14px; }
         .dancer-video-previews .video-preview-delete, body.dancr-button-system .dancer-video-previews .video-preview-delete { position:absolute; right:2px; bottom:2px; z-index:2; display:grid; place-items:center; width:44px !important; height:44px !important; min-height:44px; margin:0; padding:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; color:#fff !important; cursor:pointer; }
@@ -104,7 +104,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
         .video-preview-list small.is-ready { color:#8ce4b2; }
         .dancer-video-previews button:disabled { opacity:.55; cursor:wait; }
         .dancer-video-previews button:focus-visible { outline:2px solid #fff; outline-offset:3px; }
-        dialog.video-preview-player { width:min(440px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); margin:auto; padding:12px; border:1px solid #645778; border-radius:16px; background:#100d18; color:#fff; }
+        dialog.video-preview-player { width:min(440px,calc(100vw - 32px)); max-height:calc(100dvh - 32px); margin:auto; padding:12px; border:1px solid var(--dancr-color-border); border-radius:16px; background:var(--dancr-color-surface-card); color:#fff; }
         .video-preview-player::backdrop { background:rgba(0,0,0,.85); }
         .video-preview-player > div { display:grid; gap:10px; }
         .video-preview-player button { justify-self:end; min-width:64px; min-height:44px; }

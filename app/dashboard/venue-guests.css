@@ -1,7 +1,7 @@
 .venue-guests-workspace { min-width: 0; }
 .venue-guests-tabs { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); grid-auto-rows: 1fr; gap: 6px; margin-bottom: 12px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button { --venue-control-face: #19151f; --venue-control-edge: #50435f; font-size: 12px !important; line-height: 1.3; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button[aria-selected="true"] { --venue-control-face: #382447; --venue-control-edge: #bc91e9; font-weight: 700 !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button { --venue-control-face: var(--dancr-color-control-secondary); --venue-control-edge: var(--dancr-color-border); font-size: 12px !important; line-height: 1.3; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button[aria-selected="true"] { --venue-control-face: var(--dancr-color-brand-primary); --venue-control-edge: var(--dancr-color-brand-primary); font-weight: 700 !important; }
 /* Keep counts in a consistent trailing column, independent of label length. */
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-guests-tabs button {
   display: grid;
@@ -24,7 +24,7 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-guest-record dt { color: #bdb5c7; font-size: 11px; }
 .venue-guest-record dd { margin: 3px 0 0; font-size: 13px; line-height: 1.45; }
 .venue-guest-record a { color: #d9bafa; text-underline-offset: 3px; }
-.venue-guest-record .venue-guest-status { display: inline-flex; width: fit-content; padding: 4px 7px; border-radius: 6px; background: #2b2037; color: #e1cff7; font-size: 11px; }
+.venue-guest-record .venue-guest-status { display: inline-flex; width: fit-content; padding: 4px 7px; border-radius: 6px; background: var(--dancr-color-surface-card); color: #e1cff7; font-size: 11px; }
 .venue-guest-record .venue-guest-status.is-admitted { background: #10281f; color: #90e9c2; }
 .venue-guest-record small { color: #bdb5c7; font-size: 11px; }
 @media(max-width:520px) { .venue-guests-tabs { grid-template-columns: repeat(2,minmax(0,1fr)); } }

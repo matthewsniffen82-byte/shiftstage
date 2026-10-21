@@ -11,9 +11,9 @@
   scrollbar-width: thin;
   scrollbar-color: #8b739f #100d17;
   padding: 6px;
-  border: 1px solid #51405e;
+  border: 1px solid var(--dancr-color-border);
   border-radius: 12px;
-  background: linear-gradient(#100d17, #100d17);
+  background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card));
   scroll-padding-block: 8px;
   -webkit-overflow-scrolling: touch;
 }
@@ -27,7 +27,7 @@ body .venue-requested-scroll .venue-card-caption .venue-requested-count {
   font-variant-numeric: tabular-nums;
   white-space: normal;
 }
-.venue-requested-scroll:focus-visible { outline: 2px solid #c9a4f4; outline-offset: 3px; }
+.venue-requested-scroll:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
 /* Keep each three-column portrait grid wide enough at tablet sizes, too. */
 @media (min-width: 641px) and (max-width: 1024px) {
   .venue-value-analytics .venue-demand-grid { grid-template-columns: minmax(0, 1fr); }

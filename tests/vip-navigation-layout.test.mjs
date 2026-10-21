@@ -80,7 +80,7 @@ test('the dancer box sticks from its heading below safe-area-aware navigation in
   assert.equal(header.top, 'calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height))');
   assert.equal(header['z-index'], '4');
   assert.equal(header['padding-block'], '4px'); assert.equal(header['box-shadow'], 'none');
-  assert.equal(header.background, 'linear-gradient(#4a365f, #4a365f) top / 100% 1px no-repeat, linear-gradient(#100c17, #100c17)');
+  assert.equal(header.background, 'linear-gradient(var(--dancr-color-border), var(--dancr-color-border)) top / 100% 1px no-repeat, linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card))');
   assert.equal(filters['grid-template-columns'], 'repeat(2, minmax(0, 1fr))');
   const wideFilters = rules.find(rule => rule.parent.params === '(min-width: 900px)' && rule.selector === prefix + '.vip-roster-filters[role=group]');
   assert.equal(wideFilters.nodes.find(node => node.prop === 'grid-template-columns').value, 'repeat(4, minmax(0, 1fr))');

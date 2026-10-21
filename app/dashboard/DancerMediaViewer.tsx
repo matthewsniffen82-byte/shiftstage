@@ -41,7 +41,7 @@ export default function DancerMediaViewer({ kind, label, imageUrl, videoUrl, onC
       : <video autoPlay controls playsInline poster={imageUrl || undefined} src={videoUrl!} onError={() => setFailed(true)} />
       : <p role="status">Preview unavailable. Close and try again.</p>}
     <style>{`
-      dialog.dancer-media-viewer { box-sizing:border-box; width:min(520px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); margin:auto; padding:12px; border:1px solid #645778; border-radius:18px; background:#100d18; color:#fff; }
+      dialog.dancer-media-viewer { box-sizing:border-box; width:min(520px,calc(100vw - 24px)); max-height:calc(100dvh - 24px); margin:auto; padding:12px; border:1px solid var(--dancr-color-border); border-radius:18px; background:var(--dancr-color-surface-card); color:#fff; }
       .dancer-media-viewer::backdrop { background:#000d; }
       .dancer-media-viewer > header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
       .dancer-media-viewer > header > strong { font-size:16px; }

@@ -68,14 +68,14 @@ export default function VenueTvPanel({ city, venueId, hidden = false }: { city: 
 function VenueTvPanelStyles() {
   return (
     <style>{`
-      .venue-tv-panel { grid-column: 1 / -1; padding: 16px 18px; border: 1px solid var(--mydancr-dashboard-border, #302538); border-radius: 16px; background: var(--mydancr-dashboard-panel, #100d15); }
+      .venue-tv-panel { grid-column: 1 / -1; padding: 16px 18px; border: 1px solid var(--mydancr-dashboard-border, var(--dancr-color-border)); border-radius: 16px; background: var(--mydancr-dashboard-panel, var(--dancr-color-surface-card)); }
       .venue-tv-panel[hidden] { display: none; }
       .venue-tv-title { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px 16px; }
       .venue-tv-title h2 { margin: 0; color: #f3f0f7; font: inherit; font-size: 16px; font-weight: 650; line-height: 1.5; }
       .venue-tv-title h2 span { color: #aaa4b6; font-size: 13px; font-weight: 400; white-space: nowrap; }
       .venue-tv-title > a { min-height: 40px; display: inline-flex; align-items: center; color: #c4b5fd; font-size: 13px; font-weight: 650; text-decoration: none; }
       .venue-tv-title > a:hover { text-decoration: underline; }
-      .venue-tv-title > a:focus-visible { outline: 2px solid #a78bfa; outline-offset: 4px; border-radius: 3px; }
+      .venue-tv-title > a:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 4px; border-radius: 3px; }
       .venue-tv-panel > p { margin: 4px 0 0; color: #aaa4b6; font-size: 13px; line-height: 1.5; }
       .venue-tv-panel > .venue-tv-status { color: #a9efff; }
     `}</style>

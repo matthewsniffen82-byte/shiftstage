@@ -8,7 +8,7 @@
   color: #f4f0fa; font-size: 13px; line-height: 1.4; letter-spacing: 0;
 }
 .dancer-media-upload-rules > summary::marker { color: #c4b5fd; }
-.dancer-media-upload-rules > summary:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; border-radius: 4px; }
+.dancer-media-upload-rules > summary:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; border-radius: 4px; }
 .dancer-media-upload-rules > summary > span {
   display: block; margin-top: 3px; color: #c1bdcc; font-size: 12px; font-weight: 400; overflow-wrap: anywhere;
 }

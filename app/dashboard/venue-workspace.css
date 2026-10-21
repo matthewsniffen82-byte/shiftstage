@@ -3,18 +3,18 @@
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-toolbar { position:sticky; top:calc(max(var(--mydancr-demo-banner-height,0px),var(--mydancr-preview-banner-offset,0px)) + env(safe-area-inset-top,0px) + 6px); z-index:40; grid-column:1 / -1; align-self:start; min-width:0; display:grid; gap:6px; border-radius:16px; background:#050507; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs { padding:6px; background:#08080c; border:1px solid #34343c; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-workspace-tabs button { position:relative; }
-.venue-tab-count { display:inline-grid; place-items:center; min-width:20px; padding:2px 5px; border-radius:7px; background:#402659; color:#fff; font-size:11px; font-variant-numeric:tabular-nums; }
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-internal-roster-link { display:inline-flex; align-items:center; gap:10px; min-height:44px; margin-top:8px; padding:8px 14px; border:1px solid var(--venue-card-edge,#44374f); border-radius:12px; background:var(--mydancr-dashboard-panel,#100c17); color:var(--venue-accent,#d5b5fa); font-size:14px; font-weight:600; text-decoration:none; box-sizing:border-box; }
+.venue-tab-count { display:inline-grid; place-items:center; min-width:20px; padding:2px 5px; border-radius:7px; background:var(--dancr-color-surface-card); color:#fff; font-size:11px; font-variant-numeric:tabular-nums; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-internal-roster-link { display:inline-flex; align-items:center; gap:10px; min-height:44px; margin-top:8px; padding:8px 14px; border:1px solid var(--venue-card-edge,var(--dancr-color-border)); border-radius:12px; background:var(--mydancr-dashboard-panel,var(--dancr-color-control-secondary)); color:var(--venue-accent,#d5b5fa); font-size:14px; font-weight:600; text-decoration:none; box-sizing:border-box; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-internal-roster-link:focus-visible { outline:2px solid currentColor; outline-offset:3px; }
 .venue-tonight-overview { display:grid; gap:14px; margin-bottom:18px; }
 .venue-tonight-overview .venue-section-heading { flex-wrap:wrap; gap:6px; }
 .venue-tonight-overview .venue-section-heading>span { color:#b8adc7; font-size:12px; }
 .venue-queue-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; }
-.venue-queue-grid>a { display:grid; align-content:start; gap:5px; padding:12px; border:1px solid #44374f; border-radius:12px; background:linear-gradient(#100c17,#100c17); text-decoration:none; color:#f7f4fc; }
+.venue-queue-grid>a { display:grid; align-content:start; gap:5px; padding:12px; border:1px solid var(--dancr-color-border); border-radius:12px; background:linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)); text-decoration:none; color:#f7f4fc; }
 .venue-queue-grid>a>span { font-size:13px; font-weight:600; }
 .venue-queue-grid strong { font-size:25px; line-height:1.2; font-variant-numeric:tabular-nums; }
 .venue-queue-grid small { font-size:11px; color:#bfb2ce; line-height:1.4; }
-.venue-attention { display:grid; gap:6px; padding:12px; border:1px solid #58406f; border-radius:12px; background:#100c17; }
+.venue-attention { display:grid; gap:6px; padding:12px; border:1px solid var(--dancr-color-border); border-radius:12px; background:var(--dancr-color-surface-card); }
 .venue-attention h3 { margin:0 0 4px; font-size:15px; }
 .venue-attention>a { display:flex; justify-content:space-between; align-items:center; gap:10px; min-height:44px; padding:5px 0; color:#f1e7ff; text-decoration:none; border-bottom:1px solid #ffffff12; }
 .venue-attention strong { flex-shrink:0; color:#d5b5fa; font-size:12px; }
@@ -22,15 +22,15 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-search-form { display:flex; align-items:flex-end; flex-wrap:wrap; gap:8px; margin:14px 0; }
 .venue-search-form label { flex:1 1 180px; min-width:0; }
 .venue-search-form label,.venue-list-filters label,.venue-ride-actions label,.venue-ride-filter { display:grid; gap:6px; font-size:12px; color:#c7bfd0; }
-body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-search-form input,.venue-list-filters select,.venue-ride-actions select,.venue-ride-filter select) { box-sizing:border-box; width:100%; min-width:0; min-height:44px; padding:8px 10px; border:1px solid #51425f; border-radius:9px; background:linear-gradient(#100d16,#100d16); color:#fff; font-size:16px; }
+body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue :is(.venue-search-form input,.venue-list-filters select,.venue-ride-actions select,.venue-ride-filter select) { box-sizing:border-box; width:100%; min-width:0; min-height:44px; padding:8px 10px; border:1px solid var(--dancr-color-border); border-radius:9px; background:linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)); color:#fff; font-size:16px; }
 .venue-list-filters { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-bottom:12px; }
 .venue-ride-actions { display:flex; align-items:flex-end; flex-wrap:wrap; gap:10px; margin:8px 0; }
 .venue-ride-actions>label { flex:1 1 140px; }
 .venue-ride-filter { max-width:340px; margin:12px 0; }
 .venue-contact-badges { display:flex; flex-wrap:wrap; gap:5px; margin:7px 0; }
-.venue-contact-badges>span { padding:4px 7px; border:1px solid #59426b; background:#22152f; border-radius:7px; color:#e0c8f3; font-size:11px; }
+.venue-contact-badges>span { padding:4px 7px; border:1px solid var(--dancr-color-border); background:var(--dancr-color-surface-card); border-radius:7px; color:#e0c8f3; font-size:11px; }
 .venue-guest-record>details>summary { min-height:44px; display:flex; align-items:center; cursor:pointer; font-size:12px; color:#d7bbed; }
-.venue-vip-management,.venue-setup-checklist { margin:14px 0; padding:12px; border:1px solid #44364f; border-radius:12px; background:#100c17; }
+.venue-vip-management,.venue-setup-checklist { margin:14px 0; padding:12px; border:1px solid var(--dancr-color-border); border-radius:12px; background:var(--dancr-color-surface-card); }
 .venue-vip-management>summary,.venue-setup-checklist>summary { display:flex; justify-content:space-between; align-items:center; min-height:44px; gap:12px; cursor:pointer; color:#efe6fa; font-size:15px; font-weight:600; }
 .venue-vip-management>summary::after,.venue-setup-checklist>summary::after { content:"+"; margin-left:auto; }
 .venue-vip-management[open]>summary::after,.venue-setup-checklist[open]>summary::after { content:"−"; }
@@ -48,7 +48,7 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-roster-menu>summary { display:grid; place-items:center; width:44px; height:44px; list-style:none; cursor:pointer; color:#d2bfdc; }
 .venue-roster-menu>summary::-webkit-details-marker { display:none; }
 .venue-roster-menu[open] { z-index:12; }
-.venue-roster-menu>div { position:absolute; right:0; top:100%; width:150px; padding:4px; border:1px solid #56405d; border-radius:10px; background:#100c17; box-shadow:0 6px 20px #0009; }
+.venue-roster-menu>div { position:absolute; right:0; top:100%; width:150px; padding:4px; border:1px solid var(--dancr-color-border); border-radius:10px; background:var(--dancr-color-surface-card); box-shadow:0 6px 20px #0009; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-result-outcomes { margin:12px 0; }
 body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-venue .venue-command-primary.venue-workspace-summary { display:none; }
 @media(max-width:520px) {

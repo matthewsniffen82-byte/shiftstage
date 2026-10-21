@@ -60,7 +60,7 @@
   }
 
   html body.dancr-button-system :is(summary.dashboard-menu-trigger, button.dashboard-menu-trigger):focus-visible {
-    outline: 2px solid #d8cafa !important;
+    outline: 2px solid var(--dancr-color-brand-primary) !important;
     outline-offset: -3px !important;
   }
 

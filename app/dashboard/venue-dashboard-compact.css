@@ -68,12 +68,12 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, 
   pointer-events: none;
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button[aria-selected="true"], button[aria-pressed="true"], .venue-deal-request-actions button[aria-expanded="true"], .ir-link-form > button) {
-  --venue-control-face: #201333;
-  --venue-control-edge: #745696;
+  --venue-control-face: var(--dancr-color-brand-primary);
+  --venue-control-edge: var(--dancr-color-brand-primary);
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button.venue-team-invite-submit, button.support-send-button:not(.is-sent), .account-form-primary, .venue-publication-actions > .primary, .venue-deal-request-center form button[type="submit"], .nfc-support-form > div > button:first-child) {
-  --venue-control-face: #35106f;
-  --venue-control-edge: #745696;
+  --venue-control-face: var(--dancr-color-brand-primary);
+  --venue-control-edge: var(--dancr-color-brand-primary);
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button.danger-button, .venue-team-panel button.venue-team-remove, .venue-nfc-panel button.venue-nfc-remove-access) {
   --venue-control-face: #170b10;
@@ -82,7 +82,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button.d
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue button.support-send-button.is-sent { --venue-control-face: #09160f; --venue-control-edge: #315642; color: #a7f3d0 !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-working-now-link.is-live, .venue-deal-request-actions button[data-action-state="success"]) { --venue-control-face: #09160f; --venue-control-edge: #315642; color: #a7f3d0 !important; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, a, summary, input, select, textarea):focus-visible { outline: 2px solid #c4b5fd !important; outline-offset: 3px; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(button, a, summary, input, select, textarea):focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px; }
 
 /* Consistent fields, including native selects on iOS. */
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(input:not([type="checkbox"], [type="radio"], [type="file"]), select, textarea),
@@ -166,7 +166,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-t
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-member > span { overflow-wrap: anywhere; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-member select { flex: 1 1 100px; width: auto; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-role-card { background: #060608; border-color: #34343c; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-role-card.is-selected { background: #100c17; border-color: #745696; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-role-card.is-selected { background: var(--dancr-color-surface-card); border-color: var(--dancr-color-brand-primary); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-role-card h3 { flex-wrap: wrap; gap: 4px; font-size: 14px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-team-role-card p + p { margin-top: 6px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-tv-title { gap: 6px 10px; }

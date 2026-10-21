@@ -6,7 +6,7 @@ body.dancr-button-system #vip-dashboard .vip-roster-header {
   position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height)); z-index: 4;
   padding-block: 4px; box-shadow: none;
   /* Image-backed colors avoid Android recoloring the separator into a gray strip. */
-  background: linear-gradient(#4a365f, #4a365f) top / 100% 1px no-repeat, linear-gradient(#100c17, #100c17);
+  background: linear-gradient(var(--dancr-color-border), var(--dancr-color-border)) top / 100% 1px no-repeat, linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card));
 }
 body.dancr-button-system #vip-dashboard .vip-dancers { max-height: none; overflow: visible; overscroll-behavior-y: auto; }
 body.dancr-button-system #vip-dashboard :is(.vip-dancer, .vip-dancer a, .vip-dancer button, .vip-dancer input) {
@@ -26,12 +26,12 @@ body.dancr-button-system #vip-dashboard :is(.vip-roster-panel, .vip-visit-panel)
   body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 #vip-dashboard .vip-updates { margin-top: 24px; min-width: 0; }
-#vip-dashboard .vip-updates .notification-panel { padding: 20px 0; border: 0; border-top: 1px solid #483f52; background: transparent; box-shadow: none; }
+#vip-dashboard .vip-updates .notification-panel { padding: 20px 0; border: 0; border-top: 1px solid var(--dancr-color-border); background: transparent; box-shadow: none; }
 #vip-dashboard .vip-updates .notification-title-row,
 #vip-dashboard .vip-updates .notification-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 #vip-dashboard .vip-updates h2 { margin: 0; font-size: 22px; }
 #vip-dashboard .vip-updates .notification-list { display: grid; gap: 0; margin-top: 16px; }
-#vip-dashboard .vip-updates .notification-row { display: grid; gap: 8px; padding: 16px 0; border: 0; border-bottom: 1px solid #38323f; border-radius: 0; background: transparent; color: #f5effa; text-decoration: none; overflow-wrap: anywhere; }
+#vip-dashboard .vip-updates .notification-row { display: grid; gap: 8px; padding: 16px 0; border: 0; border-bottom: 1px solid var(--dancr-color-border); border-radius: 0; background: transparent; color: #f5effa; text-decoration: none; overflow-wrap: anywhere; }
 #vip-dashboard .vip-updates .notification-row.read { opacity: .7; }
 #vip-dashboard .vip-updates .notification-row-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #bab0c5; }
 #vip-dashboard .vip-updates .notification-row strong { min-width: 0; font-size: 15px; }

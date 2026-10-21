@@ -68,8 +68,8 @@ export default function DancerMediaRetryButton({ id, kind, status, moderationSta
       .dancer-media-review-retry { display:grid; gap:4px; min-width:0; }
       button.dancer-media-review-retry-button, body.dancr-button-system button.dancer-media-review-retry-button {
         display:inline-flex !important; align-items:center; justify-content:center; gap:6px; width:auto !important;
-        min-height:44px !important; padding:8px 10px !important; border:1px solid #695180 !important;
-        border-radius:8px !important; background:#241332 !important; color:#fff !important;
+        min-height:44px !important; padding:8px 10px !important; border:1px solid var(--dancr-color-border) !important;
+        border-radius:8px !important; background:var(--dancr-color-control-secondary) !important; color:#fff !important;
         box-shadow:none !important; font:inherit; font-size:13px; cursor:pointer; justify-self:start;
       }
       .dancer-media-review-retry-button svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
