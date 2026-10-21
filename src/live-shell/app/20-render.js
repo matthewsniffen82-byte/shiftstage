@@ -930,7 +930,9 @@
     }
 
     function syncHomeTvPageScrollIndicator() {
-      const usesPageIndicator = homeTvFeedUsesSnapViewport() &&
+      // Use Samsung's browser-level thumb instead of drawing a second page indicator.
+      const usesBrowserScrollbar = document.documentElement.classList.contains("is-samsung-browser");
+      const usesPageIndicator = !usesBrowserScrollbar && homeTvFeedUsesSnapViewport() &&
         (activeTab === "dancers" || document.documentElement.classList.contains("home-tv-page-snap"));
       document.documentElement.classList.toggle("home-page-scroll-indicator", usesPageIndicator);
       if (!usesPageIndicator) {
@@ -990,7 +992,6 @@
     function syncHomeTvPageSnapState() {
       const shouldSnap = activeTab === "tv" && homeTvFeedUsesSnapViewport();
       document.documentElement.classList.toggle("home-tv-page-snap", shouldSnap);
-      if (shouldSnap) ensureHomeTvPageScrollIndicator();
       queueHomeTvPageScrollIndicatorSync();
     }
 

@@ -35164,7 +35164,6 @@
             scroll-snap-type: y proximity;
             scroll-padding-top: calc(var(--mydancr-preview-banner-offset, env(safe-area-inset-top, 0px)) + 12px);
             scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
-            scrollbar-width: none;
           }
           /* Reuse the viewport-edge indicator without enabling TV snapping on dancers. */
           html.home-page-scroll-indicator,
@@ -35172,9 +35171,7 @@
             scrollbar-width: none;
           }
           html.home-page-scroll-indicator::-webkit-scrollbar,
-          html.home-page-scroll-indicator body::-webkit-scrollbar,
-          html.home-tv-page-snap::-webkit-scrollbar,
-          html.home-tv-page-snap body::-webkit-scrollbar {
+          html.home-page-scroll-indicator body::-webkit-scrollbar {
             width: 0;
             height: 0;
             display: none;
@@ -63345,7 +63342,9 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     }
 
     function syncHomeTvPageScrollIndicator() {
-      const usesPageIndicator = homeTvFeedUsesSnapViewport() &&
+      // Use Samsung's browser-level thumb instead of drawing a second page indicator.
+      const usesBrowserScrollbar = document.documentElement.classList.contains("is-samsung-browser");
+      const usesPageIndicator = !usesBrowserScrollbar && homeTvFeedUsesSnapViewport() &&
         (activeTab === "dancers" || document.documentElement.classList.contains("home-tv-page-snap"));
       document.documentElement.classList.toggle("home-page-scroll-indicator", usesPageIndicator);
       if (!usesPageIndicator) {
@@ -63405,7 +63404,6 @@ html.internal-profile-embed body.dancr-button-system[data-venue-guest-color="cus
     function syncHomeTvPageSnapState() {
       const shouldSnap = activeTab === "tv" && homeTvFeedUsesSnapViewport();
       document.documentElement.classList.toggle("home-tv-page-snap", shouldSnap);
-      if (shouldSnap) ensureHomeTvPageScrollIndicator();
       queueHomeTvPageScrollIndicatorSync();
     }
 

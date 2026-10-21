@@ -537,7 +537,7 @@ test("TV uses document-level mobile snapping while discovery cards keep natural 
 test("mobile TV uses a quiet page-scroll thumb at the true viewport edge", () => {
   assert.match(
     homeSource,
-    /html\.home-tv-page-snap \{[\s\S]*?scrollbar-width: none;[\s\S]*?html\.home-tv-page-snap::-webkit-scrollbar,[\s\S]*?html\.home-tv-page-snap body::-webkit-scrollbar \{[\s\S]*?width: 0;[\s\S]*?display: none;/,
+    /html\.home-page-scroll-indicator,[\s\S]*?html\.home-page-scroll-indicator body \{[\s\S]*?scrollbar-width: none;[\s\S]*?html\.home-page-scroll-indicator::-webkit-scrollbar,[\s\S]*?html\.home-page-scroll-indicator body::-webkit-scrollbar \{[\s\S]*?width: 0;[\s\S]*?display: none;/,
   );
   assert.match(
     homeSource,

@@ -18,8 +18,9 @@ function classList() {
   };
 }
 
-function harness({ tab = "dancers", mobile = true, scrollHeight = 3200 } = {}) {
+function harness({ tab = "dancers", mobile = true, samsung = false, scrollHeight = 3200 } = {}) {
   const root = { classList: classList(), clientHeight: 800, scrollHeight, scrollTop: 0 };
+  if (samsung) root.classList.add("is-samsung-browser");
   const children = [];
   const frames = [];
   const timers = new Map();
@@ -122,6 +123,42 @@ test("TV keeps its existing snap behavior and shares the same indicator", () => 
   assert.equal(children.length, 1);
 });
 
+test("Samsung keeps only its native scrollbar on dancers and TV, including scroll and resize", () => {
+  const { context, root, children, timers, flush } = harness({ samsung: true });
+  context.queueHomeTvPageScrollIndicatorSync();
+  flush();
+  assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
+  assert.equal(children.length, 0);
+  context.markHomeTvPageScrollIndicatorActive();
+  assert.equal(timers.size, 0);
+  context.activeTab = "tv";
+  context.syncHomeTvPageSnapState();
+  flush();
+  assert.equal(root.classList.contains("home-tv-page-snap"), true);
+  assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
+  assert.equal(children.length, 0);
+  context.homeTvFeedSnapMedia.matches = false;
+  context.syncHomeTvPageSnapState();
+  flush();
+  context.homeTvFeedSnapMedia.matches = true;
+  context.syncHomeTvPageSnapState();
+  flush();
+  assert.equal(children.length, 0);
+  assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
+});
+
+test("Samsung detection clears an already-created custom indicator and its active timer", () => {
+  const { context, root, timers } = harness();
+  context.syncHomeTvPageScrollIndicator();
+  context.markHomeTvPageScrollIndicatorActive();
+  root.classList.add("is-samsung-browser");
+  context.syncHomeTvPageScrollIndicator();
+  assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
+  assert.equal(context.homeTvPageScrollRail.hidden, true);
+  assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), false);
+  assert.equal(timers.size, 0);
+});
+
 test("indicator styles stay at the mobile viewport edge without changing content geometry", () => {
   const rules = [];
   styles.walkRules((rule) => {
@@ -138,4 +175,12 @@ test("indicator styles stay at the mobile viewport edge without changing content
   assert.deepEqual(nativeScroll.nodes.map(({ prop, value }) => [prop, value]), [["scrollbar-width", "none"]]);
   assert.ok(rules.some((rule) => rule.selector.includes(".overlay-open") && rule.nodes.some(({ prop, value }) => prop === "display" && value === "none")));
   assert.match(source, /function render\(\) \{[^]*?queueHomeTvPageScrollIndicatorSync\(\);/);
+});
+
+test("TV snapping does not hide the native scrollbar without a custom replacement", () => {
+  styles.walkRules((rule) => {
+    if (!/html\.home-tv-page-snap/.test(rule.selector)) return;
+    assert.equal(rule.nodes.some(({ prop }) => prop?.startsWith("scrollbar-")), false);
+    assert.doesNotMatch(rule.selector, /::-webkit-scrollbar/);
+  });
 });
