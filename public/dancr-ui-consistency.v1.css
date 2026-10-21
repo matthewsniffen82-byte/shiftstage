@@ -2658,11 +2658,17 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     background: var(--dancr-color-control-plum) linear-gradient(var(--dancr-color-control-plum), var(--dancr-color-control-plum)) !important;
   }
 
-  /* Idle secondary actions only; selected and gray action faces remain distinct. */
-  html:not(.internal-profile-embed) body.dancr-button-system:not(:has(.ir-shell, .venue-embed-profile-page, :is(#venue-dashboard, .public-profile-shell, .venue-detail):is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), #profileBackdrop.show #profileModal:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"])))
-    :is(#profileBackdrop #profileModal, .public-profile-shell) .profile-actions-compact :is(#followBtn, [data-follow-control="text"], .profile-share-action, .profile-action-preview-share, #goingBtn, .profile-action-going):not([aria-pressed="true"]):not(.is-confirmed):not([data-internal-table-request]):not(:disabled):not([aria-disabled="true"]):not(:where(:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), :is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]) *)) {
+  /* Public Follow uses MyDancr's fill even when the dancer works at Rhino.
+   * Only actual Internal / embedded club surfaces retain their branded fill. */
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :is(#profileBackdrop #profileModal, .public-profile-shell) .profile-actions-compact :is(#followBtn, [data-follow-control="text"]):not([aria-pressed="true"]):not(.is-confirmed):not([data-internal-table-request]):not(:disabled):not([aria-disabled="true"]):not(:where(.ir-shell *, .venue-embed-profile-page *)) {
     --follow-control-face: var(--dancr-color-control-plum) !important;
     --follow-control-edge: var(--dancr-color-control-border) !important;
+  }
+
+  /* Idle secondary actions only; selected and gray action faces remain distinct. */
+  html:not(.internal-profile-embed) body.dancr-button-system:not(:has(.ir-shell, .venue-embed-profile-page, :is(#venue-dashboard, .public-profile-shell, .venue-detail):is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), #profileBackdrop.show #profileModal:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"])))
+    :is(#profileBackdrop #profileModal, .public-profile-shell) .profile-actions-compact :is(.profile-share-action, .profile-action-preview-share, #goingBtn, .profile-action-going):not([aria-pressed="true"]):not(.is-confirmed):not([data-internal-table-request]):not(:disabled):not([aria-disabled="true"]):not(:where(:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), :is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]) *)) {
     --profile-utility-background: linear-gradient(var(--dancr-color-control-plum), var(--dancr-color-control-plum)) !important;
     --profile-action-background: linear-gradient(var(--dancr-color-control-plum), var(--dancr-color-control-plum)) !important;
     --profile-utility-border: var(--dancr-color-control-border) !important;
