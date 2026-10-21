@@ -33,6 +33,7 @@ export const staticAssetPaths = [
   "/outputs/live-shell-overrides.css",
   "/outputs/mydancr-logo-current.png",
   "/outputs/mydancr-logo.png",
+  "/outputs/mydancr-wordmark-borderless.webp",
   "/profile-media-owner-controls.css",
   "/profile-actions-compact.css",
   "/dancer-profile-layout.css",

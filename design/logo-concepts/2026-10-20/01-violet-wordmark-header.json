@@ -1,0 +1,7 @@
+{
+  "mode": "built-in image_gen",
+  "source": "01-violet-wordmark-borderless.png",
+  "output": "../../../public/outputs/mydancr-wordmark-borderless.webp",
+  "usage": "Homepage upper-left Home button. Optimized to 600 x 200 WebP; CSS screen blending integrates the black background with the dark header.",
+  "prompt": "Use case: precise-object-edit. Prepare the reference MyDancr wordmark as a clean header asset. Keep the exact reference logo: lowercase white mydanc and violet r, same original outlines, spacing, proportions, color, clean edges, and solid black background. Change only the framing: crop away the excess black space around the wordmark so it fills a wide horizontal image, with about 3 percent black margin at left and right and 10 percent above the tallest letter and below the y descender. Use a very wide roughly 4:1 canvas. Preserve crisp clean solid letterforms and completely clean solid black background and letter counters. Do not add or remove anything else, do not add a border, and do not make the background transparent."
+}
