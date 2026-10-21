@@ -733,11 +733,17 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
 /* Public media icons share the city pin's violet, with club accents when available.
  * The public page gate excludes dashboard previews and the Saved stylesheet export. */
 @layer dancr-follow-controls {
+  /* Hide decorative edges in every state without resizing controls or changing their glass fill. */
+  html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
+    :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
+    :is(.home-tv-feed-actions > .home-tv-feed-action, .home-tv-feed-full-view-close, .profile-media-card-back, .profile-photo-viewer-actions > button, .profile-tv-viewer-actions > button, .profile-media-viewer-actions > button) {
+    border-color: transparent !important;
+  }
+
   html body.dancr-button-system:has(> .app, .public-profile-shell[data-public-profile-page])
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
     :is(.home-tv-feed-actions > .home-tv-feed-action, .home-tv-feed-full-view-close, .profile-media-card-back, .profile-photo-viewer-actions > button, .profile-tv-viewer-actions > button, .profile-media-viewer-actions > button):not(:disabled):not([aria-disabled="true"]) {
     --public-media-icon-color: var(--venue-brand-light, var(--dancr-color-icon-location));
-    border-color: var(--venue-brand-edge, #4a365f) !important;
     background: rgba(0, 0, 0, .45) !important;
     color: #f5f2fa !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, .24) !important;
@@ -753,7 +759,6 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry > sp
     :is(#results.home-tv-feed, #profilePhotoViewer.profile-media-card-feed, #profileTvViewer.profile-media-card-feed, .public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed)
     :is(.home-tv-feed-follow-action, .profile-media-control-follow)[aria-pressed="true"]:not(:disabled):not([aria-disabled="true"]) {
     --public-media-icon-color: #fff;
-    border-color: var(--venue-brand-selected-edge, #5a4075) !important;
     background: rgba(0, 0, 0, .45) !important;
   }
 

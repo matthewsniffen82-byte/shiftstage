@@ -153,8 +153,8 @@ test("public media icons match the city violet while preserving branding, text a
   assert.ok(normal);
   assert.equal(values(normal)["--public-media-icon-color"], "var(--venue-brand-light, var(--dancr-color-icon-location))");
   assert.equal(values(normal).color, "#f5f2fa", "labels and counts keep their neutral text color");
-  assert.equal(values(normal)["border-color"], "var(--venue-brand-edge, #4a365f)");
   assert.equal(values(normal).background, "rgba(0, 0, 0, .45)");
+  assert.equal(values(normal)["box-shadow"], "0 2px 8px rgba(0, 0, 0, .24)");
   for (const target of ["#results.home-tv-feed", "#profilePhotoViewer.profile-media-card-feed",
     "#profileTvViewer.profile-media-card-feed", ".public-profile-shell[data-public-profile-page] .profile-media-viewer.profile-media-card-feed",
     ".home-tv-feed-actions > .home-tv-feed-action", ".profile-photo-viewer-actions > button",
@@ -166,7 +166,29 @@ test("public media icons match the city violet while preserving branding, text a
   const follow = rules.find((rule) => rule.selector.includes('.profile-media-control-follow)[aria-pressed="true"]'));
   const like = rules.find((rule) => rule.selector.includes('.profile-media-viewer-like)[aria-pressed="true"]'));
   assert.equal(values(follow)["--public-media-icon-color"], "#fff");
+  assert.equal(values(follow).background, "rgba(0, 0, 0, .45)");
   assert.equal(values(like)["--public-media-icon-color"], "#ff304f");
   const overflow = rules.find((rule) => rule.selector.includes(".profile-media-control-overflow"));
   assert.equal(values(overflow).color, "var(--venue-brand-light, var(--dancr-color-icon-location))");
+});
+
+test("media button borders stay invisible in every state without changing transparency or focus rings", () => {
+  const root = postcss.parse(css);
+  const borders = [];
+  root.walkDecls(/^border/, (decl) => {
+    if (decl.parent.parent.type === "atrule" && decl.parent.parent.params === "dancr-follow-controls") borders.push(decl);
+  });
+  assert.equal(borders.length, 1, "selected states must not restore a visible border");
+  const border = borders[0];
+  assert.equal(border.prop, "border-color", "keep the reserved border width and button size");
+  assert.equal(border.value, "transparent");
+  assert.ok(border.important);
+  assert.equal(border.parent.nodes.length, 1, "the border rule must not change fills, opacity, blur or shadows");
+  assert.doesNotMatch(border.parent.selector, /:not\(|aria-pressed|aria-disabled|:hover|:focus|:disabled/);
+  for (const target of [".home-tv-feed-actions > .home-tv-feed-action", ".home-tv-feed-full-view-close", ".profile-media-card-back",
+    ".profile-photo-viewer-actions > button", ".profile-tv-viewer-actions > button", ".profile-media-viewer-actions > button"]) {
+    assert.ok(border.parent.selector.includes(target), target);
+  }
+  assert.match(css, /> button:focus-visible \{\s*outline: 2px solid var\(--venue-brand-light, #c4b5fd\) !important;/);
+  assert.match(css, /outline: 1px solid var\(--venue-brand-edge, #4a365f\) !important;/, "media card edges remain unchanged");
 });
