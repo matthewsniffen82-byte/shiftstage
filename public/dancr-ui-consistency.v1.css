@@ -1480,14 +1480,14 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#
   }
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {
-  gap: 4px 8px !important;
-  padding: 6px !important;
+  gap: 0 8px !important;
+  padding: 6px 6px 0 !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .field {
   gap: 2px !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .field > label {
-  color: #bdb5c9 !important;
+  color: #aaa6b3 !important;
   font-size: 11px !important;
   font-weight: 600 !important;
   letter-spacing: .02em !important;
@@ -1499,18 +1499,23 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
   font-size: 14px !important;
   font-weight: 600 !important;
 }
+html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters :is(#distanceSelectButton, #venueSelectButton):not([aria-expanded="true"]):not(:disabled):not([aria-disabled="true"]) {
+  --discovery-control-face: var(--dancr-color-control-plum) !important;
+  --discovery-control-edge: #34343c !important;
+  color: #f8fafc !important;
+}
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters #locationBtn {
   --discovery-control-face: transparent;
   --discovery-control-edge: transparent;
   flex: 1 1 auto;
-  color: #c4b5fd !important;
+  color: #f8fafc !important;
   font-size: 13px !important;
   font-weight: 500 !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters #locationBtn .icon {
   width: 16px !important;
   height: 16px !important;
-  color: var(--dancr-color-icon-accent) !important;
+  color: var(--dancr-color-icon-location) !important;
 }
 @media (max-width: 720px) {
   html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {
@@ -2275,6 +2280,32 @@ html body.dancr-button-system > .app main.stack > section.stack
   word-spacing: 0.08em !important;
   white-space: normal;
   overflow-wrap: anywhere;
+}
+/* Passive TV counts sit beneath the heading; the club-filter Clear action
+ * keeps its existing button treatment and keyboard affordance. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > .content-head.discovery-section-head.tv-section-head:has(> #tabCount:not(.is-tv-venue-filter)) {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 3px !important;
+}
+html body.dancr-button-system > .app main.stack > section.stack
+  > .content-head.discovery-section-head.tv-section-head > #tabCount:not(.is-tv-venue-filter) {
+  justify-self: start;
+  align-self: start !important;
+  height: auto !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  color: #aaa6b3 !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.4 !important;
+  text-align: left;
 }
 html body.dancr-button-system > .app main.stack > section.stack > .venue-directory-roster-note {
   display: none;
