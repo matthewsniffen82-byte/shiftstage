@@ -472,10 +472,72 @@
     --picker-face: var(--dancr-color-surface) !important;
   }
   html body.dancr-button-system
-    :where(.city-picker-option[aria-selected="true"], .dancer-directory-filter[aria-selected="true"], .dancer-directory-filter.is-active, #homeFilterToggle.has-active-filters) {
+    :where(.dancer-directory-filter[aria-selected="true"], .dancer-directory-filter.is-active, #homeFilterToggle.has-active-filters) {
     --discovery-control-face: var(--dancr-color-brand-primary) !important;
     --discovery-control-edge: var(--dancr-color-brand-primary) !important;
     color: var(--dancr-color-text-primary) !important;
+  }
+  /* Location menus share charcoal faces and one violet selection edge. These
+     paint variables also replace the legacy plum faces on mobile browsers. */
+  html body.dancr-button-system :where(
+    #venueSelectDialog, #distanceSelectDialog, #citySelectPanel, #homeAdvancedFilters
+  ) {
+    background: var(--dancr-color-surface) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html body.dancr-button-system :where(
+    #citySelectButton[aria-expanded="true"], #distanceSelectButton[aria-expanded="true"],
+    #venueSelectButton[aria-expanded="true"], #homeFilterToggle.is-open,
+    .city-picker-option[aria-selected="true"]
+  ) {
+    --discovery-control-face: var(--dancr-color-surface) !important;
+    --discovery-control-edge: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html body.dancr-button-system :where(.city-picker-option[aria-selected="true"])::before {
+    box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system :where(
+    #venueSelectDialog .venue-picker-option, #distanceSelectDialog .distance-picker-options span,
+    #venueSelectDone, #distanceSelectApply
+  ) {
+    --picker-face: var(--dancr-color-surface) !important;
+    --picker-edge: var(--dancr-color-border) !important;
+    --picker-gradient: linear-gradient(var(--picker-face), var(--picker-face)) !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html body.dancr-button-system :where(
+    #venueSelectDialog .venue-picker-option[aria-selected="true"],
+    #distanceSelectDialog .distance-picker-options input:checked + span
+  ) {
+    --picker-edge: var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system :where(#venueSelectDone, #distanceSelectApply) {
+    --picker-face: var(--dancr-color-brand-primary) !important;
+    --picker-edge: var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system :where(#venueSelectDialog .venue-picker-header) {
+    border-color: var(--dancr-color-border) !important;
+  }
+  html body.dancr-button-system :where(
+    #venueSelectClose, #distanceSelectClose, .city-picker-stats, #distanceSelectOrigin
+  ) {
+    color: var(--dancr-color-text-muted) !important;
+  }
+  html body.dancr-button-system :where(
+    #venueSelectDialog .venue-picker-radio, #citySelectPanel .venue-picker-radio
+  ) {
+    border-color: var(--dancr-color-border-strong) !important;
+  }
+  html body.dancr-button-system :where(#venueSelectDialog .venue-picker-option[aria-selected="true"] .venue-picker-radio) {
+    border-color: var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system :where(#venueSelectDialog .venue-picker-radio)::after {
+    background: var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system :where(#distanceSelectDialog .distance-picker-options input:focus-visible + span) {
+    outline-color: var(--dancr-color-brand-primary) !important;
   }
   /* The visible mobile face is a separate layer. Paint it directly so it
      cannot keep an old plum gradient while the button backing changes. */
@@ -560,13 +622,15 @@
     color: var(--dancr-color-text-muted) !important;
     stroke: currentColor !important;
   }
-  /* Silver pins stay readable without introducing another purple. */
+  /* Every location pin uses the brand violet, including Saved and embedded
+     cards. Target pins explicitly so shift clocks keep their status colors. */
   html body.dancr-button-system :where(
     .profile-modal-city-icon, .profile-venue-pin, .profile-city svg,
     .profile-venue-destination svg, .profile-working-destination svg,
     .home-dancer-grid-venue .venue-dot, .home-dancer-grid-venue .venue-dot svg,
     .home-tv-feed-venue svg, .profile-media-venue svg, .ir-dancer-venue svg,
-    .city-picker-trigger-icon
+    .city-picker-trigger-icon, .home-city-select-icon, .tv-card-venue-line svg,
+    .profile-directions-button svg, [data-action-icon="pin"], [data-action-icon="pin"] *
   ) {
     color: var(--dancr-color-icon-location) !important;
     stroke: currentColor !important;
@@ -582,10 +646,10 @@
     color: var(--dancr-color-text-primary) !important;
   }
   html body.dancr-button-system :where(.city-picker-option[aria-selected="true"] .venue-picker-radio) {
-    border-color: var(--dancr-color-text-primary) !important;
+    border-color: var(--dancr-color-brand-primary) !important;
   }
   html body.dancr-button-system :where(.city-picker-option[aria-selected="true"] .venue-picker-radio)::after {
-    background: var(--dancr-color-text-primary) !important;
+    background: var(--dancr-color-brand-primary) !important;
   }
   html body.dancr-button-system :where(.venue-embed-heading #venue-count, .ir-guest .ir-section-title .ir-live) {
     background: var(--dancr-color-success-soft) !important;
@@ -620,7 +684,7 @@
   }
   html body.dancr-button-system
     :where(.global-mobile-bottom-nav, #discoveryTabs) {
-    background: var(--dancr-color-surface-translucent) !important;
+    background: var(--dancr-color-surface) !important;
     border-color: var(--dancr-color-border) !important;
     box-shadow: none !important;
   }
@@ -628,24 +692,25 @@
     :where(.global-mobile-bottom-nav a, #discoveryTabs > button) {
     --mobile-nav-accent: var(--dancr-color-text-muted) !important;
     --mobile-nav-accent-soft: var(--dancr-color-text-muted) !important;
-    --mobile-nav-active: var(--dancr-color-text-primary) !important;
+    --mobile-nav-active: var(--dancr-color-brand-primary) !important;
     --home-nav-accent: var(--dancr-color-text-muted) !important;
     --home-nav-accent-soft: var(--dancr-color-text-muted) !important;
-    --home-nav-active: var(--dancr-color-text-primary) !important;
+    --home-nav-active: var(--dancr-color-brand-primary) !important;
     background: var(--dancr-color-surface) !important;
     border-color: var(--dancr-color-border) !important;
     color: var(--dancr-color-text-muted) !important;
     box-shadow: none !important;
     filter: none !important;
+    text-shadow: none !important;
   }
   html body.dancr-button-system
     :where(.global-mobile-bottom-nav a.active, #discoveryTabs > button.active) {
-    --home-nav-accent: var(--dancr-color-text-primary) !important;
-    --home-nav-accent-soft: var(--dancr-color-text-primary) !important;
-    --mobile-nav-accent: var(--dancr-color-text-primary) !important;
-    --mobile-nav-accent-soft: var(--dancr-color-text-primary) !important;
-    background: var(--dancr-color-brand-primary) !important;
-    border-color: var(--dancr-color-brand-primary) !important;
+    --home-nav-accent: var(--dancr-color-brand-primary) !important;
+    --home-nav-accent-soft: var(--dancr-color-brand-primary) !important;
+    --mobile-nav-accent: var(--dancr-color-brand-primary) !important;
+    --mobile-nav-accent-soft: var(--dancr-color-brand-primary) !important;
+    background: var(--dancr-color-surface) !important;
+    border-color: transparent !important;
     color: var(--dancr-color-text-primary) !important;
   }
   html body.dancr-button-system :where(.global-mobile-bottom-nav, #discoveryTabs)
@@ -655,7 +720,7 @@
   }
   html body.dancr-button-system
     :where(.global-mobile-bottom-nav a.active svg, #discoveryTabs > button.active svg) {
-    color: var(--dancr-color-icon-accent-active) !important;
+    color: var(--dancr-color-brand-primary) !important;
     filter: none !important;
   }
   html body.dancr-button-system
@@ -670,38 +735,14 @@
     box-shadow: none !important;
     filter: none !important;
   }
-  /* The floating dock stays clear; its selected icon carries the brand violet. */
-  @media (max-width: 720px) {
-    html body.dancr-button-system :where(
-      .global-mobile-bottom-nav, #discoveryTabs,
-      .global-mobile-bottom-nav a, #discoveryTabs > button
-    ) {
-      background: transparent !important;
-    }
-    html body.dancr-button-system
-      :where(.global-mobile-bottom-nav a.active, #discoveryTabs > button.active) {
-      border-color: transparent !important;
-    }
-    html body.dancr-button-system
-      :where(.global-mobile-bottom-nav a.active svg, #discoveryTabs > button.active svg) {
-      filter:
-        drop-shadow(0 0 2px var(--dancr-color-brand-primary))
-        drop-shadow(0 0 5px color-mix(in srgb, var(--dancr-color-brand-primary) 58%, transparent))
-        drop-shadow(0 0 9px color-mix(in srgb, var(--dancr-color-brand-primary) 72%, transparent)) !important;
-    }
-    html body.dancr-button-system
-      :where(.mobile-nav-selection-halo, .home-nav-selection-halo)::before {
-      background: radial-gradient(circle,
-        color-mix(in srgb, var(--dancr-color-brand-core) 10%, transparent) 0%,
-        color-mix(in srgb, var(--dancr-color-brand-primary) 34%, transparent) 30%,
-        color-mix(in srgb, var(--dancr-color-brand-primary) 18%, transparent) 56%,
-        color-mix(in srgb, var(--dancr-color-brand-primary) 14%, transparent) 70%,
-        transparent 82%) !important;
-      box-shadow:
-        0 0 8px color-mix(in srgb, var(--dancr-color-brand-primary) 18%, transparent),
-        0 0 16px color-mix(in srgb, var(--dancr-color-brand-primary) 16%, transparent) !important;
-      filter: blur(1.5px) !important;
-    }
+  html body.dancr-button-system :where(.global-mobile-swipe-indicator) {
+    background: var(--dancr-color-surface) !important;
+    border-color: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system :where(.global-mobile-swipe-indicator span) {
+    color: var(--dancr-color-brand-primary) !important;
   }
   html body.dancr-button-system
     :where(button, a, input, select, textarea, summary):focus-visible {

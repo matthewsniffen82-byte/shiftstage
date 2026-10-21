@@ -94,7 +94,8 @@ test('Working Now keeps its green face while navigation uses one violet and the 
   const face = rules.find(rule => rule.selector === 'html body.dancr-button-system :where(.dancer-directory-filter)::before');
   assert.ok(face.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--discovery-control-face)'));
   const dock = rules.find(rule => rule.selector.includes('.global-mobile-bottom-nav a.active, #discoveryTabs > button.active'));
-  assert.ok(dock.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-color-brand-primary)'));
+  assert.ok(dock.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-color-surface)'));
+  assert.ok(dock.nodes.some(decl => decl.prop === '--mobile-nav-accent' && decl.value === 'var(--dancr-color-brand-primary)'));
   const shortcut = rules.find(rule => rule.selector.includes('.utility-menu-dashboard'));
   assert.ok(shortcut.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--dancr-color-surface)'));
   assert.doesNotMatch(read('public/dancr-button-system.v1.css'), /#241337|#301a46|#6b4d89|#8b69ab/);

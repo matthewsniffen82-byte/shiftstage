@@ -38,11 +38,11 @@
   /* Legacy plum names now resolve to the shared charcoal surface. */
   --dancr-color-surface-plum: #191820;
   --dancr-color-control-plum: #191820;
-  /* Utility and location icons are silver; selected icons are soft white. */
+  /* Utility icons are silver; location pins use the single brand violet. */
   --dancr-color-icon-accent: #aaa6b5;
   --dancr-color-icon-accent-small: #aaa6b5;
   --dancr-color-icon-accent-active: #f5f3f7;
-  --dancr-color-icon-location: #aaa6b5;
+  --dancr-color-icon-location: var(--dancr-color-brand-primary);
   --dancr-color-avatar-ring-magenta: #7c3aed;
   --dancr-color-avatar-ring-violet: #7c3aed;
   --dancr-color-avatar-ring-indigo: #7c3aed;

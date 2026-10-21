@@ -88,8 +88,8 @@ test("legacy beam aliases resolve to the single Electric Violet accent", () => {
   assert.doesNotMatch(tokens, /#985fff|#346eff/);
 });
 
-test("UI accents do not introduce lavender icons, indigo glows or plum surface tokens", () => {
-  assert.match(tokens, /--dancr-color-icon-location: #aaa6b5;/);
+test("location pins use the brand violet without lavender icons, indigo glows or plum surfaces", () => {
+  assert.match(tokens, /--dancr-color-icon-location: var\(--dancr-color-brand-primary\);/);
   assert.match(tokens, /--dancr-color-icon-accent-active: #f5f3f7;/);
   assert.match(tokens, /--dancr-color-brand-glow: #7c3aed;/);
   assert.match(tokens, /--dancr-color-brand-primary-soft: var\(--dancr-color-surface\);/);
