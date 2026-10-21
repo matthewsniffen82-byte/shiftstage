@@ -4,8 +4,8 @@
 body.dancr-status-page,
 body :is(.reset-page, .venue-team-invite-shell, .nfc-page, .redeem-shell, .deal-pass-page, .deal-claim-page) {
   box-sizing: border-box;
-  color: #f5f5f7;
-  background: radial-gradient(ellipse at 50% 25%, rgba(255, 255, 255, .035), transparent 65%), #0b0b0f !important;
+  color: var(--dancr-color-text-primary, #f5f3f7);
+  background: var(--dancr-color-background, #0b0b12) !important;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -33,7 +33,7 @@ body :is(
   max-width: 100%;
   border: 1px solid rgba(255, 255, 255, .13) !important;
   border-radius: 24px !important;
-  background: linear-gradient(155deg, #1b1b22, #15151b) !important;
+  background: var(--dancr-color-surface, #191820) !important;
   box-shadow: 0 20px 56px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .035) !important;
   text-shadow: none !important;
   overflow-wrap: anywhere;
@@ -49,7 +49,7 @@ body :is(.dancr-status-card, .reset-page .reset-card) {
 
 body :is(.dancr-status-card, .reset-card, .venue-team-invite-card, .nfc-card, .scanner-card, .deal-pass-page .deal-pass-card, .deal-claim-card) > h1 {
   margin: 0;
-  color: #f5f5f7;
+  color: var(--dancr-color-text-primary, #f5f3f7);
   font-size: clamp(28px, 6.8vw, 34px);
   font-weight: 650;
   line-height: 1.15;
@@ -60,7 +60,7 @@ body :is(.dancr-status-card, .reset-card, .venue-team-invite-card, .nfc-card, .s
 body :is(.dancr-status-card, .reset-card, .venue-team-invite-card, .nfc-card, .scanner-card, .deal-pass-page .deal-pass-card, .deal-claim-card) > p:not(.eyebrow, .reset-brand, .nfc-status, .nfc-error, .venue-team-status),
 body .reset-card form > p:not(.reset-error) {
   margin: 0;
-  color: #bdbdc9;
+  color: var(--dancr-color-text-muted, #aaa6b5);
   font-size: 15px;
   font-weight: 400;
   line-height: 1.65;
@@ -68,7 +68,7 @@ body .reset-card form > p:not(.reset-error) {
 
 body :is(.dancr-status-card .eyebrow, .reset-card .reset-brand, .venue-team-invite-card .venue-team-kicker, .nfc-card .eyebrow, .deal-pass-card .eyebrow, .deal-claim-card > span, .dancer-activation-copy .eyebrow) {
   margin: 0;
-  color: #a9a9b8 !important;
+  color: var(--dancr-color-text-muted, #aaa6b5) !important;
   font-size: 10px;
   font-weight: 650;
   line-height: 1.5;
@@ -93,7 +93,7 @@ body :is(.dancr-status-mark, .nfc-card .nfc-symbol, .deal-claim-card .nfc-mark, 
 
 body .dancr-status-mark.is-success,
 body .dancer-activation-confirmation .dancer-activation-check {
-  color: #7eddb3;
+  color: var(--dancr-color-success, #35d09a);
 }
 
 body .dancr-status-mark svg {
@@ -143,7 +143,7 @@ body :is(
   border: 1px solid rgba(197, 177, 255, .25) !important;
   border-radius: 13px !important;
   color: #fff !important;
-  background: #6538c7 !important;
+  background: var(--dancr-color-brand-primary, #7c3aed) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -206,12 +206,12 @@ body :is(.nfc-card .nfc-secondary, .scanner-card .venue-sign-in) {
 }
 
 body .scanner-card .status-pill {
-  color: #bdbdc9;
+  color: var(--dancr-color-text-muted, #aaa6b5);
   font-weight: 600;
 }
 
 body .scanner-card .status-pill.success {
-  color: #7eddb3 !important;
+  color: var(--dancr-color-success, #35d09a) !important;
   border-color: rgba(126, 221, 179, .24) !important;
   background: transparent !important;
 }
@@ -225,7 +225,7 @@ body .venue-team-invite-card .venue-team-brand {
 }
 
 body .venue-team-invite-card .venue-team-mode button.active {
-  background: #6538c7 !important;
+  background: var(--dancr-color-brand-primary, #7c3aed) !important;
   box-shadow: none !important;
 }
 

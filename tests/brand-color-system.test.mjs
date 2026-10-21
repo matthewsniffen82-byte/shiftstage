@@ -29,21 +29,21 @@ const [
 
 const requiredTokens = new Map([
   ["--dancr-color-brand-primary", "#7c3aed"],
-  ["--dancr-color-text-primary", "#f8fafc"],
-  ["--dancr-color-background", "#050507"],
-  ["--dancr-color-surface", "#111118"],
-  ["--dancr-color-text-secondary", "#cbd5e1"],
-  ["--dancr-color-text-muted", "#94a3b8"],
-  ["--dancr-color-border", "#334155"],
-  ["--dancr-color-info", "#22d3ee"],
+  ["--dancr-color-text-primary", "#f5f3f7"],
+  ["--dancr-color-background", "#0b0b12"],
+  ["--dancr-color-surface", "#191820"],
+  ["--dancr-color-text-secondary", "#aaa6b5"],
+  ["--dancr-color-text-muted", "#aaa6b5"],
+  ["--dancr-color-border", "#35313f"],
+  ["--dancr-color-info", "#b69aef"],
   ["--dancr-color-verification", "#2563eb"],
   ["--dancr-color-verification-foreground", "#ffffff"],
   ["--dancr-color-verification-outline", "#1d4ed8"],
-  ["--dancr-color-success", "#10b981"],
-  ["--dancr-color-live", "#4dec9d"],
+  ["--dancr-color-success", "#35d09a"],
+  ["--dancr-color-live", "#35d09a"],
   ["--dancr-color-live-surface-emphasis", "#28744f"],
   ["--dancr-color-featured", "#fbbf24"],
-  ["--dancr-color-danger", "#ef4444"],
+  ["--dancr-color-danger", "#fb7185"],
 ]);
 
 const frozenNavigation = await readFile(
@@ -90,15 +90,15 @@ test("legacy beam aliases resolve to the Electric Violet beam and its deep-indig
 
 test("brand text and status combinations meet normal-text contrast", () => {
   const combinations = [
-    ["#f8fafc", "#7c3aed"],
-    ["#f8fafc", "#050507"],
-    ["#cbd5e1", "#111118"],
-    ["#94a3b8", "#050507"],
-    ["#22d3ee", "#111118"],
+    ["#f5f3f7", "#7c3aed"],
+    ["#f5f3f7", "#0b0b12"],
+    ["#aaa6b5", "#191820"],
+    ["#aaa6b5", "#0b0b12"],
+    ["#b69aef", "#191820"],
     ["#ffffff", "#2563eb"],
-    ["#10b981", "#111118"],
-    ["#fbbf24", "#111118"],
-    ["#ef4444", "#111118"],
+    ["#35d09a", "#191820"],
+    ["#fbbf24", "#191820"],
+    ["#fb7185", "#191820"],
   ];
 
   for (const [foreground, background] of combinations) {
@@ -109,11 +109,11 @@ test("brand text and status combinations meet normal-text contrast", () => {
   }
 });
 
-test("browser chrome and install assets use the production background and logo colors", () => {
-  assert.match(layout, /themeColor: "#050507"/);
-  assert.match(liveShell, /<meta name="theme-color" content="#050507">/);
-  assert.match(manifest, /"background_color": "#050507"/);
-  assert.match(manifest, /"theme_color": "#050507"/);
+test("browser chrome uses midnight charcoal and installed logo artwork is preserved", () => {
+  assert.match(layout, /themeColor: "#0b0b12"/);
+  assert.match(liveShell, /<meta name="theme-color" content="#0b0b12">/);
+  assert.match(manifest, /"background_color": "#0b0b12"/);
+  assert.match(manifest, /"theme_color": "#0b0b12"/);
   assert.match(appIcon, /fill="#050507"/);
   assert.match(appIcon, /stroke="#7C3AED"/);
   assert.match(appIcon, /fill="#F8FAFC"/);

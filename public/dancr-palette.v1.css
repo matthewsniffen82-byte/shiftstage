@@ -1,0 +1,245 @@
+/* Midnight + Violet: shared presentation only. No geometry, artwork, or media changes.
+ * Important declarations live in the first declared layer to override legacy
+ * device paint layers. Internal and embedded club experiences are excluded.
+ * Semantic errors, confirmations, switches, and media controls keep their states. */
+@layer dancr-palette {
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed):not(:has(.ir-shell, .venue-embed-profile-page)) {
+    --discovery-backdrop: var(--dancr-color-background) !important;
+    --discovery-header-backdrop: var(--dancr-color-background) !important;
+    background: var(--dancr-color-background) !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.app, .app > main, .dashboard-shell, .admin-shell, .account-shell, .vip-shell, .agent-dashboard, .public-profile-shell, #profileBackdrop, .tv-shell, .tv-studio-page, .operations-guides, .legal-document-shell, .reset-page, .nfc-page, .venue-team-invite-shell, .club-update-page, .club-transport-page, .pickup-page, .deal-claim-page, .deal-pass-page, .redeem-shell, .dmca-shell, .counter-shell, .page-panel):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    --discovery-backdrop: var(--dancr-color-background) !important;
+    --mydancr-dashboard-panel: var(--dancr-color-surface) !important;
+    --mydancr-dashboard-panel-raised: var(--dancr-color-surface) !important;
+    --mydancr-dashboard-border: var(--dancr-color-border) !important;
+    --mydancr-dashboard-muted: var(--dancr-color-text-muted) !important;
+    --dancer-surface: var(--dancr-color-surface) !important;
+    --dancer-border: var(--dancr-color-border) !important;
+    --dancer-muted: var(--dancr-color-text-muted) !important;
+    --dancer-green: var(--dancr-color-success) !important;
+    --customer-surface: var(--dancr-color-surface) !important;
+    --customer-line: var(--dancr-color-border) !important;
+    --customer-control: var(--dancr-color-surface) !important;
+    --customer-control-hover: var(--dancr-color-control-hover) !important;
+    --customer-muted: var(--dancr-color-text-muted) !important;
+    --customer-green: var(--dancr-color-success) !important;
+    --customer-selected-line: var(--dancr-color-brand-primary) !important;
+    --venue-control-face: var(--dancr-color-surface) !important;
+    --venue-control-edge: var(--dancr-color-border) !important;
+    --venue-card-edge: var(--dancr-color-border) !important;
+    --venue-accent: var(--dancr-color-icon-accent) !important;
+    --admin-workspace-text: var(--dancr-color-text-primary) !important;
+    --admin-workspace-muted: var(--dancr-color-text-muted) !important;
+    --admin-workspace-line: var(--dancr-color-border) !important;
+    --vip-card: var(--dancr-color-surface) !important;
+    --vip-line: var(--dancr-color-border) !important;
+    --vip-muted: var(--dancr-color-text-muted) !important;
+    --vip-accent: var(--dancr-color-icon-accent) !important;
+    --vip-gold: var(--dancr-color-text-primary) !important;
+    background: var(--dancr-color-background) !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.dancer-workspace-card, .dancer-daily-card, .dashboard-section, .info-panel:not(.shift-panel, .dancer-profile-identity-editor), .venue-dashboard-section, .venue-command-panel, .venue-publication-panel, .venue-workspace-summary, .venue-workspace-business-summary, .venue-dashboard-metrics, .customer-settings-section, .customer-surface, .customer-night-card, .customer-empty-state, .customer-saved-panel, .admin-panel, .admin-dashboard-head, .admin-workspace-card, .vip-panel, .vip-card, .vip-request, .vip-summary-card, .account-panel, .account-card, .auth-card, .reset-card, .account-form-surface, .nfc-card, .venue-team-invite-card, .dancr-status-card, .guide-card, .guides-reference, .legal-related, .legal-contents, .legal-hub-card, .pickup-card, .club-update-page > section, .email-notification-guidance, .notification-panel, .profile-info-card, .profile-share-panel, .profile-social-section, .profile-options-panel, .guest-account-prompt, .profile-account-gate-dialog, .public-contact-sheet, .content-report-sheet, .public-report-reason-dialog, .customer-quick-panel, .dashboard-menu-panel, .metric, .dancer-activity-counts > div, .dancer-analytics-metric, .dancer-results-shifts dl > div, .dashboard-shift, .vip-selection, .vip-empty, .shift-checkin-card:not(.ready), .dancer-dashboard-nav, .customer-workspace-nav, .venue-workspace-tabs, .admin-workspace-nav, .vip-dashboard-nav):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background: var(--dancr-color-surface) !important;
+    border-color: var(--dancr-color-border) !important;
+    box-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.home-venue-discovery-slide, .venue-detail, .venue-detail-content, .customer-followed-dancer-tile):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background-color: var(--dancr-color-surface) !important;
+    border-color: var(--dancr-color-border) !important;
+    box-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.home-dancer-grid-name, .profile-modal-name-row h2, .profile-titlebar h1, .home-tv-feed-name, .tv-card-name):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.support-thread, .customer-account-details, .notification-item, .dancer-profile-share-panel, .dancer-attention-note, .visibility-panel, .vip-requests-empty, .vip-next-visit, .vip-filter-count, .vip-request-count):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background: var(--dancr-color-surface) !important;
+    border-color: var(--dancr-color-border) !important;
+    box-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.dashboard-section > summary, .venue-dashboard-section > summary, .dancer-dashboard-section-icon, .vip-identity-mark, .admin-dashboard-identity):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background: var(--dancr-color-surface) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+  }
+  /* This wrapper is deliberately frameless: its child owns the status card. */
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(#dancer-schedule .shift-panel, .dancer-profile-identity-editor):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(#profileBackdrop #profileModal.profile-split-layout, .public-profile-shell.profile-split-layout):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *))::after {
+    background: var(--dancr-color-surface) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(#profileBackdrop #profileModal.profile-split-layout, .public-profile-shell.profile-split-layout):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *))::before {
+    box-shadow: inset 0 0 0 1px var(--dancr-color-border) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.dashboard-shell :is(h1,h2,h3,h4), .admin-shell :is(h1,h2,h3,h4), .vip-shell :is(h1,h2,h3,h4), .account-shell :is(h1,h2,h3,h4), .operations-guides :is(h1,h2,h3,h4), .legal-document-shell :is(h1,h2,h3,h4)):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    color: var(--dancr-color-text-primary) !important;
+    text-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.dashboard-head p, .eyebrow, .dancer-daily-card > header p, .dancer-workspace-card > header p, .customer-view-heading p, .admin-workspace-heading p, .vip-dashboard-shell p:not([role="alert"], .vip-error, .error, .is-error), .profile-city, .profile-titlebar-city, .profile-modal-city, .guides-topline, .guides-kicker, .legal-document-header > span):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    color: var(--dancr-color-text-muted) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.dashboard-shell .info-panel button, .dancer-overview-actions > :is(button, a), .dancer-workspace-card button, .dancer-daily-card button, .customer-settings-section button, .admin-panel button, .admin-logout, .vip-shell button, .vip-link-action, .account-shell button, .secondary-action, .photo-source-action, .dancer-profile-share-tools button, .visibility-toggle, .account-action-button, .guide-actions button, .email-guidance-acknowledge, .guides-reference button, .pickup-button):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)):not(:where([class*="danger"], [class*="delete"], [class*="remove"], [class*="reject"], [data-action-state="success"], [aria-pressed="true"], .is-confirmed, .customer-notification-switch, .notification-switch, [role="switch"], .mydancr-refresh-button, .profile-upload-thumbnail *, .profile-upload-preview *, .profile-media-grid-item, .profile-media-grid-item *, .profile-media-control, .photo-crop-controls *, .video-crop-controls *)) {
+    background: var(--dancr-color-surface) !important;
+    color: var(--dancr-color-text-primary) !important;
+    border-color: var(--dancr-color-border) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.dancer-dashboard-nav button, .customer-workspace-nav button, .venue-workspace-tabs button, .admin-workspace-nav button, .vip-dashboard-nav button, .account-tabs button, .account-auth-tabs button, .auth-entry-tab, .auth-tabs button, .auth-tab, .profile-media-tabs button, .profile-modal-media-tabs button):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background: var(--dancr-color-surface) !important;
+    color: var(--dancr-color-text-muted) !important;
+    border-color: var(--dancr-color-border) !important;
+    box-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.dancer-dashboard-nav button[aria-current="page"], .customer-workspace-nav button[aria-current], .venue-workspace-tabs button.active, .admin-workspace-nav button.active, .vip-dashboard-nav button.active, .vip-dashboard-nav button[aria-current="page"], .vip-dashboard-nav button[aria-selected="true"], .account-tabs button.active, .account-auth-tabs button.active, .auth-entry-tab.active, .auth-tabs button.active, .auth-tab.active, .profile-media-tabs button.active, .profile-modal-media-tabs button.active):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-text-primary) !important;
+    border-color: var(--dancr-color-brand-primary) !important;
+    box-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.dancer-dashboard-nav button[aria-current="page"] svg, .customer-workspace-nav button[aria-current] svg, .venue-workspace-tabs button.active svg, .admin-workspace-nav button.active svg, .vip-dashboard-nav button.active svg, .vip-dashboard-nav button[aria-current="page"] svg, .vip-dashboard-nav button[aria-selected="true"] svg, .account-tabs button.active svg, .account-auth-tabs button.active svg, .auth-entry-tab.active svg, .auth-tabs button.active svg, .auth-tab.active svg, .profile-media-tabs button.active svg, .profile-modal-media-tabs button.active svg):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    color: var(--dancr-color-text-primary) !important;
+    filter: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(button[type="submit"], input[type="submit"], a.primary-action, .primary-action, .primary-link, .dancer-onboarding-primary, .dancer-workspace-save, .profile-action-primary, .account-form-primary, .vip-primary, .pickup-primary, .dancer-profile-editor-launch-button, #dancer-overview .dancer-overview-actions > :first-child, [data-dancer-control-action="save-profile"], .profile-free-entry-action, .profile-media-card-deal, .home-tv-deal-button, .home-tv-feed-deal-action.is-available, .free-entry-cta, .venue-qr-launcher, .club-deal-launcher-action, .continue-signup, .admin-login):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)):not(:where(.secondary, .secondary-action, [class*="danger"], [class*="delete"], [class*="remove"], [class*="reject"], [data-action-state="success"], .is-confirmed, .is-unavailable, .profile-action-unavailable, :disabled, [aria-disabled="true"])) {
+    --free-entry-background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important;
+    --free-entry-border: var(--dancr-color-brand-primary) !important;
+    --profile-action-background: var(--dancr-color-brand-primary) !important;
+    --profile-action-border: var(--dancr-color-brand-primary) !important;
+    background: var(--dancr-color-brand-primary) !important;
+    border-color: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.account-form-primary, .profile-free-entry-action, .free-entry-cta):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)):not(:disabled):not([aria-disabled="true"])::before {
+    background: var(--dancr-color-brand-primary) !important;
+    border-color: var(--dancr-color-brand-primary) !important;
+    box-shadow: none !important;
+  }
+  /* Override the actual Android paint variables, not just the button backing. */
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(#citySelectButton, #homeFilterToggle, .city-picker-option, .dancer-directory-filter, #distanceSelectButton, #venueSelectButton, #locationBtn, #homeFilterReset):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    --discovery-control-face: var(--dancr-color-surface) !important;
+    --discovery-control-edge: var(--dancr-color-border) !important;
+    --picker-face: var(--dancr-color-surface) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.city-picker-option[aria-selected="true"], .dancer-directory-filter[aria-selected="true"], #homeFilterToggle.has-active-filters):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    --discovery-control-face: var(--dancr-color-brand-primary) !important;
+    --discovery-control-edge: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(#accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    --discovery-header-face: var(--dancr-color-surface) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-muted) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.profile-actions-compact :is(#followBtn, [data-follow-control="text"], .profile-share-action, .profile-share-trigger, #goingBtn, .profile-action-going), .venue-action-stack :is(.venue-address-directions, .follow-venue-btn), .venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-detail-share):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)):not(:where([aria-pressed="true"], .is-active, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"])) {
+    --follow-control-face: var(--dancr-color-surface) !important;
+    --follow-control-edge: var(--dancr-color-border) !important;
+    --profile-utility-background: var(--dancr-color-surface) !important;
+    --profile-utility-border: var(--dancr-color-border) !important;
+    --profile-action-background: var(--dancr-color-surface) !important;
+    --profile-action-border: var(--dancr-color-border) !important;
+    --venue-utility-face: var(--dancr-color-surface) !important;
+    --venue-utility-edge: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(input:not([type="checkbox"],[type="radio"],[type="range"],[type="color"],[type="submit"],[type="button"],[type="hidden"]), select, textarea):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)):not([aria-invalid="true"]):not(:focus):not(:focus-visible) {
+    background-color: var(--dancr-color-surface) !important;
+    background-image: none !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.mydancr-refresh-button):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *))::before {
+    background: var(--dancr-color-surface) !important;
+    border-color: var(--dancr-color-border) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.mydancr-refresh-button):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    color: var(--dancr-color-text-muted) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.home-dancer-grid-status.is-now, .home-tv-feed-schedule.is-now, .home-discovery-feed-status.is-now, .profile-live-state.is-working, .profile-tonight-card.is-now .profile-tonight-status, .profile-titlebar-status.is-live, .dancer-visibility-badge.is-public, #dancer-schedule > header h2, .vip-status-confirmed, [data-action-state="success"]):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    color: var(--dancr-color-success) !important;
+    text-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.shift-checkin-card.ready):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background: var(--dancr-color-success-soft) !important;
+    border-color: var(--dancr-color-success-medium) !important;
+    box-shadow: none !important;
+  }
+  /* Neutral utility icons; pins retain the lighter violet and state icons retain meaning. */
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.venue-card-secondary-actions > :is(.venue-card-page-action, .venue-card-favorite-action, .venue-card-share-action) svg, .profile-action-share-slot svg, .profile-share-action svg, .profile-share-trigger svg, #homeFilterToggle > .home-filter-toggle-icon):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    color: var(--dancr-color-text-muted) !important;
+    stroke: currentColor !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.global-mobile-bottom-nav, #discoveryTabs):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background: var(--dancr-color-surface-translucent) !important;
+    border-color: var(--dancr-color-border) !important;
+    box-shadow: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.global-mobile-bottom-nav a, #discoveryTabs > button):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    --mobile-nav-accent: var(--dancr-color-text-muted) !important;
+    --mobile-nav-accent-soft: var(--dancr-color-text-muted) !important;
+    --mobile-nav-active: var(--dancr-color-text-primary) !important;
+    color: var(--dancr-color-text-muted) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.global-mobile-bottom-nav a.active, #discoveryTabs > button.active):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.global-mobile-bottom-nav a.active svg, #discoveryTabs > button.active svg):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    color: var(--dancr-color-icon-accent-active) !important;
+    filter: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.mobile-nav-selection-halo, .home-nav-selection-halo):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+    background: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(.mobile-nav-selection-halo, .home-nav-selection-halo):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *))::before {
+    background: transparent !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :where(button, a, input, select, textarea, summary):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)):focus-visible {
+    outline-color: var(--dancr-color-icon-location) !important;
+  }
+}

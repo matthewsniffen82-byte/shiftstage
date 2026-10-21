@@ -4,9 +4,12 @@
  * Components consume semantic tokens from this file so the brand palette has
  * one source of truth. The intended UI-chrome balance is 84% neutral, 10%
  * hero-beam brand, and 6% semantic state color. Approved media and the supplied
- * hero artwork are excluded from that visual-weight target. Navigation keeps
- * its existing, independently owned visual contract.
+ * hero artwork are excluded from that visual-weight target. Layout and media
+ * remain owned by their components; the shared palette only changes chrome.
  */
+
+/* Important palette declarations precede legacy component paint layers. */
+@layer dancr-palette, dancr-follow-controls;
 
 :root {
   color-scheme: dark;
@@ -17,7 +20,7 @@
 
   --dancr-color-brand-core: #f5f3ff;
   --dancr-color-brand-primary: #7c3aed;
-  --dancr-color-brand-primary-deep: #4c1d95;
+  --dancr-color-brand-primary-deep: #7c3aed;
   --dancr-color-brand-glow: #312e81;
   --dancr-color-brand-core-soft: rgba(245, 243, 255, 0.18);
   --dancr-color-brand-primary-soft: rgba(124, 58, 237, 0.14);
@@ -25,27 +28,27 @@
   --dancr-color-brand-primary-strong: rgba(124, 58, 237, 0.72);
   --dancr-color-brand-glow-soft: rgba(49, 46, 129, 0.18);
   --dancr-color-brand-glow-medium: rgba(49, 46, 129, 0.42);
-  /* Deeper violet controls keep lavender foregrounds and focus rings readable. */
-  --dancr-color-control-border: #76528f;
-  --dancr-color-control-border-soft: #493556;
-  --dancr-color-control-selected: #1c1327;
-  --dancr-color-control-indicator: #8756b8;
-  --dancr-color-control-primary: #5f24ac;
-  --dancr-color-control-primary-deep: #361366;
-  /* Opt-in sharing palette; club themes and gray controls keep their own fills. */
-  --dancr-color-surface-plum: #0b0a10;
-  --dancr-color-control-plum: #100b18;
+  /* Violet is reserved for primary actions and selected controls. */
+  --dancr-color-control-border: #35313f;
+  --dancr-color-control-border-soft: #35313f;
+  --dancr-color-control-selected: #7c3aed;
+  --dancr-color-control-indicator: #b69aef;
+  --dancr-color-control-primary: #7c3aed;
+  --dancr-color-control-primary-deep: #7c3aed;
+  /* Legacy plum names now resolve to the shared charcoal surface. */
+  --dancr-color-surface-plum: #191820;
+  --dancr-color-control-plum: #191820;
   /* Muted utility icons; tiny pins and selected states keep extra contrast. */
-  --dancr-color-icon-accent: #9f83bd;
-  --dancr-color-icon-accent-small: #b094cc;
-  --dancr-color-icon-accent-active: #c4a3f1;
-  --dancr-color-icon-location: #a78bfa;
+  --dancr-color-icon-accent: #aaa6b5;
+  --dancr-color-icon-accent-small: #aaa6b5;
+  --dancr-color-icon-accent-active: #b69aef;
+  --dancr-color-icon-location: #b69aef;
   --dancr-color-avatar-ring-magenta: #f02bdc;
   --dancr-color-avatar-ring-violet: #8b5cf6;
   --dancr-color-avatar-ring-indigo: #4f46e5;
   --dancr-color-avatar-ring-core: #ffffff;
-  --dancr-color-avatar-ring-live: #34e3a4;
-  --dancr-color-avatar-ring-upcoming: #22d3ee;
+  --dancr-color-avatar-ring-live: #35d09a;
+  --dancr-color-avatar-ring-upcoming: #b69aef;
   --dancr-color-avatar-ring-inactive: #334155;
 
   --dancr-color-beam-core: var(--dancr-color-brand-core);
@@ -57,54 +60,55 @@
   --dancr-color-beam-blue: var(--dancr-color-beam-glow);
   --dancr-color-beam-blue-soft: var(--dancr-color-beam-glow-soft);
 
-  --dancr-color-text-primary: #f8fafc;
-  --dancr-color-text-secondary: #cbd5e1;
-  --dancr-color-text-muted: #94a3b8;
-  --dancr-color-text-on-bright: #050507;
+  --dancr-color-text-primary: #f5f3f7;
+  --dancr-color-text-secondary: #aaa6b5;
+  --dancr-color-text-muted: #aaa6b5;
+  --dancr-color-text-on-bright: #0b0b12;
 
-  --dancr-color-background: #050507;
-  --dancr-color-surface: #111118;
-  --dancr-color-surface-raised: #111118;
-  --dancr-color-surface-soft: rgba(17, 17, 24, 0.88);
-  --dancr-color-surface-translucent: rgba(17, 17, 24, 0.96);
-  --dancr-color-surface-subtle: rgba(248, 250, 252, 0.045);
-  --dancr-color-overlay: rgba(5, 5, 7, 0.88);
+  --dancr-color-background: #0b0b12;
+  --dancr-color-surface: #191820;
+  --dancr-color-surface-raised: #191820;
+  --dancr-color-surface-soft: rgba(25, 24, 32, 0.88);
+  --dancr-color-surface-translucent: rgba(25, 24, 32, 0.96);
+  --dancr-color-surface-subtle: #191820;
+  --dancr-color-overlay: rgba(11, 11, 18, 0.88);
+  --dancr-color-control-hover: #24222d;
 
-  --dancr-color-border: #334155;
-  --dancr-color-border-subtle: rgba(51, 65, 85, 0.64);
-  --dancr-color-border-strong: rgba(51, 65, 85, 0.92);
+  --dancr-color-border: #35313f;
+  --dancr-color-border-subtle: #35313f;
+  --dancr-color-border-strong: #5b5568;
 
-  --dancr-color-info: #22d3ee;
-  --dancr-color-info-soft: rgba(34, 211, 238, 0.1);
-  --dancr-color-info-medium: rgba(34, 211, 238, 0.34);
-  --dancr-color-info-strong: rgba(34, 211, 238, 0.72);
-  --dancr-color-info-surface-glass: rgba(8, 145, 178, 0.66);
+  --dancr-color-info: #b69aef;
+  --dancr-color-info-soft: rgba(182, 154, 239, 0.1);
+  --dancr-color-info-medium: rgba(182, 154, 239, 0.34);
+  --dancr-color-info-strong: rgba(182, 154, 239, 0.72);
+  --dancr-color-info-surface-glass: rgba(89, 66, 127, 0.66);
 
   --dancr-color-verification: #2563eb;
   --dancr-color-verification-foreground: #ffffff;
   --dancr-color-verification-outline: #1d4ed8;
 
-  --dancr-color-success: #10b981;
-  --dancr-color-success-soft: rgba(16, 185, 129, 0.1);
-  --dancr-color-success-medium: rgba(16, 185, 129, 0.36);
-  --dancr-color-success-strong: rgba(16, 185, 129, 0.78);
+  --dancr-color-success: #35d09a;
+  --dancr-color-success-soft: rgba(53, 208, 154, 0.1);
+  --dancr-color-success-medium: rgba(53, 208, 154, 0.36);
+  --dancr-color-success-strong: rgba(53, 208, 154, 0.78);
 
-  --dancr-color-live: #4dec9d;
-  --dancr-color-live-soft: rgba(77, 236, 157, 0.1);
-  --dancr-color-live-medium: rgba(77, 236, 157, 0.36);
-  --dancr-color-live-strong: rgba(77, 236, 157, 0.78);
+  --dancr-color-live: #35d09a;
+  --dancr-color-live-soft: rgba(53, 208, 154, 0.1);
+  --dancr-color-live-medium: rgba(53, 208, 154, 0.36);
+  --dancr-color-live-strong: rgba(53, 208, 154, 0.78);
   --dancr-color-live-surface-emphasis: #28744f;
-  --dancr-color-live-surface-glass: rgba(16, 185, 129, 0.60);
+  --dancr-color-live-surface-glass: rgba(53, 208, 154, 0.60);
 
   --dancr-color-featured: #fbbf24;
   --dancr-color-featured-soft: rgba(251, 191, 36, 0.1);
   --dancr-color-featured-medium: rgba(251, 191, 36, 0.38);
   --dancr-color-featured-strong: rgba(251, 191, 36, 0.76);
 
-  --dancr-color-danger: #ef4444;
-  --dancr-color-danger-soft: rgba(239, 68, 68, 0.1);
-  --dancr-color-danger-medium: rgba(239, 68, 68, 0.38);
-  --dancr-color-danger-strong: rgba(239, 68, 68, 0.76);
+  --dancr-color-danger: #fb7185;
+  --dancr-color-danger-soft: rgba(251, 113, 133, 0.1);
+  --dancr-color-danger-medium: rgba(251, 113, 133, 0.38);
+  --dancr-color-danger-strong: rgba(251, 113, 133, 0.76);
 
   --dancr-color-white-soft: rgba(248, 250, 252, 0.08);
   --dancr-color-white-medium: rgba(248, 250, 252, 0.16);
@@ -114,16 +118,11 @@
 
   --dancr-shadow-surface: 0 10px 24px rgba(5, 5, 7, 0.3);
   --dancr-shadow-modal: 0 24px 72px rgba(5, 5, 7, 0.72);
-  --dancr-shadow-brand-subtle: 0 0 10px var(--dancr-color-brand-glow-soft);
-  /* The dancer profile's Free Entry glow is shared by violet primary actions. */
-  --dancr-shadow-brand-control: 0 2px 8px rgba(124, 58, 237, 0.1);
-  --dancr-shadow-avatar-live:
-    0 0 0 1px var(--dancr-color-avatar-ring-live),
-    0 0 12px var(--dancr-color-success-strong),
-    0 0 22px var(--dancr-color-success-medium);
+  --dancr-shadow-brand-subtle: none;
+  --dancr-shadow-brand-control: none;
+  --dancr-shadow-avatar-live: 0 0 0 1px var(--dancr-color-avatar-ring-live);
   --dancr-shadow-beam-active:
-    0 0 0 2px var(--dancr-color-beam-violet-medium),
-    0 0 10px var(--dancr-color-beam-glow-soft);
+    0 0 0 2px var(--dancr-color-beam-violet-medium);
   --dancr-shadow-beam-card:
     0 12px 28px rgba(5, 5, 7, 0.34),
     inset 0 0 0 1px var(--dancr-color-beam-violet-medium);

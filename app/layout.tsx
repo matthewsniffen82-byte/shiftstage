@@ -5,6 +5,7 @@ import { GlobalMobileBottomNav } from "./components/GlobalMobileBottomNav";
 import { versionedStaticAssetUrl } from "../src/lib/dancr/static-asset-cache.mjs";
 import { androidDeviceClassScript } from "../src/lib/security/android-device-script.mjs";
 import "../public/dancr-brand-tokens.v1.css";
+import "../public/dancr-palette.v1.css";
 import "../public/dancr-button-system.v1.css";
 import "../public/dancr-aesthetic.v1.css";
 import "../public/dancr-feedback.v1.css";
@@ -48,7 +49,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#050507",
+  themeColor: "#0b0b12",
   colorScheme: "dark",
   viewportFit: "cover",
 };

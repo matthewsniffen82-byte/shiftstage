@@ -11,6 +11,7 @@ export const staticAssetPaths = [
   "/dancr-checkboxes.v1.css",
   "/dancr-aesthetic.v1.css",
   "/dancr-brand-tokens.v1.css",
+  "/dancr-palette.v1.css",
   "/dancr-button-system.v1.css",
   "/dancr-feedback.v1.css",
   "/mobile-social-strip.css",
