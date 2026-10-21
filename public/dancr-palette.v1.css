@@ -623,8 +623,8 @@
     border-color: var(--dancr-color-border) !important;
     color: var(--dancr-color-text-muted) !important;
   }
-  /* Open header actions keep their gray face and use the brand violet for
-     the active icon and edge. Dropdowns carry the same gray into the menu. */
+  /* Open header actions keep a gray face and neutral icon, with violet only
+     on the circle edge. Dropdowns carry the same gray into the menu. */
   html body.dancr-button-system :where(
     #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn,
     #dancerProfileShareQuickBtn, #customerDealQuickBtn
@@ -633,7 +633,7 @@
     --discovery-header-face: var(--dancr-color-control-secondary) !important;
     --discovery-header-edge: var(--dancr-color-brand-primary) !important;
     border-color: var(--dancr-color-brand-primary) !important;
-    color: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-icon-accent-active) !important;
     box-shadow: none !important;
   }
   html body.dancr-button-system :where(#guestMenuBtn, #accountBtn:not(.account-icon-btn)):where(.active, .is-open, [aria-expanded="true"]) {
@@ -651,7 +651,7 @@
     #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn,
     #dancerProfileShareQuickBtn, #customerDealQuickBtn
   ):where(.active, .is-open, [aria-expanded="true"]) :where([data-quick-icon], .action-icon, .account-icon, svg, svg *) {
-    color: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-icon-accent-active) !important;
     stroke: currentColor !important;
     -webkit-text-fill-color: currentColor !important;
     filter: none !important;
