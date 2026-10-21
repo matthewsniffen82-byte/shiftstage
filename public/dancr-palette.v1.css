@@ -207,6 +207,16 @@
     border-color: var(--dancr-color-border) !important;
     box-shadow: none !important;
   }
+  /* The venue detail tab is a page canvas, using the site's deep background. */
+  html body.dancr-button-system :where(
+    #results.venue-profile-overlay,
+    #results.venue-profile-overlay .venue-detail,
+    #results.venue-profile-overlay .venue-detail-content,
+    #results.venue-profile-overlay .venue-detail-exploration,
+    #results.venue-profile-overlay .venue-dancer-grid
+  ) {
+    background: var(--dancr-color-background) !important;
+  }
   /* A club affiliation, saved color or old iframe query cannot recolor a UI. */
   html body.dancr-button-system:where(.venue-grid-embed),
   html body.dancr-button-system :where(.ir-shell, .venue-embed-profile-page, [data-venue-brand]) {
