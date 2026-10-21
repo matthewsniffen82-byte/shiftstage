@@ -32,7 +32,7 @@ test('the shared palette reaches public, Internal and embedded contexts', () => 
 });
 
 test('the site palette changes paint without changing layout, media, or hero artwork', () => {
-  const paint = new Set(['background', 'background-color', 'background-image', 'color', 'border-color', 'box-shadow', 'text-shadow', 'filter', 'stroke', 'outline-color', '-webkit-text-fill-color']);
+  const paint = new Set(['background', 'background-color', 'background-image', 'color', 'color-scheme', 'border-color', 'box-shadow', 'text-shadow', 'filter', 'stroke', 'outline-color', '-webkit-text-fill-color']);
   theme.walkDecls(decl => {
     assert.ok(decl.prop.startsWith('--') || paint.has(decl.prop), decl.prop);
     assert.equal(decl.important, true);
@@ -87,10 +87,13 @@ test('all dashboard selections and painted mobile control faces use the shared t
   }
 });
 
-test('Working Now keeps its green face, the floating dock keeps its own paint, and the account shortcut stays charcoal', () => {
+test('Working Now keeps its original bright green on a dark face, the floating dock keeps its own paint, and the account shortcut stays charcoal', () => {
   const working = rules.find(rule => rule.selector.includes('.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]'));
   assert.ok(working.selector.includes(':not(.is-empty)'));
-  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-face' && decl.value === 'var(--dancr-color-live-surface-emphasis)'));
+  assert.ok(working.nodes.some(decl => decl.prop === '--dancr-color-live' && decl.value === '#4dec9d'));
+  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-face' && decl.value === '#27272f'));
+  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-edge' && decl.value === '#48755c'));
+  assert.ok(working.nodes.some(decl => decl.prop === 'color' && decl.value === 'var(--dancr-color-live)'));
   const face = rules.find(rule => rule.selector === 'html body.dancr-button-system :where(.dancer-directory-filter)::before');
   assert.ok(face.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--discovery-control-face)'));
   // Broad tab and focus rules must also exclude the dock, so its original
