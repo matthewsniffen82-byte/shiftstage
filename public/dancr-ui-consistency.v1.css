@@ -2737,6 +2737,21 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     filter: none !important;
     box-shadow: none !important;
   }
+
+  /* Keep one location pin per card, on the destination action. Metadata stays
+   * readable, and cards without a second location action retain their pin. */
+  .home-venue-discovery-slide:has(.venue-card-directions-action)
+    .home-venue-discovery-location > .venue-dot,
+  .home-dancer-grid-card:has(.home-dancer-grid-directions)
+    .home-dancer-grid-venue > .venue-dot,
+  .dancer-card.home-discovery-feed-slide:has(.home-discovery-feed-directions)
+    .home-discovery-feed-venue > .venue-dot,
+  #profileModal:has(.profile-venue-destination, .profile-primary-directions)
+    .profile-modal-city-icon,
+  .public-profile-shell:has(.profile-working-destination, .profile-directions-button)
+    .profile-titlebar-city > svg {
+    display: none !important;
+  }
 }
 
 /* Venue utility icons share the city pin's violet. Selected/confirmed actions
