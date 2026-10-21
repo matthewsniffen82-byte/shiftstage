@@ -583,11 +583,11 @@
   html body.dancr-button-system :where(.dancer-directory-filter[aria-selected="true"]) {
     color: var(--dancr-color-text-primary) !important;
   }
-  /* Not Working uses a neutral gray selection, separate from brand actions. */
+  /* Not Working keeps its gray fill with a violet border when selected. */
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="true"]) {
     color-scheme: only light !important;
     --discovery-control-face: var(--dancr-color-control-hover) !important;
-    --discovery-control-edge: var(--dancr-color-border-strong) !important;
+    --discovery-control-edge: var(--dancr-color-brand-primary) !important;
     color: var(--dancr-color-text-primary) !important;
   }
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="true"])::before {
