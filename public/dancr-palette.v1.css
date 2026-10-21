@@ -583,9 +583,21 @@
   html body.dancr-button-system :where(.dancer-directory-filter[aria-selected="true"]) {
     color: var(--dancr-color-text-primary) !important;
   }
+  /* Restore the October 20 Working Now colors without recoloring other live states. */
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]):not(.is-empty) {
-    --discovery-control-face: var(--dancr-color-live-surface-emphasis) !important;
-    --discovery-control-edge: var(--dancr-color-success) !important;
+    --dancr-color-live: #4dec9d !important;
+    --discovery-control-face: #27272f !important;
+    --discovery-control-edge: #48755c !important;
+    color: var(--dancr-color-live) !important;
+  }
+  html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]):not(.is-empty)::before {
+    background: linear-gradient(var(--discovery-control-face), var(--discovery-control-face)) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
+  }
+  @supports (-webkit-touch-callout: none) {
+    html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]):not(.is-empty) {
+      --discovery-control-face: #08090e !important;
+    }
   }
   html body.dancr-button-system :where(.dancer-directory-filter) > :where(.dancer-directory-filter-label, .dancer-directory-filter-count) {
     color: inherit !important;
@@ -660,6 +672,7 @@
     .city-picker-trigger-icon, .home-city-select-icon, .tv-card-venue-line svg,
     .profile-directions-button svg, [data-action-icon="pin"], [data-action-icon="pin"] *
   ) {
+    color-scheme: only light !important;
     color: var(--dancr-color-icon-location) !important;
     stroke: currentColor !important;
     -webkit-text-fill-color: currentColor !important;
