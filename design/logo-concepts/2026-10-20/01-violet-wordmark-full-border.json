@@ -1,0 +1,6 @@
+{
+  "mode": "built-in image_gen",
+  "source": "01-violet-wordmark.png",
+  "output": "01-violet-wordmark-full-border.png",
+  "prompt": "Use case: precise-object-edit. Edit the attached MyDancr logo image. Change only the small missing segment in the upper horizontal violet border near the upper-right corner, directly above the violet r. Fill that gap seamlessly with the same violet line thickness, hue, brightness and soft edge glow as the neighboring border so the rounded rectangular frame becomes completely continuous on all four sides. Preserve the exact mydancr letter shapes, typography, white letters, violet r, all spacing, black backdrop, composition and canvas dimensions. Do not redesign or reposition anything. The only visible change must be the missing top border segment being restored."
+}
