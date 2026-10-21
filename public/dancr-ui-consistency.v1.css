@@ -2643,6 +2643,17 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
   }
 }
 
+/* Venue utility icons share the city pin's violet. Selected/confirmed actions
+ * retain their feedback colors; club-branded views keep their own palette. */
+@layer dancr-follow-controls.venue-icons {
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :is(.venue-card-secondary-actions > :is(.venue-card-page-action, .venue-card-favorite-action, .venue-card-share-action), .venue-card-follow, .follow-venue-btn, .venue-detail-share):not([aria-pressed="true"]):not(.is-active):not(.is-confirmed):not(:disabled):not([aria-disabled="true"]):not(:where(.ir-shell *, .venue-embed-profile-page *))
+    :is(.action-icon, svg, svg *) {
+    color: var(--dancr-color-icon-location) !important;
+    stroke: currentColor !important;
+  }
+}
+
 /* Extend the sharing palette only to MyDancr-owned surfaces.
  * Branded roots and their descendants are excluded, including portal dialogs on
  * Internal / embedded club pages. Opt-in targets preserve gray controls, primary
