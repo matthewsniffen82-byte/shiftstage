@@ -344,10 +344,10 @@ body.dancr-button-system :is(:is(#profileShareChoiceOverlay,#profileQrOverlay),.
 body.dancr-button-system .profile-share-dialog-status { color: #b8b5c6; font-size: 12px; font-weight: 400; }
 body.dancr-button-system .profile-share-dialog-status:empty { display: none; }
 
-/* Discovery controls echo the notification panel's soft lavender icons. */
+/* Discovery location and filter controls share the city pin's violet. */
 body.dancr-button-system #citySelectButton > .city-picker-trigger-icon,
 body.dancr-button-system #homeFilterToggle > .home-filter-toggle-icon {
-  color: var(--dancr-color-icon-accent) !important;
+  color: var(--dancr-color-icon-location) !important;
   stroke: currentColor !important;
   filter: none !important;
   box-shadow: none !important;
@@ -1322,7 +1322,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeFilterToggle > .home-filter-toggle-icon {
   width: 18px !important;
   height: 18px !important;
-  color: var(--dancr-color-icon-accent) !important;
+  color: var(--dancr-color-icon-location) !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectButton > .city-picker-chevron {
   width: 12px !important;
@@ -1783,6 +1783,17 @@ html body.dancr-button-system > .app > header .topbar
   :is(.customer-quick-btn, #accountBtn.account-icon-btn) :is([data-quick-icon], .action-icon, .account-icon, svg) {
   color: inherit !important;
   filter: none !important;
+}
+/* Match the city pin while retaining the brighter open/focus/hover states. */
+html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed) > .app > header .topbar
+  :is(#customerNotificationQuickBtn, #dancerProfileShareQuickBtn, #accountBtn.account-icon-btn):not(:is(.active, .is-open, [aria-expanded="true"], :focus-visible)) {
+  color: var(--dancr-color-icon-location) !important;
+}
+@media (hover: hover) {
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed) > .app > header .topbar
+    :is(#customerNotificationQuickBtn, #dancerProfileShareQuickBtn, #accountBtn.account-icon-btn):hover {
+    color: #f8fafc !important;
+  }
 }
 html body.dancr-button-system > .app > header .topbar
   :is(.customer-quick-btn, #accountBtn.account-icon-btn):is(.active, .is-open, [aria-expanded="true"], :focus-visible) {
@@ -2606,17 +2617,17 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
   }
 }
 @keyframes mydancr-refresh-spin { to { transform: rotate(360deg); } }
-/* Location pins echo the hero beam with a crisp violet stroke. Club-branded
- * cards and Internal / embedded profiles retain their existing icon colors. */
-@layer dancr-follow-controls {
+/* All MyDancr location pins share the city selector's violet. Venue metadata
+ * alone does not brand a public card; Internal and embedded club surfaces keep
+ * their own palettes. The nested layer gives these important icon colors
+ * priority over the general utility colors in the parent control layer. */
+@layer dancr-follow-controls.location-icons {
   html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
     :is(#citySelectButton > .city-picker-trigger-icon, .home-city-select-icon,
-      .venue-dot, .venue-dot svg, .profile-modal-city-icon, .profile-city svg,
-      .profile-venue-pin, [data-action-icon="pin"], [data-action-icon="pin"] svg,
+      .venue-dot[data-action-icon="pin"], [data-action-icon="pin"], [data-action-icon="pin"] *,
+      .profile-modal-city-icon, .profile-city svg, .profile-venue-pin, .profile-directions-button svg,
       .profile-media-venue svg, .home-tv-feed-venue svg, .tv-card-venue-line svg):not(:where(
-        .ir-shell *, .venue-embed-profile-page *,
-        [data-venue-brand*="rhino" i], [data-venue-brand*="rhino" i] *,
-        [data-venue-brand="talk-of-the-town"], [data-venue-brand="talk-of-the-town"] *)) {
+        .ir-shell *, .venue-embed-profile-page *)) {
     color: var(--dancr-color-icon-location) !important;
     stroke: currentColor !important;
     filter: none !important;

@@ -803,7 +803,7 @@ function SavedVenueLogo({ venue }: { venue: SavedVenueSummary }) {
 }
 
 function VenueCardIcon({ icon }: { icon: "club" | "pin" | "clock" | "check" }) {
-  return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon === "club" ? <path d="M5 20V9l7-4 7 4v11M9 20v-6h6v6" /> : icon === "check" ? <path d="m5 12 4.2 4.2L19 6.5" /> : icon === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>}</svg>;
+  return <svg data-action-icon={icon === "pin" ? "pin" : undefined} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{icon === "club" ? <path d="M5 20V9l7-4 7 4v11M9 20v-6h6v6" /> : icon === "check" ? <path d="m5 12 4.2 4.2L19 6.5" /> : icon === "clock" ? <><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5v5l3.2 2" /></> : <><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" /><circle cx="12" cy="10" r="2.5" /></>}</svg>;
 }
 
 
