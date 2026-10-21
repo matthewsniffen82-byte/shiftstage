@@ -2694,20 +2694,31 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     --profile-action-border: var(--dancr-color-control-border) !important;
   }
 
-  html:not(.internal-profile-embed) body.dancr-button-system:not(:has(.ir-shell, .venue-embed-profile-page, :is(#venue-dashboard, .public-profile-shell, .venue-detail):is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), #profileBackdrop.show #profileModal:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"])))
-    :is(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-action-stack .venue-address-directions, .venue-action-stack .follow-venue-btn):not([aria-pressed="true"]):not(.is-active):not(:disabled):not(:where(:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), :is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]) *)) {
-    --venue-utility-face: var(--dancr-color-control-plum) !important;
-    --venue-utility-edge: var(--dancr-color-control-border) !important;
-    --follow-control-face: var(--dancr-color-control-plum) !important;
-    --follow-control-edge: var(--dancr-color-control-border) !important;
-    background: linear-gradient(var(--dancr-color-control-plum), var(--dancr-color-control-plum)) !important;
-    border-color: var(--dancr-color-control-border) !important;
-  }
+  /* Public venue metadata does not apply club branding. Keep Internal and
+   * embedded club views (including their portals) on their existing palette.
+   * This sublayer overrides older important mobile and painted button fills. */
+  @layer venue-fills {
+    html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed):not(:has(.ir-shell, .venue-embed-profile-page))
+      :is(.home-venue-discovery-slide, .venue.venue-card, .venue-detail > .venue-hero):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+      background-color: var(--dancr-color-surface-plum) !important;
+      background-image: none !important;
+    }
 
-  html:not(.internal-profile-embed) body.dancr-button-system:not(:has(.ir-shell, .venue-embed-profile-page, :is(#venue-dashboard, .public-profile-shell, .venue-detail):is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), #profileBackdrop.show #profileModal:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"])))
-    .venue-action-stack .venue-detail-share:not(.is-confirmed):not(:where(:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), :is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]) *)) {
-    --profile-action-background: linear-gradient(var(--dancr-color-control-plum), var(--dancr-color-control-plum)) !important;
-    --profile-action-border: var(--dancr-color-control-border) !important;
+    html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed):not(:has(.ir-shell, .venue-embed-profile-page))
+      :is(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-action-stack .venue-address-directions, .venue-action-stack .follow-venue-btn):not([aria-pressed="true"]):not(.is-active):not(.is-following):not(.is-confirmed):not(:disabled):not([aria-disabled="true"]):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+      --venue-utility-face: var(--dancr-color-control-plum) !important;
+      --venue-utility-edge: var(--dancr-color-control-border) !important;
+      --follow-control-face: var(--dancr-color-control-plum) !important;
+      --follow-control-edge: var(--dancr-color-control-border) !important;
+      background: linear-gradient(var(--dancr-color-control-plum), var(--dancr-color-control-plum)) !important;
+      border-color: var(--dancr-color-control-border) !important;
+    }
+
+    html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed):not(:has(.ir-shell, .venue-embed-profile-page))
+      .venue-action-stack .venue-detail-share:not([aria-pressed="true"]):not(.is-active):not(.is-confirmed):not(:disabled):not([aria-disabled="true"]):not(:where(.ir-shell, .ir-shell *, .venue-embed-profile-page, .venue-embed-profile-page *)) {
+      --profile-action-background: linear-gradient(var(--dancr-color-control-plum), var(--dancr-color-control-plum)) !important;
+      --profile-action-border: var(--dancr-color-control-border) !important;
+    }
   }
 
   html:not(.internal-profile-embed) body.dancr-button-system:not(:has(.ir-shell, .venue-embed-profile-page, :is(#venue-dashboard, .public-profile-shell, .venue-detail):is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"]), #profileBackdrop.show #profileModal:is([data-venue-brand*="rhino" i], [data-venue-brand="talk-of-the-town"])))
