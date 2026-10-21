@@ -120,7 +120,7 @@ export default function GuidesClient() {
       })}
     </div>
     <p className="guides-notice" role="status" aria-live="polite">{notice}</p>
-    {catalog?.documents.includes("operations-manual") ? <section className="guides-reference"><div><h2>Full operations reference</h2><p>All workflows in one 28-page manual for administrators and managers.</p></div><button type="button" disabled={Boolean(busy)} onClick={() => void download("operations-manual")}>{busy === "operations-manual" ? "Preparing PDF…" : "↓ Full manual"}</button></section> : null}
+    {catalog?.documents.includes("operations-manual") ? <section className="guides-reference"><div><h2>Full operations reference</h2><p>Club operations in one 27-page manual for club administrators and managers.</p></div><button type="button" disabled={Boolean(busy)} onClick={() => void download("operations-manual")}>{busy === "operations-manual" ? "Preparing PDF…" : "↓ Full manual"}</button></section> : null}
     <section className="guides-help" aria-labelledby="guides-help-title"><h2 id="guides-help-title">Know who to contact</h2><dl>
       <div><dt>Club access</dt><dd>Your club owner manages team invitations and access.</dd></div>
       <div><dt>Pending or rejected uploads</dt><dd>Your club’s assigned media reviewer explains the decision and required correction.</dd></div>
