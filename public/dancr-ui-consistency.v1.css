@@ -2453,6 +2453,14 @@ html body.dancr-button-system > .app main.stack > section.stack
     background: linear-gradient(var(--follow-control-face), var(--follow-control-face)) !important;
     box-shadow: none !important; pointer-events: none; z-index: -1;
   }
+  /* Match Follow's full 1px violet outline without changing Share's face or size.
+   * Venue affiliation does not change public MyDancr styling; branded views keep theirs. */
+  html:not(.internal-profile-embed) body.dancr-button-system:not(.venue-grid-embed)
+    :is(#profileBackdrop #profileModal, .public-profile-shell) .profile-actions-compact
+    :is(.profile-share-action, .profile-share-trigger, .profile-action-preview-share):not([aria-pressed="true"]):not(.is-confirmed):not(:disabled):not([aria-disabled="true"]):not(:where(.ir-shell *, .venue-embed-profile-page *))::before {
+    border: 1px solid var(--dancr-color-control-border) !important;
+    box-shadow: none !important;
+  }
   /* Photo/video overlays keep the same translucent circle as their other actions. */
   body.dancr-button-system .profile-media-card-feed .profile-media-control-follow,
   body.dancr-button-system #results.home-tv-feed .home-tv-feed-follow-action {
