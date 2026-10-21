@@ -544,8 +544,8 @@
   html body.dancr-button-system :where(#distanceSelectDialog .distance-picker-options input:focus-visible + span) {
     outline-color: var(--dancr-color-brand-primary) !important;
   }
-  /* Neutral boxes keep the authored charcoal even in mobile Auto Dark. Paint
-     their visible faces as well as the backing; Working Now is excluded. */
+  /* Neutral boxes use the page's dark color scheme for their visible faces
+     and backing. Working Now keeps its existing paint. */
   html body.dancr-button-system :where(
     #citySelectButton, #homeFilterToggle, #distanceSelectButton, #venueSelectButton,
     #locationBtn, #homeFilterReset, .city-picker-option,
@@ -553,7 +553,7 @@
     #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn,
     .mydancr-refresh-button
   ) {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
   }
   html body.dancr-button-system :where(
     #citySelectButton, #homeFilterToggle, #distanceSelectButton, #venueSelectButton,
@@ -569,7 +569,7 @@
     .mydancr-refresh-button
   )::before,
   html body.dancr-button-system .dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="false"]::before {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     background: var(--dancr-control-secondary-background) !important;
   }
   /* The visible mobile face is a separate layer. Paint it directly so it
@@ -590,13 +590,13 @@
   }
   /* Not Working keeps its gray fill with a violet border when selected. */
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="true"]) {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     --discovery-control-face: var(--dancr-color-control-secondary) !important;
     --discovery-control-edge: var(--dancr-color-brand-primary) !important;
     color: var(--dancr-color-text-primary) !important;
   }
   html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="true"])::before {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     background: var(--dancr-control-secondary-background) !important;
   }
   /* Restore the October 20 Working Now colors without recoloring other live states. */
@@ -634,7 +634,7 @@
     #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn,
     #dancerProfileShareQuickBtn, #customerDealQuickBtn
   ):where(.active, .is-open, [aria-expanded="true"]) {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     --discovery-header-face: var(--dancr-color-control-secondary) !important;
     --discovery-header-edge: var(--dancr-color-brand-primary) !important;
     border-color: var(--dancr-color-brand-primary) !important;
@@ -662,7 +662,7 @@
     filter: none !important;
   }
   html body.dancr-button-system :where(.utility-menu-panel, .customer-quick-panel) {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     background: var(--dancr-control-secondary-background) !important;
     border-color: var(--dancr-color-border) !important;
     color: var(--dancr-color-text-primary) !important;
@@ -682,7 +682,7 @@
     .customer-quick-panel .customer-quick-clear,
     .customer-quick-panel .customer-notification-close
   ) {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     --notification-control-face: var(--dancr-color-surface) !important;
     --notification-control-edge: var(--dancr-color-border) !important;
     background: var(--dancr-color-surface) linear-gradient(var(--dancr-color-surface), var(--dancr-color-surface)) !important;
@@ -750,13 +750,13 @@
      compact Follow/Share face, with the same charcoal as discovery controls. */
   html body.dancr-button-system
     :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-action-stack :is(.follow-venue-btn, .venue-detail-share, .venue-address-directions)):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"])) {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     background: var(--dancr-control-secondary-background) !important;
     box-shadow: none !important;
   }
   html body.dancr-button-system
     :where(.venue-card-secondary-actions > .venue-card-secondary-action, .venue-card-follow, .venue-action-stack :is(.follow-venue-btn, .venue-detail-share, .venue-address-directions)):not(:where([aria-pressed="true"], .is-active, .is-confirmed, :disabled, [aria-disabled="true"]))::before {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     background: var(--dancr-control-secondary-background) !important;
     box-shadow: none !important;
   }
@@ -881,7 +881,7 @@
     .venue-card-secondary-actions > .venue-card-secondary-action,
     .venue-card-follow, .follow-venue-btn, .venue-detail-share, .venue-address-directions
   ):not(:where([aria-pressed="true"], .is-active, .is-following, .is-going, .is-confirmed, [data-internal-table-request], :disabled, [aria-disabled="true"])) {
-    color-scheme: only light !important;
+    color-scheme: only dark !important;
     --follow-control-face: var(--dancr-color-control-secondary) !important;
     --profile-utility-background: var(--dancr-control-secondary-background) !important;
     --profile-action-background: var(--dancr-control-secondary-background) !important;
