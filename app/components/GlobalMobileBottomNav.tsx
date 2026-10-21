@@ -545,7 +545,7 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-active: #f5f3ff;
             --mobile-nav-active-violet-core: rgba(124, 58, 237, 0.96);
             --mobile-nav-active-violet-glow: rgba(124, 58, 237, 0.58);
-            --mobile-nav-active-violet-depth: rgba(49, 46, 129, 0.72);
+            --mobile-nav-active-violet-depth: rgba(124, 58, 237, 0.72);
             width: 100%;
             height: 65px;
             min-width: 0;
@@ -625,15 +625,15 @@ export function GlobalMobileBottomNav() {
             border-radius: 50%;
             background: radial-gradient(
               circle,
-              rgba(245, 243, 255, 0.1) 0%,
+              rgba(124, 58, 237, 0.1) 0%,
               rgba(124, 58, 237, 0.34) 30%,
               rgba(124, 58, 237, 0.18) 56%,
-              rgba(49, 46, 129, 0.14) 70%,
+              rgba(124, 58, 237, 0.14) 70%,
               transparent 82%
             );
             box-shadow:
               0 0 8px rgba(124, 58, 237, 0.18),
-              0 0 16px rgba(49, 46, 129, 0.16);
+              0 0 16px rgba(124, 58, 237, 0.16);
             filter: blur(1.5px);
           }
 
