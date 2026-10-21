@@ -98,11 +98,11 @@ test('all dashboard selections and painted mobile control faces use the shared t
   }
 });
 
-test('Working Now keeps its original bright green on a dark face, the floating dock keeps its own paint, and the account shortcut stays charcoal', () => {
+test('Working Now uses translucent green, the floating dock keeps its own paint, and the account shortcut stays charcoal', () => {
   const working = rules.find(rule => rule.selector.includes('.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]'));
   assert.ok(working.selector.includes(':not(.is-empty)'));
   assert.ok(working.nodes.some(decl => decl.prop === '--dancr-color-live' && decl.value === '#4dec9d'));
-  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-face' && decl.value === '#27272f'));
+  assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-face' && decl.value === 'rgba(77, 236, 157, .16)'));
   assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-edge' && decl.value === '#48755c'));
   assert.ok(working.nodes.some(decl => decl.prop === 'color' && decl.value === 'var(--dancr-color-live)'));
   const face = rules.find(rule => rule.selector === 'html body.dancr-button-system :where(.dancer-directory-filter)::before');
