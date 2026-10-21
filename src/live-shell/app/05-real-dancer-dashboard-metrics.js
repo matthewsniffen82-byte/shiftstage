@@ -721,28 +721,44 @@
       const identity = JSON.stringify(headers);
       const cacheKey = JSON.stringify([city, requestedScope.key, identity]);
       if (options.force && options.cacheBust !== false) discoveryScopeCache.clear();
+      const inFlight = market.discoveryRequest;
+      if (inFlight && inFlight.cacheKey !== cacheKey) {
+        // A new tab must not wait for the old tab's response or timeout.
+        inFlight.canceled = true;
+        inFlight.controller?.abort();
+        liveMarketRefreshes.delete(city);
+        liveMarketPendingRefreshes.delete(city);
+        if (liveMarketState[city] === "loading") liveMarketState[city] = null;
+        delete market.requestScopeKey;
+        delete market.directoryFilterPending;
+      }
       const cached = discoveryScopeCache.get(cacheKey);
-      if (!options.force && !options.more && cached?.expiresAt > Date.now()
+      if (!options.force && !options.more && cached?.page && cached.expiresAt > Date.now()
         && market.pagination?.scopeKey !== requestedScope.key
         && liveMarketState[city] !== "loading" && !liveMarketRefreshes.has(city)) {
         market.pagination = { ...cached.page, loading: false, error: false };
+        delete market.directoryFilterPending;
         applyLiveMarket(city, cached.page.dancers, cached.page.tonightDancers, cached.page.venues);
         liveMarketState[city] = "ready";
         if (citySelect.value === city) render();
         // Reuse only a recent matching scope, then recheck visibility and presence.
-        return loadLiveDiscovery(city, { force: true, cacheBust: false, background: true });
+        return loadLiveDiscovery(city, { more: Boolean(cached.page.nextCursor), force: !cached.page.nextCursor, cacheBust: false, background: true });
       }
       const previous = market.pagination;
       const scopeChanged = Boolean(previous?.scopeKey && previous.scopeKey !== requestedScope.key);
       const more = Boolean(options.more && !scopeChanged);
       const force = Boolean(options.force || scopeChanged);
-      const cacheBust = force && options.cacheBust !== false;
+      const cacheBust = Boolean(options.force && options.cacheBust !== false);
       // A club can reuse its visible cards from the city directory while its
       // smaller, club-only roster is fetched. Never blank them on entry.
       const keepVenueResults = activeTab === "venues" && selectedVenueName && city === citySelect.value;
+      const keepDirectoryResults = activeTab === "dancers" && city === citySelect.value
+        && ["now", "not_now"].includes(previous?.filter)
+        && previous.scopeKey === JSON.stringify([previous.filter, requestedScope.venue])
+        && previous.identity === identity;
       const hasLoadedResults = liveMarketState[city] === "ready" || Boolean(previous?.pageCount)
         || Boolean(market.dancers?.length || market.venues?.length);
-      const keepCurrentResults = hasLoadedResults && (!scopeChanged || keepVenueResults);
+      const keepCurrentResults = hasLoadedResults && (!scopeChanged || keepVenueResults || keepDirectoryResults);
       const background = Boolean(options.background && keepCurrentResults);
       if (more && !previous?.nextCursor) return;
       if (liveMarketState[city] === "loading" || liveMarketRefreshes.has(city)) {
@@ -750,13 +766,16 @@
         return;
       }
       if (!more && !force && keepCurrentResults && liveMarketState[city] === "ready") return;
+      const request = { cacheKey, controller: typeof AbortController === "function" ? new AbortController() : null, canceled: false };
+      market.discoveryRequest = request;
       market.requestScopeKey = requestedScope.key;
+      market.directoryFilterPending = Boolean(scopeChanged && keepDirectoryResults);
       if (keepCurrentResults) {
         liveMarketState[city] = "ready";
         liveMarketRefreshes.add(city);
       }
       else liveMarketState[city] = "loading";
-      if (scopeChanged && !keepVenueResults) market.dancers = [];
+      if (scopeChanged && !keepVenueResults && !keepDirectoryResults) market.dancers = [];
       if (previous) { previous.loading = more; previous.error = false; }
       if (scopeChanged && citySelect.value === city) render();
       if (more && citySelect.value === city) render();
@@ -773,7 +792,8 @@
       let savedRequested = false;
       const publishResults = (error = false) => {
         const loading = Boolean(cursor && !error);
-        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, dancers, tonightDancers, venues, statusCounts, nextCursor: cursor, pageCount, loading, error };
+        market.pagination = { scopeKey: requestedScope.key, filter: requestedScope.filter, identity, dancers, tonightDancers, venues, statusCounts, nextCursor: cursor, pageCount, loading, error };
+        delete market.directoryFilterPending;
         if (loading) liveMarketRefreshes.add(city);
         applyLiveMarket(city, dancers, tonightDancers, venues);
         // Initial club links may resolve only once venue metadata arrives.
@@ -788,17 +808,7 @@
           savedRequested = true;
           void loadLiveCustomerSaved();
         }
-        if (!cursor && !error) {
-          const now = Date.now();
-          discoveryScopeCache.forEach((entry, key) => {
-            if (entry.expiresAt <= now) discoveryScopeCache.delete(key);
-          });
-          discoveryScopeCache.delete(cacheKey);
-          while (discoveryScopeCache.size >= DISCOVERY_SCOPE_CACHE_LIMIT) {
-            discoveryScopeCache.delete(discoveryScopeCache.keys().next().value);
-          }
-          discoveryScopeCache.set(cacheKey, { page: market.pagination, expiresAt: now + DISCOVERY_SCOPE_CACHE_TTL_MS });
-        }
+        if (!error) cacheDiscoveryScope(cacheKey, { page: market.pagination });
       };
       try {
         do {
@@ -809,11 +819,15 @@
           if (cursor) params.set("cursor", cursor);
           if (cacheBust) params.set("refresh", String(Date.now()));
           const query = params.toString();
-          const discovery = await fetchJson(`/api/public/discovery?${query}`, {
+          const prefetched = !cursor && !cacheBust && cached?.request && cached.expiresAt > Date.now() ? await cached.request : null;
+          if (request.canceled) return;
+          const discovery = prefetched || await fetchJson(`/api/public/discovery?${query}`, {
             headers, cache: "no-store",
             timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,
-            retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
+            retries: PUBLIC_DISCOVERY_REQUEST_RETRIES,
+            signal: request.controller?.signal
           });
+          if (request.canceled) return;
           if (discovery.ok === false || !Array.isArray(discovery.dancers)) throw new Error("Invalid discovery page.");
           if (discovery.nextCursor != null && (typeof discovery.nextCursor !== "string" || !discovery.nextCursor || discovery.nextCursor === cursor)) {
             throw new Error("Invalid discovery continuation.");
@@ -833,7 +847,7 @@
           pageCount += 1;
           // First visits can paint cards and begin image loading immediately.
           // Refreshes keep the complete existing list until its replacement is ready.
-          if (cursor && !keepCurrentResults) publishResults();
+          if (cursor && (!keepCurrentResults || scopeChanged && keepDirectoryResults)) publishResults();
           // A shared club link becomes resolvable as soon as venue metadata
           // arrives. Switch to that roster instead of downloading the city.
           if (citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) {
@@ -844,6 +858,7 @@
         publishResults();
         return true;
       } catch (error) {
+        if (request.canceled) return;
         if (identity !== JSON.stringify(discoveryRequestHeaders())
           || citySelect.value === city && requestedScope.key !== discoveryRequestScope(city).key) {
           liveMarketPendingRefreshes.add(city);
@@ -853,7 +868,7 @@
         if (previous) { previous.loading = false; previous.error = more; }
         // Keep successful batches and a retry cursor if a later request fails.
         // A background refresh still replaces the existing directory atomically.
-        if (pageCount > startingPageCount && (!keepCurrentResults || more)) {
+        if (pageCount > startingPageCount && (!keepCurrentResults || more || scopeChanged && keepDirectoryResults)) {
           publishResults(true);
           console.warn("Some live discovery pages could not load", error);
           return;
@@ -861,6 +876,15 @@
         if (keepCurrentResults) {
           liveMarketState[city] = "ready";
           console.warn("Live discovery refresh failed; keeping the current public results", error);
+          if (market.directoryFilterPending) {
+            delete market.directoryFilterPending;
+            if (citySelect.value === city && activeTab === "dancers") {
+              dancerDirectoryFilter = previous.filter;
+              syncHomeDestinationLocation("dancers");
+              showToast("Could not switch lists. Please try again.");
+              render();
+            }
+          }
           if (more && citySelect.value === city) render();
           return;
         }
@@ -869,18 +893,67 @@
         console.warn("Live discovery unavailable", error);
         if (citySelect.value === city) render();
       } finally {
-        if (previous) previous.loading = false;
-        liveMarketRefreshes.delete(city);
-        delete market.requestScopeKey;
-        if (liveMarketPendingRefreshes.delete(city)) {
-          if (liveMarketState[city] === "loading") liveMarketState[city] = null;
-          void loadLiveDiscovery(city, { force: true, cacheBust: true, background: true });
-        } else if (citySelect.value === city && activeTab === "venues" && selectedVenueName) {
-          // Settle a failed/partial roster after the in-flight flag is cleared.
-          render();
+        if (market.discoveryRequest === request) {
+          if (previous) previous.loading = false;
+          liveMarketRefreshes.delete(city);
+          delete market.requestScopeKey;
+          delete market.discoveryRequest;
+          if (liveMarketPendingRefreshes.delete(city)) {
+            if (liveMarketState[city] === "loading") liveMarketState[city] = null;
+            void loadLiveDiscovery(city, { force: true, cacheBust: true, background: true });
+          } else if (citySelect.value === city && activeTab === "venues" && selectedVenueName) {
+            // Settle a failed/partial roster after the in-flight flag is cleared.
+            render();
+          }
         }
       }
       return false;
+    }
+
+    function cacheDiscoveryScope(cacheKey, entry) {
+      const now = Date.now();
+      discoveryScopeCache.forEach((cached, key) => {
+        if (cached.expiresAt <= now) discoveryScopeCache.delete(key);
+      });
+      discoveryScopeCache.delete(cacheKey);
+      while (discoveryScopeCache.size >= DISCOVERY_SCOPE_CACHE_LIMIT) {
+        discoveryScopeCache.delete(discoveryScopeCache.keys().next().value);
+      }
+      entry.expiresAt = now + DISCOVERY_SCOPE_CACHE_TTL_MS;
+      discoveryScopeCache.set(cacheKey, entry);
+    }
+
+    function prefetchDancerDirectory(city) {
+      const market = discoveryMarket(city);
+      const scope = discoveryRequestScope(city);
+      if (activeTab !== "dancers" || city !== citySelect.value || scope.venue
+        || !["now", "not_now"].includes(scope.filter) || market?.pagination?.scopeKey !== scope.key) return;
+      const filter = scope.filter === "now" ? "not_now" : "now";
+      const scopeKey = JSON.stringify([filter, ""]);
+      const headers = discoveryRequestHeaders();
+      const identity = JSON.stringify(headers);
+      const cacheKey = JSON.stringify([city, scopeKey, identity]);
+      if (discoveryScopeCache.get(cacheKey)?.expiresAt > Date.now()) return;
+      const entry = {};
+      cacheDiscoveryScope(cacheKey, entry);
+      // Warm only the opening batch. The selected tab owns all continuation work.
+      entry.request = fetchJson(`/api/public/discovery?${new URLSearchParams({ city, filter })}`, {
+        headers, cache: "no-store", timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS
+      }).then(discovery => {
+        if (discoveryScopeCache.get(cacheKey) !== entry || identity !== JSON.stringify(discoveryRequestHeaders())) return null;
+        if (discovery.ok === false || !Array.isArray(discovery.dancers)
+          || discovery.nextCursor != null && (typeof discovery.nextCursor !== "string" || !discovery.nextCursor)) throw new Error("Invalid discovery page.");
+        const statusCounts = ["now", "not_now"].every(key => Number.isSafeInteger(discovery.statusCounts?.[key]) && discovery.statusCounts[key] >= 0)
+          ? { now: discovery.statusCounts.now, not_now: discovery.statusCounts.not_now } : null;
+        cacheDiscoveryScope(cacheKey, { page: {
+          scopeKey, filter, identity, dancers: discovery.dancers, tonightDancers: discovery.tonightDancers || [],
+          venues: discovery.venues || [], statusCounts, nextCursor: discovery.nextCursor || null, pageCount: 1, loading: false, error: false
+        } });
+        return discovery;
+      }).catch(() => {
+        if (discoveryScopeCache.get(cacheKey) === entry) discoveryScopeCache.delete(cacheKey);
+        return null;
+      });
     }
 
     function discoveryRequestScope(city) {

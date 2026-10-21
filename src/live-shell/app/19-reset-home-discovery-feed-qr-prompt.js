@@ -466,6 +466,7 @@
     }
 
     function renderHomeDancerGrid(city, profiles) {
+      prefetchDancerDirectory(city);
       const sections = dancerDirectorySections(profiles, city);
       const visibleCount = sections.reduce((total, section) => total + section.profiles.length, 0);
       const venueFilter = selectedVenueFilter();

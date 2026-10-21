@@ -20,7 +20,7 @@ test("populated Dancers results render without the removed list-limit state", ()
 function directoryFixture(profiles) {
   const classes = { add() {}, remove() {}, toggle() {} };
   const element = () => ({
-    classList: classes, textContent: "", setAttribute() {},
+    classList: classes, textContent: "", attributes: {}, setAttribute(name, value) { this.attributes[name] = value; },
     closest: () => null, replaceChildren() {},
   });
   let markup = "";
@@ -46,6 +46,7 @@ function directoryFixture(profiles) {
     window: { requestAnimationFrame() {} },
     homeTvLandingPreload: { sync() {} },
     revealDancerGridRows() {},
+    prefetchDancerDirectory() {},
     observeDiscoveryGrid() {},
     renderStableMediaMarkup: (container, content) => { container.innerHTML = content; },
     getItems: () => state.profiles,
@@ -67,6 +68,7 @@ function directoryFixture(profiles) {
   for (const name of [
     "syncDiscoveryCityScope", "syncCityPickerSelection", "populateVenueSelect",
     "updateTabCounts", "updateHomeLiveSummary", "syncDiscoveryRefreshButtons", "deactivateHomeTvFeed", "deactivateHomeDiscoveryFeed",
+    "queueHomeTvPageScrollIndicatorSync",
   ]) state[name] = () => {};
   const functions = [
     "dancerGridPosition", "dancerDirectoryGroups", "dancerDirectorySections", "dancerDirectoryFilterMarkup",
@@ -191,6 +193,30 @@ test("ending a shift moves a dancer to the other tab and updates both counts", (
   fixture.state.render();
   assert.equal(fixture.state.headerCount, "1 dancer");
   assert.match(fixture.markup, /<article data-profile="Checked-in dancer"/);
+});
+
+test("a pending status switch preserves cards, tabs and counts until the replacement list is ready", () => {
+  const fixture = directoryFixture([{ name: "Working dancer", now: true }]);
+  fixture.state.render();
+  const original = fixture.markup;
+  const count = fixture.state.headerCount;
+  const writes = fixture.writes;
+  const market = { directoryFilterPending: true };
+  fixture.state.discoveryMarket = () => market;
+  fixture.state.dancerDirectoryFilter = "not_now";
+  fixture.state.render();
+  assert.equal(fixture.markup, original);
+  assert.equal(fixture.writes, writes);
+  assert.equal(fixture.state.headerCount, count);
+  assert.equal(fixture.state.results.attributes["aria-busy"], "true");
+  assert.doesNotMatch(fixture.markup, /Loading dancers|No dancers are off shift/);
+  delete market.directoryFilterPending;
+  fixture.state.profiles = [{ name: "Off-shift dancer", now: false }];
+  fixture.state.render();
+  assert.match(fixture.markup, /data-profile="Off-shift dancer"/);
+  assert.doesNotMatch(fixture.markup, /data-profile="Working dancer"/);
+  assert.equal(fixture.state.results.attributes["aria-busy"], "false");
+  assert.match(fixture.markup, /data-dancer-directory-filter="not_now"[^>]*aria-selected="true"/);
 });
 
 test("pins Star first within the selected status while preserving all other dancer ordering", () => {

@@ -17,6 +17,7 @@ function context(overrides = {}) {
     PUBLIC_DISCOVERY_REQUEST_RETRIES: 1,
     discoveryScopeCache: new Map(), DISCOVERY_SCOPE_CACHE_TTL_MS: 20000, DISCOVERY_SCOPE_CACHE_LIMIT: 6,
     userLocationOutsideMarkets: false,
+    syncHomeDestinationLocation() {}, showToast() {},
     window: { setTimeout, clearTimeout },
     ...overrides,
   });
@@ -435,7 +436,10 @@ test("changing directory status or club starts from that filter's globally ranke
   request = ctx.loadLiveDiscovery("Vegas");
   assert.match(requests[1].url, /filter=not_now/);
   assert.doesNotMatch(requests[1].url, /cursor=/);
-  assert.equal(ctx.liveMarketState.Vegas, "loading");
+  assert.equal(ctx.liveMarketState.Vegas, "ready");
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "working");
+  assert.equal(ctx.markets.Vegas.directoryFilterPending, true);
+  assert.doesNotMatch(requests[1].url, /refresh=/);
   requests[1].resolve({ dancers: [{ id: "off" }], nextCursor: null }); await request;
   assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["off"]);
   ctx.selectedVenueFilter = () => "Club";
@@ -453,17 +457,151 @@ test("a filter change while a page is pending discards the stale response and fe
     const request = ctx.loadLiveDiscovery("Vegas");
     requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: "next" }); await nextPage();
     ctx.dancerDirectoryFilter = "not_now";
-    await ctx.loadLiveDiscovery("Vegas");
+    const nextRequest = ctx.loadLiveDiscovery("Vegas");
+    assert.equal(requests.length, 3, "the new filter starts before the previous response settles");
+    assert.equal(requests[1].options.signal.aborted, true);
     if (failed) requests[1].reject(new Error("offline"));
     else requests[1].resolve({ dancers: [{ id: "stale" }], nextCursor: null });
     await request;
     assert.equal(requests.length, 3);
-    assert.equal(ctx.markets.Vegas.dancers.length, 0, "even a failed continuation must not publish the previous filter's first page");
+    assert.equal(ctx.markets.Vegas.dancers[0].id, "working", "the displayed list remains intact while the new filter loads");
+    assert.equal(ctx.markets.Vegas.directoryFilterPending, true);
     assert.match(requests[2].url, /filter=not_now/);
     requests[2].resolve({ dancers: [{ id: "fresh" }], nextCursor: null });
-    await nextPage();
+    await nextRequest;
     assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, r => r.id), ["fresh"]);
   }
+});
+
+for (const filter of ["now", "not_now"]) test(`preloading ${filter} warms one batch and immediately resumes its continuation when selected`, async () => {
+  const { ctx, requests } = pagedDiscoveryFixture();
+  ctx.activeTab = "dancers";
+  ctx.dancerDirectoryFilter = filter === "now" ? "not_now" : "now";
+  const initial = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "original" }], nextCursor: null }); await initial;
+  ctx.prefetchDancerDirectory("Vegas");
+  ctx.prefetchDancerDirectory("Vegas");
+  assert.equal(requests.length, 2, "duplicate renders reuse the same warmup");
+  assert.match(requests[1].url, new RegExp(`filter=${filter}`));
+  requests[1].resolve({ dancers: [{ id: "warm" }], statusCounts: { now: 50, not_now: 31 }, nextCursor: "rest" }); await nextPage();
+  assert.equal(requests.length, 2, "the unselected list does not download continuation pages");
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "original", "prefetch cannot replace the visible list");
+  ctx.dancerDirectoryFilter = filter;
+  const selected = ctx.loadLiveDiscovery("Vegas");
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "warm", "the first cards switch synchronously from cache");
+  assert.equal(ctx.liveMarketState.Vegas, "ready");
+  assert.match(requests[2].url, /cursor=rest/);
+  assert.doesNotMatch(requests[2].url, /refresh=/);
+  requests[2].resolve({ dancers: [{ id: "rest" }], nextCursor: null }); await selected;
+  assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, row => row.id), ["warm", "rest"]);
+});
+
+test("selecting a warming tab shares its request and publishes its first batch immediately", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+  const initial = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: null }); await initial;
+  ctx.prefetchDancerDirectory("Vegas");
+  ctx.dancerDirectoryFilter = "not_now";
+  const selected = ctx.loadLiveDiscovery("Vegas");
+  assert.equal(requests.length, 2);
+  assert.equal(ctx.markets.Vegas.directoryFilterPending, true);
+  requests[1].resolve({ dancers: [{ id: "off" }], nextCursor: "next" }); await nextPage();
+  assert.equal(requests.length, 3);
+  assert.match(requests[2].url, /cursor=next/);
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "off");
+  assert.equal(ctx.markets.Vegas.directoryFilterPending, undefined);
+  requests[2].resolve({ dancers: [{ id: "off-next" }], nextCursor: null }); await selected;
+});
+
+test("rapidly switching back restores the previous tab while the canceled response cannot repaint it", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+  const initial = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: null }); await initial;
+  ctx.dancerDirectoryFilter = "not_now";
+  const off = ctx.loadLiveDiscovery("Vegas");
+  ctx.dancerDirectoryFilter = "now";
+  await ctx.loadLiveDiscovery("Vegas");
+  assert.equal(requests[1].options.signal.aborted, true);
+  assert.equal(requests.length, 2, "returning to the displayed list requires no new request");
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "working");
+  assert.equal(ctx.markets.Vegas.directoryFilterPending, undefined);
+  requests[1].resolve({ dancers: [{ id: "late-off" }], nextCursor: null }); await off;
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "working");
+  assert.equal(ctx.liveMarketRefreshes.size, 0);
+});
+
+test("a failed switch keeps the original list and restores its selected tab with retry feedback", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+  const notices = []; ctx.showToast = message => notices.push(message);
+  const initial = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: null }); await initial;
+  ctx.dancerDirectoryFilter = "not_now";
+  const selected = ctx.loadLiveDiscovery("Vegas");
+  requests[1].reject(new Error("offline")); await selected;
+  assert.equal(ctx.dancerDirectoryFilter, "now");
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "working");
+  assert.equal(ctx.markets.Vegas.directoryFilterPending, undefined);
+  assert.match(notices[0], /try again/);
+});
+
+test("explicit refresh invalidates pending prefetches and never restores their stale rows", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+  const initial = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: null }); await initial;
+  ctx.prefetchDancerDirectory("Vegas");
+  const refreshed = ctx.loadLiveDiscovery("Vegas", { force: true });
+  requests[2].resolve({ dancers: [{ id: "current" }], nextCursor: null }); await refreshed;
+  requests[1].resolve({ dancers: [{ id: "stale-off" }], nextCursor: null }); await nextPage();
+  ctx.dancerDirectoryFilter = "not_now";
+  const selected = ctx.loadLiveDiscovery("Vegas");
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "current");
+  assert.equal(requests.length, 4);
+  requests[3].resolve({ dancers: [], nextCursor: null }); await selected;
+  assert.equal(ctx.markets.Vegas.dancers.length, 0, "an actual empty response replaces the previous cards");
+  assert.equal(ctx.markets.Vegas.directoryFilterPending, undefined);
+});
+
+test("a failed warmup falls back to the selected tab's normal request", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+  const initial = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: null }); await initial;
+  ctx.prefetchDancerDirectory("Vegas");
+  ctx.dancerDirectoryFilter = "not_now";
+  const selected = ctx.loadLiveDiscovery("Vegas");
+  requests[1].reject(new Error("warmup failed")); await nextPage();
+  assert.equal(requests.length, 3);
+  assert.match(requests[2].url, /filter=not_now/);
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "working");
+  requests[2].resolve({ dancers: [{ id: "off" }], nextCursor: null }); await selected;
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "off");
+});
+
+test("an account change prevents a pending warmup from entering the cache", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+  const initial = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: null }); await initial;
+  ctx.prefetchDancerDirectory("Vegas");
+  ctx.discoveryRequestHeaders = () => ({ "x-discovery-session": "different-account" });
+  requests[1].resolve({ dancers: [{ id: "previous-account" }], nextCursor: null }); await nextPage();
+  assert.ok([...ctx.discoveryScopeCache.values()].every(entry => !entry.page?.dancers.some(row => row.id === "previous-account")));
+  ctx.dancerDirectoryFilter = "not_now";
+  const selected = ctx.loadLiveDiscovery("Vegas");
+  assert.equal(ctx.markets.Vegas.dancers.length, 0);
+  requests[2].resolve({ dancers: [{ id: "current-account" }], nextCursor: null }); await selected;
+  assert.equal(ctx.markets.Vegas.dancers[0].id, "current-account");
+});
+
+test("a failed switch in the previous city cannot change the newly selected city's tab", async () => {
+  const { ctx, requests } = pagedDiscoveryFixture(); ctx.activeTab = "dancers";
+  const notices = []; ctx.showToast = message => notices.push(message);
+  const initial = ctx.loadLiveDiscovery("Vegas");
+  requests[0].resolve({ dancers: [{ id: "working" }], nextCursor: null }); await initial;
+  ctx.dancerDirectoryFilter = "not_now";
+  const selected = ctx.loadLiveDiscovery("Vegas");
+  ctx.citySelect.value = "Miami";
+  requests[1].reject(new Error("offline")); await selected;
+  assert.equal(ctx.dancerDirectoryFilter, "not_now");
+  assert.equal(notices.length, 0);
 });
 
 test("a failed later refresh page preserves the previous complete directory and its count", async () => {

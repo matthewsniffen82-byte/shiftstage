@@ -9,7 +9,7 @@ const sectionsSource = html.match(/function dancerDirectorySections\(profiles, c
 const tabCountsSource = html.match(/function updateTabCounts\(city\) \{[\s\S]*?(?=\n    function updateHomeLiveSummary)/)[0];
 const discoveryCountSource = html.match(/function discoveryDancerCount\(city, tab = "dancers"\) \{[\s\S]*?(?=\n    function discoveryPaginationMarkup)/)[0];
 const noop = () => {};
-const node = () => ({ classList: { toggle: noop, remove: noop }, replaceChildren: noop, closest: () => node() });
+const node = () => ({ classList: { toggle: noop, remove: noop }, setAttribute: noop, replaceChildren: noop, closest: () => node() });
 
 function harness({ working = 7, off = 7, venue = "all", loading = false, error = false, more = false, statusCounts = null } = {}) {
   const items = Array.from({ length: working + off }, (_, index) => ({ working: index < working }));
@@ -22,7 +22,8 @@ function harness({ working = 7, off = 7, venue = "all", loading = false, error =
     homeTvLaunchScope: "Las Vegas:", homeDiscoveryFeedOpen: false,
     liveMarketState: { "Las Vegas": error ? "error" : "ready" },
     homeTvLandingPreload: { sync: noop }, results: node(), tabTitle: node(), viewAllBtn: node(),
-    document: { body: node(), querySelectorAll: selector => selector === ".tab[data-tab]" ? [dancerTab] : [], createElement: node, createTextNode: value => value },
+    document: { body: node(), getElementById: () => null, querySelectorAll: selector => selector === ".tab[data-tab]" ? [dancerTab] : [], createElement: node, createTextNode: value => value },
+    queueHomeTvPageScrollIndicatorSync: noop, syncDiscoveryRefreshButtons: noop,
     syncDiscoveryCityScope: noop, syncCityPickerSelection: noop, populateVenueSelect: noop,
     syncHomeDestinationLocation: noop, homeNavigationIconMarkup: () => "", updateHomeLiveSummary: noop,
     deactivateHomeTvFeed: noop, deactivateHomeDiscoveryFeed: noop,

@@ -12,6 +12,13 @@
         dancerDirectoryFilter = "now";
         syncHomeDestinationLocation("dancers");
       }
+      const switchingDirectory = activeTab === "dancers" && discoveryMarket(city)?.directoryFilterPending
+        && results.querySelector(":scope > .dancer-directory-filters");
+      results.setAttribute("aria-busy", switchingDirectory ? "true" : "false");
+      // Keep the displayed tab, cards and counts together until the next list
+      // can replace them. A status switch must never replace the whole grid
+      // with the initial page-loading screen or a false empty state.
+      if (switchingDirectory) return;
       const tvVenueFilter = selectedHomeTvVenueFilter(city);
       const tvLaunchScope = `${city}:${tvVenueFilter?.id || ""}`;
       if (homeTvLaunchScope !== tvLaunchScope) {

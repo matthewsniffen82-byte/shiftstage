@@ -12,7 +12,7 @@ test("public discovery cannot remain in a permanent loading state", () => {
   assert.match(homeSource, /const headers = discoveryRequestHeaders\(\)/);
   assert.match(
     homeSource,
-    /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{\s*headers, cache: "no-store",\s*timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,\s*retries: PUBLIC_DISCOVERY_REQUEST_RETRIES\s*\}\)/,
+    /fetchJson\(`\/api\/public\/discovery\?\$\{query\}`, \{\s*headers, cache: "no-store",\s*timeoutMs: LIVE_JSON_REQUEST_TIMEOUT_MS,\s*retries: PUBLIC_DISCOVERY_REQUEST_RETRIES,\s*signal: request\.controller\?\.signal\s*\}\)/,
   );
   assert.match(homeSource, /liveMarketState\[city\] = hasCurrentResults \? "ready" : "error"/);
 });
