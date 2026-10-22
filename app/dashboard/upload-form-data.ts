@@ -1,6 +1,7 @@
 /** XHR exposes actual request-body progress; the caller still owns auth and response handling. */
 export function uploadFormData(path: string, body: FormData, options: {
   headers: Record<string, string>;
+  method?: "POST" | "PUT";
   signal?: AbortSignal | null;
   onProgress: (percent: number) => void;
 }): Promise<Response> {
@@ -21,7 +22,7 @@ export function uploadFormData(path: string, body: FormData, options: {
       finish(new DOMException("Upload canceled.", "AbortError"));
     };
     if (options.signal?.aborted) { abort(); return; }
-    xhr.open("POST", path);
+    xhr.open(options.method || "POST", path);
     for (const [key, value] of Object.entries(options.headers)) xhr.setRequestHeader(key, value);
     xhr.upload.onprogress = event => {
       if (event.lengthComputable && event.total > 0) options.onProgress(Math.min(100, Math.floor(event.loaded / event.total * 100)));

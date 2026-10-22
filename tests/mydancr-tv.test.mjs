@@ -72,7 +72,7 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(tvSource, /\.lte\("duration_seconds", MYDANCR_TV_MAX_DURATION_SECONDS\)/);
   assert.match(tvSource, /Only videos that are 30 seconds or shorter can be approved/);
   assert.match(dancerStudio, /1–\{VIDEO_UPLOAD_MAX_SECONDS\} sec · \{VIDEO_UPLOAD_MAX_BYTES \/ \(1024 \* 1024\)\} MB max/);
-  assert.match(dancerStudio, /await cropProfileVideo\(item\.file, controller\.signal\)/);
+  assert.match(dancerStudio, /await readVideoMetadata\(item\.file, controller\.signal\)/);
   assert.match(tenSecondMigration, /where duration_seconds > 10[\s\S]*?status not in \('hidden', 'expired'\)/);
   assert.match(tenSecondMigration, /check \(duration_seconds between 1 and 10\)[\s\S]*?not valid/);
   assert.match(thirtySecondMigration, /check \(duration_seconds between 1 and 30\)[\s\S]*?not valid/);
@@ -83,8 +83,8 @@ test("dancer uploads are direct, validated, persistent, and submitted for automa
   assert.match(restoredThirtySecondMigration, /check \(duration_seconds between 1 and 30\)[\s\S]*?not valid/);
   assert.match(restoredThirtySecondMigration, /status = 'approved'[\s\S]*?duration_seconds between 1 and 30/);
   assert.match(tvSource, /status: "submitted"/);
-  assert.match(dancerStudio, /uploadToSignedUrl\(data\.upload\.path, data\.upload\.token, item\.file/);
-  assert.match(dancerStudio, /submittedCount \? `\$\{submittedCount\} \$\{submittedCount === 1 \? "video" : "videos"\} uploaded`/);
+  assert.match(dancerStudio, /uploadResumableVideo\(item\.file, \{/);
+  assert.match(dancerStudio, /submittedCount \? "" : "No videos were uploaded\."/);
   assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
   assert.match(dancerStudio, /Confirm both permissions before choosing videos/);
   assert.match(dancerStudio, /return mediaReviewLabel\(status\)/);

@@ -47,7 +47,7 @@ function installLiveShellRecovery(version, recover) {
     if (asset.origin !== window.location.origin) return;
     if (element.tagName === 'SCRIPT' && ![
       '/live-shell.js', '/mydancr-api-transport.js', '/dancer-content-visibility.js',
-      '/profile-photo-crop.js', '/profile-video-crop.js',
+      '/profile-photo-crop.js',
     ].includes(asset.pathname)) return;
     window.__dancrShellAssetFailed = true;
     recover();

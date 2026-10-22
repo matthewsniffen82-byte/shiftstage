@@ -1,47 +1,51 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { videoCropFixture } from "./helpers/video-crop-fixture.mjs";
-import { normalizeVideoUploadEdit } from "../src/lib/dancr/video-upload-edit-policy.ts";
+import { metadataReaderFixture } from "./helpers/local-video-metadata.mjs";
 
-function assertReleased(fixture) {
-  assert.deepEqual(fixture.released(), { urls: 0, timers: 0, dialogRemoved: true, focusRestored: true, source: false, handlers: false, paused: true, loads: 1 });
+for (const kind of ["dashboard", "legacy"]) {
+  const released = f => {
+    const state = f.state();
+    assert.equal(state.urls, 0); assert.equal(state.timers, 0);
+    assert.equal(state.paused, true); assert.equal(state.source, false);
+    assert.equal(state.handlers, false); assert.equal(state.loads, 1);
+  };
+  test(`${kind}: inspect the original video without an editor and release resources`, async () => {
+    const f = metadataReaderFixture(kind);
+    f.video.onloadedmetadata(); await f.promise;
+    assert.equal(f.state().outcome, "resolved");
+    assert.deepEqual({ ...f.state().value }, { duration: 12, width: 720, height: 1280 });
+    released(f);
+  });
+  test(`${kind}: timeout, unreadable, invalid and aborted videos release resources`, async () => {
+    for (const action of ["timeout", "error", "duration", "landscape", "small", "abort"]) {
+      const controller = new AbortController(), f = metadataReaderFixture(kind, { signal: controller.signal });
+      if (action === "timeout") await f.expire();
+      else if (action === "error") f.video.onerror();
+      else if (action === "abort") controller.abort();
+      else {
+        if (action === "duration") f.video.duration = 31;
+        if (action === "landscape") f.video.videoWidth = 1920;
+        if (action === "small") f.video.videoWidth = 200;
+        f.video.onloadedmetadata();
+      }
+      await f.promise;
+      assert.equal(f.state().outcome, "rejected", action); released(f);
+    }
+  });
+  test(`${kind}: accept 30 seconds and 25 MB; reject bad files before allocating video resources`, async () => {
+    const allowed = metadataReaderFixture(kind, { file: { type: "video/quicktime", size: 25 * 1024 * 1024 } });
+    allowed.video.duration = 30; allowed.video.onloadedmetadata(); await allowed.promise;
+    assert.equal(allowed.state().outcome, "resolved"); released(allowed);
+    const controller = new AbortController(); controller.abort();
+    for (const options of [
+      { file: { type: "video/mp4", size: 25 * 1024 * 1024 + 1 } },
+      { file: { type: "image/jpeg", size: 100 } },
+      { file: { type: "video/mp4", size: 0 } },
+      { signal: controller.signal },
+    ]) {
+      const f = metadataReaderFixture(kind, options); await f.promise;
+      assert.equal(f.state().outcome, "rejected");
+      assert.equal(f.state().urls, 0); assert.equal(f.state().timers, 0); assert.equal(f.state().loads, 0);
+    }
+  });
 }
-
-test("both upload screens share an editor that releases temporary media and reuses confirmed edits", async () => {
-  const f = videoCropFixture();
-  const pending = f.crop(f.file);
-  f.video.onloadedmetadata(); f.control("use").onclick();
-  const result = await pending;
-  assert.equal(result.endSeconds - result.startSeconds, 30);
-  assert.equal(result.source.width, 640);
-  assert.equal(normalizeVideoUploadEdit(result).crop.height, 480);
-  assertReleased(f);
-  assert.equal(await f.crop(f.file), result);
-});
-
-test("cancel, Escape, aborted sessions, unreadable files and metadata timeout release the entire editor", async () => {
-  for (const action of ["cancel", "escape", "abort", "invalid", "error", "timeout"]) {
-    const f = videoCropFixture(), controller = new AbortController();
-    const pending = f.crop(f.file, { signal: controller.signal });
-    if (action === "cancel") f.control("cancel").onclick();
-    else if (action === "escape") f.dialog.cancel({ preventDefault() {} });
-    else if (action === "abort") controller.abort();
-    else if (action === "invalid") { f.video.duration = Infinity; f.video.onloadedmetadata(); }
-    else if (action === "error") f.video.onerror();
-    else { const timer = [...f.timers.values()][0]; assert.equal(timer.delay, 20000); timer.fn(); }
-    if (action === "cancel" || action === "escape") assert.equal(await pending, null);
-    else await assert.rejects(pending);
-    assertReleased(f);
-  }
-});
-
-test("25 MB is accepted by the editor and one byte over is rejected before preview resources", async () => {
-  const allowed = videoCropFixture();
-  const pending = allowed.crop({ ...allowed.file, size: 25 * 1024 * 1024 });
-  allowed.video.onloadedmetadata(); allowed.control("use").onclick();
-  assert.equal((await pending).source.fileSize, 25 * 1024 * 1024);
-  assertReleased(allowed);
-  const f = videoCropFixture();
-  await assert.rejects(f.crop({ ...f.file, size: 25 * 1024 * 1024 + 1 }), /25 MB/);
-  assert.equal(f.released().urls, 0); assert.equal(f.released().loads, 0);
-});

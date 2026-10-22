@@ -1,4 +1,7 @@
 import { getPublicEnv } from "../../src/lib/env";
+import { uploadFormData } from "./upload-form-data";
+
+class SignedResumableUnavailable extends Error {}
 
 export function resumableStorageEndpoint(supabaseUrl: string) {
   const url = new URL("/storage/v1/upload/resumable", supabaseUrl);
@@ -56,7 +59,22 @@ export async function uploadResumableVideo(file: File, options: {
       onProgress: (sent, total) => {
         if (!settled && !options.signal.aborted && total > 0) options.onProgress(Math.min(100, Math.floor(sent / total * 100)));
       },
-      onError: () => finish(new Error("Video upload interrupted. Tap Retry to continue your upload.")),
+      onError: error => {
+        const status = error.originalResponse?.getStatus();
+        // Some Storage versions reject a valid signed token at TUS creation.
+        // Only this explicit response falls back to the same scoped signed PUT.
+        let invalidSignature = false;
+        try {
+          const body = JSON.parse(error.originalResponse?.getBody() || "{}");
+          invalidSignature = status === 400 && body.message === "Invalid Compact JWS";
+        } catch { /* Do not expose raw provider errors or credentials. */ }
+        finish(invalidSignature ? new SignedResumableUnavailable() : new Error(
+          status === 413 ? "Video files must be 25 MB or smaller."
+            : status === 415 ? "Choose an MP4, WebM, or MOV video."
+              : status === 401 || status === 403 ? "Upload authorization expired. Tap Retry to renew it."
+                : "Video upload interrupted. Tap Retry to continue your upload."
+        ));
+      },
       onSuccess: () => { if (!settled && !options.signal.aborted) { options.onProgress(100); finish(); } },
     });
     const abort = () => {
@@ -74,5 +92,19 @@ export async function uploadResumableVideo(file: File, options: {
       if (matching) upload.resumeFromPreviousUpload(matching);
       upload.start();
     })().catch(() => finish(new Error("Unable to start the video upload. Please try again.")));
+  }).catch(async error => {
+    if (!(error instanceof SignedResumableUnavailable)) throw error;
+    options.signal.throwIfAborted();
+    const path = options.path.split("/").map(encodeURIComponent).join("/");
+    const url = new URL(`/storage/v1/object/upload/sign/mydancr-tv-videos/${path}`, getPublicEnv().supabaseUrl);
+    url.searchParams.set("token", options.token);
+    const body = new FormData();
+    body.append("cacheControl", "3600");
+    body.append("", file);
+    options.onProgress(0);
+    const response = await uploadFormData(url.href, body, {
+      method: "PUT", headers: { "x-upsert": "false" }, signal: options.signal, onProgress: options.onProgress,
+    });
+    if (!response.ok) throw new Error("Video upload couldn't finish. Tap Retry to try again.");
   });
 }

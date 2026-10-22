@@ -131,7 +131,7 @@ test("profile and media workspace derives the avatar from the approved main phot
   assert.doesNotMatch(dancerStudio, /Add videos now or later\./);
   assert.match(dancerStudio, /\{!embedded && !isLoading && workspace && !workspace\.profileEligible/);
   assert.match(dancerStudio, /!embedded \? \([\s\S]*?Venue context is automatic/);
-  assert.match(dancerStudio, /Choose the crop and trim for each video/);
+  assert.doesNotMatch(dancerStudio, /cropProfileVideo|Choose the crop and trim/);
   assert.match(dancerStudio, /void uploadVideoBatch\(uploadable\)/);
   assert.match(dancerStudio, />Retry<\/button>/);
   assert.doesNotMatch(dancerStudio, /type="submit"/);

@@ -22,9 +22,8 @@ import {
   announceDancerProfileVideosChanged,
   primeVideoPreviewFrame,
 } from "./dancer-profile-media-sync";
-import { cropProfileVideo } from "./profile-video-crop";
+import { readVideoMetadata } from "./read-video-metadata";
 import { VIDEO_UPLOAD_MAX_SECONDS, VIDEO_UPLOAD_MAX_BYTES } from "@/src/lib/dancr/video-upload-edit-policy";
-import type { VideoUploadEdit } from "@/src/lib/dancr/video-upload-edit-policy";
 import "./dancer-upload-queue.css";
 
 type Workspace = {
@@ -65,7 +64,6 @@ type QueuedVideo = {
   stage: "queued" | "validating" | "uploading" | "checking" | "submitted" | "failed";
   progress: number;
   error?: string;
-  edit?: VideoUploadEdit;
   replaces?: { videoId?: string; queueId?: string };
 };
 
@@ -234,7 +232,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
   function queueVideoFiles(files: File[], source: QueuedVideo["source"]) {
     if (actionInFlightRef.current) return;
     if (!consentConfirmed || !rightsConfirmed) {
-      setStatus("Confirm both permissions before choosing videos. You can crop and trim before uploading.");
+      setStatus("Confirm both permissions before choosing videos.");
       return;
     }
 
@@ -265,7 +263,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     const omitted = files.length - selectedFiles.length;
     setQueuedVideos((current) => [...current, ...additions]);
     setReplacement(undefined);
-    setStatus(`${additions.length} ${additions.length === 1 ? "video" : "videos"} selected. Choose the crop and trim for each video${omitted ? `. ${omitted} exceeded the available profile slots.` : "."}`);
+    setStatus(omitted ? `${omitted} exceeded the available profile slots.` : "");
     const uploadable = additions.filter((item) => !item.error);
     if (uploadable.length) void uploadVideoBatch(uploadable);
   }
@@ -322,7 +320,6 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
     setIsSubmitting(true);
     const failedItems: QueuedVideo[] = [];
-    const cancelledIds = new Set<string>();
     let submittedCount = 0;
     try {
       for (let index = 0; index < batch.length; index += 1) {
@@ -332,17 +329,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         updateQueuedVideo(item.id, { stage: "validating", progress: 0, error: undefined });
         setStatus("Uploading");
         try {
-          const edit = item.edit || await cropProfileVideo(item.file, controller.signal);
-          if (!edit) {
-            cancelledIds.add(item.id);
-            queuedPreviewUrlsRef.current.delete(item.previewUrl);
-            URL.revokeObjectURL(item.previewUrl);
-            continue;
-          }
-          const metadata = { ...edit.source, duration: edit.source.durationSeconds };
+          const metadata = await readVideoMetadata(item.file, controller.signal);
           if (!isCurrentVideoAction(requestId, controller)) return;
-          item = { ...item, edit };
-          updateQueuedVideo(item.id, { edit });
           if (item.replaces) {
             const { videoId, queueId } = item.replaces;
             if (videoId) {
@@ -366,7 +354,6 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
               consentConfirmed,
               rightsConfirmed,
               uploadId: item.uploadId,
-              edit,
             }),
             fallbackMessage: "Unable to prepare upload.",
             signal: controller.signal,
@@ -415,7 +402,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       }
 
       if (!isCurrentVideoAction(requestId, controller)) return;
-      setQueuedVideos(current => current.filter(item => !cancelledIds.has(item.id)).map(item => failedItems.find(failed => failed.id === item.id) || item));
+      setQueuedVideos(current => current.map(item => failedItems.find(failed => failed.id === item.id) || item));
       if (libraryInputRef.current) libraryInputRef.current.value = "";
       if (cameraInputRef.current) cameraInputRef.current.value = "";
       if (submittedCount || failedItems.length) {
@@ -670,8 +657,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             <strong>Selected video {index + 1}</strong>
             <small role="status" aria-live="polite">{uploadStatus}</small>
             {item?.stage === "uploading" ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
-            {note ? <p>{note}</p> : null}
-            {item?.error ? <p>{item.error}</p> : null}
+            {item?.error || note ? <p>{item?.error || note}</p> : null}
             {video && !item?.error && !awaitingClubApproval && !processing ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} moderationStatus={reviewStatus} disabled={videoActionBusy} onBusyChange={setRetrying}
               onRetried={() => { void loadWorkspace({ silent: true }); }} /> : null}
             {!processing ? <span className="tv-queue-actions">

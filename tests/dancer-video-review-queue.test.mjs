@@ -13,7 +13,7 @@ const file = () => new File(['video fixture'], 'clip.mp4', { type: 'video/mp4' }
 
 // Run real component handlers with in-memory API/storage fixtures. No browser or remote uploads.
 function harness(initial = [], { maxVideos = 50, upload = async options => options.onProgress(100) } = {}) {
-  let rows = [...initial], cursor = 0, effects = [], dirty = true, tree, readError = false, uploadError = false, cropCancelled = false;
+  let rows = [...initial], cursor = 0, effects = [], dirty = true, tree, readError = false, uploadError = false, metadataError = false;
   const slots = [], calls = [], intervals = new Set(), revoked = [];
   const props = { embedded: true };
   const depsChanged = (a, b) => !a || b.some((dep, i) => !Object.is(dep, a[i]));
@@ -25,7 +25,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
     useCallback(fn, deps) { const i = cursor++; if (depsChanged(slots[i]?.deps, deps)) slots[i] = { fn, deps }; return slots[i].fn; },
   };
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, DOMException, crypto: globalThis.crypto,
+  vm.runInNewContext(code, { exports, Error, AbortController, DOMException, crypto: globalThis.crypto,
     URL: { createObjectURL: () => `blob:${crypto.randomUUID()}`, revokeObjectURL: url => revoked.push(url) },
     document: { visibilityState: 'visible', addEventListener() {}, removeEventListener() {} },
     window: { confirm: () => true, requestAnimationFrame: fn => fn(), setInterval: fn => { intervals.add(fn); return fn; }, clearInterval: fn => intervals.delete(fn) },
@@ -34,14 +34,14 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
       if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
       if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
       if (name === '@/src/lib/dancr/media-limits') return { MAX_DANCER_PROFILE_VIDEOS: 50 };
-      if (name === './profile-video-crop') return { cropProfileVideo: async () => cropCancelled ? null : { source: { durationSeconds: 10, width: 720, height: 1280 } } };
+      if (name === './read-video-metadata') return { readVideoMetadata: async file => { calls.push(['metadata', file]); if (metadataError) throw new Error('Choose a video between 1 and 30 seconds.'); return { duration: 10, width: 720, height: 1280 }; } };
       if (name === './dancer-profile-media-sync') return { announceDancerProfileVideosChanged() {}, primeVideoPreviewFrame() {} };
-      if (name === './resumable-video-upload') return { uploadResumableVideo: async (_file, options) => { if (uploadError) throw new Error('Connection lost.'); await upload(options); } };
+      if (name === './resumable-video-upload') return { uploadResumableVideo: async (file, options) => { calls.push(['upload', file]); if (uploadError) throw new Error('Connection lost.'); await upload(options); } };
       if (name === './dashboard-session') return {
         readDashboardAccessToken: () => 'fixture',
         requestDancerTvVideosJson: async options => {
           calls.push(['workspace', options.method || 'GET']);
-          if (options.method === 'POST') { const { uploadId } = JSON.parse(options.body); if (!rows.some(row => row.id === uploadId)) rows.push(video(uploadId, 'uploading')); return { upload: { videoId: uploadId, path: 'private', token: 'fixture' } }; }
+          if (options.method === 'POST') { const body = JSON.parse(options.body); calls.push(['prepare', body]); const { uploadId } = body; if (!rows.some(row => row.id === uploadId)) rows.push(video(uploadId, 'uploading')); return { upload: { videoId: uploadId, path: 'private', token: 'fixture' } }; }
           if (readError) throw new Error('Unable to refresh.');
           return { profile: {}, profileEligible: false, profileVisible: false, videos: [...rows], maxVideos, remainingVideoSlots: maxVideos - rows.length };
         },
@@ -78,7 +78,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
     select(files = [file()]) { nodes().find(node => node.type === 'input' && node.props.multiple).props.onChange({ target: { files, value: '' } }); render(); },
     rerender() { dirty = true; render(); },
     async refresh(next) { if (next) rows = next; for (const fn of [...intervals]) fn(); await this.settle(); },
-    setReadError(value) { readError = value; }, setUploadError(value) { uploadError = value; }, cancelCrop(value) { cropCancelled = value; },
+    setReadError(value) { readError = value; }, setUploadError(value) { uploadError = value; }, setMetadataError(value) { metadataError = value; },
   };
   render(); return ui;
 }
@@ -199,21 +199,31 @@ test('a failed automatic video check offers retry instead of claiming it is awai
   assert.doesNotMatch(ui.reviews[0].props.className, /is-awaiting-club/);
 });
 
-test('delayed review replacement at the video limit preserves the original on picker and crop cancellation', async () => {
+test('delayed review replacement at the video limit preserves the original on picker cancellation and invalid replacement files', async () => {
   const ui = harness([video('waiting', 'error')], { maxVideos: 1 }); await ui.settle();
   ui.click('Replace'); ui.permissions(); ui.select([]); await ui.settle();
   assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
-  ui.cancelCrop(true); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Review delayed']); assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
+  ui.setMetadataError(true); ui.select(); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Upload failed', 'Review delayed']); assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
 });
 
 test('failed replacement remains retryable and never puts an unapproved video in the library', async () => {
   const ui = harness([video('waiting', 'error')], { maxVideos: 1 }); await ui.settle();
   ui.click('Replace'); ui.permissions(); ui.setUploadError(true); ui.select(); await ui.settle();
   assert.deepEqual(ui.statuses, ['Upload failed']); assert.equal(ui.library.length, 0);
+  assert.deepEqual(ui.notes, ['Connection lost.'], 'show only the specific failure, not duplicate generic notes');
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);
   ui.rerender(); assert.deepEqual(ui.statuses, ['Upload failed']); ui.rerender();
   ui.setUploadError(false); ui.click('Retry'); await ui.settle();
   assert.deepEqual(ui.statuses, ['Uploading']);
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);
+});
+
+test('chosen videos upload the original file directly without crop or trim metadata', async () => {
+  const ui = harness(), original = file(); await ui.settle(); ui.permissions(); ui.select([original]); await ui.settle();
+  assert.equal(ui.calls.find(call => call[0] === 'metadata')[1], original);
+  assert.equal(ui.calls.find(call => call[0] === 'upload')[1], original);
+  const body = ui.calls.find(call => call[0] === 'prepare')[1];
+  assert.equal(body.edit, undefined); assert.equal(body.width, 720); assert.equal(body.height, 1280); assert.equal(body.durationSeconds, 10);
+  assert.deepEqual(ui.statuses, ['Uploading']);
 });

@@ -20,6 +20,6 @@ export function externalizeLiveShellAppScript(html, sourceUrl) {
   // Keep execution in its original position after the companion scripts.
   return externalized
     .replace("<head>", `<head><link rel="preload" as="script" href="${sourceUrl}">`)
-    .replace(/<script src="(\/(?:mydancr-api-transport|dancer-grid-card|profile-photo-crop|profile-video-crop|profile-media-fullscreen)\.js[^"]*)"><\/script>/g,
+    .replace(/<script src="(\/(?:mydancr-api-transport|dancer-grid-card|profile-photo-crop|profile-media-fullscreen)\.js[^"]*)"><\/script>/g,
       '<script src="$1" defer></script>');
 }
