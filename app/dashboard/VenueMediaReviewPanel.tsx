@@ -19,6 +19,8 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
+  const [feedback, setFeedback] = useState<{ id: string; text: string; error: boolean; reasonRequired?: boolean; decision?: "approved" | "rejected" } | null>(null);
+  const noteInputs = useRef<Record<string, HTMLTextAreaElement | null>>({});
   const action = useRef<AbortController | null>(null);
   useEffect(() => () => { action.current?.abort(); }, []);
   useEffect(() => {
@@ -37,9 +39,15 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
 
   async function review(item: Review, decision: "approved" | "rejected") {
     if (action.current) return;
-    if (decision === "rejected" && (notes[item.id] || "").trim().length < 3) { setMessage("Add a reason so the dancer knows what to change."); return; }
+    if (decision === "rejected" && (notes[item.id] || "").trim().length < 3) {
+      setFeedback({ id: item.id, text: "Enter a rejection reason (at least 3 characters) so the dancer knows what to change.", error: true, reasonRequired: true });
+      noteInputs.current[item.id]?.focus();
+      noteInputs.current[item.id]?.scrollIntoView({ block: "center", behavior: "smooth" });
+      return;
+    }
     const controller = new AbortController(); action.current = controller;
-    setBusy(true); setMessage(decision === "approved" ? "Publishing approved media…" : "Saving review…");
+    setBusy(true); setMessage("");
+    setFeedback({ id: item.id, text: decision === "approved" ? "Publishing approved media…" : "Saving rejection…", error: false, decision });
     try {
       await requestDashboardJson("/api/venue/media-reviews", { method: "POST", expectedRole: "venue", signal: controller.signal,
         timeoutMs: 280000, headers: { "content-type": "application/json" },
@@ -47,11 +55,12 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       });
       if (controller.signal.aborted) return;
       setMessage(`${item.stageName}’s ${item.label.toLowerCase()} ${decision}.`);
+      setFeedback(null);
       setItems(current => current.filter(value => value.id !== item.id));
       setNotes(current => { const next = { ...current }; delete next[item.id]; return next; });
       setOffset(0); setRevision(current => current + 1);
     } catch (error) {
-      if (!controller.signal.aborted) { setMessage(error instanceof Error ? error.message : "Unable to save review. Refresh the queue."); setRevision(current => current + 1); }
+      if (!controller.signal.aborted) { setFeedback({ id: item.id, text: error instanceof Error ? error.message : "Unable to save review. Refresh the queue.", error: true }); setRevision(current => current + 1); }
     } finally { if (!controller.signal.aborted) setBusy(false); if (action.current === controller) action.current = null; }
   }
 
@@ -68,9 +77,18 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
           : <img src={item.previewUrl} alt={`${item.stageName} ${item.label.toLowerCase()} for review`} /> : <p>Preview unavailable. Refresh before approving.</p>}
         <h3>{item.stageName} · {item.label}</h3><strong>{item.aiSummary}</strong>
         {item.reasons.length ? <details><summary>AI findings</summary><ul>{item.reasons.map((reason, i) => <li key={`${reason}:${i}`}>{reason.replaceAll("_", " ")}</li>)}</ul></details> : null}
-        <label>Review note<textarea value={notes[item.id] || ""} maxLength={4000} disabled={busy} placeholder="Required when rejecting" onChange={event => setNotes(current => ({ ...current, [item.id]: event.target.value }))} /></label>
+        <label>Review note<textarea ref={node => { noteInputs.current[item.id] = node; }} value={notes[item.id] || ""} maxLength={4000} disabled={busy}
+          aria-invalid={feedback?.id === item.id && feedback.reasonRequired ? true : undefined}
+          aria-describedby={`review-note-hint-${item.id}${feedback?.id === item.id ? ` review-feedback-${item.id}` : ""}`}
+          placeholder="Why isn't this upload approved?" onChange={event => {
+            const value = event.target.value;
+            setNotes(current => ({ ...current, [item.id]: value }));
+            if (value.trim().length >= 3) setFeedback(current => current?.id === item.id && current.reasonRequired ? null : current);
+          }} /></label>
+        <p className="venue-media-review-note-hint" id={`review-note-hint-${item.id}`}>A reason is required to reject.</p>
+        {feedback?.id === item.id ? <p className={`venue-media-review-feedback${feedback.error ? " is-error" : ""}`} id={`review-feedback-${item.id}`} role={feedback.error ? "alert" : "status"}>{feedback.text}</p> : null}
         <div className="venue-media-review-actions"><button type="button" disabled={busy || loading || !item.canApprove || !item.previewUrl} onClick={() => void review(item, "approved")}>Approve</button>
-          <button type="button" disabled={busy || loading || item.processing} onClick={() => void review(item, "rejected")}>Reject</button></div>
+          <button type="button" disabled={busy || loading || item.processing} onClick={() => void review(item, "rejected")}>{busy && feedback?.id === item.id && feedback.decision === "rejected" ? "Rejecting…" : "Reject"}</button></div>
       </article>)}
     </div>
     {count !== null && (offset > 0 || count > 12) ? <nav aria-label="Media review pages"><button type="button" disabled={busy || loading || offset === 0} onClick={() => setOffset(n => Math.max(0, n - 12))}>Previous</button>

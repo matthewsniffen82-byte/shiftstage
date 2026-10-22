@@ -7,6 +7,10 @@
 .venue-media-review-grid img, .venue-media-review-grid video { width: 100%; height: 280px; object-fit: contain; background: #000; border-radius: .5rem; margin-bottom: .75rem; }
 .venue-media-review label { display: grid; gap: .35rem; margin-block: .75rem; }
 .venue-media-review textarea { width: 100%; min-height: 70px; }
+.venue-media-review textarea[aria-invalid="true"] { border-color: #fca5a5; }
+.venue-media-review .venue-media-review-note-hint { margin: -.35rem 0 .5rem; font-size: .85rem; }
+.venue-media-review .venue-media-review-feedback { margin: .5rem 0; font-size: .9rem; overflow-wrap: anywhere; }
+.venue-media-review .venue-media-review-feedback.is-error { color: #fca5a5; }
 .venue-media-review-actions { display: flex; gap: .5rem; }
 .venue-media-review-actions button { flex: 1; }
 .venue-media-review > nav { margin-top: 1rem; }
