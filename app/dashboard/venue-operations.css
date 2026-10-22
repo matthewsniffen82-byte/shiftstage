@@ -47,7 +47,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-secti
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-section-heading h2 { margin: 0; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row { gap: 3px !important; padding: 10px 12px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row.is-latest { border-left: 2px solid var(--dancr-color-border); }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row.is-latest small { color: #ceb2f3 !important; }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row.is-latest small { color: var(--dancr-color-text-muted) !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-pickup-row time { color: #a7a9b7 !important; font-size: 11px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-tonight-metrics { grid-template-columns: repeat(3, minmax(0,1fr)); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-value-metrics, .venue-value-supporting, .venue-tonight-metrics) .metric { border: 0 !important; padding: 10px !important; min-height: 0 !important; background: #19191f !important; gap: 3px !important; }
@@ -122,7 +122,7 @@ body .ir-staff .ir-actions { display: flex; flex-wrap: wrap; }
 body .ir-staff .ir-actions .ir-revoke { color: #efb0ba !important; background: transparent !important; border-color: transparent !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .ir-revoke { --venue-control-face: transparent; --venue-control-edge: transparent; }
 body .ir-staff .ir-alert-help { font-size: 12px !important; color: #b3b5c2 !important; }
-body .ir-staff .ir-alert-help summary { min-height: 44px !important; display: flex; align-items: center; cursor: pointer; color: #c9b2e8 !important; }
+body .ir-staff .ir-alert-help summary { min-height: 44px !important; display: flex; align-items: center; cursor: pointer; color: var(--dancr-color-text-primary) !important; }
 /* Inbox keeps the existing UTC bounds and request handlers. */
 .pickup-card.pickup-inbox { padding: 14px; background: #111116; border-color: #292930; border-radius: 16px; }
 .pickup-inbox-heading { display: flex; gap: 8px; justify-content: space-between; align-items: center; }
@@ -135,7 +135,7 @@ body .ir-staff .ir-alert-help summary { min-height: 44px !important; display: fl
 .pickup-inbox .pickup-list-item { padding: 10px 0; border: 0; border-bottom: 1px solid #303039; border-radius: 0; background: transparent; gap: 3px; }
 .pickup-contact-actions { display: flex; gap: 8px; }
 .pickup-inbox .pickup-contact-actions a { min-height: 44px; padding: 6px 14px; margin: 0; background: var(--dancr-color-control-secondary); border: 1px solid var(--dancr-color-border); border-radius: 8px; text-decoration: none; font-size: 13px; }
-body.dancr-button-system button.venue-scroll-top { position: fixed !important; z-index: 1501; left: auto !important; top: auto !important; right: 16px !important; transform: none !important; bottom: calc(104px + env(safe-area-inset-bottom,0px)); width: 44px; height: 44px; min-height: 44px !important; padding: 0 !important; background: var(--dancr-color-control-secondary) !important; border: 1px solid var(--dancr-color-border) !important; border-radius: 12px !important; color: #dcc7fb !important; box-shadow: none !important; }
+body.dancr-button-system button.venue-scroll-top { position: fixed !important; z-index: 1501; left: auto !important; top: auto !important; right: 16px !important; transform: none !important; bottom: calc(104px + env(safe-area-inset-bottom,0px)); width: 44px; height: 44px; min-height: 44px !important; padding: 0 !important; background: var(--dancr-color-control-secondary) !important; border: 1px solid var(--dancr-color-border) !important; border-radius: 12px !important; color: var(--dancr-color-text-primary) !important; box-shadow: none !important; }
 body.dancr-button-system button.venue-scroll-top::before { display: none; }
 body :is(.dashboard-shell-venue, .ir-staff, .pickup-inbox) :is(button, a, summary, input, select, textarea):focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
 @media(max-width:640px) {
@@ -163,7 +163,7 @@ body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-works
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .venue-live-pill { display: inline-flex; align-items: center; gap: 4px; border: 0; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-refresh-control button, .venue-utility)::before { inset: 4px 0 !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-value-metrics, .venue-value-supporting) { margin-block: 8px; }
-body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .nfc-test-status { color: #c9bddb; border-color: var(--dancr-color-border); background: var(--dancr-color-surface-card); }
+body.dancr-button-system main.dashboard-shell.dashboard-shell-venue .nfc-test-status { color: var(--dancr-color-text-muted); border-color: var(--dancr-color-border); background: var(--dancr-color-surface-card); }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-team-invite-submit, .support-send-button, .venue-publication-actions > .primary) { min-height: 48px !important; }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-venue :is(.venue-nfc-roster-head, .ir-push-settings) { padding-block: 8px !important; }
 
