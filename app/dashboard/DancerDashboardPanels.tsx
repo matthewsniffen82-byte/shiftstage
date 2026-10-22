@@ -181,7 +181,7 @@ export function DancerPanel({
       overview={<>
         <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager onPresenceChange={handlePresenceChange} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
         <section className="dancer-daily-card" id="dancer-overview">
-          <header><div><h2>Your profile</h2><p>Public visibility is separate from your club check-in.</p></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{isPublic ? "Public" : "Hidden"}</span></header>
+          <header><div><h2>Your profile</h2><p>Public visibility is separate from your club check-in.</p></div><span className={`dancer-visibility-badge${isPublic ? " is-public" : ""}`}>{profile?.is_incognito === true ? "Incognito" : isPublic ? "Public" : isApproved ? "Internal only" : "Hidden"}</span></header>
           {hasPendingAvatar || hasPendingPhotos || hasRejectedMedia || !isPublic ? <section className="dancer-attention-note" aria-label="Profile attention">
             <h3>{hasRejectedMedia ? "Needs attention" : hasPendingAvatar || hasPendingPhotos ? "Awaiting review" : "Profile visibility"}</h3>
             {hasRejectedMedia ? <p>A photo needs replacement. <a href="#dancer-profile-media-library">Review photos</a></p> : null}
@@ -287,6 +287,7 @@ function DancerVisibilityPanel({
 }) {
   const initialVisible = profile?.is_public !== false && profile?.isPublic !== false;
   const [isPublic, setIsPublic] = useState(initialVisible);
+  const [isIncognito, setIsIncognito] = useState(profile?.is_incognito === true);
   const [status, setStatus] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [hasSaved, setHasSaved] = useState(false);
@@ -296,6 +297,7 @@ function DancerVisibilityPanel({
   const visibilityInFlightRef = useRef(false);
 
   useEffect(() => {
+    setIsIncognito(profile?.is_incognito === true);
     setIsPublic(profile?.is_public !== false && profile?.isPublic !== false);
   }, [profile]);
 
@@ -323,7 +325,7 @@ function DancerVisibilityPanel({
     visibilityAbortRef.current?.abort();
     const controller = new AbortController();
     visibilityAbortRef.current = controller;
-    const nextPublic = !isPublic;
+    const nextIncognito = !isIncognito;
     setIsSaving(true);
     setHasSaved(false);
     setStatus("Saving visibility…");
@@ -331,24 +333,23 @@ function DancerVisibilityPanel({
       const data = await requestDancerProfileVisibilityJson({
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ isPublic: nextPublic }),
+        body: JSON.stringify({ isIncognito: nextIncognito }),
         fallbackMessage: "Unable to update profile visibility.",
         signal: controller.signal,
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== visibilitySequenceRef.current) return;
       const savedPublic = data.profile?.is_public === true || data.profile?.isPublic === true;
-      if (savedPublic !== nextPublic) throw new Error("Profile visibility did not save. Try again.");
-      if (data.visibility?.verified !== true || data.visibility?.publicProfileVisible !== nextPublic) {
+      if (data.profile?.is_incognito !== nextIncognito) throw new Error("Profile visibility did not save. Try again.");
+      if (data.visibility?.verified !== true || data.visibility?.publicProfileVisible !== savedPublic) {
         throw new Error("Public profile visibility could not be verified. Try again.");
       }
       publishDancerVisibility(String(data.profile.id), savedPublic);
       if (data.profile) onProfileChange?.({ ...(profile || {}), ...data.profile });
       setIsPublic(savedPublic);
+      setIsIncognito(nextIncognito);
       setHasSaved(true);
       setStatus(
-        savedPublic
-          ? "Saved. Profile is public."
-          : "Saved. Profile is hidden.",
+        nextIncognito ? "Saved. Hidden from guests, including invited VIPs." : savedPublic ? "Saved. Profile is public." : "Saved. Visible inside the club and to its invited VIP guests.",
       );
     } catch (error) {
       if (mountedRef.current && !controller.signal.aborted && requestId === visibilitySequenceRef.current) {
@@ -364,18 +365,18 @@ function DancerVisibilityPanel({
   }
 
   return (
-    <article className={`info-panel visibility-panel ${isPublic ? "" : "is-incognito"}`} aria-label="Profile visibility controls">
+    <article className={`info-panel visibility-panel ${isIncognito ? "is-incognito" : ""}`} aria-label="Profile visibility controls">
       <div className="visibility-controls">
-        <div className="visibility-state" aria-label={`Profile visibility: ${isPublic ? "Public, visible" : "Incognito, hidden"}`}>
-          <strong>{isPublic ? "Public" : "Incognito"}</strong>
+        <div className="visibility-state" aria-label={`Profile visibility: ${isIncognito ? "Incognito, hidden" : isPublic ? "Public, visible" : "Internal only"}`}>
+          <strong>{isIncognito ? "Incognito" : isPublic ? "Public" : "Internal only"}</strong>
           <span aria-hidden="true">·</span>
-          <b>{isPublic ? "Visible" : "Hidden"}</b>
+          <b>{isIncognito ? "Hidden" : "Visible"}</b>
         </div>
         <button className="visibility-toggle" data-action-state={isSaving ? "saving" : hasSaved ? "success" : "idle"} type="button" onClick={toggleVisibility} disabled={isSaving} aria-busy={isSaving}>
-          <span>{isSaving ? "Saving…" : isPublic ? "Go incognito" : "Make profile public"}</span>
+          <span>{isSaving ? "Saving…" : isIncognito ? "Restore visibility" : "Go incognito"}</span>
         </button>
       </div>
-      <p>Incognito hides your profile and content. Everything stays saved.</p>
+      <p>Incognito hides you from guests, including invited VIPs, and blocks their requests. Everything stays saved.</p>
       <p className="visibility-status" role="status" aria-live="polite">{status}</p>
     </article>
   );

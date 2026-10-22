@@ -862,6 +862,7 @@
           status: approved ? "Verified" : rejected ? "Rejected" : "Pending",
           photoStatus: reviewStatusLabel(profile.photo_review_status || profile.photoReviewStatus, "Approved", dancerSetup.photos ? "Pending" : localProfile.photoStatus),
           reviewSubmitted: approved || rejected ? false : (submittedForReview || localProfile.reviewSubmitted),
+          is_incognito: profile.is_incognito === true,
           hidden: approved ? (profile.is_public === false || profile.isPublic === false) : localProfile.hidden,
           isPublic: profile.is_public !== false && profile.isPublic !== false,
           socials: { ...emptySocialMap(), ...dancerSignupSocials },

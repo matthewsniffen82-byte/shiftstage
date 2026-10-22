@@ -150,6 +150,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         rememberVipDashboard(expectedAccount, result.venues.some(member => member.id === result.selectedVenueId) ? result.selectedVenueId : "");
         lastVenue.current = result.selectedVenueId;
         setVenues(result.venues);
+        setProfileSelection(previous => previous && !result.dancers.some(dancer => dancer.id === previous.id) ? null : previous);
         if (view === "plan" && result.selectedVenueId) {
           setDrafts(previous => ({ ...previous, [result.selectedVenueId]: reconcileVipDraft(previous[result.selectedVenueId] || emptyVipDraft(), result.dancers) }));
           setEditing(previous => previous?.request.venue_id === result.selectedVenueId ? { ...previous, draft: reconcileVipDraft(previous.draft, result.dancers) } : previous);
@@ -398,7 +399,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
       </>)}
     </section>)}
     <footer className="vip-dashboard-footer"><span>MyDancr VIP</span><small>Private access. Plans confirmed by your venue.</small></footer>
-    <ClubProfileDialog prewarm profile={null} profileId={selectedProfile?.id || ""} publicSlug={selectedProfile?.slug}
+    <ClubProfileDialog prewarm profile={null} profileId={selectedProfile?.id || ""} publicSlug={selectedProfile?.slug} vipVenueId={selectedProfile?.venueId}
       publicActions={selectedProfile?.actions} loadingIdentity={selectedProfile}
       vipRequest={selectedProfile ? { added: draft.selected.includes(selectedProfile.id),
         disabled: disabled || loading || !draftsLoaded || !isVipRequestable(profileDancer),

@@ -636,3 +636,31 @@ test('staff media recovers on an unchanged profile refresh after a temporary out
   await f.bridge.openInternalProfileMessage(f.event());
   assert.equal(f.fetches.length,recovered,'A complete unchanged profile must preserve the viewer');
 });
+
+
+test('an internal-only VIP profile uses fresh authenticated club access and protected media, without table controls',async()=>{
+ const f=fixture({generic:true,staff:true,publicPayload:{ok:true,profile}});
+ const event=f.event({data:{type:'mydancr:public-profile-open',profileId:profile.id,slug:profile.slug,vipVenueId:id(20),vipRequest:{added:false,disabled:false,message:''}}});
+ await f.bridge.openPublicProfileMessage(event);
+ assert.equal(f.bridge.profile().vipProfile,true);assert.equal(f.bridge.profile().internalGuestProfile,true);
+ assert.match(f.bridge.vipProfileRequestActionsMarkup(f.bridge.profile()),/Request/);
+ assert.equal(f.bridge.internalProfileRequestActionsMarkup(f.bridge.profile()),'');
+ const scoped=f.fetches.filter(item=>item.url.startsWith('/api/internal/'));
+ assert.ok(scoped.length>=5);
+ for(const item of scoped){assert.match(item.url,/vipVenueId=/);assert.match(item.options.headers.authorization,/Bearer/);assert.equal(item.options.cache,'no-store');}
+ f.bridge.sendVipProfileRequest();assert.equal(f.messages.at(-1)[0].type,'mydancr:vip-profile-request');
+ f.bridge.closeInternalProfileFrame();assert.equal(f.bridge.profile(),null);
+});
+
+
+test('public VIP profile authorization does not close the parent selection on open or queue updates',async()=>{
+ const publicSource={id:profile.id,slug:profile.slug,stageName:profile.stage_name,verified:true,city:'Las Vegas'};
+ const f=fixture({generic:true,staff:true});
+ f.context.fetch=async(url,options)=>{f.fetches.push({url,options});return {ok:true,json:async()=>({ok:true,profile:url.startsWith('/api/internal/')?{...profile,is_public:true}:publicSource})};};
+ const event=f.event({data:{type:'mydancr:public-profile-open',profileId:profile.id,slug:profile.slug,vipVenueId:id(20),vipRequest:{added:false,disabled:false,message:''}}});
+ await f.bridge.openPublicProfileMessage(event);
+ event.data.vipRequest.added=true;await f.bridge.openPublicProfileMessage(event);
+ assert.equal(f.opens.length,1);assert.equal(f.bridge.profile().vipProfile,true);
+ assert.match(f.bridge.vipProfileRequestActionsMarkup(f.bridge.profile()),/Added to request queue/);
+ assert.ok(!f.messages.some(([message])=>message.type==='mydancr:internal-profile-close'));
+});

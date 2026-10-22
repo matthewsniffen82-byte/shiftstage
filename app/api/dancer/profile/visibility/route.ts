@@ -11,9 +11,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 const MAX_VISIBILITY_BODY_BYTES = 2_048;
 
-type VisibilityRequest = {
-  isPublic: boolean;
-};
+type VisibilityRequest = { isPublic: boolean } | { isIncognito: boolean };
 
 function json(body: Record<string, unknown>, status = 200) {
   const response = NextResponse.json(body, { status });
@@ -24,17 +22,18 @@ function json(body: Record<string, unknown>, status = 200) {
 function isVisibilityRequest(value: unknown): value is VisibilityRequest {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   const body = value as Record<string, unknown>;
-  return Object.keys(body).length === 1 && typeof body.isPublic === "boolean";
+  return Object.keys(body).length === 1 && (typeof body.isPublic === "boolean" || typeof body.isIncognito === "boolean");
 }
 
 async function verifyPublicVisibility(
   db: ReturnType<typeof createAdminSupabaseClient>,
   dancerId: string,
   isPublic: boolean,
+  isIncognito: boolean,
 ) {
   const { data: profile, error }: any = await db
     .from("dancer_profiles")
-    .select("id, status, verification_status, venue_approved_at, disabled_at, is_public")
+    .select("id, status, verification_status, venue_approved_at, disabled_at, is_public, is_incognito")
     .eq("id", dancerId)
     .maybeSingle();
 
@@ -50,13 +49,14 @@ async function verifyPublicVisibility(
     isCoreVerificationApproved(profile),
   );
 
-  if (publicProfileVisible !== isPublic) {
+  if (publicProfileVisible !== isPublic || profile?.is_incognito !== isIncognito) {
     throw new Error("PUBLIC_PROFILE_VISIBILITY_VERIFICATION_FAILED");
   }
 
   return {
     verified: true,
     isPublic,
+    isIncognito,
     publicProfileVisible,
   };
 }
@@ -70,13 +70,13 @@ export async function PATCH(request: Request) {
       tooLargeMessage: "Profile visibility request is too large.",
     });
     if (!isVisibilityRequest(body)) {
-      return json({ ok: false, error: "isPublic must be a boolean." }, 400);
+      return json({ ok: false, error: "Choose a valid profile visibility." }, 400);
     }
 
     const db = createAdminSupabaseClient() as any;
     const { data: currentProfile, error: currentProfileError } = await db
       .from("dancer_profiles")
-      .select("id, status, verification_status, venue_approved_at, disabled_at, is_public")
+      .select("id, status, verification_status, venue_approved_at, disabled_at, is_public, is_incognito")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -89,39 +89,25 @@ export async function PATCH(request: Request) {
     const coreApprovalComplete = isCoreVerificationApproved(currentProfile);
     const profileBlocked = profileStatus === "rejected" || profileStatus === "disabled";
 
-    if (body.isPublic && (!coreApprovalComplete || profileBlocked)) {
+    const incognito = "isIncognito" in body ? body.isIncognito : !body.isPublic;
+    if (!incognito && (!coreApprovalComplete || profileBlocked)) {
       return json({ ok: false, error: "Profile approval is required before reactivation." }, 409);
     }
-    if (body.isPublic && currentProfile.disabled_at) {
+    if (!incognito && currentProfile.disabled_at) {
       return json({ ok: false, error: "Reactivate your account before making the profile public." }, 409);
-    }
-
-    if (currentProfile.is_public === body.isPublic) {
-      const visibility = await verifyPublicVisibility(db, currentProfile.id, body.isPublic);
-      return json({
-        ok: true,
-        changed: false,
-        profile: {
-          id: currentProfile.id,
-          is_public: currentProfile.is_public,
-          isPublic: currentProfile.is_public,
-        },
-        visibility,
-        session,
-      });
     }
 
     const updatedProfile = await transitionDancerPublication(
       db,
       currentProfile.id,
-      body.isPublic ? "set_public" : "set_private",
+      incognito ? "set_private" : "restore_visibility",
       { actorUserId: user.id },
     );
 
-    if (updatedProfile.isPublic !== body.isPublic) {
+    if (updatedProfile.isIncognito !== incognito) {
       throw new Error("PROFILE_VISIBILITY_UPDATE_NOT_APPLIED");
     }
-    const visibility = await verifyPublicVisibility(db, currentProfile.id, body.isPublic);
+    const visibility = await verifyPublicVisibility(db, currentProfile.id, updatedProfile.isPublic, updatedProfile.isIncognito);
 
     console.info("DANCER_PROFILE_VISIBILITY_UPDATED", {
       dancerId: updatedProfile.id,
@@ -137,6 +123,7 @@ export async function PATCH(request: Request) {
         id: updatedProfile.id,
         is_public: updatedProfile.isPublic,
         isPublic: updatedProfile.isPublic,
+        is_incognito: updatedProfile.isIncognito,
       },
       visibility,
       session,

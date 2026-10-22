@@ -154,15 +154,15 @@ async function vipWorkingFollowing(client: SupabaseClient, userId: string, venue
   const dancers = (roster as VipDancer[] || []).filter(dancer => dancer.working_now && follows.has(dancer.id))
     .sort((a, b) => a.stage_name.localeCompare(b.stage_name, "en", { sensitivity: "base", numeric: true }) || a.id.localeCompare(b.id)).slice(0, 4);
   if (!dancers.length) return [];
-  const { data: profiles, error: profileError } = await client.from("dancer_profiles").select("id,slug,avatar_storage_path")
-    .in("id", dancers.map(dancer => dancer.id)).eq("status", "approved").eq("verification_status", "approved").eq("is_public", true).is("disabled_at", null);
+  const { data: profiles, error: profileError } = await client.from("dancer_profiles").select("id,slug,is_public,avatar_storage_path")
+    .in("id", dancers.map(dancer => dancer.id)).eq("status", "approved").eq("verification_status", "approved").eq("is_incognito", false).is("disabled_at", null);
   if (profileError) throw profileError;
-  const publicProfiles = new Map((profiles || []).map(profile => [profile.id, profile]));
-  return dancers.map(dancer => {
-    const profile = publicProfiles.get(dancer.id), path = profile?.avatar_storage_path;
+  const authorizedProfiles = new Map((profiles || []).map(profile => [profile.id, profile]));
+  return dancers.filter(dancer => authorizedProfiles.has(dancer.id)).map(dancer => {
+    const profile = authorizedProfiles.get(dancer.id), path = profile?.avatar_storage_path;
     return { ...dancer, following: true, canRequest: true,
       profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
-      photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null };
+      photoUrl: path && !/^https?:\/\//i.test(path) ? profile?.is_public ? dancerPhotoDeliveryUrl(path, 320) : `/api/internal/avatar/${dancer.id}?width=320&vipVenueId=${venueId}` : null };
   });
 }
 
@@ -175,17 +175,17 @@ async function vipMyDancers(client: SupabaseClient, userId: string, venueId: str
   ]);
   if (roster.error) throw roster.error;
   const eligible = new Map<string, VipDancer>((roster.data || []).map((dancer: VipDancer) => [dancer.id, dancer]));
-  const ids = [...new Set([...eligible.keys(), ...history.keys(), ...follows])];
-  const profiles = new Map<string, { slug: string; stage_name: string; avatar_storage_path: string | null }>();
+  const ids = [...eligible.keys()];
+  const profiles = new Map<string, { slug: string; stage_name: string; is_public: boolean; avatar_storage_path: string | null }>();
   // Bound URL size and avoid the database's default result limit.
   for (let offset = 0; offset < ids.length; offset += 200) {
-    const { data, error } = await client.from("dancer_profiles").select("id,slug,stage_name,avatar_storage_path")
+    const { data, error } = await client.from("dancer_profiles").select("id,slug,stage_name,is_public,avatar_storage_path")
       .in("id", ids.slice(offset, offset + 200)).eq("status", "approved").eq("verification_status", "approved")
-      .eq("is_public", true).is("disabled_at", null);
+      .eq("is_incognito", false).is("disabled_at", null);
     if (error) throw error;
     for (const profile of data || []) profiles.set(profile.id, profile);
   }
-  return ids.map(id => {
+  return ids.filter(id => profiles.has(id)).map(id => {
     const profile = profiles.get(id), dancer = eligible.get(id), path = profile?.avatar_storage_path;
     return { id, stage_name: profile?.stage_name || dancer?.stage_name || history.get(id) || "Unavailable dancer",
       working_now: dancer?.working_now === true, canRequest: dancer?.working_now === true,
@@ -193,7 +193,7 @@ async function vipMyDancers(client: SupabaseClient, userId: string, venueId: str
       // Compatibility for cached VIP clients; Follow is the only subscription.
       workingAlertsEnabled: follows.has(id),
       profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
-      photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null };
+      photoUrl: path && !/^https?:\/\//i.test(path) ? profile?.is_public ? dancerPhotoDeliveryUrl(path, 320) : `/api/internal/avatar/${id}?width=320&vipVenueId=${venueId}` : null };
   });
 }
 
@@ -225,17 +225,17 @@ async function vipDancerCards(client: SupabaseClient, dancers: VipDancer[], user
   if (!dancers.length) return [];
   const ids = dancers.map(dancer => dancer.id);
   const [profiles, follows, previous] = await Promise.all([
-    client.from("dancer_profiles").select("id,slug,avatar_storage_path")
-      .in("id", ids).eq("status", "approved").eq("verification_status", "approved").eq("is_public", true).is("disabled_at", null),
+    client.from("dancer_profiles").select("id,slug,is_public,avatar_storage_path")
+      .in("id", ids).eq("status", "approved").eq("verification_status", "approved").eq("is_incognito", false).is("disabled_at", null),
     followedDancerIds(client, userId),
     previouslyRequestedDancers(client, userId, venueId, new Set(ids)),
   ]);
   if (profiles.error) throw profiles.error;
-  const publicProfiles = new Map((profiles.data || []).map(row => [row.id, row]));
-  return dancers.map(dancer => {
-    const profile = publicProfiles.get(dancer.id), path = profile?.avatar_storage_path;
-    // The existing photo endpoint checks current anonymous RLS on every image.
-    return { ...dancer, canRequest: dancer.working_now === true, photoUrl: path && !/^https?:\/\//i.test(path) ? dancerPhotoDeliveryUrl(path, 320) : null,
+  const authorizedProfiles = new Map((profiles.data || []).map(row => [row.id, row]));
+  return dancers.filter(dancer => authorizedProfiles.has(dancer.id)).map(dancer => {
+    const profile = authorizedProfiles.get(dancer.id), path = profile?.avatar_storage_path;
+    // Public images use anonymous RLS; Internal-only images require the invited VIP session.
+    return { ...dancer, canRequest: dancer.working_now === true, photoUrl: path && !/^https?:\/\//i.test(path) ? profile?.is_public ? dancerPhotoDeliveryUrl(path, 320) : `/api/internal/avatar/${dancer.id}?width=320&vipVenueId=${venueId}` : null,
       profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
       following: follows.has(dancer.id), previouslyRequested: previous.has(dancer.id) };
   });

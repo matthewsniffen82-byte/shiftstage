@@ -1,6 +1,6 @@
 "use client";
+import VipDancerPhoto from "./VipDancerPhoto";
 
-import { useState } from "react";
 import { isVipFollowing } from "@/src/lib/dancr/vip-dashboard";
 import type { VipDancer } from "@/src/lib/dancr/vip-types";
 import "./vip-my-dancers.css";
@@ -20,9 +20,5 @@ export function VipWorkingFollowing({ dancers, onRequest, onBrowse, busy }: {
 }
 
 function LibraryPhoto({ dancer }: { dancer: VipDancer }) {
-  const [failed, setFailed] = useState(false);
-  return <span className="vip-library-photo" aria-hidden="true">{dancer.photoUrl && !failed
-    // Public media delivery rechecks profile visibility.
-    ? <img src={dancer.photoUrl} alt="" width={64} height={80} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
-    : dancer.stage_name.slice(0, 2).toUpperCase()}</span>;
+  return <span className="vip-library-photo" aria-hidden="true"><VipDancerPhoto dancer={dancer} width={64} height={80} /></span>;
 }

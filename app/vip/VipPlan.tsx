@@ -1,4 +1,5 @@
 "use client";
+import VipDancerPhoto from "./VipDancerPhoto";
 
 import { useEffect, useRef, useState } from "react";
 import { filterVipDancers, isVipFollowing, isVipRequestable, vipProfileSlug, type VipDraft, type VipDancerFilter } from "@/src/lib/dancr/vip-dashboard";
@@ -89,9 +90,5 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
 }
 
 function DancerPhoto({ dancer }: { dancer: VipDancer }) {
-  const [failed, setFailed] = useState(false);
-  return <span className="vip-avatar" aria-hidden="true">{dancer.photoUrl && !failed
-    // The photo endpoint rechecks public visibility; unavailable photos fall back to initials.
-    ? <img src={dancer.photoUrl} alt="" width={56} height={68} loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
-    : dancer.stage_name.slice(0, 2).toUpperCase()}</span>;
+  return <span className="vip-avatar" aria-hidden="true"><VipDancerPhoto dancer={dancer} width={56} height={68} /></span>;
 }

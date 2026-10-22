@@ -16,9 +16,9 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(routeSource, /createAdminSupabaseClient\(\)/);
   assert.match(routeSource, /typeof body\.isPublic === "boolean"/);
   assert.match(routeSource, /\.eq\("user_id", user\.id\)/);
-  assert.match(routeSource, /transitionDancerPublication\([\s\S]*?body\.isPublic \? "set_public" : "set_private"/);
+  assert.match(routeSource, /transitionDancerPublication\([\s\S]*?incognito \? "set_private" : "restore_visibility"/);
   assert.doesNotMatch(routeSource, /\.update\(\{ is_public: body\.isPublic \}\)/);
-  assert.match(routeSource, /updatedProfile\.isPublic !== body\.isPublic/);
+  assert.match(routeSource, /updatedProfile\.isIncognito !== incognito/);
   assert.match(routeSource, /coreApprovalComplete = isCoreVerificationApproved\(currentProfile\)/);
   assert.match(routeSource, /profileBlocked = profileStatus === "rejected" \|\| profileStatus === "disabled"/);
   assert.match(routeSource, /DANCER_PROFILE_VISIBILITY_UPDATED/);
@@ -38,7 +38,7 @@ test("incognito uses a dedicated authenticated database operation", () => {
   assert.match(dashboardSessionSource, /requestDashboardJson\("\/api\/dancer\/profile\/visibility"/);
   assert.match(dashboardSessionSource, /"x-dancr-refresh-token"/);
   assert.match(dashboardSessionSource, /persistResponseSession\(data, authHeaders,/);
-  assert.match(dashboardSource, /data\.visibility\?\.publicProfileVisible !== nextPublic/);
+  assert.match(dashboardSource, /data\.visibility\?\.publicProfileVisible !== savedPublic/);
   assert.doesNotMatch(
     dashboardSource.match(/async function toggleVisibility\(\)[\s\S]*?\n  }/)?.[0] || "",
     /fetch\("\/api\/dancer\/profile"/,
@@ -52,8 +52,8 @@ test("the production mobile control cannot report a local-only incognito success
 
   assert.match(handler, /!isDancerSession\(\) \|\| !authSession\?\.accessToken/);
   assert.match(handler, /patchAuthenticatedJson\("\/api\/dancer\/profile\/visibility"/);
-  assert.match(handler, /savedPublic !== nextPublic/);
-  assert.match(handler, /data\.visibility\?\.publicProfileVisible !== nextPublic/);
+  assert.match(handler, /savedProfile\?\.is_incognito !== !nextPublic/);
+  assert.match(handler, /data\.visibility\?\.publicProfileVisible !== savedPublic/);
   assert.match(handler, /trigger\.setAttribute\("aria-busy", "true"\)/);
   assert.match(handler, /trigger\.removeAttribute\("aria-busy"\)/);
   assert.match(mobileAppSource, /id="dancerIncognitoStatus"[\s\S]*?aria-live="polite"/);

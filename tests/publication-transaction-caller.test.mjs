@@ -35,7 +35,7 @@ for(const [name,receipt]of [['null',()=>null],['array',()=>[]],['empty',()=>({})
 });
 for(const envelope of [()=>null,()=>undefined,()=>[],()=>false])test('invalid publication response envelope '+envelope.toString()+' is unavailable',async()=>{const h=harness({envelope});await assert.rejects(h.run(),e=>e.status===503);assert.equal(h.calls.length,1);});
 test('unknown private receipt fields are not returned to the caller',async()=>{
- const h=harness({receipt:r=>({...r,privateReview:'Private review'})}),result=await h.run();assert.deepEqual(Object.keys(result).sort(),['approvedAt','disabledAt','id','isPublic','status','userId','venueApprovedAt','venueApprovedByUserId','venueApprovedVenueId','verificationStatus']);
+ const h=harness({receipt:r=>({...r,privateReview:'Private review'})}),result=await h.run();assert.deepEqual(Object.keys(result).sort(),['approvedAt','disabledAt','id','isIncognito','isPublic','status','userId','venueApprovedAt','venueApprovedByUserId','venueApprovedVenueId','verificationStatus']);
 });
 
 test('internal-only publication receipt gives a useful instruction instead of claiming external publication',async()=>{

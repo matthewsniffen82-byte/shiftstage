@@ -992,6 +992,7 @@
           scheduled: false,
           trend: 10 + index,
           distance: "Pending",
+          is_incognito: item.is_incognito === true,
           hidden: item.isPublic === false || item.is_public === false,
           isPublic: item.isPublic !== false && item.is_public !== false,
           createdAt: item.createdAt || item.created_at || "",

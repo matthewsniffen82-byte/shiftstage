@@ -15,13 +15,19 @@ async function fixture() {
     // All VIP tables, constraints, grants and functions use the actual migration.
     await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
       create schema auth;
+      create type public.dancer_status as enum ('draft','pending_review','approved','rejected','disabled');
+      create type public.review_status as enum ('pending','approved','rejected');
+      create table public.dancer_channel_preferences(dancer_id uuid primary key,visibility text);
+      create table public.dancer_shift_channels(shift_id uuid,dancer_id uuid,venue_id uuid,visibility text,selected_at timestamptz default now());
+      create table public.dancer_age_verifications(user_id uuid,provider text,status text);
+      create function public.is_internal_demo_shift(uuid) returns boolean language sql as 'select false';
       create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,raw_user_meta_data jsonb default '{}');
       create table public.app_users(id uuid primary key,role text,account_state text);
       create table public.venues(id uuid primary key,owner_user_id uuid,name text,is_active boolean,timezone text);
       create table public.venue_team_members(venue_id uuid,user_id uuid,role text,status text);
-      create table public.dancer_profiles(id uuid primary key,user_id uuid,stage_name text,status text,verification_status text,disabled_at timestamptz);
+      create table public.dancer_profiles(id uuid primary key,user_id uuid,stage_name text,status public.dancer_status,verification_status public.review_status,disabled_at timestamptz,is_public boolean default true,avatar_storage_path text,approved_at timestamptz default now(),venue_approved_at timestamptz default now(),admin_disabled_at timestamptz,updated_at timestamptz,venue_approved_by_user_id uuid,venue_approved_venue_id uuid);
       create table public.venue_dancer_affiliations(venue_id uuid,dancer_id uuid,status text,revoked_at timestamptz,reentry_blocked boolean default false);
-      create table public.shifts(dancer_id uuid,venue_id uuid,status text,checked_in_at timestamptz,checked_out_at timestamptz,location_status text,location_verification_expires_at timestamptz);
+      create table public.shifts(id uuid default gen_random_uuid(),dancer_id uuid,venue_id uuid,status text,checked_in_at timestamptz,checked_out_at timestamptz,location_status text,location_verification_expires_at timestamptz);
       create type public.notification_type as enum ('support_message');
       create type public.notification_channel as enum ('in_app','email','push');
       create table public.notifications(id uuid primary key default gen_random_uuid(),recipient_id uuid,notification_type public.notification_type,channel public.notification_channel,title text,body text,payload jsonb,sent_at timestamptz);
@@ -37,6 +43,8 @@ async function fixture() {
     await db.exec(readFileSync(new URL("../supabase/migrations/20261011201618_vip_dancer_status_notifications.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261012012535_vip_venue_private_nicknames.sql", import.meta.url), "utf8"));
     await db.exec(readFileSync(new URL("../supabase/migrations/20261020223646_vip_working_now_requests.sql", import.meta.url), "utf8"));
+    await db.exec(readFileSync(new URL("../supabase/migrations/20261022135605_dancer_incognito_vip_visibility.sql", import.meta.url), "utf8"));
+    await db.exec("create trigger guard_dancer_channel_publication before insert or update on dancer_profiles for each row execute function guard_dancer_channel_publication(); grant update on dancer_profiles to service_role");
     // Match production grants for server-only SECURITY INVOKER request writes.
     await db.exec("grant select on public.app_users,public.venues,public.venue_team_members,public.dancer_profiles to service_role; grant select,insert on public.notifications to service_role");
     for (const [n, role] of [[1, "venue"], [2, "venue"], [3, "venue"], [4, "venue"], [5, "customer"], [6, "customer"], [7, "dancer"], [8, "dancer"], [9, "dancer"], [10, "customer"]]) {
@@ -46,11 +54,11 @@ async function fixture() {
     await db.query("insert into public.venues values($1,$2,'Private club',true,'America/Los_Angeles'),($3,$4,'Other club',true,'America/New_York')", [id(20), id(1), id(21), id(4)]);
     await db.query("insert into public.venue_team_members values($1,$2,'manager','active'),($1,$3,'staff','active')", [id(20), id(2), id(3)]);
     for (const n of [7, 8, 9]) {
-      await db.query("insert into public.dancer_profiles values($1,$2,$3,'approved','approved',null)", [id(n + 30), id(n), `Dancer ${n}`]);
+      await db.query("insert into public.dancer_profiles(id,user_id,stage_name,status,verification_status,disabled_at) values($1,$2,$3,'approved','approved',null)", [id(n + 30), id(n), `Dancer ${n}`]);
     }
     await db.query("insert into public.venue_dancer_affiliations(venue_id,dancer_id,status) values($1,$2,'active'),($3,$4,'active')", [id(20), id(37), id(21), id(39)]);
-    await db.query("insert into public.shifts values($1,$2,'posted',now(),null,'club_confirmed',now()+interval '2 hours')", [id(38), id(20)]);
-    await db.query("insert into public.shifts values($1,$2,'posted',now(),null,'club_confirmed',now()+interval '2 hours')", [id(37), id(20)]);
+    await db.query("insert into public.shifts(dancer_id,venue_id,status,checked_in_at,checked_out_at,location_status,location_verification_expires_at) values($1,$2,'posted',now(),null,'club_confirmed',now()+interval '2 hours')", [id(38), id(20)]);
+    await db.query("insert into public.shifts(dancer_id,venue_id,status,checked_in_at,checked_out_at,location_status,location_verification_expires_at) values($1,$2,'posted',now(),null,'club_confirmed',now()+interval '2 hours')", [id(37), id(20)]);
     await db.exec("set role service_role");
     return db;
   } catch (error) { await db.close(); throw error; }
@@ -633,5 +641,33 @@ test("venue-private nicknames cannot be read or changed by guests or the retired
     assert.doesNotMatch(JSON.stringify(reviewed.request), /nickname|Updated private label/);
     assert.ok(reviewed.notifications.some(notification => notification.recipient_id === id(5)));
     assert.doesNotMatch(JSON.stringify(reviewed.notifications), /nickname|Updated private label/);
+  } finally { await db.close(); }
+});
+
+
+test("Incognito blocks VIP lists and stale new/edited requests; restore preserves Internal-only discovery consent", async () => {
+  const db = await fixture();
+  try {
+    await invite(db); await accept(db);
+    await adminQuery(db, "insert into dancer_channel_preferences values($1,'internal')", [id(37)]);
+    await adminQuery(db, "update dancer_profiles set is_public=false where id=$1", [id(37)]);
+    await adminQuery(db, "insert into dancer_shift_channels(shift_id,dancer_id,venue_id,visibility) values($1,$2,$3,'internal')", [id(80),id(37),id(20)]);
+    await adminQuery(db, "insert into venue_dancer_affiliations(venue_id,dancer_id,status) values($1,$2,'active')", [id(21),id(37)]);
+    const original = (await submit(db, { dancers: [37] })).request;
+    const toggle = async transition => (await db.query("select transition_dancer_publication_safely($1,$2,$3) state", [id(37),transition,id(7)])).rows[0].state;
+    assert.equal((await toggle('set_private')).is_incognito, true);
+    assert.ok(!(await db.query("select * from vip_eligible_dancers($1)",[id(20)])).rows.some(d => d.id === id(37)));
+    await denies(submit(db, {request:91,dancers:[37]}), '40001');
+    await denies(edit(db, original, {dancers:[37]}), '40001');
+    // Background publication and account reactivation cannot undo Incognito.
+    await adminQuery(db, 'update dancer_profiles set is_public=true where id=$1', [id(37)]);
+    assert.equal((await toggle('reactivate')).is_public, false);
+    const restored = await toggle('restore_visibility');
+    assert.equal(restored.is_incognito, false); assert.equal(restored.is_public, false);
+    assert.equal(restored.channel_visibility, 'internal');
+    assert.ok((await db.query("select * from vip_eligible_dancers($1)",[id(20)])).rows.some(d => d.id === id(37)));
+    assert.ok(!(await db.query("select * from vip_eligible_dancers($1)",[id(21)])).rows.some(d => d.id === id(37)));
+    assert.ok((await submit(db, {request:92,dancers:[37]})).request);
+    await denies(db.query("select transition_dancer_publication_safely($1,'set_private',$2)",[id(37),id(8)]),'42501');
   } finally { await db.close(); }
 });

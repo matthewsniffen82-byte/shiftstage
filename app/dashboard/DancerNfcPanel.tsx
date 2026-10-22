@@ -151,7 +151,7 @@ export default function DancerNfcPanel({
         <ul>
           <li>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted.</li>
           <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
-          <li>Choose Internal only, External only, or Both at each tap. Internal avatar cards open your full approved profile.</li>
+          <li>Choose Internal only, External only, or Both at each tap. Internal only includes this club’s invited VIP guests, who may be viewing remotely.</li>
         </ul>
         {!isPublic && !authorized ? <p>Upload your photos, accept the agreement, and verify your age. Your first tap sends pending media to this club for approval.</p> : null}
       </div>

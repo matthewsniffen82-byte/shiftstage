@@ -27,9 +27,9 @@ function database({ failure, denied = false, large = false, roster = cards.filte
       { id: 'request-1', user_id: guest.id, venue_id: venues[1].id, dancers: [{ id: 'other-venue', stageName: 'Other venue dancer' }] },
     ],
     dancer_profiles: [
-      { id: 'aria', slug: 'aria', stage_name: 'Aria', status: 'approved', verification_status: 'approved', is_public: true, disabled_at: null, avatar_storage_path: 'aria/photo.jpg' },
-      { id: 'nova', slug: 'nova', stage_name: 'Nova', status: 'approved', verification_status: 'approved', is_public: true, disabled_at: null, avatar_storage_path: 'https://private.test/photo' },
-      { id: 'hidden', slug: 'secret-profile', stage_name: 'Private stage name', status: 'approved', verification_status: 'approved', is_public: false, disabled_at: null, avatar_storage_path: 'private/photo.jpg' },
+      { id: 'aria', slug: 'aria', stage_name: 'Aria', status: 'approved', verification_status: 'approved', is_incognito: false, is_public: true, disabled_at: null, avatar_storage_path: 'aria/photo.jpg' },
+      { id: 'nova', slug: 'nova', stage_name: 'Nova', status: 'approved', verification_status: 'approved', is_incognito: false, is_public: true, disabled_at: null, avatar_storage_path: 'https://private.test/photo' },
+      { id: 'hidden', slug: 'secret-profile', stage_name: 'Private stage name', status: 'approved', verification_status: 'approved', is_incognito: true, is_public: false, disabled_at: null, avatar_storage_path: 'private/photo.jpg' },
     ],
   };
   if (large) {
@@ -57,11 +57,11 @@ function database({ failure, denied = false, large = false, roster = cards.filte
   } };
 }
 
-test('My dancers joins the club roster, guest collections, and selected venue history, retaining off-shift and unavailable dancers', async () => {
+test('My dancers joins the club roster, guest collections, and selected venue history, retaining eligible off-shift dancers without resurrecting hidden history', async () => {
   const db = database();
   const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers' }));
   const byId = new Map(result.dancers.map(d => [d.id, d]));
-  assert.deepEqual([...byId.keys()].sort(), ['aria', 'hidden', 'nova', 'past']);
+  assert.deepEqual([...byId.keys()].sort(), ['aria', 'nova']);
   assert.equal(byId.get('aria').following, true); assert.ok(result.dancers.every(d => !("favorite" in d)));
   assert.ok(!db.calls.some(c => c.table === 'favorites'));
   assert.equal(byId.get('aria').workingAlertsEnabled, true);
@@ -69,8 +69,6 @@ test('My dancers joins the club roster, guest collections, and selected venue hi
   assert.equal(byId.get('aria').previouslyRequested, true); assert.equal(byId.get('aria').stage_name, 'Aria');
   assert.equal(byId.get('aria').canRequest, true); assert.equal(byId.get('aria').photoUrl, '/photo/aria/photo.jpg');
   assert.equal(byId.get('nova').following, true); assert.equal(byId.get('nova').photoUrl, null);
-  assert.equal(byId.get('hidden').stage_name, 'Unavailable dancer'); assert.equal(byId.get('hidden').profileHref, null); assert.equal(byId.get('hidden').photoUrl, null);
-  assert.equal(byId.get('past').previouslyRequested, true); assert.equal(byId.get('past').canRequest, false);
   assert.equal(result.requests.length, 0);
   for (const call of db.calls.filter(c => c.table === 'follows')) assert.ok(call.steps.some(s => s[0] === 'eq' && s[1] === 'customer_id' && s[2] === guest.id));
   const other = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[1].id }));
@@ -78,17 +76,18 @@ test('My dancers joins the club roster, guest collections, and selected venue hi
   assert.equal(other.dancers.find(d => d.id === 'aria').workingAlertsEnabled, true);
   assert.equal(other.dancers.find(d => d.id === 'nova').following, true, 'the same Follow is shared across clubs');
   assert.ok(!db.calls.some(c => c.table === 'venue_vip_working_alerts'));
-  assert.ok(other.dancers.some(d => d.id === 'other-venue' && d.previouslyRequested));
+  assert.ok(!other.dancers.some(d => d.id === 'other-venue'));
   assert.ok(!other.dancers.some(d => d.id === 'past'));
 });
 
-test('club dancers include unfollowed off-shift affiliates and past requests but not another club history', async () => {
+test('club dancers include unfollowed off-shift affiliates without resurrecting unavailable historical profiles', async () => {
   const db = database({ roster: [...cards.filter(d => d.canRequest), { id: 'affiliate', stage_name: 'Off-shift affiliate', working_now: false }] });
+  db.tables.dancer_profiles.push({ ...db.tables.dancer_profiles[0], id: 'affiliate', stage_name: 'Off-shift affiliate' });
   const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers', venueId: venues[0].id }));
   const affiliated = result.dancers.find(d => d.id === 'affiliate');
   assert.equal(affiliated.canRequest, false); assert.equal(affiliated.working_now, false);
   assert.equal(affiliated.following, false); assert.equal(affiliated.previouslyRequested, false);
-  assert.ok(result.dancers.some(d => d.id === 'past' && !d.canRequest && d.previouslyRequested));
+  assert.ok(!result.dancers.some(d => d.id === 'past'));
   assert.ok(!result.dancers.some(d => d.id === 'other-venue'));
   assert.equal(db.calls.find(c => c.rpc).args.p_venue, venues[0].id);
 });
@@ -105,14 +104,15 @@ test('overview follows use only the guest follows and the selected venue current
   assert.ok(!db.calls.some(c => c.steps?.some(s => s[0] === 'select' && s[1] === 'id,dancers')));
   db.tables.follows.push({ customer_id: guest.id, dancer_id: 'nova' });
   assert.deepEqual(Array.from((await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview' }))).dancers, d => d.id), ['aria'], 'off-shift follows are omitted');
-  db.tables.dancer_profiles[0].is_public = false;
+  db.tables.dancer_profiles[0].is_incognito = true;
   const hidden = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview' }));
-  assert.equal(hidden.dancers[0].profileHref, null); assert.equal(hidden.dancers[0].photoUrl, null);
+  assert.equal(hidden.dancers.length, 0);
 });
 
 test('overview follows remain bounded, paginate follows, and skip roster reads for an empty collection', async () => {
   const roster = Array.from({ length: 6 }, (_, i) => ({ id: `saved-${500 - i}`, stage_name: `Dancer ${i}`, working_now: true }));
   const db = database({ large: true, roster });
+  db.tables.dancer_profiles.push(...roster.map(d => ({...db.tables.dancer_profiles[0], id:d.id, stage_name:d.stage_name})));
   const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'overview' }));
   assert.deepEqual(Array.from(result.dancers, d => d.id), ['saved-500', 'saved-499', 'saved-498', 'saved-497']);
   assert.ok(db.calls.some(c => c.table === 'follows' && c.steps.some(s => s[0] === 'range' && s[1] === 500)));
@@ -177,9 +177,9 @@ test('working follows expose requests, disabled refresh state, and a useful empt
 test('collections and old request history paginate fully and profile lookups stay bounded', async () => {
   const db = database({ large: true });
   const result = await service.getVipState(db.client, guest.id, new URLSearchParams({ view: 'dancers' }));
-  assert.equal(result.dancers.filter(d => d.following).length, 504);
-  assert.ok(result.dancers.some(d => d.id === 'saved-500'));
-  assert.ok(result.dancers.some(d => d.id === 'past' && d.previouslyRequested));
+  assert.equal(result.dancers.filter(d => d.following).length, 2);
+  assert.ok(!result.dancers.some(d => d.id === 'saved-500'));
+  assert.ok(!result.dancers.some(d => d.id === 'past'));
   for (const table of ['follows', 'venue_vip_requests']) assert.ok(db.calls.some(c => c.table === table && c.steps.some(s => s[0] === 'range' && s[1] === 500)));
   assert.ok(db.calls.filter(c => c.table === 'dancer_profiles').every(c => c.steps.find(s => s[0] === 'in')[2].length <= 200));
 });
@@ -289,4 +289,18 @@ test('choosing dancers and moving between steps keeps filters and visit details 
   ui.select('aria',false);assert.equal(ui.nodes().some(node=>node.props?.className==='vip-mobile-continue'),false);
   ui.select('aria');ui.details();assert.equal(sent,0);
   ui.nodes().find(node=>node.type==='form').props.onSubmit({preventDefault(){}});await Promise.resolve();assert.equal(sent,1);
+});
+
+
+test('Internal-only VIP cards use authenticated media and retain profiles; Incognito excludes even stale roster rows', async()=>{
+ const db=database();db.tables.dancer_profiles[0].is_public=false;
+ const result=await service.getVipState(db.client,guest.id,new URLSearchParams({view:'dancers'}));
+ const dancer=result.dancers.find(d=>d.id==='aria');
+ assert.equal(dancer.profileHref,'/dancers/aria');assert.equal(dancer.canRequest,true);
+ assert.equal(dancer.photoUrl,`/api/internal/avatar/aria?width=320&vipVenueId=${venues[0].id}`);
+ db.tables.dancer_profiles[0].is_incognito=true;
+ for(const view of ['dancers','overview','plan']) {
+  const hidden=await service.getVipState(db.client,guest.id,new URLSearchParams({view}));
+  assert.ok(!hidden.dancers.some(d=>d.id==='aria'));
+ }
 });

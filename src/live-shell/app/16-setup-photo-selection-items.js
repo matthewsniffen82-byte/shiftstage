@@ -543,11 +543,11 @@
       const title = document.getElementById("dancerVisibilityTitle");
       const summary = document.getElementById("dancerVisibilitySummary");
       if (!button) return;
-      const isHidden = dancerProfileIsHidden(profile);
+      const isHidden = profile?.is_incognito === true;
       button.hidden = !approved;
       button.classList.toggle("is-incognito", isHidden);
       button.setAttribute("aria-pressed", isHidden ? "true" : "false");
-      button.setAttribute("aria-label", isHidden ? "Reactivate public profile" : "Go incognito and hide public profile");
+      button.setAttribute("aria-label", isHidden ? "Restore profile visibility" : "Go incognito and hide from guests, including invited VIPs");
       const label = button.querySelector("strong");
       const helper = button.querySelector("span");
       if (label) label.textContent = isHidden ? "Turn profile back on" : "Go incognito";
@@ -559,7 +559,7 @@
         status.classList.toggle("is-incognito", isHidden);
         status.textContent = isHidden
           ? "Your content is hidden from the site and stays saved."
-          : "Your profile is public.";
+          : "Your profile is visible to permitted guests.";
       }
     }
 
@@ -664,12 +664,12 @@
       if (!approved) return;
 
       const city = activeDancerCity();
-      const isHidden = dancerProfileIsHidden(profile);
+      const isHidden = profile?.is_incognito === true;
       const visibilityPill = document.getElementById("dancerDashboardVisibilityPill");
       const overviewTitle = document.getElementById("dancerDashboardOverviewTitle");
       const overviewCopy = document.getElementById("dancerDashboardOverviewCopy");
       if (visibilityPill) {
-        visibilityPill.textContent = optionalProfileFixes ? "Action needed" : isHidden ? "Incognito" : "Public";
+        visibilityPill.textContent = optionalProfileFixes ? "Action needed" : isHidden ? "Incognito" : dancerProfileIsHidden(profile) ? "Internal only" : "Public";
         visibilityPill.classList.toggle("is-incognito", isHidden || optionalProfileFixes);
       }
       if (overviewTitle) overviewTitle.textContent = optionalProfileFixes

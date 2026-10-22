@@ -7,6 +7,7 @@ export type DancerPublicationTransition =
   | "admin_reject"
   | "set_public"
   | "set_private"
+  | "restore_visibility"
   | "disable"
   | "reactivate";
 
@@ -17,6 +18,7 @@ export type DancerPublicationState = {
   verificationStatus: string;
   approvedAt: string | null;
   isPublic: boolean;
+  isIncognito: boolean;
   disabledAt: string | null;
   venueApprovedAt: string | null;
   venueApprovedByUserId: string | null;
@@ -46,20 +48,21 @@ function publicationState(profile: any, dancerId: string, transition: DancerPubl
     || typeof profile.is_public !== "boolean"
     || ![profile.approved_at, profile.disabled_at, profile.venue_approved_at].every(timestamp)
     || ![profile.venue_approved_by_user_id, profile.venue_approved_venue_id].every(value => value === null || uuid(value))
-    || (["submit_for_venue_review", "set_public", "set_private"].includes(transition) && profile.user_id !== actorUserId?.toLowerCase())
+    || (["submit_for_venue_review", "set_public", "set_private", "restore_visibility"].includes(transition) && profile.user_id !== actorUserId?.toLowerCase())
     || (profile.is_public && (profile.status !== "approved" || profile.verification_status !== "approved"
       || profile.approved_at === null || profile.venue_approved_at === null || profile.disabled_at !== null))) throw unconfirmedPublication();
   if ((["submit_for_venue_review", "admin_accept"].includes(transition) && (profile.status !== "pending_review"
       || profile.verification_status !== "pending" || profile.approved_at !== null || profile.is_public))
     || (transition === "admin_reject" && (profile.status !== "rejected" || profile.verification_status !== "rejected" || profile.approved_at !== null || profile.is_public))
     || (transition === "set_public" && !profile.is_public) || (transition === "set_private" && profile.is_public)
+    || (transition === "restore_visibility" && (profile.is_incognito !== false || profile.is_public !== (profile.channel_visibility !== "internal")))
     || (transition === "disable" && (profile.status !== "disabled" || profile.disabled_at === null || profile.is_public))
-    || (transition === "reactivate" && (profile.is_public !== (profile.status === "approved" && profile.channel_visibility !== "internal")
+    || (transition === "reactivate" && (profile.is_public !== (profile.status === "approved" && profile.channel_visibility !== "internal" && profile.is_incognito !== true)
       || !["approved", "rejected", "pending_review", "disabled"].includes(profile.status)
       || (profile.status !== "disabled" && profile.disabled_at !== null)))) throw unconfirmedPublication();
   return {
     id: profile.id, userId: profile.user_id, status: profile.status, verificationStatus: profile.verification_status,
-    approvedAt: profile.approved_at, isPublic: profile.is_public, disabledAt: profile.disabled_at,
+    approvedAt: profile.approved_at, isPublic: profile.is_public, isIncognito: profile.is_incognito === true, disabledAt: profile.disabled_at,
     venueApprovedAt: profile.venue_approved_at, venueApprovedByUserId: profile.venue_approved_by_user_id,
     venueApprovedVenueId: profile.venue_approved_venue_id,
   };

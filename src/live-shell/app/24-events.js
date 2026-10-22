@@ -535,7 +535,7 @@
           openAuthRole("dancer");
           return;
         }
-        const nextPublic = dancerProfileIsHidden(profile);
+        const nextPublic = profile.is_incognito === true;
         if (!nextPublic && !window.confirm("Go incognito? Your profile and all your content will be hidden until you turn it off.")) {
           return;
         }
@@ -543,30 +543,31 @@
           trigger.disabled = true;
           trigger.setAttribute("aria-busy", "true");
         }
-        setResult(nextPublic ? "Reactivating your public profile..." : "Hiding your profile from public pages...");
+        setResult(nextPublic ? "Restoring profile visibility..." : "Hiding your profile from guests, including invited VIPs...");
         try {
-          const data = await patchAuthenticatedJson("/api/dancer/profile/visibility", { isPublic: nextPublic });
+          const data = await patchAuthenticatedJson("/api/dancer/profile/visibility", { isIncognito: !nextPublic });
           if (!data) throw new Error("Sign in required");
           const savedProfile = data.profile || null;
           const savedPublic = savedProfile?.is_public === true || savedProfile?.isPublic === true;
-          if (savedPublic !== nextPublic) {
+          if (savedProfile?.is_incognito !== !nextPublic) {
             throw new Error("Profile visibility did not save. Try again.");
           }
-          if (data.visibility?.verified !== true || data.visibility?.publicProfileVisible !== nextPublic) {
+          if (data.visibility?.verified !== true || data.visibility?.publicProfileVisible !== savedPublic) {
             throw new Error("Public profile visibility could not be verified. Try again.");
           }
           window.dispatchEvent(new CustomEvent("mydancr:dancer-visibility-saved", { detail: { dancerId: savedProfile.id, isPublic: savedPublic } }));
           const updatedProfile = activeDancerProfile(city) || profile;
           setDancerProfilePublic(updatedProfile, savedPublic);
+          updatedProfile.is_incognito = savedProfile.is_incognito;
           liveMarketState[city] = null;
           syncDancerIncognitoToggle(updatedProfile, true);
           renderDancerSetup();
           render();
           if (customerDashboard.classList.contains("show")) renderDashboard();
-          setResult(savedPublic
+          setResult(nextPublic
             ? "Incognito is off. Your content is visible again."
             : "Incognito is on. Your content is hidden from the site and stays saved.");
-          showToast(savedPublic ? "Profile is back on" : "Profile hidden · Incognito on");
+          showToast(nextPublic ? "Profile is back on" : "Profile hidden · Incognito on");
         } catch (error) {
           setResult(error.message || "Could not update profile visibility.");
           showToast(error.message || "Could not update profile visibility.");

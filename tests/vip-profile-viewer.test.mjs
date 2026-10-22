@@ -40,6 +40,7 @@ test('Request merges with Quick Add and stays open; Back returns to the mounted 
   assert.equal(planner.props.onOpenProfile(dancers[0]), true); ui.render();
   assert.equal(ui.profileViewer().props.profile, null);
   assert.equal(ui.profileViewer().props.publicSlug, 'aria');
+  assert.equal(ui.profileViewer().props.vipVenueId, venues[0].id);
   assert.equal(ui.profileViewer().props.publicActions.following, true);
   const writes = ui.writes.length;
   ui.profileViewer().props.onVipRequest(); ui.render();
@@ -108,4 +109,15 @@ test('profile requests disable after a dancer checks out during a dashboard refr
   assert.deepEqual([...ui.planner().props.draft.selected], []);
   assert.match(ui.profileViewer().props.vipRequest.message, /Only dancers working now/);
   ui.unmount();
+});
+
+
+test('a live VIP refresh removes an Incognito dancer from an open profile and the draft', async () => {
+ let visible = true;
+ const ui = dashboardHarness({ hash:'#vip-plan', request:async()=>state(venues[0].id,{dancers:visible?dancers:[]}) });
+ await ui.settle(); ui.planner().props.onOpenProfile(dancers[0]); ui.render();
+ ui.profileViewer().props.onVipRequest(); ui.render();
+ visible=false;ui.event('focus');await ui.settle();
+ assert.equal(ui.profileViewer().props.profileId,'');
+ assert.deepEqual([...ui.planner().props.draft.selected],[]);ui.unmount();
 });

@@ -40,7 +40,7 @@ test("account disable and reactivation preserve approval safety at the publicati
   assert.match(boundary, /profile\.status !== "disabled"/);
   assert.match(boundary, /profile\.disabled_at === null/);
   assert.match(boundary, /transition === "reactivate"/);
-  assert.match(boundary, /profile\.is_public !== \(profile\.status === "approved"\)/);
+  assert.match(boundary, /profile\.is_public !== \(profile\.status === "approved" && profile\.channel_visibility !== "internal" && profile\.is_incognito !== true\)/);
   assert.match(boundary, /throw unconfirmedPublication\(\)/);
   assert.match(accountStateWriter, /p_account_state: accountState/);
   assert.doesNotMatch(accountStateWriter, /activeDancerProfileState/);

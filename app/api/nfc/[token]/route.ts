@@ -142,7 +142,7 @@ export async function POST(request: Request, context: RouteContext) {
         action: "dancer_check_in",
         affiliation,
         session: authContext.session || null,
-        message: affiliation?.replayed ? "This tap was already processed. It did not change or extend your shift. Open your dashboard for your current status." : `Visibility: ${body.visibility === "internal" ? "Internal only — customers can open your full profile from your roster avatar" : body.visibility === "external" ? "External only — your full public profile is visible" : "Both — internal roster and external MyDancr"}. ` + (affiliation?.enrollmentStatus === "pending"
+        message: affiliation?.replayed ? "This tap was already processed. It did not change or extend your shift. Open your dashboard for your current status." : `Visibility: ${body.visibility === "internal" ? "Internal only — visible inside the club and to this club’s invited VIP guests; hidden from public discovery" : body.visibility === "external" ? "External only — your full public profile is visible" : "Both — internal roster and external MyDancr"}. ` + (affiliation?.enrollmentStatus === "pending"
           ? `Your tap at ${tag.venue.name} is saved. The club can now review your pending media. Your profile activates after the required photos are approved.`
            : affiliation?.alreadyWorking
              ? `You are already Working Now at ${affiliation?.venueName || tag.venue.name}. This tap did not extend the six-hour session.`

@@ -81,7 +81,7 @@
           : approved ? "Approved" : setupChecklistExpanded ? "Hide steps" : "Show steps";
       }
       document.getElementById("dancerSubscriptionStatus").textContent = billingSummary.label;
-      const profileIncognito = Boolean(approved && dancerProfileIsHidden(activeProfile));
+      const profileIncognito = Boolean(approved && activeProfile?.is_incognito === true);
       document.getElementById("dancerPublicStatus").textContent = approved
         ? (profileIncognito ? "Incognito" : "Visible to guests")
         : "Profile setup required";

@@ -8,6 +8,7 @@
     let internalProfileLoadSequence = 0;
     let internalProfileTargetId = "";
     let internalProfileToken = "";
+    let internalVipVenueId = "";
     let internalProfileMediaController = new AbortController();
     let internalTableRequest = null;
     let internalVipRequest = null;
@@ -21,7 +22,10 @@
 
     async function internalProfileMediaUrl(kind, id, token, revision = "", width = 0) {
       if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) return "";
-      const path = `/api/internal/${kind}/${id}${width ? `?width=${width}` : ""}`;
+      const params = new URLSearchParams();
+      if (width) params.set("width", String(width));
+      if (internalVipVenueId) params.set("vipVenueId", internalVipVenueId);
+      const path = `/api/internal/${kind}/${id}${params.size ? `?${params}` : ""}`;
       if (token) return new URL(`${path}${width ? "&" : "?"}token=${encodeURIComponent(token)}&revision=${encodeURIComponent(revision)}`, window.location.origin).toString();
       // Staff media uses their existing venue session, never a public storage URL.
       const key = `${path}:${revision}`;
@@ -52,7 +56,21 @@
         || event.data?.type !== "mydancr:public-profile-open"
         || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(event.data.profileId || "")
         || typeof event.data.slug !== "string" || !event.data.slug || event.data.slug.length > 200) return;
-      const { profileId, slug } = event.data;
+      const { profileId, slug, vipVenueId } = event.data;
+      if (vipVenueId) {
+        if (internalProfileTargetId && (internalProfileTargetId !== profileId || internalVipVenueId !== vipVenueId)) closeInternalProfileFrame(false);
+        internalProfileTargetId = profileId;
+        const session = authSession;
+        if (!session?.accessToken) throw new Error("Sign in required.");
+        const headers = { authorization: `Bearer ${session.accessToken}` };
+        if (session.refreshToken) headers["x-dancr-refresh-token"] = session.refreshToken;
+        const target = ++internalProfileLoadSequence;
+        const response = await fetch(`/api/internal/profile/${encodeURIComponent(profileId)}?vipVenueId=${encodeURIComponent(vipVenueId)}`, { headers, cache: "no-store", signal: internalProfileMediaController.signal });
+        const payload = response.ok ? await response.json() : null;
+        if (target !== internalProfileLoadSequence) return;
+        if (payload?.profile?.id !== profileId || authSession?.accessToken !== session.accessToken) throw new Error("Profile unavailable.");
+        if (payload.profile.is_public !== true) return openInternalProfileMessage({ origin: event.origin, source: event.source, data: { type: "mydancr:internal-profile-open", profile: payload.profile, vipVenueId, vipRequest: event.data.vipRequest } });
+      }
       const revision = `public:${profileId}:${slug}`;
       const vipRequest = event.data.vipRequest;
       const nextVipRequest = vipRequest && typeof vipRequest.added === "boolean" && typeof vipRequest.disabled === "boolean"
@@ -62,9 +80,10 @@
         syncVipProfileRequestUi();
         return;
       }
-      if (internalProfileTargetId) closeProfileModal();
+      if (internalProfileTargetId) closeInternalProfileFrame(false);
       internalProfileTargetId = profileId;
       internalProfileRevision = revision;
+      internalVipVenueId = vipVenueId || "";
       internalVipRequest = nextVipRequest;
       const sequence = ++internalProfileLoadSequence;
       const controller = internalProfileMediaController;
@@ -118,10 +137,13 @@
       const source = event.data.profile;
       if (!Array.isArray(source.photos) || !Array.isArray(source.videos) || !Array.isArray(source.socialLinks)) return;
       const token = typeof event.data.token === "string" ? event.data.token : "";
-      if (internalProfileTargetId && (internalProfileTargetId !== source.id || internalProfileToken !== token)) closeProfileModal();
+      if (internalProfileTargetId && (internalProfileTargetId !== source.id || internalProfileToken !== token)) closeInternalProfileFrame(false);
+      internalVipVenueId = typeof event.data.vipVenueId === "string" ? event.data.vipVenueId : "";
+      internalVipRequest = internalVipVenueId ? event.data.vipRequest || null : null;
+      syncVipProfileRequestUi();
       internalProfileTargetId = source.id;
       internalProfileToken = token;
-      document.body.dataset.internalProfileAudience = token ? "guest" : "staff";
+      document.body.dataset.internalProfileAudience = token || internalVipVenueId ? "guest" : "staff";
       // Every profile uses the site palette, including older table links.
       delete document.body.dataset.venueGuestColor;
       document.body.style.removeProperty("--venue-guest-accent");
@@ -137,7 +159,7 @@
       const rosterContext = !token && ["Internal only", "External only", "Internal + External", "Affiliated"].includes(rosterStatus) ? rosterStatus : null;
       const scoreContext = !token ? internalProfileScoreContext(performanceScore) : null;
       internalProfileActivity = { requestsTonight, requestStatus, requestId, tableRequest: requestContext, rosterStatus: rosterContext, performanceScore: scoreContext };
-      const revision = JSON.stringify([profileContent, token, Date.parse(source.workingUntil || "") > Date.now()]);
+      const revision = JSON.stringify([profileContent, token, internalVipVenueId, Date.parse(source.workingUntil || "") > Date.now()]);
       if (internalRosterProfile) {
         internalRosterProfile.requestsTonight = requestsTonight;
         internalRosterProfile.requestStatus = requestStatus;
@@ -147,7 +169,10 @@
         internalRosterProfile.performanceScore = scoreContext;
         syncInternalProfileRequestUi();
       }
-      if (revision === internalProfileRevision && !internalProfileMediaIncomplete) return;
+      if (revision === internalProfileRevision && !internalProfileMediaIncomplete) {
+        window.parent.postMessage({ type: "mydancr:internal-profile-shown", profileId: source.id }, window.location.origin);
+        return;
+      }
       internalProfileRevision = revision;
       const sequence = ++internalProfileLoadSequence;
       const city = String(source.city || selectedCity()).trim();
@@ -179,7 +204,7 @@
       const working = Date.parse(source.workingUntil || "") > Date.now();
       internalRosterProfile = {
         ...external, ...previous, id: source.id, slug: source.slug || external?.slug || "", name: source.stage_name, city,
-        internalRoster: true, internalGuestProfile: Boolean(token), status: "Verified", photoStatus: "Approved",
+        internalRoster: true, internalGuestProfile: Boolean(token || internalVipVenueId), vipProfile: Boolean(internalVipVenueId), status: "Verified", photoStatus: "Approved",
         ...internalProfileActivity,
         // These flags remain private even though this authorized viewer can display the profile.
         hidden: true, isPublic: false, is_public: false,
@@ -379,7 +404,7 @@
       window.parent.postMessage({ type: cancel ? "mydancr:internal-table-cancel" : "mydancr:internal-table-request", profileId: internalRosterProfile.id, ...(cancel ? { requestId: internalTableRequest.requestId } : {}) }, window.location.origin);
     }
 
-    function closeInternalProfileFrame() {
+    function closeInternalProfileFrame(notifyParent = true) {
       if (!internalProfileFrameId) return;
       const profileId = internalProfileTargetId;
       internalProfileLoadSequence += 1;
@@ -388,6 +413,7 @@
       internalVipRequest = null;
       internalProfileTargetId = "";
       internalProfileToken = "";
+      internalVipVenueId = "";
       internalProfileRevision = "";
       internalProfileMediaIncomplete = false;
       internalProfileMediaController.abort();
@@ -399,7 +425,7 @@
       modalGallery.profileMediaScope = "";
       modalGallery.profilePhotoItems = [];
       modalGallery.profileTvVideos = [];
-      if (profileId) window.parent.postMessage({ type: "mydancr:internal-profile-close", profileId }, window.location.origin);
+      if (profileId && notifyParent) window.parent.postMessage({ type: "mydancr:internal-profile-close", profileId }, window.location.origin);
     }
 
     function startInternalProfileAuth(mode) {

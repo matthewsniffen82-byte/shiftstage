@@ -27,7 +27,7 @@ export type PublicProfileActions = { following: boolean; notificationsEnabled: b
 export type VipProfileRequestAction = { added: boolean; disabled: boolean; message: string };
 
 /** Host the actual discovery profile viewer; the parent retains roster authorization/polling. */
-export function InternalFullProfile({ hidden = false, publicSlug, publicActions, vipRequest, onVipRequest, profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { hidden?: boolean; publicSlug?: string; publicActions?: PublicProfileActions; vipRequest?: VipProfileRequestAction; onVipRequest?: () => void; profile: InternalProfile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
+export function InternalFullProfile({ hidden = false, publicSlug, vipVenueId, publicActions, vipRequest, onVipRequest, profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { hidden?: boolean; publicSlug?: string; vipVenueId?: string; publicActions?: PublicProfileActions; vipRequest?: VipProfileRequestAction; onVipRequest?: () => void; profile: InternalProfile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const latest = useRef({ profile, token, request, vipRequest, onVipRequest, onRequest, onCancel, onReady, onError, onClose });
   latest.current = { profile, token, request, vipRequest, onVipRequest, onRequest, onCancel, onReady, onError, onClose };
@@ -37,14 +37,14 @@ export function InternalFullProfile({ hidden = false, publicSlug, publicActions,
       return;
     }
     if (publicSlug) {
-      frame.current?.contentWindow?.postMessage({ type: "mydancr:public-profile-open", profileId, slug: publicSlug, actions: publicActions, vipRequest: latest.current.vipRequest }, window.location.origin);
+      frame.current?.contentWindow?.postMessage({ type: "mydancr:public-profile-open", profileId, slug: publicSlug, vipVenueId, actions: publicActions, vipRequest: latest.current.vipRequest }, window.location.origin);
       return;
     }
     if (latest.current.profile?.id !== profileId) return;
     frame.current?.contentWindow?.postMessage({
       type: "mydancr:internal-profile-open", profile: latest.current.profile, token: latest.current.token || "", request: latest.current.request,
     }, window.location.origin);
-  }, [profileId, publicSlug, publicActions]);
+  }, [profileId, publicSlug, vipVenueId, publicActions]);
   useEffect(() => {
     const timer = profileId ? window.setTimeout(() => latest.current.onError?.(), 20000) : undefined;
     const receive = (event: MessageEvent) => {

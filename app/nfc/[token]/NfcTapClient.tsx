@@ -311,7 +311,7 @@ export function NfcTapClient({ token }: { token: string }) {
           <details className="nfc-help">
             <summary>How check-in works</summary>
             <p>For future check-ins, unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted. No particular page needs to be open.</p>
-            <p>The internal roster shows your approved avatar and stage name. Customers can tap your avatar to view your full profile. Internal only keeps you out of public MyDancr discovery.</p>
+            <p>The internal roster shows your approved avatar and stage name. Customers can tap your avatar to view your full profile. Internal only includes this club’s invited VIP guests, who may be viewing remotely, and keeps you out of public MyDancr discovery.</p>
           </details>
         ) : null}
         {phase === "error" && !complete ? <a className="nfc-secondary" href={exitHref}>{exitLabel}</a> : null}

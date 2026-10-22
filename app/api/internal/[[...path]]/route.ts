@@ -16,6 +16,7 @@ import { safeSocialProfileUrl } from "@/src/lib/dancr/social-profile-url";
 import { MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath } from "@/src/lib/dancr/media-watermark";
 import { responsiveImageStoragePaths } from "@/src/lib/dancr/responsive-image";
 import type { SocialPlatform } from "@/src/lib/dancr/types";
+import { vipProfileMembers, vipProfileScope } from "@/src/lib/dancr/vip-profile";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -40,7 +41,12 @@ export async function GET(request: Request, context: Context) {
     const token = path[0] === "link" ? path[1] : url.searchParams.get("token") ?? undefined;
     if (path.length > 2 || ![undefined, "link", "requests", "avatar", "profile", "photo", "video", "video-poster"].includes(path[0]) || (path[0] === "link" && !token)
       || (path[0] === "requests" && (path.length !== 1 || token !== undefined))) return json({ ok: false, error: "Not found." }, 404);
-    const scope = await internalScope(admin, request, token);
+    const vipVenueId = url.searchParams.get("vipVenueId");
+    // VIP sessions can read customer-facing profiles/media only, never staff data or table capabilities.
+    if (vipVenueId !== null && (token !== undefined || path.length !== 2 || !["profile", "avatar", "photo", "video", "video-poster"].includes(path[0]))) {
+      return json({ ok: false, error: "Not found." }, 404);
+    }
+    const scope = vipVenueId !== null ? await vipProfileScope(admin, request, vipVenueId) : await internalScope(admin, request, token);
     if (path[0] === "requests") {
       return json({ ok: true, requests: await internalOpenRequests(admin, scope.venueId), session: scope.session });
     }
@@ -60,14 +66,14 @@ export async function GET(request: Request, context: Context) {
     }
     // Media ownership and current roster eligibility can be read together after scope authorization.
     const [members, mediaResult] = await Promise.all([
-      scope.link ? internalMembers(admin, scope.venueId) : venueRosterMembers(admin, scope.venueId),
+      vipVenueId !== null ? vipProfileMembers(admin, scope.venueId) : scope.link ? internalMembers(admin, scope.venueId) : venueRosterMembers(admin, scope.venueId),
       mediaQuery?.maybeSingle() ?? null,
     ]);
     if (mediaResult?.error) throw mediaResult.error;
     if (path[0] === "profile") {
       if (!members.some(member => member.id === path[1])) return json({ ok: false, error: "This profile is no longer on the club roster." }, 404);
       const results = await Promise.all([
-        admin.from("dancer_profiles").select("id,slug,stage_name,city").eq("id", path[1]).single(),
+        admin.from("dancer_profiles").select("id,slug,stage_name,city,is_public").eq("id", path[1]).single(),
         admin.from("dancer_photos").select("id,is_primary,is_pinned,sort_order,like_count").eq("dancer_id", path[1]).eq("review_status", "approved").order("is_pinned", { ascending: false }).order("is_primary", { ascending: false }).order("sort_order").limit(50),
         admin.from("social_links").select("platform,handle,url").eq("dancer_id", path[1]).eq("is_active", true),
         admin.from("mydancr_tv_videos").select("id,caption,duration_seconds,like_count,is_pinned,published_at,storage_path,moderation_details").eq("dancer_id", path[1]).eq("status", "approved").lte("published_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).order("published_at", { ascending: false }).limit(12),
@@ -79,14 +85,15 @@ export async function GET(request: Request, context: Context) {
       });
       const avatarRevision = createHash("sha256").update(members.find(member => member.id === path[1])!.avatar_storage_path).digest("hex").slice(0, 16);
       const [requestsTonight, tableRequests] = await Promise.all([
-        internalRequestsTonight(admin, scope.venueId, path[1]),
+        vipVenueId !== null ? 0 : internalRequestsTonight(admin, scope.venueId, path[1]),
         scope.link ? internalTableRequestStates(admin, scope.venueId, scope.link.id) : null,
       ]);
       const videos = (results[3].data || []).map(({ storage_path, moderation_details, ...video }) => ({
         ...video, has_poster: Boolean(videoPosterStoragePath({ storage_path, moderation_details })),
       }));
+      const { is_public, ...identity } = results[0].data!;
       const internalAccent = scope.link ? (await getVenueGuestColors(admin, scope.venueId)).internalAccent : null;
-      return json({ ok: true, profile: { ...results[0].data, internalAccent, venueSlug: scope.venueSlug, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
+      return json({ ok: true, profile: { ...identity, ...(vipVenueId !== null ? { is_public } : {}), internalAccent, venueSlug: scope.venueSlug, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
     }
     if (media) {
       let storagePath = members.find(item => item.id === path[1])?.avatar_storage_path;
