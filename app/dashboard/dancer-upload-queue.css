@@ -60,7 +60,7 @@
     margin-top: 3px;
     overflow: hidden;
     border-radius: 999px;
-    background: var(--dancr-color-border, #38343e);
+    background: var(--dancr-color-border, #35313f);
   }
   .dancer-upload-progress > span {
     display: block !important;
