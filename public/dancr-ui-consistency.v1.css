@@ -1131,7 +1131,15 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-identity-meta {
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 3px;
+}
+
+/* Each detail starts under the name, even when the distance label is long. */
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-identity-distance::before {
+  content: none;
 }
 
 /* Share the dancer profile's Back control without adding a row above the card. */
