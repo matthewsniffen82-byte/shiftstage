@@ -891,6 +891,19 @@
   ) {
     color: var(--dancr-color-success) !important;
   }
+  /* Posted-hours status shares Working Now green; the adjacent hours stay neutral. */
+  html body.dancr-button-system :where(
+    .home-venue-discovery-operating-status.is-open,
+    .venue-profile-hours[data-operating-state="open"] > strong
+  ) {
+    color: var(--dancr-color-success) !important;
+  }
+  html body.dancr-button-system :where(
+    .home-venue-discovery-operating-status:is(.is-closed, .is-unknown),
+    .venue-profile-hours:is([data-operating-state="closed"], [data-operating-state="unknown"]) > strong
+  ) {
+    color: var(--dancr-color-text-muted) !important;
+  }
   html body.dancr-button-system :where(.city-picker-option[aria-selected="true"] .venue-embed-location-count) {
     color: var(--dancr-color-text-primary) !important;
   }
