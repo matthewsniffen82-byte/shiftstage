@@ -52,6 +52,8 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-builder-video-uploader > .tv-studio-embedded {
   padding:0 !important; margin:0 !important; border:0 !important; background:transparent !important;
+  /* This unframed wrapper must not clip the upload heading at a rounded corner. */
+  border-radius:0 !important; overflow:visible;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] .dancer-guided-upload-form {
   padding:8px; border:1px solid var(--dancr-color-border); border-radius:10px; background:var(--dancr-color-surface-card);

@@ -7,6 +7,7 @@ import ts from 'typescript';
 import React from 'react';
 import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from '../src/lib/dancr/media-limits.ts';
 import { mediaReviewLabel } from '../src/lib/dancr/media-review-label.ts';
+import { dancerSubmissionMedia } from '../src/lib/dancr/dancer-submission-media.ts';
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerProfileWorkspace.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
@@ -31,6 +32,10 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboa
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:[{id:'optional',status:'submitted'}],setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
+    if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerSubmissionMedia:profile=>dancerSubmissionMedia({...profile,
+      dancer_photos:profile.dancer_photos.map(photo=>({...photo,review_status:photo.status,is_primary:photo.isPrimary})),
+      pending_photo_reviews:profile.dancer_photos.filter(photo=>photo.status==='pending').map(photo=>({...photo,upload_context:'profile_gallery'})),
+    })};
     if(name.startsWith('./'))return {default:name};
     return require(name);
   }});
@@ -67,12 +72,11 @@ test('new dancers save name and city, then continue directly from media to the a
   assert.deepEqual(walk(navigation).filter(n=>n.type==='button').map(n=>n.props.children[1]),['Name & city','Photos & videos']);
 });
 
-test('pending media does not count toward the required three approved photos',async()=>{
+test('pending photos count toward setup without entering the approved gallery',async()=>{
   const f=fixture({count:2,pending:5});assert.equal(f.step(),'media');
-  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'2 of 3 photos approved');
-  await f.click();assert.equal(f.step(),'media');assert.match(f.message(),/Add 1 more approved profile photo/);
-  assert.ok(f.calls.includes('#dancer-profile-media-library'));
-  assert.equal(f.calls.includes('agreement'),false);
+  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props['data-state'],'saved');
+  assert.equal(f.draw().find(n=>n.type==='./DancerProfileMediaUploads').props.photos.length,2);
+  await f.click();assert.equal(f.calls.includes('agreement'),true);
 });
 
 test('the single requirement indicator becomes Photos ready, even with extra photos',()=>{
@@ -89,7 +93,7 @@ test('an approved gallery does not label missing avatar or main photo as ready',
     const indicator=f.draw().find(n=>n.props.className==='dancer-builder-requirement');
     assert.notEqual(indicator.props.children,'Photos ready');
     if (missing==='main') assert.equal(indicator.props.children,'Add main photo');
-    assert.equal(indicator.props['data-state'],'required');
+    assert.equal(indicator.props['data-state'],missing==='main'?'required':'saved');
   }
 });
 
@@ -98,10 +102,12 @@ test('pending videos do not block required agreement handoff',async()=>{
   assert.equal(f.calls.filter(c=>c==='agreement').length,1);
 });
 
-test('missing automatic avatar or main photo brings the main photo into view',async()=>{
-  for(const [options,id,reason] of [[{face:false},'dancer-main-photo',/avatar from your main photo/],[{count:0},'dancer-main-photo',/main photo/]]) {
-    const f=fixture(options);await f.click();assert.equal(f.step(),'media');assert.ok(f.calls.includes(`#${id}`));assert.match(f.message(),reason);assert.ok(!f.calls.includes('agreement'));
-  }
+test('a missing main photo blocks setup, while its automatic avatar does not',async()=>{
+  const missing=fixture({count:0});await missing.click();
+  assert.equal(missing.step(),'media');assert.ok(missing.calls.includes('#dancer-main-photo'));
+  assert.match(missing.message(),/main photo/);assert.ok(!missing.calls.includes('agreement'));
+  const avatarPending=fixture({face:false});await avatarPending.click();
+  assert.ok(avatarPending.calls.includes('agreement'));
 });
 
 test('failed or invalid identity saves cannot leave step one',async()=>{
