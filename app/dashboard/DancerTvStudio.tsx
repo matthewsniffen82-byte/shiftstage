@@ -446,7 +446,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
   async function removeVideo(videoId: string) {
     if (actionInFlightRef.current) return;
-    if (!window.confirm("Remove this video from MyDancr TV?")) return;
+    if (!window.confirm("Remove this video from your profile?")) return;
     if (!readDashboardAccessToken("dancer")) return setStatus("Sign in required.");
     const action = beginVideoAction();
     if (!action) return;
