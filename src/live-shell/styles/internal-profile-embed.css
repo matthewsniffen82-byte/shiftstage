@@ -148,21 +148,8 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-per
   grid-column: 1 / -1;
   font-size: inherit;
 }
-html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-working-destination > .profile-live-state {
-  margin-bottom: 4px !important;
-}
-/* The shared compact profile pulls this link upward. Internal cards need two
-   separate rows so the club's full tap target cannot cover Working now. */
-html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-shift-card.schedule-live {
-  row-gap: 4px !important;
-}
-html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-shift-card.schedule-live .schedule-stack {
-  margin-top: 0 !important;
-}
-html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-shift-card :is(.profile-venue-name, .profile-working-copy strong) {
-  font-size: clamp(12px, 1.8vw, 18px) !important;
-  line-height: 1.3 !important;
-}
+/* Working status and club location inherit the shared full-profile spacing
+   and typography, regardless of the roster or dashboard that opened them. */
 html.internal-profile-embed .internal-profile-request { width: 100%; }
 /* The table request is the primary Internal action, matching the roster cards.
    Reuse the shared button face so automatic dark mode preserves the violet. */
