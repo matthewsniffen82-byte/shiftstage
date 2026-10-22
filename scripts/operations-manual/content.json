@@ -1,0 +1,2757 @@
+{
+  "pages": [
+    {
+      "title": "Access and sign-in",
+      "role": "EVERYONE",
+      "path": "www.mydancr.com > Sign in",
+      "steps": [
+        [
+          "Use your own account",
+          "Enter the email and password for your dancer or club team account, then press Sign in. Complete any email-confirmation prompt."
+        ],
+        [
+          "Check your destination",
+          "Confirm the stage name or club before working. VIP guests must use VIP sign in or www.mydancr.com/vip."
+        ],
+        [
+          "Recover the original account",
+          "Use Forgot password? or Forgot email? if needed. An original-account warning on a shared test phone is an account-recovery issue; do not create another dancer account."
+        ]
+      ],
+      "done": "The correct identity, club and permitted controls are displayed.",
+      "issue": "Club access missing? Ask the owner to check your membership. See the troubleshooting table on p. 26.",
+      "shot": {
+        "asset": "app-capture-01.jpg",
+        "marks": [
+          [
+            1,
+            0.49382716049382713,
+            0.7692307692307693
+          ],
+          [
+            2,
+            0.49382716049382713,
+            0.9106029106029108
+          ],
+          [
+            3,
+            0.32098765432098764,
+            0.6133056133056134
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [],
+      "kind": "access"
+    },
+    {
+      "title": "Alerts and the notification inbox",
+      "role": "EVERYONE",
+      "path": "Club: Manage venue | Dancer: Account / Overview",
+      "steps": [
+        [
+          "Open Notification preferences",
+          "Check the optional categories available to your account. Club owners and managers should confirm venue, VIP and support alerts needed for their shift."
+        ],
+        [
+          "Check Email",
+          "Email starts on by default. Leave it enabled for the alerts you need; an earlier choice to mute optional alerts still applies."
+        ],
+        [
+          "Enable phone push",
+          "Use Enable notifications and accept the device prompt. On iPhone, follow the displayed Add to Home Screen instructions and open the installed app when required."
+        ],
+        [
+          "Check your mail app",
+          "Email banners depend on the phone's mail-app settings for your account address. These are separate from website push permission."
+        ],
+        [
+          "Act in the operational queue",
+          "Mark all read and Clear all affect the inbox only. Return to the table, VIP or ride request to record the real outcome."
+        ]
+      ],
+      "done": "Your mailbox is accessible, preferences match your duties and the device permission is set.",
+      "issue": "No alert? Check email address, spam and device permission; keep watching the dashboard queue meanwhile.",
+      "shot": {
+        "asset": "app-capture-02.jpg",
+        "marks": [
+          [
+            2,
+            0.8954248366013072,
+            0.43853820598006665
+          ],
+          [
+            3,
+            0.8954248366013072,
+            0.7043189368770765
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Always distinguish",
+          "Notification read does not mean request completed. Essential account/security messages and operational alerts may be handled separately from optional updates."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Publish and maintain the venue",
+      "role": "CLUB ADMIN TEAM",
+      "path": "Manage venue > Review your prepared venue page",
+      "steps": [
+        [
+          "Check the prepared package",
+          "Verify the location, name, address, phone, website, hours and official logo. Compare the Club Deal, guest terms and subscription with the agreement."
+        ],
+        [
+          "Preview customer experience",
+          "Open the preview and check the location, offer, links and customer presentation."
+        ],
+        [
+          "Correct or publish",
+          "For corrections, enter at least 10 characters under Need changes? and press Request changes. When everything is correct, select Approve & make live."
+        ],
+        [
+          "Verify the result",
+          "Wait for confirmation, then Open live venue page. The correct venue and approved offer should appear."
+        ],
+        [
+          "Maintain the commercial status",
+          "Request deal corrections through the club controls or Support. Owners/managers can view finance; contact MyDancr Support for subscription changes."
+        ]
+      ],
+      "done": "The page shows LIVE and the public information matches the agreed package.",
+      "issue": "An approved venue can be hidden without an active Club Deal. Its approval and affiliations remain saved; resolve the deal rather than recreating the club.",
+      "shot": {
+        "asset": "app-capture-22.jpg",
+        "marks": [
+          [
+            1,
+            0.8695652173913043,
+            0.48598130841121495
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Before first access",
+          "An authorized representative submits the venue request. MyDancr reviews it, completes the agreement and issues a private signup code. Use that code to create the club account. The prepared workspace is private until the venue package is approved."
+        ],
+        [
+          "Owner only: leaving MyDancr",
+          "Manage venue > Club participation > Remove club from MyDancr. Read the confirmation: this removes club participation, affiliations and check-in access, not dancers' personal accounts or media. Returning requires a new agreement and review."
+        ],
+        [
+          "Publication controls",
+          "Preview customer experience > Approve & make live. These are source-verified labels; a current screenshot was unavailable."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Invite and manage the team",
+      "role": "CLUB ADMIN TEAM - OWNER",
+      "path": "Manage venue > Team & activity",
+      "steps": [
+        [
+          "Choose the role",
+          "Manager handles venue, roster, media reviews, VIP, rides and contacts. Staff has limited operational access. Only the owner manages team membership."
+        ],
+        [
+          "Invite team member",
+          "Enter Team member email, select Manager or Staff under Access level, then press Invite team member. An existing guest or dancer account can conflict."
+        ],
+        [
+          "Finish invitation setup",
+          "The recipient follows the private invitation and account-setup steps. If email fails and a secure link is supplied, share it only with that person."
+        ],
+        [
+          "Confirm access",
+          "Have the recipient verify the club and visible tabs. Check that their membership is active."
+        ],
+        [
+          "Remove stale access",
+          "Use the role control or Remove when duties change. Use Revoke for an unused invitation that should no longer be accepted."
+        ]
+      ],
+      "done": "Each team member has their own account and only the access their work needs.",
+      "issue": "There is no reviewer-only club role. Assigning a content reviewer as Manager also gives them broader manager permissions.",
+      "shot": {
+        "asset": "app-capture-22.jpg",
+        "marks": [
+          [
+            2,
+            0.8695652173913043,
+            0.48598130841121495
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "At a glance",
+          "Owner: team + club operations. Manager: club operations + media approval. Staff: limited operations; no media approval, VIP, rides or contacts."
+        ],
+        [
+          "Private links",
+          "Never place invitation links in public signs, screenshots or shared training handouts."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Request and check table QR signs",
+      "role": "CLUB ADMIN TEAM",
+      "path": "Manage venue > Support | support@mydancr.com",
+      "steps": [
+        [
+          "Prepare the table map",
+          "List the club location and table numbers. Specify a first and last number for each range, plus any exceptions or separately numbered areas."
+        ],
+        [
+          "Check the requested count",
+          "Both endpoints count: 201-210 makes 10 tables; 201-211 makes 11. Match the requested signs to the physical tables."
+        ],
+        [
+          "Request the batch",
+          "Send the club and numbering plan to MyDancr Support. MyDancr creates the codes; tell the team about existing signs so replacements are coordinated."
+        ],
+        [
+          "Check the supplied signs",
+          "Each sign must show the table number, Powered by MyDancr and www.mydancr.com. Check readability and the full QR image before printing or installation."
+        ],
+        [
+          "Match each sign to its table",
+          "Open each QR destination and confirm the club and table. Install the matching sign. Report wrong or obsolete codes to Support and remove old physical signs."
+        ]
+      ],
+      "done": "Every installed code opens its intended club/table and matches the printed number.",
+      "issue": "Stop using a sign with the wrong destination. Send Support the club, printed table number and exact issue. Dancers use a separate dressing-room NFC sticker.",
+      "shot": null,
+      "extras": [
+        [
+          "Range examples",
+          "Both endpoints count."
+        ],
+        [
+          "Who does what",
+          "The club supplies its table map, checks each sign and installs it. MyDancr Support coordinates creation, replacement and deactivation."
+        ]
+      ],
+      "kind": "qr"
+    },
+    {
+      "title": "Check stickers and customer views",
+      "role": "CLUB ADMIN TEAM",
+      "path": "Dancers & tables > sticker controls | Club dashboard > View internal",
+      "steps": [
+        [
+          "Confirm the supplied sticker",
+          "Check the club, intended dressing-room placement and sticker label with MyDancr Support. Keep the label in the club setup record."
+        ],
+        [
+          "Check the installation",
+          "Install the assigned sticker in the agreed dressing-room area. Follow the supplied test instructions and verify the intended club before dancers use it."
+        ],
+        [
+          "Report sticker faults",
+          "Use Dancers & tables > sticker controls > Test or Support. Include Issue, Details and the sticker label. Stop using a wrong or damaged tag; Support coordinates replacement and deactivation."
+        ],
+        [
+          "Check the internal view",
+          "Open View internal or a table QR link. Verify club, table, roster, Request buttons and Powered by MyDancr attribution."
+        ],
+        [
+          "Check external and embedded views",
+          "Open the live venue page and the actual club website embed. Check location, offer, roster and a dancer profile. Have the website maintainer use the approved embed."
+        ]
+      ],
+      "done": "The sticker and customer links stay in the intended club context.",
+      "issue": "Wrong location or person? Stop using that tag/sign/link and contact Support with its label and destination. Keep private setup and invitation links out of public signs.",
+      "shot": {
+        "asset": "app-capture-03.jpg",
+        "marks": [
+          [
+            4,
+            0.8586956521739131,
+            0.1012216404886562
+          ],
+          [
+            4,
+            0.16304347826086957,
+            0.9616055846422338
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Surface differences",
+          "Internal is the club/table roster; external is public discovery; embedded is a club-branded view. Embedded profiles omit follow, share and follower counts. Staff full profiles can retain MyDancr styling."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Open and close the shift",
+      "role": "MANAGERS / TALENT MANAGEMENT",
+      "path": "Club dashboard > Tonight",
+      "steps": [
+        [
+          "Confirm the club and freshness",
+          "Check venue identity and last update; press Refresh after returning to an old tab."
+        ],
+        [
+          "Review the live queues",
+          "Check Working now, Table requests, Guest list, VIP requests and Ride requests. Assign a named owner and break cover for each."
+        ],
+        [
+          "Check the roster and review coverage",
+          "Compare Working now with the floor. Make sure an owner or manager is handling Media approvals for new or changed uploads."
+        ],
+        [
+          "Reconcile before handover",
+          "End check-ins for dancers who left. Resolve table outcomes, pending VIP decisions and unconfirmed rides using facts, not assumptions."
+        ],
+        [
+          "Hand over unresolved work",
+          "Record request/upload references, current status, next action and owner. Leave uncertain media private. Lock or sign out of shared devices."
+        ]
+      ],
+      "done": "The roster is accurate and every open item has a named owner.",
+      "issue": "Sample cards are training data. Clearing notifications or marking unfinished work complete does not constitute a handover.",
+      "shot": {
+        "asset": "app-capture-04.jpg",
+        "marks": [
+          [
+            1,
+            0.8913043478260869,
+            0.06250000000000006
+          ],
+          [
+            2,
+            0.25000000000000006,
+            0.43945312499999994
+          ],
+          [
+            2,
+            0.7391304347826086,
+            0.70703125
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Handover format",
+          "Club / shift time / duty manager; then one line per open record: reference - actual state - next action - owner."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Manage the roster",
+      "role": "MANAGERS / TALENT MANAGEMENT",
+      "path": "Dancers & tables > affiliated dancers / roster",
+      "steps": [
+        [
+          "Find the dancer",
+          "Use Search dancers, Sort dancers, All affiliated / Working now and the available channel filters."
+        ],
+        [
+          "Open the profile",
+          "Select the portrait or View profile to confirm the person and approved media."
+        ],
+        [
+          "End an incorrect check-in",
+          "Use the card menu (...) > End check-in when the dancer has left or the active session is wrong."
+        ],
+        [
+          "Remove access only when intended",
+          "Owners/managers use Remove access for a club-access change, not to end an ordinary shift. Confirm the correct dancer."
+        ],
+        [
+          "Permit a future return",
+          "Removed dancers > Allow new tap lets the dancer tap again. It does not restore a shift or automatically start one."
+        ]
+      ],
+      "done": "The right person is affiliated and their active state matches the floor.",
+      "issue": "Ending early does not bypass the cooldown. Do not remove/re-add access to force a new shift.",
+      "shot": {
+        "asset": "app-capture-05.jpg",
+        "marks": [
+          [
+            1,
+            0.2582417582417583,
+            0.10708401976935746
+          ],
+          [
+            1,
+            0.7417582417582418,
+            0.22405271828665566
+          ],
+          [
+            3,
+            0.26043956043956046,
+            0.6293245469522241
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Two separate states",
+          "Affiliated = connected to this club. Working now = an active check-in. A dancer can be affiliated without currently working."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Handle table requests",
+      "role": "MANAGERS / TALENT MANAGEMENT",
+      "path": "Dancers & tables > Table requests",
+      "steps": [
+        [
+          "Open the right record",
+          "Check table and dancer. Portrait opens the full profile; (...) > Request details opens the operational record."
+        ],
+        [
+          "Acknowledge",
+          "Use Mark seen once the team has received the request. Coordinate with the dancer; operational dancer alerts can also be sent."
+        ],
+        [
+          "Record arrival or non-arrival",
+          "Select Mark arrived only when the dancer reaches the table. Otherwise use Didn't arrive at table when that is the actual outcome."
+        ],
+        [
+          "Finish or cancel",
+          "After arrival and completion, select Complete. Use Dismiss for cancellation under the club's procedure."
+        ],
+        [
+          "Verify the state",
+          "Wait for the saved update. If the outcome is uncertain, refresh and inspect the same request before repeating an action."
+        ]
+      ],
+      "done": "The status reflects what happened, not what the team hopes will happen.",
+      "issue": "Seen is not arrival; a notification marked read is not a completed request.",
+      "shot": {
+        "asset": "app-capture-06.jpg",
+        "marks": [
+          [
+            1,
+            0.2866310160427808,
+            0.06692913385826772
+          ],
+          [
+            1,
+            0.13368983957219252,
+            0.4488188976377953
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Normal flow",
+          "Pending > Mark seen > Mark arrived > Complete"
+        ],
+        [
+          "Other outcomes",
+          "Seen > Didn't arrive at table. Dismiss cancels the request."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Scan passes and admit guests",
+      "role": "MANAGERS / ADMISSION STAFF",
+      "path": "Tonight > Guest list > Scan pass",
+      "steps": [
+        [
+          "Find the visit",
+          "Choose Tonight, Choose a date or All active passes. Search and filter Awaiting admission / Admitted / All. Clear filters or Load more if needed."
+        ],
+        [
+          "Scan the pass",
+          "Open Scan pass, allow camera access if prompted and follow the scanner. Confirm the correct venue and visit."
+        ],
+        [
+          "Verify eligibility",
+          "Check the guest and the displayed admission/arrival rules, including age, capacity, dress code and current offer conditions."
+        ],
+        [
+          "Record actual admission",
+          "Check the staff verification box, then press Admit guest & redeem pass only when admitting the guest."
+        ],
+        [
+          "Read the result",
+          "Admission confirmed records one verified visit. Already used must not admit another person; do not treat an unavailable/expired pass as valid."
+        ]
+      ],
+      "done": "The admitted guest has a recorded admission and the pass is not reused.",
+      "issue": "Opening a pass is not redemption. If scanning or validation fails, keep the result for the duty manager; do not invent another entry.",
+      "shot": {
+        "asset": "app-capture-07.jpg",
+        "marks": [
+          [
+            2,
+            0.15183246073298431,
+            0.8033707865168539
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "What staff records",
+          "One pass admits one guest. Guest-list dates and offer hours use the venue's local time."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Manage VIP access and visits",
+      "role": "MANAGERS / TALENT MANAGEMENT",
+      "path": "Tonight > VIP requests > VIP access",
+      "steps": [
+        [
+          "Invite the guest",
+          "Invite guest > email + optional private nickname > Send invitation. Only the invited email can use the link. Direct the guest to /vip."
+        ],
+        [
+          "Maintain VIP access",
+          "Invitations: Resend email / New share link replaces the old unused link; Revoke invitation cancels it. VIP guests: search > (...) > nickname or Remove VIP access."
+        ],
+        [
+          "Read the request",
+          "Requests > Pending requests / All statuses; use Newer / Older requests as needed. Check visit date, time, venue timezone, party and selected dancers."
+        ],
+        [
+          "Confirm availability, then respond",
+          "Open the dancer profile if needed. Coordinate availability, expand Add message for a guest-facing note, then Confirm request or Decline."
+        ],
+        [
+          "Handle a later cancellation",
+          "On the confirmed record, use Cancel confirmed request and verify the saved state. Existing requests remain available if VIP access is removed."
+        ]
+      ],
+      "done": "The correct guest has access and each visit has the intended decision.",
+      "issue": "Current VIP dancer selection is limited to Working now at that venue. Selection is interest, not guaranteed availability.",
+      "shot": {
+        "asset": "app-capture-08.jpg",
+        "marks": [
+          [
+            3,
+            0.3915662650602409,
+            0.2831632653061224
+          ],
+          [
+            4,
+            0.21686746987951805,
+            0.6326530612244897
+          ],
+          [
+            4,
+            0.23493975903614456,
+            0.8826530612244897
+          ],
+          [
+            4,
+            0.5481927710843373,
+            0.8826530612244897
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Private invitations",
+          "Links last seven days. Do not publish them. Nicknames are private to club owners/managers."
+        ],
+        [
+          "Different records",
+          "A public I'm Going signal, an admission pass and a VIP request do not confirm one another."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Ride requests and shared contacts",
+      "role": "MANAGERS / TALENT MANAGEMENT",
+      "path": "Tonight > Ride requests / Contacts",
+      "steps": [
+        [
+          "Find the ride",
+          "Show rides filters Open (last 48 hours), All requests, Completed or Cancelled. Use Load older requests or Open pickup inbox if needed."
+        ],
+        [
+          "Contact the guest",
+          "Check venue, name, pickup point, party size and contact details. Select Call guest or use the supplied email to agree availability and timing."
+        ],
+        [
+          "Update Ride status",
+          "Record Received, Contacted, Arranged, Completed or Cancelled as events occur. Wait for the saved result; coordinate transport with the team."
+        ],
+        [
+          "Check contact permission",
+          "Contacts > choose Shared contacts, Guest list, Email updates or Text updates > search. Read Contact & sharing details. Visit details only is not an update subscription; email and text permissions are separate."
+        ],
+        [
+          "Hand over unresolved rides",
+          "Give the next manager the request reference, actual arrangement and next action. Follow the current club offer and transport terms."
+        ]
+      ],
+      "done": "The guest knows whether a ride is arranged and the status matches the agreement.",
+      "issue": "The public pickup form is not a confirmed ride. Ride status does not verify club admission. The old pickup chat is retired.",
+      "shot": {
+        "asset": "app-capture-09.jpg",
+        "marks": [
+          [
+            1,
+            0.7282608695652174,
+            0.2538461538461537
+          ],
+          [
+            4,
+            0.7282608695652174,
+            0.7307692307692306
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Contact use",
+          "Follow up only for the recorded purpose. Guest Account > Email communications lets the guest subscribe or unsubscribe from optional MyDancr emails; this is separate from club update permissions. Essential account emails continue."
+        ],
+        [
+          "Staff access",
+          "Owners/managers handle VIP, rides and shared contacts. Keep guest details with the people responsible for the visit."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Read club results",
+      "role": "MANAGERS / TALENT MANAGEMENT",
+      "path": "Club dashboard > Results",
+      "steps": [
+        [
+          "Set a fair comparison",
+          "Choose Tonight, 7 days, 30 days or All time. Keep the same club and dates when comparing people or periods."
+        ],
+        [
+          "Read recorded activity",
+          "Review working time, table outcomes, guest-list admissions, VIP demand, customer interest and other available sections."
+        ],
+        [
+          "Find a dancer",
+          "Use search and the Dancer performance sort controls. Open Score details for the manager view."
+        ],
+        [
+          "Interpret rank in context",
+          "Rank is relative to eligible dancers in that club/period. Ties can share rank. Early data or Not enough data is not a zero-performance judgment."
+        ],
+        [
+          "Coach from observable activity",
+          "Discuss attendance, responses and actual demand. Dancers retain their own activity analytics; scoring details stay with club management."
+        ]
+      ],
+      "done": "The conclusion uses the right period and is supported by recorded activity.",
+      "issue": "Views, requests and intentions are not earnings or verified attendance. Weighted ordering continues on discovery grids and video feeds.",
+      "shot": {
+        "asset": "app-capture-10.jpg",
+        "marks": [
+          [
+            1,
+            0.6250000000000001,
+            0.0494233937397035
+          ],
+          [
+            3,
+            0.5000000000000001,
+            0.19934102141680396
+          ],
+          [
+            3,
+            0.6477272727272729,
+            0.9209225700164746
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Distribution",
+          "This page is for club management. Do not include it in dancer onboarding handouts. No weighting formulas are supplied in this guide."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Dancer onboarding",
+      "role": "DANCERS",
+      "path": "Dancer dashboard > onboarding / Profile",
+      "steps": [
+        [
+          "Save your details",
+          "Enter a stage name (2-40 characters), select your city and wait for Saved or Details saved."
+        ],
+        [
+          "Add your photos",
+          "Submit at least three profile photos in total, including a main photo. The avatar is generated from the main photo; pending uploads count toward the setup form."
+        ],
+        [
+          "Read and accept the agreement",
+          "Open the terms, accept the checkbox if you agree and press Continue."
+        ],
+        [
+          "Complete Verify 18+ if required",
+          "Follow the secure Ondato document/selfie flow using your own identity. Return to MyDancr and check the result. Not required means the step is not required; it does not mean verified."
+        ],
+        [
+          "Connect to your club",
+          "Tap the physical dressing-room sticker and finish the displayed steps. This connection lets the club review pending media; see p. 19."
+        ]
+      ],
+      "done": "Details are saved and each onboarding requirement shows a clear status.",
+      "issue": "Setup completion does not publish pending content. Identity verification and media approval are separate. Use account support for a stalled or wrong-account state.",
+      "shot": {
+        "asset": "app-capture-11.jpg",
+        "marks": [
+          [
+            1,
+            0.5000000000000001,
+            0.3826366559485531
+          ],
+          [
+            1,
+            0.5000000000000001,
+            0.7234726688102895
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Your four tabs",
+          "Overview: working status. Profile: details/media. Results: your activity. Account: preferences/help."
+        ],
+        [
+          "Identity documents",
+          "Keep ID documents inside the secure verification flow; do not send copies to ordinary club email or chat."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Main photo and photo uploads",
+      "role": "DANCERS",
+      "path": "Profile > Main photo / Add photos/videos > Photos",
+      "steps": [
+        [
+          "Choose your main photo",
+          "Use the Main photo controls to upload or Choose uploaded photo. Crop photo adjusts the card; check that your face stays visible."
+        ],
+        [
+          "Check the automatic avatar",
+          "It comes from the main image. Adjust the avatar crop if needed; there is no separate club roster photo to maintain."
+        ],
+        [
+          "Add gallery photos",
+          "Select Gallery for one or more files or Camera to take a photo. JPEG, PNG, WebP, HEIC and HEIF are accepted, up to 25 MB each."
+        ],
+        [
+          "Wait for transfer and review",
+          "A failed transfer can be retried. Processing and pending approval are different states. The club queue receives new-dancer media after the first NFC connection."
+        ],
+        [
+          "Organize approved photos",
+          "Use (...) for available crop, main-photo, pin or remove actions. Pinning changes your profile gallery order, not shared feed placement. Read rejection notes and replace corrected files."
+        ]
+      ],
+      "done": "The main image and avatar match, and each upload has a known review status.",
+      "issue": "The main photo is used for public cards and internal rosters where you are eligible. A saved change is not necessarily approved; the previous approved image may remain during review.",
+      "shot": {
+        "asset": "app-capture-12.jpg",
+        "marks": [
+          [
+            1,
+            0.46067415730337075,
+            0.38421052631578934
+          ],
+          [
+            1,
+            0.32584269662921356,
+            0.6157894736842107
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Photo source",
+          {
+            "asset": "app-capture-13.jpg",
+            "marks": [
+              [
+                3,
+                0.24725274725274732,
+                0.5864197530864197
+              ],
+              [
+                3,
+                0.7527472527472527,
+                0.5864197530864197
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          }
+        ],
+        [
+          "Before uploading",
+          "Only you (18+) may appear, including reflections/backgrounds. Follow the coverage and rights rules; no logos, watermarks or contact details. See the full review checklist on p. 23."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Upload videos",
+      "role": "DANCERS",
+      "path": "Profile > Add photos/videos > Videos",
+      "steps": [
+        [
+          "Check Video rules",
+          "Use vertical or square MP4, WebM or MOV, 1-30 seconds long and up to 25 MB."
+        ],
+        [
+          "Confirm both permissions",
+          "Only you are shown and the video is of you; and you own or may publish all visuals and audio, including music."
+        ],
+        [
+          "Choose or record",
+          "Select Choose video or Record video. Use the offered crop/trim controls to meet the format and duration rules."
+        ],
+        [
+          "Wait for processing and human review",
+          "Keep track of transfer, processing and approval separately. AI checks assist the reviewer; passing them does not publish the file."
+        ],
+        [
+          "Verify approved playback",
+          "Open your profile Videos tab and play the complete video. Eligible approved videos can also enter MyDancrTV."
+        ]
+      ],
+      "done": "The approved file plays correctly and contains permitted visuals and audio.",
+      "issue": "Music on your phone is not proof of publishing rights. For rejected files, read the correction and submit a compliant replacement.",
+      "shot": {
+        "asset": "app-capture-14.jpg",
+        "marks": [
+          [
+            2,
+            0.049450549450549455,
+            0.33147632311977715
+          ],
+          [
+            2,
+            0.049450549450549455,
+            0.5153203342618384
+          ],
+          [
+            3,
+            0.24725274725274732,
+            0.7910863509749303
+          ],
+          [
+            3,
+            0.7527472527472527,
+            0.7910863509749303
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Upload-state shortcut",
+          "Failed transfer: retry. Processing: wait. Pending approval: club review. Rejected: read reason and correct the file."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Check in and end your shift",
+      "role": "DANCERS",
+      "path": "Dressing-room NFC sticker > Overview > Working Now",
+      "steps": [
+        [
+          "Tap the physical sticker",
+          "Unlock your phone, tap, open the link if prompted and sign in to your dancer account. No particular dashboard page must be open first. Confirm the club."
+        ],
+        [
+          "Choose where you appear",
+          "Internal only: club roster, with a full-profile link. External only: public discovery. Both: both surfaces, subject to your eligibility and visibility."
+        ],
+        [
+          "Finish the displayed requirements",
+          "On the first tap, your club can review pending media. If review is pending, wait, then refresh your onboarding/dashboard status."
+        ],
+        [
+          "Check Working Now",
+          "Confirm the active club and end time. A check-in lasts up to six hours, followed by a six-hour cooldown across clubs. Retapping does not extend it."
+        ],
+        [
+          "End when you leave",
+          "Overview > End Working Now > Yes, end now. Choose Keep working if opened by mistake. Ending early does not bypass the cooldown."
+        ]
+      ],
+      "done": "Working now reflects the correct club and your actual presence.",
+      "issue": "Public profile visibility is separate from check-in. An original-account warning needs account recovery/support, not another account.",
+      "shot": {
+        "asset": "app-capture-15.jpg",
+        "marks": [
+          [
+            2,
+            0.1303703703703704,
+            0.08126410835214448
+          ],
+          [
+            2,
+            0.1303703703703704,
+            0.4379232505643341
+          ],
+          [
+            2,
+            0.1303703703703704,
+            0.7404063205417607
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "End shift",
+          {
+            "asset": "app-capture-16.jpg",
+            "marks": [
+              [
+                5,
+                0.4966442953020134,
+                0.4444444444444448
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          }
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Visibility and profile sharing",
+      "role": "DANCERS",
+      "path": "Profile > Visibility & sharing",
+      "steps": [
+        [
+          "Check Profile visibility",
+          "Read Public or Incognito before changing anything."
+        ],
+        [
+          "Hide temporarily",
+          "Go incognito hides your profile and content without deleting the uploads. Wait for the saved status."
+        ],
+        [
+          "Show it again",
+          "Make profile public restores visibility subject to approval and account eligibility."
+        ],
+        [
+          "Share your profile",
+          "Expand Share profile > Copy link, or Open profile to inspect the destination."
+        ],
+        [
+          "Check the destination",
+          "Confirm your stage name, main photo and approved media before sharing. A copied link does not bypass incognito or approval restrictions."
+        ]
+      ],
+      "done": "The saved visibility matches your intention and the copied URL is yours.",
+      "issue": "Internal only is a check-in channel. Incognito is a profile-visibility control. They are not interchangeable.",
+      "shot": {
+        "asset": "app-capture-17.jpg",
+        "marks": [
+          [
+            3,
+            0.28823529411764703,
+            0.3052064631956912
+          ],
+          [
+            4,
+            0.2470588235294117,
+            0.9048473967684023
+          ],
+          [
+            4,
+            0.7352941176470588,
+            0.9048473967684023
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [],
+      "kind": "procedure"
+    },
+    {
+      "title": "Your results and account help",
+      "role": "DANCERS",
+      "path": "Results | Account",
+      "steps": [
+        [
+          "Choose the period and club",
+          "Use This shift, 7 days, 30 days or All time and the club selector. Confirm the filters before comparing."
+        ],
+        [
+          "Read demand and outcomes",
+          "Review table requests, VIP requests, returning VIP requesters and verified entries. Request details separates available sources/outcomes."
+        ],
+        [
+          "Read your activity",
+          "Review shifts/hours, followers, profile views, likes, video views, trends and top content. Active sessions may not yet appear in completed-session totals."
+        ],
+        [
+          "Keep your account reachable",
+          "Use Account for preferences and help; see p. 4 for email/push. Use Forgot password? or Forgot email? to recover access."
+        ],
+        [
+          "Report a discrepancy",
+          "Include club, selected dates, expected activity and exact message. Use the support format on p. 26; never include passwords or ID files."
+        ]
+      ],
+      "done": "You know the period, source and meaning of the figures you are reading.",
+      "issue": "Requests and I'm Going are interest signals. They do not establish attendance, a booking or earnings.",
+      "shot": {
+        "asset": "app-capture-18.jpg",
+        "marks": [
+          [
+            1,
+            0.13440860215053765,
+            0.29082774049217
+          ],
+          [
+            1,
+            0.575268817204301,
+            0.8053691275167784
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Get help from the right person",
+          "Transfer/file problem: retry or correct. Pending media: club reviewer. Account/identity issue: account support. Missing recorded club activity: duty manager, then support."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Open the approval queue",
+      "role": "CONTENT APPROVAL MANAGER",
+      "path": "Dancers & tables > Media approvals",
+      "steps": [
+        [
+          "Confirm your access",
+          "Use an owner or manager account for the right club. Staff cannot approve media; reviewer responsibility does not create a separate restricted role."
+        ],
+        [
+          "Refresh the queue",
+          "Select Refresh. New dancers join the club queue after their NFC tap. Check the count and use Previous / Next to work all pages (12 items per page)."
+        ],
+        [
+          "Identify the exact item",
+          "Read stage name and the Photo, Main photo, Avatar or Video label. Check the actual preview/version, not a previous upload."
+        ],
+        [
+          "Read AI findings",
+          "Check running, passed, flagged or manual-review status. Expand AI findings when present. Passing AI is not human approval or proof of identity/rights."
+        ],
+        [
+          "Review, then decide",
+          "Apply p. 23 to the full image/video. Use the decision guide on p. 24. Never approve missing previews or unfinished processing."
+        ]
+      ],
+      "done": "You can inspect the correct item and understand any automated findings.",
+      "issue": "Disabled approval is not a control to work around. If a preview cannot be inspected, leave it private and follow p. 26.",
+      "shot": {
+        "asset": "app-capture-19.jpg",
+        "marks": [
+          [
+            1,
+            0.3776595744680851,
+            0.11297709923664115
+          ],
+          [
+            2,
+            0.9138297872340426,
+            0.7511450381679389
+          ]
+        ],
+        "captured": "Captured 20 Oct 2026"
+      },
+      "extras": [
+        [
+          "When uploads arrive",
+          "This capture shows an empty queue. Pending items add the asset preview, AI findings, Review note, Approve and Reject; Previous / Next appear for multiple pages. Those controls are described here, not shown in this capture."
+        ],
+        [
+          "After a decision",
+          "Wait for the success message and removal from the pending queue. Returning to the first page is normal. An uncertain save requires Refresh before another action."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Photo and video review checklist",
+      "role": "CONTENT APPROVAL MANAGER",
+      "path": "Use on every photo, main image, avatar and video",
+      "steps": [
+        [
+          "Inspect the complete asset",
+          "Photo: whole frame plus final crop. Avatar: face visible. Video: play every scene with audio from beginning to end; do not approve from its thumbnail."
+        ],
+        [
+          "Check people and coverage",
+          "Only the uploader, age 18+, may appear, including in backgrounds/reflections. Apply the coverage rules below."
+        ],
+        [
+          "Check text, objects and audio",
+          "Look for brands, logos, watermarks, contact details, solicitation and other prohibited content. Listen to the complete audio."
+        ],
+        [
+          "Check rights and technical readiness",
+          "The uploader must own or have permission for all visuals/audio. Review AI findings. Do not override a technical block or guess about identity or rights."
+        ]
+      ],
+      "done": "Every checklist category has been inspected before a publishing decision.",
+      "issue": "Any uncertainty about people, age, consent, ownership or inspectability: keep the file private and escalate. AI findings are evidence to review, not a substitute for the checklist.",
+      "shot": null,
+      "extras": [],
+      "kind": "review"
+    },
+    {
+      "title": "Approve, reject or escalate",
+      "role": "CONTENT APPROVAL MANAGER",
+      "path": "Media approvals > Review note > decision",
+      "steps": [
+        [
+          "Choose the correct outcome",
+          "Use the three-way guide below. Escalate means leave the item private and contact the responsible team; it is not a dedicated queue button."
+        ],
+        [
+          "Save once and verify",
+          "After Approve or Reject, wait for confirmation and removal from the pending queue. If the upload changed or the result is uncertain, Refresh and inspect the current version."
+        ],
+        [
+          "Review replacements anew",
+          "A corrected file is a new review. Inspect the replacement itself; do not approve solely because the previous note was addressed."
+        ],
+        [
+          "Check the release",
+          "After approval, inspect the eligible profile/internal/public surface. If still hidden, check remaining enrollment, verification, visibility and channel requirements."
+        ]
+      ],
+      "done": "The saved outcome matches the exact file inspected, and unresolved content stays private.",
+      "issue": "One approval can release an asset across eligible internal, external and TV surfaces. It does not override profile eligibility.",
+      "shot": null,
+      "extras": [],
+      "kind": "decision"
+    },
+    {
+      "title": "Review every publishing surface",
+      "role": "CONTENT APPROVAL + CLUB ADMIN",
+      "path": "Release checklist beyond the media queue",
+      "steps": [
+        [
+          "Dancer media",
+          "New photos/videos require human approval, including main images and avatars. Existing approved assets are not automatically re-queued; audit them when a historical review is required."
+        ],
+        [
+          "Profile text",
+          "Obtain the reviewer's approval of the proposed stage name, city and other visible copy before saving it. These edits do not all wait in a human queue; check the saved result afterward."
+        ],
+        [
+          "Social links",
+          "Send link-review questions to MyDancr Support. Include the dancer and link reference; club media approval does not approve a social link."
+        ],
+        [
+          "Venue pages and branding",
+          "Have the responsible reviewer approve the proposed logo, imagery and wording before the venue team saves or publishes them. Review the package and Club Deal before Approve & make live (p. 5). Branding uses separate processing rules."
+        ],
+        [
+          "Live internal, external and TV views",
+          "After a release, check the correct person and approved content. Report unsafe live content to MyDancr Support for the applicable removal/restriction action."
+        ]
+      ],
+      "done": "Each content type has a review owner, approval of the proposed version and a verified release path.",
+      "issue": "Not every text or branding change has a technical hold. The team must follow this pre-publication sign-off procedure; the media queue alone cannot enforce it.",
+      "shot": null,
+      "extras": [
+        [
+          "Before anything goes live",
+          "Club policy: the assigned reviewer signs off on content first. For edits without a technical hold, agree the exact file/copy before saving. Do not use the live page as the draft."
+        ],
+        [
+          "Keep an audit reference",
+          "Record club, dancer/asset reference, decision, reason when needed, reviewer and time under your team procedure. Avoid duplicating sensitive source media in ordinary messages."
+        ]
+      ],
+      "kind": "procedure"
+    },
+    {
+      "title": "Troubleshooting and escalation",
+      "role": "EVERYONE",
+      "path": "Account / Manage venue > Support | support@mydancr.com",
+      "steps": [],
+      "done": "One owner has the record reference, a factual problem description and the next action.",
+      "issue": "Escalate suspected unauthorized access, unsafe live content or a privacy incident immediately. Do not circulate the sensitive material.",
+      "shot": null,
+      "extras": [],
+      "kind": "troubleshooting"
+    },
+    {
+      "title": "Website grids and club branding",
+      "role": "CLUB ADMIN / WEBSITE TEAM",
+      "path": "Manage venue > Website grid",
+      "kind": "procedure",
+      "steps": [
+        [
+          "Open the location preview",
+          "Select Preview website grid. Confirm the club, working roster and profile destination. A company with several locations needs a separate location code for each."
+        ],
+        [
+          "Copy the supplied code",
+          "Select Copy embed code and give it to the company website editor. Copy preview link shares the preview. If copying fails, select and copy the fallback text."
+        ],
+        [
+          "Install on the matching page",
+          "The website editor inserts the supplied iframe on that location's HTTPS page. The company city selector must load the matching location page/code. Ask Support to confirm any sample or demo configuration before public launch."
+        ],
+        [
+          "Check the live experience",
+          "Use the refresh icon, open a dancer card, inspect Photos and Videos, then use Back. Confirm location/directions links and Powered by mydancr.com. Do not treat the screenshot's earlier city or count as a setup value."
+        ],
+        [
+          "Request brand changes",
+          "Send the official logo and desired color to MyDancr Support. Platform Admin > Clubs > Guest colors controls Website embed color and Table QR color separately. Club dashboards and public MyDancr pages retain their own theme."
+        ]
+      ],
+      "done": "Each location page shows its own eligible roster and the approved brand treatment.",
+      "issue": "Missing Website grid? Check venue publication and access. Empty results do not justify inserting another club's dancers. Escalate the location and copied URL to Support.",
+      "shot": {
+        "asset": "app-capture-20.jpg",
+        "marks": [
+          [
+            4,
+            0.896049896049896,
+            0.08685968819599109
+          ],
+          [
+            4,
+            0.15800415800415804,
+            0.6971046770601337
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "Copy controls - text reference",
+          "Preview website grid / Copy preview link / Copy embed code. These current controls are source-verified; the earlier screenshot shows the guest-facing result."
+        ]
+      ]
+    },
+    {
+      "title": "TV and full-profile media",
+      "role": "MANAGERS / TALENT / DANCERS",
+      "path": "Manage venue > MyDancr TV | dancer profile > Photos / Videos",
+      "kind": "procedure",
+      "steps": [
+        [
+          "Open the club TV feed",
+          "Select MyDancr TV in Manage venue. It opens TV with the club/city scope. Check the club filter before reviewing the feed. The public TV tab is another entry point."
+        ],
+        [
+          "Review playback",
+          "Use the speaker icon to mute/unmute and inspect the full video. The ordinary card list scrolls freely. Follow, like and share controls depend on the viewing context."
+        ],
+        [
+          "Expand the media",
+          "Use the corner/expand icon for the immersive viewer. Use its exit or back control to return. Browser controls and fullscreen support differ by device; expansion is not a publication action."
+        ],
+        [
+          "Inspect a full profile",
+          "Open the dancer from the roster/grid, choose Photos or Videos and tap an item. Review the intended file, then Back when ready. Profile layout and available actions vary between public, internal, embed and VIP views."
+        ],
+        [
+          "Use the right correction route",
+          "Dancers replace uploads through Profile; owners/managers review them in Media approvals. Pending uploads must not be published just to check playback. See pp. 22-25 for the release checks."
+        ]
+      ],
+      "done": "The approved file plays in the intended club and profile context, with usable sound and expand controls.",
+      "issue": "Missing video? Check approval, processing, profile eligibility and venue filters first. If still wrong, send the media reference and device/browser to Support.",
+      "shot": {
+        "asset": "app-capture-21.jpg",
+        "marks": [
+          [
+            2,
+            0.9168399168399168,
+            0.2992700729927007
+          ],
+          [
+            3,
+            0.9168399168399168,
+            0.6934306569343065
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "extras": [
+        [
+          "VIP profile behavior",
+          "From the VIP dashboard, Request adds the dancer to the existing request queue. Added to request queue confirms selection; Back returns to the dashboard. Complete the visit request there. Selection alone is not venue confirmation."
+        ]
+      ]
+    },
+    {
+      "title": "Refresh and keep information current",
+      "role": "ALL OPERATING ROLES",
+      "path": "Use the page or panel Refresh control before acting on old information.",
+      "kind": "refresh",
+      "steps": [
+        [
+          "Refresh the relevant screen",
+          "Check the club, date, filters and update indicator first. Use the panel refresh icon/button when returning to old information or checking an uncertain save."
+        ],
+        [
+          "Wait for the result",
+          "Keep the current record reference. Read any error before retrying. Do not mark an item complete, republish a file or recreate a request to force a refresh."
+        ]
+      ],
+      "done": "The correct scope has finished updating, and your action uses the current record.",
+      "issue": "These are current implementation intervals, not a delivery guarantee. Hidden tabs, browser suspension and connection errors can delay updates. Manual refresh remains part of shift checks.",
+      "shot": null,
+      "extras": []
+    }
+  ],
+  "cheats": [
+    {
+      "file": "MyDancr_Club_Admin_Cheat_Sheet.pdf",
+      "title": "Club Admin",
+      "sub": "Owner / club administrator - keep the club ready",
+      "shot": {
+        "asset": "app-capture-22.jpg",
+        "marks": [
+          [
+            1,
+            0.8695652173913043,
+            0.48598130841121495
+          ],
+          [
+            2,
+            0.13043478260869565,
+            0.48598130841121495
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "steps": [
+        [
+          "1. Check the club",
+          "Manage venue: identity, LIVE/hidden status, official information and active Club Deal. A hidden approved venue may need a deal correction."
+        ],
+        [
+          "2. Assign coverage",
+          "Tonight: name the duty manager and media reviewer. Check the live queues, working roster and shift handover."
+        ],
+        [
+          "3. Maintain access",
+          "Owner: Team & activity > email > Manager/Staff > Invite team member. Revoke unused invitations and remove departing staff."
+        ],
+        [
+          "4. Publish the package",
+          "Review facts/terms > Preview customer experience > Approve & make live. Need changes? Write the correction > Request changes."
+        ],
+        [
+          "5. Check guest-facing links",
+          "Request QR signs/NFC stickers through Support; verify club and table on each. Manage venue > Website grid: Preview website grid, then Copy embed code for the matching location page."
+        ]
+      ],
+      "rule": "Owner manages team and club removal. Manager can handle operations and media reviews. Staff cannot approve media.",
+      "help": "Wrong access or hidden venue? Check membership, account, active deal and publication state; then use Support.",
+      "pages": "Manual pp. 3-8, 26-29"
+    },
+    {
+      "file": "MyDancr_Manager_Talent_Cheat_Sheet.pdf",
+      "title": "Managers & talent",
+      "sub": "Duty manager - accurate roster, prompt responses, clear handover",
+      "shot": {
+        "asset": "app-capture-23.jpg",
+        "marks": [
+          [
+            1,
+            0.13043478260869565,
+            0.49999999999999994
+          ],
+          [
+            2,
+            0.37500000000000006,
+            0.49999999999999994
+          ],
+          [
+            5,
+            0.6195652173913043,
+            0.49999999999999994
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "steps": [
+        [
+          "1. Open Tonight",
+          "Refresh; compare Working now with the floor. Assign Table requests, Guest list, VIP and Ride requests to named people."
+        ],
+        [
+          "2. Maintain the roster",
+          "Dancers & tables > search/filter. Portrait opens profile. (...) > End check-in when someone leaves; Remove access is a separate access change."
+        ],
+        [
+          "3. Record table outcomes",
+          "(...) > Request details > Mark seen > Mark arrived > Complete. Use Didn't arrive at table or Dismiss for the actual alternative outcome."
+        ],
+        [
+          "4. Handle guests",
+          "Pass: Scan pass > verify > Admit guest & redeem pass. VIP: check availability > Confirm request / Decline. Ride: contact guest, then update Ride status."
+        ],
+        [
+          "5. Close and hand over",
+          "Results: compare the same club/period. Keep rank details with management. Check club media via Manage venue > MyDancr TV. Hand over each open reference with status, next action and owner."
+        ]
+      ],
+      "rule": "Seen is not arrived. A request is not a booking. Clearing a notification does not finish the task. VIP guests sign in at /vip.",
+      "help": "For a queue error, refresh and check the existing record before repeating an action. Report club, time, reference and message.",
+      "pages": "Manual pp. 9-15, 26, 28-29"
+    },
+    {
+      "file": "MyDancr_Dancer_Cheat_Sheet.pdf",
+      "title": "Dancers",
+      "sub": "Your profile, your uploads and your working status",
+      "shot": {
+        "asset": "app-capture-24.jpg",
+        "marks": [
+          [
+            1,
+            0.37500000000000006,
+            0.5465116279069767
+          ],
+          [
+            4,
+            0.13043478260869565,
+            0.5465116279069767
+          ],
+          [
+            5,
+            0.6195652173913043,
+            0.5465116279069767
+          ]
+        ],
+        "captured": "Earlier owner-supplied app capture"
+      },
+      "steps": [
+        [
+          "1. Build your profile",
+          "Save stage name and city. Add at least 3 photos total, including a main photo. Your avatar is created from it."
+        ],
+        [
+          "2. Upload compliant files",
+          "Photos: Gallery / Camera; JPEG, PNG, WebP, HEIC or HEIF, up to 25 MB. Video: both permissions > Choose video / Record video; vertical/square MP4, WebM or MOV, 1-30 seconds, up to 25 MB."
+        ],
+        [
+          "3. Finish onboarding",
+          "Accept the agreement, complete Verify 18+ if required, then tap the club sticker. This connects pending media to your club reviewer."
+        ],
+        [
+          "4. Manage your shift",
+          "Choose Internal only, External only or Both. Overview > Working Now. Leaving: End Working Now > Yes, end now. Up to 6 hours, then a 6-hour cooldown; retapping does not extend it."
+        ],
+        [
+          "5. Check activity and visibility",
+          "Results shows your activity. Profile > Visibility & sharing: Incognito hides content; Make profile public restores eligible content; Copy link shares your profile."
+        ]
+      ],
+      "rule": "Only you in the upload; follow coverage rules; no logos, watermarks or contact details. Pending content is private until human approval.",
+      "help": "Rejected? Read the reason and correct it. Wrong-account warning? Recover the original account. Never share passwords or ID files with club staff.",
+      "pages": "Manual pp. 16-21, 26"
+    },
+    {
+      "file": "MyDancr_Content_Approval_Cheat_Sheet.pdf",
+      "title": "Content approval",
+      "sub": "Assigned club owner or manager - review before release",
+      "shot": {
+        "asset": "app-capture-25.jpg",
+        "marks": [
+          [
+            1,
+            0.3776595744680851,
+            0.5175438596491225
+          ]
+        ],
+        "captured": "Captured 20 Oct 2026"
+      },
+      "steps": [
+        [
+          "1. Open the correct queue",
+          "Owner/manager account > Dancers & tables > Media approvals > Refresh. Confirm club, dancer and asset. New dancers join after their NFC tap."
+        ],
+        [
+          "2. Inspect the whole file",
+          "Photo: full frame and crop. Video: every scene and all audio. Check people, coverage, logos/contacts, prohibited conduct, rights and AI findings."
+        ],
+        [
+          "3. APPROVE",
+          "Complete preview reviewed, no unresolved policy or rights issue, technical checks complete. Press Approve when enabled; wait for confirmation."
+        ],
+        [
+          "4. REJECT",
+          "Clear correction: specific Review note > Reject. Example: \"Another person is visible in the mirror. Replace with a photo showing only you.\""
+        ],
+        [
+          "5. ESCALATE",
+          "Missing preview, processing, changed file, or uncertainty about age, identity, consent or rights: leave private and contact the club lead/platform team. There is no Escalate button."
+        ],
+        [
+          "6. Verify and continue",
+          "Uncertain save? Refresh first. Check eligible publication after approval. Previous / Next covers the full queue. Review replacements anew."
+        ]
+      ],
+      "rule": "AI passing is not approval. One approval can release eligible media. Text/branding without a queue still needs reviewer sign-off before saving or publishing.",
+      "help": "Keep uncertain content private. Send club, dancer, upload reference and exact issue to the platform team; do not circulate sensitive source material.",
+      "pages": "Manual pp. 22-26"
+    }
+  ],
+  "guides": [
+    {
+      "name": "Club Admin",
+      "short": "Club Admin",
+      "file": "MyDancr_Club_Admin_Onboarding_Guide.pdf",
+      "pages": [
+        {
+          "title": "Start here: prepare the club",
+          "role": "CLUB ADMIN TEAM",
+          "path": "Manage venue > Review your prepared venue page",
+          "steps": [
+            [
+              "Sign in and confirm access",
+              "Use your own club account at www.mydancr.com > Sign in. Confirm the club. The owner manages team membership; a manager handles operations. Use Forgot password? or ask the owner if access is missing."
+            ],
+            [
+              "Review the venue package",
+              "Manage venue > Review your prepared venue page. Check name, location, address, contact details, hours, official logo, Club Deal, guest terms and subscription against the agreement."
+            ],
+            [
+              "Preview customer experience",
+              "Open the preview. Check the correct location, offer, links and customer presentation."
+            ],
+            [
+              "Correct or publish",
+              "Need changes? Enter a specific correction of at least 10 characters and press Request changes. When the package is correct, press Approve & make live."
+            ],
+            [
+              "Verify publication",
+              "Wait for confirmation, then Open live venue page. Check LIVE status and the agreed venue information. An approved venue may be hidden when its active Club Deal is missing."
+            ]
+          ],
+          "done": "The page shows LIVE and the public information matches the agreed package.",
+          "issue": "Hidden venue: check the active deal and saved publication state; request a correction through the club controls or Support. Do not recreate the club.",
+          "shot": {
+            "asset": "app-capture-22.jpg",
+            "marks": [
+              [
+                2,
+                0.8695652173913043,
+                0.48598130841121495
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Publication controls - text reference",
+              "Review your prepared venue page / Preview customer experience / Need changes? / Request changes / Approve & make live / Open live venue page. A current capture of these controls is unavailable."
+            ],
+            [
+              "First-day checklist",
+              "Confirm the club and publication state, invite the right team, check table signs and the dancer sticker, then assign the shift and media-review coverage."
+            ],
+            [
+              "Before first access",
+              "An authorized representative submits the venue request. MyDancr reviews it, completes the agreement and issues a private signup code. Use that code to create the club account. The prepared workspace is private until the venue package is approved."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "3, 5"
+        },
+        {
+          "title": "Give each teammate the right access",
+          "role": "CLUB ADMIN TEAM - OWNER",
+          "path": "Manage venue > Team & activity",
+          "steps": [
+            [
+              "Choose the role",
+              "Manager handles venue, roster, media reviews, VIP, rides and contacts. Staff has limited operational access. Only the owner manages team membership."
+            ],
+            [
+              "Invite team member",
+              "Enter Team member email, select Manager or Staff under Access level, then press Invite team member. An existing guest or dancer account can conflict."
+            ],
+            [
+              "Finish invitation setup",
+              "The recipient follows the private invitation and account-setup steps. If email fails and a secure link is supplied, share it only with that person."
+            ],
+            [
+              "Confirm access",
+              "Have the recipient verify the club and visible tabs. Check that their membership is active."
+            ],
+            [
+              "Remove stale access",
+              "Use the role control or Remove when duties change. Use Revoke for an unused invitation that should no longer be accepted."
+            ]
+          ],
+          "done": "Each team member has their own account and only the access their work needs.",
+          "issue": "There is no reviewer-only club role. Assigning a content reviewer as Manager also gives them broader manager permissions.",
+          "shot": {
+            "asset": "app-capture-22.jpg",
+            "marks": [
+              [
+                2,
+                0.8695652173913043,
+                0.48598130841121495
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Team controls - text reference",
+              "Manage venue > Team & activity. Team member email / Access level / Invite team member / Revoke / Remove. A current capture of this panel is unavailable."
+            ],
+            [
+              "Permission check",
+              "A Manager can also approve media and use VIP, rides, contacts, finance and results. Staff cannot approve media. There is no separate restricted content-reviewer role."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "6"
+        },
+        {
+          "title": "Prepare table QR signs",
+          "role": "CLUB ADMIN TEAM",
+          "path": "Manage venue > Support | support@mydancr.com",
+          "steps": [
+            [
+              "Prepare the table map",
+              "List the club location and table numbers. Specify a first and last number for each range, plus any exceptions or separately numbered areas."
+            ],
+            [
+              "Check the requested count",
+              "Both endpoints count: 201-210 makes 10 tables; 201-211 makes 11. Match the requested signs to the physical tables."
+            ],
+            [
+              "Request the batch",
+              "Send the club and numbering plan to MyDancr Support. MyDancr creates the codes; tell the team about existing signs so replacements are coordinated."
+            ],
+            [
+              "Check the supplied signs",
+              "Each sign must show the table number, Powered by MyDancr and www.mydancr.com. Check readability and the full QR image before printing or installation."
+            ],
+            [
+              "Match each sign to its table",
+              "Open each QR destination and confirm the club and table. Install the matching sign. Report wrong or obsolete codes to Support and remove old physical signs."
+            ]
+          ],
+          "done": "Every installed code opens its intended club/table and matches the printed number.",
+          "issue": "Stop using a sign with the wrong destination. Send Support the club, printed table number and exact issue. Dancers use a separate dressing-room NFC sticker.",
+          "shot": null,
+          "extras": [
+            [
+              "Range examples",
+              "Both endpoints count."
+            ],
+            [
+              "Who does what",
+              "The club supplies its table map, checks every sign and installs it. MyDancr Support coordinates creation, replacement and deactivation."
+            ]
+          ],
+          "kind": "qr",
+          "master": "7"
+        },
+        {
+          "title": "Check stickers and customer views",
+          "role": "CLUB ADMIN TEAM",
+          "path": "Dancers & tables > sticker controls | Club dashboard > View internal",
+          "steps": [
+            [
+              "Confirm the supplied sticker",
+              "Check the club, intended dressing-room placement and sticker label with MyDancr Support. Keep the label in the club setup record."
+            ],
+            [
+              "Check the installation",
+              "Install the assigned sticker in the agreed dressing-room area. Follow the supplied test instructions and verify the intended club before dancers use it."
+            ],
+            [
+              "Report sticker faults",
+              "Use Dancers & tables > sticker controls > Test or Support. Include Issue, Details and the sticker label. Stop using a wrong or damaged tag; Support coordinates replacement and deactivation."
+            ],
+            [
+              "Check the internal view",
+              "Open View internal or a table QR link. Verify club, table, roster, Request buttons and Powered by MyDancr attribution."
+            ],
+            [
+              "Check external and embedded views",
+              "Open the live venue page and the actual club website embed. Check location, offer, roster and a dancer profile. Have the website maintainer use the approved embed."
+            ]
+          ],
+          "done": "The sticker and customer links stay in the intended club context.",
+          "issue": "Wrong location or person? Stop using that tag/sign/link and contact Support with its label and destination. Keep private setup and invitation links out of public signs.",
+          "shot": {
+            "asset": "app-capture-03.jpg",
+            "marks": [
+              [
+                4,
+                0.8586956521739131,
+                0.1012216404886562
+              ],
+              [
+                4,
+                0.16304347826086957,
+                0.9616055846422338
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Surface differences",
+              "Internal is the club/table roster; external is public discovery; embedded is a club-branded view. Embedded profiles omit follow, share and follower counts. Staff full profiles can retain MyDancr styling."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "8"
+        },
+        {
+          "title": "Daily oversight and handover",
+          "role": "MANAGERS / TALENT MANAGEMENT",
+          "path": "Tonight | Manage venue > Notification preferences / Support",
+          "steps": [
+            [
+              "Open Tonight and refresh",
+              "Confirm club identity and freshness. Compare Working now with the floor. Assign Table requests, Guest list, VIP requests and Ride requests to named people."
+            ],
+            [
+              "Assign review coverage",
+              "Name an owner or manager for Media approvals and their break cover. New-dancer media reaches the club after the NFC tap. Give the reviewer the separate Content Approval onboarding guide."
+            ],
+            [
+              "Keep alerts reachable",
+              "Manage venue > Notification preferences: email starts on by default; prior optional-alert choices still apply. Check categories, mailbox and spam. Enable phone push through the displayed instructions; iPhone may require Add to Home Screen."
+            ],
+            [
+              "Coordinate administration",
+              "Owners/managers can view finance. Send subscription or deal corrections to MyDancr Support. Only the owner manages team access and club withdrawal; follow the full reference procedure before a consequential change."
+            ],
+            [
+              "Verify the handover",
+              "Require a reference, actual status, next action and named owner for every unresolved request/review. Keep uncertain media private. Lock or sign out of shared devices."
+            ]
+          ],
+          "done": "The club is ready, each queue has coverage and unresolved work has a named owner.",
+          "issue": "Missing access: owner. Stale queue: Refresh and inspect the existing record before repeating an action. Unsafe live content, account or privacy incident: platform support immediately.",
+          "shot": {
+            "asset": "app-capture-04.jpg",
+            "marks": [
+              [
+                1,
+                0.8913043478260869,
+                0.06250000000000006
+              ],
+              [
+                1,
+                0.25000000000000006,
+                0.43945312499999994
+              ],
+              [
+                1,
+                0.7391304347826086,
+                0.70703125
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Escalation record",
+              "Club + account/record reference + local time/timezone + exact error + expected result + next owner. Exclude passwords, ID documents and private links."
+            ],
+            [
+              "Before independent use",
+              "Have the trainee find the correct club, locate team and review controls, check one sign destination, and describe an unresolved-item handover. Use read-only navigation or approved training records."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "4, 9, 26"
+        }
+      ],
+      "nav": [
+        "Setup",
+        "Team",
+        "Table QRs",
+        "Stickers",
+        "Oversight"
+      ]
+    },
+    {
+      "name": "Managers & talent",
+      "short": "Manager / talent",
+      "file": "MyDancr_Manager_Talent_Onboarding_Guide.pdf",
+      "pages": [
+        {
+          "title": "Start the shift and check the roster",
+          "role": "MANAGERS / TALENT MANAGEMENT",
+          "path": "Sign in > club dashboard > Tonight / Dancers & tables",
+          "steps": [
+            [
+              "Sign in to the correct club",
+              "Use your own owner/manager account. Confirm the club; missing access goes to the owner. Staff has limited controls and cannot approve media or handle VIP, rides or shared contacts."
+            ],
+            [
+              "Open Tonight and refresh",
+              "Compare Working now with the floor. Assign Table requests, Guest list, VIP requests, Ride requests and Media approvals to named people."
+            ],
+            [
+              "Find the dancer",
+              "Dancers & tables > Search dancers / Sort dancers / All affiliated or Working now. Use channel filters as needed. Portrait or View profile opens the full profile."
+            ],
+            [
+              "Correct the working state",
+              "Card menu (...) > End check-in when the dancer leaves. Ending early does not bypass cooldown. Remove access changes club access; it is not the ordinary end-of-shift action. Removed dancers > Allow new tap permits a future tap, not an automatic shift."
+            ],
+            [
+              "Check alerts and review coverage",
+              "Manage venue > Notification preferences. Email starts on by default; prior optional-alert preferences apply. Confirm mailbox/device settings. Assign an owner/manager to review media using the Content Approval onboarding guide."
+            ]
+          ],
+          "done": "The roster matches the floor, live queues have owners and review coverage is assigned.",
+          "issue": "Refresh stale data. Confirm club and filters before repeating an action. Do not remove and re-add a dancer to force a new shift.",
+          "shot": {
+            "asset": "app-capture-23.jpg",
+            "marks": [
+              [
+                2,
+                0.13043478260869565,
+                0.49999999999999994
+              ],
+              [
+                3,
+                0.37500000000000006,
+                0.49999999999999994
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Roster controls",
+              {
+                "asset": "app-capture-26.jpg",
+                "marks": [
+                  [
+                    3,
+                    0.2582417582417583,
+                    0.15046296296296288
+                  ],
+                  [
+                    3,
+                    0.7417582417582418,
+                    0.3148148148148147
+                  ],
+                  [
+                    4,
+                    0.26043956043956046,
+                    0.8842592592592592
+                  ]
+                ],
+                "captured": "Earlier owner-supplied app capture"
+              }
+            ],
+            [
+              "Two separate states",
+              "Affiliated means connected to this club. Working now means an active check-in. A dancer may be affiliated without currently working."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "3-4, 9-10"
+        },
+        {
+          "title": "Handle table requests",
+          "role": "MANAGERS / TALENT MANAGEMENT",
+          "path": "Dancers & tables > Table requests",
+          "steps": [
+            [
+              "Open the right record",
+              "Check table and dancer. Portrait opens the full profile; (...) > Request details opens the operational record."
+            ],
+            [
+              "Acknowledge",
+              "Use Mark seen once the team has received the request. Coordinate with the dancer; operational dancer alerts can also be sent."
+            ],
+            [
+              "Record arrival or non-arrival",
+              "Select Mark arrived only when the dancer reaches the table. Otherwise use Didn't arrive at table when that is the actual outcome."
+            ],
+            [
+              "Finish or cancel",
+              "After arrival and completion, select Complete. Use Dismiss for cancellation under the club's procedure."
+            ],
+            [
+              "Verify the state",
+              "Wait for the saved update. If the outcome is uncertain, refresh and inspect the same request before repeating an action."
+            ]
+          ],
+          "done": "The status reflects what happened, not what the team hopes will happen.",
+          "issue": "Seen is not arrival; a notification marked read is not a completed request.",
+          "shot": {
+            "asset": "app-capture-06.jpg",
+            "marks": [
+              [
+                1,
+                0.2866310160427808,
+                0.06692913385826772
+              ],
+              [
+                1,
+                0.13368983957219252,
+                0.4488188976377953
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Normal flow",
+              "Pending > Mark seen > Mark arrived > Complete"
+            ],
+            [
+              "Other outcomes",
+              "Seen > Didn't arrive at table. Dismiss cancels the request."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "11"
+        },
+        {
+          "title": "Scan passes and admit guests",
+          "role": "MANAGERS / ADMISSION STAFF",
+          "path": "Tonight > Guest list > Scan pass",
+          "steps": [
+            [
+              "Find the visit",
+              "Choose Tonight, Choose a date or All active passes. Search and filter Awaiting admission / Admitted / All. Clear filters or Load more if needed."
+            ],
+            [
+              "Scan the pass",
+              "Open Scan pass, allow camera access if prompted and follow the scanner. Confirm the correct venue and visit."
+            ],
+            [
+              "Verify eligibility",
+              "Check the guest and the displayed admission/arrival rules, including age, capacity, dress code and current offer conditions."
+            ],
+            [
+              "Record actual admission",
+              "Check the staff verification box, then press Admit guest & redeem pass only when admitting the guest."
+            ],
+            [
+              "Read the result",
+              "Admission confirmed records one verified visit. Already used must not admit another person; do not treat an unavailable/expired pass as valid."
+            ]
+          ],
+          "done": "The admitted guest has a recorded admission and the pass is not reused.",
+          "issue": "Opening a pass is not redemption. If scanning or validation fails, keep the result for the duty manager; do not invent another entry.",
+          "shot": {
+            "asset": "app-capture-07.jpg",
+            "marks": [
+              [
+                2,
+                0.15183246073298431,
+                0.8033707865168539
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "What staff records",
+              "One pass admits one guest. Guest-list dates and offer hours use the venue's local time."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "12"
+        },
+        {
+          "title": "Manage VIP access and visits",
+          "role": "MANAGERS / TALENT MANAGEMENT",
+          "path": "Tonight > VIP requests > VIP access",
+          "steps": [
+            [
+              "Invite the guest",
+              "Invite guest > email + optional private nickname > Send invitation. Only the invited email can use the link. Direct the guest to /vip."
+            ],
+            [
+              "Maintain VIP access",
+              "Invitations: Resend email / New share link replaces the old unused link; Revoke invitation cancels it. VIP guests: search > (...) > nickname or Remove VIP access."
+            ],
+            [
+              "Read the request",
+              "Requests > Pending requests / All statuses; use Newer / Older requests as needed. Check visit date, time, venue timezone, party and selected dancers."
+            ],
+            [
+              "Confirm availability, then respond",
+              "Open the dancer profile if needed. Coordinate availability, expand Add message for a guest-facing note, then Confirm request or Decline."
+            ],
+            [
+              "Handle a later cancellation",
+              "On the confirmed record, use Cancel confirmed request and verify the saved state. Existing requests remain available if VIP access is removed."
+            ]
+          ],
+          "done": "The correct guest has access and each visit has the intended decision.",
+          "issue": "Current VIP dancer selection is limited to Working now at that venue. Selection is interest, not guaranteed availability.",
+          "shot": {
+            "asset": "app-capture-08.jpg",
+            "marks": [
+              [
+                3,
+                0.3915662650602409,
+                0.2831632653061224
+              ],
+              [
+                4,
+                0.21686746987951805,
+                0.6326530612244897
+              ],
+              [
+                4,
+                0.23493975903614456,
+                0.8826530612244897
+              ],
+              [
+                4,
+                0.5481927710843373,
+                0.8826530612244897
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Private invitations",
+              "Links last seven days. Do not publish them. Nicknames are private to club owners/managers."
+            ],
+            [
+              "Different records",
+              "A public I'm Going signal, an admission pass and a VIP request do not confirm one another."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "13"
+        },
+        {
+          "title": "Ride requests and shared contacts",
+          "role": "MANAGERS / TALENT MANAGEMENT",
+          "path": "Tonight > Ride requests / Contacts",
+          "steps": [
+            [
+              "Find the ride",
+              "Show rides filters Open (last 48 hours), All requests, Completed or Cancelled. Use Load older requests or Open pickup inbox if needed."
+            ],
+            [
+              "Contact the guest",
+              "Check venue, name, pickup point, party size and contact details. Select Call guest or use the supplied email to agree availability and timing."
+            ],
+            [
+              "Update Ride status",
+              "Record Received, Contacted, Arranged, Completed or Cancelled as events occur. Wait for the saved result; coordinate transport with the team."
+            ],
+            [
+              "Check contact permission",
+              "Contacts > choose Shared contacts, Guest list, Email updates or Text updates > search. Read Contact & sharing details. Visit details only is not an update subscription; email and text permissions are separate."
+            ],
+            [
+              "Hand over unresolved rides",
+              "Give the next manager the request reference, actual arrangement and next action. Follow the current club offer and transport terms."
+            ]
+          ],
+          "done": "The guest knows whether a ride is arranged and the status matches the agreement.",
+          "issue": "The public pickup form is not a confirmed ride. Ride status does not verify club admission. The old pickup chat is retired.",
+          "shot": {
+            "asset": "app-capture-09.jpg",
+            "marks": [
+              [
+                1,
+                0.7282608695652174,
+                0.2538461538461537
+              ],
+              [
+                4,
+                0.7282608695652174,
+                0.7307692307692306
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Contact use",
+              "Follow up only for the recorded purpose. Guest Account > Email communications lets the guest subscribe or unsubscribe from optional MyDancr emails; this is separate from club update permissions. Essential account emails continue."
+            ],
+            [
+              "Staff access",
+              "Owners/managers handle VIP, rides and shared contacts. Keep guest details with the people responsible for the visit."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "14"
+        },
+        {
+          "title": "Review results and hand over",
+          "role": "MANAGERS / TALENT MANAGEMENT",
+          "path": "Club dashboard > Results",
+          "steps": [
+            [
+              "Select the club and period",
+              "Results > Tonight, 7 days, 30 days or All time. Keep the same club and dates when comparing activity."
+            ],
+            [
+              "Read actual activity",
+              "Review working time, table outcomes, admissions, VIP demand and other available activity. Views, requests and intentions do not establish earnings or verified attendance."
+            ],
+            [
+              "Use the manager performance view",
+              "Find the dancer using search/sort and open Score details. Rank is relative to eligible dancers in the selected club/period; ties may share rank. Early data or Not enough data needs context. Keep scoring information with management."
+            ],
+            [
+              "Reconcile the shift",
+              "End check-ins for dancers who left. Record actual table outcomes, unresolved VIP decisions and ride arrangements. Clearing notifications does not complete these tasks."
+            ],
+            [
+              "Hand over unresolved work",
+              "Give each open reference its actual status, next action and owner. Keep uncertain media private. Sign out or lock shared devices. Demonstrate the main queues using read-only navigation or approved training records before independent use."
+            ]
+          ],
+          "done": "Results use the correct period and every open task has a named owner.",
+          "issue": "Do not mark unfinished work complete for a tidy queue. Dancers retain their own activity analytics; manager scoring details are not dancer training.",
+          "shot": {
+            "asset": "app-capture-10.jpg",
+            "marks": [
+              [
+                1,
+                0.6250000000000001,
+                0.0494233937397035
+              ],
+              [
+                3,
+                0.5000000000000001,
+                0.19934102141680396
+              ],
+              [
+                3,
+                0.6477272727272729,
+                0.9209225700164746
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Support record",
+              "Club + record reference + selected period + time/timezone + expected result + exact result/error. Share a safely cropped screenshot, never credentials or private invitation links."
+            ],
+            [
+              "If a save is uncertain",
+              "Refresh and inspect the same record before retrying. Take account access issues to the owner; unresolved technical or privacy issues to platform support."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "9, 15, 26"
+        }
+      ],
+      "nav": [
+        "Start shift",
+        "Tables",
+        "Admission",
+        "VIP",
+        "Rides",
+        "Handover"
+      ]
+    },
+    {
+      "name": "Dancers",
+      "short": "Dancer",
+      "file": "MyDancr_Dancer_Onboarding_Guide.pdf",
+      "pages": [
+        {
+          "title": "Start here: complete your profile",
+          "role": "DANCERS",
+          "path": "Dancer dashboard > onboarding / Profile",
+          "steps": [
+            [
+              "Use your original dancer account",
+              "www.mydancr.com > Sign in. Confirm your stage name/account before editing. Use Forgot password? or Forgot email? to recover access; do not make another account to clear a device warning."
+            ],
+            [
+              "Save your details",
+              "Enter a stage name (2-40 characters), select your city and wait for Saved or Details saved."
+            ],
+            [
+              "Add your photos",
+              "Submit at least three profile photos in total, including a main photo. The avatar is generated from the main photo; pending uploads count toward the setup form."
+            ],
+            [
+              "Read and accept the agreement",
+              "Open the terms, accept the checkbox if you agree and press Continue."
+            ],
+            [
+              "Complete Verify 18+ if required",
+              "Follow the secure Ondato document/selfie flow using your own identity. Return to MyDancr and check the result. Not required means the step is not required; it does not mean verified."
+            ],
+            [
+              "Connect to your club",
+              "Tap the physical dressing-room sticker and finish the displayed steps. This connection lets the club review pending media; follow guide p. 4."
+            ]
+          ],
+          "done": "Details are saved and each onboarding requirement shows a clear status.",
+          "issue": "Setup completion does not publish pending content. Identity verification and media approval are separate. Use account support for a stalled or wrong-account state.",
+          "shot": {
+            "asset": "app-capture-11.jpg",
+            "marks": [
+              [
+                2,
+                0.5000000000000001,
+                0.3826366559485531
+              ],
+              [
+                2,
+                0.5000000000000001,
+                0.7234726688102895
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Your four tabs",
+              "Overview: working status. Profile: details/media. Results: your activity. Account: preferences/help."
+            ],
+            [
+              "Identity documents",
+              "Keep ID documents inside the secure verification flow; do not send copies to ordinary club email or chat."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "3, 16"
+        },
+        {
+          "title": "Main photo and photo uploads",
+          "role": "DANCERS",
+          "path": "Profile > Main photo / Add photos/videos > Photos",
+          "steps": [
+            [
+              "Choose your main photo",
+              "Use the Main photo controls to upload or Choose uploaded photo. Crop photo adjusts the card; check that your face stays visible."
+            ],
+            [
+              "Check the automatic avatar",
+              "It comes from the main image. Adjust the avatar crop if needed; there is no separate club roster photo to maintain."
+            ],
+            [
+              "Add gallery photos",
+              "Select Gallery for one or more files or Camera to take a photo. JPEG, PNG, WebP, HEIC and HEIF are accepted, up to 25 MB each."
+            ],
+            [
+              "Wait for transfer and review",
+              "A failed transfer can be retried. Processing and pending approval are different states. The club queue receives new-dancer media after the first NFC connection."
+            ],
+            [
+              "Organize approved photos",
+              "Use (...) for available crop, main-photo, pin or remove actions. Pinning changes your profile gallery order, not shared feed placement. Read rejection notes and replace corrected files."
+            ]
+          ],
+          "done": "The main image and avatar match, and you know each upload status.",
+          "issue": "The main photo is used for public cards and internal rosters where you are eligible. A saved change is not necessarily approved; the previous approved image may remain during review.",
+          "shot": {
+            "asset": "app-capture-12.jpg",
+            "marks": [
+              [
+                1,
+                0.46067415730337075,
+                0.38421052631578934
+              ],
+              [
+                1,
+                0.32584269662921356,
+                0.6157894736842107
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Photo source",
+              {
+                "asset": "app-capture-13.jpg",
+                "marks": [
+                  [
+                    3,
+                    0.24725274725274732,
+                    0.5864197530864197
+                  ],
+                  [
+                    3,
+                    0.7527472527472527,
+                    0.5864197530864197
+                  ]
+                ],
+                "captured": "Earlier owner-supplied app capture"
+              }
+            ],
+            [
+              "Before uploading",
+              "Read Photo rules. Only you (18+) may appear, including reflections. Cover nipples, areolas, genitals and anus; no sexual acts. No logos, watermarks or contact details. Own or have permission for the image. The club performs the full review."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "17"
+        },
+        {
+          "title": "Upload videos",
+          "role": "DANCERS",
+          "path": "Profile > Add photos/videos > Videos",
+          "steps": [
+            [
+              "Check Video rules",
+              "Use vertical or square MP4, WebM or MOV, 1-30 seconds long and up to 25 MB."
+            ],
+            [
+              "Confirm both permissions",
+              "Only you are shown and the video is of you; and you own or may publish all visuals and audio, including music."
+            ],
+            [
+              "Choose or record",
+              "Select Choose video or Record video. Use the offered crop/trim controls to meet the format and duration rules."
+            ],
+            [
+              "Wait for processing and human review",
+              "Keep track of transfer, processing and approval separately. AI checks assist the reviewer; passing them does not publish the file."
+            ],
+            [
+              "Verify approved playback",
+              "Open your profile Videos tab and play the complete video. Eligible approved videos can also enter MyDancrTV."
+            ]
+          ],
+          "done": "The approved file plays correctly and contains permitted visuals and audio.",
+          "issue": "Music on your phone is not proof of publishing rights. For rejected files, read the correction and submit a compliant replacement.",
+          "shot": {
+            "asset": "app-capture-14.jpg",
+            "marks": [
+              [
+                2,
+                0.049450549450549455,
+                0.33147632311977715
+              ],
+              [
+                2,
+                0.049450549450549455,
+                0.5153203342618384
+              ],
+              [
+                3,
+                0.24725274725274732,
+                0.7910863509749303
+              ],
+              [
+                3,
+                0.7527472527472527,
+                0.7910863509749303
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Upload-state shortcut",
+              "Failed transfer: retry. Processing: wait. Pending approval: club review. Rejected: read reason and correct the file."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "18"
+        },
+        {
+          "title": "Check in and end your shift",
+          "role": "DANCERS",
+          "path": "Dressing-room NFC sticker > Overview > Working Now",
+          "steps": [
+            [
+              "Tap the physical sticker",
+              "Unlock your phone, tap, open the link if prompted and sign in to your dancer account. No particular dashboard page must be open first. Confirm the club."
+            ],
+            [
+              "Choose where you appear",
+              "Internal only: club roster, with a full-profile link. External only: public discovery. Both: both surfaces, subject to your eligibility and visibility."
+            ],
+            [
+              "Finish the displayed requirements",
+              "On the first tap, your club can review pending media. If review is pending, wait, then refresh your onboarding/dashboard status."
+            ],
+            [
+              "Check Working Now",
+              "Confirm the active club and end time. A check-in lasts up to six hours, followed by a six-hour cooldown across clubs. Retapping does not extend it."
+            ],
+            [
+              "End when you leave",
+              "Overview > End Working Now > Yes, end now. Choose Keep working if opened by mistake. Ending early does not bypass the cooldown."
+            ]
+          ],
+          "done": "Working now reflects the correct club and your actual presence.",
+          "issue": "Public profile visibility is separate from check-in. An original-account warning needs account recovery/support, not another account.",
+          "shot": {
+            "asset": "app-capture-15.jpg",
+            "marks": [
+              [
+                2,
+                0.1303703703703704,
+                0.08126410835214448
+              ],
+              [
+                2,
+                0.1303703703703704,
+                0.4379232505643341
+              ],
+              [
+                2,
+                0.1303703703703704,
+                0.7404063205417607
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "End shift",
+              {
+                "asset": "app-capture-16.jpg",
+                "marks": [
+                  [
+                    5,
+                    0.4966442953020134,
+                    0.4444444444444448
+                  ]
+                ],
+                "captured": "Earlier owner-supplied app capture"
+              }
+            ]
+          ],
+          "kind": "procedure",
+          "master": "19"
+        },
+        {
+          "title": "Visibility and profile sharing",
+          "role": "DANCERS",
+          "path": "Profile > Visibility & sharing",
+          "steps": [
+            [
+              "Check Profile visibility",
+              "Read Public or Incognito before changing anything."
+            ],
+            [
+              "Hide temporarily",
+              "Go incognito hides your profile and content without deleting the uploads. Wait for the saved status."
+            ],
+            [
+              "Show it again",
+              "Make profile public restores visibility subject to approval and account eligibility."
+            ],
+            [
+              "Share your profile",
+              "Expand Share profile > Copy link, or Open profile to inspect the destination."
+            ],
+            [
+              "Check the destination",
+              "Confirm your stage name, main photo and approved media before sharing. A copied link does not bypass incognito or approval restrictions."
+            ]
+          ],
+          "done": "The saved visibility matches your intention and the copied URL is yours.",
+          "issue": "Internal only is a check-in channel. Incognito is a profile-visibility control. They are not interchangeable.",
+          "shot": {
+            "asset": "app-capture-17.jpg",
+            "marks": [
+              [
+                3,
+                0.28823529411764703,
+                0.3052064631956912
+              ],
+              [
+                4,
+                0.2470588235294117,
+                0.9048473967684023
+              ],
+              [
+                4,
+                0.7352941176470588,
+                0.9048473967684023
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [],
+          "kind": "procedure",
+          "master": "20"
+        },
+        {
+          "title": "Your results and account help",
+          "role": "DANCERS",
+          "path": "Results | Account",
+          "steps": [
+            [
+              "Choose the period and club",
+              "Use This shift, 7 days, 30 days or All time and the club selector. Confirm the filters before comparing."
+            ],
+            [
+              "Read demand and outcomes",
+              "Review table requests, VIP requests, returning VIP requesters and verified entries. Request details separates available sources/outcomes."
+            ],
+            [
+              "Read your activity",
+              "Review shifts/hours, followers, profile views, likes, video views, trends and top content. Active sessions may not yet appear in completed-session totals."
+            ],
+            [
+              "Keep alerts reachable",
+              "Account > Notification preferences: email starts on by default; prior optional-alert choices still apply. Check your mailbox and spam. Enable notifications for phone push; follow the displayed iPhone Add to Home Screen instructions when required."
+            ],
+            [
+              "Get the right help",
+              "File transfer: retry or correct. Pending/rejected media: club reviewer. Wrong account or identity step: account support. Missing club activity: duty manager, then support. Include club, dates, time and exact message; never passwords or ID files."
+            ]
+          ],
+          "done": "You know the period, source and meaning of the figures you are reading.",
+          "issue": "Requests and I'm Going are interest signals. They do not establish attendance, a booking or earnings.",
+          "shot": {
+            "asset": "app-capture-18.jpg",
+            "marks": [
+              [
+                1,
+                0.13440860215053765,
+                0.29082774049217
+              ],
+              [
+                1,
+                0.575268817204301,
+                0.8053691275167784
+              ]
+            ],
+            "captured": "Earlier owner-supplied app capture"
+          },
+          "extras": [
+            [
+              "Before your first shift",
+              "Check saved profile details and upload statuses, find the club sticker, identify the Working Now end control, and find visibility/preferences. Use read-only navigation or approved training records; check in only when actually working."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "4, 21, 26"
+        }
+      ],
+      "nav": [
+        "Setup",
+        "Photos",
+        "Videos",
+        "Check-in",
+        "Visibility",
+        "Results"
+      ]
+    },
+    {
+      "name": "Content approval",
+      "short": "Content approval",
+      "file": "MyDancr_Content_Approval_Onboarding_Guide.pdf",
+      "pages": [
+        {
+          "title": "Start here: open the review queue",
+          "role": "CONTENT APPROVAL MANAGER",
+          "path": "Dancers & tables > Media approvals",
+          "steps": [
+            [
+              "Sign in and open club reviews",
+              "Use your own owner/manager account at www.mydancr.com > Sign in. Confirm the club, then open Dancers & tables > Media approvals. Staff cannot approve media. Reviewer assignment does not create a separate restricted role; ask the owner for missing access."
+            ],
+            [
+              "Refresh the queue",
+              "Select Refresh. New dancers join the club queue after their NFC tap. Check the count and use Previous / Next to work all pages (12 items per page)."
+            ],
+            [
+              "Identify the exact item",
+              "Read stage name and the Photo, Main photo, Avatar or Video label. Check the actual preview/version, not a previous upload."
+            ],
+            [
+              "Read AI findings",
+              "Check running, passed, flagged or manual-review status. Expand AI findings when present. Passing AI is not human approval or proof of identity/rights."
+            ],
+            [
+              "Review, then decide",
+              "Use the full checklist on guide p. 2 and the decision guide on p. 3. Never approve a missing preview or unfinished processing."
+            ]
+          ],
+          "done": "You can inspect the correct item and understand any automated findings.",
+          "issue": "Disabled approval is not a control to work around. Leave an uninspectable item private and contact the club lead/platform team with the asset reference and error.",
+          "shot": {
+            "asset": "app-capture-19.jpg",
+            "marks": [
+              [
+                1,
+                0.3776595744680851,
+                0.11297709923664115
+              ],
+              [
+                2,
+                0.9138297872340426,
+                0.7511450381679389
+              ]
+            ],
+            "captured": "Captured 20 Oct 2026"
+          },
+          "extras": [
+            [
+              "When uploads arrive",
+              "This capture shows an empty queue. Pending items add the asset preview, AI findings, Review note, Approve and Reject; Previous / Next appear for multiple pages. Those controls are described here, not shown in this capture."
+            ],
+            [
+              "After a decision",
+              "Wait for the success message and removal from the pending queue. Returning to the first page is normal. An uncertain save requires Refresh before another action."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "22"
+        },
+        {
+          "title": "Photo and video review checklist",
+          "role": "CONTENT APPROVAL MANAGER",
+          "path": "Use on every photo, main image, avatar and video",
+          "steps": [
+            [
+              "Inspect the complete asset",
+              "Photo: whole frame plus final crop. Avatar: face visible. Video: play every scene with audio from beginning to end; do not approve from its thumbnail."
+            ],
+            [
+              "Check people and coverage",
+              "Only the uploader, age 18+, may appear, including in backgrounds/reflections. Apply the coverage rules below."
+            ],
+            [
+              "Check text, objects and audio",
+              "Look for brands, logos, watermarks, contact details, solicitation and other prohibited content. Listen to the complete audio."
+            ],
+            [
+              "Check rights and technical readiness",
+              "The uploader must own or have permission for all visuals/audio. Review AI findings. Do not override a technical block or guess about identity or rights."
+            ]
+          ],
+          "done": "Every checklist category has been inspected before a publishing decision.",
+          "issue": "Any uncertainty about people, age, consent, ownership or inspectability: keep the file private and escalate. AI findings are evidence to review, not a substitute for the checklist.",
+          "shot": null,
+          "extras": [],
+          "kind": "review",
+          "master": "23"
+        },
+        {
+          "title": "Approve, reject or escalate",
+          "role": "CONTENT APPROVAL MANAGER",
+          "path": "Media approvals > Review note > decision",
+          "steps": [
+            [
+              "Choose the correct outcome",
+              "Use the three-way guide below. Escalate means leave the item private and contact the responsible team; it is not a dedicated queue button."
+            ],
+            [
+              "Save once and verify",
+              "After Approve or Reject, wait for confirmation and removal from the pending queue. If the upload changed or the result is uncertain, Refresh and inspect the current version."
+            ],
+            [
+              "Review replacements anew",
+              "A corrected file is a new review. Inspect the replacement itself; do not approve solely because the previous note was addressed."
+            ],
+            [
+              "Check the release",
+              "After approval, inspect the eligible profile/internal/public surface. If still hidden, check remaining enrollment, verification, visibility and channel requirements."
+            ]
+          ],
+          "done": "The saved outcome matches the exact file inspected, and unresolved content stays private.",
+          "issue": "One approval can release an asset across eligible internal, external and TV surfaces. It does not override profile eligibility.",
+          "shot": null,
+          "extras": [],
+          "kind": "decision",
+          "master": "24"
+        },
+        {
+          "title": "Review every publishing surface",
+          "role": "CONTENT APPROVAL + CLUB ADMIN",
+          "path": "Release checklist beyond the media queue",
+          "steps": [
+            [
+              "Dancer media",
+              "New photos/videos require human approval, including main images and avatars. Existing approved assets are not automatically re-queued; audit them when a historical review is required."
+            ],
+            [
+              "Profile text",
+              "Obtain the reviewer's approval of the proposed stage name, city and other visible copy before saving it. These edits do not all wait in a human queue; check the saved result afterward."
+            ],
+            [
+              "Social links",
+              "Send link-review questions to MyDancr Support. Include the dancer and link reference; club media approval does not approve a social link."
+            ],
+            [
+              "Venue pages and branding",
+              "Have the responsible reviewer approve the proposed logo, imagery and wording before the venue team saves or publishes them. Review the package and Club Deal before Approve & make live (Operations Manual, p. 5). Branding uses separate processing rules."
+            ],
+            [
+              "Live internal, external and TV views",
+              "After a release, check the correct person and approved content. Report unsafe live content to MyDancr Support for the applicable removal/restriction action."
+            ]
+          ],
+          "done": "Each content type has a review owner, approval of the proposed version and a verified release path.",
+          "issue": "For text/branding without a technical hold, get approval of the proposed version before saving. Report unsafe live content immediately to MyDancr Support with its reference.",
+          "shot": null,
+          "extras": [
+            [
+              "Before anything goes live",
+              "Club policy: the assigned reviewer signs off on content first. For edits without a technical hold, agree the exact file/copy before saving. Do not use the live page as the draft."
+            ],
+            [
+              "Keep an audit reference",
+              "Record club, dancer/asset reference, decision, reason when needed, reviewer and time under your team procedure. Avoid duplicating sensitive source media in ordinary messages."
+            ]
+          ],
+          "kind": "procedure",
+          "master": "25-26"
+        }
+      ],
+      "nav": [
+        "Queue",
+        "Checklist",
+        "Decision",
+        "Release"
+      ]
+    }
+  ]
+}

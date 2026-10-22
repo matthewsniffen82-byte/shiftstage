@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output/pdf/mydancr-operations"
 QA = ROOT / "tmp/pdfs/operations-packet"
 SECTIONS = [
-    ("Operations manual", "MyDancr_Operations_Manual.pdf", 27),
+    ("Operations manual", "MyDancr_Operations_Manual.pdf", 30),
     ("Club Admin - one-page cheat sheet", "MyDancr_Club_Admin_Cheat_Sheet.pdf", 1),
     ("Managers & talent - one-page cheat sheet", "MyDancr_Manager_Talent_Cheat_Sheet.pdf", 1),
     ("Dancers - one-page cheat sheet", "MyDancr_Dancer_Cheat_Sheet.pdf", 1),
@@ -81,7 +81,7 @@ def main():
     c.linkURL("https://www.mydancr.com/guides", (190, 77, 332, 91), relative=0)
     c.setStrokeColor(HexColor("#DDD8E3")); c.line(42, 53, 570, 53)
     c.setFillColor(HexColor("#55515D")); c.setFont("Helvetica", 8)
-    c.drawString(42, 36, "MyDancr | Complete operations packet | 20 October 2026")
+    c.drawString(42, 36, "MyDancr | Complete operations packet | 21 October 2026")
     c.drawRightString(570, 36, f"1 / {total}")
     c.showPage(); c.save(); cover.seek(0)
 

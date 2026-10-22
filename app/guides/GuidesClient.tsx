@@ -121,13 +121,13 @@ export default function GuidesClient() {
       })}
     </div>
     <p className="guides-notice" role="status" aria-live="polite">{notice}</p>
-    {catalog?.documents.includes("operations-packet") ? <section className="guides-reference"><div><h2>Operations manual &amp; cheat sheets</h2><p>32 pages: the operations manual and four one-page cheat sheets.</p></div><button type="button" disabled={Boolean(busy)} onClick={() => void download("operations-packet")}>{busy === "operations-packet" ? "Preparing PDF…" : "↓ Download complete PDF"}</button></section> : null}
+    {catalog?.documents.includes("operations-packet") ? <section className="guides-reference"><div><h2>Operations manual &amp; cheat sheets</h2><p>35 pages: the operations manual and four one-page cheat sheets.</p></div><button type="button" disabled={Boolean(busy)} onClick={() => void download("operations-packet")}>{busy === "operations-packet" ? "Preparing PDF…" : "↓ Download complete PDF"}</button></section> : null}
     <section className="guides-help" aria-labelledby="guides-help-title"><h2 id="guides-help-title">Know who to contact</h2><dl>
       <div><dt>Club access</dt><dd>Your club owner manages team invitations and access.</dd></div>
       <div><dt>Pending or rejected uploads</dt><dd>Your club’s assigned media reviewer explains the decision and required correction.</dd></div>
       <div><dt>Urgent club issues</dt><dd>Contact the duty manager directly for current-shift problems.</dd></div>
       <div><dt>MyDancr account or technical support</dt><dd><a href={`mailto:${OPERATIONS_SUPPORT_EMAIL}`}>{OPERATIONS_SUPPORT_EMAIL}</a><span>Include the club, issue and record reference. Keep passwords and ID documents out of email.</span></dd></div>
     </dl><p className="guides-small">Ask your club owner for the named contact for each duty before your first shift.</p></section>
-    <footer className="guides-footer">20 October 2026 edition · Earlier app captures are labeled in the PDFs. Uncaptured controls use text references.</footer>
+    <footer className="guides-footer">21 October 2026 edition · Earlier app captures are labeled in the PDFs. Uncaptured controls use text references.</footer>
   </main>;
 }
