@@ -261,7 +261,9 @@ for (const avatar of [false, true]) for (const retry of [false, true]) {
     assert.equal(s.record.status, result.decision);
     assert.equal(s.record.category_flags.ai_recommended_approval, decision === 'approved');
     assert.equal(s.record.category_flags.ai_recommended_rejection, decision !== 'approved');
-    assert.equal(s.events.includes('public-upload'), false);
+    assert.equal(s.events.includes('public-upload'), decision === 'approved');
+    assert.equal(s.record.category_flags.publication_prepared, decision === 'approved' ? true : undefined);
+    assert.equal(s.record.final_storage_path, decision === 'approved' ? 'owner/profile/public.jpg' : undefined);
     assert.equal(s.rpcVersion, undefined);
     assert.equal(s.files.has(s.record.temporary_storage_path), decision === 'approved');
     assert.equal(s.files.size, decision === 'approved' ? 1 : 0);
@@ -365,6 +367,8 @@ for (const avatar of [false, true]) for (const retry of [false, true]) {
     const s = scenario({ avatar, retry, decision: 'approved', identityAnalysis: { personCount: 1, personCountConfidence: 0.99, singlePersonOnly: true, referenceMatch: 'mismatch', confidence: 0.1 } });
     assert.equal((await s.run()).decision, 'pending_review');
     assert.ok(s.events.includes('content-check'));
-    assert.equal(s.events.includes('public-upload'), false, 'AI must leave publication to the admin');
+    assert.equal(s.events.includes('public-upload'), true, 'Display files are prepared before club review');
+    assert.equal(s.record.decision, 'review', 'Prepared files are still unpublished');
+    assert.equal(s.rpcVersion, undefined, 'Only human approval calls publication');
   });
 }

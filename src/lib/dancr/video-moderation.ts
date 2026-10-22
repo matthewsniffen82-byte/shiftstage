@@ -4,6 +4,7 @@ import { safeErrorMetadata } from "../security/safe-error-metadata";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { runMediaProcess } from "./media-process.ts";
+import { downloadOriginalVideoForModeration } from "./media-watermark";
 import { createReadStream } from "node:fs";
 import { mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -71,7 +72,6 @@ export type MyDancrTvModerationResult = {
 
 const VIDEO_POLICY_MODEL = process.env.DANCR_VIDEO_POLICY_MODEL || "gpt-4.1-mini";
 const VIDEO_TRANSCRIPTION_MODEL = process.env.DANCR_VIDEO_TRANSCRIPTION_MODEL || "whisper-1";
-const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 const MAX_VIDEO_FRAMES = 10;
 const FFMPEG_TIMEOUT_MS = 25_000;
 const OPENAI_TIMEOUT_MS = 30_000;
@@ -207,9 +207,7 @@ function strongestDecision(decisions: DancrImageModerationDecision[]) {
 }
 
 async function downloadVideo(admin: AdminClient, storagePath: string) {
-  const { data, error } = await admin.storage.from(MYDANCR_TV_BUCKET).download(storagePath);
-  if (error || !data) throw error || new Error("Unable to read the uploaded video.");
-  return Buffer.from(await data.arrayBuffer());
+  return downloadOriginalVideoForModeration(admin, storagePath);
 }
 
 async function probeVideoDurationSeconds(videoPath: string) {

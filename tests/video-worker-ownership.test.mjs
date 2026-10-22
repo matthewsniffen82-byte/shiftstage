@@ -82,7 +82,7 @@ for (const demo of [false, true]) test(`${demo ? "demo" : "AI"} video review com
   assert.equal((await h.submit(true)).status, "moderating");
   assert.equal((await h.retry()).status, "submitted");
   assert.equal(h.providers.length, 1);
-  assert.equal(h.watermarks.length, 0);
+  assert.equal(h.watermarks.length, 1);
   assert.equal(isPublicDancerProfileEligible(unfinishedProfile), false);
 });
 
@@ -101,7 +101,7 @@ for (const demo of [false, true]) test(`${demo ? "legacy demo setting" : "AI set
   } });
   assert.equal((await h.retry()).status, "submitted");
   assert.equal(h.providers.length, 1);
-  assert.equal(h.watermarks.length, 0);
+  assert.equal(h.watermarks.length, 1);
   assert.equal((await workerSnapshot(db)).row.published_at, null);
   assert.equal((await h.review()).status, "approved");
   assert.equal(h.watermarks.length, 1);
@@ -205,14 +205,34 @@ for (const [name, values] of [
   } finally { h.releaseAll(); await job; }
 });
 
-test("AI completion never starts public watermark processing", async () => {
-  const h = videoWorkerHarness(db, { beforeWatermarkReturns() { assert.fail("AI must not publish media"); } });
+test("upload processing prepares private video files and approval does not encode again", async () => {
+  const h = videoWorkerHarness(db);
   assert.equal((await h.retry()).status, "submitted");
-  assert.equal(h.watermarks.length, 0);
+  assert.equal(h.watermarks.length, 1);
   const { row } = await workerSnapshot(db);
+  assert.equal(row.moderation_details.preparedPublication.storagePath, row.storage_path);
   assert.equal(row.published_at, null);
   assert.equal(row.reviewed_at, null);
   assert.equal(row.reviewed_by, null);
+  assert.equal((await h.review()).status, "approved");
+  assert.equal(h.watermarks.length, 1);
+});
+
+test("a superseded worker cannot mark its prepared files ready for approval", async () => {
+  const h = videoWorkerHarness(db, { beforeWatermarkReturns: () => patchWorker(db, { status: "hidden" }) });
+  await assert.rejects(h.retry(), /review changed/);
+  const { row } = await workerSnapshot(db);
+  assert.equal(row.status, "hidden");
+  assert.equal(row.moderation_details.preparedPublication, undefined);
+  assert.equal(row.published_at, null);
+});
+
+test("changed video dimensions invalidate a preparation receipt", async () => {
+  const h = videoWorkerHarness(db);
+  await h.retry();
+  await patchWorker(db, { width: 800 });
+  await h.review();
+  assert.equal(h.watermarks.length, 2);
 });
 
 for (const [name, receipt] of [
@@ -313,15 +333,17 @@ test("legacy demo configuration cannot bypass AI or club approval for inline upl
   const h = videoWorkerHarness(db, { demo: true });
   assert.equal((await h.submit()).status, "submitted");
   assert.equal(h.providers.length, 1);
-  assert.equal(h.watermarks.length, 0);
+  assert.equal(h.watermarks.length, 1);
   assert.equal((await workerSnapshot(db)).row.published_at, null);
 });
 
-for (const demo of [false, true]) test(`admin watermark failure keeps ${demo ? "legacy demo" : "AI"} uploads pending`, async () => {
+for (const demo of [false, true]) test(`preparation failure keeps ${demo ? "legacy demo" : "AI"} uploads private and retryable`, async () => {
   const h = videoWorkerHarness(db, { demo, beforeWatermarkReturns() { throw new Error("Synthetic media failure"); } });
   assert.equal((await h.retry()).status, "submitted");
   await assert.rejects(h.review(), /Synthetic media failure/);
   const { row } = await workerSnapshot(db);
   assert.equal(row.status, "submitted");
+  assert.equal(row.moderation_decision, "review");
+  assert.deepEqual(row.moderation_reason_codes, ["public_watermark_processing_failed"]);
   assert.equal(row.published_at, null);
 });

@@ -196,6 +196,9 @@ test("video upload timeout is 90 seconds while processing retains its separate b
   for (const [url, method, expected] of [
     ["https://example.supabase.co/storage/v1/object/upload/sign/mydancr-tv-videos/owner/video.mp4?token=test", "PUT", 90000],
     ["/api/dancer/tv/videos/video", "PATCH", 180000],
+    ["/api/venue/media-reviews", "POST", 280000],
+    ["/api/venue/media-reviews/?test=1", "POST", 280000],
+    ["/api/venue/media-reviews", "GET", 45000],
     ["/api/account", "GET", 45000],
   ]) {
     let delay, cancel, signal;
@@ -206,4 +209,30 @@ test("video upload timeout is 90 seconds while processing retains its separate b
     assert.equal(delay, expected); assert.equal(signal.aborted, false);
     cancel(); await assert.rejects(pending, /took too long/); assert.equal(signal.aborted, true);
   }
+});
+
+test("club video approval survives ordinary read and media deadlines and confirms once", async () => {
+  let now = 0, timerId = 0, calls = 0, signal, finish;
+  const timers = new Map();
+  const window = {
+    location: { href: "https://www.mydancr.com/dashboard/venue", origin: "https://www.mydancr.com" },
+    fetch: (_url, options) => { calls++; signal = options.signal; return new Promise(resolve => { finish = resolve; }); },
+    setTimeout(fn, ms) { const id = ++timerId; timers.set(id, { fn, at: now + ms }); return id; },
+    clearTimeout(id) { timers.delete(id); },
+  };
+  vm.runInNewContext(browserSource, { window, URL, Request, Response, Headers, AbortController, Date, console });
+  const pending = window.fetch("/api/venue/media-reviews", { method: "POST", body: JSON.stringify({ kind: "video", decision: "approved" }) });
+  // Observe failures immediately so a premature timeout fails this test cleanly.
+  const result = pending.then(response => ({ response }), error => ({ error }));
+  for (const elapsed of [45000, 180000, 260000]) {
+    now = elapsed;
+    for (const [id, timer] of timers) if (timer.at <= now) { timers.delete(id); timer.fn(); }
+    assert.equal(signal.aborted, false, `approval must still be pending after ${elapsed}ms`);
+  }
+  finish(Response.json({ ok: true }));
+  const settled = await result;
+  assert.equal(settled.error, undefined);
+  assert.deepEqual(await settled.response.json(), { ok: true });
+  assert.equal(calls, 1);
+  assert.equal(timers.size, 0);
 });

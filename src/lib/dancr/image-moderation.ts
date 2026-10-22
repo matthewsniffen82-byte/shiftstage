@@ -43,6 +43,7 @@ import {
 } from "./photo-slot";
 import {
   responsivePublicImage,
+  uploadResponsiveImage,
 } from "./responsive-image";
 import { galleryReviewVersion, publishDancerPhoto, updatePendingGalleryReview } from "./photo-publication";
 
@@ -262,6 +263,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   }
 
   return holdPhotoForClubReview(admin, {
+    userId: input.userId, profileId: profile.id,
     recordId: record.id, expectedUpdatedAt, image, tempPath, uploadContext, evaluation, categoryFlags,
   });
   });
@@ -395,6 +397,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
     });
 
     return await holdPhotoForClubReview(admin, {
+      userId: record.user_id, profileId: profile.id,
       recordId: record.id, expectedUpdatedAt, image: downloadedImage, tempPath,
       uploadContext, evaluation, categoryFlags,
     });
@@ -440,6 +443,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
 async function holdPhotoForClubReview(
   admin: DancrClient,
   input: {
+    userId: string; profileId: string;
     recordId: string; expectedUpdatedAt: string; image: ValidatedDancrImage;
     tempPath: string; uploadContext: string; evaluation: DancrImageModerationEvaluation;
     categoryFlags: Record<string, boolean>;
@@ -463,8 +467,16 @@ async function holdPhotoForClubReview(
   // A unique private copy avoids an obsolete worker overwriting a newer review.
   const reviewPath = input.tempPath.replace(/([^/]+)$/, `review-${randomUUID()}-$1`);
   await uploadPrivateObject(admin, MODERATION_REVIEW_BUCKET, reviewPath, input.image);
+  // Prepare private display files now, so human approval only publishes references.
+  // Neither a gallery row nor an avatar reference exists until the club approves.
+  const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
+  const prepared = await uploadResponsiveImage(admin, APPROVED_PHOTO_BUCKET,
+    `${input.userId}/${input.profileId}${isAvatar ? "/avatar" : ""}`,
+    isAvatar ? await prepareFaceCenteredAvatar(input.image) : input.image,
+    "31536000", isAvatar ? {} : { archiveOriginal: true, watermark: true, mainPhotoAvatar: true });
   await updateModerationRecord(admin, input.recordId, {
     temporaryStoragePath: reviewPath,
+    finalStoragePath: prepared.storagePath,
     decision: "review", status: "pending_review",
     reasonCodes: evaluation.reasonCodes,
     categoryFlags: {
@@ -472,6 +484,7 @@ async function holdPhotoForClubReview(
       ai_recommended_approval: true,
       ai_recommended_rejection: false,
       ai_needs_review: false,
+      publication_prepared: true,
     },
     categoryScores: evaluation.categoryScores,
     providerFlagged: evaluation.providerFlagged,

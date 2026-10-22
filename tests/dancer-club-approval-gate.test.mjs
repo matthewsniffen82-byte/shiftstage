@@ -5,16 +5,17 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { mediaReview } from './helpers/media-review-label.mjs';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
+import * as serverJobs from '../src/lib/server-job.ts';
 
 const compiled = ts.transpileModule(readFileSync(new URL('../app/api/venue/media-reviews/route.ts', import.meta.url), 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
 const id = '12345678-1234-4123-8123-123456789012';
 const version = '2026-10-22T00:00:00Z';
-function fixture(kind, fields) {
+function fixture(kind, fields, options = {}) {
   const record = { id, updated_at: version, status: kind === 'photo' ? 'pending_review' : 'submitted',
     upload_context: 'profile_gallery:1', user_id: 'dancer', submitted_by: 'dancer', ...fields };
-  const decisions = [];
+  const decisions = [], deferred = [], followUps = [];
   const admin = {
     from() { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: record }) }; return q; },
     rpc: async name => ({ data: name === 'get_venue_dancer_media_review' ? { count: 1, items: [{ id, kind, record }] } : true }),
@@ -24,20 +25,37 @@ function fixture(kind, fields) {
     ...mediaReview, PublicApiError, NextResponse: { json: body => body },
     apiError: error => ({ status: error.status, message: error.message }),
     readBoundedJsonObject: async request => request.body,
-    runWithServerJob: work => work(),
+    ...serverJobs,
+    after: work => deferred.push(work),
     createRequestSupabaseContext: async () => ({ user: { id: 'reviewer' }, session: {} }),
     createAdminSupabaseClient: () => admin,
     requireActiveVenueAccount: async () => {}, requireVenueAccess: async () => ({ venueId: 'venue', role: 'manager' }),
     withSignedThumbnail: async () => ({ thumbnailUrl: 'private-preview' }),
-    approveReviewRecord: async () => decisions.push('approved'), rejectReviewRecord: async () => decisions.push('rejected'),
+    approveReviewRecord: async (_admin, _record, _actor, _notes, config) => {
+      decisions.push('approved');
+      config.deferCleanup(async () => { serverJobs.assertServerJobActive(); followUps.push('cleanup'); });
+    }, rejectReviewRecord: async () => decisions.push('rejected'),
     reviewMyDancrTvVideo: async (_admin, _reviewer, _id, decision) => decisions.push(decision),
-    finalizePendingDancerNfcEnrollment: async () => {}, recordVenueActivity: async () => {},
+    finalizePendingDancerNfcEnrollment: async () => { serverJobs.assertServerJobActive(); followUps.push('activation'); if (options.followUpError) throw new Error('Synthetic failure'); },
+    recordVenueActivity: async () => { serverJobs.assertServerJobActive(); followUps.push('activity'); },
+    safeErrorMetadata: () => ({ code: 'SYNTHETIC' }),
   };
   const route = {};
   vm.runInNewContext(compiled, { exports: route, require: () => deps, URL, console });
-  return { decisions, get: () => route.GET({ url: 'https://example.test/api/venue/media-reviews' }),
+  return { decisions, followUps, deferred, get: () => route.GET({ url: 'https://example.test/api/venue/media-reviews' }),
     post: (decision = 'approved', notes = 'Logo visible') => route.POST({ body: { id, kind, version, decision, notes } }) };
 }
+
+for (const kind of ['photo', 'video']) test(`${kind}: saved approval responds before cleanup, activation and activity logging`, async () => {
+  const f = fixture(kind, { category_flags: { ai_recommended_approval: true }, moderation_decision: 'approved' }, { followUpError: true });
+  assert.equal((await f.post()).ok, true);
+  assert.deepEqual(f.followUps, []);
+  assert.equal(f.deferred.length, 1);
+  await f.deferred[0]();
+  assert.ok(f.followUps.includes('activation'));
+  assert.ok(f.followUps.includes('activity'));
+  assert.equal(f.followUps.includes('cleanup'), kind === 'photo');
+});
 
 for (const kind of ['photo', 'video']) {
   test(`${kind}: a club rejection requires one to three words`, async () => {

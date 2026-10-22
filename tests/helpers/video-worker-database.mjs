@@ -162,8 +162,8 @@ export function videoWorkerHarness(db, options = {}) {
         return new Promise((resolve, reject) => pending.push({ resolve, reject }));
       } };
       if (name === "./video-moderation-mode") return { isVideoDemoAutoApproveMode: () => options.demo === true, demoVideoAutoApprovalValues };
-      if (name === "./media-watermark") return { async watermarkStoredVideo(_client, input) {
-        watermarks.push(input); await options.beforeWatermarkReturns?.(); return { posterStoragePath: "synthetic-poster" };
+      if (name === "./media-watermark") return { myDancrTvPosterStoragePath: storagePath => storagePath + ".poster.webp", async watermarkStoredVideo(_client, input) {
+        watermarks.push(input); await options.beforeWatermarkReturns?.(); return { posterStoragePath: input.storagePath + ".poster.webp", mobilePlayback: null };
       } };
       if (name === "./media-identity") return { DancerIdentityReferenceRequiredError: class extends Error {}, isDancerIdentityReferenceRequiredError: error => error?.identityMissing === true };
       if (name === "./video-upload-validation") return { async inspectStoredMyDancrTvVideo(_client, input) { inspections.push(input); await options.beforeInspectionReturns?.(); if (options.inspectionError) throw options.inspectionError; return { durationSeconds: 10, fileSizeBytes: 1024, width: 720, height: 1280 }; } };

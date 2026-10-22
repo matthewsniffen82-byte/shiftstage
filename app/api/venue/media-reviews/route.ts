@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { after, NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { PublicApiError } from "@/src/lib/api-error-policy";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
@@ -61,8 +61,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const followUps: Array<() => Promise<void>> = [];
   try {
-    return await runWithServerJob(async () => {
+    const response = await runWithServerJob(async () => {
       const { admin, access, user, session } = await context(request);
       const body = await readBoundedJsonObject(request, { maxBytes: 8192, invalidMessage: "Invalid media review.", tooLargeMessage: "Review notes are too long." });
       const { id, kind, decision, version } = body;
@@ -85,20 +86,29 @@ export async function POST(request: Request) {
         : record.moderation_decision === "approved";
       if (decision === "approved" && !passedChecks) throw new PublicApiError("CONFLICT", "This upload must pass automated checks before Club approval. Ask the dancer to retry or replace it.", 409);
       if (photo) {
-        if (decision === "approved") await approveReviewRecord(admin, record, user.id, notes);
+        if (decision === "approved") await approveReviewRecord(admin, record, user.id, notes, { deferCleanup: work => { followUps.push(work); } });
         else await rejectReviewRecord(admin, record, user.id, notes);
       } else await reviewMyDancrTvVideo(admin, user.id, id, decision as "approved" | "rejected", notes, version);
-      // Publication succeeded. Activation is recoverable from the dancer dashboard if this step fails.
-      if (decision === "approved") {
-        try { await finalizePendingDancerNfcEnrollment(admin, { dancerUserId }); }
-        catch (error) { console.warn("MEDIA_REVIEW_ACTIVATION_DEFERRED", safeErrorMetadata(error)); }
-      }
-      try {
+      // The saved decision is the response boundary. Recoverable follow-up work
+      // must not keep the club waiting or turn a successful approval into a timeout.
+      if (decision === "approved") followUps.push(async () => {
+        await finalizePendingDancerNfcEnrollment(admin, { dancerUserId });
+      });
+      followUps.push(async () => {
         await recordVenueActivity(admin, { venueId: access.venueId, actorUserId: user.id, actorRole: access.role,
           action: `media.${decision}`, targetType: photo ? "image_moderation_record" : "mydancr_tv_video", targetId: id,
           summary: `${photo ? "Photo" : "Video"} ${decision} by the club.` });
-      } catch (error) { console.warn("MEDIA_REVIEW_ACTIVITY_NOT_SAVED", safeErrorMetadata(error)); }
+      });
       return json({ ok: true, session });
     }, 270000);
+    // Register outside the completed job's cancellation scope. Next keeps this
+    // bounded work alive after returning the confirmed result to the dashboard.
+    after(async () => {
+      await Promise.all(followUps.map(async work => {
+        try { await runWithServerJob(work); }
+        catch (error) { console.warn("MEDIA_REVIEW_FOLLOW_UP_DEFERRED", safeErrorMetadata(error)); }
+      }));
+    });
+    return response;
   } catch (error) { return apiError(error, "Unable to save the media review. Refresh the queue before trying again."); }
 }

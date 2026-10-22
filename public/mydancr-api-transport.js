@@ -36,6 +36,9 @@
     // Upload/processing endpoints retain a larger budget than ordinary reads.
     const media = storage || /\/(photos|avatar|videos|verification-documents|import)(\/|$)/.test(url.pathname);
     const videoUpload = storage && mutation && /\/mydancr-tv-videos\//.test(url.pathname);
+    // Club approval can encode the public video. Match its dashboard deadline,
+    // which leaves time for the route's 270-second processing budget to respond.
+    const clubMediaReview = api && method === "POST" && /^\/api\/venue\/media-reviews\/?$/.test(url.pathname);
     let timer;
     const deadline = new Promise((_, reject) => {
       timer = window.setTimeout(() => {
@@ -45,7 +48,7 @@
           : "Loading took too long. Check your connection and try again.");
         error.code = "request_timeout";
         reject(error);
-      }, videoUpload ? 90000 : media ? 180000 : 45000);
+      }, clubMediaReview ? 280000 : videoUpload ? 90000 : media ? 180000 : 45000);
     });
     try {
       return await Promise.race([deadline, (async () => {

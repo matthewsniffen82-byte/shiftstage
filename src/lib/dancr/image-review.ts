@@ -35,7 +35,8 @@ export async function withSignedThumbnail(admin: any, record: any) {
   };
 }
 
-export async function approveReviewRecord(admin: any, record: any, reviewerId: string, notes: string) {
+export async function approveReviewRecord(admin: any, record: any, reviewerId: string, notes: string,
+  options: { deferCleanup?: (work: () => Promise<void>) => void } = {}) {
   if (["venue_cover", "venue_logo"].includes(record.upload_context)) {
     return approveVenueMediaReview(admin, record, reviewerId, notes);
   }
@@ -68,23 +69,34 @@ export async function approveReviewRecord(admin: any, record: any, reviewerId: s
   const sourcePath = record.temporary_storage_path;
   if (!sourcePath) throw new Error("Review image is missing.");
   const sourceBucket = moderationStorageBucket(record);
-  const { data: file, error: downloadError } = await admin.storage.from(sourceBucket).download(sourcePath);
-  if (downloadError || !file) throw downloadError || new Error("Unable to read review image.");
+  const preparedPrefix = `${record.user_id}/${profile.id}/${isAvatar ? "avatar/" : ""}`;
+  let finalPath: string = record.category_flags?.publication_prepared === true
+    && typeof record.final_storage_path === "string" && record.final_storage_path.startsWith(preparedPrefix)
+    && !record.final_storage_path.split("/").includes("..") ? record.final_storage_path : "";
+  // Older queued uploads still need one preparation pass. New uploads arrive ready.
+  if (!finalPath) {
+    const { data: file, error: downloadError } = await admin.storage.from(sourceBucket).download(sourcePath);
+    if (downloadError || !file) throw downloadError || new Error("Unable to read review image.");
 
-  const image = await validateAndPrepareDancrImage(file);
-  const uploadedImage = await uploadResponsiveImage(
-    admin,
-    APPROVED_PHOTO_BUCKET,
-    isAvatar
-      ? `${record.user_id}/${profile.id}/avatar`
-      : `${record.user_id}/${profile.id}`,
-    isAvatar ? await prepareFaceCenteredAvatar(image) : image,
-    "31536000",
-    isAvatar
-      ? {}
-      : { archiveOriginal: true, watermark: true, mainPhotoAvatar: true },
-  );
-  const finalPath = uploadedImage.storagePath;
+    const image = await validateAndPrepareDancrImage(file);
+    const uploadedImage = await uploadResponsiveImage(
+      admin,
+      APPROVED_PHOTO_BUCKET,
+      isAvatar
+        ? `${record.user_id}/${profile.id}/avatar`
+        : `${record.user_id}/${profile.id}`,
+      isAvatar ? await prepareFaceCenteredAvatar(image) : image,
+      "31536000",
+      isAvatar
+        ? {}
+        : { archiveOriginal: true, watermark: true, mainPhotoAvatar: true },
+    );
+    finalPath = uploadedImage.storagePath;
+  }
+  const cleanup = async (work: () => Promise<void>) => {
+    if (options.deferCleanup) options.deferCleanup(work);
+    else await work();
+  };
 
   try {
     assertServerJobActive();
@@ -95,10 +107,12 @@ export async function approveReviewRecord(admin: any, record: any, reviewerId: s
         categoryScores: record.category_scores || {}, providerFlagged: Boolean(record.provider_flagged),
         reviewerId, reviewNotes: notes, legacyExpected: profile,
       });
-      await admin.storage.from(sourceBucket).remove([sourcePath]).catch(() => null);
-      if (published.previousStoragePath && published.previousStoragePath !== published.profile.avatar_storage_path) {
-        await tryRetireGalleryStorageFiles(admin, profile.id, published.previousStoragePath);
-      }
+      await cleanup(async () => {
+        await admin.storage.from(sourceBucket).remove([sourcePath]).catch(() => null);
+        if (published.previousStoragePath && published.previousStoragePath !== published.profile.avatar_storage_path) {
+          await tryRetireGalleryStorageFiles(admin, profile.id, published.previousStoragePath);
+        }
+      });
       console.info(JSON.stringify({ event: "image_moderation.human_decision", recordId: record.id, decision: "approved", target: "avatar" }));
       return published.record;
     }
@@ -109,9 +123,9 @@ export async function approveReviewRecord(admin: any, record: any, reviewerId: s
       categoryScores: record.category_scores || {}, providerFlagged: Boolean(record.provider_flagged),
       reviewerId, reviewNotes: notes,
     });
-    await cleanPublishedGalleryFiles(admin, published, {
+    await cleanup(() => cleanPublishedGalleryFiles(admin, published, {
       userId: record.user_id, profileId: profile.id, bucket: sourceBucket, path: sourcePath,
-    });
+    }));
     console.info(JSON.stringify({ event: "image_moderation.human_decision", recordId: record.id, decision: "approved" }));
     return published.record;
   } catch (error) {

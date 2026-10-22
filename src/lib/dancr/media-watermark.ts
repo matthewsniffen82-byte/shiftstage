@@ -312,6 +312,13 @@ export async function watermarkStoredVideo(
   }
 }
 
+/** Retries must review the upload, never the platform watermark added during preparation. */
+export async function downloadOriginalVideoForModeration(client: DancrClient, storagePath: string) {
+  return await downloadOptionalObject(client, MYDANCR_TV_BUCKET,
+    archivedOriginalStoragePath(MYDANCR_TV_BUCKET, storagePath))
+    || await downloadRequiredObject(client, MYDANCR_TV_BUCKET, storagePath);
+}
+
 export async function generateStoredVideoPoster(
   client: DancrClient,
   input: {

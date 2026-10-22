@@ -1396,6 +1396,8 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   return runWithServerJob(async () => {
   if (!videoWorkerState(video).workerId) throw videoWorkerUnavailable();
   let moderation: MyDancrTvModerationResult;
+  let prepared: Awaited<ReturnType<typeof watermarkStoredVideo>> | null = null;
+  let preparingPublication = false;
   try {
     video = await validateQueuedVideo(admin, video);
     const moderationStartedAt = Date.now();
@@ -1406,10 +1408,19 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       caption: video.caption,
     });
     console.info(JSON.stringify({ event: "media_processing.stage", media: "video", stage: "ai_review", durationMs: Date.now() - moderationStartedAt, succeeded: true }));
+    if (moderation.decision === "approved") {
+      await assertVideoWorkerCurrent(admin, video);
+      preparingPublication = true;
+      prepared = await watermarkStoredVideo(admin, {
+        publicBucket: MYDANCR_TV_BUCKET, storagePath: video.storage_path,
+        storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
+        width: Number(video.width), height: Number(video.height),
+      });
+    }
   } catch (error) {
     assertServerJobActive();
     const completedAt = new Date().toISOString();
-    const errorCode = videoModerationErrorCode(error);
+    const errorCode = preparingPublication ? "public_watermark_processing_failed" : videoModerationErrorCode(error);
     console.error(JSON.stringify({
       event: "mydancr_tv.ai_moderation_failed",
       videoId: video.id,
@@ -1437,8 +1448,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   const decision = moderation.decision === "approved" ? "approved" : "rejected";
   const reasonCodes = [...new Set([...moderation.reasonCodes, ...(moderation.decision === "review" ? ["video_approval_not_confirmed"] : [])])];
   const completedAt = new Date().toISOString();
-  // AI findings never publish dancer uploads. Only an authorized human review
-  // creates public derivatives and records the human publication decision.
+  // Prepared files remain private: only human approval changes publication status.
   const update = {
     moderation_decision: decision,
     moderation_reason_codes: reasonCodes,
@@ -1446,7 +1456,14 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     moderation_provider_flagged: moderation.providerFlagged,
     moderation_frame_count: moderation.frameCount,
     moderation_model: moderation.moderationModel,
-    moderation_details: moderation.details,
+    moderation_details: {
+      ...moderation.details,
+      ...(prepared ? {
+        ...prepared,
+        preparedPublication: { storagePath: video.storage_path, storageMime: video.storage_mime,
+          width: video.width, height: video.height },
+      } : {}),
+    },
     moderation_completed_at: completedAt,
     status: decision === "approved" ? "submitted" : "rejected",
     review_notes: decision === "approved"
@@ -1635,7 +1652,12 @@ export async function reviewMyDancrTvVideo(
   let posterStoragePath: string | null = null;
   let mobilePlayback: MobileVideoPlayback | null = null;
   if (decision === "approved") {
-    const media = await watermarkStoredVideo(admin, {
+    const ready = video.moderation_details?.preparedPublication;
+    const alreadyPrepared = ready?.storagePath === video.storage_path && ready?.storageMime === video.storage_mime
+      && ready?.width === video.width && ready?.height === video.height
+      && video.moderation_details?.posterStoragePath === myDancrTvPosterStoragePath(video.storage_path);
+    // Legacy queue entries are prepared once; new entries publish without encoding.
+    const media = alreadyPrepared ? video.moderation_details : await watermarkStoredVideo(admin, {
       publicBucket: MYDANCR_TV_BUCKET,
       storagePath: video.storage_path,
       storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
