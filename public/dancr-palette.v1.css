@@ -987,6 +987,19 @@
     border-color: transparent !important;
     box-shadow: none !important;
   }
+  /* Attendance uses a quiet violet selection beside the solid Free Entry action. */
+  html body.dancr-button-system :where(
+    :is(#profileBackdrop #profileModal, .public-profile-shell, .dancer-profile-preview-overlay)
+    .profile-actions-compact :is(#goingBtn, .profile-action-going)[aria-pressed="true"]
+  ):not(:where(:disabled, [aria-disabled="true"], [data-internal-table-request])) {
+    --profile-action-selected-background: linear-gradient(var(--dancr-color-control-selected-soft), var(--dancr-color-control-selected-soft)) !important;
+    --profile-action-selected-border: var(--dancr-color-brand-primary) !important;
+    --profile-action-selected-shadow: none !important;
+    --profile-action-icon-color: var(--dancr-color-text-primary) !important;
+    background: transparent !important;
+    color: var(--dancr-color-text-primary) !important;
+    -webkit-text-fill-color: var(--dancr-color-text-primary) !important;
+  }
   /* The floating dock keeps its component-owned glass, light icons and violet halo. */
   html body.dancr-button-system
     :where(button, a, input, select, textarea, summary):focus-visible:not(:where(.global-mobile-bottom-nav *, #discoveryTabs *)) {
