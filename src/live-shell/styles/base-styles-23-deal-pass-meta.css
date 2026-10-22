@@ -685,8 +685,8 @@
       border: 1px solid rgba(167, 139, 250, .92) !important;
       border-radius: 16px !important;
       color: #fff !important;
-      background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #8b5cf6 100%) !important;
-      box-shadow: 0 14px 32px rgba(0, 0, 0, .32), 0 0 26px rgba(124, 58, 237, .42), inset 0 1px 0 rgba(255, 255, 255, .22) !important;
+      background: linear-gradient(135deg, #5b21b6 0%, #6d28ff 52%, #8b5cf6 100%) !important;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, .32), 0 0 26px rgba(109, 40, 255, .42), inset 0 1px 0 rgba(255, 255, 255, .22) !important;
       -webkit-appearance: none;
       appearance: none;
       transition: filter 160ms ease, transform 160ms ease, box-shadow 160ms ease !important;
@@ -695,14 +695,14 @@
     @media (hover: hover) and (pointer: fine) {
       .deal-pass-action.primary:hover:not(:disabled) {
         filter: brightness(1.08);
-        box-shadow: 0 16px 34px rgba(0, 0, 0, .34), 0 0 32px rgba(124, 58, 237, .52), inset 0 1px 0 rgba(255, 255, 255, .26) !important;
+        box-shadow: 0 16px 34px rgba(0, 0, 0, .34), 0 0 32px rgba(109, 40, 255, .52), inset 0 1px 0 rgba(255, 255, 255, .26) !important;
       }
     }
 
     .deal-pass-action.primary:active:not(:disabled) {
       transform: translateY(1px);
       filter: brightness(.96);
-      box-shadow: 0 9px 22px rgba(0, 0, 0, .34), 0 0 18px rgba(124, 58, 237, .36), inset 0 2px 7px rgba(0, 0, 0, .22) !important;
+      box-shadow: 0 9px 22px rgba(0, 0, 0, .34), 0 0 18px rgba(109, 40, 255, .36), inset 0 2px 7px rgba(0, 0, 0, .22) !important;
     }
 
     .deal-pass-action.primary:focus-visible {
@@ -883,10 +883,10 @@
       border: 1px solid rgba(192, 132, 255, 0.68) !important;
       color: #ffffff !important;
       background:
-        linear-gradient(135deg, #7c3aed 0%, #9b5cff 48%, #22c7ff 100%) !important;
+        linear-gradient(135deg, #6d28ff 0%, #9b5cff 48%, #22c7ff 100%) !important;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.06) inset,
-        0 14px 34px rgba(124, 58, 237, 0.28),
+        0 14px 34px rgba(109, 40, 255, 0.28),
         0 0 28px rgba(155, 92, 255, 0.34),
         0 0 18px rgba(34, 199, 255, 0.16) !important;
       font-weight: 950;
@@ -922,11 +922,11 @@
     .role-actions #venueSignupBtn {
       border-color: rgba(192, 132, 255, 0.72) !important;
       background:
-        linear-gradient(135deg, #5b21b6 0%, #7c3aed 52%, #c084fc 100%) !important;
+        linear-gradient(135deg, #5b21b6 0%, #6d28ff 52%, #c084fc 100%) !important;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.06) inset,
         0 14px 34px rgba(91, 33, 182, 0.28),
-        0 0 30px rgba(124, 58, 237, 0.36),
+        0 0 30px rgba(109, 40, 255, 0.36),
         0 0 18px rgba(192, 132, 255, 0.22) !important;
     }
 
@@ -956,7 +956,7 @@
         0 0 5px rgba(255, 255, 255, 0.24),
         0 0 10px rgba(168, 85, 255, 0.96),
         0 0 24px rgba(139, 92, 246, 0.78),
-        0 0 42px rgba(124, 58, 237, 0.52) !important;
+        0 0 42px rgba(109, 40, 255, 0.52) !important;
     }
 
     /* Customer dashboard mobile fit: keep every panel and card inside the phone viewport. */

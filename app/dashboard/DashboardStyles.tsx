@@ -82,13 +82,13 @@ export function DashboardStyles() {
       .venue-refresh-control { display: grid; justify-items: end; gap: 5px; }
       .venue-refresh-control small, .venue-refresh-status { color: var(--mydancr-dashboard-muted); font-size: 10px; font-weight: 760; }
       .venue-refresh-control button { min-height: 34px; padding: 0 11px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 9px; color: #f8fafc; background: rgba(255,255,255,.045); font: inherit; font-size: 11px; font-weight: 850; cursor: pointer; }
-      .venue-refresh-control button:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+      .venue-refresh-control button:focus-visible { outline: 2px solid #6d28ff; outline-offset: 2px; }
       .venue-refresh-control button:disabled { opacity: .6; cursor: wait; }
       .venue-command-primary { display: grid; gap: 8px; padding: 16px; border: 1px solid rgba(255,255,255,.13); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel-raised); }
       .venue-command-primary > strong { color: #f8f7fb; font-size: clamp(21px, 4vw, 27px); line-height: 1.08; }
       .venue-command-links { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin-top: 5px; }
       .venue-command-primary .venue-current-deals-link, .venue-command-primary .venue-working-now-link { width: 100%; max-width: 100%; min-height: 52px; box-sizing: border-box; border-radius: 14px; }
-      .venue-command-primary .venue-current-deals-link { border: 1px solid var(--dancr-color-border); color: #f8fafc; background: #7c3aed; box-shadow: var(--dancr-shadow-brand-control); }
+      .venue-command-primary .venue-current-deals-link { border: 1px solid var(--dancr-color-border); color: #f8fafc; background: #6d28ff; box-shadow: var(--dancr-shadow-brand-control); }
       .venue-command-primary .venue-working-now-link { border: 1px solid var(--mydancr-dashboard-border); color: #f8fafc; background: #111118; box-shadow: none; }
       .venue-command-primary .venue-working-now-link.is-live { border-color: rgba(16,185,129,.58); color: #d1fae5; background: rgba(6,78,59,.34); box-shadow: 0 0 18px rgba(16,185,129,.12); }
       .venue-publication-panel { display: grid; gap: 14px; padding: 18px; border: 1px solid var(--dancr-color-border); border-radius: var(--mydancr-dashboard-radius); background: linear-gradient(145deg, rgba(20, 20, 27, 0.72), rgba(11,11,16,.98) 64%); box-shadow: none; }
@@ -98,7 +98,7 @@ export function DashboardStyles() {
       .venue-publication-panel p { margin: 0; color: var(--mydancr-dashboard-muted); font-size: 13px; line-height: 1.48; }
       .venue-publication-actions { display: flex; flex-wrap: wrap; gap: 10px; }
       .venue-publication-actions > button, .venue-publication-actions > a { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 16px; border: 1px solid rgba(255,255,255,.16); border-radius: 10px; color: #f8fafc; background: #17171d; font: inherit; font-size: 13px; font-weight: 900; text-decoration: none; cursor: pointer; }
-      .venue-publication-actions > .primary { border-color: var(--dancr-color-brand-primary); background: #7c3aed; box-shadow: var(--dancr-shadow-brand-control); }
+      .venue-publication-actions > .primary { border-color: var(--dancr-color-brand-primary); background: #6d28ff; box-shadow: var(--dancr-shadow-brand-control); }
       .venue-publication-actions > .venue-preview-action { gap: 9px; border-color: var(--dancr-color-border); background: linear-gradient(145deg,rgba(48, 48, 56, 0.82),rgba(48, 48, 56, 0.92)); box-shadow: none; }
       .venue-publication-actions > .venue-preview-action > svg { width: 18px; height: 18px; fill: none; stroke: #d8ccff; stroke-width: 1.8; filter: drop-shadow(0 0 7px rgba(167,139,250,.95)); }
       .venue-publication-actions > .venue-preview-action:hover { border-color: var(--dancr-color-border-strong); background: linear-gradient(145deg,rgba(48, 48, 56, 0.9),rgba(48, 48, 56, 0.96)); box-shadow: none; }
@@ -133,7 +133,7 @@ export function DashboardStyles() {
       .venue-review-package dd { min-width: 0; margin: 0; overflow-wrap: anywhere; color: #f8fafc; font-size: 12px; font-weight: 800; line-height: 1.35; }
       .venue-review-request label { color: #f8fafc; font-size: 12px; font-weight: 900; }
       .venue-review-request textarea { width: 100%; min-height: 88px; box-sizing: border-box; resize: vertical; padding: 10px 11px; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; color: #f8fafc; background: #111118; font: inherit; }
-      .venue-review-request textarea:focus { border-color: #7c3aed; outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 1px; }
+      .venue-review-request textarea:focus { border-color: #6d28ff; outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 1px; }
       .venue-review-request button { width: fit-content; min-height: 42px; padding: 0 14px; border: 1px solid rgba(255,255,255,.16); border-radius: 9px; color: #f8fafc; background: #17171d; font: inherit; font-weight: 900; }
       .venue-review-request button:disabled { opacity: .45; cursor: not-allowed; }
       .venue-workspace-tabs { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 5px; padding: 5px; border: 1px solid rgba(255,255,255,.12); border-radius: 16px; background: rgba(7,7,11,.94); box-shadow: 0 16px 38px rgba(0,0,0,.42); backdrop-filter: blur(18px); }
@@ -163,7 +163,7 @@ export function DashboardStyles() {
       .venue-dashboard-section { grid-column: 1 / -1; overflow: clip; scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 12px); border: 1px solid var(--mydancr-dashboard-border); border-radius: var(--mydancr-dashboard-radius); background: var(--mydancr-dashboard-panel); box-shadow: none; }
       .venue-dashboard-section > summary { min-height: 76px; display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 16px 18px; color: #f8fafc; cursor: pointer; list-style: none; }
       .venue-dashboard-section > summary::-webkit-details-marker { display: none; }
-      .venue-dashboard-section > summary:focus-visible { outline: 2px solid #7c3aed; outline-offset: -4px; }
+      .venue-dashboard-section > summary:focus-visible { outline: 2px solid #6d28ff; outline-offset: -4px; }
       .venue-dashboard-section > summary:hover { background: rgba(255,255,255,.025); }
       .venue-dashboard-section[open] > summary { border-bottom: 1px solid var(--mydancr-dashboard-border); background: rgba(20, 20, 27, 0.035); }
       .venue-dashboard-section-copy { min-width: 0; display: grid; gap: 5px; }
@@ -311,7 +311,7 @@ export function DashboardStyles() {
       .earnings-history { display: grid; gap: 12px; }
       .earnings-history-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; padding: 5px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 10px; background: rgba(255,255,255,.025); }
       .earnings-history-tabs button { min-height: 40px; border: 0; border-radius: 7px; color: var(--mydancr-dashboard-muted); background: transparent; font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; }
-      .earnings-history-tabs button.active { color: #fff; background: rgba(124, 58, 237, 0.48); box-shadow: none; }
+      .earnings-history-tabs button.active { color: #fff; background: rgba(109, 40, 255, 0.48); box-shadow: none; }
       .earnings-filters { display: flex !important; flex-wrap: wrap; gap: 6px !important; }
       .earnings-filters button { min-height: 34px; padding: 0 10px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 999px; color: var(--mydancr-dashboard-muted); background: rgba(255,255,255,.03); font: inherit; font-size: 11px; font-weight: 850; cursor: pointer; }
       .earnings-filters button.active { border-color: rgba(148,229,255,.38); color: #fff; background: rgba(148,229,255,.1); }
@@ -356,7 +356,7 @@ export function DashboardStyles() {
       .shift-checkin-card strong { color: #fff; font-size: 18px; }
       .shift-checkin-card small { color: #cfc5de; line-height: 1.45; }
       .shift-checkin-card button { min-height: 44px; border: 0; border-radius: 8px; color: #050507; background: #94e5ff; font-weight: 950; cursor: pointer; padding: 0 16px; }
-      .shift-checkin-card button.check-in-retry { color: #fff; background: #7c3aed; box-shadow: none; }
+      .shift-checkin-card button.check-in-retry { color: #fff; background: #6d28ff; box-shadow: none; }
       .shift-checkin-card button.check-in-retry::before { content: "↻"; margin-right: 7px; font-size: 16px; line-height: 1; }
       .shift-checkin-card button.check-in-confirmation, .shift-actions button.check-in-confirmation { border: 1px solid var(--dancr-color-success-medium); color: var(--dancr-color-success); background: var(--dancr-color-success-soft); box-shadow: inset 0 0 0 1px var(--dancr-color-success-soft) !important; cursor: default !important; filter: none !important; opacity: 1 !important; }
       .shift-checkin-card .shift-checkin-status { grid-column: 1 / -1; display: block; padding: 10px 12px; border: 1px solid rgba(148,229,255,.24); border-radius: 8px; color: #94e5ff; background: rgba(148,229,255,.08); font-weight: 850; }
@@ -706,7 +706,7 @@ export function DashboardStyles() {
       .customer-settings-panel button.customer-notification-switch { display: flex !important; align-items: center !important; justify-content: center !important; gap: 7px !important; width: 76px !important; min-width: 76px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important; border: 0 !important; border-radius: 9px !important; background: transparent !important; box-shadow: none !important; color: #bdb6cb !important; cursor: pointer; }
       .customer-switch-track { box-sizing: border-box; position: relative; display: block; width: 42px; height: 24px; flex: 0 0 42px; border: 1px solid var(--dancr-color-border); border-radius: 999px; background: var(--dancr-color-surface-card); transition: background .18s ease,border-color .18s ease; }
       .customer-switch-track i { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #e3dfeb; box-shadow: 0 1px 4px #0005; transform: translateX(0); transition: transform .18s ease; }
-      .customer-notification-switch[aria-checked="true"] .customer-switch-track { border-color: var(--dancr-color-brand-primary); background: #7c3aed; }
+      .customer-notification-switch[aria-checked="true"] .customer-switch-track { border-color: var(--dancr-color-brand-primary); background: #6d28ff; }
       .customer-notification-switch[aria-checked="true"] .customer-switch-track i { transform: translateX(18px); background: #fff; }
       .customer-switch-state { width: 23px; font-size: 11px; font-weight: 750; text-align: left; }
       .customer-settings-panel button.customer-notification-switch[aria-checked="true"] { color: #e9d5ff !important; }
@@ -721,7 +721,7 @@ export function DashboardStyles() {
       .customer-settings-panel .customer-alert-status { margin: 0; color: #d8b4fe; }
       .venue-working-list { display: grid; gap: 9px; }
       .venue-working-list a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,.08); color: #fff; background: rgba(255,255,255,.04); text-decoration: none; }
-      .venue-working-list a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+      .venue-working-list a:focus-visible { outline: 2px solid #6d28ff; outline-offset: 2px; }
       .venue-working-identity { min-width: 0; display: flex; align-items: center; gap: 10px; }
       .venue-working-identity > img, .venue-working-identity > i { width: 48px; height: 48px; flex: 0 0 48px; display: grid; place-items: center; object-fit: cover; border: 1px solid rgba(255,255,255,.18); border-radius: 50%; color: #f8fafc; background: #111118; font-style: normal; font-weight: 900; }
       .venue-working-identity > span, .venue-working-verification { min-width: 0; display: grid; gap: 3px; }
@@ -732,8 +732,8 @@ export function DashboardStyles() {
       .venue-analytics-period { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 7px; padding: 5px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: #050507; }
       .venue-analytics-period[aria-label="Analytics period"] { grid-template-columns: repeat(4,minmax(0,1fr)); }
       .venue-analytics-period button { min-height: 40px; border: 1px solid transparent; border-radius: 9px; color: var(--mydancr-dashboard-muted); background: transparent; font: inherit; font-size: 12px; font-weight: 850; cursor: pointer; }
-      .venue-analytics-period button.active { border-color: var(--dancr-color-brand-primary); color: #f8fafc; background: #7c3aed; box-shadow: none; }
-      .venue-analytics-period button:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+      .venue-analytics-period button.active { border-color: var(--dancr-color-brand-primary); color: #f8fafc; background: #6d28ff; box-shadow: none; }
+      .venue-analytics-period button:focus-visible { outline: 2px solid #6d28ff; outline-offset: 2px; }
       .venue-analytics-metric small { color: var(--mydancr-dashboard-muted); font-size: 9px; line-height: 1.25; }
       .venue-analytics-metric small.positive { color: #6ee7b7; }
       .venue-analytics-metric small.negative { color: #fca5a5; }
@@ -754,13 +754,13 @@ export function DashboardStyles() {
       .venue-deal-redemption-guide { padding: 0 2px; }
       .venue-deal-redemption-guide ol { display: grid; gap: 6px; margin: 0 0 10px; padding-left: 22px; color: #cbd5e1; }
       .venue-contract-empty { min-height: 90px; place-content: center; }
-      .venue-contract-preview { width: fit-content; max-width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; border: 1px solid var(--dancr-color-border); border-radius: 9px; color: #f8fafc; background: #7c3aed; font-size: 14px; font-weight: 800; text-decoration: none; }
+      .venue-contract-preview { width: fit-content; max-width: 100%; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 16px; border: 1px solid var(--dancr-color-border); border-radius: 9px; color: #f8fafc; background: #6d28ff; font-size: 14px; font-weight: 800; text-decoration: none; }
       .venue-contract-preview-note { margin: 0; color: var(--dancr-color-text-secondary); font-size: 13px; line-height: 1.45; }
       .venue-deal-request-center { display: grid; gap: 10px; padding-top: 16px; border-top: 1px solid var(--mydancr-dashboard-border); }
       .venue-deal-request-center h3, .venue-deal-request-center p { margin: 0; }
       .venue-deal-request-center h3 { font-size: 14px; }
       .venue-deal-request-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-      .venue-deal-request-actions > button, .venue-deal-request-center form button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--dancr-color-border); border-radius: 9px; background: #7c3aed; color: #f8fafc; font: inherit; font-weight: 750; cursor: pointer; }
+      .venue-deal-request-actions > button, .venue-deal-request-center form button { min-height: 44px; padding: 8px 12px; border: 1px solid var(--dancr-color-border); border-radius: 9px; background: #6d28ff; color: #f8fafc; font: inherit; font-weight: 750; cursor: pointer; }
       .venue-deal-request-actions > button { flex: 1 1 150px; background: transparent; border-color: var(--mydancr-dashboard-border); font-size: 13px; }
       .venue-deal-request-actions > button:hover { background: rgba(48, 48, 56, 0.12); }
       .venue-deal-request-actions > button:disabled { opacity: .5; cursor: wait; }
@@ -824,8 +824,8 @@ export function DashboardStyles() {
       .venue-deal-control-metrics strong { color: #f8fafc; font-size: 17px; overflow-wrap: anywhere; }
       .venue-deal-control-actions { display: flex; flex-wrap: wrap; align-content: center; justify-content: flex-end; gap: 9px; }
       .venue-deal-control-actions > button, .venue-deal-control-actions > a { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; padding: 0 15px; border: 1px solid var(--mydancr-dashboard-border); border-radius: 9px; color: #f8fafc; background: #17171d; font-size: 13px; font-weight: 900; text-decoration: none; }
-      .venue-deal-control-actions > button.venue-deal-control-primary { border-color: var(--dancr-color-border); background: #7c3aed; box-shadow: var(--dancr-shadow-brand-control); }
-      .venue-deal-control-actions > button:focus-visible, .venue-deal-control-actions > a:focus-visible { outline: 2px solid #7c3aed; outline-offset: 2px; }
+      .venue-deal-control-actions > button.venue-deal-control-primary { border-color: var(--dancr-color-border); background: #6d28ff; box-shadow: var(--dancr-shadow-brand-control); }
+      .venue-deal-control-actions > button:focus-visible, .venue-deal-control-actions > a:focus-visible { outline: 2px solid #6d28ff; outline-offset: 2px; }
       .venue-deal-editor, .venue-deal-performance { overflow: hidden; border: 1px solid var(--mydancr-dashboard-border); border-radius: 12px; background: #0d0d12; }
       .venue-deal-editor { border-color: var(--dancr-color-border); background: linear-gradient(105deg, rgba(20, 20, 27, 0.94), rgba(13,13,18,.98) 68%); box-shadow: none; }
       .venue-deal-editor > summary, .venue-deal-performance > summary { min-height: 62px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 15px; color: #f8fafc; cursor: pointer; list-style: none; }
@@ -917,7 +917,7 @@ export function DashboardStyles() {
       .venue-deal-qr-copy p { color: #cbd5e1; line-height: 1.48; }
       .venue-deal-qr-copy small { color: #fbbf24; font-weight: 800; }
       .venue-deal-qr-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 5px; }
-      .venue-deal-qr-actions button { min-height: 42px; background: #7c3aed; color: #f8fafc; border: 1px solid var(--dancr-color-border); box-shadow: var(--dancr-shadow-brand-control); }
+      .venue-deal-qr-actions button { min-height: 42px; background: #6d28ff; color: #f8fafc; border: 1px solid var(--dancr-color-border); box-shadow: var(--dancr-shadow-brand-control); }
       .venue-deal-share-options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 10px; border: 1px solid var(--dancr-color-border); border-radius: 10px; background: rgba(20, 20, 27, 0.08); }
       .venue-deal-share-options button { min-height: 44px; padding: 8px 10px; color: #f8fafc; background: #111118; border: 1px solid #334155; font-size: 12px; }
       .venue-deal-qr-preview { min-height: 210px; display: grid; align-content: center; justify-items: center; gap: 8px; padding: 12px; box-sizing: border-box; border: 1px solid #334155; border-radius: 12px; background: #050507; text-align: center; }
@@ -1046,7 +1046,7 @@ export function DashboardStyles() {
       .dancer-onboarding-steps .is-current .dancer-onboarding-step-control.is-action { border-color: var(--dancr-color-brand-primary); background: var(--dancr-color-brand-primary); color: #fff; }
       .dancer-onboarding-steps .is-current .dancer-onboarding-step-marker { border-color: var(--dancr-color-brand-primary); background: var(--dancr-color-surface-card); color: #fff; }
       .dancer-onboarding-step-check { font-size: 12px; line-height: 1; }
-      .dancer-onboarding-steps .is-current > button { background: rgba(124, 58, 237, 0.12); box-shadow: none; }
+      .dancer-onboarding-steps .is-current > button { background: rgba(109, 40, 255, 0.12); box-shadow: none; }
       .dancer-onboarding-steps .is-current { border-color: var(--dancr-color-brand-primary); }
       .dancer-onboarding-steps .is-complete { border-color: rgba(76,223,166,.28); }
       .dancer-onboarding-steps .is-complete > button { background: rgba(25,140,101,.07); }
@@ -1141,7 +1141,7 @@ export function DashboardStyles() {
       .dancer-onboarding-agreement > .dancer-onboarding-announcement:empty { display:none; }
       body.dancr-button-system .dancer-profile-editor-launch-card .dancer-profile-editor-launch-button { min-height:48px !important; padding:10px 14px; border-radius:12px !important; border-color:var(--dancr-color-brand-primary) !important; color:#fff !important; background:var(--dancr-color-brand-primary) !important; box-shadow:none !important; font-size:14px; line-height:1.25; }
       body.dancr-button-system .dancer-profile-editor-launch-card[data-ready="false"] .dancer-profile-editor-launch-button,
-      body.dancr-button-system .dancer-profile-agreement .dancer-onboarding-primary:not(:disabled) { border-color:var(--dancr-color-brand-primary) !important; color:#fff !important; background:#7c3aed !important; box-shadow:none !important; }
+      body.dancr-button-system .dancer-profile-agreement .dancer-onboarding-primary:not(:disabled) { border-color:var(--dancr-color-brand-primary) !important; color:#fff !important; background:#6d28ff !important; box-shadow:none !important; }
       body.dancr-button-system .dancer-profile-agreement .dancer-onboarding-primary { min-height:48px !important; padding:10px 14px; border-radius:12px !important; font-size:14px; line-height:1.25; }
       body.dancr-button-system .dancer-profile-agreement .dancer-onboarding-primary:disabled { border-color:var(--dancr-color-border) !important; color:#96929f !important; background:var(--dancr-color-surface-card) !important; box-shadow:none !important; opacity:1 !important; cursor:not-allowed; }
       body.dancr-button-system .dancer-profile-agreement .dancer-onboarding-primary:disabled[aria-busy="true"] { cursor:wait; }
@@ -1360,17 +1360,17 @@ export function DashboardStyles() {
       .dancer-social-link-form > label { min-width:0; display:grid; gap:7px; color:#d9d4e1; font-size:12px; font-weight:900; line-height:1.2; }
       .dancer-social-link-form input { width:100%; min-width:0; min-height:50px; box-sizing:border-box; padding:0 14px; border:1px solid rgba(148,163,184,.42); border-radius:13px; outline:none; color:#f8fafc; background:#111118; font:inherit; font-size:16px; }
       .dancer-social-link-form input::placeholder { color:#94a3b8; opacity:.78; }
-      .dancer-social-link-form input:focus { border-color:#7c3aed; box-shadow:none; }
+      .dancer-social-link-form input:focus { border-color:#6d28ff; box-shadow:none; }
       .dancer-social-link-form .dancer-form-save-state { min-height:0; margin:0; color:#cbd5e1; font-size:11px; line-height:1.35; }
       .dancer-social-link-form .dancer-form-save-state.is-unsaved { color:#fda4af; }
       .dancer-social-link-save,
       .dancer-social-link-remove { width:100%; min-height:48px; border-radius:13px; font:inherit; font-size:14px; font-weight:950; cursor:pointer; }
-      .dancer-social-link-save { border:1px solid var(--dancr-color-border); color:#fff; background:#7c3aed; box-shadow: var(--dancr-shadow-brand-control); }
+      .dancer-social-link-save { border:1px solid var(--dancr-color-border); color:#fff; background:#6d28ff; box-shadow: var(--dancr-shadow-brand-control); }
       .dancer-social-link-remove { min-height:42px; border:1px solid rgba(239,68,68,.32); color:#fecaca; background:rgba(239,68,68,.08); box-shadow:none; }
       .dancer-social-link-save:disabled,
       .dancer-social-link-remove:disabled,
       .dancer-profile-builder-panel.dancer-social-link-modal > header > button:disabled { cursor:wait; opacity:.58; }
-      body.dancr-button-system .dancer-social-link-save { min-height:48px !important; border-color:var(--dancr-color-brand-primary) !important; border-radius:13px !important; color:#fff !important; background:#7c3aed !important; box-shadow: var(--dancr-shadow-brand-control) !important; }
+      body.dancr-button-system .dancer-social-link-save { min-height:48px !important; border-color:var(--dancr-color-brand-primary) !important; border-radius:13px !important; color:#fff !important; background:#6d28ff !important; box-shadow: var(--dancr-shadow-brand-control) !important; }
       body.dancr-button-system .dancer-social-link-remove { min-height:42px !important; border-color:rgba(239,68,68,.32) !important; border-radius:13px !important; color:#fecaca !important; background:rgba(239,68,68,.08) !important; box-shadow:none !important; }
       .dancer-profile-builder-panel { position:fixed; z-index:30; left:50%; bottom:0; width:min(calc(100% - 24px),760px); max-height:min(88dvh,780px); box-sizing:border-box; display:grid; grid-template-rows:auto minmax(0,1fr); overflow:hidden; padding:0 max(12px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); border:1px solid rgba(126,234,255,.28); border-bottom:0; border-radius:22px 22px 0 0; outline:none; color:#f7f2ff; background:linear-gradient(180deg,rgba(20, 20, 27, 0.995),rgba(5,5,8,.998)); box-shadow:none; transform:translateX(-50%); }
       .dancer-profile-builder-panel[hidden] { display:none; }
@@ -1496,7 +1496,7 @@ export function DashboardStyles() {
       .dashboard-shell-venue .venue-deal-panel select { border-color: rgba(255,255,255,.14); color: #f8f7fb; background: #16161b; }
       .dashboard-shell-venue .venue-deal-panel button { border: 1px solid rgba(255,255,255,.14); color: #f8f7fb; background: #17171d; box-shadow: none; }
       .dashboard-shell-venue .venue-deal-live-list > button { border-color: rgba(16,185,129,.28); background: rgba(16,185,129,.07); }
-      .dashboard-shell-venue .venue-deal-control-actions > button.venue-deal-control-primary { border-color: var(--dancr-color-border); color: #fff; background: #7c3aed; box-shadow: var(--dancr-shadow-brand-control); }
+      .dashboard-shell-venue .venue-deal-control-actions > button.venue-deal-control-primary { border-color: var(--dancr-color-border); color: #fff; background: #6d28ff; box-shadow: var(--dancr-shadow-brand-control); }
       .dashboard-shell-venue .venue-deal-form-actions .primary { border-color: var(--dancr-color-brand-primary); color: #fff; background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)); }
       .dashboard-shell-venue .venue-deal-form-actions .secondary { color: #f8f7fb; background: #17171d; }
       .dashboard-shell-venue .venue-deal-form-actions .danger { border-color: rgba(255,86,108,.3); color: #ffccd3; background: rgba(255,86,108,.12); }
@@ -1591,9 +1591,9 @@ export function DashboardStyles() {
       .dancer-profile-builder-panel.dancer-profile-editor-modal .info-panel { display:grid; gap:12px; overflow:visible; padding:0; border:0; border-radius:0; background:transparent; box-shadow:none; }
       .dancer-profile-editor-modal-actions { min-width:0; display:grid; grid-template-columns:minmax(0,1fr) minmax(132px,190px); align-items:center; gap:12px; padding:12px 14px max(12px,env(safe-area-inset-bottom)); border-top:1px solid rgba(255,255,255,.08); background:rgba(20, 20, 27, 0.96); }
       .dancer-profile-editor-modal-actions > p { margin:0; color:#fda4af; font-size:11px; line-height:1.35; }
-      .dancer-profile-editor-modal-actions > button { width:100%; min-height:48px; border:1px solid var(--dancr-color-border); border-radius:13px; color:#fff; background:#7c3aed; box-shadow: var(--dancr-shadow-brand-control); font:inherit; font-size:14px; font-weight:950; cursor:pointer; }
+      .dancer-profile-editor-modal-actions > button { width:100%; min-height:48px; border:1px solid var(--dancr-color-border); border-radius:13px; color:#fff; background:#6d28ff; box-shadow: var(--dancr-shadow-brand-control); font:inherit; font-size:14px; font-weight:950; cursor:pointer; }
       .dancer-profile-editor-modal-actions > button:disabled { cursor:wait; opacity:.58; }
-      body.dancr-button-system .dancer-profile-editor-modal-actions > button { min-height:48px !important; border-color:var(--dancr-color-brand-primary) !important; border-radius:13px !important; color:#fff !important; background:#7c3aed !important; box-shadow: var(--dancr-shadow-brand-control) !important; }
+      body.dancr-button-system .dancer-profile-editor-modal-actions > button { min-height:48px !important; border-color:var(--dancr-color-brand-primary) !important; border-radius:13px !important; color:#fff !important; background:#6d28ff !important; box-shadow: var(--dancr-shadow-brand-control) !important; }
 
       .dancer-profile-editor-intro { margin:0; color:#c5bdce !important; font-size:13px !important; line-height:1.4; }
       .dancer-profile-identity-editor .dancer-profile-identity-form { display:grid; grid-template-columns:1fr; gap:12px; }
@@ -1601,7 +1601,7 @@ export function DashboardStyles() {
       .dancer-profile-identity-editor .dancer-profile-identity-form input,
       .dancer-profile-identity-editor .dancer-profile-identity-form select { width:100%; min-width:0; min-height:50px; height:50px; box-sizing:border-box; padding:0 14px; border:1px solid rgba(148,163,184,.42); border-radius:13px; outline:none; color:#f8fafc; background:#111118; font:inherit; font-size:16px; }
       .dancer-profile-identity-editor .dancer-profile-identity-form input:focus,
-      .dancer-profile-identity-editor .dancer-profile-identity-form select:focus { border-color:#7c3aed; box-shadow:none; }
+      .dancer-profile-identity-editor .dancer-profile-identity-form select:focus { border-color:#6d28ff; box-shadow:none; }
       .dancer-profile-identity-editor .dancer-profile-identity-form label small { color:#9f97aa; font-size:11px; font-weight:700; line-height:1.35; }
       .dancer-profile-identity-editor .dancer-form-save-state { min-height:0; margin:0; }
 

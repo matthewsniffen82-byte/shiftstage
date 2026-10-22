@@ -46,7 +46,7 @@ function RedeemStyles() {
       dl { display: grid; gap: 10px; margin: 0; }
       dl div { display: flex; justify-content: space-between; gap: 16px; border-top: 1px solid rgba(255,255,255,.08); padding-top: 10px; }
       dd { margin: 0; color: #fff; font-weight: 900; text-align: right; }
-      button { min-height: 48px; border: 0; border-radius: 8px; background: linear-gradient(135deg, #7c3aed, #22c7ff); color: #fff; font-weight: 950; font: inherit; cursor: pointer; }
+      button { min-height: 48px; border: 0; border-radius: 8px; background: linear-gradient(135deg, #6d28ff, #22c7ff); color: #fff; font-weight: 950; font: inherit; cursor: pointer; }
       button:disabled { opacity: .62; cursor: default; }
       .arrival-verification { display:flex; align-items:flex-start; gap:12px; line-height:1.5; padding:12px 0; }
       .arrival-verification input { width:22px; height:22px; flex-shrink:0; }

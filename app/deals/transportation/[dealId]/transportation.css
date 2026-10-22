@@ -26,7 +26,7 @@
 }
 .club-transport-card h1 {
   font-size: 28px; line-height: 1.15; letter-spacing: -.7px; margin: 8px 0 16px; padding-bottom: 12px;
-  border-bottom: 1px solid var(--dancr-color-brand-primary-medium, rgba(124, 58, 237, .34));
+  border-bottom: 1px solid var(--dancr-color-brand-primary-medium, rgba(109, 40, 255, .34));
   box-shadow: inset 0 -1px 0 rgba(167, 139, 250, .18);
 }
 /* This programmatically focused heading announces screen changes without a touch outline. */

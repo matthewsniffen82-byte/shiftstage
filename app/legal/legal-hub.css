@@ -92,7 +92,7 @@
   height: 36px;
   border-radius: 10px;
   color: var(--dancr-color-icon-accent);
-  background: var(--dancr-color-brand-primary-soft, rgba(124, 58, 237, .14));
+  background: var(--dancr-color-brand-primary-soft, rgba(109, 40, 255, .14));
 }
 
 .legal-hub-copy {
@@ -125,7 +125,7 @@
 
 .legal-hub .legal-hub-row:active,
 .legal-hub .legal-hub-back:active {
-  background: var(--dancr-color-brand-primary-soft, rgba(124, 58, 237, .14));
+  background: var(--dancr-color-brand-primary-soft, rgba(109, 40, 255, .14));
 }
 
 @media (hover: hover) {

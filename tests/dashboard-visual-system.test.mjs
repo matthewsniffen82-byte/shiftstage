@@ -29,7 +29,7 @@ test("dancer dashboard has one primary action and neutral secondary cards", () =
   );
   assert.match(
     liveApp,
-    /#dancerDashboard \.dancer-shift-primary \{[\s\S]*?background: linear-gradient\(135deg, #5223d6, #7c3aed 58%, #4a19c8\);/,
+    /#dancerDashboard \.dancer-shift-primary \{[\s\S]*?background: linear-gradient\(135deg, #5223d6, #6d28ff 58%, #4a19c8\);/,
   );
   assert.match(
     liveApp,

@@ -793,7 +793,7 @@
       border-width: 2px;
       border-color: rgba(53,216,255,.94);
       color: #fff;
-      background: linear-gradient(135deg, #00c8ff 0%, #7c3aed 58%, #ff2ab1 100%);
+      background: linear-gradient(135deg, #00c8ff 0%, #6d28ff 58%, #ff2ab1 100%);
       box-shadow: 0 0 0 3px rgba(53,216,255,.16), 0 18px 42px rgba(0,0,0,.45), 0 0 34px rgba(255,42,177,.28);
       animation: submitReviewPulse 1.45s ease-in-out infinite;
     }

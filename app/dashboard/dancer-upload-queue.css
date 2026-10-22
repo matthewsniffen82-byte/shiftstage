@@ -66,7 +66,7 @@
     display: block !important;
     height: 100%;
     border-radius: inherit;
-    background: var(--dancr-color-brand-primary, #7c3aed);
+    background: var(--dancr-color-brand-primary, #6d28ff);
     transition: width 180ms ease-out;
   }
   .dancer-upload-progress.is-indeterminate > span {

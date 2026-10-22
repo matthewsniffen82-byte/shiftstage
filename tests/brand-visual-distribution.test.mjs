@@ -12,8 +12,8 @@ test("the hero beam is the single centralized brand reference with an 84/10/6 UI
   assert.match(tokens, /--dancr-visual-weight-brand: 10;/);
   assert.match(tokens, /--dancr-visual-weight-semantic: 6;/);
   assert.match(tokens, /--dancr-color-brand-core: #f5f3ff;/);
-  assert.match(tokens, /--dancr-color-brand-primary: #7c3aed;/);
-  assert.match(tokens, /--dancr-color-brand-glow: #312e81;/);
+  assert.match(tokens, /--dancr-color-brand-primary: #6d28ff;/);
+  assert.match(tokens, /--dancr-color-brand-glow: #6d28ff;/);
   assert.match(tokens, /--dancr-color-beam-core: var\(--dancr-color-brand-core\);/);
   assert.match(tokens, /--dancr-color-beam-glow: var\(--dancr-color-brand-glow\);/);
 });

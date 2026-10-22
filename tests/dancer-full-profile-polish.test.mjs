@@ -301,7 +301,7 @@ test("profile actions keep matching neutral circles with brighter selected check
   );
   assert.doesNotMatch(
     guestActionsBlock.split("body.dancr-button-system #profileBackdrop #profileModal .modal-actions .profile-report-action")[0],
-    /--dancr-color-brand|rgba\(124, 58, 237|#d8c9ff/,
+    /--dancr-color-brand|rgba\(109, 40, 255|#d8c9ff/,
   );
 });
 

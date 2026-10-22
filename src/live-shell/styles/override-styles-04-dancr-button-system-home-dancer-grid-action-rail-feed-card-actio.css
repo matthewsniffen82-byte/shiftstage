@@ -450,14 +450,14 @@
           font-size: .86em;
         }
         .dancer-directory-filter.is-active {
-          border-color: rgba(124, 58, 237, .58);
+          border-color: rgba(109, 40, 255, .58);
           color: #f8fafc;
           background:
-            linear-gradient(rgba(124, 58, 237, .12), rgba(124, 58, 237, .12)),
+            linear-gradient(rgba(109, 40, 255, .12), rgba(109, 40, 255, .12)),
             #18181c;
           box-shadow:
-            inset 0 0 0 1px rgba(124, 58, 237, .12),
-            0 0 12px rgba(124, 58, 237, .12);
+            inset 0 0 0 1px rgba(109, 40, 255, .12),
+            0 0 12px rgba(109, 40, 255, .12);
         }
         .dancer-directory-filter.is-active span {
           color: #f8fafc;
@@ -498,7 +498,7 @@
           color: #94a3b8;
         }
         .dancer-directory-filter:focus-visible {
-          outline: 2px solid #7c3aed;
+          outline: 2px solid #6d28ff;
           outline-offset: 2px;
         }
         .dancer-directory-filter-empty {
@@ -867,7 +867,7 @@
           scrollbar-color: rgba(255,255,255,.28) transparent;
           border-inline: 1px solid rgba(126,234,255,.1) !important;
           background:
-            radial-gradient(circle at 76% 4%, rgba(124,58,237,.18), transparent 25rem),
+            radial-gradient(circle at 76% 4%, rgba(109,40,255,.18), transparent 25rem),
             linear-gradient(180deg, #08080e, #040406 60%) !important;
         }
         #profileBackdrop .profile-modal::-webkit-scrollbar {
@@ -917,7 +917,7 @@
           border-radius: 50%;
           color: #fff;
           background:
-            linear-gradient(145deg, rgba(124,58,237,.72), rgba(34,199,255,.34));
+            linear-gradient(145deg, rgba(109,40,255,.72), rgba(34,199,255,.34));
           background-position: var(--custom-photo-position, center);
           background-repeat: no-repeat;
           background-size: cover;
@@ -1079,7 +1079,7 @@
           background-color: #020204 !important;
           background-position: center !important;
           background-size: cover !important;
-          box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(124,58,237,.12) !important;
+          box-shadow: 0 24px 70px rgba(0,0,0,.42), 0 0 34px rgba(109,40,255,.12) !important;
           cursor: default;
           pointer-events: auto !important;
           touch-action: pan-y !important;

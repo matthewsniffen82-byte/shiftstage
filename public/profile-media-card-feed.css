@@ -703,7 +703,7 @@ html body.dancr-button-system .profile-media-card-feed .profile-media-entry {
   justify-content: center;
   gap: 6px;
   padding: 0 10px !important;
-  border: 1px solid var(--dancr-color-brand-primary, #7c3aed) !important;
+  border: 1px solid var(--dancr-color-brand-primary, #6d28ff) !important;
   border-radius: 10px !important;
   background: linear-gradient(135deg, #3500a8, #240072) !important;
   color: #fff !important;

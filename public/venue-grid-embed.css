@@ -82,7 +82,7 @@ html body.venue-grid-embed [hidden] { display: none !important; }
 
 /* Website embeds share the site palette; older accent values are ignored. */
 html body.venue-grid-embed {
-  --embed-accent: #7c3aed;
+  --embed-accent: #6d28ff;
   --embed-accent-text: #fff;
   --discovery-backdrop: var(--dancr-color-background);
   background: var(--discovery-backdrop) !important;

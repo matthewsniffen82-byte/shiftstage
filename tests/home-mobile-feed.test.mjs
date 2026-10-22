@@ -678,7 +678,7 @@ test("venue inline cards use production venue, schedule, revenue, and customer a
   )?.[0] || "";
   assert.match(venueArtRule, /repeating-linear-gradient\(115deg/);
   assert.match(venueArtRule, /linear-gradient\(145deg, #1d1e22 0%, #090a0c 48%, #131418 100%\)/);
-  assert.doesNotMatch(venueArtRule, /--venue-accent|124,58,237/);
+  assert.doesNotMatch(venueArtRule, /--venue-accent|109,40,255/);
   assert.match(
     aesthetic,
     /Mobile Clubs is a fast discovery list[\s\S]*?\.home-venue-discovery-context-actions \{[\s\S]*?grid-row: 3 !important;[\s\S]*?height: 46px !important;[\s\S]*?\.home-venue-discovery-context-actions[\s\S]*?> :is\(\.home-discovery-feed-directions, \.home-venue-discovery-uber\) \{[\s\S]*?height: 44px !important;/,
@@ -859,7 +859,7 @@ test("Working Now dancer grid cards expose a functional admission-pass Club Deal
   assert.doesNotMatch(homeSource, /Preview only—select this deal before tapping the cashier NFC sticker/);
   assert.match(
     homeSource,
-    /\.deal-pass-action\.primary \{[^}]*min-height: 52px !important;[^}]*background: linear-gradient\(135deg, #5b21b6 0%, #7c3aed 52%, #8b5cf6 100%\) !important;[^}]*0 0 26px rgba\(124, 58, 237, \.42\)/,
+    /\.deal-pass-action\.primary \{[^}]*min-height: 52px !important;[^}]*background: linear-gradient\(135deg, #5b21b6 0%, #6d28ff 52%, #8b5cf6 100%\) !important;[^}]*0 0 26px rgba\(109, 40, 255, \.42\)/,
   );
   assert.match(
     homeSource,
@@ -962,7 +962,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(244,242,248,.86\)[\s\S]*?--home-nav-accent-soft: rgba\(244,242,248,.78\)[\s\S]*?--home-nav-active: #f5f3ff[\s\S]*?--home-nav-active-violet-core: rgba\(124,58,237,.96\)[\s\S]*?--home-nav-active-violet-glow: rgba\(124,58,237,.58\)[\s\S]*?--home-nav-active-violet-depth: rgba\(49,46,129,.72\)/,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(244,242,248,.86\)[\s\S]*?--home-nav-accent-soft: rgba\(244,242,248,.78\)[\s\S]*?--home-nav-active: #f5f3ff[\s\S]*?--home-nav-active-violet-core: rgba\(109,40,255,.96\)[\s\S]*?--home-nav-active-violet-glow: rgba\(109,40,255,.58\)[\s\S]*?--home-nav-active-violet-depth: rgba\(49,46,129,.72\)/,
   );
   assert.match(
     homeSource,
@@ -1016,7 +1016,7 @@ test("the account menu groups published policies behind one Legal and Privacy li
   );
   assert.match(
     homeSource,
-    /\.utility-menu-dashboard \{[\s\S]*?linear-gradient\(135deg, rgba\(124,58,237,.98\), rgba\(8,145,178,.94\)\)[\s\S]*?box-shadow:/,
+    /\.utility-menu-dashboard \{[\s\S]*?linear-gradient\(135deg, rgba\(109,40,255,.98\), rgba\(8,145,178,.94\)\)[\s\S]*?box-shadow:/,
   );
   assert.match(
     homeSource,

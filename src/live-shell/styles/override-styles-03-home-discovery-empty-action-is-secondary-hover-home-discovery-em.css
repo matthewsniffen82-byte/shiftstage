@@ -379,7 +379,7 @@
             border: 1px solid rgba(139,92,246,.42) !important;
             border-radius: 20px !important;
             scroll-snap-align: none !important;
-            box-shadow: 0 18px 44px rgba(0,0,0,.48), 0 0 24px rgba(124,58,237,.12) !important;
+            box-shadow: 0 18px 44px rgba(0,0,0,.48), 0 0 24px rgba(109,40,255,.12) !important;
           }
           #results.home-venue-discovery-feed .home-discovery-feed-copy {
             right: 72px;
@@ -539,9 +539,9 @@
             --home-nav-accent: rgba(244,242,248,.86);
             --home-nav-accent-soft: rgba(244,242,248,.78);
             --home-nav-active: #f5f3ff;
-            --home-nav-active-violet-core: rgba(124,58,237,.96);
-            --home-nav-active-violet-glow: rgba(124,58,237,.58);
-            --home-nav-active-violet-depth: rgba(124,58,237,.72);
+            --home-nav-active-violet-core: rgba(109,40,255,.96);
+            --home-nav-active-violet-glow: rgba(109,40,255,.58);
+            --home-nav-active-violet-depth: rgba(109,40,255,.72);
             position: relative !important;
             width: 100% !important;
             height: 65px !important;
@@ -636,8 +636,8 @@
             position: absolute;
             inset: 8px;
             border-radius: 50%;
-            background: radial-gradient(circle,rgba(124,58,237,.1) 0%,rgba(124,58,237,.34) 30%,rgba(124,58,237,.18) 56%,rgba(124,58,237,.14) 70%,transparent 82%);
-            box-shadow: 0 0 8px rgba(124,58,237,.18),0 0 16px rgba(124,58,237,.16);
+            background: radial-gradient(circle,rgba(109,40,255,.1) 0%,rgba(109,40,255,.34) 30%,rgba(109,40,255,.18) 56%,rgba(109,40,255,.14) 70%,transparent 82%);
+            box-shadow: 0 0 8px rgba(109,40,255,.18),0 0 16px rgba(109,40,255,.16);
             filter: blur(1.5px);
           }
           #discoveryTabs .tab:not(.active) .home-nav-icon,
@@ -1034,7 +1034,7 @@
           border-radius: 16px;
           color: #fff;
           background: #0a0a0e;
-          box-shadow: 0 14px 34px rgba(0,0,0,.4), 0 0 18px rgba(124,58,237,.1);
+          box-shadow: 0 14px 34px rgba(0,0,0,.4), 0 0 18px rgba(109,40,255,.1);
           transform: none !important;
         }
         #results.home-dancer-grid > .home-dancer-grid-card::before,
@@ -1075,7 +1075,7 @@
           color: rgba(255,255,255,.78);
           background:
             radial-gradient(circle at 70% 18%, rgba(34,199,255,.2), transparent 34%),
-            radial-gradient(circle at 18% 78%, rgba(124,58,237,.38), transparent 42%),
+            radial-gradient(circle at 18% 78%, rgba(109,40,255,.38), transparent 42%),
             linear-gradient(145deg,#15101f,#08080d);
           background-size: cover;
           background-position: center top;

@@ -636,14 +636,14 @@
       --text: #FFFFFF;
       --muted: #B8B8C5;
       --muted2: #7C7C8C;
-      --violet: #7C3AED;
+      --violet: #6D28FF;
       --magenta: #FF2FAE;
       --cyan: #22C7FF;
       --cyan-blue: #22C7FF;
       --gold: #C084FC;
       --green: #FF2FAE;
-      --accent: #7C3AED;
-      --accent-glow: rgba(124, 58, 237, .38);
+      --accent: #6D28FF;
+      --accent-glow: rgba(109, 40, 255, .38);
       --line: rgba(184, 184, 197, .13);
       --shadow: 0 26px 78px rgba(0, 0, 0, .64);
     }
@@ -657,22 +657,22 @@
     body {
       background:
         radial-gradient(circle at 74% -10%, rgba(255, 47, 174, .14), transparent 30rem),
-        radial-gradient(circle at 20% 0%, rgba(124, 58, 237, .20), transparent 31rem),
+        radial-gradient(circle at 20% 0%, rgba(109, 40, 255, .20), transparent 31rem),
         #050507;
     }
 
     body:before {
       background:
         radial-gradient(circle at 86% 10%, rgba(255, 47, 174, .08), transparent 25rem),
-        radial-gradient(circle at 16% 4%, rgba(124, 58, 237, .10), transparent 25rem);
+        radial-gradient(circle at 16% 4%, rgba(109, 40, 255, .10), transparent 25rem);
     }
 
     .app {
       background:
-        radial-gradient(circle at 78% 0%, rgba(124, 58, 237, .13), transparent 30rem),
+        radial-gradient(circle at 78% 0%, rgba(109, 40, 255, .13), transparent 30rem),
         linear-gradient(180deg, #050507, #08080d 52%, #050507);
-      border-color: rgba(124, 58, 237, .18);
-      box-shadow: 0 42px 130px rgba(0, 0, 0, .80), 0 0 70px rgba(124, 58, 237, .14);
+      border-color: rgba(109, 40, 255, .18);
+      box-shadow: 0 42px 130px rgba(0, 0, 0, .80), 0 0 70px rgba(109, 40, 255, .14);
     }
 
     header,
@@ -688,15 +688,15 @@
     .profile-modal,
     .modal-body {
       background-color: rgba(17, 17, 24, .82);
-      border-color: rgba(124, 58, 237, .22);
+      border-color: rgba(109, 40, 255, .22);
     }
 
     .reference-hero {
       background:
         radial-gradient(circle at 76% 46%, rgba(255, 47, 174, .16), transparent 0 34%),
         linear-gradient(90deg, rgba(5, 5, 7, 1) 0%, rgba(9, 7, 20, .98) 45%, rgba(31, 9, 72, .95) 100%);
-      border-color: rgba(124, 58, 237, .35);
-      box-shadow: 0 0 34px rgba(124, 58, 237, .18), inset 0 0 48px rgba(255, 47, 174, .05);
+      border-color: rgba(109, 40, 255, .35);
+      box-shadow: 0 0 34px rgba(109, 40, 255, .18), inset 0 0 48px rgba(255, 47, 174, .05);
     }
 
     .reference-hero:before {
@@ -706,13 +706,13 @@
     .reference-hero:after {
       background:
         linear-gradient(90deg, transparent, rgba(255, 47, 174, .24), #d98bff 48%, rgba(34, 199, 255, .24), transparent);
-      box-shadow: 0 0 34px rgba(255, 47, 174, .38), 0 0 70px rgba(124, 58, 237, .24);
+      box-shadow: 0 0 34px rgba(255, 47, 174, .38), 0 0 70px rgba(109, 40, 255, .24);
     }
 
     .reference-hero h2 strong,
     .hero-title-accent {
       color: #9b5cff;
-      text-shadow: 0 0 22px rgba(124, 58, 237, .72), 0 0 44px rgba(255, 47, 174, .22);
+      text-shadow: 0 0 22px rgba(109, 40, 255, .72), 0 0 44px rgba(255, 47, 174, .22);
     }
 
     .reference-hero p,
@@ -731,8 +731,8 @@
     .profile-modal .follow-primary {
       color: #FFFFFF;
       border-color: transparent;
-      background: linear-gradient(135deg, #7C3AED, #FF2FAE);
-      box-shadow: 0 16px 40px rgba(124, 58, 237, .28), 0 0 28px rgba(255, 47, 174, .22);
+      background: linear-gradient(135deg, #6D28FF, #FF2FAE);
+      box-shadow: 0 16px 40px rgba(109, 40, 255, .28), 0 0 28px rgba(255, 47, 174, .22);
     }
 
     .action-btn.secondary,
@@ -742,9 +742,9 @@
     .profile-modal .action-btn.secondary,
     .profile-modal .going-btn:disabled {
       color: #FFFFFF;
-      border-color: rgba(124, 58, 237, .42);
+      border-color: rgba(109, 40, 255, .42);
       background: rgba(14, 14, 20, .86);
-      box-shadow: inset 0 0 18px rgba(124, 58, 237, .06);
+      box-shadow: inset 0 0 18px rgba(109, 40, 255, .06);
     }
 
     .tab {
@@ -759,15 +759,15 @@
     .location-btn:hover,
     .action-btn.secondary:hover {
       border-color: rgba(255, 47, 174, .42);
-      box-shadow: 0 0 18px rgba(124, 58, 237, .18);
+      box-shadow: 0 0 18px rgba(109, 40, 255, .18);
     }
 
     .dancer-card,
     .dancer-card:not(.pending),
     .dancer-card.trending-card {
-      border-color: rgba(124, 58, 237, .36);
+      border-color: rgba(109, 40, 255, .36);
       background: rgba(17, 17, 24, .84);
-      box-shadow: 0 22px 64px rgba(0, 0, 0, .58), 0 0 22px rgba(124, 58, 237, .14);
+      box-shadow: 0 22px 64px rgba(0, 0, 0, .58), 0 0 22px rgba(109, 40, 255, .14);
     }
 
     .dancer-card:hover,
@@ -777,12 +777,12 @@
     .dancer-card.trending-card:focus-visible,
     .dancer-card.trending-card:active {
       border-color: rgba(255, 47, 174, .58);
-      box-shadow: 0 26px 72px rgba(0, 0, 0, .62), 0 0 30px rgba(124, 58, 237, .24), 0 0 24px rgba(255, 47, 174, .14);
+      box-shadow: 0 26px 72px rgba(0, 0, 0, .62), 0 0 30px rgba(109, 40, 255, .24), 0 0 24px rgba(255, 47, 174, .14);
     }
 
     .dancer-card .portrait:after {
       background:
-        linear-gradient(180deg, rgba(5, 5, 7, 0) 38%, rgba(124, 58, 237, .10) 66%, rgba(5, 5, 7, .96) 100%);
+        linear-gradient(180deg, rgba(5, 5, 7, 0) 38%, rgba(109, 40, 255, .10) 66%, rgba(5, 5, 7, .96) 100%);
     }
 
     .badge,
@@ -806,10 +806,10 @@
     .profile-modal .badge.trend,
     .venue-shift-rank {
       color: #FFFFFF;
-      border-color: rgba(124, 58, 237, .55);
-      background: rgba(124, 58, 237, .28);
+      border-color: rgba(109, 40, 255, .55);
+      background: rgba(109, 40, 255, .28);
       text-shadow: 0 0 9px rgba(255, 255, 255, .22);
-      box-shadow: 0 0 18px rgba(124, 58, 237, .32), 0 0 20px rgba(255, 47, 174, .12), inset 0 0 14px rgba(255, 255, 255, .04);
+      box-shadow: 0 0 18px rgba(109, 40, 255, .32), 0 0 20px rgba(255, 47, 174, .12), inset 0 0 14px rgba(255, 255, 255, .04);
     }
 
     .badge.trend .badge-icon,
@@ -857,7 +857,7 @@
     select,
     textarea {
       background: rgba(14, 14, 20, .90);
-      border-color: rgba(124, 58, 237, .22);
+      border-color: rgba(109, 40, 255, .22);
       color: #FFFFFF;
     }
 
@@ -866,7 +866,7 @@
     select:focus,
     textarea:focus {
       border-color: rgba(255, 47, 174, .48);
-      box-shadow: 0 0 22px rgba(124, 58, 237, .22);
+      box-shadow: 0 0 22px rgba(109, 40, 255, .22);
     }
 
     .field-needs-review {
@@ -958,20 +958,20 @@
 
     .venue-card:hover,
     .venue:hover {
-      border-color: rgba(124, 58, 237, .56);
-      box-shadow: 0 0 24px rgba(124, 58, 237, .18);
+      border-color: rgba(109, 40, 255, .56);
+      box-shadow: 0 0 24px rgba(109, 40, 255, .18);
     }
 
     .modal-identity,
     .profile-modal .modal-identity-stack .modal-identity {
-      border-color: rgba(124, 58, 237, .25);
+      border-color: rgba(109, 40, 255, .25);
       background: rgba(17, 17, 24, .58);
-      box-shadow: 0 0 26px rgba(124, 58, 237, .18);
+      box-shadow: 0 0 26px rgba(109, 40, 255, .18);
       backdrop-filter: blur(16px);
     }
 
     .profile-modal {
-      box-shadow: 0 26px 90px rgba(0, 0, 0, .82), 0 0 48px rgba(124, 58, 237, .18);
+      box-shadow: 0 26px 90px rgba(0, 0, 0, .82), 0 0 48px rgba(109, 40, 255, .18);
     }
 
     .profile-modal .social-link svg,
@@ -993,8 +993,8 @@
     .badge.trend.full-trend {
       color: #FFFFFF;
       border-color: rgba(255, 47, 174, .62);
-      background: linear-gradient(135deg, rgba(124, 58, 237, .38), rgba(255, 47, 174, .30));
-      box-shadow: 0 0 18px rgba(124, 58, 237, .34), 0 0 14px rgba(255, 47, 174, .24), inset 0 0 14px rgba(255, 255, 255, .05);
+      background: linear-gradient(135deg, rgba(109, 40, 255, .38), rgba(255, 47, 174, .30));
+      box-shadow: 0 0 18px rgba(109, 40, 255, .34), 0 0 14px rgba(255, 47, 174, .24), inset 0 0 14px rgba(255, 255, 255, .05);
     }
 
     .dancer-card .badge.trend.compact-trend .badge-icon,
@@ -1007,40 +1007,40 @@
 
     header {
       background: rgba(5, 5, 7, .92);
-      border-bottom-color: rgba(124, 58, 237, .24);
-      box-shadow: 0 14px 38px rgba(0, 0, 0, .46), 0 0 32px rgba(124, 58, 237, .10);
+      border-bottom-color: rgba(109, 40, 255, .24);
+      box-shadow: 0 14px 38px rgba(0, 0, 0, .46), 0 0 32px rgba(109, 40, 255, .10);
     }
 
     .dancr-home-logo {
       background: rgba(17, 17, 24, .86);
-      border-color: rgba(124, 58, 237, .32);
-      box-shadow: inset 0 0 18px rgba(124, 58, 237, .08), 0 0 22px rgba(124, 58, 237, .16);
+      border-color: rgba(109, 40, 255, .32);
+      box-shadow: inset 0 0 18px rgba(109, 40, 255, .08), 0 0 22px rgba(109, 40, 255, .16);
     }
 
     .dancr-home-logo .logo-accent,
     .dancr-home-logo strong:last-child {
       color: #9B5CFF;
-      text-shadow: 0 0 16px rgba(124, 58, 237, .70), 0 0 18px rgba(255, 47, 174, .28);
+      text-shadow: 0 0 16px rgba(109, 40, 255, .70), 0 0 18px rgba(255, 47, 174, .28);
     }
 
     #accountBtn {
       background: rgba(14, 14, 20, .90);
-      border-color: rgba(124, 58, 237, .48);
+      border-color: rgba(109, 40, 255, .48);
       color: #FFFFFF;
-      box-shadow: 0 0 18px rgba(124, 58, 237, .14);
+      box-shadow: 0 0 18px rgba(109, 40, 255, .14);
     }
 
     #accountBtn:hover {
       border-color: rgba(255, 47, 174, .55);
-      box-shadow: 0 0 22px rgba(255, 47, 174, .16), 0 0 24px rgba(124, 58, 237, .16);
+      box-shadow: 0 0 22px rgba(255, 47, 174, .16), 0 0 24px rgba(109, 40, 255, .16);
     }
 
     .controls {
       background:
         radial-gradient(circle at 92% 0%, rgba(255, 47, 174, .08), transparent 18rem),
         linear-gradient(180deg, rgba(17, 17, 24, .92), rgba(10, 10, 15, .94));
-      border-color: rgba(124, 58, 237, .36);
-      box-shadow: inset 0 0 28px rgba(124, 58, 237, .06), 0 0 30px rgba(124, 58, 237, .10);
+      border-color: rgba(109, 40, 255, .36);
+      box-shadow: inset 0 0 28px rgba(109, 40, 255, .06), 0 0 30px rgba(109, 40, 255, .10);
     }
 
     .controls label,
@@ -1053,37 +1053,37 @@
     #citySelect,
     #distanceSelect {
       background: #050507;
-      border-color: rgba(124, 58, 237, .52);
+      border-color: rgba(109, 40, 255, .52);
       color: #FFFFFF;
-      box-shadow: inset 0 0 18px rgba(124, 58, 237, .08);
+      box-shadow: inset 0 0 18px rgba(109, 40, 255, .08);
     }
 
     .controls select:focus,
     #citySelect:focus,
     #distanceSelect:focus {
       border-color: rgba(255, 47, 174, .60);
-      box-shadow: 0 0 24px rgba(124, 58, 237, .26), 0 0 18px rgba(255, 47, 174, .12);
+      box-shadow: 0 0 24px rgba(109, 40, 255, .26), 0 0 18px rgba(255, 47, 174, .12);
     }
 
     .location-btn {
       color: #FFFFFF;
-      border-color: rgba(124, 58, 237, .36);
+      border-color: rgba(109, 40, 255, .36);
       background:
-        linear-gradient(90deg, rgba(124, 58, 237, .18), rgba(255, 47, 174, .10)),
+        linear-gradient(90deg, rgba(109, 40, 255, .18), rgba(255, 47, 174, .10)),
         rgba(14, 14, 20, .90);
-      box-shadow: inset 0 0 18px rgba(124, 58, 237, .08), 0 0 20px rgba(124, 58, 237, .10);
+      box-shadow: inset 0 0 18px rgba(109, 40, 255, .08), 0 0 20px rgba(109, 40, 255, .10);
     }
 
     .location-btn .icon,
     .location-btn svg {
       color: #9B5CFF;
       stroke: #9B5CFF;
-      filter: drop-shadow(0 0 8px rgba(124, 58, 237, .65));
+      filter: drop-shadow(0 0 8px rgba(109, 40, 255, .65));
     }
 
     .location-btn:hover {
       border-color: rgba(255, 47, 174, .52);
-      box-shadow: 0 0 24px rgba(255, 47, 174, .14), 0 0 24px rgba(124, 58, 237, .18);
+      box-shadow: 0 0 24px rgba(255, 47, 174, .14), 0 0 24px rgba(109, 40, 255, .18);
     }
 
     .tabs {
@@ -1097,8 +1097,8 @@
 
     .tabs .tab-count {
       color: #FFFFFF;
-      background: rgba(124, 58, 237, .28);
-      border-color: rgba(124, 58, 237, .44);
+      background: rgba(109, 40, 255, .28);
+      border-color: rgba(109, 40, 255, .44);
     }
 
     .tabs .tab.active .tab-count {
@@ -1112,8 +1112,8 @@
     .action-btn.follow-venue-btn.is-following {
       color: #FFFFFF;
       border-color: transparent;
-      background: linear-gradient(135deg, #7C3AED 0%, #FF2FAE 100%);
-      box-shadow: 0 16px 36px rgba(124, 58, 237, .30), 0 0 24px rgba(255, 47, 174, .28);
+      background: linear-gradient(135deg, #6D28FF 0%, #FF2FAE 100%);
+      box-shadow: 0 16px 36px rgba(109, 40, 255, .30), 0 0 24px rgba(255, 47, 174, .28);
     }
 
     .profile-modal .action-btn.secondary.is-following,
@@ -1121,21 +1121,21 @@
       color: #FFFFFF;
       border-color: rgba(255, 47, 174, .48);
       background:
-        linear-gradient(135deg, rgba(124, 58, 237, .18), rgba(255, 47, 174, .12)),
+        linear-gradient(135deg, rgba(109, 40, 255, .18), rgba(255, 47, 174, .12)),
         rgba(14, 14, 20, .92);
-      box-shadow: inset 0 0 18px rgba(255, 47, 174, .08), 0 0 20px rgba(124, 58, 237, .18);
+      box-shadow: inset 0 0 18px rgba(255, 47, 174, .08), 0 0 20px rgba(109, 40, 255, .18);
     }
 
     .profile-modal .going-btn:not(:disabled) {
-      background: linear-gradient(135deg, #7C3AED 0%, #FF2FAE 58%, #7C3AED 100%);
-      box-shadow: 0 18px 42px rgba(124, 58, 237, .32), 0 0 30px rgba(255, 47, 174, .24);
+      background: linear-gradient(135deg, #6D28FF 0%, #FF2FAE 58%, #6D28FF 100%);
+      box-shadow: 0 18px 42px rgba(109, 40, 255, .32), 0 0 30px rgba(255, 47, 174, .24);
     }
 
     .profile-modal .going-btn:disabled {
       color: #B8B8C5;
-      border-color: rgba(124, 58, 237, .28);
+      border-color: rgba(109, 40, 255, .28);
       background: rgba(14, 14, 20, .82);
-      box-shadow: inset 0 0 18px rgba(124, 58, 237, .06);
+      box-shadow: inset 0 0 18px rgba(109, 40, 255, .06);
     }
 
     .badge.trend,

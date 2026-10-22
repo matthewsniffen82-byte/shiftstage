@@ -51,7 +51,7 @@ test("admin uses the same routed dashboard chrome and structured loading hierarc
 test("admin authentication follows the same responsive form hierarchy as other sign-in pages", () => {
   assert.match(adminClient, /\.sign-in \{ max-width: 520px; display: grid; gap: 14px; padding: 18px;/);
   assert.match(adminClient, /\.sign-in \.forgot-password \{ width: 100%; min-height: 44px; justify-self: stretch;/);
-  assert.match(adminClient, /\.sign-in > button\[type="submit"\] \{ width: 100%; min-height: 48px;[\s\S]*?linear-gradient\(135deg,#7c3aed,#4c1d95\)/);
+  assert.match(adminClient, /\.sign-in > button\[type="submit"\] \{ width: 100%; min-height: 48px;[\s\S]*?linear-gradient\(135deg,#6d28ff,#4c1d95\)/);
   assert.match(adminClient, /@media \(max-width: 680px\)[\s\S]*?\.sign-in \{ gap: 13px; padding: 16px; \}/);
 
   assert.match(liveApp, /<form class="auth-card auth-form admin-login-form" id="adminLoginForm">/);

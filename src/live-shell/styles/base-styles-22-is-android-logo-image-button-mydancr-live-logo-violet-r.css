@@ -1,8 +1,8 @@
 
     .is-android .logo-image-button .mydancr-live-logo .violet-r {
-      color: #7c3aed !important;
+      color: #6d28ff !important;
       text-shadow:
-        0 0 8px rgba(124, 58, 237, 0.92),
+        0 0 8px rgba(109, 40, 255, 0.92),
         0 0 18px rgba(109, 40, 217, 0.62),
         0 0 30px rgba(76, 29, 149, 0.38) !important;
       filter: none !important;
@@ -22,7 +22,7 @@
       .is-android .hero.reference-hero.uploaded-hero-ready,
       .is-android .hero.reference-hero:not(.uploaded-hero-ready) {
         background-color: var(--matte-black) !important;
-        border-color: rgba(124, 58, 237, 0.58) !important;
+        border-color: rgba(109, 40, 255, 0.58) !important;
         filter: brightness(1.42) contrast(1.18) saturate(1.12) !important;
         -webkit-filter: brightness(1.42) contrast(1.18) saturate(1.12) !important;
         box-shadow:
@@ -77,11 +77,11 @@
       .is-android .tab.active,
       .is-android .tab[aria-selected="true"],
       .is-android .location-btn {
-        background: linear-gradient(135deg, #4c1d95 0%, #7c3aed 62%, #0ea5e9 100%) !important;
-        border-color: rgba(124, 58, 237, 0.76) !important;
+        background: linear-gradient(135deg, #4c1d95 0%, #6d28ff 62%, #0ea5e9 100%) !important;
+        border-color: rgba(109, 40, 255, 0.76) !important;
         box-shadow:
           0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-          0 0 24px rgba(124, 58, 237, 0.48),
+          0 0 24px rgba(109, 40, 255, 0.48),
           0 0 16px rgba(14, 165, 233, 0.22) !important;
       }
 
@@ -148,12 +148,12 @@
     html.android-rendering .brand-home.logo-image-button,
     body.android-rendering .brand-home.logo-image-button {
       background:
-        radial-gradient(circle at 82% 48%, rgba(124, 58, 237, 0.2) 0 22%, transparent 48%),
+        radial-gradient(circle at 82% 48%, rgba(109, 40, 255, 0.2) 0 22%, transparent 48%),
         linear-gradient(180deg, #101017 0%, #050507 100%) !important;
-      border: 1px solid rgba(124, 58, 237, 0.72) !important;
+      border: 1px solid rgba(109, 40, 255, 0.72) !important;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.025) inset,
-        0 0 18px rgba(124, 58, 237, 0.34),
+        0 0 18px rgba(109, 40, 255, 0.34),
         0 12px 30px rgba(0, 0, 0, 0.42) !important;
       -webkit-backdrop-filter: none !important;
       backdrop-filter: none !important;
@@ -176,13 +176,13 @@
     body.is-android .logo-image-button .mydancr-live-logo .violet-r,
     html.android-rendering .logo-image-button .mydancr-live-logo .violet-r,
     body.android-rendering .logo-image-button .mydancr-live-logo .violet-r {
-      color: #7c3aed !important;
-      -webkit-text-fill-color: #7c3aed !important;
+      color: #6d28ff !important;
+      -webkit-text-fill-color: #6d28ff !important;
       background: none !important;
       filter: none !important;
       -webkit-filter: none !important;
       text-shadow:
-        0 0 7px rgba(124, 58, 237, 0.9),
+        0 0 7px rgba(109, 40, 255, 0.9),
         0 0 18px rgba(109, 40, 217, 0.64),
         0 0 30px rgba(76, 29, 149, 0.38) !important;
     }
@@ -191,10 +191,10 @@
     body.is-samsung-browser .logo-image-button .mydancr-live-logo .violet-r,
     html.samsung-rendering .logo-image-button .mydancr-live-logo .violet-r,
     body.samsung-rendering .logo-image-button .mydancr-live-logo .violet-r {
-      color: #7c3aed !important;
-      -webkit-text-fill-color: #7c3aed !important;
+      color: #6d28ff !important;
+      -webkit-text-fill-color: #6d28ff !important;
       text-shadow:
-        0 0 9px rgba(124, 58, 237, 0.98),
+        0 0 9px rgba(109, 40, 255, 0.98),
         0 0 20px rgba(109, 40, 217, 0.74),
         0 0 34px rgba(76, 29, 149, 0.46) !important;
     }
@@ -311,14 +311,14 @@
         aspect-ratio: 1672 / 941 !important;
         margin: 16px 0 14px !important;
         border-radius: 24px !important;
-        border: 1px solid rgba(124, 58, 237, 0.76) !important;
+        border: 1px solid rgba(109, 40, 255, 0.76) !important;
         background-color: #050507 !important;
         background-size: 100% 100% !important;
         background-position: center center !important;
         background-repeat: no-repeat !important;
         box-shadow:
           0 0 0 1px rgba(255, 255, 255, 0.026) inset,
-          0 0 24px rgba(124, 58, 237, 0.28),
+          0 0 24px rgba(109, 40, 255, 0.28),
           0 20px 48px rgba(0, 0, 0, 0.44) !important;
         overflow: hidden !important;
       }
@@ -386,7 +386,7 @@
       border: 1px solid rgba(53, 216, 255, .28);
       border-radius: 16px;
       background:
-        linear-gradient(135deg, rgba(53, 216, 255, .08), rgba(124, 58, 237, .12)),
+        linear-gradient(135deg, rgba(53, 216, 255, .08), rgba(109, 40, 255, .12)),
         rgba(5, 5, 9, .72);
       box-shadow:
         0 0 22px rgba(53, 216, 255, .1),
@@ -434,7 +434,7 @@
       border-color: rgba(53, 216, 255, .66);
       box-shadow:
         0 0 24px rgba(53, 216, 255, .16),
-        0 0 20px rgba(124, 58, 237, .18);
+        0 0 20px rgba(109, 40, 255, .18);
     }
 
     .customer-benefit-grid {
@@ -475,7 +475,7 @@
       border: 1px solid rgba(183, 77, 255, .34);
       border-radius: 16px;
       background:
-        linear-gradient(135deg, rgba(124, 58, 237, .13), rgba(5, 5, 9, .76));
+        linear-gradient(135deg, rgba(109, 40, 255, .13), rgba(5, 5, 9, .76));
       box-shadow:
         0 0 22px rgba(183, 77, 255, .14),
         inset 0 0 18px rgba(255, 255, 255, .03);

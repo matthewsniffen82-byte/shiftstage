@@ -29,7 +29,7 @@ test('guest consent uses a compact native checkbox instead of mobile text-input 
   assert.equal(input.margin.value, '0');
   assert.equal(input['box-sizing'].value, 'border-box');
   assert.equal(input.appearance.value, 'auto', 'preserve the native checked indicator');
-  assert.equal(input['accent-color'].value, '#7c3aed');
+  assert.equal(input['accent-color'].value, '#6d28ff');
   assert.equal(input.background.value, 'transparent');
   assert.equal(input.background.important, true);
   assert.equal(input['box-shadow'].value, 'none');

@@ -14,25 +14,25 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/mydancr-icon-192.png?v=b0063c2fdaec7ee6",
+      "src": "/mydancr-icon-192.png?v=a14d7d7361245004",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/mydancr-icon-512.png?v=1a7f5576cee92f32",
+      "src": "/mydancr-icon-512.png?v=1cc9cf671461b286",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/mydancr-icon-maskable-192.png?v=695f76af75cc11f7",
+      "src": "/mydancr-icon-maskable-192.png?v=729ba75e2e1f2905",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/mydancr-icon-maskable-512.png?v=b5324616e07e4880",
+      "src": "/mydancr-icon-maskable-512.png?v=8899df965c1c921a",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

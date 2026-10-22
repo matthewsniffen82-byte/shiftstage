@@ -100,7 +100,7 @@
       align-items: center;
       gap: 14px;
       padding: 16px;
-      border: 1px solid rgba(124,58,237,.54);
+      border: 1px solid rgba(109,40,255,.54);
       border-radius: 17px;
       background:
         radial-gradient(circle at 92% 10%, rgba(100,38,255,.28), transparent 15rem),
@@ -138,7 +138,7 @@
       border: 1px solid rgba(195,169,255,.76);
       border-radius: 14px;
       color: #fff;
-      background: linear-gradient(135deg, #5223d6, #7c3aed 58%, #4a19c8);
+      background: linear-gradient(135deg, #5223d6, #6d28ff 58%, #4a19c8);
       box-shadow: 0 0 24px rgba(104,44,255,.38), inset 0 0 14px rgba(255,255,255,.12);
       font-size: 13px;
       font-weight: 950;
@@ -159,7 +159,7 @@
 
     .dancer-shift-primary.is-retry {
       border-color: rgba(216,201,255,.82);
-      background: linear-gradient(135deg, #5223d6, #7c3aed 58%, #4a19c8);
+      background: linear-gradient(135deg, #5223d6, #6d28ff 58%, #4a19c8);
       box-shadow: 0 12px 28px rgba(82,35,214,.34), inset 0 1px 0 rgba(255,255,255,.14);
     }
 
@@ -203,7 +203,7 @@
     .dancer-quick-actions button:focus-visible,
     .dancer-quick-actions a:hover,
     .dancer-quick-actions a:focus-visible {
-      border-color: rgba(124,58,237,.72);
+      border-color: rgba(109,40,255,.72);
       color: #fff;
       background: linear-gradient(145deg, rgba(78,34,180,.3), rgba(8,8,13,.92));
       box-shadow: 0 0 20px rgba(104,44,255,.15), inset 0 0 16px rgba(139,92,246,.06);
@@ -270,7 +270,7 @@
       display: inline-grid;
       place-items: center;
       padding: 0 8px;
-      border: 1px solid rgba(124,58,237,.34);
+      border: 1px solid rgba(109,40,255,.34);
       border-radius: 999px;
       color: #fff;
       background: rgba(63,28,136,.34);
@@ -447,7 +447,7 @@
 
     #dancerDashboard .dancer-shift-primary {
       border-color: rgba(195,169,255,.62);
-      background: linear-gradient(135deg, #5223d6, #7c3aed 58%, #4a19c8);
+      background: linear-gradient(135deg, #5223d6, #6d28ff 58%, #4a19c8);
       box-shadow: 0 10px 24px rgba(82,35,214,.24), inset 0 1px 0 rgba(255,255,255,.12);
     }
 

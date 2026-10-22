@@ -63,7 +63,7 @@
     body {
       background:
         radial-gradient(circle at 80% -10%, rgba(109, 40, 217, 0.09), transparent 34rem),
-        radial-gradient(circle at 0% 16%, rgba(124, 58, 237, 0.06), transparent 28rem),
+        radial-gradient(circle at 0% 16%, rgba(109, 40, 255, 0.06), transparent 28rem),
         var(--lux-bg) !important;
     }
 
@@ -241,16 +241,16 @@
     select:focus,
     input:focus,
     textarea:focus {
-      border-color: var(--dancr-color-brand-primary, #7c3aed) !important;
-      outline: 2px solid var(--dancr-color-brand-primary, #7c3aed) !important;
+      border-color: var(--dancr-color-brand-primary, #6d28ff) !important;
+      outline: 2px solid var(--dancr-color-brand-primary, #6d28ff) !important;
       outline-offset: -2px !important;
       box-shadow: none !important;
     }
 
     .select-field:focus-within,
     .form-field:focus-within {
-      border-color: var(--dancr-color-brand-primary, #7c3aed) !important;
-      outline: 2px solid var(--dancr-color-brand-primary, #7c3aed) !important;
+      border-color: var(--dancr-color-brand-primary, #6d28ff) !important;
+      outline: 2px solid var(--dancr-color-brand-primary, #6d28ff) !important;
       outline-offset: -2px !important;
       box-shadow: none !important;
     }
@@ -265,7 +265,7 @@
     .follow-btn,
     .going-btn,
     .venue-page .primary-action {
-      background: linear-gradient(135deg, #4c1d95, #7c3aed) !important;
+      background: linear-gradient(135deg, #4c1d95, #6d28ff) !important;
       border-color: rgba(167, 139, 250, 0.28) !important;
       box-shadow: 0 0 20px rgba(109, 40, 217, 0.24) !important;
     }
@@ -718,7 +718,7 @@
       opacity: 1 !important;
       background: transparent !important;
       transform-origin: center !important;
-      filter: drop-shadow(0 0 7px rgba(124, 58, 237, 0.72)) !important;
+      filter: drop-shadow(0 0 7px rgba(109, 40, 255, 0.72)) !important;
     }
 
     .trend-flame-icon img,

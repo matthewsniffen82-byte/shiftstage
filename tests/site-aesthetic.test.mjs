@@ -62,11 +62,11 @@ test("scrollable production surfaces use one quiet neutral scrollbar", () => {
   for (const source of [liveApp, aesthetic, tvFeed]) {
     assert.doesNotMatch(
       source,
-      /scrollbar-color:[^;}]*(?:139\s*,\s*92\s*,\s*246|124\s*,\s*58\s*,\s*237|109\s*,\s*40\s*,\s*217)/,
+      /scrollbar-color:[^;}]*(?:139\s*,\s*92\s*,\s*246|109\s*,\s*40\s*,\s*255|109\s*,\s*40\s*,\s*217)/,
     );
     assert.doesNotMatch(
       source,
-      /::\-webkit-scrollbar-thumb[^{}]*\{[^}]*(?:rgba\((?:139\s*,\s*92\s*,\s*246|124\s*,\s*58\s*,\s*237|109\s*,\s*40\s*,\s*217)|box-shadow:\s*0\s+0)/,
+      /::\-webkit-scrollbar-thumb[^{}]*\{[^}]*(?:rgba\((?:139\s*,\s*92\s*,\s*246|109\s*,\s*40\s*,\s*255|109\s*,\s*40\s*,\s*217)|box-shadow:\s*0\s+0)/,
     );
   }
 });
@@ -293,7 +293,7 @@ test("dancer profile media viewers and grid tiles use neutral edges without colo
   );
   assert.doesNotMatch(
     mediaFrameRule,
-    /beam-violet|brand-primary|126,\s*234,\s*255|124,\s*58,\s*237/,
+    /beam-violet|brand-primary|126,\s*234,\s*255|109,\s*40,\s*255/,
   );
   assert.match(mediaFrameRule, /\.profile-media-grid-item \{[\s\S]*?box-shadow: none !important;/);
   assert.doesNotMatch(mediaFrameRule, /profile-titlebar-avatar|profile-media-tabs|home-bottom|home-nav/);
@@ -446,7 +446,7 @@ test("the mobile utility header is borderless with one neutral elevation shadow 
   );
   assert.doesNotMatch(
     liveApp,
-    /Mobile utility chrome is deliberately device-neutral[\s\S]{0,900}border: 1px solid rgba\(124, 58, 237/,
+    /Mobile utility chrome is deliberately device-neutral[\s\S]{0,900}border: 1px solid rgba\(109, 40, 255/,
   );
   const androidSurfaceOverrides = liveApp.match(
     /\.is-android \.controls,[\s\S]*?backdrop-filter: none !important;\s*\}/,
@@ -527,7 +527,7 @@ test("Android and Samsung Browser reset legacy glow and media filters before sco
   assert.match(neutralSurfaceRule, /box-shadow: none !important;/);
   assert.match(neutralSurfaceRule, /\.home-discovery-feed-slide:not\(\.home-venue-discovery-slide\)/);
   assert.doesNotMatch(neutralSurfaceRule, /\n  \.home-venue-discovery-slide,/);
-  assert.doesNotMatch(neutralSurfaceRule, /radial-gradient|91, 19, 255|124, 58, 237/);
+  assert.doesNotMatch(neutralSurfaceRule, /radial-gradient|91, 19, 255|109, 40, 255/);
 
   const androidTvGlassRule = parityLayer.match(
     /The final Android\/Samsung parity layer[\s\S]*?(?=\/\* Stateful selection keeps one restrained brand cue)/,

@@ -62,7 +62,7 @@ body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-
   padding: 10px 16px !important;
   border: 1px solid rgba(196,181,253,.35) !important;
   border-radius: 12px !important;
-  background: linear-gradient(110deg, #7c3aed, #6d28d9) !important;
+  background: linear-gradient(110deg, #6d28ff, #6d28d9) !important;
   color: #fff !important;
   box-shadow: var(--dancr-shadow-brand-control) !important;
   font-size: 14px !important; font-weight: 700 !important;
@@ -157,7 +157,7 @@ body.dancr-button-system #authPage :is(.auth-back-to-types, .venue-request-back)
 body.dancr-button-system #authPage :is(.venue-request-intro, .venue-request-section, .venue-signup-step, .venue-account-fields) { gap: 12px; }
 body.dancr-button-system #authPage :is(.venue-request-section-head, .venue-signup-step-head) { gap: 4px; }
 body.dancr-button-system #authPage .venue-signup-step { padding: 12px; border-color: var(--dancr-form-border); background: #08080c; box-shadow: none; }
-body.dancr-button-system #authPage .venue-code-verify { width: 100%; min-height: 45px !important; padding: 10px 16px !important; border-radius: 12px !important; border-color: #745696 !important; background: linear-gradient(110deg, #7c3aed, #6d28d9) !important; box-shadow: none !important; }
+body.dancr-button-system #authPage .venue-code-verify { width: 100%; min-height: 45px !important; padding: 10px 16px !important; border-radius: 12px !important; border-color: #745696 !important; background: linear-gradient(110deg, #6d28ff, #6d28d9) !important; box-shadow: none !important; }
 
 body.dancr-button-system #authPage:not(.venue-request-succeeded) .venue-request-back {
   display: inline-flex; align-items: center; justify-content: center; border: 0 !important; background: transparent !important; box-shadow: none !important;
@@ -223,7 +223,7 @@ body.dancr-button-system .vip-auth-shell :is(input, button, a):focus-visible { o
 body.dancr-button-system .vip-auth-shell input:focus { outline-offset: -2px !important; border-color: #8b6bb5 !important; }
 body.dancr-button-system .vip-auth-shell .vip-primary {
   min-height: 45px !important; padding: 10px 16px !important; border: 1px solid rgba(196,181,253,.35) !important;
-  border-radius: 12px !important; background: linear-gradient(110deg, #7c3aed, #6d28d9) !important;
+  border-radius: 12px !important; background: linear-gradient(110deg, #6d28ff, #6d28d9) !important;
   color: #fff !important; font-size: 14px !important; font-weight: 700 !important; box-shadow: var(--dancr-shadow-brand-control) !important;
 }
 body.dancr-button-system .vip-auth-shell .vip-auth-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 0; margin-bottom: 14px; border-radius: 12px; background: #08080c; }
@@ -273,7 +273,7 @@ body.dancr-button-system .account-shell .brand {
 }
 body.dancr-button-system .account-shell .nfc-brand::after { display: none; }
 body.dancr-button-system .account-shell .nfc-dancer-lock { border-color: #57436a; background: #201628; font-weight: 600; }
-body.dancr-button-system .account-shell .nfc-dancer-lock span { color: #fff; background: #7c3aed; }
+body.dancr-button-system .account-shell .nfc-dancer-lock span { color: #fff; background: #6d28ff; }
 body.dancr-button-system .account-shell :is(.nav-links a, .nfc-back-link) {
   min-height: 44px; padding: 4px 0; border: 0 !important; background: transparent !important;
   border-radius: 4px !important; box-shadow: none !important; color: #b8bac6 !important;

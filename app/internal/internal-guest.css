@@ -142,7 +142,7 @@ body .ir-guest .ir-refresh-message:not([data-error]) { position: absolute; width
 /* A slimmer 32px face below the portrait keeps the full 44px touch target. */
 body.dancr-button-system .ir-shell.ir-guest button.ir-table-request {
   --ir-guest-control-edge: #8c62c9;
-  --dancr-shadow-brand-control: 0 2px 6px rgba(124, 58, 237, .08);
+  --dancr-shadow-brand-control: 0 2px 6px rgba(109, 40, 255, .08);
   inset: auto !important;
   height: 44px !important;
   min-height: 44px !important;

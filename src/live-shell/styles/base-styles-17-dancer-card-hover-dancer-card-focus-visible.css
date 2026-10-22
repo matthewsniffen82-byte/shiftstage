@@ -4,7 +4,7 @@
       border-color: rgba(167, 139, 250, 0.70) !important;
       box-shadow:
         0 22px 58px rgba(0, 0, 0, 0.56),
-        0 0 32px rgba(124, 58, 237, 0.24),
+        0 0 32px rgba(109, 40, 255, 0.24),
         0 0 12px rgba(34, 199, 255, 0.08) !important;
     }
 
@@ -14,7 +14,7 @@
       color: #FF64C8 !important;
       text-shadow:
         0 0 9px rgba(255, 47, 174, 0.42),
-        0 0 18px rgba(124, 58, 237, 0.14) !important;
+        0 0 18px rgba(109, 40, 255, 0.14) !important;
     }
 
     /* Final full-profile schedule glow polish */
@@ -232,15 +232,15 @@
       isolation: isolate !important;
       overflow: hidden !important;
       background:
-        radial-gradient(ellipse at 92% 50%, rgba(124, 58, 237, 0.28), transparent 0 29%),
+        radial-gradient(ellipse at 92% 50%, rgba(109, 40, 255, 0.28), transparent 0 29%),
         radial-gradient(ellipse at 82% 48%, rgba(236, 72, 153, 0.09), transparent 0 35%),
         linear-gradient(100deg, #050507 0%, #07060d 50%, #120821 74%, #1f0b48 100%) !important;
       border-color: rgba(139, 92, 246, 0.42) !important;
       box-shadow:
         0 22px 64px rgba(0, 0, 0, 0.54),
-        0 0 34px rgba(124, 58, 237, 0.18),
+        0 0 34px rgba(109, 40, 255, 0.18),
         inset 0 0 0 1px rgba(255, 255, 255, 0.035),
-        inset -84px 0 130px rgba(124, 58, 237, 0.24) !important;
+        inset -84px 0 130px rgba(109, 40, 255, 0.24) !important;
     }
 
     .hero.reference-hero::before {
@@ -262,7 +262,7 @@
       box-shadow:
         0 0 10px rgba(255, 255, 255, 0.34),
         0 0 24px rgba(139, 92, 246, 0.58),
-        0 0 54px rgba(124, 58, 237, 0.38),
+        0 0 54px rgba(109, 40, 255, 0.38),
         -38px 0 80px rgba(236, 72, 153, 0.10) !important;
       filter: saturate(1.05) !important;
       mix-blend-mode: screen !important;
@@ -281,7 +281,7 @@
       opacity: 0.54 !important;
       background:
         radial-gradient(ellipse at 92% 50%, rgba(139, 92, 246, 0.22), transparent 0 23%),
-        linear-gradient(90deg, transparent 0 72%, rgba(124, 58, 237, 0.12) 88%, rgba(124, 58, 237, 0.22) 100%) !important;
+        linear-gradient(90deg, transparent 0 72%, rgba(109, 40, 255, 0.12) 88%, rgba(109, 40, 255, 0.22) 100%) !important;
       box-shadow: none !important;
       filter: none !important;
       mix-blend-mode: normal !important;
@@ -326,7 +326,7 @@
       color: #FFFFFF !important;
       border-color: rgba(167, 139, 250, 0.72) !important;
       background:
-        linear-gradient(135deg, #4C1D95 0%, #6D28D9 48%, #7C3AED 100%) !important;
+        linear-gradient(135deg, #4C1D95 0%, #6D28D9 48%, #6D28FF 100%) !important;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.055) inset,
         0 0 24px rgba(139, 92, 246, 0.42),
@@ -336,7 +336,7 @@
     .tabs .tab.active:hover,
     .tab.active:hover {
       background:
-        linear-gradient(135deg, #5B21B6 0%, #7C3AED 54%, #8B5CF6 100%) !important;
+        linear-gradient(135deg, #5B21B6 0%, #6D28FF 54%, #8B5CF6 100%) !important;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.07) inset,
         0 0 30px rgba(139, 92, 246, 0.52),
@@ -370,7 +370,7 @@
       color: #FFFFFF !important;
       border: 1px solid rgba(34, 199, 255, 0.42) !important;
       background:
-        linear-gradient(135deg, #5B21B6 0%, #7C3AED 48%, #22C7FF 100%) !important;
+        linear-gradient(135deg, #5B21B6 0%, #6D28FF 48%, #22C7FF 100%) !important;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.08) inset,
         0 0 30px rgba(139, 92, 246, 0.34),
@@ -447,7 +447,7 @@
       min-height: 118px !important;
       border-color: rgba(139, 92, 246, 0.54) !important;
       background:
-        radial-gradient(circle at 76% 50%, rgba(124, 58, 237, 0.18), transparent 0 32%),
+        radial-gradient(circle at 76% 50%, rgba(109, 40, 255, 0.18), transparent 0 32%),
         linear-gradient(135deg, rgba(18, 16, 28, 0.98), rgba(7, 7, 12, 0.98)) !important;
       box-shadow:
         0 18px 42px rgba(0, 0, 0, 0.52),
@@ -473,12 +473,12 @@
     .venue-detail .mini-list .venue.venue-card .venue-shift-pill {
       color: #f3e8ff !important;
       border-color: rgba(192, 132, 252, 0.42) !important;
-      background: rgba(124, 58, 237, 0.14) !important;
+      background: rgba(109, 40, 255, 0.14) !important;
     }
 
     .venue-detail .mini-list .venue.venue-card .venue-art:before {
       box-shadow:
-        0 0 20px rgba(124, 58, 237, 0.28),
+        0 0 20px rgba(109, 40, 255, 0.28),
         0 0 12px rgba(255, 47, 174, 0.10),
         inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
     }
@@ -685,7 +685,7 @@
       transform: translateY(1px) scale(0.992) !important;
       border-color: rgba(34, 199, 255, 0.58) !important;
       background:
-        linear-gradient(135deg, rgba(124, 58, 237, 0.94), rgba(139, 92, 246, 0.88) 58%, rgba(34, 199, 255, 0.70)) !important;
+        linear-gradient(135deg, rgba(109, 40, 255, 0.94), rgba(139, 92, 246, 0.88) 58%, rgba(34, 199, 255, 0.70)) !important;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.07) inset,
         0 0 24px rgba(139, 92, 246, 0.34),
@@ -732,7 +732,7 @@
         linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.50), rgba(139, 92, 246, 0.92), rgba(236, 72, 153, 0.42), transparent) !important;
       box-shadow:
         0 0 18px rgba(139, 92, 246, 0.50),
-        0 0 34px rgba(124, 58, 237, 0.34),
+        0 0 34px rgba(109, 40, 255, 0.34),
         0 0 46px rgba(236, 72, 153, 0.14) !important;
       filter: blur(0.2px);
     }
@@ -741,25 +741,25 @@
       opacity: 0.52 !important;
       background:
         radial-gradient(circle at 88% 46%, rgba(139, 92, 246, 0.22), transparent 32%),
-        linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.12) 66%, rgba(124, 58, 237, 0.28) 100%) !important;
+        linear-gradient(90deg, transparent 0%, rgba(139, 92, 246, 0.12) 66%, rgba(109, 40, 255, 0.28) 100%) !important;
     }
 
     .location-btn {
       background:
-        linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(139, 92, 246, 0.84) 72%, rgba(34, 199, 255, 0.58)) !important;
+        linear-gradient(135deg, rgba(109, 40, 255, 0.92), rgba(139, 92, 246, 0.84) 72%, rgba(34, 199, 255, 0.58)) !important;
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.16),
-        0 14px 34px rgba(124, 58, 237, 0.22),
+        0 14px 34px rgba(109, 40, 255, 0.22),
         0 0 18px rgba(34, 199, 255, 0.12) !important;
     }
 
     .tabs .tab.active,
     .tab.active {
       background:
-        linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(139, 92, 246, 0.84)) !important;
+        linear-gradient(135deg, rgba(109, 40, 255, 0.92), rgba(139, 92, 246, 0.84)) !important;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-        0 12px 30px rgba(124, 58, 237, 0.30),
+        0 12px 30px rgba(109, 40, 255, 0.30),
         0 0 20px rgba(139, 92, 246, 0.20) !important;
     }
     /* Full profile tile normalization: same rhythm for tonight, upcoming, and no-shift states. */
@@ -922,10 +922,10 @@
       color: #ffffff !important;
       border: 1px solid rgba(34, 199, 255, 0.46) !important;
       background:
-        linear-gradient(135deg, rgba(124, 58, 237, 0.92), rgba(139, 92, 246, 0.82) 62%, rgba(34, 199, 255, 0.66)) !important;
+        linear-gradient(135deg, rgba(109, 40, 255, 0.92), rgba(139, 92, 246, 0.82) 62%, rgba(34, 199, 255, 0.66)) !important;
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.12),
-        0 16px 34px rgba(124, 58, 237, 0.22),
+        0 16px 34px rgba(109, 40, 255, 0.22),
         0 0 18px rgba(34, 199, 255, 0.16) !important;
     }
 
@@ -951,7 +951,7 @@
       color: rgba(255,255,255,.94);
       border: 1px solid rgba(139,92,246,.72);
       background:
-        linear-gradient(135deg, rgba(22,14,38,.56), rgba(85,38,150,.46) 48%, rgba(124,58,237,.42)),
+        linear-gradient(135deg, rgba(22,14,38,.56), rgba(85,38,150,.46) 48%, rgba(109,40,255,.42)),
         rgba(11,8,18,.58);
       box-shadow:
         0 0 0 1px rgba(255,255,255,.045) inset,
@@ -1008,7 +1008,7 @@
       color: #fffaf0;
       border: 1px solid rgba(255,216,109,.82);
       background:
-        linear-gradient(135deg, rgba(58,36,10,.72), rgba(124,58,237,.55) 44%, rgba(236,72,153,.58) 72%, rgba(255,184,65,.68)),
+        linear-gradient(135deg, rgba(58,36,10,.72), rgba(109,40,255,.55) 44%, rgba(236,72,153,.58) 72%, rgba(255,184,65,.68)),
         rgba(14,9,18,.72);
       box-shadow:
         0 0 0 1px rgba(255,255,255,.07) inset,

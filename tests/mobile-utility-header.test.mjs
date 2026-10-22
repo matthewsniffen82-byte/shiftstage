@@ -86,7 +86,7 @@ test("hover remains neutral while every open role action uses restrained violet"
   );
   assert.match(
     mobileHeader,
-    /header \.customer-quick-btn\.active,[\s\S]*?header \.customer-quick-btn\.is-open,[\s\S]*?header #accountBtn\.account-icon-btn\.active \{[\s\S]*?border-color: rgba\(139, 92, 246, 0\.5\) !important;[\s\S]*?rgba\(43, 26, 74, 0\.58\) !important;[\s\S]*?0 0 12px rgba\(124, 58, 237, 0\.12\) !important;/,
+    /header \.customer-quick-btn\.active,[\s\S]*?header \.customer-quick-btn\.is-open,[\s\S]*?header #accountBtn\.account-icon-btn\.active \{[\s\S]*?border-color: rgba\(139, 92, 246, 0\.5\) !important;[\s\S]*?rgba\(43, 26, 74, 0\.58\) !important;[\s\S]*?0 0 12px rgba\(109, 40, 255, 0\.12\) !important;/,
   );
   assert.doesNotMatch(
     mobileHeader,

@@ -844,7 +844,7 @@ function DancerTvStudioStyles() {
       .tv-video-source-action { position: relative; min-width: 0; min-height: 44px; height: 100%; display: grid; grid-template-columns: 20px minmax(0,1fr); align-items: center; gap: 7px; padding: 8px 10px; border: 1px solid var(--dancr-color-border); border-radius: 8px; color: #f8f5fb; background: linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)); box-sizing: border-box; cursor: pointer; appearance: none; -webkit-tap-highlight-color: transparent; text-align: left; font: inherit; }
       .tv-video-source-action:hover { border-color: var(--dancr-color-border-strong); background: linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)); }
       .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:not(:disabled) { border-color: var(--dancr-color-border); color: #fff; background: linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)); }
-      .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:hover:not(:disabled) { background: linear-gradient(#7c3aed,#7c3aed); }
+      .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:hover:not(:disabled) { background: linear-gradient(#6d28ff,#6d28ff); }
       .tv-video-source-action:focus-visible { outline: 2px solid #7eeaff; outline-offset: 2px; }
       .tv-video-source-action.is-awaiting-permissions { color: #bdb7c8; border-color: var(--dancr-color-border); opacity: 1; }
       .tv-video-source-action:disabled { opacity: .5; cursor: progress; }

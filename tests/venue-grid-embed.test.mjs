@@ -89,7 +89,7 @@ test("saved embed colors exclude the internal color and resetting overrides old 
   assert.equal(data.venue.embedAccent, "#00aaff");
   assert.equal(JSON.stringify(data).includes("#ff0000"), false);
   const reset = await apiFixture({ colors: { internalAccent: "#ff0000", embedAccent: null, configured: true } }).get("?accent=ffffff");
-  assert.equal((await reset.json()).venue.embedAccent, "#7c3aed");
+  assert.equal((await reset.json()).venue.embedAccent, "#6d28ff");
   assert.equal((await (await apiFixture().get()).json()).venue.embedAccent, null);
 });
 
@@ -264,10 +264,10 @@ test("an existing embed ignores saved club colors on load and refresh without re
   const f = componentFixture();
   f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#00aaff" }, dancers: [dancer], nextCursor: null }));
   await f.window.MydancrVenueEmbed.mount(f.document);
-  assert.equal(f.styles.get("--embed-accent"), "#7c3aed");
-  f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#7c3aed" }, dancers: [dancer], nextCursor: null }));
+  assert.equal(f.styles.get("--embed-accent"), "#6d28ff");
+  f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#6d28ff" }, dancers: [dancer], nextCursor: null }));
   f.timers[0].handler(); await settle();
-  assert.equal(f.styles.get("--embed-accent"), "#7c3aed");
+  assert.equal(f.styles.get("--embed-accent"), "#6d28ff");
   assert.ok(f.requests.every(request => request.url.includes(`/venue-grid/${venue.slug}`)));
 });
 
@@ -365,19 +365,19 @@ test("every location and legacy accent URL uses the shared site palette", async 
     await fixture.get("?accent=c99842&city=WrongCity");
     assert.equal(fixture.calls[0].city, location.city);
     assert.equal(fixture.calls[0].venueId, location.id);
-    assert.equal(venueEmbedAccent(new URL(`https://www.mydancr.com/embed/venues/${location.slug}?accent=c99842`)), "#7c3aed");
+    assert.equal(venueEmbedAccent(new URL(`https://www.mydancr.com/embed/venues/${location.slug}?accent=c99842`)), "#6d28ff");
   }
-  for (const value of ["red", "javascript:alert(1)", "ff0000; color:red", "fff"]) assert.equal(venueEmbedAccent(new URL(`https://example.com/?accent=${encodeURIComponent(value)}`)), "#7c3aed");
+  for (const value of ["red", "javascript:alert(1)", "ff0000; color:red", "fff"]) assert.equal(venueEmbedAccent(new URL(`https://example.com/?accent=${encodeURIComponent(value)}`)), "#6d28ff");
   const window = runtime();
   for (const accent of ["#ffffff", "#000000", "#c99842"]) {
     const values = new Map();
     window.MydancrVenueEmbed.applyTheme({ body: { dataset: { accent }, style: { setProperty: (key, value) => values.set(key, value) } } });
-    assert.equal(values.get("--embed-accent"), "#7c3aed");
+    assert.equal(values.get("--embed-accent"), "#6d28ff");
     assert.equal(values.get("--embed-accent-text"), "#f5f3f7");
   }
   assert.doesNotMatch(read("public/venue-grid-embed.js"), /localStorage|sessionStorage|postMessage/);
   assert.doesNotMatch(read("src/live-shell/shell.html"), /venue-grid-embed\.css|venue-grid-embed\.js/);
-  assert.match(read("public/dancr-brand-tokens.v1.css"), /--dancr-color-brand-primary: #7c3aed/);
+  assert.match(read("public/dancr-brand-tokens.v1.css"), /--dancr-color-brand-primary: #6d28ff/);
 });
 
 const publicProfile = { ...dancer, city: "Las Vegas", checkedInAt: new Date().toISOString(), locationStatus: "club_confirmed",

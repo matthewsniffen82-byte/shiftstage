@@ -14552,7 +14552,7 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home
   gap: 6px !important;
   padding: 0 10px !important;
   border-radius: 10px !important;
-  border-color: var(--dancr-color-brand-primary, #7c3aed) !important;
+  border-color: var(--dancr-color-brand-primary, #6d28ff) !important;
   background: linear-gradient(135deg, #3500a8, #240072) !important;
   color: #fff !important;
   box-shadow: var(--dancr-shadow-brand-control) !important;

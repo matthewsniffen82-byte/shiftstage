@@ -1,5 +1,5 @@
 export type VenueGuestColors = { internalAccent: string | null; embedAccent: string | null };
-export const DEFAULT_GUEST_ACCENT = "#7c3aed";
+export const DEFAULT_GUEST_ACCENT = "#6d28ff";
 
 export function normalizeGuestAccent(value: unknown): string | null {
   if (typeof value !== "string") return null;

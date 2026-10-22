@@ -598,7 +598,7 @@
     /* Dancr balance pass: premium nightlife tech, less soft-purple app energy. */
     body {
       background:
-        radial-gradient(circle at 78% 0%, rgba(124, 58, 237, 0.12), transparent 0 34rem),
+        radial-gradient(circle at 78% 0%, rgba(109, 40, 255, 0.12), transparent 0 34rem),
         linear-gradient(180deg, #050507 0%, #07070b 52%, #050507 100%) !important;
       color: #FFFFFF !important;
     }
@@ -618,7 +618,7 @@
     .venue-card {
       background:
         linear-gradient(180deg, rgba(17, 17, 24, 0.96), rgba(8, 8, 13, 0.98)) !important;
-      border-color: rgba(124, 58, 237, 0.24) !important;
+      border-color: rgba(109, 40, 255, 0.24) !important;
       box-shadow:
         0 18px 44px rgba(0, 0, 0, 0.42),
         inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
@@ -627,19 +627,19 @@
     .reference-hero {
       background:
         radial-gradient(ellipse at 92% 50%, rgba(255, 47, 174, 0.2), transparent 0 14rem),
-        radial-gradient(ellipse at 86% 48%, rgba(124, 58, 237, 0.54), transparent 0 24rem),
+        radial-gradient(ellipse at 86% 48%, rgba(109, 40, 255, 0.54), transparent 0 24rem),
         linear-gradient(90deg, #050507 0%, #07060d 48%, #120821 76%, #250454 100%) !important;
       box-shadow:
-        0 0 38px rgba(124, 58, 237, 0.24),
-        inset 0 0 0 1px rgba(124, 58, 237, 0.38),
-        inset -110px 0 160px rgba(124, 58, 237, 0.34) !important;
+        0 0 38px rgba(109, 40, 255, 0.24),
+        inset 0 0 0 1px rgba(109, 40, 255, 0.38),
+        inset -110px 0 160px rgba(109, 40, 255, 0.34) !important;
     }
 
     .reference-hero::after {
       box-shadow:
         0 0 10px rgba(255, 255, 255, 0.62),
         0 0 26px rgba(139, 92, 246, 0.78),
-        0 0 58px rgba(124, 58, 237, 0.64),
+        0 0 58px rgba(109, 40, 255, 0.64),
         -48px 0 96px rgba(255, 47, 174, 0.16) !important;
     }
 
@@ -661,17 +661,17 @@
     .action-btn.secondary,
     .profile-modal #notifyBtn {
       background: rgba(17, 17, 24, 0.74) !important;
-      border-color: rgba(124, 58, 237, 0.34) !important;
+      border-color: rgba(109, 40, 255, 0.34) !important;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
     }
 
     .tabs .tab.active,
     .tab.active {
-      background: linear-gradient(135deg, #7C3AED 0%, #FF2FAE 100%) !important;
+      background: linear-gradient(135deg, #6D28FF 0%, #FF2FAE 100%) !important;
       color: #FFFFFF !important;
       border-color: rgba(255, 47, 174, 0.5) !important;
       box-shadow:
-        0 0 18px rgba(124, 58, 237, 0.46),
+        0 0 18px rgba(109, 40, 255, 0.46),
         0 0 24px rgba(255, 47, 174, 0.26),
         inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
     }
@@ -681,10 +681,10 @@
     .auth-card button[type="submit"],
     .post-shift-submit,
     .location-btn {
-      background: linear-gradient(135deg, #7C3AED 0%, #FF2FAE 100%) !important;
+      background: linear-gradient(135deg, #6D28FF 0%, #FF2FAE 100%) !important;
       color: #FFFFFF !important;
       box-shadow:
-        0 0 18px rgba(124, 58, 237, 0.34),
+        0 0 18px rgba(109, 40, 255, 0.34),
         0 0 28px rgba(255, 47, 174, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
     }
@@ -724,7 +724,7 @@
       color: #FF5FC3 !important;
       text-shadow:
         0 0 8px rgba(255, 47, 174, 0.38),
-        0 0 14px rgba(124, 58, 237, 0.16) !important;
+        0 0 14px rgba(109, 40, 255, 0.16) !important;
     }
 
     .card-schedule-text.upcoming,
@@ -743,7 +743,7 @@
     #customerDashboard .customer-summary,
     #customerDashboard .customer-notification-card,
     #customerDashboard .stat {
-      border-color: rgba(124, 58, 237, 0.22) !important;
+      border-color: rgba(109, 40, 255, 0.22) !important;
       box-shadow:
         0 16px 34px rgba(0, 0, 0, 0.38),
         inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
@@ -761,7 +761,7 @@
       border-color: rgba(255, 47, 174, 0.42) !important;
       box-shadow:
         0 20px 54px rgba(0, 0, 0, 0.5),
-        0 0 22px rgba(124, 58, 237, 0.26),
+        0 0 22px rgba(109, 40, 255, 0.26),
         0 0 18px rgba(255, 47, 174, 0.12) !important;
     }
 
@@ -775,7 +775,7 @@
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025) 42%, rgba(5, 5, 7, 0.16)),
         radial-gradient(circle at 18% 18%, rgba(255, 255, 255, 0.16), transparent 0 32%),
-        linear-gradient(135deg, rgba(124, 58, 237, 0.48), rgba(255, 47, 174, 0.3)),
+        linear-gradient(135deg, rgba(109, 40, 255, 0.48), rgba(255, 47, 174, 0.3)),
         rgba(10, 8, 18, 0.76) !important;
       box-shadow:
         0 0 8px rgba(139, 92, 246, 0.42),
@@ -818,7 +818,7 @@
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.045) 42%, rgba(5, 5, 7, 0.12)),
         radial-gradient(circle at 20% 18%, rgba(255, 242, 189, 0.34), transparent 0 38%),
-        linear-gradient(135deg, rgba(124, 58, 237, 0.68) 0%, rgba(236, 72, 153, 0.68) 50%, rgba(224, 168, 70, 0.56) 100%) !important;
+        linear-gradient(135deg, rgba(109, 40, 255, 0.68) 0%, rgba(236, 72, 153, 0.68) 50%, rgba(224, 168, 70, 0.56) 100%) !important;
       box-shadow:
         0 0 12px rgba(255, 210, 114, 0.3),
         0 0 20px rgba(255, 47, 174, 0.32),
@@ -842,13 +842,13 @@
 
     /* Final profile card/modal polish: tighter, more Dancr, less dead space. */
     .dancer-card {
-      border-color: rgba(124, 58, 237, 0.42) !important;
+      border-color: rgba(109, 40, 255, 0.42) !important;
       background:
         radial-gradient(circle at 50% 108%, rgba(255, 47, 174, 0.10), transparent 0 44%),
         #050507 !important;
       box-shadow:
         0 24px 58px rgba(0, 0, 0, 0.58),
-        0 0 18px rgba(124, 58, 237, 0.22),
+        0 0 18px rgba(109, 40, 255, 0.22),
         inset 0 1px 0 rgba(255, 255, 255, 0.035) !important;
     }
 
@@ -856,7 +856,7 @@
       border-color: rgba(255, 47, 174, 0.44) !important;
       box-shadow:
         0 26px 62px rgba(0, 0, 0, 0.62),
-        0 0 26px rgba(124, 58, 237, 0.28),
+        0 0 26px rgba(109, 40, 255, 0.28),
         0 0 24px rgba(255, 47, 174, 0.16),
         inset 0 1px 0 rgba(255, 255, 255, 0.045) !important;
     }
@@ -866,7 +866,7 @@
       box-shadow:
         0 26px 62px rgba(0, 0, 0, 0.6),
         0 0 24px rgba(255, 47, 174, 0.22),
-        0 0 30px rgba(124, 58, 237, 0.20),
+        0 0 30px rgba(109, 40, 255, 0.20),
         inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
     }
 
@@ -883,7 +883,7 @@
       padding-bottom: 14px !important;
       background:
         linear-gradient(180deg, rgba(5, 5, 7, 0) 0%, rgba(5, 5, 7, 0.46) 43%, rgba(5, 5, 7, 0.96) 100%),
-        radial-gradient(circle at 20% 100%, rgba(124, 58, 237, 0.16), transparent 0 42%),
+        radial-gradient(circle at 20% 100%, rgba(109, 40, 255, 0.16), transparent 0 42%),
         radial-gradient(circle at 92% 100%, rgba(255, 47, 174, 0.11), transparent 0 34%) !important;
     }
 
@@ -895,7 +895,7 @@
       max-height: min(96svh, 900px) !important;
       padding-bottom: 0 !important;
       background:
-        radial-gradient(circle at 50% 100%, rgba(124, 58, 237, 0.14), transparent 0 24rem),
+        radial-gradient(circle at 50% 100%, rgba(109, 40, 255, 0.14), transparent 0 24rem),
         linear-gradient(180deg, rgba(17, 17, 24, 0.98), rgba(5, 5, 7, 0.99)) !important;
     }
 
@@ -912,13 +912,13 @@
     .profile-modal .info-tile {
       min-height: 70px !important;
       padding: 12px 14px !important;
-      border-color: rgba(124, 58, 237, 0.34) !important;
+      border-color: rgba(109, 40, 255, 0.34) !important;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
         rgba(12, 10, 18, 0.84) !important;
       box-shadow:
         0 12px 26px rgba(0, 0, 0, 0.3),
-        inset 3px 0 0 rgba(124, 58, 237, 0.76),
+        inset 3px 0 0 rgba(109, 40, 255, 0.76),
         inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
     }
 
@@ -990,20 +990,20 @@
     header {
       background:
         linear-gradient(90deg, rgba(5, 5, 7, 0.96), rgba(17, 17, 24, 0.96) 54%, rgba(30, 10, 42, 0.78)) !important;
-      border-bottom-color: rgba(124, 58, 237, 0.34) !important;
+      border-bottom-color: rgba(109, 40, 255, 0.34) !important;
       box-shadow:
         0 14px 34px rgba(0, 0, 0, 0.42),
         0 1px 0 rgba(255, 255, 255, 0.035) inset !important;
     }
 
     .dancr-home-logo {
-      border-color: rgba(124, 58, 237, 0.46) !important;
+      border-color: rgba(109, 40, 255, 0.46) !important;
       background:
         radial-gradient(circle at 74% 50%, rgba(236, 72, 153, 0.18), transparent 0 38%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.012)),
         rgba(10, 10, 16, 0.9) !important;
       box-shadow:
-        0 0 24px rgba(124, 58, 237, 0.22),
+        0 0 24px rgba(109, 40, 255, 0.22),
         inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
     }
 
@@ -1022,7 +1022,7 @@
         linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.01)),
         rgba(9, 9, 15, 0.88) !important;
       box-shadow:
-        0 0 22px rgba(124, 58, 237, 0.18),
+        0 0 22px rgba(109, 40, 255, 0.18),
         inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
     }
 
@@ -1031,35 +1031,35 @@
       border-color: rgba(236, 72, 153, 0.7) !important;
       box-shadow:
         0 0 28px rgba(236, 72, 153, 0.22),
-        0 0 24px rgba(124, 58, 237, 0.20),
+        0 0 24px rgba(109, 40, 255, 0.20),
         inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
     }
 
     .reference-hero {
-      border-color: rgba(124, 58, 237, 0.52) !important;
+      border-color: rgba(109, 40, 255, 0.52) !important;
       background:
         radial-gradient(ellipse at 96% 50%, rgba(236, 72, 153, 0.20), transparent 0 18%),
-        radial-gradient(ellipse at 82% 50%, rgba(124, 58, 237, 0.36), transparent 0 42%),
+        radial-gradient(ellipse at 82% 50%, rgba(109, 40, 255, 0.36), transparent 0 42%),
         linear-gradient(90deg, #050507 0%, #090713 42%, #1a0d35 78%, #321071 100%) !important;
       box-shadow:
         0 24px 68px rgba(0, 0, 0, 0.56),
-        0 0 34px rgba(124, 58, 237, 0.20),
+        0 0 34px rgba(109, 40, 255, 0.20),
         inset 0 0 0 1px rgba(255, 255, 255, 0.035) !important;
     }
 
     .reference-hero:before {
       opacity: 1 !important;
       background:
-        linear-gradient(90deg, transparent 0 calc(100% - 57px), rgba(236, 72, 153, 0.10) calc(100% - 56px), rgba(139, 92, 246, 0.48) calc(100% - 51px), rgba(255, 255, 255, 0.60) calc(100% - 48px), rgba(236, 72, 153, 0.55) calc(100% - 45px), rgba(124, 58, 237, 0.22) calc(100% - 37px), transparent calc(100% - 24px)),
+        linear-gradient(90deg, transparent 0 calc(100% - 57px), rgba(236, 72, 153, 0.10) calc(100% - 56px), rgba(139, 92, 246, 0.48) calc(100% - 51px), rgba(255, 255, 255, 0.60) calc(100% - 48px), rgba(236, 72, 153, 0.55) calc(100% - 45px), rgba(109, 40, 255, 0.22) calc(100% - 37px), transparent calc(100% - 24px)),
         radial-gradient(ellipse at 93% 50%, rgba(236, 72, 153, 0.16), transparent 0 28%),
-        radial-gradient(ellipse at 88% 50%, rgba(124, 58, 237, 0.24), transparent 0 44%) !important;
+        radial-gradient(ellipse at 88% 50%, rgba(109, 40, 255, 0.24), transparent 0 44%) !important;
       filter: blur(0.2px) saturate(1.08) !important;
     }
 
     .reference-hero .hero-copy h2 {
       text-shadow:
         0 8px 24px rgba(0, 0, 0, 0.72),
-        0 0 18px rgba(124, 58, 237, 0.18) !important;
+        0 0 18px rgba(109, 40, 255, 0.18) !important;
     }
 
     .reference-hero .hero-copy h2 strong {
@@ -1070,46 +1070,46 @@
     }
 
     .controls {
-      border-color: rgba(124, 58, 237, 0.42) !important;
+      border-color: rgba(109, 40, 255, 0.42) !important;
       background:
         radial-gradient(circle at 92% 28%, rgba(236, 72, 153, 0.09), transparent 0 34%),
         linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
         rgba(10, 10, 16, 0.88) !important;
       box-shadow:
         0 22px 54px rgba(0, 0, 0, 0.45),
-        0 0 24px rgba(124, 58, 237, 0.12),
+        0 0 24px rgba(109, 40, 255, 0.12),
         inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
     }
 
     .controls:before {
       background:
-        radial-gradient(circle at 12% 0%, rgba(124, 58, 237, 0.16), transparent 0 42%),
+        radial-gradient(circle at 12% 0%, rgba(109, 40, 255, 0.16), transparent 0 42%),
         radial-gradient(circle at 94% 92%, rgba(236, 72, 153, 0.10), transparent 0 38%) !important;
     }
 
     .controls select {
-      border-color: rgba(124, 58, 237, 0.50) !important;
+      border-color: rgba(109, 40, 255, 0.50) !important;
       background: rgba(5, 5, 7, 0.88) !important;
       box-shadow:
         inset 0 0 0 1px rgba(255, 255, 255, 0.02),
-        0 0 18px rgba(124, 58, 237, 0.10) !important;
+        0 0 18px rgba(109, 40, 255, 0.10) !important;
     }
 
     .controls select:focus {
       border-color: rgba(236, 72, 153, 0.76) !important;
       box-shadow:
         0 0 0 3px rgba(236, 72, 153, 0.10),
-        0 0 22px rgba(124, 58, 237, 0.18) !important;
+        0 0 22px rgba(109, 40, 255, 0.18) !important;
     }
 
     .location-btn {
       color: #FFFFFF !important;
       border-color: rgba(236, 72, 153, 0.42) !important;
       background:
-        linear-gradient(135deg, #7C3AED 0%, #EC4899 100%) !important;
+        linear-gradient(135deg, #6D28FF 0%, #EC4899 100%) !important;
       box-shadow:
         0 14px 34px rgba(236, 72, 153, 0.23),
-        0 0 24px rgba(124, 58, 237, 0.20),
+        0 0 24px rgba(109, 40, 255, 0.20),
         inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
     }
 
@@ -1119,7 +1119,7 @@
     }
 
     .tab {
-      border-color: rgba(124, 58, 237, 0.24) !important;
+      border-color: rgba(109, 40, 255, 0.24) !important;
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.01)),
         rgba(17, 17, 24, 0.84) !important;
@@ -1130,10 +1130,10 @@
       color: #FFFFFF !important;
       border-color: rgba(236, 72, 153, 0.62) !important;
       background:
-        linear-gradient(135deg, #7C3AED 0%, #EC4899 100%) !important;
+        linear-gradient(135deg, #6D28FF 0%, #EC4899 100%) !important;
       box-shadow:
         0 0 28px rgba(236, 72, 153, 0.28),
-        0 0 26px rgba(124, 58, 237, 0.24),
+        0 0 26px rgba(109, 40, 255, 0.24),
         inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
     }
 
@@ -1145,7 +1145,7 @@
 
     .content-head h2 {
       color: #FFFFFF !important;
-      text-shadow: 0 0 22px rgba(124, 58, 237, 0.16) !important;
+      text-shadow: 0 0 22px rgba(109, 40, 255, 0.16) !important;
     }
 
     /* Schedule icon color language: place stays blue, timing follows shift state. */
@@ -1160,7 +1160,7 @@
       color: #FF2FAE !important;
       filter:
         drop-shadow(0 0 7px rgba(255, 47, 174, 0.56))
-        drop-shadow(0 0 11px rgba(124, 58, 237, 0.22)) !important;
+        drop-shadow(0 0 11px rgba(109, 40, 255, 0.22)) !important;
     }
 
     .dancer-card .schedule-row.is-upcoming .venue-dot,

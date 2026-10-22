@@ -827,16 +827,16 @@ function AccountStyles() {
       .dancer-signup-note { display: grid; gap: 10px; padding: 14px; border: 1px solid rgba(139,92,246,.34); border-radius: 8px; background: linear-gradient(135deg, rgba(139,92,246,.14), rgba(5,5,9,.72)); box-shadow: 0 0 24px rgba(139,92,246,.12); }
       .dancer-signup-note h2 { margin: 0; font-size: 20px; }
       .dancer-signup-note p { font-size: 14px; line-height: 1.45; }
-      .nfc-account-shell { padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: max(112px, calc(96px + env(safe-area-inset-bottom))); background: radial-gradient(circle at 50% -8%, rgba(124,58,237,.3), transparent 26rem), radial-gradient(circle at 82% 30%, rgba(34,211,238,.08), transparent 22rem), #050507; }
+      .nfc-account-shell { padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: max(112px, calc(96px + env(safe-area-inset-bottom))); background: radial-gradient(circle at 50% -8%, rgba(109,40,255,.3), transparent 26rem), radial-gradient(circle at 82% 30%, rgba(34,211,238,.08), transparent 22rem), #050507; }
       .nfc-account-header { width: min(100%, 920px); min-height: 60px; margin: 0 auto clamp(24px,5vw,52px); display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 0 2px 14px; border-bottom: 1px solid rgba(248,250,252,.1); }
-      .nfc-brand { position: relative; color: #f8fafc; font-size: 25px; letter-spacing: -.055em; text-transform: lowercase; text-shadow: 0 0 20px rgba(124,58,237,.4); }
-      .nfc-brand::after { content: ""; position: absolute; right: -3px; bottom: 3px; width: 19px; height: 2px; border-radius: 999px; background: #7c3aed; box-shadow: 0 0 12px rgba(124,58,237,.68); }
+      .nfc-brand { position: relative; color: #f8fafc; font-size: 25px; letter-spacing: -.055em; text-transform: lowercase; text-shadow: 0 0 20px rgba(109,40,255,.4); }
+      .nfc-brand::after { content: ""; position: absolute; right: -3px; bottom: 3px; width: 19px; height: 2px; border-radius: 999px; background: #6d28ff; box-shadow: 0 0 12px rgba(109,40,255,.68); }
       .nfc-back-link { min-height: 40px; display: inline-flex; align-items: center; padding: 0 13px; border: 1px solid rgba(248,250,252,.14); border-radius: 999px; color: #f8fafc; background: rgba(17,17,24,.78); text-decoration: none; font-size: 12px; font-weight: 900; }
       .nfc-account-grid { width: min(100%, 920px); grid-template-columns: minmax(0,1fr) minmax(320px,420px); align-items: start; }
       .nfc-account-grid .account-copy { gap: 14px; }
       .nfc-account-grid h1 { max-width: 620px; font-size: clamp(38px,6vw,68px); line-height: .98; }
       .nfc-account-grid .account-copy>p { color: #cbd5e1; font-size: clamp(15px,2.1vw,18px); line-height: 1.55; }
-      .nfc-account-mark { width: 72px; height: 72px; display: grid; place-items: center; border: 1px solid rgba(248,250,252,.16); border-radius: 22px; color: #f8fafc; background: radial-gradient(circle at 42% 34%,rgba(124,58,237,.42),transparent 58%),#111118; box-shadow: 0 16px 40px rgba(0,0,0,.42),0 0 28px rgba(124,58,237,.14); }
+      .nfc-account-mark { width: 72px; height: 72px; display: grid; place-items: center; border: 1px solid rgba(248,250,252,.16); border-radius: 22px; color: #f8fafc; background: radial-gradient(circle at 42% 34%,rgba(109,40,255,.42),transparent 58%),#111118; box-shadow: 0 16px 40px rgba(0,0,0,.42),0 0 28px rgba(109,40,255,.14); }
       .nfc-account-mark svg { width: 38px; height: 38px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
       .nfc-venue-context { min-height: 62px; display: flex; align-items: center; gap: 12px; box-sizing: border-box; margin-top: 4px; padding: 12px 14px; border: 1px solid rgba(34,211,238,.28); border-radius: 16px; background: rgba(17,17,24,.84); box-shadow: inset 0 1px 0 rgba(248,250,252,.035); }
       .nfc-venue-context.error { border-color: rgba(251,191,36,.28); }
@@ -847,14 +847,14 @@ function AccountStyles() {
       .nfc-venue-context small { overflow: hidden; color: #94a3b8; font-size: 12px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
       .nfc-account-steps { display: grid; gap: 9px; margin: 4px 0 0; padding: 0; list-style: none; }
       .nfc-account-steps li { display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-size: 13px; }
-      .nfc-account-steps li span { width: 25px; height: 25px; display: grid; place-items: center; flex: 0 0 25px; border: 1px solid rgba(124,58,237,.48); border-radius: 50%; color: #f8fafc; background: rgba(124,58,237,.16); font-size: 11px; }
+      .nfc-account-steps li span { width: 25px; height: 25px; display: grid; place-items: center; flex: 0 0 25px; border: 1px solid rgba(109,40,255,.48); border-radius: 50%; color: #f8fafc; background: rgba(109,40,255,.16); font-size: 11px; }
       .account-panel-nfc { border-color: rgba(248,250,252,.16); border-radius: 20px; background: linear-gradient(155deg,rgba(17,17,24,.97),rgba(5,5,7,.96)); box-shadow: 0 26px 72px rgba(0,0,0,.48),inset 0 1px 0 rgba(248,250,252,.04); }
       .nfc-dancer-lock { min-height: 42px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(34,211,238,.24); border-radius: 12px; color: #f8fafc; background: rgba(34,211,238,.055); font-size: 13px; font-weight: 900; }
       .nfc-dancer-lock span { width: 19px; height: 19px; display: grid; place-items: center; border-radius: 50%; color: #050507; background: #22d3ee; font-size: 12px; }
       .account-panel-nfc .segmented { border-radius: 12px; background: rgba(248,250,252,.035); }
       .account-panel-nfc .segmented button { border-radius: 9px; }
       .account-panel-nfc.account-panel-dancer .segmented button.active,
-      .account-panel-nfc .submit { border: 1px solid rgba(166,126,255,.5); color: #f8fafc; background: linear-gradient(135deg,#7c3aed,#4c1d95); box-shadow: 0 10px 26px rgba(124,58,237,.24),0 0 18px rgba(124,58,237,.14); }
+      .account-panel-nfc .submit { border: 1px solid rgba(166,126,255,.5); color: #f8fafc; background: linear-gradient(135deg,#6d28ff,#4c1d95); box-shadow: 0 10px 26px rgba(109,40,255,.24),0 0 18px rgba(109,40,255,.14); }
       .account-panel-nfc input,.account-panel-nfc select { border-color: rgba(248,250,252,.15); background: #111118; }
       @media (max-width: 780px) { .account-grid { grid-template-columns: 1fr; } }
       @media (max-width: 780px) { .nfc-account-grid { gap: 22px; } .nfc-account-grid .account-copy { max-width: 620px; } .nfc-account-grid h1 { font-size: clamp(36px,10vw,52px); } }

@@ -28,7 +28,7 @@ const [
   ]);
 
 const requiredTokens = new Map([
-  ["--dancr-color-brand-primary", "#7c3aed"],
+  ["--dancr-color-brand-primary", "#6d28ff"],
   ["--dancr-color-text-primary", "#f5f3f7"],
   ["--dancr-color-background", "#0b0b0b"],
   ["--dancr-color-surface", "#191820"],
@@ -91,7 +91,7 @@ test("legacy beam aliases resolve to the single Electric Violet accent", () => {
 test("location pins use the brand violet without lavender icons, indigo glows or plum surfaces", () => {
   assert.match(tokens, /--dancr-color-icon-location: var\(--dancr-color-brand-primary\);/);
   assert.match(tokens, /--dancr-color-icon-accent-active: #f5f3f7;/);
-  assert.match(tokens, /--dancr-color-brand-glow: #7c3aed;/);
+  assert.match(tokens, /--dancr-color-brand-glow: #6d28ff;/);
   assert.match(tokens, /--dancr-color-brand-primary-soft: var\(--dancr-color-surface\);/);
   assert.match(tokens, /--dancr-color-info-surface-glass: var\(--dancr-color-surface-translucent\);/);
   assert.doesNotMatch(tokens, /#b69aef|#a78bfa|#c4b5fd|#312e81|rgba\(182, 154, 239|rgba\(49, 46, 129/);
@@ -99,7 +99,7 @@ test("location pins use the brand violet without lavender icons, indigo glows or
 
 test("brand text and status combinations meet normal-text contrast", () => {
   const combinations = [
-    ["#f5f3f7", "#7c3aed"],
+    ["#f5f3f7", "#6d28ff"],
     ["#f5f3f7", "#0b0b0b"],
     ["#aaa6b5", "#191820"],
     ["#aaa6b5", "#0b0b0b"],
@@ -124,7 +124,7 @@ test("browser chrome uses midnight charcoal and installed logo artwork is preser
   assert.match(manifest, /"background_color": "#0b0b0b"/);
   assert.match(manifest, /"theme_color": "#0b0b0b"/);
   assert.match(appIcon, /fill="#050507"/);
-  assert.match(appIcon, /stroke="#7C3AED"/);
+  assert.match(appIcon, /stroke="#6D28FF"/);
   assert.match(appIcon, /fill="#F8FAFC"/);
 });
 

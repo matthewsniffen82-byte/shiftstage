@@ -140,10 +140,10 @@ body :is(
   gap: 8px;
   margin-top: 4px;
   padding: 13px 16px;
-  border: 1px solid var(--dancr-color-brand-primary, #7c3aed) !important;
+  border: 1px solid var(--dancr-color-brand-primary, #6d28ff) !important;
   border-radius: 13px !important;
   color: #fff !important;
-  background: var(--dancr-color-brand-primary, #7c3aed) !important;
+  background: var(--dancr-color-brand-primary, #6d28ff) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -225,7 +225,7 @@ body .venue-team-invite-card .venue-team-brand {
 }
 
 body .venue-team-invite-card .venue-team-mode button.active {
-  background: var(--dancr-color-brand-primary, #7c3aed) !important;
+  background: var(--dancr-color-brand-primary, #6d28ff) !important;
   box-shadow: none !important;
 }
 

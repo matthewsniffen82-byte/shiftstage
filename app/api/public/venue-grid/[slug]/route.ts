@@ -32,7 +32,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
       primaryPhotoUrl: venueEmbedMediaUrl(dancer.primaryPhotoUrl), primaryPhotoSrcSet: venueEmbedMediaSrcSet(dancer.primaryPhotoSrcSet),
     }));
     const { embedAccent, configured } = await getVenueGuestColors(client, venue.id);
-    return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name, embedAccent: slug === RHINO_VENUE_SLUG ? RHINO_ACCENT : configured ? embedAccent || "#7c3aed" : null }, dancers, nextCursor: page.nextCursor }, { headers });
+    return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name, embedAccent: slug === RHINO_VENUE_SLUG ? RHINO_ACCENT : configured ? embedAccent || "#6d28ff" : null }, dancers, nextCursor: page.nextCursor }, { headers });
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) return NextResponse.json({ ok: false, error: "Please wait before refreshing." },
       { status: 429, headers: { ...headers, "Retry-After": String(error.retryAfterSeconds) } });

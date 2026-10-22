@@ -159,7 +159,7 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.match(dashboard, /Preview and approval controls are at the bottom/);
   assert.doesNotMatch(dashboard, /MyDancr-managed setup/);
   assert.match(dashboard, /className="venue-preview-action"/);
-  assert.match(dashboard, /\.venue-preview-action \{[\s\S]*?rgba\(139,92,246,\.7\)[\s\S]*?rgba\(124,58,237,\.24\)/);
+  assert.match(dashboard, /\.venue-preview-action \{[\s\S]*?rgba\(139,92,246,\.7\)[\s\S]*?rgba\(109,40,255,\.24\)/);
   assert.match(dashboard, /Approve & make live/);
   assert.match(dashboard, /Approve this venue information and commercial package and make the venue live on MyDancr/);
   assert.match(dashboard, /Request changes/);
@@ -167,7 +167,7 @@ test("the venue dashboard presents a read-only review and approval experience", 
   assert.match(dashboard, /className="venue-review-completion"/);
   assert.match(dashboard, /\.venue-review-completion \.venue-publication-actions > \* \{[^}]*min-height: 52px;[^}]*white-space: nowrap;/);
   assert.match(dashboard, /\.venue-review-completion \.venue-publication-actions > \.venue-preview-action \{[^}]*background: rgba\(8,8,13,\.9\) !important;[^}]*box-shadow: inset/);
-  assert.match(dashboard, /\.venue-review-completion \.venue-publication-actions > \.primary \{[^}]*background: linear-gradient\(135deg,#6d28d9,#7c3aed\) !important;/);
+  assert.match(dashboard, /\.venue-review-completion \.venue-publication-actions > \.primary \{[^}]*background: linear-gradient\(135deg,#6d28d9,#6d28ff\) !important;/);
   assert.match(dashboard, /@media \(max-width: 620px\)[\s\S]*?\.venue-review-completion \.venue-publication-actions \{ grid-template-columns: 1fr; gap: 10px; \}/);
   assert.ok(dashboard.indexOf('className="venue-review-package"') < dashboard.indexOf('className="venue-review-completion"'));
   assert.ok(dashboard.indexOf('className="venue-review-request"') < dashboard.indexOf('className="venue-review-completion"'));

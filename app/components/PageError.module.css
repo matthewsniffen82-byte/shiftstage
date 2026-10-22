@@ -53,10 +53,10 @@
   align-items: center;
   justify-content: center;
   padding: 13px 16px;
-  border: 1px solid var(--dancr-color-brand-primary, #7c3aed);
+  border: 1px solid var(--dancr-color-brand-primary, #6d28ff);
   border-radius: 13px;
   color: #fff;
-  background: var(--dancr-color-brand-primary, #7c3aed);
+  background: var(--dancr-color-brand-primary, #6d28ff);
   font: inherit;
   font-size: 15px;
   font-weight: 600;

@@ -151,14 +151,14 @@ test("TV cards are completely borderless without a violet perimeter", () => {
   const tvSlideShell = homeSource.match(/\.home-tv-feed-slide \{[\s\S]*?contain: layout paint style;[\s\S]*?\}/)?.[0] || "";
   assert.match(tvSlideShell, /border: 0;/);
   assert.match(tvSlideShell, /box-shadow: 0 20px 54px rgba\(0,0,0,\.48\);/);
-  assert.doesNotMatch(tvSlideShell, /139,92,246|124,58,237|91,19,255|violet/);
+  assert.doesNotMatch(tvSlideShell, /139,92,246|109,40,255|91,19,255|violet/);
   const sharedMobileCardShell = homeSource.match(
     /#results\.home-dancer-grid > \.home-dancer-grid-card,[\s\S]*?#results\.venue-card-grid > \.venue\.venue-card \{[\s\S]*?0 0 22px var\(--home-card-glow\) !important;[\s\S]*?\}/,
   )?.[0] || "";
   assert.doesNotMatch(sharedMobileCardShell, /home-tv-feed/);
   assert.doesNotMatch(
     homeSource.match(/\.home-tv-feed-loading \{[\s\S]*?\}/)?.[0] || "",
-    /139,92,246|124,58,237|violet/,
+    /139,92,246|109,40,255|violet/,
   );
   assert.match(
     aestheticSource,
@@ -192,7 +192,7 @@ test("TV cards are completely borderless without a violet perimeter", () => {
   assert.match(fullTvPlayerRule, /border: 0;/);
   assert.match(fullTvPlayerRule, /outline: 0;/);
   assert.match(fullTvPlayerRule, /background: #000;/);
-  assert.doesNotMatch(fullTvPlayerRule, /139,92,246|124,58,237|109,40,217|violet/);
+  assert.doesNotMatch(fullTvPlayerRule, /139,92,246|109,40,255|109,40,217|violet/);
   const fullTvPerimeterOverride = aestheticSource.match(
     /\/\* Full-page TV cards stay perimeter-free[\s\S]*?(?=\r?\n\r?\n\.public-profile-shell)/,
   )?.[0] || "";

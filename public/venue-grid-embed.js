@@ -31,7 +31,7 @@
   }
   function applyTheme(document) {
     // Saved club colors and legacy URL accents no longer change presentation.
-    document.body.style.setProperty("--embed-accent", "#7c3aed");
+    document.body.style.setProperty("--embed-accent", "#6d28ff");
     document.body.style.setProperty("--embed-accent-text", "#f5f3f7");
   }
   function sampleRoster(rows, key, count) {

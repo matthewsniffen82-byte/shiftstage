@@ -207,7 +207,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   border-color: var(--dancr-color-border) !important; background: linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)) !important; color: #fff !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-action.tv-video-source-library[aria-disabled="false"]:hover:not(:disabled) {
-  background: linear-gradient(#7c3aed,#7c3aed) !important;
+  background: linear-gradient(#6d28ff,#6d28ff) !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace .tv-video-source-action[aria-disabled="true"] {
   border-color: var(--dancr-color-border) !important; color: #bdb7c8 !important; opacity: 1 !important;

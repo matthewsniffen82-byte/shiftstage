@@ -79,7 +79,7 @@ test("customer dashboard uses compact electric-violet hierarchy without duplicat
   assert.match(dashboard, /\.customer-dashboard-primary-links a > strong \{[^}]*height: 24px;[^}]*border-radius: 999px;[^}]*background: #6d28d9/);
   assert.match(dashboard, /\.customer-followed-dancer-status\.is-working \{ color: #6ee7a6;/);
   assert.match(dashboard, /\.customer-followed-dancer-status\.is-upcoming \{ color: var\(--mydancr-customer-accent\)/);
-  assert.match(dashboard, /\.dashboard-shell-customer \.venue-dashboard-section-badge \{[^}]*min-width: 28px;[^}]*background: rgba\(124,58,237,\.3\)/);
+  assert.match(dashboard, /\.dashboard-shell-customer \.venue-dashboard-section-badge \{[^}]*min-width: 28px;[^}]*background: rgba\(109,40,255,\.3\)/);
   assert.match(dashboard, /\.customer-saved-card \.customer-card-actions \{ display: grid !important; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\); \}/);
   assert.match(dashboard, /@media \(max-width: 620px\) \{[\s\S]*?\.dashboard-shell-customer \.venue-dashboard-section > summary \{ min-height: 78px; grid-template-columns: minmax\(0,1fr\) auto auto;/);
 });

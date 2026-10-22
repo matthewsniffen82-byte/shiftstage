@@ -29,7 +29,7 @@ test("profile video grids open the shared viewer and playback controls remain ne
   const tvRetryRule = tvFeed.match(/\.tv-playback-retry \{[\s\S]*?\}/)?.[0] || "";
   assert.match(tvRetryRule, /border: 1px solid rgba\(255,255,255,\.18\)/);
   assert.match(tvRetryRule, /background: rgba\(25,25,30,\.9\)/);
-  assert.doesNotMatch(tvRetryRule, /126,234,255|34,199,255|124,58,237|109,40,217/);
+  assert.doesNotMatch(tvRetryRule, /126,234,255|34,199,255|109,40,255|109,40,217/);
 
   const tvRetryStateRule = aesthetic.match(
     /\.tv-shell \.tv-playback-retry:is\(:hover, :focus-visible, :active\) \{[\s\S]*?\}/,

@@ -250,7 +250,7 @@
       clip-path: inset(0 round 15px);
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.035) inset,
-        0 0 20px rgba(124, 58, 237, 0.36),
+        0 0 20px rgba(109, 40, 255, 0.36),
         0 10px 28px rgba(0, 0, 0, 0.38) !important;
     }
 
@@ -578,12 +578,12 @@
       justify-content: space-between;
       gap: 10px;
       padding: 10px 13px;
-      border: 1px solid rgba(124, 58, 237, 0.28);
+      border: 1px solid rgba(109, 40, 255, 0.28);
       border-radius: 999px;
       background: #070708;
       box-shadow:
         0 12px 30px rgba(0, 0, 0, 0.32),
-        inset 0 0 18px rgba(124, 58, 237, 0.06);
+        inset 0 0 18px rgba(109, 40, 255, 0.06);
       color: #B8B8C5;
       font-size: 12px;
       font-weight: 900;

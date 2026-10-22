@@ -30,8 +30,8 @@ body .ir-shell .ir-brand .mydancr-live-logo .violet-r {
 }
 body .ir-shell .ir-brand .mydancr-live-logo {
   /* MyDancr's own mark must not inherit a club's accent or glow. */
-  --dancr-color-brand-primary: #7c3aed;
-  --dancr-color-brand-primary-medium: rgba(124, 58, 237, .34);
+  --dancr-color-brand-primary: #6d28ff;
+  --dancr-color-brand-primary-medium: rgba(109, 40, 255, .34);
   --dancr-color-brand-glow-soft: rgba(49, 46, 129, .18);
   display: inline-block;
   color: #fff;

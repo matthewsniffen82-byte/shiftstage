@@ -19,7 +19,7 @@
       border: 1px solid rgba(139,92,246,.28);
       border-radius: 18px;
       background:
-        linear-gradient(135deg, rgba(124,58,237,.16), rgba(5,5,7,.84)),
+        linear-gradient(135deg, rgba(109,40,255,.16), rgba(5,5,7,.84)),
         rgba(17,17,24,.72);
       box-shadow:
         0 18px 42px rgba(0,0,0,.32),
@@ -201,8 +201,8 @@
       background-size: cover !important;
       background-clip: padding-box !important;
       border-radius: 16px !important;
-      border: 1px solid rgba(124, 58, 237, 0.34) !important;
-      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.5), 0 0 26px rgba(124, 58, 237, 0.1) !important;
+      border: 1px solid rgba(109, 40, 255, 0.34) !important;
+      box-shadow: 0 18px 54px rgba(0, 0, 0, 0.5), 0 0 26px rgba(109, 40, 255, 0.1) !important;
     }
 
     .hero.reference-hero.uploaded-hero-ready::before,
@@ -379,11 +379,11 @@
     /* Deepen primary controls so active states feel more premium than candy-bright. */
     .location-btn {
       background:
-        linear-gradient(110deg, rgba(124, 58, 237, 0.96) 0%, rgba(91, 33, 182, 0.95) 58%, rgba(34, 199, 255, 0.78) 100%) !important;
+        linear-gradient(110deg, rgba(109, 40, 255, 0.96) 0%, rgba(91, 33, 182, 0.95) 58%, rgba(34, 199, 255, 0.78) 100%) !important;
       border-color: rgba(167, 139, 250, 0.34) !important;
       box-shadow:
         0 14px 32px rgba(0, 0, 0, 0.34),
-        0 0 28px rgba(124, 58, 237, 0.24),
+        0 0 28px rgba(109, 40, 255, 0.24),
         inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
     }
 
@@ -392,12 +392,12 @@
     .tabs .tab[aria-selected="true"],
     .tab[aria-selected="true"] {
       background:
-        linear-gradient(135deg, rgba(91, 33, 182, 0.98) 0%, rgba(124, 58, 237, 0.94) 62%, rgba(168, 85, 247, 0.78) 100%) !important;
+        linear-gradient(135deg, rgba(91, 33, 182, 0.98) 0%, rgba(109, 40, 255, 0.94) 62%, rgba(168, 85, 247, 0.78) 100%) !important;
       border-color: rgba(196, 181, 253, 0.46) !important;
       box-shadow:
         0 0 0 1px rgba(255, 255, 255, 0.05) inset,
         0 12px 30px rgba(91, 33, 182, 0.34),
-        0 0 34px rgba(124, 58, 237, 0.30) !important;
+        0 0 34px rgba(109, 40, 255, 0.30) !important;
     }
 
     .tabs .tab.active .tab-count,
@@ -975,7 +975,7 @@
 
     .profile-qr-action.primary {
       border: none;
-      background: linear-gradient(135deg, #7C3AED, #EC4899);
+      background: linear-gradient(135deg, #6D28FF, #EC4899);
       box-shadow: 0 0 24px rgba(139, 92, 246, 0.24);
     }
 

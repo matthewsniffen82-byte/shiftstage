@@ -78,6 +78,6 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
     venueSlug={slug}
     returnHref={returnHref}
     venueDirectionsHref={venueDirectionsHref}
-    accent={rhino ? RHINO_ACCENT : colors.embedAccent || "#7c3aed"}
+    accent={rhino ? RHINO_ACCENT : colors.embedAccent || "#6d28ff"}
   />;
 }

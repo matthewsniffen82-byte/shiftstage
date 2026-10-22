@@ -7,10 +7,10 @@ const OUTPUT_DIRECTORY = new URL("../public/venue-logos/fictional/", import.meta
 const venues = [
   { asset: "neon-ember.svg", name: "Neon Ember", monogram: "NE", accent: "#a855f7", accent2: "#22d3ee", symbol: "spark" },
   { asset: "velvet-orbit.svg", name: "Velvet Orbit", monogram: "VO", accent: "#ec4899", accent2: "#8b5cf6", symbol: "orbit" },
-  { asset: "electric-mirage.svg", name: "Electric Mirage", monogram: "EM", accent: "#22d3ee", accent2: "#7c3aed", symbol: "prism" },
+  { asset: "electric-mirage.svg", name: "Electric Mirage", monogram: "EM", accent: "#22d3ee", accent2: "#6d28ff", symbol: "prism" },
   { asset: "afterglow-social.svg", name: "Afterglow Social", monogram: "AS", accent: "#f97316", accent2: "#ec4899", symbol: "horizon" },
   { asset: "violet-hour.svg", name: "Violet Hour", monogram: "VH", accent: "#8b5cf6", accent2: "#c084fc", symbol: "hour" },
-  { asset: "lunar-house.svg", name: "Lunar House", monogram: "LH", accent: "#e2e8f0", accent2: "#7c3aed", symbol: "lunar" },
+  { asset: "lunar-house.svg", name: "Lunar House", monogram: "LH", accent: "#e2e8f0", accent2: "#6d28ff", symbol: "lunar" },
   { asset: "prism-room.svg", name: "Prism Room", monogram: "PR", accent: "#06b6d4", accent2: "#d946ef", symbol: "facet" },
   { asset: "golden-halo.svg", name: "Golden Halo", monogram: "GH", accent: "#facc15", accent2: "#f97316", symbol: "halo" },
   { asset: "midnight-current.svg", name: "Midnight Current", monogram: "MC", accent: "#38bdf8", accent2: "#6366f1", symbol: "wave" },

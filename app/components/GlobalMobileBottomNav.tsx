@@ -392,7 +392,7 @@ export function GlobalMobileBottomNav() {
             background: rgba(9, 7, 16, 0.88);
             box-shadow:
               0 12px 32px rgba(0, 0, 0, 0.42),
-              0 0 22px rgba(124, 58, 237, 0.2);
+              0 0 22px rgba(109, 40, 255, 0.2);
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
               sans-serif;
             font-size: 12px;
@@ -543,9 +543,9 @@ export function GlobalMobileBottomNav() {
             --mobile-nav-accent: rgba(244, 242, 248, 0.86);
             --mobile-nav-accent-soft: rgba(244, 242, 248, 0.78);
             --mobile-nav-active: #f5f3ff;
-            --mobile-nav-active-violet-core: rgba(124, 58, 237, 0.96);
-            --mobile-nav-active-violet-glow: rgba(124, 58, 237, 0.58);
-            --mobile-nav-active-violet-depth: rgba(124, 58, 237, 0.72);
+            --mobile-nav-active-violet-core: rgba(109, 40, 255, 0.96);
+            --mobile-nav-active-violet-glow: rgba(109, 40, 255, 0.58);
+            --mobile-nav-active-violet-depth: rgba(109, 40, 255, 0.72);
             width: 100%;
             height: 65px;
             min-width: 0;
@@ -625,15 +625,15 @@ export function GlobalMobileBottomNav() {
             border-radius: 50%;
             background: radial-gradient(
               circle,
-              rgba(124, 58, 237, 0.1) 0%,
-              rgba(124, 58, 237, 0.34) 30%,
-              rgba(124, 58, 237, 0.18) 56%,
-              rgba(124, 58, 237, 0.14) 70%,
+              rgba(109, 40, 255, 0.1) 0%,
+              rgba(109, 40, 255, 0.34) 30%,
+              rgba(109, 40, 255, 0.18) 56%,
+              rgba(109, 40, 255, 0.14) 70%,
               transparent 82%
             );
             box-shadow:
-              0 0 8px rgba(124, 58, 237, 0.18),
-              0 0 16px rgba(124, 58, 237, 0.16);
+              0 0 8px rgba(109, 40, 255, 0.18),
+              0 0 16px rgba(109, 40, 255, 0.16);
             filter: blur(1.5px);
           }
 

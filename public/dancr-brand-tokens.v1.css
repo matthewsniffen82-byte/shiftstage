@@ -30,9 +30,9 @@
   --dancr-visual-weight-semantic: 6;
 
   --dancr-color-brand-core: #f5f3ff;
-  --dancr-color-brand-primary: #7c3aed;
-  --dancr-color-brand-primary-deep: #7c3aed;
-  --dancr-color-brand-glow: #7c3aed;
+  --dancr-color-brand-primary: #6d28ff;
+  --dancr-color-brand-primary-deep: #6d28ff;
+  --dancr-color-brand-glow: #6d28ff;
   --dancr-color-brand-core-soft: rgba(245, 243, 255, 0.18);
   --dancr-color-brand-primary-soft: var(--dancr-color-surface);
   --dancr-color-brand-primary-medium: var(--dancr-color-border);
@@ -42,11 +42,11 @@
   /* Violet is reserved for primary actions and selected controls. */
   --dancr-color-control-border: #35313f;
   --dancr-color-control-border-soft: #35313f;
-  --dancr-color-control-selected: #7c3aed;
-  --dancr-color-control-selected-soft: rgba(124, 58, 237, 0.2);
-  --dancr-color-control-indicator: #7c3aed;
-  --dancr-color-control-primary: #7c3aed;
-  --dancr-color-control-primary-deep: #7c3aed;
+  --dancr-color-control-selected: #6d28ff;
+  --dancr-color-control-selected-soft: rgba(109, 40, 255, 0.2);
+  --dancr-color-control-indicator: #6d28ff;
+  --dancr-color-control-primary: #6d28ff;
+  --dancr-color-control-primary-deep: #6d28ff;
   /* Legacy plum names now resolve to the shared charcoal surface. */
   --dancr-color-surface-plum: #191820;
   --dancr-color-control-plum: #191820;
@@ -55,9 +55,9 @@
   --dancr-color-icon-accent-small: #aaa6b5;
   --dancr-color-icon-accent-active: #f5f3f7;
   --dancr-color-icon-location: var(--dancr-color-brand-primary);
-  --dancr-color-avatar-ring-magenta: #7c3aed;
-  --dancr-color-avatar-ring-violet: #7c3aed;
-  --dancr-color-avatar-ring-indigo: #7c3aed;
+  --dancr-color-avatar-ring-magenta: #6d28ff;
+  --dancr-color-avatar-ring-violet: #6d28ff;
+  --dancr-color-avatar-ring-indigo: #6d28ff;
   --dancr-color-avatar-ring-core: #ffffff;
   --dancr-color-avatar-ring-live: #35d09a;
   --dancr-color-avatar-ring-upcoming: #aaa6b5;
@@ -65,8 +65,8 @@
 
   --dancr-color-beam-core: var(--dancr-color-brand-core);
   --dancr-color-beam-violet: var(--dancr-color-brand-primary);
-  --dancr-color-beam-violet-medium: rgba(124, 58, 237, 0.58);
-  --dancr-color-beam-violet-soft: rgba(124, 58, 237, 0.2);
+  --dancr-color-beam-violet-medium: rgba(109, 40, 255, 0.58);
+  --dancr-color-beam-violet-soft: rgba(109, 40, 255, 0.2);
   --dancr-color-beam-glow: var(--dancr-color-brand-glow);
   --dancr-color-beam-glow-soft: var(--dancr-color-brand-glow-soft);
   --dancr-color-beam-blue: var(--dancr-color-beam-glow);
