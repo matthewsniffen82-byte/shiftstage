@@ -686,7 +686,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           {item?.previewUrl || video?.videoUrl ? <video className="tv-upload-preview" muted playsInline preload="metadata"
             src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
           <div className="dancer-upload-review-copy">
-            <strong>Selected video {index + 1}</strong>
+            <strong>Video {index + 1}</strong>
             <small role="status" aria-live="polite">{uploadStatus === "Uploading" ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
             {processing ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
               role="progressbar" aria-label={`Video ${index + 1}: ${uploadStatus}`}

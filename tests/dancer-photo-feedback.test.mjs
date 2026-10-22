@@ -267,12 +267,12 @@ test("mixed batches clear approvals while keeping unresolved photos in selection
   await ui.settle();
   releases[0]({ decision: "approved", photo: approved() }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Uploading · 0%", "Uploading · 0%"]);
-  assert.deepEqual(ui.labels, ["Selected photo 1", "Selected photo 2", "Selected photo 3"]);
+  assert.deepEqual(ui.labels, ["Photo 1", "Photo 2", "Photo 3"]);
   releases[1]({ decision: "rejected", moderationRecordId: "rejected", message: "Multiple people" }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Uploading · 0%"]);
   releases[2]({ decision: "review", photo: { id: "review", reviewStatus: "pending" } }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Not approved", "Waiting for Club approval"]);
-  assert.deepEqual(ui.labels, ["second.jpg", "Selected photo 3"]);
+  assert.deepEqual(ui.labels, ["second.jpg", "Photo 3"]);
   assert.equal(ui.notes[0], "Multiple people");
   assert.equal(ui.notes.length, 1);
   assert.equal(ui.progress.length, 0);

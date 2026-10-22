@@ -614,7 +614,7 @@ export function DancerPhotoPanel({
               <div className={`photo-review-card is-${result?.status || "pending"} dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item && ["preparing", "uploading", "checking"].includes(item.stage) ? "is-uploading" : ""}`.trim()} key={item?.id || result?.id}>
                 <div className="photo-preview" style={{ backgroundImage: `url(${item?.previewUrl || result?.imageUrl || ""})` }} aria-label="Photo preview">{!item?.previewUrl && !result?.imageUrl ? <span>Photo</span> : null}</div>
                 <span className="dancer-upload-review-copy">
-                  <strong>{`Selected photo ${selectionNumber}`}</strong>
+                  <strong>{`Photo ${selectionNumber}`}</strong>
                   <small role="status" aria-live="polite">{uploadStatus === "Uploading" ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
                   {processing ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
                     role="progressbar" aria-label={`Photo ${selectionNumber}: ${uploadStatus}`}
