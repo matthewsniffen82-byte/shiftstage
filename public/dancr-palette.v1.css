@@ -612,7 +612,7 @@
     #citySelectButton, #homeFilterToggle, #distanceSelectButton, #venueSelectButton,
     #locationBtn, #homeFilterReset, .city-picker-option,
     .dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="false"],
-    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn,
+    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn, #customerDealQuickBtn,
     .mydancr-refresh-button
   ) {
     color-scheme: only dark !important;
@@ -627,7 +627,7 @@
   html body.dancr-button-system :where(
     #citySelectButton, #homeFilterToggle, #distanceSelectButton, #venueSelectButton,
     #locationBtn, #homeFilterReset, .city-picker-option,
-    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn,
+    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn, #customerDealQuickBtn,
     .mydancr-refresh-button
   )::before,
   html body.dancr-button-system .dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="false"]::before {
@@ -680,7 +680,7 @@
     background: currentColor !important;
   }
   html body.dancr-button-system
-    :where(#accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn) {
+    :where(#accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn, #customerDealQuickBtn) {
     --discovery-header-face: var(--dancr-color-control-secondary) !important;
     border-color: var(--dancr-color-border) !important;
     color: var(--dancr-color-text-muted) !important;
@@ -937,7 +937,7 @@
     #citySelectButton, #homeFilterToggle, #distanceSelectButton, #venueSelectButton,
     #locationBtn, #homeFilterReset, .city-picker-option,
     .dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="false"],
-    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn,
+    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn, #customerDealQuickBtn,
     .mydancr-refresh-button
   ):not(:where([aria-expanded="true"], [aria-selected="true"], [aria-pressed="true"], .active, .is-active, .is-open, .has-active-filters, :focus-visible)) {
     --discovery-control-edge: transparent !important;
@@ -948,7 +948,7 @@
     #citySelectButton, #homeFilterToggle, #distanceSelectButton, #venueSelectButton,
     #locationBtn, #homeFilterReset, .city-picker-option,
     .dancer-directory-filter[data-dancer-directory-filter="not_now"][aria-selected="false"],
-    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn,
+    #accountBtn, #guestMenuBtn, #customerNotificationQuickBtn, #dancerProfileShareQuickBtn, #customerDealQuickBtn,
     .mydancr-refresh-button
   ):not(:where([aria-expanded="true"], [aria-selected="true"], [aria-pressed="true"], .active, .is-active, .is-open, .has-active-filters, :focus-visible))::before {
     border-color: transparent !important;
