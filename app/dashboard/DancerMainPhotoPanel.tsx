@@ -8,7 +8,7 @@ import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerPhotoControls from "./DancerPhotoControls";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
-import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import "../../public/dancer-main-photo.css";
 
@@ -40,20 +40,17 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
     if (action.current || !selection.current) return;
     const controller = new AbortController();
     action.current = controller;
-    setBusy(true); setRetry(false); setStatus("Preparing your photo…");
+    setBusy(true); setRetry(false); setStatus("Uploading");
     try {
       const result = await uploadMainProfilePhoto(selection.current.file, {
         ...selection.current, signal: controller.signal,
-        onUploadStart: () => { if (!controller.signal.aborted) setStatus("Uploading your main photo…"); },
-        onUploadProgress: percent => {
-          if (!controller.signal.aborted) setStatus(percent === 100 ? "Photo uploaded. Processing and reviewing…" : `Uploading your main photo ${percent}%…`);
-        },
+        onUploadStart: () => { if (!controller.signal.aborted) setStatus("Uploading"); },
       });
       if (controller.signal.aborted) return;
       selection.current = null;
       if (!result) { setStatus("Crop canceled. Your main photo hasn’t changed."); return; }
       if (result.profile) onProfileChange?.(result.profile);
-      const message = result.decision === "rejected" ? "This photo wasn’t approved. Choose another photo. Your current photo hasn’t changed." : "";
+      const message = result.decision === "rejected" ? `Not approved. ${mediaReviewExplanation("photo", "rejected", result)} Your current photo hasn’t changed.` : "";
       setStatus([message, result.replacementWarning, result.refreshFailed ? "Photo uploaded. Reload the dashboard to see its latest status." : ""].filter(Boolean).join(" "));
     } catch (error) {
       if (controller.signal.aborted) return;
@@ -111,7 +108,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
     <div className="dancer-main-photo-copy">
       <h3>Main photo</h3>
       <p>Shown on your dancer card and profile. Your avatar is created automatically.</p>
-      <strong className="dancer-main-photo-state" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? "Checking" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
+      <strong className="dancer-main-photo-state" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? "Uploading" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
         <DancerPhotoControls label="main photo" compact hidden={!displayed} openRequested={editRequested} disabled={busy || cropping} primary={

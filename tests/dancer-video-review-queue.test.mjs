@@ -108,11 +108,10 @@ test('both video sources stay gated until both permissions are checked and re-lo
 
 test('saved unresolved videos show reasons and actions while only approvals enter the library', async () => {
   const ui = harness([video('live', 'approved'), video('checking', 'moderating'), video('denied', 'rejected', 'Only you may appear in the video.')]); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking', 'Not approved']);
-  assert.match(ui.notes[0], /automatic check is still running/);
-  assert.equal(ui.notes[1], 'Only you may appear in the video.');
+  assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
+  assert.deepEqual(ui.notes, ['Only you may appear in the video.']);
   assert.deepEqual(Array.from(ui.library, item => item.id), ['live']);
-  ui.rerender(); assert.deepEqual(ui.statuses, ['Checking', 'Not approved']);
+  ui.rerender(); assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
   await ui.refresh([video('live', 'approved'), video('checking', 'approved'), video('denied', 'rejected', 'Only you may appear in the video.')]);
   assert.deepEqual(ui.statuses, ['Not approved']);
 });
@@ -126,7 +125,7 @@ test('saved video reasons explain waiting review and replace legacy generic note
   await ui.settle();
   assert.match(ui.notes[0], /couldn't confirm that you are the only person/);
   assert.match(ui.notes[1], /Remove phone numbers/);
-  assert.match(ui.notes[2], /specific reason wasn't provided/);
+  assert.equal(ui.notes.length, 2);
   await ui.refresh([video('uncertain', 'approved'), video('denied', 'approved'), video('no-reason', 'approved')]);
   assert.deepEqual(ui.notes, []);
   assert.equal(ui.library.length, 3);
@@ -134,11 +133,15 @@ test('saved video reasons explain waiting review and replace legacy generic note
 
 test('submitted video remains visible through refresh failure then moves into the approved library', async () => {
   const ui = harness(); await ui.settle(); ui.permissions(); ui.setReadError(true); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Uploaded · Processing and reviewing']); assert.equal(ui.library.length, 0);
+  assert.deepEqual(ui.statuses, ['Uploading']); assert.equal(ui.library.length, 0);
   assert.equal(ui.revoked.length, 0, 'do not discard the only preview after submission');
-  ui.rerender(); assert.deepEqual(ui.statuses, ['Uploaded · Processing and reviewing']);
+  ui.rerender(); assert.deepEqual(ui.statuses, ['Uploading']);
   ui.setReadError(false); await ui.refresh();
   const id = ui.calls.find(call => call[1] === 'PATCH')[0];
+  assert.deepEqual(ui.statuses, ['Uploading']);
+  await ui.refresh([video(id, 'submitted', 'AI checks passed. Pending club approval.')]);
+  assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
+  assert.deepEqual(ui.notes, []);
   await ui.refresh([video(id, 'approved')]); ui.rerender();
   assert.equal(ui.reviews.length, 0); assert.equal(ui.library.length, 1); assert.equal(ui.revoked.length, 1);
 });
@@ -159,7 +162,7 @@ test('replacement at the video limit preserves the original on picker and crop c
   ui.click('Replace'); ui.permissions(); ui.select([]); await ui.settle();
   assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
   ui.cancelCrop(true); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Awaiting review']); assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
+  assert.deepEqual(ui.statuses, ['Waiting for Club approval']); assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
 });
 
 test('failed replacement remains retryable and never puts an unapproved video in the library', async () => {
@@ -169,6 +172,6 @@ test('failed replacement remains retryable and never puts an unapproved video in
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);
   ui.rerender(); assert.deepEqual(ui.statuses, ['Upload failed']); ui.rerender();
   ui.setUploadError(false); ui.click('Retry'); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking']);
+  assert.deepEqual(ui.statuses, ['Uploading']);
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);
 });

@@ -97,10 +97,10 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
     try {
       const refreshed = await requestDancerProfileJson({ cache: "no-store", signal: controller.signal });
       assertOwner();
-      return { decision, profile: refreshed.profile || null, refreshFailed: !refreshed.profile, replacementWarning };
+      return { decision, reasonCodes: data.reasonCodes, message: data.message, profile: refreshed.profile || null, refreshFailed: !refreshed.profile, replacementWarning };
     } catch {
       assertOwner();
-      return { decision, profile: null, refreshFailed: true, replacementWarning };
+      return { decision, reasonCodes: data.reasonCodes, message: data.message, profile: null, refreshFailed: true, replacementWarning };
     }
   } finally {
     options.signal.removeEventListener("abort", cancel);

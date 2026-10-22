@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson, requestDancerTvVideoJson } from "./dashboard-session";
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
+import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 
 export function canRetryMediaReview(status: string, moderationStatus = "") {
   if (["approved", "live", "rejected", "denied", "hidden", "removed", "expired", "uploading", "failed"].includes(status)) return false;
@@ -46,7 +47,7 @@ export default function DancerMediaRetryButton({ id, kind, status, moderationSta
         setResolved(["approved", "rejected"].includes(result.decision));
       } else announceDancerProfileVideosChanged();
       callbacks.current.onRetried?.({ profile, result });
-      setMessage(result.message || "Review restarted.");
+      setMessage(result.decision === "rejected" ? mediaReviewExplanation(kind, "rejected", result) : mediaReviewLabel(result.decision || "pending"));
     } catch (error) {
       if (current()) setMessage(error instanceof Error ? error.message : "Unable to retry review.");
     } finally {
@@ -61,7 +62,7 @@ export default function DancerMediaRetryButton({ id, kind, status, moderationSta
     <button className="dancer-media-review-retry-button" type="button" disabled={disabled || busy} aria-busy={busy}
       aria-label={`Retry ${kind} review`} onClick={() => void retry()}>
       <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M20 7v5h-5M19 12a7 7 0 1 0-2 5M20 12l-3-5" /></svg>
-      {busy ? "Retrying..." : "Retry"}
+      {busy ? "Uploading" : "Retry"}
     </button>
     {message ? <span className="dancer-media-review-retry-message" role="status">{message}</span> : null}
     <style>{`

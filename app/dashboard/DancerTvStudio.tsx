@@ -329,7 +329,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         let item = batch[index];
         setUploadingQueueItemId(item.id);
         updateQueuedVideo(item.id, { stage: "validating", progress: 0, error: undefined });
-        setStatus(`Preparing video ${index + 1} of ${batch.length}...`);
+        setStatus("Uploading");
         try {
           const edit = item.edit || await cropProfileVideo(item.file, controller.signal);
           if (!edit) {
@@ -376,7 +376,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
           if (!data.upload.alreadySubmitted && !data.upload.uploadComplete) {
             if (!data.upload.path || !data.upload.token) throw new Error("Unable to prepare upload.");
-            setStatus(`Uploading video ${index + 1} of ${batch.length} securely...`);
+            setStatus("Uploading");
             updateQueuedVideo(item.id, { stage: "uploading", progress: 0 });
             await uploadResumableVideo(item.file, {
               path: data.upload.path, token: data.upload.token, signal: controller.signal,
@@ -389,7 +389,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
           if (!data.upload.alreadySubmitted) {
             updateQueuedVideo(item.id, { stage: "checking", progress: 100 });
-            setStatus(`Checking video ${index + 1} of ${batch.length}...`);
+            setStatus("Uploading");
             await requestDancerTvVideoJson(preparedVideoId, {
               method: "PATCH",
               headers: { "content-type": "application/json" },
@@ -422,10 +422,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         if (!isCurrentVideoAction(requestId, controller)) return;
         announceDancerProfileVideosChanged();
       }
-      setStatus([
-        submittedCount ? `${submittedCount} ${submittedCount === 1 ? "video" : "videos"} uploaded` : "",
-        failedItems.length ? `${failedItems.length} ready to retry` : "",
-      ].filter(Boolean).join(". ") || "No videos were uploaded.");
+      setStatus(failedItems.length ? `${failedItems.length} ready to retry` : submittedCount ? "" : "No videos were uploaded.");
     } finally {
       if (finishVideoAction(requestId)) {
         setUploadingQueueItemId("");
@@ -657,16 +654,18 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 
       {reviews.length ? <div className="tv-upload-queue" aria-label="Videos awaiting approval">
         <strong>Video uploads · {reviews.length}</strong>
-        {reviews.map(({ item, video }, index) => video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
-          label={item?.file.name || `Video ${index + 1}`} message={mediaReviewExplanation("video", video.status, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes })}
+        {reviews.map(({ item, video }, index) => {
+          const note = video ? mediaReviewExplanation("video", video.status, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
+          return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
+          label={item?.file.name || `Video ${index + 1}`} message={note}
           disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item ${item && uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
           {item?.previewUrl || video?.videoUrl ? <video className="tv-upload-preview" muted playsInline preload="metadata"
             src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
           <div>
             <strong>Selected video {index + 1}</strong>
-            <small>{item?.error ? "Upload failed" : item?.stage === "validating" ? "Preparing video" : item?.stage === "uploading" ? `Uploading ${item.progress}%` : item?.stage === "checking" ? "Uploaded · Processing and reviewing" : video ? statusLabel(video.status) : item?.stage === "submitted" ? "Uploaded · Processing and reviewing" : "Waiting to upload"}</small>
+            <small>{item?.error ? "Upload failed" : item && ["validating", "uploading", "checking"].includes(item.stage) ? "Uploading" : video ? statusLabel(video.status) : item?.stage === "submitted" ? "Uploading" : "Waiting to upload"}</small>
             {item?.stage === "uploading" ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
-            {video ? <p>{mediaReviewExplanation("video", video.status, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes })}</p> : null}
+            {note ? <p>{note}</p> : null}
             {item?.error ? <p>{item.error}</p> : null}
             {video && !item?.error ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={videoActionBusy} onBusyChange={setRetrying}
               onRetried={() => { void loadWorkspace({ silent: true }); }} /> : null}
@@ -676,7 +675,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
               <button disabled={videoActionBusy} onClick={() => video ? void removeVideo(video.id) : item && void removeQueuedVideo(item)} type="button">Remove</button>
             </span>
           </div>
-        </article>)}
+        </article>;
+        })}
       </div> : null}
 
       {status ? <div className="tv-studio-status" role="status" aria-live="polite">{status}</div> : null}

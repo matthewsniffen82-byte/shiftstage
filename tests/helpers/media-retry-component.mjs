@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { mediaReview } from './media-review-label.mjs';
 
 const requireTest = createRequire(import.meta.url);
 export function loadMediaRetryComponent({ hooks, api = {}, announce = () => {} } = {}) {
@@ -12,6 +13,7 @@ export function loadMediaRetryComponent({ hooks, api = {}, announce = () => {} }
     if (name === 'react' && hooks) return hooks;
     if (name === './dashboard-session') return api;
     if (name === './dancer-profile-media-sync') return { announceDancerProfileVideosChanged: announce };
+    if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
     return requireTest(name);
   } });
   return exports;

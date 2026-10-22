@@ -248,7 +248,7 @@ export function DancerPhotoPanel({
     const { requestId, controller } = action;
 
     setIsUploading(true);
-    setStatus(`Preparing ${batch.length} ${batch.length === 1 ? "photo" : "photos"}...`);
+    setStatus("Uploading");
     const failedItems: DancerPhotoQueueItem[] = [];
     const rejectedItemIds = new Set<string>();
     const acceptedItemIds = new Set<string>();
@@ -264,7 +264,7 @@ export function DancerPhotoPanel({
         let item = queuedItem;
         const uploadSortOrder = item.uploadSortOrder ?? nextSortOrder++;
         updateQueuedPhoto(item.id, { stage: "preparing", progress: 0, uploadSortOrder, error: undefined });
-        setStatus(`Uploading ${batch.length} ${batch.length === 1 ? "photo" : "photos"}...`);
+        setStatus("Uploading");
         try {
           if (!item.file.type.startsWith("image/") || !item.file.size || item.file.size > 25 * 1024 * 1024) {
             throw new Error("Choose a photo between 1 byte and 25 MB.");
@@ -367,11 +367,10 @@ export function DancerPhotoPanel({
       if (galleryPhotoInputRef.current) galleryPhotoInputRef.current.value = "";
       if (cameraPhotoInputRef.current) cameraPhotoInputRef.current.value = "";
       const summary = [
-        acceptedCount ? `${acceptedCount} uploaded` : "",
         rejectedCount ? `${rejectedCount} not approved` : "",
         failedItems.length ? `${failedItems.length} ready to retry` : "",
       ].filter(Boolean).join(". ");
-      setStatus(summary || "No photos were uploaded.");
+      setStatus(summary || (acceptedCount ? "" : "No photos were uploaded."));
     } catch (error) {
       if (isCurrentPhotoAction(requestId, controller)) {
         const message = error instanceof Error ? error.message : "Unable to upload photos.";
@@ -584,7 +583,7 @@ export function DancerPhotoPanel({
                 <div className="photo-preview" style={{ backgroundImage: `url(${item?.previewUrl || result?.imageUrl || ""})` }} aria-label="Photo preview">{!item?.previewUrl && !result?.imageUrl ? <span>Photo</span> : null}</div>
                 <span>
                   <strong>{`Selected photo ${selectionNumber}`}</strong>
-                  <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "preparing" ? "Preparing photo" : item?.stage === "uploading" ? `Uploading ${item.progress}%` : item?.stage === "checking" ? "Uploaded · Processing and reviewing" : item?.error ? "Upload failed" : "Waiting to upload"}</small>
+                  <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item && ["preparing", "uploading", "checking"].includes(item.stage) ? "Uploading" : item?.error ? "Upload failed" : "Waiting to upload"}</small>
                   {item?.stage === "uploading" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
                   {result?.note ? <em>{result.note}</em> : null}
                   {result ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}

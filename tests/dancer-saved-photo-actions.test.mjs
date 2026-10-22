@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
+import { mediaReview } from './helpers/media-review-label.mjs';
 
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerSavedPhotoCrop.tsx', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
@@ -16,7 +17,7 @@ function fixture({ fails = false, pending = true } = {}) {
     require: name => name === 'react' ? {
       useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], next => { slots[i] = next; }]; },
       useRef(initial) { return slots[cursor++] ||= { current: initial }; }, useEffect() {},
-    } : name === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : {
+    } : name === 'react/jsx-runtime' ? { jsx, jsxs: jsx } : name === '@/src/lib/dancr/media-review-label' ? mediaReview : {
       uploadMainProfilePhoto: async (...args) => { uploads.push(args); if (fails) throw Error('Upload failed'); return { decision: 'review', profile: {} }; },
     },
   });

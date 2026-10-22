@@ -86,7 +86,7 @@ test("a first main upload appears in the main slot while awaiting approval, incl
     assert.equal(view.button.props['aria-label'], "Replace main photo");
     assert.equal(view.button.props.disabled, false);
     assert.equal(view.crop, undefined);
-    assert.equal(view.badge, 'Pending club approval');
+    assert.equal(view.badge, 'Waiting for Club approval');
     assert.equal(view.status, '');
   }
   ui.update({ dancer_photos: [main] });
@@ -127,9 +127,18 @@ test('choosing another pending main photo preserves the approved replacement ide
 });
 
 test('moderation work and delays use the same labels as the media library', () => {
-  for (const [status, label] of [['moderating', 'Checking'], ['error', 'Review delayed'], ['pending_review', 'Pending club approval']]) {
+  for (const [status, label] of [['moderating', 'Uploading'], ['error', 'Review delayed'], ['pending_review', 'Waiting for Club approval']]) {
     assert.equal(fixture({ pending_photo_reviews: [{ ...pending, status }] }).badge, label);
   }
+});
+
+test('a rejected main photo shows the reason and preserves the current photo', async () => {
+  const ui = fixture({ dancer_photos: [main] }, { decision: 'rejected', reasonCodes: ['multiple_people_detected'] });
+  await ui.upload();
+  assert.match(ui.status, /Not approved/);
+  assert.match(ui.status, /more than one person/);
+  assert.match(ui.status, /current photo hasn’t changed/);
+  assert.equal(ui.image.props.src, main.imageUrl);
 });
 
 test('removing a pending main photo restores the approved photo; cancellation and failure preserve it', async () => {

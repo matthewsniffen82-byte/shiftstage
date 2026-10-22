@@ -7,7 +7,7 @@ import ts from "typescript";
 const code = ts.transpileModule(readFileSync("app/dashboard/main-profile-photo-upload.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-function fixture({ decision = "approved", canceled = false, refreshFails = false, cropWait = false, uploadFails = false, saved = false, isPrimary = true, makeMain = false, pendingReviewId, photoSlot, deleteFails = false, switchAfterUpload = false } = {}) {
+function fixture({ decision = "approved", reasonCodes, message, canceled = false, refreshFails = false, cropWait = false, uploadFails = false, saved = false, isPrimary = true, makeMain = false, pendingReviewId, photoSlot, deleteFails = false, switchAfterUpload = false } = {}) {
   let session = { account: { id: "dancer-a", role: "dancer" }, accessToken: "token-a" };
   const listeners = new Set(), requests = [], controller = new AbortController();
   const original = new File(["original"], "portrait.jpg", { type: "image/jpeg" });
@@ -34,7 +34,7 @@ function fixture({ decision = "approved", canceled = false, refreshFails = false
         if (options.method === 'DELETE') { if (deleteFails) throw new Error('Review already approved'); return { photo: { deletedIds: [JSON.parse(options.body).photoId] } }; }
         if (uploadFails) throw new Error("Network unavailable");
         if (switchAfterUpload) session = { account: { id: 'dancer-b', role: 'dancer' }, accessToken: 'other' };
-        return { decision, moderationRecordId: 'new-review' };
+        return { decision, reasonCodes, message, moderationRecordId: 'new-review' };
       },
       requestDancerProfileJson: async () => { if (refreshFails) throw new Error("Refresh failed"); return { profile: { id: "profile-a" } }; },
     },
@@ -72,6 +72,16 @@ test("canceling a crop writes nothing", async () => {
   const f = fixture({ canceled: true }); assert.equal(await f.start(), null);
   assert.equal(f.requests.length, 0); assert.equal(f.listeners.size, 0);
 });
+
+for (const refreshFails of [false, true]) {
+  test(`main-photo rejection reasons survive a ${refreshFails ? 'failed' : 'successful'} profile refresh`, async () => {
+    const reasonCodes = ['multiple_people_detected'];
+    const message = 'Choose a photo showing only you.';
+    const result = await fixture({ decision: 'rejected', reasonCodes, message, refreshFails }).start();
+    assert.equal(result.message, message);
+    assert.deepEqual(result.reasonCodes, reasonCodes);
+  });
+}
 
 for (const decision of ["approved", "review", "moderation_retry", "rejected"]) {
   test(`${decision} remains acknowledged when the profile refresh fails`, async () => {

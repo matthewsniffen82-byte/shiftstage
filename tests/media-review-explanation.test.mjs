@@ -26,8 +26,8 @@ for (const kind of ['photo', 'video']) {
   test(`${kind} distinguishes technical delays, active checks, missing reasons and final approvals`, () => {
     assert.match(explain(kind, 'review', { reasonCodes: ['OPENAI_TIMEOUT'], message: 'Photo uploaded, but moderation stopped before approval. Diagnostic code: OPENAI_TIMEOUT.' }), /Retry/);
     assert.doesNotMatch(explain(kind, 'review', { reasonCodes: ['OPENAI_TIMEOUT'] }), /OPENAI/);
-    assert.match(explain(kind, 'moderating'), /AI checks are running/);
-    assert.match(explain(kind, 'submitted'), /waiting for club approval/);
+    assert.equal(explain(kind, 'moderating'), '');
+    assert.equal(explain(kind, 'submitted'), '');
     assert.match(explain(kind, 'rejected'), /specific reason wasn't saved/);
     assert.equal(explain(kind, 'approved', { reasonCodes: ['multiple_people_detected'], message: 'Old rejection.' }), '');
   });
@@ -46,8 +46,24 @@ test('specific moderator instructions survive automatic review codes', () => {
 });
 
 test('unknown and malformed reasons never invent a violation or expose diagnostics', () => {
-  assert.match(explain('photo', 'review', { reasonCodes: ['new_internal_reason', null, {}] }), /waiting for club approval/);
+  assert.equal(explain('photo', 'review', { reasonCodes: ['new_internal_reason', null, {}] }), '');
   assert.match(explain('photo', 'rejected', { reasonCodes: 'multiple_people_detected' }), /specific reason wasn't saved/);
   assert.doesNotMatch(explain('photo', 'review', { reasonCodes: ['new_internal_reason'] }), /new_internal_reason/);
-  assert.match(explain('photo', 'review', { reasonCodes: ['provider_not_flagged'] }), /waiting for club approval/);
+  assert.equal(explain('photo', 'review', { reasonCodes: ['provider_not_flagged'] }), '');
 });
+
+for (const kind of ['photo', 'video']) {
+  test(`${kind} keeps background processing receipts out of uploading and club approval feedback`, () => {
+    for (const status of ['pending', 'moderating']) {
+      assert.equal(mediaReview.mediaReviewLabel(status), 'Uploading');
+      assert.equal(explain(kind, status, { message: 'Upload received. AI checks are running; club approval is required before it goes live.' }), '');
+    }
+    for (const status of ['pending_review', 'submitted', 'review', 'completed']) {
+      assert.equal(mediaReview.mediaReviewLabel('pending', status), 'Waiting for Club approval');
+      assert.equal(explain(kind, 'pending', { moderationStatus: status, message: 'AI checks passed. Pending club approval.' }), '');
+    }
+    assert.equal(mediaReview.mediaReviewLabel('approved', 'pending_review'), 'Approved');
+    assert.equal(mediaReview.mediaReviewLabel('rejected', 'moderating'), 'Not approved');
+    assert.match(explain(kind, 'rejected', { reasonCodes: ['multiple_people_detected'] }), /more than one person/);
+  });
+}

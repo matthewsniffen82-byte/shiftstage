@@ -8,9 +8,9 @@ export function mediaReviewLabel(status: string, moderationStatus = "") {
   if (state === "hidden" || state === "removed") return "Removed";
   if (state === "expired") return "Expired";
   const review = String(moderationStatus || state).trim().toLowerCase();
-  if (["pending_review", "submitted", "review", "completed"].includes(review)) return "Pending club approval";
+  if (["pending_review", "submitted", "review", "completed"].includes(review)) return "Waiting for Club approval";
   if (["error", "moderation_error", "moderation_retry"].includes(review)) return "Review delayed";
-  if (["pending", "moderating"].includes(state)) return "Checking";
+  if (["pending", "moderating"].includes(state)) return "Uploading";
   return "Check upload status";
 }
 
@@ -19,7 +19,8 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   moderationStatus = "", reasonCodes, message,
 }: { moderationStatus?: string; reasonCodes?: unknown; message?: unknown } = {}) {
   const label = mediaReviewLabel(status, moderationStatus);
-  if (["Approved", "Removed", "Expired"].includes(label)) return "";
+  // Keep active uploads quiet, including saved server receipts from background checks.
+  if (["Approved", "Removed", "Expired", "Uploading"].includes(label)) return "";
   const rejected = label === "Not approved";
   const rejectedPhoto = kind === "photo" && rejected;
   const codes = Array.isArray(reasonCodes) ? reasonCodes.filter((code): code is string => typeof code === "string") : [];
@@ -66,11 +67,11 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   }
   // A saved moderator note takes precedence over automatic reasons. Ignore legacy generic receipts.
   const savedMessage = typeof message === "string" ? message.trim() : "";
-  const genericMessage = /^(Your photo was uploaded and is awaiting|Photo uploaded, but moderation stopped|Automatically approved|Automated safety review requested human review|This video did not meet MyDancr TV safety guidelines|This photo does not meet Dancr's photo guidelines|Rejected by admin moderation\.)/i;
+  const genericMessage = /^(Your photo was uploaded and is awaiting|Photo uploaded, but moderation stopped|Automatically approved|Automated safety review requested human review|This video did not meet MyDancr TV safety guidelines|This photo does not meet Dancr's photo guidelines|Rejected by admin moderation\.|Upload received\. AI checks|Your video uploaded successfully\. AI checks|AI checks (are running|passed)|Pending club approval\.)/i;
   if (savedMessage && !genericMessage.test(savedMessage)) return savedMessage;
   if (notes.length) return [...new Set(notes)].join(" ");
   if (rejected) return `This ${kind} wasn't approved, but a specific reason wasn't saved. You can replace it with another ${kind}.`;
-  if (label === "Pending club approval") return `This ${kind} is waiting for club approval and is not visible on the site yet.`;
+  if (label === "Waiting for Club approval") return "";
   if (label === "Upload incomplete" || label === "Upload failed") return `The upload didn't finish. Retry or choose another ${kind}.`;
-  return `AI checks are running. This ${kind} will stay private until your club approves it.`;
+  return "";
 }

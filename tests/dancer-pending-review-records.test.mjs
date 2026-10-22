@@ -65,7 +65,7 @@ test("pending reviews query saved reasons for the signed-in owner and return rea
   assert.match(rows[0].message, /couldn't confirm that you are the only person/);
   assert.match(rows[1].message, /Retry/);
   assert.doesNotMatch(rows[1].message, /OPENAI|Diagnostic/);
-  assert.match(rows[2].message, /specific reason wasn't provided/);
+  assert.equal(rows[2].message, '');
 });
 
 test("a stale review linked to the same saved approval cannot downgrade it", async () => {
@@ -109,8 +109,8 @@ for (const upload_context of ["profile_gallery:2", "profile_main"]) {
 test("final media decisions take precedence and waiting review is distinct from an active check", () => {
   assert.equal(mediaReview.mediaReviewLabel("approved", "pending_review"), "Approved");
   assert.equal(mediaReview.mediaReviewLabel("rejected", "moderating"), "Not approved");
-  assert.equal(mediaReview.mediaReviewLabel("pending", "pending_review"), "Awaiting review");
-  assert.equal(mediaReview.mediaReviewLabel("submitted"), "Awaiting review");
+  assert.equal(mediaReview.mediaReviewLabel("pending", "pending_review"), "Waiting for Club approval");
+  assert.equal(mediaReview.mediaReviewLabel("submitted"), "Waiting for Club approval");
   assert.equal(mediaReview.mediaReviewLabel("pending", "moderation_error"), "Review delayed");
-  assert.equal(mediaReview.mediaReviewLabel("pending", "moderating"), "Checking");
+  assert.equal(mediaReview.mediaReviewLabel("pending", "moderating"), "Uploading");
 });

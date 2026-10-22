@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { DancerPhotoItem } from "./dashboard-types";
 import { uploadMainProfilePhoto, type SavedPhotoCropSource } from "./main-profile-photo-upload";
+import { mediaReviewExplanation } from "@/src/lib/dancr/media-review-label";
 
 export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfileChange, onBusyChange, makeMain = false, mainPhotoId, replacementPhotoId, pendingReviewId, thumbnail, label }: {
   photo: DancerPhotoItem;
@@ -44,13 +45,13 @@ export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfil
         makeMain, replacementPhotoId: makeMain ? mainPhotoId : pending ? replacementPhotoId : undefined,
         pendingReviewId: pending ? pendingReviewId : undefined,
         photoSlot: pending ? { isPrimary: Boolean(photo.isPrimary), sortOrder: Number(photo.sortOrder || 0) } : undefined,
-        onUploadStart: () => setStatus("Saving and checking your crop…"),
+        onUploadStart: () => setStatus("Uploading"),
       });
       if (controller.signal.aborted) return;
       selection.current = null;
       if (!result) { setStatus("Crop canceled. Your photo hasn’t changed."); return; }
       if (result.profile) onProfileChange?.(result.profile);
-      setStatus([result.decision === "rejected" ? "This photo wasn’t approved. Your current photo hasn’t changed." : "",
+      setStatus([result.decision === "rejected" ? `Not approved. ${mediaReviewExplanation("photo", "rejected", result)} Your current photo hasn’t changed.` : "",
         result.replacementWarning, result.refreshFailed ? "Photo uploaded. Reload to see the latest status." : ""].filter(Boolean).join(" "));
     } catch (error) {
       if (controller.signal.aborted) return;
@@ -62,7 +63,7 @@ export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfil
   }
   return <div className="dancer-saved-photo-crop">
     {pending ? <input ref={input} type="file" hidden accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Replace pending photo" disabled={disabled || busy} onChange={event => { const file = event.target.files?.[0]; event.target.value = ""; if (file) void crop(false, file); }} /> : null}
-    <button type="button" className={thumbnail ? "dancer-saved-photo-choice" : undefined} aria-label={label} disabled={disabled || busy} aria-busy={busy} onClick={() => void crop()}>{thumbnail || (busy ? "Preparing photo…" : pending ? "Choose another photo" : makeMain ? "Use as main photo" : "Crop photo")}</button>
+    <button type="button" className={thumbnail ? "dancer-saved-photo-choice" : undefined} aria-label={label} disabled={disabled || busy} aria-busy={busy} onClick={() => void crop()}>{thumbnail || (busy ? "Uploading" : pending ? "Choose another photo" : makeMain ? "Use as main photo" : "Crop photo")}</button>
     {retry ? <button type="button" disabled={disabled || busy} onClick={() => void crop(true)}>Retry crop save</button> : null}
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </div>;
