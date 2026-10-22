@@ -81,6 +81,7 @@ test("live roster cards retain photos, shift details and permission-scoped profi
       if (name.includes('venue-roster')) return roster;
       if (name === '../internal/InternalRoster') return { InternalRoster: 'InternalRoster', VenueRosterProfileButton: 'ProfileButton' };
       if (name === './VenueDashboardIdentity') return { VenueDashboardIcon: 'Icon' };
+      if (name === './VenueGridImage') return { default: 'img' };
       throw new Error(`Unexpected import: ${name}`);
     },
   });
@@ -95,6 +96,15 @@ test("live roster cards retain photos, shift details and permission-scoped profi
   const cards = tree.filter(node => node.props.className === 'venue-dancer-card');
   assert.equal(cards.length, 2);
   assert.equal(nodes(cards[0]).find(node => node.type === 'ProfileButton').props.dancerId, 'one');
+  assert.equal(nodes(cards[0]).find(node => node.type === 'ProfileButton').props.rosterStatus, 'Internal + External');
+  for (const [internalVisible, externalVisible, expected] of [[true, false, 'Internal only'], [false, true, 'External only'], [false, false, 'Affiliated']]) {
+    Object.assign(fixture[0], { internalVisible, externalVisible });
+    const updated = render({ canManageRoster: true });
+    const button = updated.find(node => node.type === 'ProfileButton');
+    assert.equal(button.props.rosterStatus, expected);
+    assert.ok(nodes(button).some(node => node.props.children === expected), 'profile and grid use the same visibility label');
+  }
+  Object.assign(fixture[0], { internalVisible: true, externalVisible: true });
   assert.equal(nodes(cards[0]).find(node => node.type === 'img').props.src, '/bella.jpg');
   assert.ok(nodes(cards[0]).some(node => node.props.children === 'Internal + External'));
   const caption = nodes(cards[0]).find(node => node.props.className === 'venue-card-caption');

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type KeyboardEvent, type MouseEvent, type
 import { createVenueDashboardDemo, DEMO_PERIODS, type DemoRecord, type DemoRosterDancer } from "@/src/lib/dancr/venue-dashboard-demo";
 import type { VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import { VenueRosterProfileButton } from "../internal/InternalRoster";
+import type { RosterStatus } from "../internal/InternalFullProfile";
 import { VenueDashboardIcon } from "./VenueDashboardIdentity";
 import VenueTonightOverview from "./VenueTonightOverview";
 import VenueSetupChecklist from "./VenueSetupChecklist";
@@ -19,12 +20,12 @@ type Workspace = typeof workspaces[number][0];
 type GuestTab = typeof guestTabs[number][0];
 const timezone = "America/Los_Angeles";
 
-function DemoDancerIdentity({ dancer, children }: { dancer: DemoRosterDancer; children?: ReactNode }) {
+function DemoDancerIdentity({ dancer, rosterStatus, children }: { dancer: DemoRosterDancer; rosterStatus?: RosterStatus; children?: ReactNode }) {
   const identity = <span className="venue-card-portrait">
     <span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={dancer.photoUrl} /></span>
     <span className="venue-card-caption"><strong>{dancer.name}</strong>{children}</span>
   </span>;
-  return dancer.profileDancerId ? <VenueRosterProfileButton dancerId={dancer.profileDancerId} stageName={dancer.name} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
+  return dancer.profileDancerId ? <VenueRosterProfileButton dancerId={dancer.profileDancerId} stageName={dancer.name} rosterStatus={rosterStatus} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
     : identity;
 }
 
@@ -132,7 +133,7 @@ export default function VenueDemoDashboard({ workingNow, affiliations = [], onVi
       <section id="venue-dancer-roster" className="venue-card-region" tabIndex={-1}><h2>Dancers</h2>
         <div className="venue-performance-tools"><label>Find a dancer<input type="search" value={rosterSearch} onChange={event => setRosterSearch(event.target.value)} /></label>
           <label>Roster<select value={workingOnly ? "working" : "all"} onChange={event => setWorkingOnly(event.target.value === "working")}><option value="all">All affiliated dancers</option><option value="working">Working now</option></select></label></div>
-        <ul className="venue-dancer-grid" aria-label="Dancer roster cards">{roster.map(row => <li className="venue-dancer-card" key={row.id}><DemoDancerIdentity dancer={row}>
+        <ul className="venue-dancer-grid" aria-label="Dancer roster cards">{roster.map(row => <li className="venue-dancer-card" key={row.id}><DemoDancerIdentity dancer={row} rosterStatus={row.working ? "Internal + External" : "Affiliated"}>
           <small>{row.working ? "Internal + External" : "Affiliated"}</small>
           <span className="venue-card-status" data-state={row.working ? "working" : "inactive"}>{row.working ? "● Working now" : "Not working now"}</span>
         </DemoDancerIdentity>

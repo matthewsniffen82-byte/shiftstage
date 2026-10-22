@@ -501,7 +501,7 @@ test('the same profile renderer omits Club Deals only for Internal context', () 
   const context={shiftStatus:()=>({}),selectedCity:()=>'',socialLinksMarkup:()=>'',dancerClubDealState:()=>({key:'available'}),
     profileDealTileMarkup:()=>'<div data-club-deal>Free Entry</div>',dancerProfileTonightTravelActionsMarkup:()=>'',isWorkingTonight:()=>true,
     liveProfileModalActionsMarkup:()=>'<button>Follow</button><button>Share</button>',escapeHtml:v=>v,shiftsMarkup:()=>'<p>Working now</p>',
-    liveProfileGoingActionsMarkup:()=>'<button>I’m Going</button>',internalProfileRequestActionsMarkup:()=>'<button>Request at Table 1</button>',internalProfileTableRequestMarkup:()=>'',profileLocationStatusTile:()=>''};
+    liveProfileGoingActionsMarkup:()=>'<button>I’m Going</button>',internalProfileRequestActionsMarkup:()=>'<button>Request at Table 1</button>',internalProfileTableRequestMarkup:()=>'',internalProfileRosterStatusMarkup:()=>'',profileLocationStatusTile:()=>''};
   vm.runInNewContext(renderer+'\nthis.render=profileModalGridMarkup;',context);
   const external=context.render({scheduled:true}),internal=context.render({scheduled:true,internalRoster:true});
   assert.match(external,/data-club-deal/); assert.doesNotMatch(internal,/data-club-deal|Free Entry|profile-tonight-deal/);
@@ -542,6 +542,36 @@ test('staff table context is never shown in table guest or public profiles', asy
   for (const view of [f.bridge.profile(), { tableRequest: event.data.profile.tableRequest }]) {
     assert.equal(f.context.internalProfileTableRequestMarkup(view), '');
   }
+});
+
+test('staff roster visibility matches the card and updates without reloading media', async () => {
+  const f = fixture({ staff: true });
+  const statusNode = { outerHTML: '' };
+  f.context.document.querySelector = selector => selector === '.internal-profile-roster-status' ? statusNode : null;
+  const event = f.event();
+  event.data.profile = { ...profile, rosterStatus: 'Internal only' };
+  await f.bridge.openInternalProfileMessage(event);
+  const reads = f.fetches.length;
+  for (const rosterStatus of ['Internal only', 'External only', 'Internal + External', 'Affiliated']) {
+    event.data.profile = { ...profile, rosterStatus };
+    await f.bridge.openInternalProfileMessage(event);
+    assert.match(statusNode.outerHTML, /role="status"/);
+    assert.ok(statusNode.outerHTML.includes(rosterStatus));
+    assert.equal(f.bridge.profile().rosterStatus, rosterStatus);
+    assert.equal(f.fetches.length, reads);
+    assert.equal(f.opens.length, 1);
+  }
+  for (const rosterStatus of [null, undefined, '<script>unknown</script>']) {
+    event.data.profile = { ...profile, rosterStatus };
+    await f.bridge.openInternalProfileMessage(event);
+    assert.equal(statusNode.outerHTML, '', 'unknown or absent status does not carry over from another card');
+  }
+  const guest = fixture();
+  const guestEvent = guest.event();
+  guestEvent.data.profile = { ...profile, rosterStatus: 'Internal only' };
+  await guest.bridge.openInternalProfileMessage(guestEvent);
+  assert.equal(guest.bridge.profile().rosterStatus, null);
+  assert.equal(f.context.internalProfileRosterStatusMarkup({ rosterStatus: 'Internal only' }), '', 'public profiles omit staff roster details');
 });
 
 test('staff media recovers on an unchanged profile refresh after a temporary outage', async () => {

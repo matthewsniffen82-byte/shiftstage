@@ -1436,6 +1436,41 @@ test("the shared viewer follows the selected request through status changes with
   assert.equal(context(), undefined, 'opening the roster card does not retain table context');
 });
 
+test("roster cards carry visibility into both the shared and standalone profile", async t => {
+  for (const rosterStatus of ['Internal only', 'External only', 'Internal + External', 'Affiliated']) {
+    const selections = [];
+    const shared = harness(() => assert.fail('Shared cards do not fetch their own viewer'), {
+      component: 'VenueRosterProfileButton', props: { rosterStatus }, sharedOpen: value => selections.push(value),
+    });
+    t.after(() => shared.unmount()); await shared.mount();
+    find(shared.render(), node => node.type === 'button').props.onClick();
+    assert.equal(selections[0].rosterStatus, rosterStatus);
+    const standalone = harness(async () => response({ ok: true, profile: { id: dancer.id } }), {
+      component: 'VenueRosterProfileButton', props: { rosterStatus }, session: { accessToken: 'staff', account: { role: 'venue' } },
+    });
+    t.after(() => standalone.unmount()); await standalone.mount();
+    assert.equal(profile(standalone).rosterStatus, rosterStatus);
+  }
+});
+
+test("only the selected roster card updates visibility in the shared viewer", async t => {
+  const app = harness(async () => response({ ok: true, profile: { id: dancer.id } }),
+    { component: 'VenueProfileProvider', session: { accessToken: 'staff', account: { role: 'venue' } } });
+  t.after(() => app.unmount()); await app.mount();
+  app.render().props.value.open({ id: dancer.id, stageName: dancer.stageName, rosterStatus: 'Internal only' });
+  app.render(); app.runEffect(0, true); await flush();
+  app.render().props.value.syncRosterStatus('another-dancer', 'External only');
+  assert.equal(profile(app).rosterStatus, 'Internal only');
+  for (const next of ['External only', 'Internal + External', 'Affiliated', null]) {
+    app.render().props.value.syncRosterStatus(dancer.id, next);
+    assert.equal(profile(app).rosterStatus, next);
+  }
+  app.render().props.value.open({ id: dancer.id, stageName: dancer.stageName, tableRequest: { id: 'table-request', tableLabel: 'Table 1', state: 'pending' } });
+  app.render().props.value.syncRosterStatus(dancer.id, 'Internal only');
+  assert.equal(profile(app).rosterStatus, undefined, 'another origin keeps its own context');
+  assert.equal(profile(app).tableRequest.id, 'table-request');
+});
+
 test("one venue viewer opens immediately, cancels a switched dancer and keeps refreshed sessions", async t => {
   const first = deferred(), calls = [];
   const app = harness(async (url, options) => {

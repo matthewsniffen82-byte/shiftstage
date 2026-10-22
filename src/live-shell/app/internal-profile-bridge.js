@@ -131,16 +131,18 @@
         busy: event.data.request.busy === true, message: String(event.data.request.message || ""),
         status: source.requestStatus, requestId: source.requestId, confirmed: event.data.request.confirmed === true,
       } : null;
-      const { requestsTonight, requestStatus, requestId, tableRequest, ...profileContent } = source;
+      const { requestsTonight, requestStatus, requestId, tableRequest, rosterStatus, ...profileContent } = source;
       const requestContext = !token && tableRequest && ["pending", "acknowledged", "arrived", "closed"].includes(tableRequest.state)
         ? { id: String(tableRequest.id || ""), state: tableRequest.state, tableLabel: String(tableRequest.tableLabel || "Table").slice(0, 60), sample: tableRequest.sample === true } : null;
-      internalProfileActivity = { requestsTonight, requestStatus, requestId, tableRequest: requestContext };
+      const rosterContext = !token && ["Internal only", "External only", "Internal + External", "Affiliated"].includes(rosterStatus) ? rosterStatus : null;
+      internalProfileActivity = { requestsTonight, requestStatus, requestId, tableRequest: requestContext, rosterStatus: rosterContext };
       const revision = JSON.stringify([profileContent, token, Date.parse(source.workingUntil || "") > Date.now()]);
       if (internalRosterProfile) {
         internalRosterProfile.requestsTonight = requestsTonight;
         internalRosterProfile.requestStatus = requestStatus;
         internalRosterProfile.requestId = requestId;
         internalRosterProfile.tableRequest = requestContext;
+        internalRosterProfile.rosterStatus = rosterContext;
         syncInternalProfileRequestUi();
       }
       if (revision === internalProfileRevision && !internalProfileMediaIncomplete) return;
@@ -326,7 +328,17 @@
       return `<div class="internal-profile-table-context" data-state="${escapeHtml(request.state)}" role="status"><span>${request.sample ? "Sample · " : ""}${escapeHtml(request.tableLabel)}</span><strong>${label}</strong></div>`;
     }
 
+    function internalProfileRosterStatusMarkup(profile) {
+      const label = profile?.internalRoster && !profile.internalGuestProfile ? profile.rosterStatus : null;
+      if (!["Internal only", "External only", "Internal + External", "Affiliated"].includes(label)) return "";
+      return `<div class="internal-profile-roster-status" role="status">${escapeHtml(label)}</div>`;
+    }
+
     function syncInternalProfileRequestUi() {
+      const rosterStatus = document.querySelector(".internal-profile-roster-status");
+      const rosterMarkup = internalProfileRosterStatusMarkup(internalRosterProfile);
+      if (rosterStatus) rosterStatus.outerHTML = rosterMarkup;
+      else if (rosterMarkup) document.querySelector("#modalBody .modal-grid")?.insertAdjacentHTML("afterbegin", rosterMarkup);
       const context = document.querySelector(".internal-profile-table-context");
       const contextMarkup = internalProfileTableRequestMarkup(internalRosterProfile);
       if (context) context.outerHTML = contextMarkup;

@@ -369,6 +369,7 @@ export default function VenueNfcTagPanel({
         <div className="venue-dancer-grid" aria-label="Dancer roster cards">
         {rosterEntries.slice(0, visibleCount).map(({ id, affiliation, dancer, checkIn }, index) => {
           const visibility = rosterChannelVisibility(affiliation);
+          const rosterStatus = visibility.internal && visibility.external ? "Internal + External" : visibility.internal ? "Internal only" : visibility.external ? "External only" : affiliation?.status === "active" ? "Affiliated" : null;
           const checkedInAt = typeof checkIn?.checkedInAt === "string" && Number.isFinite(Date.parse(checkIn.checkedInAt)) ? checkIn.checkedInAt : null;
           const identity = <span className="venue-card-portrait">
               <span className="venue-card-photo" aria-hidden="true">
@@ -376,20 +377,20 @@ export default function VenueNfcTagPanel({
               </span>
               <span className="venue-card-caption">
                 <strong>{dancer?.stageName || "Dancer"}</strong>
-                {visibility.internal || visibility.external ? <small>{visibility.internal && visibility.external ? "Internal + External" : visibility.internal ? "Internal only" : "External only"}</small> : affiliation?.status === "active" ? <small>Affiliated</small> : null}
+                {rosterStatus ? <small>{rosterStatus}</small> : null}
                 <span className="venue-card-status" data-state={checkIn ? "working" : "inactive"}>{checkIn ? "● Working now" : "Not working now"}</span>
               </span>
             </span>;
           return (
           <article className="venue-dancer-card" key={id}>
             {affiliation?.canViewProfile && affiliation.dancerId
-              ? <VenueRosterProfileButton dancerId={affiliation.dancerId} stageName={dancer?.stageName || "Dancer"} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
+              ? <VenueRosterProfileButton dancerId={affiliation.dancerId} stageName={dancer?.stageName || "Dancer"} rosterStatus={rosterStatus} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton>
               : identity}
             <details className="venue-card-menu" name="venue-card-details"><summary className="dashboard-menu-trigger" aria-label={`Details for ${dancer?.stageName || "dancer"}`} title="Dancer details"><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary>
             <div className="venue-card-popover"><div className="venue-card-details">
               <strong>{dancer?.stageName || "Dancer"}</strong>
               <span className="venue-card-status" data-state={checkIn ? "working" : "inactive"}>{checkIn ? "● Working now" : "Not working now"}</span>
-              {visibility.internal || visibility.external ? <small>{visibility.internal && visibility.external ? "Internal + External" : visibility.internal ? "Internal only" : "External only"}</small> : null}
+              {visibility.internal || visibility.external ? <small>{rosterStatus}</small> : null}
               {checkedInAt ? <small>Checked in · <time dateTime={checkedInAt}>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZoneName: "short", timeZone }).format(new Date(checkedInAt))}</time></small> : null}
               {dancer?.city ? <small>{dancer.city}</small> : null}
             </div>

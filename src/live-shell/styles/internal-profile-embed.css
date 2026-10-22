@@ -116,6 +116,13 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-tab
 html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-table-context[data-state="pending"] strong { color: #fbbf24; }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-table-context[data-state="acknowledged"] strong { color: #c8b8ed; }
 html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-table-context[data-state="arrived"] strong { color: #75dfb6; }
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-roster-status {
+  color: #bebec8;
+  font-size: clamp(11px, 1.8vw, 16px);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
 html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-working-destination > .profile-live-state {
   margin-bottom: 4px !important;
 }

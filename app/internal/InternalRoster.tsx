@@ -74,6 +74,7 @@ async function rosterFetch(url: string, token: string | undefined, body?: Record
 const VenueProfileContext = createContext<{
   open: (selection: ProfileSelection) => void;
   syncTableRequests: (requests: ClubRequest[]) => void;
+  syncRosterStatus: (dancerId: string, rosterStatus: Profile["rosterStatus"]) => void;
 } | null>(null);
 
 function syncTableRequest(context: Profile["tableRequest"], requests: ClubRequest[]) {
@@ -563,10 +564,13 @@ export function VenueProfileProvider({ children }: { children: ReactNode }) {
     const tableRequest = syncTableRequest(current?.tableRequest, requests);
     return current && current.tableRequest !== tableRequest ? { ...current, tableRequest } : current;
   }), []);
-  return <VenueProfileContext.Provider value={{ open: setSelection, syncTableRequests }}>
+  const syncRosterStatus = useCallback((dancerId: string, rosterStatus: Profile["rosterStatus"]) => setSelection(current =>
+    current?.id === dancerId && current.rosterStatus !== undefined && current.rosterStatus !== rosterStatus
+      ? { ...current, rosterStatus } : current), []);
+  return <VenueProfileContext.Provider value={{ open: setSelection, syncTableRequests, syncRosterStatus }}>
     {children}
     {error ? <p role="status" className="ir-notice">{error}</p> : null}
-    <ClubProfileDialog prewarm profile={profile ? { ...profile, tableRequest: selection?.tableRequest } : null} profileId={selection?.id || ""} loadingIdentity={selection} onError={fail} onClose={close} />
+    <ClubProfileDialog prewarm profile={profile ? { ...profile, tableRequest: selection?.tableRequest, rosterStatus: selection?.rosterStatus } : null} profileId={selection?.id || ""} loadingIdentity={selection} onError={fail} onClose={close} />
   </VenueProfileContext.Provider>;
 }
 
@@ -621,13 +625,17 @@ function useStaffProfile(dancerId: string, open: boolean, onClose: () => void, p
   return { profile: open && profile?.id === dancerId ? profile : null, error, fail };
 }
 
-export function VenueRosterProfileButton({ dancerId, stageName, children, className }: { dancerId: string; stageName: string; children?: ReactNode; className?: string }) {
+export function VenueRosterProfileButton({ dancerId, stageName, rosterStatus, children, className }: { dancerId: string; stageName: string; rosterStatus?: Profile["rosterStatus"]; children?: ReactNode; className?: string }) {
   const openVenueProfile = useContext(VenueProfileContext);
+  const syncRosterStatus = openVenueProfile?.syncRosterStatus;
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   const { profile, error, fail } = useStaffProfile(dancerId, open && !openVenueProfile, close);
+  useEffect(() => {
+    if (rosterStatus !== undefined) syncRosterStatus?.(dancerId, rosterStatus);
+  }, [dancerId, rosterStatus, syncRosterStatus]);
   return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={event => {
-    if (openVenueProfile) openVenueProfile.open({ id: dancerId, stageName, photoUrl: selectedCardPhoto(event?.currentTarget) });
+    if (openVenueProfile) openVenueProfile.open({ id: dancerId, stageName, photoUrl: selectedCardPhoto(event?.currentTarget), rosterStatus });
     else setOpen(true);
-  }} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!openVenueProfile ? <ClubProfileDialog profile={profile} profileId={open ? dancerId : ""} loadingIdentity={{ id: dancerId, stageName }} onError={fail} onClose={close} /> : null}</div>;
+  }} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!openVenueProfile ? <ClubProfileDialog profile={profile ? { ...profile, rosterStatus } : null} profileId={open ? dancerId : ""} loadingIdentity={{ id: dancerId, stageName }} onError={fail} onClose={close} /> : null}</div>;
 }
