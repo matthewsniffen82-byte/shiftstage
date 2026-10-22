@@ -8,7 +8,7 @@ import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerPhotoControls from "./DancerPhotoControls";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
-import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 import "../../public/dancer-main-photo.css";
 
@@ -22,6 +22,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
   const pendingPhoto = photos.find(photo => photo.isPrimary && photo.status === "pending");
   const displayed = pendingPhoto || main;
   const pending = Boolean(pendingPhoto);
+  const awaitingClubApproval = Boolean(pendingPhoto && isAwaitingClubApproval(pendingPhoto.status, pendingPhoto.moderationStatus));
   const pendingReviewId = (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).some((review: Record<string, unknown>) => review.id === pendingPhoto?.id) ? pendingPhoto?.id : undefined;
   const [busy, setBusy] = useState(false);
   const [cropping, setCropping] = useState(false);
@@ -50,7 +51,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
       selection.current = null;
       if (!result) { setStatus("Crop canceled. Your main photo hasn’t changed."); return; }
       if (result.profile) onProfileChange?.(result.profile);
-      const message = result.decision === "rejected" ? `Not approved. ${mediaReviewExplanation("photo", "rejected", result)} Your current photo hasn’t changed.` : "";
+      const message = result.decision === "rejected" ? `Not approved. ${mediaReviewExplanation("photo", "rejected", result)}` : "";
       setStatus([message, result.replacementWarning, result.refreshFailed ? "Photo uploaded. Reload the dashboard to see its latest status." : ""].filter(Boolean).join(" "));
     } catch (error) {
       if (controller.signal.aborted) return;
@@ -63,7 +64,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
   }
 
   function choose(file?: File) {
-    if (!file || action.current || cropping) return;
+    if (!file || action.current || cropping || awaitingClubApproval) return;
     selection.current = null;
     setRetry(false);
     if (!file.size || file.size > 25 * 1024 * 1024 || (!file.type.startsWith("image/") && !/\.(heic|heif)$/i.test(file.name))) {
@@ -101,17 +102,17 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
   }
 
   return <section className="dancer-main-photo-panel" aria-label="Main profile photo" aria-busy={busy || cropping}>
-    <button className="dancer-main-photo-preview dancer-photo-edit-target" data-empty={!displayed} type="button" disabled={busy || cropping}
-      aria-label={displayed ? "Edit main photo" : "Add main photo"} onClick={() => displayed ? setEditRequested(value => value + 1) : input.current?.click()}>
+    <button className="dancer-main-photo-preview dancer-photo-edit-target" data-empty={!displayed} type="button" disabled={busy || cropping || awaitingClubApproval}
+      aria-label={awaitingClubApproval ? "Main photo waiting for Club approval" : displayed ? "Edit main photo" : "Add main photo"} onClick={() => displayed ? setEditRequested(value => value + 1) : input.current?.click()}>
       {displayed?.imageUrl ? <img src={displayed.imageUrl} alt={pending ? "Main photo awaiting review" : "Current main profile photo"} /> : <span>{pending ? "Main photo awaiting review" : "+ Add photo"}</span>}
     </button>
     <div className="dancer-main-photo-copy">
       <h3>Main photo</h3>
       <p>Shown on your dancer card and profile. Your avatar is created automatically.</p>
       <strong className="dancer-main-photo-state" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? "Uploading" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
-      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
+      <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping || awaitingClubApproval} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
-        <DancerPhotoControls label="main photo" compact hidden={!displayed} openRequested={editRequested} disabled={busy || cropping} primary={
+        {awaitingClubApproval ? <button type="button" aria-label="Remove pending main photo" disabled={busy || cropping} onClick={() => void remove()}>Remove</button> : <DancerPhotoControls label="main photo" compact hidden={!displayed} openRequested={editRequested} disabled={busy || cropping} primary={
           <button type="button" aria-label={pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"} disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating…" : pending ? "Replace" : displayed ? "Change" : "Add"}</button>
         }>
           {photos.some(photo => photo.status === "approved" && photo.id !== displayed?.id) ? <details className="dancer-saved-photo-picker">
@@ -127,10 +128,10 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
             {displayed.status === "approved" ? <DancerSavedPhotoCrop key={displayed.id} photo={displayed} disabled={busy || pending} onBusyChange={setCropping} onProfileChange={onProfileChange} /> : null}
             <button type="button" disabled={busy || cropping} onClick={() => void remove()}>{pending ? "Remove pending photo" : "Remove main photo"}</button>
           </> : null}
-        </DancerPhotoControls>
+        </DancerPhotoControls>}
       </div>
-      {retry ? <button type="button" disabled={busy} onClick={() => void upload()}>Retry main photo upload</button> : null}
-      {pendingPhoto ? <DancerMediaRetryButton id={pendingPhoto.id} kind="photo" status={pendingPhoto.status} moderationStatus={pendingPhoto.moderationStatus}
+      {retry && !awaitingClubApproval ? <button type="button" disabled={busy} onClick={() => void upload()}>Retry main photo upload</button> : null}
+      {pendingPhoto && !awaitingClubApproval ? <DancerMediaRetryButton id={pendingPhoto.id} kind="photo" status={pendingPhoto.status} moderationStatus={pendingPhoto.moderationStatus}
         disabled={busy || cropping} onBusyChange={setBusy} onRetried={({ profile }) => { if (profile) onProfileChange?.(profile); }} /> : null}
       <p className="dancer-main-photo-status" role="status" aria-live="polite">{status}</p>
     </div>

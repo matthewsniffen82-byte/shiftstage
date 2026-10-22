@@ -82,8 +82,8 @@ test("a first main upload appears in the main slot while awaiting approval, incl
   for (const view of [ui, fixture(profile)]) {
     assert.equal(view.image.props.src, pending.previewUrl);
     assert.equal(view.image.props.alt, "Main photo awaiting review");
-    assert.equal(view.button.props.children, "Replace");
-    assert.equal(view.button.props['aria-label'], "Replace main photo");
+    assert.equal(view.button.props.children, "Remove");
+    assert.equal(view.button.props['aria-label'], "Remove pending main photo");
     assert.equal(view.button.props.disabled, false);
     assert.equal(view.crop, undefined);
     assert.equal(view.badge, 'Waiting for Club approval');
@@ -106,6 +106,17 @@ test("a pending main replacement previews privately without changing the approve
   assert.equal(ui.image.props.src, main.imageUrl);
 });
 
+test('main photo waiting for Club approval offers only Remove and blocks replacement', async () => {
+  const ui = fixture({ dancer_photos: [main], pending_photo_reviews: [pending] });
+  assert.equal(ui.controls, undefined);
+  assert.equal(ui.choices.length, 0);
+  assert.equal(ui.target.props.disabled, true);
+  assert.equal(ui.button.props.children, 'Remove');
+  assert.equal(ui.badge, 'Waiting for Club approval');
+  await ui.upload();
+  assert.equal(ui.uploads.length, 0);
+});
+
 test("pending gallery photos do not occupy or disable the main photo slot", () => {
   const ui = fixture({ dancer_photos: [main], pending_photo_reviews: [{ ...pending, is_primary: false, sort_order: 2 }] });
   assert.equal(ui.image.props.src, main.imageUrl);
@@ -118,8 +129,8 @@ test("a main upload identified by its upload context still appears in the main s
   assert.equal(ui.image.props.src, pending.previewUrl);
 });
 
-test('choosing another pending main photo preserves the approved replacement identity', async () => {
-  const ui = fixture({ dancer_photos: [main], pending_photo_reviews: [pending] }, { decision: 'review', profile: { pending_photo_reviews: [pending] } });
+test('choosing another processing main photo preserves the approved replacement identity', async () => {
+  const ui = fixture({ dancer_photos: [main], pending_photo_reviews: [{ ...pending, status: 'moderating' }] }, { decision: 'review', profile: { pending_photo_reviews: [pending] } });
   await ui.upload();
   assert.equal(ui.uploads.length, 1);
   assert.equal(ui.uploads[0][1].replacementPhotoId, 'main');
@@ -136,8 +147,8 @@ test('a rejected main photo shows the reason and preserves the current photo', a
   const ui = fixture({ dancer_photos: [main] }, { decision: 'rejected', reasonCodes: ['multiple_people_detected'] });
   await ui.upload();
   assert.match(ui.status, /Not approved/);
-  assert.match(ui.status, /more than one person/);
-  assert.match(ui.status, /current photo hasn’t changed/);
+  assert.match(ui.status, /Multiple people/);
+  assert.equal(ui.status, 'Not approved. Multiple people');
   assert.equal(ui.image.props.src, main.imageUrl);
 });
 

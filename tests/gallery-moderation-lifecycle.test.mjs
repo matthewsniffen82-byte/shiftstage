@@ -237,7 +237,7 @@ for (const avatar of [false,true]) for (const retry of [false,true]) {
     assert.equal(result.decision,'rejected');assert.equal(s.record.decision,'rejected');
     assert.equal(s.record.status,'rejected');assert.equal(result.photo,undefined);
     assert.equal(s.record.category_flags.ai_recommended_approval,false);
-    assert.match(result.message,/Choose/);
+    assert.equal(result.message,'Approval unconfirmed');
     assert.equal(s.files.size,0);
     assert.equal(s.events.includes('upload:dancr-image-moderation-review'),false);
     assert.ok(s.events.indexOf('state:rejected')<s.events.indexOf('remove:dancr-image-moderation-temp'));

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { mediaReview } from './helpers/media-review-label.mjs';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
 
 const compiled = ts.transpileModule(readFileSync(new URL('../app/api/venue/media-reviews/route.ts', import.meta.url), 'utf8'), {
@@ -20,7 +21,7 @@ function fixture(kind, fields) {
     storage: { from: () => ({ createSignedUrl: async () => ({ data: { signedUrl: 'private-preview' } }) }) },
   };
   const deps = {
-    PublicApiError, NextResponse: { json: body => body },
+    ...mediaReview, PublicApiError, NextResponse: { json: body => body },
     apiError: error => ({ status: error.status, message: error.message }),
     readBoundedJsonObject: async request => request.body,
     runWithServerJob: work => work(),
@@ -35,10 +36,18 @@ function fixture(kind, fields) {
   const route = {};
   vm.runInNewContext(compiled, { exports: route, require: () => deps, URL, console });
   return { decisions, get: () => route.GET({ url: 'https://example.test/api/venue/media-reviews' }),
-    post: (decision = 'approved') => route.POST({ body: { id, kind, version, decision, notes: 'Choose a clearer upload.' } }) };
+    post: (decision = 'approved', notes = 'Logo visible') => route.POST({ body: { id, kind, version, decision, notes } }) };
 }
 
 for (const kind of ['photo', 'video']) {
+  test(`${kind}: a club rejection requires one to three words`, async () => {
+    const f = fixture(kind, {});
+    for (const reason of ['', '   ', 'This reason has four']) {
+      assert.equal((await f.post('rejected', reason)).status, 400);
+      assert.equal(f.decisions.length, 0);
+    }
+    assert.equal((await f.post('rejected', 'Nudity')).ok, true);
+  });
   for (const decision of ['approved', 'review', 'rejected', null]) test(`${kind}: only an automated pass enables and accepts Club approval (${decision})`, async () => {
     const f = fixture(kind, kind === 'photo' ? { category_flags: {
       ai_recommended_approval: decision === 'approved', ai_recommended_rejection: decision === 'rejected',

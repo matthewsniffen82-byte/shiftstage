@@ -16,7 +16,7 @@ test('saved rejection feedback is owner scoped and excludes avatar reviews and p
   const calls = [], exports = {};
   const query = new Proxy({ then: resolve => resolve({ data: [
     { id: 'rejected-photo', upload_context: 'profile_gallery:2', reason_codes: ['multiple_people_detected'] },
-    { id: 'manual-rejection', upload_context: 'profile_gallery:3', reason_codes: ['person_count_uncertain'], review_notes: 'Please replace the photo with one without the mirror reflection of another person.' },
+    { id: 'manual-rejection', upload_context: 'profile_gallery:3', reason_codes: ['person_count_uncertain'], review_notes: 'Multiple people' },
   ] }) }, {
     get: (target, key) => target[key] || ((...args) => { calls.push([key, ...args]); return query; }),
   });
@@ -30,11 +30,11 @@ test('saved rejection feedback is owner scoped and excludes avatar reviews and p
   assert.ok(calls.some(call => call.join(':') === `neq:upload_context:${slot.PROFILE_AVATAR_CONTEXT}`));
   assert.ok(calls.some(call => call[0] === 'select' && call[1].includes('review_notes')));
   assert.equal(rows[0].id, 'rejected-photo');
-  assert.match(rows[0].message, /more than one person/);
+  assert.match(rows[0].message, /Multiple people/);
   assert.equal(rows[0].status, 'rejected');
   assert.equal(rows[0].isPrimary, false);
   assert.ok(!('temporary_storage_path' in rows[0]));
-  assert.equal(rows[1].message, 'Please replace the photo with one without the mirror reflection of another person.');
+  assert.equal(rows[1].message, 'Multiple people');
 });
 
 async function pendingReviews(reviews, photos) {

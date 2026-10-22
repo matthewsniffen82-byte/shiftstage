@@ -23,6 +23,43 @@ export function videoReviewStatus(status: string, decision?: string | null) {
   return status === "submitted" && decision !== "approved" ? "moderation_error" : status;
 }
 
+export function isBriefRejectionReason(value: string) {
+  return Boolean(value.trim()) && value.trim().split(/\s+/).length <= 3;
+}
+
+/** One concise reason, with uncertainty kept distinct from a detected violation. */
+export function mediaRejectionReason(reasonCodes: unknown) {
+  const codes = Array.isArray(reasonCodes) ? reasonCodes.filter((code): code is string => typeof code === "string") : [];
+  const reasons = new Set(codes.map(code => code.toLowerCase().replace(/^(frame_\d+_|text_|photo_policy_|policy_)/, "")));
+  const labels: [string[], string][] = [
+    [["minor_safety_rejected", "minor_or_age_uncertain", "provider_flagged_sexual_minors"], "Age unverified"],
+    [["nudity_rejected"], "Nudity"],
+    [["explicit_sexual_content_rejected", "explicit_nudity_or_sex_act"], "Explicit content"],
+    [["sexual_services_or_solicitation"], "Solicitation"],
+    [["violent_content_rejected", "illicit_violent_content_rejected", "violence_gore_or_weapon_threat", "provider_flagged_violence", "provider_flagged_violence_graphic", "provider_flagged_illicit_violent"], "Violence"],
+    [["self_harm_content_rejected", "self_harm", "provider_flagged_self_harm", "provider_flagged_self_harm_intent", "provider_flagged_self_harm_instructions"], "Self-harm"],
+    [["drug_use_or_sales"], "Drugs"],
+    [["threatening_hate_content_rejected", "hate_harassment_or_threat", "provider_flagged_hate", "provider_flagged_hate_threatening", "provider_flagged_harassment", "provider_flagged_harassment_threatening"], "Hate or harassment"],
+    [["provider_flagged_illicit"], "Illegal activity"],
+    [["nonconsensual_or_coercive_content"], "Consent unverified"],
+    [["impersonation_or_deceptive_media"], "Deceptive content"],
+    [["multiple_people_detected"], "Multiple people"],
+    [["person_count_uncertain", "dancer_visibility_uncertain"], "Person unclear"],
+    [["dancer_not_visible", "avatar_face_required"], "Not visible"],
+    [["visible_branding_or_logo"], "Logo visible"],
+    [["branding_or_logo_uncertain"], "Branding unclear"],
+    [["contact_or_payment_overlay"], "Contact information"],
+    [["copyright_or_consent_uncertain"], "Rights unverified"],
+    [["unreadable_or_obscured_content"], "Unclear content"],
+    [["sexual_content_requires_review"], "Coverage unclear"],
+    [["photo_content_requires_review"], "Content unverified"],
+    [["photo_approval_not_confirmed", "video_approval_not_confirmed"], "Approval unconfirmed"],
+  ];
+  for (const [matches, label] of labels) if (matches.some(reason => reasons.has(reason))) return label;
+  if ([...reasons].some(reason => reason.startsWith("provider_flagged_"))) return "Safety check failed";
+  return "Reason unavailable";
+}
+
 /** Owner-facing feedback only: never display raw provider diagnostics or guess a missing reason. */
 export function mediaReviewExplanation(kind: "photo" | "video", status: string, {
   moderationStatus = "", reasonCodes, message,
@@ -31,6 +68,12 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   // Keep active uploads quiet, including saved server receipts from background checks.
   if (["Approved", "Removed", "Expired", "Uploading"].includes(label)) return "";
   const rejected = label === "Not approved";
+  if (rejected) {
+    const saved = typeof message === "string" ? message.trim() : "";
+    if (isBriefRejectionReason(saved) && !/human review|manual review|sent to a person|[a-z]+_[a-z_]+/i.test(saved)) return saved;
+    const reason = mediaRejectionReason(reasonCodes);
+    return reason;
+  }
   const codes = Array.isArray(reasonCodes) ? reasonCodes.filter((code): code is string => typeof code === "string") : [];
   // Video safety checks prefix frame/text reasons; the content policy prefixes photo/video reasons.
   const reasons = new Set(codes.map(code => code.toLowerCase().replace(/^(frame_\d+_|text_|photo_policy_|policy_)/, "")));
@@ -61,7 +104,6 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   }
   if (has("sexual_content_requires_review") || (!notes.length && has("photo_content_requires_review"))) notes.push(`The automatic check couldn't confirm that this ${kind} meets the content rules. Choose a clear ${kind} with intimate areas covered and no sexual activity.`);
   if (!notes.length && [...reasons].some(reason => reason.startsWith("provider_flagged_"))) notes.push(`The automatic safety check couldn't approve this ${kind}. Choose another ${kind}.`);
-  if (rejected && !notes.length && has("photo_approval_not_confirmed", "video_approval_not_confirmed")) notes.push(`This ${kind} wasn't approved because the automatic check couldn't confirm it meets the content guidelines. Choose another ${kind}.`);
   if (!rejected && !notes.length && (label === "Review delayed" || [...reasons].some(reason => /^(provider_(?!not_flagged|flagged_)|openai_|image_url_|image_load_|storage_image_|database_update_failed|moderation_unknown_error|video_moderation_|video_decode_failed|public_watermark_processing_failed|approved_publication_unconfirmed|missing_openai_|invalid_openai_)/.test(reason)))) {
     const problem = has("provider_timeout", "openai_timeout", "video_moderation_timeout")
       ? "The automatic check timed out."
@@ -79,7 +121,6 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   const genericMessage = /^(Your photo was uploaded and is awaiting|Photo uploaded, but moderation stopped|Automatically approved|Automated safety review requested human review|This video did not meet MyDancr TV safety guidelines|This photo does not meet Dancr's photo guidelines|Rejected by admin moderation\.|Upload received\. AI checks|Your video uploaded successfully\. AI checks|AI checks (are running|passed)|Pending club approval\.)/i;
   if (savedMessage && !genericMessage.test(savedMessage) && !/human review|manual review|sent to a person/i.test(savedMessage)) return savedMessage;
   if (notes.length) return [...new Set(notes)].join(" ");
-  if (rejected) return `This ${kind} wasn't approved, but a specific reason wasn't saved. You can replace it with another ${kind}.`;
   if (label === "Waiting for Club approval") return "";
   if (label === "Upload incomplete" || label === "Upload failed") return `The upload didn't finish. Retry or choose another ${kind}.`;
   return "";

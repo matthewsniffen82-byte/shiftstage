@@ -12,6 +12,7 @@ import { MYDANCR_TV_BUCKET, reviewMyDancrTvVideo } from "@/src/lib/dancr/tv";
 import { finalizePendingDancerNfcEnrollment } from "@/src/lib/dancr/nfc";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
         || typeof version !== "string" || !Number.isFinite(Date.parse(version)) || notes.length > 4000) {
         throw new PublicApiError("INVALID_REQUEST", "Choose an upload and a review decision.", 400);
       }
-      if (decision === "rejected" && notes.length < 3) throw new PublicApiError("INVALID_REQUEST", "Add a reason so the dancer knows what to change.", 400);
+      if (decision === "rejected" && !isBriefRejectionReason(notes)) throw new PublicApiError("INVALID_REQUEST", "Enter a rejection reason in 1–3 words.", 400);
       const photo = kind === "photo";
       const { data: record, error } = await admin.from(photo ? "image_moderation_records" : "mydancr_tv_videos").select("*").eq("id", id).maybeSingle();
       if (error) throw error;

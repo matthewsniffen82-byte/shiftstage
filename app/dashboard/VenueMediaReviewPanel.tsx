@@ -3,6 +3,7 @@ import RefreshButton from "../components/RefreshButton";
 
 import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
+import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
 import "./venue-media-review.css";
 
 type Review = { id: string; kind: "photo" | "video"; stageName: string; version: string; previewUrl: string;
@@ -39,8 +40,8 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
 
   async function review(item: Review, decision: "approved" | "rejected") {
     if (action.current) return;
-    if (decision === "rejected" && (notes[item.id] || "").trim().length < 3) {
-      setFeedback({ id: item.id, text: "Enter a rejection reason (at least 3 characters) so the dancer knows what to change.", error: true, reasonRequired: true });
+    if (decision === "rejected" && !isBriefRejectionReason(notes[item.id] || "")) {
+      setFeedback({ id: item.id, text: "Enter a rejection reason in 1–3 words.", error: true, reasonRequired: true });
       noteInputs.current[item.id]?.focus();
       noteInputs.current[item.id]?.scrollIntoView({ block: "center", behavior: "smooth" });
       return;
@@ -80,12 +81,12 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
         <label>Review note<textarea ref={node => { noteInputs.current[item.id] = node; }} value={notes[item.id] || ""} maxLength={4000} disabled={busy}
           aria-invalid={feedback?.id === item.id && feedback.reasonRequired ? true : undefined}
           aria-describedby={`review-note-hint-${item.id}${feedback?.id === item.id ? ` review-feedback-${item.id}` : ""}`}
-          placeholder="Why isn't this upload approved?" onChange={event => {
+          placeholder="e.g. Logo visible" onChange={event => {
             const value = event.target.value;
             setNotes(current => ({ ...current, [item.id]: value }));
-            if (value.trim().length >= 3) setFeedback(current => current?.id === item.id && current.reasonRequired ? null : current);
+            if (isBriefRejectionReason(value)) setFeedback(current => current?.id === item.id && current.reasonRequired ? null : current);
           }} /></label>
-        <p className="venue-media-review-note-hint" id={`review-note-hint-${item.id}`}>A reason is required to reject.</p>
+        <p className="venue-media-review-note-hint" id={`review-note-hint-${item.id}`}>Rejection reason: 1–3 words.</p>
         {feedback?.id === item.id ? <p className={`venue-media-review-feedback${feedback.error ? " is-error" : ""}`} id={`review-feedback-${item.id}`} role={feedback.error ? "alert" : "status"}>{feedback.text}</p> : null}
         <div className="venue-media-review-actions"><button type="button" disabled={busy || loading || !item.canApprove || !item.previewUrl} onClick={() => void review(item, "approved")}>Approve</button>
           <button type="button" disabled={busy || loading || item.processing} onClick={() => void review(item, "rejected")}>{busy && feedback?.id === item.id && feedback.decision === "rejected" ? "Rejecting…" : "Reject"}</button></div>

@@ -123,7 +123,7 @@ test("overlapping photo reviews reserve selection order and show real progress b
 
 test("collapsing photo upload controls leaves pending and rejected reviews outside the disclosure", () => {
   const ui = photoHarness({ uploadOnly: true, profile: { dancer_photos: [approved("a", 1), approved("b", 2), approved("c", 3)],
-    pending_photo_reviews: [pending()], rejected_photo_reviews: [{ id: "rejected", message: "Choose a solo photo." }] } });
+    pending_photo_reviews: [pending()], rejected_photo_reviews: [{ id: "rejected", message: "Multiple people" }] } });
   assert.equal(ui.picker.props.defaultOpen, false);
   assert.equal(ui.reviewsInsidePicker.length, 0);
   assert.equal(ui.cards.length, 2);
@@ -227,12 +227,12 @@ test("mixed batches clear approvals while keeping unresolved photos in selection
   releases[0]({ decision: "approved", photo: approved() }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Uploading", "Uploading"]);
   assert.deepEqual(ui.labels, ["Selected photo 1", "Selected photo 2", "Selected photo 3"]);
-  releases[1]({ decision: "rejected", moderationRecordId: "rejected", message: "Choose a solo photo." }); await ui.settle();
+  releases[1]({ decision: "rejected", moderationRecordId: "rejected", message: "Multiple people" }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Uploading"]);
   releases[2]({ decision: "review", photo: { id: "review", reviewStatus: "pending" } }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Not approved", "Waiting for Club approval"]);
   assert.deepEqual(ui.labels, ["second.jpg", "Selected photo 3"]);
-  assert.equal(ui.notes[0], "Choose a solo photo.");
+  assert.equal(ui.notes[0], "Multiple people");
   assert.equal(ui.notes.length, 1);
   assert.equal(ui.progress.length, 0);
   assert.equal(ui.buttons.filter(button => button.props.children === "Remove").length, 1);
@@ -310,10 +310,10 @@ test("the Add photo box retains failed upload feedback and retry", async () => {
 test("saved pending and rejected photos stay above the library with reasons after reopening", () => {
   const ui = photoHarness({ uploadOnly: true, profile: {
     dancer_photos: [approved()], pending_photo_reviews: [pending()],
-    rejected_photo_reviews: [{ id: 'denied', message: 'Only you can appear in a profile photo.' }],
+    rejected_photo_reviews: [{ id: 'denied', message: 'Multiple people' }],
   } });
   assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
-  assert.deepEqual(ui.notes, ['Only you can appear in a profile photo.']);
+  assert.deepEqual(ui.notes, ['Multiple people']);
   assert.equal(ui.replacements.length, 1);
   ui.close(); ui.reopen();
   assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
@@ -323,10 +323,10 @@ test("saved pending and rejected photos stay above the library with reasons afte
 test("an asynchronous rejection updates the same card with the saved reason", async () => {
   const ui = photoHarness({ uploadOnly: true, read: async () => ({ profile: { pending_photo_reviews: [pending()] } }) });
   ui.select(); await ui.settle();
-  ui.updateProfile({ rejected_photo_reviews: [{ id: 'review', message: 'Remove the contact overlay.' }] });
+  ui.updateProfile({ rejected_photo_reviews: [{ id: 'review', message: 'Contact information' }] });
   assert.deepEqual(ui.statuses, ['Not approved']);
-  assert.deepEqual(ui.notes, ['Remove the contact overlay.']);
-  ui.updateProfile({ rejected_photo_reviews: [{ id: "review", message: "Remove the contact overlay." }] });
+  assert.deepEqual(ui.notes, ['Contact information']);
+  ui.updateProfile({ rejected_photo_reviews: [{ id: "review", message: "Contact information" }] });
   assert.deepEqual(ui.statuses, ['Not approved']);
   ui.notices[0].props.onDismiss(); await ui.settle();
   assert.equal(ui.cards.length, 0);

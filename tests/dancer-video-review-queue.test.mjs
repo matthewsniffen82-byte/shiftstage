@@ -108,12 +108,12 @@ test('both video sources stay gated until both permissions are checked and re-lo
 });
 
 test('saved unresolved videos show reasons and actions while only approvals enter the library', async () => {
-  const ui = harness([video('live', 'approved'), video('checking', 'moderating'), video('denied', 'rejected', 'Only you may appear in the video.')]); await ui.settle();
+  const ui = harness([video('live', 'approved'), video('checking', 'moderating'), video('denied', 'rejected', 'Multiple people')]); await ui.settle();
   assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
-  assert.deepEqual(ui.notes, ['Only you may appear in the video.']);
+  assert.deepEqual(ui.notes, ['Multiple people']);
   assert.deepEqual(Array.from(ui.library, item => item.id), ['live']);
   ui.rerender(); assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
-  await ui.refresh([video('live', 'approved'), video('checking', 'approved'), video('denied', 'rejected', 'Only you may appear in the video.')]);
+  await ui.refresh([video('live', 'approved'), video('checking', 'approved'), video('denied', 'rejected', 'Multiple people')]);
   assert.deepEqual(ui.statuses, ['Not approved']);
 });
 
@@ -125,7 +125,7 @@ test('saved video reasons explain waiting review and replace legacy generic note
   ]);
   await ui.settle();
   assert.match(ui.notes[0], /couldn't confirm that you are the only person/);
-  assert.match(ui.notes[1], /Remove phone numbers/);
+  assert.match(ui.notes[1], /Contact information/);
   assert.equal(ui.notes.length, 2);
   await ui.refresh([video('uncertain', 'approved'), video('denied', 'approved'), video('no-reason', 'approved')]);
   assert.deepEqual(ui.notes, []);
@@ -150,8 +150,8 @@ test('submitted video remains visible through refresh failure then moves into th
 test('asynchronous video rejection keeps the same upload with the rejection reason', async () => {
   const ui = harness(); await ui.settle(); ui.permissions(); ui.select(); await ui.settle();
   const id = ui.calls.find(call => call[1] === 'PATCH')[0];
-  await ui.refresh([video(id, 'rejected', 'Remove the contact overlay.')]);
-  assert.deepEqual(ui.statuses, ['Not approved']); assert.deepEqual(ui.notes, ['Remove the contact overlay.']);
+  await ui.refresh([video(id, 'rejected', 'Contact information')]);
+  assert.deepEqual(ui.statuses, ['Not approved']); assert.deepEqual(ui.notes, ['Contact information']);
   assert.equal(ui.library.length, 0); assert.equal(ui.reviews.length, 1);
   ui.notices[0].props.onDismiss(); await ui.settle();
   assert.equal(ui.reviews.length, 0); assert.equal(ui.revoked.length, 1);

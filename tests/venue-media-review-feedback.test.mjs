@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
+import { mediaReview } from './helpers/media-review-label.mjs';
 
 const code = ts.transpileModule(readFileSync('app/dashboard/VenueMediaReviewPanel.tsx', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
@@ -26,6 +27,7 @@ function harness(kind = 'photo') {
   };
   const exports = {};
   vm.runInNewContext(code, { exports, AbortController, Error, require(name) {
+    if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
     if (name === 'react') return hooks;
     if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
     if (name === './dashboard-session') return { requestDashboardJson: async (_url, options) => {
@@ -66,11 +68,11 @@ function harness(kind = 'photo') {
 }
 
 for (const kind of ['photo', 'video']) {
-  test(`${kind}: Reject with a missing or short reason focuses that card and shows an inline alert`, async () => {
+  test(`${kind}: Reject with a missing or overly long reason focuses that card and shows an inline alert`, async () => {
     const ui = harness(kind); await ui.settle();
-    for (const note of ['', '  ', 'no']) {
+    for (const note of ['', '  ', 'This reason is lengthy']) {
       ui.note(note, 1); ui.click('Reject', 1);
-      assert.match(ui.alerts(1)[0].props.children, /rejection reason.*3 characters/);
+      assert.match(ui.alerts(1)[0].props.children, /rejection reason.*1–3 words/);
       assert.equal(ui.field(1).props['aria-invalid'], true);
       assert.ok(ui.field(1).props['aria-describedby'].includes(ui.alerts(1)[0].props.id));
       assert.equal(ui.alerts(0).length, 0); assert.equal(ui.calls.length, 0);
@@ -78,11 +80,11 @@ for (const kind of ['photo', 'video']) {
     }
   });
   test(`${kind}: a valid reason rejects once, removes only that upload and updates the count`, async () => {
-    const ui = harness(kind); await ui.settle(); ui.click(); ui.note('The photo contains a logo.');
+    const ui = harness(kind); await ui.settle(); ui.click(); ui.note('Logo visible');
     assert.equal(ui.alerts().length, 0); assert.equal(ui.field().props['aria-invalid'], undefined);
     const savedButton = ui.buttons().find(node => node.props.children === 'Reject');
     ui.click(); savedButton.props.onClick();
-    assert.equal(ui.calls.length, 1); assert.equal(ui.calls[0].notes, 'The photo contains a logo.');
+    assert.equal(ui.calls.length, 1); assert.equal(ui.calls[0].notes, 'Logo visible');
     assert.equal(ui.calls[0].kind, kind); assert.equal(ui.calls[0].decision, 'rejected');
     assert.ok(ui.buttons().some(node => node.props.children === 'Rejecting…' && node.props.disabled));
     ui.finish(); await ui.settle();
@@ -91,10 +93,10 @@ for (const kind of ['photo', 'video']) {
 }
 
 test('a failed save keeps the reason and displays the server error on the affected card, allowing retry', async () => {
-  const ui = harness(); await ui.settle(); ui.note('Please upload a clearer photo.'); ui.fail(true); ui.click();
+  const ui = harness(); await ui.settle(); ui.note('Unclear photo'); ui.fail(true); ui.click();
   ui.finish(); await ui.settle();
   assert.match(ui.alerts()[0].props.children, /Unable to save rejection/);
-  assert.equal(ui.field().props.value, 'Please upload a clearer photo.'); assert.equal(ui.cards.length, 2);
+  assert.equal(ui.field().props.value, 'Unclear photo'); assert.equal(ui.cards.length, 2);
   assert.equal(ui.alerts(1).length, 0);
   ui.fail(false); ui.click(); await ui.settle();
   assert.equal(ui.cards.length, 1); assert.equal(ui.calls.length, 2);
