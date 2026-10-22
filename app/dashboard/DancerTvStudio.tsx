@@ -442,7 +442,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     setRemovingId(videoId);
     setStatus("");
     try {
-      const data = await requestDancerTvVideoJson(videoId, {
+      await requestDancerTvVideoJson(videoId, {
         method: "DELETE",
         fallbackMessage: "Unable to remove video.",
         signal: controller.signal,
@@ -457,7 +457,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         : current);
       setQueuedVideos(current => current.filter(item => item.uploadId !== videoId));
       announceDancerProfileVideosChanged();
-      setStatus(embedded ? "Video deleted." : data.message || "Video removed from MyDancr TV.");
+      setStatus("");
     } catch (error) {
       if (isCurrentVideoAction(requestId, controller)) {
         setStatus(error instanceof Error ? error.message : "Unable to remove video.");

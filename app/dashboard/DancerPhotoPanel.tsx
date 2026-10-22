@@ -446,7 +446,7 @@ export function DancerPhotoPanel({
       deletedPhotoStoragePathsRef.current = [];
       onDeletedPhotoIdsChange?.(deletedPhotoIdsRef.current);
       onDeletedPhotoStoragePathsChange?.([]);
-      setStatus("Photo deleted permanently.");
+      setStatus("");
       window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
 
       const refreshData = await requestDancerProfileJson({

@@ -93,7 +93,7 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
       const refreshed = await requestDancerProfileJson({ cache: "no-store", signal: controller.signal });
       if (!current()) return;
       if (!refreshed.profile) throw new Error("Photo removed. Reload to see the latest status.");
-      onProfileChange?.(refreshed.profile); setStatus("Photo removed.");
+      onProfileChange?.(refreshed.profile); setStatus("");
     } catch (error) {
       if (current()) setStatus(error instanceof Error ? error.message : "Unable to remove your photo. Try again.");
     } finally {

@@ -245,7 +245,7 @@ test("photo deletion removes the preview immediately, blocks duplicates, and con
   release({ ok: true }); await ui.settle();
   assert.equal(ui.deleteButton, undefined);
   assert.match(ui.html, /0 added/);
-  assert.match(ui.html, /Photo deleted\./);
+  assert.doesNotMatch(ui.html, /Deleting photo|Photo deleted|profile-upload-status/);
   assert.deepEqual(ui.changes, [["photo-id"]]);
   assert.equal(ui.requests.length, 1);
   assert.deepEqual(ui.busy, [true, false]);
@@ -302,7 +302,7 @@ test("stale parent photos never restore a confirmed deleted preview", async () =
   ui.rerender();
   assert.equal(ui.deleteButton, undefined);
   assert.equal(ui.changes.length, 1);
-  assert.match(ui.html, /Photo deleted\./);
+  assert.doesNotMatch(ui.html, /Deleting photo|Photo deleted|profile-upload-status/);
   assert.equal(ui.requests.length, 1);
   assert.equal(ui.requests.filter(request => request.method === "DELETE").length, 1);
 });
@@ -333,7 +333,7 @@ test("video preview deletion confirms once, blocks duplicate clicks, and refresh
   assert.deepEqual(ui.changes, [["video-id"]]);
   assert.deepEqual(ui.busy, [true, false]);
   assert.deepEqual(ui.announcements, [true]);
-  assert.match(ui.html, /Video deleted\./);
+  assert.doesNotMatch(ui.html, /Video deleted|profile-upload-status/);
 });
 
 test("cancelled or failed video deletion keeps the preview without claiming success", async () => {

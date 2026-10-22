@@ -100,7 +100,7 @@ export default function DancerProfileMediaUploads({
       });
       if (!isCurrent()) return;
       onPhotoDeleted(photoId);
-      setPhotoStatus("Photo deleted.");
+      setPhotoStatus("");
     } catch (error) {
       if (isCurrent()) {
         setDeletedPhotoIds((current) => {
@@ -138,7 +138,7 @@ export default function DancerProfileMediaUploads({
       setDeletedVideoIds((current) => new Set(current).add(videoId));
       onVideoDeleted(videoId);
       announceDancerProfileVideosChanged();
-      setVideoStatus("Video deleted.");
+      setVideoStatus("");
     } catch (error) {
       if (isCurrent()) setVideoStatus(error instanceof Error ? error.message : "Unable to delete video. Try again.");
     } finally {
