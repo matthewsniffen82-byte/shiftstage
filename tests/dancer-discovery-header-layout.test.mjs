@@ -181,12 +181,15 @@ test("the dancer disclaimer keeps 12px separation independently of the card gaps
   assert.ok(filterMargin.important);
 });
 
-test("the dancer discovery grid uses 2px gaps without changing other media grids", () => {
+test("the dancer discovery grid shares the wider gaps used by other media grids", () => {
   const selector = "html body.dancr-button-system #results.home-dancer-grid.home-dancer-three-column";
-  const grid = consistency.nodes.find((node) => node.type === "rule" && node.selector === selector);
+  const grid = consistency.nodes.find((node) => node.type === "rule" && node.selector.startsWith(selector + ","));
   assert.ok(grid);
   assert.deepEqual(Object.fromEntries(grid.nodes.map((node) => [node.prop, node.value])), {
-    "--dancr-media-grid-gap": "2px",
+    gap: "var(--dancr-media-grid-gap, 6px)",
   }, "only spacing changes, not the columns or card dimensions");
-  assert.match(aesthetic, /--dancr-media-grid-gap:\s*1px;/, "other media collections retain their existing spacing");
+  assert.match(aesthetic, /--dancr-media-grid-gap:\s*3px;/);
+  consistency.walkDecls("--dancr-media-grid-gap", () => {
+    assert.fail("discovery must inherit the shared gap instead of overriding it");
+  });
 });
