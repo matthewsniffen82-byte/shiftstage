@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
-import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel, videoReviewStatus } from "@/src/lib/dancr/media-review-label";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
@@ -656,8 +656,9 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       {reviews.length ? <div className="tv-upload-queue" aria-label="Videos awaiting approval">
         <strong>Video uploads · {reviews.length}</strong>
         {reviews.map(({ item, video }, index) => {
-          const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(video.status));
-          const note = video ? mediaReviewExplanation("video", video.status, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
+          const reviewStatus = video ? videoReviewStatus(video.status, video.moderationDecision) : "";
+          const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
+          const note = video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
           label={item?.file.name || `Video ${index + 1}`} message={note}
           disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item && uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
@@ -665,11 +666,11 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
           <div className="dancer-upload-review-copy">
             <strong>Selected video {index + 1}</strong>
-            <small>{item?.error ? "Upload failed" : item && ["validating", "uploading", "checking"].includes(item.stage) ? "Uploading" : video ? statusLabel(video.status) : item?.stage === "submitted" ? "Uploading" : "Waiting to upload"}</small>
+            <small>{item?.error ? "Upload failed" : item && ["validating", "uploading", "checking"].includes(item.stage) ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Uploading" : "Waiting to upload"}</small>
             {item?.stage === "uploading" ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
             {note ? <p>{note}</p> : null}
             {item?.error ? <p>{item.error}</p> : null}
-            {video && !item?.error && !awaitingClubApproval ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={videoActionBusy} onBusyChange={setRetrying}
+            {video && !item?.error && !awaitingClubApproval ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} moderationStatus={reviewStatus} disabled={videoActionBusy} onBusyChange={setRetrying}
               onRetried={() => { void loadWorkspace({ silent: true }); }} /> : null}
             <span className="tv-queue-actions">
               {item?.error && !awaitingClubApproval ? <button disabled={videoActionBusy} onClick={() => void uploadVideoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
@@ -714,7 +715,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
                 ) : null}
                 {video.moderationDecision ? (
                   <small className="tv-moderation-summary">
-                    Automated review: {video.moderationDecision === "review" ? "sent to a person" : video.moderationDecision}
+                    Automated check: {video.moderationDecision === "review" ? "not completed" : video.moderationDecision}
                     {video.moderationFrameCount ? ` · ${video.moderationFrameCount} video frames checked` : ""}
                   </small>
                 ) : null}

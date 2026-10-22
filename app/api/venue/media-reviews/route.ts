@@ -50,8 +50,8 @@ export async function GET(request: Request) {
       const recommendation = photo ? flags.ai_recommended_rejection ? "rejected" : flags.ai_recommended_approval ? "approved" : "review" : r.moderation_decision;
       return { id: item.id, kind: item.kind, stageName: item.stageName, version: r.updated_at, previewUrl,
         label: photo ? r.upload_context === "profile_avatar" ? "Avatar" : r.upload_context.startsWith("profile_main") ? "Main photo" : "Photo" : "Video",
-        processing, canApprove: !processing && (photo || !r.upload_validation_pending),
-        aiSummary: processing ? "AI checks running" : recommendation === "approved" ? "AI checks passed" : recommendation === "rejected" ? "AI flagged this upload" : "AI needs a manual review",
+        processing, canApprove: !processing && recommendation === "approved" && (photo || !r.upload_validation_pending),
+        aiSummary: processing ? "AI checks running" : recommendation === "approved" ? "AI checks passed" : "AI checks did not pass",
         reasons: photo ? r.reason_codes || [] : r.moderation_reason_codes || [],
       };
     }));
@@ -79,6 +79,10 @@ export async function POST(request: Request) {
       const authorization = await admin.rpc("assert_dancer_media_reviewer", { p_actor_id: user.id, p_dancer_user_id: dancerUserId, p_venue_id: access.venueId });
       if (authorization.error) throw new PublicApiError("FORBIDDEN", "This dancer is not connected to your club. Refresh the queue.", 403);
       if (record.updated_at !== version) throw new PublicApiError("CONFLICT", "This upload changed. Refresh before reviewing it.", 409);
+      const passedChecks = photo
+        ? record.category_flags?.ai_recommended_approval === true && record.category_flags?.ai_recommended_rejection !== true
+        : record.moderation_decision === "approved";
+      if (decision === "approved" && !passedChecks) throw new PublicApiError("CONFLICT", "This upload must pass automated checks before Club approval. Ask the dancer to retry or replace it.", 409);
       if (photo) {
         if (decision === "approved") await approveReviewRecord(admin, record, user.id, notes);
         else await rejectReviewRecord(admin, record, user.id, notes);

@@ -134,7 +134,7 @@ for (const [name, values] of [
   assert.deepEqual(await workerSnapshot(db), expected);
 });
 
-test("an interrupted final attempt enters human review without another provider call and supports admin recovery", async () => {
+test("an interrupted final attempt stays private for retry without another provider call and supports admin recovery", async () => {
   await patchWorker(db, { moderation_attempt_count: 3, moderation_started_at: new Date(workerInstant - 3600000).toISOString(), moderation_details: { workerId: foreignWorker } });
   const h = videoWorkerHarness(db);
   assert.equal((await h.retry()).status, "submitted");
@@ -249,13 +249,14 @@ test("an uncertain claim response is never replayed", async () => {
 for (const decision of ["approved", "review", "rejected"]) test(`the current worker can persist ${decision} exactly once`, async () => {
   const h = videoWorkerHarness(db, { decision });
   const result = await h.retry();
-  assert.equal(result.status, "submitted");
+  assert.equal(result.status, decision === "approved" ? "submitted" : "rejected");
   assert.equal(h.providers.length, 1);
   assert.equal(h.calls.filter(call => call.kind === "result").length, 1);
-  assert.equal((await workerSnapshot(db)).row.moderation_decision, decision);
+  assert.equal((await workerSnapshot(db)).row.moderation_decision, decision === "approved" ? "approved" : "rejected");
+  assert.doesNotMatch((await workerSnapshot(db)).row.review_notes, /manual review|human review/i);
 });
 
-test("a current provider failure becomes human review without replaying the provider", async () => {
+test("a current provider failure stays private for retry without replaying the provider", async () => {
   const h = videoWorkerHarness(db, { providerError: new Error("Synthetic provider failure") });
   assert.equal((await h.retry()).status, "submitted");
   assert.equal(h.providers.length, 1);

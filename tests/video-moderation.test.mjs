@@ -168,12 +168,11 @@ test("video frame moderation respects the provider one-image limit with bounded 
   assert.match(videoModeration, /"mydancr_tv\.frame_moderation_retry"/);
 });
 
-test("video submission persists exactly approve, human-review, or reject outcomes", () => {
+test("video submission sends only automated passes to club approval", () => {
   assert.match(tvSource, /status: "moderating"/);
   assert.match(tvSource, /moderateStoredMyDancrTvVideo/);
-  assert.match(tvSource, /decision === "approved"[\s\S]*?status: "approved"/);
-  assert.match(tvSource, /decision === "rejected"[\s\S]*?status: "rejected"/);
-  assert.match(tvSource, /status: "submitted"[\s\S]*?Automated safety review requested human review/);
+  assert.match(tvSource, /status: decision === "approved" \? "submitted" : "rejected"/);
+  assert.doesNotMatch(tvSource, /Human review is required|human review or|requested human review/i);
   assert.doesNotMatch(tvSource, /profile_not_eligible_for_auto_publish/);
   assert.match(tvSource, /isDancerMediaOnboardingEligible/);
   assert.match(tvSource, /Videos stay private during setup|venue_approved_at/);
@@ -211,7 +210,7 @@ test("video moderation decisions are durable, recoverable, and visible to dancer
   assert.deepEqual(JSON.parse(vercelConfig).crons.filter(({ path }) => path === "/api/cron/video-moderation"), [
     { path: "/api/cron/video-moderation", schedule: "2-59/5 * * * *" },
   ]);
-  assert.match(studio, /Automated review:/);
+  assert.match(studio, /Automated check:/);
   assert.match(studio, /video frames checked/);
   assert.match(adminPanel, /Automated safety review:/);
   assert.match(adminPanel, /moderationReasonCodes/);

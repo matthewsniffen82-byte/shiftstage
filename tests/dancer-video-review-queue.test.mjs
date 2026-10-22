@@ -8,7 +8,7 @@ import { mediaReview } from './helpers/media-review-label.mjs';
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerTvStudio.tsx', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
-const video = (id, status = 'submitted', reviewNotes = '') => ({ id, status, videoUrl: `/${id}.mp4`, reviewNotes });
+const video = (id, status = 'submitted', reviewNotes = '') => ({ id, status, moderationDecision: status === 'submitted' ? 'approved' : null, videoUrl: `/${id}.mp4`, reviewNotes });
 const file = () => new File(['video fixture'], 'clip.mp4', { type: 'video/mp4' });
 
 // Run real component handlers with in-memory API/storage fixtures. No browser or remote uploads.
@@ -167,6 +167,17 @@ test('club approval videos offer only Remove through refreshes and remove the sa
   ui.click('Remove'); await ui.settle();
   assert.ok(ui.calls.some(call => call[0] === 'waiting' && call[1] === 'DELETE'));
   assert.equal(ui.reviews.length, 0);
+});
+
+test('a failed automatic video check offers retry instead of claiming it is awaiting Club approval', async () => {
+  const ui = harness([{ ...video('failed-check', 'submitted'), moderationDecision: 'review',
+    moderationReasonCodes: ['video_moderation_timeout'], reviewNotes: 'Automated safety review was unavailable. Human review is required.' }]);
+  await ui.settle();
+  assert.deepEqual(ui.statuses, ['Review delayed']);
+  assert.match(ui.notes[0], /timed out.*Retry/);
+  assert.doesNotMatch(ui.notes[0], /human review|manual review/i);
+  assert.ok(ui.reviewActions.some(node => node.type === './DancerMediaRetryButton' && node.props.moderationStatus === 'moderation_error'));
+  assert.doesNotMatch(ui.reviews[0].props.className, /is-awaiting-club/);
 });
 
 test('delayed review replacement at the video limit preserves the original on picker and crop cancellation', async () => {

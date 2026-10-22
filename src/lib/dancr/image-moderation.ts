@@ -14,6 +14,7 @@ import {
   prepareFaceCenteredAvatar,
 } from "./avatar-face";
 import { ACTIVE_IMAGE_MODERATION_STATUSES } from "./image-moderation-status";
+import { mediaReviewExplanation } from "./media-review-label";
 import { validateAndPrepareDancrImage, type ValidatedDancrImage } from "./image-validation";
 import { MAX_DANCER_PROFILE_PHOTOS } from "./media-limits";
 import { resolvePhotoPublicationIntent } from "./photo-publication-intent";
@@ -435,7 +436,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
   });
 }
 
-/** AI findings inform the club reviewer; they never publish or reject dancer uploads. */
+/** Only a clear automated pass reaches club approval; no automated result publishes media. */
 async function holdPhotoForClubReview(
   admin: DancrClient,
   input: {
@@ -445,6 +446,20 @@ async function holdPhotoForClubReview(
   },
 ): Promise<ModeratedPhotoResult> {
   const { evaluation } = input;
+  if (evaluation.decision !== "approved") {
+    const reasonCodes = [...new Set([...evaluation.reasonCodes, ...(evaluation.decision === "review" ? ["photo_approval_not_confirmed"] : [])])];
+    await updateModerationRecord(admin, input.recordId, {
+      decision: "rejected", status: "rejected", reasonCodes,
+      categoryFlags: { ...input.categoryFlags, ai_recommended_approval: false, ai_recommended_rejection: true, ai_needs_review: false },
+      categoryScores: evaluation.categoryScores, providerFlagged: evaluation.providerFlagged,
+      errorCode: null, nextAttemptAt: null, lockedAt: null,
+      lastErrorCode: null, lastErrorMessage: null, completedAt: new Date().toISOString(),
+    }, input.expectedUpdatedAt);
+    // Delete only after the versioned rejection is confirmed.
+    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
+    return { decision: "rejected", moderationRecordId: input.recordId, reasonCodes,
+      providerFlagged: evaluation.providerFlagged, message: photoRejectionMessage(reasonCodes) };
+  }
   // A unique private copy avoids an obsolete worker overwriting a newer review.
   const reviewPath = input.tempPath.replace(/([^/]+)$/, `review-${randomUUID()}-$1`);
   await uploadPrivateObject(admin, MODERATION_REVIEW_BUCKET, reviewPath, input.image);
@@ -454,9 +469,9 @@ async function holdPhotoForClubReview(
     reasonCodes: evaluation.reasonCodes,
     categoryFlags: {
       ...input.categoryFlags,
-      ai_recommended_approval: evaluation.decision === "approved",
-      ai_recommended_rejection: evaluation.decision === "rejected",
-      ai_needs_review: evaluation.decision === "review",
+      ai_recommended_approval: true,
+      ai_recommended_rejection: false,
+      ai_needs_review: false,
     },
     categoryScores: evaluation.categoryScores,
     providerFlagged: evaluation.providerFlagged,
@@ -829,10 +844,7 @@ export function photoRejectionMessage(reasonCodes: string[]) {
   if (reasons.has("dancer_not_visible")) {
     return "A clear photo of you is required. Choose a photo where you are visible.";
   }
-  if (reasons.has("photo_approval_not_confirmed")) {
-    return "This photo wasn't approved because the automatic check couldn't confirm it meets the photo guidelines. Please upload a different image.";
-  }
-  return "This photo does not meet Dancr's photo guidelines. Please upload a different image.";
+  return mediaReviewExplanation("photo", "rejected", { reasonCodes });
 }
 
 function pendingModerationPhoto(recordId: string, uploadContext: unknown): NonNullable<ModeratedPhotoResult["photo"]> {

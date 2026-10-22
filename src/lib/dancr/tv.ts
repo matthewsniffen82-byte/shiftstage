@@ -1,5 +1,6 @@
 import { editedVideoDimensions, normalizeVideoUploadEdit, videoUploadSourcePath, VIDEO_UPLOAD_MAX_BYTES } from "./video-upload-edit-policy.ts";
 import { dancerVideoDeliveryUrl } from './media-delivery-url';
+import { mediaReviewExplanation } from "./media-review-label";
 import { adaptiveVideoPath, parseAdaptiveVideoManifest } from './adaptive-video-manifest';
 import { mobileVideoStoragePath, parseMobileVideoPlayback, type MobileVideoPlayback } from './video-mobile-playback';
 import { toPublicClubDeal } from "./public-club-deal";
@@ -1147,14 +1148,14 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
   if (!queued && (previous.startedAt === null || Date.parse(previous.startedAt) >= Date.now() - VIDEO_WORKER_STALE_AFTER_MS)) return null;
   if (previous.attempt >= 3) {
     // A terminated final attempt cannot write its own failure. Return only the
-    // same expired worker to human review; never reclaim or publish its media.
+    // same expired worker to a retryable failure; never publish unchecked media.
     const update = admin.from("mydancr_tv_videos").update({
       status: "submitted",
       moderation_decision: "review",
       moderation_reason_codes: ["video_moderation_attempts_exhausted"],
       moderation_details: { errorCode: "video_moderation_attempts_exhausted" },
       moderation_completed_at: new Date().toISOString(),
-      review_notes: "Automatic processing was interrupted. Human review or an administrator retry is required.",
+      review_notes: "Automatic processing was interrupted. Retry the check or replace the video.",
       reviewed_by: null,
       reviewed_at: null,
       published_at: null,
@@ -1423,7 +1424,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
         moderation_provider_flagged: false,
         moderation_details: { errorCode },
         moderation_completed_at: completedAt,
-        review_notes: "Automated safety review was unavailable. Human review is required.",
+        review_notes: mediaReviewExplanation("video", "moderation_error", { reasonCodes: [errorCode] }),
       });
     const { data, error: updateError } = await matchVideoWorkerOwner(update, video)
       .select("id, status, submitted_at, moderation_decision, moderation_reason_codes")
@@ -1432,8 +1433,8 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   }
 
   assertServerJobActive();
-  const decision = moderation.decision;
-  const reasonCodes = moderation.reasonCodes;
+  const decision = moderation.decision === "approved" ? "approved" : "rejected";
+  const reasonCodes = [...new Set([...moderation.reasonCodes, ...(moderation.decision === "review" ? ["video_approval_not_confirmed"] : [])])];
   const completedAt = new Date().toISOString();
   // AI findings never publish dancer uploads. Only an authorized human review
   // creates public derivatives and records the human publication decision.
@@ -1446,10 +1447,10 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     moderation_model: moderation.moderationModel,
     moderation_details: moderation.details,
     moderation_completed_at: completedAt,
-    status: "submitted",
+    status: decision === "approved" ? "submitted" : "rejected",
     review_notes: decision === "approved"
       ? "AI checks passed. Pending club approval."
-      : `Pending club approval. ${videoModerationReviewNotes(decision, reasonCodes)}`,
+      : videoModerationReviewNotes(decision, reasonCodes),
     reviewed_by: null,
     reviewed_at: null,
     published_at: null,
@@ -1484,28 +1485,7 @@ function videoModerationReviewNotes(
   decision: "review" | "rejected",
   reasonCodes: string[],
 ) {
-  const reasons = new Set(reasonCodes.map(String));
-  if (reasons.has("visible_branding_or_logo")) {
-    return "Visible branding and logos are not allowed. Choose a video without brand names, logos, or watermarks, including on clothing and in the background.";
-  }
-  if (reasons.has("branding_or_logo_uncertain")) {
-    return "Possible branding or a logo needs human review. This video will stay private until reviewed.";
-  }
-  if (reasons.has("multiple_people_detected")) {
-    return "Only you can appear in a profile video. Choose a video with no other people visible.";
-  }
-  if (reasons.has("dancer_not_visible")) {
-    return "A clear video of you is required. Choose a video where you are visible.";
-  }
-  if (
-    reasons.has("dancer_visibility_uncertain") ||
-    reasons.has("person_count_uncertain")
-  ) {
-    return "AI could not confirm that you are the only person shown. Human review is required.";
-  }
-  return decision === "rejected"
-    ? "This video did not meet MyDancr TV safety guidelines."
-    : "Automated safety review requested human review.";
+  return mediaReviewExplanation("video", decision, { reasonCodes });
 }
 
 function videoModerationErrorCode(error: unknown) {

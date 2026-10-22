@@ -397,7 +397,7 @@ test("saved manual-review reasons remain visible after reopening and clear on ap
 test("initial and retried upload outcomes preserve their reasons when the library cannot supply one", async () => {
   const ui = photoHarness({ uploadOnly: true, post: async () => ({ decision: "moderation_error", moderationRecordId: "review", reasonCodes: ["branding_or_logo_uncertain"] }), read: async () => { throw new Error("Refresh unavailable."); } });
   ui.select(); await ui.settle();
-  assert.match(ui.notes[0], /Possible branding or a logo/);
+  assert.match(ui.notes[0], /couldn't rule out branding, a logo/);
   ui.reviewButtons[0].props.onRetried({ result: { decision: "review", reasonCodes: ["person_count_uncertain"] } });
   await ui.settle();
   assert.match(ui.notes[0], /couldn't confirm that you are the only person/);

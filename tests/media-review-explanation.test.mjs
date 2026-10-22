@@ -4,6 +4,13 @@ import { mediaReview } from './helpers/media-review-label.mjs';
 
 const explain = mediaReview.mediaReviewExplanation;
 
+for (const [code, reason] of [['provider_flagged_violence', 'violence'], ['provider_flagged_harassment', 'harassment'],
+  ['provider_flagged_self_harm', 'self-harm'], ['provider_flagged_illicit', 'illegal activity']]) {
+  test(`rejection explains the specific safety finding ${code}`, () => {
+    assert.match(explain('video', 'rejected', { reasonCodes: [`frame_1_${code}`] }), new RegExp(reason));
+  });
+}
+
 for (const reason of ['person_count_uncertain', 'dancer_visibility_uncertain', 'branding_or_logo_uncertain',
   'photo_policy_copyright_or_consent_uncertain', 'photo_policy_unreadable_or_obscured_content',
   'sexual_content_requires_review', 'provider_flagged_other', 'photo_approval_not_confirmed']) {
@@ -16,10 +23,18 @@ for (const reason of ['person_count_uncertain', 'dancer_visibility_uncertain', '
 }
 
 for (const kind of ['photo', 'video']) {
-  test(`${kind} explains uncertainty without calling it a rejection`, () => {
+  for (const reason of ['person_count_uncertain', 'branding_or_logo_uncertain', 'copyright_or_consent_uncertain',
+    'unreadable_or_obscured_content', 'sexual_content_requires_review', `${kind}_approval_not_confirmed`]) {
+    test(`${kind} rejection explains ${reason} without a manual-review outcome`, () => {
+      const note = explain(kind, 'rejected', { reasonCodes: [reason] });
+      assert.match(note, /Choose/);
+      assert.doesNotMatch(note, /manual review|human review|Possible|specific reason wasn't saved/);
+    });
+  }
+  test(`${kind} explains uncertainty without promising manual review`, () => {
     const note = explain(kind, 'review', { reasonCodes: ['person_count_uncertain', 'branding_or_logo_uncertain'] });
     assert.match(note, /couldn't confirm that you are the only person/);
-    assert.match(note, /Possible branding/);
+    assert.match(note, /couldn't rule out branding/);
     assert.doesNotMatch(note, /not allowed|wasn't approved/);
   });
 
