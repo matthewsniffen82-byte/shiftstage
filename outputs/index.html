@@ -41574,10 +41574,10 @@ html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-a
   gap: 12px;
   min-width: 0;
 }
-/* Use the portrait's existing height to separate identity from shift details. */
+/* Keep score and shift details directly below identity, independent of portrait height. */
 html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout > .profile-details-column > .modal-body {
-  margin-top: auto !important;
-  padding-top: 24px !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
   padding-bottom: 24px !important;
 }
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-details-column .profile-activity-metrics.is-internal {
@@ -41657,6 +41657,14 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-per
 }
 html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-working-destination > .profile-live-state {
   margin-bottom: 4px !important;
+}
+/* The shared compact profile pulls this link upward. Internal cards need two
+   separate rows so the club's full tap target cannot cover Working now. */
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-shift-card.schedule-live {
+  row-gap: 4px !important;
+}
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-shift-card.schedule-live .schedule-stack {
+  margin-top: 0 !important;
 }
 html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-shift-card :is(.profile-venue-name, .profile-working-copy strong) {
   font-size: clamp(12px, 1.8vw, 18px) !important;
