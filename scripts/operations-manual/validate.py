@@ -42,7 +42,7 @@ for name, count in EXPECTED.items():
         assert len(reader.outline) == 30
         assert len(reader.pages[1]['/Annots']) == 28
         text = ' '.join(' '.join(texts).split())
-        for label in ['Approve & make live', 'Admit guest & redeem pass', 'Media approvals',
+        for label in ['Approve & make live', 'Review the guest list', 'Media approvals',
                       'Review note', 'Previous / Next', 'Copy embed code', 'MyDancr TV',
                       'Website embed color', 'Table QR color', 'before saving', '30 seconds']:
             assert label in text, label

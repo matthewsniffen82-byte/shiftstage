@@ -203,7 +203,7 @@
       "kind": "procedure"
     },
     {
-      "title": "Request and check table QR signs",
+      "title": "Receive and verify table QR signs",
       "role": "CLUB ADMIN TEAM",
       "path": "Manage venue > Support | support@mydancr.com",
       "steps": [
@@ -216,12 +216,12 @@
           "Both endpoints count: 201-210 makes 10 tables; 201-211 makes 11. Match the requested signs to the physical tables."
         ],
         [
-          "Request the batch",
-          "Send the club and numbering plan to MyDancr Support. MyDancr creates the codes; tell the team about existing signs so replacements are coordinated."
+          "Request signs from MyDancr admin",
+          "Send the club and numbering plan through MyDancr Support. MyDancr admin creates the QR codes and supplies the signs. Tell the team about existing signs before requesting replacements."
         ],
         [
           "Check the supplied signs",
-          "Each sign must show the table number, Powered by MyDancr and www.mydancr.com. Check readability and the full QR image before printing or installation."
+          "Check the signs supplied by MyDancr admin for the table number, Powered by MyDancr, www.mydancr.com and a complete, readable QR image before placement."
         ],
         [
           "Match each sign to its table",
@@ -238,7 +238,7 @@
         ],
         [
           "Who does what",
-          "The club supplies its table map, checks each sign and installs it. MyDancr Support coordinates creation, replacement and deactivation."
+          "MyDancr admin creates and manages the QR codes. The venue supplies table numbers, receives the signs, verifies destinations and places them. Venue staff do not generate QR codes."
         ]
       ],
       "kind": "qr"
@@ -466,48 +466,46 @@
       "kind": "procedure"
     },
     {
-      "title": "Scan passes and admit guests",
-      "role": "MANAGERS / ADMISSION STAFF",
-      "path": "Tonight > Guest list > Scan pass",
+      "title": "Review the guest list",
+      "role": "MANAGERS / TALENT MANAGEMENT",
+      "path": "Tonight > Guest list",
       "steps": [
         [
-          "Find the visit",
-          "Choose Tonight, Choose a date or All active passes. Search and filter Awaiting admission / Admitted / All. Clear filters or Load more if needed."
+          "Open the guest list",
+          "Open Tonight > Guest list and select Refresh. Confirm the club, visit date and displayed club time before reviewing entries."
         ],
         [
-          "Scan the pass",
-          "Open Scan pass, allow camera access if prompted and follow the scanner. Confirm the correct venue and visit."
+          "Find the expected visit",
+          "Choose Tonight, Choose a date or All active passes. Search by name, phone or email. Use Clear to remove a search."
         ],
         [
-          "Verify eligibility",
-          "Check the guest and the displayed admission/arrival rules, including age, capacity, dress code and current offer conditions."
+          "Read the recorded status",
+          "Filter Awaiting admission, Admitted or All. These filters show recorded statuses; they do not admit anyone. All can also include expired passes."
         ],
         [
-          "Record actual admission",
-          "Check the staff verification box, then press Admit guest & redeem pass only when admitting the guest."
+          "Expand the guest details",
+          "Open the guest row to see contact details, Joined guest list and Pass valid until. If an admission has been recorded, the row also shows its recorded time."
         ],
         [
-          "Read the result",
-          "Admission confirmed records one verified visit. Already used must not admit another person; do not treat an unavailable/expired pass as valid."
+          "Check missing or stale entries",
+          "Clear filters, confirm the date and use Load more guests if available. Refresh before reporting a discrepancy to the duty manager with the guest reference and time."
         ]
       ],
-      "done": "The admitted guest has a recorded admission and the pass is not reused.",
-      "issue": "Opening a pass is not redemption. If scanning or validation fails, keep the result for the duty manager; do not invent another entry.",
-      "shot": {
-        "asset": "app-capture-07.jpg",
-        "marks": [
-          [
-            2,
-            0.15183246073298431,
-            0.8033707865168539
-          ]
-        ],
-        "captured": "Earlier owner-supplied app capture"
-      },
+      "done": "The correct guest, visit period and latest recorded status are identified; any discrepancy has a named follow-up owner.",
+      "issue": "A guest-list entry is not proof of attendance. If an update fails, the last loaded list may remain visible; check the error and update time.",
+      "shot": null,
       "extras": [
         [
-          "What staff records",
-          "One pass admits one guest. Guest-list dates and offer hours use the venue's local time."
+          "Dashboard scope",
+          "The club dashboard is for viewing the guest list. Pass scanning and admitting guests are not performed in this dashboard. Follow the club's separate entry procedure."
+        ],
+        [
+          "Current controls - text reference",
+          "Refresh / Visit date / Find a guest / Search / Clear / Awaiting admission / Admitted / All / Load more guests. A current screenshot of this list is unavailable."
+        ],
+        [
+          "Guest information",
+          "Use contact details only for the relevant visit and permitted purpose. Being on the guest list does not itself establish a marketing subscription."
         ]
       ],
       "kind": "procedure"
@@ -1380,10 +1378,10 @@
         ],
         [
           "5. Check guest-facing links",
-          "Request QR signs/NFC stickers through Support; verify club and table on each. Manage venue > Website grid: Preview website grid, then Copy embed code for the matching location page."
+          "MyDancr admin creates the QR codes. Send table numbers through Support; receive, check and place the supplied signs. Request NFC stickers through Support. Manage venue > Website grid: Preview website grid, then Copy embed code for that location."
         ]
       ],
-      "rule": "Owner manages team and club removal. Manager can handle operations and media reviews. Staff cannot approve media.",
+      "rule": "Club Admin means the venue team, not MyDancr admin. Owner manages team access; managers handle operations and media reviews. Staff cannot approve media.",
       "help": "Wrong access or hidden venue? Check membership, account, active deal and publication state; then use Support.",
       "pages": "Manual pp. 3-8, 26-29"
     },
@@ -1426,8 +1424,8 @@
           "(...) > Request details > Mark seen > Mark arrived > Complete. Use Didn't arrive at table or Dismiss for the actual alternative outcome."
         ],
         [
-          "4. Handle guests",
-          "Pass: Scan pass > verify > Admit guest & redeem pass. VIP: check availability > Confirm request / Decline. Ride: contact guest, then update Ride status."
+          "4. Review guests and requests",
+          "Guest list: search and review visit details/status; scanning and admission happen outside this dashboard. VIP: check availability > Confirm request / Decline. Ride: contact guest, then update Ride status."
         ],
         [
           "5. Close and hand over",
@@ -1650,7 +1648,7 @@
           "master": "6"
         },
         {
-          "title": "Prepare table QR signs",
+          "title": "Receive and verify table QR signs",
           "role": "CLUB ADMIN TEAM",
           "path": "Manage venue > Support | support@mydancr.com",
           "steps": [
@@ -1663,12 +1661,12 @@
               "Both endpoints count: 201-210 makes 10 tables; 201-211 makes 11. Match the requested signs to the physical tables."
             ],
             [
-              "Request the batch",
-              "Send the club and numbering plan to MyDancr Support. MyDancr creates the codes; tell the team about existing signs so replacements are coordinated."
+              "Request signs from MyDancr admin",
+              "Send the club and numbering plan through MyDancr Support. MyDancr admin creates the QR codes and supplies the signs. Tell the team about existing signs before requesting replacements."
             ],
             [
               "Check the supplied signs",
-              "Each sign must show the table number, Powered by MyDancr and www.mydancr.com. Check readability and the full QR image before printing or installation."
+              "Check the signs supplied by MyDancr admin for the table number, Powered by MyDancr, www.mydancr.com and a complete, readable QR image before placement."
             ],
             [
               "Match each sign to its table",
@@ -1685,7 +1683,7 @@
             ],
             [
               "Who does what",
-              "The club supplies its table map, checks every sign and installs it. MyDancr Support coordinates creation, replacement and deactivation."
+              "MyDancr admin creates and manages the QR codes. The venue supplies table numbers, receives the signs, verifies destinations and places them. Venue staff do not generate QR codes."
             ]
           ],
           "kind": "qr",
@@ -1955,48 +1953,46 @@
           "master": "11"
         },
         {
-          "title": "Scan passes and admit guests",
-          "role": "MANAGERS / ADMISSION STAFF",
-          "path": "Tonight > Guest list > Scan pass",
+          "title": "Review the guest list",
+          "role": "MANAGERS / TALENT MANAGEMENT",
+          "path": "Tonight > Guest list",
           "steps": [
             [
-              "Find the visit",
-              "Choose Tonight, Choose a date or All active passes. Search and filter Awaiting admission / Admitted / All. Clear filters or Load more if needed."
+              "Open the guest list",
+              "Open Tonight > Guest list and select Refresh. Confirm the club, visit date and displayed club time before reviewing entries."
             ],
             [
-              "Scan the pass",
-              "Open Scan pass, allow camera access if prompted and follow the scanner. Confirm the correct venue and visit."
+              "Find the expected visit",
+              "Choose Tonight, Choose a date or All active passes. Search by name, phone or email. Use Clear to remove a search."
             ],
             [
-              "Verify eligibility",
-              "Check the guest and the displayed admission/arrival rules, including age, capacity, dress code and current offer conditions."
+              "Read the recorded status",
+              "Filter Awaiting admission, Admitted or All. These filters show recorded statuses; they do not admit anyone. All can also include expired passes."
             ],
             [
-              "Record actual admission",
-              "Check the staff verification box, then press Admit guest & redeem pass only when admitting the guest."
+              "Expand the guest details",
+              "Open the guest row to see contact details, Joined guest list and Pass valid until. If an admission has been recorded, the row also shows its recorded time."
             ],
             [
-              "Read the result",
-              "Admission confirmed records one verified visit. Already used must not admit another person; do not treat an unavailable/expired pass as valid."
+              "Check missing or stale entries",
+              "Clear filters, confirm the date and use Load more guests if available. Refresh before reporting a discrepancy to the duty manager with the guest reference and time."
             ]
           ],
-          "done": "The admitted guest has a recorded admission and the pass is not reused.",
-          "issue": "Opening a pass is not redemption. If scanning or validation fails, keep the result for the duty manager; do not invent another entry.",
-          "shot": {
-            "asset": "app-capture-07.jpg",
-            "marks": [
-              [
-                2,
-                0.15183246073298431,
-                0.8033707865168539
-              ]
-            ],
-            "captured": "Earlier owner-supplied app capture"
-          },
+          "done": "The correct guest, visit period and latest recorded status are identified; any discrepancy has a named follow-up owner.",
+          "issue": "A guest-list entry is not proof of attendance. If an update fails, the last loaded list may remain visible; check the error and update time.",
+          "shot": null,
           "extras": [
             [
-              "What staff records",
-              "One pass admits one guest. Guest-list dates and offer hours use the venue's local time."
+              "Dashboard scope",
+              "The club dashboard is for viewing the guest list. Pass scanning and admitting guests are not performed in this dashboard. Follow the club's separate entry procedure."
+            ],
+            [
+              "Current controls - text reference",
+              "Refresh / Visit date / Find a guest / Search / Clear / Awaiting admission / Admitted / All / Load more guests. A current screenshot of this list is unavailable."
+            ],
+            [
+              "Guest information",
+              "Use contact details only for the relevant visit and permitted purpose. Being on the guest list does not itself establish a marketing subscription."
             ]
           ],
           "kind": "procedure",
@@ -2192,7 +2188,7 @@
       "nav": [
         "Start shift",
         "Tables",
-        "Admission",
+        "Guest list",
         "VIP",
         "Rides",
         "Handover"

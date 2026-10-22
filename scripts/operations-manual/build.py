@@ -23,7 +23,7 @@ para,txt,label=old.para,old.txt,old.label
 def footer(c,n,total):
     c.setStrokeColor(RULE);c.setLineWidth(.6);c.line(42,39,570,39)
     c.setFillColor(G);c.setFont('Helvetica',8)
-    c.drawString(42,25,'MyDancr | Operations guide | 21 Oct 2026 | Revision 5')
+    c.drawString(42,25,'MyDancr | Operations guide | 21 Oct 2026 | Revision 6')
     c.drawRightString(570,25,f'{n} / {total}')
 
 def header(c,title,role,path,n,total):
@@ -74,7 +74,7 @@ def body(c,d,n,total):
     if d['kind']=='access':
         rows=[['<b>Club owner</b>','Team membership and club participation, plus manager operations.'],
               ['<b>Manager</b>','Venue, roster, media approval, VIP, rides, contacts, finance and results.'],
-              ['<b>Staff</b>','Limited operations and guest admission/check-in actions; no media approval, VIP, rides or contacts.'],
+              ['<b>Staff</b>','Limited venue operations; no media approval, VIP, rides or contacts.'],
               ['<b>Dancer</b>','Own profile, media, check-ins and activity analytics.'],
               ['<b>Content reviewer</b>','An assigned owner or manager. Reviews media using the club dashboard.']]
         y=table(c,rows,42,y,[110,418],['Role','Access'])-20
@@ -146,12 +146,12 @@ def body(c,d,n,total):
     c.showPage()
 
 def cover(c,total):
-    c.bookmarkPage('p1');c.addOutlineEntry('Operations manual - Revision 5','p1',0)
+    c.bookmarkPage('p1');c.addOutlineEntry('Operations manual - Revision 6','p1',0)
     label(c,'MYDANCR / OPERATIONS',42,750,11)
     y=para(c,'Operations manual',42,690,528,'lead')
     y=para(c,'A task guide for club admins, talent managers,<br/>dancers and content reviewers.',42,y-22,528,'intro')-34
     for role,rng,text in [('Club Admin team','05-08','Venue publication, team access, table signs and sticker checks.'),
-                          ('Managers & talent','09-15','Shift control, roster, table requests, admission, VIP, rides and results.'),
+                          ('Managers & talent','09-15','Shift control, roster, table requests, guest list, VIP, rides and results.'),
                           ('Dancers','16-21','Onboarding, media, check-ins, visibility, activity and account help.'),
                           ('Content approval','22-25','Review queue, full-file checklist, decisions and release coverage.')]:
         label(c,rng,42,y,14)
@@ -159,7 +159,7 @@ def cover(c,total):
     y=para(c,'<b>Every task follows the same pattern</b><br/>GO: where to start. Numbered steps: what to do. DONE WHEN: how to verify it. IF BLOCKED: the next action.',42,y-3,528)-21
     y=para(c,'<b>Use the right handout.</b> Keep this complete manual with club administrators and managers. Give dancers pages 16-21 and the dancer one-page guide. Manager ranking details are not part of dancer training.',42,y,528)-18
     y=para(c,'<b>Additional operating tasks:</b> troubleshooting (p. 26), website grids and branding (p. 27), TV and profile media (p. 28), refresh guidance (p. 29) and training sign-off (p. 30).',42,y,528)-18
-    y=para(c,'Revision 5 | 21 October 2026. Current written procedures checked against app source. Screenshots include a current club approval-queue capture and earlier owner-supplied app captures; controls not pictured use text references. See edition notes on p. 30.',42,y,528,'small')
+    y=para(c,'Revision 6 | 21 October 2026. Current written procedures checked against app source. Screenshots include a current club approval-queue capture and earlier owner-supplied app captures; controls not pictured use text references. See edition notes on p. 30.',42,y,528,'small')
     assert y>54
     footer(c,1,total);c.showPage()
 
@@ -197,10 +197,10 @@ def training(c,total):
                  'A safe support report and sign-out from a shared device.']:
         c.setStrokeColor(G);c.rect(43,y-10,8,8,fill=0,stroke=1)
         y=para(c,txt(line),61,y,509)-12
-    y=para(c,'Demonstrate read-only navigation or use approved training records. Do not publish real content, send an invitation or record an admission merely for practice.',42,y,528,'small')-23
+    y=para(c,'Demonstrate read-only navigation or use approved training records. Do not publish real content, send an invitation or complete a real request merely for practice.',42,y,528,'small')-23
     y=para(c,'Trainee: __________________________  Role: ________________________<br/><br/>Club: _____________________________  Trainer: _____________________<br/><br/>Date: _____________________________  Follow-up: ___________________',42,y,528)-30
     y=para(c,'<b>Edition and maintenance</b>',42,y,528)-12
-    y=para(c,'Revision 5, 21 October 2026. Written procedures were checked against the current workspace implementation, including club access, venue publication, QR/sticker management, live request queues, dancer onboarding and the human media-review flow. Application source baseline: 25813c6c0.',42,y,528)-14
+    y=para(c,'Revision 6, 21 October 2026. Written procedures were checked against the current workspace implementation, including club access, venue publication, QR/sticker management, live request queues, dancer onboarding and the human media-review flow. Application source baseline: 25813c6c0.',42,y,528)-14
     y=para(c,'The club Media approvals screen was captured on 20 October 2026 (p. 22). The queue was empty, so review-item controls such as Approve and Reject remain labeled text references. Other screenshots are earlier owner-supplied captures. Each image is labeled; arrows point to the numbered steps.',42,y,528)-14
     y=para(c,'After a release, recheck permissions, approval rules, button labels, upload limits and check-in behavior. Replace earlier captures with current ones when available. Production configuration, including required age verification, can vary; follow the current account status.',42,y,528)-14
     y=para(c,'This manual documents behavior and operating routines. It does not change permissions, approve content or replace the club\'s admission, privacy and incident procedures.',42,y,528,'small')
@@ -212,7 +212,7 @@ CHEATS=DATA['cheats']
 def main():
     total=len(PAGES)+3
     c=canvas.Canvas(str(OUT/'MyDancr_Operations_Manual.pdf'),pagesize=(612,792),pageCompression=1)
-    c.setTitle('MyDancr Operations Manual - Revision 5');c.setAuthor('MyDancr Operations')
+    c.setTitle('MyDancr Operations Manual - Revision 6');c.setAuthor('MyDancr Operations')
     c.setSubject('Role-based operations, annotated app screens and content-review decisions')
     cover(c,total);contents(c,total)
     for n,d in enumerate(PAGES,3):body(c,d,n,total)

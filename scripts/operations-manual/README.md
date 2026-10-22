@@ -1,8 +1,8 @@
 # Operations documentation
 
-The manual, four role onboarding guides and four one-page cheat sheets are generated from `content.json`, the page layout, and 26 cropped regions of real app screenshots. Arrows are vector callouts drawn in the PDF, not changes to the app interface. `screenshots/sources.json` records the original capture filenames and crop coordinates. Captures from earlier layouts are labeled; unavailable controls are described as text references.
+The manual, four role onboarding guides and four one-page cheat sheets are generated from `content.json`, the page layout, and selected cropped regions of real app screenshots. Arrows are vector callouts drawn in the PDF, not changes to the app interface. `screenshots/sources.json` records the original capture filenames and crop coordinates. Captures from earlier layouts are labeled; unavailable controls are described as text references.
 
-Edition: 21 October 2026, revision 5. Source baseline: `25813c6c0`.
+Edition: 21 October 2026, revision 6. Source baseline: `25813c6c0`. Revision 6 clarifies the owner's operating instructions: MyDancr admin creates and manages table QR codes; venues supply table numbers, receive and verify the signs, and place them. The club dashboard displays guest-list records; pass scanning and guest admission are not performed in that dashboard. The obsolete scanner screenshot is no longer used in the manual or role guides.
 
 From the repository root, using Python with ReportLab, Pillow, pypdf and pdfplumber:
 
@@ -20,7 +20,7 @@ After editing, render every changed PDF with Poppler and inspect all pages. Chec
 ## Editorial sources
 
 - Role access, venue publication and team: `VenueDashboardPanels.tsx`, `VenueTeamPanel.tsx`, `venue-team-role-descriptions.ts`.
-- Requests, admission, VIP, rides and contacts: their venue dashboard panels and API handlers. Contacts distinguish visit details from club email/text subscriptions.
+- Requests, guest list, VIP, rides and contacts: their venue dashboard panels and API handlers. Guest-list controls were rechecked in `VenueGuestListPanel.tsx` for revision 6. Contacts distinguish visit details from club email/text subscriptions.
 - Dancer setup and media: `DancerProfileWorkspace.tsx`, `DancerProfileEditor.tsx`, `DancerPhotoPanel.tsx`, `DancerTvStudio.tsx`, `dancer-submission-media.ts` and the upload/review handlers.
 - Media approval: `VenueMediaReviewPanel.tsx`, `/api/venue/media-reviews`, and current photo/video rules. Reviewer is an assigned owner/manager, not a separate permission role.
 - Embedded grids and TV: `VenueWebsiteGrid.tsx`, `VenueTvPanel.tsx`, `public/venue-grid-embed.js` and `docs/venue-working-now-embed.md`. Prefer current code if older documentation differs.

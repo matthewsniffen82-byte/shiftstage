@@ -2,7 +2,7 @@ export const OPERATIONS_SUPPORT_EMAIL = "support@mydancr.com";
 
 export const GUIDE_ROLES = [
   { id: "club-admin", title: "Club Admin", description: "Prepare the club, manage team access and check QR signs and stickers.", pages: 5 },
-  { id: "manager", title: "Managers & talent", description: "Run the shift, manage requests, admit guests and hand over.", pages: 6 },
+  { id: "manager", title: "Managers & talent", description: "Run the shift, manage requests, review the guest list and hand over.", pages: 6 },
   { id: "dancer", title: "Dancers", description: "Set up your profile, upload media and manage your working status.", pages: 6 },
   { id: "content-approval", title: "Content approval", description: "Inspect uploads, record decisions and verify publication.", pages: 4 },
 ] as const;
