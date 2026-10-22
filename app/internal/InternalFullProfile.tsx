@@ -3,10 +3,13 @@
 import { useCallback, useEffect, useRef } from "react";
 import { createInternalFollowReturn } from "@/src/lib/dancr/internal-profile-auth-return";
 
+export type TableRequestContext = { id: string; tableLabel: string; state: "pending" | "acknowledged" | "arrived" | "closed"; sample?: boolean };
+
 export type InternalProfile = {
   initialPhotoUrl?: string; id: string; slug?: string; stage_name: string; city: string; venueName: string;
   internalAccent?: string | null;
   venueSlug?: string;
+  tableRequest?: TableRequestContext;
   workingUntil: string | null; avatarRevision: string;
   requestId?: string | null; requestsTonight: number; requestStatus: "pending" | "acknowledged" | null;
   photos: { id: string; is_primary?: boolean; is_pinned?: boolean; sort_order?: number; like_count?: number }[];

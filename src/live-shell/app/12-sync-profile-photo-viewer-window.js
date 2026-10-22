@@ -743,6 +743,7 @@
       ].filter(Boolean).join(" ");
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
+          ${internal ? internalProfileTableRequestMarkup(profile) : ""}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           <section class="${tonightClasses}" data-profile-shift-state="${shiftState}" data-profile-deal-state="${escapeHtml(dealState.key)}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}

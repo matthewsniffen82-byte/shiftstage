@@ -41572,9 +41572,22 @@ html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-a
   grid-row: 1 / 3;
   display: flex !important;
   flex-direction: column;
-  align-self: start;
+  align-self: stretch;
   gap: 12px;
   min-width: 0;
+}
+/* Use the portrait's existing height to separate identity from shift details. */
+html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout > .profile-details-column > .modal-body {
+  margin-top: auto !important;
+  padding-top: 24px !important;
+  padding-bottom: 24px !important;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-details-column .profile-activity-metrics.is-internal {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  column-gap: 6px !important;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-details-column .profile-activity-metrics.is-internal > div {
+  gap: 5px !important;
 }
 html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal .profile-details-column .profile-activity-metrics.is-internal dt {
   width: auto !important;
@@ -41582,7 +41595,36 @@ html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileMo
   white-space: normal !important;
   overflow-wrap: normal;
   text-wrap: balance;
+  min-height: 2.4em;
 }
+/* Internal shift details sit directly on the card, without the old glass tile. */
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-details-column :is(.profile-tonight-card, .profile-shift-card) {
+  border: 0 !important;
+  background: none !important;
+  box-shadow: none !important;
+  filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-details-column :is(.profile-tonight-card, .profile-shift-card)::before,
+html.internal-profile-embed body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-details-column :is(.profile-tonight-card, .profile-shift-card)::after {
+  content: none !important;
+  display: none !important;
+}
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-table-context {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+  min-width: 0;
+  font-size: clamp(11px, 1.8vw, 16px);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  color: #bebec8;
+}
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-table-context strong { font-weight: 650; }
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-table-context[data-state="pending"] strong { color: #fbbf24; }
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-table-context[data-state="acknowledged"] strong { color: #c8b8ed; }
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-table-context[data-state="arrived"] strong { color: #75dfb6; }
 html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-working-destination > .profile-live-state {
   margin-bottom: 4px !important;
 }
@@ -43370,13 +43412,16 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         busy: event.data.request.busy === true, message: String(event.data.request.message || ""),
         status: source.requestStatus, requestId: source.requestId, confirmed: event.data.request.confirmed === true,
       } : null;
-      const { requestsTonight, requestStatus, requestId, ...profileContent } = source;
-      internalProfileActivity = { requestsTonight, requestStatus, requestId };
+      const { requestsTonight, requestStatus, requestId, tableRequest, ...profileContent } = source;
+      const requestContext = !token && tableRequest && ["pending", "acknowledged", "arrived", "closed"].includes(tableRequest.state)
+        ? { id: String(tableRequest.id || ""), state: tableRequest.state, tableLabel: String(tableRequest.tableLabel || "Table").slice(0, 60), sample: tableRequest.sample === true } : null;
+      internalProfileActivity = { requestsTonight, requestStatus, requestId, tableRequest: requestContext };
       const revision = JSON.stringify([profileContent, token, Date.parse(source.workingUntil || "") > Date.now()]);
       if (internalRosterProfile) {
         internalRosterProfile.requestsTonight = requestsTonight;
         internalRosterProfile.requestStatus = requestStatus;
         internalRosterProfile.requestId = requestId;
+        internalRosterProfile.tableRequest = requestContext;
         syncInternalProfileRequestUi();
       }
       if (revision === internalProfileRevision && !internalProfileMediaIncomplete) return;
@@ -43555,7 +43600,18 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       window.parent.postMessage({ type: "mydancr:vip-profile-request", profileId: internalRosterProfile.id }, window.location.origin);
     }
 
+    function internalProfileTableRequestMarkup(profile) {
+      const request = profile?.internalRoster && !profile.internalGuestProfile ? profile.tableRequest : null;
+      const label = { pending: "New request", acknowledged: "Seen by staff", arrived: "Arrived at table", closed: "Request closed" }[request?.state];
+      if (!label) return "";
+      return `<div class="internal-profile-table-context" data-state="${escapeHtml(request.state)}" role="status"><span>${request.sample ? "Sample · " : ""}${escapeHtml(request.tableLabel)}</span><strong>${label}</strong></div>`;
+    }
+
     function syncInternalProfileRequestUi() {
+      const context = document.querySelector(".internal-profile-table-context");
+      const contextMarkup = internalProfileTableRequestMarkup(internalRosterProfile);
+      if (context) context.outerHTML = contextMarkup;
+      else if (contextMarkup) document.querySelector("#modalBody .modal-grid")?.insertAdjacentHTML("afterbegin", contextMarkup);
       const count = document.getElementById("internalRequestsTonight");
       if (count) count.textContent = Number.isSafeInteger(internalRosterProfile.requestsTonight) && internalRosterProfile.requestsTonight >= 0 ? internalRosterProfile.requestsTonight.toLocaleString() : "—";
       const actions = document.querySelector(".internal-profile-request");
@@ -55599,6 +55655,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       ].filter(Boolean).join(" ");
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
+          ${internal ? internalProfileTableRequestMarkup(profile) : ""}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}
           <section class="${tonightClasses}" data-profile-shift-state="${shiftState}" data-profile-deal-state="${escapeHtml(dealState.key)}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}

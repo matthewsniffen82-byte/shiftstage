@@ -71,7 +71,17 @@ async function rosterFetch(url: string, token: string | undefined, body?: Record
   }
 }
 
-const VenueProfileContext = createContext<((selection: ProfileSelection) => void) | null>(null);
+const VenueProfileContext = createContext<{
+  open: (selection: ProfileSelection) => void;
+  syncTableRequests: (requests: ClubRequest[]) => void;
+} | null>(null);
+
+function syncTableRequest(context: Profile["tableRequest"], requests: ClubRequest[]) {
+  if (!context || context.sample) return context;
+  const request = requests.find(item => item.id === context.id);
+  const state: NonNullable<Profile["tableRequest"]>["state"] = !request ? "closed" : request.status === "pending" ? "pending" : request.attendance === "arrived" ? "arrived" : "acknowledged";
+  return context.state === state ? context : { ...context, state };
+}
 
 function selectedCardPhoto(button?: HTMLButtonElement) {
   const image = button?.querySelector("img");
@@ -111,6 +121,7 @@ function VenueBrandLogo({ url, name }: { url: string; name: string }) {
 
 export function InternalRoster({ token, operationsOnly = false, sampleTableRequests = false, roster }: { token?: string; operationsOnly?: boolean; sampleTableRequests?: boolean; roster?: ReactNode }) {
   const openVenueProfile = useContext(VenueProfileContext);
+  const syncVenueTableRequests = openVenueProfile?.syncTableRequests;
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -126,6 +137,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const [profile, setProfile] = useState<Profile | null>(null);
   const [openingProfileId, setOpeningProfileId] = useState("");
   const selectedProfile = useRef("");
+  const selectedTableRequest = useRef<Profile["tableRequest"]>(undefined);
   const requestKey = useRef("");
   const requestsInFlight = useRef(new Set<string>());
   const mutationInFlight = useRef(false);
@@ -142,7 +154,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const clearRoster = useCallback((message = "") => {
     hasSnapshot.current = false;
     noticeTimers.current.forEach(clearTimeout); noticeTimers.current.clear(); setDancerNotices({});
-    setSnapshot(null); setProfile(null); setOpeningProfileId(""); selectedProfile.current = ""; setError(message);
+    setSnapshot(null); setProfile(null); setOpeningProfileId(""); selectedProfile.current = ""; selectedTableRequest.current = undefined; setError(message);
   }, []);
 
   function dismissDancerNotice(dancerId: string) {
@@ -190,7 +202,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
         if (!data.dancers.some((dancer: Dancer) => dancer.id === selected)) { selectedProfile.current = ""; setProfile(null); setOpeningProfileId(""); }
         else {
           const result = await rosterFetch(`/api/internal/profile/${selected}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token, undefined, signal);
-          if (current() && selectedProfile.current === selected) setProfile(result.profile);
+          if (current() && selectedProfile.current === selected) setProfile({ ...result.profile, tableRequest: selectedTableRequest.current });
         }
       }
       return true;
@@ -366,20 +378,21 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
     void mutate({ action: "cancel_request", dancerId, requestId });
   }
 
-  async function openProfile(dancer: Dancer, photoUrl = "") {
+  async function openProfile(dancer: Dancer, photoUrl = "", tableRequest?: Profile["tableRequest"]) {
     if (!token && openVenueProfile) {
-      openVenueProfile({ id: dancer.id, stageName: dancer.stageName, photoUrl });
+      openVenueProfile.open({ id: dancer.id, stageName: dancer.stageName, photoUrl, tableRequest });
       return;
     }
     if (token) dismissDancerNotice(dancer.id);
     else setNotice("");
     setProfile(null); setOpeningProfileId(dancer.id);
     selectedProfile.current = dancer.id;
+    selectedTableRequest.current = token ? undefined : tableRequest;
     const generation = refreshGeneration.current;
     try {
       const data = await rosterFetch(`/api/internal/profile/${dancer.id}${token ? `?token=${encodeURIComponent(token)}` : ""}`, token);
       if (alive.current && selectedProfile.current === dancer.id) {
-        if (generation === refreshGeneration.current) setProfile(data.profile);
+        if (generation === refreshGeneration.current) setProfile({ ...data.profile, tableRequest: selectedTableRequest.current });
         else void refresh();
       }
     } catch (reason) {
@@ -414,6 +427,13 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
   const tableRequests = staff ? [] : dancers.filter(dancer => dancer.requestStatus);
   const receiptStatus = snapshot?.receipt?.status;
   const inactiveReceipt = !!receiptStatus && ["completed", "cancelled", "expired"].includes(receiptStatus);
+  useEffect(() => {
+    if (token || !snapshot?.requests) return;
+    syncVenueTableRequests?.(snapshot.requests);
+    selectedTableRequest.current = syncTableRequest(selectedTableRequest.current, snapshot.requests);
+    setProfile(current => current && current.tableRequest !== selectedTableRequest.current
+      ? { ...current, tableRequest: selectedTableRequest.current } : current);
+  }, [token, snapshot?.requests, syncVenueTableRequests]);
   // Show progress until the first response supplies the real venue/table identity.
   if (!staff && !snapshot && !error) return <div className="ir-shell ir-guest" aria-busy={true} data-global-navigation-swipe="ignore">
     <div className="ir-loading-status" role="status">
@@ -501,7 +521,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
             {dancer ? <ProtectedMedia key={`${dancer.mainPhotoId || dancer.id}:${dancer.mainPhotoRevision || dancer.avatarRevision}`} id={dancer.mainPhotoId || dancer.id} kind={dancer.mainPhotoId ? "photo" : "avatar"} revision={dancer.mainPhotoId ? dancer.mainPhotoRevision : dancer.avatarRevision} alt="" grid lazy={index >= 12} priority={index < 3} /> : <VenueGridImage />}</span>
             <span className="venue-card-caption"><strong>{dancerName}</strong><small>{item.sample ? `Sample · ${tableLabel}` : tableLabel}</small><span className="venue-card-status" data-state={requestState}>{openingProfileId === dancer?.id ? "Opening…" : requestLabel}</span></span></span>;
           return <article className="venue-dancer-card" data-request-id={item.id} data-sample={item.sample || undefined} key={item.id}><div className="venue-table-request-identity">
-            {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={event => void openProfile(dancer, selectedCardPhoto(event?.currentTarget))}>{identity}</button>
+            {dancer ? <button type="button" className="ir-profile-link venue-card-profile" aria-label={`View ${dancerName} profile`} aria-busy={openingProfileId === dancer.id} onClick={event => void openProfile(dancer, selectedCardPhoto(event?.currentTarget), { id: item.id, tableLabel, state: requestState, sample: item.sample })}>{identity}</button>
               : identity}</div>
             <details className="venue-card-menu" name="venue-card-details"><summary className="dashboard-menu-trigger" aria-label={`${tableLabel} request details for ${dancerName}`} title="Request details"><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary>
             <div className="venue-card-popover"><div className="venue-card-details"><strong>{tableLabel} · {dancerName}</strong>
@@ -539,10 +559,14 @@ export function VenueProfileProvider({ children }: { children: ReactNode }) {
   const [selection, setSelection] = useState<ProfileSelection | null>(null);
   const close = useCallback(() => setSelection(null), []);
   const { profile, error, fail } = useStaffProfile(selection?.id || "", !!selection, close, selection?.photoUrl);
-  return <VenueProfileContext.Provider value={setSelection}>
+  const syncTableRequests = useCallback((requests: ClubRequest[]) => setSelection(current => {
+    const tableRequest = syncTableRequest(current?.tableRequest, requests);
+    return current && current.tableRequest !== tableRequest ? { ...current, tableRequest } : current;
+  }), []);
+  return <VenueProfileContext.Provider value={{ open: setSelection, syncTableRequests }}>
     {children}
     {error ? <p role="status" className="ir-notice">{error}</p> : null}
-    <ClubProfileDialog prewarm profile={profile} profileId={selection?.id || ""} loadingIdentity={selection} onError={fail} onClose={close} />
+    <ClubProfileDialog prewarm profile={profile ? { ...profile, tableRequest: selection?.tableRequest } : null} profileId={selection?.id || ""} loadingIdentity={selection} onError={fail} onClose={close} />
   </VenueProfileContext.Provider>;
 }
 
@@ -603,7 +627,7 @@ export function VenueRosterProfileButton({ dancerId, stageName, children, classN
   const close = useCallback(() => setOpen(false), []);
   const { profile, error, fail } = useStaffProfile(dancerId, open && !openVenueProfile, close);
   return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={event => {
-    if (openVenueProfile) openVenueProfile({ id: dancerId, stageName, photoUrl: selectedCardPhoto(event?.currentTarget) });
+    if (openVenueProfile) openVenueProfile.open({ id: dancerId, stageName, photoUrl: selectedCardPhoto(event?.currentTarget) });
     else setOpen(true);
   }} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!openVenueProfile ? <ClubProfileDialog profile={profile} profileId={open ? dancerId : ""} loadingIdentity={{ id: dancerId, stageName }} onError={fail} onClose={close} /> : null}</div>;
 }

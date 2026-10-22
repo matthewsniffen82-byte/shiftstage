@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { InternalFullProfile, type InternalProfile as Profile, type InternalRequestAction, type PublicProfileActions, type VipProfileRequestAction } from "./InternalFullProfile";
 import "./internal.css";
 
-export type ProfileSelection = { id: string; stageName: string; photoUrl?: string };
+export type ProfileSelection = { id: string; stageName: string; photoUrl?: string; tableRequest?: Profile["tableRequest"] };
 
 export function ClubProfileDialog({ prewarm = false, publicSlug, publicActions, vipRequest, onVipRequest, loadingIdentity, profile, profileId = profile?.id || "", token, request, onRequest, onCancel, onReady, onError, onClose }: { prewarm?: boolean; publicSlug?: string; publicActions?: PublicProfileActions; vipRequest?: VipProfileRequestAction; onVipRequest?: () => void; loadingIdentity?: ProfileSelection | null; profile: Profile | null; profileId?: string; token?: string; request?: InternalRequestAction; onRequest?: () => void; onCancel?: () => void; onReady?: () => void; onError?: () => void; onClose: () => void }) {
   const profileDialog = useRef<HTMLDialogElement>(null);

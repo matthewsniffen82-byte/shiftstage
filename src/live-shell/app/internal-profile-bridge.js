@@ -131,13 +131,16 @@
         busy: event.data.request.busy === true, message: String(event.data.request.message || ""),
         status: source.requestStatus, requestId: source.requestId, confirmed: event.data.request.confirmed === true,
       } : null;
-      const { requestsTonight, requestStatus, requestId, ...profileContent } = source;
-      internalProfileActivity = { requestsTonight, requestStatus, requestId };
+      const { requestsTonight, requestStatus, requestId, tableRequest, ...profileContent } = source;
+      const requestContext = !token && tableRequest && ["pending", "acknowledged", "arrived", "closed"].includes(tableRequest.state)
+        ? { id: String(tableRequest.id || ""), state: tableRequest.state, tableLabel: String(tableRequest.tableLabel || "Table").slice(0, 60), sample: tableRequest.sample === true } : null;
+      internalProfileActivity = { requestsTonight, requestStatus, requestId, tableRequest: requestContext };
       const revision = JSON.stringify([profileContent, token, Date.parse(source.workingUntil || "") > Date.now()]);
       if (internalRosterProfile) {
         internalRosterProfile.requestsTonight = requestsTonight;
         internalRosterProfile.requestStatus = requestStatus;
         internalRosterProfile.requestId = requestId;
+        internalRosterProfile.tableRequest = requestContext;
         syncInternalProfileRequestUi();
       }
       if (revision === internalProfileRevision && !internalProfileMediaIncomplete) return;
@@ -316,7 +319,18 @@
       window.parent.postMessage({ type: "mydancr:vip-profile-request", profileId: internalRosterProfile.id }, window.location.origin);
     }
 
+    function internalProfileTableRequestMarkup(profile) {
+      const request = profile?.internalRoster && !profile.internalGuestProfile ? profile.tableRequest : null;
+      const label = { pending: "New request", acknowledged: "Seen by staff", arrived: "Arrived at table", closed: "Request closed" }[request?.state];
+      if (!label) return "";
+      return `<div class="internal-profile-table-context" data-state="${escapeHtml(request.state)}" role="status"><span>${request.sample ? "Sample · " : ""}${escapeHtml(request.tableLabel)}</span><strong>${label}</strong></div>`;
+    }
+
     function syncInternalProfileRequestUi() {
+      const context = document.querySelector(".internal-profile-table-context");
+      const contextMarkup = internalProfileTableRequestMarkup(internalRosterProfile);
+      if (context) context.outerHTML = contextMarkup;
+      else if (contextMarkup) document.querySelector("#modalBody .modal-grid")?.insertAdjacentHTML("afterbegin", contextMarkup);
       const count = document.getElementById("internalRequestsTonight");
       if (count) count.textContent = Number.isSafeInteger(internalRosterProfile.requestsTonight) && internalRosterProfile.requestsTonight >= 0 ? internalRosterProfile.requestsTonight.toLocaleString() : "—";
       const actions = document.querySelector(".internal-profile-request");

@@ -501,7 +501,7 @@ test('the same profile renderer omits Club Deals only for Internal context', () 
   const context={shiftStatus:()=>({}),selectedCity:()=>'',socialLinksMarkup:()=>'',dancerClubDealState:()=>({key:'available'}),
     profileDealTileMarkup:()=>'<div data-club-deal>Free Entry</div>',dancerProfileTonightTravelActionsMarkup:()=>'',isWorkingTonight:()=>true,
     liveProfileModalActionsMarkup:()=>'<button>Follow</button><button>Share</button>',escapeHtml:v=>v,shiftsMarkup:()=>'<p>Working now</p>',
-    liveProfileGoingActionsMarkup:()=>'<button>I’m Going</button>',internalProfileRequestActionsMarkup:()=>'<button>Request at Table 1</button>',profileLocationStatusTile:()=>''};
+    liveProfileGoingActionsMarkup:()=>'<button>I’m Going</button>',internalProfileRequestActionsMarkup:()=>'<button>Request at Table 1</button>',internalProfileTableRequestMarkup:()=>'',profileLocationStatusTile:()=>''};
   vm.runInNewContext(renderer+'\nthis.render=profileModalGridMarkup;',context);
   const external=context.render({scheduled:true}),internal=context.render({scheduled:true,internalRoster:true});
   assert.match(external,/data-club-deal/); assert.doesNotMatch(internal,/data-club-deal|Free Entry|profile-tonight-deal/);
@@ -509,6 +509,40 @@ test('the same profile renderer omits Club Deals only for Internal context', () 
   assert.match(internal,/Request at Table 1/);assert.doesNotMatch(internal,/I’m Going/);assert.match(external,/I’m Going/);
 });
 
+
+test('staff table context matches the clicked request and updates without reloading media', async () => {
+  const f = fixture({ staff: true });
+  const contextNode = { outerHTML: '' };
+  f.context.document.querySelector = selector => selector === '.internal-profile-table-context' ? contextNode : null;
+  const event = f.event();
+  event.data.profile = { ...profile, tableRequest: { id: 'request-one', tableLabel: 'Table <7>', state: 'pending' } };
+  await f.bridge.openInternalProfileMessage(event);
+  const reads = f.fetches.length;
+  for (const [state, label] of [['pending', 'New request'], ['acknowledged', 'Seen by staff'], ['arrived', 'Arrived at table'], ['closed', 'Request closed']]) {
+    event.data.profile = { ...profile, tableRequest: { id: 'request-one', tableLabel: 'Table <7>', state } };
+    await f.bridge.openInternalProfileMessage(event);
+    assert.ok(contextNode.outerHTML.includes(label));
+    assert.match(contextNode.outerHTML, /Table &lt;7&gt;/);
+    assert.equal(f.bridge.profile().scheduled, true, 'request status does not alter working status');
+    assert.equal(f.fetches.length, reads, 'status-only updates do not reload private media');
+    assert.equal(f.opens.length, 1, 'keep the open profile and media position');
+  }
+  event.data.profile = profile;
+  await f.bridge.openInternalProfileMessage(event);
+  assert.equal(contextNode.outerHTML, '', 'the roster profile clears the previous request context');
+  assert.equal(f.context.internalProfileTableRequestMarkup({ ...f.bridge.profile(), tableRequest: { state: 'unexpected', tableLabel: 'Table 1' } }), '');
+});
+
+test('staff table context is never shown in table guest or public profiles', async () => {
+  const f = fixture();
+  const event = f.event();
+  event.data.profile = { ...profile, tableRequest: { id: 'request-one', tableLabel: 'Table 7', state: 'pending' } };
+  await f.bridge.openInternalProfileMessage(event);
+  assert.equal(f.bridge.profile().tableRequest, null);
+  for (const view of [f.bridge.profile(), { tableRequest: event.data.profile.tableRequest }]) {
+    assert.equal(f.context.internalProfileTableRequestMarkup(view), '');
+  }
+});
 
 test('staff media recovers on an unchanged profile refresh after a temporary outage', async () => {
   const f = fixture({staff:true,mediaFailure:true});

@@ -77,7 +77,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
       if (name === "../components/RefreshButton") return refreshButtonModule;
       if (name.endsWith(".css")) return {};
       if (name === "react") return {
-        createContext: () => ({ Provider: "VenueProfileContext" }), useContext: () => sharedOpen,
+        createContext: () => ({ Provider: "VenueProfileContext" }), useContext: () => sharedOpen ? { open: sharedOpen } : null,
         useState(initial) {
           const index = stateIndex++;
           if (mounting) states[index] = component === "VenueRosterProfileButton" && index === 0 ? true : initial;
@@ -337,6 +337,7 @@ test("staff table requests have a protected avatar and open the matching profile
   button.props.onClick(); await flush(); await flush();
   assert.deepEqual(app.navigations, []);
   assert.equal(profile(app).id, dancer.id);
+  assert.deepEqual(JSON.parse(JSON.stringify(profile(app).tableRequest)), { id: 'request-1', tableLabel: 'Table 7', state: 'pending' });
   assert.ok(calls.some(call => call.url === '/api/internal/profile/' + dancer.id && call.options.headers.authorization === 'Bearer staff-token'));
   assert.ok(calls.every(call => call.options.method === 'GET'));
   assert.ok(find(app.render(), node => node.props?.['data-request-id']));
@@ -1394,6 +1395,47 @@ test("shared venue cards hand off their existing image without creating per-card
   assert.equal(selections[0].photoUrl, "blob:https://example.invalid/card");
 });
 
+test("table request cards pass their own table and status into the shared venue viewer", async t => {
+  const selections = [];
+  const requests = [
+    { id: 'one', dancer_id: dancer.id, link_id: 'table-1', status: 'pending' },
+    { id: 'two', dancer_id: dancer.id, link_id: 'table-2', status: 'acknowledged' },
+    { id: 'three', dancer_id: dancer.id, link_id: 'table-3', status: 'acknowledged', attendance: 'arrived' },
+  ];
+  const app = harness(async () => response({ ...roster, requests, links: requests.map((item, i) => ({ id: item.link_id, label: `Table ${i + 1}` })) }),
+    { props: { token: undefined, operationsOnly: true }, session: { accessToken: 'owner', account: { role: 'venue' } }, sharedOpen: value => selections.push(value) });
+  t.after(() => app.unmount()); await app.mount();
+  for (const [index, item] of requests.entries()) {
+    const card = find(app.render(), node => node.props?.['data-request-id'] === item.id);
+    find(card, node => node.props?.className === 'ir-profile-link venue-card-profile').props.onClick();
+    assert.deepEqual(JSON.parse(JSON.stringify(selections.at(-1).tableRequest)),
+      { id: item.id, tableLabel: `Table ${index + 1}`, state: ['pending', 'acknowledged', 'arrived'][index] });
+  }
+});
+
+test("the shared viewer follows the selected request through status changes without mixing other tables", async t => {
+  const app = harness(async () => response({ ok: true, profile: { id: dancer.id, stage_name: dancer.stageName } }),
+    { component: 'VenueProfileProvider', session: { accessToken: 'owner', account: { role: 'venue' } } });
+  t.after(() => app.unmount()); await app.mount();
+  const selection = { id: dancer.id, stageName: dancer.stageName, tableRequest: { id: 'selected', tableLabel: 'Table 7', state: 'pending' } };
+  app.render().props.value.open(selection);
+  app.render(); app.runEffect(0, true); await flush();
+  const context = () => profile(app).tableRequest;
+  assert.equal(context().state, 'pending');
+  for (const [attendance, expected] of [[null, 'acknowledged'], ['arrived', 'arrived']]) {
+    app.render().props.value.syncTableRequests([
+      { id: 'other-table', dancer_id: dancer.id, status: 'pending' },
+      { id: 'selected', dancer_id: dancer.id, status: 'acknowledged', attendance },
+    ]);
+    assert.equal(context().state, expected);
+    assert.equal(context().tableLabel, 'Table 7');
+  }
+  app.render().props.value.syncTableRequests([]);
+  assert.equal(context().state, 'closed');
+  app.render().props.value.open({ id: dancer.id, stageName: dancer.stageName });
+  assert.equal(context(), undefined, 'opening the roster card does not retain table context');
+});
+
 test("one venue viewer opens immediately, cancels a switched dancer and keeps refreshed sessions", async t => {
   const first = deferred(), calls = [];
   const app = harness(async (url, options) => {
@@ -1401,13 +1443,13 @@ test("one venue viewer opens immediately, cancels a switched dancer and keeps re
     return url.endsWith("first") ? first.promise : response({ ok: true, profile: { id: "second", stage_name: "Second" }, session: { accessToken: "refreshed" } });
   }, { component: "VenueProfileProvider", session: { accessToken: "owner", account: { role: "venue" } }, persistRefresh: true });
   t.after(() => app.unmount()); await app.mount();
-  app.render().props.value({ id: "first", stageName: "First", photoUrl: "card-first" });
+  app.render().props.value.open({ id: "first", stageName: "First", photoUrl: "card-first" });
   let tree = app.render(); app.runEffect(0, true);
   const dialog = () => find(app.render(), node => node.type?.name === "ClubProfileDialog").props;
   assert.equal(dialog().prewarm, true);
   assert.equal(dialog().profileId, "first");
   assert.equal(dialog().profile, null);
-  tree.props.value({ id: "second", stageName: "Second", photoUrl: "card-second" });
+  tree.props.value.open({ id: "second", stageName: "Second", photoUrl: "card-second" });
   app.render(); app.runEffect(0, true); await flush();
   assert.equal(calls[0].options.signal.aborted, true);
   assert.equal(dialog().profile.id, "second");
