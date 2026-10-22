@@ -743,6 +743,7 @@
       ].filter(Boolean).join(" ");
       return `
         <div class="modal-grid ${options.preview ? "is-editor-preview" : ""}">
+          ${internal ? internalProfilePerformanceScoreMarkup(profile) : ""}
           ${internal ? internalProfileTableRequestMarkup(profile) : ""}
           ${internal ? internalProfileRosterStatusMarkup(profile) : ""}
           ${options.preview ? "" : liveProfileModalActionsMarkup(profile, status)}

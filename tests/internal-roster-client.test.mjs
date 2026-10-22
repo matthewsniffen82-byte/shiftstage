@@ -1471,6 +1471,43 @@ test("only the selected roster card updates visibility in the shared viewer", as
   assert.equal(profile(app).tableRequest.id, 'table-request');
 });
 
+test("contribution cards carry the exact score and period into shared and standalone profiles", async t => {
+  for (const performanceScore of [{ value: 87, period: '30d', early: false }, { value: 0, period: '7d', early: true }, { value: null, period: 'tonight', early: false }]) {
+    const selections = [];
+    const shared = harness(() => assert.fail('Shared cards do not fetch their own viewer'), {
+      component: 'VenueRosterProfileButton', props: { performanceScore }, sharedOpen: value => selections.push(value),
+    });
+    t.after(() => shared.unmount()); await shared.mount();
+    find(shared.render(), node => node.type === 'button').props.onClick();
+    assert.deepEqual(selections[0].performanceScore, performanceScore);
+    const standalone = harness(async () => response({ ok: true, profile: { id: dancer.id } }), {
+      component: 'VenueRosterProfileButton', props: { performanceScore }, session: { accessToken: 'staff', account: { role: 'venue' } },
+    });
+    t.after(() => standalone.unmount()); await standalone.mount();
+    assert.deepEqual(profile(standalone).performanceScore, performanceScore);
+  }
+});
+
+test("only a selected contribution profile follows score changes and other origins clear its score", async t => {
+  const app = harness(async () => response({ ok: true, profile: { id: dancer.id } }),
+    { component: 'VenueProfileProvider', session: { accessToken: 'staff', account: { role: 'venue' } } });
+  t.after(() => app.unmount()); await app.mount();
+  const performanceScore = { value: 87, period: '30d', early: false };
+  app.render().props.value.open({ id: dancer.id, stageName: dancer.stageName, performanceScore });
+  app.render(); app.runEffect(0, true); await flush();
+  app.render().props.value.syncPerformanceScore('another-dancer', { value: 99, period: '7d', early: true });
+  assert.deepEqual(profile(app).performanceScore, performanceScore);
+  for (const next of [{ value: 88, period: '30d', early: false }, { value: 0, period: '7d', early: true }, { value: null, period: 'tonight', early: false }]) {
+    app.render().props.value.syncPerformanceScore(dancer.id, next);
+    assert.deepEqual(profile(app).performanceScore, next);
+  }
+  for (const otherContext of [{ rosterStatus: 'Internal only' }, { tableRequest: { id: 'table-request', tableLabel: 'Table 1', state: 'pending' } }]) {
+    app.render().props.value.open({ id: dancer.id, stageName: dancer.stageName, ...otherContext });
+    app.render().props.value.syncPerformanceScore(dancer.id, performanceScore);
+    assert.equal(profile(app).performanceScore, undefined, 'background score changes cannot add a score to a different profile origin');
+  }
+});
+
 test("one venue viewer opens immediately, cancels a switched dancer and keeps refreshed sessions", async t => {
   const first = deferred(), calls = [];
   const app = harness(async (url, options) => {

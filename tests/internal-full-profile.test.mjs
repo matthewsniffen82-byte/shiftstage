@@ -501,7 +501,7 @@ test('the same profile renderer omits Club Deals only for Internal context', () 
   const context={shiftStatus:()=>({}),selectedCity:()=>'',socialLinksMarkup:()=>'',dancerClubDealState:()=>({key:'available'}),
     profileDealTileMarkup:()=>'<div data-club-deal>Free Entry</div>',dancerProfileTonightTravelActionsMarkup:()=>'',isWorkingTonight:()=>true,
     liveProfileModalActionsMarkup:()=>'<button>Follow</button><button>Share</button>',escapeHtml:v=>v,shiftsMarkup:()=>'<p>Working now</p>',
-    liveProfileGoingActionsMarkup:()=>'<button>I’m Going</button>',internalProfileRequestActionsMarkup:()=>'<button>Request at Table 1</button>',internalProfileTableRequestMarkup:()=>'',internalProfileRosterStatusMarkup:()=>'',profileLocationStatusTile:()=>''};
+    liveProfileGoingActionsMarkup:()=>'<button>I’m Going</button>',internalProfileRequestActionsMarkup:()=>'<button>Request at Table 1</button>',internalProfileTableRequestMarkup:()=>'',internalProfileRosterStatusMarkup:()=>'',internalProfilePerformanceScoreMarkup:()=>'',profileLocationStatusTile:()=>''};
   vm.runInNewContext(renderer+'\nthis.render=profileModalGridMarkup;',context);
   const external=context.render({scheduled:true}),internal=context.render({scheduled:true,internalRoster:true});
   assert.match(external,/data-club-deal/); assert.doesNotMatch(internal,/data-club-deal|Free Entry|profile-tonight-deal/);
@@ -509,6 +509,56 @@ test('the same profile renderer omits Club Deals only for Internal context', () 
   assert.match(internal,/Request at Table 1/);assert.doesNotMatch(internal,/I’m Going/);assert.match(external,/I’m Going/);
 });
 
+
+test('contribution score and period update in the staff profile without resetting media', async () => {
+  const f = fixture({ staff: true });
+  const scoreNode = { outerHTML: '' };
+  f.context.document.querySelector = selector => selector === '.internal-profile-performance-score' ? scoreNode : null;
+  const event = f.event();
+  event.data.profile = { ...profile, performanceScore: { value: 87, period: '30d', early: false } };
+  await f.bridge.openInternalProfileMessage(event);
+  const reads = f.fetches.length;
+  const gridSource = readFileSync('src/live-shell/app/12-sync-profile-photo-viewer-window.js', 'utf8');
+  vm.runInNewContext(gridSource.match(/    function profileModalGridMarkup\([^]*?\n    \}/)[0], f.context);
+  Object.assign(f.context, { shiftStatus: () => ({}), isWorkingTonight: () => true, shiftsMarkup: () => 'Working now',
+    profileLocationStatusTile: () => '', liveProfileModalActionsMarkup: () => '' });
+  const initial = f.context.profileModalGridMarkup(f.bridge.profile());
+  assert.match(initial, /Overall score<\/span><strong>87<span> \/100/);
+  assert.match(initial, /<small>30 days<\/small>/);
+  assert.ok(initial.indexOf('Overall score') < initial.indexOf('Working now'));
+  for (const [period, label] of [['tonight', 'Tonight'], ['7d', '7 days'], ['14d', '14 days'], ['30d', '30 days'], ['all', 'All time']]) {
+    event.data.profile = { ...profile, performanceScore: { value: 0, period, early: true } };
+    await f.bridge.openInternalProfileMessage(event);
+    assert.match(scoreNode.outerHTML, /<strong>0<span> \/100/);
+    assert.ok(scoreNode.outerHTML.includes(`${label} · Early data`));
+    assert.equal(f.fetches.length, reads);
+    assert.equal(f.opens.length, 1);
+  }
+  event.data.profile = { ...profile, performanceScore: { value: null, period: '30d', early: false } };
+  await f.bridge.openInternalProfileMessage(event);
+  assert.match(scoreNode.outerHTML, /<strong>—<\/strong>/);
+  assert.match(scoreNode.outerHTML, /30 days · Not enough data/);
+  for (const performanceScore of [undefined, { value: -1, period: '30d', early: false }, { value: 101, period: '30d', early: false },
+    { value: '87', period: '30d', early: false }, { value: 87, period: '<script>', early: false }, { value: 87, period: '30d' }]) {
+    event.data.profile = { ...profile, performanceScore };
+    await f.bridge.openInternalProfileMessage(event);
+    assert.equal(scoreNode.outerHTML, '', 'invalid or absent score context is cleared');
+  }
+  assert.equal(f.fetches.length, reads);
+  assert.equal(f.opens.length, 1);
+});
+
+test('venue contribution scores never appear in guest or public profiles', async () => {
+  const f = fixture();
+  const event = f.event();
+  const performanceScore = { value: 87, period: '30d', early: false };
+  event.data.profile = { ...profile, performanceScore };
+  await f.bridge.openInternalProfileMessage(event);
+  assert.equal(f.bridge.profile().performanceScore, null);
+  for (const view of [f.bridge.profile(), { performanceScore }, { internalRoster: true, internalGuestProfile: true, performanceScore }]) {
+    assert.equal(f.context.internalProfilePerformanceScoreMarkup(view), '');
+  }
+});
 
 test('staff table context matches the clicked request and updates without reloading media', async () => {
   const f = fixture({ staff: true });

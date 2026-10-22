@@ -305,6 +305,19 @@ test("performance rows show every score beside the portrait and retain the full 
   assert.equal(demoTree.filter(node => node.type === "li").length, demo.report.performance.dancers.length);
 });
 
+test("contribution profiles receive the displayed overall score for each reporting period", () => {
+  const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
+  const dancers = scoredDancers();
+  for (const period of ['tonight', '7d', '14d', '30d', 'all']) {
+    const tree = render({ dancers, period });
+    const scores = scoring.scoreVenueDancers(dancers, period);
+    for (const button of tree.filter(node => node.type === 'ProfileButton')) {
+      const overall = scores.find(row => row.dancer.id === button.props.dancerId).scores.overall;
+      assert.deepEqual({ ...button.props.performanceScore }, { value: overall.value, period, early: overall.confidence === 'early' });
+    }
+  }
+});
+
 test("score dialog opens modally, closes, reopens and dismisses when its dancer disappears", () => {
   const render = component("app/dashboard/VenueDancerPerformance.tsx", "default", "", scoreDependencies);
   const dancers = scoredDancers();

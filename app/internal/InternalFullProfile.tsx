@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useRef } from "react";
 import { createInternalFollowReturn } from "@/src/lib/dancr/internal-profile-auth-return";
+import type { DancerScorePeriod } from "@/src/lib/dancr/venue-dancer-scores";
 
 export type TableRequestContext = { id: string; tableLabel: string; state: "pending" | "acknowledged" | "arrived" | "closed"; sample?: boolean };
 export type RosterStatus = "Internal only" | "External only" | "Internal + External" | "Affiliated";
+export type PerformanceScoreContext = { value: number | null; period: DancerScorePeriod; early: boolean };
 
 export type InternalProfile = {
   initialPhotoUrl?: string; id: string; slug?: string; stage_name: string; city: string; venueName: string;
@@ -12,6 +14,7 @@ export type InternalProfile = {
   venueSlug?: string;
   tableRequest?: TableRequestContext;
   rosterStatus?: RosterStatus | null;
+  performanceScore?: PerformanceScoreContext;
   workingUntil: string | null; avatarRevision: string;
   requestId?: string | null; requestsTonight: number; requestStatus: "pending" | "acknowledged" | null;
   photos: { id: string; is_primary?: boolean; is_pinned?: boolean; sort_order?: number; like_count?: number }[];

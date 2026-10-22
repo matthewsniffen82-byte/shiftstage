@@ -79,7 +79,7 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
       </span>;
       return <li key={row.dancer.id}>
         <div className="venue-dancer-card">
-          {profileId ? <VenueRosterProfileButton dancerId={profileId} stageName={row.dancer.name} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton> : identity}
+          {profileId ? <VenueRosterProfileButton dancerId={profileId} stageName={row.dancer.name} performanceScore={{ value: row.scores.overall.value, period, early: row.scores.overall.confidence === "early" }} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton> : identity}
         </div>
         <div className="venue-performance-summary">
           <p className="venue-score-card-rank" title={rank}>{rank}</p>

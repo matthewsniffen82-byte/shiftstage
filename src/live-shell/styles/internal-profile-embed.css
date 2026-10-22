@@ -123,6 +123,31 @@ html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-ros
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-performance-score {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 3px 8px;
+  margin-bottom: 12px;
+  color: #bebec8;
+  font-size: clamp(11px, 1.8vw, 16px);
+  line-height: 1.4;
+}
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-performance-score strong {
+  color: #fff;
+  font-size: clamp(22px, 3vw, 30px);
+  font-weight: 750;
+  white-space: nowrap;
+}
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-performance-score strong span {
+  color: #bebec8;
+  font-size: .5em;
+  font-weight: 500;
+}
+html.internal-profile-embed #profileBackdrop #profileModal .internal-profile-performance-score small {
+  grid-column: 1 / -1;
+  font-size: inherit;
+}
 html.internal-profile-embed body.dancr-button-system:is([data-internal-profile-audience="staff"], [data-internal-profile-audience="guest"]) #profileBackdrop #profileModal.profile-split-layout .profile-details-column .profile-working-destination > .profile-live-state {
   margin-bottom: 4px !important;
 }
