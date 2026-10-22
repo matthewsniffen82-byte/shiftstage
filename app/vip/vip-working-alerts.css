@@ -1,6 +1,6 @@
 body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 body.dancr-button-system #vip-dashboard .vip-roster-filters[role=group] button:nth-child(n) { grid-column: auto; }
-body.dancr-button-system #vip-dashboard { --vip-nav-height: 80px; --vip-roster-header-height: 320px; }
+body.dancr-button-system #vip-dashboard { --vip-nav-height: 80px; --vip-roster-header-height: 220px; }
 body.dancr-button-system #vip-dashboard .vip-dashboard-nav { top: env(safe-area-inset-top, 0px); }
 body.dancr-button-system #vip-dashboard .vip-roster-header {
   position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--vip-nav-height)); z-index: 4;
