@@ -51,7 +51,10 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
   </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-demo="${demo}" data-accent="${venueEmbedAccent()}">
     <div class="app"><main class="stack">
-      <div class="venue-embed-heading"><div><p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p><h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1></div><button id="venue-refresh" class="mydancr-refresh-button" type="button" aria-label="Refresh working dancers" title="Refresh working dancers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.8L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
+      <div class="venue-embed-heading"><div>
+        <div class="venue-embed-brand">${rhino ? '<img class="venue-embed-logo" src="/venue-logos/spearmint-rhino-las-vegas.png" alt="Spearmint Rhino logo" width="48" height="48">' : ""}<p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p></div>
+        <h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1>
+      </div><button id="venue-refresh" class="mydancr-refresh-button" type="button" aria-label="Refresh working dancers" title="Refresh working dancers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.8L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
         <a class="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by mydancr.com</span></a>
       </div>
       ${locations}
