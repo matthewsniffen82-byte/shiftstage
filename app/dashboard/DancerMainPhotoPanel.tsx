@@ -31,6 +31,8 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
   const [retry, setRetry] = useState(false);
   const [editRequested, setEditRequested] = useState(0);
   const action = useRef<AbortController | null>(null);
+  const cancelRequested = useRef(false);
+  const uploadReceived = useRef(false);
   const selection = useRef<{ file: File; uploadKey: string; replacementPhotoId?: string; pendingReviewId?: string } | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
@@ -42,22 +44,28 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
     if (action.current || !selection.current) return;
     const controller = new AbortController();
     action.current = controller;
+    cancelRequested.current = false; uploadReceived.current = false;
     setBusy(true); setRetry(false); setStatus("Uploading");
     try {
       const result = await uploadMainProfilePhoto(selection.current.file, {
         ...selection.current, signal: controller.signal,
+        isCanceled: () => cancelRequested.current,
         onUploadStart: () => { if (!controller.signal.aborted) setStatus("Uploading"); },
-        onUploadProgress: percent => { if (!controller.signal.aborted) setStatus(percent === 100 ? "Checking photo…" : "Uploading"); },
+        onUploadProgress: percent => {
+          if (controller.signal.aborted || action.current !== controller) return;
+          if (percent === 100) uploadReceived.current = true;
+          if (!cancelRequested.current) setStatus(percent === 100 ? "Checking photo…" : "Uploading");
+        },
       });
       if (controller.signal.aborted) return;
       selection.current = null;
       if (!result) { setStatus("Crop canceled. Your main photo hasn’t changed."); return; }
       if (result.profile) onProfileChange?.(result.profile);
-      const message = result.decision === "rejected" ? `Not approved. ${mediaReviewExplanation("photo", "rejected", result)}` : "";
+      const message = result.decision === "canceled" ? "Upload canceled." : result.decision === "rejected" ? `Not approved. ${mediaReviewExplanation("photo", "rejected", result)}` : "";
       setStatus([message, result.replacementWarning, result.refreshFailed ? "Photo uploaded. Reload the dashboard to see its latest status." : ""].filter(Boolean).join(" "));
     } catch (error) {
       if (controller.signal.aborted) return;
-      if (error instanceof Error && error.name === "AbortError") selection.current = null;
+      if (cancelRequested.current || error instanceof Error && error.name === "AbortError") selection.current = null;
       else setRetry(true);
       setStatus(error instanceof Error ? error.message : "Unable to upload your main photo. Try again.");
     } finally {
@@ -77,8 +85,15 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
     void upload();
   }
 
-  async function remove() {
-    if (!displayed || action.current || cropping || !window.confirm(pending ? "Remove this pending main photo? Your approved photo will stay in use." : "Remove your main photo? An approved main photo is required to complete your profile.")) return;
+  function cancelUpload() {
+    cancelRequested.current = true;
+    if (uploadReceived.current) { setStatus("Canceling…"); return; }
+    action.current?.abort(); action.current = null; selection.current = null;
+    setBusy(false); setRetry(false); setStatus("Upload canceled.");
+  }
+
+  async function remove(cancelPending = false) {
+    if (!displayed || action.current || cropping || (!cancelPending && !window.confirm(pending ? "Remove this pending main photo? Your approved photo will stay in use." : "Remove your main photo? An approved main photo is required to complete your profile."))) return;
     const owner = readSession()?.account?.id;
     if (!owner) { setStatus("Sign in again to remove your photo."); return; }
     const controller = new AbortController();
@@ -111,9 +126,11 @@ export function DancerMainPhotoPanel({ profile, onProfileChange, onBusyChange }:
     <div className="dancer-main-photo-copy">
       <h3>Main photo</h3>
       <p>Shown on your dancer card and profile. Your avatar is created automatically.</p>
-      <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? ["Checking photo…", "Removing photo…"].includes(status) ? status : "Uploading" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
+      <strong className="dancer-main-photo-state" role="status" aria-live="polite" data-state={busy ? "pending" : displayed?.status || "required"}>{busy ? ["Checking photo…", "Removing photo…", "Canceling…"].includes(status) ? status : "Uploading" : displayed ? mediaReviewLabel(displayed.status, displayed.moderationStatus) : "Required"}</strong>
       <input ref={input} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" aria-label="Upload main profile photo" hidden disabled={busy || cropping || awaitingClubApproval} onChange={event => { choose(event.target.files?.[0]); event.target.value = ""; }} />
       <div className="dancer-main-photo-actions">
+        {busy && selection.current ? <button type="button" disabled={cancelRequested.current} onClick={cancelUpload}>{cancelRequested.current ? "Canceling…" : "Cancel"}</button>
+          : pending && !awaitingClubApproval ? <button type="button" disabled={busy || cropping} onClick={() => void remove(true)}>Cancel</button> : null}
         {awaitingClubApproval ? <button type="button" aria-label="Remove pending main photo" disabled={busy || cropping} onClick={() => void remove()}>Remove</button> : <DancerPhotoControls label="main photo" compact hidden={!displayed} openRequested={editRequested} disabled={busy || cropping} primary={
           <button type="button" aria-label={pending ? "Replace main photo" : displayed ? "Change main photo" : "Add main photo"} disabled={busy || cropping} onClick={() => input.current?.click()}>{busy ? "Updating…" : pending ? "Replace" : displayed ? "Change" : "Add"}</button>
         }>

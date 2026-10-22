@@ -43,6 +43,7 @@ export function DancerPhotoPanel({
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [cancelingUploads, setCancelingUploads] = useState(false);
+  const [cancelingIds, setCancelingIds] = useState<Set<string>>(() => new Set());
   const uploadCancellationRef = useRef<ReturnType<typeof createMediaUploadCancellation> | null>(null);
   const [pinningPhotoId, setPinningPhotoId] = useState("");
   const [retrying, setRetrying] = useState(false);
@@ -175,6 +176,33 @@ export function DancerPhotoPanel({
     }));
   }
 
+  async function discardPhotoUpload(item?: DancerPhotoQueueItem, result?: DancerPhotoItem) {
+    if (result) await requestDancerPhotosJson({ method: "DELETE", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ photoId: result.id }), fallbackMessage: "Unable to cancel photo. Try again." });
+    if (!mountedRef.current) return;
+    if (result) {
+      setPhotos(current => current.filter(photo => photo.id !== result.id));
+      setRetiredReviewIds(current => new Set(current).add(result.id));
+    }
+    setQueuedPhotos(current => current.filter(queued => {
+      if (queued.id !== item?.id && (!result || queued.result?.id !== result.id)) return true;
+      queuedPreviewUrlsRef.current.delete(queued.previewUrl); URL.revokeObjectURL(queued.previewUrl); return false;
+    }));
+  }
+
+  async function cancelPhotoUpload(item?: DancerPhotoQueueItem, result?: DancerPhotoItem) {
+    const id = item?.id || result!.id;
+    setCancelingIds(current => new Set(current).add(id));
+    if (item && ["queued", "preparing", "uploading", "checking"].includes(item.stage) && uploadCancellationRef.current) {
+      uploadCancellationRef.current.cancelOne(item.id);
+      if (item.stage === "queued") await discardPhotoUpload(item);
+      return;
+    }
+    try { await discardPhotoUpload(item, result); }
+    catch (error) { setStatus(error instanceof Error ? error.message : "Unable to cancel photo. Try again."); }
+    finally { setCancelingIds(current => { const next = new Set(current); next.delete(id); return next; }); }
+  }
+
   function dismissRejectedPhoto(id: string) {
     dismissedRejectionsRef.current.add(id);
     setRetiredReviewIds(current => new Set(current).add(id));
@@ -268,8 +296,9 @@ export function DancerPhotoPanel({
       await persistQueuedPhotoDeletions(controller.signal);
       await runMediaUploadBatch(batch, batch.some(item => item.replaces) ? 1 : 2, async queuedItem => {
         if (!isCurrentPhotoAction(requestId, controller)) return;
-        const transfer = cancellation.start();
+        const transfer = cancellation.start(queuedItem.id);
         if (!transfer) {
+          if (cancellation.isCanceled(queuedItem.id)) { await discardPhotoUpload(queuedItem); return; }
           updateQueuedPhoto(queuedItem.id, { stage: "failed", progress: 0, error: "Upload canceled." });
           return;
         }
@@ -339,6 +368,14 @@ export function DancerPhotoPanel({
             isPrimary: Boolean(data.photo?.isPrimary || data.photo?.is_primary),
             sortOrder: Number(data.photo?.sortOrder ?? data.photo?.sort_order ?? uploadSortOrder),
           };
+          if (transfer.canceled) {
+            try { await discardPhotoUpload(item, uploadedPhoto); }
+            catch (error) {
+              updateQueuedPhoto(item.id, { stage: "failed", progress: 100, result: uploadedPhoto,
+                error: error instanceof Error ? error.message : "Unable to cancel photo. Try again." });
+            }
+            return;
+          }
           if (uploadStatus === "rejected") {
             rejectedCount += 1;
             rejectedItemIds.add(item.id);
@@ -352,6 +389,7 @@ export function DancerPhotoPanel({
         } catch (error) {
           if (!isCurrentPhotoAction(requestId, controller)) return;
           if (transfer.signal.aborted) {
+            if (transfer.canceled) { await discardPhotoUpload(item); return; }
             updateQueuedPhoto(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
             return;
           }
@@ -364,6 +402,7 @@ export function DancerPhotoPanel({
           updateQueuedPhoto(item.id, failedItem);
         } finally {
           transfer.finish();
+          setCancelingIds(current => { const next = new Set(current); next.delete(item.id); return next; });
         }
       }, controller.signal);
 
@@ -625,8 +664,10 @@ export function DancerPhotoPanel({
                   {result && !awaitingClubApproval && !processing ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
                     disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(result.id, data)} /> : null}
                   {item?.error ? <em>{item.error}</em> : null}
+                  {processing ? <button type="button" disabled={cancelingIds.has(item?.id || result!.id)}
+                    onClick={() => void cancelPhotoUpload(item, result)}>{cancelingIds.has(item?.id || result!.id) ? "Canceling…" : "Cancel"}</button> : null}
                   {processing ? null : result?.status === "approved" ? <span className="photo-queue-actions"><em>Approved. Updating your library.</em><RefreshButton label="Refresh photo library" busy={retrying} type="button" disabled={photoActionBusy} onClick={() => void refreshPhotoLibrary()} /></span> : <span className="photo-queue-actions">
-                    {item?.error && !awaitingClubApproval ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+                    {item?.error && !result && !awaitingClubApproval ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
                     {!awaitingClubApproval ? <label className="media-review-replace">Replace<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" disabled={photoActionBusy} aria-label={`Replace photo ${selectionNumber}`} onChange={event => {
                       const file = event.target.files?.[0]; event.target.value = "";
                       if (file) queuePhotos([file], "gallery", { photoId: result?.id, queueId: item?.id });

@@ -101,6 +101,26 @@ test("selecting several photos uploads the batch without opening a crop popup", 
   assert.equal(ui.buttons.filter(button => button.props.children === "Retry").length, 0);
 });
 
+test('Cancel during photo checks waits for its receipt, removes that upload and retains other photos', async () => {
+  let finish;
+  const ui=photoHarness({uploadOnly:true,profile:{dancer_photos:[approved()]},
+    post:options=>options.method==='DELETE'?Promise.resolve({ok:true}):new Promise(resolve=>{finish=resolve;options.onUploadProgress(100);}),
+    read:async()=>({profile:{dancer_photos:[approved()]}})});
+  ui.select();await ui.settle();
+  ui.buttons.find(button=>button.props.children==='Cancel').props.onClick();await ui.settle();
+  assert.ok(ui.buttons.some(button=>button.props.children==='Canceling…'));
+  finish({decision:'moderating',moderationRecordId:'new-upload'});await ui.settle();await ui.settle();
+  assert.deepEqual(JSON.parse(ui.posts.find(post=>post.method==='DELETE').body),{photoId:'new-upload'});
+  assert.equal(ui.cards.length,0);assert.equal(ui.revoked.length,1);
+});
+
+test('a restored processing photo has an enabled Cancel button that deletes only its review', async () => {
+  const ui=photoHarness({uploadOnly:true,profile:{dancer_photos:[approved()],pending_photo_reviews:[{...pending('stuck'),status:'moderating'}]},post:async()=>({ok:true})});
+  const cancel=ui.buttons.find(button=>button.props.children==='Cancel');assert.ok(cancel);assert.equal(cancel.props.disabled,false);
+  cancel.props.onClick();await ui.settle();
+  assert.deepEqual(JSON.parse(ui.posts[0].body),{photoId:'stuck'});assert.equal(ui.cards.length,0);
+});
+
 test("overlapping photo reviews reserve selection order and show real progress before results arrive", async () => {
   const releases = [];
   const ui = photoHarness({ uploadOnly: true,
@@ -118,7 +138,7 @@ test("overlapping photo reviews reserve selection order and show real progress b
   assert.equal(ui.progress[1].props.children.props.style, undefined, 'checks have no invented percentage');
   assert.equal(ui.replacements.length, 0, 'active and queued uploads cannot be replaced');
   assert.equal(ui.reviewButtons.length, 0);
-  assert.deepEqual(ui.buttons.filter(button => button.props.className !== 'photo-source-action is-disabled').map(button => button.props.children), ['Cancel uploads']);
+  assert.deepEqual(ui.buttons.filter(button => button.props.className !== 'photo-source-action is-disabled').map(button => button.props.children), ['Cancel uploads', 'Cancel', 'Cancel', 'Cancel']);
   assert.deepEqual(ui.uploadMessages, [], 'each receipt already announces its upload status');
   releases[1]({ decision: 'approved', photo: approved('second', 2) }); await ui.settle();
   assert.equal(ui.posts.length, 3, 'the third upload does not wait for the first review');
@@ -625,4 +645,29 @@ test("settled photos alone do not start a background refresh loop", () => {
       useEffect: effect => assert.equal(effect(), undefined),
     });
   }
+});
+
+test("Cancel immediately removes a queued photo without waiting for active transfers", async () => {
+  const transfers=[];
+  const ui=photoHarness({post:()=>new Promise(resolve=>transfers.push(resolve))});
+  ui.select([1,2,3].map(i=>new File(["fixture"],`photo-${i}.jpg`,{type:"image/jpeg"})));await ui.settle();
+  ui.buttons.filter(button=>button.props.children==="Cancel")[2].props.onClick();await ui.settle();
+  assert.equal(ui.cards.length,2);assert.equal(transfers.length,2);
+  transfers.forEach((resolve,i)=>resolve({decision:"moderating",moderationRecordId:`review-${i}`}));await ui.settle();
+  assert.equal(transfers.length,2);
+});
+
+test("a failed cancellation keeps the accepted photo receipt without offering another upload", async () => {
+  let finish;
+  const ui=photoHarness({post:options=>{
+    if(options.method==="DELETE") throw new Error("Unable to cancel photo. Try again.");
+    options.onUploadProgress(100);return new Promise(resolve=>{finish=resolve;});
+  }});
+  ui.select();await ui.settle();
+  ui.buttons.find(button=>button.props.children==="Cancel").props.onClick();await ui.settle();
+  finish({decision:"moderating",moderationRecordId:"accepted"});await ui.settle();
+  assert.ok(ui.buttons.some(button=>button.props.children==="Cancel"));
+  assert.equal(ui.buttons.some(button=>button.props.children==="Retry"),false);
+  assert.ok(ui.notes.includes("Unable to cancel photo. Try again."));
+  assert.equal(ui.posts.filter(post=>post.method==="POST").length,1);
 });

@@ -36,3 +36,13 @@ test('finished uploads release cancellation listeners and a new batch can retry'
   const retry = createMediaUploadCancellation(new AbortController().signal).start();
   assert.equal(retry.signal.aborted, false); retry.finish();
 });
+
+test('individual Cancel stops one transfer, skips that queued file, and preserves checking acknowledgments for deletion', () => {
+  const batch=createMediaUploadCancellation(new AbortController().signal);
+  const first=batch.start('first'),second=batch.start('second'),checking=batch.start('checking');
+  checking.beginReview();batch.cancelOne('checking');batch.cancelOne('first');batch.cancelOne('queued');
+  assert.equal(first.signal.aborted,true);assert.equal(second.signal.aborted,false);
+  assert.equal(checking.signal.aborted,false);assert.equal(checking.canceled,true);
+  assert.equal(batch.start('queued'),null);assert.equal(batch.canceled,false);
+  first.finish();second.finish();checking.finish();
+});

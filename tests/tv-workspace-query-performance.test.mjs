@@ -15,18 +15,24 @@ test("owner video workspace creates revocable URLs and preserves query scope, or
   assert.ok(f.queries[1].operations.some(([method, field, value]) => method === "eq" && field === "distribution_scope" && value === "profile_and_feed"));
 });
 
-test("admin review queue prepares 100 authorized rows without a Storage token and retains status/limit", async () => {
+test("admin history prepares 100 authorized rows without a Storage token and retains status/limit", async () => {
   const f = workspaceFixture(100);
-  const videos = await tvWorkspace.getAdminMyDancrTvVideos(f.client, "unexpected");
+  const videos = await tvWorkspace.getAdminMyDancrTvVideos(f.client, "approved");
   assert.equal(videos.length, 100);
   assert.equal(f.calls.length, 0);
-  assert.ok(f.queries[0].operations.some(([method, field, value]) => method === "eq" && field === "status" && value === "submitted"));
+  assert.ok(f.queries[0].operations.some(([method, field, value]) => method === "eq" && field === "status" && value === "approved"));
   assert.ok(f.queries[0].operations.some(([method, value]) => method === "limit" && value === 100));
+});
+
+test('pending dancer uploads remain in the club queue instead of the admin queue', async () => {
+  const f=workspaceFixture(100);
+  assert.equal((await tvWorkspace.getAdminMyDancrTvVideos(f.client,'unexpected')).length,0);
+  assert.equal(f.queries.length,0);
 });
 
 test("workspace URLs remain bound to each authorized record and expose no storage paths", async () => {
   const f = workspaceFixture(3);
-  const videos = await tvWorkspace.getAdminMyDancrTvVideos(f.client);
+  const videos = await tvWorkspace.getAdminMyDancrTvVideos(f.client, 'approved');
   for (let n = 0; n < videos.length; n++) {
     assert.equal(new URL(videos[n].videoUrl).searchParams.get('id'), f.rows[n].id);
     assert.ok(!videos[n].videoUrl.includes(f.rows[n].storage_path));

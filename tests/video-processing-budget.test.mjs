@@ -4,6 +4,7 @@ import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
 import * as jobs from "../src/lib/server-job.ts";
+import * as processing from "../src/lib/dancr/video-processing-state.ts";
 
 const videoId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
@@ -99,4 +100,32 @@ test("cron leaves the next video unclaimed when a full encoding job no longer fi
   assert.equal((await result.json()).processed, 1);
   assert.deepEqual(retried, [videoId]);
   assert.deepEqual(budgets, [jobs.VIDEO_PROCESSING_ROUTE_TIMEOUT_MS]);
+});
+
+test('dashboard refresh acknowledges immediately and recovers only bounded eligible owner jobs', async () => {
+  const after=[],retried=[];
+  const old=new Date(Date.now()-600000).toISOString(),recent=new Date().toISOString();
+  const videos=[{id:'running',status:'moderating',moderationStartedAt:recent,moderationAttemptCount:1},
+    {id:'stale',status:'moderating',moderationStartedAt:old,moderationAttemptCount:1},
+    {id:'queued',status:'moderating',moderationStartedAt:recent,moderationAttemptCount:0},
+    {id:'next',status:'moderating',moderationStartedAt:recent,moderationAttemptCount:0},
+    {id:'club',status:'submitted',moderationStartedAt:old,moderationAttemptCount:1}];
+  const route=loadRoute('app/api/dancer/tv/videos/route.ts',{
+    'next/server':{NextResponse:{json:Response.json},after:fn=>after.push(fn)},
+    '@/src/lib/api':{apiError:error=>{throw error;}}, '@/src/lib/bounded-json-body':{},
+    '@/src/lib/dancr/tv':{getDancerMyDancrTvWorkspace:async (_admin,id)=>{assert.equal(id,'owner');return {videos};},
+      retryMyDancrTvAutomatedModeration:async (_admin,id)=>{retried.push(id);}},
+    '@/src/lib/dancr/media-request-rate-limit':{},
+    '@/src/lib/supabase/admin':{createAdminSupabaseClient:()=>({})},
+    '@/src/lib/supabase/request':{createRequestSupabaseContext:async (_request,options)=>{
+      assert.equal(options.role,'dancer');return {user:{id:'owner'}};}},
+    '@/src/lib/dancr/video-processing-state':processing,
+    '@/src/lib/security/safe-error-metadata':{safeErrorMetadata:()=>({})},
+    '@/src/lib/server-job':{...jobs,runWithServerJob:async fn=>fn()},
+  },{performance:{now:()=>0},Promise});
+  const result=await route.GET(new Request('https://synthetic.invalid'));
+  assert.equal(result.status,200);assert.equal(result.headers.get('cache-control'),'no-store');
+  assert.equal((await result.json()).videos.length,5);assert.deepEqual(retried,[]);
+  for(const run of after)await run();
+  assert.deepEqual(retried,['stale','queued']);
 });

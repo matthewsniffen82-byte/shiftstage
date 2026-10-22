@@ -12,6 +12,8 @@ import { uploadResumableVideo } from "./resumable-video-upload";
 import { createMediaUploadCancellation } from "./media-upload-cancellation";
 import { runMediaUploadBatch } from "./media-upload-batch";
 import DancerVideoPreviews from "./DancerVideoPreviews";
+import DancerVideoThumbnail from "./DancerVideoThumbnail";
+import { isVideoProcessingStalled } from "@/src/lib/dancr/video-processing-state";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import {
@@ -22,7 +24,6 @@ import {
 } from "./dashboard-session";
 import {
   announceDancerProfileVideosChanged,
-  primeVideoPreviewFrame,
 } from "./dancer-profile-media-sync";
 import { readVideoMetadata } from "./read-video-metadata";
 import { VIDEO_UPLOAD_MAX_SECONDS, VIDEO_UPLOAD_MAX_BYTES } from "@/src/lib/dancr/video-upload-edit-policy";
@@ -51,6 +52,7 @@ type ManagedVideo = {
   moderationDecision?: "approved" | "review" | "rejected" | null;
   moderationReasonCodes?: string[];
   moderationFrameCount?: number;
+  moderationStartedAt?: string | null;
   submittedAt?: string | null;
   publishedAt?: string | null;
   expiresAt?: string | null;
@@ -78,6 +80,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cancelingUploads, setCancelingUploads] = useState(false);
+  const [cancelingIds, setCancelingIds] = useState<Set<string>>(() => new Set());
   const uploadCancellationRef = useRef<ReturnType<typeof createMediaUploadCancellation> | null>(null);
   const [removingId, setRemovingId] = useState("");
   const [pinningId, setPinningId] = useState("");
@@ -287,6 +290,34 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     setQueuedVideos((current) => current.map((item) => item.id === id ? { ...item, ...changes } : item));
   }
 
+  async function cancelVideoUpload(item?: QueuedVideo, video?: ManagedVideo) {
+    const id = item?.id || video!.id;
+    setCancelingIds(current => new Set(current).add(id));
+    if (item && ["queued", "validating", "uploading", "checking"].includes(item.stage) && uploadCancellationRef.current) {
+      uploadCancellationRef.current.cancelOne(item.id);
+      if (item.stage === "queued") await discardVideoUpload(item.uploadId, item.id, false);
+      return; // The upload handler removes its server receipt before retiring it.
+    }
+    try {
+      await discardVideoUpload(item?.uploadId || video!.id, item?.id);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to cancel video. Try again.");
+    } finally {
+      setCancelingIds(current => { const next = new Set(current); next.delete(id); return next; });
+    }
+  }
+
+  async function discardVideoUpload(uploadId: string, queueId?: string, saved = true) {
+    if (saved) await requestDancerTvVideoJson(uploadId, { method: "DELETE", fallbackMessage: "Unable to cancel video. Try again." });
+    if (!mountedRef.current) return;
+    setWorkspace(current => current ? { ...current, videos: current.videos.filter(video => video.id !== uploadId) } : current);
+    setQueuedVideos(current => current.filter(item => {
+      if (item.id !== queueId && item.uploadId !== uploadId) return true;
+      queuedPreviewUrlsRef.current.delete(item.previewUrl); URL.revokeObjectURL(item.previewUrl); return false;
+    }));
+    announceDancerProfileVideosChanged();
+  }
+
   async function removeQueuedVideo(itemToRemove: QueuedVideo) {
     const action = beginVideoAction();
     if (!action) return;
@@ -331,12 +362,17 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       await runMediaUploadBatch(batch, 3, async queuedItem => {
         if (!isCurrentVideoAction(requestId, controller)) return;
         let item = queuedItem;
-        const transfer = cancellation.start();
+        const transfer = cancellation.start(queuedItem.id);
         if (!transfer) {
+          if (cancellation.isCanceled(queuedItem.id)) {
+            await discardVideoUpload(queuedItem.uploadId, queuedItem.id, false);
+            return;
+          }
           updateQueuedVideo(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
           return;
         }
         updateQueuedVideo(item.id, { stage: "validating", progress: 0, error: undefined });
+        let savedUpload = Boolean(workspace?.videos.some(video => video.id === item.uploadId));
         setStatus("Uploading");
         try {
           const metadata = await readVideoMetadata(item.file, transfer.signal);
@@ -367,9 +403,10 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
               uploadId: item.uploadId,
             }),
             fallbackMessage: "Unable to prepare upload.",
-            signal: transfer.signal,
+            signal: controller.signal,
           });
           if (!isCurrentVideoAction(requestId, controller)) return;
+          savedUpload = true;
           transfer.signal.throwIfAborted();
           const preparedVideoId = String(data.upload.videoId || "");
           if (!preparedVideoId) throw new Error("Unable to prepare upload.");
@@ -402,9 +439,15 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           }
 
           submittedCount += 1;
+          if (transfer.canceled) { await discardVideoUpload(preparedVideoId, item.id); return; }
           updateQueuedVideo(item.id, { stage: "submitted", progress: 100, uploadId: preparedVideoId });
         } catch (error) {
           if (!isCurrentVideoAction(requestId, controller)) return;
+          if (transfer.canceled) {
+            try { await discardVideoUpload(item.uploadId, item.id, savedUpload); }
+            catch (cleanupError) { updateQueuedVideo(item.id, { stage: "failed", error: cleanupError instanceof Error ? cleanupError.message : "Unable to cancel video. Try again." }); }
+            return;
+          }
           if (transfer.signal.aborted) {
             updateQueuedVideo(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
             return;
@@ -419,6 +462,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           updateQueuedVideo(item.id, failedItem);
         } finally {
           transfer.finish();
+          setCancelingIds(current => { const next = new Set(current); next.delete(item.id); return next; });
         }
       }, controller.signal);
 
@@ -674,26 +718,29 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           if (item?.stage === "rejected" && !video) return <DancerRejectedUploadNotice key={item.id} id={item.uploadId} kind="video"
             label={item.file.name} message={item.error || "Reason unavailable"} localOnly
             disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(item.uploadId)} />;
-          const reviewStatus = video ? videoReviewStatus(video.status, video.moderationDecision) : "";
+          const stalled = Boolean(video && isVideoProcessingStalled(video));
+          const reviewStatus = stalled ? "moderation_error" : video ? videoReviewStatus(video.status, video.moderationDecision) : "";
           const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
-          const uploadStatus = item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : item?.stage === "checking" ? "Checking video…" : item?.stage === "validating" ? "Preparing video…" : item?.stage === "uploading" ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Checking video…" : "Waiting to upload";
+          const uploadStatus = stalled ? "Upload delayed" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : item?.stage === "checking" || item?.stage === "validating" || item?.stage === "uploading" || video?.status === "moderating" ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Uploading" : "Waiting to upload";
           const processing = ["Uploading", "Preparing video…", "Checking video…", "Waiting to upload"].includes(uploadStatus);
           const uploadProgress = item?.stage === "uploading" ? item.progress : uploadStatus === "Waiting to upload" ? 0 : undefined;
-          const note = video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
+          const note = stalled ? "Processing was interrupted. Retrying automatically, or tap Retry." : video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
           label={item?.file.name || `Video ${index + 1}`} message={note}
           disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item?.stage === "uploading" ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
-          {item?.previewUrl || video?.videoUrl ? <video className="tv-upload-preview" muted playsInline preload="metadata"
-            src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
+          <div className="tv-upload-preview"><DancerVideoThumbnail key={item?.uploadId || video?.id}
+            videoUrl={item?.previewUrl || video?.videoUrl} posterUrl={video?.posterUrl} /></div>
           <div className="dancer-upload-review-copy">
             <strong>Video {index + 1}</strong>
-            <small role="status" aria-live="polite">{uploadStatus === "Uploading" ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
+            <small role="status" aria-live="polite">{uploadStatus === "Uploading" && uploadProgress !== undefined ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
             {processing ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
               role="progressbar" aria-label={`Video ${index + 1}: ${uploadStatus}`}
               aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
               <span style={uploadProgress === undefined ? undefined : { width: `${uploadProgress}%` }} />
             </span> : null}
             {item?.error || note ? <p>{item?.error || note}</p> : null}
+            {processing || stalled ? <button type="button" disabled={cancelingIds.has(item?.id || video!.id)}
+              onClick={() => void cancelVideoUpload(item, video)}>{cancelingIds.has(item?.id || video!.id) ? "Canceling…" : "Cancel"}</button> : null}
             {video && !item?.error && !awaitingClubApproval && !processing ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} moderationStatus={reviewStatus} disabled={videoActionBusy} onBusyChange={setRetrying}
               onRetried={() => { void loadWorkspace({ silent: true }); }} /> : null}
             {!processing ? <span className="tv-queue-actions">
@@ -813,7 +860,7 @@ function DancerTvStudioStyles() {
       .tv-upload-queue { display: grid; gap: 10px; }
       .tv-upload-queue-item { min-width: 0; display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; padding: 10px; border: 1px solid rgba(251,191,36,.38); border-radius: 10px; background: rgba(251,191,36,.07); }
       .tv-upload-queue-item.is-uploading { border-color: rgba(34,211,238,.58); box-shadow: inset 3px 0 0 rgba(34,211,238,.8); }
-      .tv-upload-preview { width: 96px; aspect-ratio: 9 / 16; max-height: 170px; object-fit: contain; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: #000; }
+      .tv-upload-preview { position:relative; width: 96px; aspect-ratio: 9 / 16; max-height: 170px; overflow:hidden; object-fit: contain; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: #000; }
       .tv-upload-queue-item > div { min-width: 0; display: grid; align-content: start; gap: 6px; }
       .tv-upload-queue-item p { margin: 0; color: #fca5a5; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
       .tv-upload-queue-item button { width: fit-content; min-height: 36px; padding: 0 12px; border: 1px solid rgba(239,68,68,.36); border-radius: 8px; color: #fecaca; background: rgba(239,68,68,.12); font-weight: 850; cursor: pointer; }

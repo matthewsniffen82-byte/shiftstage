@@ -41,7 +41,7 @@ function fixture({ decision = "approved", reasonCodes, message, canceled = false
   };
   vm.runInNewContext(code, scope);
   return { requests, previews, cropFiles, listeners, controller, original, cropped,
-    start: (replacementPhotoId = "photo-a") => scope.exports.uploadMainProfilePhoto(saved ? source : original, { signal: controller.signal, uploadKey: "stable-key", replacementPhotoId, makeMain, pendingReviewId, photoSlot }),
+    start: (replacementPhotoId = "photo-a", overrides = {}) => scope.exports.uploadMainProfilePhoto(saved ? source : original, { signal: controller.signal, uploadKey: "stable-key", replacementPhotoId, makeMain, pendingReviewId, photoSlot, ...overrides }),
     confirm: () => confirm(),
     validate: () => validate(),
     change: (id, dispatch = true) => { session = { account: { id, role: "dancer" }, accessToken: "new-token" }; if (dispatch) listeners.forEach(fn => fn({ key: "session" })); },
@@ -71,6 +71,13 @@ test("a first main photo is added without replacing a gallery photo or avatar", 
 test("canceling a crop writes nothing", async () => {
   const f = fixture({ canceled: true }); assert.equal(await f.start(), null);
   assert.equal(f.requests.length, 0); assert.equal(f.listeners.size, 0);
+});
+
+test('canceling a received main-photo upload removes only its new receipt before replacing an older pending photo', async () => {
+  const f=fixture({decision:'moderating',pendingReviewId:'previous-review'});
+  const result=await f.start('photo-a',{isCanceled:()=>true});
+  assert.equal(result.decision,'canceled');assert.equal(result.profile.id,'profile-a');
+  assert.deepEqual(f.requests.filter(r=>r.method==='DELETE').map(r=>JSON.parse(r.body)),[{photoId:'new-review'}]);
 });
 
 for (const refreshFails of [false, true]) {

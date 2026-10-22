@@ -3,15 +3,35 @@
 import { useEffect, useRef, useState } from "react";
 import { primeVideoPreviewFrame } from "./dancer-profile-media-sync";
 
+function resourceKey(value: string) {
+  if (!value) return "";
+  try {
+    const url = new URL(value, "https://preview.invalid");
+    url.searchParams.delete("preview");
+    url.searchParams.delete("token");
+    return url.href;
+  } catch { return value; }
+}
+
 export default function DancerVideoThumbnail({ posterUrl, videoUrl }: {
   posterUrl?: string | null;
   videoUrl?: string | null;
 }) {
   const [failedPoster, setFailedPoster] = useState("");
+  const [posterSource, setPosterSource] = useState(posterUrl || "");
+  const [failedVideo, setFailedVideo] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [previewSource, setPreviewSource] = useState("");
   const containerRef = useRef<HTMLSpanElement>(null);
-  const hasPoster = Boolean(posterUrl && posterUrl !== failedPoster);
+  // Polls renew private preview tokens. Keep the loaded resource until it fails
+  // or its identity changes, then use the latest authorized URL.
+  const currentPoster = posterUrl && posterSource && posterSource !== failedPoster
+    && resourceKey(posterSource) === resourceKey(posterUrl) ? posterSource : posterUrl || "";
+  const hasPoster = Boolean(currentPoster && currentPoster !== failedPoster);
+
+  useEffect(() => {
+    if (currentPoster !== posterSource) setPosterSource(currentPoster);
+  }, [currentPoster, posterSource]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -32,17 +52,19 @@ export default function DancerVideoThumbnail({ posterUrl, videoUrl }: {
 
   useEffect(() => {
     // Keep the current frame stable when status polling renews signed URLs.
-    if (!hasPoster && isVisible && videoUrl && !previewSource) setPreviewSource(videoUrl);
-  }, [hasPoster, isVisible, videoUrl, previewSource]);
+    if (!hasPoster && isVisible && videoUrl && (!previewSource || previewSource === failedVideo
+      || resourceKey(videoUrl) !== resourceKey(previewSource)) && videoUrl !== previewSource) setPreviewSource(videoUrl);
+  }, [hasPoster, isVisible, videoUrl, previewSource, failedVideo]);
 
   return (
     <span className="dancer-video-thumbnail" ref={containerRef} aria-hidden="true">
-      {hasPoster ? <img alt="" loading="lazy" src={posterUrl!} onError={() => setFailedPoster(posterUrl!)} /> : previewSource ? (
+      {hasPoster ? <img alt="" loading="lazy" src={currentPoster} onError={() => setFailedPoster(currentPoster)} /> : previewSource ? (
         <video
           muted
           playsInline
           preload="metadata"
           src={previewSource}
+          onError={() => setFailedVideo(previewSource)}
           onLoadedMetadata={(event) => primeVideoPreviewFrame(event.currentTarget)}
         />
       ) : null}

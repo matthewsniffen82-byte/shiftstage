@@ -701,7 +701,7 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
 
   const { data: videos, error: videoError } = await admin
     .from("mydancr_tv_videos")
-    .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, is_pinned")
+    .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, is_pinned")
     .eq("dancer_id", dancer.id)
     .eq("distribution_scope", "profile_and_feed")
     .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])

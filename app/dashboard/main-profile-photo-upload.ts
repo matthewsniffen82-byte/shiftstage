@@ -13,6 +13,7 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
   makeMain?: boolean;
   onUploadStart?: () => void;
   onUploadProgress?: (percent: number) => void;
+  isCanceled?: () => boolean;
 }) {
   const owner = readSession()?.account?.id;
   if (!owner || readSession()?.account?.role !== "dancer") throw new Error("Sign in as a dancer to upload your main photo.");
@@ -75,6 +76,17 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
     const decision = String(data.decision || "");
     if (!["approved", "review", "pending", "pending_review", "moderating", "moderation_retry", "moderation_error", "rejected"].includes(decision)) {
       throw new Error("Unable to confirm your photo upload. Try again.");
+    }
+    if (options.isCanceled?.()) {
+      const photoId = data.moderationRecordId || data.photo?.id;
+      if (!photoId) throw new Error("Unable to confirm cancellation. Refresh your photos and try again.");
+      await requestDancerPhotosJson({ method: "DELETE", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ photoId }), signal: controller.signal, fallbackMessage: "Unable to cancel your photo. Try again." });
+      assertOwner();
+      const refreshed = await requestDancerProfileJson({ cache: "no-store", signal: controller.signal });
+      assertOwner();
+      return { decision: "canceled", reasonCodes: [], message: "Upload canceled.", profile: refreshed.profile || null,
+        refreshFailed: !refreshed.profile, replacementWarning: "" };
     }
     let replacementWarning = "";
     // Keep the previous pending upload on cancellation, rejection, or an uncertain upload.

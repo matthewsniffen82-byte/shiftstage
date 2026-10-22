@@ -20,7 +20,7 @@ function harness(initial) {
   };
   class Observer { constructor(callback) { onIntersection = callback; } observe() {} disconnect() {} }
   const exports = {};
-  vm.runInNewContext(code, { exports, IntersectionObserver: Observer, require: name => name === "react" ? hooks : name === "./dancer-profile-media-sync" ? { primeVideoPreviewFrame: video => primed.push(video) } : requireTest(name) });
+  vm.runInNewContext(code, { exports, URL, IntersectionObserver: Observer, require: name => name === "react" ? hooks : name === "./dancer-profile-media-sync" ? { primeVideoPreviewFrame: video => primed.push(video) } : requireTest(name) });
   function render() { let count = 0; while (dirty) { if (++count > 10) throw Error("Unexpected render loop"); dirty = false; cursor = 0; tree = exports.default(props); effects.splice(0).forEach(effect => effect()); } }
   render();
   return {
@@ -58,4 +58,22 @@ test("a broken poster uses the video frame and a replacement poster is accepted"
   ui.update({ videoUrl: "/video.mp4", posterUrl: "/replacement.webp" });
   assert.equal(ui.media.type, "img");
   assert.equal(ui.media.props.src, "/replacement.webp");
+});
+
+test("status polling keeps a loaded poster stable and renews it only after a load failure", () => {
+  const ui=harness({videoUrl:'/video.mp4',posterUrl:'/poster.webp?preview=first'});
+  ui.update({videoUrl:'/video.mp4',posterUrl:'/poster.webp?preview=renewed'});
+  assert.equal(ui.media.props.src,'/poster.webp?preview=first');
+  ui.media.props.onError();ui.flush();
+  assert.equal(ui.media.props.src,'/poster.webp?preview=renewed');
+  ui.update({videoUrl:'/different.mp4',posterUrl:'/different.webp?preview=new'});
+  assert.equal(ui.media.props.src,'/different.webp?preview=new');
+});
+
+test("a failed video frame retries with a renewed URL without restarting other previews", () => {
+  const ui=harness({videoUrl:'/video.mp4?preview=first'});ui.visible();
+  ui.update({videoUrl:'/video.mp4?preview=renewed'});
+  assert.equal(ui.media.props.src,'/video.mp4?preview=first');
+  ui.media.props.onError();ui.flush();
+  assert.equal(ui.media.props.src,'/video.mp4?preview=renewed');
 });

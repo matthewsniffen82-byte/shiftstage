@@ -26,6 +26,11 @@ before(async () => {
       upload_validation_pending boolean default false,created_at timestamptz default now(),updated_at timestamptz default now());
     grant all on all tables in schema public to service_role;`);
   await db.exec(migration);
+  await db.exec(`alter table mydancr_tv_videos add column moderation_decision text,
+    add column moderation_completed_at timestamptz, add column moderation_reason_codes text[] default '{}',
+    add column moderation_details jsonb default '{}', add column reviewed_at timestamptz,
+    add column published_at timestamptz, add column expires_at timestamptz, add column venue_featured boolean default false;`);
+  await db.exec(read('supabase/migrations/20261022183959_allow_automated_video_rejection.sql'));
   await db.exec('create trigger test_submission before insert or update of status,verification_status,venue_approved_at on dancer_profiles for each row execute function enforce_dancer_onboarding_photos()');
 });
 after(async () => db?.close());
@@ -45,6 +50,7 @@ async function upload(n, context='profile_gallery:1', extra={}) {
   const record = { id:id(n),user_id:id(1),upload_context:context,decision:'review',status:'pending_review',temporary_storage_path:'private/'+n,updated_at:'2026-01-01T00:00:00Z',...extra };
   await db.query(`insert into image_moderation_records(id,user_id,upload_context,decision,status,temporary_storage_path,updated_at,photo_publication_mode,replacement_photo_id)
     values($1,$2,$3,$4,$5,$6,$7,$8,$9)`,[record.id,record.user_id,context,record.decision,record.status,record.temporary_storage_path,record.updated_at,extra.photo_publication_mode||'add',extra.replacement_photo_id||null]);
+  await db.query(`update image_moderation_records set category_flags='{"ai_recommended_approval":true}' where id=$1`, [record.id]);
   return record;
 }
 const tap = () => db.query("insert into dancer_nfc_enrollments(dancer_user_id,venue_id,nfc_tag_id,status,expires_at) values($1,$2,$3,'pending',now()+interval '7 days')",[id(1),id(20),id(30)]);
@@ -60,7 +66,9 @@ const forbidden = error => error.code==='42501';
 test('no club sees uploads until NFC; tap routes photos and videos only to the tapped club', async () => {
   await upload(100); await db.query("insert into mydancr_tv_videos(id,dancer_id,submitted_by,status) values($1,$2,$3,'moderating')",[id(200),id(10),id(1)]);
   assert.equal((await queue()).count,0); await assert.rejects(authorize(),forbidden);
-  await tap(); assert.equal((await queue()).count,2); assert.equal((await queue(3,21)).count,0);
+  await tap(); assert.equal((await queue()).count,1); assert.equal((await queue(3,21)).count,0);
+  await db.exec("update mydancr_tv_videos set status='submitted',moderation_decision='approved'");
+  assert.equal((await queue()).count,2);
   await authorize(4); await assert.rejects(authorize(5),forbidden); await assert.rejects(authorize(3,21),forbidden);
   await assert.rejects(queue(2,21),forbidden);
 });
@@ -133,4 +141,36 @@ test('queue totals include every upload, pagination remains scoped, and signed-o
   for(const signature of ['venue_media_dancers(uuid)','assert_dancer_media_reviewer(uuid,uuid,uuid)','get_venue_dancer_media_review(uuid,uuid,integer,integer)','dancer_submission_media(uuid)']) {
     for(const role of ['anon','authenticated']) assert.equal((await db.query('select has_function_privilege($1,$2,\'EXECUTE\') allowed',[role,signature])).rows[0].allowed,false);
   }
+});
+
+test('a claimed automatic rejection settles privately without a club reviewer', async () => {
+  await tap();
+  await db.query(`insert into mydancr_tv_videos(id,dancer_id,submitted_by,status,moderation_details)
+    values($1,$2,$3,'moderating','{"workerId":"fixture-worker"}')`, [id(200),id(10),id(1)]);
+  await db.exec(`update mydancr_tv_videos set status='rejected',moderation_decision='rejected',
+    moderation_completed_at=now(),moderation_reason_codes=array['visible_branding_or_logo']`);
+  const row=(await db.query('select * from mydancr_tv_videos')).rows[0];
+  assert.equal(row.status,'rejected'); assert.equal(row.reviewed_by,null); assert.equal(row.published_at,null);
+  assert.equal((await queue()).count,0);
+});
+
+test('automatic rejection cannot bypass reviewer checks for approval or incomplete decisions', async () => {
+  await db.query(`insert into mydancr_tv_videos(id,dancer_id,submitted_by,status,moderation_details)
+    values($1,$2,$3,'moderating','{"workerId":"fixture-worker"}')`, [id(200),id(10),id(1)]);
+  await assert.rejects(db.exec("update mydancr_tv_videos set status='rejected'"),forbidden);
+  await assert.rejects(db.exec("update mydancr_tv_videos set status='approved'"),error=>error.code==='40001');
+  await db.exec("update mydancr_tv_videos set status='submitted',moderation_decision='approved'");
+  await assert.rejects(db.exec("update mydancr_tv_videos set status='approved'"),forbidden);
+});
+
+test('club queue and count exclude running, failed, rejected, and unchecked media', async () => {
+  await tap();
+  await upload(100); await upload(101,'profile_gallery',{status:'moderating'}); await upload(102);
+  await db.query("update image_moderation_records set category_flags='{}' where id=$1",[id(102)]);
+  for (const [n,status,decision,pending] of [[200,'moderating',null,false],[201,'submitted','review',false],
+    [202,'rejected','rejected',false],[203,'submitted','approved',true],[204,'submitted','approved',false]]) {
+    await db.query('insert into mydancr_tv_videos(id,dancer_id,submitted_by,status,moderation_decision,upload_validation_pending) values($1,$2,$3,$4,$5,$6)',[id(n),id(10),id(1),status,decision,pending]);
+  }
+  assert.deepEqual((await queue()).items.map(item=>item.id),[id(100),id(204)]);
+  assert.equal((await queue(2,20,0,0)).count,2);
 });

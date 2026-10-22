@@ -67,6 +67,8 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
     get reviewRetry() { return nodes().find(node => node.type === 'MediaRetry'); },
     get badge() { return nodes().find(node => node.props?.className === 'dancer-main-photo-state').props.children; },
     update(next) { profile = next; render(); },
+    cancel() { nodes().find(node=>node.type==='button'&&node.props.children==='Cancel').props.onClick();render(); },
+    async settle() { await new Promise(resolve=>setImmediate(resolve));render(); },
     async remove() { nodes().find(node => node.type === 'button' && /Remove/.test(node.props.children)).props.onClick(); await new Promise(resolve => setImmediate(resolve)); render(); },
     async upload() {
       nodes().find(node => node.type === "input").props.onChange({ target: { files: [new File(["photo"], "main.jpg", { type: "image/jpeg" })], value: "" } });
@@ -96,6 +98,21 @@ test("a first main upload appears in the main slot while awaiting approval, incl
   assert.ok(ui.crop);
   assert.equal(ui.badge, 'Approved');
   assert.doesNotMatch(ui.status, /awaiting approval/);
+});
+
+test('main-photo Cancel aborts a transfer while preserving the current approved photo', async () => {
+  let finish;const ui=fixture({dancer_photos:[main]},new Promise(resolve=>{finish=resolve;}));
+  await ui.upload();ui.cancel();assert.equal(ui.uploads[0][1].signal.aborted,true);
+  finish({decision:'moderating',profile:{pending_photo_reviews:[pending]}});await ui.settle();
+  assert.equal(ui.image.props.src,main.imageUrl);assert.equal(ui.status,'Upload canceled.');
+});
+
+test('main-photo Cancel during server checks keeps the receipt available for deletion', async () => {
+  let finish;const ui=fixture({dancer_photos:[main]},new Promise(resolve=>{finish=resolve;}));
+  await ui.upload();const options=ui.uploads[0][1];options.onUploadProgress(100);await ui.settle();ui.cancel();
+  assert.equal(options.signal.aborted,false);assert.equal(options.isCanceled(),true);
+  finish({decision:'canceled',profile:{dancer_photos:[main]}});await ui.settle();
+  assert.equal(ui.image.props.src,main.imageUrl);assert.equal(ui.status,'Upload canceled.');
 });
 
 test("a pending main replacement previews privately without changing the approved profile data", () => {

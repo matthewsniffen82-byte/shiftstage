@@ -6,6 +6,7 @@ import ts from 'typescript';
 import { mediaReview } from './helpers/media-review-label.mjs';
 import { createMediaUploadCancellation } from '../app/dashboard/media-upload-cancellation.ts';
 import { runMediaUploadBatch } from '../app/dashboard/media-upload-batch.ts';
+import * as processingState from '../src/lib/dancr/video-processing-state.ts';
 
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerTvStudio.tsx', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
@@ -35,6 +36,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
       if (name === 'react') return hooks;
       if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
       if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
+      if (name === '@/src/lib/dancr/video-processing-state') return processingState;
       if (name === './media-upload-cancellation') return { createMediaUploadCancellation };
       if (name === './media-upload-batch') return { runMediaUploadBatch };
       if (name === '@/src/lib/dancr/media-limits') return { MAX_DANCER_PROFILE_VIDEOS: 50 };
@@ -113,32 +115,32 @@ test('both video sources stay gated until both permissions are checked and re-lo
   assert.equal(ui.calls.filter(call => call[0] === 'picker').length, 2);
 });
 
-test('saved active video checks hide actions while only approvals enter the library', async () => {
+test('saved active video checks offer Cancel while only approvals enter the library', async () => {
   const ui = harness([video('live', 'approved'), video('checking', 'moderating'), video('denied', 'rejected', 'Multiple people')]); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking video…', 'Not approved']);
+  assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
   assert.deepEqual(ui.notes, ['Multiple people']);
-  assert.deepEqual(ui.reviewActions, []);
+  assert.deepEqual(ui.reviewActions.map(node => node.props.children), ['Cancel']);
   assert.deepEqual(Array.from(ui.library, item => item.id), ['live']);
-  ui.rerender(); assert.deepEqual(ui.statuses, ['Checking video…', 'Not approved']);
+  ui.rerender(); assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
   await ui.refresh([video('live', 'approved'), video('checking', 'approved'), video('denied', 'rejected', 'Multiple people')]);
   assert.deepEqual(ui.statuses, ['Not approved']);
 });
 
-test('video upload and checks stay compact with no actions or repeated uploading message', async () => {
+test('video upload and checks stay compact with Cancel and no repeated uploading message', async () => {
   let finishUpload;
   const ui = harness([], { upload: options => new Promise(resolve => { options.onProgress(40); finishUpload = resolve; }) });
   await ui.settle(); ui.permissions(); ui.select(); await ui.settle();
   assert.deepEqual(ui.statuses, ['Uploading · 40%']);
   assert.equal(ui.progress[0].props['aria-valuenow'], 40);
   assert.equal(ui.progress[0].props.children.props.style.width, '40%');
-  assert.deepEqual(ui.reviewActions, []);
+  assert.deepEqual(ui.reviewActions.map(node => node.props.children), ['Cancel']);
   assert.deepEqual(ui.uploadMessages, []);
   finishUpload(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking video…']);
+  assert.deepEqual(ui.statuses, ['Uploading']);
   assert.equal(ui.progress[0].props['aria-valuenow'], undefined);
   assert.match(ui.progress[0].props.className, /is-indeterminate/);
   assert.equal(ui.progress[0].props.children.props.style, undefined, 'checks have no invented percentage');
-  assert.deepEqual(ui.reviewActions, [], 'server checks keep actions hidden after transfer completes');
+  assert.deepEqual(ui.reviewActions.map(node => node.props.children), ['Cancel'], 'server checks retain Cancel after transfer completes');
   const id = ui.calls.find(call => call[1] === 'PATCH')[0];
   await ui.refresh([video(id, 'submitted')]);
   assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
@@ -157,22 +159,22 @@ test('Cancel uploads stops the active video, skips queued videos and keeps earli
     });
   } });
   await ui.settle(); ui.permissions(); ui.select([file(), file(), file(), file(), file()]); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking video…', 'Uploading · 40%', 'Uploading · 40%', 'Uploading · 40%', 'Waiting to upload']);
+  assert.deepEqual(ui.statuses, ['Uploading', 'Uploading · 40%', 'Uploading · 40%', 'Uploading · 40%', 'Waiting to upload']);
   const firstId = ui.calls.find(call => call[1] === 'PATCH')[0];
   ui.click('Cancel uploads'); await ui.settle();
   assert.equal(transfers[1].signal.aborted, true);
   assert.equal(transfers.length, 4);
   assert.ok(transfers.slice(1).every(transfer=>transfer.signal.aborted));
-  assert.deepEqual(ui.statuses, ['Checking video…', 'Upload canceled', 'Upload canceled', 'Upload canceled', 'Upload canceled']);
+  assert.deepEqual(ui.statuses, ['Uploading', 'Upload canceled', 'Upload canceled', 'Upload canceled', 'Upload canceled']);
   transfers[1].onProgress(95); ui.rerender();
-  assert.deepEqual(ui.statuses, ['Checking video…', 'Upload canceled', 'Upload canceled', 'Upload canceled', 'Upload canceled'], 'late progress cannot revive a canceled upload');
+  assert.deepEqual(ui.statuses, ['Uploading', 'Upload canceled', 'Upload canceled', 'Upload canceled', 'Upload canceled'], 'late progress cannot revive a canceled upload');
   assert.equal(ui.calls.filter(call => call[1] === 'PATCH').length, 1);
   ui.click('Retry'); await ui.settle();
   assert.equal(transfers.length, 5); assert.equal(transfers[4].signal.aborted, false);
   const prepared = ui.calls.filter(call => call[0] === 'prepare').map(call => call[1].uploadId);
   assert.equal(prepared[4], prepared[1], 'retry keeps its existing upload identity');
   assert.equal(ui.calls.filter(call => call[0] === firstId && call[1] === 'PATCH').length, 1);
-  assert.deepEqual(ui.statuses, ['Checking video…', 'Checking video…', 'Upload canceled', 'Upload canceled', 'Upload canceled']);
+  assert.deepEqual(ui.statuses, ['Uploading', 'Uploading', 'Upload canceled', 'Upload canceled', 'Upload canceled']);
 });
 
 test('bulk videos use three workers and a stalled file does not block later files',async()=>{
@@ -210,13 +212,13 @@ test('saved video reasons explain waiting review and replace legacy generic note
 
 test('submitted video remains visible through refresh failure then moves into the approved library', async () => {
   const ui = harness(); await ui.settle(); ui.permissions(); ui.setReadError(true); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking video…']); assert.equal(ui.library.length, 0);
-  assert.deepEqual(ui.reviewActions, [], 'a submitted upload cannot be replaced or retried while refresh is unavailable');
+  assert.deepEqual(ui.statuses, ['Uploading']); assert.equal(ui.library.length, 0);
+  assert.deepEqual(ui.reviewActions.map(node => node.props.children), ['Cancel'], 'a submitted upload cannot be replaced or retried while refresh is unavailable');
   assert.equal(ui.revoked.length, 0, 'do not discard the only preview after submission');
-  ui.rerender(); assert.deepEqual(ui.statuses, ['Checking video…']);
+  ui.rerender(); assert.deepEqual(ui.statuses, ['Uploading']);
   ui.setReadError(false); await ui.refresh();
   const id = ui.calls.find(call => call[1] === 'PATCH')[0];
-  assert.deepEqual(ui.statuses, ['Checking video…']);
+  assert.deepEqual(ui.statuses, ['Uploading']);
   await ui.refresh([video(id, 'submitted', 'AI checks passed. Pending club approval.')]);
   assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
   assert.deepEqual(ui.notes, []);
@@ -273,7 +275,7 @@ test('failed replacement remains retryable and never puts an unapproved video in
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);
   ui.rerender(); assert.deepEqual(ui.statuses, ['Upload failed']); ui.rerender();
   ui.setUploadError(false); ui.click('Retry'); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking video…']);
+  assert.deepEqual(ui.statuses, ['Uploading']);
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);
 });
 
@@ -283,7 +285,7 @@ test('chosen videos upload the original file directly without crop or trim metad
   assert.equal(ui.calls.find(call => call[0] === 'upload')[1], original);
   const body = ui.calls.find(call => call[0] === 'prepare')[1];
   assert.equal(body.edit, undefined); assert.equal(body.width, 720); assert.equal(body.height, 1280); assert.equal(body.durationSeconds, 10);
-  assert.deepEqual(ui.statuses, ['Checking video…']);
+  assert.deepEqual(ui.statuses, ['Uploading']);
 });
 
 test('overlength videos show the photo-style rejection notice without creating an upload or offering Retry', async () => {
@@ -304,4 +306,46 @@ test('overlength replacement preserves the existing video and frees its rejected
   ui.notices[0].props.onDismiss(); await ui.settle();
   assert.deepEqual(ui.statuses, ['Review delayed']);
   assert.equal(ui.calls.some(call => call[1] === 'DELETE' || call[0] === 'prepare'), false);
+});
+
+test('a stale saved check shows recovery actions and can be canceled after a hard refresh', async () => {
+  const ui=harness([{...video('stuck','moderating'),moderationStartedAt:new Date(Date.now()-600000).toISOString()}]);
+  await ui.settle();assert.deepEqual(ui.statuses,['Upload delayed']);assert.equal(ui.progress.length,0);
+  assert.ok(ui.reviewActions.some(node=>node.type==='./DancerMediaRetryButton'));
+  ui.click('Cancel');await ui.settle();
+  assert.ok(ui.calls.some(call=>call[0]==='stuck'&&call[1]==='DELETE'));
+  assert.equal(ui.reviews.length,0);await ui.refresh();assert.equal(ui.reviews.length,0);
+});
+
+test('Cancel aborts a selected transfer, removes its saved reservation, and ignores late progress', async () => {
+  let progress;
+  const ui=harness([], {upload:options=>new Promise((_resolve,reject)=>{
+    progress=options.onProgress;options.onProgress(20);
+    options.signal.addEventListener('abort',()=>reject(new DOMException('Canceled','AbortError')),{once:true});
+  })});
+  await ui.settle();ui.permissions();ui.select();await ui.settle();ui.click('Cancel');await ui.settle();
+  assert.equal(ui.reviews.length,0);assert.ok(ui.calls.some(call=>call[1]==='DELETE'));
+  progress(90);await ui.settle();assert.equal(ui.reviews.length,0);
+  await ui.refresh();assert.equal(ui.reviews.length,0);
+});
+
+test('Cancel is available for saved processing videos while another file is uploading', async () => {
+  const ui=harness([video('saved','moderating')], {upload:()=>new Promise(()=>{})});
+  await ui.settle();ui.permissions();ui.select();await ui.settle();
+  const cancel=ui.reviewActions.filter(node=>node.props.children==='Cancel');
+  assert.equal(cancel.length,2);assert.equal(cancel[1].props.disabled,false);
+  cancel[1].props.onClick();await ui.settle();
+  assert.ok(ui.calls.some(call=>call[0]==='saved'&&call[1]==='DELETE'));
+  assert.equal(ui.reviews.length,1);
+});
+
+test('Cancel immediately removes a queued video while all transfer slots are occupied', async () => {
+  const transfers=[];
+  const ui=harness([], {upload:()=>new Promise(resolve=>transfers.push(resolve))});
+  await ui.settle();ui.permissions();ui.select([file(),file(),file(),file()]);await ui.settle();
+  const cancel=ui.reviewActions.filter(node=>node.props.children==='Cancel');
+  cancel[3].props.onClick();await ui.settle();
+  assert.equal(ui.reviews.length,3);assert.equal(transfers.length,3);
+  transfers.forEach(resolve=>resolve());await ui.settle();
+  assert.equal(transfers.length,3);assert.equal(ui.calls.filter(call=>call[0]==='prepare').length,3);
 });
