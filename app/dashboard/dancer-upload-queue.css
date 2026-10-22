@@ -6,14 +6,23 @@
     gap: 8px !important;
     min-height: 0 !important;
     padding: 8px !important;
+    border: 1px solid var(--dancr-color-border) !important;
+    border-radius: 10px !important;
   }
   .dancer-upload-review-card > :is(.photo-preview, .tv-upload-preview) {
+    display: grid !important;
+    place-items: center !important;
+    align-content: center !important;
     width: 56px !important;
     height: 75px !important;
     min-height: 0 !important;
     max-height: 75px !important;
     object-fit: cover;
+    box-sizing: border-box;
+    border: 1px solid var(--dancr-color-border) !important;
     border-radius: 6px !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
   }
   .dancer-upload-review-card > .dancer-upload-review-copy {
     min-width: 0;
@@ -53,5 +62,45 @@
     padding: 6px 8px !important;
     font-size: 12px !important;
     line-height: 1.4 !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+  }
+}
+
+/* Use the same paint for photo and video receipts, ahead of legacy status
+   fills and destructive photo-button styles in the dashboard cascade. */
+@layer dancr-palette {
+  html body.dancr-button-system .dancer-upload-review-card {
+    background: var(--dancr-color-surface-card) !important;
+    border-color: var(--dancr-color-border) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system .dancer-upload-review-copy > strong {
+    color: var(--dancr-color-text-primary) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  html body.dancr-button-system .dancer-upload-review-card > :is(.photo-preview, .tv-upload-preview) {
+    background-color: var(--dancr-color-background) !important;
+    color: var(--dancr-color-text-muted) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+  html body.dancr-button-system .dancer-upload-review-copy > small {
+    color: var(--dancr-color-text-muted) !important;
+    -webkit-text-fill-color: currentColor !important;
+    font-weight: 400 !important;
+  }
+  html body.dancr-button-system .dancer-upload-review-card.is-awaiting-club
+    > .dancer-upload-review-copy > :is(.photo-queue-actions, .tv-queue-actions) > button {
+    background: var(--dancr-control-secondary-background) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+    -webkit-text-fill-color: currentColor !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  html body.dancr-button-system .dancer-upload-review-card.is-awaiting-club
+    > .dancer-upload-review-copy > :is(.photo-queue-actions, .tv-queue-actions) > button:disabled {
+    opacity: .55 !important;
   }
 }
