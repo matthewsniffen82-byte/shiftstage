@@ -103,10 +103,10 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos .photo-source
 
 /* Keep setup compact without shrinking the photo previews or 44px menu targets. */
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos {
-  row-gap:4px;
+  row-gap:2px; min-height:0; align-content:start;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-photo-guidance {
-  margin:0; line-height:1.4;
+  margin:0; line-height:1.35;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos :is(.dancer-avatar-panel,.dancer-main-photo-panel) {
   gap:4px !important; align-content:start;
