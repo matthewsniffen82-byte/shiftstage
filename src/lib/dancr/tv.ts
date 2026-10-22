@@ -774,7 +774,8 @@ export async function createMyDancrTvUpload(
   }
   const prepared = edit ? { ...editedVideoDimensions(edit), durationSeconds: Number((edit.endSeconds - edit.startSeconds).toFixed(3)) } : input;
   if (!Number.isFinite(prepared.durationSeconds) || prepared.durationSeconds < 1 || prepared.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS) {
-    throw new PublicApiError("INVALID_REQUEST", "Videos must be between 1 and 30 seconds.", 400);
+    throw new PublicApiError("INVALID_REQUEST", Number.isFinite(prepared.durationSeconds) && prepared.durationSeconds > MYDANCR_TV_MAX_DURATION_SECONDS
+      ? "Over 30 seconds" : "Videos must be between 1 and 30 seconds.", 400);
   }
   if (!Number.isSafeInteger(prepared.width) || !Number.isSafeInteger(prepared.height)
     || prepared.width < 240 || prepared.height < prepared.width || prepared.height > 7680) {

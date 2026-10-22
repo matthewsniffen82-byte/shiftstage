@@ -29,7 +29,10 @@
             const abort = () => finish(new DOMException("Video selection closed.", "AbortError"));
             const timer = window.setTimeout(() => finish(new Error("Unable to read this video. Try another MP4, WebM, or MOV file.")), 20000);
             video.onloadedmetadata = () => {
-                if (!Number.isFinite(video.duration) || video.duration < 1 || video.duration > 30) {
+                if (Number.isFinite(video.duration) && video.duration > 30) {
+                    finish(new Error("Over 30 seconds"));
+                }
+                else if (!Number.isFinite(video.duration) || video.duration < 1) {
                     finish(new Error("Choose a video between 1 and 30 seconds."));
                 }
                 else if (!Number.isInteger(video.videoWidth) || !Number.isInteger(video.videoHeight) || video.videoWidth < 240 || video.videoHeight < video.videoWidth || video.videoHeight > 7680) {
@@ -94,7 +97,7 @@
       }
       applyResponseSession(prepared, headers);
       preparedVideoId = prepared.upload.videoId;
-      approvedProfileVideoStatus = "Uploading securely...";
+      approvedProfileVideoStatus = "Uploading";
       renderApprovedProfileVideoManager();
 
       if (!prepared.upload.alreadySubmitted && !prepared.upload.uploadComplete) {
@@ -113,7 +116,7 @@
         }
       }
 
-      approvedProfileVideoStatus = "Running the complete-video safety check...";
+      approvedProfileVideoStatus = "Uploading";
       renderApprovedProfileVideoManager();
       const submitResponse = await fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
         method: "PATCH",
@@ -125,7 +128,7 @@
         throw new Error(normalizeRequestError(submitted.error || submitted.message, "Unable to submit the video for review."));
       }
       applyResponseSession(submitted, headers);
-      const completionMessage = submitted.message || "Your video completed automated safety review.";
+      const completionMessage = approvedProfileVideoStatusLabel(submitted.video?.status || "moderating", submitted.video?.moderationDecision);
       const completionTone = submitted.video?.status === "rejected" ? "error" : "success";
       if (fileInput) fileInput.value = "";
       form.reset();
@@ -134,7 +137,7 @@
       approvedProfileVideoStatus = completionMessage;
       approvedProfileVideoStatusTone = completionTone;
       renderApprovedProfileVideoManager();
-      showToast("Profile video saved");
+      showToast(completionMessage);
 
     }
 

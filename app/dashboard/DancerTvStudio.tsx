@@ -61,7 +61,7 @@ type QueuedVideo = {
   file: File;
   previewUrl: string;
   source: "library" | "camera";
-  stage: "queued" | "validating" | "uploading" | "checking" | "submitted" | "failed";
+  stage: "queued" | "validating" | "uploading" | "checking" | "submitted" | "failed" | "rejected";
   progress: number;
   error?: string;
   replaces?: { videoId?: string; queueId?: string };
@@ -236,7 +236,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       return;
     }
 
-    const availableSlots = replacement ? 1 : Math.max(0, maxVideos - currentVideoCount - queuedVideos.filter(item => !workspace?.videos.some(video => video.id === item.uploadId)).length);
+    const availableSlots = replacement ? 1 : Math.max(0, maxVideos - currentVideoCount - queuedVideos.filter(item => item.stage !== "rejected" && !workspace?.videos.some(video => video.id === item.uploadId)).length);
     const selectedFiles = files.slice(0, availableSlots);
     if (!selectedFiles.length) {
       setStatus("Your profile video library is full. Remove a video before adding another.");
@@ -394,7 +394,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           if (!isCurrentVideoAction(requestId, controller)) return;
           failedItems.push({
             ...item,
-            stage: "failed",
+            stage: error instanceof Error && error.message === "Over 30 seconds" ? "rejected" : "failed",
             progress: 0,
             error: error instanceof Error ? error.message : "Unable to submit this video.",
           });
@@ -410,7 +410,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         if (!isCurrentVideoAction(requestId, controller)) return;
         announceDancerProfileVideosChanged();
       }
-      setStatus(failedItems.length ? `${failedItems.length} ready to retry` : submittedCount ? "" : "No videos were uploaded.");
+      const retryCount = failedItems.filter(item => item.stage === "failed").length;
+      setStatus(retryCount ? `${retryCount} ready to retry` : "");
     } finally {
       if (finishVideoAction(requestId)) {
         setUploadingQueueItemId("");
@@ -475,7 +476,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
   }
 
   function dismissRejectedVideo(videoId: string) {
-    setWorkspace(current => current ? { ...current, videos: current.videos.filter(video => video.id !== videoId),
+    setWorkspace(current => current?.videos.some(video => video.id === videoId) ? { ...current, videos: current.videos.filter(video => video.id !== videoId),
       remainingVideoSlots: Math.min(current.maxVideos, current.remainingVideoSlots + 1) } : current);
     setQueuedVideos(current => current.filter(item => {
       if (item.uploadId !== videoId) return true;
@@ -643,6 +644,9 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       {reviews.length ? <div className="tv-upload-queue" aria-label="Videos awaiting approval">
         <strong>Video uploads · {reviews.length}</strong>
         {reviews.map(({ item, video }, index) => {
+          if (item?.stage === "rejected" && !video) return <DancerRejectedUploadNotice key={item.id} id={item.uploadId} kind="video"
+            label={item.file.name} message={item.error || "Reason unavailable"} localOnly
+            disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(item.uploadId)} />;
           const reviewStatus = video ? videoReviewStatus(video.status, video.moderationDecision) : "";
           const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
           const uploadStatus = item?.error ? "Upload failed" : item && ["validating", "uploading", "checking"].includes(item.stage) ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Uploading" : "Waiting to upload";

@@ -762,12 +762,13 @@
       return photos.filter((photo) => photo.status === "rejected").length + socialFixes;
     }
 
-    function approvedProfileVideoStatusLabel(status = "") {
+    function approvedProfileVideoStatusLabel(status = "", decision = "") {
       return ({
-        uploading: "Upload incomplete",
-        moderating: "Safety check",
-        submitted: "Under review",
-        approved: "Moderation passed",
+        uploading: "Uploading",
+        moderating: "Uploading",
+        submitted: decision === "approved" ? "Waiting for Club approval" : "Review delayed",
+        review: "Waiting for Club approval",
+        approved: "Approved",
         rejected: "Not approved"
       })[status] || status || "Saved";
     }
@@ -801,7 +802,7 @@
       const message = approvedProfileVideoStatus || (approvedProfileVideoLoading
         ? "Loading your profile videos..."
         : workspace?.profileEligible === false
-          ? "Videos that pass safety moderation stay private until your dancer profile is approved."
+          ? "Videos stay private until your dancer profile is approved."
           : "Approved videos automatically appear with the pictures on your public profile and in MyDancr TV.");
       const selectedVideoUrl = pendingApprovedProfileVideoPreviewUrl;
       return `
@@ -820,7 +821,8 @@
                   ? `<video src="${displayText(video.videoUrl)}" controls playsinline preload="none" aria-label="Profile video ${index + 1}"></video>`
                   : '<div class="approved-profile-video-empty"><small>Video preview unavailable</small></div>'}
                 <div class="approved-profile-video-slot-copy">
-                  <span class="approved-profile-video-status">${displayText(approvedProfileVideoStatusLabel(video.status))}</span>
+                  <span class="approved-profile-video-status">${displayText(approvedProfileVideoStatusLabel(video.status, video.moderationDecision))}</span>
+                  ${video.status === "rejected" ? `<p>${displayText(video.reviewNotes || "Reason unavailable")}</p>` : ""}
                 </div>
                 <button class="approved-profile-video-remove" type="button" data-approved-profile-video-remove="${displayText(video.id)}" ${approvedProfileVideoRemovingId === video.id ? "disabled" : ""}>
                   ${approvedProfileVideoRemovingId === video.id ? "Removing..." : "Remove"}
@@ -835,7 +837,7 @@
             `).join("")}
           </div>
           ${workspace && workspace.profileEligible === false
-            ? '<p class="approved-profile-video-limit">Private during setup · every upload receives automated safety moderation.</p>'
+            ? '<p class="approved-profile-video-limit">Private during setup</p>'
             : ""}
           ${!workspace ? (approvedProfileVideoLoading
               ? ""

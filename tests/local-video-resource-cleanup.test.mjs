@@ -49,3 +49,9 @@ for (const kind of ["dashboard", "legacy"]) {
     }
   });
 }
+
+for (const kind of ['dashboard', 'legacy']) test(`${kind}: videos over 30 seconds are explicitly rejected before uploading`, async () => {
+  const f = metadataReaderFixture(kind); f.video.duration = 30.001; f.video.onloadedmetadata(); await f.promise;
+  assert.equal(f.state().outcome, 'rejected'); assert.equal(f.state().value, 'Over 30 seconds');
+  assert.equal(f.state().urls, 0); assert.equal(f.state().timers, 0);
+});

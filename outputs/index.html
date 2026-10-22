@@ -53115,12 +53115,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       return photos.filter((photo) => photo.status === "rejected").length + socialFixes;
     }
 
-    function approvedProfileVideoStatusLabel(status = "") {
+    function approvedProfileVideoStatusLabel(status = "", decision = "") {
       return ({
-        uploading: "Upload incomplete",
-        moderating: "Safety check",
-        submitted: "Under review",
-        approved: "Moderation passed",
+        uploading: "Uploading",
+        moderating: "Uploading",
+        submitted: decision === "approved" ? "Waiting for Club approval" : "Review delayed",
+        review: "Waiting for Club approval",
+        approved: "Approved",
         rejected: "Not approved"
       })[status] || status || "Saved";
     }
@@ -53154,7 +53155,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const message = approvedProfileVideoStatus || (approvedProfileVideoLoading
         ? "Loading your profile videos..."
         : workspace?.profileEligible === false
-          ? "Videos that pass safety moderation stay private until your dancer profile is approved."
+          ? "Videos stay private until your dancer profile is approved."
           : "Approved videos automatically appear with the pictures on your public profile and in MyDancr TV.");
       const selectedVideoUrl = pendingApprovedProfileVideoPreviewUrl;
       return `
@@ -53173,7 +53174,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
                   ? `<video src="${displayText(video.videoUrl)}" controls playsinline preload="none" aria-label="Profile video ${index + 1}"></video>`
                   : '<div class="approved-profile-video-empty"><small>Video preview unavailable</small></div>'}
                 <div class="approved-profile-video-slot-copy">
-                  <span class="approved-profile-video-status">${displayText(approvedProfileVideoStatusLabel(video.status))}</span>
+                  <span class="approved-profile-video-status">${displayText(approvedProfileVideoStatusLabel(video.status, video.moderationDecision))}</span>
+                  ${video.status === "rejected" ? `<p>${displayText(video.reviewNotes || "Reason unavailable")}</p>` : ""}
                 </div>
                 <button class="approved-profile-video-remove" type="button" data-approved-profile-video-remove="${displayText(video.id)}" ${approvedProfileVideoRemovingId === video.id ? "disabled" : ""}>
                   ${approvedProfileVideoRemovingId === video.id ? "Removing..." : "Remove"}
@@ -53188,7 +53190,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             `).join("")}
           </div>
           ${workspace && workspace.profileEligible === false
-            ? '<p class="approved-profile-video-limit">Private during setup · every upload receives automated safety moderation.</p>'
+            ? '<p class="approved-profile-video-limit">Private during setup</p>'
             : ""}
           ${!workspace ? (approvedProfileVideoLoading
               ? ""
@@ -53293,7 +53295,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             const abort = () => finish(new DOMException("Video selection closed.", "AbortError"));
             const timer = window.setTimeout(() => finish(new Error("Unable to read this video. Try another MP4, WebM, or MOV file.")), 20000);
             video.onloadedmetadata = () => {
-                if (!Number.isFinite(video.duration) || video.duration < 1 || video.duration > 30) {
+                if (Number.isFinite(video.duration) && video.duration > 30) {
+                    finish(new Error("Over 30 seconds"));
+                }
+                else if (!Number.isFinite(video.duration) || video.duration < 1) {
                     finish(new Error("Choose a video between 1 and 30 seconds."));
                 }
                 else if (!Number.isInteger(video.videoWidth) || !Number.isInteger(video.videoHeight) || video.videoWidth < 240 || video.videoHeight < video.videoWidth || video.videoHeight > 7680) {
@@ -53358,7 +53363,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       }
       applyResponseSession(prepared, headers);
       preparedVideoId = prepared.upload.videoId;
-      approvedProfileVideoStatus = "Uploading securely...";
+      approvedProfileVideoStatus = "Uploading";
       renderApprovedProfileVideoManager();
 
       if (!prepared.upload.alreadySubmitted && !prepared.upload.uploadComplete) {
@@ -53377,7 +53382,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         }
       }
 
-      approvedProfileVideoStatus = "Running the complete-video safety check...";
+      approvedProfileVideoStatus = "Uploading";
       renderApprovedProfileVideoManager();
       const submitResponse = await fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
         method: "PATCH",
@@ -53389,7 +53394,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         throw new Error(normalizeRequestError(submitted.error || submitted.message, "Unable to submit the video for review."));
       }
       applyResponseSession(submitted, headers);
-      const completionMessage = submitted.message || "Your video completed automated safety review.";
+      const completionMessage = approvedProfileVideoStatusLabel(submitted.video?.status || "moderating", submitted.video?.moderationDecision);
       const completionTone = submitted.video?.status === "rejected" ? "error" : "success";
       if (fileInput) fileInput.value = "";
       form.reset();
@@ -53398,7 +53403,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       approvedProfileVideoStatus = completionMessage;
       approvedProfileVideoStatusTone = completionTone;
       renderApprovedProfileVideoManager();
-      showToast("Profile video saved");
+      showToast(completionMessage);
 
     }
 
@@ -67984,12 +67989,12 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         if (approvedProfileVideoSubmitting) return;
         if (document.querySelector("[data-setup-profile-editor]")) captureDancerSetupProfileDraft();
         approvedProfileVideoSubmitting = true;
-        approvedProfileVideoStatus = "Checking your video...";
+        approvedProfileVideoStatus = "Uploading";
         approvedProfileVideoStatusTone = "";
         const submit = profileVideoForm.querySelector('button[type="submit"]');
         if (submit) {
           submit.disabled = true;
-          submit.textContent = "Uploading and checking...";
+          submit.textContent = "Uploading";
         }
         try {
           await submitApprovedProfileVideo(profileVideoForm);

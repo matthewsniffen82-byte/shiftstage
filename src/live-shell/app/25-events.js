@@ -338,12 +338,12 @@
         if (approvedProfileVideoSubmitting) return;
         if (document.querySelector("[data-setup-profile-editor]")) captureDancerSetupProfileDraft();
         approvedProfileVideoSubmitting = true;
-        approvedProfileVideoStatus = "Checking your video...";
+        approvedProfileVideoStatus = "Uploading";
         approvedProfileVideoStatusTone = "";
         const submit = profileVideoForm.querySelector('button[type="submit"]');
         if (submit) {
           submit.disabled = true;
-          submit.textContent = "Uploading and checking...";
+          submit.textContent = "Uploading";
         }
         try {
           await submitApprovedProfileVideo(profileVideoForm);

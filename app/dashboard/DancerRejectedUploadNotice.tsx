@@ -6,12 +6,13 @@ import "./dancer-rejected-upload-notice.css";
 
 export const REJECTION_NOTICE_MS = 5_000;
 
-export default function DancerRejectedUploadNotice({ id, kind, label, message, disabled = false, onDismiss }: {
+export default function DancerRejectedUploadNotice({ id, kind, label, message, disabled = false, localOnly = false, onDismiss }: {
   id: string;
   kind: "photo" | "video";
   label: string;
   message: string;
   disabled?: boolean;
+  localOnly?: boolean;
   onDismiss: () => void;
 }) {
   const [hasBeenVisible, setHasBeenVisible] = useState(false);
@@ -45,6 +46,12 @@ export default function DancerRejectedUploadNotice({ id, kind, label, message, d
     setRemoving(true);
     setError("");
     try {
+      // Files rejected before upload have no server record to dismiss.
+      if (localOnly) {
+        setRemoved(true);
+        dismissCallback.current();
+        return;
+      }
       const options = { method: "PATCH", headers: { "content-type": "application/json" },
         body: JSON.stringify({ action: "dismiss-rejected", ...(kind === "photo" ? { photoId: id } : {}) }),
         signal: controller.signal, fallbackMessage: "Unable to clear this upload. Try again." };
@@ -58,7 +65,7 @@ export default function DancerRejectedUploadNotice({ id, kind, label, message, d
     } finally {
       if (!controller.signal.aborted) { request.current = null; setRemoving(false); }
     }
-  }, [id, kind]);
+  }, [id, kind, localOnly]);
 
   useEffect(() => {
     if (!hasBeenVisible || !pageVisible || disabled || removing || removed || error) return;

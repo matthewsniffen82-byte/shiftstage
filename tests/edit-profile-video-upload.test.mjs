@@ -68,3 +68,20 @@ test("the direct studio respects the same fifty-video contract", () => {
   assert.match(dancerStudio, /\{currentVideoCount\} \$\{currentVideoCount === 1 \? "video" : "videos"\}/);
   assert.doesNotMatch(dancerStudio, /Up to \{maxVideos\}|\{currentVideoCount\}\/\{maxVideos\}|slots remaining/);
 });
+
+test('legacy video uploads use the same processing and Club approval labels', async () => {
+  const { runInNewContext } = await import('node:vm');
+  const start = liveApp.indexOf('function approvedProfileVideoStatusLabel(');
+  const end = liveApp.indexOf('function clearPendingApprovedProfileVideoSelection(', start);
+  const context = {};
+  runInNewContext(liveApp.slice(start, end), context);
+  const label = context.approvedProfileVideoStatusLabel;
+  assert.equal(label('uploading'), 'Uploading'); assert.equal(label('moderating'), 'Uploading');
+  assert.equal(label('submitted', 'approved'), 'Waiting for Club approval');
+  assert.equal(label('submitted', 'review'), 'Review delayed');
+  assert.equal(label('rejected'), 'Not approved');
+  assert.match(liveApp, /video\.status === "rejected".*displayText\(video\.reviewNotes/);
+  const handler = liveApp.slice(liveApp.indexOf('const profileVideoForm ='), liveApp.indexOf('const shiftForm =', liveApp.indexOf('const profileVideoForm =')));
+  const submit = liveApp.slice(liveApp.indexOf('async function submitApprovedProfileVideo('), liveApp.indexOf('async function removeApprovedProfileVideo('));
+  assert.doesNotMatch(handler + submit, /Uploading and checking|Running the complete-video safety check/);
+});

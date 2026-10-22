@@ -101,3 +101,9 @@ for (const kind of ['photo', 'video']) {
     assert.match(explain(kind, 'rejected', { reasonCodes: ['multiple_people_detected'] }), /Multiple people/);
   });
 }
+
+test('overlength video rejection gives the same brief reason from saved notes or a reason code', () => {
+  assert.equal(explain('video', 'rejected', { message: 'Over 30 seconds' }), 'Over 30 seconds');
+  assert.equal(explain('video', 'rejected', { reasonCodes: ['video_too_long'] }), 'Over 30 seconds');
+  assert.equal(explain('video', 'rejected', { reasonCodes: ['video_duration_exceeded'] }), 'Over 30 seconds');
+});

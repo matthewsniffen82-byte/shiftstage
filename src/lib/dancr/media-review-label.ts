@@ -32,6 +32,7 @@ export function mediaRejectionReason(reasonCodes: unknown) {
   const codes = Array.isArray(reasonCodes) ? reasonCodes.filter((code): code is string => typeof code === "string") : [];
   const reasons = new Set(codes.map(code => code.toLowerCase().replace(/^(frame_\d+_|text_|photo_policy_|policy_)/, "")));
   const labels: [string[], string][] = [
+    [["video_too_long", "video_duration_exceeded"], "Over 30 seconds"],
     [["minor_safety_rejected", "minor_or_age_uncertain", "provider_flagged_sexual_minors"], "Age unverified"],
     [["nudity_rejected"], "Nudity"],
     [["explicit_sexual_content_rejected", "explicit_nudity_or_sex_act"], "Explicit content"],

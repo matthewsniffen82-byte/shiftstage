@@ -60,12 +60,13 @@ export async function uploadResumableVideo(file: File, options: {
         if (!settled && !options.signal.aborted && total > 0) options.onProgress(Math.min(100, Math.floor(sent / total * 100)));
       },
       onError: error => {
-        const status = error.originalResponse?.getStatus();
+        const response = "originalResponse" in error ? error.originalResponse : null;
+        const status = response?.getStatus();
         // Some Storage versions reject a valid signed token at TUS creation.
         // Only this explicit response falls back to the same scoped signed PUT.
         let invalidSignature = false;
         try {
-          const body = JSON.parse(error.originalResponse?.getBody() || "{}");
+          const body = JSON.parse(response?.getBody() || "{}");
           invalidSignature = status === 400 && body.message === "Invalid Compact JWS";
         } catch { /* Do not expose raw provider errors or credentials. */ }
         finish(invalidSignature ? new SignedResumableUnavailable() : new Error(

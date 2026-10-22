@@ -100,7 +100,7 @@ test("the dashboard video manager shows compact previews while the separate TV s
   assert.doesNotMatch(uploadOnly, /My videos|video-preview-list|tv-video-manager|Delete video|Engaged views/);
   assert.match(uploadOnly, /Videos awaiting approval/);
   assert.match(uploadOnly, /Not approved/);
-  assert.match(uploadOnly, />Replace</);
+  assert.doesNotMatch(uploadOnly, />Replace</, "processing and rejected notices do not offer replacement controls");
   assert.match(uploadOnly, /dancer-rejected-upload-notice/);
   const standalone = renderToStaticMarkup(React.createElement(Studio)).replace(/<style>[\s\S]*?<\/style>/g, "");
   assert.match(standalone, /Engaged views/);

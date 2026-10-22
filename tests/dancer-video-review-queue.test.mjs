@@ -34,7 +34,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
       if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
       if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
       if (name === '@/src/lib/dancr/media-limits') return { MAX_DANCER_PROFILE_VIDEOS: 50 };
-      if (name === './read-video-metadata') return { readVideoMetadata: async file => { calls.push(['metadata', file]); if (metadataError) throw new Error('Choose a video between 1 and 30 seconds.'); return { duration: 10, width: 720, height: 1280 }; } };
+      if (name === './read-video-metadata') return { readVideoMetadata: async file => { calls.push(['metadata', file]); if (metadataError) throw new Error(typeof metadataError === 'string' ? metadataError : 'Choose a video between 1 and 30 seconds.'); return { duration: 10, width: 720, height: 1280 }; } };
       if (name === './dancer-profile-media-sync') return { announceDancerProfileVideosChanged() {}, primeVideoPreviewFrame() {} };
       if (name === './resumable-video-upload') return { uploadResumableVideo: async (file, options) => { calls.push(['upload', file]); if (uploadError) throw new Error('Connection lost.'); await upload(options); } };
       if (name === './dashboard-session') return {
@@ -226,4 +226,24 @@ test('chosen videos upload the original file directly without crop or trim metad
   const body = ui.calls.find(call => call[0] === 'prepare')[1];
   assert.equal(body.edit, undefined); assert.equal(body.width, 720); assert.equal(body.height, 1280); assert.equal(body.durationSeconds, 10);
   assert.deepEqual(ui.statuses, ['Uploading']);
+});
+
+test('overlength videos show the photo-style rejection notice without creating an upload or offering Retry', async () => {
+  const ui = harness(); await ui.settle(); ui.permissions(); ui.setMetadataError('Over 30 seconds'); ui.select(); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Not approved']); assert.deepEqual(ui.notes, ['Over 30 seconds']);
+  assert.equal(ui.notices[0].props.localOnly, true);
+  assert.deepEqual(ui.reviewActions, []); assert.deepEqual(ui.uploadMessages, []);
+  assert.equal(ui.calls.some(call => call[0] === 'prepare' || call[0] === 'upload'), false);
+  ui.notices[0].props.onDismiss(); await ui.settle();
+  assert.equal(ui.reviews.length, 0); assert.equal(ui.revoked.length, 1);
+  assert.equal(ui.calls.some(call => call[1] === 'DELETE' || call[1] === 'PATCH'), false);
+});
+
+test('overlength replacement preserves the existing video and frees its rejected local preview', async () => {
+  const ui = harness([video('original', 'error')], { maxVideos: 1 }); await ui.settle();
+  ui.click('Replace'); ui.permissions(); ui.setMetadataError('Over 30 seconds'); ui.select(); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Not approved', 'Review delayed']);
+  ui.notices[0].props.onDismiss(); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Review delayed']);
+  assert.equal(ui.calls.some(call => call[1] === 'DELETE' || call[0] === 'prepare'), false);
 });

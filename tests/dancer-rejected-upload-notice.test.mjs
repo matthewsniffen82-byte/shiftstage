@@ -6,11 +6,11 @@ import ts from 'typescript';
 
 const source = readFileSync('app/dashboard/DancerRejectedUploadNotice.tsx', 'utf8');
 const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
-function harness(kind = 'photo', response) {
+function harness(kind = 'photo', response, localOnly = false) {
   const slots = [], timers = new Map(), events = new Map(), calls = [], exports = {};
   let cursor = 0, effects = [], dirty = true, tree, now = 0, observer;
   const document = { visibilityState: 'visible', addEventListener: (name, fn) => events.set(name, fn), removeEventListener: name => events.delete(name) };
-  const props = { id: 'rejected-id', kind, label: 'Selected upload', message: 'Remove the contact overlay.', onDismiss: () => calls.push(['dismissed']) };
+  const props = { id: 'rejected-id', localOnly, kind, label: 'Selected upload', message: 'Remove the contact overlay.', onDismiss: () => calls.push(['dismissed']) };
   const changed = (a, b) => !a || b.some((dep, i) => !Object.is(dep, a[i]));
   const hooks = {
     useState(initial) { const i = cursor++; slots[i] ||= { value: initial }; slots[i].set ||= next => {
@@ -93,4 +93,11 @@ test('unmount cancels the timer and ignores an in-flight cleanup response', asyn
   pending.visible(true); await pending.advance(5_000); const signal = pending.calls[0][0].signal;
   pending.close(); assert.equal(signal.aborted, true); finish({ dismissedId: 'rejected-id' }); await pending.settle();
   assert.ok(!pending.calls.some(call => call[0] === 'dismissed'));
+});
+
+test('a local rejection uses the same reading time and clears without any server request', async () => {
+  const ui = harness('video', () => { throw new Error('Local files must never send a dismissal request'); }, true);
+  ui.visible(true); await ui.advance(4_999); assert.equal(ui.calls.length, 0); assert.ok(ui.tree);
+  await ui.advance(1); assert.equal(ui.tree, null);
+  assert.deepEqual(ui.calls, [['dismissed']]);
 });
