@@ -32,7 +32,8 @@ test("the canonical in-app venue page is dedicated to the selected club and its 
     /const tonight = localProfiles[\s\S]*?isWorkingTonight\(profile\)/,
   );
   assert.match(venueDetail, /recordVenuePageEvent\(\{ venueId: venue\.id, eventType: "page_view", source: "venue_page" \}\)/);
-  assert.match(venueDetail, /venue-hero-summary[\s\S]*?venueOfferStatusMarkup\(venue\)[\s\S]*?venue-hero-body[\s\S]*?venueOfferMarkup\(venue\)/);
+  assert.match(venueDetail, /venue-hero-summary[\s\S]*?venue-hero-body[\s\S]*?venueOfferMarkup\(venue\)/);
+  assert.doesNotMatch(venueDetail, /venueOfferStatusMarkup|venue-detail-club-deal-status|Active tonight/);
   assert.doesNotMatch(venueDetail, /\/api\/public\/maps\/embed\?address=|<iframe/i);
   assert.match(venueDetail, /const venueValue = escapeOptionValue\(venue\.id \|\| venue\.name\)/);
   assert.match(venueDetail, /class="venue-secondary-actions profile-actions-compact"[\s\S]*?class="action-btn secondary follow-venue-btn[\s\S]*?data-venue-follow="\$\{venueValue\}"[\s\S]*?class="action-btn secondary venue-detail-share[^"]*"[\s\S]*?data-share-venue="\$\{venueValue\}"/);
@@ -145,19 +146,19 @@ test("venue profiles reserve customer Club Deal language for active offers", () 
 
 test("venue detail Free Entry retains the complete offer configuration", () => {
   const venueOfferSource = liveApp.match(
-    /function venueOfferStatusMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
+    /function venueOfferMarkup\(venue\) \{[\s\S]*?(?=\n    function profileDealTileMarkup)/,
   )?.[0] || "";
   let encodedConfig;
   const escapeHtml = (value) => String(value).replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
   const rideLabelSource = liveApp.match(/function rideActionLabel\(source, venueName\) \{[\s\S]*?(?=\n    function uberRideLinkMarkup)/)?.[0] || "";
   const rideLinkSource = liveApp.match(/function uberRideLinkMarkup\([\s\S]*?(?=\n    document.addEventListener)/)?.[0] || "";
   const rideMarkup = new Function("escapeHtml", "escapeOptionValue", "actionButtonLabel", `${rideLabelSource}; ${rideLinkSource}; return uberRideLinkMarkup;`)(escapeHtml, escapeHtml, (_, label) => `<span>${label}</span>`);
-  const { venueOfferMarkup, venueOfferStatusMarkup } = new Function(
+  const { venueOfferMarkup } = new Function(
     "encodeDealPass",
     "escapeHtml",
     "uberRideLinkMarkup",
     "freeEntryButtonLabel",
-    `${venueOfferSource}; return { venueOfferMarkup, venueOfferStatusMarkup };`,
+    `${venueOfferSource}; return { venueOfferMarkup };`,
   )(
     (config) => {
       encodedConfig = config;
@@ -200,9 +201,6 @@ test("venue detail Free Entry retains the complete offer configuration", () => {
     ],
   });
   assert.doesNotMatch(multipleOffers, />Active tonight</);
-  assert.match(venueOfferStatusMarkup({ id: "venue-1", activeDeal: { id: "deal-1" } }), />Active tonight</);
-  assert.equal(venueOfferStatusMarkup({ id: "venue-1", activeDeal: null }), "");
-  assert.equal(venueOfferStatusMarkup({ activeDeal: { id: "deal-1" } }), "");
   assert.doesNotMatch(multipleOffers, /Free entry options|<h3>/);
   assert.match(multipleOffers, />Free Entry</);
   assert.doesNotMatch(multipleOffers, /<p>/);

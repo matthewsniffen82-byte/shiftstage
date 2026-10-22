@@ -51943,11 +51943,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       return true;
     }
 
-    function venueOfferStatusMarkup(venue) {
-      if (!venue?.activeDeal || !venue?.id) return "";
-      return `<div class="venue-detail-club-deal-heading"><span class="venue-detail-club-deal-status">Active tonight</span></div>`;
-    }
-
     function venueOfferMarkup(venue) {
       if (venue?.activeDeal && venue?.id) {
         const config = {
@@ -54255,7 +54250,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
                   <strong>${escapeHtml(operatingStatus.label)}</strong>
                   ${operatingStatus.hoursLabel ? `<span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
                 </div>
-                ${venueOfferStatusMarkup(venue)}
               </div>
             </div>
             <div class="venue-hero-body">

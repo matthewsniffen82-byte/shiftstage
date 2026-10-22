@@ -703,11 +703,6 @@
       return true;
     }
 
-    function venueOfferStatusMarkup(venue) {
-      if (!venue?.activeDeal || !venue?.id) return "";
-      return `<div class="venue-detail-club-deal-heading"><span class="venue-detail-club-deal-status">Active tonight</span></div>`;
-    }
-
     function venueOfferMarkup(venue) {
       if (venue?.activeDeal && venue?.id) {
         const config = {

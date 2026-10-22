@@ -370,7 +370,6 @@
                   <strong>${escapeHtml(operatingStatus.label)}</strong>
                   ${operatingStatus.hoursLabel ? `<span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
                 </div>
-                ${venueOfferStatusMarkup(venue)}
               </div>
             </div>
             <div class="venue-hero-body">

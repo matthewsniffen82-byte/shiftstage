@@ -1050,7 +1050,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   display: grid !important;
   grid-template-columns: var(--venue-detail-logo-size) minmax(0, 1fr) !important;
   align-items: stretch !important;
-  gap: 0 !important;
+  gap: 12px !important;
   min-height: var(--venue-detail-logo-size) !important;
   /* Reduce empty top space while preserving the logo's existing size. */
   padding: 12px 12px 4px !important;
