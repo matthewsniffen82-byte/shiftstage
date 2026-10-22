@@ -33,7 +33,7 @@ function component(file, name, extra = "", dependencies = {}) {
 }
 
 test("pickup presets preserve UTC inclusive dates across year boundaries and keep custom/all behavior", () => {
-  const render = component("app/pickups/PickupInbox.tsx", "Inbox", "\nexport { Inbox };");
+  const render = component("app/pickups/PickupInbox.tsx", "Inbox", "\nexport { Inbox };", { "../components/RefreshButton": { default: "RefreshButton" } });
   const choose = label => render({ role: "venue" }).find(node => node.type === "button" && node.props.children === label).props.onClick();
   assert.equal(render({ role: "venue" }).filter(node => node.type === "input" && node.props.type === "date").length, 0);
   choose("7 days"); choose("Custom");

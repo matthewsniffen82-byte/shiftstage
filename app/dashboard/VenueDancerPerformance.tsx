@@ -75,11 +75,12 @@ export default function VenueDancerPerformance({ dancers, period = "30d" }: { da
         <span className="venue-card-photo" aria-hidden="true"><VenueGridImage src={row.dancer.photoUrl} srcSet={row.dancer.photoSrcSet || undefined} sizes="(max-width: 620px) 30vw, 320px" lazy={index >= 12} /></span>
         <span className="venue-card-caption">
           <strong>{row.dancer.name}</strong>
+          {profileId && <span className="venue-performance-open-profile">Open profile <span aria-hidden="true">↗</span></span>}
         </span>
       </span>;
       return <li key={row.dancer.id}>
         <div className="venue-dancer-card">
-          {profileId ? <VenueRosterProfileButton dancerId={profileId} stageName={row.dancer.name} performanceScore={{ value: row.scores.overall.value, period, early: row.scores.overall.confidence === "early" }} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton> : identity}
+          {profileId ? <VenueRosterProfileButton dancerId={profileId} stageName={row.dancer.name} ariaLabel={`${row.dancer.name}: Open profile`} performanceScore={{ value: row.scores.overall.value, period, early: row.scores.overall.confidence === "early" }} className="ir-profile-link venue-card-profile">{identity}</VenueRosterProfileButton> : identity}
         </div>
         <div className="venue-performance-summary">
           <p className="venue-score-card-rank" title={rank}>{rank}</p>

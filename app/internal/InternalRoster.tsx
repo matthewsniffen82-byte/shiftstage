@@ -629,7 +629,7 @@ function useStaffProfile(dancerId: string, open: boolean, onClose: () => void, p
   return { profile: open && profile?.id === dancerId ? profile : null, error, fail };
 }
 
-export function VenueRosterProfileButton({ dancerId, stageName, rosterStatus, performanceScore, children, className }: { dancerId: string; stageName: string; rosterStatus?: Profile["rosterStatus"]; performanceScore?: Profile["performanceScore"]; children?: ReactNode; className?: string }) {
+export function VenueRosterProfileButton({ dancerId, stageName, rosterStatus, performanceScore, children, className, ariaLabel }: { dancerId: string; stageName: string; rosterStatus?: Profile["rosterStatus"]; performanceScore?: Profile["performanceScore"]; children?: ReactNode; className?: string; ariaLabel?: string }) {
   const openVenueProfile = useContext(VenueProfileContext);
   const syncRosterStatus = openVenueProfile?.syncRosterStatus;
   const syncPerformanceScore = openVenueProfile?.syncPerformanceScore;
@@ -648,5 +648,5 @@ export function VenueRosterProfileButton({ dancerId, stageName, rosterStatus, pe
   return <div className="ir-profile-control ir-staff"><button type="button" className={className} onClick={event => {
     if (openVenueProfile) openVenueProfile.open({ id: dancerId, stageName, photoUrl: selectedCardPhoto(event?.currentTarget), rosterStatus, performanceScore });
     else setOpen(true);
-  }} aria-label={`View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!openVenueProfile ? <ClubProfileDialog profile={profile ? { ...profile, rosterStatus, performanceScore } : null} profileId={open ? dancerId : ""} loadingIdentity={{ id: dancerId, stageName }} onError={fail} onClose={close} /> : null}</div>;
+  }} aria-label={ariaLabel || `View ${stageName} profile`} aria-busy={open && !profile}>{children || "View profile"}</button>{error ? <small role="status">{error}</small> : null}{!openVenueProfile ? <ClubProfileDialog profile={profile ? { ...profile, rosterStatus, performanceScore } : null} profileId={open ? dancerId : ""} loadingIdentity={{ id: dancerId, stageName }} onError={fail} onClose={close} /> : null}</div>;
 }
