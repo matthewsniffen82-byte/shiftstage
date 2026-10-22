@@ -296,6 +296,7 @@ export function requestDancerShiftCheckInJson(options: DashboardJsonRequestOptio
 
 export function requestDancerTvVideosJson(options: DashboardJsonRequestOptions = {}) {
   return requestDashboardJson("/api/dancer/tv/videos", {
+    timeoutMs: 30_000,
     ...options,
     expectedRole: "dancer",
     fallbackMessage: options.fallbackMessage || "Unable to update MyDancr TV videos.",
@@ -304,6 +305,7 @@ export function requestDancerTvVideosJson(options: DashboardJsonRequestOptions =
 
 export function requestDancerTvVideoJson(videoId: string, options: DashboardJsonRequestOptions = {}) {
   return requestDashboardJson(`/api/dancer/tv/videos/${encodeURIComponent(videoId)}`, {
+    timeoutMs: 30_000,
     ...options,
     expectedRole: "dancer",
     fallbackMessage: options.fallbackMessage || "Unable to update MyDancr TV video.",

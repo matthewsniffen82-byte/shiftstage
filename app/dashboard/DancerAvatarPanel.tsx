@@ -12,8 +12,14 @@ export function DancerAvatarPanel({ compact = false, onProfileChange, profile }:
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
 }) {
-  const main = dancerPhotoItemsFromProfile(profile).find(photo => photo.status === "approved" && photo.isPrimary);
-  const avatarUrl = String(profile?.avatarPhotoUrl || "");
+  const photos = dancerPhotoItemsFromProfile(profile);
+  const main = photos.find(photo => photo.status === "approved" && photo.isPrimary);
+  const pendingMain = photos.find(photo => photo.status === "pending" && photo.isPrimary);
+  const pendingReview = (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : [])
+    .find((review: Record<string, unknown>) => review.id === pendingMain?.id && review.status === "pending_review");
+  const pendingAvatarUrl = typeof pendingReview?.avatarPreviewUrl === "string" ? pendingReview.avatarPreviewUrl : "";
+  const avatarUrl = pendingAvatarUrl || String(profile?.avatarPhotoUrl || "");
+  const canAdjustCrop = Boolean(main && !pendingAvatarUrl);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const action = useRef<AbortController | null>(null);
@@ -22,10 +28,10 @@ export function DancerAvatarPanel({ compact = false, onProfileChange, profile }:
   useEffect(() => {
     action.current?.abort(); action.current = null; setBusy(false); setStatus("");
     return () => { action.current?.abort(); action.current = null; };
-  }, [profile?.id, main?.id, main?.storagePath, profile?.avatar_updated_at]);
+  }, [profile?.id, main?.id, main?.storagePath, profile?.avatar_updated_at, canAdjustCrop]);
 
   async function adjustCrop() {
-    if (!main || action.current) return;
+    if (!main || !canAdjustCrop || action.current) return;
     const owner = readSession()?.account?.id;
     if (!owner) { setStatus("Sign in again to adjust your avatar."); return; }
     const controller = new AbortController(); action.current = controller;
@@ -73,15 +79,15 @@ export function DancerAvatarPanel({ compact = false, onProfileChange, profile }:
     }
   }
 
-  return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={busy} data-avatar-state={avatarUrl ? "approved" : "automatic"}>
+  return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={busy} data-avatar-state={pendingAvatarUrl ? "pending" : avatarUrl ? "approved" : "automatic"}>
     <div className="dancer-avatar-editor" aria-label="Automatic avatar preview">
-      <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!avatarUrl} type="button" disabled={busy || !main}
-        aria-label="Adjust avatar crop" onClick={() => void adjustCrop()}>
-        {avatarUrl ? <img src={avatarUrl} alt="Avatar from your main photo" style={{ objectPosition: `${profile?.avatarPhotoFocalX ?? 50}% ${profile?.avatarPhotoFocalY ?? 50}%` }} /> : <span aria-hidden="true">Auto</span>}
+      <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!avatarUrl} type="button" disabled={busy || !canAdjustCrop}
+        aria-label={pendingAvatarUrl ? "Avatar preview pending club approval" : "Adjust avatar crop"} onClick={() => void adjustCrop()}>
+        {avatarUrl ? <img src={avatarUrl} alt="Avatar from your main photo" style={{ objectPosition: pendingAvatarUrl ? "50% 50%" : `${profile?.avatarPhotoFocalX ?? 50}% ${profile?.avatarPhotoFocalY ?? 50}%` }} /> : <span aria-hidden="true">Auto</span>}
       </button>
     </div>
     <div className="dancer-avatar-upload-controls">
-      {main ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>Your avatar appears when your main photo is approved.</p>}
+      {pendingAvatarUrl ? <p>Preview · Pending club approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>Appears after your main photo passes checks.</p>}
     </div>
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </article>;

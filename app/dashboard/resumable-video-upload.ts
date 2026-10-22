@@ -2,6 +2,8 @@ import { getPublicEnv } from "../../src/lib/env";
 import { uploadFormData } from "./upload-form-data";
 
 class SignedResumableUnavailable extends Error {}
+const unavailableSignedEndpoints = new Set<string>();
+const UPLOAD_IDLE_TIMEOUT_MS = 60_000;
 
 export function resumableStorageEndpoint(supabaseUrl: string) {
   const url = new URL("/storage/v1/upload/resumable", supabaseUrl);
@@ -16,9 +18,10 @@ export async function uploadResumableVideo(file: File, options: {
   onProgress: (percent: number) => void;
 }) {
   options.signal.throwIfAborted();
+  const endpoint = resumableStorageEndpoint(getPublicEnv().supabaseUrl);
+  if (unavailableSignedEndpoints.has(endpoint)) return uploadSignedVideo(file, options);
   const { Upload } = await import("tus-js-client");
   options.signal.throwIfAborted();
-  const endpoint = resumableStorageEndpoint(getPublicEnv().supabaseUrl);
   const endpointUrl = new URL(endpoint);
   const trustedUploadUrl = (value: string | null) => {
     if (!value) return false;
@@ -30,16 +33,28 @@ export async function uploadResumableVideo(file: File, options: {
   };
   return new Promise<void>((resolve, reject) => {
     let settled = false;
+    let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    const markActivity = () => {
+      if (settled) return;
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        finish(new Error("Video upload stalled. Tap Retry to continue your upload."));
+        void upload.abort().catch(() => undefined);
+      }, UPLOAD_IDLE_TIMEOUT_MS);
+    };
     const finish = (error?: Error) => {
       if (settled) return;
       settled = true;
+      clearTimeout(idleTimer);
       options.signal.removeEventListener("abort", abort);
       if (error) reject(error); else resolve();
     };
     const upload = new Upload(file, {
       endpoint,
       chunkSize: 6 * 1024 * 1024,
-      uploadDataDuringCreation: true,
+      // Check signed-TUS compatibility before transferring a chunk. Some Storage
+      // versions reject this token; never waste 6 MB before the signed PUT fallback.
+      uploadDataDuringCreation: false,
       retryDelays: [0, 1000, 3000, 5000, 10000],
       headers: { "x-signature": options.token },
       metadata: { bucketName: "mydancr-tv-videos", objectName: options.path, contentType: file.type, cacheControl: "3600" },
@@ -51,15 +66,21 @@ export async function uploadResumableVideo(file: File, options: {
         options.signal.throwIfAborted();
         // Stored resume URLs and Location responses must not redirect signed credentials.
         if (!trustedUploadUrl(request.getURL())) throw new Error("Invalid video upload destination.");
+        markActivity();
       },
+      onAfterResponse: () => markActivity(),
       onShouldRetry: error => {
         const status = error.originalResponse?.getStatus() || 0;
-        return !options.signal.aborted && (status === 0 || [408, 409, 423, 429].includes(status) || status >= 500);
+        return !settled && !options.signal.aborted && (status === 0 || [408, 409, 423, 429].includes(status) || status >= 500);
       },
       onProgress: (sent, total) => {
-        if (!settled && !options.signal.aborted && total > 0) options.onProgress(Math.min(100, Math.floor(sent / total * 100)));
+        if (!settled && !options.signal.aborted && total > 0) {
+          markActivity();
+          options.onProgress(Math.min(100, Math.floor(sent / total * 100)));
+        }
       },
       onError: error => {
+        if (settled) return;
         const response = "originalResponse" in error ? error.originalResponse : null;
         const status = response?.getStatus();
         // Some Storage versions reject a valid signed token at TUS creation.
@@ -85,6 +106,7 @@ export async function uploadResumableVideo(file: File, options: {
     };
     options.signal.addEventListener("abort", abort, { once: true });
     if (options.signal.aborted) { abort(); return; }
+    markActivity();
     void (async () => {
       const previous = await upload.findPreviousUploads().catch(() => []);
       if (settled || options.signal.aborted) return;
@@ -96,16 +118,25 @@ export async function uploadResumableVideo(file: File, options: {
   }).catch(async error => {
     if (!(error instanceof SignedResumableUnavailable)) throw error;
     options.signal.throwIfAborted();
-    const path = options.path.split("/").map(encodeURIComponent).join("/");
-    const url = new URL(`/storage/v1/object/upload/sign/mydancr-tv-videos/${path}`, getPublicEnv().supabaseUrl);
-    url.searchParams.set("token", options.token);
-    const body = new FormData();
-    body.append("cacheControl", "3600");
-    body.append("", file);
-    options.onProgress(0);
-    const response = await uploadFormData(url.href, body, {
-      method: "PUT", headers: { "x-upsert": "false" }, signal: options.signal, onProgress: options.onProgress,
-    });
-    if (!response.ok) throw new Error("Video upload couldn't finish. Tap Retry to try again.");
+    unavailableSignedEndpoints.add(endpoint);
+    return uploadSignedVideo(file, options);
   });
+}
+
+async function uploadSignedVideo(file: File, options: {
+  path: string; token: string; signal: AbortSignal; onProgress: (percent: number) => void;
+}) {
+  options.signal.throwIfAborted();
+  const path = options.path.split("/").map(encodeURIComponent).join("/");
+  const url = new URL(`/storage/v1/object/upload/sign/mydancr-tv-videos/${path}`, getPublicEnv().supabaseUrl);
+  url.searchParams.set("token", options.token);
+  const body = new FormData();
+  body.append("cacheControl", "3600");
+  body.append("", file);
+  options.onProgress(0);
+  const response = await uploadFormData(url.href, body, {
+    method: "PUT", headers: { "x-upsert": "false" }, signal: options.signal, onProgress: options.onProgress,
+    idleTimeoutMs: UPLOAD_IDLE_TIMEOUT_MS,
+  });
+  if (!response.ok) throw new Error("Video upload couldn't finish. Tap Retry to try again.");
 }

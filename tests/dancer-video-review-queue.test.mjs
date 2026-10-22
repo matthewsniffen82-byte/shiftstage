@@ -5,6 +5,7 @@ import test from 'node:test';
 import ts from 'typescript';
 import { mediaReview } from './helpers/media-review-label.mjs';
 import { createMediaUploadCancellation } from '../app/dashboard/media-upload-cancellation.ts';
+import { runMediaUploadBatch } from '../app/dashboard/media-upload-batch.ts';
 
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerTvStudio.tsx', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
@@ -35,6 +36,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
       if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
       if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
       if (name === './media-upload-cancellation') return { createMediaUploadCancellation };
+      if (name === './media-upload-batch') return { runMediaUploadBatch };
       if (name === '@/src/lib/dancr/media-limits') return { MAX_DANCER_PROFILE_VIDEOS: 50 };
       if (name === './read-video-metadata') return { readVideoMetadata: async file => { calls.push(['metadata', file]); if (metadataError) throw new Error(typeof metadataError === 'string' ? metadataError : 'Choose a video between 1 and 30 seconds.'); return { duration: 10, width: 720, height: 1280 }; } };
       if (name === './dancer-profile-media-sync') return { announceDancerProfileVideosChanged() {}, primeVideoPreviewFrame() {} };
@@ -148,28 +150,47 @@ test('Cancel uploads stops the active video, skips queued videos and keeps earli
   const transfers = [];
   const ui = harness([], { upload: options => {
     transfers.push(options);
-    if (transfers.length !== 2) { options.onProgress(100); return Promise.resolve(); }
+    if (transfers.length === 1 || transfers.length > 4) { options.onProgress(100); return Promise.resolve(); }
     return new Promise((_, reject) => {
       options.onProgress(40);
       options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
     });
   } });
-  await ui.settle(); ui.permissions(); ui.select([file(), file(), file()]); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking video…', 'Uploading · 40%', 'Waiting to upload']);
+  await ui.settle(); ui.permissions(); ui.select([file(), file(), file(), file(), file()]); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Checking video…', 'Uploading · 40%', 'Uploading · 40%', 'Uploading · 40%', 'Waiting to upload']);
   const firstId = ui.calls.find(call => call[1] === 'PATCH')[0];
   ui.click('Cancel uploads'); await ui.settle();
   assert.equal(transfers[1].signal.aborted, true);
-  assert.equal(transfers.length, 2);
-  assert.deepEqual(ui.statuses, ['Checking video…', 'Upload canceled', 'Upload canceled']);
+  assert.equal(transfers.length, 4);
+  assert.ok(transfers.slice(1).every(transfer=>transfer.signal.aborted));
+  assert.deepEqual(ui.statuses, ['Checking video…', 'Upload canceled', 'Upload canceled', 'Upload canceled', 'Upload canceled']);
   transfers[1].onProgress(95); ui.rerender();
-  assert.deepEqual(ui.statuses, ['Checking video…', 'Upload canceled', 'Upload canceled'], 'late progress cannot revive a canceled upload');
+  assert.deepEqual(ui.statuses, ['Checking video…', 'Upload canceled', 'Upload canceled', 'Upload canceled', 'Upload canceled'], 'late progress cannot revive a canceled upload');
   assert.equal(ui.calls.filter(call => call[1] === 'PATCH').length, 1);
   ui.click('Retry'); await ui.settle();
-  assert.equal(transfers.length, 3); assert.equal(transfers[2].signal.aborted, false);
+  assert.equal(transfers.length, 5); assert.equal(transfers[4].signal.aborted, false);
   const prepared = ui.calls.filter(call => call[0] === 'prepare').map(call => call[1].uploadId);
-  assert.equal(prepared[2], prepared[1], 'retry keeps its existing upload identity');
+  assert.equal(prepared[4], prepared[1], 'retry keeps its existing upload identity');
   assert.equal(ui.calls.filter(call => call[0] === firstId && call[1] === 'PATCH').length, 1);
-  assert.deepEqual(ui.statuses, ['Checking video…', 'Checking video…', 'Upload canceled']);
+  assert.deepEqual(ui.statuses, ['Checking video…', 'Checking video…', 'Upload canceled', 'Upload canceled', 'Upload canceled']);
+});
+
+test('bulk videos use three workers and a stalled file does not block later files',async()=>{
+  const transfers=[];
+  const ui=harness([],{upload:options=>new Promise((resolve,reject)=>{
+    options.onProgress(20);transfers.push({resolve,reject});
+  })});
+  await ui.settle();ui.permissions();ui.select([file(),file(),file(),file(),file()]);await ui.settle();
+  assert.equal(transfers.length,3);
+  assert.deepEqual(ui.statuses,['Uploading · 20%','Uploading · 20%','Uploading · 20%','Waiting to upload','Waiting to upload']);
+  transfers[1].reject(Error('Video upload stalled. Tap Retry to continue your upload.'));await ui.settle();
+  assert.equal(transfers.length,4);assert.equal(ui.statuses[1],'Upload failed','failure is visible before the batch finishes');
+  transfers[2].resolve();await ui.settle();assert.equal(transfers.length,5);
+  assert.equal(ui.statuses[0],'Uploading · 20%','other transfers progressed while the first was still active');
+  transfers[0].resolve();transfers[3].resolve();transfers[4].resolve();await ui.settle();
+  assert.equal(ui.calls.filter(call=>call[1]==='PATCH').length,4);
+  assert.equal(ui.reviewActions.find(node=>node.props.children==='Retry').props.disabled,false);
+  assert.equal(ui.library.length,0,'upload concurrency does not bypass checks or club approval');
 });
 
 test('saved video reasons explain waiting review and replace legacy generic notes', async () => {

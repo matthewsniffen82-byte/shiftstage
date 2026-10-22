@@ -151,7 +151,9 @@ export function videoWorkerHarness(db, options = {}) {
   vm.runInNewContext(compiled, { exports: tv, Error, Date: ControlledDate, crypto: webcrypto, console: { info() {}, warn() {}, error() {} },
     require(name) {
       if (name === "./media-review-label") return mediaReview;
-      if (name === "../server-job.ts") return serverJobs;
+      if (name === "../server-job.ts") return options.jobTimeoutMs ? { ...serverJobs,
+        runWithServerJob: operation => serverJobs.runWithServerJob(operation, options.jobTimeoutMs),
+      } : serverJobs;
       if (name === "../api-error-policy") return { PublicApiError };
       if (name === "./video-moderation") return { async moderateStoredMyDancrTvVideo(_client, input) {
         providers.push(input);

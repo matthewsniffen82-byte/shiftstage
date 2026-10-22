@@ -13,6 +13,28 @@ beforeEach(async () => { await seedWorker(db); });
 after(async () => { await db?.close(); });
 const foreignWorker = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
 
+test('processing timeout immediately becomes retryable and late completion cannot publish it',async()=>{
+  const h=videoWorkerHarness(db,{jobTimeoutMs:80,holdProviders:true});
+  const outcome=await h.retry();
+  assert.equal(outcome.status,'submitted');
+  let snapshot=await workerSnapshot(db);
+  assert.equal(snapshot.row.moderation_decision,'review');
+  assert.deepEqual(snapshot.row.moderation_reason_codes,['video_moderation_timeout']);
+  assert.equal(snapshot.row.published_at,null);
+  h.releaseAll();await new Promise(resolve=>setTimeout(resolve,10));
+  assert.equal(h.watermarks.length,0);assert.deepEqual(await workerSnapshot(db),snapshot);
+});
+test('a timed out worker cannot change a newer worker or removed video',async()=>{
+  for(const change of [{moderation_details:{workerId:foreignWorker}},{status:'hidden'}]){
+    await seedWorker(db);
+    const h=videoWorkerHarness(db,{jobTimeoutMs:150,holdProviders:true});
+    const job=captureWorker(h.retry());await h.waitFor(({providerCount})=>providerCount===1);
+    await patchWorker(db,change);const before=await workerSnapshot(db);
+    const outcome=await job;assert.match(outcome.error?.message||'',/review changed/);
+    h.releaseAll();assert.deepEqual(await workerSnapshot(db),before);
+  }
+});
+
 test("deferred submission acknowledges storage before inspection or AI, then validates in the worker", async () => {
   await patchWorker(db, { status: "uploading" });
   const h = videoWorkerHarness(db);

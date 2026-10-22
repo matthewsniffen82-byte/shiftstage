@@ -10,7 +10,7 @@ function load(name, scope = {}) {
   const source = readFileSync(new URL('../app/dashboard/' + name, import.meta.url), 'utf8');
   vm.runInNewContext(ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText, { exports, File, Blob, URL, Response, FormData, DOMException, AbortController, ...scope });
+  }).outputText, { exports, File, Blob, URL, Response, FormData, DOMException, AbortController, setTimeout, clearTimeout, ...scope });
   return exports;
 }
 const tick = () => new Promise(resolve => setImmediate(resolve));
@@ -102,7 +102,7 @@ test('canceling during photo preparation releases decoded memory and prevents up
   assert.equal(closed, true);
 });
 
-function videoFixture(previous = [], fallback = async () => new Response("{}")) {
+function videoFixture(previous = [], fallback = async () => new Response("{}"), timers = {}) {
   const calls = [], instances = [], putCalls = [];
   class Upload {
     constructor(file, options) { this.file = file; this.options = options; instances.push(this); }
@@ -111,7 +111,7 @@ function videoFixture(previous = [], fallback = async () => new Response("{}")) 
     start() { calls.push(['start']); }
     async abort(terminate) { calls.push(['abort', terminate]); }
   }
-  const helpers = load('resumable-video-upload.ts', { require: name => {
+  const helpers = load('resumable-video-upload.ts', { ...timers, require: name => {
     if (name === 'tus-js-client') return { Upload };
     if (name === './upload-form-data') return { uploadFormData: async (...args) => { putCalls.push(args); return fallback(...args); } };
     if (name === '../../src/lib/env') return { getPublicEnv: () => ({ supabaseUrl: 'https://fixture.supabase.co' }) };
@@ -130,6 +130,7 @@ test('videos use direct storage, scoped signed auth, real byte progress, and a t
   const options = f.instances[0].options;
   assert.equal(options.endpoint, 'https://fixture.storage.supabase.co/storage/v1/upload/resumable');
   assert.equal(options.chunkSize, 6 * 1024 * 1024);
+  assert.equal(options.uploadDataDuringCreation,false,'compatibility check must not send a wasted video chunk');
   assert.equal(options.headers['x-signature'], 'scoped-token');
   assert.equal(options.headers.authorization, undefined);
   assert.equal(options.removeFingerprintOnSuccess, true);
@@ -171,7 +172,7 @@ test('network and temporary storage errors retry; authorization and invalid file
   await assert.rejects(pending, error => /Tap Retry/.test(error.message) && !error.message.includes('sensitive-provider-detail'));
 });
 
-function xhrFixture() {
+function xhrFixture(timers={}) {
   const requests = [];
   class XMLHttpRequest {
     constructor() { this.upload = {}; this.headers = {}; requests.push(this); }
@@ -180,7 +181,7 @@ function xhrFixture() {
     send(body) { this.body = body; }
     abort() { this.aborted = true; this.onabort?.(); }
   }
-  return { ...load('upload-form-data.ts', { XMLHttpRequest }), requests };
+  return { ...load('upload-form-data.ts', { XMLHttpRequest, ...timers }), requests };
 }
 
 test('photo progress reaches 100 when bytes finish while the review response can still be pending', async () => {
@@ -257,4 +258,39 @@ test('signed fallback uses PUT and preserves XHR cancellation and progress handl
   xhr.upload.onprogress({ lengthComputable: true, loaded: 1, total: 2 });
   xhr.status = 200; xhr.responseText = '{}'; xhr.onload();
   assert.equal((await pending).ok, true); assert.deepEqual(progress, [50]);
+});
+
+function idleClock(){
+  let now=0,id=0;const timers=new Map();
+  return {setTimeout(fn,ms){timers.set(++id,{fn,at:now+ms});return id;},clearTimeout(id){timers.delete(id);},
+    advance(ms){now+=ms;for(const [id,t] of timers)if(t.at<=now){timers.delete(id);t.fn();}},get count(){return timers.size;}};
+}
+test('known incompatible signed TUS endpoints skip the failed probe for later bulk files',async()=>{
+  const f=videoFixture(), options=videoOptions(new AbortController());
+  const first=f.uploadResumableVideo(videoFile(),options);await tick();
+  f.instances[0].options.onError({originalResponse:{getStatus:()=>400,getBody:()=>'{"message":"Invalid Compact JWS"}'}});
+  await first;
+  await f.uploadResumableVideo(videoFile(),{...options,path:'owner/profile/second.mp4'});
+  assert.equal(f.instances.length,1);assert.equal(f.putCalls.length,2);
+  assert.match(f.putCalls[1][0],/second\.mp4/);
+  assert.equal(f.putCalls[1][2].idleTimeoutMs,60_000);
+});
+test('a stalled resumable video stops and becomes retryable without late progress or leaked timers',async()=>{
+  const clock=idleClock(),f=videoFixture([],undefined,clock),progress=[];
+  const pending=f.uploadResumableVideo(videoFile(),videoOptions(new AbortController(),p=>progress.push(p)));
+  const rejected=assert.rejects(pending,/stalled.*Retry/);await tick();
+  clock.advance(50_000);f.instances[0].options.onProgress(5,10);
+  clock.advance(50_000);assert.equal(f.calls.some(c=>c[0]==='abort'),false);
+  clock.advance(10_000);await rejected;
+  f.instances[0].options.onProgress(9,10);
+  assert.deepEqual(progress,[50]);assert.deepEqual(f.calls.at(-1),['abort',undefined]);assert.equal(clock.count,0);
+});
+test('signed PUT progress keeps slow transfers alive and stalled responses expose Retry',async()=>{
+  const clock=idleClock(),f=xhrFixture(clock);
+  const pending=f.uploadFormData('/signed',new FormData(),{headers:{},method:'PUT',onProgress(){},idleTimeoutMs:60_000});
+  const rejected=assert.rejects(pending,/stalled.*Retry/),xhr=f.requests[0];
+  clock.advance(50_000);xhr.upload.onprogress({lengthComputable:true,loaded:1,total:2});
+  clock.advance(50_000);assert.equal(xhr.aborted,undefined);
+  xhr.upload.onload();clock.advance(60_000);await rejected;
+  assert.equal(xhr.aborted,true);assert.equal(xhr.onload,null);assert.equal(clock.count,0);
 });

@@ -247,7 +247,7 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
   const admin = createAdminSupabaseClient() as any;
   const { data, error } = await admin
     .from("image_moderation_records")
-    .select("id, image_id, final_storage_path, decision, status, reason_codes, review_notes, upload_context, temporary_storage_path, photo_publication_mode, replacement_photo_id, created_at")
+    .select("id, image_id, final_storage_path, decision, status, reason_codes, category_flags, review_notes, upload_context, temporary_storage_path, photo_publication_mode, replacement_photo_id, created_at")
     .eq("user_id", userId)
     .eq("decision", "review")
     .neq("upload_context", PROFILE_AVATAR_CONTEXT)
@@ -301,10 +301,28 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
       review_status: "pending",
       message: mediaReviewExplanation("photo", "pending", { moderationStatus: review.status, reasonCodes: review.reason_codes, message: review.review_notes }),
     };
-    if (!storagePath) return { ...review, ...slotFields, previewUrl: "" };
+    // A checked main photo already has a face-cropped derivative. Preview it only
+    // for its owner; publication references stay unchanged until club approval.
+    const finalPath = String(review.final_storage_path || "").trim();
+    const flags = review.category_flags || {};
+    const canPreviewAvatar = slot.isPrimary && review.decision === "review" && review.status === "pending_review"
+      && flags.ai_recommended_approval === true && flags.publication_prepared === true
+      && flags.ai_recommended_rejection !== true && flags.ai_needs_review !== true
+      && finalPath.startsWith(`${userId}/`) && !finalPath.includes("\\")
+      && finalPath.split("/").every(part => part && part !== "." && part !== "..");
+    const signPreview = async (bucket: string, path: string) => {
+      if (!path) return "";
+      try {
+        const { data: signed, error: signedError } = await admin.storage.from(bucket).createSignedUrl(path, 60 * 60);
+        return signedError ? "" : String(signed?.signedUrl || "");
+      } catch { return ""; }
+    };
     const bucket = review.status === "pending_review" ? MODERATION_REVIEW_BUCKET : MODERATION_TEMP_BUCKET;
-    const { data: signed, error: signedError } = await admin.storage.from(bucket).createSignedUrl(storagePath, 60 * 60);
-    return { ...review, ...slotFields, previewUrl: signedError ? "" : String(signed?.signedUrl || "") };
+    const [previewUrl, avatarPreviewUrl] = await Promise.all([
+      signPreview(bucket, storagePath),
+      canPreviewAvatar ? signPreview(APPROVED_PHOTO_BUCKET, `${finalPath}.avatar.jpg`) : "",
+    ]);
+    return { ...review, ...slotFields, previewUrl, avatarPreviewUrl };
   }));
 }
 

@@ -10,6 +10,7 @@ import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
 import { uploadResumableVideo } from "./resumable-video-upload";
 import { createMediaUploadCancellation } from "./media-upload-cancellation";
+import { runMediaUploadBatch } from "./media-upload-batch";
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -71,7 +72,6 @@ type QueuedVideo = {
 export default function DancerTvStudio({ embedded = false, uploadOnly = false, onBusyChange }: { embedded?: boolean; uploadOnly?: boolean; onBusyChange?: (busy: boolean) => void }) {
   const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [queuedVideos, setQueuedVideos] = useState<QueuedVideo[]>([]);
-  const [uploadingQueueItemId, setUploadingQueueItemId] = useState("");
   const [consentConfirmed, setConsentConfirmed] = useState(false);
   const [rightsConfirmed, setRightsConfirmed] = useState(false);
   const [status, setStatus] = useState("");
@@ -328,15 +328,14 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     const failedItems: QueuedVideo[] = [];
     let submittedCount = 0;
     try {
-      for (let index = 0; index < batch.length; index += 1) {
+      await runMediaUploadBatch(batch, 3, async queuedItem => {
         if (!isCurrentVideoAction(requestId, controller)) return;
-        let item = batch[index];
+        let item = queuedItem;
         const transfer = cancellation.start();
         if (!transfer) {
           updateQueuedVideo(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
-          continue;
+          return;
         }
-        setUploadingQueueItemId(item.id);
         updateQueuedVideo(item.id, { stage: "validating", progress: 0, error: undefined });
         setStatus("Uploading");
         try {
@@ -408,18 +407,20 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           if (!isCurrentVideoAction(requestId, controller)) return;
           if (transfer.signal.aborted) {
             updateQueuedVideo(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
-            continue;
+            return;
           }
-          failedItems.push({
+          const failedItem: QueuedVideo = {
             ...item,
             stage: error instanceof Error && error.message === "Over 30 seconds" ? "rejected" : "failed",
             progress: 0,
             error: error instanceof Error ? error.message : "Unable to submit this video.",
-          });
+          };
+          failedItems.push(failedItem);
+          updateQueuedVideo(item.id, failedItem);
         } finally {
           transfer.finish();
         }
-      }
+      }, controller.signal);
 
       if (!isCurrentVideoAction(requestId, controller)) return;
       setQueuedVideos(current => current.map(item => failedItems.find(failed => failed.id === item.id) || item));
@@ -432,11 +433,12 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       }
       const retryCount = failedItems.filter(item => item.stage === "failed").length;
       setStatus(cancellation.canceled ? "Uploads canceled. Completed uploads are kept." : retryCount ? `${retryCount} ready to retry` : "");
+    } catch (error) {
+      if (isCurrentVideoAction(requestId, controller)) setStatus(error instanceof Error ? error.message : "Unable to finish uploads. Retry the unfinished videos.");
     } finally {
       if (finishVideoAction(requestId)) {
         uploadCancellationRef.current = null;
         setCancelingUploads(false);
-        setUploadingQueueItemId("");
         setIsSubmitting(false);
       }
     }
@@ -680,7 +682,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           const note = video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
           label={item?.file.name || `Video ${index + 1}`} message={note}
-          disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item && uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
+          disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item?.stage === "uploading" ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
           {item?.previewUrl || video?.videoUrl ? <video className="tv-upload-preview" muted playsInline preload="metadata"
             src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
           <div className="dancer-upload-review-copy">

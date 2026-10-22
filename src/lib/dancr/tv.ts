@@ -30,7 +30,7 @@ import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { getManagedVideoMetricCounts } from "./tv-metric-counts";
 import { PublicApiError } from "../api-error-policy";
-import { assertServerJobActive, runWithServerJob, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../server-job.ts";
+import { assertServerJobActive, runWithServerJob, ServerJobTimeoutError, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../server-job.ts";
 
 export const MYDANCR_TV_BUCKET = "mydancr-tv-videos";
 export const MYDANCR_TV_MAX_BYTES = VIDEO_UPLOAD_MAX_BYTES;
@@ -1492,7 +1492,22 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     reasonCodes,
   }));
   return completed;
-  }, VIDEO_PROCESSING_JOB_TIMEOUT_MS);
+  }, VIDEO_PROCESSING_JOB_TIMEOUT_MS).catch(async error => {
+    if (!(error instanceof ServerJobTimeoutError)) throw error;
+    // The video job has ended, but its route reserves time to save a retryable
+    // result. Match the worker lease so late work cannot overwrite a newer review.
+    assertServerJobActive();
+    const errorCode = "video_moderation_timeout";
+    const update = admin.from("mydancr_tv_videos").update({
+      status: "submitted", moderation_decision: "review",
+      moderation_reason_codes: [errorCode], moderation_details: { errorCode },
+      moderation_completed_at: new Date().toISOString(),
+      review_notes: mediaReviewExplanation("video", "moderation_error", { reasonCodes: [errorCode] }),
+    });
+    const { data, error: updateError } = await matchVideoWorkerOwner(update, video)
+      .select("id, status, submitted_at, moderation_decision, moderation_reason_codes").maybeSingle();
+    return videoWorkerOutcome(data, updateError, video.id, "submitted");
+  });
 }
 
 function myDancrTvExpiry() {

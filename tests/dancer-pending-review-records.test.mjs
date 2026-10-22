@@ -37,15 +37,15 @@ test('saved rejection feedback is owner scoped and excludes avatar reviews and p
   assert.equal(rows[1].message, 'Multiple people');
 });
 
-async function pendingReviews(reviews, photos) {
+async function pendingReviews(reviews, photos, {avatarFailure=false}={}) {
   const signed = [], calls = [];
   const query = new Proxy({ then: resolve => resolve({ data: reviews }) }, { get: (target, key) => target[key] || ((...args) => { calls.push([key, ...args]); return query; }) });
   const context = vm.createContext({
     ...slot, ...mediaReview, ACTIVE_IMAGE_MODERATION_STATUSES: [], MAX_DANCER_PROFILE_PHOTOS: 30,
-    MODERATION_REVIEW_BUCKET: "review", MODERATION_TEMP_BUCKET: "temp",
+    MODERATION_REVIEW_BUCKET: "review", MODERATION_TEMP_BUCKET: "temp", APPROVED_PHOTO_BUCKET: "approved",
     createAdminSupabaseClient: () => ({
       from: () => query,
-      storage: { from: bucket => ({ createSignedUrl: async path => { signed.push([bucket, path]); return { data: { signedUrl: `/signed/${path}` } }; } }) },
+      storage: { from: bucket => ({ createSignedUrl: async (path, expiry) => { assert.equal(expiry,3600);signed.push([bucket, path]);if(avatarFailure&&path.endsWith('.avatar.jpg'))throw Error('Unavailable');return { data: { signedUrl: `/signed/${path}` } }; } }) },
     }),
   });
   vm.runInContext(compile(loader), context);
@@ -112,5 +112,30 @@ test("final media decisions take precedence and waiting review is distinct from 
   assert.equal(mediaReview.mediaReviewLabel("pending", "pending_review"), "Waiting for Club approval");
   assert.equal(mediaReview.mediaReviewLabel("submitted"), "Waiting for Club approval");
   assert.equal(mediaReview.mediaReviewLabel("pending", "moderation_error"), "Review delayed");
-  assert.equal(mediaReview.mediaReviewLabel("pending", "moderating"), "Uploading");
+  assert.equal(mediaReview.mediaReviewLabel("pending", "moderating"), "Checking photo…");
+});
+
+const checkedMain={id:'checked-main',decision:'review',status:'pending_review',upload_context:'profile_main',temporary_storage_path:'private-main.jpg',final_storage_path:'owner/profile/main.jpg',category_flags:{ai_recommended_approval:true,publication_prepared:true}};
+test('owner receives the prepared avatar preview without changing publication status',async()=>{
+  const {rows,signed,calls}=await pendingReviews([checkedMain],[]);
+  assert.equal(rows[0].avatarPreviewUrl,'/signed/owner/profile/main.jpg.avatar.jpg');
+  assert.equal(rows[0].review_status,'pending');assert.equal(rows[0].decision,'review');
+  assert.ok(!('avatarPhotoUrl' in rows[0]));
+  assert.deepEqual(signed,[['review','private-main.jpg'],['approved','owner/profile/main.jpg.avatar.jpg']]);
+  assert.ok(calls.some(c=>c.join(':')==='eq:user_id:owner'));
+  assert.ok(calls.some(c=>c[0]==='select'&&c[1].includes('category_flags')));
+});
+for(const changes of [
+  {status:'moderating'},{decision:'rejected'},{upload_context:'profile_gallery:1'},
+  {category_flags:{}},{category_flags:{ai_recommended_approval:true}},
+  {category_flags:{...checkedMain.category_flags,ai_recommended_rejection:true}},
+  {category_flags:{...checkedMain.category_flags,ai_needs_review:true}},
+  ...['other/profile/main.jpg','owner/../other.jpg','owner//main.jpg','owner/./main.jpg','owner/\\other.jpg',''].map(final_storage_path=>({final_storage_path})),
+])test('avatar preview requires checked prepared primary media and an owned path: '+JSON.stringify(changes),async()=>{
+  const {rows,signed}=await pendingReviews([{...checkedMain,...changes}],[]);
+  assert.equal(rows[0].avatarPreviewUrl,'');assert.ok(signed.every(([bucket])=>bucket!=='approved'));
+});
+test('missing avatar derivative does not prevent loading the main photo review',async()=>{
+  const {rows}=await pendingReviews([checkedMain],[],{avatarFailure:true});
+  assert.equal(rows[0].previewUrl,'/signed/private-main.jpg');assert.equal(rows[0].avatarPreviewUrl,'');
 });

@@ -63,7 +63,8 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
     tapPhoto() { this.target.props.onClick(); render(); },
     connectInput(click) { nodes().find(node => node.type === 'input').props.ref.current = { click }; },
     get crop() { return nodes().find(node => node.type === "SavedCrop"); },
-    get status() { return nodes().find(node => node.props?.role === "status").props.children; },
+    get status() { return nodes().find(node => node.props?.className === "dancer-main-photo-status").props.children; },
+    get reviewRetry() { return nodes().find(node => node.type === 'MediaRetry'); },
     get badge() { return nodes().find(node => node.props?.className === 'dancer-main-photo-state').props.children; },
     update(next) { profile = next; render(); },
     async remove() { nodes().find(node => node.type === 'button' && /Remove/.test(node.props.children)).props.onClick(); await new Promise(resolve => setImmediate(resolve)); render(); },
@@ -139,7 +140,9 @@ test('choosing another processing main photo preserves the approved replacement 
 
 test('moderation work and delays use the same labels as the media library', () => {
   for (const [status, label] of [['moderating', 'Checking photo…'], ['error', 'Review delayed'], ['pending_review', 'Waiting for Club approval']]) {
-    assert.equal(fixture({ pending_photo_reviews: [{ ...pending, status }] }).badge, label);
+    const ui = fixture({ pending_photo_reviews: [{ ...pending, status }] });
+    assert.equal(ui.badge, label);
+    assert.equal(Boolean(ui.reviewRetry), status === 'error');
   }
 });
 

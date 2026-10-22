@@ -111,8 +111,11 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos :is(.dancer-avatar-panel,.dancer-main-photo-panel) {
   gap:4px !important; align-content:start;
 }
-body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos :is(.dancer-avatar-panel,.dancer-main-photo-copy) {
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-avatar-panel {
   display:grid; grid-template-columns:minmax(0,1fr) minmax(0,max-content) 44px minmax(0,1fr); justify-items:center; align-items:center; gap:4px;
+}
+body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-copy {
+  display:grid; grid-template-columns:minmax(0,1fr); justify-items:center; align-items:start; gap:8px;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-avatar-editor {
   display:contents;
@@ -132,10 +135,11 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
   grid-column:3; grid-row:2;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-state {
-  grid-column:2; grid-row:1;
+  grid-column:1; grid-row:auto; order:0; box-sizing:border-box; min-width:0; max-width:100%;
+  text-align:center; white-space:normal; overflow-wrap:anywhere; line-height:1.4;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-copy .dancer-photo-controls-row {
-  grid-column:3; grid-row:1;
+  grid-column:1; grid-row:auto;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-copy > :is(button,p),
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-avatar-upload-controls > :not(.dancer-photo-controls) {
@@ -148,7 +152,7 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
   grid-row:3;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-main-photo-copy .dancer-photo-options {
-  grid-row:2;
+  grid-row:auto;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos :is(.dancer-avatar-upload-controls,.dancer-main-photo-actions):has(> .dancer-photo-controls[hidden]) {
   display:none !important;
