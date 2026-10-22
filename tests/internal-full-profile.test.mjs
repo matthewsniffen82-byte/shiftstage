@@ -169,13 +169,14 @@ test('VIP profiles replace Free Entry with a queue action and update Added witho
   Object.assign(f.context, {
     shiftStatus: () => ({}), isWorkingTonight: () => false, shiftsMarkup: () => 'club',
     profileLocationStatusTile: () => '', liveProfileModalActionsMarkup: () => 'Follow Share',
-    liveProfileGoingActionsMarkup: () => 'Going', dancerClubDealState: () => assert.fail('VIP must not show Free Entry'),
+    liveProfileGoingActionsMarkup: () => assert.fail('VIP must not offer I’m Going'), dancerClubDealState: () => assert.fail('VIP must not show Free Entry'),
     profileDealTileMarkup: () => assert.fail('VIP must not render a deal tile'),
     dancerProfileTonightTravelActionsMarkup: () => assert.fail('No secondary upcoming Free Entry'),
   });
   const markup = f.context.profileModalGridMarkup(profile);
   assert.match(markup, /data-vip-profile-request/); assert.match(markup, />Request<\/button>/);
   assert.match(markup, /Follow Share/);
+  assert.match(markup, /profile-tonight-card is-vip-profile/);
   f.bridge.sendVipProfileRequest();
   assert.equal(f.messages.at(-1)[0].type, 'mydancr:vip-profile-request');
   assert.equal(f.messages.at(-1)[0].profileId, id(1));
@@ -197,6 +198,13 @@ test('VIP profiles replace Free Entry with a queue action and update Added witho
   await f.bridge.openPublicProfileMessage({ ...event, data: { ...event.data, vipRequest: undefined } });
   assert.equal(f.bridge.profile().vipProfile, false, 'VIP actions must not leak into ordinary customer profiles');
   assert.equal(f.bridge.vipProfileRequestActionsMarkup(f.bridge.profile()), '');
+  Object.assign(f.context, {
+    liveProfileGoingActionsMarkup: () => 'I’m Going', dancerClubDealState: () => ({ key: 'none' }),
+    dancerProfileTonightTravelActionsMarkup: () => '',
+  });
+  const customerMarkup = f.context.profileModalGridMarkup(f.bridge.profile());
+  assert.match(customerMarkup, /I’m Going/);
+  assert.doesNotMatch(customerMarkup, /is-vip-profile|data-vip-profile-request/);
 });
 
 test('customer viewer rejects private, unverified, mismatched and foreign profile responses', async () => {

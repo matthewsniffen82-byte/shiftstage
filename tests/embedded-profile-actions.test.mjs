@@ -46,7 +46,7 @@ const profileComponent = load("app/dancers/[slug]/PublicDancerProfile.tsx", {
     ProfileShareButton: () => h("button", { "aria-label": "Share profile" }, "Share"),
   },
   "./ProfileViewTracker": { ProfileViewTracker: () => null },
-  "./VipProfileRequest": { default: ({ children }) => children },
+  "./VipProfileRequest": { default: () => h("button", { "data-vip-profile-request": true }, "Request") },
 }).default;
 const directions = "https://www.google.com/maps/dir/?api=1&destination=Spearmint%20Rhino%2C%20Boise%2C%20ID";
 const profile = {
@@ -91,11 +91,24 @@ test("ordinary public profiles retain Follow, Share and their venue page link", 
   const html = renderToStaticMarkup(h(profileComponent, { profile, tvVideos: [] }));
   assert.match(html, /data-follow-control="text"/);
   assert.match(html, /aria-label="Share profile"/);
+  assert.match(html, /I’m Going/);
   assert.match(html, /<dt>Followers<\/dt>/);
   assert.match(html, /href="\/venues\/rhino"/);
   assert.doesNotMatch(html, /google\.com\/maps/);
   assert.equal(galleryProps.showSocialActions, true);
   assert.equal(galleryProps.viewerVenue.href, "/venues/rhino");
+});
+
+test("VIP-linked profiles retain Follow and Share with Request as their only visit action", () => {
+  const html = renderToStaticMarkup(h(profileComponent, {
+    profile, tvVideos: [], vipReturnHref: "/vip?venueId=venue-one#vip-plan",
+    activeDeals: [{ id: "deal-one", venueId: "venue-one" }],
+  }));
+  assert.match(html, /data-follow-control="text"/);
+  assert.match(html, /aria-label="Share profile"/);
+  assert.match(html, /data-vip-profile-request="true">Request/);
+  assert.match(html, /profile-tonight-card is-vip-profile/);
+  assert.doesNotMatch(html, /<button[^>]*class="[^"]*profile-action-going|>I’m Going<|>Free Entry</);
 });
 
 // Render the already-open media component without a browser, network or effects.

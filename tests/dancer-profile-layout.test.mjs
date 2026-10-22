@@ -316,7 +316,7 @@ test("profile action centers stay mathematically balanced across supported phone
 test("only Working Now activates dancer deal attribution while Upcoming links to the venue page", () => {
   assert.match(profilePage, /data-working-now-indicator="">NOW<\/span>/);
   assert.doesNotMatch(profilePage, /profile-titlebar-status is-live">Working Now<\/span>/);
-  assert.match(profileActions, /className=\{`profile-tonight-card\$\{hasLiveActions \? " is-now" : " is-no-schedule"\}\$\{hasClubDeal \? " has-club-deal" : ""\}`\}/);
+  assert.match(profileActions, /className=\{`profile-tonight-card[^`]*\$\{hasLiveActions \? " is-now" : " is-no-schedule"\}\$\{hasClubDeal \? " has-club-deal" : ""\}`\}/);
   assert.match(profilePage, /className="profile-shift-card profile-working-card is-now"/);
   assert.match(profilePage, /className="profile-working-destination"[\s\S]*?id="profile-working-title">Working now<\/span>[\s\S]*?<VenuePinIcon \/>[\s\S]*?<strong>\{activeShift\.venueName\}<\/strong>/);
   assert.match(profilePage, /const directionsHref = embedded \? venueDirectionsHref : undefined/);

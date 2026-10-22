@@ -195,6 +195,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
         <DancerProfileActions
           preview={preview && !embedded}
           showSocialActions={!embedded}
+          vipRequest={vipRequest}
           dancerId={profile.id}
           hasClubDeal={Boolean(activeDeal) || vipRequest}
           shareControl={embedded ? undefined : <ProfileShareButton dancerId={profile.id} stageName={profile.stageName} preview={preview} />}

@@ -734,6 +734,7 @@
           : "no-schedule";
       const tonightClasses = [
         "profile-tonight-card",
+        vip ? "is-vip-profile" : "",
         isWorkingTonight(profile, city) && profile.scheduled ? "is-now" : "",
         profile.scheduled && !isWorkingTonight(profile, city) ? "is-upcoming" : "",
         !profile.scheduled ? "is-no-schedule" : "",
@@ -746,7 +747,7 @@
           <section class="${tonightClasses}" data-profile-shift-state="${shiftState}" data-profile-deal-state="${escapeHtml(dealState.key)}" aria-label="Tonight">
             ${shiftsMarkup(profile, status, { preview: Boolean(options.preview), city })}
             ${dealMarkup ? `<div class="profile-tonight-deal">${dealMarkup}</div>` : ""}
-            ${options.preview ? "" : internal ? internalProfileRequestActionsMarkup(profile) : liveProfileGoingActionsMarkup(profile)}
+            ${options.preview || vip ? "" : internal ? internalProfileRequestActionsMarkup(profile) : liveProfileGoingActionsMarkup(profile)}
             ${travelActionsMarkup}
           </section>
           ${profileLocationStatusTile(profile, city)}

@@ -381,6 +381,7 @@ export function DancerProfileActions({
   hasClubDeal = false,
   preview = false,
   showSocialActions = true,
+  vipRequest = false,
 }: {
   dancerId: string;
   shifts: ShiftAction[];
@@ -389,6 +390,7 @@ export function DancerProfileActions({
   hasClubDeal?: boolean;
   preview?: boolean;
   showSocialActions?: boolean;
+  vipRequest?: boolean;
 }) {
   const {
     mediaFollowAction,
@@ -705,12 +707,12 @@ export function DancerProfileActions({
       </div> : null}
       <section
         aria-label="Tonight"
-        className={`profile-tonight-card${hasLiveActions ? " is-now" : " is-no-schedule"}${hasClubDeal ? " has-club-deal" : ""}`}
+        className={`profile-tonight-card${vipRequest ? " is-vip-profile" : ""}${hasLiveActions ? " is-now" : " is-no-schedule"}${hasClubDeal ? " has-club-deal" : ""}`}
         data-profile-deal-state={hasClubDeal ? "available" : "none"}
         data-profile-shift-state={hasLiveActions ? "now" : "no-schedule"}
       >
         {children}
-        <div className="live-actions profile-actions-compact profile-venue-actions" aria-label="Plan your visit" aria-busy={goingSaving}>
+        {!vipRequest ? <div className="live-actions profile-actions-compact profile-venue-actions" aria-label="Plan your visit" aria-busy={goingSaving}>
           <button
             aria-disabled={!actionShift ? "true" : undefined}
             aria-label={actionShift ? (isGoing ? "Remove this shift from your plans" : "Add this shift to your plans") : "I’m Going unavailable until a shift is posted"}
@@ -726,7 +728,7 @@ export function DancerProfileActions({
               <span>{isGoing ? "Going" : "I’m Going"}</span>
             </span>
           </button>
-        </div>
+        </div> : null}
         {!showSocialActions && status ? <span className="profile-action-status" role="status">{status}</span> : null}
       </section>
       {accountRequiredAction ? (
