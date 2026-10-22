@@ -88,7 +88,7 @@ function renderWorkspace(workspace, { opened = [], ready = true } = {}) {
   } }).outputText, { exports, require: name => {
     if (name === "react") return { ...React, useState(initial) {
       const index = hook++;
-      return React.useState(index === 4 ? workspace : index === 5 ? opened : initial);
+      return React.useState(index === 5 ? workspace : index === 6 ? opened : initial);
     } };
     if (name === "react/jsx-runtime") return require(name);
     if (name === "next/dynamic") return { default: loader => component(loader.toString().match(/\.\/(\w+)/)[1]) };
