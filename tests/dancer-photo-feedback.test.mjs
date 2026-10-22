@@ -75,7 +75,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
     get reviewButtons() { return nodes().filter(node => node.type === "MediaRetryButton"); },
     get buttons() { return nodes().filter(node => node.type === "button"); },
     get replacements() { return nodes().filter(node => node.type === "input" && /^Replace photo/.test(node.props['aria-label'] || '')); },
-    get progress() { return nodes().filter(node => node.type === "progress"); },
+    get progress() { return nodes().filter(node => node.props?.role === "progressbar"); },
     get uploadMessages() { return nodes().filter(node => node.props?.className === "photo-upload-status").map(node => node.props.children); },
     select(files = [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })], source = "gallery") {
       nodes().find(node => node.type === "input" && node.props.className === "photo-source-input"
@@ -110,8 +110,11 @@ test("overlapping photo reviews reserve selection order and show real progress b
   await ui.settle();
   assert.equal(ui.posts.length, 2, 'the second upload starts before the first review completes');
   ui.posts[0].onUploadProgress(43); ui.posts[1].onUploadProgress(100); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Uploading', 'Checking photo…', 'Waiting to upload']);
-  assert.equal(ui.progress[0].props.value, 43);
+  assert.deepEqual(ui.statuses, ['Uploading · 43%', 'Checking photo…', 'Waiting to upload']);
+  assert.deepEqual(ui.progress.map(bar => bar.props['aria-valuenow']), [43, undefined, 0]);
+  assert.equal(ui.progress[0].props.children.props.style.width, '43%');
+  assert.match(ui.progress[1].props.className, /is-indeterminate/);
+  assert.equal(ui.progress[1].props.children.props.style, undefined, 'checks have no invented percentage');
   assert.equal(ui.replacements.length, 0, 'active and queued uploads cannot be replaced');
   assert.equal(ui.reviewButtons.length, 0);
   assert.equal(ui.buttons.filter(button => button.props.className !== 'photo-source-action is-disabled').length, 0);
@@ -230,10 +233,10 @@ test("mixed batches clear approvals while keeping unresolved photos in selection
   ui.select(["first", "second", "third"].map(name => new File([name], `${name}.jpg`, { type: "image/jpeg" })));
   await ui.settle();
   releases[0]({ decision: "approved", photo: approved() }); await ui.settle();
-  assert.deepEqual(ui.statuses, ["Approved", "Uploading", "Uploading"]);
+  assert.deepEqual(ui.statuses, ["Approved", "Uploading · 0%", "Uploading · 0%"]);
   assert.deepEqual(ui.labels, ["Selected photo 1", "Selected photo 2", "Selected photo 3"]);
   releases[1]({ decision: "rejected", moderationRecordId: "rejected", message: "Multiple people" }); await ui.settle();
-  assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Uploading"]);
+  assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Uploading · 0%"]);
   releases[2]({ decision: "review", photo: { id: "review", reviewStatus: "pending" } }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Not approved", "Waiting for Club approval"]);
   assert.deepEqual(ui.labels, ["second.jpg", "Selected photo 3"]);

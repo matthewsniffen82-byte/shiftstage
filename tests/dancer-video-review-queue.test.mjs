@@ -67,6 +67,7 @@ function harness(initial = [], { maxVideos = 50, upload = async options => optio
     get sourceButtons() { return nodes().filter(node => node.type === 'button' && node.props.className?.includes('tv-video-source-action')); },
     get reviewActions() { return this.reviews.flatMap(card => nodes(card).filter(node => node.type === 'button' || node.type === './DancerMediaRetryButton')); },
     get uploadMessages() { return nodes().filter(node => node.props?.className === 'tv-studio-status').map(node => node.props.children); },
+    get progress() { return nodes().filter(node => node.props?.role === 'progressbar'); },
     setPermission(index, checked) { nodes().filter(node => node.type === 'input' && node.props.type === 'checkbox')[index].props.onChange({ target: { checked } }); render(); },
     openSource(index) {
       nodes().filter(node => node.type === 'input' && node.props.type === 'file').forEach((node, i) => { node.props.ref.current = { click: () => calls.push(['picker', i]) }; });
@@ -123,15 +124,21 @@ test('video upload and checks stay compact with no actions or repeated uploading
   let finishUpload;
   const ui = harness([], { upload: options => new Promise(resolve => { options.onProgress(40); finishUpload = resolve; }) });
   await ui.settle(); ui.permissions(); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Uploading']);
+  assert.deepEqual(ui.statuses, ['Uploading · 40%']);
+  assert.equal(ui.progress[0].props['aria-valuenow'], 40);
+  assert.equal(ui.progress[0].props.children.props.style.width, '40%');
   assert.deepEqual(ui.reviewActions, []);
   assert.deepEqual(ui.uploadMessages, []);
   finishUpload(); await ui.settle();
   assert.deepEqual(ui.statuses, ['Checking video…']);
+  assert.equal(ui.progress[0].props['aria-valuenow'], undefined);
+  assert.match(ui.progress[0].props.className, /is-indeterminate/);
+  assert.equal(ui.progress[0].props.children.props.style, undefined, 'checks have no invented percentage');
   assert.deepEqual(ui.reviewActions, [], 'server checks keep actions hidden after transfer completes');
   const id = ui.calls.find(call => call[1] === 'PATCH')[0];
   await ui.refresh([video(id, 'submitted')]);
   assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
+  assert.equal(ui.progress.length, 0, 'completed checks stop the progress bar while awaiting a person');
   assert.deepEqual(ui.reviewActions.map(node => node.props.children), ['Remove']);
 });
 

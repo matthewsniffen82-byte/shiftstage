@@ -577,8 +577,9 @@ export function DancerPhotoPanel({
           {reviews.map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
             const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
-            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "checking" ? "Checking photo…" : item && ["preparing", "uploading"].includes(item.stage) ? "Uploading" : item?.error ? "Upload failed" : "Waiting to upload";
-            const processing = ["Uploading", "Checking photo…", "Waiting to upload"].includes(uploadStatus);
+            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "checking" ? "Checking photo…" : item?.stage === "preparing" ? "Preparing photo…" : item?.stage === "uploading" ? "Uploading" : item?.error ? "Upload failed" : "Waiting to upload";
+            const processing = ["Uploading", "Preparing photo…", "Checking photo…", "Waiting to upload"].includes(uploadStatus);
+            const uploadProgress = uploadStatus === "Uploading" ? item?.progress : uploadStatus === "Waiting to upload" ? 0 : undefined;
             if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
               label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
               disabled={photoActionBusy} onDismiss={() => dismissRejectedPhoto(result.id)} />;
@@ -587,8 +588,12 @@ export function DancerPhotoPanel({
                 <div className="photo-preview" style={{ backgroundImage: `url(${item?.previewUrl || result?.imageUrl || ""})` }} aria-label="Photo preview">{!item?.previewUrl && !result?.imageUrl ? <span>Photo</span> : null}</div>
                 <span className="dancer-upload-review-copy">
                   <strong>{`Selected photo ${selectionNumber}`}</strong>
-                  <small role="status" aria-live="polite">{uploadStatus}</small>
-                  {item?.stage === "uploading" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
+                  <small role="status" aria-live="polite">{uploadStatus === "Uploading" ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
+                  {processing ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
+                    role="progressbar" aria-label={`Photo ${selectionNumber}: ${uploadStatus}`}
+                    aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
+                    <span style={uploadProgress === undefined ? undefined : { width: `${uploadProgress}%` }} />
+                  </span> : null}
                   {result?.note ? <em>{result.note}</em> : null}
                   {result && !awaitingClubApproval && !processing ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
                     disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(result.id, data)} /> : null}

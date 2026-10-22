@@ -649,8 +649,9 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(item.uploadId)} />;
           const reviewStatus = video ? videoReviewStatus(video.status, video.moderationDecision) : "";
           const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
-          const uploadStatus = item?.error ? "Upload failed" : item?.stage === "checking" ? "Checking video…" : item && ["validating", "uploading"].includes(item.stage) ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Checking video…" : "Waiting to upload";
-          const processing = ["Uploading", "Checking video…", "Waiting to upload"].includes(uploadStatus);
+          const uploadStatus = item?.error ? "Upload failed" : item?.stage === "checking" ? "Checking video…" : item?.stage === "validating" ? "Preparing video…" : item?.stage === "uploading" ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Checking video…" : "Waiting to upload";
+          const processing = ["Uploading", "Preparing video…", "Checking video…", "Waiting to upload"].includes(uploadStatus);
+          const uploadProgress = item?.stage === "uploading" ? item.progress : uploadStatus === "Waiting to upload" ? 0 : undefined;
           const note = video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
           label={item?.file.name || `Video ${index + 1}`} message={note}
@@ -659,8 +660,12 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
           <div className="dancer-upload-review-copy">
             <strong>Selected video {index + 1}</strong>
-            <small role="status" aria-live="polite">{uploadStatus}</small>
-            {item?.stage === "uploading" ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
+            <small role="status" aria-live="polite">{uploadStatus === "Uploading" ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
+            {processing ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
+              role="progressbar" aria-label={`Video ${index + 1}: ${uploadStatus}`}
+              aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
+              <span style={uploadProgress === undefined ? undefined : { width: `${uploadProgress}%` }} />
+            </span> : null}
             {item?.error || note ? <p>{item?.error || note}</p> : null}
             {video && !item?.error && !awaitingClubApproval && !processing ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} moderationStatus={reviewStatus} disabled={videoActionBusy} onBusyChange={setRetrying}
               onRetried={() => { void loadWorkspace({ silent: true }); }} /> : null}
@@ -783,7 +788,6 @@ function DancerTvStudioStyles() {
       .tv-upload-queue-item.is-uploading { border-color: rgba(34,211,238,.58); box-shadow: inset 3px 0 0 rgba(34,211,238,.8); }
       .tv-upload-preview { width: 96px; aspect-ratio: 9 / 16; max-height: 170px; object-fit: contain; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: #000; }
       .tv-upload-queue-item > div { min-width: 0; display: grid; align-content: start; gap: 6px; }
-      .tv-upload-queue-item progress { width: 100%; height: 7px; accent-color: #7eeaff; }
       .tv-upload-queue-item p { margin: 0; color: #fca5a5; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
       .tv-upload-queue-item button { width: fit-content; min-height: 36px; padding: 0 12px; border: 1px solid rgba(239,68,68,.36); border-radius: 8px; color: #fecaca; background: rgba(239,68,68,.12); font-weight: 850; cursor: pointer; }
       .tv-queue-actions { display: flex; flex-wrap: wrap; gap: 7px; }
