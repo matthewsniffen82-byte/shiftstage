@@ -1,0 +1,57 @@
+/* Share compact upload receipts across onboarding, photos and videos. */
+@layer dancr-upload-reviews {
+  .dancer-upload-review-card {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-height: 0 !important;
+    padding: 8px !important;
+  }
+  .dancer-upload-review-card > :is(.photo-preview, .tv-upload-preview) {
+    width: 56px !important;
+    height: 75px !important;
+    min-height: 0 !important;
+    max-height: 75px !important;
+    object-fit: cover;
+    border-radius: 6px !important;
+  }
+  .dancer-upload-review-card > .dancer-upload-review-copy {
+    min-width: 0;
+    gap: 4px !important;
+  }
+  .dancer-upload-review-copy > :is(strong, small, em, p) {
+    margin: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    overflow-wrap: anywhere;
+  }
+  .dancer-upload-review-copy > strong {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+  }
+  .dancer-upload-review-card.is-awaiting-club > .dancer-upload-review-copy {
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    column-gap: 8px !important;
+  }
+  .is-awaiting-club > .dancer-upload-review-copy > :is(strong, small) {
+    grid-column: 1;
+  }
+  .is-awaiting-club > .dancer-upload-review-copy > :is(em, p) {
+    grid-column: 1 / -1;
+  }
+  .is-awaiting-club > .dancer-upload-review-copy > :is(.photo-queue-actions, .tv-queue-actions) {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    margin: 0 !important;
+  }
+  .dancer-upload-review-copy > :is(.photo-queue-actions, .tv-queue-actions) > button {
+    width: auto !important;
+    min-height: 44px !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+}

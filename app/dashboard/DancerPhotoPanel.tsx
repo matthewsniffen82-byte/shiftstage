@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
 import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
-import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
@@ -15,6 +15,7 @@ import type { LoadState, DancerPhotoItem, DancerPhotoQueueItem } from "./dashboa
 import { DANCER_PHOTOS_KEEP_OPEN_EVENT } from "./DashboardShared";
 import { preparePhotoUpload } from "./prepare-photo-upload";
 import { runMediaUploadBatch } from "./media-upload-batch";
+import "./dancer-upload-queue.css";
 export function DancerPhotoPanel({
   uploadOnly = false,
   onBusyChange,
@@ -575,26 +576,27 @@ export function DancerPhotoPanel({
           {!uploadOnly ? <strong>Upload status · {reviews.length}</strong> : null}
           {reviews.map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
+            const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
             if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
               label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
               disabled={photoActionBusy} onDismiss={() => dismissRejectedPhoto(result.id)} />;
             return (
-              <div className={`photo-review-card is-${result?.status || "pending"} ${item && ["preparing", "uploading", "checking"].includes(item.stage) ? "is-uploading" : ""}`.trim()} key={item?.id || result?.id}>
+              <div className={`photo-review-card is-${result?.status || "pending"} dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item && ["preparing", "uploading", "checking"].includes(item.stage) ? "is-uploading" : ""}`.trim()} key={item?.id || result?.id}>
                 <div className="photo-preview" style={{ backgroundImage: `url(${item?.previewUrl || result?.imageUrl || ""})` }} aria-label="Photo preview">{!item?.previewUrl && !result?.imageUrl ? <span>Photo</span> : null}</div>
-                <span>
+                <span className="dancer-upload-review-copy">
                   <strong>{`Selected photo ${selectionNumber}`}</strong>
                   <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item && ["preparing", "uploading", "checking"].includes(item.stage) ? "Uploading" : item?.error ? "Upload failed" : "Waiting to upload"}</small>
                   {item?.stage === "uploading" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
                   {result?.note ? <em>{result.note}</em> : null}
-                  {result ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
+                  {result && !awaitingClubApproval ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
                     disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(result.id, data)} /> : null}
                   {item?.error ? <em>{item.error}</em> : null}
                   {result?.status === "approved" ? <span className="photo-queue-actions"><em>Approved. Updating your library.</em><RefreshButton label="Refresh photo library" busy={retrying} type="button" disabled={photoActionBusy} onClick={() => void refreshPhotoLibrary()} /></span> : <span className="photo-queue-actions">
-                    {item?.error ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
-                    <label className="media-review-replace">Replace<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" disabled={photoActionBusy} aria-label={`Replace photo ${selectionNumber}`} onChange={event => {
+                    {item?.error && !awaitingClubApproval ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+                    {!awaitingClubApproval ? <label className="media-review-replace">Replace<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" disabled={photoActionBusy} aria-label={`Replace photo ${selectionNumber}`} onChange={event => {
                       const file = event.target.files?.[0]; event.target.value = "";
                       if (file) queuePhotos([file], "gallery", { photoId: result?.id, queueId: item?.id });
-                    }} /></label>
+                    }} /></label> : null}
                     <button className="photo-delete-button" disabled={photoActionBusy} onClick={() => result ? void deletePhoto(result) : item && removeQueuedPhoto(item.id)} type="button">Remove</button>
                   </span>}
                 </span>

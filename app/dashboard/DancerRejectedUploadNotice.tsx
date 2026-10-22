@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { requestDancerPhotosJson, requestDancerTvVideoJson } from "./dashboard-session";
 import "./dancer-rejected-upload-notice.css";
 
-export const REJECTION_NOTICE_MS = 10_000;
+export const REJECTION_NOTICE_MS = 5_000;
 
 export default function DancerRejectedUploadNotice({ id, kind, label, message, disabled = false, onDismiss }: {
   id: string;

@@ -65,6 +65,7 @@ function harness(initial = [], { maxVideos = 50 } = {}) {
     get notes() { return this.reviews.flatMap(card => card.type === './DancerRejectedUploadNotice' ? [card.props.message] : nodes(card).filter(node => node.type === 'p').map(node => node.props.children)); },
     get library() { return nodes().find(node => node.type === './DancerVideoPreviews')?.props.videos || []; },
     get sourceButtons() { return nodes().filter(node => node.type === 'button' && node.props.className?.includes('tv-video-source-action')); },
+    get reviewActions() { return this.reviews.flatMap(card => nodes(card).filter(node => node.type === 'button' || node.type === './DancerMediaRetryButton')); },
     setPermission(index, checked) { nodes().filter(node => node.type === 'input' && node.props.type === 'checkbox')[index].props.onChange({ target: { checked } }); render(); },
     openSource(index) {
       nodes().filter(node => node.type === 'input' && node.props.type === 'file').forEach((node, i) => { node.props.ref.current = { click: () => calls.push(['picker', i]) }; });
@@ -157,16 +158,27 @@ test('asynchronous video rejection keeps the same upload with the rejection reas
   assert.equal(ui.library.length, 0);
 });
 
-test('replacement at the video limit preserves the original on picker and crop cancellation', async () => {
-  const ui = harness([video('waiting', 'submitted')], { maxVideos: 1 }); await ui.settle();
+test('club approval videos offer only Remove through refreshes and remove the saved upload', async () => {
+  const ui = harness([video('waiting', 'submitted')]); await ui.settle();
+  assert.deepEqual(ui.reviewActions.map(node => node.props.children), ['Remove']);
+  assert.match(ui.reviews[0].props.className, /is-awaiting-club/);
+  await ui.refresh([video('waiting', 'review')]);
+  assert.deepEqual(ui.reviewActions.map(node => node.props.children), ['Remove']);
+  ui.click('Remove'); await ui.settle();
+  assert.ok(ui.calls.some(call => call[0] === 'waiting' && call[1] === 'DELETE'));
+  assert.equal(ui.reviews.length, 0);
+});
+
+test('delayed review replacement at the video limit preserves the original on picker and crop cancellation', async () => {
+  const ui = harness([video('waiting', 'error')], { maxVideos: 1 }); await ui.settle();
   ui.click('Replace'); ui.permissions(); ui.select([]); await ui.settle();
   assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
   ui.cancelCrop(true); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Waiting for Club approval']); assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
+  assert.deepEqual(ui.statuses, ['Review delayed']); assert.ok(!ui.calls.some(call => call[1] === 'DELETE'));
 });
 
 test('failed replacement remains retryable and never puts an unapproved video in the library', async () => {
-  const ui = harness([video('waiting', 'submitted')], { maxVideos: 1 }); await ui.settle();
+  const ui = harness([video('waiting', 'error')], { maxVideos: 1 }); await ui.settle();
   ui.click('Replace'); ui.permissions(); ui.setUploadError(true); ui.select(); await ui.settle();
   assert.deepEqual(ui.statuses, ['Upload failed']); assert.equal(ui.library.length, 0);
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);

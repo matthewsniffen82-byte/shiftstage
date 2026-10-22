@@ -10,14 +10,14 @@ import { loadMediaRetryComponent } from './helpers/media-retry-component.mjs';
 
 const retry = loadMediaRetryComponent();
 for (const kind of ['photo', 'video']) {
-  for (const status of ['pending', 'pending_review', 'moderation_error', 'moderation_retry', 'error', 'review', 'submitted', 'moderating']) {
+  for (const status of ['pending', 'moderation_error', 'moderation_retry', 'error', 'moderating']) {
     test(`${kind} ${status} shows review retry`, () => {
       const html = renderToStaticMarkup(React.createElement(retry.default, { id: 'item', kind, status }));
       assert.match(html, new RegExp(`aria-label="Retry ${kind} review"`));
       assert.match(html, /type="button"/);
     });
   }
-  for (const status of ['approved', 'live', 'rejected', 'denied', 'removed', 'hidden', 'expired', 'uploading', 'failed', 'unknown']) {
+  for (const status of ['pending_review', 'review', 'submitted', 'completed', 'approved', 'live', 'rejected', 'denied', 'removed', 'hidden', 'expired', 'uploading', 'failed', 'unknown']) {
     test(`${kind} ${status} cannot restart moderation from the review button`, () => {
       assert.equal(renderToStaticMarkup(React.createElement(retry.default, { id: 'item', kind, status })), '');
     });
@@ -26,6 +26,7 @@ for (const kind of ['photo', 'video']) {
 test('final media state takes precedence over stale moderation metadata', () => {
   assert.equal(retry.canRetryMediaReview('approved', 'moderation_error'), false);
   assert.equal(retry.canRetryMediaReview('rejected', 'pending_review'), false);
+  assert.equal(retry.canRetryMediaReview('pending', 'pending_review'), false);
 });
 
 function ui({ kind = 'photo', failure = false } = {}) {

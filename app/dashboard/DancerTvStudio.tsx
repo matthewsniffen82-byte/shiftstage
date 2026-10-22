@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { MAX_DANCER_PROFILE_VIDEOS } from "@/src/lib/dancr/media-limits";
-import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
@@ -25,6 +25,7 @@ import {
 import { cropProfileVideo } from "./profile-video-crop";
 import { VIDEO_UPLOAD_MAX_SECONDS, VIDEO_UPLOAD_MAX_BYTES } from "@/src/lib/dancr/video-upload-edit-policy";
 import type { VideoUploadEdit } from "@/src/lib/dancr/video-upload-edit-policy";
+import "./dancer-upload-queue.css";
 
 type Workspace = {
   profile: {
@@ -655,23 +656,24 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       {reviews.length ? <div className="tv-upload-queue" aria-label="Videos awaiting approval">
         <strong>Video uploads · {reviews.length}</strong>
         {reviews.map(({ item, video }, index) => {
+          const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(video.status));
           const note = video ? mediaReviewExplanation("video", video.status, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
           label={item?.file.name || `Video ${index + 1}`} message={note}
-          disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item ${item && uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
+          disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item && uploadingQueueItemId === item.id ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
           {item?.previewUrl || video?.videoUrl ? <video className="tv-upload-preview" muted playsInline preload="metadata"
             src={item?.previewUrl || video?.videoUrl} poster={video?.posterUrl || undefined} onLoadedMetadata={event => primeVideoPreviewFrame(event.currentTarget)} /> : <div className="tv-upload-preview">Video</div>}
-          <div>
+          <div className="dancer-upload-review-copy">
             <strong>Selected video {index + 1}</strong>
             <small>{item?.error ? "Upload failed" : item && ["validating", "uploading", "checking"].includes(item.stage) ? "Uploading" : video ? statusLabel(video.status) : item?.stage === "submitted" ? "Uploading" : "Waiting to upload"}</small>
             {item?.stage === "uploading" ? <progress aria-label={`Video ${index + 1} upload progress`} max="100" value={item.progress} /> : null}
             {note ? <p>{note}</p> : null}
             {item?.error ? <p>{item.error}</p> : null}
-            {video && !item?.error ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={videoActionBusy} onBusyChange={setRetrying}
+            {video && !item?.error && !awaitingClubApproval ? <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={videoActionBusy} onBusyChange={setRetrying}
               onRetried={() => { void loadWorkspace({ silent: true }); }} /> : null}
             <span className="tv-queue-actions">
-              {item?.error ? <button disabled={videoActionBusy} onClick={() => void uploadVideoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
-              <button type="button" disabled={videoActionBusy} onClick={() => { setReplacement({ videoId: video?.id, queueId: item?.id }); }}>Replace</button>
+              {item?.error && !awaitingClubApproval ? <button disabled={videoActionBusy} onClick={() => void uploadVideoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
+              {!awaitingClubApproval ? <button type="button" disabled={videoActionBusy} onClick={() => { setReplacement({ videoId: video?.id, queueId: item?.id }); }}>Replace</button> : null}
               <button disabled={videoActionBusy} onClick={() => video ? void removeVideo(video.id) : item && void removeQueuedVideo(item)} type="button">Remove</button>
             </span>
           </div>

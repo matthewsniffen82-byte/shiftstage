@@ -14,6 +14,10 @@ export function mediaReviewLabel(status: string, moderationStatus = "") {
   return "Check upload status";
 }
 
+export function isAwaitingClubApproval(status: string, moderationStatus = "") {
+  return mediaReviewLabel(status, moderationStatus) === "Waiting for Club approval";
+}
+
 /** Owner-facing feedback only: never display raw provider diagnostics or guess a missing reason. */
 export function mediaReviewExplanation(kind: "photo" | "video", status: string, {
   moderationStatus = "", reasonCodes, message,

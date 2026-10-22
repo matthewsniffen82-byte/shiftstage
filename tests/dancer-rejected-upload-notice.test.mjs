@@ -44,12 +44,12 @@ function harness(kind = 'photo', response) {
   render(); return ui;
 }
 
-for (const kind of ['photo', 'video']) test(`${kind} shows the reason, then clears only the rejected ID ten seconds after appearing`, async () => {
+for (const kind of ['photo', 'video']) test(`${kind} shows the reason, then clears only the rejected ID five seconds after appearing`, async () => {
   const ui = harness(kind);
   assert.equal(ui.tree.props.role, 'status');
   assert.equal(ui.tree.props.children[1].props.children, 'Remove the contact overlay.');
   await ui.advance(20_000); assert.equal(ui.calls.length, 0, 'offscreen is not reading time');
-  ui.visible(true); await ui.advance(9_999); assert.equal(ui.calls.length, 0);
+  ui.visible(true); await ui.advance(4_999); assert.equal(ui.calls.length, 0);
   await ui.advance(1); assert.equal(ui.tree, null);
   const options = ui.calls[0].at(-1);
   assert.equal(options.method, 'PATCH'); assert.equal(JSON.parse(options.body).action, 'dismiss-rejected');
@@ -59,38 +59,38 @@ for (const kind of ['photo', 'video']) test(`${kind} shows the reason, then clea
 });
 
 test('background tabs and busy uploads preserve elapsed reading time instead of restarting it', async () => {
-  const ui = harness(); ui.visible(true); await ui.advance(5_000); ui.tabVisible(false);
+  const ui = harness(); ui.visible(true); await ui.advance(2_000); ui.tabVisible(false);
   await ui.advance(20_000); assert.equal(ui.calls.length, 0);
   ui.tabVisible(true); ui.busy(true); await ui.advance(20_000); assert.equal(ui.calls.length, 0);
-  ui.busy(false); await ui.advance(4_999); assert.equal(ui.calls.length, 0);
+  ui.busy(false); await ui.advance(2_999); assert.equal(ui.calls.length, 0);
   await ui.advance(1); assert.equal(ui.tree, null);
 });
 
 test('scrolling away after seeing a reason does not leave the rejection stored indefinitely', async () => {
   const ui = harness(); ui.visible(true); await ui.advance(4_000);
-  ui.visible(false); await ui.advance(5_999); assert.equal(ui.calls.length, 0);
+  ui.visible(false); await ui.advance(999); assert.equal(ui.calls.length, 0);
   await ui.advance(1); assert.equal(ui.tree, null);
 });
 
 test('synthetic mobile hover does not prevent the rejection notice from clearing', async () => {
   const ui = harness(); ui.visible(true); ui.hover(true);
-  await ui.advance(10_000); assert.equal(ui.tree, null);
+  await ui.advance(5_000); assert.equal(ui.tree, null);
   assert.equal(ui.calls.filter(call => call[0] === 'dismissed').length, 1);
 });
 
 for (const failure of ['network', 'unconfirmed']) test(`${failure} keeps the reason and offers one explicit retry without a request loop`, async () => {
   let count = 0;
   const ui = harness('photo', async () => { if (++count === 1) { if (failure === 'network') throw new Error('offline'); return {}; } return { dismissedId: 'rejected-id' }; });
-  ui.visible(true); await ui.advance(10_000); assert.ok(ui.tree); assert.equal(count, 1);
+  ui.visible(true); await ui.advance(5_000); assert.ok(ui.tree); assert.equal(count, 1);
   await ui.advance(60_000); assert.equal(count, 1);
   ui.retry(); await ui.settle(); assert.equal(ui.tree, null); assert.equal(count, 2);
 });
 
 test('unmount cancels the timer and ignores an in-flight cleanup response', async () => {
-  const closed = harness(); closed.visible(true); closed.close(); await closed.advance(10_000); assert.equal(closed.calls.length, 0);
+  const closed = harness(); closed.visible(true); closed.close(); await closed.advance(5_000); assert.equal(closed.calls.length, 0);
   let finish;
   const pending = harness('photo', () => new Promise(resolve => { finish = resolve; }));
-  pending.visible(true); await pending.advance(10_000); const signal = pending.calls[0][0].signal;
+  pending.visible(true); await pending.advance(5_000); const signal = pending.calls[0][0].signal;
   pending.close(); assert.equal(signal.aborted, true); finish({ dismissedId: 'rejected-id' }); await pending.settle();
   assert.ok(!pending.calls.some(call => call[0] === 'dismissed'));
 });

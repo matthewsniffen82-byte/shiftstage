@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { readSession, requestDancerPhotosJson, requestDancerProfileJson, requestDancerTvVideoJson } from "./dashboard-session";
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
-import { mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { isAwaitingClubApproval, mediaReviewExplanation, mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 
 export function canRetryMediaReview(status: string, moderationStatus = "") {
+  if (isAwaitingClubApproval(status, moderationStatus)) return false;
   if (["approved", "live", "rejected", "denied", "hidden", "removed", "expired", "uploading", "failed"].includes(status)) return false;
   return ["pending", "pending_review", "submitted", "review", "moderating", "error", "moderation_error", "moderation_retry"].includes(moderationStatus || status);
 }

@@ -395,12 +395,13 @@ test("saved manual-review reasons remain visible after reopening and clear on ap
 });
 
 test("initial and retried upload outcomes preserve their reasons when the library cannot supply one", async () => {
-  const ui = photoHarness({ uploadOnly: true, post: async () => ({ decision: "review", moderationRecordId: "review", reasonCodes: ["branding_or_logo_uncertain"] }), read: async () => { throw new Error("Refresh unavailable."); } });
+  const ui = photoHarness({ uploadOnly: true, post: async () => ({ decision: "moderation_error", moderationRecordId: "review", reasonCodes: ["branding_or_logo_uncertain"] }), read: async () => { throw new Error("Refresh unavailable."); } });
   ui.select(); await ui.settle();
   assert.match(ui.notes[0], /Possible branding or a logo/);
   ui.reviewButtons[0].props.onRetried({ result: { decision: "review", reasonCodes: ["person_count_uncertain"] } });
   await ui.settle();
   assert.match(ui.notes[0], /couldn't confirm that you are the only person/);
+  assert.equal(ui.reviewButtons.length, 0, 'a successful retry stops offering retry once it reaches club approval');
 });
 
 test("the dashboard keeps same-position pending uploads and the current approved photo distinct", () => {
@@ -421,6 +422,31 @@ test("pending replacements stay manageable even when the approved library fills 
   } });
   assert.equal(ui.cards.length, 31);
   assert.equal(ui.statuses.filter(status => status === "Uploading").length, 1);
+});
+
+test("club approval photos offer only Remove after upload and after reopening", async () => {
+  let removed = false;
+  const profile = { pending_photo_reviews: [{ ...pending(), status: 'pending_review' }] };
+  const ui = photoHarness({ uploadOnly: true,
+    post: async options => {
+      if (options.method === 'DELETE') { removed = true; return { ok: true }; }
+      return { decision: 'review', moderationRecordId: 'review', photo: { id: 'review', sortOrder: 1 } };
+    }, read: async () => ({ profile: removed ? {} : profile }) });
+  ui.select(); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
+  assert.equal(ui.reviewButtons.length, 0);
+  assert.equal(ui.replacements.length, 0);
+  assert.deepEqual(ui.buttons.filter(node => node.props.className !== 'photo-source-action').map(node => node.props.children), ['Remove']);
+  assert.equal(ui.buttons.find(node => node.props.children === 'Remove').props.disabled, false);
+  assert.match(ui.cards[0].props.className, /is-awaiting-club/);
+  ui.updateProfile(profile); ui.close(); ui.reopen();
+  assert.equal(ui.reviewButtons.length, 0);
+  assert.equal(ui.replacements.length, 0);
+  assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
+  ui.buttons.find(node => node.props.children === 'Remove').props.onClick(); await ui.settle();
+  assert.equal(removed, true);
+  assert.equal(JSON.parse(ui.posts.at(-1).body).photoId, 'review');
+  assert.equal(ui.cards.length, 0);
 });
 
 test("completed checks awaiting review are distinct from active checks and become approved after refresh", () => {
