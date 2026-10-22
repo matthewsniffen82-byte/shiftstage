@@ -514,7 +514,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
         {requestCards.length ? <div className="venue-dancer-grid" aria-label="Table request cards">{requestCards.map((item, index) => {
           const dancer = snapshot.dancers.find(row => row.id === item.dancer_id);
           const dancerName = item.dancerName || dancer?.stageName || "Dancer";
-          const tableLabel = item.sample ? item.tableLabel : snapshot.links?.find(link => link.id === item.link_id)?.label || "Table";
+          const tableLabel = item.sample ? item.tableLabel || "Table" : snapshot.links?.find(link => link.id === item.link_id)?.label || "Table";
           const requestState = item.status === "pending" ? "pending" : item.attendance === "arrived" ? "arrived" : "acknowledged";
           const requestLabel = item.status === "pending" ? "New request" : item.attendance === "arrived" ? "Arrived at table" : "Seen by staff";
           const identity = <span className="venue-card-portrait"><span className="venue-card-photo" aria-hidden="true">
