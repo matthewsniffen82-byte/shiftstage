@@ -1211,7 +1211,7 @@ export function CustomerPreferencesPanel({
       <div className="customer-delivery-heading"><h3>Delivery options</h3><p>Your alerts appear here. Email and push are optional.</p></div>
       <div className="customer-preference-list">
         <div className="customer-preference-row">
-          <span><strong>Email</strong><small>{delivery.emailAvailable ? "Send alerts to your account email." : "Email alerts are not available yet."}</small></span>
+          <span><strong>Email communications</strong><small>{delivery.emailAvailable ? "Receive club promotions, newsletters, dancer alerts, ads, and other MyDancr updates. Turn off to unsubscribe from optional emails." : "Email subscriptions are not available yet. You can still unsubscribe."}</small></span>
           <CustomerNotificationSwitch label="Email notifications" checked={settings.emailEnabled} disabled={isSaving || (!delivery.emailAvailable && !settings.emailEnabled)} busy={savingKey === "emailEnabled"} saved={savedKey === "emailEnabled"} onChange={() => void savePreference("emailEnabled", !settings.emailEnabled)} />
         </div>
         <div className="customer-preference-row">

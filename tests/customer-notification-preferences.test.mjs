@@ -193,6 +193,16 @@ test("customer choices do not suppress transactional email or other account role
   assert.equal((await f.sendTransactionalEmail({ to: "customer@example.com", subject: "Password changed", text: "Test" })).delivered, true);
 });
 
+test("email unsubscribe suppresses all optional kinds while preserving push, and subscribe restores delivery", async () => {
+  const settings = { emailEnabled: false, pushEnabled: true };
+  const f = deliveryFixture(settings);
+  const rows = [...Object.values(kinds), "newsletter", "club_promotion", "advertisement", "support_reply"].map(kind => row(kind));
+  assert.deepEqual(plain(await f.deliverNotificationRows(f.client, rows)), { email: 0, push: rows.length });
+  assert.equal(f.requests.filter(request => request.url).length, 0);
+  settings.emailEnabled = true;
+  assert.deepEqual(plain(await f.deliverNotificationRows(f.client, rows)), { email: rows.length, push: rows.length });
+});
+
 test("VIP working alerts default on and honor channel and master/category mutes, with club-specific links", async () => {
   const vipRow = { ...row("vip_dancer_working_now"), payload: { kind: "vip_dancer_working_now", venueId: "club-one" } };
   for (const settings of [{ emailEnabled: false, pushEnabled: false }, { workingNow: false }, { followAlertsEnabled: false }]) {

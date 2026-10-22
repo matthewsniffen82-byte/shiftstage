@@ -33,6 +33,7 @@ import { isAffiliatedDancerWorkingNow } from "@/src/lib/dancr/venue-roster";
 import { loadCustomerDashboard } from "./customer-dashboard-loader";
 import { loadDancerDashboard } from "./dancer-dashboard-loader";
 import CustomerAccountPanel from "./CustomerAccountPanel";
+import CustomerEmailPreferencesPanel from "./CustomerEmailPreferencesPanel";
 import CustomerClubPrivacyPanel from "./CustomerClubPrivacyPanel";
 import DancerNotificationSettings from "./DancerNotificationSettings";
 import { DEVICE_SAVED_DEALS_KEY, DEVICE_SAVED_DEALS_CHANGED_EVENT, mergeCustomerSavedClubDeals, readDeviceSavedClubDeals, type DeviceSavedClubDeal } from "@/src/lib/dancr/customer-device-deals";
@@ -588,6 +589,7 @@ export default function DashboardClient({
                   <div className="customer-view-heading"><h2>Account</h2><p>Your account and activity stay private.</p></div>
                   {isLoading ? <p role="status">Loading your account…</p> : <div className="customer-account-stack">
                     <CustomerAccountPanel account={state.account || {}} onAccountChange={updateAccountDetails} />
+                    {state.profile ? <CustomerEmailPreferencesPanel key={String(state.account?.id || "")} profile={state.profile} onProfileChange={updateProfile} /> : <p role="status">{state.profile === null ? "Email preferences are unavailable right now." : "Loading your email preferences…"}</p>}
                     <CustomerClubPrivacyPanel key={String(state.account?.id || "")} accountId={String(state.account?.id || "")} />
                     <details className="customer-account-disclosure" id="customer-support-section">
                       <summary>Help & support <span>{customerSupportCount ? `${customerSupportCount} conversations` : "Get in touch"}</span></summary>
