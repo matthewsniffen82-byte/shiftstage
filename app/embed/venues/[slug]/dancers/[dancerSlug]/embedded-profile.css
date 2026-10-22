@@ -14,6 +14,12 @@ html body.dancr-button-system .venue-embed-profile-page :is(#profileBackdrop #pr
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell .profile-titlebar-city {
   gap: 5px;
 }
+/* Keep the header below the shared frame outline (z-index: 2). The open
+   options menu still rises above it through the shared :has([open]) rule. */
+html body.dancr-button-system .venue-embed-profile-page .public-profile-shell.profile-split-layout > .profile-titlebar {
+  z-index: 1;
+  backdrop-filter: none;
+}
 html body.dancr-button-system .venue-embed-profile-page .public-profile-shell .profile-titlebar-city .profile-venue-pin {
   flex: 0 0 16px !important; width: 16px !important; height: 16px !important;
 }

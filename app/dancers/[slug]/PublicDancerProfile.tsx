@@ -193,7 +193,7 @@ export default function PublicDancerProfile({ profile, tvVideos, activeDeals = [
         ) : null}
 
         <DancerProfileActions
-          preview={preview}
+          preview={preview && !embedded}
           showSocialActions={!embedded}
           dancerId={profile.id}
           hasClubDeal={Boolean(activeDeal) || vipRequest}

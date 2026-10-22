@@ -46,6 +46,7 @@ const profileComponent = load("app/dancers/[slug]/PublicDancerProfile.tsx", {
     ProfileShareButton: () => h("button", { "aria-label": "Share profile" }, "Share"),
   },
   "./ProfileViewTracker": { ProfileViewTracker: () => null },
+  "./VipProfileRequest": { default: ({ children }) => children },
 }).default;
 const directions = "https://www.google.com/maps/dir/?api=1&destination=Spearmint%20Rhino%2C%20Boise%2C%20ID";
 const profile = {

@@ -80,3 +80,77 @@ test('preview follow, going, report and share controls cannot load customer stat
   share.find(n => n.type === 'button').props.onClick();
   assert.equal(setters.length, before); assert.equal(writes.length, 0);
 });
+
+function embeddedActionsFixture(preview, initiallyGoing = false) {
+  const slots = [], effects = [], requests = [], counts = [];
+  let cursor = 0;
+  const context = { mediaFollowAction: { current: null }, setMediaFollowState() {}, setFollowedBy() {}, setFollowerCount() {}, setNotificationCount() {}, setGoingCount: count => counts.push(count) };
+  const hooks = {
+    createContext: () => ({}), useContext: () => context,
+    useState(initial) { const i = cursor++; if (!(i in slots)) slots[i] = initial; return [slots[i], next => { slots[i] = typeof next === 'function' ? next(slots[i]) : next; }]; },
+    useRef(initial) { const i = cursor++; return slots[i] ||= { current: initial }; },
+    useMemo: fn => fn(),
+    useEffect(effect, deps) {
+      const i = cursor++, previous = slots[i];
+      if (deps && previous && deps.every((value, index) => Object.is(value, previous.deps[index]))) return;
+      effects.push(() => { previous?.cleanup?.(); slots[i] = { deps, cleanup: effect() }; });
+    },
+  };
+  let respond = async (_url, init) => ({ ok: true, json: async () => ({ ok: true,
+    going: init.method === 'POST' ? JSON.parse(init.body).going : initiallyGoing,
+    goingCount: init.method === 'POST' ? (JSON.parse(init.body).going ? 5 : 4) : 4,
+  }) });
+  const actions = load('app/dancers/[slug]/DancerProfileActions.tsx', {
+    react: hooks,
+    '@/src/lib/dancr/browser-session': { readBrowserAccessToken: () => '' },
+  }, { fetch: (url, init) => { requests.push({ url, ...init }); return respond(url, init); } });
+  const tree = walk(PublicProfile({ profile: { ...profile, upcomingShifts: [{ id: 'posted-shift', startsAt: '2026-10-21T01:00:00Z', endsAt: '2026-10-22T10:00:00Z' }] }, tvVideos: [], preview, embedded: true }));
+  const props = tree.find(node => node.type === 'DancerProfileActions').props;
+  const render = () => { cursor = 0; const nodes = walk(actions.DancerProfileActions(props)); effects.splice(0).forEach(effect => effect()); return nodes; };
+  const button = () => render().find(node => node.type === 'button' && node.props.className?.includes('profile-action-going'));
+  return { requests, counts, props, tree, render, button,
+    click: () => button().props.onClick(),
+    respondWith(fn) { respond = fn; },
+    async settle() { for (let i = 0; i < 8; i++) await Promise.resolve(); render(); },
+  };
+}
+
+for (const preview of [false, true]) test(`embedded Going loads, saves, updates its count and cancels (preview=${preview})`, async () => {
+  const f = embeddedActionsFixture(preview);
+  assert.equal(f.props.preview, false, 'embedded visit actions must load and save even in the Rhino showcase');
+  assert.equal(f.props.showSocialActions, false);
+  assert.equal(f.tree.find(node => node.type === 'Gallery').props.preview, preview, 'media previews retain their behavior');
+  assert.equal(f.button().props.disabled, true, 'wait for the saved selection before allowing a toggle');
+  await f.settle();
+  assert.equal(f.requests[0].url, '/api/customer/going?shiftId=posted-shift');
+  assert.equal(f.button().props.disabled, false);
+  await f.click();
+  assert.deepEqual(JSON.parse(f.requests[1].body), { shiftId: 'posted-shift', going: true });
+  assert.equal(f.requests[1].credentials, 'same-origin');
+  assert.equal(f.button().props['aria-pressed'], true);
+  assert.equal(f.counts.at(-1), 5);
+  await f.click();
+  assert.deepEqual(JSON.parse(f.requests[2].body), { shiftId: 'posted-shift', going: false });
+  assert.equal(f.button().props['aria-pressed'], false);
+  assert.equal(f.counts.at(-1), 4);
+  assert.equal(f.requests.length, 3);
+});
+
+test('embedded Going restores an existing selection and prevents duplicate taps while saving', async () => {
+  const f = embeddedActionsFixture(true, true);
+  f.render(); await f.settle();
+  assert.equal(f.button().props['aria-pressed'], true);
+  let resolve;
+  f.respondWith(() => new Promise(done => { resolve = done; }));
+  const pending = f.click();
+  assert.equal(f.button().props.disabled, true);
+  assert.equal(f.button().props['aria-busy'], true);
+  await f.click();
+  assert.equal(f.requests.length, 2);
+  resolve({ ok: false, json: async () => ({ ok: false, error: 'Please try again.' }) });
+  await pending;
+  assert.equal(f.button().props['aria-pressed'], true, 'failed cancellation must restore the saved selection');
+  assert.equal(f.button().props.disabled, false);
+  assert.equal(f.render().find(node => node.props?.role === 'status').props.children, 'Please try again.');
+  assert.equal(f.counts.at(-1), 4);
+});
