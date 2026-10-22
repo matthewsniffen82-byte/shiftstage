@@ -107,6 +107,7 @@ html body.venue-grid-embed #venue-location {
 html body.venue-grid-embed #venue-location:focus-visible { outline: 2px solid var(--embed-accent); outline-offset: 3px; }
 /* Share the homepage city-picker geometry and palette. */
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls {
+  width: 100% !important; max-width: none !important; min-width: 0;
   grid-template-columns: minmax(0, 1fr) !important; gap: 4px !important; margin: 0 !important;
 }
 html body.dancr-button-system.venue-grid-embed > .app main.stack > .home-discovery-controls #citySelectButton,
