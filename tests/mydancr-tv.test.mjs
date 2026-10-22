@@ -327,7 +327,7 @@ test("administrator moderation persists decisions and venue TV is schedule-deriv
   assert.match(migration, /record_mydancr_tv_review_decision/);
   assert.match(migration, /'tv_video_status'/);
   assert.match(migration, /insert into public\.admin_actions/);
-  assert.match(tvSource, /event: "mydancr_tv\.admin_decision"/);
+  assert.match(tvSource, /event: "mydancr_tv\.human_decision"/);
   assert.match(adminPanel, /Approve and publish/);
   assert.match(adminPanel, /import \{ requestAdminJson \} from "\.\/admin-session"/);
   assert.equal((adminPanel.match(/requestAdminJson\(/g) || []).length, 3);
