@@ -29,6 +29,8 @@
           payload.emailRedirectTo = saveAuthResume("customer", pendingAccountAuthReturnTo || "/dashboard/customer?confirmed=1");
           payload.userTermsAccepted = document.getElementById("customerTermsAccepted").checked;
           payload.userTermsVersion = document.getElementById("customerTermsAccepted").dataset.termsVersion;
+          payload.customerEmailOptIn = document.getElementById("customerEmailOptIn").checked;
+          payload.customerEmailConsentVersion = document.getElementById("customerEmailOptIn").dataset.consentVersion;
         }
         const result = await requestAuth(payload);
         if (authMode === "signup") {

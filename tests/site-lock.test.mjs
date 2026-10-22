@@ -58,6 +58,19 @@ function post(password = fixturePassword, returnTo = "/", headers = {}) {
   return new Request(origin + "/site-unlock", { method: "POST", headers: { origin, "content-type": "application/x-www-form-urlencoded", ...headers }, body: new URLSearchParams({ password, returnTo }) });
 }
 
+test("anonymous email preference links bypass the site password only on their intended methods", () => {
+  const f = fixture();
+  for (const path of ["/email-preferences/" + "a".repeat(64), "/updates/" + "A".repeat(43)]) {
+    assert.equal(f.core.bypassSiteLock(new NextRequest(origin + path)), true);
+    assert.equal(f.core.bypassSiteLock(new NextRequest(origin + path, { method: "DELETE" })), false);
+  }
+  for (const path of ["/api/public/customer-email", "/api/public/venue-updates"]) {
+    assert.equal(f.core.bypassSiteLock(new NextRequest(origin + path, { method: "POST" })), true);
+    assert.equal(f.core.bypassSiteLock(new NextRequest(origin + path)), false);
+  }
+  assert.equal(f.core.bypassSiteLock(new NextRequest(origin + "/email-preferences/short")), false);
+});
+
 for (const path of ["/", "/?view=venues", "/dancers/star", "/dashboard/venue", "/admin", "/internal/club/test-token", "/outputs/index.html", "/live-shell.js", "/_next/image?url=%2Fphoto.jpg&w=320&q=80"]) {
   test("the site lock covers direct entry to " + path, async () => {
     const f = fixture();

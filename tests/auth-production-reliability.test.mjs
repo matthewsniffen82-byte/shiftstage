@@ -38,6 +38,10 @@ const userTermsVersion = compile(readFileSync(new URL("../src/lib/dancr/user-ter
 const userTerms = compile(readFileSync(new URL("../src/lib/dancr/user-terms.ts", import.meta.url), "utf8"), {
   "../api-error-policy": policy, "./user-terms-version": userTermsVersion,
 });
+const customerEmail = compile(readFileSync(new URL("../src/lib/dancr/customer-email-consent.ts", import.meta.url), "utf8"), {
+  "../api-error-policy": policy,
+  "./customer-notification-preferences": { CUSTOMER_EMAIL_CONSENT_VERSION: "customer-email-v1" },
+});
 const agreementVersion = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement-version.ts", import.meta.url), "utf8"));
 const dancerAgreement = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement.ts", import.meta.url), "utf8"), {
   "../api-error-policy": policy, "./dancer-agreement-version": agreementVersion,
@@ -85,6 +89,7 @@ function authFixture(providerError = null, { role = "customer", authSession = se
     "@/src/lib/dancr/password-policy": passwordPolicy,
     "@/src/lib/dancr/password-setup": passwordSetup,
     "@/src/lib/dancr/vip-login": vipLogin,
+    "@/src/lib/dancr/customer-email-consent": customerEmail,
     "@/src/lib/dancr/user-terms": {
       prepareUserTermsSignup: async (_admin, _email, input) => {
         userTerms.validateUserTermsAcceptance(input);
@@ -203,6 +208,20 @@ test("guest signup refuses absent, unchecked, string and outdated acceptance bef
   const response=await f.POST(jsonRequest("POST",{mode:"signup",role:"customer",email:"new@example.test",password:"Unique1!password",userTermsAccepted:true,userTermsVersion:userTermsVersion.USER_TERMS_VERSION}));
   assert.equal(response.status,200);
   assert.equal(f.calls[0].options.data.user_terms_intent,"11111111-1111-4111-8111-111111111111");
+  assert.equal(f.calls[0].options.data.customer_email_intent, null);
+});
+
+test("customer signup passes a server-issued email-consent intent only after affirmative current opt-in", async () => {
+  const input = { mode: "signup", role: "customer", email: "new@example.test", password: "Unique1!password", userTermsAccepted: true, userTermsVersion: userTermsVersion.USER_TERMS_VERSION, customerEmailOptIn: true, customerEmailConsentVersion: "customer-email-v1" };
+  const calls = [], nonce = "22222222-2222-4222-8222-222222222222";
+  const f = authFixture(null, { adminClient: { rpc: async (name, args) => { calls.push([name, args]); return { data: nonce }; } } });
+  assert.equal((await f.POST(jsonRequest("POST", input))).status, 200);
+  assert.equal(calls[0][0], "prepare_customer_email_signup");
+  assert.equal(calls[0][1].p_email, input.email);
+  assert.equal(f.calls[0].options.data.customer_email_intent, nonce);
+  const stale = authFixture();
+  assert.equal((await stale.POST(jsonRequest("POST", { ...input, customerEmailConsentVersion: "old" }))).status, 400);
+  assert.equal(stale.calls.length, 0);
 });
 
 for (const role of ["customer", "dancer"]) test(`repeated ${role} signup never provisions the provider's obfuscated user`, async () => {

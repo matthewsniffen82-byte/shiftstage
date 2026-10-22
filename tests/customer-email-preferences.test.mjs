@@ -85,7 +85,7 @@ test('saved choices show the appropriate action without changing subscription on
     assert.equal(f.button().props.children, enabled ? 'Unsubscribe from emails' : 'Subscribe to emails');
     assert.equal(f.requests.length, 0);
     const description = f.find(f.render(), node => node.props?.id === 'customer-email-description').props.children;
-    for (const category of ['club promotions', 'newsletters', 'dancer alerts', 'ads', 'MyDancr updates']) assert.ok(description.includes(category));
+    assert.equal(description, preferences.CUSTOMER_EMAIL_CONSENT_TEXT);
     assert.equal(f.button().props['aria-describedby'], 'customer-email-description');
   }
 });
@@ -96,7 +96,7 @@ test('guests can unsubscribe and subscribe again, changing only the email prefer
     await f.click();
     const request = f.requests.at(-1);
     assert.equal(request.method, 'PATCH');
-    assert.deepEqual(JSON.parse(request.body), { notificationSettings: { emailEnabled: enabled } });
+    assert.deepEqual(JSON.parse(request.body), { notificationSettings: { emailEnabled: enabled }, emailConsentSource: 'account_preferences', emailConsentVersion: preferences.CUSTOMER_EMAIL_CONSENT_VERSION });
     assert.equal(f.updates.at(-1).notificationSettings.emailEnabled, enabled);
     assert.equal(f.updates.at(-1).notificationSettings.pushEnabled, true);
     assert.equal(f.updates.at(-1).notificationSettings.clubDeals, false);

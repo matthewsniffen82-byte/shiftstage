@@ -65,7 +65,7 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
   };
   const pushRows = rows.filter(row => allowed(row, "pushEnabled"));
   const push = options.push === false ? 0 : await deliverPushNotifications(client, pushRows);
-  const email = options.email === false ? 0 : await deliverEmailNotifications(rows.filter(row => allowed(row, "emailEnabled")), recipients);
+  const email = options.email === false ? 0 : await deliverEmailNotifications(client, rows.filter(row => allowed(row, "emailEnabled")), recipients);
 
   return { push, email };
 }
@@ -154,7 +154,7 @@ async function deliverPushNotifications(client: DancrClient, rows: NotificationD
   return delivered;
 }
 
-async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipients: Recipient[]) {
+async function deliverEmailNotifications(client: DancrClient, rows: NotificationDeliveryRow[], recipients: Recipient[]) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (!apiKey || !from) return 0;
@@ -163,13 +163,29 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
   let delivered = 0;
 
   for (const row of rows) {
-    const email = recipientById.get(row.recipient_id)?.email;
+    const recipient = recipientById.get(row.recipient_id);
+    let email = recipient?.email;
     if (!email) continue;
+    let unsubscribeUrl = "", oneClickUrl = "";
+    if (recipient?.role === "customer") {
+      // Fresh consent, verified address and withdrawal check immediately before each send.
+      try {
+        const { data, error } = await client.rpc("customer_email_delivery_target", { p_user_id: row.recipient_id });
+        if (error || !data || typeof data.email !== "string" || !/^[a-f0-9]{64}$/.test(data.token || "")) continue;
+        email = data.email;
+        unsubscribeUrl = `${publicAppUrl()}/email-preferences/${data.token}`;
+        oneClickUrl = `${publicAppUrl()}/api/public/customer-email?token=${data.token}`;
+      } catch { continue; }
+    }
     const actionUrl = notificationActionUrl(row);
-    const text = actionUrl ? `${row.body}\n\nOpen your Dancr dashboard:\n${actionUrl}` : row.body;
-    const html = actionUrl
+    let text = actionUrl ? `${row.body}\n\nOpen your Dancr dashboard:\n${actionUrl}` : row.body;
+    let html = actionUrl
       ? `<p>${escapeHtml(row.body)}</p><p><a href="${escapeHtml(actionUrl)}">Open your Dancr dashboard</a></p>`
       : undefined;
+    if (unsubscribeUrl) {
+      text += `\n\nUnsubscribe from optional MyDancr emails (no sign-in needed):\n${unsubscribeUrl}`;
+      html = (html || `<p>${escapeHtml(row.body)}</p>`) + `<p><a href="${escapeHtml(unsubscribeUrl)}">Unsubscribe from optional MyDancr emails</a> (no sign-in needed)</p>`;
+    }
 
     const response = await requestDeliveryProvider("resend", "https://api.resend.com/emails", {
       method: "POST",
@@ -184,6 +200,7 @@ async function deliverEmailNotifications(rows: NotificationDeliveryRow[], recipi
         to: email,
         subject: row.title,
         text,
+        ...(oneClickUrl ? { headers: { "List-Unsubscribe": `<${oneClickUrl}>`, "List-Unsubscribe-Post": "List-Unsubscribe=One-Click" } } : {}),
         ...(html ? { html } : {}),
       }),
     });

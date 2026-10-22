@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { venueOperatingStatus } from "@/src/lib/dancr/venue-operating-status";
-import { CUSTOMER_FOLLOW_ALERTS, customerNotificationSettings, type CustomerNotificationKey } from "@/src/lib/dancr/customer-notification-preferences";
+import { CUSTOMER_FOLLOW_ALERTS, CUSTOMER_EMAIL_CONSENT_TEXT, CUSTOMER_EMAIL_CONSENT_VERSION, customerNotificationSettings, type CustomerNotificationKey } from "@/src/lib/dancr/customer-notification-preferences";
 import { customerPushDeviceEnabled, customerPushSupportMessage, disableCustomerPush, enableCustomerPush, type CustomerNotificationDelivery } from "@/src/lib/dancr/customer-push";
 import { CustomerDashboardIcon } from "./CustomerDashboardIdentity";
 import { DEVICE_SAVED_DEALS_CHANGED_EVENT, removeDeviceSavedClubDeal } from "@/src/lib/dancr/customer-device-deals";
@@ -1151,7 +1151,7 @@ export function CustomerPreferencesPanel({
       const data = await requestCustomerProfileJson({
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ notificationSettings: { [key]: nextEnabled } }),
+        body: JSON.stringify({ notificationSettings: { [key]: nextEnabled }, ...(key === "emailEnabled" ? { emailConsentSource: "notification_preferences", emailConsentVersion: CUSTOMER_EMAIL_CONSENT_VERSION } : {}) }),
         fallbackMessage: "Unable to update notifications.",
         signal: controller.signal,
       });
@@ -1211,7 +1211,7 @@ export function CustomerPreferencesPanel({
       <div className="customer-delivery-heading"><h3>Delivery options</h3><p>Your alerts appear here. Email and push are optional.</p></div>
       <div className="customer-preference-list">
         <div className="customer-preference-row">
-          <span><strong>Email communications</strong><small>{delivery.emailAvailable ? "Receive club promotions, newsletters, dancer alerts, ads, and other MyDancr updates. Turn off to unsubscribe from optional emails." : "Email subscriptions are not available yet. You can still unsubscribe."}</small></span>
+          <span><strong>Email communications</strong><small>{delivery.emailAvailable ? CUSTOMER_EMAIL_CONSENT_TEXT : "Email subscriptions are not available yet. You can still unsubscribe."}</small></span>
           <CustomerNotificationSwitch label="Email notifications" checked={settings.emailEnabled} disabled={isSaving || (!delivery.emailAvailable && !settings.emailEnabled)} busy={savingKey === "emailEnabled"} saved={savedKey === "emailEnabled"} onChange={() => void savePreference("emailEnabled", !settings.emailEnabled)} />
         </div>
         <div className="customer-preference-row">

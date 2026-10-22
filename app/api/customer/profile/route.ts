@@ -6,6 +6,8 @@ import type { Json } from "@/src/lib/dancr/types";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { parseCustomerNotificationPatch } from "@/src/lib/dancr/customer-notification-preferences";
 import { customerNotificationDelivery } from "@/src/lib/dancr/customer-notification-delivery";
+import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
+import { setCustomerEmailPreference } from "@/src/lib/dancr/customer-email-consent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -66,7 +68,13 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "No guest profile updates provided." }, { status: 400 });
     }
 
-    const profile = await updateCustomerProfile(client, user.id, update);
+    const emailEnabled = update.notificationSettings?.emailEnabled;
+    if (typeof emailEnabled === "boolean" && (update.city !== undefined || Object.keys(update.notificationSettings!).length !== 1)) {
+      return NextResponse.json({ ok: false, error: "Change the optional email preference separately from other settings." }, { status: 400 });
+    }
+    const profile = typeof emailEnabled === "boolean"
+      ? await setCustomerEmailPreference(createAdminSupabaseClient(), user.id, emailEnabled, body.emailConsentSource, body.emailConsentVersion)
+      : await updateCustomerProfile(client, user.id, update);
     return NextResponse.json({ ok: true, profile: { ...profile, notificationDelivery: customerNotificationDelivery(user.id, user.email) }, session });
   } catch (error) {
     return apiError(error, "Unable to update guest profile.");

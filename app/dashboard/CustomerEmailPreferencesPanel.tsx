@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { customerNotificationSettings } from "@/src/lib/dancr/customer-notification-preferences";
+import { customerNotificationSettings, CUSTOMER_EMAIL_CONSENT_TEXT, CUSTOMER_EMAIL_CONSENT_VERSION } from "@/src/lib/dancr/customer-notification-preferences";
 import type { CustomerNotificationDelivery } from "@/src/lib/dancr/customer-push";
 import { readSession, requestCustomerProfileJson } from "./dashboard-session";
 
@@ -44,7 +44,7 @@ export default function CustomerEmailPreferencesPanel({ profile, onProfileChange
       const data = await requestCustomerProfileJson({
         method: "PATCH", timeoutMs: 20_000,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ notificationSettings: { emailEnabled: nextEnabled } }),
+        body: JSON.stringify({ notificationSettings: { emailEnabled: nextEnabled }, emailConsentSource: "account_preferences", emailConsentVersion: CUSTOMER_EMAIL_CONSENT_VERSION }),
         fallbackMessage: "Unable to save your email preference. Please try again.",
         signal: controller.signal,
       });
@@ -70,7 +70,8 @@ export default function CustomerEmailPreferencesPanel({ profile, onProfileChange
   return (
     <article className="info-panel customer-account-details customer-email-preferences" aria-labelledby="customer-email-heading">
       <h2 id="customer-email-heading">Email communications</h2>
-      <p id="customer-email-description">Subscribe to receive club promotions, newsletters, dancer alerts, ads, and other MyDancr updates by email. You can unsubscribe at any time.</p>
+      <p id="customer-email-description">{CUSTOMER_EMAIL_CONSENT_TEXT}</p>
+      {!emailEnabled && <p>Optional emails stay off until you choose “Subscribe to emails”. Creating an account or following a dancer does not automatically subscribe you.</p>}
       <p className="customer-email-state">Optional emails are <strong>{emailEnabled ? "on" : "off"}</strong>.</p>
       <button className="account-action-button" type="button" disabled={busy || (!emailEnabled && !delivery.emailAvailable)} aria-busy={busy || undefined} aria-describedby="customer-email-description" onClick={changeEmailSubscription}>
         {busy ? emailEnabled ? "Unsubscribing…" : "Subscribing…" : emailEnabled ? "Unsubscribe from emails" : "Subscribe to emails"}

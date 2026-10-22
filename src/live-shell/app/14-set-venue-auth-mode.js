@@ -402,6 +402,10 @@
       termsInput.checked = false;
       termsInput.required = isSignup;
       termsInput.disabled = !isSignup;
+      const emailOptIn = document.getElementById("customerEmailOptIn");
+      document.getElementById("customerEmailOptInField").hidden = !isSignup;
+      emailOptIn.checked = false;
+      emailOptIn.disabled = !isSignup;
       document.getElementById("customerBackToTypes").hidden = !isSignup;
       const vipSignInLink = document.getElementById("vipSignInLink");
       if (vipSignInLink) vipSignInLink.hidden = isSignup;

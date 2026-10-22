@@ -41847,6 +41847,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link. <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></span>
             </div>
             <label class="customer-terms-consent" id="customerTermsField" hidden><input id="customerTermsAccepted" type="checkbox" data-terms-version="2026-10-08-v3"><span>I agree to the <a href="/terms/user/2026-10-08-v3" target="_blank" rel="noopener">User Terms</a>.</span></label>
+            <label class="customer-terms-consent" id="customerEmailOptInField" hidden><input id="customerEmailOptIn" type="checkbox" data-consent-version="customer-email-v1" disabled><span>Email me MyDancr promotions, newsletters, dancer and club alerts, and offers. Optional; unsubscribe at any time.</span></label>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
@@ -56958,6 +56959,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
       if (scope === "all" || scope === "customer") {
         clearValue("customerEmail");
+        const emailOptIn = document.getElementById("customerEmailOptIn");
+        if (emailOptIn) emailOptIn.checked = false;
         clearValue("customerPassword");
         clearValue("customerConfirmPassword");
         stopConfirmationResendCooldown(document.getElementById("authSubmit"), authMode === "signup" ? "Create guest account" : "Sign in");
@@ -57426,6 +57429,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       termsInput.checked = false;
       termsInput.required = isSignup;
       termsInput.disabled = !isSignup;
+      const emailOptIn = document.getElementById("customerEmailOptIn");
+      document.getElementById("customerEmailOptInField").hidden = !isSignup;
+      emailOptIn.checked = false;
+      emailOptIn.disabled = !isSignup;
       document.getElementById("customerBackToTypes").hidden = !isSignup;
       const vipSignInLink = document.getElementById("vipSignInLink");
       if (vipSignInLink) vipSignInLink.hidden = isSignup;
@@ -66908,6 +66915,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           payload.emailRedirectTo = saveAuthResume("customer", pendingAccountAuthReturnTo || "/dashboard/customer?confirmed=1");
           payload.userTermsAccepted = document.getElementById("customerTermsAccepted").checked;
           payload.userTermsVersion = document.getElementById("customerTermsAccepted").dataset.termsVersion;
+          payload.customerEmailOptIn = document.getElementById("customerEmailOptIn").checked;
+          payload.customerEmailConsentVersion = document.getElementById("customerEmailOptIn").dataset.consentVersion;
         }
         const result = await requestAuth(payload);
         if (authMode === "signup") {

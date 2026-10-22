@@ -1,3 +1,6 @@
+export const CUSTOMER_EMAIL_CONSENT_VERSION = "customer-email-v1";
+export const CUSTOMER_EMAIL_CONSENT_TEXT = "Email me MyDancr promotions, newsletters, dancer and club alerts, and offers. Optional; unsubscribe at any time.";
+
 export const CUSTOMER_FOLLOW_ALERTS = [
   { key: "workingNow", title: "Working Now", description: "A dancer you follow starts working." },
   { key: "upcomingShifts", title: "Upcoming shifts", description: "A dancer you follow posts a shift." },
@@ -12,7 +15,7 @@ export const DEFAULT_CUSTOMER_NOTIFICATION_SETTINGS = {
   upcomingShifts: true,
   clubDeals: true,
   newDancers: true,
-  emailEnabled: true,
+  emailEnabled: false,
   pushEnabled: true,
 };
 export type CustomerNotificationSettings = typeof DEFAULT_CUSTOMER_NOTIFICATION_SETTINGS;

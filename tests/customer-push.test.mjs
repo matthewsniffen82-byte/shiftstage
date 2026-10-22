@@ -39,7 +39,7 @@ test("Working Now confirmation respects defaults and opt-outs and requires a usa
   f.Notification.permission = "denied";
   assert.equal(await f.customerWorkingNowAlertsEnabled(profile, "customer"), false);
   assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationSettings: { emailEnabled: true }, notificationDelivery: { emailAvailable: true } }, "customer"), true);
-  assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationDelivery: { emailAvailable: true } }, "customer"), true);
+  assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationDelivery: { emailAvailable: true } }, "customer"), false);
   assert.equal(await f.customerWorkingNowAlertsEnabled({ ...profile, notificationSettings: { emailEnabled: false }, notificationDelivery: { emailAvailable: true } }, "customer"), false);
   assert.equal(await f.customerWorkingNowAlertsEnabled(null, "customer"), false);
 });

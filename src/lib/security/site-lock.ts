@@ -36,6 +36,9 @@ export function bypassSiteLock(request: NextRequest) {
   const path = request.nextUrl.pathname.replace(/\/$/, "") || "/";
   if (isPublicVenueEmbedRequest(request.method, path)) return true;
   if (path === "/site-unlock") return true;
+  // Bearer preference links must remain usable without account or site-password access.
+  if (["GET", "HEAD"].includes(request.method) && (/^\/email-preferences\/[a-f0-9]{64}$/.test(path) || /^\/updates\/[A-Za-z0-9_-]{43}$/.test(path))) return true;
+  if (request.method === "POST" && ["/api/public/customer-email", "/api/public/venue-updates"].includes(path)) return true;
   // Machine endpoints retain their existing cron/signature authentication.
   if (request.method === "GET" && workerPaths.has(path)) return true;
   if (request.method === "POST" && ["/api/stripe/webhook", "/api/ondato/webhook"].includes(path)) return true;

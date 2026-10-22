@@ -998,6 +998,8 @@
 
       if (scope === "all" || scope === "customer") {
         clearValue("customerEmail");
+        const emailOptIn = document.getElementById("customerEmailOptIn");
+        if (emailOptIn) emailOptIn.checked = false;
         clearValue("customerPassword");
         clearValue("customerConfirmPassword");
         stopConfirmationResendCooldown(document.getElementById("authSubmit"), authMode === "signup" ? "Create guest account" : "Sign in");

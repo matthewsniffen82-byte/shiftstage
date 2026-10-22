@@ -35,6 +35,7 @@ import { getOptionalServerEnv } from "@/src/lib/server-env";
 import { prepareUserTermsSignup } from "@/src/lib/dancr/user-terms";
 import { recordPasswordSetup } from "@/src/lib/dancr/password-setup";
 import { requireVipLoginArea } from "@/src/lib/dancr/vip-login";
+import { prepareCustomerEmailSignup } from "@/src/lib/dancr/customer-email-consent";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -239,7 +240,8 @@ export async function POST(request: Request) {
     const metadata =
       role === "customer"
         ? { role, display_name: displayName, city,
-            user_terms_intent: await prepareUserTermsSignup(createAdminSupabaseClient(), email, body) }
+            user_terms_intent: await prepareUserTermsSignup(createAdminSupabaseClient(), email, body),
+            customer_email_intent: await prepareCustomerEmailSignup(createAdminSupabaseClient(), email, body) }
         : {
             role,
             display_name: displayName,
