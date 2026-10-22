@@ -12,26 +12,43 @@ export default function VenueCustomersPanel({ refreshKey, active, timezone }: { 
   const [busy, setBusy] = useState(false), [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(""), [hasMore, setHasMore] = useState(false);
   const controller = useRef<AbortController | null>(null);
+  const currentEntries = useRef<VenueCustomer[]>([]);
+  const currentQuery = useRef("");
   async function load(offset = 0) {
     controller.current?.abort();
     const request = new AbortController(); controller.current = request;
     setBusy(true); setError("");
-    if (!offset) { setEntries([]); setLoaded(false); setHasMore(false); }
+    const query = new URLSearchParams({ source, search });
+    if (currentQuery.current !== query.toString()) {
+      currentQuery.current = query.toString(); currentEntries.current = [];
+      setEntries([]); setLoaded(false); setHasMore(false);
+    }
+    const previous = currentEntries.current;
     try {
-      const data = await requestDashboardJson(`/api/venue/customers?${new URLSearchParams({ source, offset: String(offset), search })}`, {
-        expectedRole: "venue", signal: request.signal, cache: "no-store", timeoutMs: 15000, fallbackMessage: "Unable to load customers.",
-      });
-      if (request.signal.aborted) return;
-      setEntries(previous => offset ? [...new Map([...previous, ...data.entries].map(entry => [entry.id, entry])).values()] : data.entries);
-      setHasMore(data.hasMore); setLoaded(true);
+      const pages = offset ? 1 : Math.max(1, Math.ceil(previous.length / 50));
+      const results: VenueCustomer[] = [];
+      let more = false;
+      for (let page = 0; page < pages; page++) {
+        query.set("offset", String(offset || page * 50));
+        const data = await requestDashboardJson(`/api/venue/customers?${query}`, {
+          expectedRole: "venue", signal: request.signal, cache: "no-store", timeoutMs: 15000, fallbackMessage: "Unable to load customers.",
+        });
+        if (request.signal.aborted) return;
+        results.push(...data.entries); more = Boolean(data.hasMore);
+        if (!more) break;
+      }
+      const next = [...new Map([...(offset ? previous : []), ...results].map(entry => [entry.id, entry])).values()];
+      currentEntries.current = next; setEntries(next);
+      setHasMore(more); setLoaded(true);
     } catch (reason) {
       if (request.signal.aborted) return;
-      setEntries([]); setLoaded(false); setHasMore(false);
+      if (reason && typeof reason === "object" && "status" in reason && [401, 403].includes(Number(reason.status))) {
+        currentEntries.current = []; setEntries([]); setLoaded(false); setHasMore(false);
+      }
       setError(reason instanceof Error ? reason.message : "Unable to load customers.");
     } finally { if (!request.signal.aborted) setBusy(false); }
   }
   useEffect(() => {
-    setEntries([]); setLoaded(false); setHasMore(false); setError("");
     if (active) void load();
     return () => controller.current?.abort();
   }, [refreshKey, source, active, search]); // eslint-disable-line react-hooks/exhaustive-deps

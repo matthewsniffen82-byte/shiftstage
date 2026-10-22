@@ -61,7 +61,8 @@ function fixture(component, props, request = async () => ({}), hash = "") {
     "@/src/lib/dancr/club-deal-transportation": { clubArrivalLabel: () => "Driving" },
   };
   const exports = {};
-  vm.runInNewContext(ts.transpileModule(readFileSync(new URL(`../app/dashboard/${component}.tsx`, import.meta.url), "utf8"), {
+  const isHook = component === "useVenueOperations";
+  vm.runInNewContext(ts.transpileModule(readFileSync(new URL(`../app/dashboard/${component}.${isHook ? "ts" : "tsx"}`, import.meta.url), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, { exports, window, document, AbortController, URLSearchParams, Error, require: name => {
     assert.ok(name in imports, name); return imports[name];
@@ -69,13 +70,13 @@ function fixture(component, props, request = async () => ({}), hash = "") {
   function nodes(node = tree) { if (node?.type === refreshButtonModule.default) return nodes(node.type(node.props)); return node && typeof node === "object" ? [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(nodes)] : []; }
   function render(next = {}) {
     props = { ...props, ...next }; dirty = true;
-    for (let i = 0; dirty && i < 20; i++) { dirty = false; cursor = 0; effects = []; tree = exports.default(props); effects.forEach(run => run()); }
+    for (let i = 0; dirty && i < 20; i++) { dirty = false; cursor = 0; effects = []; tree = isHook ? exports.useVenueOperations(props.venueId, props.refreshKey) : exports.default(props); effects.forEach(run => run()); }
     assert.equal(dirty, false); return tree;
   }
   function flushFrames() { const pending = [...frames.values()]; frames.clear(); pending.forEach(run => run()); }
   async function settle() { await new Promise(resolve => setImmediate(resolve)); render(); flushFrames(); }
   render(); flushFrames();
-  return { render, nodes, settle, calls, focused, intervals, window, html: () => renderToStaticMarkup(tree),
+  return { render, nodes, settle, calls, focused, intervals, window, value: () => tree, html: () => renderToStaticMarkup(tree),
     button: label => nodes().find(node => node.type === "button" && (node.props['aria-label'] === label || [node.props.children].flat().some(child => child === label || child?.props?.children === label))),
     pane: id => nodes().find(node => node.props?.role === "tabpanel" && node.props.id === id),
     hash(value) { window.location.hash = value; listeners.get("hashchange")?.(); render(); flushFrames(); },
@@ -84,6 +85,104 @@ function fixture(component, props, request = async () => ({}), hash = "") {
   };
 }
 const guestProps = { venueId: "venue-a", role: "owner", active: true, timezone: "America/Los_Angeles" };
+
+for (const config of [
+  { component: "VenueCustomersPanel", pageSize: 50, offset: "offset", more: "Load more contacts", result: (entries, hasMore) => ({ entries, hasMore }),
+    row: id => ({ id, name: `Contact ${id}`, joined_at: "2026-10-21T20:00:00Z", is_guest: true }) },
+  { component: "PickupDashboardPanel", pageSize: 30, offset: "phoneOffset", more: "Load older requests", result: (phoneRequests, hasMorePhoneRequests) => ({ phoneRequests, hasMorePhoneRequests }),
+    row: id => ({ id, venue_id: "venue-a", name: `Ride ${id}`, phone: "+17025550123", requested_at: "2026-10-21T20:00:00Z" }) },
+]) {
+  test(`${config.component}: refresh keeps all loaded pages visible until the complete replacement is ready`, async () => {
+    const rows = Array.from({ length: config.pageSize + 3 }, (_, i) => config.row(String(i)));
+    let mode = "initial", finish;
+    const ui = fixture(config.component, { ...guestProps, refreshKey: "initial" }, async url => {
+      const offset = Number(new URL(url, "https://example.test").searchParams.get(config.offset));
+      if (mode === "revoked") throw new DashboardDataRequestError("Access removed", 403);
+      if (mode === "empty") return config.result([], false);
+      const next = rows.slice(offset, offset + config.pageSize).map(row => mode === "initial" ? row : { ...row, name: `${row.name} updated` });
+      if (offset && mode === "slow") return new Promise(resolve => { finish = () => resolve(config.result(next, false)); });
+      if (offset && mode === "offline") throw new Error("Connection interrupted");
+      return config.result(next, offset === 0);
+    });
+    const cards = () => ui.nodes().filter(node => node.type === "article");
+    await ui.settle(); ui.button(config.more).props.onClick(); await ui.settle();
+    assert.equal(cards().length, rows.length);
+    const keys = cards().map(card => card.key);
+    mode = "slow"; ui.render({ refreshKey: "timer-1" });
+    assert.equal(cards().length, rows.length); assert.doesNotMatch(ui.html(), /Loading ride requests/);
+    await ui.settle();
+    assert.equal(typeof finish, "function"); assert.deepEqual(cards().map(card => card.key), keys);
+    assert.doesNotMatch(ui.html(), /updated/);
+    finish(); await ui.settle();
+    assert.deepEqual(cards().map(card => card.key), keys); assert.match(ui.html(), /updated/);
+
+    mode = "offline"; ui.render({ refreshKey: "timer-2" }); await ui.settle();
+    assert.equal(cards().length, rows.length); assert.match(ui.html(), /Connection interrupted/);
+    mode = "empty"; ui.render({ refreshKey: "timer-3" }); await ui.settle();
+    assert.equal(cards().length, 0);
+    mode = "initial"; ui.render({ refreshKey: "timer-4" }); await ui.settle();
+    assert.equal(cards().length, config.pageSize);
+    mode = "revoked"; ui.render({ refreshKey: "timer-5" }); await ui.settle();
+    assert.equal(cards().length, 0); assert.match(ui.html(), /Access removed/);
+    ui.close();
+  });
+}
+
+test("ride polling retains cards while waiting, but changing the venue removes the previous venue's cards", async () => {
+  let finish;
+  const ui = fixture("PickupDashboardPanel", guestProps, async () => new Promise(resolve => { finish = resolve; }));
+  finish({ phoneRequests: [{ id: "ride", venue_id: "venue-a", name: "Current guest", requested_at: "2026-10-21" }], hasMorePhoneRequests: false });
+  await ui.settle(); ui.tick(); ui.render();
+  assert.match(ui.html(), /Current guest/); assert.doesNotMatch(ui.html(), /Loading ride requests/);
+  const late = finish;
+  ui.render({ venueId: "venue-b" }); assert.doesNotMatch(ui.html(), /Current guest/);
+  late({ phoneRequests: [{ id: "late", venue_id: "venue-a", name: "Old venue guest" }], hasMorePhoneRequests: false });
+  await ui.settle(); assert.doesNotMatch(ui.html(), /Old venue guest/); ui.close();
+});
+
+test("contacts clear only when their source changes, ignoring a late response from the previous source", async () => {
+  let finish;
+  const ui = fixture("VenueCustomersPanel", { ...guestProps, refreshKey: "first" }, () => new Promise(resolve => { finish = resolve; }));
+  finish({ entries: [{ id: "contact", name: "Current contact", joined_at: "2026-10-21" }], hasMore: false });
+  await ui.settle(); ui.render({ refreshKey: "second" });
+  assert.match(ui.html(), /Current contact/);
+  const late = finish;
+  ui.button("Shared followers").props.onClick(); ui.render();
+  assert.doesNotMatch(ui.html(), /Current contact/);
+  late({ entries: [{ id: "late", name: "Wrong source", joined_at: "2026-10-21" }], hasMore: false });
+  await ui.settle(); assert.doesNotMatch(ui.html(), /Wrong source/); ui.close();
+});
+
+test("live operation counts survive refresh and temporary failures, then update or clear on confirmed access loss", async () => {
+  let response = { operations: { tablePending: 4, ridesOpen: 3 } }, finish;
+  const ui = fixture("useVenueOperations", guestProps, async () => {
+    if (response instanceof Error) throw response;
+    if (response === null) return new Promise(resolve => { finish = resolve; });
+    return response;
+  });
+  await ui.settle(); assert.equal(ui.value().operations.tablePending, 4);
+  response = null; ui.render({ refreshKey: "new" });
+  assert.equal(ui.value().operations.tablePending, 4);
+  finish({ operations: { tablePending: 2, ridesOpen: 0 } }); await ui.settle();
+  assert.equal(ui.value().operations.tablePending, 2); assert.equal(ui.value().operations.ridesOpen, 0);
+  response = new Error("Offline"); ui.tick(); await ui.settle();
+  assert.equal(ui.value().operations.tablePending, 2); assert.match(ui.value().error, /could not update/);
+  response = { operations: { tablePending: 0 } }; ui.tick(); await ui.settle();
+  assert.equal(ui.value().operations.tablePending, 0); assert.equal(ui.value().error, "");
+  response = new DashboardDataRequestError("Access removed", 403); ui.tick(); await ui.settle();
+  assert.equal(ui.value().operations, null); ui.close();
+});
+
+test("live operation counts never carry across venues or accept stale responses", async () => {
+  let finish;
+  const ui = fixture("useVenueOperations", guestProps, () => new Promise(resolve => { finish = resolve; }));
+  finish({ operations: { tablePending: 7 } }); await ui.settle();
+  ui.tick(); const late = finish;
+  ui.render({ venueId: "venue-b" }); assert.equal(ui.value().operations, null);
+  late({ operations: { tablePending: 99 } }); await ui.settle(); assert.equal(ui.value().operations, null);
+  finish({ operations: { tablePending: 1 } }); await ui.settle(); assert.equal(ui.value().operations.tablePending, 1);
+  ui.render({ venueId: undefined }); assert.equal(ui.value().operations, null); ui.close();
+});
 
 test("Contacts shows the shared total before opening and updates its badge including zero", () => {
   const ui = fixture("VenueGuestsPanel", { ...guestProps, operations: { contactsShared: 127 } });
@@ -143,7 +242,7 @@ const ride = { id: "ride-1", venue_id: "venue-a", venue_name: "Club A", name: "R
 test("ride details are scoped to the current venue, paginate without duplication and clear after access failure", async () => {
   let fail = false;
   const ui = fixture("PickupDashboardPanel", guestProps, async url => {
-    if (fail) throw new Error("Access removed");
+    if (fail) throw new DashboardDataRequestError("Access removed", 403);
     const params = new URL(url, "https://example.test").searchParams;
     assert.equal(params.get("venueId"), "venue-a");
     return params.get("phoneOffset") === "0"

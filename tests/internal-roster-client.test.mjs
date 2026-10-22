@@ -15,7 +15,7 @@ const code = ts.transpileModule(`${source}\nexport { rosterFetch, ProtectedMedia
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
 }).outputText;
 const flush = () => new Promise(resolve => setImmediate(resolve));
-const refreshInterval = 20 * 60 * 1000;
+const refreshInterval = 5 * 60 * 1000;
 const sessionKey = "dancrAuthSessionV1";
 const dancer = { id: "dancer-1", stageName: "Demo dancer", mainPhotoId: null };
 const roster = { ok: true, venueName: "Demo club", dancers: [dancer] };
@@ -1041,7 +1041,7 @@ test("a stalled fetch times out, polling recovers, and a late response cannot re
   assert.equal(find(app.render(), node => node.type === "h1").props.children, "Demo club");
 });
 
-test("refreshes wait 20 minutes and a stalled response keeps the roster and profile visible without messages", async t => {
+test("refreshes wait 5 minutes and a stalled response keeps the roster and profile visible without messages", async t => {
   const stalledBody = deferred();
   let rosterCalls = 0;
   const app = harness(async url => {
@@ -1118,7 +1118,7 @@ test("timed-out staff responses cannot persist a late refreshed session", async 
 });
 
 for (const failure of ["offline", 429, 503]) {
-  test(`a background ${failure} failure quietly retains the roster and recovers on the next 20-minute refresh`, async t => {
+  test(`a background ${failure} failure quietly retains the roster and recovers on the next 5-minute refresh`, async t => {
     let calls = 0;
     const app = harness(async () => {
       if (++calls === 2) {
@@ -1200,7 +1200,7 @@ test("staff sign-out immediately clears the roster and cancels an in-flight refr
   assert.equal(grid(app), undefined);
 });
 
-test("sending a table request updates the roster immediately without waiting 20 minutes", async t => {
+test("sending a table request updates the roster immediately without waiting 5 minutes", async t => {
   const methods = [];
   const app = harness(async (_url, options) => {
     methods.push(options.method);
@@ -1360,7 +1360,7 @@ test("a background read started before submission cannot undo Request sent", asy
   assert.equal(find(button,node=>node.type==='span').props.children,'Request sent');assert.equal(button.props.disabled,true);
 });
 
-test("an open staff profile also refreshes quietly every 20 minutes and closes on confirmed access loss", async t => {
+test("an open staff profile also refreshes quietly every 5 minutes and closes on confirmed access loss", async t => {
   let calls = 0;
   const app = harness(async () => {
     calls++;

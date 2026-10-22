@@ -19,6 +19,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [loadError, setLoadError] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<{ id: string; text: string; error: boolean; reasonRequired?: boolean; decision?: "approved" | "rejected" } | null>(null);
   const noteInputs = useRef<Record<string, HTMLTextAreaElement | null>>({});
@@ -31,9 +32,17 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       expectedRole: "venue", cache: "no-store", signal: controller.signal,
     }).then(data => {
       if (controller.signal.aborted) return;
-      if (data.venueId !== venueId) throw new Error("Your club changed. Refresh the dashboard.");
-      setItems(data.items || []); setCount(data.count); onCountChange(data.count);
-    }).catch(error => { if (!controller.signal.aborted) { setItems([]); setMessage(error.message || "Unable to load media reviews."); } })
+      if (data.venueId !== venueId) {
+        setItems([]); setCount(null);
+        throw new Error("Your club changed. Refresh the dashboard.");
+      }
+      if (active) setItems(data.items || []);
+      setCount(data.count); onCountChange(data.count); setLoadError("");
+    }).catch(error => {
+      if (controller.signal.aborted) return;
+      if ([401, 403].includes(Number(error?.status))) { setItems([]); setCount(null); }
+      setLoadError(error.message || "Unable to load media reviews.");
+    })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => controller.abort();
   }, [active, venueId, refreshKey, revision, offset, onCountChange]);
@@ -71,6 +80,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       <p>Review your dancers’ photos and videos before they appear on the site. New dancers join this queue after their NFC tap.</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
     {message ? <p role="status">{message}</p> : null}
+    {loadError ? <p role="alert">{loadError}</p> : null}
     {loading ? <p role="status">Updating media reviews…</p> : !items.length ? <p>{count ? "No uploads on this page. Go back to see pending media." : "No media waiting for approval."}</p> : null}
     <div className="venue-media-review-grid">
       {items.map(item => <article key={item.id}>

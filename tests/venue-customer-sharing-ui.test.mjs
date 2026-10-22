@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import ts from "typescript";
 import { VENUE_SHARING_CONSENT_VERSION } from "../src/lib/dancr/venue-customers.ts";
 import { CLUB_PRIVACY_CHANGED_EVENT } from "../src/lib/dancr/customer-club-privacy.ts";
+import { refreshButtonModule } from './helpers/refresh-button.mjs';
 const require=createRequire(import.meta.url);
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function find(tree,predicate) {
@@ -18,6 +19,7 @@ function fixture(component, request, props) {
   const states=[],refs=[],effects=[],exports={};let si=0,ri=0,ei=0,pending=[];
   const listeners=new Map();
   const imports={
+    "../components/RefreshButton":refreshButtonModule,
     react:{useState(initial){const i=si++;if(!(i in states))states[i]=initial;return [states[i],value=>{states[i]=typeof value==="function"?value(states[i]):value;}];},
       useRef(initial){const i=ri++;return refs[i]??=( {current:initial} );},
       useEffect(callback,deps){const i=ei++,prior=effects[i];if(!prior||deps.some((d,n)=>d!==prior.deps[n])){effects[i]={deps,cleanup:prior?.cleanup};pending.push(()=>{effects[i].cleanup?.();effects[i].cleanup=callback();});}}},
@@ -27,7 +29,7 @@ function fixture(component, request, props) {
     "@/src/lib/dancr/customer-club-privacy":{CLUB_PRIVACY_CHANGED_EVENT},
     "./venue-customers.css":{},
   };
-  vm.runInNewContext(source,{exports,AbortController,Map,Date,JSON,encodeURIComponent,Event,
+  vm.runInNewContext(source,{exports,AbortController,Map,Date,JSON,encodeURIComponent,Event,URLSearchParams,Error,
     window:{addEventListener:(name,fn)=>listeners.set(name,fn),removeEventListener:name=>listeners.delete(name),dispatchEvent:event=>listeners.get(event.type)?.()},
     document:{visibilityState:"visible",addEventListener(){},removeEventListener(){}},
     FormData:class {constructor(values){this.values=values;}get(key){return this.values[key]??null;}},
@@ -58,9 +60,9 @@ test("customer consent is separate from following and can be withdrawn",async()=
 });
 test("a venue authorization failure clears already displayed private contacts",async()=>{
   let fail=false;
-  const f=fixture("VenueCustomersPanel",async()=>{if(fail)throw new Error("Access removed");return {entries:[{id:"person",name:"Private Person",email:"person@example.test",is_follower:true,joined_at:"2026-10-01"}],hasMore:false};},{refreshKey:"owner",active:true});
+  const f=fixture("VenueCustomersPanel",async()=>{if(fail)throw Object.assign(new Error("Access removed"),{status:403});return {entries:[{id:"person",name:"Private Person",email:"person@example.test",is_follower:true,joined_at:"2026-10-01"}],hasMore:false};},{refreshKey:"owner",active:true});
   f.render();await flush();assert.ok(find(f.render(),n=>n.type==="strong"&&n.props.children==="Private Person"));
-  fail=true;find(f.render(),n=>n.type==="button"&&n.props.children==="Refresh").props.onClick();await flush();
+  fail=true;find(f.render(),n=>n.type===refreshButtonModule.default).props.onClick();await flush();
   const tree=f.render();assert.equal(find(tree,n=>n.type==="strong"&&n.props.children==="Private Person"),undefined);assert.ok(find(tree,n=>n.props.role==="alert"));f.close();
 });
 

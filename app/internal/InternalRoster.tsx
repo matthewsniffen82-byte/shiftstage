@@ -19,7 +19,7 @@ type TableRequestCard = ClubRequest & { sample?: true; tableLabel?: string };
 type Snapshot = { venueName: string; venueSlug?: string; venueLogoUrl?: string | null; internalAccent?: string | null; dancers: Dancer[]; kind?: "table"; label?: string; role?: string; links?: ClubLink[]; requests?: ClubRequest[]; receipt?: { status: string } | null };
 type DancerNotice = { message: string; error: boolean };
 
-const ROSTER_REFRESH_INTERVAL_MS = 20 * 60 * 1000;
+const ROSTER_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 // Match the public grid's pinned profile; only reorder dancers in the current roster.
 const STAR_PROFILE_ID = "70e50bad-b7be-45ad-bc7a-64f1cba6b5e2";
 const REQUEST_SENT_NOTICE = "Request sent to club staff. Staff acknowledgement does not guarantee the dancer is available.";

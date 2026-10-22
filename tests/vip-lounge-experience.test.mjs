@@ -10,7 +10,7 @@ import { vipCalendar } from '../src/lib/dancr/vip-calendar.ts';
 import * as types from '../src/lib/dancr/vip-types.ts';
 import { BROWSER_AUTH_SESSION_KEY, clearBrowserAuthSession, persistBrowserAuthSession } from '../src/lib/dancr/browser-session.ts';
 
-const draft = { selected: ['dancer-2'], date: '2027-01-15', time: '21:30' };
+const draft = { selected: ['dancer-3'], date: '2027-01-15', time: '21:30' };
 const visit = { id: 'request-1', venue_id: venues[0].id, guest_name: 'Jordan', status: 'confirmed',
   starts_at: '2027-01-16T05:30:00Z', created_at: '2026-10-01T12:00:00Z', timezone: venues[0].timezone,
   dancers: [{ id: 'dancer-1', stageName: 'Aria' }], notes: '', response_note: '' };
@@ -99,7 +99,7 @@ test('confirmed summary opens its filter and repeat requests merge selections wi
   await ui.settle(); assert.match(ui.calls.at(-1).url, /status=confirmed/);
   ui.navigate('plan'); await ui.settle(); ui.planner().props.onChange(draft); ui.render();
   ui.navigate('requests'); await ui.settle(); ui.requests().props.onRepeat(visit); await ui.settle();
-  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['dancer-2', 'dancer-1']);
+  assert.deepEqual(Array.from(ui.planner().props.draft.selected), ['dancer-3', 'dancer-1']);
   assert.equal(ui.planner().props.draft.date, draft.date); assert.equal(ui.calls.some(c => c.options.method === 'POST'), false); ui.unmount();
 });
 

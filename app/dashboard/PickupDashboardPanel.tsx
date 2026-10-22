@@ -18,25 +18,37 @@ export default function PickupDashboardPanel({ refreshKey, venueId, active = tru
   const pending = useRef(false), olderPages = useRef(false);
   const [queue, setQueue] = useState("open"), [saving, setSaving] = useState("");
   const actionController = useRef<AbortController | null>(null);
-  const load = useCallback(async (offset = 0, silent = false) => {
+  const currentRequests = useRef<PhonePickupRequest[]>([]);
+  useEffect(() => {
+    currentRequests.current = []; olderPages.current = false;
+    setRequests([]); setLoaded(false); setHasMore(false); setError("");
+  }, [venueId, queue]);
+  const load = useCallback(async (offset = 0) => {
     if (!venueId || actionController.current) return;
     controller.current?.abort();
     const request = new AbortController(); controller.current = request;
     pending.current = true; setBusy(true); setError("");
-    if (!offset) {
-      olderPages.current = false;
-      if (!silent) { setRequests([]); setLoaded(false); setHasMore(false); }
-    }
+    const previous = currentRequests.current;
     try {
-      const params = new URLSearchParams({ venueId, phoneOffset: String(offset), rideQueue: queue });
-      const data = await requestPickupJson(`/api/pickups?${params}`, { signal: request.signal, cache: "no-store" });
-      if (request.signal.aborted) return;
-      const entries: PhonePickupRequest[] = data.phoneRequests.filter((entry: PhonePickupRequest) => entry.venue_id === venueId);
-      setRequests(previous => offset ? [...new Map([...previous, ...entries].map(entry => [entry.id, entry])).values()] : entries);
-      setHasMore(data.hasMorePhoneRequests); setLoaded(true); olderPages.current = offset > 0;
+      const pages = offset ? 1 : Math.max(1, Math.ceil(previous.length / 30));
+      const results: PhonePickupRequest[] = [];
+      let more = false;
+      for (let page = 0; page < pages; page++) {
+        const params = new URLSearchParams({ venueId, phoneOffset: String(offset || page * 30), rideQueue: queue });
+        const data = await requestPickupJson(`/api/pickups?${params}`, { signal: request.signal, cache: "no-store" });
+        if (request.signal.aborted) return;
+        results.push(...data.phoneRequests.filter((entry: PhonePickupRequest) => entry.venue_id === venueId));
+        more = Boolean(data.hasMorePhoneRequests);
+        if (!more) break;
+      }
+      const next = [...new Map([...(offset ? previous : []), ...results].map(entry => [entry.id, entry])).values()];
+      currentRequests.current = next; setRequests(next);
+      setHasMore(more); setLoaded(true); olderPages.current = offset > 0 || pages > 1;
     } catch (reason) {
       if (request.signal.aborted) return;
-      setRequests([]); setLoaded(false); setHasMore(false); olderPages.current = false;
+      if (reason && typeof reason === "object" && "status" in reason && [401, 403].includes(Number(reason.status))) {
+        currentRequests.current = []; setRequests([]); setLoaded(false); setHasMore(false); olderPages.current = false;
+      }
       setError(reason instanceof Error ? reason.message : "Unable to load ride requests.");
     } finally { if (!request.signal.aborted) { pending.current = false; setBusy(false); } }
   }, [venueId, queue]);
@@ -52,16 +64,17 @@ export default function PickupDashboardPanel({ refreshKey, venueId, active = tru
       const result = await requestDashboardJson("/api/venue/rides", { method: "POST", expectedRole: "venue", signal: request.signal,
         headers: { "content-type": "application/json" }, body: JSON.stringify({ id: ride.id, status, version: ride.staff_status_version ?? 0 }) });
       if (request.signal.aborted) return;
-      setRequests(rows => rows.flatMap(row => {
+      const next = currentRequests.current.flatMap(row => {
         if (row.id !== ride.id) return [row];
         const updated = { ...row, ...result.ride };
         return queue === "open" && ["completed", "cancelled"].includes(updated.staff_status) || ["completed", "cancelled"].includes(queue) && updated.staff_status !== queue ? [] : [updated];
-      }));
+      });
+      currentRequests.current = next; setRequests(next);
       notifyVenueOperationsChanged();
     } catch (reason) {
       if (!request.signal.aborted) {
         if (reason && typeof reason === "object" && "status" in reason && [401, 403].includes(Number(reason.status))) {
-          setRequests([]); setLoaded(false); setHasMore(false); olderPages.current = false;
+          currentRequests.current = []; setRequests([]); setLoaded(false); setHasMore(false); olderPages.current = false;
         }
         setError(reason instanceof Error ? reason.message : "Unable to update ride.");
       }
@@ -72,7 +85,7 @@ export default function PickupDashboardPanel({ refreshKey, venueId, active = tru
     if (!active || !venueId) return;
     void load();
     const refresh = () => {
-      if (document.visibilityState === "visible" && !pending.current && !actionController.current && !olderPages.current) void load(0, true);
+      if (document.visibilityState === "visible" && !pending.current && !actionController.current && !olderPages.current) void load();
     };
     const timer = window.setInterval(refresh, 30000);
     window.addEventListener("focus", refresh); window.addEventListener("online", refresh);
@@ -105,7 +118,7 @@ export default function PickupDashboardPanel({ refreshKey, venueId, active = tru
       </dl>
       <small>Details shared to arrange this ride.</small>
     </article>)}</div>
-    {olderPages.current && <p className="venue-value-note">Reviewing older requests. Refresh to return to the latest requests.</p>}
+    {olderPages.current && <p className="venue-value-note">Older requests loaded. Refresh updates this list.</p>}
     {hasMore && <button type="button" disabled={busy || Boolean(saving)} onClick={() => void load(requests.length)}>Load older requests</button>}
     <Link className="primary-link dashboard-primary-action" href="/pickups">Open pickup inbox →</Link>
   </div>;
