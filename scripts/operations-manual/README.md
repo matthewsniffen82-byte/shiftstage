@@ -1,29 +1,44 @@
-# Operations documentation
+# MyDancr operations documentation
 
-The manual, four role onboarding guides and four one-page cheat sheets are generated from `content.json`, the page layout, and selected cropped regions of real app screenshots. Arrows are vector callouts drawn in the PDF, not changes to the app interface. `screenshots/sources.json` records the original capture filenames and crop coordinates. Captures from earlier layouts are labeled; unavailable controls are described as text references.
+The 21 October 2026 edition is a complete rewrite. Its prose, layout and screenshots were created from scratch against current application source. No previous manual text or screenshots are inputs. Legacy assets have been retired; earlier editions remain in Git history.
 
-Edition: 21 October 2026, revision 6. Source baseline: `25813c6c0`. Revision 6 clarifies the owner's operating instructions: MyDancr admin creates and manages table QR codes; venues supply table numbers, receive and verify the signs, and place them. The club dashboard displays guest-list records; pass scanning and guest admission are not performed in that dashboard. The obsolete scanner screenshot is no longer used in the manual or role guides.
+## Deliverables
 
-From the repository root, using Python with ReportLab, Pillow, pypdf and pdfplumber:
+- 46-page operations manual with 41 procedures, linked contents, role/access guidance, troubleshooting and a release/handover worksheet.
+- Four complete role guides: Club Admin (16 pages), Managers and Talent Management (13), Dancers (15), Content Approval Manager (13).
+- Four one-page onboarding cheat sheets.
+- 50-page complete packet: manual followed by all four sheets, preserving internal contents links.
+
+Final PDFs are in `output/pdf/mydancr-operations/`. The existing role-checked `/api/guides` endpoint serves the same filenames. The catalog in `src/lib/dancr/operations-guides.ts` and the `/guides` page describe this edition. Each PDF must remain below the private response size limit.
+
+## Source and reproducibility
+
+`v2/content.py` is the new editorial source. `v2/build.py` generates all ten PDFs in one pass with ReportLab/Pillow/pypdf. `v2/edition.json` records counts and the application baseline commit. Original capture PNGs and source-file hashes are in `v2/screenshots/manifest.json`.
+
+`v2/capture.cjs` renders actual current React components in isolation with fictional training fixtures. It uses the repository's component markup and styles, suppresses effects, blocks network requests and records arrow target bounds. It does not start the application, log in, submit actions or run browser journeys. These are component screenshots, not live-session captures. The PDFs disclose this on their cover and figure captions. Orange arrows are vector annotations added to the PDFs.
+
+Requirements: repository Node dependencies, Playwright with Edge (or adjust the local capture browser), Python with ReportLab/Pillow/pypdf/pdfplumber, and Poppler. Set `CODEX_NODE_MODULES` to the shared Node modules directory if different from the capture default.
+
+From the repository root:
 
 ```text
-python scripts/operations-manual/build.py
-python scripts/operations-manual/onboarding.py
-python scripts/build-operations-packet.py
-python scripts/operations-manual/validate.py
+node scripts/operations-manual/v2/capture.cjs
+python scripts/operations-manual/v2/build.py
+python scripts/operations-manual/v2/validate.py
+python scripts/operations-manual/v2/render.py
+node --test tests/operations-guides.test.mjs
 ```
 
-Outputs remain in `output/pdf/mydancr-operations/`, behind the existing role-checked guides endpoint. The complete packet contains the manual and four cheat sheets. The four longer role guides remain separate downloads. Temporary layout/validation reports go to `tmp/pdfs/operations-manual/`.
+To recapture selected components, append screenshot IDs to the capture command. Old build/onboarding/packet command paths now delegate to this generator and cannot recreate the retired edition. Temporary layout, validation and rendered QA artifacts go to `tmp/pdfs/operations-manual-v2/`.
 
-After editing, render every changed PDF with Poppler and inspect all pages. Check screenshot arrows against the numbered steps, footer clearances, one-page cheat sheet length, and PDF links. Keep every PDF below the existing private download response limit. Run the focused `tests/operations-guides.test.mjs` tests before delivery. Do not use E2E tests or automated browser journeys.
+Inspect rendered pages for readable screenshots, correct numbered arrows, contents links, text bounds, footer clearance and one-page sheet length. Validation checks every final PDF's counts, text geometry, internal destinations, task coverage, source hashes and packet contents. No E2E tests or automated application journeys are permitted.
 
-## Editorial sources
+## Editorial checks
 
-- Role access, venue publication and team: `VenueDashboardPanels.tsx`, `VenueTeamPanel.tsx`, `venue-team-role-descriptions.ts`.
-- Requests, guest list, VIP, rides and contacts: their venue dashboard panels and API handlers. Guest-list controls were rechecked in `VenueGuestListPanel.tsx` for revision 6. Contacts distinguish visit details from club email/text subscriptions.
-- Dancer setup and media: `DancerProfileWorkspace.tsx`, `DancerProfileEditor.tsx`, `DancerPhotoPanel.tsx`, `DancerTvStudio.tsx`, `dancer-submission-media.ts` and the upload/review handlers.
-- Media approval: `VenueMediaReviewPanel.tsx`, `/api/venue/media-reviews`, and current photo/video rules. Reviewer is an assigned owner/manager, not a separate permission role.
-- Embedded grids and TV: `VenueWebsiteGrid.tsx`, `VenueTvPanel.tsx`, `public/venue-grid-embed.js` and `docs/venue-working-now-embed.md`. Prefer current code if older documentation differs.
-- Refresh: public discovery sync, `InternalRoster.tsx`, `DashboardClient.tsx`, `useVenueOperations.ts`, `VipDashboard.tsx` and the embed script.
+- Club team and publication: `VenueTeamPanel.tsx`, `VenueDashboardPanels.tsx`, team permission helpers and publication handlers.
+- Shift work: `VenueTonightOverview.tsx`, `VenueNfcTagPanel.tsx`, `InternalRoster.tsx`, guest-list, VIP, pickup and contacts panels and handlers.
+- Dancer setup: identity/editor components, main/photo/video panels, agreement, age verification, NFC, Working Now, visibility, notification and analytics components and handlers.
+- Content review: `VenueMediaReviewPanel.tsx`, media-review handlers, current photo/video rules and publication behavior.
+- Platform coordination: table QR and subscription roster components. Club teams coordinate platform-only tasks; they do not gain platform permissions.
 
-The pre-publication sign-off procedure for text/branding is an operating policy. The manual explicitly distinguishes that policy from the technical hold on pending dancer media; it must not claim a universal product-wide approval gate.
+The current app does not provide a universal approval gate for every content type. The manual requires recorded pre-publication sign-off for text, branding, offers, embeds and other changes without a technical queue, while explaining the actual pending-media approval workflow. Keep that distinction explicit. Billing data is not connected, club guest-list panels do not admit guests, and the roster menu does not provide an end-check-in button.

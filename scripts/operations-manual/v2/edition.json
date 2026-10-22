@@ -1,0 +1,78 @@
+{
+  "edition": "21 October 2026",
+  "sourceCommit": "651dd6eed68d41109b96a2f72132a27c5b93e5be",
+  "taskCount": 41,
+  "screenshotCount": 39,
+  "documents": [
+    {
+      "file": "MyDancr_Operations_Manual.pdf",
+      "role": "master",
+      "pages": 46,
+      "kind": "manual",
+      "bytes": 1591032
+    },
+    {
+      "file": "MyDancr_Club_Admin_Onboarding_Guide.pdf",
+      "role": "club-admin",
+      "pages": 16,
+      "kind": "guide",
+      "bytes": 666386
+    },
+    {
+      "file": "MyDancr_Club_Admin_Cheat_Sheet.pdf",
+      "role": "club-admin",
+      "pages": 1,
+      "kind": "cheat-sheet",
+      "bytes": 21132
+    },
+    {
+      "file": "MyDancr_Manager_Talent_Onboarding_Guide.pdf",
+      "role": "manager",
+      "pages": 13,
+      "kind": "guide",
+      "bytes": 395389
+    },
+    {
+      "file": "MyDancr_Manager_Talent_Cheat_Sheet.pdf",
+      "role": "manager",
+      "pages": 1,
+      "kind": "cheat-sheet",
+      "bytes": 21172
+    },
+    {
+      "file": "MyDancr_Dancer_Onboarding_Guide.pdf",
+      "role": "dancer",
+      "pages": 15,
+      "kind": "guide",
+      "bytes": 451322
+    },
+    {
+      "file": "MyDancr_Dancer_Cheat_Sheet.pdf",
+      "role": "dancer",
+      "pages": 1,
+      "kind": "cheat-sheet",
+      "bytes": 32685
+    },
+    {
+      "file": "MyDancr_Content_Approval_Onboarding_Guide.pdf",
+      "role": "content-approval",
+      "pages": 13,
+      "kind": "guide",
+      "bytes": 220412
+    },
+    {
+      "file": "MyDancr_Content_Approval_Cheat_Sheet.pdf",
+      "role": "content-approval",
+      "pages": 1,
+      "kind": "cheat-sheet",
+      "bytes": 32794
+    },
+    {
+      "file": "MyDancr_Complete_Operations_Packet.pdf",
+      "role": "master",
+      "kind": "packet",
+      "pages": 50,
+      "bytes": 1696157
+    }
+  ]
+}

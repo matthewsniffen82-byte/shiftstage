@@ -1,10 +1,10 @@
 export const OPERATIONS_SUPPORT_EMAIL = "support@mydancr.com";
 
 export const GUIDE_ROLES = [
-  { id: "club-admin", title: "Club Admin", description: "Prepare the club, manage team access and check QR signs and stickers.", pages: 5 },
-  { id: "manager", title: "Managers & talent", description: "Run the shift, manage requests, review the guest list and hand over.", pages: 6 },
-  { id: "dancer", title: "Dancers", description: "Set up your profile, upload media and manage your working status.", pages: 6 },
-  { id: "content-approval", title: "Content approval", description: "Inspect uploads, record decisions and verify publication.", pages: 4 },
+  { id: "club-admin", title: "Club Admin", description: "Manage club setup, team access, publication, offers, QR signs, website grids and operating reviews.", pages: 16 },
+  { id: "manager", title: "Managers & talent", description: "Run the roster, table requests, guest list, VIP visits, rides, contacts and shift handover.", pages: 13 },
+  { id: "dancer", title: "Dancers", description: "Complete setup, manage photos and videos, check in, choose visibility and review results.", pages: 15 },
+  { id: "content-approval", title: "Content approval", description: "Review media, approve releases, verify internal and external destinations, and handle corrections.", pages: 13 },
 ] as const;
 
 export type GuideRole = typeof GUIDE_ROLES[number]["id"];
