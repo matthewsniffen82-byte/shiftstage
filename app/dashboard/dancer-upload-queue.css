@@ -1,5 +1,18 @@
 /* Share compact upload receipts across onboarding, photos and videos. */
 @layer dancr-upload-reviews {
+  :is(.photo-upload-queue, .tv-upload-queue) > .dancer-upload-cancel {
+    justify-self: end;
+    width: fit-content !important;
+    min-height: 44px !important;
+    padding: 8px 12px !important;
+    margin: 0 !important;
+    border: 1px solid var(--dancr-color-border) !important;
+    border-radius: 8px !important;
+    background: var(--dancr-control-secondary-background) !important;
+    color: var(--dancr-color-text-primary) !important;
+    font: inherit;
+    font-size: 12px !important;
+  }
   .dancer-upload-review-card {
     grid-template-columns: 56px minmax(0, 1fr) !important;
     align-items: center !important;

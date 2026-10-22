@@ -7,6 +7,7 @@ import ts from "typescript";
 import { mediaReview } from "./helpers/media-review-label.mjs";
 import { preparePhotoUpload } from "../app/dashboard/prepare-photo-upload.ts";
 import { runMediaUploadBatch } from "../app/dashboard/media-upload-batch.ts";
+import { createMediaUploadCancellation } from "../app/dashboard/media-upload-cancellation.ts";
 
 const source = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 const photoSource = source.slice(source.indexOf("type DancerPhotoItem ="), source.indexOf("\nfunction InfoPanel("));
@@ -24,7 +25,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    preparePhotoUpload, runMediaUploadBatch, RefreshButton: refreshButtonModule.default,
+    preparePhotoUpload, runMediaUploadBatch, createMediaUploadCancellation, RefreshButton: refreshButtonModule.default,
     exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, MIN_DANCER_ONBOARDING_PHOTOS: 3, DancerRejectedUploadNotice: "RejectedUploadNotice", DancerUploadDisclosure: "UploadDisclosure", DancerMediaUploadRules: "MediaUploadRules", DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     cropProfilePhoto: (...args) => { crops.push(args); throw new Error("Uploads must not open the manual crop editor."); },
@@ -117,7 +118,7 @@ test("overlapping photo reviews reserve selection order and show real progress b
   assert.equal(ui.progress[1].props.children.props.style, undefined, 'checks have no invented percentage');
   assert.equal(ui.replacements.length, 0, 'active and queued uploads cannot be replaced');
   assert.equal(ui.reviewButtons.length, 0);
-  assert.equal(ui.buttons.filter(button => button.props.className !== 'photo-source-action is-disabled').length, 0);
+  assert.deepEqual(ui.buttons.filter(button => button.props.className !== 'photo-source-action is-disabled').map(button => button.props.children), ['Cancel uploads']);
   assert.deepEqual(ui.uploadMessages, [], 'each receipt already announces its upload status');
   releases[1]({ decision: 'approved', photo: approved('second', 2) }); await ui.settle();
   assert.equal(ui.posts.length, 3, 'the third upload does not wait for the first review');
@@ -127,6 +128,38 @@ test("overlapping photo reviews reserve selection order and show real progress b
   releases[0]({ decision: 'approved', photo: approved('first', 1) }); await ui.settle();
   assert.equal(ui.reads.length, 1);
   assert.equal(ui.cards.length, 0);
+});
+
+test("Cancel uploads stops photo transfers and queued files, preserves an active review, and allows retry", async () => {
+  const releases = [];
+  const ui = photoHarness({ uploadOnly: true,
+    post: options => new Promise((resolve, reject) => {
+      releases.push(resolve);
+      options.signal.addEventListener('abort', () => reject(options.signal.reason), { once: true });
+    }),
+    read: async () => ({ profile: { pending_photo_reviews: [{ ...pending('kept', 2), status: 'pending_review' }] } }),
+  });
+  ui.select(['first', 'second', 'third'].map(name => new File([name], name + '.jpg', { type: 'image/jpeg' })));
+  await ui.settle();
+  ui.posts[0].onUploadProgress(40); ui.posts[1].onUploadProgress(100); await ui.settle();
+  ui.buttons.find(button => button.props.children === 'Cancel uploads').props.onClick();
+  await ui.settle();
+  assert.equal(ui.posts[0].signal.aborted, true);
+  assert.equal(ui.posts[1].signal.aborted, false, 'completed transfer keeps its review response');
+  assert.equal(ui.posts.length, 2, 'queued third file never starts');
+  ui.posts[0].onUploadProgress(100); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Upload canceled', 'Checking photo…', 'Upload canceled']);
+  releases[1]({ decision: 'review', photo: { id: 'kept', reviewStatus: 'pending', sortOrder: 2 } });
+  await ui.settle();
+  assert.deepEqual(ui.statuses, ['Upload canceled', 'Waiting for Club approval', 'Upload canceled']);
+  assert.equal(ui.progress.length, 0);
+  const retry = ui.buttons.find(button => button.props.children === 'Retry');
+  assert.equal(retry.props.disabled, false); retry.props.onClick(); await ui.settle();
+  assert.equal(ui.posts.length, 3);
+  assert.equal(ui.posts[2].signal.aborted, false);
+  assert.equal(ui.posts[2].body.get('idempotencyKey'), ui.posts[0].body.get('idempotencyKey'));
+  releases[2]({ decision: 'review', photo: { id: 'retry', reviewStatus: 'pending', sortOrder: 1 } });
+  await ui.settle();
 });
 
 test("collapsing photo upload controls leaves pending and rejected reviews outside the disclosure", () => {

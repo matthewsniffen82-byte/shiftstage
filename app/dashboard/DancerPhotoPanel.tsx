@@ -15,6 +15,7 @@ import type { LoadState, DancerPhotoItem, DancerPhotoQueueItem } from "./dashboa
 import { DANCER_PHOTOS_KEEP_OPEN_EVENT } from "./DashboardShared";
 import { preparePhotoUpload } from "./prepare-photo-upload";
 import { runMediaUploadBatch } from "./media-upload-batch";
+import { createMediaUploadCancellation } from "./media-upload-cancellation";
 import "./dancer-upload-queue.css";
 export function DancerPhotoPanel({
   uploadOnly = false,
@@ -41,6 +42,8 @@ export function DancerPhotoPanel({
   const [queuedPhotos, setQueuedPhotos] = useState<DancerPhotoQueueItem[]>([]);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
+  const [cancelingUploads, setCancelingUploads] = useState(false);
+  const uploadCancellationRef = useRef<ReturnType<typeof createMediaUploadCancellation> | null>(null);
   const [pinningPhotoId, setPinningPhotoId] = useState("");
   const [retrying, setRetrying] = useState(false);
   const [retiredReviewIds, setRetiredReviewIds] = useState<Set<string>>(() => new Set());
@@ -249,6 +252,9 @@ export function DancerPhotoPanel({
     const { requestId, controller } = action;
 
     setIsUploading(true);
+    setCancelingUploads(false);
+    const cancellation = createMediaUploadCancellation(controller.signal);
+    uploadCancellationRef.current = cancellation;
     setStatus("Uploading");
     const failedItems: DancerPhotoQueueItem[] = [];
     const rejectedItemIds = new Set<string>();
@@ -262,6 +268,11 @@ export function DancerPhotoPanel({
       await persistQueuedPhotoDeletions(controller.signal);
       await runMediaUploadBatch(batch, batch.some(item => item.replaces) ? 1 : 2, async queuedItem => {
         if (!isCurrentPhotoAction(requestId, controller)) return;
+        const transfer = cancellation.start();
+        if (!transfer) {
+          updateQueuedPhoto(queuedItem.id, { stage: "failed", progress: 0, error: "Upload canceled." });
+          return;
+        }
         let item = queuedItem;
         const uploadSortOrder = item.uploadSortOrder ?? nextSortOrder++;
         updateQueuedPhoto(item.id, { stage: "preparing", progress: 0, uploadSortOrder, error: undefined });
@@ -274,7 +285,7 @@ export function DancerPhotoPanel({
             const { photoId, queueId } = item.replaces;
             if (photoId) {
               await requestDancerPhotosJson({ method: "DELETE", headers: { "content-type": "application/json" },
-                body: JSON.stringify({ photoId }), signal: controller.signal, fallbackMessage: "Unable to replace this photo. Try again." });
+                body: JSON.stringify({ photoId }), signal: transfer.signal, fallbackMessage: "Unable to replace this photo. Try again." });
               if (!isCurrentPhotoAction(requestId, controller)) return;
               workingPhotos = workingPhotos.filter(photo => photo.id !== photoId);
               setPhotos(workingPhotos);
@@ -287,8 +298,9 @@ export function DancerPhotoPanel({
           if (workingPhotos.length >= MAX_DANCER_PROFILE_PHOTOS) {
             throw new Error("No profile photo slot is available for this photo.");
           }
-          const file = await preparePhotoUpload(item.file, controller.signal);
+          const file = await preparePhotoUpload(item.file, transfer.signal);
           if (!isCurrentPhotoAction(requestId, controller)) return;
+          transfer.signal.throwIfAborted();
           updateQueuedPhoto(item.id, { stage: "uploading", progress: 0 });
           const uploadKey = `${item.id}:gallery`;
           const formData = new FormData();
@@ -303,14 +315,17 @@ export function DancerPhotoPanel({
             headers: { "idempotency-key": uploadKey },
             body: formData,
             fallbackMessage: "Unable to upload photo.",
-            signal: controller.signal,
+            signal: transfer.signal,
             onUploadProgress: progress => {
-              if (isCurrentPhotoAction(requestId, controller)) updateQueuedPhoto(item.id, {
+              if (!isCurrentPhotoAction(requestId, controller) || transfer.signal.aborted) return;
+              if (progress === 100) transfer.beginReview();
+              updateQueuedPhoto(item.id, {
                 progress, stage: progress === 100 ? "checking" : "uploading",
               });
             },
           });
           if (!isCurrentPhotoAction(requestId, controller)) return;
+          transfer.signal.throwIfAborted();
           const uploadStatus = normalizePhotoStatus(data.photo?.reviewStatus || data.photo?.review_status || data.decision);
           const approved = uploadStatus === "approved";
           const uploadedPhoto: DancerPhotoItem = {
@@ -336,6 +351,10 @@ export function DancerPhotoPanel({
           updateQueuedPhoto(item.id, { stage: "complete", progress: 100, result: uploadedPhoto });
         } catch (error) {
           if (!isCurrentPhotoAction(requestId, controller)) return;
+          if (transfer.signal.aborted) {
+            updateQueuedPhoto(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
+            return;
+          }
           const message = error instanceof Error ? error.message : "Unable to upload photo.";
           const friendlyMessage = message.includes("valid JPEG, PNG, or WebP") || message.includes("HEIC or HEIF")
             ? "That photo could not be converted. Choose another photo or set your phone camera to Most Compatible."
@@ -343,6 +362,8 @@ export function DancerPhotoPanel({
           const failedItem = { ...item, uploadSortOrder, stage: "failed" as const, progress: 0, error: friendlyMessage };
           failedItems.push(failedItem);
           updateQueuedPhoto(item.id, failedItem);
+        } finally {
+          transfer.finish();
         }
       }, controller.signal);
 
@@ -371,7 +392,7 @@ export function DancerPhotoPanel({
         rejectedCount ? `${rejectedCount} not approved` : "",
         failedItems.length ? `${failedItems.length} ready to retry` : "",
       ].filter(Boolean).join(". ");
-      setStatus(summary || (acceptedCount ? "" : "No photos were uploaded."));
+      setStatus(cancellation.canceled ? "Uploads canceled. Completed uploads are kept." : summary || (acceptedCount ? "" : "No photos were uploaded."));
     } catch (error) {
       if (isCurrentPhotoAction(requestId, controller)) {
         const message = error instanceof Error ? error.message : "Unable to upload photos.";
@@ -380,12 +401,15 @@ export function DancerPhotoPanel({
         setQueuedPhotos((current) => current.flatMap((item) => {
           if (rejectedItemIds.has(item.id) || acceptedItemIds.has(item.id)) return [item];
           if (!batchIds.has(item.id)) return [item];
+          if (item.error === "Upload canceled.") return [item];
           return [failedById.get(item.id) || { ...item, stage: "failed", progress: 0, error: message }];
         }));
         setStatus(message);
       }
     } finally {
       if (finishPhotoAction(requestId)) {
+        uploadCancellationRef.current = null;
+        setCancelingUploads(false);
         setIsUploading(false);
         window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
       }
@@ -574,10 +598,13 @@ export function DancerPhotoPanel({
       {reviews.length ? (
         <div className="photo-upload-queue" role="group" aria-label="Photo upload status">
           {!uploadOnly ? <strong>Upload status · {reviews.length}</strong> : null}
+          {isUploading && queuedPhotos.some(item => ["queued", "preparing", "uploading"].includes(item.stage)) ? <button className="dancer-upload-cancel" type="button" disabled={cancelingUploads} onClick={() => {
+            uploadCancellationRef.current?.cancel(); setCancelingUploads(true);
+          }}>{cancelingUploads ? "Canceling…" : "Cancel uploads"}</button> : null}
           {reviews.map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
             const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
-            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "checking" ? "Checking photo…" : item?.stage === "preparing" ? "Preparing photo…" : item?.stage === "uploading" ? "Uploading" : item?.error ? "Upload failed" : "Waiting to upload";
+            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "checking" ? "Checking photo…" : item?.stage === "preparing" ? "Preparing photo…" : item?.stage === "uploading" ? "Uploading" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : "Waiting to upload";
             const processing = ["Uploading", "Preparing photo…", "Checking photo…", "Waiting to upload"].includes(uploadStatus);
             const uploadProgress = uploadStatus === "Uploading" ? item?.progress : uploadStatus === "Waiting to upload" ? 0 : undefined;
             if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
