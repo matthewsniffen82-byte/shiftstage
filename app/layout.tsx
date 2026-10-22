@@ -49,13 +49,13 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0b12",
+  themeColor: "#0b0b0b",
   viewportFit: "cover",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" style={{ colorScheme: "only dark", backgroundColor: "var(--dancr-color-background, #0b0b12)", color: "var(--dancr-color-text-primary, #f5f3f7)" }} suppressHydrationWarning>
+    <html lang="en" style={{ colorScheme: "only dark", backgroundColor: "var(--dancr-color-background, #0b0b0b)", color: "var(--dancr-color-text-primary, #f5f3f7)" }} suppressHydrationWarning>
       <head>
         <meta name="color-scheme" content="dark" />
       </head>

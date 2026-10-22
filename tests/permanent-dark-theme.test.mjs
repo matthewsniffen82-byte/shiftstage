@@ -44,7 +44,7 @@ test('the production homepage keeps critical dark paint inline before blocking a
   const css = postcss.parse(critical[1]);
   const values = Object.fromEntries(css.first.nodes.map(node => [node.prop, node.value]));
   assert.equal(values['color-scheme'], 'only dark');
-  assert.equal(values['background-color'], 'var(--dancr-color-background, #0b0b12)');
+  assert.equal(values['background-color'], 'var(--dancr-color-background, #0b0b0b)');
   assert.equal(values.color, 'var(--dancr-color-text-primary, #f5f3f7)');
   for (const file of ['app/layout.tsx', 'app/global-error.tsx']) {
     assert.match(read(file), /<html[^>]*style=\{\{ colorScheme: "only dark", backgroundColor:/, file);

@@ -6,7 +6,7 @@ import { dashboardStyleFiles, dashboardStyleBlocks } from './helpers/dashboard-p
 const files = ['app/dashboard', 'app/admin', 'app/vip'].flatMap(dashboardStyleFiles)
   .filter(file => !file.endsWith('saved-venue-cards.generated.css'));
 files.push('app/internal/internal-dashboard.css', 'app/components/dashboard-header.css', 'app/components/dashboard-menu.css');
-const palette = new Set(['124,58,237', '20,20,27', '48,48,56', '11,11,18', '53,49,63', '91,85,104', '170,166,181', '245,243,247']);
+const palette = new Set(['124,58,237', '20,20,27', '48,48,56', '11,11,11', '53,49,63', '91,85,104', '170,166,181', '245,243,247']);
 const colors = /#(?:[\da-f]{8}|[\da-f]{6}|[\da-f]{4}|[\da-f]{3})\b|rgba?\([^()]+\)/gi;
 function obsoletePlum(color) {
   let rgb;

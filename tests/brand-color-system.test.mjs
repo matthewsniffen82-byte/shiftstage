@@ -30,7 +30,7 @@ const [
 const requiredTokens = new Map([
   ["--dancr-color-brand-primary", "#7c3aed"],
   ["--dancr-color-text-primary", "#f5f3f7"],
-  ["--dancr-color-background", "#0b0b12"],
+  ["--dancr-color-background", "#0b0b0b"],
   ["--dancr-color-surface", "#191820"],
   ["--dancr-color-text-secondary", "#aaa6b5"],
   ["--dancr-color-text-muted", "#aaa6b5"],
@@ -100,9 +100,9 @@ test("location pins use the brand violet without lavender icons, indigo glows or
 test("brand text and status combinations meet normal-text contrast", () => {
   const combinations = [
     ["#f5f3f7", "#7c3aed"],
-    ["#f5f3f7", "#0b0b12"],
+    ["#f5f3f7", "#0b0b0b"],
     ["#aaa6b5", "#191820"],
-    ["#aaa6b5", "#0b0b12"],
+    ["#aaa6b5", "#0b0b0b"],
     ["#f5f3f7", "#28744f"],
     ["#ffffff", "#2563eb"],
     ["#35d09a", "#191820"],
@@ -119,10 +119,10 @@ test("brand text and status combinations meet normal-text contrast", () => {
 });
 
 test("browser chrome uses midnight charcoal and installed logo artwork is preserved", () => {
-  assert.match(layout, /themeColor: "#0b0b12"/);
-  assert.match(liveShell, /<meta name="theme-color" content="#0b0b12">/);
-  assert.match(manifest, /"background_color": "#0b0b12"/);
-  assert.match(manifest, /"theme_color": "#0b0b12"/);
+  assert.match(layout, /themeColor: "#0b0b0b"/);
+  assert.match(liveShell, /<meta name="theme-color" content="#0b0b0b">/);
+  assert.match(manifest, /"background_color": "#0b0b0b"/);
+  assert.match(manifest, /"theme_color": "#0b0b0b"/);
   assert.match(appIcon, /fill="#050507"/);
   assert.match(appIcon, /stroke="#7C3AED"/);
   assert.match(appIcon, /fill="#F8FAFC"/);

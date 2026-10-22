@@ -19,7 +19,7 @@
     color-scheme: only dark !important;
   }
   :root {
-    background-color: var(--dancr-color-background, #0b0b12);
+    background-color: var(--dancr-color-background, #0b0b0b);
     color: var(--dancr-color-text-primary, #f5f3f7);
   }
 }
@@ -75,16 +75,16 @@
   --dancr-color-text-primary: #f5f3f7;
   --dancr-color-text-secondary: #aaa6b5;
   --dancr-color-text-muted: #aaa6b5;
-  --dancr-color-text-on-bright: #0b0b12;
+  --dancr-color-text-on-bright: #0b0b0b;
 
-  --dancr-color-background: #0b0b12;
+  --dancr-color-background: #0b0b0b;
   --dancr-color-surface: #191820;
   --dancr-color-surface-card: #14141b;
   --dancr-color-surface-raised: #191820;
   --dancr-color-surface-soft: rgba(25, 24, 32, 0.88);
   --dancr-color-surface-translucent: rgba(25, 24, 32, 0.96);
   --dancr-color-surface-subtle: #191820;
-  --dancr-color-overlay: rgba(11, 11, 18, 0.88);
+  --dancr-color-overlay: rgba(11, 11, 11, 0.88);
   --dancr-color-control-secondary: #303038;
   /* Paint dark control faces directly; tiny SVG fills can be recolored as
      foreground images by mobile browsers. */
