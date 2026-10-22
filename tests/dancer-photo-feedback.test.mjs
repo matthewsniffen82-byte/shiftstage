@@ -76,6 +76,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
     get buttons() { return nodes().filter(node => node.type === "button"); },
     get replacements() { return nodes().filter(node => node.type === "input" && /^Replace photo/.test(node.props['aria-label'] || '')); },
     get progress() { return nodes().filter(node => node.type === "progress"); },
+    get uploadMessages() { return nodes().filter(node => node.props?.className === "photo-upload-status").map(node => node.props.children); },
     select(files = [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })], source = "gallery") {
       nodes().find(node => node.type === "input" && node.props.className === "photo-source-input"
         && Boolean(node.props.capture) === (source === "camera")).props.onChange({ target: { files, value: "" } });
@@ -111,6 +112,10 @@ test("overlapping photo reviews reserve selection order and show real progress b
   ui.posts[0].onUploadProgress(43); ui.posts[1].onUploadProgress(100); await ui.settle();
   assert.deepEqual(ui.statuses, ['Uploading', 'Uploading', 'Waiting to upload']);
   assert.equal(ui.progress[0].props.value, 43);
+  assert.equal(ui.replacements.length, 0, 'active and queued uploads cannot be replaced');
+  assert.equal(ui.reviewButtons.length, 0);
+  assert.equal(ui.buttons.filter(button => button.props.className !== 'photo-source-action is-disabled').length, 0);
+  assert.deepEqual(ui.uploadMessages, [], 'each receipt already announces its upload status');
   releases[1]({ decision: 'approved', photo: approved('second', 2) }); await ui.settle();
   assert.equal(ui.posts.length, 3, 'the third upload does not wait for the first review');
   assert.deepEqual(ui.posts.map(post => Number(post.body.get('sortOrder'))), [1, 2, 3]);
@@ -314,7 +319,9 @@ test("saved pending and rejected photos stay above the library with reasons afte
   } });
   assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
   assert.deepEqual(ui.notes, ['Multiple people']);
-  assert.equal(ui.replacements.length, 1);
+  assert.equal(ui.replacements.length, 0);
+  assert.equal(ui.reviewButtons.length, 0, 'saved active checks do not offer Retry');
+  assert.equal(ui.buttons.some(button => button.props.children === 'Remove'), false);
   ui.close(); ui.reopen();
   assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
   assert.equal(ui.pinButtons.length, 0);
@@ -358,9 +365,9 @@ test("a profile refresh retains a failed photo and replacement cancellation leav
   assert.equal(ui.replacements.length, 1);
 });
 
-test("replacement failure stays in the upload area and retries the new photo without deleting twice", async () => {
+test("delayed review replacement failure stays in the upload area and retries the new photo without deleting twice", async () => {
   let attempts = 0;
-  const ui = photoHarness({ uploadOnly: true, profile: { pending_photo_reviews: [pending('waiting')] }, post: async options => {
+  const ui = photoHarness({ uploadOnly: true, profile: { pending_photo_reviews: [{ ...pending('waiting'), status: 'moderation_error' }] }, post: async options => {
     if (options.method === 'DELETE') return { ok: true };
     if (++attempts === 1) throw new Error('Connection lost.');
     return { decision: 'approved', photo: approved() };

@@ -12,7 +12,7 @@ const video = (id, status = 'submitted', reviewNotes = '') => ({ id, status, mod
 const file = () => new File(['video fixture'], 'clip.mp4', { type: 'video/mp4' });
 
 // Run real component handlers with in-memory API/storage fixtures. No browser or remote uploads.
-function harness(initial = [], { maxVideos = 50 } = {}) {
+function harness(initial = [], { maxVideos = 50, upload = async options => options.onProgress(100) } = {}) {
   let rows = [...initial], cursor = 0, effects = [], dirty = true, tree, readError = false, uploadError = false, cropCancelled = false;
   const slots = [], calls = [], intervals = new Set(), revoked = [];
   const props = { embedded: true };
@@ -36,7 +36,7 @@ function harness(initial = [], { maxVideos = 50 } = {}) {
       if (name === '@/src/lib/dancr/media-limits') return { MAX_DANCER_PROFILE_VIDEOS: 50 };
       if (name === './profile-video-crop') return { cropProfileVideo: async () => cropCancelled ? null : { source: { durationSeconds: 10, width: 720, height: 1280 } } };
       if (name === './dancer-profile-media-sync') return { announceDancerProfileVideosChanged() {}, primeVideoPreviewFrame() {} };
-      if (name === './resumable-video-upload') return { uploadResumableVideo: async (_file, options) => { if (uploadError) throw new Error('Connection lost.'); options.onProgress(100); } };
+      if (name === './resumable-video-upload') return { uploadResumableVideo: async (_file, options) => { if (uploadError) throw new Error('Connection lost.'); await upload(options); } };
       if (name === './dashboard-session') return {
         readDashboardAccessToken: () => 'fixture',
         requestDancerTvVideosJson: async options => {
@@ -66,6 +66,7 @@ function harness(initial = [], { maxVideos = 50 } = {}) {
     get library() { return nodes().find(node => node.type === './DancerVideoPreviews')?.props.videos || []; },
     get sourceButtons() { return nodes().filter(node => node.type === 'button' && node.props.className?.includes('tv-video-source-action')); },
     get reviewActions() { return this.reviews.flatMap(card => nodes(card).filter(node => node.type === 'button' || node.type === './DancerMediaRetryButton')); },
+    get uploadMessages() { return nodes().filter(node => node.props?.className === 'tv-studio-status').map(node => node.props.children); },
     setPermission(index, checked) { nodes().filter(node => node.type === 'input' && node.props.type === 'checkbox')[index].props.onChange({ target: { checked } }); render(); },
     openSource(index) {
       nodes().filter(node => node.type === 'input' && node.props.type === 'file').forEach((node, i) => { node.props.ref.current = { click: () => calls.push(['picker', i]) }; });
@@ -107,14 +108,31 @@ test('both video sources stay gated until both permissions are checked and re-lo
   assert.equal(ui.calls.filter(call => call[0] === 'picker').length, 2);
 });
 
-test('saved unresolved videos show reasons and actions while only approvals enter the library', async () => {
+test('saved active video checks hide actions while only approvals enter the library', async () => {
   const ui = harness([video('live', 'approved'), video('checking', 'moderating'), video('denied', 'rejected', 'Multiple people')]); await ui.settle();
   assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
   assert.deepEqual(ui.notes, ['Multiple people']);
+  assert.deepEqual(ui.reviewActions, []);
   assert.deepEqual(Array.from(ui.library, item => item.id), ['live']);
   ui.rerender(); assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
   await ui.refresh([video('live', 'approved'), video('checking', 'approved'), video('denied', 'rejected', 'Multiple people')]);
   assert.deepEqual(ui.statuses, ['Not approved']);
+});
+
+test('video upload and checks stay compact with no actions or repeated uploading message', async () => {
+  let finishUpload;
+  const ui = harness([], { upload: options => new Promise(resolve => { options.onProgress(40); finishUpload = resolve; }) });
+  await ui.settle(); ui.permissions(); ui.select(); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Uploading']);
+  assert.deepEqual(ui.reviewActions, []);
+  assert.deepEqual(ui.uploadMessages, []);
+  finishUpload(); await ui.settle();
+  assert.deepEqual(ui.statuses, ['Uploading']);
+  assert.deepEqual(ui.reviewActions, [], 'server checks keep actions hidden after transfer completes');
+  const id = ui.calls.find(call => call[1] === 'PATCH')[0];
+  await ui.refresh([video(id, 'submitted')]);
+  assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
+  assert.deepEqual(ui.reviewActions.map(node => node.props.children), ['Remove']);
 });
 
 test('saved video reasons explain waiting review and replace legacy generic notes', async () => {
@@ -135,6 +153,7 @@ test('saved video reasons explain waiting review and replace legacy generic note
 test('submitted video remains visible through refresh failure then moves into the approved library', async () => {
   const ui = harness(); await ui.settle(); ui.permissions(); ui.setReadError(true); ui.select(); await ui.settle();
   assert.deepEqual(ui.statuses, ['Uploading']); assert.equal(ui.library.length, 0);
+  assert.deepEqual(ui.reviewActions, [], 'a submitted upload cannot be replaced or retried while refresh is unavailable');
   assert.equal(ui.revoked.length, 0, 'do not discard the only preview after submission');
   ui.rerender(); assert.deepEqual(ui.statuses, ['Uploading']);
   ui.setReadError(false); await ui.refresh();

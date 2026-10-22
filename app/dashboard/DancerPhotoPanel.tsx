@@ -568,7 +568,7 @@ export function DancerPhotoPanel({
           </button>
         </div>
         <p className="photo-upload-selection-hint">You can select several photos from your gallery.</p>
-        {status ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
+        {status && !(status === "Uploading" && reviews.length) ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       </DancerUploadDisclosure>
       {reviews.length ? (
@@ -577,6 +577,8 @@ export function DancerPhotoPanel({
           {reviews.map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
             const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
+            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item && ["preparing", "uploading", "checking"].includes(item.stage) ? "Uploading" : item?.error ? "Upload failed" : "Waiting to upload";
+            const processing = uploadStatus === "Uploading" || uploadStatus === "Waiting to upload";
             if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
               label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
               disabled={photoActionBusy} onDismiss={() => dismissRejectedPhoto(result.id)} />;
@@ -585,13 +587,13 @@ export function DancerPhotoPanel({
                 <div className="photo-preview" style={{ backgroundImage: `url(${item?.previewUrl || result?.imageUrl || ""})` }} aria-label="Photo preview">{!item?.previewUrl && !result?.imageUrl ? <span>Photo</span> : null}</div>
                 <span className="dancer-upload-review-copy">
                   <strong>{`Selected photo ${selectionNumber}`}</strong>
-                  <small>{result ? photoStatusLabel(result.status, result.moderationStatus) : item && ["preparing", "uploading", "checking"].includes(item.stage) ? "Uploading" : item?.error ? "Upload failed" : "Waiting to upload"}</small>
+                  <small role="status" aria-live="polite">{uploadStatus}</small>
                   {item?.stage === "uploading" ? <progress aria-label={`Photo ${selectionNumber} upload progress`} max="100" value={item.progress} /> : null}
                   {result?.note ? <em>{result.note}</em> : null}
-                  {result && !awaitingClubApproval ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
+                  {result && !awaitingClubApproval && !processing ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
                     disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(result.id, data)} /> : null}
                   {item?.error ? <em>{item.error}</em> : null}
-                  {result?.status === "approved" ? <span className="photo-queue-actions"><em>Approved. Updating your library.</em><RefreshButton label="Refresh photo library" busy={retrying} type="button" disabled={photoActionBusy} onClick={() => void refreshPhotoLibrary()} /></span> : <span className="photo-queue-actions">
+                  {processing ? null : result?.status === "approved" ? <span className="photo-queue-actions"><em>Approved. Updating your library.</em><RefreshButton label="Refresh photo library" busy={retrying} type="button" disabled={photoActionBusy} onClick={() => void refreshPhotoLibrary()} /></span> : <span className="photo-queue-actions">
                     {item?.error && !awaitingClubApproval ? <button className="photo-retry-button" disabled={photoActionBusy} onClick={() => void uploadPhotoBatch([{ ...item, stage: "queued", progress: 0, error: undefined }])} type="button">Retry</button> : null}
                     {!awaitingClubApproval ? <label className="media-review-replace">Replace<input type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif" disabled={photoActionBusy} aria-label={`Replace photo ${selectionNumber}`} onChange={event => {
                       const file = event.target.files?.[0]; event.target.value = "";
