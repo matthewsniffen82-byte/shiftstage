@@ -82,7 +82,7 @@ test('primary actions exclude destructive, confirmed, disabled and secondary sta
     assert.ok(primary.selector.includes(state), state);
   }
   const controls = rules.find(rule => rule.selector.includes('.dashboard-shell .info-panel button'));
-  for (const state of ['[role="switch"]', '.customer-notification-switch', '.profile-upload-preview *', '.profile-media-control', '.dancer-request-count']) {
+  for (const state of ['[role="switch"]', '.customer-notification-switch', '.profile-upload-preview *', '.profile-media-control', '.dancer-request-count', '.auth-help-row .forgot-password']) {
     assert.ok(controls.selector.includes(state), state);
   }
 });

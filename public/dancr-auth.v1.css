@@ -139,13 +139,17 @@ body.dancr-button-system :is(#authPage .auth-help-row, .account-shell .auth-help
   display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 16px; margin-block: 0;
 }
 body.dancr-button-system :is(#authPage .auth-help-row .forgot-password-link, .account-shell .forgot-password) {
-  width: auto !important; min-height: 44px !important; padding: 4px 0 !important; border: 0 !important;
-  border-radius: 4px !important; color: #b8bac6 !important; background: transparent !important; box-shadow: none !important;
+  width: auto !important; min-width: 0 !important; min-height: 44px !important; padding: 4px 8px !important; border: 0 !important;
+  border-radius: 4px !important; color: var(--dancr-color-text-secondary) !important; background: transparent !important; box-shadow: none !important;
   -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
   font-size: 12px !important; font-weight: 500 !important;
+  text-decoration: underline; text-underline-offset: 3px;
 }
 body.dancr-button-system :is(#authPage .auth-help-row .forgot-password-link, .account-shell .forgot-password):is(:hover, :focus-visible) {
   color: #fff !important; text-decoration: underline; text-underline-offset: 3px;
+}
+body.dancr-button-system :is(#authPage .auth-help-row .forgot-password-link, .account-shell .forgot-password):focus-visible {
+  outline: 2px solid var(--dancr-color-text-primary) !important; outline-offset: 2px !important;
 }
 body.dancr-button-system #authPage :is(.auth-back-to-types, .venue-request-back) {
   min-height: 44px; margin: 0; padding: 4px 2px !important; color: #b8bac6 !important; font-size: 12px !important; font-weight: 500 !important;
