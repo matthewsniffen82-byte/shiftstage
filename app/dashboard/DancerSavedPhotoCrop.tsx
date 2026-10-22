@@ -46,6 +46,7 @@ export default function DancerSavedPhotoCrop({ photo, disabled = false, onProfil
         pendingReviewId: pending ? pendingReviewId : undefined,
         photoSlot: pending ? { isPrimary: Boolean(photo.isPrimary), sortOrder: Number(photo.sortOrder || 0) } : undefined,
         onUploadStart: () => setStatus("Uploading"),
+        onUploadProgress: percent => { if (!controller.signal.aborted) setStatus(percent === 100 ? "Checking photo…" : "Uploading"); },
       });
       if (controller.signal.aborted) return;
       selection.current = null;

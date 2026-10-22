@@ -53118,7 +53118,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function approvedProfileVideoStatusLabel(status = "", decision = "") {
       return ({
         uploading: "Uploading",
-        moderating: "Uploading",
+        moderating: "Checking video…",
         submitted: decision === "approved" ? "Waiting for Club approval" : "Review delayed",
         review: "Waiting for Club approval",
         approved: "Approved",
@@ -53382,7 +53382,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         }
       }
 
-      approvedProfileVideoStatus = "Uploading";
+      approvedProfileVideoStatus = "Checking video…";
       renderApprovedProfileVideoManager();
       const submitResponse = await fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
         method: "PATCH",

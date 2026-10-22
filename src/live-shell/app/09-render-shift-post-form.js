@@ -765,7 +765,7 @@
     function approvedProfileVideoStatusLabel(status = "", decision = "") {
       return ({
         uploading: "Uploading",
-        moderating: "Uploading",
+        moderating: "Checking video…",
         submitted: decision === "approved" ? "Waiting for Club approval" : "Review delayed",
         review: "Waiting for Club approval",
         approved: "Approved",

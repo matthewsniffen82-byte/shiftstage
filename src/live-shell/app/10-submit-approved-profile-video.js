@@ -116,7 +116,7 @@
         }
       }
 
-      approvedProfileVideoStatus = "Uploading";
+      approvedProfileVideoStatus = "Checking video…";
       renderApprovedProfileVideoManager();
       const submitResponse = await fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
         method: "PATCH",

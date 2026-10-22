@@ -123,7 +123,7 @@ test("uploaded previews retain pending and rejected items without presenting the
   assert.match(html, /3 added/);
   assert.match(html, /1 added/);
   assert.match(html, /Approved/);
-  assert.match(html, /Uploading/);
+  assert.match(html, /Checking photo…/);
   assert.match(html, /Not approved/);
   assert.doesNotMatch(html, /Added to your profile/);
 });
@@ -144,7 +144,7 @@ test("an approved dancer sees the actual review state of each photo", () => {
   ] });
   assert.match(html, /View photo 1: Approved/);
   assert.match(html, /View photo 2: Waiting for Club approval/);
-  assert.match(html, /View photo 3: Uploading/);
+  assert.match(html, /View photo 3: Checking photo…/);
   assert.match(html, /View photo 4: Review delayed/);
 });
 

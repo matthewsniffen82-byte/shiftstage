@@ -649,8 +649,8 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(item.uploadId)} />;
           const reviewStatus = video ? videoReviewStatus(video.status, video.moderationDecision) : "";
           const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
-          const uploadStatus = item?.error ? "Upload failed" : item && ["validating", "uploading", "checking"].includes(item.stage) ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Uploading" : "Waiting to upload";
-          const processing = uploadStatus === "Uploading" || uploadStatus === "Waiting to upload";
+          const uploadStatus = item?.error ? "Upload failed" : item?.stage === "checking" ? "Checking video…" : item && ["validating", "uploading"].includes(item.stage) ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Checking video…" : "Waiting to upload";
+          const processing = ["Uploading", "Checking video…", "Waiting to upload"].includes(uploadStatus);
           const note = video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
           label={item?.file.name || `Video ${index + 1}`} message={note}
@@ -738,7 +738,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
 }
 
 function statusLabel(status: string) {
-  return mediaReviewLabel(status);
+  return mediaReviewLabel(status, "", "video");
 }
 
 function DancerTvStudioStyles() {

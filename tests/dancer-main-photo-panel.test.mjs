@@ -138,7 +138,7 @@ test('choosing another processing main photo preserves the approved replacement 
 });
 
 test('moderation work and delays use the same labels as the media library', () => {
-  for (const [status, label] of [['moderating', 'Uploading'], ['error', 'Review delayed'], ['pending_review', 'Waiting for Club approval']]) {
+  for (const [status, label] of [['moderating', 'Checking photo…'], ['error', 'Review delayed'], ['pending_review', 'Waiting for Club approval']]) {
     assert.equal(fixture({ pending_photo_reviews: [{ ...pending, status }] }).badge, label);
   }
 });

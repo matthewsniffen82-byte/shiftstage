@@ -110,11 +110,11 @@ test('both video sources stay gated until both permissions are checked and re-lo
 
 test('saved active video checks hide actions while only approvals enter the library', async () => {
   const ui = harness([video('live', 'approved'), video('checking', 'moderating'), video('denied', 'rejected', 'Multiple people')]); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
+  assert.deepEqual(ui.statuses, ['Checking video…', 'Not approved']);
   assert.deepEqual(ui.notes, ['Multiple people']);
   assert.deepEqual(ui.reviewActions, []);
   assert.deepEqual(Array.from(ui.library, item => item.id), ['live']);
-  ui.rerender(); assert.deepEqual(ui.statuses, ['Uploading', 'Not approved']);
+  ui.rerender(); assert.deepEqual(ui.statuses, ['Checking video…', 'Not approved']);
   await ui.refresh([video('live', 'approved'), video('checking', 'approved'), video('denied', 'rejected', 'Multiple people')]);
   assert.deepEqual(ui.statuses, ['Not approved']);
 });
@@ -127,7 +127,7 @@ test('video upload and checks stay compact with no actions or repeated uploading
   assert.deepEqual(ui.reviewActions, []);
   assert.deepEqual(ui.uploadMessages, []);
   finishUpload(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Uploading']);
+  assert.deepEqual(ui.statuses, ['Checking video…']);
   assert.deepEqual(ui.reviewActions, [], 'server checks keep actions hidden after transfer completes');
   const id = ui.calls.find(call => call[1] === 'PATCH')[0];
   await ui.refresh([video(id, 'submitted')]);
@@ -152,13 +152,13 @@ test('saved video reasons explain waiting review and replace legacy generic note
 
 test('submitted video remains visible through refresh failure then moves into the approved library', async () => {
   const ui = harness(); await ui.settle(); ui.permissions(); ui.setReadError(true); ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Uploading']); assert.equal(ui.library.length, 0);
+  assert.deepEqual(ui.statuses, ['Checking video…']); assert.equal(ui.library.length, 0);
   assert.deepEqual(ui.reviewActions, [], 'a submitted upload cannot be replaced or retried while refresh is unavailable');
   assert.equal(ui.revoked.length, 0, 'do not discard the only preview after submission');
-  ui.rerender(); assert.deepEqual(ui.statuses, ['Uploading']);
+  ui.rerender(); assert.deepEqual(ui.statuses, ['Checking video…']);
   ui.setReadError(false); await ui.refresh();
   const id = ui.calls.find(call => call[1] === 'PATCH')[0];
-  assert.deepEqual(ui.statuses, ['Uploading']);
+  assert.deepEqual(ui.statuses, ['Checking video…']);
   await ui.refresh([video(id, 'submitted', 'AI checks passed. Pending club approval.')]);
   assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
   assert.deepEqual(ui.notes, []);
@@ -215,7 +215,7 @@ test('failed replacement remains retryable and never puts an unapproved video in
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);
   ui.rerender(); assert.deepEqual(ui.statuses, ['Upload failed']); ui.rerender();
   ui.setUploadError(false); ui.click('Retry'); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Uploading']);
+  assert.deepEqual(ui.statuses, ['Checking video…']);
   assert.equal(ui.calls.filter(call => call[1] === 'DELETE').length, 1);
 });
 
@@ -225,7 +225,7 @@ test('chosen videos upload the original file directly without crop or trim metad
   assert.equal(ui.calls.find(call => call[0] === 'upload')[1], original);
   const body = ui.calls.find(call => call[0] === 'prepare')[1];
   assert.equal(body.edit, undefined); assert.equal(body.width, 720); assert.equal(body.height, 1280); assert.equal(body.durationSeconds, 10);
-  assert.deepEqual(ui.statuses, ['Uploading']);
+  assert.deepEqual(ui.statuses, ['Checking video…']);
 });
 
 test('overlength videos show the photo-style rejection notice without creating an upload or offering Retry', async () => {

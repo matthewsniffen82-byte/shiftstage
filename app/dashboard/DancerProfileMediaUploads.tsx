@@ -18,8 +18,8 @@ type UploadItem = {
   moderationStatus?: string;
 };
 
-export function profileUploadStatus(status: string, moderationStatus?: string) {
-  return mediaReviewLabel(status, moderationStatus);
+export function profileUploadStatus(status: string, moderationStatus?: string, kind: "photo" | "video" = "photo") {
+  return mediaReviewLabel(status, moderationStatus, kind);
 }
 
 export default function DancerProfileMediaUploads({
@@ -207,7 +207,7 @@ export default function DancerProfileMediaUploads({
                 {items.map((item, index) => (
                   <li key={item.id} data-review-status={item.status}>
                     <div className="profile-upload-preview">
-                      <button aria-label={`${isPhoto ? compact ? "Edit" : "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus)}`} disabled={Boolean(deletingVideoId || pinningId) || disabled} onClick={event => {
+                      <button aria-label={`${isPhoto ? compact ? "Edit" : "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}`} disabled={Boolean(deletingVideoId || pinningId) || disabled} onClick={event => {
                         if (compact && isPhoto) {
                           const options = event.currentTarget.parentElement?.querySelector<HTMLDetailsElement>("details.dancer-thumbnail-menu");
                           if (options) options.open = true;
@@ -222,7 +222,7 @@ export default function DancerProfileMediaUploads({
                       </button>
                       {isPhoto && item.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
                       {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary className="dashboard-menu-trigger" aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div>
-                        <p className="profile-upload-menu-caption">{label} {index + 1} · {profileUploadStatus(item.status, item.moderationStatus)}</p>
+                        <p className="profile-upload-menu-caption">{label} {index + 1} · {profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}</p>
                         {isPhoto ? photoActions?.(item.id) : null}
                         {isPhoto ? <button type="button" disabled={actionsDisabled} onClick={() => setActivePreview({ kind: "photo", id: item.id, label: `${label} ${index + 1}` })}>View photo</button> : null}
                         {onMediaPinned ? <button type="button" disabled={actionsDisabled || item.status !== "approved"} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)}>{item.isPinned ? "Unpin" : "Pin"}</button> : null}
@@ -244,7 +244,7 @@ export default function DancerProfileMediaUploads({
                       </>}
                     </div>
                     <strong>{label} {index + 1}</strong>
-                    <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status, item.moderationStatus)}</small>
+                    <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}</small>
                     <DancerMediaRetryButton key={item.id} id={item.id} kind={isPhoto ? "photo" : "video"} status={item.status} moderationStatus={item.moderationStatus}
                       disabled={actionsDisabled} onBusyChange={busy => { setRetrying(busy); onDeleteBusyChange?.(busy); }}
                       onRetried={({ profile }) => { if (profile) onProfileChange?.(profile); }} />

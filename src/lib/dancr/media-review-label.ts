@@ -1,5 +1,5 @@
 /** A profile's approval never substitutes for an individual upload's review. */
-export function mediaReviewLabel(status: string, moderationStatus = "") {
+export function mediaReviewLabel(status: string, moderationStatus = "", kind: "photo" | "video" = "photo") {
   const state = String(status || "").trim().toLowerCase();
   if (state === "approved" || state === "live") return "Approved";
   if (state === "rejected" || state === "denied") return "Not approved";
@@ -10,7 +10,7 @@ export function mediaReviewLabel(status: string, moderationStatus = "") {
   const review = String(moderationStatus || state).trim().toLowerCase();
   if (["pending_review", "submitted", "review", "completed"].includes(review)) return "Waiting for Club approval";
   if (["error", "moderation_error", "moderation_retry"].includes(review)) return "Review delayed";
-  if (["pending", "moderating"].includes(state)) return "Uploading";
+  if (["pending", "moderating"].includes(state)) return `Checking ${kind}…`;
   return "Check upload status";
 }
 
@@ -65,9 +65,9 @@ export function mediaRejectionReason(reasonCodes: unknown) {
 export function mediaReviewExplanation(kind: "photo" | "video", status: string, {
   moderationStatus = "", reasonCodes, message,
 }: { moderationStatus?: string; reasonCodes?: unknown; message?: unknown } = {}) {
-  const label = mediaReviewLabel(status, moderationStatus);
+  const label = mediaReviewLabel(status, moderationStatus, kind);
   // Keep active uploads quiet, including saved server receipts from background checks.
-  if (["Approved", "Removed", "Expired", "Uploading"].includes(label)) return "";
+  if (["Approved", "Removed", "Expired", `Checking ${kind}…`].includes(label)) return "";
   const rejected = label === "Not approved";
   if (rejected) {
     const saved = typeof message === "string" ? message.trim() : "";

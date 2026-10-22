@@ -577,8 +577,8 @@ export function DancerPhotoPanel({
           {reviews.map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
             const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
-            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item && ["preparing", "uploading", "checking"].includes(item.stage) ? "Uploading" : item?.error ? "Upload failed" : "Waiting to upload";
-            const processing = uploadStatus === "Uploading" || uploadStatus === "Waiting to upload";
+            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "checking" ? "Checking photo…" : item && ["preparing", "uploading"].includes(item.stage) ? "Uploading" : item?.error ? "Upload failed" : "Waiting to upload";
+            const processing = ["Uploading", "Checking photo…", "Waiting to upload"].includes(uploadStatus);
             if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
               label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
               disabled={photoActionBusy} onDismiss={() => dismissRejectedPhoto(result.id)} />;

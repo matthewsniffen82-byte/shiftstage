@@ -15,7 +15,7 @@ type PreviewVideo = {
 };
 
 export function videoPreviewStatus(status: string) {
-  return mediaReviewLabel(status);
+  return mediaReviewLabel(status, "", "video");
 }
 
 export default function DancerVideoPreviews({ videos, removingId, disabled, onRemove, pinningId, onPin }: {

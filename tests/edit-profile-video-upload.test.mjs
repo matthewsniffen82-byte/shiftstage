@@ -65,7 +65,7 @@ test("the direct studio respects the same fifty-video contract", () => {
   assert.match(dancerStudio, /const maxVideos = workspace\?\.maxVideos \|\| MAX_DANCER_PROFILE_VIDEOS/);
   assert.match(dancerStudio, /const atVideoLimit = currentVideoCount >= maxVideos/);
   assert.match(dancerStudio, /Your profile video library is full\. Remove a video before adding another\./);
-  assert.match(dancerStudio, /\{currentVideoCount\} \$\{currentVideoCount === 1 \? "video" : "videos"\}/);
+  assert.match(dancerStudio, /const selectedFiles = files\.slice\(0, availableSlots\)/);
   assert.doesNotMatch(dancerStudio, /Up to \{maxVideos\}|\{currentVideoCount\}\/\{maxVideos\}|slots remaining/);
 });
 
@@ -76,7 +76,7 @@ test('legacy video uploads use the same processing and Club approval labels', as
   const context = {};
   runInNewContext(liveApp.slice(start, end), context);
   const label = context.approvedProfileVideoStatusLabel;
-  assert.equal(label('uploading'), 'Uploading'); assert.equal(label('moderating'), 'Uploading');
+  assert.equal(label('uploading'), 'Uploading'); assert.equal(label('moderating'), 'Checking video…');
   assert.equal(label('submitted', 'approved'), 'Waiting for Club approval');
   assert.equal(label('submitted', 'review'), 'Review delayed');
   assert.equal(label('rejected'), 'Not approved');

@@ -46,7 +46,7 @@ test("every video shows three-dot options with Pin or Unpin inside", () => {
 test("video review labels are concise and pending uploads never imply approval or rejection", () => {
   assert.equal(previews.videoPreviewStatus("approved"), "Approved");
   assert.equal(previews.videoPreviewStatus("rejected"), "Not approved");
-  for (const status of ["moderating", "pending"]) assert.equal(previews.videoPreviewStatus(status), "Uploading");
+  for (const status of ["moderating", "pending"]) assert.equal(previews.videoPreviewStatus(status), "Checking video…");
   for (const status of ["submitted", "review"]) assert.equal(previews.videoPreviewStatus(status), "Waiting for Club approval");
   assert.equal(previews.videoPreviewStatus("uploading"), "Upload incomplete");
   assert.equal(previews.videoPreviewStatus("failed"), "Upload failed");
@@ -60,7 +60,7 @@ test("saved video previews use lazy posters without downloading full videos or s
   assert.match(html, /Delete video 3/);
   assert.match(html, /Approved/);
   assert.match(html, /Not approved/);
-  assert.match(html, /Uploading/);
+  assert.match(html, /Checking video…/);
   assert.doesNotMatch(html, /<video|Automatically|frames checked|Engaged views|Remove video/);
   assert.equal((render({ disabled: true, removingId: "video-0" }).match(/disabled=""/g) || []).length, 7);
   assert.match(render({ disabled: true, removingId: "video-0" }), /aria-label="Deleting video 1" aria-busy="true"/);
