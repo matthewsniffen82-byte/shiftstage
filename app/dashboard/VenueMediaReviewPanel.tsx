@@ -35,6 +35,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   const [feedback, setFeedback] = useState<{ id: string; text: string; error: boolean; reasonRequired?: boolean; decision?: "approved" | "rejected" } | null>(null);
   const noteInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const action = useRef<AbortController | null>(null);
+  const read = useRef<AbortController | null>(null);
   const heading = useRef<HTMLHeadingElement | null>(null);
   const selectedId = selectedDancer?.id;
   const pageCount = selectedDancer ? uploadCount : dancerCount;
@@ -44,7 +45,9 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     if (rejectingId) noteInputs.current[rejectingId]?.focus();
   }, [rejectingId]);
   useEffect(() => {
+    if (action.current) return;
     const controller = new AbortController();
+    read.current = controller;
     setLoading(true);
     requestDashboardJson(`/api/venue/media-reviews?view=dancers&offset=${offset}&status=${showAll ? "all" : "pending"}${selectedId && active ? `&dancerId=${selectedId}` : ""}${active ? "" : "&countOnly=1"}`, {
       expectedRole: "venue", cache: "no-store", signal: controller.signal,
@@ -75,7 +78,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       setLoadError(error.message || "Unable to load media reviews.");
     })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
-    return () => controller.abort();
+    return () => { controller.abort(); if (read.current === controller) read.current = null; };
   }, [active, venueId, refreshKey, revision, offset, selectedId, onCountChange, showAll]);
 
   function openDancer(dancer: Dancer | null) {
@@ -93,6 +96,9 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       return;
     }
     const controller = new AbortController(); action.current = controller;
+    // A refresh started before this decision must not restore its old queue.
+    read.current?.abort();
+    setLoading(false);
     const dismissPhoto = decision === "rejected" && item.kind === "photo";
     if (dismissPhoto) setPendingPhotoRejection(item.id);
     setBusy(true); setMessage("");
@@ -106,9 +112,19 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       setMessage(result.message);
       setFeedback(null);
       setRejectingId(null);
-      if (showAll) { setRevision(current => current + 1); return; }
-      setItems(current => current.filter(value => value.id !== item.id));
       setNotes(current => { const next = { ...current }; delete next[item.id]; return next; });
+      if (item.clubStatus === "pending" && count !== null) {
+        const nextCount = Math.max(0, count - 1);
+        setCount(nextCount); onCountChange(nextCount);
+      }
+      if (showAll) {
+        if (result.review?.id === item.id && result.review.clubStatus === decision && typeof result.review.decisionVersion === "string") {
+          setItems(current => current.map(value => value.id === item.id
+            ? { ...value, clubStatus: decision, decisionVersion: result.review.decisionVersion } : value));
+        } else setRevision(current => current + 1);
+        return;
+      }
+      setItems(current => current.filter(value => value.id !== item.id));
       // Keep the selected dancer open while uploads remain; their last decision
       // returns to the dancer grid, where the completed card no longer appears.
       const remaining = Math.max(0, uploadCount - 1);
@@ -117,7 +133,8 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
         ? [{ ...dancer, count: dancer.count - 1, photoCount: dancer.photoCount - (item.kind === "photo" ? 1 : 0), videoCount: dancer.videoCount - (item.kind === "video" ? 1 : 0) }] : []));
       if (!remaining) { setSelectedDancer(null); setOffset(0); }
       else if (offset >= remaining) setOffset(Math.floor((remaining - 1) / 12) * 12);
-      setRevision(current => current + 1);
+      // Reuse loaded previews; fetch only to fill the page from unseen uploads.
+      else if (uploadCount > offset + items.length) setRevision(current => current + 1);
     } catch (error) {
       if (!controller.signal.aborted) { setFeedback({ id: item.id, text: error instanceof Error ? error.message : "Unable to save review. Refresh the queue.", error: true }); setRevision(current => current + 1); }
     } finally {

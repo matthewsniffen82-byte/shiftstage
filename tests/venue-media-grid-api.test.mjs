@@ -89,12 +89,13 @@ test('dancer overview uses pending main photos and approved mains for video-only
   assert.doesNotMatch(JSON.stringify(result),/private-owner|temporary_storage_path|storage_path|moderation_details|category_flags/);
 });
 test('selected dancer query uses the Main photo/avatar label and preserves approval gates',async()=>{
-  const f=fixture({count:3,uploadCount:1,dancerCount:2,dancers:[],items:[{id:'photo',dancerId,kind:'photo',stageName:'Star',record:photo}]});
+  const f=fixture({count:3,uploadCount:1,dancerCount:2,dancers:[card],items:[{id:'photo',dancerId,kind:'photo',stageName:'Star',record:photo}]});
   const result=await f.get('?view=dancers&dancerId='+dancerId);
   assert.equal(f.calls[0].args.p_dancer_id,dancerId);assert.equal(result.uploadCount,1);
   assert.equal(result.items[0].label,'Main photo/avatar');assert.equal(result.items[0].canApprove,true);
   assert.equal(result.items[0].version,photo.updated_at);assert.equal(result.items[0].previewUrl,'/signed/private/photo');
-  assert.equal(f.queries.length,0);
+  assert.equal(f.queries.length,0,'opening a dancer must not fetch or sign the outer grid previews');
+  assert.equal(result.dancers.length,0);assert.equal(f.thumbnails.length,1);
 });
 
 const videoRecord={id:dancerId,caption:dancerId,storage_path:'owner/video.mp4',status:'submitted',updated_at:photo.updated_at,
@@ -169,7 +170,7 @@ test('current approved primary is the fallback, never an old main, avatar, galle
 });
 
 test('count-only uses no previews; invalid dancer IDs never reach the queue',async()=>{
-  const f=fixture({count:5,dancerCount:2,dancers:[],items:[]});
+  const f=fixture({count:5,dancerCount:2,dancers:[card],items:[]});
   assert.equal((await f.get('?view=dancers&countOnly=1')).count,5);
   assert.equal(f.calls[0].args.p_limit,0);assert.equal(f.signed.length,0);assert.equal(f.thumbnails.length,0);
   assert.equal(f.queries.length,0);

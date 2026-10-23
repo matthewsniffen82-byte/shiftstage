@@ -22,13 +22,14 @@ function harness(kind = 'photo') {
   function response(url) {
     const params = new URL(url, 'https://example.test').searchParams;
     const selected = params.get('dancerId'), offset = Number(params.get('offset'));
-    const dancers = [...new Set(rows.map(row => row.dancerId))].map(id => {
-      const media = rows.filter(row => row.dancerId === id);
+    const visible = params.get('status') === 'all' ? rows : rows.filter(row => row.clubStatus === 'pending');
+    const dancers = [...new Set(visible.map(row => row.dancerId))].map(id => {
+      const media = visible.filter(row => row.dancerId === id);
       return { id, stageName: media[0].stageName, count: media.length, photoCount: media.filter(row => row.kind === 'photo').length,
         videoCount: media.filter(row => row.kind === 'video').length, previewUrl: media[0].previewUrl };
     });
-    const media = rows.filter(row => row.dancerId === selected);
-    return { venueId: 'venue', count: rows.length, dancerCount: dancers.length, uploadCount: media.length,
+    const media = visible.filter(row => row.dancerId === selected);
+    return { venueId: 'venue', count: rows.filter(row => row.clubStatus === 'pending').length, dancerCount: dancers.length, uploadCount: media.length,
       dancer: dancers.find(dancer => dancer.id === selected) || null, dancerAvatar: selected ? avatar : null,
       dancers: selected ? [] : dancers.slice(offset, offset + 12), items: media.slice(offset, offset + 12) };
   }
@@ -51,7 +52,8 @@ function harness(kind = 'photo') {
       if (options.method === 'POST') {
         const body = JSON.parse(options.body); calls.push(body); await pending;
         if (failure) throw new Error('Unable to save rejection. Try again.');
-        rows = reads.at(-1)?.includes('status=all') ? rows.map(row => row.id === body.id ? {...row,clubStatus:body.decision,decisionVersion:'revised'} : row) : rows.filter(row => row.id !== body.id); return { ok: true, message:'Saved for your club.' };
+        rows = rows.map(row => row.id === body.id ? {...row,clubStatus:body.decision,decisionVersion:'revised'} : row);
+        return { ok: true, message:'Saved for your club.', review: { id: body.id, clubStatus: body.decision, decisionVersion: 'revised' } };
       }
       reads.push(_url);
       if (getResponse) return getResponse(_url, options);
@@ -200,6 +202,49 @@ test('approval does not require a rejection reason or send a cancelled rejection
   ui.finish(); await ui.settle(); assert.equal(ui.cards.length, 1);
 });
 
+test('approval confirms the save once, then enables the next item without reloading previews', async () => {
+  const ui = await ready('video'), reads = ui.reads.length;
+  const approve = ui.buttons().find(button => button.props.children === 'Approve');
+  ui.click('Approve'); approve.props.onClick();
+  assert.equal(ui.calls.length, 1, 'rapid repeated taps cannot duplicate the write');
+  assert.equal(ui.cards.length, 2, 'do not report approval before the server saves it');
+  assert.equal(ui.counts.at(-1), 2);
+  assert.ok(ui.buttons().some(button => button.props.children === 'Approving…'));
+  ui.render({ refreshKey: 'while-approving' }); await ui.settle();
+  assert.equal(ui.reads.length, reads, 'automatic refresh waits for the decision');
+  ui.finish(); await ui.settle();
+  assert.equal(ui.cards.length, 1); assert.equal(ui.counts.at(-1), 1);
+  assert.equal(ui.reads.length, reads, 'reuse the loaded preview instead of another GET');
+  assert.ok(ui.buttons().every(button => !button.props.disabled));
+  ui.click('Approve'); await ui.settle();
+  assert.equal(ui.calls.length, 2); assert.equal(ui.counts.at(-1), 0);
+});
+
+test('a refresh started before approval cannot restore the saved item or its old count', async () => {
+  const ui = await ready('video');
+  const oldItems = ui.rows.slice();
+  const approve = ui.buttons().find(button => button.props.children === 'Approve');
+  let finishRead, signal;
+  ui.respondWith((_url, options) => new Promise(resolve => { finishRead = resolve; signal = options.signal; }));
+  ui.render({ refreshKey: 'before-approval' });
+  approve.props.onClick(); ui.render();
+  assert.equal(signal.aborted, true);
+  ui.finish(); await ui.settle();
+  finishRead({ venueId: 'venue', items: oldItems, count: 2, uploadCount: 2, dancerCount: 1 });
+  await ui.settle();
+  assert.equal(ui.cards.length, 1); assert.equal(ui.counts.at(-1), 1);
+  assert.ok(ui.buttons().every(button => !button.props.disabled));
+});
+
+test('a failed approval leaves the item pending and can be retried', async () => {
+  const ui = await ready('video'); ui.fail(true); ui.click('Approve');
+  ui.finish(); await ui.settle();
+  assert.equal(ui.cards.length, 2); assert.equal(ui.counts.at(-1), 2);
+  assert.match(ui.alerts()[0].props.children, /Unable to save/);
+  ui.fail(false); ui.click('Approve'); await ui.settle();
+  assert.equal(ui.cards.length, 1); assert.equal(ui.counts.at(-1), 1);
+});
+
 test('automatic media review refresh retains cards and notes while waiting or offline, then publishes a completed result', async () => {
   const ui = await ready('video'); ui.click(); ui.note('Logo visible');
   let finish;
@@ -315,6 +360,19 @@ test('reviewing the last item on a later media page loads the previous page inst
   assert.match(ui.reads.at(-1),/offset=0&status=pending&dancerId=dancer-one/);
 });
 
+test('approval refills a full page when more unseen uploads remain', async () => {
+  const ui = harness(); await ui.settle();
+  const sample = ui.rows[0]; ui.setRows(Array.from({ length: 13 }, (_, i) => ({ ...sample, id: `upload-${i}` })));
+  ui.render({ refreshKey: 'many' }); await ui.settle(); ui.open(); await ui.settle();
+  const reads = ui.reads.length;
+  ui.click('Approve'); ui.finish(); await ui.settle();
+  assert.equal(ui.cards.length, 12); assert.equal(ui.counts.at(-1), 12);
+  assert.equal(ui.reads.length, reads + 1);
+  ui.click('Approve', 11);
+  assert.equal(ui.calls.at(-1).id, 'upload-12', 'the next page item fills the vacated slot');
+  await ui.settle();
+});
+
 test('a late response after backing out cannot replace the dancer grid',async()=>{
   const ui=harness();await ui.settle();let finish;
   ui.respondWith(url=>url.includes('dancerId=')?new Promise(resolve=>{finish=resolve;}):Promise.resolve({venueId:'venue',count:0,dancerCount:0,dancers:[]}));
@@ -325,8 +383,11 @@ test('a late response after backing out cannot replace the dancer grid',async()=
 
 test('all-media view retains a reviewed item and sends its latest decision version when changed again',async()=>{
  const ui=harness();await ui.settle();ui.showAll();await ui.settle();ui.open();await ui.settle();
+ const reads=ui.reads.length;
  assert.match(ui.reads.at(-1),/status=all/);ui.click('Approve');ui.finish();await ui.settle();
  assert.equal(ui.cards.length,2);assert.match(JSON.stringify(ui.cards[0]),/Approved at your club/);
+ assert.equal(ui.reads.length,reads);assert.equal(ui.counts.at(-1),1);
  ui.click('Reject');await ui.settle();assert.equal(ui.cards.length,2);
  assert.equal(ui.calls[1].decisionVersion,'revised');assert.match(JSON.stringify(ui.cards[0]),/Hidden at your club/);
+ assert.equal(ui.reads.length,reads);assert.equal(ui.counts.at(-1),1,'changing an existing decision does not decrement pending twice');
 });

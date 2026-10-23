@@ -105,7 +105,7 @@ export async function GET(request: Request) {
         reasons: photo ? r.reason_codes || [] : r.moderation_reason_codes || [],
       };
     }));
-    const gridDancers = data?.dancers || [];
+    const gridDancers = !dancerId && url.searchParams.get("countOnly") !== "1" ? data?.dancers || [] : [];
     const previews = await mainPhotoPreviews(admin, gridDancers.map((dancer: any) => dancer.id));
     const dancers = gridDancers.map((dancer: any) => ({ id: dancer.id, stageName: dancer.stageName, count: dancer.count,
       photoCount: dancer.photoCount, videoCount: dancer.videoCount, previewUrl: previews.get(dancer.id) || "" }));
@@ -142,7 +142,8 @@ export async function POST(request: Request) {
       });
       if (error?.code === "42501") throw new PublicApiError("FORBIDDEN", "This dancer is not connected to your club. Refresh the queue.", 403);
       if (error) throw new PublicApiError("CONFLICT", "The media or club decision changed. Refresh before reviewing it.", 409);
-      if (saved?.media_id !== id || saved?.venue_id !== access.venueId || saved?.reviewer_id !== user.id || saved?.decision !== decision) {
+      if (saved?.media_id !== id || saved?.venue_id !== access.venueId || saved?.reviewer_id !== user.id || saved?.decision !== decision
+        || typeof saved?.revision !== "string" || !uuid.test(saved.revision)) {
         throw new Error("Club review could not be confirmed. Refresh the queue.");
       }
       followUps.push(async () => {
@@ -150,7 +151,7 @@ export async function POST(request: Request) {
           action: `media.${decision}`, targetType: photo ? "image_moderation_record" : "mydancr_tv_video", targetId: id,
           summary: `${photo ? "Photo" : "Video"} ${decision} for this club only.` });
       });
-      return json({ ok: true, message: decision === "approved"
+      return json({ ok: true, review: { id, clubStatus: decision, decisionVersion: saved.revision }, message: decision === "approved"
         ? saved.platformApproved ? "Approved for your club." : "Approved for your club. Waiting for MyDancr final approval."
         : "Hidden at your club. Other clubs and the dancer’s profile are unchanged.", session });
     }, 270000);

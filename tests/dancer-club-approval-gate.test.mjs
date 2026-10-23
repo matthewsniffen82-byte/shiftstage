@@ -15,7 +15,7 @@ function fixture(kind='photo',options={}) {
   const admin={rpc:async(name,args)=>{
     calls.push({name,args});
     if(name==='get_club_media_queue')return{data:{items:[item],count:1,dancers:[]}};
-    if(name==='set_club_media_permission')return options.error?{error:options.error}:{data:{media_id:id,venue_id:'venue',reviewer_id:'reviewer',decision:args.p_decision,platformApproved:record.status==='approved'}};
+    if(name==='set_club_media_permission')return options.error?{error:options.error}:{data:{media_id:id,venue_id:'venue',reviewer_id:'reviewer',decision:args.p_decision,revision:id,platformApproved:record.status==='approved',...options.saved}};
     throw Error('Unexpected RPC');
   },storage:{from:()=>({createSignedUrl:async()=>({data:{signedUrl:'preview'}})})}};
   const deps={...mediaReview,...serverJobs,PublicApiError,NextResponse:{json:body=>body},after:work=>deferred.push(work),
@@ -30,6 +30,7 @@ function fixture(kind='photo',options={}) {
 }
 for(const kind of ['photo','video'])test(kind+': approval is stored for the authenticated club and logging follows the response',async()=>{
   const f=fixture(kind);const result=await f.post();assert.equal(result.ok,true);assert.match(result.message,/your club/);
+  assert.equal(result.review.id,id);assert.equal(result.review.clubStatus,'approved');assert.equal(result.review.decisionVersion,id);
   const call=f.calls[0];assert.equal(call.name,'set_club_media_permission');assert.equal(call.args.p_venue_id,'venue');
   assert.equal(call.args.p_actor_id,'reviewer');assert.equal(call.args.p_content_version,version);
   assert.deepEqual(f.activity,[]);await f.deferred[0]();assert.equal(f.activity.length,1);
@@ -44,6 +45,9 @@ test('stale and unauthorized decisions surface conflicts and cannot report succe
   for(const [code,status] of [['40001',409],['42501',403]])assert.equal((await fixture('photo',{error:{code}}).post()).status,status);
   for(const extra of [{contentVersion:'bad'},{decisionVersion:'bad'},{dancerId:'bad'},{source:'video'}]){
     const f=fixture();assert.equal((await f.post('approved','',extra)).status,400);assert.equal(f.calls.length,0);
+  }
+  for(const saved of [{revision:null},{revision:'invalid'},{decision:'rejected'},{media_id:'other'}]){
+    const f=fixture('photo',{saved});assert.equal((await f.post()).ok,undefined);assert.equal(f.deferred.length,0);
   }
 });
 test('published items remain reviewable and pending publication has distinct copy',async()=>{
