@@ -21,7 +21,7 @@ export async function cropProfilePhoto(file: File, signal: AbortSignal, assertSe
     aspectRatio,
     onCrop,
     batch,
-    confirmLabel: batch ? "Crop & upload" : savedPreview ? "Save crop" : undefined,
+    confirmLabel: batch ? "Upload photo" : savedPreview ? "Save crop" : undefined,
     prepare: async (original, previewSignal) => {
       assertSession();
       if (savedPreview) return savedPreview;
