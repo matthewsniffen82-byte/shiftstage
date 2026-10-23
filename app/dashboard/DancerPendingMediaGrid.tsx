@@ -20,7 +20,11 @@ export default function DancerPendingMediaGrid({ items, addMore }: {
   addMore?: { label: string; disabled?: boolean; onClick: () => void };
 }) {
   if (!items.length) return null;
-  return <div className="dancer-pending-media-box" role="group" aria-label="Awaiting final approval">
+  const mediaLabel = items.every(item => item.kind === "photo") ? "Photos"
+    : items.every(item => item.kind === "video") ? "Videos" : "Photos & videos";
+  return <div className="dancer-pending-media-section">
+    <h3 className="dancer-pending-media-title">{mediaLabel}</h3>
+    <div className="dancer-pending-media-box" role="group" aria-label={`${mediaLabel} awaiting final approval`}>
     <div className="dancer-pending-media-header">
       <strong className="dancer-pending-media-heading">Awaiting final approval</strong>
       {addMore ? <button className="dancer-pending-media-add" type="button" disabled={addMore.disabled} onClick={addMore.onClick}>{addMore.label}</button> : null}
@@ -38,5 +42,6 @@ export default function DancerPendingMediaGrid({ items, addMore }: {
         </button>
       </li>)}
     </ul>
+    </div>
   </div>;
 }

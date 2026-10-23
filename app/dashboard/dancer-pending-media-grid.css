@@ -1,6 +1,22 @@
 /* Share the home gallery's three columns, 9:16 portraits and spacing.
    The outline adds no inset, so the cards retain the gallery's full width. */
 @layer dancr-upload-reviews {
+  .dancer-pending-media-section {
+    display: grid;
+    grid-column: 1 / -1;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+    margin: 8px 0;
+  }
+  .dancer-pending-media-section > .dancer-pending-media-title {
+    margin: 0 !important;
+    padding: 0;
+    color: var(--dancr-color-text-primary);
+    font-size: 16px !important;
+    font-weight: 600;
+    line-height: 1.4;
+  }
   .dancer-pending-media-box {
     box-sizing: border-box;
     display: grid;
@@ -8,7 +24,7 @@
     gap: 8px;
     width: 100%;
     min-width: 0;
-    margin: 8px 0;
+    margin: 0;
     padding: 0;
     border: 0;
     border-radius: 8px;
