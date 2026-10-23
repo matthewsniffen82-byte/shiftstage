@@ -1013,6 +1013,44 @@
     color: var(--dancr-color-text-primary) !important;
     -webkit-text-fill-color: var(--dancr-color-text-primary) !important;
   }
+  /* Loading rings share the primary violet, including legacy pseudo-elements.
+     Keep the track neutral and leave animation and reduced-motion behavior local. */
+  html body.dancr-button-system :where(
+    .home-discovery-loading-spinner, .venue-dashboard-loading-spinner,
+    .ir-loading-spinner, .profile-club-deal-loading
+  ),
+  html body.dancr-button-system :where(
+    .profile-media-grid-sentinel, .profile-media-lazy-sentinel,
+    .club-deal-hub-offer.is-loading
+  )::after,
+  html body.dancr-button-system:where(
+    .dancer-profile-bootstrap body, .venue-profile-bootstrap body,
+    .venue-preview-bootstrap body
+  )::after,
+  html body.dancr-button-system :where(
+    #passwordRecoveryCard[data-state="sending"] #passwordRecoverySubmit
+  )::before {
+    border-color: var(--dancr-color-brand-primary) var(--dancr-color-border) var(--dancr-color-border) !important;
+  }
+  /* A neutral sending face keeps the violet spinner visible inside the button. */
+  html body.dancr-button-system :where(#passwordRecoveryCard[data-state="sending"] #passwordRecoverySubmit) {
+    background: var(--dancr-color-control-secondary) !important;
+    border-color: var(--dancr-color-border) !important;
+  }
+  html body.dancr-button-system :where(#passwordRecoveryCard[data-state="sending"] #passwordRecoverySubmit)::before {
+    background: transparent !important;
+  }
+  html body.dancr-button-system :where(
+    .mydancr-refresh-button[aria-busy="true"] > svg,
+    .ir-roster-refresh[aria-busy="true"] svg,
+    .venue-grid-embed #venue-refresh:disabled svg
+  ) {
+    color: var(--dancr-color-brand-primary) !important;
+    stroke: currentColor !important;
+  }
+  html body.dancr-button-system :where(.admin-tv-result.is-working .admin-tv-result-icon) {
+    color: var(--dancr-color-brand-primary) !important;
+  }
   /* The floating dock keeps its component-owned glass, light icons and violet halo. */
   html body.dancr-button-system
     :where(button, a, input, select, textarea, summary):focus-visible:not(:where(.global-mobile-bottom-nav *, #discoveryTabs *)) {

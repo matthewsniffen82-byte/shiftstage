@@ -11,7 +11,7 @@ export const staticAssetVersions = {
   "/dancr-checkboxes.v1.css": "412ddff9485b8f76",
   "/dancr-aesthetic.v1.css": "95001b4cd7e2043e",
   "/dancr-brand-tokens.v1.css": "2baff41c13e44b3a",
-  "/dancr-palette.v1.css": "62d7309315acbf53",
+  "/dancr-palette.v1.css": "efea2ef415c03f80",
   "/dancr-button-system.v1.css": "2b8d5593362c4138",
   "/dancr-feedback.v1.css": "b1d66c256717c88e",
   "/mobile-social-strip.css": "b1a1f47e8eda7853",
