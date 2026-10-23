@@ -129,7 +129,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   if (!active) return null;
   return <section className="venue-media-review" id="venue-media-reviews" aria-labelledby="venue-media-review-title" aria-busy={busy || loading}>
     <header><div><h2 id="venue-media-review-title" ref={heading} tabIndex={-1}>{selectedDancer ? `${selectedDancer.stageName} · Club media` : "Media approvals"}{count !== null ? ` · ${selectedDancer ? uploadCount : count}` : ""}</h2>
-      <p>Choose what appears at your club. Decisions apply here only; MyDancr approval is also required before media goes live.</p></div>
+      <p>Your approval sends media to MyDancr for final review.</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
     <label>Show <select value={showAll ? "all" : "pending"} disabled={busy} onChange={event => { setShowAll(event.target.value === "all"); openDancer(null); }}><option value="pending">Waiting for your club</option><option value="all">All media and decisions</option></select></label>
     {selectedDancer ? <button className="venue-media-back" type="button" disabled={busy} onClick={() => openDancer(null)}>← All dancers</button> : null}
@@ -154,7 +154,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     </div> : <div className="venue-media-review-grid">
       {items.filter(item => item.id !== pendingPhotoRejection).map(item => <article key={item.id}>
         <h3 className="venue-media-type">{item.label}</h3>
-        <p>{item.clubStatus === "approved" ? "Approved at your club" : item.clubStatus === "rejected" ? "Hidden at your club" : "Waiting for your club"}</p><p>{item.reviewSummary}</p>
+        {showAll ? <p>{item.clubStatus === "approved" ? "Approved at your club" : item.clubStatus === "rejected" ? "Hidden at your club" : "Pending"}</p> : null}
         <div className="venue-media-review-preview">
         {item.previewUrl ? item.kind === "video" ? <video controls playsInline preload="metadata" src={item.previewUrl} poster={item.posterUrl || undefined}
           onLoadedMetadata={event => { if (!item.posterUrl) primeVideoPreviewFrame(event.currentTarget); }} aria-label={`${item.stageName} video for review`} />
