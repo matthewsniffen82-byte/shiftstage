@@ -8,7 +8,6 @@ import React from 'react';
 import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from '../src/lib/dancr/media-limits.ts';
 import { mediaReviewLabel } from '../src/lib/dancr/media-review-label.ts';
 import { dancerSubmissionMedia } from '../src/lib/dancr/dancer-submission-media.ts';
-import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerProfileWorkspace.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
@@ -33,7 +32,6 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboa
     if(name==='./DancerUploadFeedback')return {DancerCanLeaveUploadContext:leaveContext,DancerPendingUploadsContext:React.createContext(()=>{})};
     if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');const result=save?await save():saveResult;if(result){props.profile.stage_name=props.draftIdentity.stageName;props.profile.city=props.draftIdentity.city;}return result;}};
     if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p};
-    if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:[{id:'optional',status:'submitted'}],setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
@@ -223,18 +221,13 @@ test('main photo stays first and avatar cropping lives in its menu instead of be
   assert.ok(!f.draw().some(node => node.props.id === 'dancer-required-photos'));
 });
 
-test('Photos and Videos boxes each show the avatar beside their label without nested buttons', () => {
+test('Photos and Videos boxes retain plain labels without avatar pictures', () => {
   const f = fixture({ onboarding: false });
   for (const label of ['+ Photos', '+ Videos']) {
     const button = f.button(label), images = walk(button).filter(node => node.type === 'img');
-    assert.equal(images.length, 1); assert.equal(images[0].props.src, '/face.jpg');
-    assert.equal(images[0].props.alt, ''); assert.equal(walk(button).filter(node => node.type === 'button').length, 1);
+    assert.equal(images.length, 0); assert.equal(textContent(button), label);
+    assert.equal(walk(button).filter(node => node.type === 'button').length, 1);
   }
-  f.props.profile.dancer_photos.push({ id: 'replacement', status: 'pending', isPrimary: true });
-  f.props.profile.pending_photo_reviews = [{ id: 'replacement', status: 'pending_review', avatarPreviewUrl: '/new-avatar.jpg' }];
-  for (const label of ['+ Photos', '+ Videos']) assert.equal(walk(f.button(label)).find(node => node.type === 'img').props.src, '/new-avatar.jpg');
-  f.props.profile.dancer_photos = [];
-  for (const label of ['+ Photos', '+ Videos']) assert.equal(walk(f.button(label)).some(node => node.type === 'img'), false);
 });
 
 test('dashboard media shortcuts select the shared chooser and keep one uploader for each type',async()=>{

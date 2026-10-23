@@ -7,6 +7,7 @@ import ts from "typescript";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { effectiveDancerProfileStatus } from "../src/lib/dancr/profile-approval.ts";
+import { dancerAvatarPreview } from "../app/dashboard/dancer-avatar-preview.ts";
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
@@ -25,7 +26,7 @@ const headerEnd = source.indexOf("\n      {isLoading &&", headerStart);
 const identityEnd = source.indexOf("  const dancerAccountContent =", start);
 const loadingStart = source.indexOf('  if (role === "dancer" && isLoading && !state.error)', identityEnd);
 const header = compile('export function Header({state, isLoading, role = "dancer", dancerWorkingNow = false}) {' + source.slice(start, identityEnd) + source.slice(loadingStart, end) + ' return (' + source.slice(headerStart, headerEnd).trim() + ');}', {
-  useMemo: fn => fn(), dashboardName: profile => profile?.stage_name || "", homeDiscoveryHref: () => "/", effectiveDancerProfileStatus,
+  useMemo: fn => fn(), dashboardName: profile => profile?.stage_name || "", homeDiscoveryHref: () => "/", effectiveDancerProfileStatus, dancerAvatarPreview,
   DancerDashboardAvatar: identity.DancerDashboardAvatar, DashboardCloseButton: () => React.createElement("button", null, "Close"),
   CustomerDashboardAvatar: guestIdentity.CustomerDashboardAvatar,
   DashboardStyles: () => null,
@@ -65,6 +66,37 @@ test("a loaded stage name and avatar replace the loading identity", () => {
   assert.doesNotMatch(html, /Loading your dashboard|Complete your profile|avatar-placeholder/);
 });
 
+test("the header circle shows the checked private avatar while main photo approval is pending", () => {
+  const html = renderHeader({ profile: { stage_name: 'Ty', status: 'draft', pending_photo_reviews: [
+    { id: 'main', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/private-avatar.jpg' },
+  ] } }, false);
+  assert.match(html, /src="\/private-avatar.jpg"/);
+  assert.match(html, /object-position:50% 50%/);
+  assert.doesNotMatch(html, />T<|dashboard-identity-status is-live/);
+});
+
+test("the header ignores gallery avatars and unchecked or superseded main photo previews", () => {
+  for (const reviews of [
+    [{ id: 'gallery', upload_context: 'profile_gallery', status: 'pending_review', avatarPreviewUrl: '/wrong.jpg' }],
+    [{ id: 'main', is_primary: true, status: 'moderating', avatarPreviewUrl: '/wrong.jpg' }],
+    [{ id: 'main', is_primary: true, status: 'rejected', avatarPreviewUrl: '/wrong.jpg' }],
+    [{ id: 'new', is_primary: true, status: 'moderating' }, { id: 'old', is_primary: true, status: 'pending_review', avatarPreviewUrl: '/wrong.jpg' }],
+  ]) {
+    const html = renderHeader({ profile: { stage_name: 'Ty', pending_photo_reviews: reviews } }, false);
+    assert.match(html, />T</); assert.doesNotMatch(html, /src="\/wrong.jpg"/);
+  }
+});
+
+test("replacing or deleting a pending avatar restores the saved header photo and its crop", () => {
+  const profile = { stage_name: 'Ty', avatarPhotoUrl: '/saved.jpg', avatarPhotoFocalX: 35, avatarPhotoFocalY: 42 };
+  const pending = renderHeader({ profile: { ...profile, pending_photo_reviews: [
+    { id: 'replacement', upload_context: 'profile_main', status: 'pending_review', avatarPreviewUrl: '/replacement.jpg' },
+  ] } }, false);
+  assert.match(pending, /src="\/replacement.jpg"/); assert.doesNotMatch(pending, /src="\/saved.jpg"/);
+  const restored = renderHeader({ profile }, false);
+  assert.match(restored, /src="\/saved.jpg"/); assert.match(restored, /object-position:35% 42%/);
+});
+
 test("missing identity is an onboarding prompt only after a successful load", () => {
   assert.match(renderHeader({ profile: { status: "draft" } }, false), /Complete your profile/);
   const failed = renderHeader({ error: "Sign in to open this dashboard." }, false);
@@ -99,6 +131,7 @@ test("the complete initial dancer page contains only an accessible loading annou
   const exports = {};
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText, { exports, require: name => {
     if (name === "react" || name === "react/jsx-runtime") return require(name);
+    if (name === "./dancer-avatar-preview") return { dancerAvatarPreview };
     return new Proxy(() => null, { get: (_target, key) => key === "__esModule" ? false : () => null });
   } });
   const html = renderToStaticMarkup(React.createElement(exports.default, { role: "dancer" })).replace(/<style>[\s\S]*?<\/style>/g, "");
@@ -119,6 +152,7 @@ test("the paused page exposes account controls without onboarding or active danc
       } : index === 1 ? false : initial);
     } };
     if (name === "react/jsx-runtime") return require(name);
+    if (name === "./dancer-avatar-preview") return { dancerAvatarPreview };
     if (name === "next/dynamic") return { default: () => () => null };
     if (name === "./CustomerAccountPanel") return { default: ({ account }) => React.createElement("article", null, account.email) };
     return new Proxy(() => null, { get: (_target, key) => key === "__esModule" ? false : () => null });

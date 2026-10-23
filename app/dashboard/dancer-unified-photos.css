@@ -1,4 +1,4 @@
-/* Main photo identity and the avatar shown beside the Photos and Videos controls. */
+/* Main photo identity and its empty upload state. */
 body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-main-photo-badge {
   position: absolute;
   bottom: 6px;
@@ -64,21 +64,4 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   .dancer-main-photo-empty-copy strong { font-size: 14px; }
   .dancer-main-photo-empty-copy small { font-size: 12px; line-height: 1.4; color: var(--dancr-color-text-secondary); }
   .dancer-main-photo-empty:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
-}
-@layer dancr-profile-builder-controls {
-  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace .dancer-builder-upload-entry > button {
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    gap: 8px !important;
-  }
-  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace .dancer-media-button-avatar {
-    display: block;
-    flex: 0 0 48px;
-    width: 48px !important;
-    height: 48px !important;
-    min-width: 48px;
-    border-radius: 50% !important;
-    object-fit: cover;
-  }
 }

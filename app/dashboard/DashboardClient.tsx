@@ -10,6 +10,7 @@ import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { captureBrowserAuthSessionGuard } from "@/src/lib/dancr/browser-session";
 import { effectiveDancerProfileStatus } from "@/src/lib/dancr/profile-approval";
 import { DancerDashboardAvatar, DancerDashboardIcon } from "./DancerDashboardIdentity";
+import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import "./dancer-dashboard.css";
 import { CustomerDashboardAvatar } from "./CustomerDashboardIdentity";
 import "./customer-dashboard.css";
@@ -456,6 +457,7 @@ export default function DashboardClient({
     && dancerProfileStatus === "approved"
     && state.profile?.is_public !== false
     && state.profile?.isPublic !== false;
+  const dancerAvatar = dancerAvatarPreview(role === "dancer" ? state.profile : undefined);
 
   const dancerAccountContent = <DashboardSection
     description="Messages, notifications, and account settings."
@@ -519,7 +521,7 @@ export default function DashboardClient({
         </div>
         <div className="dashboard-identity-row">
           <div className="dashboard-identity-avatar">
-            {role === "dancer" ? <DancerDashboardAvatar avatarUrl={String(state.profile?.avatarPhotoUrl || "")} name={profileDisplayName} workingNow={dancerWorkingNow && dancerProfileStatus === "approved" && !state.error && !dancerAccountPaused} /> : null}
+            {role === "dancer" ? <DancerDashboardAvatar avatarUrl={dancerAvatar.avatarUrl} objectPosition={dancerAvatar.objectPosition} name={profileDisplayName} workingNow={dancerWorkingNow && dancerProfileStatus === "approved" && !state.error && !dancerAccountPaused} /> : null}
             {role === "customer" ? <CustomerDashboardAvatar name={accountDisplayName} /> : null}
             {role === "venue" ? <span className="venue-dashboard-logo" aria-hidden="true">
               {profileDisplayName ? <span>{profileDisplayName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => Array.from(part)[0]).join("").toLocaleUpperCase()}</span> : <VenueDashboardIcon section="venue" />}
