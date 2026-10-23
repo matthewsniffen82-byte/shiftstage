@@ -1,11 +1,11 @@
 import "./dancer-media-upload-rules.css";
 
 export default function DancerMediaUploadRules({ kind, facePhoto = false }: { kind: "photo" | "video"; facePhoto?: boolean }) {
-  return <div className="dancer-media-upload-rules" role="note" aria-label={kind === "photo" ? "Photo rules" : "Video rules"}>
-    <div className="dancer-media-upload-rules-heading">
+  return <details className="dancer-media-upload-rules">
+    <summary>
       <strong>{kind === "photo" ? "Photo rules" : "Video rules"}</strong>
       <span>Bikinis, lingerie, thongs, and cleavage are allowed. Nipples, genitals, and anus must stay covered. No sexual activity.</span>
-    </div>
+    </summary>
     <ul>
       <li>Only you (18+) may appear, including in backgrounds and reflections. No other people or minors.</li>
       {facePhoto ? <li>Your face must be clearly visible in your face photo.</li> : null}
@@ -19,5 +19,5 @@ export default function DancerMediaUploadRules({ kind, facePhoto = false }: { ki
     </ul>
     {kind === "photo" ? <p>JPEG, PNG, WebP, HEIC, or HEIF. Up to 25 MB per photo.</p> : null}
     <p>Uploads are reviewed before they appear publicly. Unclear content may need a manual review.</p>
-  </div>;
+  </details>;
 }
