@@ -121,20 +121,30 @@ export async function getOwnDancerAudienceAnalytics(
       id, kind: "video" as const, likes: videoLikes.get(id) || 0, views: videoViews.get(id) || 0,
     })),
   ].sort((a, b) => b.likes - a.likes || (b.views || 0) - (a.views || 0) || a.id.localeCompare(b.id));
+  // Deleted videos retain hidden rows for historical counts, but their files
+  // are removed. Resolve current, approved media before limiting the ranking so
+  // deleted or withdrawn items cannot appear or crowd out available content.
+  const available = new Map<string, Record<string, any>>();
+  await Promise.all((["photo", "video"] as const).map(async kind => {
+    const ids = candidates.filter(item => item.kind === kind).map(item => item.id);
+    const table = kind === "photo" ? "dancer_photos" : "mydancr_tv_videos";
+    const fields = kind === "photo" ? "id, storage_path" : "id, caption, moderation_details";
+    // Keep ID filters below URL limits, including long All time histories.
+    for (let offset = 0; offset < ids.length; offset += 100) {
+      const result = await admin.from(table).select(fields).eq("dancer_id", dancerId)
+        .eq(kind === "photo" ? "review_status" : "status", "approved").in("id", ids.slice(offset, offset + 100));
+      if (result.error) throw result.error;
+      for (const row of result.data || []) available.set(`${kind}:${row.id}`, row);
+    }
+  }));
+  const currentCandidates = candidates.filter(item => available.has(`${item.kind}:${item.id}`));
   // Include both media types and let the panel progressively reveal the list.
   const selected = [
-    ...candidates.filter(item => item.kind === "photo").slice(0, 6),
-    ...candidates.filter(item => item.kind === "video").slice(0, 6),
+    ...currentCandidates.filter(item => item.kind === "photo").slice(0, 6),
+    ...currentCandidates.filter(item => item.kind === "video").slice(0, 6),
   ].sort((a, b) => b.likes - a.likes || (b.views || 0) - (a.views || 0) || a.id.localeCompare(b.id));
-  const topContent: DancerTopContent[] = [];
-  const content = await Promise.all(selected.map(async item => {
-    const table = item.kind === "photo" ? "dancer_photos" : "mydancr_tv_videos";
-    const fields = item.kind === "photo" ? "id, storage_path" : "id, caption, moderation_details";
-    const result = await admin.from(table).select(fields).eq("dancer_id", dancerId).eq("id", item.id).maybeSingle();
-    if (result.error) throw result.error;
-    // Media can be deleted between the event and metadata queries.
-    const row = result.data as Record<string, any> | null;
-    if (!row) return null;
+  const topContent: DancerTopContent[] = selected.map(item => {
+    const row = available.get(`${item.kind}:${item.id}`)!;
     return {
       ...item,
       label: item.kind === "photo" ? "Photo" : String(row.caption || "Video"),
@@ -142,8 +152,7 @@ export async function getOwnDancerAudienceAnalytics(
         ? dancerPhotoDeliveryUrl(String(row.storage_path), 160, true)
         : row.moderation_details?.posterStoragePath ? dancerVideoDeliveryUrl(item.id, true, true) : null,
     };
-  }));
-  for (const item of content) if (item) topContent.push(item);
+  });
 
   return {
     period, activeShift, periodStart: start, periodEnd: end, timezone: timeZone, profileCreatedAt: profile.created_at,

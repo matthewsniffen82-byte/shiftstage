@@ -62,6 +62,8 @@ export function DancerPanel({
   const [videoBusy, setVideoBusy] = useState(false);
   const [editorRequested, setEditorRequested] = useState(0);
   const [presenceKey, setPresenceKey] = useState<string>();
+  const [resultsRefreshKey, setResultsRefreshKey] = useState(0);
+  const refreshResults = useCallback(() => setResultsRefreshKey(value => value + 1), []);
   const handlePresenceChange = useCallback((key: string) => {
     setPresenceKey(key);
     onWorkingNowChange?.(key !== "off");
@@ -180,7 +182,7 @@ export function DancerPanel({
         profileMediaContent={({ profileReady, agreementComplete, continueToAgreement, continueLabel }) => <DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} onboarding profileReady={profileReady} agreementComplete={agreementComplete} onContinue={continueToAgreement} continueLabel={continueLabel} />}
         venueVerificationContent={<DancerNfcPanel onboarding initialAffiliations={affiliations} initialNfcState={nfc || null} onAuthorizationChange={refreshDancerProfile} />} />
       {accountContent}
-    </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested}
+    </> : <DancerDashboardWorkspace busy={editorBusy} editorRequested={editorRequested} onResultsOpen={refreshResults}
       overview={<>
         <DancerAgeVerificationGate><section className="dancer-daily-card" id="dancer-schedule"><header><h2>Working Now</h2><DancerDashboardIcon section="schedule" /></header><DancerShiftManager onPresenceChange={handlePresenceChange} onVisibilityChange={refreshDancerProfile} /></section></DancerAgeVerificationGate>
         <section className="dancer-daily-card" id="dancer-overview">
@@ -196,7 +198,7 @@ export function DancerPanel({
         <DancerAgeVerificationGate loadingLabel="Loading results…"><DancerAnalyticsPanel compact initialAnalytics={analytics} presenceKey={presenceKey} /></DancerAgeVerificationGate>
       </>}
       profile={<DancerProfileWorkspace key={String(profile?.id || "profile")} {...workspaceProps} visibilityContent={visibilityAndSharing} />}
-      results={<DancerAgeVerificationGate loadingLabel="Loading results…"><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} presenceKey={presenceKey} /></section></DancerAgeVerificationGate>}
+      results={<DancerAgeVerificationGate loadingLabel="Loading results…"><section className="dancer-daily-card" id="dancer-performance"><header><div><h2>Results</h2><p>See your requests, returning VIPs and audience growth.</p></div><DancerDashboardIcon section="performance" /></header><DancerAnalyticsPanel initialAnalytics={analytics} presenceKey={presenceKey} refreshKey={resultsRefreshKey} /></section></DancerAgeVerificationGate>}
       account={accountTools}
     />}
   </>;

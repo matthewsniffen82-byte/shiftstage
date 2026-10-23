@@ -36,7 +36,7 @@ const matchesSelection = (data: DancerAudienceAnalytics | null, selection: Dance
     : data.period === selection || (selection === "shift" && data.period === "7d" && data.activeShift === null)
 ));
 
-export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presenceKey }: { initialAnalytics?: Record<string, unknown> | null; compact?: boolean; presenceKey?: string }) {
+export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presenceKey, refreshKey = 0 }: { initialAnalytics?: Record<string, unknown> | null; compact?: boolean; presenceKey?: string; refreshKey?: number }) {
   const initial = readAnalytics(initialAnalytics);
   const [selection, setSelection] = useState<DancerAnalyticsSelection>("auto");
   const [analytics, setAnalytics] = useState(initial);
@@ -55,7 +55,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
     const initial = readAnalytics(initialAnalytics);
     // After the live check-in manager responds, always refresh from the server.
     // An earlier seven-day snapshot must not reappear after a shift ends.
-    if (initial && matchesSelection(initial, selection) && retry === 0 && presenceKey === undefined) {
+    if (initial && matchesSelection(initial, selection) && retry === 0 && presenceKey === undefined && refreshKey === 0) {
       setAnalytics(initial); setClubs(initial.performance.clubs); setActiveShift(initial.activeShift); setError(""); return;
     }
     const controller = new AbortController();
@@ -74,7 +74,7 @@ export function DancerAnalyticsPanel({ initialAnalytics, compact = false, presen
       if (!controller.signal.aborted) setError("Unable to load results. Try again.");
     });
     return () => controller.abort();
-  }, [initialAnalytics, selection, retry, presenceKey]);
+  }, [initialAnalytics, selection, retry, presenceKey, refreshKey]);
 
   const current = matchesSelection(analytics, selection) ? analytics : null;
   const period = current?.period || (selection === "auto" ? initial?.activeShift ? "shift" : "7d" : selection);

@@ -19,9 +19,9 @@ export function dancerDashboardDestination(hash: string): Destination {
   return "overview";
 }
 
-export default function DancerDashboardWorkspace({ overview, profile, results, account, busy = false, editorRequested = 0 }: {
+export default function DancerDashboardWorkspace({ overview, profile, results, account, busy = false, editorRequested = 0, onResultsOpen }: {
   overview: ReactNode; profile: ReactNode; results: ReactNode; account: ReactNode;
-  busy?: boolean; editorRequested?: number;
+  busy?: boolean; editorRequested?: number; onResultsOpen?: () => void;
 }) {
   const [active, setActive] = useState<Destination>("overview");
   const [visited, setVisited] = useState<Destination[]>(["overview"]);
@@ -29,8 +29,10 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
   const navigation = useRef<HTMLElement>(null);
   const activeRef = useRef(active);
   const busyRef = useRef(busy);
+  const onResultsOpenRef = useRef(onResultsOpen);
   activeRef.current = active;
   busyRef.current = busy;
+  onResultsOpenRef.current = onResultsOpen;
   useEffect(() => {
     const nav = navigation.current;
     if (!nav || typeof ResizeObserver === "undefined") return;
@@ -45,6 +47,7 @@ export default function DancerDashboardWorkspace({ overview, profile, results, a
     if (busyRef.current) return;
     setVisited(current => current.includes(id) ? current : [...current, id]);
     setActive(id);
+    if (id === "results") onResultsOpenRef.current?.();
   };
   useEffect(() => {
     const sync = () => {

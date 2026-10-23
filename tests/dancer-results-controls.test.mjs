@@ -38,6 +38,31 @@ function fixture(initial=data('7d'), props={}) {
     async settle(){await new Promise(resolve=>setImmediate(resolve));render();},close(){slots.forEach(slot=>slot?.cleanup?.());}};
 }
 
+test('opening Results from navigation or a link requests fresh data, except while busy',()=>{
+  for (const busy of [false,true]) {
+    const effects=[],listeners=new Map();let refreshes=0;
+    const react={
+      useState:initial=>[initial,()=>{}],useRef:current=>({current}),useCallback:callback=>callback,
+      useEffect:effect=>effects.push(effect),
+    };
+    const window={location:{hash:'#dancer-profile'},history:{replaceState(){}},requestAnimationFrame(){},
+      addEventListener:(name,listener)=>listeners.set(name,listener),removeEventListener:name=>listeners.delete(name)};
+    const exports={};vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/dashboard/DancerDashboardWorkspace.tsx',import.meta.url),'utf8'),{
+      compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX},
+    }).outputText,{exports,window,require:name=>name==='react'?react:name==='./DancerDashboardIdentity'?{DancerDashboardIcon:()=>null}:name.endsWith('.css')?{}:require(name)});
+    const tree=exports.default({busy,onResultsOpen:()=>refreshes++});
+    const cleanup=effects.map(effect=>effect());
+    const buttons=tree.props.children[0].props.children;
+    buttons.find(button=>button.props['aria-controls']==='dancer-destination-results').props.onClick();
+    assert.equal(refreshes,busy?0:1);
+    buttons.find(button=>button.props['aria-controls']==='dancer-destination-profile').props.onClick();
+    assert.equal(refreshes,busy?0:1);
+    window.location.hash='#dancer-results';listeners.get('hashchange')();
+    assert.equal(refreshes,busy?0:2);
+    cleanup.forEach(fn=>fn?.());
+  }
+});
+
 test('audience growth shows four supported metrics, even with historical social taps',()=>{
   const initial=data('7d');initial.socialLinkTaps={value:99,previous:50};
   const ui=fixture(initial);
@@ -68,6 +93,23 @@ test('video-only activity counts as results and stays global when filtering club
   assert.match(renderToStaticMarkup(video()),/About Video views/);
   ui.nodes().find(node=>node.type==='select').props.onChange({target:{value:'club-b'}});ui.render();
   assert.equal(video().props.metric.value,1234);assert.equal(ui.calls.length,0);ui.close();
+});
+
+test('reopening Results replaces deleted top content and preserves the chosen range',async()=>{
+  const initial=data('7d');initial.topContent=[{id:'removed-video',kind:'video',label:'Removed video',thumbnailUrl:'/removed.jpg',likes:1,views:1}];
+  const ui=fixture(initial);
+  assert.match(ui.html(),/Removed video/);
+  ui.setProps({refreshKey:1});
+  assert.equal(ui.calls[0].url,'/api/dancer/analytics?period=auto');
+  assert.doesNotMatch(ui.html(),/Removed video/);
+  ui.calls[0].resolve({analytics:data('7d')});await ui.settle();
+  assert.doesNotMatch(ui.html(),/Removed video/);
+  ui.button('30 days').props.onClick();ui.render();
+  ui.calls[1].resolve({analytics:data('30d')});await ui.settle();
+  ui.setProps({refreshKey:2});
+  assert.equal(ui.calls[2].url,'/api/dancer/analytics?period=30d');
+  ui.calls[2].resolve({analytics:data('30d')});await ui.settle();
+  assert.doesNotMatch(ui.html(),/Removed video/);ui.close();
 });
 
 test('cached or malformed video totals refresh instead of displaying invented numbers',async()=>{

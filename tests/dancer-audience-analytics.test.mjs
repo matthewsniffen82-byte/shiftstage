@@ -35,8 +35,8 @@ function fixture() {
     profile_views: [0, 1, 7, 8, 14, 30, 60].map((day, i) => ({ id: i, dancer_id: "mine", viewed_at: daysAgo(day) })).concat({ dancer_id: "other", viewed_at: daysAgo(1) }),
     social_clicks: [1, 1, 3, 8].map(day => ({ dancer_id: "mine", clicked_at: daysAgo(day) })),
     follows: [{ dancer_id: "mine", created_at: daysAgo(2), notifications_enabled: true }, { dancer_id: "mine", created_at: daysAgo(40), notifications_enabled: false }, { dancer_id: "other", created_at: daysAgo(1), notifications_enabled: true }],
-    dancer_photos: [{ id: "photo-1", dancer_id: "mine", storage_path: "mine/photo.jpg" }, { id: "private-photo", dancer_id: "other", storage_path: "other/photo.jpg" }],
-    mydancr_tv_videos: [{ id: "video-1", dancer_id: "mine", caption: "Friday night", moderation_details: { posterStoragePath: "poster.jpg" } }],
+    dancer_photos: [{ id: "photo-1", dancer_id: "mine", review_status: "approved", storage_path: "mine/photo.jpg" }, { id: "private-photo", dancer_id: "other", review_status: "approved", storage_path: "other/photo.jpg" }],
+    mydancr_tv_videos: [{ id: "video-1", dancer_id: "mine", status: "approved", caption: "Friday night", moderation_details: { posterStoragePath: "poster.jpg" } }],
     media_likes: [
       ...Array.from({ length: 1005 }, (_, i) => ({ id: `like-${String(i).padStart(5, "0")}`, photo_id: "photo-1", created_at: daysAgo(1) })),
       { id: "older", photo_id: "photo-1", created_at: daysAgo(8) },
@@ -73,6 +73,7 @@ function database(rows, failTable) {
     const query = {
       select(fields, options = {}) { call.fields = fields; call.options = options; return query; },
       eq(key, value) { call.filters.push([key, "eq", value]); return query; },
+      in(key, value) { call.filters.push([key, "in", value]); return query; },
       is(key, value) { call.filters.push([key, "eq", value]); return query; },
       neq(key, value) { call.filters.push([key, "neq", value]); return query; },
       gt(key, value) { call.filters.push([key, "gt", value]); return query; },
@@ -93,7 +94,7 @@ function database(rows, failTable) {
             const foreignKey = parent === "dancer_photos" ? "photo_id" : "video_id";
             actual = rows[parent]?.find(item => item.id === row[foreignKey])?.[field];
           }
-          return op === "ilike" ? String(actual).toLowerCase() === value.toLowerCase() : op === "eq" ? actual === value : op === "neq" ? actual !== value : op === "gt" ? actual > value : op === "lte" ? actual != null && actual <= value : op === "gte" ? actual >= value : actual < value;
+          return op === "in" ? value.includes(actual) : op === "ilike" ? String(actual).toLowerCase() === value.toLowerCase() : op === "eq" ? actual === value : op === "neq" ? actual !== value : op === "gt" ? actual > value : op === "lte" ? actual != null && actual <= value : op === "gte" ? actual >= value : actual < value;
         }));
         const count = data.length;
         if (call.order) data = [...data].sort((a, b) => (call.ascending ? 1 : -1) * String(a[call.order]).localeCompare(String(b[call.order])));
@@ -131,7 +132,7 @@ test("7-day analytics scope every metric to the owner, use disjoint periods, and
 
 test("video totals page all owned engaged views, not just the six top videos", async () => {
   const rows = fixture();
-  rows.mydancr_tv_videos.push(...Array.from({ length: 7 }, (_, i) => ({ id: `extra-${i}`, dancer_id: "mine" })),
+  rows.mydancr_tv_videos.push(...Array.from({ length: 7 }, (_, i) => ({ id: `extra-${i}`, dancer_id: "mine", status: "approved" })),
     { id: "private-video", dancer_id: "other" });
   rows.mydancr_tv_events = [
     ...Array.from({ length: 1005 }, (_, i) => ({ id: `current-${String(i).padStart(5, "0")}`, video_id: `extra-${i % 7}`, event_type: "engaged_view", occurred_at: daysAgo(7) })),
@@ -157,6 +158,50 @@ test("video totals page all owned engaged views, not just the six top videos", a
     assert.ok(query.filters.some(([key, op, value]) => key === "event_type" && op === "eq" && value === "engaged_view"));
     assert.doesNotMatch(query.fields, /visitor|session|viewer/);
   }
+});
+
+for (const period of ["7d", "30d", "all"]) test(`${period} top content excludes removed media before ranking without erasing historical totals`, async () => {
+  const rows = fixture();
+  const unavailable = Array.from({ length: 105 }, (_, index) => ({ id: `deleted-${index}`, dancer_id: "mine", status: "hidden",
+    moderation_details: { posterStoragePath: `deleted-${index}.jpg` } }));
+  unavailable.push(...["rejected", "submitted", "moderating"].map(status => ({ id: status, dancer_id: "mine", status })));
+  const available = Array.from({ length: 7 }, (_, index) => ({ id: `available-${index}`, dancer_id: "mine", status: "approved" }));
+  rows.mydancr_tv_videos.push(...unavailable, ...available);
+  rows.media_likes.push(...unavailable.flatMap(video => [1, 2].map(index => ({ id: `${video.id}-like-${index}`, video_id: video.id, created_at: daysAgo(1) }))));
+  rows.mydancr_tv_events.push(...[...unavailable, ...available].map(video => ({ id: `${video.id}-view`, video_id: video.id, event_type: "engaged_view", occurred_at: daysAgo(1) })));
+  rows.dancer_photos.push({ id: "withdrawn-photo", dancer_id: "mine", review_status: "rejected", storage_path: "removed.jpg" });
+  rows.media_likes.push({ id: "withdrawn-photo-like", photo_id: "withdrawn-photo", created_at: daysAgo(1) });
+  const db = database(rows);
+  const result = await service.getOwnDancerAudienceAnalytics(db, "owner", period, now);
+  const topVideos = result.topContent.filter(item => item.kind === "video");
+  assert.equal(topVideos.length, 6, "deleted high-ranking items cannot crowd out current videos");
+  assert.ok(topVideos.every(item => item.id === "video-1" || item.id.startsWith("available-")));
+  assert.deepEqual(Array.from(result.topContent.filter(item => item.kind === "photo"), item => item.id), ["photo-1"]);
+  assert.equal(result.contentLikes.value, (period === "7d" ? 1006 : 1007) + unavailable.length * 2 + 1);
+  assert.equal(result.videoViews.value, (period === "7d" ? 1 : 2) + unavailable.length + available.length);
+  const metadataQueries = db.calls.filter(call => ["dancer_photos", "mydancr_tv_videos"].includes(call.table));
+  assert.equal(metadataQueries.filter(call => call.table === "mydancr_tv_videos").length, 2);
+  for (const query of metadataQueries) {
+    assert.ok(query.filters.some(([key, op, value]) => key === "dancer_id" && op === "eq" && value === "mine"));
+    assert.ok(query.filters.some(([key, op, value]) => key === (query.table === "dancer_photos" ? "review_status" : "status") && op === "eq" && value === "approved"));
+    assert.ok(query.filters.find(([, op]) => op === "in")[2].length <= 100);
+  }
+});
+
+test("media deleted between activity counting and metadata lookup is omitted", async () => {
+  const rows = fixture();
+  const db = database(rows);
+  const from = db.from;
+  db.from = table => {
+    if (table === "dancer_photos") rows.dancer_photos = [];
+    if (table === "mydancr_tv_videos") rows.mydancr_tv_videos[0].status = "hidden";
+    return from(table);
+  };
+  const result = await service.getOwnDancerAudienceAnalytics(db, "owner", "7d", now);
+  assert.equal(result.topContent.length, 0);
+  assert.equal(result.contentLikes.value, 1006);
+  assert.equal(result.videoViews.value, 1);
+  await assert.rejects(service.getOwnDancerAudienceAnalytics(database(fixture(), "mydancr_tv_videos"), "owner", "7d", now), /database unavailable/);
 });
 
 test("30-day analytics use a matching prior 30 days and update content rankings", async () => {
