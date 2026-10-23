@@ -30,6 +30,7 @@ const Overview = component('OperationsOverview', {
   useState: () => [false, () => {}], adminAttentionItems, adminCountLabel,
   Panel: () => null, Metric: () => null, OperationsList: () => null, SystemHealthSummary: () => null,
   relativeTime: () => 'just now',
+  RefreshButton: () => null,
 });
 
 test('home hides empty queues but keeps failed counts visible and never calls them clear', () => {
@@ -62,7 +63,7 @@ test('queue shortcuts open their matching review tool, including copyright cases
     assert.ok(button, item.label);
     button.props.onClick();
     assert.deepEqual(opened.at(-1), routes[item.key]);
-    assert.ok(source.includes(`id="${item.panel}"`) || (['admin-dancer-approvals', 'admin-photo-review', 'admin-tv-review'].includes(item.panel) && source.includes('panel = "admin-review-queue"')), 'destination exists or routes to the unified queue');
+    assert.ok(source.includes(`id="${item.panel}"`) || (['admin-dancer-approvals', 'admin-photo-review', 'admin-tv-review'].includes(item.panel) && source.includes('"admin-media-workbench"')), 'destination exists or routes to the matching review queue');
   }
 });
 

@@ -13,7 +13,7 @@ const MAX_SUPPORT_REPLY_BODY_BYTES = 24_576;
 export async function GET(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
-    await requireAdmin(client, user.id);
+    await requireAdmin(client, user.id, "support");
     const threads = await listAdminSupportThreads(createAdminSupabaseClient());
     return NextResponse.json({ ok: true, threads, session: session || null });
   } catch (error) {
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
-    await requireAdmin(client, user.id);
+    await requireAdmin(client, user.id, "support");
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_SUPPORT_REPLY_BODY_BYTES,
       invalidMessage: "Invalid support reply request.",

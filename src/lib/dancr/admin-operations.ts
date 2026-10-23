@@ -64,7 +64,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
 
   const results = await Promise.all([
     safeCount("Dancer approvals", () => db.from("dancer_profiles").select("id", { count: "exact", head: true }).eq("status", "pending_review")),
-    safeCount("Photo moderation", () => db.from("image_moderation_records").select("id", { count: "exact", head: true }).eq("decision", "review").not("upload_context", "like", "profile_%")),
+    safeCount("Photo moderation", () => db.from("image_moderation_records").select("id", { count: "exact", head: true }).eq("decision", "review").or("upload_context.not.like.profile_%,club_reviewed_at.not.is.null")),
     safeCount("Social link reviews", () => db.from("approval_reviews").select("id", { count: "exact", head: true }).eq("status", "pending").like("review_type", "social_link:%")),
     safeCount("Content reports", () => db.from("content_reports").select("id", { count: "exact", head: true }).eq("status", "open")),
     safeCount("Copyright cases", () => db.from("dmca_cases").select("id", { count: "exact", head: true }).in("status", ["submitted", "needs_information", "disabled", "countered", "court_hold"])),
@@ -119,6 +119,7 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     safeCount("Ride requests (24h)", () => db.from("club_shuttle_requests").select("id", { count: "exact", head: true }).gte("created_at", dayAgo)),
     safeCount("Email update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "email").is("withdrawn_at", null)),
     safeCount("Text update subscriptions", () => db.from("venue_update_subscriptions").select("id", { count: "exact", head: true }).eq("channel", "text").is("withdrawn_at", null)),
+    safeCount("Video moderation", () => db.from("admin_media_workspace").select("id", { count: "exact", head: true }).eq("stage", "staff").eq("kind", "video")),
   ]);
 
   const [
@@ -127,14 +128,14 @@ export async function getAdminOperationsCenter(client: DancrClient): Promise<Adm
     checkedInDancers, activeVenueCount, qrGeneratedToday, qrRedeemedToday, suspiciousQrToday,
     missedCheckIns, totalAccounts, activeDancers, newAccounts7d, profileViews7d,
     profileViews30d, directionRequests7d, newFollows7d, publishedVideos30d, activity, accounts, clubRequests, allClubs, allDancers, tapStickers,
-    pendingVip, activeVip, guestList24h, rides24h, emailUpdates, textUpdates,
+    pendingVip, activeVip, guestList24h, rides24h, emailUpdates, textUpdates, videos,
   ] = results;
 
   const overdue = count(overdueProfiles) + count(overdueSupport) + count(overdueReports);
   const attentionCounts = {
     dancerProfiles: count(dancerProfiles),
     photos: count(photos),
-    videos: 0,
+    videos: count(videos),
     socialLinks: count(socialLinks),
     reports: count(reports),
     dmca: count(dmca),

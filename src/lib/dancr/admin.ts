@@ -1,4 +1,5 @@
 import "server-only";
+import { permitsStaffScope, staffRole, type StaffScope } from "./admin-workspace-policy";
 import { changeVenuePublication } from "./venue-publication";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -107,10 +108,10 @@ export type AdminMonitoringStatus = {
   integrations: Array<{ name: string; ok: boolean; required: string[] }>;
 };
 
-export async function requireAdmin(client: DancrClient, userId: string) {
+export async function requireAdmin(client: DancrClient, userId: string, scope: StaffScope = "owner") {
   const { data, error } = await client
     .from("app_users")
-    .select("id, role, account_state")
+    .select("id, role, account_state, admin_workspace_role")
     .eq("id", userId)
     .maybeSingle();
 
@@ -123,6 +124,9 @@ export async function requireAdmin(client: DancrClient, userId: string) {
     }));
     throw new Error("Admin access required.");
   }
+  const role = staffRole(data.admin_workspace_role);
+  if (!permitsStaffScope(role, scope)) throw new PublicApiError("FORBIDDEN", "Your staff role does not allow this action.", 403);
+  return role!;
 }
 
 export async function getApprovalQueue(client: DancrClient): Promise<AdminApprovalDancer[]> {

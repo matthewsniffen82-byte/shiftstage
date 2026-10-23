@@ -7,6 +7,7 @@ import ts from "typescript";
 import { PublicApiError, resolveApiError } from "../src/lib/api-error-policy.ts";
 import { requestRoleFixture } from "./helpers/request-role-fixture.mjs";
 import * as serverJobs from "../src/lib/server-job.ts";
+import * as workspacePolicy from "../src/lib/dancr/admin-workspace-policy.ts";
 
 const require = createRequire(import.meta.url);
 const compile = file => ts.transpileModule(readFileSync(new URL("../" + file, import.meta.url), "utf8"), {
@@ -17,6 +18,7 @@ const quietConsole = { log() {}, warn() {}, error() {}, info() {} };
 
 function fixture(options = {}) {
   const auth = requestRoleFixture(options), unexpected = [];
+  if (auth.row) auth.row.admin_workspace_role = options.workspaceRole || "owner";
   const unavailable = new Proxy({}, { get(_target, name) {
     if (name === "__esModule") return false;
     if (/^is[A-Z].*Error$/.test(String(name))) return () => false;
@@ -26,6 +28,7 @@ function fixture(options = {}) {
   vm.runInNewContext(adminCode, { exports: adminExports, Error, console: quietConsole, require(name) {
     if (name === "server-only") return {};
     if (name === "../api-error-policy") return { PublicApiError };
+    if (name === "./admin-workspace-policy") return workspacePolicy;
     return unavailable;
   } });
   return { auth, unexpected, adminExports, unavailable };
@@ -59,6 +62,14 @@ const denied = [
   { label: "missing account", missing: true, status: 403 },
   { label: "anonymous", anonymous: true, status: 401 },
 ];
+for (const role of ['owner', 'reviewer', 'support', 'billing']) for (const scope of ['owner', 'reviewer', 'support', 'billing', 'workspace']) {
+  test(`${role} staff server permission for ${scope}`, async () => {
+    const f = fixture({ role: 'admin', workspaceRole: role });
+    const context = await f.auth.createContext(new Request('https://www.mydancr.com/api/admin/test', { headers: { authorization: 'Bearer synthetic-token' } }));
+    if (role === 'owner' || role === scope || scope === 'workspace') assert.equal(await f.adminExports.requireAdmin(context.client, context.user.id, scope), role);
+    else await assert.rejects(f.adminExports.requireAdmin(context.client, context.user.id, scope), error => error.status === 403);
+  });
+}
 for (const file of routes) {
   const code = compile(file);
   const methods = [...readFileSync(new URL("../" + file, import.meta.url), "utf8").matchAll(/export async function (GET|POST|PUT|PATCH|DELETE)\(/g)].map(m => m[1]);

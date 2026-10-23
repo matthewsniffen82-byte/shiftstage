@@ -18,8 +18,9 @@ const statusLabel = (status: string) => ({ generated: "Awaiting admission", rede
 type Confirmation = { row: AdminGuestRow; action: AdminGuestAction; nextStatus?: string };
 
 const defaultFilter = (section: AdminGuestSection) => section === "visits" || section === "invitations" ? "pending" : section === "guests" ? "generated" : "all";
-export default function AdminGuestOperations({ venues, onActionConfirmed, initialVenueId = "", initialSection = "visits" }: { venues: Array<Record<string, unknown>>; onActionConfirmed: (message: string) => void; initialVenueId?: string; initialSection?: AdminGuestSection }) {
+export default function AdminGuestOperations({ venues, onActionConfirmed, initialVenueId = "", initialSection = "visits", onVenueChange }: { venues: Array<Record<string, unknown>>; onActionConfirmed: (message: string) => void; initialVenueId?: string; initialSection?: AdminGuestSection; onVenueChange?: (id: string) => void }) {
   const [venueId, setVenueId] = useState(initialVenueId);
+  useEffect(() => { setVenueId(initialVenueId); setOffset(0); }, [initialVenueId]);
   const [section, setSection] = useState<AdminGuestSection>(initialSection);
   const [filter, setFilter] = useState(defaultFilter(initialSection)), [offset, setOffset] = useState(0);
   const [period, setPeriod] = useState<"tonight" | "7d" | "30d">("30d");
@@ -41,7 +42,7 @@ export default function AdminGuestOperations({ venues, onActionConfirmed, initia
   const load = useCallback(async () => {
     read.current?.abort();
     const controller = new AbortController(); read.current = controller;
-    setData(null); setError("");
+    setError("");
     if (!venueId) { setLoading(false); return; }
     const accountId = readAdminSession()?.account?.id;
     setLoading(true);
@@ -96,7 +97,7 @@ export default function AdminGuestOperations({ venues, onActionConfirmed, initia
   return <section className="admin-guest-operations" aria-labelledby="admin-guest-title">
     <header><div><span className="eyebrow">Guest operations</span><h2 id="admin-guest-title">VIP, guests & club results</h2></div>
       <RefreshButton label="Refresh guest operations" busy={loading} type="button" disabled={!venueId || busy} onClick={() => void load()} /></header>
-    <label className="admin-guest-venue">Club<select value={venueId} disabled={saving} onChange={event => { setVenueId(event.target.value); setOffset(0); }}>
+    <label className="admin-guest-venue">Club<select value={venueId} disabled={saving} onChange={event => { setVenueId(event.target.value); onVenueChange?.(event.target.value); setOffset(0); }}>
       <option value="">Choose a club</option>{venues.map(venue => <option key={String(venue.id)} value={String(venue.id)}>{String(venue.name || "Club")}{venue.is_active === false ? " · inactive" : ""}</option>)}
     </select></label>
     <nav aria-label="Guest operation sections">{ADMIN_GUEST_SECTIONS.map(id => <button key={id} type="button" aria-pressed={section === id} disabled={saving}

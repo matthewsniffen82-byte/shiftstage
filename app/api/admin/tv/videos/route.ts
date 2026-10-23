@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { claimAdminMedia } from "@/src/lib/dancr/admin-media-workspace";
 import { apiError, PublicApiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireAdmin } from "@/src/lib/dancr/admin";
@@ -19,7 +20,7 @@ const MAX_VIDEO_REVIEW_BODY_BYTES = 8_192;
 export async function GET(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
-    await requireAdmin(client, user.id);
+    await requireAdmin(client, user.id, "reviewer");
     const status = new URL(request.url).searchParams.get("status") || "submitted";
     const videos = await getAdminMyDancrTvVideos(createAdminSupabaseClient(), status);
     return NextResponse.json({ ok: true, videos, count: videos.length, session: session || null });
@@ -31,7 +32,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
-    await requireAdmin(client, user.id);
+    await requireAdmin(client, user.id, "reviewer");
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_VIDEO_REVIEW_BODY_BYTES,
       invalidMessage: "Invalid video review request.",
@@ -64,6 +65,7 @@ export async function POST(request: Request) {
     if (typeof body.version !== "string" || !Number.isFinite(Date.parse(body.version))) {
       throw new PublicApiError("CONFLICT", "Refresh the video before reviewing it.", 409);
     }
+    await claimAdminMedia(createAdminSupabaseClient(), user.id, "video", videoId, body.version);
     const video = await reviewMyDancrTvVideo(
       createAdminSupabaseClient(),
       user.id,

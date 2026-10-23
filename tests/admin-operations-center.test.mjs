@@ -43,7 +43,7 @@ test("admin UI provides the complete mobile operations workspace", () => {
   assert.match(client, /const ADMIN_WORKSPACES/);
   assert.match(client, /function adminSectionsForWorkspace/);
   assert.match(client, /function loadWorkspaceData/);
-  assert.match(client, /loadedWorkspaces\[nextWorkspace\]/);
+  assert.match(client, /completedWorkspaces\.current\[nextWorkspace\]/);
   assert.match(client, /<AdminWorkspaceLoadingState workspace=\{workspace\}/);
   assert.match(client, /title="People"/);
   assert.match(client, /title="Clubs"/);

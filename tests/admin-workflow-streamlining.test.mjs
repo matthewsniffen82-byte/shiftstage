@@ -116,11 +116,11 @@ test('photo and video cards advance only for a confirmed matching decision', asy
   for (const kind of ['photo', 'video']) for (const valid of [false, true]) {
     const decisions = [];
     const props = kind === 'photo'
-      ? { records: [{ id: 'item', decision: 'review' }], focused: true, onRecordsChange: rows => decisions.push(rows), onActionConfirmed() {} }
+      ? { records: [{ id: 'item', decision: 'review', thumbnailUrl: 'photo', club_reviewed_at: '2026-10-01' }], focused: true, onRecordsChange: rows => decisions.push(rows), onActionConfirmed() {} }
       : { selectedVideo: { id: 'item', status: 'submitted', videoUrl: 'video' }, onReviewed: (...args) => decisions.push(args) };
     const data = kind === 'photo' ? { record: { id: valid ? 'item' : 'other', decision: 'approved' } } : { video: { id: valid ? 'item' : 'other', status: 'approved' } };
     const fixture = reviewComponent(kind === 'photo' ? 'app/admin/AdminClient.tsx' : 'app/admin/AdminTvPanel.tsx', kind === 'photo' ? 'ImageModerationQueue' : 'AdminTvPanel', props, async () => data);
-    const button = fixture.render().find(node => node.type === 'button' && node.props.children === (kind === 'photo' ? 'Approve' : 'Approve and publish'));
+    const button = fixture.render().find(node => node.type === 'button' && node.props.children === 'Approve and publish');
     await button.props.onClick(); fixture.render();
     assert.equal(decisions.length, valid ? 1 : 0, `${kind}: ${valid ? 'matching' : 'mismatched'} receipt`);
     fixture.close();

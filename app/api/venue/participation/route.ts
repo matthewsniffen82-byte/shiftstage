@@ -3,6 +3,7 @@ import { apiError } from "@/src/lib/api";
 import { PublicApiError } from "@/src/lib/api-error-policy";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAccountByUserId } from "@/src/lib/dancr/auth";
+import { requireAdmin } from "@/src/lib/dancr/admin";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -18,6 +19,7 @@ async function context(request: Request, venueId: unknown) {
     throw new PublicApiError("INVALID_REQUEST", "Choose a club.", 400);
   }
   const admin = createAdminSupabaseClient();
+  if (account.role === "admin") await requireAdmin(client, user.id);
   if (account.role !== "admin") {
     const access = await requireVenueAccess(admin, user.id, "manage_profile");
     if (access.role !== "owner" || access.venueId !== venueId) throw new PublicApiError("FORBIDDEN", "Only the club owner or MyDancr can remove this club.", 403);

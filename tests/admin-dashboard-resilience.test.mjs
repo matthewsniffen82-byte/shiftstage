@@ -78,8 +78,8 @@ test("the top-level admin shell cancels stale loads and serializes authenticatio
   assert.match(shell, /function invalidateAdminDataRequests\(\)/);
   assert.match(shell, /function cancelWorkspaceLoad\(\)/);
   assert.match(shell, /if \(!mountedRef\.current \|\| authActionInFlightRef\.current\) return null;/);
-  // Initial load, workspace load, and the shared dashboard-count refresh.
-  assert.equal((shell.match(/signal: controller\.signal/g) || []).length, 3);
+  // Workspace authorization and support startup are cancellable too.
+  assert.equal((shell.match(/signal: controller\.signal/g) || []).length, 5);
   assert.equal((shell.match(/signal: action\.controller\.signal/g) || []).length, 2);
   assert.match(shell, /workspaceLoadRef\.current === request/);
   assert.match(shell, /generation === dataGenerationRef\.current/);

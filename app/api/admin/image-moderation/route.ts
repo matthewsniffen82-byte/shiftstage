@@ -1,4 +1,5 @@
 import { finalizePendingDancerNfcEnrollment } from "@/src/lib/dancr/nfc";
+import { claimAdminMedia } from "@/src/lib/dancr/admin-media-workspace";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { after, NextResponse } from "next/server";
 import { runWithServerJob } from "@/src/lib/server-job";
@@ -19,7 +20,7 @@ const MAX_IMAGE_REVIEW_PAGE = 1_000;
 export async function GET(request: Request) {
   try {
     const { client, session, user } = await createRequestSupabaseContext(request);
-    await requireAdmin(client, user.id);
+    await requireAdmin(client, user.id, "reviewer");
 
     const admin = createAdminSupabaseClient() as any;
     const url = new URL(request.url);
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
   try {
     const response = await runWithServerJob(async () => {
     const { client, session, user } = await createRequestSupabaseContext(request);
-    await requireAdmin(client, user.id);
+    await requireAdmin(client, user.id, "reviewer");
     const admin = createAdminSupabaseClient() as any;
     const body = await readBoundedJsonObject(request, {
       maxBytes: MAX_IMAGE_REVIEW_BODY_BYTES,
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
     if (typeof body.version !== "string" || record.updated_at !== body.version) {
       return NextResponse.json({ ok: false, error: "This upload changed. Refresh the queue before reviewing it." }, { status: 409 });
     }
+    await claimAdminMedia(admin, user.id, "photo", recordId, body.version);
     if (decision === "approved") {
       const approved = await approveReviewRecord(admin, record, user.id, notes);
       if (String(record.upload_context).startsWith("profile_")) followUps.push(async () => {

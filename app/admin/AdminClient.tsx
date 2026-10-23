@@ -1,4 +1,7 @@
 "use client";
+import dynamic from "next/dynamic";
+import { AdminGlobalSearch, AdminStaffPermissions, AdminUrgentWork, type WorkspaceAccess } from "./AdminWorkspaceTools";
+const AdminMediaWorkbench = dynamic(() => import("./AdminMediaWorkbench"));
 import RefreshButton from "../components/RefreshButton";
 
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
@@ -20,10 +23,10 @@ import {
 } from "@/src/lib/dancr/club-deal-presets";
 import type { AdminOperationsCenter } from "@/src/lib/dancr/admin-operations";
 import type { AdminDancerRosterItem, AdminDancerRosterResult } from "@/src/lib/dancr/admin-dancers";
-import AdminDmcaPanel from "./AdminDmcaPanel";
-import AdminNfcInventoryPanel from "./AdminNfcInventoryPanel";
-import AdminPilotAnalytics from "./AdminPilotAnalytics";
-import AdminSalesAgentPanel from "./AdminSalesAgentPanel";
+const AdminDmcaPanel = dynamic(() => import("./AdminDmcaPanel"));
+const AdminNfcInventoryPanel = dynamic(() => import("./AdminNfcInventoryPanel"));
+const AdminPilotAnalytics = dynamic(() => import("./AdminPilotAnalytics"));
+const AdminSalesAgentPanel = dynamic(() => import("./AdminSalesAgentPanel"));
 import AdminVenueSubscriptions from "./AdminVenueSubscriptions";
 import AdminTvPanel from "./AdminTvPanel";
 import AdminGuestOperations from "./AdminGuestOperations";
@@ -32,6 +35,7 @@ import AdminTableQrCodes from "./AdminTableQrCodes";
 import AdminClubSetupChecklist from "./AdminClubSetupChecklist";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
+import "./admin-operations-workspace.css";
 import { adminWorkspaceCounts, adminCountLabel } from "./admin-workspace-counts";
 import { adminAttentionItems } from "./admin-attention";
 import { ADMIN_DATA_CHANGED } from "./admin-data-events";
@@ -119,12 +123,6 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
         path: "/api/admin/approvals",
         apply: (data) => ({ queue: data.queue || [], dancerTotal: Number(data.dancerTotal || 0) }),
       },
-      {
-        label: "Image moderation",
-        path: "/api/admin/image-moderation?decision=review&pageSize=50",
-        apply: (data) => ({ imageModeration: data.records || [] }),
-      },
-      { label: "Video moderation", path: "/api/admin/tv/videos?status=submitted", apply: data => ({ reviewVideos: data.videos || [] }) },
       { label: "Reports", path: "/api/admin/reports", apply: (data) => ({ reports: data.reports || [] }) },
     ];
   }
@@ -171,6 +169,8 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
 }
 
 export default function AdminClient() {
+  const [access, setAccess] = useState<WorkspaceAccess | null>(null);
+  const scrollPositions = useRef<Partial<Record<AdminWorkspace, number>>>({});
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -186,6 +186,7 @@ export default function AdminClient() {
   const [workspace, setWorkspace] = useState<AdminWorkspace>("home");
   const [requestedPanel, setRequestedPanel] = useState("");
   const [loadedWorkspaces, setLoadedWorkspaces] = useState<Partial<Record<AdminWorkspace, boolean>>>({});
+  const completedWorkspaces = useRef<Partial<Record<AdminWorkspace, boolean>>>({});
   const [loadingWorkspace, setLoadingWorkspace] = useState<AdminWorkspace | null>(null);
   const [requestedDancerId, setRequestedDancerId] = useState("");
   const [guestDestination, setGuestDestination] = useState<{ venueId: string; section: AdminGuestSection; revision: number } | null>(null);
@@ -255,6 +256,7 @@ export default function AdminClient() {
   }
 
   useEffect(() => {
+    if (access?.role !== "owner") return;
     let timer: number | undefined;
     let request: AbortController | null = null;
     const refreshCounts = () => {
@@ -279,7 +281,7 @@ export default function AdminClient() {
     };
     window.addEventListener(ADMIN_DATA_CHANGED, refreshCounts);
     return () => { window.removeEventListener(ADMIN_DATA_CHANGED, refreshCounts); window.clearTimeout(timer); request?.abort(); };
-  }, []);
+  }, [access?.role]);
 
   function openDancerManagement(dancerId: string) {
     setRequestedDancerId(dancerId);
@@ -287,6 +289,7 @@ export default function AdminClient() {
   }
 
   function openClubOperations(venueId: string, section: AdminGuestSection) {
+    setRequestedClubId(venueId);
     setGuestDestination(current => ({ venueId, section, revision: (current?.revision || 0) + 1 }));
     openWorkspace("clubs", "admin-guest-operations");
   }
@@ -359,13 +362,16 @@ export default function AdminClient() {
   function openWorkspace(nextWorkspace: AdminWorkspace, panel = "") {
     if (nextWorkspace === "approvals" && ["admin-dancer-approvals", "admin-photo-review", "admin-tv-review"].includes(panel)) {
       setRequestedReviewFilter(panel === "admin-photo-review" ? "photo" : panel === "admin-tv-review" ? "video" : "all");
-      panel = "admin-review-queue";
+      panel = panel === "admin-dancer-approvals" ? "admin-review-queue" : "admin-media-workbench";
     }
+    scrollPositions.current[workspace] = window.scrollY;
     setRequestedPanel(panel);
     setWorkspace(nextWorkspace);
+    try { sessionStorage.setItem(`admin-workspace:${access?.userId}`, nextWorkspace); } catch {}
     void loadWorkspaceData(nextWorkspace);
     window.requestAnimationFrame(() => {
-      document.querySelector(".admin-workspace-nav")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      if (!panel && scrollPositions.current[nextWorkspace] != null) window.scrollTo({ top: scrollPositions.current[nextWorkspace]!, behavior: "instant" });
+      else document.querySelector(".admin-workspace-nav")?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
   }
 
@@ -475,6 +481,8 @@ export default function AdminClient() {
     setShowPassword(false);
     setWorkspace("home");
     setLoadedWorkspaces({});
+    completedWorkspaces.current = {};
+    setAccess(null);
     setLoadingWorkspace(null);
     setActionNotice(null);
     setCountRefreshError("");
@@ -488,7 +496,7 @@ export default function AdminClient() {
   }
 
   async function loadWorkspaceData(nextWorkspace: AdminWorkspace) {
-    if (nextWorkspace === "home" || loadedWorkspaces[nextWorkspace]) {
+    if (nextWorkspace === "home" || completedWorkspaces.current[nextWorkspace]) {
       cancelWorkspaceLoad();
       return;
     }
@@ -507,6 +515,7 @@ export default function AdminClient() {
     };
     workspaceLoadRef.current = request;
     setLoadingWorkspace(nextWorkspace);
+    setLoadedWorkspaces(current => ({ ...current, [nextWorkspace]: true }));
     const requestSession = readAdminSession();
 
     const isCurrentRequest = () => mountedRef.current
@@ -519,7 +528,7 @@ export default function AdminClient() {
         sections.map((section) => requestAdminJson(section.path, {
           signal: controller.signal,
           fallbackMessage: `${section.label} could not be loaded.`,
-        })),
+        }).then(data => { if (isCurrentRequest()) setState(current => ({ ...current, ...section.apply(data) })); return data; })),
       );
       if (!isCurrentRequest()) return;
       const authenticationFailure = results.find(
@@ -558,6 +567,7 @@ export default function AdminClient() {
         ],
       }));
       setLoadedWorkspaces((current) => ({ ...current, [nextWorkspace]: true }));
+      completedWorkspaces.current[nextWorkspace] = warnings.length === 0;
     } catch (error) {
       if (!isCurrentRequest()) return;
       setState((current) => ({
@@ -586,18 +596,34 @@ export default function AdminClient() {
       && adminLoadAbortRef.current === controller
       && generation === dataGenerationRef.current;
 
-    setIsLoading(true);
-    setWorkspace("home");
-    setLoadedWorkspaces({});
+    if (!access) setIsLoading(true);
     setLoadingWorkspace(null);
 
     try {
+      const workspaceAccess: WorkspaceAccess = await requestAdminJson("/api/admin/workspace", { signal: controller.signal });
+      if (!isCurrentRequest()) return;
+      setAccess(workspaceAccess);
+      setState(current => ({ ...current, authRequired: false, venues: current.venues?.length ? current.venues : workspaceAccess.venues }));
+      setIsLoading(false);
+      if (!access) {
+        try {
+          const club = sessionStorage.getItem(`admin-club:${workspaceAccess.userId}`) || "";
+          if (workspaceAccess.venues.some(venue => venue.id === club)) setRequestedClubId(club);
+        } catch {}
+      }
+      if (workspaceAccess.role !== "owner") {
+        if (workspaceAccess.role === "support") {
+          const support = await requestAdminJson("/api/admin/support", { signal: controller.signal });
+          if (isCurrentRequest()) setState(current => ({ ...current, supportThreads: support.threads || [] }));
+        }
+        return;
+      }
       const sections = adminSectionsForWorkspace("home");
       const results = await Promise.allSettled(
         sections.map((section) => requestAdminJson(section.path, {
           signal: controller.signal,
           fallbackMessage: `${section.label} could not be loaded.`,
-        })),
+        }).then(data => { if (isCurrentRequest()) setState(current => ({ ...current, ...section.apply(data) })); return data; })),
       );
       if (!isCurrentRequest()) return;
       const authenticationFailure = results.find(
@@ -615,23 +641,7 @@ export default function AdminClient() {
         return;
       }
 
-      const nextState: AdminState = {
-        authRequired: false,
-        monitoring: null,
-        operations: null,
-        queue: [],
-        dancerTotal: 0,
-        venues: [],
-        venueClaimCodes: [],
-        venueSignupRequests: [],
-        subscriptions: [],
-        deals: [],
-        clubDeals: [],
-        dealRequests: [],
-        supportThreads: [],
-        imageModeration: [],
-        reports: [],
-      };
+      const nextState: AdminState = { authRequired: false };
       const warnings: string[] = [];
 
       results.forEach((result, index) => {
@@ -648,12 +658,19 @@ export default function AdminClient() {
       });
 
       nextState.warnings = warnings;
-      setState(nextState);
-      setLoadedWorkspaces({ home: true });
+      setState(current => ({ ...current, ...nextState }));
+      setLoadedWorkspaces(current => ({ ...current, home: true }));
+      if (access && workspace !== "home") { completedWorkspaces.current[workspace] = false; void loadWorkspaceData(workspace); }
+      if (!access) {
+        try { const saved = sessionStorage.getItem(`admin-workspace:${workspaceAccess.userId}`) as AdminWorkspace;
+          if (workspaceAccess.workspaces.includes(saved) && saved !== "home") { setWorkspace(saved); void loadWorkspaceData(saved); }
+        } catch {}
+      }
     } catch (error) {
       if (!isCurrentRequest()) return;
       setState({
-        authRequired: false,
+        authRequired: !access || isAdminAuthenticationError(error),
+        error: error instanceof Error ? error.message : "Unable to load admin dashboard.",
         warnings: [error instanceof Error ? error.message : "Unable to load admin dashboard."],
       });
     } finally {
@@ -663,7 +680,16 @@ export default function AdminClient() {
     }
   }
 
+  useEffect(() => {
+    if (!access) return;
+    try { sessionStorage.setItem(`admin-club:${access.userId}`, requestedClubId); } catch {}
+  }, [requestedClubId, access]);
   const needsSignIn = state.authRequired === true;
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => { if (document.querySelector('[data-admin-unsaved="true"]')) event.preventDefault(); };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, []);
   const dashboardWarnings = state.warnings || [];
   const workspaceCounts = adminWorkspaceCounts(state.operations);
   const pendingClubCount = state.operations?.warnings.some(warning => warning.section === "Club signup requests")
@@ -821,6 +847,19 @@ export default function AdminClient() {
               <button type="button" onClick={() => loadAdmin()}>Retry unavailable sections</button>
             </aside>
           ) : null}
+          {access && <div className="admin-context-bar">
+            <label>Selected club<select value={requestedClubId} onChange={event => { if (!document.querySelector('.admin-review-detail[data-admin-unsaved="true"]') || window.confirm("Discard unsaved review notes and change clubs?")) setRequestedClubId(event.target.value); }}><option value="">All clubs</option>{access.venues.map(venue => <option key={String(venue.id)} value={String(venue.id)}>{String(venue.name)}</option>)}</select></label>
+            {(access.role === "owner" || access.role === "support") && <AdminGlobalSearch onOpen={result => {
+              if (access.role !== "owner") return;
+              if (result.type === "dancer") openDancerManagement(result.id);
+              if (result.venueId) { setRequestedClubId(result.venueId); openWorkspace("clubs", "admin-club-accounts"); }
+            }} />}
+            <p>Admin / {access.role === "owner" ? ADMIN_WORKSPACES.find(item => item.id === workspace)?.label : access.role} / {String(access.venues.find(venue => venue.id === requestedClubId)?.name || "All clubs")}</p>
+          </div>}
+          {access?.role === "reviewer" && <AdminMediaWorkbench venueId={requestedClubId} userId={access.userId} onSaved={confirmAdminAction} />}
+          {access?.role === "support" && <AdminSupportInbox threads={state.supportThreads || []} onThreadsChange={supportThreads => setState(current => ({ ...current, supportThreads }))} />}
+          {access?.role === "billing" && <AdminVenueSubscriptions venues={access.venues.filter(venue => !requestedClubId || venue.id === requestedClubId)} />}
+          {access?.role === "owner" && <>
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
             {ADMIN_WORKSPACES.map((item) => {
               const count = item.id === "clubs" ? pendingClubCount : workspaceCounts[item.id].value;
@@ -842,8 +881,10 @@ export default function AdminClient() {
             ); })}
           </nav>
           {countRefreshError ? <p role="status">{countRefreshError} <button type="button" onClick={() => window.dispatchEvent(new Event(ADMIN_DATA_CHANGED))}>Retry counts</button></p> : null}
-          {workspace === "home" ? (
-            <>
+          {loadedWorkspaces.home || workspace === "home" ? (
+            <section hidden={workspace !== "home"} className="admin-retained-workspace">
+              <AdminUrgentWork onOpen={openWorkspace} />
+              <details><summary>Other operations, analytics & activity</summary>
               <OperationsOverview
                 operations={state.operations || null}
                 monitoring={state.monitoring || null}
@@ -851,23 +892,25 @@ export default function AdminClient() {
                 onRefresh={() => void loadAdmin()}
               />
               <ActivityTimeline operations={state.operations || null} />
-            </>
+              </details>
+            </section>
           ) : null}
 
           {workspace !== "home" && loadingWorkspace === workspace && !loadedWorkspaces[workspace]
             ? <AdminWorkspaceLoadingState workspace={workspace} />
             : null}
 
-          {workspace === "approvals" && loadedWorkspaces.approvals ? (
-            <>
+          {loadedWorkspaces.approvals ? (
+            <section hidden={workspace !== "approvals"} className="admin-retained-workspace">
               <WorkspaceHeader
                 eyebrow="Review queues"
                 title="Approvals"
                 description="Review the next item here. Saved decisions advance the queue automatically."
               />
               <section className="admin-grid">
-                <Panel id="admin-review-queue" title="Review queue" defaultOpen>
-                  <UnifiedReviewQueue profiles={state.queue || []} images={state.imageModeration || []} videos={state.reviewVideos || []}
+                <div id="admin-media-workbench"><AdminMediaWorkbench venueId={requestedClubId} userId={access.userId} active={workspace === "approvals"} onSaved={confirmAdminAction} /></div>
+                <Panel id="admin-review-queue" title="Applications & social links">
+                  <UnifiedReviewQueue profiles={state.queue || []} images={[]} videos={[]} includeMedia={false}
                     requestedFilter={requestedReviewFilter}
                     warnings={(state.warnings || []).filter(warning => /^(Dancer approvals|Image moderation|Video moderation):/.test(warning))}
                     onRefresh={refreshReviewSources} onActionConfirmed={confirmAdminAction} onManageDancer={openDancerManagement}
@@ -883,11 +926,11 @@ export default function AdminClient() {
                   />
                 </Panel>
               </section>
-            </>
+            </section>
           ) : null}
 
-          {workspace === "people" && loadedWorkspaces.people ? (
-            <>
+          {loadedWorkspaces.people ? (
+            <section hidden={workspace !== "people"} className="admin-retained-workspace">
               <WorkspaceHeader
                 eyebrow="Accounts"
                 title="People"
@@ -897,6 +940,8 @@ export default function AdminClient() {
                 <Panel title="Dancer management" badge={`${adminCountLabel(state.operations?.counts?.dancers)} profiles`} defaultOpen>
                   <DancerDirectory
                     requestedDancerId={requestedDancerId}
+                    requestedClubId={requestedClubId}
+                    onClubChange={setRequestedClubId}
                     onActionConfirmed={confirmAdminAction}
                     onProfileUpdated={(profile) => {
                       setState((current) => ({
@@ -926,11 +971,11 @@ export default function AdminClient() {
                   <AdminSalesAgentPanel onActionConfirmed={confirmAdminAction} />
                 </Panel>
               </section>
-            </>
+            </section>
           ) : null}
 
-          {workspace === "clubs" && loadedWorkspaces.clubs ? (
-            <>
+          {loadedWorkspaces.clubs ? (
+            <section hidden={workspace !== "clubs"} className="admin-retained-workspace">
               <WorkspaceHeader
                 eyebrow="Venue operations"
                 title="Clubs"
@@ -947,13 +992,14 @@ export default function AdminClient() {
                     venues={state.venues || []}
                     onOpenOperations={openClubOperations}
                     requestedClubId={requestedClubId}
+                    onClubChange={setRequestedClubId}
                     claimCodes={state.venueClaimCodes || []}
                     onVenuesChange={(venues) => setState((current) => ({ ...current, venues }))}
                     onClaimCodesChange={(venueClaimCodes) => setState((current) => ({ ...current, venueClaimCodes }))}
                   />
                 </Panel>
                 <Panel id="admin-guest-operations" title="VIP & guest operations">
-                  <AdminGuestOperations key={guestDestination?.revision || 0} initialVenueId={guestDestination?.venueId} initialSection={guestDestination?.section} venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
+                  <AdminGuestOperations key={guestDestination?.revision || 0} initialVenueId={requestedClubId} onVenueChange={setRequestedClubId} initialSection={guestDestination?.section} venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
                 </Panel>
                 {clubRequestPanel}
                 <Panel title="Deal attribution" badge={`${state.deals?.length || 0} records`}>
@@ -961,25 +1007,25 @@ export default function AdminClient() {
                 </Panel>
                 <Panel id="admin-tap-stickers" title="Tap sticker inventory" badge={`${adminCountLabel(state.operations?.counts?.tapStickers)} stickers`}>
                   <p>Dressing-room taps start Working Now for {NFC_WORKING_WINDOW_HOURS} hours, followed by a {NFC_COOLDOWN_HOURS}-hour cooldown across clubs. Tapping again does not extend the session. Table QR codes are managed inside each club account.</p>
-                  <AdminNfcInventoryPanel />
+                  <AdminNfcInventoryPanel key={requestedClubId} scopedVenueId={requestedClubId || undefined} />
                 </Panel>
               </section>
-            </>
+            </section>
           ) : null}
 
-          {workspace === "money" && loadedWorkspaces.money ? (
-            <>
+          {loadedWorkspaces.money ? (
+            <section hidden={workspace !== "money"} className="admin-retained-workspace">
               <WorkspaceHeader
                 eyebrow="Venue billing"
                 title="Subscriptions"
                 description="Venues pay a subscription for MyDancr. Review the venue roster and billing availability here."
               />
-              <AdminVenueSubscriptions venues={state.warnings?.some(warning => warning.startsWith("Venues:")) ? undefined : state.venues} />
-            </>
+              <AdminVenueSubscriptions venues={state.warnings?.some(warning => warning.startsWith("Venues:")) ? undefined : state.venues?.filter(venue => !requestedClubId || venue.id === requestedClubId)} />
+            </section>
           ) : null}
 
-          {workspace === "more" && loadedWorkspaces.more ? (
-            <>
+          {loadedWorkspaces.more ? (
+            <section hidden={workspace !== "more"} className="admin-retained-workspace">
               <WorkspaceHeader
                 eyebrow="Platform tools"
                 title="Tools"
@@ -1008,12 +1054,14 @@ export default function AdminClient() {
                 <Panel id="admin-rankings" title="Rankings" badge={`${adminCountLabel(state.operations?.analytics.activeDancers)} approved dancers`}>
                   <RankingManager />
                 </Panel>
+                <Panel title="Staff permissions"><AdminStaffPermissions access={access} onSaved={confirmAdminAction} /></Panel>
                 <Panel title="Pilot analytics">
                   <AdminPilotAnalytics venues={state.venues || []} onActionConfirmed={confirmAdminAction} />
                 </Panel>
               </section>
-            </>
+            </section>
           ) : null}
+          </>}
         </>
       )}
     </main>
@@ -2714,7 +2762,7 @@ function VenueManager({
   onVenuesChange,
   onClaimCodesChange,
   onOpenOperations,
-  requestedClubId = "",
+  requestedClubId = "", onClubChange,
 }: {
   clubDeals: Array<Record<string, unknown>>;
   dealRequests: Array<Record<string, unknown>>;
@@ -2726,7 +2774,7 @@ function VenueManager({
   onVenuesChange: (venues: Array<Record<string, unknown>>) => void;
   onClaimCodesChange: (claimCodes: Array<Record<string, unknown>>) => void;
   onOpenOperations: (venueId: string, section: AdminGuestSection) => void;
-  requestedClubId?: string;
+  requestedClubId?: string; onClubChange?: (id: string) => void;
 }) {
   const [openedVenues, setOpenedVenues] = useState<Record<string, boolean>>({});
   const [commercialStates, setCommercialStates] = useState<Record<string, { dirty: boolean; busy: boolean }>>({});
@@ -3057,7 +3105,7 @@ function VenueManager({
                   ? "Published"
                   : "MyDancr draft";
           return (
-            <details className="venue-admin-row" id={`admin-club-${venueId}`} key={venueId} onToggle={event => { if (event.currentTarget.open) setOpenedVenues(current => current[venueId] ? current : { ...current, [venueId]: true }); }}>
+            <details className="venue-admin-row" id={`admin-club-${venueId}`} key={venueId} onToggle={event => { if (event.target === event.currentTarget && event.currentTarget.open) { setOpenedVenues(current => current[venueId] ? current : { ...current, [venueId]: true }); onClubChange?.(venueId); } }}>
               <summary>
                 <span className="venue-admin-identity">
                   <strong>{asText(venue.name) || "Venue"}</strong>
@@ -3108,7 +3156,7 @@ function VenueManager({
                 {reviewStatus === "changes_requested" && asText(venue.page_review_notes) ? (
                   <div className="venue-page-change-request"><strong>Venue requested changes</strong><p>{asText(venue.page_review_notes)}</p></div>
                 ) : null}
-                <form id={`venue-page-editor-${venueId}`} className="venue-page-editor" onChange={() => setUnsavedByVenue(current => ({ ...current, [venueId]: true }))} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
+                <form id={`venue-page-editor-${venueId}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={() => setUnsavedByVenue(current => ({ ...current, [venueId]: true }))} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
                   const input = event.target as HTMLInputElement;
                   setVenueStatus(venueId, `${input.labels?.[0]?.textContent || "Field"}: ${input.validationMessage}`);
                 }}>
@@ -3163,6 +3211,10 @@ function VenueManager({
                     <p>{isActive ? "Saved details and uploaded images update the published page." : "The preview uses the same venue-page renderer the manager will review and customers will see after approval."}</p>
                   </div>
                   <button className="secondary-action" type="submit" form={`venue-page-editor-${venueId}`} disabled={controlsBusy || (isActive && !unsavedByVenue[venueId])}>{busyVenueId === venueId ? "Saving..." : isActive ? "Save changes" : "Save progress"}</button>
+                  {unsavedByVenue[venueId] && <><span>Unsaved page changes</span><button type="button" disabled={controlsBusy} onClick={() => {
+                    (document.getElementById(`venue-page-editor-${venueId}`) as HTMLFormElement | null)?.reset();
+                    setUnsavedByVenue(current => ({ ...current, [venueId]: false }));
+                  }}>Cancel changes</button></>}
                   {!isActive ? <small>Save an unfinished private page at any time. Send it for approval when every requirement is complete.</small> : null}
                   {statusByVenue[venueId] ? <p className="venue-status" role="status" aria-live="polite">{statusByVenue[venueId]}</p> : null}
                   <a className="venue-page-preview-action" href={venuePagePreviewHref(venue)} rel="noopener noreferrer" target="_blank">Preview full customer page</a>
@@ -3219,10 +3271,11 @@ function VenueManager({
 
 type ApprovalActionRequest = { controller: AbortController; requestId: number };
 
-function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilter = "all", onProfilesChange, onImagesChange, onVideosChange, onRefresh, onActionConfirmed, onManageDancer }: {
+function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilter = "all", includeMedia = true, onProfilesChange, onImagesChange, onVideosChange, onRefresh, onActionConfirmed, onManageDancer }: {
   profiles: Array<Record<string, unknown>>; images: Array<Record<string, unknown>>; videos: Array<Record<string, unknown>>;
   warnings: string[]; onProfilesChange: (rows: Array<Record<string, unknown>>) => void;
   requestedFilter?: ReviewKind | "all";
+  includeMedia?: boolean;
   onImagesChange: (rows: Array<Record<string, unknown>>) => void; onVideosChange: (rows: Array<Record<string, unknown>>) => void;
   onRefresh: (signal: AbortSignal) => Promise<void>; onActionConfirmed: (message: string) => void; onManageDancer: (id: string) => void;
 }) {
@@ -3232,7 +3285,7 @@ function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilte
   const [busy, setBusy] = useState(false), [refreshing, setRefreshing] = useState(false), [error, setError] = useState("");
   const request = useRef<AbortController | null>(null);
   useEffect(() => () => request.current?.abort(), []);
-  const items = adminReviewQueue(profiles, images, videos);
+  const items = adminReviewQueue(profiles, images, videos).filter(item => includeMedia || (item.kind !== "photo" && item.kind !== "video"));
   const filtered = items.filter(item => filter === "all" || item.kind === filter);
   const selected = filtered.find(item => item.key === selectedKey) || filtered[0];
   const index = selected ? filtered.indexOf(selected) : -1;
@@ -3255,7 +3308,7 @@ function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilte
   return <section className="admin-unified-review" aria-label="Unified approval queue">
     <div className="admin-review-toolbar">
       <label>Review<select value={filter} disabled={busy || refreshing} onChange={event => { setFilter(event.target.value as typeof filter); setSelectedKey(""); }}>
-        {([["all", "All items"], ["application", "Applications"], ["photo", "Photos"], ["video", "Videos"], ["social", "Social links"]] as const).map(([id, label]) => <option key={id} value={id}>{label} · {items.filter(item => id === "all" || item.kind === id).length}</option>)}
+        {([["all", "All items"], ["application", "Applications"], ["photo", "Photos"], ["video", "Videos"], ["social", "Social links"]] as const).filter(([id]) => includeMedia || (id !== "photo" && id !== "video")).map(([id, label]) => <option key={id} value={id}>{label} · {items.filter(item => id === "all" || item.kind === id).length}</option>)}
       </select></label>
       <RefreshButton label="Refresh approval queue" busy={refreshing} type="button" disabled={busy || refreshing} onClick={() => void refresh()} />
     </div>
@@ -4024,11 +4077,13 @@ function DancerDirectory({
   onProfileUpdated,
   onActionConfirmed,
   requestedDancerId = "",
+  requestedClubId = "", onClubChange,
 }: {
   onDeleted: (dancerId: string) => void;
   onProfileUpdated: (profile: Record<string, unknown>) => void;
   onActionConfirmed: (message: string) => void;
   requestedDancerId?: string;
+  requestedClubId?: string; onClubChange?: (id: string) => void;
 }) {
   const [roster, setRoster] = useState<AdminDancerRosterResult | null>(null);
   const [query, setQuery] = useState("");
@@ -4038,7 +4093,8 @@ function DancerDirectory({
   const [moderationFilter, setModerationFilter] = useState("all");
   const [sourceFilter, setSourceFilter] = useState("all");
   const [cityFilter, setCityFilter] = useState("");
-  const [venueFilter, setVenueFilter] = useState("");
+  const [venueFilter, setVenueFilter] = useState(requestedClubId);
+  useEffect(() => { setVenueFilter(requestedClubId); }, [requestedClubId]);
   const [sort, setSort] = useState("updated");
   const [page, setPage] = useState(1);
   const [refreshVersion, setRefreshVersion] = useState(0);
@@ -4297,7 +4353,7 @@ function DancerDirectory({
         <RosterSelect label="Moderation" value={moderationFilter} onChange={setModerationFilter} options={[["all", "Any moderation"], ["pending", "Pending review"], ["clear", "No pending review"]]} />
         <RosterSelect label="Source" value={sourceFilter} onChange={setSourceFilter} options={[["all", "Demo and standard"], ["demo", "Demo assignments"], ["standard", "Standard profiles"]]} />
         <RosterSelect label="City" value={cityFilter} onChange={setCityFilter} options={[["", "All cities"], ...(roster?.filters.cities || []).map((city) => [city, city] as [string, string])]} />
-        <RosterSelect label="Club" value={venueFilter} onChange={setVenueFilter} options={[["", "All clubs"], ...(roster?.filters.venues || []).map((venue) => [venue.id, `${venue.name} · ${venue.city}`] as [string, string])]} />
+        <RosterSelect label="Club" value={venueFilter} onChange={value => { setVenueFilter(value); onClubChange?.(value); }} options={[["", "All clubs"], ...(roster?.filters.venues || []).map((venue) => [venue.id, `${venue.name} · ${venue.city}`] as [string, string])]} />
         <RosterSelect label="Sort" value={sort} onChange={setSort} options={[["updated", "Recently active"], ["created", "Newest profiles"], ["name", "Stage name"], ["status", "Profile state"]]} />
         <button className="secondary-action dancer-roster-clear" type="button" onClick={() => { setQuery(""); setStatusFilter("all"); setScheduleFilter("all"); setModerationFilter("all"); setSourceFilter("all"); setCityFilter(""); setVenueFilter(""); setSort("updated"); }}>Clear filters</button>
       </div>

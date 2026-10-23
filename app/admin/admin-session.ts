@@ -106,7 +106,7 @@ export async function requestAdminJson(
     accessToken: authHeaders.authorization.slice(7),
     refreshToken: authHeaders["x-dancr-refresh-token"],
   });
-  notifyAdminDataChanged(options.method);
+  if (path !== "/api/admin/media-workspace") notifyAdminDataChanged(options.method);
   return data;
 }
 
