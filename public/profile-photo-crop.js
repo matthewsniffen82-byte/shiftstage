@@ -101,7 +101,7 @@
           + pixels(styles.borderTopWidth) + pixels(styles.borderBottomWidth)
           + pixels(getComputedStyle(frame).marginBottom);
         const availableWidth = dialog.clientWidth - pixels(styles.paddingLeft) - pixels(styles.paddingRight);
-        const previewHeightLimit = options.batch ? Math.min(360, viewportHeight * .48) : Infinity;
+        const previewHeightLimit = options.batch ? Math.min(280, viewportHeight * .36) : Infinity;
         const previewWidth = Math.max(1, Math.floor(Math.min(400, availableWidth, Math.max(1, Math.min(previewHeightLimit, maxHeight - chromeHeight - 2)) * ratio)));
         dialog.style.setProperty("--crop-preview-width", `${previewWidth}px`);
         canvas.width = Math.round(previewWidth * 2);
