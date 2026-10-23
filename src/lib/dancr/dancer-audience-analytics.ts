@@ -127,12 +127,12 @@ export async function getOwnDancerAudienceAnalytics(
   const available = new Map<string, Record<string, any>>();
   await Promise.all((["photo", "video"] as const).map(async kind => {
     const ids = candidates.filter(item => item.kind === kind).map(item => item.id);
-    const table = kind === "photo" ? "dancer_photos" : "mydancr_tv_videos";
-    const fields = kind === "photo" ? "id, storage_path" : "id, caption, moderation_details";
     // Keep ID filters below URL limits, including long All time histories.
     for (let offset = 0; offset < ids.length; offset += 100) {
-      const result = await admin.from(table).select(fields).eq("dancer_id", dancerId)
-        .eq(kind === "photo" ? "review_status" : "status", "approved").in("id", ids.slice(offset, offset + 100));
+      const query = kind === "photo"
+        ? admin.from("dancer_photos").select("id, storage_path").eq("review_status", "approved")
+        : admin.from("mydancr_tv_videos").select("id, caption, moderation_details").eq("status", "approved");
+      const result = await query.eq("dancer_id", dancerId).in("id", ids.slice(offset, offset + 100));
       if (result.error) throw result.error;
       for (const row of result.data || []) available.set(`${kind}:${row.id}`, row);
     }
