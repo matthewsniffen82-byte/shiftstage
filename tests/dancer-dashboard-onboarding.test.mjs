@@ -160,7 +160,8 @@ test("step one uses the shared inline editor and opens an explicit agreement rev
   assert.match(sharedWorkspace, /\{identityContent\}/);
   assert.match(sharedWorkspace, /Your details/);
   assert.match(sharedWorkspace, />\+ Photos<\/button>/);
-  assert.doesNotMatch(sharedWorkspace, /id="dancer-main-upload-title"/);
+  assert.match(sharedWorkspace, /id="dancer-main-upload-title"/);
+  assert.match(sharedWorkspace, /id="dancer-face-photo-title"/);
   assert.match(sharedWorkspace, />Photos<\/button>/);
   assert.match(sharedWorkspace, /Video uploads/);
   assert.doesNotMatch(sharedWorkspace, /DancerIdentityEditor|aria-modal/);
@@ -234,7 +235,7 @@ test("the full profile editor retains accessible add targets that preserve the a
   assert.match(dashboard, /data-profile-editor-trigger="stageName" onClick=\{\(\) => openEditorSection\("stageName"\)\}/);
   assert.match(dashboard, /data-profile-editor-trigger="city" onClick=\{\(\) => openEditorSection\("city"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("avatar"\)\}/);
-  assert.match(dashboard, /workspaceProps = \{ identityContent: identityContent\(\), avatarContent, photoContent, videoContent/);
+  assert.match(dashboard, /workspaceProps = \{ identityContent: identityContent\(\), avatarContent, mainPhotoContent, photoContent, videoContent/);
   assert.doesNotMatch(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);
   assert.doesNotMatch(dashboard, /SOCIAL_PLATFORMS\.map\(\(platform\) =>/);
   assert.doesNotMatch(dashboard, /className="social-links-control"[\s\S]*?<h2 id="dancer-profile-builder-social-heading">Social Links<\/h2>/);

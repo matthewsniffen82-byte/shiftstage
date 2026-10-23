@@ -25,7 +25,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboa
     useCallback:fn=>fn,
   };
   const photos=[...Array.from({length:count},(_,i)=>({id:`p${i}`,imageUrl:`/${i}.jpg`,status:'approved',isPrimary:i===0})),...Array.from({length:pending},(_,i)=>({id:`pending${i}`,status:'pending'}))];
-  const props={identityContent:'Identity',avatarContent:'Avatar',photoContent:'Photo uploader',videoContent:'Video uploader',draftIdentity:{stageName:draft?'New name':newProfile?'':'Dancer',city:newProfile?'':'Las Vegas'},profile:{id:'owner',stage_name:newProfile?'':'Dancer',city:newProfile?'':'Las Vegas',avatarPhotoUrl:face?'/face.jpg':'',dancer_photos:photos},onboarding,uploadBusy:busy,onContinue:()=>calls.push('agreement')};
+  const props={identityContent:'Identity',avatarContent:'Avatar',mainPhotoContent:'Main uploader',photoContent:'Photo uploader',videoContent:'Video uploader',draftIdentity:{stageName:draft?'New name':newProfile?'':'Dancer',city:newProfile?'':'Las Vegas'},profile:{id:'owner',stage_name:newProfile?'':'Dancer',city:newProfile?'':'Las Vegas',avatarPhotoUrl:face?'/face.jpg':'',dancer_photos:photos},onboarding,uploadBusy:busy,onContinue:()=>calls.push('agreement')};
   vm.runInNewContext(code,{exports,AbortController,Error,window:{location:{hash},addEventListener(){},removeEventListener(){},requestAnimationFrame:fn=>fn(),localStorage:{getItem:key=>{if(storageBlocked)throw Error('blocked');return storage.get(key);},setItem:(key,value)=>{if(storageBlocked)throw Error('blocked');storage.set(key,value);}}},require:name=>{
     if(name==='react')return hooks;
     if(name==='./DancerProfileUploadContext')return {DancerProfileUploadContext:uploadContext};
@@ -63,7 +63,7 @@ test('new dancers save name and city, then continue directly from media to the a
   const f=fixture({newProfile:true,count:0,face:false});
   assert.equal(f.step(),'details');
   assert.equal(f.draw().find(n=>n.props.id==='dancer-details-section').props.hidden,false);
-  assert.equal(f.draw().some(n=>n.props.id==='dancer-required-photos'),false);
+  assert.equal(f.draw().find(n=>n.props.id==='dancer-required-photos').props.hidden,true);
   await f.click();assert.equal(f.calls.includes('save'),false);assert.match(f.message(),/stage name/);
   f.props.draftIdentity={stageName:'Kay',city:'Las Vegas'};
   await f.click();assert.equal(f.step(),'media');assert.equal(f.calls.includes('agreement'),false);
@@ -107,7 +107,7 @@ test('pending videos do not block required agreement handoff',async()=>{
 
 test('a missing main photo blocks setup, while its automatic avatar does not',async()=>{
   const missing=fixture({count:0});await missing.click('+ Videos');await missing.click();
-  assert.equal(missing.step(),'media');assert.ok(missing.calls.includes('#dancer-profile-media-library'));
+  assert.equal(missing.step(),'media');assert.ok(missing.calls.includes('#dancer-main-photo'));
   assert.equal(missing.button('+ Photos').props['aria-pressed'],true);
   assert.equal(missing.draw().find(n=>n.props.id==='dancer-profile-media-library').props.hidden,false);
   assert.match(missing.message(),/main photo/);assert.ok(!missing.calls.includes('agreement'));
@@ -140,7 +140,7 @@ test('navigation persists the selected step and retains all editors mounted',asy
   assert.equal(f.storage.get('mydancr:dancer-profile-builder:owner'),'details');
   const nodes=f.draw();
   assert.ok(!nodes.find(n=>n.type==='fieldset').props.hidden);
-  for(const content of ['Identity','Photo uploader','Video uploader']) assert.ok(nodes.some(n=>React.Children.toArray(n.props.children).includes(content)),content);
+  for(const content of ['Identity','Main uploader','Avatar','Photo uploader','Video uploader']) assert.ok(nodes.some(n=>React.Children.toArray(n.props.children).includes(content)),content);
   await f.click();assert.equal(f.step(),'media');assert.equal(f.storage.get('mydancr:dancer-profile-builder:owner'),'media');
 });
 
@@ -162,7 +162,9 @@ for (const onboarding of [true, false]) test(`media tabs separate complete queue
   const active=()=>f.draw().find(n=>n.type===uploadContext.Provider).props.value.active;
   const photoPanel=()=>f.draw().find(n=>n.props.id==='dancer-profile-media-library');
   const videoPanel=()=>f.draw().find(n=>n.props.id==='dancer-profile-video-library');
+  const mainSection=()=>f.draw().find(n=>n.props.id==='dancer-required-photos');
   assert.equal(active(),'photos');
+  assert.equal(mainSection().props.hidden,false);
   assert.equal(photoPanel().props.hidden,false);assert.equal(videoPanel().props.hidden,true);
   assert.ok(!walk(videoPanel()).some(n=>n.props.id==='dancer-required-photos'));
   assert.ok(walk(photoPanel()).some(n=>n.props.children==='Photo uploader'));
@@ -173,10 +175,12 @@ for (const onboarding of [true, false]) test(`media tabs separate complete queue
   assert.equal(f.button('+ Photos').props['aria-controls'],photoPanel().props.id);
   assert.equal(f.button('+ Videos').props['aria-controls'],videoPanel().props.id);
   await f.click('+ Videos');assert.equal(active(),'videos');
+  assert.equal(mainSection().props.hidden,true);
   assert.equal(photoPanel().props.hidden,true);assert.equal(videoPanel().props.hidden,false);
   assert.equal(f.button('+ Photos').props['aria-pressed'],false);
   assert.equal(f.button('+ Videos').props['aria-pressed'],true);
   await f.click('+ Photos');assert.equal(active(),'photos');
+  assert.equal(mainSection().props.hidden,false);
   assert.equal(photoPanel().props.hidden,false);assert.equal(videoPanel().props.hidden,true);
   assert.equal(f.button('+ Photos').props['aria-pressed'],true);
   assert.equal(f.button('+ Videos').props['aria-pressed'],false);
@@ -185,6 +189,7 @@ for (const onboarding of [true, false]) test(`media tabs separate complete queue
   for(const label of ['+ Photos','+ Videos']) assert.equal(f.button(label).props.disabled,true);
   f.props.uploadBusy=false;
   await f.click('+ Photos');assert.equal(active(),null);
+  assert.equal(mainSection().props.hidden,true);
   assert.equal(photoPanel().props.hidden,false);assert.equal(videoPanel().props.hidden,false);
   assert.equal(f.button('+ Photos').props['aria-pressed'],false);
   await f.click('+ Videos');assert.equal(active(),'videos');
@@ -195,7 +200,7 @@ for (const onboarding of [true, false]) test(`media tabs separate complete queue
   assert.ok(f.draw().some(n=>n.props.children==='Photo uploader'));assert.ok(f.draw().some(n=>n.props.children==='Video uploader'));
   const media=f.draw().find(n=>n.props.className==='dancer-profile-media-area');
   assert.equal(React.Children.toArray(media.props.children)[0].props.className,'dancer-builder-upload-entry');
-  assert.equal(walk(media).filter(n=>n.props.id==='dancer-required-photos').length,0);
+  assert.equal(walk(media).filter(n=>n.props.id==='dancer-required-photos').length,1);
   assert.equal(walk(media).filter(n=>n.props.children==='Photo uploader').length,1);
   assert.equal(walk(media).filter(n=>n.props.children==='Video uploader').length,1);
 });
@@ -208,17 +213,24 @@ test('both libraries stay expanded, include the main photo, and exclude pending 
   }
 });
 
-test('main photo stays first and avatar cropping lives in its menu instead of below the image', () => {
+test('main photo and avatar have one dedicated section above the photo library', async () => {
   const f = fixture({ onboarding: false });
+  await f.click('Photos');
   f.props.profile.dancer_photos.reverse();
   f.props.profile.dancer_photos[0].isPinned = true;
   const library = () => f.draw().find(node => node.type === './DancerProfileMediaUploads' && node.props.mediaType === 'photos');
   assert.equal(library().props.photos[0].id, 'p0');
   assert.equal(library().props.photoAccessory, undefined);
-  assert.match(textContent(library().props.photoActions('p0')), /Avatar/);
+  assert.doesNotMatch(textContent(library().props.photoActions('p0')), /Avatar/);
   assert.doesNotMatch(textContent(library().props.photoActions('p1')), /Avatar/);
   assert.equal(f.draw().filter(node => node.props.children === 'Photo uploader').length, 1);
-  assert.ok(!f.draw().some(node => node.props.id === 'dancer-required-photos'));
+  const panel = f.draw().find(node => node.props.id === 'dancer-profile-media-library');
+  const section = React.Children.toArray(panel.props.children)[0];
+  assert.equal(section.props.id, 'dancer-required-photos');
+  assert.equal(section.props.hidden, false);
+  assert.match(textContent(walk(section).find(node => node.props.id === 'dancer-main-photo')), /Main uploader/);
+  assert.match(textContent(walk(section).find(node => node.props.id === 'dancer-face-photo')), /Avatar/);
+  assert.equal(f.draw().filter(node => node.type !== 'h4' && React.Children.toArray(node.props.children).includes('Avatar')).length, 1);
 });
 
 test('Photos and Videos boxes retain plain labels without avatar pictures', () => {
@@ -244,7 +256,8 @@ test('returning dancers can open photo and video uploads from incoming links',()
     assert.equal(f.draw().find(n=>n.type===uploadContext.Provider).props.value.active,kind);
     assert.equal(f.draw().find(n=>n.props.id==='dancer-profile-media-library').props.hidden,kind==='videos');
     assert.equal(f.draw().find(n=>n.props.id==='dancer-profile-video-library').props.hidden,kind==='photos');
-    assert.ok(!f.draw().some(n=>n.props.id==='dancer-required-photos'));
+    assert.equal(f.draw().find(n=>n.props.id==='dancer-required-photos').props.hidden,kind==='videos');
+    if (['#dancer-required-photos','#dancer-main-photo','#dancer-face-photo'].includes(hash)) assert.ok(f.calls.includes(hash));
   }
 });
 
@@ -274,7 +287,9 @@ test('a removed main photo cannot be replaced implicitly by enough approved gall
   await f.click();
   assert.equal(f.step(),'media');
   assert.match(f.message(),/Add your main photo/);
-  assert.ok(f.calls.includes('#dancer-profile-media-library'));
+  assert.ok(f.calls.includes('#dancer-main-photo'));
+  assert.equal(f.draw().find(n=>n.props.id==='dancer-required-photos').props.hidden,false);
+  assert.match(textContent(f.draw().find(n=>n.props.id==='dancer-main-photo')), /Main uploader/);
   assert.ok(!f.calls.includes('agreement'));
 });
 

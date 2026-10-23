@@ -13,6 +13,7 @@ import type { LoadState, DancerPhotoItem, DancerIdentityDraft, DancerProfileEdit
 import { persistedDancerStageName, DashboardSection, DANCER_PROFILE_EDITOR_SAVE_EVENT } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, DancerPhotoPanel } from "./DancerPhotoPanel";
 import { DancerAvatarPanel } from "./DancerAvatarPanel";
+import { DancerMainPhotoPanel } from "./DancerMainPhotoPanel";
 import DancerAgeVerificationGate from "./DancerAgeVerificationGate";
 import { DancerAnalyticsPanel } from "./DancerAnalyticsPanel";
 import { DancerOnboardingCommand } from "./DancerProfileEditor";
@@ -56,6 +57,7 @@ export function DancerPanel({
   const isVenueApproved = Boolean(profile?.venue_approved_at || profile?.venueApprovedAt)
     || affiliations.some((item) => item.status === "active");
   const [editorBusy, setEditorBusy] = useState(false);
+  const [mainBusy, setMainBusy] = useState(false);
   const [photosBusy, setPhotosBusy] = useState(false);
   const [videoBusy, setVideoBusy] = useState(false);
   const [editorRequested, setEditorRequested] = useState(0);
@@ -144,11 +146,11 @@ export function DancerPanel({
       autosave
     />
   );
-  const avatarContent = <DancerAvatarPanel menuOnly profile={profile} onProfileChange={onProfileChange} />;
+  const avatarContent = <DancerAvatarPanel compact profile={profile} onProfileChange={onProfileChange} />;
+  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} onBusyChange={setMainBusy} profile={profile} onProfileChange={onProfileChange} />;
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly
-      automaticMain
       onBusyChange={setPhotosBusy}
       deletedPhotoIds={deletedPhotoIds}
       deletedPhotoStoragePaths={deletedPhotoStoragePaths}
@@ -159,8 +161,8 @@ export function DancerPanel({
     />
   );
   const videoContent = <DancerTvStudio embedded uploadOnly onBusyChange={setVideoBusy} />;
-  const workspaceProps = { identityContent: identityContent(), avatarContent, photoContent, videoContent,
-    draftIdentity, profile, onProfileChange, isPublic, uploadBusy: photosBusy || videoBusy, onBusyChange: setEditorBusy };
+  const workspaceProps = { identityContent: identityContent(), avatarContent, mainPhotoContent, photoContent, videoContent,
+    draftIdentity, profile, onProfileChange, isPublic, uploadBusy: mainBusy || photosBusy || videoBusy, onBusyChange: setEditorBusy };
   const visibilityAndSharing = <section className="dancer-workspace-card" id="dancer-visibility-sharing" aria-label="Visibility and sharing">
     <h3>Visibility & sharing</h3>
     <DashboardSection id="dancer-visibility" title="Profile visibility" description="Show or hide your public profile." icon={<DancerDashboardIcon section="status" />} toggleAffordance="chevron"><DancerVisibilityPanel profile={profile} onProfileChange={onProfileChange} /></DashboardSection>

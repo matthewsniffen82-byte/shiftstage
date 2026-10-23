@@ -23,11 +23,11 @@ const profileSteps: { id: ProfileStep; label: string }[] = [
 ];
 
 export default function DancerProfileWorkspace({
-  identityContent, avatarContent, photoContent, videoContent,
+  identityContent, avatarContent, mainPhotoContent, photoContent, videoContent,
   draftIdentity, profile, onProfileChange, onboarding = false,
   onContinue, continueLabel = "Continue to agreement", onBusyChange, isPublic = false, uploadBusy = false, visibilityContent,
 }: {
-  identityContent: ReactNode; avatarContent: ReactNode;
+  identityContent: ReactNode; avatarContent: ReactNode; mainPhotoContent: ReactNode;
   photoContent: ReactNode; videoContent: ReactNode; draftIdentity: DancerIdentityDraft;
   profile?: LoadState["profile"]; onProfileChange?: (profile: Record<string, unknown>) => void;
   uploadBusy?: boolean;
@@ -48,7 +48,8 @@ export default function DancerProfileWorkspace({
       if (/video/.test(hash)) setUploadKind("videos");
       else if (/photo|media-library/.test(hash)) setUploadKind("photos");
       if (["#dancer-photos-title", "#dancer-videos-title", "#dancer-required-photos", "#dancer-main-photo", "#dancer-face-photo"].includes(hash)) {
-        const targetId = /video/.test(hash) ? "dancer-builder-video-upload" : "dancer-profile-media-library";
+        const targetId = hash === "#dancer-videos-title" ? "dancer-builder-video-upload"
+          : hash === "#dancer-photos-title" ? "dancer-profile-media-library" : hash.slice(1);
         window.requestAnimationFrame(() => root.current?.querySelector<HTMLElement>(`#${targetId}`)?.scrollIntoView({ block: "start" }));
       }
     };
@@ -136,8 +137,7 @@ export default function DancerProfileWorkspace({
     if (["dancer-profile-media-library", "dancer-required-photos", "dancer-main-photo", "dancer-face-photo"].includes(id)) setUploadKind("photos");
     if (id === "dancer-profile-video-library") setUploadKind("videos");
     window.requestAnimationFrame(() => {
-      const targetId = id === "dancer-profile-video-library" ? "dancer-builder-video-upload"
-        : ["dancer-required-photos", "dancer-main-photo", "dancer-face-photo"].includes(id) ? "dancer-profile-media-library" : id;
+      const targetId = id === "dancer-profile-video-library" ? "dancer-builder-video-upload" : id;
       const area = root.current?.querySelector<HTMLElement>(`#${targetId}`);
       const uploader = area?.querySelector<HTMLDetailsElement>('details[data-profile-upload]');
       if (uploader) uploader.open = true;
@@ -228,6 +228,18 @@ export default function DancerProfileWorkspace({
         <button type="button" aria-pressed={uploadKind === "videos"} aria-controls="dancer-profile-video-library" disabled={busy} onClick={() => setUploadKind(current => current === "videos" ? null : "videos")}>+ Videos</button>
       </section>
       <section hidden={(onboarding && step !== "media") || uploadKind === "videos"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
+        <section hidden={uploadKind !== "photos"} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label="Main photo and automatic avatar">
+          <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
+            <h4 id="dancer-main-upload-title">Main photo</h4>
+            <p className="dancer-photo-guidance">Shown on dancer cards and club rosters.</p>
+            {mainPhotoContent}
+          </div>
+          <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">
+            <h4 id="dancer-face-photo-title">Avatar</h4>
+            <p className="dancer-photo-guidance">Created from your main photo.</p>
+            {avatarContent}
+          </div>
+        </section>
         <div className="dancer-section-uploader">{photoContent}</div>
         <DancerProfileMediaUploads compact expanded mediaType="photos" photos={approvedPhotos} videos={[]}
           onProfileChange={onProfileChange}
@@ -252,7 +264,7 @@ export default function DancerProfileWorkspace({
             }
             return photo.status === "approved" ? <>
               <DancerSavedPhotoCrop photo={photo} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} />
-              {!photo.isPrimary ? <DancerSavedPhotoCrop photo={photo} makeMain mainPhotoId={primaryPhoto?.id} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} /> : <><span className="dancer-main-label">Main photo</span>{avatarContent}</>}
+              {!photo.isPrimary ? <DancerSavedPhotoCrop photo={photo} makeMain mainPhotoId={primaryPhoto?.id} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} /> : <span className="dancer-main-label">Main photo</span>}
             </> : null;
           }}
         />
