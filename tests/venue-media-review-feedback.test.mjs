@@ -185,7 +185,7 @@ for (const status of [401, 403, 'changed club']) {
   });
 }
 
-test('dancer cards open only that dancer’s new media, keep main-photo labels inside cards and disappear after the last decision', async () => {
+test('dancer cards open only that dancer’s new media, put labels above previews and disappear after the last decision', async () => {
   const ui=harness();await ui.settle();
   ui.setRows([
     { ...ui.rows[0], label:'Main photo' },
@@ -196,7 +196,13 @@ test('dancer cards open only that dancer’s new media, keep main-photo labels i
   assert.equal(ui.dancerCards.length,2);assert.equal(ui.cards.length,0);
   assert.equal(ui.dancerCards[0].props['aria-label'],'Review 2 new uploads from Star');
   ui.open();await ui.settle();assert.equal(ui.cards.length,2);
-  assert.match(JSON.stringify(ui.cards[0]), /venue-media-review-preview.*venue-media-type.*Main photo/);
+  for (const [index, label] of ['Main photo', 'Video'].entries()) {
+    const [heading, preview] = ui.cards[index].props.children;
+    assert.equal(heading.type, 'h3');assert.equal(heading.props.children, label);
+    assert.equal(preview.props.className, 'venue-media-review-preview');
+    assert.doesNotMatch(JSON.stringify(preview), /venue-media-type/);
+  }
+  assert.equal(ui.cards[0].props.children[1].props.children.props.href, '/private-preview');
   assert.match(JSON.stringify(ui.cards[1]), /video.*controls.*New clip/);
   ui.click('Approve');ui.finish();await ui.settle();
   assert.equal(ui.cards.length,1);assert.equal(ui.dancerCards.length,0);

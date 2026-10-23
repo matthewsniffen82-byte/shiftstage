@@ -1,4 +1,4 @@
-/* Compact review cards; keep previews uncropped and actions easy to tap. */
+/* Grid-sized photo previews with labels and review actions outside the image. */
 #venue-dashboard #venue-media-reviews { margin-block: 8px; min-width: 0; padding: 0; border: 0; background: transparent; }
 #venue-dashboard #venue-media-reviews > header, #venue-dashboard #venue-media-reviews > nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 #venue-dashboard #venue-media-reviews > header { margin-bottom: 8px; }
@@ -13,9 +13,10 @@
 #venue-media-reviews :is(.venue-media-dancer-grid, .venue-media-review-grid) { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--dancr-media-grid-gap, 3px); align-items: start; }
 #venue-media-reviews .venue-media-review-grid article { display: grid; gap: 6px; margin: 0; padding: 0; border: 0; border-radius: 0; min-width: 0; background: transparent; box-shadow: none; }
 #venue-media-reviews .venue-media-review-preview { position: relative; min-width: 0; aspect-ratio: 9 / 16; overflow: hidden; border-radius: 8px; background: #050507; }
-#venue-media-reviews .venue-media-review-preview > a { display: block; height: 100%; }
+#venue-media-reviews .venue-media-review-preview > a { position: absolute; inset: 0; display: block; height: 100%; }
 #venue-media-reviews .venue-media-review-preview img, #venue-media-reviews .venue-media-review-preview video { display: block; width: 100%; height: 100%; object-fit: contain; background: #000; margin: 0; }
-#venue-dashboard #venue-media-reviews .venue-media-type { position: absolute; inset: 6px auto auto 6px; max-width: calc(100% - 12px); padding: 4px 7px; border-radius: 5px; background: #111116e8; color: #fff; font-size: 12px !important; pointer-events: none; }
+#venue-media-reviews .venue-media-review-preview img { object-fit: cover; object-position: center top; }
+#venue-dashboard #venue-media-reviews .venue-media-type { min-width: 0; color: #fff; font-size: 12px !important; overflow-wrap: anywhere; }
 #venue-dashboard #venue-media-reviews .venue-media-dancer-card { position: relative; box-sizing: border-box; display: block; width: 100%; min-width: 0; max-width: none; height: auto !important; min-height: 0 !important; aspect-ratio: 9 / 16; margin: 0; padding: 0 !important; overflow: hidden; border: 0 !important; border-radius: 8px !important; background: #050507 !important; color: #fff !important; box-shadow: none !important; text-align: left; }
 #venue-dashboard #venue-media-reviews .venue-media-dancer-card::before, #venue-dashboard #venue-media-reviews .venue-media-dancer-card::after { display: none !important; }
 #venue-media-reviews .venue-media-dancer-card > img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
@@ -30,7 +31,7 @@
 @media (max-width: 699px) {
   #venue-media-reviews .venue-media-dancer-identity > span { font-size: 10px; }
   #venue-media-reviews .venue-media-new-count { inset: 5px 5px auto auto; padding: 3px 5px; font-size: 11px; }
-  #venue-dashboard #venue-media-reviews .venue-media-type { inset: 4px auto auto 4px; max-width: calc(100% - 8px); padding: 3px 4px; font-size: 11px !important; }
+  #venue-dashboard #venue-media-reviews .venue-media-type { font-size: 11px !important; }
   #venue-media-reviews .venue-media-review-actions { flex-direction: column; }
 }
 @media (max-width: 679px) {

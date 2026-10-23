@@ -135,10 +135,10 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       </button>)}
     </div> : <div className="venue-media-review-grid">
       {items.map(item => <article key={item.id}>
+        <h3 className="venue-media-type">{item.label}</h3>
         <div className="venue-media-review-preview">
         {item.previewUrl ? item.kind === "video" ? <video controls playsInline preload="metadata" src={item.previewUrl} aria-label={`${item.stageName} video for review`} />
           : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open full ${item.label.toLowerCase()} of ${item.stageName}`}><img src={item.previewUrl} alt={`${item.stageName} ${item.label.toLowerCase()} for review`} /></a> : <p>Preview unavailable. Refresh before approving.</p>}
-        <h3 className="venue-media-type">{item.label}</h3>
         </div>
         {item.caption ? <p>Caption: {item.caption}</p> : null}
         {item.processing ? <p>Processing…</p> : null}
