@@ -8,10 +8,12 @@ import React from 'react';
 import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from '../src/lib/dancr/media-limits.ts';
 import { mediaReviewLabel } from '../src/lib/dancr/media-review-label.ts';
 import { dancerSubmissionMedia } from '../src/lib/dancr/dancer-submission-media.ts';
+import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 
 const require = createRequire(import.meta.url);
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerProfileWorkspace.tsx', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
+const textContent = node => typeof node === 'string' ? node : React.isValidElement(node) ? React.Children.toArray(node.props.children).map(textContent).join('') : '';
 const uploadContext = React.createContext(null);
 const leaveContext = React.createContext(true);
 function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboarding=true, saveResult=true, valid=true, savedStep, newProfile=false, storageBlocked=false, save, hash='' }={}) {
@@ -31,6 +33,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboa
     if(name==='./DancerUploadFeedback')return {DancerCanLeaveUploadContext:leaveContext,DancerPendingUploadsContext:React.createContext(()=>{})};
     if(name==='./DashboardShared')return {AvatarUploadBusyContext:React.createContext(()=>{}),persistedDancerStageName:p=>p?.stage_name||'',saveDancerProfileEditor:async()=>{calls.push('save');const result=save?await save():saveResult;if(result){props.profile.stage_name=props.draftIdentity.stageName;props.profile.city=props.draftIdentity.city;}return result;}};
     if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p?.dancer_photos||[],relabelPhotoItems:p=>p};
+    if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
     if(name==='./useDancerProfileVideos')return {useDancerProfileVideos:()=>({uploadedVideos:[{id:'optional',status:'submitted'}],setUploadedVideos(){},isMediaLoading:false,mediaError:''})};
     if(name==='@/src/lib/dancr/media-limits')return {MIN_DANCER_ONBOARDING_PHOTOS,approvedProfilePhotoCount};
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
@@ -50,7 +53,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboa
     }
     assert.equal(dirty,false,'effects settle');return nodes;
   }
-  const button=label=>draw().find(n=>n.type==='button'&&n.props.children===label);
+  const button=label=>draw().find(n=>n.type==='button'&&textContent(n)===label);
   const stepButton=id=>walk(draw().find(n=>n.props.className==='dancer-builder-steps')).filter(n=>n.type==='button')[['details','media'].indexOf(id)];
   const footer=()=>draw().find(n=>n.type==='footer').props.children[1];
   return {draw,button,stepButton,footer,calls,props,storage,step:()=>draw()[0].props['data-builder-step'],message:()=>draw().find(n=>n.props.id==='dancer-workspace-next-step').props.children,
@@ -154,7 +157,7 @@ for (const onboarding of [true, false]) test(`media tabs separate complete queue
   const f=fixture({onboarding});
   const entry=f.draw().find(n=>n.props.className==='dancer-builder-upload-entry');
   assert.equal(entry.props.hidden,false);
-  assert.deepEqual(React.Children.toArray(entry.props.children).map(n=>[n.type,n.props.children]),[['button','+ Photos'],['button','+ Videos']]);
+  assert.deepEqual(React.Children.toArray(entry.props.children).map(n=>[n.type,textContent(n)]),[['button','+ Photos'],['button','+ Videos']]);
   assert.equal(f.button('+ Photos').props['aria-pressed'],false);
   assert.equal(f.button('+ Videos').props['aria-pressed'],false);
   await f.click('+ Photos');
@@ -207,18 +210,31 @@ test('both libraries stay expanded, include the main photo, and exclude pending 
   }
 });
 
-test('one photo library keeps the main photo first and attaches its avatar only once', () => {
+test('main photo stays first and avatar cropping lives in its menu instead of below the image', () => {
   const f = fixture({ onboarding: false });
   f.props.profile.dancer_photos.reverse();
   f.props.profile.dancer_photos[0].isPinned = true;
   const library = () => f.draw().find(node => node.type === './DancerProfileMediaUploads' && node.props.mediaType === 'photos');
   assert.equal(library().props.photos[0].id, 'p0');
-  assert.equal(library().props.photoAccessory('p0'), 'Avatar');
-  assert.equal(library().props.photoAccessory('p1'), null);
+  assert.equal(library().props.photoAccessory, undefined);
+  assert.match(textContent(library().props.photoActions('p0')), /Avatar/);
+  assert.doesNotMatch(textContent(library().props.photoActions('p1')), /Avatar/);
   assert.equal(f.draw().filter(node => node.props.children === 'Photo uploader').length, 1);
   assert.ok(!f.draw().some(node => node.props.id === 'dancer-required-photos'));
+});
+
+test('Photos and Videos boxes each show the avatar beside their label without nested buttons', () => {
+  const f = fixture({ onboarding: false });
+  for (const label of ['+ Photos', '+ Videos']) {
+    const button = f.button(label), images = walk(button).filter(node => node.type === 'img');
+    assert.equal(images.length, 1); assert.equal(images[0].props.src, '/face.jpg');
+    assert.equal(images[0].props.alt, ''); assert.equal(walk(button).filter(node => node.type === 'button').length, 1);
+  }
   f.props.profile.dancer_photos.push({ id: 'replacement', status: 'pending', isPrimary: true });
-  assert.equal(library().props.photoAccessory('p0'), null, 'the pending main photo owns the replacement avatar');
+  f.props.profile.pending_photo_reviews = [{ id: 'replacement', status: 'pending_review', avatarPreviewUrl: '/new-avatar.jpg' }];
+  for (const label of ['+ Photos', '+ Videos']) assert.equal(walk(f.button(label)).find(node => node.type === 'img').props.src, '/new-avatar.jpg');
+  f.props.profile.dancer_photos = [];
+  for (const label of ['+ Photos', '+ Videos']) assert.equal(walk(f.button(label)).some(node => node.type === 'img'), false);
 });
 
 test('dashboard media shortcuts select the shared chooser and keep one uploader for each type',async()=>{

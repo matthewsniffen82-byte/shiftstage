@@ -1,4 +1,4 @@
-/* The uploaded main photo owns its avatar, keeping identity and media together. */
+/* Main photo identity and the avatar shown beside the Photos and Videos controls. */
 body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-main-photo-badge {
   position: absolute;
   bottom: 6px;
@@ -13,43 +13,6 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   font-weight: 600;
   line-height: 1.3;
   pointer-events: none;
-}
-body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar {
-  display: grid !important;
-  grid-template-columns: 36px minmax(0, 1fr) !important;
-  align-items: center;
-  gap: 4px !important;
-  width: 100%;
-  min-width: 0;
-  margin: 0;
-  padding: 6px 2px !important;
-  border: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-editor {
-  min-height: 0;
-  display: block;
-}
-body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-preview img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-upload-controls {
-  display: grid;
-  min-width: 0;
-  gap: 0;
-}
-body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar :is(strong, p) {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--dancr-color-text-secondary);
-}
-body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar > [role="status"] {
-  grid-column: 1 / -1;
 }
 @layer dancr-profile-photo-targets {
   body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-main-photo-empty {
@@ -101,27 +64,21 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   .dancer-main-photo-empty-copy strong { font-size: 14px; }
   .dancer-main-photo-empty-copy small { font-size: 12px; line-height: 1.4; color: var(--dancr-color-text-secondary); }
   .dancer-main-photo-empty:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
-  body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-preview {
-    display: grid !important;
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    min-height: 36px !important;
-    padding: 0 !important;
-    border-radius: 50% !important;
-    overflow: hidden;
+}
+@layer dancr-profile-builder-controls {
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace .dancer-builder-upload-entry > button {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 8px !important;
   }
-  body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-upload-controls > button {
-    min-width: 0 !important;
-    min-height: 44px !important;
-    padding: 2px 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    font-size: 11px !important;
-    text-align: left !important;
-    white-space: normal;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace .dancer-media-button-avatar {
+    display: block;
+    flex: 0 0 30px;
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px;
+    border-radius: 50% !important;
+    object-fit: cover;
   }
 }

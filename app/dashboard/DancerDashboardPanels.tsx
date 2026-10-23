@@ -144,12 +144,11 @@ export function DancerPanel({
       autosave
     />
   );
-  const avatarContent = <DancerAvatarPanel compact inline profile={profile} onProfileChange={onProfileChange} />;
+  const avatarContent = <DancerAvatarPanel menuOnly profile={profile} onProfileChange={onProfileChange} />;
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly
       automaticMain
-      mainPhotoAccessory={avatarContent}
       onBusyChange={setPhotosBusy}
       deletedPhotoIds={deletedPhotoIds}
       deletedPhotoStoragePaths={deletedPhotoStoragePaths}

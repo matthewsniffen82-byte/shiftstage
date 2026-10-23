@@ -3,10 +3,11 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import test from 'node:test';
 import ts from 'typescript';
+import { dancerAvatarPreview } from '../app/dashboard/dancer-avatar-preview.ts';
 
 const code = ts.transpileModule(readFileSync('app/dashboard/DancerAvatarPanel.tsx','utf8'), { compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX} }).outputText;
 const main = {id:'main',status:'approved',isPrimary:true,storagePath:'owned/main.jpg'};
-function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,prepare, pending=[]}={}) {
+function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,prepare, pending=[],menuOnly=false}={}) {
   let profile = {id:'profile',avatar_updated_at:'version-1',avatarPhotoUrl:empty?'':'avatar.jpg',photos:[...(empty?[]:[main]),...pending.map(p=>({...p,status:'pending',isPrimary:p.is_primary}))],pending_photo_reviews:pending}, account='owner', tree, cursor=0, dirty=true;
   const slots=[], effects=[], requests=[], exports={};
   const jsx=(type,props)=>({type,props});
@@ -21,6 +22,7 @@ function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,pr
       if(name==='react')return hooks;if(name==='react/jsx-runtime')return {jsx,jsxs:jsx};
       if(name==='./DashboardShared')return {AvatarUploadBusyContext:{}};
       if(name==='./DancerPhotoPanel')return {dancerPhotoItemsFromProfile:p=>p.photos||[]};
+      if(name==='./dancer-avatar-preview')return {dancerAvatarPreview};
       if(name==='./profile-photo-crop')return {cropProfilePhoto:async(_file,_signal,assertOwner,ratio,_preview,onCrop)=>{assert.equal(ratio,1);assertOwner();if(!cancel)onCrop({x:0,y:.125,width:1,height:.75});}};
       if(name==='./dashboard-session')return {
         DASHBOARD_SESSION_KEY:'session',readSession:()=>({account:{id:account,role:'dancer'}}),
@@ -30,13 +32,23 @@ function fixture({empty=false,cancel=false,refreshFails=false,saveFails=false,pr
       throw Error(name);
     },
   });
-  function render(){do{dirty=false;cursor=0;tree=exports.DancerAvatarPanel({profile,onProfileChange:p=>{profile=p;dirty=true;}});effects.splice(0).forEach(fn=>fn());}while(dirty);}
+  function render(){do{dirty=false;cursor=0;tree=exports.DancerAvatarPanel({profile,menuOnly,onProfileChange:p=>{profile=p;dirty=true;}});effects.splice(0).forEach(fn=>fn());}while(dirty);}
   const nodes=(n=tree)=>!n||typeof n!=='object'?[]:[n,...[n.props?.children].flat(Infinity).filter(Boolean).flatMap(child=>nodes(child))];
   const settle=async()=>{await new Promise(resolve=>setImmediate(resolve));render();};
   render();return {nodes,requests,settle,update(next){profile={...profile,...next};dirty=true;render();},click(){nodes().find(n=>n.type==='button').props.onClick();render();},changeAccount(){account='other';},unmount(){slots.forEach(s=>s?.cleanup?.());},
     get image(){return nodes().find(n=>n.type==='img')?.props.src;},get status(){return nodes().find(n=>n.props?.role==='status')?.props.children;},get busy(){return tree.props['aria-busy'];}};
 }
 test('avatar setup has no separate file input and waits for main photo checks',()=>{const ui=fixture({empty:true});assert.equal(ui.nodes().some(n=>n.type==='input'),false);assert.equal(ui.nodes().find(n=>n.type==='button').props.disabled,true);assert.equal(ui.image,undefined);});
+test('main photo menu retains avatar crop without rendering a separate avatar panel',async()=>{
+  const ui=fixture({menuOnly:true});
+  assert.equal(ui.nodes().some(n=>n.type==='article'||n.type==='img'),false);
+  assert.equal(ui.nodes().find(n=>n.type==='button').props.children,'Adjust avatar crop');
+  ui.click();await ui.settle();assert.ok(ui.requests.some(r=>r.url.endsWith('/crop')));
+});
+test('pending avatar stays a preview and cannot expose the crop action in the photo menu',()=>{
+  const ui=fixture({menuOnly:true,pending:[{id:'pending-main',is_primary:true,status:'pending_review',avatarPreviewUrl:'/pending.jpg'}]});
+  assert.equal(ui.nodes().length,0);
+});
 test('checked main photo displays its private avatar while still pending club approval', async()=>{
   const ui=fixture({empty:true,pending:[{id:'pending-main',is_primary:true,status:'pending_review',avatarPreviewUrl:'/private-avatar.jpg'}]});
   assert.equal(ui.image,'/private-avatar.jpg');

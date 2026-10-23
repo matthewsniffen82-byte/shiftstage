@@ -159,7 +159,7 @@ test("profile and media workspace derives the avatar from the approved main phot
 test("step one uses the shared inline editor and opens an explicit agreement review", () => {
   assert.match(sharedWorkspace, /\{identityContent\}/);
   assert.match(sharedWorkspace, /Your details/);
-  assert.match(sharedWorkspace, /photoAccessory=/);
+  assert.match(sharedWorkspace, /\{mediaButtonAvatar\}\+ Photos/);
   assert.doesNotMatch(sharedWorkspace, /id="dancer-main-upload-title"/);
   assert.match(sharedWorkspace, />Photos<\/button>/);
   assert.match(sharedWorkspace, /Video uploads/);

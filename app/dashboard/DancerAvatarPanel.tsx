@@ -6,20 +6,18 @@ import type { LoadState } from "./dashboard-types";
 import { AvatarUploadBusyContext } from "./DashboardShared";
 import { cropProfilePhoto, type AvatarCrop } from "./profile-photo-crop";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
+import { dancerAvatarPreview } from "./dancer-avatar-preview";
 
-export function DancerAvatarPanel({ compact = false, inline = false, onProfileChange, profile }: {
+export function DancerAvatarPanel({ compact = false, menuOnly = false, onProfileChange, profile }: {
   compact?: boolean;
-  inline?: boolean;
+  menuOnly?: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
 }) {
   const photos = dancerPhotoItemsFromProfile(profile);
   const main = photos.find(photo => photo.status === "approved" && photo.isPrimary);
   const pendingMain = photos.find(photo => photo.status === "pending" && photo.isPrimary);
-  const pendingReview = (Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : [])
-    .find((review: Record<string, unknown>) => review.id === pendingMain?.id && review.status === "pending_review");
-  const pendingAvatarUrl = typeof pendingReview?.avatarPreviewUrl === "string" ? pendingReview.avatarPreviewUrl : "";
-  const avatarUrl = pendingAvatarUrl || String(profile?.avatarPhotoUrl || "");
+  const { pendingAvatarUrl, avatarUrl, objectPosition } = dancerAvatarPreview(profile, pendingMain?.id);
   const canAdjustCrop = Boolean(main && !pendingAvatarUrl);
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
@@ -80,16 +78,20 @@ export function DancerAvatarPanel({ compact = false, inline = false, onProfileCh
     }
   }
 
-  return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}${inline ? " dancer-photo-avatar" : ""}`} aria-busy={busy} data-avatar-state={pendingAvatarUrl ? "pending" : avatarUrl ? "approved" : "automatic"}>
+  if (menuOnly) return canAdjustCrop ? <>
+    <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating avatar…" : "Adjust avatar crop"}</button>
+    {status ? <p role="status" aria-live="polite">{status}</p> : null}
+  </> : null;
+
+  return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={busy} data-avatar-state={pendingAvatarUrl ? "pending" : avatarUrl ? "approved" : "automatic"}>
     <div className="dancer-avatar-editor" aria-label="Automatic avatar preview">
       <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!avatarUrl} type="button" disabled={busy || !canAdjustCrop}
         aria-label={pendingAvatarUrl ? "Avatar preview waiting for final approval" : "Adjust avatar crop"} onClick={() => void adjustCrop()}>
-        {avatarUrl ? <img src={avatarUrl} alt="Avatar from your main photo" style={{ objectPosition: pendingAvatarUrl ? "50% 50%" : `${profile?.avatarPhotoFocalX ?? 50}% ${profile?.avatarPhotoFocalY ?? 50}%` }} /> : <span aria-hidden="true">Auto</span>}
+        {avatarUrl ? <img src={avatarUrl} alt="Avatar from your main photo" style={{ objectPosition }} /> : <span aria-hidden="true">Auto</span>}
       </button>
     </div>
     <div className="dancer-avatar-upload-controls">
-      {inline ? <strong>Avatar</strong> : null}
-      {pendingAvatarUrl ? inline ? null : <p>Waiting for final approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>{inline ? "Created after checks" : "Appears after your main photo passes checks."}</p>}
+      {pendingAvatarUrl ? <p>Waiting for final approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>Appears after your main photo passes checks.</p>}
     </div>
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </article>;

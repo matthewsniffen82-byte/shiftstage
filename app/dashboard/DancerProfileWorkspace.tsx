@@ -10,6 +10,7 @@ import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import type { DancerIdentityDraft, LoadState } from "./dashboard-types";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { dancerAvatarPreview } from "./dancer-avatar-preview";
 import { DancerProfileUploadContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
 import { DancerCanLeaveUploadContext, DancerPendingUploadsContext } from "./DancerUploadFeedback";
 import "./dancer-profile-photos.css";
@@ -75,6 +76,9 @@ export default function DancerProfileWorkspace({
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
   const mainPhoto = primaryPhoto;
   const pendingMain = photos.find(photo => photo.isPrimary && photo.status === "pending");
+  const { avatarUrl, objectPosition: avatarPosition } = dancerAvatarPreview(profile, pendingMain?.id);
+  const mediaButtonAvatar = avatarUrl && (mainPhoto || pendingMain)
+    ? <img className="dancer-media-button-avatar" src={avatarUrl} alt="" aria-hidden="true" style={{ objectPosition: avatarPosition }} /> : null;
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
   const dirty = draftIdentity.stageName.trim() !== persistedDancerStageName(profile)
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
@@ -224,13 +228,12 @@ export default function DancerProfileWorkspace({
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
       <section hidden={onboarding && step !== "media"} className="dancer-builder-upload-entry" aria-label="Add profile media">
-        <button type="button" aria-pressed={uploadKind === "photos"} aria-controls="dancer-profile-media-library" disabled={busy} onClick={() => setUploadKind(current => current === "photos" ? null : "photos")}>+ Photos</button>
-        <button type="button" aria-pressed={uploadKind === "videos"} aria-controls="dancer-profile-video-library" disabled={busy} onClick={() => setUploadKind(current => current === "videos" ? null : "videos")}>+ Videos</button>
+        <button type="button" aria-pressed={uploadKind === "photos"} aria-controls="dancer-profile-media-library" disabled={busy} onClick={() => setUploadKind(current => current === "photos" ? null : "photos")}>{mediaButtonAvatar}+ Photos</button>
+        <button type="button" aria-pressed={uploadKind === "videos"} aria-controls="dancer-profile-video-library" disabled={busy} onClick={() => setUploadKind(current => current === "videos" ? null : "videos")}>{mediaButtonAvatar}+ Videos</button>
       </section>
       <section hidden={(onboarding && step !== "media") || uploadKind === "videos"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
         <div className="dancer-section-uploader">{photoContent}</div>
         <DancerProfileMediaUploads compact expanded mediaType="photos" photos={approvedPhotos} videos={[]}
-          photoAccessory={id => id === primaryPhoto?.id && !pendingMain ? avatarContent : null}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={false} videoError=""
           disabled={cropBusy || saving || avatarBusy}
@@ -253,7 +256,7 @@ export default function DancerProfileWorkspace({
             }
             return photo.status === "approved" ? <>
               <DancerSavedPhotoCrop photo={photo} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} />
-              {!photo.isPrimary ? <DancerSavedPhotoCrop photo={photo} makeMain mainPhotoId={primaryPhoto?.id} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} /> : <span className="dancer-main-label">Main photo</span>}
+              {!photo.isPrimary ? <DancerSavedPhotoCrop photo={photo} makeMain mainPhotoId={primaryPhoto?.id} disabled={busy} onProfileChange={onProfileChange} onBusyChange={reportCropBusy} /> : <><span className="dancer-main-label">Main photo</span>{avatarContent}</>}
             </> : null;
           }}
         />
