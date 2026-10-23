@@ -74,10 +74,10 @@ body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer
   }
   body.dancr-button-system #dancer-dashboard .dancer-profile-workspace .dancer-media-button-avatar {
     display: block;
-    flex: 0 0 30px;
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px;
+    flex: 0 0 48px;
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px;
     border-radius: 50% !important;
     object-fit: cover;
   }
