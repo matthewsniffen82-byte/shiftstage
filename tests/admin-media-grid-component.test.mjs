@@ -1,0 +1,110 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import vm from 'node:vm';
+import ts from 'typescript';
+import React from 'react';
+import postcss from 'postcss';
+
+const require=createRequire(import.meta.url);
+const source=readFileSync('app/admin/AdminMediaWorkbench.tsx','utf8');
+const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+const walk=node=>React.isValidElement(node)?[node,...React.Children.toArray(node.props.children).flatMap(walk)]:[];
+const item=(id,kind='photo')=>({id,queue_key:kind+':'+id,kind,stage:'staff',updated_at:'2026-10-23T00:00:00Z',dancer_name:'Test dancer',previewUrl:'/media/'+id,upload_context:'profile_main'});
+
+function fixture(initial,write=async(_path,body)=>body.decision==='approved'?{record:{id:body.recordId,decision:'approved'},video:{id:body.videoId,status:'approved',published_at:'2026-10-23'}}:{record:{id:body.recordId,decision:'rejected'},video:{id:body.videoId,status:'rejected'}}) {
+  let rows=initial.slice(),cursor=0,dirty=true,tree;
+  const slots=[],effects=[],calls=[],saved=[],intervals=[];
+  const hooks={
+    useState(initial){const i=cursor++,slot=slots[i]||={value:typeof initial==='function'?initial():initial};return [slot.value,next=>{slot.value=typeof next==='function'?next(slot.value):next;dirty=true;}];},
+    useRef(initial){return slots[cursor++]||={current:initial};},
+    useEffect(fn,deps){const i=cursor++,old=slots[i];if(!old||deps.some((d,n)=>d!==old.deps[n]))effects.push(()=>{old?.cleanup?.();slots[i]={deps,cleanup:fn()};});},
+    useCallback(fn,deps){const i=cursor++,old=slots[i];if(!old||deps.some((d,n)=>d!==old.deps[n]))slots[i]={deps,fn};return slots[i].fn;},
+  };
+  const exports={};
+  vm.runInNewContext(code,{exports,AbortController,URLSearchParams,Date,Error,
+    setTimeout(){return 1;},clearTimeout(){},setInterval(fn){intervals.push(fn);return intervals.length;},clearInterval(){},
+    document:{visibilityState:'visible'},window:{confirm:()=>true,addEventListener(){},removeEventListener(){}},
+    require(name){
+      if(name==='react')return hooks;
+      if(name==='react/jsx-runtime')return require(name);
+      if(name==='./admin-session')return {requestAdminJson:async(path,options={})=>{
+        calls.push([path,options]);
+        if(options.method==='POST'){
+          const body=JSON.parse(options.body),result=await write(path,body);
+          if((result.record?.decision||result.video?.status)===body.decision)rows=rows.filter(row=>row.id!==body.recordId);
+          return result;
+        }
+        const params=new URL(path,'https://test.invalid').searchParams,counts={staff:rows.length,club:0,processing:0};
+        if(params.get('view')==='dancers')return {dancers:rows.length?[{id:'dancer:test',stageName:'Test dancer',count:rows.length,photoCount:rows.filter(r=>r.kind==='photo').length,videoCount:rows.filter(r=>r.kind==='video').length,previewKind:'photo',previewUrl:'/main.jpg'}]:[],dancerCount:rows.length?1:0,total:rows.length,counts};
+        return {items:rows,total:rows.length,nextCursor:null,counts};
+      }};
+      return {default:name};
+    },
+  });
+  function render(){for(let n=0;dirty&&n<20;n++){dirty=false;cursor=0;tree=exports.default({userId:'reviewer',active:true,onSaved:message=>saved.push(message)});effects.splice(0).forEach(fn=>fn());}assert.equal(dirty,false);return walk(tree);}
+  render();
+  return {calls,saved,intervals,nodes:render,
+    get cards(){return render().filter(n=>n.type==='article');},
+    button(label){return render().find(n=>n.type==='button'&&n.props.children===label);},
+    async settle(){await new Promise(resolve=>setImmediate(resolve));render();},
+    async open(){await this.settle();render().find(n=>n.props.className==='admin-media-dancer-card').props.onClick();render();await this.settle();},
+    unmount(){slots.forEach(slot=>slot?.cleanup?.());},
+  };
+}
+
+test('dancer cards open a media grid with controls under each photo/video and retain the dancer until their final decision',async()=>{
+  const f=fixture([item('photo'),item('video','video')]);
+  try{
+    await f.open();assert.equal(f.cards.length,2);
+    const video=f.nodes().find(n=>n.type==='video');assert.equal(video.props.controls,true);assert.equal(video.props.playsInline,true);
+    for(const card of f.cards){const nodes=walk(card);assert.ok(nodes.findIndex(n=>n.props.className==='admin-media-preview')<nodes.findIndex(n=>n.props.children==='Approve'));}
+    const approve=f.button('Approve');const pending=approve.props.onClick();approve.props.onClick();await pending;await f.settle();
+    assert.equal(f.calls.filter(([,o])=>o.method==='POST').length,1,'duplicate taps cannot submit twice');
+    assert.equal(f.cards.length,1);assert.ok(f.button('← All dancers'));
+    await f.button('Approve').props.onClick();await f.settle();await f.settle();
+    assert.equal(f.cards.length,0);assert.equal(f.button('← All dancers'),undefined);assert.equal(f.saved.length,2);
+    const writes=f.calls.filter(([,o])=>o.method==='POST');
+    assert.equal(writes[0][0],'/api/admin/image-moderation');assert.equal(writes[1][0],'/api/admin/tv/videos');
+    assert.equal(JSON.parse(writes[0][1].body).version,'2026-10-23T00:00:00Z');
+  }finally{f.unmount();}
+});
+
+test('failed or unconfirmed publication keeps the upload available and never claims success',async()=>{
+  for(const write of [async()=>{throw new Error('Another reviewer claimed this upload.');},async()=>({video:{id:'v',status:'approved'}})]){
+    const f=fixture([item('v','video')],write);
+    try{await f.open();await f.button('Approve').props.onClick();await f.settle();assert.equal(f.cards.length,1);assert.equal(f.saved.length,0);assert.ok(f.nodes().find(n=>n.props.role==='alert'));}finally{f.unmount();}
+  }
+});
+
+test('rejection requires a reason, sends it with the upload version, and removes only the reviewed upload',async()=>{
+  const f=fixture([item('a'),item('b')]);
+  try{
+    await f.open();f.button('Reject').props.onClick();f.nodes();
+    let form=f.nodes().find(n=>n.type==='form');await form.props.onSubmit({preventDefault(){}});await f.settle();
+    assert.equal(f.calls.filter(([,o])=>o.method==='POST').length,0);
+    f.nodes().find(n=>n.type==='input'&&n.props.placeholder==='e.g. Logo visible').props.onChange({target:{value:'Logo visible'}});
+    form=f.nodes().find(n=>n.type==='form');await form.props.onSubmit({preventDefault(){}});await f.settle();
+    assert.equal(f.cards.length,1);const body=JSON.parse(f.calls.find(([,o])=>o.method==='POST')[1].body);
+    assert.equal(body.decision,'rejected');assert.equal(body.notes,'Logo visible');assert.match(f.saved[0],/rejected/);
+  }finally{f.unmount();}
+});
+
+test('count polling preserves the current media sources and review notes',async()=>{
+  const f=fixture([item('v','video')]);
+  try{await f.open();f.button('Reject').props.onClick();f.nodes().find(n=>n.type==='input'&&n.props.placeholder).props.onChange({target:{value:'Audio concern'}});f.nodes();
+    f.intervals.at(-1)();await f.settle();
+    assert.equal(f.nodes().find(n=>n.type==='video').props.src,'/media/v');
+    assert.equal(f.nodes().find(n=>n.type==='input'&&n.props.placeholder).props.value,'Audio concern');
+    assert.ok(f.calls.at(-1)[0].includes('countsOnly=1'));
+  }finally{f.unmount();}
+});
+
+test('admin review grids match the club’s three columns, portrait ratio, gutters and corner radius',()=>{
+  const rules=[];postcss.parse(readFileSync('app/admin/admin-media-grid.css','utf8')).walkRules(rule=>rules.push(rule));
+  const values=selector=>Object.fromEntries(rules.find(r=>r.selector===selector).nodes.filter(n=>n.type==='decl').map(n=>[n.prop,n.value]));
+  const grid=values('.admin-media-grid-workbench :is(.admin-media-dancer-grid, .admin-media-review-grid)');
+  assert.equal(grid['grid-template-columns'],'repeat(3, minmax(0, 1fr))');assert.equal(grid.gap,'var(--dancr-media-grid-gap, 3px)');
+  const preview=values('.admin-media-grid-workbench .admin-media-preview');assert.equal(preview['aspect-ratio'],'9 / 16');assert.equal(preview['border-radius'],'8px');
+});

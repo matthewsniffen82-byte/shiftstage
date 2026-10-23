@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { requireAdmin } from "@/src/lib/dancr/admin";
-import { claimAdminMedia, getAdminMediaWorkspace, ADMIN_UUID } from "@/src/lib/dancr/admin-media-workspace";
+import { claimAdminMedia, getAdminMediaWorkspace, getAdminMediaDancers, ADMIN_UUID } from "@/src/lib/dancr/admin-media-workspace";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
@@ -18,7 +18,8 @@ export async function GET(request: Request) {
       if (error) throw error;
       return NextResponse.json({ ok: true, events: data, session });
     }
-    return NextResponse.json({ ok: true, ...await getAdminMediaWorkspace(db, params), session });
+    const result = params.get("view") === "dancers" ? await getAdminMediaDancers(db, user.id, params) : await getAdminMediaWorkspace(db, params);
+    return NextResponse.json({ ok: true, ...result, session });
   } catch (error) { return apiError(error, "Unable to load media reviews."); }
 }
 export async function POST(request: Request) {

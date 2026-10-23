@@ -18,7 +18,7 @@ vm.runInNewContext(compile('src/lib/dancr/admin-media-workspace.ts'),{exports:se
 }});
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
 function database(size=75){
-  const rows=Array.from({length:size},(_,i)=>({id:id(i),kind:'photo',stage:'staff',queue_key:'photo:'+id(i),created_at:'2026-10-01T00:00:00.123456+00:00',temporary_storage_path:'private/path'}));
+  const rows=Array.from({length:size},(_,i)=>({id:id(i),dancer_id:id(i%2+100),kind:'photo',stage:'staff',queue_key:'photo:'+id(i),created_at:'2026-10-01T00:00:00.123456+00:00',temporary_storage_path:'private/path'}));
   const calls=[];
   return {rows,calls,from(){
     let data=rows.slice(),head=false,max=Infinity;
@@ -56,27 +56,49 @@ test('review conflicts are surfaced without pretending the claim succeeded',asyn
   assert.equal(invoked,false);
 });
 function renderReview(kind,claimed,stage='staff'){
-  const item={id:id(1),queue_key:kind+':'+id(1),kind,stage,dancer_name:'Test dancer',venue_name:'Test club',previewUrl:'https://example.test/media',caption:'<b>Caption</b>',created_at:'2026-10-01',updated_at:'2026-10-01',club_reviewed_at:'2026-10-02',club_reviewer_name:'Club reviewer',club_review_notes:'Meets guidelines'};
+  const item={id:id(1),queue_key:kind+':'+id(1),kind,stage,dancer_name:'Test dancer',venue_name:'Test club',previewUrl:'https://example.test/media',caption:'<b>Caption</b>',created_at:'2026-10-01',updated_at:'2026-10-01',club_reviewed_at:'2026-10-02',club_reviewer_name:'Club reviewer',club_review_notes:'Meets guidelines',claimed_by:claimed?null:id(8),upload_context:'profile_main'};
   const page={items:[item],total:135,nextCursor:null,counts:{staff:135,club:2,processing:1}};
   let index=0;
   const exports={};
   vm.runInNewContext(compile('app/admin/AdminMediaWorkbench.tsx'),{exports,URLSearchParams,Date,require(name){
-    if(name==='react')return {...React,useState(initial){const slot=index++;return [({0:stage,5:page,6:item,12:claimed})[slot]??initial,()=>{}];}};
+    if(name==='react')return {...React,useState(initial){const slot=index++;return [({0:stage,6:{counts:page.counts},7:{id:'dancer:'+id(10),stageName:'Test dancer'},8:page})[slot]??initial,()=>{}];}};
     if(name==='react/jsx-runtime')return require(name);
     if(name==='./admin-session')return {requestAdminJson:()=>{throw new Error('No network during component render');}};
+    if(name.endsWith('.css')||name.includes('dancer-profile-media-sync'))return {};
+    if(name.includes('DancerVideoThumbnail'))return {default:()=>null};
     throw new Error(name);
   }});
   return renderToStaticMarkup(React.createElement(exports.default,{userId:id(3),onSaved(){}}));
 }
 test('review detail renders exact counts, club signoff and escaped caption with working video controls',()=>{
   const html=renderReview('video',true);
-  assert.match(html,/135 matching uploads/);assert.match(html,/Club approved by Club reviewer/);
+  assert.match(html,/135 uploads/);assert.match(html,/Club approved by Club reviewer/);
   assert.match(html,/Meets guidelines/);assert.match(html,/&lt;b&gt;Caption&lt;\/b&gt;/);
-  assert.match(html,/<video[^>]*controls=""/);assert.match(html,/Alt\+A approve/);
-  assert.match(html,/>Approve for publication<\/button>/);
+  assert.match(html,/<video[^>]*controls=""/);
+  assert.match(html,/>Approve<\/button>/);assert.match(html,/admin-media-review-grid/);
 });
-test('unclaimed and club-pending media cannot expose an enabled final approval',()=>{
+test('another reviewer’s claimed upload and club-pending media cannot expose an enabled final approval',()=>{
   const unclaimed=renderReview('photo',false);
-  assert.match(unclaimed,/<button[^>]*disabled=""[^>]*>Approve for publication/);
-  assert.doesNotMatch(renderReview('photo',false,'club'),/>Approve for publication/);
+  assert.match(unclaimed,/<button[^>]*disabled=""[^>]*>Approve/);
+  assert.doesNotMatch(renderReview('photo',false,'club'),/>Approve<\/button>/);
+});
+
+test('selected dancer media and its total include only that dancer, with invalid groups rejected',async()=>{
+  const page=await service.getAdminMediaWorkspace(database(),new URLSearchParams({group:'dancer:'+id(100)}));
+  assert.equal(page.total,38);assert.equal(page.items.length,30);
+  assert.ok(page.items.every(item=>item.dancer_id===id(100)));
+  await assert.rejects(service.getAdminMediaWorkspace(database(),new URLSearchParams({group:'dancer:bad'})),error=>error.status===400);
+  await assert.rejects(service.getAdminMediaWorkspace(database(),new URLSearchParams({group:'DANCER:'+id(100)})),error=>error.status===400);
+});
+
+test('dancer groups sign one preview each and return no private storage paths',async()=>{
+  let args;
+  const db={rpc:async(name,params)=>{assert.equal(name,'get_admin_media_dancers');args=params;return {data:{dancerCount:50,total:135,counts:{staff:135,club:2,processing:1},dancers:[{review_group:'dancer:'+id(100),dancer_name:'Test dancer',count:40,photo_count:40,video_count:0,preview:{kind:'photo',id:id(1),temporary_storage_path:'private/path'}}]}};}};
+  const result=await service.getAdminMediaDancers(db,id(3),new URLSearchParams({offset:'12',venueId:id(20)}));
+  assert.equal(args.p_actor,id(3));assert.equal(args.p_offset,12);assert.equal(args.p_venue_id,id(20));
+  assert.equal(result.dancerCount,50);assert.equal(result.dancers[0].count,40);
+  assert.equal(result.dancers[0].previewUrl,'https://example.test/'+id(1));
+  assert.doesNotMatch(JSON.stringify(result),/private\/path|temporary_storage_path/);
+  await service.getAdminMediaDancers(db,id(3),new URLSearchParams({stage:'invalid',kind:'invalid'}));
+  assert.equal(args.p_stage,'staff');assert.equal(args.p_kind,'all');
 });

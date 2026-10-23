@@ -33,6 +33,7 @@ before(async()=>{
     add column moderation_attempt_count int default 0,add column moderation_started_at timestamptz,add column venue_id uuid,add column review_notes text;`);
   await db.exec(read('supabase/migrations/20261023025136_human_media_approval.sql'));
   await db.exec(read('supabase/migrations/20261023042742_admin_operations_workspace.sql'));
+  await db.exec(read('supabase/migrations/20261023163628_admin_media_dancer_grid.sql'));
 });
 after(async()=>db?.close());
 beforeEach(async()=>{
@@ -58,6 +59,39 @@ async function publish(r,actor=4){
   await db.query("insert into storage.objects values('dancer-photos',$1) on conflict do nothing",[path]);
   return (await db.query("select publish_approved_dancer_gallery_photo($1,$2,$3,'[]','{}','{}',false,null,$4,'Final review') result",[r.id,r.updated_at,path,id(actor)])).rows[0].result;
 }
+
+test('dancer grid counts every upload before paging, separates equal names, and keeps club-pending media private',async()=>{
+  for(let n=100;n<135;n++) {
+    let record=await upload(n);
+    if(n===134) record=(await db.query("update image_moderation_records set upload_context='profile_main' where id=$1 returning *",[id(n)])).rows[0];
+    await club(record);
+  }
+  await upload(140);
+  for(let n=0;n<13;n++) {
+    await db.query('insert into auth.users values($1)',[id(1000+n)]);
+    await db.query("insert into app_users(id,role) values($1,'dancer')",[id(1000+n)]);
+    await db.query("insert into dancer_profiles(id,user_id,stage_name) values($1,$2,'Test dancer')",[id(2000+n),id(1000+n)]);
+    await db.query("insert into venue_dancer_affiliations(venue_id,dancer_id,status) values($1,$2,'active')",[id(20),id(2000+n)]);
+    const record=(await db.query(`insert into image_moderation_records(id,user_id,upload_context,decision,status,temporary_storage_path,category_flags)
+      values($1,$2,'profile_gallery:1','review','pending_review','private/new','{"file_checks_passed":true}') returning *`,[id(3000+n),id(1000+n)])).rows[0];
+    await club(record);
+  }
+  const grid=async(offset=0,stage='staff',kind='all',counts=false,actor=4)=>(await db.query("select get_admin_media_dancers($1,$2,$3,null,'',0,$4,$5) value",[id(actor),stage,kind,offset,counts])).rows[0].value;
+  const first=await grid(),second=await grid(12);
+  assert.equal(first.dancerCount,14);assert.equal(first.total,48);assert.equal(first.dancers.length,12);assert.equal(second.dancers.length,2);
+  const all=[...first.dancers,...second.dancers];
+  assert.equal(new Set(all.map(d=>d.review_group)).size,14);
+  const dancer=all.find(d=>d.review_group==='dancer:'+id(10));
+  assert.equal(dancer.count,35);assert.equal(dancer.photo_count,35);assert.equal(dancer.video_count,0);
+  assert.equal(dancer.preview.upload_context,'profile_main');
+  assert.equal((await grid(0,'club')).total,1);
+  assert.equal((await grid(0,'staff','video')).total,0);
+  const counts=await grid(0,'staff','all',true);assert.equal(counts.total,48);assert.deepEqual(counts.dancers,[]);
+  assert.equal(counts.counts.club,1);
+  await assert.rejects(grid(0,'staff','all',false,5),e=>e.code==='42501');
+  await db.exec('set role authenticated');
+  await assert.rejects(grid(),e=>e.code==='42501');
+});
 test('club-first queue, exclusive reviewer claim, atomic publication and full audit history',async()=>{
   const uploadRow=await upload();
   assert.equal((await db.query('select stage from admin_media_workspace')).rows[0].stage,'club');
