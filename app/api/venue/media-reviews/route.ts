@@ -32,8 +32,12 @@ export async function GET(request: Request) {
     const { admin, access, user, session } = await context(request);
     const url = new URL(request.url);
     const offset = Math.max(0, Math.min(100000, Number.parseInt(url.searchParams.get("offset") || "0", 10) || 0));
-    const { data, error } = await admin.rpc("get_venue_dancer_media_review", {
+    const dancerId = url.searchParams.get("dancerId");
+    if (dancerId !== null && !uuid.test(dancerId)) throw new PublicApiError("INVALID_REQUEST", "Choose a dancer to review.", 400);
+    const grouped = url.searchParams.get("view") === "dancers" || dancerId !== null;
+    const { data, error } = await admin.rpc(grouped ? "get_venue_dancer_media_grid" : "get_venue_dancer_media_review", {
       p_actor_id: user.id, p_venue_id: access.venueId, p_offset: offset, p_limit: url.searchParams.get("countOnly") === "1" ? 0 : 12,
+      ...(grouped ? { p_dancer_id: dancerId } : {}),
     });
     if (error) throw error;
     const items = await Promise.all((data?.items || []).map(async (item: any) => {
@@ -47,14 +51,28 @@ export async function GET(request: Request) {
         previewUrl = signed.data?.signedUrl || "";
       }
       const ready = photo ? r.category_flags?.file_checks_passed === true : r.moderation_details?.fileChecksPassed === true;
-      return { id: item.id, kind: item.kind, stageName: item.stageName, version: r.updated_at, previewUrl, caption: photo ? null : r.caption,
+      return { id: item.id, kind: item.kind, dancerId: item.dancerId, stageName: item.stageName, version: r.updated_at, previewUrl, caption: photo ? null : r.caption,
         label: photo ? r.upload_context === "profile_avatar" ? "Avatar" : r.upload_context.startsWith("profile_main") ? "Main photo" : "Photo" : "Video",
         processing, canApprove: !processing && ready && !r.club_reviewed_at && (photo || !r.upload_validation_pending),
         reviewSummary: processing ? "Preparing upload" : "Club review required before MyDancr final approval",
         reasons: photo ? r.reason_codes || [] : r.moderation_reason_codes || [],
       };
     }));
-    return json({ ok: true, venueId: access.venueId, count: data?.count || 0, items, session });
+    const dancers = await Promise.all((data?.dancers || []).map(async (dancer: any) => {
+      let previewUrl = "";
+      // The outer grid never downloads video files. Only sign the chosen private
+      // photo or prepared poster after the database has scoped it to this club.
+      if (dancer.kind === "photo") previewUrl = (await withSignedThumbnail(admin, dancer.record)).thumbnailUrl;
+      else if (dancer.record?.moderation_details?.posterStoragePath) {
+        const signed = await admin.storage.from(MYDANCR_TV_BUCKET).createSignedUrl(dancer.record.moderation_details.posterStoragePath, 300);
+        if (!signed.error) previewUrl = signed.data?.signedUrl || "";
+      }
+      return { id: dancer.id, stageName: dancer.stageName, count: dancer.count,
+        photoCount: dancer.photoCount, videoCount: dancer.videoCount, previewUrl };
+    }));
+    return json({ ok: true, venueId: access.venueId, count: data?.count || 0, items, session,
+      ...(grouped ? { dancers, dancer: data?.dancer || null, dancerCount: data?.dancerCount || 0, uploadCount: data?.uploadCount || 0 } : {}),
+    });
   } catch (error) { return apiError(error, "Unable to load your club’s media reviews."); }
 }
 

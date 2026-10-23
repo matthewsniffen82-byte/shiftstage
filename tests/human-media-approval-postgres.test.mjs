@@ -33,6 +33,7 @@ before(async () => {
     add column caption text default 'Synthetic video', add column width integer default 720, add column height integer default 1280,
     add column duration_seconds numeric default 10, add column moderation_attempt_count integer default 0, add column moderation_started_at timestamptz;`);
   await db.exec(read('supabase/migrations/20261023025136_human_media_approval.sql'));
+  await db.exec(read('supabase/migrations/20261023054159_venue_media_dancer_grid.sql'));
   await db.exec('create trigger test_submission before insert or update of status,verification_status,venue_approved_at on dancer_profiles for each row execute function enforce_dancer_onboarding_photos()');
 });
 after(async () => db?.close());
@@ -58,6 +59,7 @@ async function upload(n, context='profile_gallery:1', extra={}) {
 const tap = () => db.query("insert into dancer_nfc_enrollments(dancer_user_id,venue_id,nfc_tag_id,status,expires_at) values($1,$2,$3,'pending',now()+interval '7 days')",[id(1),id(20),id(30)]);
 const authorize = (actor=2, venue=20) => db.query('select assert_dancer_media_reviewer($1,$2,$3)',[id(actor),id(1),id(venue)]);
 const queue = async (actor=2,venue=20,offset=0,limit=12) => (await db.query('select get_venue_dancer_media_review($1,$2,$3,$4) value',[id(actor),id(venue),offset,limit])).rows[0].value;
+const grid = async (dancer=null,offset=0,limit=12,actor=2,venue=20) => (await db.query('select get_venue_dancer_media_grid($1,$2,$3,$4,$5) value',[id(actor),id(venue),dancer===null?null:id(dancer),offset,limit])).rows[0].value;
 async function publish(record,actor=2) {
   const path = `${id(1)}/${id(10)}/${record.id}.jpg`;
   await db.query("insert into storage.objects values('dancer-photos',$1) on conflict do nothing",[path]);
@@ -137,4 +139,54 @@ test('new rows cannot start approved and human-review RPC is service-only',async
   await assert.rejects(upload(100,'profile_main',{decision:'approved',status:'approved'}),forbidden);
   await db.exec('set role authenticated');
   await assert.rejects(db.query("select review_club_dancer_media($1,$2,'photo',$3,now(),'')",[id(2),id(20),id(100)]),forbidden);
+});
+
+test('dancer grid groups complete queues, keeps same-name dancers distinct and pages their media separately', async () => {
+  await tap();
+  await db.query('insert into auth.users values($1)', [id(7)]);
+  await db.query("insert into app_users(id,role) values($1,'dancer')", [id(7)]);
+  await db.query('insert into dancer_profiles(id,user_id) values($1,$2)', [id(17),id(7)]);
+  await db.query("insert into venue_dancer_affiliations(venue_id,dancer_id,status) values($1,$2,'active')", [id(20),id(17)]);
+  for (let n=100;n<114;n++) await upload(n, n===113 ? 'profile_main' : 'profile_gallery:1');
+  await upload(150,'profile_main',{user_id:id(7)});
+  await db.query("insert into mydancr_tv_videos(id,dancer_id,submitted_by,status,moderation_details) values($1,$2,$3,'submitted','{\"fileChecksPassed\":true}')",[id(200),id(10),id(1)]);
+  const overview=await grid();
+  assert.equal(overview.count,16); assert.equal(overview.dancerCount,2); assert.equal(overview.items.length,0);
+  const first=overview.dancers.find(d=>d.id===id(10));
+  assert.equal(first.count,15); assert.equal(first.photoCount,14); assert.equal(first.videoCount,1);
+  assert.equal(first.record.upload_context,'profile_main');
+  assert.equal(overview.dancers[0].stageName,overview.dancers[1].stageName);
+  assert.equal((await grid(null,0,1)).dancers.length,1);
+  assert.notEqual((await grid(null,0,1)).dancers[0].id,(await grid(null,1,1)).dancers[0].id);
+  const page=await grid(10), next=await grid(10,12);
+  assert.equal(page.items.length,12); assert.equal(next.items.length,3); assert.equal(page.uploadCount,15);
+  assert.equal(page.items[0].record.upload_context,'profile_main');
+  assert.equal(new Set([...page.items,...next.items].map(i=>i.id)).size,15);
+  assert.ok([...page.items,...next.items].every(i=>i.dancerId===id(10)));
+  const counts=await grid(null,0,0);
+  assert.equal(counts.count,16);assert.equal(counts.dancers.length,0);assert.equal(counts.items.length,0);
+});
+
+test('dancer grid excludes decisions, unfinished uploads and other clubs; only authorized service calls can read it',async()=>{
+  await tap();const approved=await upload(100), rejected=await upload(101), unfinished=await upload(102);
+  await club(approved);
+  await db.query("update image_moderation_records set decision='rejected',status='rejected',review_decision='rejected',reviewed_by=$1 where id=$2",[id(2),rejected.id]);
+  await db.query("update image_moderation_records set category_flags='{}' where id=$1",[unfinished.id]);
+  assert.equal((await grid()).dancers.length,0);
+  await upload(103);
+  assert.equal((await grid(null,0,12,3,21)).count,0);
+  const foreign=await grid(10,0,12,3,21);
+  assert.equal(foreign.items.length,0);assert.equal(foreign.dancer,null);
+  await assert.rejects(grid(null,0,12,5),forbidden);
+  await db.exec('set role authenticated');await assert.rejects(grid(),forbidden);
+});
+
+test('rejecting a new main photo removes only its pending card and preserves the approved main photo',async()=>{
+  await tap();await publish(await club(await upload(100,'profile_main')),6);
+  const before=(await db.query('select * from dancer_photos')).rows;
+  const replacement=await upload(101,'profile_main',{photo_publication_mode:'replace',replacement_photo_id:before[0].id});
+  assert.equal((await grid(10)).items[0].record.upload_context,'profile_main');
+  await db.query("update image_moderation_records set decision='rejected',status='rejected',review_decision='rejected',reviewed_by=$1 where id=$2",[id(2),replacement.id]);
+  assert.equal((await grid()).count,0);assert.equal((await grid()).dancers.length,0);
+  assert.deepEqual((await db.query('select * from dancer_photos')).rows,before);
 });
