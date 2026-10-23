@@ -3259,7 +3259,7 @@ function UnifiedReviewQueue({ profiles, images, videos, warnings, requestedFilte
       </select></label>
       <RefreshButton label="Refresh approval queue" busy={refreshing} type="button" disabled={busy || refreshing} onClick={() => void refresh()} />
     </div>
-    <p className="admin-info-note">AI moderation and required venue and verification checks still apply. Applications awaiting those checks remain pending.</p>
+    <p className="admin-info-note">Club-approved dancer media waits here for MyDancr’s final review before going live. Required venue and verification checks still apply.</p>
     {warnings.length ? <p role="alert">Some review sources are unavailable. Refresh to retry. {warnings.join(" ")}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
     {selected ? <>
