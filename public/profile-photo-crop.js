@@ -43,7 +43,7 @@
       const dialog = document.createElement("dialog");
       dialog.className = "dancr-photo-crop";
       dialog.setAttribute("aria-label", "Crop profile photo");
-      dialog.innerHTML = '<div data-crop-header><h2>Fit your photo to the card</h2><p>Drag to position, then adjust zoom. Framing may vary slightly by screen.</p></div><div data-crop-frame hidden><canvas tabindex="0" role="img" aria-label="Photo crop preview. Use arrow keys to reposition the photo."></canvas></div><div data-crop-controls><label data-crop-zoom hidden>Zoom<input type="range" min="1" max="3" step="0.01" value="1" aria-label="Photo zoom"></label><div data-crop-actions><button type="button" data-crop-cancel>Cancel</button><button type="button" data-crop-reset hidden disabled>Reset</button><button type="button" data-crop-confirm hidden disabled>Use photo</button><button type="button" data-crop-original hidden>Use original</button><button type="button" data-crop-cancel-batch hidden>Cancel uploads</button><button type="button" data-crop-retry hidden>Retry</button></div><p data-crop-status role="status" aria-live="polite">Preparing your photo…</p></div>';
+      dialog.innerHTML = '<div data-crop-header><h2>Fit your photo to the card</h2><p>Drag to position, then adjust zoom. Framing may vary slightly by screen.</p></div><div data-crop-frame hidden><canvas tabindex="0" role="img" aria-label="Photo crop preview. Use arrow keys to reposition the photo."></canvas></div><div data-crop-controls><div data-crop-toolbar><label data-crop-zoom hidden>Zoom<input type="range" min="1" max="3" step="0.01" value="1" aria-label="Photo zoom"></label><button type="button" data-crop-reset hidden disabled>Reset</button></div><div data-crop-actions><button type="button" data-crop-cancel>Cancel</button><button type="button" data-crop-confirm hidden disabled>Use photo</button><button type="button" data-crop-original hidden>Use original</button><button type="button" data-crop-cancel-batch hidden>Cancel uploads</button><button type="button" data-crop-retry hidden>Retry</button></div><p data-crop-status role="status" aria-live="polite">Preparing your photo…</p></div>';
       const original = dialog.querySelector("[data-crop-original]");
       const cancelBatch = dialog.querySelector("[data-crop-cancel-batch]");
       if (options.batch) {
@@ -101,7 +101,8 @@
           + pixels(styles.borderTopWidth) + pixels(styles.borderBottomWidth)
           + pixels(getComputedStyle(frame).marginBottom);
         const availableWidth = dialog.clientWidth - pixels(styles.paddingLeft) - pixels(styles.paddingRight);
-        const previewWidth = Math.max(1, Math.floor(Math.min(400, availableWidth, Math.max(1, maxHeight - chromeHeight - 2) * ratio)));
+        const previewHeightLimit = options.batch ? Math.min(360, viewportHeight * .48) : Infinity;
+        const previewWidth = Math.max(1, Math.floor(Math.min(400, availableWidth, Math.max(1, Math.min(previewHeightLimit, maxHeight - chromeHeight - 2)) * ratio)));
         dialog.style.setProperty("--crop-preview-width", `${previewWidth}px`);
         canvas.width = Math.round(previewWidth * 2);
         canvas.height = Math.max(1, Math.round(canvas.width / ratio));
@@ -125,7 +126,7 @@
           dialog.querySelector("[data-crop-zoom]").hidden = false;
           confirm.hidden = reset.hidden = false;
           confirm.disabled = reset.disabled = false;
-          status.textContent = options.batch ? "Each photo uploads after you confirm." : options.onCrop ? "Drag and zoom your main photo, then save your avatar crop." : options.confirmLabel ? "Your current photo stays visible until the saved crop is approved." : "Your photo is added to your profile only after you choose Use photo.";
+          status.textContent = options.batch ? "" : options.onCrop ? "Drag and zoom your main photo, then save your avatar crop." : options.confirmLabel ? "Your current photo stays visible until the saved crop is approved." : "Your photo is added to your profile only after you choose Use photo.";
           if (!dialog.open) dialog.showModal();
           draw();
           canvas.focus({ preventScroll: true });
