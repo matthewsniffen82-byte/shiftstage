@@ -188,11 +188,10 @@ test("five photo uploads reserve selection order, show progress and queue extras
   assert.equal(ui.posts.length, 5, 'five uploads start while the sixth waits');
   assert.equal(ui.crops.length, 5, 'queued photos wait before opening their crop editor');
   ui.posts[0].onUploadProgress(43); ui.posts[1].onUploadProgress(100); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Uploading · 43%', 'Checking photo…', 'Uploading · 0%', 'Uploading · 0%', 'Uploading · 0%', 'Waiting to upload']);
-  assert.deepEqual(ui.progress.map(bar => bar.props['aria-valuenow']), [43, undefined, 0, 0, 0, 0]);
+  assert.deepEqual(ui.statuses, ['Uploading · 43%', 'Completed', 'Uploading · 0%', 'Uploading · 0%', 'Uploading · 0%', 'Uploading · 0%']);
+  assert.deepEqual(ui.progress.map(bar => bar.props['aria-valuenow']), [43, 0, 0, 0, 0]);
   assert.equal(ui.progress[0].props.children.props.style.width, '43%');
-  assert.match(ui.progress[1].props.className, /is-indeterminate/);
-  assert.equal(ui.progress[1].props.children.props.style, undefined, 'checks have no invented percentage');
+  assert.equal(ui.progress.length, 5, 'the completed upload no longer shows a progress bar');
   assert.equal(ui.replacements.length, 0, 'active and queued uploads cannot be replaced');
   assert.equal(ui.reviewButtons.length, 0);
   assert.deepEqual(ui.buttons.filter(button => button.props.className !== 'photo-source-action is-disabled').map(button => button.props.children), ['Cancel uploads', ...Array(6).fill('Cancel')]);
@@ -227,10 +226,10 @@ test("Cancel uploads stops photo transfers and queued files, preserves an active
   assert.equal(ui.posts.length, 5, 'queued sixth file never starts');
   assert.ok(ui.posts.filter((_, index) => index !== 1).every(post => post.signal.aborted));
   ui.posts[0].onUploadProgress(100); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Upload canceled', 'Checking photo…', ...Array(4).fill('Upload canceled')]);
+  assert.deepEqual(ui.statuses, ['Upload canceled', 'Completed', ...Array(4).fill('Upload canceled')]);
   releases[1]({ decision: 'review', photo: { id: 'kept', reviewStatus: 'pending', sortOrder: 2 } });
   await ui.settle();
-  assert.deepEqual(ui.statuses, ['Upload canceled', 'Waiting for Club approval', ...Array(4).fill('Upload canceled')]);
+  assert.deepEqual(ui.statuses, ['Upload canceled', 'Waiting for final approval', ...Array(4).fill('Upload canceled')]);
   assert.equal(ui.progress.length, 0);
   const retry = ui.buttons.find(button => button.props.children === 'Retry');
   assert.equal(retry.props.disabled, false); retry.props.onClick(); await ui.settle();
@@ -241,7 +240,7 @@ test("Cancel uploads stops photo transfers and queued files, preserves an active
   await ui.settle();
 });
 
-test('overall photo progress waits for processing, follows refreshed results and counts rejections as processed', async () => {
+test('overall photo progress disappears after transfer and stays hidden through review updates', async () => {
   const releases = [];
   const ui = photoHarness({ post: () => new Promise(resolve => releases.push(resolve)),
     read: async () => ({ profile: { pending_photo_reviews: [pending('one', 1), pending('two', 2)].map(photo => ({ ...photo, status: 'moderating' })) } }),
@@ -249,18 +248,18 @@ test('overall photo progress waits for processing, follows refreshed results and
   ui.select([1, 2].map(id => new File(['photo'], `${id}.jpg`, { type: 'image/jpeg' })));
   await ui.settle(); assert.equal(ui.overallProgress, 0);
   ui.posts[0].onUploadProgress(50); ui.posts[1].onUploadProgress(100); await ui.settle();
-  assert.equal(ui.overallProgress, 67);
+  assert.equal(ui.overallProgress, 75);
   releases.forEach((release, index) => release({ decision: 'moderating', moderationRecordId: ['one', 'two'][index] }));
-  await ui.settle(); assert.equal(ui.overallProgress, 95);
+  await ui.settle(); assert.equal(ui.overallProgress, undefined);
   ui.updateProfile({ pending_photo_reviews: [{ ...pending('one', 1), status: 'pending_review' }, { ...pending('two', 2), status: 'moderating' }] });
-  assert.equal(ui.overallProgress, 97);
+  assert.equal(ui.overallProgress, undefined);
   ui.updateProfile({ pending_photo_reviews: [{ ...pending('one', 1), status: 'pending_review' }], rejected_photo_reviews: [{ id: 'two', message: 'Multiple people' }] });
-  assert.equal(ui.overallProgress, 100);
-  assert.deepEqual(ui.statuses, ['Waiting for Club approval', 'Not approved']);
+  assert.equal(ui.overallProgress, undefined);
+  assert.deepEqual(ui.statuses, ['Waiting for final approval', 'Not approved']);
   ui.updateProfile({ dancer_photos: [approved('published-one', 1)], rejected_photo_reviews: [{ id: 'two', message: 'Multiple people' }] });
-  assert.equal(ui.overallProgress, 100, 'club approval cannot move completed processing backwards');
+  assert.equal(ui.overallProgress, undefined, 'final approval cannot restore a completed upload bar');
   const restored = photoHarness({ profile: { pending_photo_reviews: [{ ...pending('restore'), status: 'moderating' }] } });
-  assert.equal(restored.overallProgress, 95);
+  assert.equal(restored.overallProgress, undefined);
 });
 
 test("collapsing photo upload controls leaves pending and rejected reviews outside the disclosure", () => {
@@ -350,12 +349,12 @@ test("pending upload cards disappear after approval with either the same or a ne
   for (const approvedId of ["review", "published"]) {
     const ui = photoHarness({ uploadOnly: true, read: async () => ({ profile: { pending_photo_reviews: [pending()] } }) });
     ui.select(); await ui.settle();
-    assert.deepEqual(ui.statuses, ["Checking photo…"]);
+    assert.deepEqual(ui.statuses, ["Completed"]);
     const refreshed = { dancer_photos: [approved(approvedId)], pending_photo_reviews: [pending("unrelated")] };
     ui.updateProfile(refreshed);
     assert.equal(ui.cards.length, 1, "the unrelated review remains in the upload area");
-    assert.deepEqual(ui.statuses, ["Checking photo…"]);
-    assert.deepEqual(photoHarness({ profile: refreshed }).statuses, ["Checking photo…", "Approved"]);
+    assert.deepEqual(ui.statuses, ["Completed"]);
+    assert.deepEqual(photoHarness({ profile: refreshed }).statuses, ["Completed", "Approved"]);
     assert.equal(ui.posts.length, 1, "approval must not upload the photo again");
     assert.deepEqual(ui.revoked, [], "gallery previews remain valid until the uploader closes");
   }
@@ -372,7 +371,7 @@ test("mixed batches clear approvals while keeping unresolved photos in selection
   releases[1]({ decision: "rejected", moderationRecordId: "rejected", message: "Multiple people" }); await ui.settle();
   assert.deepEqual(ui.statuses, ["Approved", "Not approved", "Uploading · 0%"]);
   releases[2]({ decision: "review", photo: { id: "review", reviewStatus: "pending" } }); await ui.settle();
-  assert.deepEqual(ui.statuses, ["Not approved", "Waiting for Club approval"]);
+  assert.deepEqual(ui.statuses, ["Not approved", "Waiting for final approval"]);
   assert.deepEqual(ui.labels, ["second.jpg", "Photo 3"]);
   assert.equal(ui.notes[0], "Multiple people");
   assert.equal(ui.notes.length, 1);
@@ -454,13 +453,13 @@ test("saved pending and rejected photos stay above the library with reasons afte
     dancer_photos: [approved()], pending_photo_reviews: [pending()],
     rejected_photo_reviews: [{ id: 'denied', message: 'Multiple people' }],
   } });
-  assert.deepEqual(ui.statuses, ['Checking photo…', 'Not approved']);
+  assert.deepEqual(ui.statuses, ['Completed', 'Not approved']);
   assert.deepEqual(ui.notes, ['Multiple people']);
   assert.equal(ui.replacements.length, 0);
   assert.equal(ui.reviewButtons.length, 0, 'saved active checks do not offer Retry');
   assert.equal(ui.buttons.some(button => button.props.children === 'Remove'), false);
   ui.close(); ui.reopen();
-  assert.deepEqual(ui.statuses, ['Checking photo…', 'Not approved']);
+  assert.deepEqual(ui.statuses, ['Completed', 'Not approved']);
   assert.equal(ui.pinButtons.length, 0);
 });
 
@@ -476,18 +475,18 @@ test("an asynchronous rejection updates the same card with the saved reason", as
   assert.equal(ui.cards.length, 0);
   assert.deepEqual(ui.revoked, ui.previews);
   ui.updateProfile({ rejected_photo_reviews: [{ id: 'review', message: 'Stale refresh' }], pending_photo_reviews: [pending('other')] });
-  assert.deepEqual(ui.statuses, ['Checking photo…'], 'stale data cannot restore a cleared rejection');
+  assert.deepEqual(ui.statuses, ['Completed'], 'stale data cannot restore a cleared rejection');
 });
 
 test('batch rejection cleanup removes every seen rejection from profile feedback without touching pending or approved photos', async () => {
   const ui = photoHarness({ uploadOnly: true, profile: { dancer_photos: [approved()], pending_photo_reviews: [pending()],
     rejected_photo_reviews: [{ id: 'first', message: 'First reason' }, { id: 'second', message: 'Second reason' }] } });
   ui.notices.forEach(notice => notice.props.onDismiss()); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Checking photo…']);
+  assert.deepEqual(ui.statuses, ['Completed']);
   assert.equal(ui.profiles.at(-1).rejected_photo_reviews.length, 0);
   assert.equal(ui.profiles.at(-1).dancer_photos.length, 1);
   ui.updateProfile(ui.profiles.at(-1)); ui.close(); ui.reopen();
-  assert.deepEqual(ui.statuses, ['Checking photo…']);
+  assert.deepEqual(ui.statuses, ['Completed']);
 });
 
 test("a profile refresh retains a failed photo and replacement cancellation leaves it untouched", async () => {
@@ -522,7 +521,7 @@ test("delayed review replacement failure stays in the upload area and retries th
 test("a real pending replacement stays checking until the server approves it", async () => {
   const ui = photoHarness({ read: async () => ({ profile: { dancer_photos: [approved("old")], pending_photo_reviews: [pending()] } }) });
   ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ["Checking photo…", "Approved"]);
+  assert.deepEqual(ui.statuses, ["Completed", "Approved"]);
   assert.equal(ui.notes.length, 0);
   ui.updateProfile({ dancer_photos: [approved("replacement")] });
   assert.deepEqual(ui.statuses, ["Approved"]);
@@ -553,10 +552,10 @@ test("the dashboard keeps same-position pending uploads and the current approved
     dancer_photos: [approved("current", 1)],
     pending_photo_reviews: [pending("first", 1), pending("second", 1)],
   } });
-  assert.deepEqual(ui.statuses, ["Checking photo…", "Checking photo…", "Approved"]);
+  assert.deepEqual(ui.statuses, ["Completed", "Completed", "Approved"]);
   assert.deepEqual(Array.from(ui.mapProfile({ pending_photo_reviews: [pending("first", 1), pending("second", 1)] }), item => item.id), ["first", "second"]);
   ui.updateProfile({ dancer_photos: [approved("current", 1), approved("published", 2)], pending_photo_reviews: [pending("first", 1)] });
-  assert.deepEqual(ui.statuses, ["Checking photo…", "Approved", "Approved"]);
+  assert.deepEqual(ui.statuses, ["Completed", "Approved", "Approved"]);
 });
 
 test("pending replacements stay manageable even when the approved library fills every slot", () => {
@@ -565,7 +564,7 @@ test("pending replacements stay manageable even when the approved library fills 
     pending_photo_reviews: [pending("replacement", 1)],
   } });
   assert.equal(ui.cards.length, 31);
-  assert.equal(ui.statuses.filter(status => status === "Checking photo…").length, 1);
+  assert.equal(ui.statuses.filter(status => status === "Completed").length, 1);
 });
 
 test("club approval photos offer only Remove after upload and after reopening", async () => {
@@ -577,7 +576,7 @@ test("club approval photos offer only Remove after upload and after reopening", 
       return { decision: 'review', moderationRecordId: 'review', photo: { id: 'review', sortOrder: 1 } };
     }, read: async () => ({ profile: removed ? {} : profile }) });
   ui.select(); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
+  assert.deepEqual(ui.statuses, ['Waiting for final approval']);
   assert.equal(ui.reviewButtons.length, 0);
   assert.equal(ui.replacements.length, 0);
   assert.deepEqual(ui.buttons.filter(node => node.props.className !== 'photo-source-action').map(node => node.props.children), ['Remove']);
@@ -586,7 +585,7 @@ test("club approval photos offer only Remove after upload and after reopening", 
   ui.updateProfile(profile); ui.close(); ui.reopen();
   assert.equal(ui.reviewButtons.length, 0);
   assert.equal(ui.replacements.length, 0);
-  assert.deepEqual(ui.statuses, ['Waiting for Club approval']);
+  assert.deepEqual(ui.statuses, ['Waiting for final approval']);
   ui.buttons.find(node => node.props.children === 'Remove').props.onClick(); await ui.settle();
   assert.equal(removed, true);
   assert.equal(JSON.parse(ui.posts.at(-1).body).photoId, 'review');
@@ -599,10 +598,10 @@ test("completed checks awaiting review are distinct from active checks and becom
     dancer_photos: [approved("first", 1)],
     pending_photo_reviews: [{ ...pending("waiting", 2), status: "pending_review" }, { ...pending("checking", 3), status: "moderating" }],
   } });
-  assert.deepEqual(ui.statuses, ["Waiting for Club approval", "Checking photo…", "Approved"]);
+  assert.deepEqual(ui.statuses, ["Waiting for final approval", "Completed", "Approved"]);
   assert.equal(ui.pinButtons.length, 1, "unapproved uploads do not have library controls");
   ui.updateProfile({ dancer_photos: [approved("first", 1), approved("reviewed", 2)], pending_photo_reviews: [{ ...pending("checking", 3), status: "moderating" }] });
-  assert.deepEqual(ui.statuses, ["Checking photo…", "Approved", "Approved"]);
+  assert.deepEqual(ui.statuses, ["Completed", "Approved", "Approved"]);
   assert.equal(ui.pinButtons[1].props.available, true);
 });
 

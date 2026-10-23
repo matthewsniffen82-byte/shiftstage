@@ -1,19 +1,12 @@
-import { isAwaitingClubApproval } from "../../src/lib/dancr/media-review-label.ts";
-
 type PhotoResult = { status: string; moderationStatus?: string };
 type PhotoTransfer = { stage: string; progress?: number; error?: string };
 
-/** Work milestones, not an elapsed-time estimate: transfer 0–90, receipt 95,
- * final processing result 100. Club approval is a separate human action. */
+/** Track file transfer only. Processing and final approval use status text. */
 export function photoUploadPercent(item?: PhotoTransfer, result?: PhotoResult) {
-  if (result) {
-    if (["approved", "rejected"].includes(result.status)
-      || isAwaitingClubApproval(result.status, result.moderationStatus)) return 100;
-    return 95;
-  }
-  if (item?.stage === "checking") return 90;
+  if (result) return ["approved", "rejected", "pending"].includes(result.status) ? 100 : 0;
+  if (item?.stage === "checking") return 100;
   if (item?.stage === "uploading") {
-    return Math.floor(Math.max(0, Math.min(100, Number.isFinite(item.progress) ? item.progress! : 0)) * .9);
+    return Math.floor(Math.max(0, Math.min(100, Number.isFinite(item.progress) ? item.progress! : 0)));
   }
   return 0;
 }

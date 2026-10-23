@@ -76,9 +76,10 @@ test('legacy video uploads use the same processing and Club approval labels', as
   const context = {};
   runInNewContext(liveApp.slice(start, end), context);
   const label = context.approvedProfileVideoStatusLabel;
-  assert.equal(label('uploading'), 'Uploading'); assert.equal(label('moderating'), 'Checking video…');
-  assert.equal(label('submitted', 'approved'), 'Waiting for Club approval');
-  assert.equal(label('submitted', 'review'), 'Review delayed');
+  assert.equal(label('uploading'), 'Uploading'); assert.equal(label('moderating'), 'Completed');
+  assert.equal(label('submitted', { moderationDetails: { fileChecksPassed: true } }), 'Waiting for final approval');
+  assert.equal(label('submitted', { clubReviewedAt: '2026-10-22T00:00:00Z' }), 'Waiting for final approval');
+  assert.equal(label('submitted', { moderationDecision: 'approved' }), 'Review delayed');
   assert.equal(label('rejected'), 'Not approved');
   assert.match(liveApp, /video\.status === "rejected".*displayText\(video\.reviewNotes/);
   const handler = liveApp.slice(liveApp.indexOf('const profileVideoForm ='), liveApp.indexOf('const shiftForm =', liveApp.indexOf('const profileVideoForm =')));

@@ -1,5 +1,5 @@
 /** A profile's approval never substitutes for an individual upload's review. */
-export function mediaReviewLabel(status: string, moderationStatus = "", kind: "photo" | "video" = "photo") {
+export function mediaReviewLabel(status: string, moderationStatus = "", _kind: "photo" | "video" = "photo") {
   const state = String(status || "").trim().toLowerCase();
   if (state === "approved" || state === "live") return "Approved";
   if (state === "rejected" || state === "denied") return "Not approved";
@@ -8,15 +8,14 @@ export function mediaReviewLabel(status: string, moderationStatus = "", kind: "p
   if (state === "hidden" || state === "removed") return "Removed";
   if (state === "expired") return "Expired";
   const review = String(moderationStatus || state).trim().toLowerCase();
-  if (review === "staff_review") return "Waiting for MyDancr approval";
-  if (["pending_review", "submitted", "review", "completed"].includes(review)) return "Waiting for Club approval";
+  if (["staff_review", "pending_review", "submitted", "review", "completed"].includes(review)) return "Waiting for final approval";
   if (["error", "moderation_error", "moderation_retry"].includes(review)) return "Review delayed";
-  if (["pending", "moderating"].includes(state)) return `Checking ${kind}…`;
+  if (["pending", "moderating"].includes(state)) return "Completed";
   return "Check upload status";
 }
 
 export function isAwaitingClubApproval(status: string, moderationStatus = "") {
-  return ["Waiting for Club approval", "Waiting for MyDancr approval"].includes(mediaReviewLabel(status, moderationStatus));
+  return mediaReviewLabel(status, moderationStatus) === "Waiting for final approval";
 }
 
 /** Technical readiness and human review are separate from a content decision. */
@@ -70,7 +69,7 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
 }: { moderationStatus?: string; reasonCodes?: unknown; message?: unknown } = {}) {
   const label = mediaReviewLabel(status, moderationStatus, kind);
   // Keep active uploads quiet, including saved server receipts from background checks.
-  if (["Approved", "Removed", "Expired", `Checking ${kind}…`].includes(label)) return "";
+  if (["Approved", "Removed", "Expired", "Completed"].includes(label)) return "";
   const rejected = label === "Not approved";
   if (rejected) {
     const saved = typeof message === "string" ? message.trim() : "";
@@ -125,7 +124,7 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   const genericMessage = /^(Your photo was uploaded and is awaiting|Photo uploaded, but moderation stopped|Automatically approved|Automated safety review requested human review|This video did not meet MyDancr TV safety guidelines|This photo does not meet Dancr's photo guidelines|Rejected by admin moderation\.|Upload received\. AI checks|Your video uploaded successfully\. AI checks|AI checks (are running|passed)|Pending club approval\.)/i;
   if (savedMessage && !genericMessage.test(savedMessage) && !/human review|manual review|sent to a person/i.test(savedMessage)) return savedMessage;
   if (notes.length) return [...new Set(notes)].join(" ");
-  if (["Waiting for Club approval", "Waiting for MyDancr approval"].includes(label)) return "";
+  if (label === "Waiting for final approval") return "";
   if (label === "Upload incomplete" || label === "Upload failed") return `The upload didn't finish. Retry or choose another ${kind}.`;
   return "";
 }

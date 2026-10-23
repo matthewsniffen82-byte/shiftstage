@@ -116,7 +116,7 @@
         }
       }
 
-      approvedProfileVideoStatus = "Checking video…";
+      approvedProfileVideoStatus = "Completed";
       renderApprovedProfileVideoManager();
       const submitResponse = await fetch(`/api/dancer/tv/videos/${encodeURIComponent(preparedVideoId)}`, {
         method: "PATCH",
@@ -128,7 +128,7 @@
         throw new Error(normalizeRequestError(submitted.error || submitted.message, "Unable to submit the video for review."));
       }
       applyResponseSession(submitted, headers);
-      const completionMessage = approvedProfileVideoStatusLabel(submitted.video?.status || "moderating", submitted.video?.moderationDecision);
+      const completionMessage = approvedProfileVideoStatusLabel(submitted.video?.status || "moderating", submitted.video);
       const completionTone = submitted.video?.status === "rejected" ? "error" : "success";
       if (fileInput) fileInput.value = "";
       form.reset();

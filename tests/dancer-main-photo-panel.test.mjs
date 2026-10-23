@@ -92,7 +92,7 @@ test("a first main upload appears in the main slot while awaiting approval, incl
     assert.equal(view.button.props['aria-label'], "Remove pending main photo");
     assert.equal(view.button.props.disabled, false);
     assert.equal(view.crop, undefined);
-    assert.equal(view.badge, 'Waiting for Club approval');
+    assert.equal(view.badge, 'Waiting for final approval');
     assert.equal(view.status, '');
   }
   ui.update({ dancer_photos: [main] });
@@ -133,7 +133,7 @@ test('main photo waiting for Club approval offers only Remove and blocks replace
   assert.equal(ui.choices.length, 0);
   assert.equal(ui.target.props.disabled, true);
   assert.equal(ui.button.props.children, 'Remove');
-  assert.equal(ui.badge, 'Waiting for Club approval');
+  assert.equal(ui.badge, 'Waiting for final approval');
   await ui.upload();
   assert.equal(ui.uploads.length, 0);
 });
@@ -159,10 +159,10 @@ test('choosing another processing main photo preserves the approved replacement 
 });
 
 test('moderation work and delays use the same labels as the media library', () => {
-  for (const [status, label] of [['moderating', 'Checking photo…'], ['error', 'Review delayed'], ['pending_review', 'Waiting for Club approval']]) {
+  for (const [status, label] of [['moderating', 'Completed'], ['error', 'Review delayed'], ['pending_review', 'Waiting for final approval']]) {
     const ui = fixture({ pending_photo_reviews: [{ ...pending, status }] });
     assert.equal(ui.badge, label);
-    assert.equal(ui.progress, status === 'pending_review' ? 100 : 95);
+    assert.equal(ui.progress, undefined, 'saved uploads use status text without a lingering progress bar');
     assert.equal(Boolean(ui.reviewRetry), status === 'error');
   }
 });
@@ -173,7 +173,7 @@ test('a rejected main photo shows the reason and preserves the current photo', a
   assert.match(ui.status, /Not approved/);
   assert.match(ui.status, /Multiple people/);
   assert.equal(ui.status, 'Not approved. Multiple people');
-  assert.equal(ui.progress, 100);
+  assert.equal(ui.progress, undefined);
   assert.equal(ui.image.props.src, main.imageUrl);
 });
 

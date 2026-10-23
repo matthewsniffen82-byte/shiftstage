@@ -723,9 +723,9 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           const stalled = Boolean(video && isVideoProcessingStalled(video));
           const reviewStatus = stalled ? "moderation_error" : video ? videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed) : "";
           const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
-          const uploadStatus = stalled ? "Upload delayed" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : item?.stage === "checking" || item?.stage === "validating" || item?.stage === "uploading" || video?.status === "moderating" ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Uploading" : "Waiting to upload";
-          const processing = ["Uploading", "Preparing video…", "Checking video…", "Waiting to upload"].includes(uploadStatus);
-          const uploadProgress = item?.stage === "uploading" ? item.progress : uploadStatus === "Waiting to upload" ? 0 : undefined;
+          const uploadStatus = stalled ? "Upload delayed" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : item?.stage === "validating" || item?.stage === "uploading" ? "Uploading" : item?.stage === "checking" ? "Completed" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Completed" : "Uploading";
+          const processing = ["Uploading", "Completed"].includes(uploadStatus);
+          const uploadProgress = item?.stage === "uploading" ? item.progress : item?.stage === "queued" ? 0 : undefined;
           const note = stalled ? "Processing was interrupted. Retrying automatically, or tap Retry." : video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
           label={item?.file.name || `Video ${index + 1}`} message={note}
@@ -735,7 +735,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           <div className="dancer-upload-review-copy">
             <strong>Video {index + 1}</strong>
             <small role="status" aria-live="polite">{uploadStatus === "Uploading" && uploadProgress !== undefined ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
-            {processing ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
+            {uploadStatus === "Uploading" ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
               role="progressbar" aria-label={`Video ${index + 1}: ${uploadStatus}`}
               aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
               <span style={uploadProgress === undefined ? undefined : { width: `${uploadProgress}%` }} />

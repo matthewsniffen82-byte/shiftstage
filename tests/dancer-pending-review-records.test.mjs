@@ -109,13 +109,13 @@ for (const upload_context of ["profile_gallery:2", "profile_main"]) {
 test("final media decisions take precedence and waiting review is distinct from an active check", () => {
   assert.equal(mediaReview.mediaReviewLabel("approved", "pending_review"), "Approved");
   assert.equal(mediaReview.mediaReviewLabel("rejected", "moderating"), "Not approved");
-  assert.equal(mediaReview.mediaReviewLabel("pending", "pending_review"), "Waiting for Club approval");
-  assert.equal(mediaReview.mediaReviewLabel("submitted"), "Waiting for Club approval");
+  assert.equal(mediaReview.mediaReviewLabel("pending", "pending_review"), "Waiting for final approval");
+  assert.equal(mediaReview.mediaReviewLabel("submitted"), "Waiting for final approval");
   assert.equal(mediaReview.mediaReviewLabel("pending", "moderation_error"), "Review delayed");
-  assert.equal(mediaReview.mediaReviewLabel("pending", "moderating"), "Checking photo…");
+  assert.equal(mediaReview.mediaReviewLabel("pending", "moderating"), "Completed");
 });
 
-const checkedMain={id:'checked-main',decision:'review',status:'pending_review',upload_context:'profile_main',temporary_storage_path:'private-main.jpg',final_storage_path:'owner/profile/main.jpg',category_flags:{ai_recommended_approval:true,publication_prepared:true}};
+const checkedMain={id:'checked-main',decision:'review',status:'pending_review',upload_context:'profile_main',temporary_storage_path:'private-main.jpg',final_storage_path:'owner/profile/main.jpg',category_flags:{file_checks_passed:true,publication_prepared:true}};
 test('owner receives the prepared avatar preview without changing publication status',async()=>{
   const {rows,signed,calls}=await pendingReviews([checkedMain],[]);
   assert.equal(rows[0].avatarPreviewUrl,'/signed/owner/profile/main.jpg.avatar.jpg');
@@ -127,9 +127,9 @@ test('owner receives the prepared avatar preview without changing publication st
 });
 for(const changes of [
   {status:'moderating'},{decision:'rejected'},{upload_context:'profile_gallery:1'},
-  {category_flags:{}},{category_flags:{ai_recommended_approval:true}},
-  {category_flags:{...checkedMain.category_flags,ai_recommended_rejection:true}},
-  {category_flags:{...checkedMain.category_flags,ai_needs_review:true}},
+  {category_flags:{}},{category_flags:{file_checks_passed:true}},
+  {category_flags:{...checkedMain.category_flags,file_checks_passed:false}},
+  {category_flags:{...checkedMain.category_flags,publication_prepared:false}},
   ...['other/profile/main.jpg','owner/../other.jpg','owner//main.jpg','owner/./main.jpg','owner/\\other.jpg',''].map(final_storage_path=>({final_storage_path})),
 ])test('avatar preview requires checked prepared primary media and an owned path: '+JSON.stringify(changes),async()=>{
   const {rows,signed}=await pendingReviews([{...checkedMain,...changes}],[]);

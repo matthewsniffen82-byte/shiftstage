@@ -82,12 +82,12 @@ export function DancerAvatarPanel({ compact = false, onProfileChange, profile }:
   return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={busy} data-avatar-state={pendingAvatarUrl ? "pending" : avatarUrl ? "approved" : "automatic"}>
     <div className="dancer-avatar-editor" aria-label="Automatic avatar preview">
       <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!avatarUrl} type="button" disabled={busy || !canAdjustCrop}
-        aria-label={pendingAvatarUrl ? "Avatar preview pending club approval" : "Adjust avatar crop"} onClick={() => void adjustCrop()}>
+        aria-label={pendingAvatarUrl ? "Avatar preview waiting for final approval" : "Adjust avatar crop"} onClick={() => void adjustCrop()}>
         {avatarUrl ? <img src={avatarUrl} alt="Avatar from your main photo" style={{ objectPosition: pendingAvatarUrl ? "50% 50%" : `${profile?.avatarPhotoFocalX ?? 50}% ${profile?.avatarPhotoFocalY ?? 50}%` }} /> : <span aria-hidden="true">Auto</span>}
       </button>
     </div>
     <div className="dancer-avatar-upload-controls">
-      {pendingAvatarUrl ? <p>Preview · Pending club approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>Appears after your main photo passes checks.</p>}
+      {pendingAvatarUrl ? <p>Waiting for final approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>Appears after your main photo passes checks.</p>}
     </div>
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </article>;

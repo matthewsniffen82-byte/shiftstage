@@ -762,12 +762,12 @@
       return photos.filter((photo) => photo.status === "rejected").length + socialFixes;
     }
 
-    function approvedProfileVideoStatusLabel(status = "", decision = "") {
+    function approvedProfileVideoStatusLabel(status = "", video = {}) {
       return ({
         uploading: "Uploading",
-        moderating: "Checking video…",
-        submitted: decision === "approved" ? "Waiting for Club approval" : "Review delayed",
-        review: "Waiting for Club approval",
+        moderating: "Completed",
+        submitted: video.clubReviewedAt || video.moderationDetails?.fileChecksPassed === true ? "Waiting for final approval" : "Review delayed",
+        review: "Waiting for final approval",
         approved: "Approved",
         rejected: "Not approved"
       })[status] || status || "Saved";
@@ -821,7 +821,7 @@
                   ? `<video src="${displayText(video.videoUrl)}" controls playsinline preload="none" aria-label="Profile video ${index + 1}"></video>`
                   : '<div class="approved-profile-video-empty"><small>Video preview unavailable</small></div>'}
                 <div class="approved-profile-video-slot-copy">
-                  <span class="approved-profile-video-status">${displayText(approvedProfileVideoStatusLabel(video.status, video.moderationDecision))}</span>
+                  <span class="approved-profile-video-status">${displayText(approvedProfileVideoStatusLabel(video.status, video))}</span>
                   ${video.status === "rejected" ? `<p>${displayText(video.reviewNotes || "Reason unavailable")}</p>` : ""}
                 </div>
                 <button class="approved-profile-video-remove" type="button" data-approved-profile-video-remove="${displayText(video.id)}" ${approvedProfileVideoRemovingId === video.id ? "disabled" : ""}>

@@ -679,14 +679,14 @@ export function DancerPhotoPanel({
         {status && !(status === "Uploading" && reviews.length) ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       </DancerUploadDisclosure>
-      {batchProgress ? <div className="dancer-upload-overall">
-        <strong>{batchProgress.needsAttention ? "Upload needs attention" : batchProgress.percent === 100 ? "Uploads processed" : "Uploading photos"} · {batchProgress.percent}%</strong>
+      {batchProgress && batchProgress.percent < 100 ? <div className="dancer-upload-overall">
+        <strong>{batchProgress.needsAttention ? "Upload needs attention" : "Uploading"} · {batchProgress.percent}%</strong>
         <span className="dancer-upload-progress" role="progressbar" aria-label="Overall photo upload progress"
           aria-valuemin={0} aria-valuemax={100} aria-valuenow={batchProgress.percent}
-          aria-valuetext={`${batchProgress.percent}%. ${batchProgress.completed} of ${batchProgress.total} photos processed.`}>
+          aria-valuetext={`${batchProgress.percent}%. ${batchProgress.completed} of ${batchProgress.total} uploads completed.`}>
           <span style={{ width: `${batchProgress.percent}%` }} />
         </span>
-        <small>{batchProgress.completed} of {batchProgress.total} processed</small>
+        <small>{batchProgress.completed} of {batchProgress.total} completed</small>
       </div> : null}
       {reviews.length ? (
         <div className="photo-upload-queue" role="group" aria-label="Photo upload status">
@@ -697,9 +697,9 @@ export function DancerPhotoPanel({
           {reviews.map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
             const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
-            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "cropping" ? "Crop photo" : item?.stage === "checking" ? "Checking photo…" : item?.stage === "preparing" ? "Preparing photo…" : item?.stage === "uploading" ? "Uploading" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : "Waiting to upload";
-            const processing = ["Uploading", "Preparing photo…", "Crop photo", "Checking photo…", "Waiting to upload"].includes(uploadStatus);
-            const uploadProgress = uploadStatus === "Uploading" ? item?.progress : uploadStatus === "Waiting to upload" ? 0 : undefined;
+            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "cropping" ? "Crop photo" : item?.stage === "checking" ? "Completed" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : "Uploading";
+            const processing = ["Uploading", "Crop photo", "Completed"].includes(uploadStatus);
+            const uploadProgress = uploadStatus === "Uploading" && item?.stage === "uploading" ? item.progress : item?.stage === "queued" ? 0 : undefined;
             if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
               label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
               disabled={photoActionBusy} onDismiss={() => dismissRejectedPhoto(result.id)} />;
@@ -708,8 +708,8 @@ export function DancerPhotoPanel({
                 <div className="photo-preview" style={{ backgroundImage: `url(${item?.previewUrl || result?.imageUrl || ""})` }} aria-label="Photo preview">{!item?.previewUrl && !result?.imageUrl ? <span>Photo</span> : null}</div>
                 <span className="dancer-upload-review-copy">
                   <strong>{`Photo ${selectionNumber}`}</strong>
-                  <small role="status" aria-live="polite">{uploadStatus === "Uploading" ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
-                  {processing && item?.stage !== "cropping" ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
+                  <small role="status" aria-live="polite">{uploadStatus === "Uploading" && uploadProgress !== undefined ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
+                  {uploadStatus === "Uploading" ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
                     role="progressbar" aria-label={`Photo ${selectionNumber}: ${uploadStatus}`}
                     aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
                     <span style={uploadProgress === undefined ? undefined : { width: `${uploadProgress}%` }} />

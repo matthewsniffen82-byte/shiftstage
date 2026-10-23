@@ -123,7 +123,7 @@ test("uploaded previews retain pending and rejected items without presenting the
   assert.match(html, /3 added/);
   assert.match(html, /1 added/);
   assert.match(html, /Approved/);
-  assert.match(html, /Checking photo…/);
+  assert.match(html, /Completed/);
   assert.match(html, /Not approved/);
   assert.doesNotMatch(html, /Added to your profile/);
 });
@@ -132,7 +132,7 @@ test("upload progress, failure, and unknown statuses never imply publication", (
   assert.equal(exports.profileUploadStatus("uploading"), "Upload incomplete");
   assert.equal(exports.profileUploadStatus("failed"), "Upload failed");
   assert.equal(exports.profileUploadStatus("unknown"), "Check upload status");
-  assert.equal(exports.profileUploadStatus("submitted"), "Waiting for Club approval");
+  assert.equal(exports.profileUploadStatus("submitted"), "Waiting for final approval");
 });
 
 test("an approved dancer sees the actual review state of each photo", () => {
@@ -143,8 +143,8 @@ test("an approved dancer sees the actual review state of each photo", () => {
     { id: "delayed", status: "pending", moderationStatus: "moderation_error" },
   ] });
   assert.match(html, /View photo 1: Approved/);
-  assert.match(html, /View photo 2: Waiting for Club approval/);
-  assert.match(html, /View photo 3: Checking photo…/);
+  assert.match(html, /View photo 2: Waiting for final approval/);
+  assert.match(html, /View photo 3: Completed/);
   assert.match(html, /View photo 4: Review delayed/);
 });
 

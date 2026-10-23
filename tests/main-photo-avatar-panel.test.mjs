@@ -42,7 +42,7 @@ test('checked main photo displays its private avatar while still pending club ap
   assert.equal(ui.image,'/private-avatar.jpg');
   assert.equal(ui.nodes()[0].props['data-avatar-state'],'pending');
   assert.equal(ui.nodes().find(n=>n.type==='button').props.disabled,true);
-  assert.ok(ui.nodes().some(n=>n.type==='p'&&n.props.children==='Preview · Pending club approval'));
+  assert.ok(ui.nodes().some(n=>n.type==='p'&&n.props.children==='Waiting for final approval'));
   ui.click();await ui.settle();assert.equal(ui.requests.length,0,'preview does not publish or crop unapproved media');
 });
 test('pending replacement avatar replaces the preview only and restores the approved avatar when removed',()=>{
