@@ -646,6 +646,8 @@ export function DancerPhotoPanel({
     && photoStatusLabel(result.status, result.moderationStatus) === "Awaiting final approval");
   const activeReviews = reviews.filter(review => !awaitingReviews.includes(review));
   const approvedPhotos = photos.filter(photo => photo.status === "approved");
+  const needsMainPhoto = automaticMain && !photos.some(photo => photo.isPrimary && photo.status !== "rejected");
+  const uploadLabel = needsMainPhoto ? "Main photo & avatar" : "Add photos";
   const batchEntries = uploadBatchIds.length
     ? confirmedQueuedPhotos.filter(item => uploadBatchIds.includes(item.id)).map(item => ({ item,
       result: reviewPhotos.find(photo => photo.id === item.result?.id)
@@ -660,9 +662,17 @@ export function DancerPhotoPanel({
 
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
-      <DancerUploadDisclosure kind="photos" label="Add photos" defaultOpen={!uploadOnly || approvedPhotos.length < MIN_DANCER_ONBOARDING_PHOTOS}>
+      <DancerUploadDisclosure kind="photos" label={uploadLabel} openRequested={needsMainPhoto} defaultOpen={needsMainPhoto || !uploadOnly || approvedPhotos.length < MIN_DANCER_ONBOARDING_PHOTOS}>
       <div className="dancer-photo-upload-form">
-        <strong className="photo-source-heading">Add photos</strong>
+        <strong className="photo-source-heading">{uploadLabel}</strong>
+        {needsMainPhoto ? <button type="button" className="dancer-main-photo-empty" disabled={photoActionBusy}
+          aria-label="Add a main photo and create your avatar" onClick={() => galleryPhotoInputRef.current?.click()}>
+          <span className="dancer-main-photo-empty-preview" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM5 16l5-5 4 4 3-3 3 3" /><circle cx="16" cy="9" r="1" /></svg>
+            <span><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M5 21v-2a7 7 0 0 1 14 0v2" /></svg></span>
+          </span>
+          <span className="dancer-main-photo-empty-copy"><strong>Add main photo</strong><small>Your avatar will be created automatically.</small></span>
+        </button> : null}
         <DancerMediaUploadRules kind="photo" />
         {!uploadOnly && !approvedPhotos.length ? <div className="photo-upload-heading">
           <span><strong>Add at least 1 solo photo of yourself. You can add more later.</strong></span>
@@ -683,7 +693,7 @@ export function DancerPhotoPanel({
             }}
           />
           <button
-            aria-label="Choose profile photos from your library"
+            aria-label={needsMainPhoto ? "Choose your main photo from your library" : "Choose profile photos from your library"}
             className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}
             disabled={photoActionBusy}
             type="button"
@@ -713,7 +723,7 @@ export function DancerPhotoPanel({
             }}
           />
           <button
-            aria-label="Take a new profile photo"
+            aria-label={needsMainPhoto ? "Take a new main photo" : "Take a new profile photo"}
             className={`photo-source-action${photoActionBusy ? " is-disabled" : ""}`}
             disabled={photoActionBusy}
             type="button"
@@ -730,7 +740,9 @@ export function DancerPhotoPanel({
           </button>
         </div>
         <p className="photo-upload-selection-hint">Select photos, then keep all crops or adjust individually.</p>
-        {automaticMain ? <p className="photo-upload-selection-hint">Your main photo appears on dancer cards and creates your avatar. Choose another from a photo’s menu.</p> : null}
+        {automaticMain ? <p className="photo-upload-selection-hint">{needsMainPhoto
+          ? "The first photo you select becomes your main photo. Your other photos stay saved."
+          : "Your main photo appears on dancer cards and creates your avatar. Choose another from a photo’s menu."}</p> : null}
         {status && !(status === "Uploading" && reviews.length) ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       </DancerUploadDisclosure>

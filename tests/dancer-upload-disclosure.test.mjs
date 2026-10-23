@@ -47,3 +47,15 @@ test('returning editors retain native upload disclosures and replacement request
   ui.draw({openRequested:true});assert.equal(closed.props.ref.current.open,true);
   assert.equal(fixture().draw({defaultOpen:true}).props.open,true);
 });
+
+test('a missing main photo opens the photo chooser once and still allows switching to videos', () => {
+  const calls = [], picker = { active: null };
+  picker.open = kind => { calls.push(kind); picker.active = kind; };
+  const ui = fixture(picker);
+  ui.draw({ openRequested: false });
+  ui.draw({ openRequested: true });
+  assert.equal(ui.draw({ openRequested: true }).props.hidden, false);
+  picker.active = 'videos';
+  assert.equal(ui.draw({ openRequested: true }).props.hidden, true);
+  assert.deepEqual(calls, ['photos']);
+});

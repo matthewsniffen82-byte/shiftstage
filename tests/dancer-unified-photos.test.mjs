@@ -20,7 +20,7 @@ const approved = { id: 'main', imageUrl: '/main.jpg', review_status: 'approved',
 const pending = { id: 'pending-main', previewUrl: '/pending.jpg', status: 'pending_review', upload_context: 'profile_main', is_primary: true };
 
 // Run actual component handlers with in-memory uploads; no browser or external requests.
-function fixture({ profile = {}, automaticMain = true, failFirst = false } = {}) {
+function fixture({ profile = {}, automaticMain = true, failFirst = false, failDelete = false } = {}) {
   const slots = [], posts = [];
   let cursor = 0, dirty = true, effects = [], tree;
   const hooks = {
@@ -60,8 +60,16 @@ function fixture({ profile = {}, automaticMain = true, failFirst = false } = {})
       readSession: () => ({ accessToken: 'fixture', account: { id: 'owner' } }),
       requestDancerPhotosJson: async options => {
         posts.push(options);
+        if (options.method === 'DELETE') {
+          if (failDelete) throw new Error('Unable to delete photo.');
+          const { photoId } = JSON.parse(options.body);
+          profile = { ...profile, pending_photo_reviews: (profile.pending_photo_reviews || []).filter(photo => photo.id !== photoId) };
+          return { ok: true };
+        }
         if (failFirst && posts.length === 1) throw new Error('Connection lost.');
-        return { decision: 'review', photo: { id: `photo-${posts.length}`, isPrimary: options.body.get('isPrimary') === 'true', sortOrder: Number(options.body.get('sortOrder')) } };
+        const photo = { id: `photo-${posts.length}`, isPrimary: options.body.get('isPrimary') === 'true', sortOrder: Number(options.body.get('sortOrder')) };
+        profile = { ...profile, pending_photo_reviews: [...(profile.pending_photo_reviews || []), { ...photo, status: 'pending_review' }] };
+        return { decision: 'review', photo };
       },
       requestDancerProfileJson: async () => ({ profile }),
     },
@@ -83,6 +91,7 @@ function fixture({ profile = {}, automaticMain = true, failFirst = false } = {})
   return {
     posts,
     nodes: draw,
+    updateProfile(next) { profile = next; props.profile = next; dirty = true; draw(); },
     select(count = 1, source = 'gallery', keep = false) {
       const input = draw().find(node => node.type === 'input' && node.props.className === 'photo-source-input' && Boolean(node.props.capture) === (source === 'camera'));
       input.props.onChange({ target: { files: Array.from({ length: count }, (_, i) => new File(['image'], `photo-${i}.jpg`, { type: 'image/jpeg' })), value: '' } });
@@ -122,4 +131,54 @@ test('pending main photo appears first with its avatar accessory only once', () 
   const items = ui.nodes().find(node => node.type === 'PendingGrid').props.items;
   assert.equal(items[0].id, 'pending-main'); assert.equal(items[0].label, 'Main photo');
   assert.equal(items[0].accessory, 'Avatar control'); assert.equal(items[1].accessory, undefined);
+});
+
+const emptyTarget = ui => ui.nodes().find(node => node.props.className === 'dancer-main-photo-empty');
+const disclosure = ui => ui.nodes().find(node => node.type === './DancerUploadDisclosure');
+
+test('missing main photo has an explicit upload target even with five saved pending photos', () => {
+  const gallery = Array.from({ length: 5 }, (_, i) => ({ ...pending, id: `gallery-${i}`, is_primary: false, upload_context: 'profile_gallery' }));
+  const ui = fixture({ profile: { pending_photo_reviews: gallery } });
+  assert.equal(disclosure(ui).props.label, 'Main photo & avatar');
+  assert.equal(disclosure(ui).props.openRequested, true);
+  const opened = [];
+  const inputs = ui.nodes().filter(node => node.type === 'input' && node.props.className === 'photo-source-input');
+  inputs.forEach((node, i) => { node.props.ref.current = { click: () => opened.push(i) }; });
+  emptyTarget(ui).props.onClick();
+  ui.nodes().find(node => node.props['aria-label'] === 'Choose your main photo from your library').props.onClick();
+  ui.nodes().find(node => node.props['aria-label'] === 'Take a new main photo').props.onClick();
+  assert.deepEqual(opened, [0, 0, 1]);
+  assert.equal(ui.nodes().find(node => node.type === 'PendingGrid').props.items.length, 5);
+});
+
+test('deleting a pending main photo reopens its uploader and the replacement becomes main', async () => {
+  const gallery = { ...pending, id: 'gallery', is_primary: false, upload_context: 'profile_gallery' };
+  const ui = fixture({ profile: { pending_photo_reviews: [pending, gallery] } });
+  assert.equal(emptyTarget(ui), undefined);
+  ui.nodes().find(node => node.type === 'PendingGrid').props.items[0].onRemove(); await ui.settle();
+  assert.ok(emptyTarget(ui)); assert.equal(disclosure(ui).props.openRequested, true);
+  assert.equal(ui.nodes().find(node => node.type === 'PendingGrid').props.items[0].id, 'gallery');
+  ui.select(1, 'camera'); await ui.settle();
+  const replacement = ui.posts.find(post => post.method === 'POST');
+  assert.equal(replacement.body.get('isPrimary'), 'true');
+  assert.equal(replacement.body.get('replaceExisting'), 'false');
+  assert.equal(emptyTarget(ui), undefined);
+  assert.equal(disclosure(ui).props.label, 'Add photos');
+});
+
+test('removing an approved main photo restores its uploader even with an otherwise complete library', () => {
+  const gallery = Array.from({ length: 4 }, (_, i) => ({ ...approved, id: `saved-${i}`, is_primary: false, sort_order: i + 1 }));
+  const ui = fixture({ profile: { dancer_photos: [approved, ...gallery] } });
+  assert.equal(emptyTarget(ui), undefined);
+  ui.updateProfile({ dancer_photos: gallery });
+  assert.ok(emptyTarget(ui)); assert.equal(disclosure(ui).props.openRequested, true);
+  assert.equal(disclosure(ui).props.defaultOpen, true);
+});
+
+test('failed deletion keeps the existing main photo and does not offer a misleading empty slot', async () => {
+  const ui = fixture({ profile: { pending_photo_reviews: [pending] }, failDelete: true });
+  ui.nodes().find(node => node.type === 'PendingGrid').props.items[0].onRemove(); await ui.settle();
+  assert.equal(emptyTarget(ui), undefined);
+  assert.equal(disclosure(ui).props.openRequested, false);
+  assert.equal(ui.nodes().find(node => node.type === 'PendingGrid').props.items[0].id, pending.id);
 });
