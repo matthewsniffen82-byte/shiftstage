@@ -124,11 +124,13 @@ export default function AdminMediaWorkbench({ venueId = "", userId, active = tru
       <button type="button" disabled={locked || loading} onClick={() => void load()}>Refresh</button></header>
     <div className="admin-media-stages">{[["staff", "Ready for MyDancr"], ["club", "Waiting on club"], ["processing", "File preparation"], ["history", "Decision history"]].map(([value, label]) =>
       <button type="button" key={value} disabled={locked} aria-pressed={stage === value} onClick={() => changeFilter(() => setStage(value))}>{label}{value !== "history" && dancers ? ` · ${dancers.counts[value as keyof typeof dancers.counts]}` : ""}</button>)}</div>
-    <div className="admin-media-filters"><label>Find dancer or club<input type="search" value={search} disabled={locked} onChange={event => changeFilter(() => setSearch(event.target.value))} /></label>
+    <div className="admin-media-filters"><label className="admin-media-search">Find dancer or club<input type="search" value={search} disabled={locked} onChange={event => changeFilter(() => setSearch(event.target.value))} /></label>
       <label>Media<select value={kind} disabled={locked} onChange={event => changeFilter(() => setKind(event.target.value))}><option value="all">Photos & videos</option><option value="photo">Photos</option><option value="video">Videos</option></select></label>
       <label>Waiting<select value={hours} disabled={locked} onChange={event => changeFilter(() => setHours(event.target.value))}><option value="0">Any time</option><option value="24">Over 24 hours</option><option value="72">Over 3 days</option><option value="168">Over 7 days</option></select></label></div>
-    {selected ? <button type="button" disabled={Boolean(busy)} onClick={() => choose(null)}>← All dancers</button> : null}
-    <p role="status">{selected ? page ? `${page.total} uploads · ${page.items.length} loaded` : "Loading uploads…" : dancers ? `${dancers.dancerCount} dancers · ${dancers.total} uploads` : "Loading dancers…"}</p>
+    <div className="admin-media-toolbar">
+      {selected ? <button className="admin-media-back" type="button" disabled={Boolean(busy)} onClick={() => choose(null)}>← All dancers</button> : null}
+      <p role="status">{selected ? page ? `${page.total} uploads · ${page.items.length} loaded` : "Loading uploads…" : dancers ? `${dancers.dancerCount} dancers · ${dancers.total} uploads` : "Loading dancers…"}</p>
+    </div>
     {message ? <p role="status">{message}</p> : null}{error ? <p role="alert">{error}</p> : null}
     {!loading && !(selected ? page?.items.length : dancers?.dancers.length) && !error ? <p>No media in this view.</p> : null}
     {!selected ? <div className="admin-media-dancer-grid">{dancers?.dancers.map(dancer => <button type="button" className="admin-media-dancer-card" key={dancer.id}

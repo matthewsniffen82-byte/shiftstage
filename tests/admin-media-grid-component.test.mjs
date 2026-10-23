@@ -101,10 +101,59 @@ test('count polling preserves the current media sources and review notes',async(
   }finally{f.unmount();}
 });
 
-test('admin review grids match the club’s three columns, portrait ratio, gutters and corner radius',()=>{
+test('filter controls and the back/count toolbar retain their navigation and review behavior', async () => {
+  const f = fixture([item('a'), item('b')]);
+  try {
+    await f.open();
+    const toolbar = f.nodes().find(node => node.props.className === 'admin-media-toolbar');
+    assert.ok(walk(toolbar).some(node => node.props.className === 'admin-media-back'));
+    assert.ok(walk(toolbar).some(node => node.props.role === 'status' && node.props.children === '2 uploads · 2 loaded'));
+    assert.equal(f.nodes().filter(node => node.props.className === 'admin-media-search').length, 1);
+    f.button('← All dancers').props.onClick(); await f.settle();
+    assert.equal(f.cards.length, 0);
+    assert.ok(f.nodes().some(node => node.props.className === 'admin-media-dancer-card'));
+    await f.open();
+    f.nodes().find(node => node.type === 'select' && node.props.value === 'all').props.onChange({ target: { value: 'video' } });
+    await f.settle();
+    assert.equal(f.button('← All dancers'), undefined);
+    assert.ok(f.calls.at(-1)[0].includes('kind=video'));
+  } finally { f.unmount(); }
+});
+
+test('admin review grids retain three portrait columns without escaping the clipped panel',()=>{
   const rules=[];postcss.parse(readFileSync('app/admin/admin-media-grid.css','utf8')).walkRules(rule=>rules.push(rule));
   const values=selector=>Object.fromEntries(rules.find(r=>r.selector===selector).nodes.filter(n=>n.type==='decl').map(n=>[n.prop,n.value]));
-  const grid=values('.admin-media-grid-workbench :is(.admin-media-dancer-grid, .admin-media-review-grid)');
+  const selector='.admin-media-grid-workbench :is(.admin-media-dancer-grid, .admin-media-review-grid)';
+  const grid=values(selector);
   assert.equal(grid['grid-template-columns'],'repeat(3, minmax(0, 1fr))');assert.equal(grid.gap,'var(--dancr-media-grid-gap, 3px)');
+  assert.equal(grid.width,'100%');assert.equal(grid['max-width'],'100%');assert.equal(grid['box-sizing'],'border-box');
+  assert.equal(grid['margin-inline'],'0');assert.equal(grid['padding-inline'],'0');
+  for (const rule of rules.filter(rule => rule.selector === selector)) {
+    rule.walkDecls(decl => assert.doesNotMatch(decl.value, /vw/, 'mobile rules must not expand beyond the admin panel'));
+  }
   const preview=values('.admin-media-grid-workbench .admin-media-preview');assert.equal(preview['aspect-ratio'],'9 / 16');assert.equal(preview['border-radius'],'8px');
+  assert.equal(preview.overflow,'hidden');
+  const media=values('.admin-media-grid-workbench .admin-media-preview :is(img,video)');
+  assert.equal(media.position,'absolute');assert.equal(media.inset,'0');assert.equal(media.height,'100%');
+});
+
+test('admin filters are compact, wrap on narrow screens, and leave space before the review grid', () => {
+  const rules=[];postcss.parse(readFileSync('app/admin/admin-media-grid.css','utf8')).walkRules(rule=>rules.push(rule));
+  const values=(selector,media)=>Object.fromEntries(rules.find(rule=>rule.selector===selector && (rule.parent.type==='atrule'?rule.parent.params:undefined)===media).nodes.filter(node=>node.type==='decl').map(node=>[node.prop,node.value]));
+  const prefix='body .admin-shell .admin-media-grid-workbench';
+  const controls=values(prefix+' .admin-media-filters :is(input, select)');
+  assert.equal(controls.height,'44px');assert.equal(controls['min-height'],'44px');assert.equal(controls['font-size'],'16px');
+  assert.equal(controls['min-width'],'0');assert.equal(controls['max-width'],'100%');assert.equal(controls['box-sizing'],'border-box');
+  assert.equal(values(prefix+' label')['letter-spacing'],'0');
+  assert.equal(values(prefix+' .admin-media-filters','(max-width: 760px)')['grid-template-columns'],'minmax(0, 1.25fr) minmax(0, 1fr)');
+  assert.equal(values(prefix+' .admin-media-search','(max-width: 760px)')['grid-column'],'1 / -1');
+  assert.equal(values(prefix+' .admin-media-filters','(max-width: 359px)')['grid-template-columns'],'minmax(0, 1fr)');
+  const toolbar=values(prefix+' .admin-media-toolbar');
+  assert.equal(toolbar['flex-wrap'],'wrap');assert.equal(toolbar.gap,'8px');assert.equal(toolbar['margin-block'],'12px');
+  const back=values(prefix+' .admin-media-back');
+  assert.equal(back['min-height'],'44px');assert.equal(back['font-size'],'13px');assert.equal(back.margin,'0');
+  const actions=values('.admin-media-grid-workbench :is(.admin-media-card-actions,.admin-media-rejection) button');
+  assert.equal(actions['min-height'],'44px');assert.equal(actions['max-width'],'100%');assert.equal(actions['white-space'],'normal');
+  const history=values('.admin-media-grid-workbench .admin-media-review-grid :is(details, summary)');
+  assert.equal(history['font-size'],'12px');assert.equal(history['overflow-wrap'],'anywhere');
 });
