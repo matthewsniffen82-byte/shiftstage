@@ -15,10 +15,18 @@
     background: var(--dancr-color-surface-card);
     box-shadow: 0 0 0 1px var(--dancr-color-border);
   }
-  .dancer-pending-media-box > .dancer-pending-media-heading {
+  .dancer-pending-media-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 8px 0;
+  }
+  .dancer-pending-media-header > .dancer-pending-media-heading {
     display: block;
     margin: 0 !important;
-    padding: 10px 8px 0;
+    padding: 0;
     color: var(--dancr-color-text-primary);
     font-size: 14px !important;
     font-weight: 600;
@@ -45,6 +53,15 @@
     border: 0;
     background: transparent;
   }
+  .dancer-pending-media-grid > li > .dancer-pending-media-label {
+    margin: 0 !important;
+    padding: 2px 4px;
+    color: var(--dancr-color-text-primary);
+    font-size: 12px !important;
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
   .dancer-pending-media-preview {
     position: relative;
     display: grid;
@@ -68,7 +85,8 @@
     object-fit: cover;
     object-position: center;
   }
-  html body.dancr-button-system .dancer-pending-media-grid > li > .dancer-pending-media-remove {
+  html body.dancr-button-system .dancer-pending-media-grid > li > .dancer-pending-media-remove,
+  html body.dancr-button-system .dancer-pending-media-header > .dancer-pending-media-add {
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -90,6 +108,10 @@
     line-height: 1.4 !important;
     text-transform: none;
   }
-  .dancer-pending-media-remove:disabled { opacity: .55; }
-  .dancer-pending-media-remove:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -2px; }
+  html body.dancr-button-system .dancer-pending-media-header > .dancer-pending-media-add {
+    width: auto !important;
+    padding-inline: 8px !important;
+  }
+  :is(.dancer-pending-media-remove, .dancer-pending-media-add):disabled { opacity: .55; }
+  :is(.dancer-pending-media-remove, .dancer-pending-media-add):focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -2px; }
 }

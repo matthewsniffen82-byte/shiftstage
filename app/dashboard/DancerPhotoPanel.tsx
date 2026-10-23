@@ -771,9 +771,11 @@ export function DancerPhotoPanel({
           })}
         </div>
       ) : null}
-      <DancerPendingMediaGrid items={awaitingReviews.map(review => {
+      <DancerPendingMediaGrid addMore={{ label: "Add more photos", disabled: photoActionBusy,
+        onClick: () => galleryPhotoInputRef.current?.click() }} items={awaitingReviews.map(review => {
         const { item, result } = review;
-        return { id: result!.id, kind: "photo", label: `Photo ${reviews.indexOf(review) + 1}`,
+        return { id: result!.id, kind: "photo", isMainPhoto: Boolean(result!.isPrimary),
+          label: result!.isPrimary ? "Main photo/avatar" : `Photo ${reviews.indexOf(review) + 1}`,
           imageUrl: item?.previewUrl || result!.imageUrl, disabled: photoActionBusy,
           removing: deletingPhotoIds.has(result!.id), onRemove: () => void deletePhoto(result!) };
       })} />
