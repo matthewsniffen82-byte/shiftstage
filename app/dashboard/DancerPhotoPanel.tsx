@@ -679,14 +679,9 @@ export function DancerPhotoPanel({
         {status && !(status === "Uploading" && reviews.length) ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       </DancerUploadDisclosure>
-      {batchProgress && batchProgress.percent < 100 ? <div className="dancer-upload-overall">
-        <strong>{batchProgress.needsAttention ? "Upload needs attention" : "Uploading"} · {batchProgress.percent}%</strong>
-        <span className="dancer-upload-progress" role="progressbar" aria-label="Overall photo upload progress"
-          aria-valuemin={0} aria-valuemax={100} aria-valuenow={batchProgress.percent}
-          aria-valuetext={`${batchProgress.percent}%. ${batchProgress.completed} of ${batchProgress.total} uploads completed.`}>
-          <span style={{ width: `${batchProgress.percent}%` }} />
-        </span>
-        <small>{batchProgress.completed} of {batchProgress.total} completed</small>
+      {batchProgress ? <div className="dancer-upload-overall" role="status" aria-live="polite">
+        {batchProgress.needsAttention ? <strong>Upload needs attention</strong> : null}
+        <small>{batchProgress.completed} of {batchProgress.total} processed</small>
       </div> : null}
       {reviews.length ? (
         <div className="photo-upload-queue" role="group" aria-label="Photo upload status">

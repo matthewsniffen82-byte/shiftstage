@@ -80,6 +80,7 @@ function photoHarness({ uploadOnly = false, profile = {}, crop = async file => f
     get replacements() { return nodes().filter(node => node.type === "input" && /^Replace photo/.test(node.props['aria-label'] || '')); },
     get progress() { return nodes().filter(node => node.props?.role === "progressbar" && node.props['aria-label'] !== 'Overall photo upload progress'); },
     get overallProgress() { return nodes().find(node => node.props?.['aria-label'] === 'Overall photo upload progress')?.props['aria-valuenow']; },
+    get processedCount() { const summary = nodes().find(node => node.props?.className === 'dancer-upload-overall'); return summary && nodes(summary).find(node => node.type === 'small').props.children.join(''); },
     get uploadMessages() { return nodes().filter(node => node.props?.className === "photo-upload-status").map(node => node.props.children); },
     get uploadHint() { return Array.from(nodes().find(node => node.props?.className === "photo-upload-selection-hint").props.children).join(''); },
     select(files = [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })], source = "gallery") {
@@ -240,19 +241,27 @@ test("Cancel uploads stops photo transfers and queued files, preserves an active
   await ui.settle();
 });
 
-test('overall photo progress disappears after transfer and stays hidden through review updates', async () => {
+test('batch summary keeps the processed count without an overall percentage or bar', async () => {
   const releases = [];
   const ui = photoHarness({ post: () => new Promise(resolve => releases.push(resolve)),
     read: async () => ({ profile: { pending_photo_reviews: [pending('one', 1), pending('two', 2)].map(photo => ({ ...photo, status: 'moderating' })) } }),
   });
   ui.select([1, 2].map(id => new File(['photo'], `${id}.jpg`, { type: 'image/jpeg' })));
-  await ui.settle(); assert.equal(ui.overallProgress, 0);
+  await ui.settle();
+  assert.equal(ui.overallProgress, undefined);
+  assert.equal(ui.processedCount, '0 of 2 processed');
   ui.posts[0].onUploadProgress(50); ui.posts[1].onUploadProgress(100); await ui.settle();
-  assert.equal(ui.overallProgress, 75);
+  assert.equal(ui.overallProgress, undefined);
+  assert.equal(ui.processedCount, '1 of 2 processed');
+  assert.equal(ui.progress.length, 1, 'only the unfinished photo keeps its transfer bar');
+  assert.equal(ui.progress[0].props['aria-valuenow'], 50);
   releases.forEach((release, index) => release({ decision: 'moderating', moderationRecordId: ['one', 'two'][index] }));
   await ui.settle(); assert.equal(ui.overallProgress, undefined);
+  assert.equal(ui.processedCount, '2 of 2 processed');
+  assert.equal(ui.progress.length, 0);
   ui.updateProfile({ pending_photo_reviews: [{ ...pending('one', 1), status: 'pending_review' }, { ...pending('two', 2), status: 'moderating' }] });
   assert.equal(ui.overallProgress, undefined);
+  assert.equal(ui.processedCount, '2 of 2 processed');
   ui.updateProfile({ pending_photo_reviews: [{ ...pending('one', 1), status: 'pending_review' }], rejected_photo_reviews: [{ id: 'two', message: 'Multiple people' }] });
   assert.equal(ui.overallProgress, undefined);
   assert.deepEqual(ui.statuses, ['Waiting for final approval', 'Not approved']);
@@ -260,6 +269,7 @@ test('overall photo progress disappears after transfer and stays hidden through 
   assert.equal(ui.overallProgress, undefined, 'final approval cannot restore a completed upload bar');
   const restored = photoHarness({ profile: { pending_photo_reviews: [{ ...pending('restore'), status: 'moderating' }] } });
   assert.equal(restored.overallProgress, undefined);
+  assert.equal(restored.processedCount, '1 of 1 processed');
 });
 
 test("collapsing photo upload controls leaves pending and rejected reviews outside the disclosure", () => {
