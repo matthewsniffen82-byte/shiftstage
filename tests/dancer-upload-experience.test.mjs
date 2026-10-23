@@ -117,7 +117,7 @@ test('processing timings record successful and failed stages without changing th
   for (const stage of ['encode_mobile', 'source_download']) assert.ok(Number.isFinite(context.stages[stage]) && context.stages[stage] >= 0);
 });
 
-function photoPanelFixture() {
+function photoPanelFixture({ crop, profile = { id: 'profile' } } = {}) {
   const slots = [], effects = [], requests = [], crops = [];
   let cursor = 0, dirty = true, tree;
   const hooks = { ...React,
@@ -137,12 +137,12 @@ function photoPanelFixture() {
     './photo-upload-crop-queue': { createPhotoCropQueue },
     './media-upload-batch': { runMediaUploadBatch, MEDIA_UPLOAD_CONCURRENCY },
     './media-upload-cancellation': { createMediaUploadCancellation },
-    './profile-photo-crop': { cropProfilePhoto: async file => { crops.push('individual'); return file; } },
+    './profile-photo-crop': { cropProfilePhoto: async (...args) => { crops.push('individual'); return crop ? crop(...args) : args[0]; } },
     './default-photo-crop': { keepDefaultPhotoCrop: async file => { crops.push('batch'); return file; } },
     './prepare-photo-upload': { preparePhotoUpload: async file => file },
     './dashboard-session': {
       readSession: () => ({ accessToken: 'synthetic', account: { id: 'owner' } }),
-      requestDancerPhotosJson: options => new Promise(resolve => requests.push({ options, resolve })),
+      requestDancerPhotosJson: options => new Promise((resolve, reject) => requests.push({ options, resolve, reject })),
       requestDancerProfileJson: async () => ({}),
     },
   };
@@ -151,7 +151,7 @@ function photoPanelFixture() {
   }).outputText;
   vm.runInNewContext(source, { exports, File, FormData, URL, AbortController, DOMException, Error, Event,
     crypto: globalThis.crypto, window: new EventTarget(), require: name => dependencies[name] || { default: name } });
-  const props = { profile: { id: 'profile' }, deletedPhotoIds: [], deletedPhotoStoragePaths: [] };
+  const props = { profile, deletedPhotoIds: [], deletedPhotoStoragePaths: [] };
   const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
   function draw() {
     for (let iteration = 0; dirty && iteration < 20; iteration++) {
@@ -161,11 +161,12 @@ function photoPanelFixture() {
   }
   draw();
   return { requests, crops, draw,
-    choose() { draw().find(node => node.type === 'input' && node.props.multiple).props.onChange({ target: {
-      files: [new File(['a'], 'a.jpg', { type: 'image/jpeg' }), new File(['b'], 'b.jpg', { type: 'image/jpeg' })], value: '',
+    choose(files = [new File(['a'], 'a.jpg', { type: 'image/jpeg' }), new File(['b'], 'b.jpg', { type: 'image/jpeg' })]) { draw().find(node => node.type === 'input' && node.props.multiple).props.onChange({ target: {
+      files, value: '',
     } }); draw(); },
     get choice() { return draw().find(node => node.type === 'CropChoice'); },
     get summary() { return draw().find(node => node.type === 'UploadSummary').props; },
+    get cards() { return draw().filter(node => node.props.className?.includes('dancer-upload-review-card')); },
     async settle() { await new Promise(resolve => setImmediate(resolve)); draw(); },
     unmount() { slots.forEach(slot => slot?.cleanup?.()); },
   };
@@ -174,7 +175,7 @@ function photoPanelFixture() {
 for (const keep of [true, false]) test(`photo batch waits for crop consent and counts server receipts, keepAll=${keep}`, async () => {
   const f = photoPanelFixture();
   try {
-    f.choose(); assert.equal(f.requests.length, 0); assert.equal(f.summary.summary.total, 2);
+    f.choose(); assert.equal(f.requests.length, 0); assert.equal(f.summary.summary, null); assert.equal(f.cards.length, 0);
     f.choice.props[keep ? 'onKeep' : 'onAdjust'](); await f.settle();
     assert.deepEqual(f.crops, [keep ? 'batch' : 'individual', keep ? 'batch' : 'individual']);
     assert.equal(f.requests.length, 2);
@@ -193,4 +194,66 @@ test('canceling batch crop selection releases the queue without uploading', () =
   const f = photoPanelFixture();
   try { f.choose(); f.choice.props.onCancel(); assert.equal(f.choice, undefined); assert.equal(f.summary.summary, null); assert.equal(f.requests.length, 0); }
   finally { f.unmount(); }
+});
+
+function deferredCrops() {
+  const dialogs = [];
+  return { dialogs, crop: (file, signal, _assertSession, _ratio, _preview, _onCrop, batch) => new Promise((resolve, reject) => {
+    signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+    dialogs.push({ confirm: () => resolve(file), skip: () => resolve(null), cancel: batch.onCancelBatch,
+      fail: () => reject(new Error('Unable to prepare photo')) });
+  }) };
+}
+
+test('a photo appears in upload status only after confirming its crop', async () => {
+  const pending = deferredCrops(), f = photoPanelFixture(pending);
+  try {
+    f.choose([new File(['a'], 'a.jpg', { type: 'image/jpeg' })]); await f.settle();
+    assert.equal(pending.dialogs.length, 1);
+    assert.equal(f.cards.length, 0); assert.equal(f.summary.summary, null); assert.equal(f.requests.length, 0);
+    pending.dialogs[0].confirm(); await f.settle();
+    assert.equal(f.cards.length, 1); assert.equal(f.summary.summary.total, 1); assert.equal(f.requests.length, 1);
+    f.requests[0].reject(new Error('Network failed')); await f.settle();
+    assert.equal(f.cards.length, 1);
+    assert.ok(f.draw().some(node => node.type === 'button' && node.props.children === 'Retry'));
+  } finally { f.unmount(); }
+});
+
+for (const action of ['cancel', 'skip', 'fail']) test(`unconfirmed photo leaves no upload card after crop ${action}`, async () => {
+  const pending = deferredCrops(), f = photoPanelFixture(pending);
+  try {
+    f.choose([new File(['a'], 'a.jpg', { type: 'image/jpeg' })]); await f.settle();
+    pending.dialogs[0][action](); await f.settle();
+    assert.equal(f.cards.length, 0); assert.equal(f.summary.summary, null); assert.equal(f.requests.length, 0);
+    assert.equal(f.summary.busy, false);
+    assert.ok(!f.draw().some(node => node.props.children === 'Upload canceled'));
+    // A dismissed draft must not occupy a profile slot or prevent another selection.
+    f.choose(); assert.ok(f.choice); f.choice.props.onCancel();
+  } finally { f.unmount(); }
+});
+
+test('canceling remaining individual crops preserves only the already confirmed photo', async () => {
+  const pending = deferredCrops(), f = photoPanelFixture(pending);
+  try {
+    f.choose(['a', 'b', 'c'].map(name => new File([name], `${name}.jpg`, { type: 'image/jpeg' })));
+    f.choice.props.onAdjust(); await f.settle();
+    assert.equal(f.cards.length, 0); assert.equal(pending.dialogs.length, 1);
+    pending.dialogs[0].confirm(); await f.settle();
+    assert.equal(pending.dialogs.length, 2); assert.equal(f.cards.length, 1);
+    f.requests[0].resolve({ decision: 'pending_review', photo: { id: 'saved-photo', sortOrder: 1 } }); await f.settle();
+    pending.dialogs[1].cancel(); await f.settle();
+    assert.equal(pending.dialogs.length, 2); assert.equal(f.requests.length, 1); assert.equal(f.cards.length, 1);
+    assert.equal(f.summary.summary.total, 1); assert.equal(f.summary.summary.completed, 1); assert.equal(f.summary.busy, false);
+    const labels = f.draw().filter(node => node.type === 'small' && node.props.role === 'status').map(node => node.props.children);
+    assert.deepEqual(labels, ['Awaiting final approval']);
+  } finally { f.unmount(); }
+});
+
+test('invalid selections explain the issue without adding an unconfirmed photo card', () => {
+  const f = photoPanelFixture();
+  try {
+    f.choose([new File(['text'], 'file.txt', { type: 'text/plain' })]);
+    assert.equal(f.cards.length, 0); assert.equal(f.summary.summary, null); assert.equal(f.requests.length, 0);
+    assert.ok(f.draw().some(node => String(node.props.children).includes('Choose a JPEG')));
+  } finally { f.unmount(); }
 });

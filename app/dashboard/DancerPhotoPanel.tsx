@@ -129,12 +129,16 @@ export function DancerPhotoPanel({
       } satisfies DancerPhotoQueueItem;
     });
     const omitted = files.length - selectedFiles.length;
-    setUploadBatchIds(additions.map(item => item.id));
-    setQueuedPhotos((current) => [...current, ...additions]);
-    setStatus(omitted ? `${omitted} exceeded the available profile slots.` : "");
     const uploadable = additions.filter((item) => !item.error);
+    for (const item of additions.filter(item => item.error)) {
+      URL.revokeObjectURL(item.previewUrl); queuedPreviewUrlsRef.current.delete(item.previewUrl);
+    }
+    setUploadBatchIds(uploadable.map(item => item.id));
+    setQueuedPhotos((current) => [...current, ...uploadable]);
     if (uploadable.length > 1) setCropBatchIds(uploadable.map(item => item.id));
     else if (uploadable.length) void uploadPhotoBatch(uploadable);
+    setStatus([...new Set(additions.flatMap(item => item.error ? [item.error] : [])),
+      omitted ? `${omitted} exceeded the available profile slots.` : ""].filter(Boolean).join(" "));
   }
 
   function confirmBatchCrops(keepAll: boolean) {
@@ -316,8 +320,9 @@ export function DancerPhotoPanel({
     const cancellation = createMediaUploadCancellation(controller.signal);
     const cropNext = createPhotoCropQueue();
     uploadCancellationRef.current = cancellation;
-    setStatus("Uploading");
+    setStatus("");
     const failedItems: DancerPhotoQueueItem[] = [];
+    const cropErrors: string[] = [];
     const rejectedItemIds = new Set<string>();
     const acceptedItemIds = new Set<string>();
     let workingPhotos = [...photos];
@@ -331,14 +336,13 @@ export function DancerPhotoPanel({
         if (!isCurrentPhotoAction(requestId, controller)) return;
         const transfer = cancellation.start(queuedItem.id);
         if (!transfer) {
-          if (cancellation.isCanceled(queuedItem.id)) { await discardPhotoUpload(queuedItem); return; }
+          if (!queuedItem.cropConfirmed || cancellation.isCanceled(queuedItem.id)) { await discardPhotoUpload(queuedItem); return; }
           updateQueuedPhoto(queuedItem.id, { stage: "failed", progress: 0, error: "Upload canceled." });
           return;
         }
         let item = queuedItem;
         const uploadSortOrder = item.uploadSortOrder ?? nextSortOrder++;
         updateQueuedPhoto(item.id, { stage: "preparing", progress: 0, uploadSortOrder, error: undefined });
-        setStatus("Uploading");
         try {
           if (!item.file.type.startsWith("image/") || !item.file.size || item.file.size > 25 * 1024 * 1024) {
             throw new Error("Choose a photo between 1 byte and 25 MB.");
@@ -450,11 +454,16 @@ export function DancerPhotoPanel({
         } catch (error) {
           if (!isCurrentPhotoAction(requestId, controller)) return;
           if (transfer.signal.aborted) {
-            if (transfer.canceled) { await discardPhotoUpload(item); return; }
+            if (!item.cropConfirmed || transfer.canceled) { await discardPhotoUpload(item); return; }
             updateQueuedPhoto(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
             return;
           }
           const friendlyMessage = mediaUploadError(error, "photo");
+          if (!item.cropConfirmed) {
+            cropErrors.push("Couldn't prepare this photo. Select it again.");
+            await discardPhotoUpload(item);
+            return;
+          }
           const failedItem = { ...item, uploadSortOrder, stage: "failed" as const, progress: 0, error: friendlyMessage };
           failedItems.push(failedItem);
           updateQueuedPhoto(item.id, failedItem);
@@ -486,10 +495,11 @@ export function DancerPhotoPanel({
       if (galleryPhotoInputRef.current) galleryPhotoInputRef.current.value = "";
       if (cameraPhotoInputRef.current) cameraPhotoInputRef.current.value = "";
       const summary = [
+        ...new Set(cropErrors),
         rejectedCount ? `${rejectedCount} not approved` : "",
         failedItems.length ? `${failedItems.length} ready to retry` : "",
       ].filter(Boolean).join(". ");
-      setStatus(cancellation.canceled ? "Uploads canceled. Completed uploads are kept." : summary || (acceptedCount ? "" : "No photos were uploaded."));
+      setStatus(cancellation.canceled ? (acceptedCount ? "Uploads canceled. Completed uploads are kept." : "") : summary);
     } catch (error) {
       if (isCurrentPhotoAction(requestId, controller)) {
         const message = error instanceof Error ? error.message : "Unable to upload photos.";
@@ -498,6 +508,10 @@ export function DancerPhotoPanel({
         setQueuedPhotos((current) => current.flatMap((item) => {
           if (rejectedItemIds.has(item.id) || acceptedItemIds.has(item.id)) return [item];
           if (!batchIds.has(item.id)) return [item];
+          if (!item.cropConfirmed) {
+            queuedPreviewUrlsRef.current.delete(item.previewUrl); URL.revokeObjectURL(item.previewUrl);
+            return [];
+          }
           if (item.error === "Upload canceled.") return [item];
           return [failedById.get(item.id) || { ...item, stage: "failed", progress: 0, error: message }];
         }));
@@ -611,7 +625,9 @@ export function DancerPhotoPanel({
   }));
   const reviewPhotos = [...photos.filter(photo => photo.status !== "approved"), ...rejectedPhotos].filter(photo => !retiredReviewIds.has(photo.id));
   const libraryIds = new Set([...confirmedPhotoIds, ...dancerPhotoItemsFromProfile(profile).filter(photo => photo.status === "approved").map(photo => photo.id)]);
-  const visibleQueuedPhotos = queuedPhotos.filter(item => item.stage !== "complete" || item.result?.status === "rejected"
+  // A selection belongs to the crop tool until the dancer confirms it.
+  const confirmedQueuedPhotos = queuedPhotos.filter(item => item.cropConfirmed || item.result);
+  const visibleQueuedPhotos = confirmedQueuedPhotos.filter(item => item.stage !== "complete" || item.result?.status === "rejected"
     || (uploadOnly && item.result?.status === "approved" && !libraryIds.has(item.result.id))
     || reviewPhotos.some(photo => photo.id === item.result?.id));
   const reviews: { item?: DancerPhotoQueueItem; result?: DancerPhotoItem }[] = [
@@ -620,7 +636,7 @@ export function DancerPhotoPanel({
   ];
   const approvedPhotos = photos.filter(photo => photo.status === "approved");
   const batchEntries = uploadBatchIds.length
-    ? queuedPhotos.filter(item => uploadBatchIds.includes(item.id)).map(item => ({ item,
+    ? confirmedQueuedPhotos.filter(item => uploadBatchIds.includes(item.id)).map(item => ({ item,
       result: reviewPhotos.find(photo => photo.id === item.result?.id)
         || photos.find(photo => photo.id === item.result?.id)
         || (item.result && approvedPhotos.find(photo => photo.sortOrder === item.result?.sortOrder && photo.isPrimary === item.result?.isPrimary))
@@ -714,8 +730,8 @@ export function DancerPhotoPanel({
           {isUploading && queuedPhotos.some(item => ["queued", "preparing", "cropping", "uploading"].includes(item.stage)) ? <button className="dancer-upload-cancel" type="button" disabled={cancelingUploads} onClick={() => {
             uploadCancellationRef.current?.cancel(); setCancelingUploads(true);
           }}>{cancelingUploads ? "Canceling…" : "Cancel uploads"}</button> : null}
-          {reviews.filter(({ item }) => !item || !cropBatchIds.includes(item.id)).map(({ item, result }, index) => {
-            const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
+          {reviews.map(({ item, result }, index) => {
+            const selectionNumber = index + 1;
             const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
             const uploadStatus = item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : result ? photoStatusLabel(result.status, result.moderationStatus) : "Uploading";
             const processing = uploadStatus === "Uploading";
