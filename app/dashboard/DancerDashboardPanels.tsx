@@ -76,6 +76,9 @@ export function DancerPanel({
     || dancerPhotoItemsFromProfile(profile).some(photo => photo.status === "rejected");
   const hasPendingAvatar = !profile?.avatar_source_photo_id && Boolean(profile?.pending_avatar_review);
   const hasPendingPhotos = dancerPhotoItemsFromProfile(profile).some((photo) => photo.status === "pending");
+  const hasProcessingPhotos = dancerPhotoItemsFromProfile(profile).some(photo => photo.status === "pending"
+    && ["moderating", "pending"].includes(photo.moderationStatus || "pending"));
+  const hasProcessingAvatar = hasPendingAvatar && ["moderating", "pending"].includes(String((profile?.pending_avatar_review as Record<string, unknown>)?.status || "pending"));
 
   useEffect(() => {
     if (!hasPendingAvatar && !hasPendingPhotos && (isApproved || effectiveStatus !== "pending_review")) return;
@@ -104,7 +107,7 @@ export function DancerPanel({
       }
     };
     void refreshProfile();
-    const interval = window.setInterval(refreshProfile, 8_000);
+    const interval = window.setInterval(refreshProfile, hasProcessingPhotos || hasProcessingAvatar ? 2_000 : 8_000);
     document.addEventListener("visibilitychange", refreshProfile);
     return () => {
       cancelled = true;
@@ -112,7 +115,7 @@ export function DancerPanel({
       window.clearInterval(interval);
       document.removeEventListener("visibilitychange", refreshProfile);
     };
-  }, [effectiveStatus, hasPendingAvatar, hasPendingPhotos, isApproved, onProfileChange]);
+  }, [effectiveStatus, hasPendingAvatar, hasPendingPhotos, hasProcessingPhotos, hasProcessingAvatar, isApproved, onProfileChange]);
 
   const refreshDancerProfile = useCallback(async () => {
     const session = readSession();

@@ -92,10 +92,12 @@ const rateLimitMemory = new Map<string, { count: number; resetAt: number }>();
 export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: DancrClient, input: ModeratedPhotoInput): Promise<ModeratedPhotoResult> {
   return runWithServerJob(async () => {
   enforceUploadRateLimit(input.userId, input.ipAddress);
-  const profile = await getOwnDancerProfile(admin, input.userId);
-  const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
   const preparationStartedAt = Date.now();
-  const image = await validateAndPrepareDancrImage(input.file);
+  const [profile, image] = await Promise.all([
+    getOwnDancerProfile(admin, input.userId),
+    validateAndPrepareDancrImage(input.file),
+  ]);
+  const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
   logModeration("stage_timing", { stage: "prepare", durationMs: Date.now() - preparationStartedAt });
   let idempotencyKey = safeIdempotencyKey(input.idempotencyKey || `${image.sha256}:${randomUUID()}`);
   const existing = await findExistingModerationRecord(admin, input.userId, idempotencyKey);
@@ -356,7 +358,6 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
     || !Number.isFinite(Date.parse(record.locked_at))) throw new Error("retry_record_not_claimed");
   const expectedUpdatedAt = galleryReviewVersion(record.updated_at);
 
-  const profile = await getOwnDancerProfile(admin, record.user_id);
   const uploadContext = record.upload_context || "profile_gallery";
   const isAvatar = isProfileAvatarUploadContext(uploadContext);
 
@@ -364,7 +365,10 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
   let errorCode: string | null = null;
 
   try {
-    const downloaded = await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
+    const [profile, downloaded] = await Promise.all([
+      getOwnDancerProfile(admin, record.user_id),
+      downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath),
+    ]);
     const downloadedImage = moderationImageFromPrivateObject(downloaded);
     if (isAvatar) avatarRetryReference(record, profile);
     const reviewStartedAt = Date.now();
@@ -466,14 +470,21 @@ async function holdPhotoForClubReview(
   }
   // A unique private copy avoids an obsolete worker overwriting a newer review.
   const reviewPath = input.tempPath.replace(/([^/]+)$/, `review-${randomUUID()}-$1`);
-  await uploadPrivateObject(admin, MODERATION_REVIEW_BUCKET, reviewPath, input.image);
   // Prepare private display files now, so human approval only publishes references.
   // Neither a gallery row nor an avatar reference exists until the club approves.
   const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
-  const prepared = await uploadResponsiveImage(admin, APPROVED_PHOTO_BUCKET,
-    `${input.userId}/${input.profileId}${isAvatar ? "/avatar" : ""}`,
-    isAvatar ? await prepareFaceCenteredAvatar(input.image) : input.image,
-    "31536000", isAvatar ? {} : { archiveOriginal: true, watermark: true, mainPhotoAvatar: true });
+  const displayImage = isAvatar ? await prepareFaceCenteredAvatar(input.image) : input.image;
+  // These private copies are independent. Drain both before changing the review
+  // state, including on failure, so the club never sees an incomplete upload.
+  const [reviewCopy, displayCopy] = await Promise.allSettled([
+    uploadPrivateObject(admin, MODERATION_REVIEW_BUCKET, reviewPath, input.image),
+    uploadResponsiveImage(admin, APPROVED_PHOTO_BUCKET,
+      `${input.userId}/${input.profileId}${isAvatar ? "/avatar" : ""}`, displayImage,
+      "31536000", isAvatar ? {} : { archiveOriginal: true, watermark: true, mainPhotoAvatar: true }),
+  ]);
+  if (reviewCopy.status === "rejected") throw reviewCopy.reason;
+  if (displayCopy.status === "rejected") throw displayCopy.reason;
+  const prepared = displayCopy.value;
   await updateModerationRecord(admin, input.recordId, {
     temporaryStoragePath: reviewPath,
     finalStoragePath: prepared.storagePath,
@@ -645,21 +656,21 @@ async function occupiedDancerPhotoSlots(
   userId: string,
   ignoredModerationRecordId = "",
 ) {
-  const { data: photos, error: photoError } = await client
+  const [photoResult, reviewResult] = await Promise.all([client
     .from("dancer_photos")
     .select("is_primary, sort_order, review_status")
     .eq("dancer_id", dancerId)
-    .in("review_status", ["approved", "pending"]);
-  if (photoError) throw photoError;
-  const slots = new Set<string>((photos || []).map((photo: any) => profilePhotoSlotKey(photo)));
-
-  const { data: reviews, error: reviewError } = await client
+    .in("review_status", ["approved", "pending"]), client
     .from("image_moderation_records")
     .select("id, upload_context")
     .eq("user_id", userId)
     .eq("decision", "review")
-    .in("status", ACTIVE_IMAGE_MODERATION_STATUSES);
+    .in("status", ACTIVE_IMAGE_MODERATION_STATUSES)]);
+  const { data: photos, error: photoError } = photoResult;
+  const { data: reviews, error: reviewError } = reviewResult;
+  if (photoError) throw photoError;
   if (reviewError) throw reviewError;
+  const slots = new Set<string>((photos || []).map((photo: any) => profilePhotoSlotKey(photo)));
 
   for (const review of reviews || []) {
     if (isProfileAvatarUploadContext(review.upload_context)) continue;

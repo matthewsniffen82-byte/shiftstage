@@ -4,6 +4,7 @@ import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
 import { mediaReview } from './helpers/media-review-label.mjs';
+import { photoUploadPercent } from '../app/dashboard/photo-upload-progress.ts';
 
 const compile = path => ts.transpileModule(readFileSync(path, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
@@ -32,6 +33,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
       if (name === "react") return hooks;
       if (name === "react/jsx-runtime") return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
       if (name === "./DancerPhotoPanel") return mapping;
+      if (name === "./photo-upload-progress") return { photoUploadPercent };
       if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
       if (name === './dashboard-session') return {
         readSession: () => ({ account: { id: 'owner' } }),
@@ -64,6 +66,7 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
     connectInput(click) { nodes().find(node => node.type === 'input').props.ref.current = { click }; },
     get crop() { return nodes().find(node => node.type === "SavedCrop"); },
     get status() { return nodes().find(node => node.props?.className === "dancer-main-photo-status").props.children; },
+    get progress() { return nodes().find(node => node.props?.role === 'progressbar')?.props['aria-valuenow']; },
     get reviewRetry() { return nodes().find(node => node.type === 'MediaRetry'); },
     get badge() { return nodes().find(node => node.props?.className === 'dancer-main-photo-state').props.children; },
     update(next) { profile = next; render(); },
@@ -159,6 +162,7 @@ test('moderation work and delays use the same labels as the media library', () =
   for (const [status, label] of [['moderating', 'Checking photo…'], ['error', 'Review delayed'], ['pending_review', 'Waiting for Club approval']]) {
     const ui = fixture({ pending_photo_reviews: [{ ...pending, status }] });
     assert.equal(ui.badge, label);
+    assert.equal(ui.progress, status === 'pending_review' ? 100 : 95);
     assert.equal(Boolean(ui.reviewRetry), status === 'error');
   }
 });
@@ -169,6 +173,7 @@ test('a rejected main photo shows the reason and preserves the current photo', a
   assert.match(ui.status, /Not approved/);
   assert.match(ui.status, /Multiple people/);
   assert.equal(ui.status, 'Not approved. Multiple people');
+  assert.equal(ui.progress, 100);
   assert.equal(ui.image.props.src, main.imageUrl);
 });
 

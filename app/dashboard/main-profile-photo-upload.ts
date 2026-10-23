@@ -1,4 +1,5 @@
 import { cropProfilePhoto } from "./profile-photo-crop";
+import { preparePhotoUpload } from "./prepare-photo-upload";
 import { DASHBOARD_SESSION_KEY, readSession, requestDashboardJson, requestDancerPhotosJson, requestDancerProfileJson } from "./dashboard-session";
 
 export type SavedPhotoCropSource = { id: string; isPrimary: boolean; sortOrder: number };
@@ -60,7 +61,8 @@ export async function uploadMainProfilePhoto(source: File | SavedPhotoCropSource
     if (!cropped) return null;
     options.onUploadStart?.();
     const body = new FormData();
-    body.set("file", cropped);
+    body.set("file", await preparePhotoUpload(cropped, controller.signal));
+    assertOwner();
     body.set("isPrimary", String(options.makeMain ? true : saved?.isPrimary ?? options.photoSlot?.isPrimary ?? true));
     body.set("sortOrder", String(options.makeMain ? 0 : saved?.sortOrder ?? options.photoSlot?.sortOrder ?? 0));
     const replacementPhotoId = options.makeMain ? options.replacementPhotoId : saved?.id || options.replacementPhotoId;

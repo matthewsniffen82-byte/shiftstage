@@ -174,6 +174,9 @@ test('the authenticated photo route forwards replacement identity without accept
     createAdminSupabaseClient:()=>({}),enforceDancerMediaRequestRateLimit:async()=>{},
     readBoundedFormData:async()=>body,
     moderateAndStoreDancerPhoto:async(_client,_admin,input)=>{submitted=input;return {decision:'approved'};},
+    scheduleDancerPhotoReview:()=>{},
+    DancerMediaRateLimitError:class extends Error{},
+    apiError:error=>{throw error;},
     MAX_DANCR_RAW_UPLOAD_BYTES:1024,
   });
   await POST({headers:new Headers()});

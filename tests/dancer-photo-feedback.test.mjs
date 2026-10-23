@@ -9,6 +9,7 @@ import { preparePhotoUpload } from "../app/dashboard/prepare-photo-upload.ts";
 import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "../app/dashboard/media-upload-batch.ts";
 import { createMediaUploadCancellation } from "../app/dashboard/media-upload-cancellation.ts";
 import { createPhotoCropQueue } from "../app/dashboard/photo-upload-crop-queue.ts";
+import { photoBatchProgress } from "../app/dashboard/photo-upload-progress.ts";
 
 const source = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 const photoSource = source.slice(source.indexOf("type DancerPhotoItem ="), source.indexOf("\nfunction InfoPanel("));
@@ -26,7 +27,7 @@ function photoHarness({ uploadOnly = false, profile = {}, crop = async file => f
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    preparePhotoUpload, MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch, createMediaUploadCancellation, createPhotoCropQueue, RefreshButton: refreshButtonModule.default,
+    preparePhotoUpload, photoBatchProgress, MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch, createMediaUploadCancellation, createPhotoCropQueue, RefreshButton: refreshButtonModule.default,
     exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, MIN_DANCER_ONBOARDING_PHOTOS: 3, DancerRejectedUploadNotice: "RejectedUploadNotice", DancerUploadDisclosure: "UploadDisclosure", DancerMediaUploadRules: "MediaUploadRules", DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     cropProfilePhoto: (...args) => { crops.push(args); return crop(...args); },
@@ -77,7 +78,8 @@ function photoHarness({ uploadOnly = false, profile = {}, crop = async file => f
     get reviewButtons() { return nodes().filter(node => node.type === "MediaRetryButton"); },
     get buttons() { return nodes().filter(node => node.type === "button"); },
     get replacements() { return nodes().filter(node => node.type === "input" && /^Replace photo/.test(node.props['aria-label'] || '')); },
-    get progress() { return nodes().filter(node => node.props?.role === "progressbar"); },
+    get progress() { return nodes().filter(node => node.props?.role === "progressbar" && node.props['aria-label'] !== 'Overall photo upload progress'); },
+    get overallProgress() { return nodes().find(node => node.props?.['aria-label'] === 'Overall photo upload progress')?.props['aria-valuenow']; },
     get uploadMessages() { return nodes().filter(node => node.props?.className === "photo-upload-status").map(node => node.props.children); },
     get uploadHint() { return Array.from(nodes().find(node => node.props?.className === "photo-upload-selection-hint").props.children).join(''); },
     select(files = [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })], source = "gallery") {
@@ -237,6 +239,28 @@ test("Cancel uploads stops photo transfers and queued files, preserves an active
   assert.equal(ui.posts[5].body.get('idempotencyKey'), ui.posts[0].body.get('idempotencyKey'));
   releases[5]({ decision: 'review', photo: { id: 'retry', reviewStatus: 'pending', sortOrder: 1 } });
   await ui.settle();
+});
+
+test('overall photo progress waits for processing, follows refreshed results and counts rejections as processed', async () => {
+  const releases = [];
+  const ui = photoHarness({ post: () => new Promise(resolve => releases.push(resolve)),
+    read: async () => ({ profile: { pending_photo_reviews: [pending('one', 1), pending('two', 2)].map(photo => ({ ...photo, status: 'moderating' })) } }),
+  });
+  ui.select([1, 2].map(id => new File(['photo'], `${id}.jpg`, { type: 'image/jpeg' })));
+  await ui.settle(); assert.equal(ui.overallProgress, 0);
+  ui.posts[0].onUploadProgress(50); ui.posts[1].onUploadProgress(100); await ui.settle();
+  assert.equal(ui.overallProgress, 67);
+  releases.forEach((release, index) => release({ decision: 'moderating', moderationRecordId: ['one', 'two'][index] }));
+  await ui.settle(); assert.equal(ui.overallProgress, 95);
+  ui.updateProfile({ pending_photo_reviews: [{ ...pending('one', 1), status: 'pending_review' }, { ...pending('two', 2), status: 'moderating' }] });
+  assert.equal(ui.overallProgress, 97);
+  ui.updateProfile({ pending_photo_reviews: [{ ...pending('one', 1), status: 'pending_review' }], rejected_photo_reviews: [{ id: 'two', message: 'Multiple people' }] });
+  assert.equal(ui.overallProgress, 100);
+  assert.deepEqual(ui.statuses, ['Waiting for Club approval', 'Not approved']);
+  ui.updateProfile({ dancer_photos: [approved('published-one', 1)], rejected_photo_reviews: [{ id: 'two', message: 'Multiple people' }] });
+  assert.equal(ui.overallProgress, 100, 'club approval cannot move completed processing backwards');
+  const restored = photoHarness({ profile: { pending_photo_reviews: [{ ...pending('restore'), status: 'moderating' }] } });
+  assert.equal(restored.overallProgress, 95);
 });
 
 test("collapsing photo upload controls leaves pending and rejected reviews outside the disclosure", () => {
@@ -664,17 +688,17 @@ test("new pictures always append to the gallery without replacing a legacy prima
 
 const refreshSource = source.slice(source.indexOf("  const hasPendingAvatar ="), source.indexOf("  const refreshDancerProfile ="));
 test("draft and approved profiles refresh pending photos with one visible-page request at a time", async () => {
-  for (const effectiveStatus of ["draft", "approved"]) {
+  for (const effectiveStatus of ["draft", "approved"]) for (const moderationStatus of ["moderating", "pending_review"]) {
     const ui = photoHarness();
     const requests = [], listeners = new Map();
     let cleanup, tick, resolveRequest;
     const visibility = { visibilityState: "visible", addEventListener: (event, handler) => listeners.set(event, handler), removeEventListener: event => listeners.delete(event) };
     runInNewContext(compile(refreshSource), {
-      profile: { pending_photo_reviews: [pending()] }, effectiveStatus, isApproved: effectiveStatus === "approved",
+      profile: { pending_photo_reviews: [{ ...pending(), status: moderationStatus }] }, effectiveStatus, isApproved: effectiveStatus === "approved",
       dancerPhotoItemsFromProfile: ui.mapProfile,
       useEffect: effect => { cleanup = effect(); },
       readSession: () => ({ accessToken: "fixture" }), AbortController, document: visibility,
-      window: { setInterval: (handler, delay) => { assert.equal(delay, 8000); tick = handler; return 1; }, clearInterval: () => { tick = undefined; } },
+      window: { setInterval: (handler, delay) => { assert.equal(delay, moderationStatus === 'moderating' ? 2000 : 8000); tick = handler; return 1; }, clearInterval: () => { tick = undefined; } },
       onProfileChange: next => ui.updateProfile(next),
       requestDancerProfileJson: options => { requests.push(options); return new Promise(resolve => { resolveRequest = resolve; }); },
     });

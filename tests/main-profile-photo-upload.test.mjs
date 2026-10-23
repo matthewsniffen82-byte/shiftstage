@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import { preparePhotoUpload } from "../app/dashboard/prepare-photo-upload.ts";
 
 const code = ts.transpileModule(readFileSync("app/dashboard/main-profile-photo-upload.ts", "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
@@ -17,7 +18,7 @@ function fixture({ decision = "approved", reasonCodes, message, canceled = false
   let confirm, validate, cropSignal;
   const scope = { exports: {}, AbortController, DOMException, FormData, File, atob, Uint8Array,
     window: { addEventListener: (_, fn) => listeners.add(fn), removeEventListener: (_, fn) => listeners.delete(fn) },
-    require: name => name === "./profile-photo-crop" ? {
+    require: name => name === "./prepare-photo-upload" ? { preparePhotoUpload } : name === "./profile-photo-crop" ? {
       cropProfilePhoto: async (file, signal, check, ratio) => {
         assert.equal(ratio, 3 / 4);
         if (saved) assert.equal(await file.text(), "saved-original"); else assert.equal(file, original);

@@ -18,6 +18,7 @@ import { cropProfilePhoto } from "./profile-photo-crop";
 import { createPhotoCropQueue } from "./photo-upload-crop-queue";
 import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "./media-upload-batch";
 import { createMediaUploadCancellation } from "./media-upload-cancellation";
+import { photoBatchProgress } from "./photo-upload-progress";
 import "./dancer-upload-queue.css";
 export function DancerPhotoPanel({
   uploadOnly = false,
@@ -42,6 +43,7 @@ export function DancerPhotoPanel({
     relabelPhotoItems(dancerPhotoItemsFromProfile(profile, deletedPhotoIds)),
   );
   const [queuedPhotos, setQueuedPhotos] = useState<DancerPhotoQueueItem[]>([]);
+  const [uploadBatchIds, setUploadBatchIds] = useState<string[]>([]);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [cancelingUploads, setCancelingUploads] = useState(false);
@@ -77,6 +79,11 @@ export function DancerPhotoPanel({
   useEffect(() => {
     deletedPhotoIdsRef.current = [...deletedPhotoIds];
     deletedPhotoStoragePathsRef.current = [...deletedPhotoStoragePaths];
+    const refreshed = dancerPhotoItemsFromProfile(profile, deletedPhotoIdsRef.current);
+    setQueuedPhotos(current => current.map(item => {
+      const result = refreshed.find(photo => photo.id === item.result?.id);
+      return result ? { ...item, result } : item;
+    }));
     setPhotos((current) =>
       excludePendingDeletions(
         relabelPhotoItems(preserveConfirmedPhotoPreviews(dancerPhotoItemsFromProfile(profile, deletedPhotoIdsRef.current), current)),
@@ -118,6 +125,7 @@ export function DancerPhotoPanel({
       } satisfies DancerPhotoQueueItem;
     });
     const omitted = files.length - selectedFiles.length;
+    setUploadBatchIds(additions.map(item => item.id));
     setQueuedPhotos((current) => [...current, ...additions]);
     setStatus(`${additions.length} ${additions.length === 1 ? "photo" : "photos"} selected.${omitted ? ` ${omitted} exceeded the available profile slots.` : ""}`);
     const uploadable = additions.filter((item) => !item.error);
@@ -589,6 +597,13 @@ export function DancerPhotoPanel({
     ...reviewPhotos.filter(photo => !visibleQueuedPhotos.some(item => item.result?.id === photo.id)).map(result => ({ result })),
   ];
   const approvedPhotos = photos.filter(photo => photo.status === "approved");
+  const batchProgress = photoBatchProgress(uploadBatchIds.length
+    ? queuedPhotos.filter(item => uploadBatchIds.includes(item.id)).map(item => ({ item,
+      result: reviewPhotos.find(photo => photo.id === item.result?.id)
+        || photos.find(photo => photo.id === item.result?.id)
+        || (item.result && approvedPhotos.find(photo => photo.sortOrder === item.result?.sortOrder && photo.isPrimary === item.result?.isPrimary))
+        || item.result,
+    })) : reviews);
 
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
@@ -664,6 +679,15 @@ export function DancerPhotoPanel({
         {status && !(status === "Uploading" && reviews.length) ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       </DancerUploadDisclosure>
+      {batchProgress ? <div className="dancer-upload-overall">
+        <strong>{batchProgress.needsAttention ? "Upload needs attention" : batchProgress.percent === 100 ? "Uploads processed" : "Uploading photos"} · {batchProgress.percent}%</strong>
+        <span className="dancer-upload-progress" role="progressbar" aria-label="Overall photo upload progress"
+          aria-valuemin={0} aria-valuemax={100} aria-valuenow={batchProgress.percent}
+          aria-valuetext={`${batchProgress.percent}%. ${batchProgress.completed} of ${batchProgress.total} photos processed.`}>
+          <span style={{ width: `${batchProgress.percent}%` }} />
+        </span>
+        <small>{batchProgress.completed} of {batchProgress.total} processed</small>
+      </div> : null}
       {reviews.length ? (
         <div className="photo-upload-queue" role="group" aria-label="Photo upload status">
           {!uploadOnly ? <strong>Upload status · {reviews.length}</strong> : null}

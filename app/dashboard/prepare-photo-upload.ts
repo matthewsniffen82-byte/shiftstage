@@ -24,7 +24,7 @@ export async function preparePhotoUpload(file: File, signal: AbortSignal): Promi
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
     // Preserve transparency in PNG/WebP photos. JPEG camera images stay JPEG.
     const type = file.type === "image/jpeg" ? "image/jpeg" : "image/webp";
-    const blob = await new Promise<Blob | null>(resolve => canvas!.toBlob(resolve, type, .92));
+    const blob = await new Promise<Blob | null>(resolve => canvas!.toBlob(resolve, type, .88));
     signal.throwIfAborted();
     if (!blob || blob.size >= file.size) return file;
     const extension = blob.type === "image/jpeg" ? "jpg" : blob.type === "image/webp" ? "webp" : "png";
