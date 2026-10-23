@@ -450,6 +450,10 @@ export function DashboardStyles() {
       .dashboard-shift button { color: #fff; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.1); padding: 0 12px; }
       .dashboard-shift button:disabled { cursor: wait; }
       .shift-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+      .shift-ranking-progress { display: grid; grid-column: 1 / -1; gap: 6px; min-width: 0; width: 100%; }
+      .shift-ranking-progress p { margin: 2px 0; }
+      .shift-ranking-progress a { justify-self: start; padding: 8px 0; color: var(--dancr-color-text-primary); text-underline-offset: 3px; }
+      .shift-ranking-progress strong { font-variant-numeric: tabular-nums; }
       .shift-actions button:first-child { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.1); }
       .shift-panel-feedback { margin: 0; color: #94e5ff; font-size: 14px; line-height: 1.45; }
       .billing-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
@@ -459,30 +463,30 @@ export function DashboardStyles() {
       .account-summary-panel { align-content: start; }
       .account-summary-heading { display: flex !important; align-items: center; justify-content: space-between; gap: 12px !important; }
       .account-summary-heading h2, .support-panel-heading h2, .account-controls-heading h2 { margin: 0; }
-      .account-status-pill { width: fit-content; min-height: 30px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: #d7d1df; background: rgba(255,255,255,.045); font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
+      .account-status-pill { width: fit-content; min-height: 30px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: var(--dancr-color-text-muted); background: rgba(255,255,255,.045); font-size: 11px; font-weight: 950; letter-spacing: .08em; text-transform: uppercase; }
       .account-status-pill.is-active { border-color: rgba(52,211,153,.3); color: #86efac; background: rgba(6,78,59,.2); }
       .account-summary-list { display: grid; margin: 0; border-top: 1px solid rgba(255,255,255,.08); }
       .account-summary-list > div { min-width: 0; min-height: 52px; display: grid; grid-template-columns: 72px minmax(0,1fr); align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,.08); }
       .account-summary-list > div:last-child { border-bottom: 0; }
-      .account-summary-list dt { color: #9f96ac; font-size: 12px; font-weight: 850; }
-      .account-summary-list dd { min-width: 0; margin: 0; color: #f8f7fb; font-size: 15px; font-weight: 850; overflow-wrap: anywhere; }
+      .account-summary-list dt { color: var(--dancr-color-text-muted); font-size: 12px; font-weight: 850; }
+      .account-summary-list dd { min-width: 0; margin: 0; color: var(--dancr-color-text-primary); font-size: 15px; font-weight: 850; overflow-wrap: anywhere; }
       .account-controls-heading, .support-panel-heading { display: grid !important; gap: 5px !important; }
-      .account-controls-heading p, .support-panel-heading p { margin: 0; color: #a9a1b3; font-size: 13px; line-height: 1.45; }
+      .account-controls-heading p, .support-panel-heading p { margin: 0; color: var(--dancr-color-text-muted); font-size: 13px; line-height: 1.45; }
       .account-controls-panel { min-width: 0; grid-template-columns: minmax(0, 1fr); padding: 20px !important; border-radius: 22px !important; }
       .account-controls-panel .account-controls-heading { grid-template-columns: 36px minmax(0, 1fr); align-items: center; column-gap: 10px !important; row-gap: 10px !important; }
       .account-controls-heading h2 { font-size: 21px; line-height: 1.2; letter-spacing: -.025em; }
       .account-controls-heading > p { grid-column: 1 / -1; }
-      .account-security-icon, .account-action-icon { box-sizing: border-box; width: 36px; height: 36px; display: grid !important; place-items: center; border: 1px solid var(--dancr-color-border); border-radius: 11px; color: #b89bdd; background: var(--dancr-color-surface-card); }
+      .account-security-icon, .account-action-icon { box-sizing: border-box; width: 36px; height: 36px; display: grid !important; place-items: center; border: 1px solid var(--dancr-color-border); border-radius: 11px; color: var(--dancr-color-icon-accent); background: var(--dancr-color-surface-card); }
       .account-security-icon > svg, .account-action-icon > svg { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
       .account-actions { min-width: 0; display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 0 !important; }
       .account-action-row { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 18px; padding: 18px 0; border-top: 1px solid rgba(255,255,255,.07); }
       .account-action-row > .account-action-details { min-width: 0; display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: start; gap: 12px; }
       .account-action-details > span:last-child { min-width: 0; display: grid; gap: 5px; }
-      .account-action-icon.is-pause { color: #c2b4d3; border-color: var(--dancr-color-border); background: var(--dancr-color-surface-card); }
+      .account-action-icon.is-pause { color: var(--dancr-color-icon-accent); border-color: var(--dancr-color-border); background: var(--dancr-color-surface-card); }
       .account-action-icon.is-delete { color: #ed9baa; border-color: rgba(237,155,170,.16); background: rgba(185,68,94,.07); }
-      .account-action-row strong { color: #f4f0f8; font-size: 15px; line-height: 1.3; }
-      .account-action-row small { color: #a7a0b2; font-size: 12px; line-height: 1.5; }
-      .account-action-button { min-width: 88px; min-height: 40px; border: 1px solid rgba(255,255,255,.13); border-radius: 10px; color: #f8f7fb; background: rgba(255,255,255,.055); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; padding: 0 13px; }
+      .account-action-row strong { color: var(--dancr-color-text-primary); font-size: 15px; line-height: 1.3; }
+      .account-action-row small { color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.5; }
+      .account-action-button { min-width: 88px; min-height: 40px; border: 1px solid rgba(255,255,255,.13); border-radius: 10px; color: var(--dancr-color-text-primary); background: rgba(255,255,255,.055); font: inherit; font-size: 12px; font-weight: 900; cursor: pointer; padding: 0 13px; }
       .account-action-button:hover { border-color: var(--dancr-color-border-strong); background: rgba(48, 48, 56, 0.12); }
       .account-action-button:disabled { opacity: .55; cursor: wait; }
       .account-danger-row { margin-top: 2px; padding-bottom: 0; border-top-color: rgba(237,155,170,.16); }
@@ -493,14 +497,19 @@ export function DashboardStyles() {
       body.dancr-button-system .account-controls-panel .account-action-button.danger-button:hover:not(:disabled) { border-color: #e59aa9 !important; background: #552536 !important; }
       body.dancr-button-system .account-controls-panel .account-action-button:focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px !important; }
       .account-delete-confirmation { box-sizing: border-box; min-width: 0; display: grid !important; grid-template-columns: minmax(0, 1fr); gap: 10px !important; margin-top: 10px; padding: 13px; border: 1px solid rgba(248,113,113,.24); border-radius: 12px; background: rgba(69,10,10,.2); }
-      .account-delete-confirmation label { color: #e7dce9; font-size: 12px; line-height: 1.45; }
+      .account-delete-confirmation label { color: var(--dancr-color-text-primary); font-size: 12px; line-height: 1.45; }
       body.dancr-button-system .account-controls-panel .account-delete-confirmation label { font-size: 12px !important; font-weight: 500 !important; letter-spacing: normal !important; line-height: 1.5 !important; text-transform: none !important; }
       .account-delete-confirmation label strong { color: #fecaca; letter-spacing: .08em; }
       .account-delete-confirmation input { min-width: 0; width: 100%; max-width: 100%; min-height: 44px; box-sizing: border-box; padding: 0 12px; border: 1px solid rgba(248,113,113,.3); border-radius: 9px; color: #fff; background: rgba(5,5,7,.72); font: inherit; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
       .account-delete-confirmation input:focus-visible { outline: 2px solid #ef4444; outline-offset: 2px; }
       .account-delete-confirmation > div { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
       @media (max-width: 520px) { .account-controls-panel { padding: 16px !important; } .account-controls-heading h2 { font-size: 20px; } .account-controls-panel .account-action-row { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-block: 16px; } .account-controls-panel .account-action-row:last-of-type { padding-bottom: 0; } body.dancr-button-system .account-controls-panel .account-action-row > .account-action-button { justify-self: start; margin-left: 48px !important; min-width: 116px !important; } .account-delete-confirmation > div { display: grid; grid-template-columns: minmax(0, 1fr); } body.dancr-button-system .account-controls-panel .account-delete-confirmation .account-action-button { width: 100% !important; } }
-      .account-actions p { margin: 10px 0 0; color: #94e5ff; font-size: 14px; }
+      .account-actions p { margin: 10px 0 0; color: var(--dancr-color-text-muted); font-size: 14px; }
+      /* Account text stays neutral above role-specific presentation overrides. */
+      @layer dancr-palette {
+        html body.dancr-button-system :where(.account-action-row strong, .account-summary-list dd, .account-delete-confirmation label) { color: var(--dancr-color-text-primary) !important; }
+        html body.dancr-button-system :where(.account-controls-heading p, .support-panel-heading p, .account-action-row small, .account-summary-list dt, .account-actions > p) { color: var(--dancr-color-text-muted) !important; }
+      }
       .notification-title-row { display: flex !important; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px !important; }
       .notification-title-row > div { display: grid; gap: 4px; }
       .notification-toolbar { display: flex !important; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px !important; }
