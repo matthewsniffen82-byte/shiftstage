@@ -19,8 +19,12 @@ function load(file, dependencies, globals = {}, exportName = 'default') {
     require: name => dependencies[name] || (name === 'react/jsx-runtime' ? require(name) : { default: name }) });
   return exports[exportName];
 }
-const Grid = load('app/dashboard/DancerPendingMediaGrid.tsx', {
+const Preview = load('app/dashboard/DancerVideoPreview.tsx', {
+  react: React,
   './DancerVideoThumbnail': { default: ({ videoUrl }) => React.createElement('span', { 'data-video-preview': videoUrl }) },
+});
+const Grid = load('app/dashboard/DancerPendingMediaGrid.tsx', {
+  './DancerVideoPreview': { default: Preview },
 });
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
 
@@ -38,6 +42,8 @@ test('pending grid groups all media under one heading and preserves each compact
   buttons[7].props.onClick(); assert.deepEqual(removed, [7]);
   assert.equal(buttons[7].props['aria-label'], 'Remove video 8');
   assert.match(html, /data-video-preview="\/video-1.mp4"/);
+  assert.equal((html.match(/aria-label="Play video /g) || []).length, 5);
+  assert.doesNotMatch(html, /role="img"/, 'play controls must remain accessible inside the cards');
   assert.match(html, /alt="Photo 1"/);
   assert.equal(Grid({ items: [] }), null);
 });
@@ -48,7 +54,17 @@ test('pending removal stays disabled while its request is in flight', () => {
   assert.equal(button.props.disabled, true); assert.equal(button.props.children, 'Removing…');
 });
 
-test('photo uploads have one Add photos label and retain Gallery and Camera without a duplicate pending action', () => {
+test('pending videos remain playable during other uploads but stop accepting playback while being removed', () => {
+  for (const removing of [false, true]) {
+    const tree = Grid({ items: [{ id: 'video', kind: 'video', label: 'Video 1', videoUrl: '/pending.mp4', disabled: true, removing, onRemove() {} }] });
+    const preview = walk(tree).find(node => node.type === Preview);
+    assert.equal(preview.props.videoUrl, '/pending.mp4');
+    assert.equal(preview.props.disabled, removing);
+    assert.equal(walk(tree).find(node => node.type === 'button').props.disabled, true);
+  }
+});
+
+test('photo uploads retain their source label and Gallery and Camera without a duplicate pending action', () => {
   const Panel = load('app/dashboard/DancerPhotoPanel.tsx', {
     react: { useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}],
       useRef: initial => ({ current: initial }), useEffect() {} },
@@ -66,7 +82,7 @@ test('photo uploads have one Add photos label and retain Gallery and Camera with
     const form = nodes.find(node => node.props.className === 'dancer-photo-upload-form');
     const heading = walk(form).filter(node => node.props.className === 'photo-source-heading');
     assert.equal(heading.length, 1); assert.equal(heading[0].type, 'strong');
-    assert.equal(heading[0].props.children, 'Add photos');
+    assert.equal(heading[0].props.children, uploadOnly ? 'More photos' : 'Add photos');
     const inputs = walk(form).filter(node => node.type === 'input');
     const buttons = walk(form).filter(node => node.type === 'button');
     assert.equal(buttons.length, 2);
@@ -135,13 +151,17 @@ test('video grid contains saved pending reviews while incomplete and failed proc
     { id: 'club', status: 'submitted', moderationDetails: { fileChecksPassed: true }, videoUrl: '/club.mp4' },
     { id: 'staff', status: 'submitted', clubReviewedAt: '2026-10-22', videoUrl: '/staff.mp4' },
     { id: 'incomplete', status: 'uploading' },
-    { id: 'processing-error', status: 'submitted', moderationDetails: { fileChecksPassed: false } },
+    { id: 'processing-error', status: 'submitted', moderationDetails: { fileChecksPassed: false }, videoUrl: '/processing.mp4' },
     { id: 'approved', status: 'approved' },
   ]);
   try {
     await f.settle();
     assert.deepEqual(Array.from(f.pending, item => item.id), ['club', 'staff']);
     assert.equal(f.active.length, 2);
+    const previews = f.active.map(card => walk(card).find(node => node.type === './DancerVideoPreview'));
+    assert.ok(previews.every(Boolean), 'processing cards also offer video playback');
+    assert.equal(previews[1].props.videoUrl, '/processing.mp4');
+    assert.equal(previews[1].props.label, 'Video 4');
     f.pending[1].onRemove(); await f.settle();
     assert.deepEqual(f.calls, [['staff', 'DELETE']]);
     assert.deepEqual(Array.from(f.pending, item => item.id), ['club']);

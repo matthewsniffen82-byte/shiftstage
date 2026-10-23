@@ -13,7 +13,7 @@ import { createVideoUploadTiming, type VideoTransfer } from "@/src/lib/dancr/vid
 import { createMediaUploadCancellation } from "./media-upload-cancellation";
 import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "./media-upload-batch";
 import DancerVideoPreviews from "./DancerVideoPreviews";
-import DancerVideoThumbnail from "./DancerVideoThumbnail";
+import DancerVideoPreview from "./DancerVideoPreview";
 import DancerPendingMediaGrid from "./DancerPendingMediaGrid";
 import { isVideoProcessingStalled } from "@/src/lib/dancr/video-processing-state";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
@@ -761,8 +761,9 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
           label={item?.file.name || `Video ${index + 1}`} message={note}
           disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(video.id)} /> : <article className={`tv-upload-queue-item dancer-upload-review-card${awaitingClubApproval ? " is-awaiting-club" : ""} ${item?.stage === "uploading" ? "is-uploading" : ""}`.trim()} key={item?.id || video?.id}>
-          <div className="tv-upload-preview"><DancerVideoThumbnail key={item?.uploadId || video?.id}
-            videoUrl={item?.previewUrl || video?.videoUrl} posterUrl={video?.posterUrl} /></div>
+          <div className="tv-upload-preview"><DancerVideoPreview key={item?.uploadId || video?.id} label={`Video ${index + 1}`}
+            videoUrl={item?.previewUrl || video?.videoUrl} posterUrl={video?.posterUrl}
+            disabled={Boolean(video && removingId === video.id) || cancelingIds.has(item?.id || video!.id)} /></div>
           <div className="dancer-upload-review-copy">
             <strong>Video {index + 1}</strong>
             <small role="status" aria-live="polite">{uploadStatus === "Uploading" && uploadProgress !== undefined ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>

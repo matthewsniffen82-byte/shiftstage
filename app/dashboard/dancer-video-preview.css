@@ -1,0 +1,39 @@
+/* Keep the play target transparent within the dashboard's shared button palette. */
+@layer dancr-palette {
+  button.dancer-video-preview-open,
+  html body.dancr-button-system button.dancer-video-preview-open {
+    position: absolute !important;
+    inset: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    box-sizing: border-box;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: inherit !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+    color: #fff !important;
+    transform: none !important;
+    cursor: pointer;
+  }
+  button.dancer-video-preview-open::before,
+  button.dancer-video-preview-open::after { display: none !important; }
+  .dancer-video-preview-open > span {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #000b;
+  }
+  .dancer-video-preview-open > span > svg { width: 22px; height: 22px; fill: currentColor; stroke: none; }
+  button.dancer-video-preview-open:focus-visible { outline: 2px solid #fff !important; outline-offset: -3px; }
+  button.dancer-video-preview-open:disabled { opacity: .55; cursor: default; }
+}

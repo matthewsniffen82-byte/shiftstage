@@ -9,6 +9,7 @@ import ts from "typescript";
 import { mediaReview } from "./helpers/media-review-label.mjs";
 import { loadMediaRetryComponent } from "./helpers/media-retry-component.mjs";
 import * as processingState from "../src/lib/dancr/video-processing-state.ts";
+import { mediaBatchSummary } from "../app/dashboard/media-upload-feedback.ts";
 
 const requireTest = createRequire(import.meta.url);
 const retryButton = loadMediaRetryComponent();
@@ -21,6 +22,7 @@ function compile(file, resolver) {
 }
 const thumbnail = compile("DancerVideoThumbnail.tsx", name => name === "./dancer-profile-media-sync" ? {} : requireTest(name));
 const pinButton = compile("DancerMediaPinButton.tsx", requireTest);
+const videoPreview = compile("DancerVideoPreview.tsx", name => name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaViewer" || name.endsWith('.css') ? {} : requireTest(name));
 const previews = compile("DancerVideoPreviews.tsx", name => name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : requireTest(name));
 const videos = ["approved", "rejected", "moderating"].map((status, index) => ({
   id: `video-${index}`, videoUrl: `/video-${index}.mp4`, posterUrl: `/poster-${index}.jpg`, status,
@@ -47,8 +49,7 @@ test("every video shows three-dot options with Pin or Unpin inside", () => {
 test("video review labels are concise and pending uploads never imply approval or rejection", () => {
   assert.equal(previews.videoPreviewStatus("approved"), "Approved");
   assert.equal(previews.videoPreviewStatus("rejected"), "Not approved");
-  for (const status of ["moderating", "pending"]) assert.equal(previews.videoPreviewStatus(status), "Completed");
-  for (const status of ["submitted", "review"]) assert.equal(previews.videoPreviewStatus(status), "Waiting for final approval");
+  for (const status of ["moderating", "pending", "submitted", "review"]) assert.equal(previews.videoPreviewStatus(status), "Awaiting final approval");
   assert.equal(previews.videoPreviewStatus("uploading"), "Upload incomplete");
   assert.equal(previews.videoPreviewStatus("failed"), "Upload failed");
   assert.equal(previews.videoPreviewStatus("unknown"), "Check upload status");
@@ -61,7 +62,7 @@ test("saved video previews use lazy posters without downloading full videos or s
   assert.match(html, /Delete video 3/);
   assert.match(html, /Approved/);
   assert.match(html, /Not approved/);
-  assert.match(html, /Completed/);
+  assert.match(html, /Awaiting final approval/);
   assert.doesNotMatch(html, /<video|Automatically|frames checked|Engaged views|Remove video/);
   assert.equal((render({ disabled: true, removingId: "video-0" }).match(/disabled=""/g) || []).length, 7);
   assert.match(render({ disabled: true, removingId: "video-0" }), /aria-label="Deleting video 1" aria-busy="true"/);
@@ -72,6 +73,8 @@ test("the dashboard video manager shows compact previews while the separate TV s
   const uploadContext = compile("DancerProfileUploadContext.tsx", requireTest);
   const uploadDisclosure = compile("DancerUploadDisclosure.tsx", name => name === "./DancerProfileUploadContext" ? uploadContext : requireTest(name));
   const rejectedNotice = compile("DancerRejectedUploadNotice.tsx", name => name.endsWith('.css') || name === "./dashboard-session" ? {} : requireTest(name));
+  const pendingGrid = compile("DancerPendingMediaGrid.tsx", name => name === "./DancerVideoPreview" ? videoPreview : name.endsWith('.css') ? {} : requireTest(name));
+  const uploadFeedback = compile("DancerUploadFeedback.tsx", requireTest);
   const hooks = { ...React, useCallback: fn => fn, useEffect() {}, useRef: initial => ({ current: initial }), useState: initial => [typeof initial === "function" ? initial() : initial === null ? { videos, profileEligible: false, maxVideos: 50 } : initial === true ? false : initial, () => {}] };
   const Studio = compile("DancerTvStudio.tsx", name => {
     if (name === "@/src/lib/dancr/media-review-label") return mediaReview;
@@ -79,6 +82,10 @@ test("the dashboard video manager shows compact previews while the separate TV s
     if (name === "react") return hooks;
     if (name === "./DancerVideoPreviews") return { default: previews.default };
     if (name === "./DancerVideoThumbnail") return thumbnail;
+    if (name === "./DancerVideoPreview") return videoPreview;
+    if (name === "./DancerPendingMediaGrid") return pendingGrid;
+    if (name === "./DancerUploadFeedback") return uploadFeedback;
+    if (name === "./media-upload-feedback") return { mediaBatchSummary };
     if (name === "./DancerMediaPinButton") return pinButton;
     if (name === "./DancerMediaRetryButton") return retryButton;
     if (name === "./DancerMediaUploadRules") return uploadRules;
@@ -94,14 +101,15 @@ test("the dashboard video manager shows compact previews while the separate TV s
   assert.match(embedded, /video-preview-list/);
   assert.match(embedded, /Delete video 1/);
   assert.doesNotMatch(embedded, /tv-managed-video|Automated review|frames checked|Moderation passed|Engaged views|after setup and approval/);
-  assert.match(embedded, /Videos awaiting approval/);
-  assert.equal((embedded.match(/video-preview-open/g) || []).length, 1, "only the approved video is in the library");
+  assert.match(embedded, /Videos awaiting final approval/);
+  assert.equal((embedded.match(/class="video-preview-open"/g) || []).length, 1, "only the approved video is in the library");
+  assert.equal((embedded.match(/class="dancer-video-preview-open"/g) || []).length, 1, "the pending video is also playable");
   const uploadOnly = renderToStaticMarkup(React.createElement(Studio, { embedded: true, uploadOnly: true })).replace(/<style>[\s\S]*?<\/style>/g, "");
   assert.match(uploadOnly, /Choose profile videos from your library/);
   assert.match(uploadOnly, /Record a new profile video/);
   assert.match(uploadOnly, /Confirm permissions/);
   assert.doesNotMatch(uploadOnly, /My videos|video-preview-list|tv-video-manager|Delete video|Engaged views/);
-  assert.match(uploadOnly, /Videos awaiting approval/);
+  assert.match(uploadOnly, /Videos awaiting final approval/);
   assert.match(uploadOnly, /Not approved/);
   assert.doesNotMatch(uploadOnly, />Replace</, "processing and rejected notices do not offer replacement controls");
   assert.match(uploadOnly, /dancer-rejected-upload-notice/);

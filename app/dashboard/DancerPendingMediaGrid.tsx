@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import DancerVideoThumbnail from "./DancerVideoThumbnail";
+import DancerVideoPreview from "./DancerVideoPreview";
 import "./dancer-pending-media-grid.css";
 
 export type PendingMediaCard = {
@@ -33,8 +33,8 @@ export default function DancerPendingMediaGrid({ items, addMore }: {
     </div>
     <ul className="dancer-pending-media-grid">
       {items.map(item => <li key={`${item.kind}:${item.id}`}>
-        <div className="dancer-pending-media-preview" role={item.kind === "video" ? "img" : undefined} aria-label={item.kind === "video" ? item.label : undefined}>
-          {item.kind === "video" ? <DancerVideoThumbnail videoUrl={item.videoUrl} posterUrl={item.imageUrl} />
+        <div className="dancer-pending-media-preview">
+          {item.kind === "video" ? <DancerVideoPreview label={item.label} videoUrl={item.videoUrl} posterUrl={item.imageUrl} disabled={item.removing} />
             : item.imageUrl ? <img src={item.imageUrl} alt={item.label} loading="lazy" /> : <span>{item.label}</span>}
           {item.isMainPhoto ? <strong className="dancer-pending-media-label">Main photo</strong> : null}
         </div>
