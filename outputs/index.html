@@ -41505,6 +41505,37 @@
     #publicContactPopover.is-compact .public-contact-actions {
       padding: 10px 20px;
     }
+    #signupEmailConfirmation {
+      box-sizing: border-box;
+      position: fixed;
+      inset: 0;
+      width: min(420px, calc(100% - 32px));
+      max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      margin: auto;
+      padding: 24px;
+      overflow: auto;
+      border: 1px solid var(--dancr-color-border);
+      border-radius: 20px;
+      color: var(--dancr-color-text-primary);
+      background: var(--dancr-color-surface-card);
+      box-shadow: var(--dancr-shadow-modal);
+      color-scheme: dark;
+    }
+    #signupEmailConfirmation:not([open]) { display: none; }
+    #signupEmailConfirmation::backdrop {
+      background: rgba(5, 5, 7, .8);
+      backdrop-filter: blur(6px);
+    }
+    #signupEmailConfirmation h2 { margin: 0; font-size: 24px; line-height: 1.25; }
+    #signupEmailConfirmation p { margin: 12px 0 0; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+    #signupEmailConfirmationRecipient { color: var(--dancr-color-text-secondary); }
+    #signupEmailConfirmation form { margin: 24px 0 0; }
+    #signupEmailConfirmation button {
+      width: 100%; min-height: 48px; margin: 0; padding: 12px 16px;
+      border: 0; border-radius: 12px; font: inherit; font-weight: 700;
+      color: #fff; background: var(--dancr-color-brand-primary); cursor: pointer;
+    }
+    #signupEmailConfirmation button:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 4px; }
 /* The framed Internal route opens the existing full discovery profile, not another layout. */
 html.internal-profile-embed .app > header,
 html.internal-profile-embed .app > main,
@@ -43300,6 +43331,15 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           </div>
         </form>
       </section>
+    </dialog>
+
+    <dialog id="signupEmailConfirmation" aria-labelledby="signupEmailConfirmationTitle" aria-describedby="signupEmailConfirmationRecipient signupEmailConfirmationInstructions">
+      <h2 id="signupEmailConfirmationTitle">Check your email</h2>
+      <p id="signupEmailConfirmationRecipient"></p>
+      <p id="signupEmailConfirmationInstructions">Open the newest MyDancr email and tap <strong>Confirm email</strong> to continue. If you don’t see it, check your spam folder.</p>
+      <form method="dialog">
+        <button class="action-btn" type="submit" autofocus>Got it</button>
+      </form>
     </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
@@ -57465,6 +57505,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       status.hidden = !message;
     }
 
+    function showSignupEmailConfirmation(email) {
+      const dialog = document.getElementById("signupEmailConfirmation");
+      const recipient = document.getElementById("signupEmailConfirmationRecipient");
+      recipient.textContent = email?.trim() ? `Sent to ${email.trim()}` : "Confirmation sent";
+      if (!dialog.open) dialog.showModal();
+    }
+
     function stopConfirmationResendCooldown(button, defaultText = "", enable = true) {
       const timer = confirmationResendTimers.get(button);
       if (timer) window.clearInterval(timer);
@@ -66924,9 +66971,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           isCustomerLoggedIn = false;
           updateAccountHeader();
           confirmationSent = true;
-          const confirmationMessage = "Confirmation email sent. Open the newest MyDancr email and tap the confirmation link. You’ll return signed in.";
-          setCustomerAuthStatus(confirmationMessage);
-          showToast(confirmationMessage);
+          setCustomerAuthStatus("Confirmation sent");
+          showSignupEmailConfirmation(payload.email);
           return;
         }
         if (!result.session?.accessToken) throw new Error("Sign in did not start a session. Confirm your email, then try again.");
@@ -67224,8 +67270,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         });
         if (result.requiresEmailConfirmation) {
           confirmationSent = true;
-          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Open the newest MyDancr email and tap Confirm email. Then finish your profile and dressing-room tap step.`);
-          showToast("Confirmation email sent. Open the newest email to continue.");
+          setDancerSignupStatus("Confirmation sent");
+          showSignupEmailConfirmation(email);
           return;
         }
         dancerSignupStarted = true;

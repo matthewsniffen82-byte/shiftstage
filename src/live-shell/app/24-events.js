@@ -37,9 +37,8 @@
           isCustomerLoggedIn = false;
           updateAccountHeader();
           confirmationSent = true;
-          const confirmationMessage = "Confirmation email sent. Open the newest MyDancr email and tap the confirmation link. You’ll return signed in.";
-          setCustomerAuthStatus(confirmationMessage);
-          showToast(confirmationMessage);
+          setCustomerAuthStatus("Confirmation sent");
+          showSignupEmailConfirmation(payload.email);
           return;
         }
         if (!result.session?.accessToken) throw new Error("Sign in did not start a session. Confirm your email, then try again.");
@@ -337,8 +336,8 @@
         });
         if (result.requiresEmailConfirmation) {
           confirmationSent = true;
-          setDancerSignupStatus(`Confirmation email sent${email ? ` to ${email}` : ""}. Open the newest MyDancr email and tap Confirm email. Then finish your profile and dressing-room tap step.`);
-          showToast("Confirmation email sent. Open the newest email to continue.");
+          setDancerSignupStatus("Confirmation sent");
+          showSignupEmailConfirmation(email);
           return;
         }
         dancerSignupStarted = true;

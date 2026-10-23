@@ -437,6 +437,13 @@
       status.hidden = !message;
     }
 
+    function showSignupEmailConfirmation(email) {
+      const dialog = document.getElementById("signupEmailConfirmation");
+      const recipient = document.getElementById("signupEmailConfirmationRecipient");
+      recipient.textContent = email?.trim() ? `Sent to ${email.trim()}` : "Confirmation sent";
+      if (!dialog.open) dialog.showModal();
+    }
+
     function stopConfirmationResendCooldown(button, defaultText = "", enable = true) {
       const timer = confirmationResendTimers.get(button);
       if (timer) window.clearInterval(timer);

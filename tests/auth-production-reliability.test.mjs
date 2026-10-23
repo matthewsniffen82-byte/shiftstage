@@ -539,7 +539,7 @@ test("dancer signup displays the password rejection and lets the user correct it
       sentPasswords.push(body.password);
       return (sentPasswords.length === 1 ? rejected : accepted).POST(jsonRequest("POST", body));
     },
-    setDancerSignupStatus: message => statuses.push(message), showToast() {},
+    setDancerSignupStatus: message => statuses.push(message), showToast() {}, showSignupEmailConfirmation() {},
     saveAuthResume: () => "https://mydancr.com/auth/callback?role=dancer",
     normalizeAccountEmail: value => value.trim().toLowerCase(), persistAccountEmail() {},
     endAuthSession: async () => { endSessionCalls++; },
@@ -556,7 +556,7 @@ test("dancer signup displays the password rejection and lets the user correct it
   password.value = "Unique1!Test1!password";
   await submitHandler({ preventDefault() {}, submitter: submit });
   assert.deepEqual(sentPasswords, ["Test1!password", "Unique1!Test1!password"]);
-  assert.match(statuses.at(-1), /Confirmation email sent/);
+  assert.equal(statuses.at(-1), "Confirmation sent");
   assert.equal(accepted.provisions.length, 1);
   assert.equal(endSessionCalls, 1, "confirmation-only signup clears the original session once through the guarded helper");
   assert.equal(cooldownCalls, 1);

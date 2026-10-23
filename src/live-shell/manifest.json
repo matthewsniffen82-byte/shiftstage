@@ -80,6 +80,7 @@
       "styles/override-styles-08-profile-backdrop-profile-modal-modal-grid-social-tile.css",
       "styles/utility-menu.css",
       "styles/public-contact.css",
+      "styles/signup-email-confirmation.css",
       "styles/internal-profile-embed.css"
     ]
   }

@@ -90,7 +90,7 @@ test("unified sign-in opens the dashboard returned by the production account", (
 test("confirmation cooldowns begin only after a successful email send", () => {
   assert.match(liveApp, /function startConfirmationResendCooldown\(button, readyText = "Resend confirmation email", seconds = 60\)/);
   assert.match(liveApp, /if \(confirmationSent\) \{\s*startConfirmationResendCooldown\(submit\)/);
-  assert.match(liveApp, /confirmationSent = true;[\s\S]*?Confirmation email sent/);
+  assert.match(liveApp, /confirmationSent = true;[\s\S]*?Confirmation sent/);
   assert.doesNotMatch(liveApp, /Check email or spam folder/);
   assert.doesNotMatch(liveApp, /55 seconds|55s/);
 });
@@ -117,5 +117,5 @@ test("dancer signup keeps a concise privacy note without duplicating later setup
     assert.ok(form.includes(requirement), requirement);
   }
   assert.match(form, /type="submit">Create dancer account<\/button>/);
-  assert.match(liveApp, /setDancerSignupStatus\(`Confirmation email sent/);
+  assert.match(liveApp, /setDancerSignupStatus\("Confirmation sent"\)/);
 });

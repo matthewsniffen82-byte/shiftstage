@@ -1,0 +1,31 @@
+    #signupEmailConfirmation {
+      box-sizing: border-box;
+      position: fixed;
+      inset: 0;
+      width: min(420px, calc(100% - 32px));
+      max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+      margin: auto;
+      padding: 24px;
+      overflow: auto;
+      border: 1px solid var(--dancr-color-border);
+      border-radius: 20px;
+      color: var(--dancr-color-text-primary);
+      background: var(--dancr-color-surface-card);
+      box-shadow: var(--dancr-shadow-modal);
+      color-scheme: dark;
+    }
+    #signupEmailConfirmation:not([open]) { display: none; }
+    #signupEmailConfirmation::backdrop {
+      background: rgba(5, 5, 7, .8);
+      backdrop-filter: blur(6px);
+    }
+    #signupEmailConfirmation h2 { margin: 0; font-size: 24px; line-height: 1.25; }
+    #signupEmailConfirmation p { margin: 12px 0 0; font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
+    #signupEmailConfirmationRecipient { color: var(--dancr-color-text-secondary); }
+    #signupEmailConfirmation form { margin: 24px 0 0; }
+    #signupEmailConfirmation button {
+      width: 100%; min-height: 48px; margin: 0; padding: 12px 16px;
+      border: 0; border-radius: 12px; font: inherit; font-weight: 700;
+      color: #fff; background: var(--dancr-color-brand-primary); cursor: pointer;
+    }
+    #signupEmailConfirmation button:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 4px; }
