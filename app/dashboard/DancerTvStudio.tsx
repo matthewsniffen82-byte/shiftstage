@@ -49,6 +49,8 @@ type ManagedVideo = {
   posterUrl?: string | null;
   status: string;
   reviewNotes?: string | null;
+  clubReviewedAt?: string | null;
+  moderationDetails?: { fileChecksPassed?: boolean };
   moderationDecision?: "approved" | "review" | "rejected" | null;
   moderationReasonCodes?: string[];
   moderationFrameCount?: number;
@@ -719,7 +721,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             label={item.file.name} message={item.error || "Reason unavailable"} localOnly
             disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(item.uploadId)} />;
           const stalled = Boolean(video && isVideoProcessingStalled(video));
-          const reviewStatus = stalled ? "moderation_error" : video ? videoReviewStatus(video.status, video.moderationDecision) : "";
+          const reviewStatus = stalled ? "moderation_error" : video ? videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed) : "";
           const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
           const uploadStatus = stalled ? "Upload delayed" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : item?.stage === "checking" || item?.stage === "validating" || item?.stage === "uploading" || video?.status === "moderating" ? "Uploading" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Uploading" : "Waiting to upload";
           const processing = ["Uploading", "Preparing video…", "Checking video…", "Waiting to upload"].includes(uploadStatus);
@@ -783,12 +785,6 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
                     : workspace?.profileVisible
                       ? "Uploaded. Added to your profile."
                       : "Uploaded and saved. Hidden while incognito is on."}</p>
-                ) : null}
-                {video.moderationDecision ? (
-                  <small className="tv-moderation-summary">
-                    Automated check: {video.moderationDecision === "review" ? "not completed" : video.moderationDecision}
-                    {video.moderationFrameCount ? ` · ${video.moderationFrameCount} video frames checked` : ""}
-                  </small>
                 ) : null}
                 {video.reviewNotes ? <p>{video.reviewNotes}</p> : null}
                 {video.metrics ? (

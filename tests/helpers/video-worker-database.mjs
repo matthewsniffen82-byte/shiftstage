@@ -14,7 +14,7 @@ export const workerVideoId = slotId(100);
 export const workerUserId = slotId(1);
 export const workerVideoPath = `${workerUserId}/${workerUserId}/${workerVideoId}.mp4`;
 export const workerInstant = Date.parse("2026-09-12T12:00:00.000Z");
-const columns = new Set([...slotSchema.columns.map(column => column.column_name), "upload_edit", "upload_validation_pending"]);
+const columns = new Set([...slotSchema.columns.map(column => column.column_name), "upload_edit", "upload_validation_pending", "club_reviewed_at", "club_reviewed_by"]);
 const quote = value => '"' + value.replaceAll('"', '""') + '"';
 const source = process.env.VIDEO_WORKER_BASELINE === "1"
   ? execFileSync("git", ["show", "8e01369bda91831d0f3952062082b21f67899a0d:src/lib/dancr/tv.ts"], { encoding: "utf8", windowsHide: true })
@@ -29,7 +29,7 @@ export async function createWorkerDatabase() {
   const db = await createSlotDatabase();
   try {
     await db.exec(ownershipSchema + ownershipTrigger);
-    await db.exec("alter table public.mydancr_tv_videos add column upload_edit jsonb; alter table public.mydancr_tv_videos add column upload_validation_pending boolean not null default false; alter table public.mydancr_tv_videos add constraint tv_validated_before_approval check (not upload_validation_pending or status <> 'approved')");
+    await db.exec("alter table public.mydancr_tv_videos add column upload_edit jsonb; alter table public.mydancr_tv_videos add column club_reviewed_at timestamptz; alter table public.mydancr_tv_videos add column club_reviewed_by uuid; alter table public.mydancr_tv_videos add column upload_validation_pending boolean not null default false; alter table public.mydancr_tv_videos add constraint tv_validated_before_approval check (not upload_validation_pending or status <> 'approved')");
     return db;
   }
   catch (error) { await db.close(); throw error; }
@@ -155,17 +155,13 @@ export function videoWorkerHarness(db, options = {}) {
         runWithServerJob: operation => serverJobs.runWithServerJob(operation, options.jobTimeoutMs),
       } : serverJobs;
       if (name === "../api-error-policy") return { PublicApiError };
-      if (name === "./video-moderation") return { async moderateStoredMyDancrTvVideo(_client, input) {
-        providers.push(input);
-        if (!options.holdProviders || released) {
-          if (options.providerError) throw options.providerError;
-          return workerDecision(options.decision);
-        }
-        return new Promise((resolve, reject) => pending.push({ resolve, reject }));
-      } };
+      if (name === "./video-moderation") return { async moderateStoredMyDancrTvVideo() { providers.push(true); assert.fail("AI moderation must not run"); } };
       if (name === "./video-moderation-mode") return { isVideoDemoAutoApproveMode: () => options.demo === true, demoVideoAutoApprovalValues };
       if (name === "./media-watermark") return { myDancrTvPosterStoragePath: storagePath => storagePath + ".poster.webp", async watermarkStoredVideo(_client, input) {
-        watermarks.push(input); await options.beforeWatermarkReturns?.(); return { posterStoragePath: input.storagePath + ".poster.webp", mobilePlayback: null };
+        watermarks.push(input);
+        if (options.holdPreparations && !released) await new Promise((resolve,reject)=>pending.push({resolve,reject}));
+        if (options.preparationError) throw options.preparationError;
+        await options.beforeWatermarkReturns?.(); return { posterStoragePath: input.storagePath + ".poster.webp", mobilePlayback: null };
       } };
       if (name === "./media-identity") return { DancerIdentityReferenceRequiredError: class extends Error {}, isDancerIdentityReferenceRequiredError: error => error?.identityMissing === true };
       if (name === "./video-upload-validation") return { async inspectStoredMyDancrTvVideo(_client, input) { inspections.push(input); await options.beforeInspectionReturns?.(); if (options.inspectionError) throw options.inspectionError; return { durationSeconds: 10, fileSizeBytes: 1024, width: 720, height: 1280 }; } };
@@ -185,7 +181,7 @@ export function videoWorkerHarness(db, options = {}) {
     releaseAll() { released = true; for (const job of pending) job.resolve(workerDecision()); },
     async waitFor(predicate) {
       const until = performance.now() + 2000;
-      while (!predicate({ providerCount: providers.length, claimAttempts })) {
+      while (!predicate({ preparationCount: watermarks.length, claimAttempts })) {
         assert.ok(performance.now() < until, "Native worker fixture did not reach its expected barrier");
         await new Promise(resolve => setTimeout(resolve, 2));
       }

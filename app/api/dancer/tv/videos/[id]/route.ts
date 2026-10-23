@@ -99,7 +99,7 @@ const UUID_PATTERN =
 
 function moderationMessage(video: any) {
   if (video?.status === "moderating") {
-    return "Your video uploaded successfully. AI checks are running; club approval is required before it goes live.";
+    return "Video uploaded. Preparing it for club review, then MyDancr final approval.";
   }
   if (video?.status === "approved") {
     return "Your video was approved by your club and will appear whenever your dancer profile is live.";

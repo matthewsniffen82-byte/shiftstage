@@ -2079,7 +2079,7 @@ function ImageModerationQueue({
         method: "POST",
         signal: request.controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ recordId, decision, notes: notesById[recordId] || "" }),
+        body: JSON.stringify({ recordId, decision, version: records.find(record => String(record.id) === recordId)?.updated_at, notes: notesById[recordId] || "" }),
         fallbackMessage: "Unable to update moderation record.",
       });
       if (!isCurrentImageModerationAction(request)) return;
@@ -2121,24 +2121,19 @@ function ImageModerationQueue({
         {records.slice(0, 12).map((record) => {
           const recordId = String(record.id || "");
           const reasonCodes = Array.isArray(record.reasonCodes) ? record.reasonCodes : Array.isArray(record.reason_codes) ? record.reason_codes : [];
-          const scores = (record.categoryScores || record.category_scores || {}) as Record<string, unknown>;
-          const flags = (record.categoryFlags || record.category_flags || {}) as Record<string, unknown>;
           return (
             <article className="image-moderation-row" key={recordId}>
-              {record.thumbnailUrl ? <img src={String(record.thumbnailUrl)} alt="Moderation thumbnail" /> : <div className="moderation-thumb-empty">Private</div>}
+              {record.thumbnailUrl ? <a href={String(record.thumbnailUrl)} target="_blank" rel="noopener noreferrer" aria-label="Open full image for review"><img src={String(record.thumbnailUrl)} alt="Image awaiting review" style={{ objectFit: "contain" }} /></a> : <div className="moderation-thumb-empty">Private</div>}
               <div className="image-moderation-copy">
                 <strong>{String(record.upload_context || "photo upload")}</strong>
                 <span>{String(record.decision || "review")} / {String(record.status || "pending")}</span>
                 <small>{String(record.created_at || "")}</small>
-                <small>Model: {String(record.provider_model || "openai")}</small>
+                <small>{record.club_reviewed_at ? "Club approved · MyDancr final review" : "MyDancr review"}</small>
                 <small>Reasons: {reasonCodes.length ? reasonCodes.join(", ") : "None"}</small>
-                <details>
-                  <summary>Category flags and scores</summary>
-                  <pre>{JSON.stringify({ flags, scores }, null, 2)}</pre>
-                </details>
+
                 {String(record.decision) === "review" ? (
                   <>
-                    <p>Reject any clear branding or logo, including clothing, backgrounds, and watermarks. Approve a questionable mark only after confirming it is not branding.</p>
+                    <p>Final review: inspect the full image against MyDancr guidelines. Dancer media must show only that dancer, with no prohibited nudity, sexual activity, branding, contact details, or unsafe content.</p>
                     <textarea
                       value={notesById[recordId] || ""}
                       disabled={controlsBusy}
@@ -2146,7 +2141,7 @@ function ImageModerationQueue({
                       placeholder="Reviewer notes"
                     />
                     <div className="image-moderation-actions">
-                      <button type="button" disabled={controlsBusy} onClick={() => decide(recordId, "approved")}>Approve</button>
+                      <button type="button" disabled={controlsBusy || !record.thumbnailUrl} onClick={() => decide(recordId, "approved")}>Approve and publish</button>
                       <button type="button" disabled={controlsBusy} onClick={() => decide(recordId, "rejected")}>Reject</button>
                     </div>
                   </>

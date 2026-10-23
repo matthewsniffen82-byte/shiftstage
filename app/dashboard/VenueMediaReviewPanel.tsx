@@ -7,7 +7,7 @@ import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
 import "./venue-media-review.css";
 
 type Review = { id: string; kind: "photo" | "video"; stageName: string; version: string; previewUrl: string;
-  label: string; processing: boolean; canApprove: boolean };
+  label: string; processing: boolean; canApprove: boolean; caption?: string | null };
 
 export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onCountChange }: {
   venueId: string; active: boolean; refreshKey?: string | null; onCountChange: (count: number) => void;
@@ -61,14 +61,14 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     }
     const controller = new AbortController(); action.current = controller;
     setBusy(true); setMessage("");
-    setFeedback({ id: item.id, text: decision === "approved" ? "Publishing approved media…" : "Saving rejection…", error: false, decision });
+    setFeedback({ id: item.id, text: decision === "approved" ? "Sending to MyDancr…" : "Saving rejection…", error: false, decision });
     try {
       await requestDashboardJson("/api/venue/media-reviews", { method: "POST", expectedRole: "venue", signal: controller.signal,
         timeoutMs: 280000, headers: { "content-type": "application/json" },
         body: JSON.stringify({ id: item.id, kind: item.kind, version: item.version, decision, notes: decision === "rejected" ? notes[item.id] || "" : "" }),
       });
       if (controller.signal.aborted) return;
-      setMessage(`${item.stageName}’s ${item.label.toLowerCase()} ${decision}.`);
+      setMessage(decision === "approved" ? `${item.stageName}’s ${item.label.toLowerCase()} sent to MyDancr for final approval.` : `${item.stageName}’s ${item.label.toLowerCase()} rejected.`);
       setFeedback(null);
       setRejectingId(null);
       setItems(current => current.filter(value => value.id !== item.id));
@@ -82,16 +82,18 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   if (!active) return null;
   return <section className="venue-media-review" id="venue-media-reviews" aria-labelledby="venue-media-review-title" aria-busy={busy || loading}>
     <header><div><h2 id="venue-media-review-title">Media approvals{count !== null ? ` · ${count}` : ""}</h2>
-      <p>Approve or reject media for live dancer profiles.</p></div>
+      <p>Review each upload. Approved items go to MyDancr staff for final approval before going live.</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
+    <details><summary>Review guidelines</summary><p>Confirm the media shows only this adult dancer and they have permission to share it. No nudity, sexual activity, unsafe content, logos, watermarks, or contact/payment details. Watch the entire video with sound and check its caption. Reject anything uncertain with a clear reason.</p></details>
     {message ? <p role="status">{message}</p> : null}
     {loadError ? <p role="alert">{loadError}</p> : null}
     {loading ? <p role="status">Updating media reviews…</p> : !items.length ? <p>{count ? "No uploads on this page. Go back to see pending media." : "No media waiting for approval."}</p> : null}
     <div className="venue-media-review-grid">
       {items.map(item => <article key={item.id}>
         {item.previewUrl ? item.kind === "video" ? <video controls playsInline preload="metadata" src={item.previewUrl} aria-label={`${item.stageName} video for review`} />
-          : <img src={item.previewUrl} alt={`${item.stageName} ${item.label.toLowerCase()} for review`} /> : <p>Preview unavailable. Refresh before approving.</p>}
+          : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open full ${item.label.toLowerCase()} of ${item.stageName}`}><img src={item.previewUrl} alt={`${item.stageName} ${item.label.toLowerCase()} for review`} /></a> : <p>Preview unavailable. Refresh before approving.</p>}
         <h3>{item.stageName} · {item.label}</h3>
+        {item.caption ? <p>Caption: {item.caption}</p> : null}
         {item.processing ? <p>Processing…</p> : null}
         {feedback?.id === item.id ? <p className={`venue-media-review-feedback${feedback.error ? " is-error" : ""}`} id={`review-feedback-${item.id}`} role={feedback.error ? "alert" : "status"}>{feedback.text}</p> : null}
         {rejectingId === item.id ? <form className="venue-media-rejection" onSubmit={event => { event.preventDefault(); void review(item, "rejected"); }}>
@@ -110,7 +112,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
             <button type="button" disabled={busy} onClick={() => { setRejectingId(null); setFeedback(null); }}>Cancel</button>
           </div>
         </form> : <div className="venue-media-review-actions">
-          <button type="button" disabled={busy || loading || !item.canApprove || !item.previewUrl} onClick={() => void review(item, "approved")}>Approve</button>
+          <button type="button" disabled={busy || loading || !item.canApprove || !item.previewUrl} onClick={() => void review(item, "approved")}>Send to MyDancr</button>
           <button type="button" disabled={busy || loading || item.processing} onClick={() => { setRejectingId(item.id); setFeedback(null); }}>Reject</button>
         </div>}
       </article>)}

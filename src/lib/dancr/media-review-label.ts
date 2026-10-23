@@ -8,6 +8,7 @@ export function mediaReviewLabel(status: string, moderationStatus = "", kind: "p
   if (state === "hidden" || state === "removed") return "Removed";
   if (state === "expired") return "Expired";
   const review = String(moderationStatus || state).trim().toLowerCase();
+  if (review === "staff_review") return "Waiting for MyDancr approval";
   if (["pending_review", "submitted", "review", "completed"].includes(review)) return "Waiting for Club approval";
   if (["error", "moderation_error", "moderation_retry"].includes(review)) return "Review delayed";
   if (["pending", "moderating"].includes(state)) return `Checking ${kind}…`;
@@ -15,12 +16,14 @@ export function mediaReviewLabel(status: string, moderationStatus = "", kind: "p
 }
 
 export function isAwaitingClubApproval(status: string, moderationStatus = "") {
-  return mediaReviewLabel(status, moderationStatus) === "Waiting for Club approval";
+  return ["Waiting for Club approval", "Waiting for MyDancr approval"].includes(mediaReviewLabel(status, moderationStatus));
 }
 
-/** Legacy submitted rows may contain failed checks; only a pass is ready for the club. */
-export function videoReviewStatus(status: string, decision?: string | null) {
-  return status === "submitted" && decision !== "approved" ? "moderation_error" : status;
+/** Technical readiness and human review are separate from a content decision. */
+export function videoReviewStatus(status: string, _decision?: string | null, clubReviewedAt?: string | null, fileChecksPassed?: boolean) {
+  if (status !== "submitted") return status;
+  if (clubReviewedAt) return "staff_review";
+  return fileChecksPassed ? "submitted" : "moderation_error";
 }
 
 export function isBriefRejectionReason(value: string) {
@@ -122,7 +125,7 @@ export function mediaReviewExplanation(kind: "photo" | "video", status: string, 
   const genericMessage = /^(Your photo was uploaded and is awaiting|Photo uploaded, but moderation stopped|Automatically approved|Automated safety review requested human review|This video did not meet MyDancr TV safety guidelines|This photo does not meet Dancr's photo guidelines|Rejected by admin moderation\.|Upload received\. AI checks|Your video uploaded successfully\. AI checks|AI checks (are running|passed)|Pending club approval\.)/i;
   if (savedMessage && !genericMessage.test(savedMessage) && !/human review|manual review|sent to a person/i.test(savedMessage)) return savedMessage;
   if (notes.length) return [...new Set(notes)].join(" ");
-  if (label === "Waiting for Club approval") return "";
+  if (["Waiting for Club approval", "Waiting for MyDancr approval"].includes(label)) return "";
   if (label === "Upload incomplete" || label === "Upload failed") return `The upload didn't finish. Retry or choose another ${kind}.`;
   return "";
 }

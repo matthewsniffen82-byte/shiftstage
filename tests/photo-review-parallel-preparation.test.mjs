@@ -37,6 +37,7 @@ for (const failCopy of [false, true]) test(`private review and display copies ov
   assert.equal(removed.length, failCopy ? 0 : 1);
   if (!failCopy) {
     assert.equal(writes[0][2].status, 'pending_review');
-    assert.equal(writes[0][2].categoryFlags.ai_recommended_approval, true);
+    assert.equal(writes[0][2].categoryFlags.file_checks_passed, true);
+    assert.equal(writes[0][2].categoryFlags.ai_recommended_approval, undefined);
   }
 });

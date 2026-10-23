@@ -1,17 +1,11 @@
 import "server-only";
-import { createMediaVisualResponse, MEDIA_VISUAL_MODEL } from "./media-visual-provider.ts";
-import { withOpenAIRequestDeadline } from "../openai-request.ts";
 
 import { createHash } from "crypto";
-import { createOpenAIClient } from "../openai-client";
-import { getServerEnv } from "../server-env.ts";
 import {
   AvatarFaceDetectionUnavailableError,
   AvatarFaceRequiredError,
   computeAvatarCandidateCrops,
   computeFaceCenteredAvatarCrop,
-  isAvatarFaceRequiredError,
-  parseAvatarCandidateSelection,
   type AvatarCandidatePosition,
   type AvatarCandidateSelection,
 } from "./avatar-face-core.ts";
@@ -30,9 +24,8 @@ export {
   type AvatarSquareCrop,
 } from "./avatar-face-core.ts";
 
-export const DANCR_AVATAR_FACE_MODEL = MEDIA_VISUAL_MODEL;
+export const DANCR_AVATAR_FACE_MODEL = "local-face-crop";
 
-const AVATAR_FACE_ANALYSIS_TIMEOUT_MS = 25_000;
 const AVATAR_ANALYSIS_MAX_DIMENSION = 1024;
 const AVATAR_OUTPUT_MAX_DIMENSION = 2048;
 const AVATAR_OUTPUT_JPEG_QUALITY = 95;
@@ -118,65 +111,13 @@ export async function prepareFaceCenteredAvatar(
 async function selectPrimaryAvatarCandidate(
   candidates: Array<{ position: AvatarCandidatePosition; buffer: Buffer }>,
 ): Promise<AvatarCandidateSelection> {
-  if (!process.env.OPENAI_API_KEY) throw new AvatarFaceDetectionUnavailableError();
-  const openai = await createOpenAIClient({ apiKey: getServerEnv("OPENAI_API_KEY") });
-  const content: any[] = [
-    {
-      type: "input_text",
-      text:
-        "Each following image is a real square crop from the same upload and is labeled start, middle, or end. Select the one crop that most clearly shows the main foreground subject's complete real face, including both eyes, full nose, full mouth, chin, and outer face. Prefer the crop that preserves the entire top of the head and hair, even if more of the body is visible or the face is above center. Ignore faces in posters, screens, reflections, and background people. Do not infer hidden features. Choose none unless a complete recognizable face is visibly present.",
-    },
-  ];
   for (const candidate of candidates) {
-    content.push({ type: "input_text", text: `Candidate ${candidate.position}` });
-    content.push({
-      type: "input_image",
-      image_url: `data:image/jpeg;base64,${candidate.buffer.toString("base64")}`,
-      detail: "high",
-    });
+    const face = await locateAvatarFace(candidate.buffer);
+    if (face) return { clearFace: true, fullyVisible: true, selectedCandidate: candidate.position, confidence: 1, rejectionReason: "" };
   }
-
-  try {
-    const response = await withOpenAIRequestDeadline(
-      options => createMediaVisualResponse(openai, {
-        instructions:
-          "Compare avatar crop candidates only. Do not identify the person or infer sensitive traits.",
-        input: [{ role: "user", content }],
-        text: {
-          format: {
-            type: "json_schema",
-            name: "dancr_avatar_crop_selection",
-            strict: true,
-            schema: {
-              type: "object",
-              additionalProperties: false,
-              required: ["clearFace", "fullyVisible", "selectedCandidate", "confidence", "rejectionReason"],
-              properties: {
-                clearFace: { type: "boolean" },
-                fullyVisible: { type: "boolean" },
-                selectedCandidate: {
-                  type: "string",
-                  enum: ["start", "middle", "end", "none"],
-                },
-                confidence: { type: "number" },
-                rejectionReason: { type: "string" },
-              },
-            },
-          },
-        },
-      }, options),
-      AVATAR_FACE_ANALYSIS_TIMEOUT_MS,
-      "provider_timeout: avatar crop review",
-    );
-    if (response.status !== "completed" || !response.output_text) throw new AvatarFaceDetectionUnavailableError();
-    return parseAvatarCandidateSelection(
-      JSON.parse(response.output_text),
-      candidates.map((candidate) => candidate.position),
-    );
-  } catch (error) {
-    if (isAvatarFaceRequiredError(error)) throw error;
-    throw new AvatarFaceDetectionUnavailableError(error);
-  }
+  // Human reviewers decide whether the face is acceptable. A centered crop
+  // remains available even when the local detector cannot locate a face.
+  return { clearFace: true, fullyVisible: true, selectedCandidate: candidates.find(c => c.position === "middle")?.position || candidates[0].position, confidence: 0, rejectionReason: "" };
 }
 
 function positiveDimension(value: unknown) {

@@ -63,8 +63,8 @@ export async function approveReviewRecord(admin: any, record: any, reviewerId: s
     return published.record;
   }
   if (record.decision !== "review" || ["approved", "rejected"].includes(record.status)) throw galleryReviewConflict();
-  if (["pending", "moderating", "moderation_retry"].includes(record.status)) {
-    throw new PublicApiError("CONFLICT", "AI checks are still running. Refresh the review before approving this upload.", 409);
+  if (record.status !== "pending_review" || record.category_flags?.file_checks_passed !== true || !record.club_reviewed_at) {
+    throw new PublicApiError("CONFLICT", "File preparation and club review must finish before MyDancr approval.", 409);
   }
   const sourcePath = record.temporary_storage_path;
   if (!sourcePath) throw new Error("Review image is missing.");
@@ -140,6 +140,7 @@ export async function approveReviewRecord(admin: any, record: any, reviewerId: s
 }
 
 export async function rejectReviewRecord(admin: any, record: any, reviewerId: string, notes: string) {
+  if (notes.trim().length < 3) throw new PublicApiError("INVALID_REQUEST", "Add a clear rejection reason for the dancer.", 400);
   const sourcePath = record.temporary_storage_path;
   const update = {
     decision: "rejected",

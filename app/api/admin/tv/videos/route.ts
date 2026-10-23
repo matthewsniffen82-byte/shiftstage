@@ -61,12 +61,16 @@ export async function POST(request: Request) {
     if (!decision) {
       return NextResponse.json({ ok: false, error: "Choose a video and decision." }, { status: 400 });
     }
+    if (typeof body.version !== "string" || !Number.isFinite(Date.parse(body.version))) {
+      throw new PublicApiError("CONFLICT", "Refresh the video before reviewing it.", 409);
+    }
     const video = await reviewMyDancrTvVideo(
       createAdminSupabaseClient(),
       user.id,
       videoId,
       decision,
       notes,
+      body.version,
     );
     return NextResponse.json({
       ok: true,
@@ -106,24 +110,16 @@ const VIDEO_REVIEW_CLIENT_ERRORS = new Set([
   "Admin access required.",
   "Video not found.",
   "This video is no longer waiting for review.",
-  "Only automated processing failures can restart automated review.",
+  "Only file processing failures can restart file preparation.",
+  "Finish file preparation before approving this video.",
+  "This video changed. Refresh the queue before reviewing it.",
   "The dancer profile is not eligible for media onboarding.",
   "Only videos that are 30 seconds or shorter can be approved.",
   "Add a clear rejection reason for the dancer.",
 ]);
 
 function automatedReviewMessage(video: any) {
-  if (video?.status === "approved") {
-    return "Automated safety review passed. The video is published on MyDancr TV.";
-  }
-  if (video?.status === "rejected") {
-    return "Automated safety review rejected the video and notified the dancer.";
-  }
-  const reasonCodes = Array.isArray(video?.moderation_reason_codes)
-    ? video.moderation_reason_codes.map(String)
-    : [];
-  if (reasonCodes.some((reason: string) => reason.startsWith("video_moderation_") || reason === "video_decode_failed")) {
-    return "Automated safety review is still unavailable. The video remains in human review.";
-  }
-  return "Automated safety review completed. The video still needs a human decision.";
+  return video?.moderation_details?.fileChecksPassed === true
+    ? "File preparation completed. Waiting for club review, then MyDancr approval."
+    : "File preparation could not finish. The video stays private and can be retried.";
 }

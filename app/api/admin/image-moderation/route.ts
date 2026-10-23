@@ -1,4 +1,6 @@
-import { NextResponse } from "next/server";
+import { finalizePendingDancerNfcEnrollment } from "@/src/lib/dancr/nfc";
+import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
+import { after, NextResponse } from "next/server";
 import { runWithServerJob } from "@/src/lib/server-job";
 import { apiError } from "@/src/lib/api";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
@@ -30,11 +32,11 @@ export async function GET(request: Request) {
 
     let query = admin
       .from("image_moderation_records")
-      .select("id, user_id, image_id, temporary_storage_path, final_storage_path, upload_context, provider, provider_model, provider_flagged, decision, status, reason_codes, category_flags, category_scores, reviewed_by, reviewed_at, review_decision, review_notes, created_at", { count: "exact" })
+      .select("id, updated_at, club_reviewed_at, club_reviewed_by, club_review_venue_id, club_review_notes, user_id, image_id, temporary_storage_path, final_storage_path, upload_context, provider, provider_model, provider_flagged, decision, status, reason_codes, category_flags, category_scores, reviewed_by, reviewed_at, review_decision, review_notes, created_at", { count: "exact" })
       .order("created_at", { ascending: false })
       .range(page * pageSize, page * pageSize + pageSize - 1);
 
-    if (decision === "review") query = query.not("upload_context", "like", "profile_%");
+    if (decision === "review") query = query.or("upload_context.not.like.profile_%,club_reviewed_at.not.is.null");
     if (["review", "approved", "rejected"].includes(decision)) query = query.eq("decision", decision);
 
     const { data, error, count } = await query;
@@ -48,8 +50,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  const followUps: Array<() => Promise<void>> = [];
   try {
-    return await runWithServerJob(async () => {
+    const response = await runWithServerJob(async () => {
     const { client, session, user } = await createRequestSupabaseContext(request);
     await requireAdmin(client, user.id);
     const admin = createAdminSupabaseClient() as any;
@@ -73,14 +76,23 @@ export async function POST(request: Request) {
     if (error) throw error;
     if (!record) return NextResponse.json({ ok: false, error: "Moderation record not found." }, { status: 404 });
 
+    if (typeof body.version !== "string" || record.updated_at !== body.version) {
+      return NextResponse.json({ ok: false, error: "This upload changed. Refresh the queue before reviewing it." }, { status: 409 });
+    }
     if (decision === "approved") {
       const approved = await approveReviewRecord(admin, record, user.id, notes);
+      if (String(record.upload_context).startsWith("profile_")) followUps.push(async () => {
+        try { await runWithServerJob(() => finalizePendingDancerNfcEnrollment(admin, { dancerUserId: record.user_id })); }
+        catch (error) { console.warn("MEDIA_FINAL_APPROVAL_ENROLLMENT_DEFERRED", safeErrorMetadata(error)); }
+      });
       return NextResponse.json({ ok: true, record: approved, session: session || null });
     }
 
     const rejected = await rejectReviewRecord(admin, record, user.id, notes);
     return NextResponse.json({ ok: true, record: rejected, session: session || null });
     });
+    after(async () => { await Promise.all(followUps.map(work => work())); });
+    return response;
   } catch (error) {
     return apiError(error, "Unable to update image moderation record.");
   }

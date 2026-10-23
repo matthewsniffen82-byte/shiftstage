@@ -1,31 +1,16 @@
 import "server-only";
-import { MEDIA_VISUAL_MODEL, MEDIA_VISUAL_SERVICE_TIER } from "./media-visual-provider.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api";
-import { analyzeImageBranding } from "./image-branding";
-import { evaluateMediaBranding } from "./media-branding-policy.ts";
-import { evaluateDancrImageModeration } from "./moderation-policy";
 import { validateAndPrepareDancrImage, normalizeDancrVenueLogoImage, type ValidatedDancrImage } from "./image-validation";
 import { uploadResponsiveImage } from "./responsive-image";
 import { requireStorageUploadReceipt } from "./storage-upload-receipt";
 import type { VenueOwnerProfile } from "./types";
 
 const REVIEW_BUCKET = "dancr-image-moderation-review";
-export const VENUE_MEDIA_REVIEW_MESSAGE = "This image is private and waiting for human review in the image moderation queue. Clear branding or logos are not allowed.";
+export const VENUE_MEDIA_REVIEW_MESSAGE = "This image is private and waiting for MyDancr staff approval.";
 
-export async function evaluateVenueImage(image: ValidatedDancrImage, safetyCheck: () => Promise<any>) {
-  const [safetyResult, brandingResult] = await Promise.allSettled([safetyCheck(), analyzeImageBranding(image)]);
-  const safety = safetyResult.status === "fulfilled" ? evaluateDancrImageModeration(safetyResult.value)
-    : { decision: "review", reasonCodes: ["provider_response_incomplete"], categoryScores: {}, providerFlagged: false };
-  const branding = brandingResult.status === "fulfilled" ? evaluateMediaBranding(brandingResult.value)
-    : { decision: "review", reasonCode: "branding_review_unavailable" };
-  return {
-    decision: safety.decision === "rejected" || branding.decision === "rejected" ? "rejected" as const
-      : safety.decision === "review" || branding.decision === "review" ? "review" as const : "approved" as const,
-    reasonCodes: [...safety.reasonCodes, branding.reasonCode],
-    categoryScores: { ...safety.categoryScores, ...(brandingResult.status === "fulfilled" ? { branding_confidence: brandingResult.value.brandingConfidence } : {}) },
-    providerFlagged: safety.providerFlagged,
-  };
+export async function evaluateVenueImage() {
+  return { decision: "review" as "review" | "approved" | "rejected", reasonCodes: ["human_review_required"], categoryScores: {}, providerFlagged: false };
 }
 
 export async function queueVenueMediaReview(client: SupabaseClient, input: {
@@ -40,7 +25,7 @@ export async function queueVenueMediaReview(client: SupabaseClient, input: {
   requireStorageUploadReceipt(uploaded, REVIEW_BUCKET, path);
   const { data, error } = await client.from("image_moderation_records").insert({
     user_id: adminId, upload_context: `venue_${kind}`, temporary_storage_path: path,
-    provider_model: `omni-moderation-latest+${MEDIA_VISUAL_MODEL}:${MEDIA_VISUAL_SERVICE_TIER}`, provider_flagged: evaluation.providerFlagged,
+    provider: "human", provider_model: "human-review-v1", provider_flagged: evaluation.providerFlagged,
     decision: "review", status: "pending_review", reason_codes: evaluation.reasonCodes, category_scores: evaluation.categoryScores,
     venue_media_context: { venueId: venue.id, kind,
       expectedPath: kind === "logo" ? venue.logoStoragePath : venue.coverImageStoragePath,
@@ -58,7 +43,7 @@ export async function approveVenueMediaReview(client: SupabaseClient, record: an
     || record.decision !== "review" || record.status !== "pending_review") {
     throw new PublicApiError("CONFLICT", "This venue image review has changed. Refresh the queue.", 409);
   }
-  if (notes.trim().length < 3) throw new PublicApiError("INVALID_REQUEST", "Confirm in the review notes that the image contains no clear branding or logos.", 400);
+  if (notes.trim().length < 3) throw new PublicApiError("INVALID_REQUEST", "Confirm in the review notes that this venue image meets MyDancr guidelines.", 400);
   const { data: file, error: downloadError } = await client.storage.from(REVIEW_BUCKET).download(record.temporary_storage_path);
   if (downloadError || !file) throw downloadError || new Error("Review image is missing.");
   const original = await validateAndPrepareDancrImage(file);

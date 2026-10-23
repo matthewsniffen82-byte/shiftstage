@@ -3,7 +3,6 @@ import { PublicApiError } from "../api";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   MODERATION_TEMP_BUCKET,
-  moderateImageWithOpenAI,
 } from "./image-moderation";
 import {
   normalizeDancrVenueLogoImage,
@@ -186,7 +185,7 @@ export async function uploadVenueCoverImageByAdmin(
     if (tempUploadError) throw tempUploadError;
     requireStorageUploadReceipt(tempUploaded, MODERATION_TEMP_BUCKET, tempPath);
 
-    const evaluation = await evaluateVenueImage(image, () => moderateImageWithOpenAI(client, tempPath));
+    const evaluation = await evaluateVenueImage();
     if (evaluation.decision === "review") {
       await queueVenueMediaReview(client, { adminId, venue, kind: "cover", image, path: tempPath, evaluation });
       return { ...venue, mediaReviewPending: true };
@@ -332,7 +331,7 @@ export async function uploadVenueLogoImageByAdmin(
     if (tempUploadError) throw tempUploadError;
     requireStorageUploadReceipt(tempUploaded, MODERATION_TEMP_BUCKET, tempPath);
 
-    const evaluation = await evaluateVenueImage(validatedImage, () => moderateImageWithOpenAI(client, tempPath));
+    const evaluation = await evaluateVenueImage();
     if (evaluation.decision === "review") {
       await queueVenueMediaReview(client, { adminId, venue, kind: "logo", image: validatedImage, path: tempPath, evaluation });
       return { ...venue, mediaReviewPending: true };

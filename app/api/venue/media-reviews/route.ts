@@ -7,9 +7,8 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
-import { approveReviewRecord, rejectReviewRecord, withSignedThumbnail } from "@/src/lib/dancr/image-review";
+import { rejectReviewRecord, withSignedThumbnail } from "@/src/lib/dancr/image-review";
 import { MYDANCR_TV_BUCKET, reviewMyDancrTvVideo } from "@/src/lib/dancr/tv";
-import { finalizePendingDancerNfcEnrollment } from "@/src/lib/dancr/nfc";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
@@ -47,12 +46,11 @@ export async function GET(request: Request) {
         if (signed.error) throw signed.error;
         previewUrl = signed.data?.signedUrl || "";
       }
-      const flags = r.category_flags || {};
-      const recommendation = photo ? flags.ai_recommended_rejection ? "rejected" : flags.ai_recommended_approval ? "approved" : "review" : r.moderation_decision;
-      return { id: item.id, kind: item.kind, stageName: item.stageName, version: r.updated_at, previewUrl,
+      const ready = photo ? r.category_flags?.file_checks_passed === true : r.moderation_details?.fileChecksPassed === true;
+      return { id: item.id, kind: item.kind, stageName: item.stageName, version: r.updated_at, previewUrl, caption: photo ? null : r.caption,
         label: photo ? r.upload_context === "profile_avatar" ? "Avatar" : r.upload_context.startsWith("profile_main") ? "Main photo" : "Photo" : "Video",
-        processing, canApprove: !processing && recommendation === "approved" && (photo || !r.upload_validation_pending),
-        aiSummary: processing ? "AI checks running" : recommendation === "approved" ? "AI checks passed" : "AI checks did not pass",
+        processing, canApprove: !processing && ready && !r.club_reviewed_at && (photo || !r.upload_validation_pending),
+        reviewSummary: processing ? "Preparing upload" : "Club review required before MyDancr final approval",
         reasons: photo ? r.reason_codes || [] : r.moderation_reason_codes || [],
       };
     }));
@@ -81,25 +79,24 @@ export async function POST(request: Request) {
       const authorization = await admin.rpc("assert_dancer_media_reviewer", { p_actor_id: user.id, p_dancer_user_id: dancerUserId, p_venue_id: access.venueId });
       if (authorization.error) throw new PublicApiError("FORBIDDEN", "This dancer is not connected to your club. Refresh the queue.", 403);
       if (record.updated_at !== version) throw new PublicApiError("CONFLICT", "This upload changed. Refresh before reviewing it.", 409);
-      const passedChecks = photo
-        ? record.category_flags?.ai_recommended_approval === true && record.category_flags?.ai_recommended_rejection !== true
-        : record.moderation_decision === "approved";
-      if (decision === "approved" && !passedChecks) throw new PublicApiError("CONFLICT", "This upload must pass automated checks before Club approval. Ask the dancer to retry or replace it.", 409);
-      if (photo) {
-        if (decision === "approved") await approveReviewRecord(admin, record, user.id, notes, { deferCleanup: work => { followUps.push(work); } });
-        else await rejectReviewRecord(admin, record, user.id, notes);
-      } else await reviewMyDancrTvVideo(admin, user.id, id, decision as "approved" | "rejected", notes, version);
-      // The saved decision is the response boundary. Recoverable follow-up work
-      // must not keep the club waiting or turn a successful approval into a timeout.
-      if (decision === "approved") followUps.push(async () => {
-        await finalizePendingDancerNfcEnrollment(admin, { dancerUserId });
-      });
+      if (record.club_reviewed_at) throw new PublicApiError("CONFLICT", "This upload is already waiting for MyDancr approval.", 409);
+      if (decision === "approved") {
+        const { data: signedOff, error: signoffError } = await admin.rpc("review_club_dancer_media", {
+          p_actor_id: user.id, p_venue_id: access.venueId, p_kind: kind, p_id: id,
+          p_expected_updated_at: version, p_notes: notes,
+        });
+        if (signoffError) throw new PublicApiError("CONFLICT", "The upload changed or is still processing. Refresh the queue.", 409);
+        if (signedOff?.id !== id || signedOff?.club_reviewed_by !== user.id || !signedOff.club_reviewed_at) {
+          throw new Error("Club review could not be confirmed. Refresh the queue.");
+        }
+      } else if (photo) await rejectReviewRecord(admin, record, user.id, notes);
+      else await reviewMyDancrTvVideo(admin, user.id, id, "rejected", notes, version);
       followUps.push(async () => {
         await recordVenueActivity(admin, { venueId: access.venueId, actorUserId: user.id, actorRole: access.role,
           action: `media.${decision}`, targetType: photo ? "image_moderation_record" : "mydancr_tv_video", targetId: id,
           summary: `${photo ? "Photo" : "Video"} ${decision} by the club.` });
       });
-      return json({ ok: true, session });
+      return json({ ok: true, message: decision === "approved" ? "Sent to MyDancr for final approval. Still private." : "Upload rejected.", session });
     }, 270000);
     // Register outside the completed job's cancellation scope. Next keeps this
     // bounded work alive after returning the confirmed result to the dashboard.

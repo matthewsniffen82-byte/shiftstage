@@ -1,13 +1,8 @@
 import "server-only";
-import { analyzeDancerVisualMedia } from "./media-visual-review.ts";
-import { MEDIA_VISUAL_MODEL, MEDIA_VISUAL_SERVICE_TIER } from "./media-visual-provider.ts";
-import { withOpenAIRequestDeadline as withTimeout } from "../openai-request.ts";
 import { assertServerJobActive, MODERATION_WORKER_STALE_MS, runWithServerJob } from "../server-job.ts";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createHash, randomUUID } from "crypto";
-import { createOpenAIClient } from "../openai-client";
-import { getServerEnv } from "../server-env";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { PublicApiError } from "../api-error-policy";
 import { avatarRetryReference, createDancerAvatarReview, publishDancerAvatar } from "./avatar-publication";
@@ -21,17 +16,6 @@ import { validateAndPrepareDancrImage, type ValidatedDancrImage } from "./image-
 import { MAX_DANCER_PROFILE_PHOTOS } from "./media-limits";
 import { resolvePhotoPublicationIntent } from "./photo-publication-intent";
 import {
-  applyDancerPhotoContentPolicy,
-  dancerPhotoContentCategoryFlags,
-} from "./photo-content-policy";
-import {
-  combineDancerMediaModeration,
-  dancerMediaIdentityCategoryFlags,
-  evaluateDancerMediaIdentity,
-} from "./media-identity";
-import {
-  DANCR_IMAGE_MODERATION_MODEL,
-  evaluateDancrImageModeration,
   type DancrImageModerationEvaluation,
 } from "./moderation-policy";
 import {
@@ -149,7 +133,7 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   try {
     record = isAvatar ? await createDancerAvatarReview(admin, {
       userId: input.userId, profileId: profile.id, expected: profile, temporaryStoragePath: tempPath,
-      idempotencyKey, providerModel: DANCR_IMAGE_MODERATION_MODEL,
+      idempotencyKey, providerModel: "human-review-v1",
     }) : await createModerationRecord(admin, {
       userId: input.userId, temporaryStoragePath: tempPath, uploadContext, idempotencyKey,
       photoPublicationMode: publicationIntent.mode, replacementPhotoId: publicationIntent.replacementPhotoId,
@@ -169,98 +153,13 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
   if (input.deferModeration) {
     return {
       decision: "moderating", moderationRecordId: record.id,
-      message: "Upload received. AI checks are running; club approval is required before it goes live.",
+      message: "Upload received. Preparing your photo for club review, then MyDancr approval.",
       photo: pendingModerationPhoto(record.id, uploadContext),
     };
   }
 
-  let evaluation: DancrImageModerationEvaluation;
-  let categoryFlags: Record<string, boolean> = {};
-  let errorCode: string | null = null;
-
-  try {
-    const reviewStartedAt = Date.now();
-    const [providerResult, { identityAnalysis, contentAnalysis }] = await Promise.all([
-      moderateImageWithOpenAI(admin, tempPath, image),
-      analyzeDancerVisualMedia({
-        targetImages: [image.buffer], contentType: image.contentType, mediaType: "photo",
-      }),
-    ]);
-    logModeration("stage_timing", { stage: "all_ai_checks", durationMs: Date.now() - reviewStartedAt });
-    categoryFlags = {
-      ...(providerResult.categories || {}),
-      ...dancerMediaIdentityCategoryFlags(identityAnalysis),
-      ...dancerPhotoContentCategoryFlags(contentAnalysis),
-    };
-    evaluation = combineDancerMediaModeration(
-      applyDancerPhotoContentPolicy(evaluateDancrImageModeration(providerResult), contentAnalysis),
-      evaluateDancerMediaIdentity(identityAnalysis),
-    );
-    logModeration("decision_evaluated", {
-      recordId: record.id,
-      flagged: Boolean(providerResult.flagged),
-      categories: providerResult.categories || {},
-      categoryScores: providerResult.category_scores || providerResult.categoryScores || {},
-      personCount: identityAnalysis.personCount,
-      singlePersonOnly: identityAnalysis.singlePersonOnly,
-      personCountConfidence: identityAnalysis.personCountConfidence,
-      decision: evaluation.decision,
-    });
-  } catch (error) {
-    errorCode = moderationErrorCode(error);
-    const diagnosticCode = moderationDiagnosticCode(errorCode, error);
-    const providerError = sanitizeProviderError(error);
-    console.error("DANCR_MODERATION_ERROR", {
-      imageId: record.id,
-      diagnosticCode,
-      ...providerError,
-    });
-    console.error("DANCR_MODERATION_FAILURE", {
-      imageId: record.id,
-      functionFile: "src/lib/dancr/image-moderation.ts",
-      reachedOpenAI: didReachOpenAI(errorCode),
-      openaiReturnedResponse: didOpenAIReturnResponse(error),
-      diagnosticCode,
-      status: providerError.status,
-      code: providerError.code,
-      type: providerError.type,
-      requestId: providerError.requestId,
-    });
-    logModeration(errorCode === "provider_timeout" ? "provider_timeout" : "provider_error", {
-      recordId: record.id,
-      errorCode,
-      diagnosticCode,
-      providerError,
-    });
-    await updateModerationRecord(admin, record.id, {
-      decision: "review",
-      status: "moderation_error",
-      reasonCodes: [diagnosticCode],
-      categoryFlags,
-      categoryScores: {},
-      providerFlagged: false,
-      errorCode: diagnosticCode,
-      attemptCount: 1,
-      nextAttemptAt: null,
-      lastErrorCode: diagnosticCode,
-      lastErrorMessage: diagnosticCode,
-    }, expectedUpdatedAt);
-    logModeration("database_status_written", {
-      recordId: record.id,
-      databaseStatus: "moderation_error",
-      errorCode,
-      diagnosticCode,
-    });
-    return {
-      decision: "moderation_error",
-      moderationRecordId: record.id,
-      reasonCodes: [diagnosticCode],
-      diagnosticCode,
-      providerFlagged: false,
-      message: moderationDiagnosticMessage(diagnosticCode),
-      photo: pendingModerationPhoto(record.id, uploadContext),
-    };
-  }
+  const evaluation: DancrImageModerationEvaluation = { decision: "review", reasonCodes: ["human_review_required"], categoryScores: {}, providerFlagged: false };
+  const categoryFlags = { file_checks_passed: true };
 
   return holdPhotoForClubReview(admin, {
     userId: input.userId, profileId: profile.id,
@@ -367,34 +266,10 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
       getOwnDancerProfile(admin, record.user_id),
       downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath),
     ]);
-    const downloadedImage = moderationImageFromPrivateObject(downloaded);
+    const downloadedImage = await validateAndPrepareDancrImage(new Blob([new Uint8Array(downloaded.buffer)], { type: downloaded.contentType }));
     if (isAvatar) avatarRetryReference(record, profile);
-    const reviewStartedAt = Date.now();
-    const [providerResult, { identityAnalysis, contentAnalysis }] = await Promise.all([
-      moderateImageWithOpenAI(admin, tempPath, downloadedImage),
-      analyzeDancerVisualMedia({
-        targetImages: [downloadedImage.buffer], contentType: downloadedImage.contentType, mediaType: "photo",
-      }),
-    ]);
-    logModeration("stage_timing", { stage: "all_ai_checks", durationMs: Date.now() - reviewStartedAt });
-    categoryFlags = {
-      ...(providerResult.categories || {}),
-      ...dancerMediaIdentityCategoryFlags(identityAnalysis),
-      ...dancerPhotoContentCategoryFlags(contentAnalysis),
-    };
-    const evaluation = combineDancerMediaModeration(
-      applyDancerPhotoContentPolicy(evaluateDancrImageModeration(providerResult), contentAnalysis),
-      evaluateDancerMediaIdentity(identityAnalysis),
-    );
-    logModeration("retry_decision_evaluated", {
-      recordId: record.id,
-      attemptCount,
-      flagged: Boolean(providerResult.flagged),
-      personCount: identityAnalysis.personCount,
-      singlePersonOnly: identityAnalysis.singlePersonOnly,
-      personCountConfidence: identityAnalysis.personCountConfidence,
-      decision: evaluation.decision,
-    });
+    const evaluation: DancrImageModerationEvaluation = { decision: "review", reasonCodes: ["human_review_required"], categoryScores: {}, providerFlagged: false };
+    categoryFlags = { file_checks_passed: true };
 
     return await holdPhotoForClubReview(admin, {
       userId: record.user_id, profileId: profile.id,
@@ -439,7 +314,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
   });
 }
 
-/** Uncertain checks remain private for review; no automated result publishes media. */
+/** File preparation never approves content. Both human reviews are required. */
 async function holdPhotoForClubReview(
   admin: DancrClient,
   input: {
@@ -450,41 +325,8 @@ async function holdPhotoForClubReview(
   },
 ): Promise<ModeratedPhotoResult> {
   const { evaluation } = input;
-  if (evaluation.decision === "rejected") {
-    const reasonCodes = evaluation.reasonCodes;
-    await updateModerationRecord(admin, input.recordId, {
-      decision: "rejected", status: "rejected", reasonCodes,
-      categoryFlags: { ...input.categoryFlags, ai_recommended_approval: false, ai_recommended_rejection: true, ai_needs_review: false },
-      categoryScores: evaluation.categoryScores, providerFlagged: evaluation.providerFlagged,
-      errorCode: null, nextAttemptAt: null, lockedAt: null,
-      lastErrorCode: null, lastErrorMessage: null, completedAt: new Date().toISOString(),
-    }, input.expectedUpdatedAt);
-    // Delete only after the versioned rejection is confirmed.
-    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
-    return { decision: "rejected", moderationRecordId: input.recordId, reasonCodes,
-      providerFlagged: evaluation.providerFlagged, message: photoRejectionMessage(reasonCodes) };
-  }
-  // A unique private copy avoids an obsolete worker overwriting a newer review.
   const reviewPath = input.tempPath.replace(/([^/]+)$/, `review-${randomUUID()}-$1`);
-  if (evaluation.decision === "review") {
-    await uploadPrivateObject(admin, MODERATION_REVIEW_BUCKET, reviewPath, input.image);
-    await updateModerationRecord(admin, input.recordId, {
-      temporaryStoragePath: reviewPath,
-      decision: "review", status: "pending_review", reasonCodes: evaluation.reasonCodes,
-      categoryFlags: { ...input.categoryFlags, ai_recommended_approval: false,
-        ai_recommended_rejection: false, ai_needs_review: true, publication_prepared: false },
-      categoryScores: evaluation.categoryScores, providerFlagged: evaluation.providerFlagged,
-      errorCode: null, nextAttemptAt: null, lockedAt: null,
-      lastErrorCode: null, lastErrorMessage: null, completedAt: new Date().toISOString(),
-    }, input.expectedUpdatedAt);
-    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
-    return { decision: "pending_review", moderationRecordId: input.recordId,
-      reasonCodes: evaluation.reasonCodes, providerFlagged: evaluation.providerFlagged,
-      message: "AI checks need review. Your upload stays private until club approval.",
-      photo: pendingModerationPhoto(input.recordId, input.uploadContext) };
-  }
-  // Prepare private display files now, so human approval only publishes references.
-  // Neither a gallery row nor an avatar reference exists until the club approves.
+  // Prepare private display variants; only final staff approval publishes references.
   const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
   const displayImage = isAvatar ? await prepareFaceCenteredAvatar(input.image) : input.image;
   // These private copies are independent. Drain both before changing the review
@@ -505,9 +347,7 @@ async function holdPhotoForClubReview(
     reasonCodes: evaluation.reasonCodes,
     categoryFlags: {
       ...input.categoryFlags,
-      ai_recommended_approval: true,
-      ai_recommended_rejection: false,
-      ai_needs_review: false,
+      file_checks_passed: true,
       publication_prepared: true,
     },
     categoryScores: evaluation.categoryScores,
@@ -517,64 +357,13 @@ async function holdPhotoForClubReview(
   }, input.expectedUpdatedAt);
   // Retain both copies on an uncertain write; only a confirmed update allows cleanup.
   await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
-  logModeration("awaiting_club_review", { recordId: input.recordId, aiDecision: evaluation.decision });
+  logModeration("awaiting_club_review", { recordId: input.recordId, reviewMode: "human" });
   return {
     decision: "pending_review", moderationRecordId: input.recordId,
     reasonCodes: evaluation.reasonCodes, providerFlagged: evaluation.providerFlagged,
-    message: "Pending club approval. Your upload will appear on the site only after approval.",
+    message: "Waiting for club review, then MyDancr approval. Your upload stays private.",
     photo: pendingModerationPhoto(input.recordId, input.uploadContext),
   };
-}
-
-export async function moderateImageWithOpenAI(admin: DancrClient, tempPath: string, prepared?: Pick<ValidatedDancrImage, "buffer" | "contentType">): Promise<any> {
-  const apiKey = getServerEnv("OPENAI_API_KEY");
-  const openai = await createOpenAIClient({ apiKey });
-  // The normalized bytes are already available to the other required AI checks.
-  // Reuse them instead of a text diagnostic, storage download and URL probe.
-  const image = prepared || await downloadPrivateObject(admin, MODERATION_TEMP_BUCKET, tempPath);
-  const startedAt = Date.now();
-  let response: any;
-  try {
-    response = await createModeration(openai, [{ type: "image_url", image_url: { url: `data:${image.contentType};base64,${image.buffer.toString("base64")}` } }]);
-  } finally {
-    logModeration("stage_timing", { stage: "safety_check", durationMs: Date.now() - startedAt });
-  }
-  const result = response?.results?.[0];
-  if (!result) throw new Error("provider_response_incomplete");
-  if (typeof result.flagged !== "boolean") throw new Error("INVALID_MODERATION_RESPONSE");
-  console.log("OPENAI_MODERATION_RESULT", {
-    ...safeErrorMetadata({ request_id: response?._request_id }),
-    resultExists: Boolean(result),
-    flagged: result?.flagged,
-  });
-  console.log("OPENAI_IMAGE_MODERATION_RESULT", {
-    ...safeErrorMetadata({ request_id: response?._request_id }),
-    resultExists: Boolean(result),
-    flagged: result?.flagged,
-  });
-  logModeration("provider_response", {
-    model: DANCR_IMAGE_MODERATION_MODEL,
-    resultCount: Array.isArray(response?.results) ? response.results.length : 0,
-  });
-  logModeration("moderation_completed", {
-    model: DANCR_IMAGE_MODERATION_MODEL,
-    flagged: Boolean(result.flagged),
-    categoryCount: Object.keys(result.categories || {}).length,
-  });
-  return result;
-}
-
-async function createModeration(openai: any, input: Array<{ type: "image_url"; image_url: { url: string } }>) {
-  return withRetry<any>(() =>
-    withTimeout(
-      (requestOptions) => openai.moderations.create({
-        model: DANCR_IMAGE_MODERATION_MODEL,
-        input,
-      }, requestOptions),
-      20000,
-      "provider_timeout",
-    ),
-  );
 }
 
 async function downloadPrivateObject(client: DancrClient, bucket: string, path: string) {
@@ -586,44 +375,6 @@ async function downloadPrivateObject(client: DancrClient, bucket: string, path: 
     throw new Error("provider_private_download_unsupported_type");
   }
   return { buffer, contentType };
-}
-
-function moderationImageFromPrivateObject(image: { buffer: Buffer; contentType: string }): ValidatedDancrImage {
-  const contentType = image.contentType as ValidatedDancrImage["contentType"];
-  return {
-    buffer: image.buffer,
-    contentType,
-    extension: imageExtension(contentType),
-    width: 0,
-    height: 0,
-    sha256: createHash("sha256").update(image.buffer).digest("hex"),
-    storageFileName: `${randomUUID()}.${imageExtension(contentType)}`,
-  };
-}
-
-function imageExtension(contentType: ValidatedDancrImage["contentType"]) {
-  if (contentType === "image/png") return "png" as const;
-  if (contentType === "image/webp") return "webp" as const;
-  return "jpg" as const;
-}
-
-async function withRetry<T>(operation: () => Promise<T>) {
-  let lastError: unknown;
-  const retryDelays = [500, 1500];
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    try {
-      return await operation();
-    } catch (error: any) {
-      lastError = error;
-      const status = Number(error?.status || error?.response?.status || 0);
-      if (status >= 400 && status < 500 && status !== 429) break;
-      const delay = retryDelays[attempt] ?? 0;
-      if (delay > 0) {
-        await new Promise((resolve) => setTimeout(resolve, delay + Math.floor(Math.random() * 150)));
-      }
-    }
-  }
-  throw lastError;
 }
 
 async function getOwnDancerProfile(client: DancrClient, userId: string) {
@@ -732,8 +483,8 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
       user_id: input.userId,
       temporary_storage_path: input.temporaryStoragePath,
       upload_context: input.uploadContext,
-      provider: "openai",
-      provider_model: `${DANCR_IMAGE_MODERATION_MODEL}+${MEDIA_VISUAL_MODEL}:${MEDIA_VISUAL_SERVICE_TIER}`,
+      provider: "human",
+      provider_model: "human-review-v1",
       provider_flagged: false,
       decision: "review",
       status: "moderating",
@@ -753,8 +504,8 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
 
 async function updateModerationRecord(client: DancrClient, id: string, update: Record<string, unknown>, expectedUpdatedAt: string) {
   assertServerJobActive();
-  const dbUpdate: Record<string, unknown> = { updated_at: new Date().toISOString(),
-    provider_model: `${DANCR_IMAGE_MODERATION_MODEL}+${MEDIA_VISUAL_MODEL}:${MEDIA_VISUAL_SERVICE_TIER}` };
+  const dbUpdate: Record<string, unknown> = { provider: "human", updated_at: new Date().toISOString(),
+    provider_model: "human-review-v1" };
   if ("imageId" in update) dbUpdate.image_id = update.imageId;
   if ("temporaryStoragePath" in update) dbUpdate.temporary_storage_path = update.temporaryStoragePath;
   if ("finalStoragePath" in update) dbUpdate.final_storage_path = update.finalStoragePath;
@@ -841,8 +592,8 @@ async function moderationRecordToUploadResponse(client: DancrClient, record: any
     providerFlagged: Boolean(record.provider_flagged),
     message: rejected
       ? photoRejectionMessage(record.reason_codes || [])
-      : decision === "pending_review" ? "Pending club approval. Your upload will appear on the site only after approval."
-      : decision === "moderating" ? "AI checks are running. Your upload still needs club approval."
+      : decision === "pending_review" ? "Waiting for club review, then MyDancr approval. Your upload stays private."
+      : decision === "moderating" ? "Preparing your photo for club review, then MyDancr approval."
       : moderationUploadErrorMessage(record.error_code || "provider_error"),
     photo: rejected ? undefined : pendingModerationPhoto(record.id, record.upload_context),
   };
@@ -950,9 +701,9 @@ function moderationUploadErrorMessage(errorCode: string | null) {
     return "Image moderation is not configured. Photo uploads are paused until moderation is connected.";
   }
   if (retryableModerationError(errorCode)) {
-    return "Your photo uploaded successfully, but the safety check is taking longer than expected. We'll retry it automatically.";
+    return "Your photo uploaded, but file preparation is taking longer than expected. We will retry automatically.";
   }
-  return "Image moderation could not check this photo. Please try a JPG, PNG, or WebP image.";
+  return "The photo could not be prepared. Retry or choose a JPG, PNG, or WebP image.";
 }
 
 function moderationDiagnosticMessage(diagnosticCode: string) {

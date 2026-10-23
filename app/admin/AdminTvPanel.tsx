@@ -8,6 +8,9 @@ export type AdminTvVideo = {
   id: string;
   videoUrl: string;
   status: string;
+  caption?: string;
+  updatedAt?: string;
+  clubReviewedAt?: string | null;
   reviewNotes?: string | null;
   moderationDecision?: string | null;
   moderationReasonCodes?: string[];
@@ -130,7 +133,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
         method: "POST",
         signal: controller.signal,
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ videoId: video.id, decision, notes: reviewNotes }),
+        body: JSON.stringify({ videoId: video.id, decision, version: video.updatedAt, notes: reviewNotes }),
         fallbackMessage: "Unable to review video.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
@@ -178,7 +181,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
 
   async function retryAutomatedReview(video: AdminTvVideo) {
     if (!mountedRef.current || actionInFlightRef.current) return;
-    if (!window.confirm(`Retry the automated safety review for ${video.dancer?.stageName || "this dancer"}’s video?`)) {
+    if (!window.confirm(`Retry the file preparation for ${video.dancer?.stageName || "this dancer"}’s video?`)) {
       return;
     }
     actionInFlightRef.current = true;
@@ -196,19 +199,19 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
       delete next[video.id];
       return next;
     });
-    setStatus("Retrying automated safety review…");
+    setStatus("Retrying file preparation…");
     try {
       const data = await requestAdminJson("/api/admin/tv/videos", {
         method: "POST",
         signal: controller.signal,
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ videoId: video.id, action: "retry_automated_review" }),
-        fallbackMessage: "Unable to retry automated review.",
+        fallbackMessage: "Unable to retry file preparation.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      const successMessage = data.message || "Automated safety review completed.";
+      const successMessage = data.message || "File preparation completed.";
       if (selectedVideo) {
-        if (data.video?.id !== video.id || typeof data.video.status !== "string") throw new Error("The automated review could not be confirmed. Refresh the queue.");
+        if (data.video?.id !== video.id || typeof data.video.status !== "string") throw new Error("The file preparation could not be confirmed. Refresh the queue.");
         setVideos([{ ...video, status: data.video.status, moderationDecision: data.video.moderation_decision,
           moderationReasonCodes: data.video.moderation_reason_codes, moderationDetails: data.video.moderation_details }]);
         if (data.video.status !== "submitted") onReviewed?.(video.id, data.video.status);
@@ -222,7 +225,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
       onActionConfirmed?.(successMessage);
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      const errorMessage = error instanceof Error ? error.message : "Unable to retry automated review.";
+      const errorMessage = error instanceof Error ? error.message : "Unable to retry file preparation.";
       setReviewResults((current) => ({
         ...current,
         [video.id]: { decision: "error", message: errorMessage },
@@ -277,30 +280,12 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
                 {video.dancer?.city || "City unavailable"}
                 {" · Venue context is assigned from the live schedule"}
               </small>
-              {video.moderationDecision ? (
-                <div className={`admin-tv-ai-decision decision-${video.moderationDecision}`}>
-                  <strong>Automated safety review: {video.moderationDecision}</strong>
-                  <small>
-                    {video.moderationFrameCount || 0} frames checked
-                    {video.moderationDetails?.audioChecked ? " · audio checked" : " · no audio detected"}
-                    {typeof video.moderationDetails?.policyConfidence === "number"
-                      ? ` · ${Math.round(video.moderationDetails.policyConfidence * 100)}% policy confidence`
-                      : ""}
-                  </small>
-                  {video.moderationReasonCodes?.length ? (
-                    <ul>
-                      {video.moderationReasonCodes.map((reason) => (
-                        <li key={reason}>{readableReason(reason)}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {video.moderationModel ? <small>Models: {video.moderationModel}</small> : null}
-                </div>
-              ) : null}
+              <p>{video.clubReviewedAt ? "Club approved · MyDancr final review" : "Waiting for club review"}</p>
+              {video.caption ? <p>Caption: {video.caption}</p> : null}
               {video.dancer ? <Link href={`/dancers/${video.dancer.slug}`}>Open dancer profile</Link> : null}
               {video.status === "submitted" ? (
                 <>
-                  <p>Review the full video. Reject any clear branding or logo, including clothing, backgrounds, and watermarks.</p>
+                  <p>Watch the full video with sound and check its caption against MyDancr guidelines before publishing.</p>
                   <label>
                     Review notes
                     <textarea
@@ -312,7 +297,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
                     />
                   </label>
                   <div className="admin-tv-actions">
-                    <button type="button" disabled={Boolean(workingId)} onClick={() => review(video, "approved")}>
+                    <button type="button" disabled={Boolean(workingId) || !video.videoUrl || !video.clubReviewedAt} onClick={() => review(video, "approved")}>
                       {workingId === video.id && workingDecision === "approved" ? "Publishing…" : "Approve and publish"}
                     </button>
                     <button className="reject" type="button" disabled={Boolean(workingId)} onClick={() => review(video, "rejected")}>
@@ -320,7 +305,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
                     </button>
                     {canRetryAutomatedReview(video) ? (
                       <button className="retry" type="button" disabled={Boolean(workingId)} onClick={() => retryAutomatedReview(video)}>
-                        {workingId === video.id && workingDecision === "retry" ? "Reviewing…" : "Retry automated review"}
+                        {workingId === video.id && workingDecision === "retry" ? "Reviewing…" : "Retry file preparation"}
                       </button>
                     ) : null}
                   </div>
@@ -332,7 +317,7 @@ export default function AdminTvPanel({ selectedVideo, onReviewed, onActionConfir
                           {workingDecision === "approved"
                             ? "Publishing video…"
                             : workingDecision === "retry"
-                              ? "Running automated safety review…"
+                              ? "Running file preparation…"
                               : "Rejecting video…"}
                         </strong>
                         <small>Please keep this page open while the update is saved.</small>

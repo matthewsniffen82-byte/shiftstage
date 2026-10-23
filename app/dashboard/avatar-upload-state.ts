@@ -38,7 +38,7 @@ export function avatarUploadPresentation({
     }
   }
   if (!state) state = avatarUrl ? "approved" : undefined;
-  const reviewStatus = String(pendingReview?.status || upload?.moderationStatus || "pending_review");
+  const reviewStatus = String(pendingReview?.club_reviewed_at ? "staff_review" : pendingReview?.status || upload?.moderationStatus || "pending_review");
   const label = state === "checking" ? "Checking"
     : state === "pending" ? mediaReviewLabel("pending", reviewStatus)
     : state === "rejected" ? "Not approved"

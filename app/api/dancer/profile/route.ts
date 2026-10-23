@@ -247,7 +247,7 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
   const admin = createAdminSupabaseClient() as any;
   const { data, error } = await admin
     .from("image_moderation_records")
-    .select("id, image_id, final_storage_path, decision, status, reason_codes, category_flags, review_notes, upload_context, temporary_storage_path, photo_publication_mode, replacement_photo_id, created_at")
+    .select("id, club_reviewed_at, image_id, final_storage_path, decision, status, reason_codes, category_flags, review_notes, upload_context, temporary_storage_path, photo_publication_mode, replacement_photo_id, created_at")
     .eq("user_id", userId)
     .eq("decision", "review")
     .neq("upload_context", PROFILE_AVATAR_CONTEXT)
@@ -299,15 +299,14 @@ async function loadPendingPhotoReviews(userId: string, occupiedPhotos: any[] = [
       sort_order: slot.isPrimary ? 0 : slot.sortOrder,
       reviewStatus: "pending",
       review_status: "pending",
-      message: mediaReviewExplanation("photo", "pending", { moderationStatus: review.status, reasonCodes: review.reason_codes, message: review.review_notes }),
+      message: mediaReviewExplanation("photo", "pending", { moderationStatus: review.club_reviewed_at ? "staff_review" : review.status, reasonCodes: review.reason_codes, message: review.review_notes }),
     };
     // A checked main photo already has a face-cropped derivative. Preview it only
-    // for its owner; publication references stay unchanged until club approval.
+    // for its owner; publication references stay unchanged until MyDancr final approval.
     const finalPath = String(review.final_storage_path || "").trim();
     const flags = review.category_flags || {};
     const canPreviewAvatar = slot.isPrimary && review.decision === "review" && review.status === "pending_review"
-      && flags.ai_recommended_approval === true && flags.publication_prepared === true
-      && flags.ai_recommended_rejection !== true && flags.ai_needs_review !== true
+      && flags.file_checks_passed === true && flags.publication_prepared === true
       && finalPath.startsWith(`${userId}/`) && !finalPath.includes("\\")
       && finalPath.split("/").every(part => part && part !== "." && part !== "..");
     const signPreview = async (bucket: string, path: string) => {
@@ -343,7 +342,7 @@ async function loadPendingAvatarReview(userId: string) {
   const admin = createAdminSupabaseClient() as any;
   const { data, error } = await admin
     .from("image_moderation_records")
-    .select("id, decision, status, upload_context, temporary_storage_path, created_at")
+    .select("id, club_reviewed_at, decision, status, upload_context, temporary_storage_path, created_at")
     .eq("user_id", userId)
     .eq("upload_context", PROFILE_AVATAR_CONTEXT)
     .eq("decision", "review")

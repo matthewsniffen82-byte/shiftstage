@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaPinButton from "./DancerMediaPinButton";
 import DancerMediaRetryButton from "./DancerMediaRetryButton";
-import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
+import { mediaReviewLabel, videoReviewStatus } from "@/src/lib/dancr/media-review-label";
 
 type PreviewVideo = {
   id: string;
@@ -12,10 +12,12 @@ type PreviewVideo = {
   videoUrl: string;
   posterUrl?: string | null;
   status: string;
+  clubReviewedAt?: string | null;
+  moderationDetails?: { fileChecksPassed?: boolean };
 };
 
-export function videoPreviewStatus(status: string) {
-  return mediaReviewLabel(status, "", "video");
+export function videoPreviewStatus(status: string, video?: PreviewVideo) {
+  return mediaReviewLabel(status, video ? videoReviewStatus(status, null, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed) : "", "video");
 }
 
 export default function DancerVideoPreviews({ videos, removingId, disabled, onRemove, pinningId, onPin }: {
@@ -47,7 +49,7 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
             <div className="video-preview-frame">
               <button
                 className="video-preview-open"
-                aria-label={`Play video ${index + 1}: ${videoPreviewStatus(video.status)}`}
+                aria-label={`Play video ${index + 1}: ${videoPreviewStatus(video.status, video)}`}
                 disabled={disabled || !video.videoUrl}
                 onClick={() => { setPlaybackError(false); setActiveId(video.id); }}
                 type="button"
@@ -68,8 +70,8 @@ export default function DancerVideoPreviews({ videos, removingId, disabled, onRe
               </button>
             </div>
             <strong>Video {index + 1}</strong>
-            <small className={video.status === "approved" ? "is-ready" : ""}>{videoPreviewStatus(video.status)}</small>
-            <DancerMediaRetryButton id={video.id} kind="video" status={video.status} disabled={disabled} />
+            <small className={video.status === "approved" ? "is-ready" : ""}>{videoPreviewStatus(video.status, video)}</small>
+            <DancerMediaRetryButton id={video.id} kind="video" status={video.status} moderationStatus={videoReviewStatus(video.status, null, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed)} disabled={disabled} />
           </li>
         ))}
       </ul>

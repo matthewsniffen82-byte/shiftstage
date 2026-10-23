@@ -17,10 +17,6 @@ import { orderByPerformance } from "./performance-placement";
 import { isActiveNfcPresence } from "./shift-presence";
 import { requireVenueAccess } from "./venue-access";
 import {
-  moderateStoredMyDancrTvVideo,
-  type MyDancrTvModerationResult,
-} from "./video-moderation";
-import {
   MYDANCR_TV_POSTER_BUCKET,
   myDancrTvPosterStoragePath,
   archivedOriginalStoragePath,
@@ -701,7 +697,7 @@ export async function getDancerMyDancrTvWorkspace(admin: AdminClient, userId: st
 
   const { data: videos, error: videoError } = await admin
     .from("mydancr_tv_videos")
-    .select("id, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, is_pinned")
+    .select("id, updated_at, club_reviewed_at, club_reviewed_by, caption, storage_path, storage_mime, file_size_bytes, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, is_pinned")
     .eq("dancer_id", dancer.id)
     .eq("distribution_scope", "profile_and_feed")
     .in("status", [...MYDANCR_TV_PROFILE_SLOT_STATUSES])
@@ -1025,7 +1021,7 @@ export async function publishPlatformMyDancrTvUpload(
     throw new Error("The uploaded video type could not be verified.");
   }
 
-  // Platform imports use the same AI checks and private human-review queue as dancer uploads.
+  // Platform imports use the same file checks and private human-review queue as dancer uploads.
   console.info(JSON.stringify({ event: "mydancr_tv.platform_video_submitted", videoId: video.id, adminId }));
   return submitMyDancrTvUpload(admin, video.submitted_by, video.id);
 }
@@ -1191,12 +1187,12 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
 
 export async function queueOwnMyDancrTvReviewRetry(admin: AdminClient, userId: string, videoId: string) {
   const { data: video, error } = await admin.from("mydancr_tv_videos")
-    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, reviewed_by, reviewed_at, ${VIDEO_WORKER_FIELDS}`)
+    .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, reviewed_by, reviewed_at, club_reviewed_at, ${VIDEO_WORKER_FIELDS}`)
     .eq("id", videoId).eq("submitted_by", userId).maybeSingle();
   if (error) throw error;
   if (!video) throw new PublicApiError("NOT_FOUND", "Video not found.", 404);
-  if (!["submitted", "moderating"].includes(video.status) || video.reviewed_by !== null || video.reviewed_at !== null) {
-    throw new PublicApiError("CONFLICT", "This video is no longer waiting for automated review. Refresh its status.", 409);
+  if (!["submitted", "moderating"].includes(video.status) || video.reviewed_by !== null || video.reviewed_at !== null || video.club_reviewed_at || video.moderation_details?.fileChecksPassed === true) {
+    throw new PublicApiError("CONFLICT", "This video is no longer waiting for file preparation. Refresh its status.", 409);
   }
   const previous = videoWorkerState(video);
   const waitMs = video.status === "moderating" ? VIDEO_WORKER_STALE_AFTER_MS : 60_000;
@@ -1207,10 +1203,10 @@ export async function queueOwnMyDancrTvReviewRetry(admin: AdminClient, userId: s
   const update = admin.from("mydancr_tv_videos").update({
     status: "moderating", moderation_attempt_count: 0, moderation_started_at: now,
     moderation_details: {}, moderation_decision: null, moderation_completed_at: null,
-    moderation_reason_codes: [], review_notes: "Automated safety review restarted.",
+    moderation_reason_codes: [], review_notes: "File preparation restarted.",
   });
   const { data: queued, error: claimError } = await matchVideoWorkerSnapshot(update, video, video.status)
-    .is("reviewed_by", null).is("reviewed_at", null)
+    .is("reviewed_by", null).is("reviewed_at", null).is("club_reviewed_at", null)
     .select(`id, submitted_by, storage_path, storage_mime, caption, duration_seconds, width, height, status, ${VIDEO_WORKER_FIELDS}`)
     .maybeSingle();
   if (claimError) throw claimError;
@@ -1238,7 +1234,7 @@ export async function retrySubmittedMyDancrTvAutomatedModeration(
     ? video.moderation_reason_codes.map(String)
     : [];
   if (!reasonCodes.some((reason) => RETRYABLE_VIDEO_MODERATION_REASON_CODES.has(reason))) {
-    throw new Error("Only automated processing failures can restart automated review.");
+    throw new Error("Only file processing failures can restart file preparation.");
   }
 
   const previous = videoWorkerState(video);
@@ -1250,7 +1246,7 @@ export async function retrySubmittedMyDancrTvAutomatedModeration(
     .from("mydancr_tv_videos")
     .update({
       status: "moderating",
-      review_notes: "Automated safety review restarted by an administrator.",
+      review_notes: "File preparation restarted by MyDancr staff.",
       reviewed_by: null,
       reviewed_at: null,
       moderation_decision: null,
@@ -1395,34 +1391,23 @@ function videoWorkerOutcome(data: any, error: unknown, videoId: string, expected
 async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: any) {
   return runWithServerJob(async () => {
   if (!videoWorkerState(video).workerId) throw videoWorkerUnavailable();
-  let moderation: MyDancrTvModerationResult;
   let prepared: Awaited<ReturnType<typeof watermarkStoredVideo>> | null = null;
   let preparingPublication = false;
   try {
     video = await validateQueuedVideo(admin, video);
-    const moderationStartedAt = Date.now();
-    moderation = await moderateStoredMyDancrTvVideo(admin, {
-      videoId: video.id,
-      storagePath: video.storage_path,
-      storageMime: video.storage_mime,
-      caption: video.caption,
+    await assertVideoWorkerCurrent(admin, video);
+    preparingPublication = true;
+    prepared = await watermarkStoredVideo(admin, {
+      publicBucket: MYDANCR_TV_BUCKET, storagePath: video.storage_path,
+      storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
+      width: Number(video.width), height: Number(video.height),
     });
-    console.info(JSON.stringify({ event: "media_processing.stage", media: "video", stage: "ai_review", durationMs: Date.now() - moderationStartedAt, succeeded: true }));
-    if (moderation.decision === "approved") {
-      await assertVideoWorkerCurrent(admin, video);
-      preparingPublication = true;
-      prepared = await watermarkStoredVideo(admin, {
-        publicBucket: MYDANCR_TV_BUCKET, storagePath: video.storage_path,
-        storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
-        width: Number(video.width), height: Number(video.height),
-      });
-    }
   } catch (error) {
     assertServerJobActive();
     const completedAt = new Date().toISOString();
     const errorCode = preparingPublication ? "public_watermark_processing_failed" : videoModerationErrorCode(error);
     console.error(JSON.stringify({
-      event: "mydancr_tv.ai_moderation_failed",
+      event: "mydancr_tv.file_preparation_failed",
       videoId: video.id,
       errorCode,
       ...safeErrorMetadata(error),
@@ -1445,19 +1430,19 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   }
 
   assertServerJobActive();
-  const decision = moderation.decision;
-  const reasonCodes = [...new Set(moderation.reasonCodes)];
+  const decision = "review" as const;
+  const reasonCodes = ["human_review_required"];
   const completedAt = new Date().toISOString();
   // Prepared files remain private: only human approval changes publication status.
   const update = {
     moderation_decision: decision,
     moderation_reason_codes: reasonCodes,
-    moderation_category_scores: moderation.categoryScores,
-    moderation_provider_flagged: moderation.providerFlagged,
-    moderation_frame_count: moderation.frameCount,
-    moderation_model: moderation.moderationModel,
+    moderation_category_scores: {},
+    moderation_provider_flagged: false,
+    moderation_frame_count: 0,
+    moderation_model: "human-review-v1",
     moderation_details: {
-      ...moderation.details,
+      fileChecksPassed: true,
       ...(prepared ? {
         ...prepared,
         preparedPublication: { storagePath: video.storage_path, storageMime: video.storage_mime,
@@ -1465,10 +1450,8 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       } : {}),
     },
     moderation_completed_at: completedAt,
-    status: decision === "rejected" ? "rejected" : "submitted",
-    review_notes: decision === "approved"
-      ? "AI checks passed. Pending club approval."
-      : videoModerationReviewNotes(decision, reasonCodes),
+    status: "submitted",
+    review_notes: "Waiting for club review, then MyDancr approval.",
     reviewed_by: null,
     reviewed_at: null,
     published_at: null,
@@ -1484,11 +1467,11 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     .maybeSingle();
   const completed = videoWorkerOutcome(data, error, video.id, update.status);
   console.info(JSON.stringify({
-    event: "mydancr_tv.ai_moderation_persisted",
+    event: "mydancr_tv.file_preparation_persisted",
     videoId: video.id,
     decision,
     status: completed.status,
-    frameCount: moderation.frameCount,
+    frameCount: 0,
     reasonCodes,
   }));
   return completed;
@@ -1619,13 +1602,13 @@ function assertMyDancrTvStoragePath(video: any) {
 export async function getAdminMyDancrTvVideos(admin: AdminClient, status = "submitted") {
   const allowedStatuses = new Set(["submitted", "approved", "rejected", "hidden", "all"]);
   const normalized = allowedStatuses.has(status) ? status : "submitted";
-  if (normalized === "submitted") return []; // Dancer media is reviewed by the club.
   let query = admin
     .from("mydancr_tv_videos")
-    .select("id, caption, storage_path, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_category_scores, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, dancer_profiles(id, stage_name, slug, city, status, is_public)")
+    .select("id, updated_at, club_reviewed_at, caption, storage_path, duration_seconds, width, height, status, distribution_scope, review_notes, moderation_decision, moderation_reason_codes, moderation_category_scores, moderation_provider_flagged, moderation_frame_count, moderation_model, moderation_details, moderation_attempt_count, moderation_started_at, moderation_completed_at, submitted_at, reviewed_at, published_at, expires_at, created_at, dancer_profiles(id, stage_name, slug, city, status, is_public)")
     .order("submitted_at", { ascending: true, nullsFirst: false })
     .limit(100);
   if (normalized !== "all") query = query.eq("status", normalized);
+  if (normalized === "submitted") query = query.not("club_reviewed_at", "is", null);
   const { data, error } = await query;
   if (error) throw error;
 
@@ -1646,7 +1629,7 @@ export async function reviewMyDancrTvVideo(
   return runWithServerJob(async () => {
   const { data: video, error } = await admin
     .from("mydancr_tv_videos")
-    .select(`id, updated_at, status, storage_path, storage_mime, duration_seconds, width, height, moderation_details, upload_validation_pending, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
+    .select(`id, updated_at, status, submitted_by, club_reviewed_at, club_reviewed_by, storage_path, storage_mime, duration_seconds, width, height, moderation_details, upload_validation_pending, dancer_profiles(stage_name, city, status, verification_status${IDENTITY_PROFILE_FIELDS}, photo_review_status, approved_at, disabled_at, is_public)`)
     .eq("id", videoId)
     .maybeSingle();
   if (error) throw error;
@@ -1654,7 +1637,8 @@ export async function reviewMyDancrTvVideo(
   if (expectedVersion && video.updated_at !== expectedVersion) throw new Error("This video changed. Refresh the queue before reviewing it.");
   if (video.status !== "submitted") throw new Error("This video is no longer waiting for review.");
 
-  if (decision === "approved" && video.upload_validation_pending) throw new Error("Restart automated processing to validate this video before approval.");
+  if (decision === "approved" && !video.club_reviewed_at) throw new PublicApiError("CONFLICT", "Club approval is required before MyDancr final approval.", 409);
+  if (decision === "approved" && (video.upload_validation_pending || video.moderation_details?.fileChecksPassed !== true)) throw new Error("Finish file preparation before approving this video.");
   if (decision === "approved" && !isDancerMediaOnboardingEligible(one(video.dancer_profiles))) {
     throw new Error("The dancer profile is not eligible for media onboarding.");
   }
@@ -1831,6 +1815,8 @@ function mapManagedVideo(
     width: Number(video.width || 0),
     height: Number(video.height || 0),
     status: video.status,
+    updatedAt: video.updated_at,
+    clubReviewedAt: video.club_reviewed_at || null,
     distributionScope: video.distribution_scope === "feed_only" ? "feed_only" : "profile_and_feed",
     reviewNotes: video.review_notes || null,
     moderationDecision: video.moderation_decision || null,
