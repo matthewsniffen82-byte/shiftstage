@@ -131,8 +131,10 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     <header><div><h2 id="venue-media-review-title" ref={heading} tabIndex={-1}>{selectedDancer ? `${selectedDancer.stageName} · Club media` : "Media approvals"}{count !== null ? ` · ${selectedDancer ? uploadCount : count}` : ""}</h2>
       <p>Your approval sends media to MyDancr for final review.</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
-    <label>Show <select value={showAll ? "all" : "pending"} disabled={busy} onChange={event => { setShowAll(event.target.value === "all"); openDancer(null); }}><option value="pending">Waiting for your club</option><option value="all">All media and decisions</option></select></label>
-    {selectedDancer ? <button className="venue-media-back" type="button" disabled={busy} onClick={() => openDancer(null)}>← All dancers</button> : null}
+    <div className="venue-media-controls">
+      <label>Show <select value={showAll ? "all" : "pending"} disabled={busy} onChange={event => { setShowAll(event.target.value === "all"); openDancer(null); }}><option value="pending">Waiting for your club</option><option value="all">All media and decisions</option></select></label>
+      {selectedDancer ? <button className="venue-media-back" type="button" disabled={busy} onClick={() => openDancer(null)}>← All dancers</button> : null}
+    </div>
     {selectedDancer && dancerAvatar && dancerAvatar.dancerId === selectedId && dancerAvatar.venueId === venueId ? <div className="venue-media-review-avatar">
       <img src={dancerAvatar.url} alt={`${selectedDancer.stageName} avatar`} width={64} height={64} />
       <div><h3>Avatar</h3><p>{dancerAvatar.status === "pending" ? "Pending approval" : "Approved"}</p></div>

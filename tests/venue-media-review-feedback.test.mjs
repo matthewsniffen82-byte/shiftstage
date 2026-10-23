@@ -79,6 +79,7 @@ function harness(kind = 'photo') {
     setRows(next) { rows = next; },
     setAvatar(next) { avatar = next; },
     get avatar() { return nodes().find(node => node.props?.className === 'venue-media-review-avatar'); },
+    get controls() { return nodes().find(node => node.props?.className === 'venue-media-controls'); },
     get rows() { return rows; },
     get dancerCards() { return nodes().filter(node => node.props?.className === 'venue-media-dancer-card'); },
     open(index = 0) { this.dancerCards[index].props.onClick(); render(); },
@@ -104,6 +105,21 @@ function harness(kind = 'photo') {
 async function ready(kind) {
   const ui = harness(kind); await ui.settle(); ui.open(); await ui.settle(); return ui;
 }
+
+test('filter and back button share one toolbar and retain their navigation behavior', async () => {
+  const ui = harness(); await ui.settle();
+  const children = () => ui.controls.props.children.filter(Boolean);
+  assert.equal(children().length, 1);
+  assert.equal(children()[0].type, 'label');
+  ui.open(); await ui.settle();
+  assert.equal(children().length, 2);
+  assert.equal(children()[1].props.className, 'venue-media-back');
+  ui.back(); await ui.settle();
+  assert.equal(children().length, 1); assert.equal(ui.dancerCards.length, 1);
+  ui.open(); await ui.settle(); ui.showAll(); await ui.settle();
+  assert.equal(children().length, 1); assert.equal(ui.dancerCards.length, 1);
+  assert.match(ui.reads.at(-1), /status=all/);
+});
 
 test('photo: Reject hides the upload immediately, sends no reason and cannot be repeated while saving', async () => {
   const ui = await ready('photo');
