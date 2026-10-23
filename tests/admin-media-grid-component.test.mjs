@@ -71,6 +71,21 @@ test('dancer cards open a media grid with controls under each photo/video and re
   }finally{f.unmount();}
 });
 
+test('a video-only queue displays the main photo on its clickable dancer card and videos inside',async()=>{
+  const f=fixture([item('video','video')]);
+  try{
+    await f.settle();
+    const card=f.nodes().find(node=>node.props.className==='admin-media-dancer-card');
+    const photo=walk(card).find(node=>node.type==='img');
+    assert.equal(photo.props.src,'/main.jpg');assert.equal(card.type,'button');
+    assert.equal(card.props['aria-label'],'Review 1 uploads from Test dancer');
+    assert.equal(f.cards.length,0);
+    await f.open();
+    assert.equal(f.cards.length,1);assert.equal(f.nodes().find(node=>node.type==='video').props.src,'/media/video');
+    assert.match(f.calls.at(-1)[0],/group=dancer%3Atest/);
+  }finally{f.unmount();}
+});
+
 test('failed or unconfirmed publication keeps the upload available and never claims success',async()=>{
   for(const write of [async()=>{throw new Error('Another reviewer claimed this upload.');},async()=>({video:{id:'v',status:'approved'}})]){
     const f=fixture([item('v','video')],write);

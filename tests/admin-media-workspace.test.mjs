@@ -14,6 +14,7 @@ vm.runInNewContext(compile('src/lib/dancr/admin-media-workspace.ts'),{exports:se
   if(name==='server-only')return {};
   if(name==='../api-error-policy')return {PublicApiError};
   if(name==='./image-review')return {withSignedThumbnail:async(_db,row)=>({...row,thumbnailUrl:'https://example.test/'+row.id})};
+  if(name==='./media-review-main-photo')return {mainPhotoPreviews:async(db,ids)=>{db.previewIds=Array.from(ids);return new Map(ids.map(id=>[id,'https://example.test/main/'+id]));}};
   throw new Error(name);
 }});
 const id=n=>`00000000-0000-4000-8000-${String(n).padStart(12,'0')}`;
@@ -91,13 +92,14 @@ test('selected dancer media and its total include only that dancer, with invalid
   await assert.rejects(service.getAdminMediaWorkspace(database(),new URLSearchParams({group:'DANCER:'+id(100)})),error=>error.status===400);
 });
 
-test('dancer groups sign one preview each and return no private storage paths',async()=>{
+test('dancer groups use independent main photos and return no private storage paths',async()=>{
   let args;
   const db={rpc:async(name,params)=>{assert.equal(name,'get_admin_media_dancers');args=params;return {data:{dancerCount:50,total:135,counts:{staff:135,club:2,processing:1},dancers:[{review_group:'dancer:'+id(100),dancer_name:'Test dancer',count:40,photo_count:40,video_count:0,preview:{kind:'photo',id:id(1),temporary_storage_path:'private/path'}}]}};}};
   const result=await service.getAdminMediaDancers(db,id(3),new URLSearchParams({offset:'12',venueId:id(20)}));
   assert.equal(args.p_actor,id(3));assert.equal(args.p_offset,12);assert.equal(args.p_venue_id,id(20));
   assert.equal(result.dancerCount,50);assert.equal(result.dancers[0].count,40);
-  assert.equal(result.dancers[0].previewUrl,'https://example.test/'+id(1));
+  assert.equal(result.dancers[0].previewUrl,'https://example.test/main/'+id(100));
+  assert.equal(result.dancers[0].previewKind,'photo');assert.deepEqual(db.previewIds,[id(100)]);
   assert.doesNotMatch(JSON.stringify(result),/private\/path|temporary_storage_path/);
   await service.getAdminMediaDancers(db,id(3),new URLSearchParams({stage:'invalid',kind:'invalid'}));
   assert.equal(args.p_stage,'staff');assert.equal(args.p_kind,'all');

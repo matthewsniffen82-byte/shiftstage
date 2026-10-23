@@ -1,6 +1,7 @@
 import "server-only";
 import { PublicApiError } from "../api-error-policy";
 import { withSignedThumbnail } from "./image-review";
+import { mainPhotoPreviews } from "./media-review-main-photo";
 
 export const ADMIN_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function signedMediaPreview(db: any, row: any) {
@@ -23,11 +24,18 @@ export async function getAdminMediaDancers(db: any, actor: string, params: URLSe
     p_counts_only: params.get("countsOnly") === "1",
   });
   if (error) throw error;
-  const dancers = await Promise.all((data.dancers || []).map(async (row: any) => ({
-    id: row.review_group, stageName: row.dancer_name, count: row.count,
-    photoCount: row.photo_count, videoCount: row.video_count,
-    previewKind: row.preview?.kind, previewUrl: row.preview ? await signedMediaPreview(db, row.preview) : "",
-  })));
+  const rows = params.get("countsOnly") === "1" ? [] : data.dancers || [];
+  const dancerId = (row: any) => row.review_group.startsWith("dancer:") ? row.review_group.slice(7) : null;
+  const previews = await mainPhotoPreviews(db, rows.map(dancerId).filter((id: string | null) => id && ADMIN_UUID.test(id)));
+  const dancers = await Promise.all(rows.map(async (row: any) => {
+    const id = dancerId(row);
+    return {
+      id: row.review_group, stageName: row.dancer_name, count: row.count,
+      photoCount: row.photo_count, videoCount: row.video_count,
+      previewKind: id ? "photo" : row.preview?.kind,
+      previewUrl: id ? previews.get(id) || "" : row.preview ? await signedMediaPreview(db, row.preview) : "",
+    };
+  }));
   return { dancers, dancerCount: data.dancerCount, total: data.total, counts: data.counts };
 }
 export async function claimAdminMedia(db: any, actor: string, kind: string, id: string, version: unknown, release = false) {

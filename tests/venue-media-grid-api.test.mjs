@@ -15,6 +15,11 @@ vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/tv.ts','utf8')
 const compiled=ts.transpileModule(readFileSync('app/api/venue/media-reviews/route.ts','utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
 }).outputText;
+const compileService=path=>ts.transpileModule(readFileSync(path,'utf8'),{
+  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
+}).outputText;
+const mainPhotoCode=compileService('src/lib/dancr/media-review-main-photo.ts');
+const adminCode=compileService('src/lib/dancr/admin-media-workspace.ts');
 const avatarExports={};
 vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/venue-media-avatar.ts','utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
@@ -22,7 +27,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/venue-media-av
 const dancerId='12345678-1234-4123-8123-123456789012';
 const photo={id:'photo',decision:'review',status:'pending_review',updated_at:'2026-10-23T00:00:00Z',upload_context:'profile_main',
   category_flags:{file_checks_passed:true},temporary_storage_path:'private/photo',user_id:'private-owner'};
-function fixture(data,{profiles=[],pending=[],unavailable=[],queryError=null}={}){
+function fixture(data,{profiles=[],pending=[],unavailable=[],queryError=null,rpcError=null}={}){
   const calls=[],signed=[],access=[],thumbnails=[],queries=[];
   function from(table){
     const query={table,filters:[],orders:[]};queries.push(query);
@@ -57,15 +62,19 @@ function fixture(data,{profiles=[],pending=[],unavailable=[],queryError=null}={}
     venueMediaAvatar:avatarExports.venueMediaAvatar,
     createRequestSupabaseContext:async()=>({user:{id:'actor'},session:{}}),requireActiveVenueAccount:async()=>{},
     requireVenueAccess:async(_db,actor,permission)=>{access.push({actor,permission});return{venueId:'club'};},
-    createAdminSupabaseClient:()=>({from,rpc:async(name,args)=>{calls.push({name,args});return{data};},
+    createAdminSupabaseClient:()=>({from,rpc:async(name,args)=>{calls.push({name,args});return{data,error:rpcError};},
       storage:{from:bucket=>({createSignedUrl:async(path,ttl)=>{signed.push({bucket,path,ttl});return unavailable.includes(path)
         ? {error:new Error('Missing file')} : {data:{signedUrl:bucket==='videos'?'/signed-video':path.startsWith('tv-posters/')?'/signed-poster':'/signed/'+path}};}})}}),
     withSignedThumbnail:async(_db,record)=>{thumbnails.push(record);const path=record.decision==='approved'?record.final_storage_path:record.temporary_storage_path;
       return{thumbnailUrl:unavailable.includes(path)?'':'/signed/'+path};},
     MYDANCR_TV_BUCKET:'videos',MYDANCR_TV_POSTER_BUCKET,normalizedVideoPosterStoragePath:tvExports.normalizedVideoPosterStoragePath,
   };
+  const mainPhotos={};vm.runInNewContext(mainPhotoCode,{exports:mainPhotos,require:()=>deps});
+  deps.mainPhotoPreviews=mainPhotos.mainPhotoPreviews;
+  const admin={};vm.runInNewContext(adminCode,{exports:admin,require:()=>deps});
   const exports={};vm.runInNewContext(compiled,{exports,require:()=>deps,URL,console});
-  return{calls,signed,access,thumbnails,queries,get:query=>exports.GET({url:'https://example.test/api/venue/media-reviews'+query})};
+  return{calls,signed,access,thumbnails,queries,get:query=>exports.GET({url:'https://example.test/api/venue/media-reviews'+query}),
+    getAdmin:query=>admin.getAdminMediaDancers(deps.createAdminSupabaseClient(),'reviewer',new URLSearchParams(query))};
 }
 const approved={id:'approved',storage_path:'approved/main.jpg',is_primary:true,review_status:'approved'};
 const profile={id:dancerId,user_id:'private-owner',dancer_photos:[approved]};
@@ -175,6 +184,56 @@ test('count-only uses no previews; invalid dancer IDs never reach the queue',asy
   assert.equal(f.calls[0].args.p_limit,0);assert.equal(f.signed.length,0);assert.equal(f.thumbnails.length,0);
   assert.equal(f.queries.length,0);
   assert.equal((await f.get('?view=dancers&dancerId=wrong')).status,400);assert.equal(f.calls.length,1);
+});
+
+const adminCard={review_group:'dancer:'+dancerId,dancer_name:'Star',count:3,photo_count:2,video_count:1,
+  preview:{kind:'video',storage_path:'pending/video.mp4'}};
+
+test('admin grid uses the same pending or approved main photo across review stages and media filters',async()=>{
+  for(const stage of ['staff','club','processing','history']){
+    for(const kind of ['all','photo','video']){
+      for(const pending of [[],[photo]]){
+        const f=fixture({dancers:[adminCard],dancerCount:1,total:3,counts:{staff:3,club:0,processing:0}}, {profiles:[profile],pending});
+        const result=await f.getAdmin({stage,kind});
+        assert.equal(result.dancers[0].previewKind,'photo');
+        assert.equal(result.dancers[0].previewUrl,pending.length?'/signed/private/photo':'/signed/approved/main.jpg');
+        assert.equal(result.dancers[0].id,adminCard.review_group);
+        assert.equal(result.dancers[0].count,3);assert.equal(result.total,3);
+        assert.equal(f.calls[0].name,'get_admin_media_dancers');assert.equal(f.calls[0].args.p_actor,'reviewer');
+        assert.equal(f.calls[0].args.p_stage,stage);assert.equal(f.calls[0].args.p_kind,kind);
+        assert.equal(f.signed.length,0,'the pending video never becomes the dancer identity photo');
+        assert.deepEqual(f.queries[0].filters.find(filter=>filter.op==='in').value,[dancerId]);
+        assert.doesNotMatch(JSON.stringify(result),/private-owner|storage_path|category_flags|pending\/video/);
+      }
+    }
+  }
+});
+
+test('both grids show a pending main before any approved photo exists, then use the approved main after publication',async()=>{
+  for(const admin of [false,true]){
+    const data={dancers:[admin?adminCard:card]};
+    const get=f=>admin?f.getAdmin({}):f.get('?view=dancers');
+    const pending=fixture(data,{profiles:[{...profile,dancer_photos:[]}],pending:[photo]});
+    assert.equal((await get(pending)).dancers[0].previewUrl,'/signed/private/photo');
+    const published=fixture(data,{profiles:[profile],pending:[{...photo,decision:'approved',status:'approved'}]});
+    assert.equal((await get(published)).dancers[0].previewUrl,'/signed/approved/main.jpg');
+    const missing=fixture(data,{profiles:[{...profile,dancer_photos:[]}]});
+    assert.equal((await get(missing)).dancers[0].previewUrl,'');
+    assert.equal(missing.thumbnails.length,0);assert.equal(missing.signed.length,0);
+  }
+});
+
+test('admin counts and rejected queue access never load identity photos; unrelated club uploads keep their own previews',async()=>{
+  const countOnly=fixture({dancers:[adminCard],total:3,dancerCount:1});
+  assert.equal((await countOnly.getAdmin({countsOnly:'1'})).dancers.length,0);
+  assert.equal(countOnly.queries.length,0);assert.equal(countOnly.thumbnails.length,0);
+  const denied=fixture({dancers:[adminCard]},{rpcError:new Error('Access denied')});
+  await assert.rejects(denied.getAdmin({}),/Access denied/);
+  assert.equal(denied.queries.length,0);assert.equal(denied.thumbnails.length,0);
+  const club=fixture({dancers:[{...adminCard,review_group:'user:'+dancerId,
+    preview:{kind:'photo',upload_context:'venue_cover',decision:'review',temporary_storage_path:'private/cover'}}]});
+  assert.equal((await club.getAdmin({})).dancers[0].previewUrl,'/signed/private/cover');
+  assert.equal(club.queries.length,0);
 });
 
 const avatarPath=`private-owner/${dancerId}/avatar/approved.jpg`;
