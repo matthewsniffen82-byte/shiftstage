@@ -17,14 +17,14 @@ vm.runInNewContext(ts.transpileModule(source('DancerMediaUploadRules.tsx'), {
 const render = props => renderToStaticMarkup(React.createElement(exports.default, props));
 
 for (const kind of ['photo', 'video']) {
-  test(`${kind} rules show key limits immediately with the complete rules in a native disclosure`, () => {
+  test(`${kind} rules show every rule immediately without a disclosure`, () => {
     const html = render({ kind });
-    const summary = html.match(/<summary>(.*?)<\/summary>/s)[1];
-    assert.match(summary, new RegExp(kind === 'photo' ? 'Photo rules' : 'Video rules'));
-    assert.match(summary, /Bikinis, lingerie, thongs, and cleavage are allowed\./);
-    assert.match(summary, /Nipples, genitals, and anus must stay covered\. No sexual activity\./);
+    const heading = html.match(/<div class="dancer-media-upload-rules-heading">(.*?)<\/div>/s)[1];
+    assert.match(heading, new RegExp(kind === 'photo' ? 'Photo rules' : 'Video rules'));
+    assert.match(heading, /Bikinis, lingerie, thongs, and cleavage are allowed\./);
+    assert.match(heading, /Nipples, genitals, and anus must stay covered\. No sexual activity\./);
     assert.doesNotMatch(html, /No nudity/);
-    assert.doesNotMatch(html, /<details[^>]*\bopen|<input|<button/);
+    assert.doesNotMatch(html, /<details|<summary|\bhidden\b|<input|<button/);
     for (const rule of [/Only you \(18\+\) may appear/, /backgrounds and reflections/, /No other people or minors/, /Bikinis, opaque lingerie, thongs, and cleavage are allowed/, /nipples, areolas, genitals, and anus are covered/, /Exposed buttocks from a thong are allowed\./, /No sex acts or masturbation/, /No visible brands, logos, or watermarks/, /clothing, accessories, and in the background/, /phone numbers, emails, social or payment handles, or QR codes/, /No sexual solicitation/, /drug use or sales/, /graphic violence/, /weapon threats/, /self-harm/, /hate, harassment, threats/, /coercion, nonconsensual content/, /deceptive impersonation/, /Uploads are reviewed before they appear publicly/]) {
       assert.match(html, rule);
     }
