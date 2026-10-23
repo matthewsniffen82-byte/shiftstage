@@ -43,19 +43,11 @@
       const dialog = document.createElement("dialog");
       dialog.className = "dancr-photo-crop";
       dialog.setAttribute("aria-label", "Crop profile photo");
-      dialog.innerHTML = '<div data-crop-header><h2>Fit your photo to the card</h2><p>Drag to position, then adjust zoom. Framing may vary slightly by screen.</p></div><div data-crop-frame hidden><canvas tabindex="0" role="img" aria-label="Photo crop preview. Use arrow keys to reposition the photo."></canvas></div><div data-crop-controls><div data-crop-toolbar><label data-crop-zoom hidden>Zoom<input type="range" min="1" max="3" step="0.01" value="1" aria-label="Photo zoom"></label><button type="button" data-crop-reset hidden disabled>Reset</button></div><div data-crop-actions><button type="button" data-crop-cancel>Cancel</button><button type="button" data-crop-confirm hidden disabled>Use photo</button><button type="button" data-crop-original hidden>Use original</button><button type="button" data-crop-retry hidden>Retry</button></div><p data-crop-status role="status" aria-live="polite">Preparing your photo…</p></div>';
-      const original = dialog.querySelector("[data-crop-original]");
+      dialog.innerHTML = '<div data-crop-header><h2>Fit your photo to the card</h2><p>Drag to position, then adjust zoom. Framing may vary slightly by screen.</p></div><div data-crop-frame hidden><canvas tabindex="0" role="img" aria-label="Photo crop preview. Use arrow keys to reposition the photo."></canvas></div><div data-crop-controls><div data-crop-toolbar><label data-crop-zoom hidden>Zoom<input type="range" min="1" max="3" step="0.01" value="1" aria-label="Photo zoom"></label><button type="button" data-crop-reset hidden disabled>Reset</button></div><div data-crop-actions><button type="button" data-crop-cancel>Cancel</button><button type="button" data-crop-confirm hidden disabled>Use photo</button><button type="button" data-crop-retry hidden>Retry</button></div><p data-crop-status role="status" aria-live="polite">Preparing your photo…</p></div>';
       const cancel = dialog.querySelector("[data-crop-cancel]");
       if (options.batch) {
-        dialog.setAttribute("data-crop-batch", "");
-        dialog.querySelector("h2").textContent = `Photo ${options.batch.position} of ${options.batch.total}`;
-        dialog.querySelector("[data-crop-header] p").textContent = "Drag or zoom to crop. Then upload.";
-        cancel.textContent = "×";
+        dialog.setAttribute("aria-label", `Crop profile photo ${options.batch.position} of ${options.batch.total}`);
         cancel.setAttribute("aria-label", options.batch.total > 1 ? "Cancel uploads" : "Cancel upload");
-        cancel.title = options.batch.total > 1 ? "Cancel uploads" : "Cancel upload";
-        dialog.querySelector("[data-crop-header]").append(cancel);
-        original.hidden = false;
-        original.textContent = "Upload original";
       }
       if (options.onCrop) {
         dialog.setAttribute("aria-label", "Adjust avatar crop");
@@ -96,7 +88,11 @@
       }
       function draw() {
         if (!image || settled) return;
-        reset.hidden = zoom === 1 && x === .5 && y === .5;
+        const rect = cropRect(image.naturalWidth, image.naturalHeight, ratio, zoom, x, y);
+        const initialRect = cropRect(image.naturalWidth, image.naturalHeight, ratio, 1, .5, .5);
+        const adjusted = ["x", "y", "width", "height"].some(key => rect[key] !== initialRect[key]);
+        reset.hidden = !adjusted;
+        confirm.disabled = saving;
         // Measure the actual controls (including wrapped text and browser font
         // sizing) before giving the remaining viewport space to the photo.
         const styles = getComputedStyle(dialog);
@@ -109,12 +105,10 @@
           + pixels(styles.borderTopWidth) + pixels(styles.borderBottomWidth)
           + pixels(getComputedStyle(frame).marginBottom);
         const availableWidth = dialog.clientWidth - pixels(styles.paddingLeft) - pixels(styles.paddingRight);
-        const previewHeightLimit = options.batch ? Math.min(280, viewportHeight * .36) : Infinity;
-        const previewWidth = Math.max(1, Math.floor(Math.min(400, availableWidth, Math.max(1, Math.min(previewHeightLimit, maxHeight - chromeHeight - 2)) * ratio)));
+        const previewWidth = Math.max(1, Math.floor(Math.min(400, availableWidth, Math.max(1, maxHeight - chromeHeight - 2) * ratio)));
         dialog.style.setProperty("--crop-preview-width", `${previewWidth}px`);
         canvas.width = Math.round(previewWidth * 2);
         canvas.height = Math.max(1, Math.round(canvas.width / ratio));
-        const rect = cropRect(image.naturalWidth, image.naturalHeight, ratio, zoom, x, y);
         const ctx = canvas.getContext("2d");
         ctx.drawImage(image, rect.x, rect.y, rect.width, rect.height, 0, 0, canvas.width, canvas.height);
       }
@@ -133,8 +127,9 @@
           frame.hidden = false;
           dialog.querySelector("[data-crop-zoom]").hidden = false;
           confirm.hidden = false;
-          confirm.disabled = reset.disabled = false;
-          status.textContent = options.batch ? "" : options.onCrop ? "Drag and zoom your main photo, then save your avatar crop." : options.confirmLabel ? "Your current photo stays visible until the saved crop is approved." : "Your photo is added to your profile only after you choose Use photo.";
+          confirm.disabled = false;
+          reset.disabled = false;
+          status.textContent = options.onCrop ? "Drag and zoom your main photo, then save your avatar crop." : options.confirmLabel ? "Your current photo stays visible until the saved crop is approved." : "Your photo is added to your profile only after you choose Use photo.";
           if (!dialog.open) dialog.showModal();
           draw();
           canvas.focus({ preventScroll: true });
@@ -178,15 +173,10 @@
       reset.addEventListener("click", () => { zoom = 1; x = y = .5; range.value = "1"; draw(); range.focus({ preventScroll: true }); });
       retry.addEventListener("click", () => { void prepare(); });
       cancel.addEventListener("click", cancelSelection);
-      original.addEventListener("click", () => {
-        if (!options.batch || saving) return;
-        confirmed.set(file, file);
-        finish(file);
-      });
       dialog.addEventListener("cancel", (event) => { event.preventDefault(); cancelSelection(); });
       dialog.addEventListener("keydown", (event) => { if (event.key === "Escape") event.stopPropagation(); });
       confirm.addEventListener("click", () => {
-        if (!image || saving) return;
+        if (!image || saving || confirm.disabled) return;
         saving = true;
         confirm.disabled = reset.disabled = range.disabled = true;
         status.textContent = "Saving your crop…";
