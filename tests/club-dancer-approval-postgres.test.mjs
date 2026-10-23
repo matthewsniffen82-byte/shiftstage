@@ -20,6 +20,7 @@ before(async()=>{
   for(const dancer of [10,11])for(const n of [1,2])await pg.query("insert into public.dancer_photos(id,dancer_id,storage_path,review_status,sort_order) values($1,$2,$3,'approved',$4)",[id(dancer*100+n),id(dancer),`synthetic/extra-${dancer}-${n}`,n+1]);
   await tap(id(30),id(49),id(5));
   await pg.exec(source('supabase/migrations/20261023091937_club_dancer_join_approval.sql'));
+  await pg.exec(source('supabase/migrations/20261023093339_club_approval_returning_dancer_taps.sql'));
 });
 beforeEach(async()=>pg.exec('begin;set role service_role'));
 afterEach(async()=>pg.exec('rollback;reset role'));
@@ -112,4 +113,15 @@ test('browser roles cannot read decisions, forge approval, or call privileged fu
     await rejects(()=>review('approved',id(2),id(20),revision),'42501');
     await rejects(()=>tap(),'42501');
   }
+});
+
+test('a returning dancer keeps club approval but needs a new tap after removal',async()=>{
+  await tap();await review();await tap(id(30),id(51));
+  await pg.query("update public.venue_dancer_affiliations set status='revoked',revoked_at=clock_timestamp(),revoked_by_user_id=$1,reentry_blocked=true where dancer_id=$2",[id(2),id(10)]);
+  await rejects(()=>tap(id(30),id(52)),'42501');
+  await pg.query('update public.venue_dancer_affiliations set reentry_blocked=false where dancer_id=$1',[id(10)]);
+  await rejects(()=>pg.query('select public.approve_dancer_venue_affiliation_from_nfc($1,$2,$3,$4)',[id(30),id(1),id(52),{}]),'42501');
+  await pg.query("update public.shifts set checked_out_at=clock_timestamp(),nfc_last_tapped_at=now()-interval '13 hours' where dancer_id=$1",[id(10)]);
+  const result=await tap(id(30),id(52));assert.equal(result.shiftCheckedIn,true);assert.equal(result.affiliationActivated,true);
+  assert.equal((await request()).status,'approved');
 });
