@@ -38,8 +38,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
 body.dancr-button-system #dancer-dashboard .dancer-profile-media-area {
   display:grid; gap:8px; min-width:0;
 }
-body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry { display:grid; gap:6px; }
-body.dancr-button-system #dancer-dashboard .dancer-builder-upload-types { display:flex; gap:6px; }
+body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-footer {
   position:static !important; display:flex; flex-direction:column; gap:4px; padding:8px 0 0 !important;
   margin:0 !important; border:0 !important; background:transparent !important; box-shadow:none !important;
@@ -151,7 +150,6 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
     min-height:44px !important; padding:6px 8px !important; font-size:12px !important;
   }
   body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button,
-  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-types > button,
   body.dancr-button-system #dancer-dashboard .dancer-builder-back {
     min-width:0 !important; min-height:44px !important; height:auto !important; margin:0 !important; padding:8px !important;
     background:transparent !important; color:#c7bfce !important; -webkit-text-fill-color:currentColor !important;
@@ -161,28 +159,28 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
     display:flex !important; flex-direction:row; align-items:center; justify-content:center; gap:6px;
     white-space:normal !important; line-height:1.3 !important; border-radius:10px !important;
   }
-  body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button[aria-current='step'],
-  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-types > button[aria-pressed='true'] {
+  body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button[aria-current='step'] {
     background:linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)) !important; border-color:var(--dancr-color-brand-primary) !important; color:#f5f3ff !important;
   }
   body.dancr-button-system #dancer-dashboard .dancer-builder-steps > button > span { color:#bda3f9; font-size:11px; }
   body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button {
-    width:100% !important; min-height:44px !important; padding:8px 10px !important; border:1px solid var(--dancr-color-border) !important;
+    width:100% !important; min-width:0 !important; min-height:44px !important; margin:0 !important; padding:8px 10px !important; border:1px solid var(--dancr-color-border) !important;
     background:linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary)) !important; color:#f5f3ff !important; -webkit-text-fill-color:currentColor !important; box-shadow:none !important;
-  }
-  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button[aria-expanded='true'] {
-    background:#292930 !important; border-color:#858590 !important; border-radius:8px !important;
-    color:#ffffff !important; font-weight:700 !important; box-shadow:inset 0 1px 0 #ffffff14 !important;
+    border-radius:8px !important; font-weight:700 !important;
     -webkit-appearance:none !important; appearance:none !important; color-scheme:only dark !important;
     cursor:pointer !important; opacity:1 !important;
   }
-  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button[aria-expanded='true']:hover:not(:disabled) {
-    background:#35353e !important; border-color:#a3a3af !important;
+  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button[aria-pressed='true'] {
+    background:linear-gradient(var(--dancr-color-brand-primary),var(--dancr-color-brand-primary)) !important;
+    border-color:var(--dancr-color-brand-primary) !important;
   }
-  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button[aria-expanded='true']:active:not(:disabled) {
-    background:#202026 !important; border-color:#a3a3af !important; box-shadow:inset 0 2px 4px #00000040 !important;
+  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button:hover:not(:disabled) {
+    border-color:#a3a3af !important;
   }
-  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button[aria-expanded='true']:disabled {
+  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button:active:not(:disabled) {
+    box-shadow:inset 0 2px 4px #00000040 !important;
+  }
+  body.dancr-button-system #dancer-dashboard .dancer-builder-upload-entry > button:disabled {
     opacity:.55 !important; cursor:wait !important; box-shadow:none !important;
   }
   body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main) {
@@ -207,11 +205,11 @@ body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-
   body.dancr-button-system #dancer-dashboard .dancer-preview-edit-main strong {
     position:absolute; inset:auto 0 0; padding:30px 8px 8px; text-align:left; font-size:14px; background:linear-gradient(transparent,rgba(20, 20, 27, 0.9255));
   }
-  body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-types,.dancer-builder-upload-entry) > button::before,
-  body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-types,.dancer-builder-upload-entry) > button::after,
+  body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-entry) > button::before,
+  body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-entry) > button::after,
   body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main,.dancer-builder-back)::before,
   body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main,.dancer-builder-back)::after { content:none !important; }
-  body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-types,.dancer-builder-upload-entry) > button:focus-visible,
+  body.dancr-button-system #dancer-dashboard :is(.dancer-builder-steps,.dancer-builder-upload-entry) > button:focus-visible,
   body.dancr-button-system #dancer-dashboard :is(.dancer-preview-edit-avatar,.dancer-preview-edit-identity,.dancer-preview-edit-main,.dancer-builder-back):focus-visible {
     outline:2px solid var(--dancr-color-brand-primary) !important; outline-offset:3px !important;
   }

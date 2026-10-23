@@ -236,11 +236,8 @@ export default function DancerProfileWorkspace({
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
       {requiredPhotos}
       <section hidden={onboarding && step !== "media"} className="dancer-builder-upload-entry" aria-label="Add profile media">
-        <button type="button" aria-expanded={uploadKind !== null} aria-controls="dancer-builder-upload-types" disabled={busy} onClick={() => setUploadKind(uploadKind ? null : "photos")}>{uploadKind ? "Close uploads" : "+ Add photos/videos"}</button>
-        <div id="dancer-builder-upload-types" hidden={!uploadKind} className="dancer-builder-upload-types" role="group" aria-label="Upload type">
-          <button type="button" aria-pressed={uploadKind === "photos"} disabled={busy} onClick={() => setUploadKind("photos")}>Photos</button>
-          <button type="button" aria-pressed={uploadKind === "videos"} disabled={busy} onClick={() => setUploadKind("videos")}>Videos</button>
-        </div>
+        <button type="button" aria-pressed={uploadKind === "photos"} aria-controls="dancer-profile-media-library" disabled={busy} onClick={() => setUploadKind(current => current === "photos" ? null : "photos")}>+ Photos</button>
+        <button type="button" aria-pressed={uploadKind === "videos"} aria-controls="dancer-profile-video-library" disabled={busy} onClick={() => setUploadKind(current => current === "videos" ? null : "videos")}>+ Videos</button>
       </section>
       <section hidden={(onboarding && step !== "media") || uploadKind === "videos"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
         <div className="dancer-section-uploader">{photoContent}</div>
