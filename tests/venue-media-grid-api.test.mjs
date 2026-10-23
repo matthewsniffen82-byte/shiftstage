@@ -5,6 +5,12 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { PublicApiError } from '../src/lib/api-error-policy.ts';
 import { profilePhotoSlotFromUploadContext } from '../src/lib/dancr/photo-slot.ts';
+import { MYDANCR_TV_POSTER_BUCKET, myDancrTvPosterStoragePath } from '../src/lib/dancr/media-watermark.ts';
+
+const tvExports={};
+vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/tv.ts','utf8'),{
+  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
+}).outputText,{exports:tvExports,require:()=>({myDancrTvPosterStoragePath})});
 
 const compiled=ts.transpileModule(readFileSync('app/api/venue/media-reviews/route.ts','utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
@@ -47,10 +53,11 @@ function fixture(data,{profiles=[],pending=[],unavailable=[],queryError=null}={}
     createRequestSupabaseContext:async()=>({user:{id:'actor'},session:{}}),requireActiveVenueAccount:async()=>{},
     requireVenueAccess:async(_db,actor,permission)=>{access.push({actor,permission});return{venueId:'club'};},
     createAdminSupabaseClient:()=>({from,rpc:async(name,args)=>{calls.push({name,args});return{data};},
-      storage:{from:bucket=>({createSignedUrl:async(path,ttl)=>{signed.push({bucket,path,ttl});return{data:{signedUrl:'/signed-poster'}};}})}}),
+      storage:{from:bucket=>({createSignedUrl:async(path,ttl)=>{signed.push({bucket,path,ttl});return unavailable.includes(path)
+        ? {error:new Error('Missing file')} : {data:{signedUrl:bucket==='videos'?'/signed-video':'/signed-poster'}};}})}}),
     withSignedThumbnail:async(_db,record)=>{thumbnails.push(record);const path=record.decision==='approved'?record.final_storage_path:record.temporary_storage_path;
       return{thumbnailUrl:unavailable.includes(path)?'':'/signed/'+path};},
-    MYDANCR_TV_BUCKET:'videos',
+    MYDANCR_TV_BUCKET:'videos',MYDANCR_TV_POSTER_BUCKET,normalizedVideoPosterStoragePath:tvExports.normalizedVideoPosterStoragePath,
   };
   const exports={};vm.runInNewContext(compiled,{exports,require:()=>deps,URL,console});
   return{calls,signed,access,thumbnails,queries,get:query=>exports.GET({url:'https://example.test/api/venue/media-reviews'+query})};
@@ -83,6 +90,43 @@ test('selected dancer query uses the Main photo/avatar label and preserves appro
   assert.equal(result.items[0].label,'Main photo/avatar');assert.equal(result.items[0].canApprove,true);
   assert.equal(result.items[0].version,photo.updated_at);assert.equal(result.items[0].previewUrl,'/signed/private/photo');
   assert.equal(f.queries.length,0);
+});
+
+const videoRecord={id:dancerId,caption:dancerId,storage_path:'owner/video.mp4',status:'submitted',updated_at:photo.updated_at,
+  moderation_details:{fileChecksPassed:true,posterStoragePath:'tv-posters/owner/video.poster.webp'}};
+const videoData=record=>({dancers:[],items:[{id:dancerId,dancerId,kind:'video',stageName:'Star',record}]});
+
+test('video reviews sign the real poster from the image bucket and hide generated file-ID captions',async()=>{
+  const f=fixture(videoData(videoRecord));
+  const result=await f.get('?view=dancers&dancerId='+dancerId);
+  assert.equal(result.items[0].previewUrl,'/signed-video');
+  assert.equal(result.items[0].posterUrl,'/signed-poster');
+  assert.equal(result.items[0].caption,null);
+  assert.equal(result.items[0].canApprove,true);
+  assert.deepEqual(f.signed,[{bucket:'videos',path:'owner/video.mp4',ttl:300},
+    {bucket:MYDANCR_TV_POSTER_BUCKET,path:'tv-posters/owner/video.poster.webp',ttl:300}]);
+  assert.doesNotMatch(JSON.stringify(result),/storage_path|moderation_details|posterStoragePath/);
+});
+
+test('missing or mismatched posters do not block playback or sign another video image',async()=>{
+  for(const posterStoragePath of [undefined,'tv-posters/another/video.poster.webp']){
+    const f=fixture(videoData({...videoRecord,moderation_details:{fileChecksPassed:true,posterStoragePath}}));
+    const result=await f.get('?view=dancers&dancerId='+dancerId);
+    assert.equal(result.items[0].posterUrl,'');assert.equal(result.items[0].previewUrl,'/signed-video');
+    assert.equal(f.signed.length,1);
+  }
+  const f=fixture(videoData(videoRecord),{unavailable:['tv-posters/owner/video.poster.webp']});
+  const result=await f.get('?view=dancers&dancerId='+dancerId);
+  assert.equal(result.items[0].posterUrl,'');assert.equal(result.items[0].previewUrl,'/signed-video');
+});
+
+test('file-ID labels with video extensions are hidden but written captions remain reviewable',async()=>{
+  for(const caption of [dancerId,' '+dancerId+'.MOV ',null,'']){
+    const f=fixture(videoData({...videoRecord,caption}));
+    assert.equal((await f.get('?view=dancers&dancerId='+dancerId)).items[0].caption,null);
+  }
+  const f=fixture(videoData({...videoRecord,caption:'New performance tonight'}));
+  assert.equal((await f.get('?view=dancers&dancerId='+dancerId)).items[0].caption,'New performance tonight');
 });
 test('newest checked main wins even after club signoff while unrelated and unsafe uploads are excluded',async()=>{
   const candidate=(id,extra={})=>({...photo,id,created_at:'2026-10-23T01:00:00Z',temporary_storage_path:id,...extra});

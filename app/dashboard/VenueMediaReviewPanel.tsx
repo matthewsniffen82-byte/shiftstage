@@ -4,10 +4,11 @@ import RefreshButton from "../components/RefreshButton";
 import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
+import { primeVideoPreviewFrame } from "./dancer-profile-media-sync";
 import "./venue-media-review.css";
 
 type Review = { id: string; kind: "photo" | "video"; stageName: string; version: string; previewUrl: string;
-  label: string; processing: boolean; canApprove: boolean; caption?: string | null };
+  label: string; processing: boolean; canApprove: boolean; caption?: string | null; posterUrl?: string };
 type Dancer = { id: string; stageName: string; count: number; photoCount: number; videoCount: number; previewUrl: string };
 
 export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onCountChange }: {
@@ -143,7 +144,8 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       {items.filter(item => item.id !== pendingPhotoRejection).map(item => <article key={item.id}>
         <h3 className="venue-media-type">{item.label}</h3>
         <div className="venue-media-review-preview">
-        {item.previewUrl ? item.kind === "video" ? <video controls playsInline preload="metadata" src={item.previewUrl} aria-label={`${item.stageName} video for review`} />
+        {item.previewUrl ? item.kind === "video" ? <video controls playsInline preload="metadata" src={item.previewUrl} poster={item.posterUrl || undefined}
+          onLoadedMetadata={event => { if (!item.posterUrl) primeVideoPreviewFrame(event.currentTarget); }} aria-label={`${item.stageName} video for review`} />
           : <a href={item.previewUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open full ${item.label.toLowerCase()} of ${item.stageName}`}><img src={item.previewUrl} alt={`${item.stageName} ${item.label.toLowerCase()} for review`} /></a> : <p>Preview unavailable. Refresh before approving.</p>}
         </div>
         {item.caption ? <p>Caption: {item.caption}</p> : null}

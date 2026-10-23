@@ -8,7 +8,8 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
 import { rejectReviewRecord, withSignedThumbnail } from "@/src/lib/dancr/image-review";
-import { MYDANCR_TV_BUCKET, reviewMyDancrTvVideo } from "@/src/lib/dancr/tv";
+import { MYDANCR_TV_BUCKET, normalizedVideoPosterStoragePath, reviewMyDancrTvVideo } from "@/src/lib/dancr/tv";
+import { MYDANCR_TV_POSTER_BUCKET } from "@/src/lib/dancr/media-watermark";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
@@ -79,14 +80,22 @@ export async function GET(request: Request) {
       const r = item.record, photo = item.kind === "photo";
       const processing = photo ? ["pending", "moderating", "moderation_retry"].includes(r.status) : r.status === "moderating";
       let previewUrl = "";
+      let posterUrl = "";
       if (photo) previewUrl = (await withSignedThumbnail(admin, r)).thumbnailUrl;
       else {
         const signed = await admin.storage.from(MYDANCR_TV_BUCKET).createSignedUrl(r.storage_path, 300);
         if (signed.error) throw signed.error;
         previewUrl = signed.data?.signedUrl || "";
+        const posterPath = normalizedVideoPosterStoragePath(r);
+        if (posterPath) {
+          const poster = await admin.storage.from(MYDANCR_TV_POSTER_BUCKET).createSignedUrl(posterPath, 300);
+          if (!poster.error) posterUrl = poster.data?.signedUrl || "";
+        }
       }
       const ready = photo ? r.category_flags?.file_checks_passed === true : r.moderation_details?.fileChecksPassed === true;
-      return { id: item.id, kind: item.kind, dancerId: item.dancerId, stageName: item.stageName, version: r.updated_at, previewUrl, caption: photo ? null : r.caption,
+      const caption = photo ? "" : String(r.caption || "").trim();
+      return { id: item.id, kind: item.kind, dancerId: item.dancerId, stageName: item.stageName, version: r.updated_at, previewUrl, posterUrl,
+        caption: caption && !uuid.test(caption.replace(/\.(?:mp4|mov|m4v|webm)$/i, "")) ? caption : null,
         label: photo ? r.upload_context === "profile_avatar" ? "Avatar" : r.upload_context.startsWith("profile_main") ? "Main photo/avatar" : "Photo" : "Video",
         processing, canApprove: !processing && ready && !r.club_reviewed_at && (photo || !r.upload_validation_pending),
         reviewSummary: processing ? "Preparing upload" : "Club review required before MyDancr final approval",

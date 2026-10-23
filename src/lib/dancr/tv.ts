@@ -667,7 +667,7 @@ async function signPublicVideos(
   });
 }
 
-function normalizedVideoPosterStoragePath(row: any) {
+export function normalizedVideoPosterStoragePath(row: any) {
   const configuredPath = String(
     row?.moderation_details?.posterStoragePath || "",
   ).trim();
