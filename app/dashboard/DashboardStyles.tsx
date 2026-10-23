@@ -513,20 +513,27 @@ export function DashboardStyles() {
       .notification-title-row { display: flex !important; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px !important; }
       .notification-title-row > div { display: grid; gap: 4px; }
       .notification-toolbar { display: flex !important; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px !important; }
-      .notification-unread-pill { min-height: 32px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid rgba(126,234,255,.2); border-radius: 999px; color: #9eeeff; background: rgba(126,234,255,.065); font-size: 11px; font-weight: 900; }
+      .notification-unread-pill { min-height: 32px; display: inline-flex; align-items: center; padding: 0 10px; border: 1px solid var(--dancr-color-border); border-radius: 999px; color: var(--dancr-color-text-primary); background: var(--dancr-color-surface-card); font-size: 11px; font-weight: 900; }
       .notification-mark-read-button { min-height: 36px; border: 1px solid rgba(255,255,255,.13); border-radius: 999px; color: #f5f3f8; background: rgba(255,255,255,.045); font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; padding: 0 12px; }
       .notification-mark-read-button:disabled, .notification-clear-button:disabled { opacity: .45; cursor: not-allowed; }
       .notification-list { display: grid; gap: 10px; }
       .notification-row { text-align: left; display: grid; gap: 4px; padding: 12px; border-radius: 12px; border: 1px solid rgba(126,234,255,.12); background: rgba(255,255,255,.035); color: #fff; cursor: pointer; text-decoration: none; }
       .notification-row:hover { border-color: rgba(126,234,255,.25); background: rgba(126,234,255,.06); }
       .notification-row.read { opacity: .58; }
-      .notification-row span { color: #b9accd; }
-      .notification-row .notification-row-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #7eeaff; font-size: 11px; }
+      .notification-row span { color: var(--dancr-color-text-muted); }
+      .notification-row > strong > span { color: inherit; }
+      .notification-row .notification-row-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--dancr-color-text-muted); font-size: 11px; }
       .notification-row-meta b { letter-spacing: .08em; text-transform: uppercase; }
-      .notification-row-meta time { color: #a99fba; font-variant-numeric: tabular-nums; }
-      .notification-row em { color: #7eeaff; font-size: 11px; font-style: normal; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+      .notification-row-meta time { color: var(--dancr-color-text-muted); font-variant-numeric: tabular-nums; }
+      .notification-row em { color: var(--dancr-color-text-muted); font-size: 11px; font-style: normal; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
       .notification-clear-button { min-height: 38px; justify-self: end; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; color: #c9c3d1; background: transparent; font: inherit; font-size: 11px; font-weight: 900; cursor: pointer; padding: 0 13px; }
-      .notification-panel > p { margin: 0; color: #94e5ff; font-size: 13px; }
+      .notification-panel > p { margin: 0; color: var(--dancr-color-text-muted); font-size: 13px; }
+      /* Keep inbox titles and metadata neutral above the individual dashboard skins. */
+      @layer dancr-palette {
+        html body.dancr-button-system :where(.notification-panel .notification-row > strong, .notification-panel .notification-row > strong > span, .notification-unread-pill) { color: var(--dancr-color-text-primary) !important; }
+        html body.dancr-button-system :where(.notification-panel .notification-row > span, .notification-panel .notification-row-meta b, .notification-panel .notification-row-meta time, .notification-panel .notification-row > em, .notification-panel > p) { color: var(--dancr-color-text-muted) !important; }
+        html body.dancr-button-system :where(.notification-unread-pill) { border-color: var(--dancr-color-border) !important; background: var(--dancr-color-surface-card) !important; }
+      }
       #venue-support { scroll-margin-top: calc(var(--mydancr-preview-banner-offset, 0px) + 12px); }
       .support-panel form, .support-thread { display: grid; gap: 12px; }
       .support-panel label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }
@@ -1476,12 +1483,12 @@ export function DashboardStyles() {
       .dashboard-shell-customer .venue-dashboard-section-toggle { border-color: var(--dancr-color-border); background: rgba(20, 20, 27, 0.17); }
       .dashboard-shell-customer .venue-dashboard-section-body > .info-panel,
       .dashboard-shell-customer .venue-dashboard-inner-grid > .info-panel { border-color: var(--dancr-color-border); background: rgba(255,255,255,.025); }
-      .dashboard-shell-customer .notification-unread-pill { border-color: var(--dancr-color-border); color: #e9e1ff; background: rgba(20, 20, 27, 0.2); }
+      .dashboard-shell-customer .notification-unread-pill { border-color: var(--dancr-color-border); color: var(--dancr-color-text-primary); background: var(--dancr-color-surface-card); }
       .dashboard-shell-customer .notification-row { border-color: var(--dancr-color-border); }
       .dashboard-shell-customer .notification-row:hover { border-color: var(--dancr-color-border-strong); background: rgba(20, 20, 27, 0.07); }
       .dashboard-shell-customer .notification-row .notification-row-meta,
       .dashboard-shell-customer .notification-row em,
-      .dashboard-shell-customer .notification-panel > p { color: #c9bbf3; }
+      .dashboard-shell-customer .notification-panel > p { color: var(--dancr-color-text-muted); }
       .dashboard-shell-customer .support-message.from-admin { border-color: var(--dancr-color-border); background: rgba(20, 20, 27, 0.1); }
       .dashboard-shell-venue .venue-working-list span { color: #76f0c8; }
       .dashboard-shell-venue .venue-deal-panel,

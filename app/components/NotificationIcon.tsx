@@ -22,5 +22,5 @@ export default function NotificationIcon({ notification }: { notification: { ico
     ? notification.icon as NotificationIconName : notificationIconName(notification);
   return <svg className="notification-type-icon" data-notification-icon={icon} aria-hidden="true" focusable="false" viewBox="0 0 24 24"
     fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-    style={{ width: 20, height: 20, flex: "0 0 20px", color: "#b99af0" }}><path d={paths[icon]} /></svg>;
+    style={{ width: 20, height: 20, flex: "0 0 20px", color: "var(--dancr-color-icon-accent)" }}><path d={paths[icon]} /></svg>;
 }
