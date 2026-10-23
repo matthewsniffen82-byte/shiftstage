@@ -35,6 +35,7 @@ export type ResolvedNfcTag = NfcTagSummary & {
 };
 
 export type DancerNfcDashboardState = {
+  clubApprovals?: Array<{ status: string; expiresAt: string | null; venue: { id: string; name: string; slug: string; city: string; state: string | null } | null }>;
   profileAuthorization: {
     profileExists: boolean;
     authorized: boolean;
@@ -263,21 +264,24 @@ export async function getDancerNfcDashboardState(
     : Promise.resolve({ data: [], error: null });
   const enrollmentQuery = (client as any)
     .from("dancer_nfc_enrollments")
-    .select("id, status, tapped_at, expires_at, completed_at, venues(id, name, slug, city, state)")
+    .select("id, venue_id, status, tapped_at, expires_at, completed_at, venues(id, name, slug, city, state)")
     .eq("dancer_user_id", dancerUserId)
-    .order("tapped_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const [{ data: affiliations, error: affiliationsError }, { data: enrollment, error: enrollmentError }, { data: channels, error: channelsError }] = await Promise.all([
+    .order("tapped_at", { ascending: false });
+  const [{ data: affiliations, error: affiliationsError }, { data: enrollments, error: enrollmentError }, { data: channels, error: channelsError }, { data: clubApprovals, error: clubApprovalsError }] = await Promise.all([
     affiliationQuery,
     enrollmentQuery,
     profile ? client.from("dancer_channel_preferences").select("visibility").eq("dancer_id", profile.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    profile ? client.from("club_dancer_approvals").select("venue_id, status, venues(id, name, slug, city, state)").eq("dancer_id", profile.id).eq("grandfathered", false).order("requested_at", { ascending: false }) : Promise.resolve({ data: [], error: null }),
   ]);
   if (affiliationsError) throw affiliationsError;
   if (enrollmentError) throw enrollmentError;
   if (channelsError) throw channelsError;
+  if (clubApprovalsError) throw clubApprovalsError;
+  const enrollment = enrollments?.[0] || null;
 
   return {
+    clubApprovals: (clubApprovals || []).filter(row => !(affiliations || []).some((affiliation: any) => affiliation.status === "active" && firstJoined(affiliation.venues)?.id === row.venue_id))
+      .map(row => ({ status: row.status, expiresAt: enrollments?.find((item: any) => item.venue_id === row.venue_id)?.expires_at || null, venue: mapDashboardVenue(firstJoined(row.venues)) })),
     profileAuthorization: {
       profileExists: Boolean(profile),
       authorized: Boolean(profile?.venue_approved_at),

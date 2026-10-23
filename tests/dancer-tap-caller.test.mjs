@@ -60,6 +60,14 @@ function harness(options={}){
   const response=await route.POST(new Request('https://example.invalid/api/nfc/synthetic-token',{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify({sessionId:id(50),visibility:'external',...extra})}),{params:Promise.resolve({token:'synthetic-token'})});return {response,body:await response.json()};
  }};
 }
+for(const clubApprovalStatus of ['pending','rejected'])test(`club ${clubApprovalStatus} receipts give clear status without claiming visibility or notifying followers`,async()=>{
+ const h=harness({mutate:r=>({enrollmentStatus:'pending',enrollmentId:r.enrollmentId,venueId:r.venueId,venueName:r.venueName,venueSlug:r.venueSlug,
+   profileActivated:false,shiftCheckedIn:false,affiliationActivated:false,clubApprovalStatus,visibility:r.visibility,replayed:false})});
+ const result=await h.post();assert.equal(result.response.status,200);assert.equal(result.body.affiliation.clubApprovalStatus,clubApprovalStatus);
+ assert.match(result.body.message,/not checked in/);assert.doesNotMatch(result.body.message,/Visibility:|You are Working Now/);assert.equal(h.notifications.length,0);
+ assert.match(result.body.message,clubApprovalStatus==='pending'?/awaiting this club’s approval/:/declined/);
+});
+
 test('actual endpoint and service use one atomic tap and retain the established response',async()=>{
  const h=harness(),result=await h.post({}, {'x-forwarded-for':'192.0.2.1, 192.0.2.2','user-agent':'Synthetic agent','x-device-fingerprint':'synthetic-device'});
  assert.equal(result.response.status,200);assert.equal(result.body.ok,true);assert.equal(result.body.action,'dancer_check_in');assert.equal(result.body.affiliation.enrollmentStatus,'completed');assert.equal(result.body.affiliation.shiftCheckedIn,true);assert.equal(result.body.affiliation.tapApplied,true);assert.equal(h.calls.length,1);assert.deepEqual(h.steps,['rate','tag','auth']);assert.equal(result.response.headers.get('set-cookie'),null);assert.equal(h.notifications.length,2);assert.match(result.response.headers.get('cache-control'),/private, no-store/);

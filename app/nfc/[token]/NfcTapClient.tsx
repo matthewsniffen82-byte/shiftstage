@@ -173,7 +173,7 @@ export function NfcTapClient({ token }: { token: string }) {
       if (state.tag.type === "cashier") clearPendingDealIntent();
       let completedDancerTap = state.tag.type === "dressing_room"
         && data.affiliation?.enrollmentStatus === "completed";
-      if (state.tag.type === "dressing_room" && !completedDancerTap) {
+      if (state.tag.type === "dressing_room" && !completedDancerTap && !data.affiliation?.clubApprovalStatus) {
         const verificationResponse = await fetch("/api/dancer/dashboard", {
           headers,
           cache: "no-store",
@@ -196,9 +196,7 @@ export function NfcTapClient({ token }: { token: string }) {
       const successMessage = data.message || (state.tag.type === "cashier" ? "Club Deal redeemed." : "Club tap confirmed.");
       setStatus(completedDancerTap
         ? `${successMessage} ${externalTapRankingMessage(data.affiliation)} Opening your live dancer dashboard…`
-        : state.tag.type === "dressing_room"
-          ? "Your physical club tap was saved, but profile activation is not complete yet. Open the dancer dashboard to review the remaining setup requirement."
-          : successMessage);
+        : successMessage);
       if (completedDancerTap) {
         redirectTimerRef.current = window.setTimeout(() => {
           window.location.replace("/dashboard/dancer?nfc=complete");
@@ -310,6 +308,7 @@ export function NfcTapClient({ token }: { token: string }) {
         {state?.tag.type === "dressing_room" && !complete ? (
           <details className="nfc-help">
             <summary>How check-in works</summary>
+            <p>Your first tap at each club requests that club’s approval. After approval, tap again to check in. Photos and videos have separate club permissions.</p>
             <p>For future check-ins, unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted. No particular page needs to be open.</p>
             <p>The internal roster shows your approved avatar and stage name. Customers can tap your avatar to view your full profile. Internal only includes this club’s invited VIP guests, who may be viewing remotely, and keeps you out of public MyDancr discovery.</p>
           </details>

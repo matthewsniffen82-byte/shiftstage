@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { APPROVED_PHOTO_BUCKET } from "./image-moderation";
 import { profilePhotoSlotFromUploadContext } from "./photo-slot";
 
-/** Call only with a dancer returned by the venue-authorized media grid RPC. */
+/** Call only after authorizing the dancer through the club's media grid or join requests. */
 export async function venueMediaAvatar(admin: SupabaseClient, dancerId: string) {
   const { data: profiles, error: profileError } = await admin.from("dancer_profiles")
     .select("id, user_id, avatar_storage_path, dancer_photos(id, storage_path)")
