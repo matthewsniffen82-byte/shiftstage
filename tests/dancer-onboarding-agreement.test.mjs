@@ -16,8 +16,8 @@ const code = ts.transpileModule(command, { compilerOptions: { module: ts.ModuleK
 const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
 const consent = { agreementAccepted: true, agreementVersion: DANCER_AGREEMENT_VERSION };
 const receipt = { accepted: true, version: DANCER_AGREEMENT_VERSION };
-function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, save = async () => ({ agreement: receipt }), saveProfile } = {}) {
-  const slots = [], effects = [], requests = [], profileSaves = [], events = [], profileChanges = [], exports = {};
+function fixture({ effectiveStatus = "approved", agreementReviewRequired = true, ready = true, storageBlocked = false, save = async () => ({ agreement: receipt }), saveProfile } = {}) {
+  const slots = [], effects = [], requests = [], profileSaves = [], events = [], profileChanges = [], navigation = [], exports = {};
   let cursor = 0, controls;
   const profile = Object.freeze({ id: "saved-profile", stage_name: "Existing", city: "Las Vegas", avatarPhotoUrl: ready ? "saved-avatar" : "", status: effectiveStatus, verification_status: "approved",
     dancer_photos: ready ? [1, 2, 3].map(id => ({ id: String(id), review_status: "approved", is_primary: id === 1 })) : [] });
@@ -29,8 +29,8 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
   vm.runInNewContext(code, {
     ...hooks, exports, AbortController, Error, Event, URLSearchParams, DANCER_AGREEMENT_VERSION, MIN_DANCER_ONBOARDING_PHOTOS, dancerSubmissionMedia,
     require: name => require(name),
-    window: { location: { search: "" }, localStorage: { removeItem() {}, setItem() {} }, addEventListener() {}, removeEventListener() {}, dispatchEvent: event => events.push(event.type), requestAnimationFrame: fn => fn() },
-    document: { getElementById: () => null, querySelector: () => null },
+    window: { location: { search: "" }, localStorage: { removeItem() {}, setItem() { if(storageBlocked) throw Error('Storage disabled'); } }, addEventListener() {}, removeEventListener() {}, dispatchEvent: event => events.push(event.type), requestAnimationFrame: fn => fn() },
+    document: { getElementById: id => id==='dancer-onboarding-agreement'?{scrollIntoView:()=>navigation.push('agreement'),focus:()=>navigation.push('focus')}:null, querySelector: () => null },
     persistedDancerStageName: p => p.stage_name,
     dancerPhotoItemsFromProfile: p => p.dancer_photos.map(photo => ({ id: photo.id, status: photo.review_status, isPrimary: photo.is_primary })),
     DANCER_PHOTOS_KEEP_OPEN_EVENT: "keep-open",
@@ -45,7 +45,7 @@ function fixture({ effectiveStatus = "approved", agreementReviewRequired = true,
     return walk(exports.DancerOnboardingCommand({ agreementReviewRequired, effectiveStatus, isVenueApproved: effectiveStatus === "approved", profile, onProfileChange: p => { profileChanges.push(p); effectiveStatus = p.status; agreementReviewRequired = false; }, profileMediaContent: input => { controls = input; return React.createElement("div", null, "Profile editor"); }, venueVerificationContent: "Club confirmation" }));
   }
   render(); effects.splice(0).forEach(fn => fn());
-  return { render, requests, profileSaves, events, profileChanges, profile,
+  return { render, requests, profileSaves, events, profileChanges, profile, navigation,
     flushEffects() { effects.length = 0; render(); effects.splice(0).forEach(fn => fn()); },
     get continueLabel() { render(); return controls.continueLabel; },
     setAge(value) { render().find(node => node.type === "AgeVerification").props.onVerificationChange(value); },
@@ -112,6 +112,13 @@ test("a new dancer keeps the original profile-to-agreement-to-verification flow"
   f.setAge({ required: true, status: "verified" });
   f.flushEffects();
   assert.equal(f.render().find(node => node.props.id === "dancer-onboarding-nfc-button").props["aria-expanded"], true);
+});
+
+test("Continue opens and focuses the agreement even if browser storage is disabled",()=>{
+  const f=fixture({effectiveStatus:'draft',agreementReviewRequired:false,storageBlocked:true});
+  f.continueFromProfile();
+  assert.equal(f.render().find(node=>node.props.id==='dancer-onboarding-agreement').props.hidden,false);
+  assert.deepEqual(f.navigation,['agreement','focus']);assert.equal(f.profileSaves.length,0);
 });
 
 test("the agreement continues to the age-verification step even when the account has no required check", async () => {

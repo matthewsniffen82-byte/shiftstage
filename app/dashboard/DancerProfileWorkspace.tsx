@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { dancerSubmissionMedia } from "@/src/lib/dancr/dancer-submission-media";
-import { MIN_DANCER_ONBOARDING_PHOTOS, approvedProfilePhotoCount } from "@/src/lib/dancr/media-limits";
+import { MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
 import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEditor } from "./DashboardShared";
 import { dancerPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
@@ -10,7 +10,6 @@ import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import type { DancerIdentityDraft, LoadState } from "./dashboard-types";
-import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { DancerProfileUploadContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
 import { DancerCanLeaveUploadContext, DancerPendingUploadsContext } from "./DancerUploadFeedback";
 import "./dancer-profile-photos.css";
@@ -75,22 +74,15 @@ export default function DancerProfileWorkspace({
   const photos = relabelPhotoItems(sourcePhotos);
   const approvedPhotos = photos.filter(photo => photo.status === "approved").sort((a, b) => Number(Boolean(b.isPrimary)) - Number(Boolean(a.isPrimary)));
   const primaryPhoto = approvedPhotos.find(photo => photo.isPrimary);
-  const mainPhoto = primaryPhoto;
-  const pendingMain = photos.find(photo => photo.isPrimary && photo.status === "pending");
   const pendingReviewIds = new Set((Array.isArray(profile?.pending_photo_reviews) ? profile.pending_photo_reviews : []).map((review: Record<string, unknown>) => String(review.id)));
   const dirty = draftIdentity.stageName.trim() !== persistedDancerStageName(profile)
     || draftIdentity.city.trim() !== String(profile?.city || "").trim();
   const detailsSaved = Boolean(persistedDancerStageName(profile) && String(profile?.city || "").trim());
-  const pendingFace = profile?.pending_avatar_review as Record<string, unknown> | undefined;
-  const faceReady = Boolean(profile?.avatarPhotoUrl);
-  const approvedCount = approvedProfilePhotoCount(photos);
   const submittedMedia = dancerSubmissionMedia(profile);
   const galleryReady = submittedMedia.count >= MIN_DANCER_ONBOARDING_PHOTOS;
   const photosReady = submittedMedia.hasMain && galleryReady;
-  const faceState = faceReady ? "Approved" : pendingFace ? mediaReviewLabel("pending", String(pendingFace.status || "pending_review")) : "Required";
-  const mainState = mainPhoto ? "Approved" : pendingMain ? mediaReviewLabel(pendingMain.status, pendingMain.moderationStatus) : "Required";
   const photoBlocker = !submittedMedia.hasMain ? "Add your main photo to continue."
-    : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"}. Pending uploads count toward setup.` : "";
+    : !galleryReady ? `Add ${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count} more profile photo${MIN_DANCER_ONBOARDING_PHOTOS - submittedMedia.count === 1 ? "" : "s"}. Your automatic avatar doesn’t count as another photo. Pending uploads count.` : "";
   const identityHint = draftIdentity.stageName.trim().length < 2 ? "Enter your stage name."
     : !draftIdentity.city.trim() ? "Choose your city." : "";
   const setupHint = identityHint || (step === "details" ? "" : photoBlocker);
@@ -107,7 +99,7 @@ export default function DancerProfileWorkspace({
     // Retired preview progress resumes at media, with all requirements checked again.
     setStep(!detailsSaved || /details/.test(hash) ? "details" : /photo|video|media/.test(hash) ? "media" : savedStep === "details" ? "details" : "media");
   }, [onboarding, profile?.id, stepStorageKey, detailsSaved]);
-  useEffect(() => { setStatus(""); }, [faceReady, mainPhoto?.id, faceState, mainState, approvedCount]);
+  useEffect(() => { setStatus(""); }, [submittedMedia.count, submittedMedia.hasMain]);
   // Upload panels expose their own busy state; retain them while switching steps.
   const hasActiveUpload = () => busy || Boolean(root.current?.querySelector('[aria-busy="true"]'));
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
@@ -148,7 +140,8 @@ export default function DancerProfileWorkspace({
   }
   const needsDetails = dirty || !detailsSaved;
   function advanceSetup() {
-    if (savingRef.current || hasActiveUpload()) return;
+    if (savingRef.current) return;
+    if (hasActiveUpload()) { setStatus("Wait for your upload to finish, then continue."); return; }
     if (step === "details") { void save("media"); return; }
     if (identityHint) { showStep("details"); setStatus(identityHint); return; }
     if (!photosReady) { revealMissingPhoto(); setStatus(photoBlocker); return; }
@@ -161,8 +154,12 @@ export default function DancerProfileWorkspace({
     showStep(next);
   }
   function revealMissingPhoto() {
-    if (!submittedMedia.hasMain) openEditorArea("dancer-main-photo");
-    else openEditorArea("dancer-profile-media-library");
+    setUploadKind("photos");
+    window.requestAnimationFrame(() => {
+      const notice = root.current?.querySelector<HTMLElement>("#dancer-builder-photo-requirement");
+      notice?.scrollIntoView({ behavior: "smooth", block: "center" });
+      notice?.focus({ preventScroll: true });
+    });
   }
 
   async function save(next?: ProfileStep | "continue") {
@@ -205,7 +202,7 @@ export default function DancerProfileWorkspace({
       </nav>
       <header className="dancer-builder-heading">
         <h3 id="dancer-builder-title" tabIndex={-1}>{step === "details" ? "Name & city" : "Build your profile"}</h3>
-        {step === "media" ? <span className="dancer-builder-requirement" data-state={photosReady ? "saved" : "required"} role="status">{!mainPhoto ? "Add main photo" : galleryReady && faceReady ? "Photos ready" : `${approvedCount} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos approved`}</span> : null}
+        {step === "media" ? <span className="dancer-builder-requirement" data-state={photosReady ? "saved" : "required"} role="status">{photosReady ? "Photos ready" : !submittedMedia.hasMain ? "Add main photo" : `${submittedMedia.count} of ${MIN_DANCER_ONBOARDING_PHOTOS} photos added`}</span> : null}
       </header>
     </> : null}
     {!onboarding ? <header className="dancer-workspace-heading">
@@ -224,6 +221,7 @@ export default function DancerProfileWorkspace({
         {identityContent}
       </section>
       <div className="dancer-profile-media-area" hidden={onboarding && step !== "media"}>
+      {onboarding && photoBlocker ? <p id="dancer-builder-photo-requirement" className="dancer-builder-photo-requirement" role="status" tabIndex={-1}>{photoBlocker}</p> : null}
       <section hidden={onboarding && step !== "media"} className="dancer-builder-upload-entry" aria-label="Add profile media">
         <button type="button" aria-pressed={uploadKind === "photos"} aria-controls="dancer-profile-media-library" disabled={busy} onClick={() => setUploadKind(current => current === "photos" ? null : "photos")}>+ Photos</button>
         <button type="button" aria-pressed={uploadKind === "videos"} aria-controls="dancer-profile-video-library" disabled={busy} onClick={() => setUploadKind(current => current === "videos" ? null : "videos")}>+ Videos</button>

@@ -15,7 +15,7 @@ const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArr
 const textContent = node => typeof node === 'string' ? node : React.isValidElement(node) ? React.Children.toArray(node.props.children).map(textContent).join('') : '';
 const uploadContext = React.createContext(null);
 const leaveContext = React.createContext(true);
-function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboarding=true, saveResult=true, valid=true, savedStep, newProfile=false, storageBlocked=false, save, hash='' }={}) {
+function fixture({ count=3, pending=0, face=true, draft=false, busy=false, childBusy=false, onboarding=true, saveResult=true, valid=true, savedStep, newProfile=false, storageBlocked=false, save, hash='' }={}) {
   const slots=[], calls=[], effects=[], storage=new Map(), exports={}; let cursor=0, dirty=true, nodes=[];
   if (savedStep) storage.set('mydancr:dancer-profile-builder:owner', savedStep);
   const hooks={...React,
@@ -37,7 +37,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboa
     if(name==='@/src/lib/dancr/media-review-label')return {mediaReviewLabel};
     if(name==='@/src/lib/dancr/dancer-submission-media')return {dancerSubmissionMedia:profile=>dancerSubmissionMedia({...profile,
       dancer_photos:profile.dancer_photos.map(photo=>({...photo,review_status:photo.status,is_primary:photo.isPrimary})),
-      pending_photo_reviews:profile.dancer_photos.filter(photo=>photo.status==='pending').map(photo=>({...photo,upload_context:'profile_gallery'})),
+      pending_photo_reviews:profile.dancer_photos.filter(photo=>photo.status==='pending').map(photo=>({...photo,upload_context:photo.isPrimary?'profile_main':'profile_gallery'})),
     })};
     if(name.startsWith('./'))return {default:name};
     return require(name);
@@ -46,7 +46,7 @@ function fixture({ count=3, pending=0, face=true, draft=false, busy=false, onboa
     dirty=true;
     for(let loop=0;dirty&&loop<30;loop++) {
       dirty=false;cursor=0;effects.length=0;nodes=walk(exports.default(props));
-      nodes[0].props.ref.current={querySelector:s=>s==='.dancer-profile-identity-form'?{checkValidity:()=>valid,reportValidity:()=>valid}:s==='[aria-busy="true"]'?null:{scrollIntoView:()=>calls.push(s),focus(){},querySelector:()=>({focus(){}})}};
+      nodes[0].props.ref.current={querySelector:s=>s==='.dancer-profile-identity-form'?{checkValidity:()=>valid,reportValidity:()=>valid}:s==='[aria-busy="true"]'?(childBusy?{}:null):{scrollIntoView:()=>calls.push(s),focus(){calls.push(`focus:${s}`);},querySelector:()=>({focus(){}})}};
       effects.splice(0).forEach(fn=>fn());
     }
     assert.equal(dirty,false,'effects settle');return nodes;
@@ -82,6 +82,33 @@ test('pending photos count toward setup without entering the approved gallery',a
   await f.click();assert.equal(f.calls.includes('agreement'),true);
 });
 
+test('main photo and one picture show the exact missing requirement; a third pending photo unlocks agreement',async()=>{
+  const f=fixture({count:0,face:false});
+  f.props.profile.dancer_photos=[
+    {id:'main',isPrimary:true,status:'pending'},
+    {id:'gallery',status:'pending'},
+  ];
+  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'2 of 3 photos added');
+  const notice=f.draw().find(n=>n.props.id==='dancer-builder-photo-requirement');
+  assert.match(textContent(notice),/Add 1 more profile photo/);
+  assert.match(textContent(notice),/avatar doesn’t count/);
+  await f.click('+ Videos');await f.click('Continue to agreement');
+  assert.equal(f.calls.includes('agreement'),false);assert.equal(f.calls.includes('save'),false);
+  assert.equal(f.button('+ Photos').props['aria-pressed'],true);
+  assert.ok(f.calls.includes('#dancer-builder-photo-requirement'));
+  assert.ok(f.calls.includes('focus:#dancer-builder-photo-requirement'));
+  f.props.profile.dancer_photos.push({id:'third',status:'pending'});
+  assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Photos ready');
+  assert.equal(f.draw().some(n=>n.props.id==='dancer-builder-photo-requirement'),false);
+  assert.equal(f.message(),'');
+  await f.click('Continue to agreement');assert.equal(f.calls.filter(c=>c==='agreement').length,1);
+});
+
+test('a child upload still finishing gives feedback instead of a silent Continue click',async()=>{
+  const f=fixture({childBusy:true});await f.click('Continue to agreement');
+  assert.equal(f.calls.includes('agreement'),false);assert.match(f.message(),/Wait for your upload to finish/);
+});
+
 test('the single requirement indicator becomes Photos ready, even with extra photos',()=>{
   for(const count of [3,7]) {
     const f=fixture({count});assert.equal(f.draw().find(n=>n.props.className==='dancer-builder-requirement').props.children,'Photos ready');
@@ -89,13 +116,12 @@ test('the single requirement indicator becomes Photos ready, even with extra pho
   }
 });
 
-test('an approved gallery does not label missing avatar or main photo as ready',()=>{
+test('a missing main photo blocks readiness but an automatic avatar does not',()=>{
   for (const missing of ['avatar', 'main']) {
     const f=fixture({count:5,face:missing!=='avatar'});
     if (missing==='main') f.props.profile.dancer_photos.forEach(photo=>{photo.isPrimary=false;});
     const indicator=f.draw().find(n=>n.props.className==='dancer-builder-requirement');
-    assert.notEqual(indicator.props.children,'Photos ready');
-    if (missing==='main') assert.equal(indicator.props.children,'Add main photo');
+    assert.equal(indicator.props.children,missing==='main'?'Add main photo':'Photos ready');
     assert.equal(indicator.props['data-state'],missing==='main'?'required':'saved');
   }
 });
@@ -107,7 +133,7 @@ test('pending videos do not block required agreement handoff',async()=>{
 
 test('a missing main photo blocks setup, while its automatic avatar does not',async()=>{
   const missing=fixture({count:0});await missing.click('+ Videos');await missing.click();
-  assert.equal(missing.step(),'media');assert.ok(missing.calls.includes('#dancer-main-photo'));
+  assert.equal(missing.step(),'media');assert.ok(missing.calls.includes('#dancer-builder-photo-requirement'));
   assert.equal(missing.button('+ Photos').props['aria-pressed'],true);
   assert.equal(missing.draw().find(n=>n.props.id==='dancer-profile-media-library').props.hidden,false);
   assert.match(missing.message(),/main photo/);assert.ok(!missing.calls.includes('agreement'));
@@ -287,7 +313,7 @@ test('a removed main photo cannot be replaced implicitly by enough approved gall
   await f.click();
   assert.equal(f.step(),'media');
   assert.match(f.message(),/Add your main photo/);
-  assert.ok(f.calls.includes('#dancer-main-photo'));
+  assert.ok(f.calls.includes('#dancer-builder-photo-requirement'));
   assert.equal(f.draw().find(n=>n.props.id==='dancer-required-photos').props.hidden,false);
   assert.match(textContent(f.draw().find(n=>n.props.id==='dancer-main-photo')), /Main uploader/);
   assert.ok(!f.calls.includes('agreement'));

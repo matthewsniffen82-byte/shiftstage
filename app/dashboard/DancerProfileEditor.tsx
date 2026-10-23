@@ -660,7 +660,7 @@ export function DancerOnboardingCommand({
     }
     setReviewAgreement(true);
     setExpandedStepId("dancer-profile-media");
-    window.localStorage.setItem(storageKey, "dancer-profile-media");
+    try { window.localStorage.setItem(storageKey, "dancer-profile-media"); } catch { /* Agreement navigation must work without browser storage. */ }
     window.requestAnimationFrame(() => {
       document.getElementById("dancer-onboarding-agreement")?.scrollIntoView({ behavior: "smooth", block: "start" });
       const nextAction = document.querySelector<HTMLElement>('#dancer-onboarding-agreement input[type="checkbox"]:not(:disabled), #dancer-onboarding-agreement button[type="submit"]:not(:disabled)')
