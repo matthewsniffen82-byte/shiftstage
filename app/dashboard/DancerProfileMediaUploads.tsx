@@ -11,6 +11,7 @@ import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 
 type UploadItem = {
   id: string;
+  isPrimary?: boolean;
   isPinned?: boolean;
   imageUrl?: string | null;
   videoUrl?: string | null;
@@ -40,12 +41,14 @@ export default function DancerProfileMediaUploads({
   mediaType,
   disabled = false,
   photoActions,
+  photoAccessory,
 }: {
   compact?: boolean;
   expanded?: boolean;
   mediaType?: "photos" | "videos";
   disabled?: boolean;
   photoActions?: (id: string) => ReactNode;
+  photoAccessory?: (id: string) => ReactNode;
   photos: UploadItem[];
   videos: UploadItem[];
   isApproved: boolean;
@@ -230,6 +233,7 @@ export default function DancerProfileMediaUploads({
                   <li key={item.id} data-review-status={item.status}>
                     {!compact ? <div>{clubLabels(item, isPhoto ? "photo" : "video").map(club => <small key={club.venueId}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}{club.status === "rejected" && club.reason ? " · " + club.reason : ""}<br /></small>)}</div> : null}
                     <div className="profile-upload-preview">
+                      {isPhoto && item.isPrimary ? <span className="dancer-main-photo-badge">Main photo</span> : null}
                       <button aria-label={`${isPhoto ? compact ? "Edit" : "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}`} disabled={Boolean(deletingVideoId || pinningId) || disabled} onClick={event => {
                         if (compact && isPhoto) {
                           const options = event.currentTarget.parentElement?.querySelector<HTMLDetailsElement>("details.dancer-thumbnail-menu");
@@ -268,6 +272,7 @@ export default function DancerProfileMediaUploads({
                       </button>
                       </>}
                     </div>
+                    {isPhoto ? photoAccessory?.(item.id) : null}
                     <strong>{label} {index + 1}</strong>
                     <small className={item.status === "approved" ? "is-ready" : ""}>{profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}</small>
                     <DancerMediaRetryButton key={item.id} id={item.id} kind={isPhoto ? "photo" : "video"} status={item.status} moderationStatus={item.moderationStatus}

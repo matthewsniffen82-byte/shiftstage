@@ -1,7 +1,7 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
 import { MAX_DANCER_PROFILE_PHOTOS, MIN_DANCER_ONBOARDING_PHOTOS } from "@/src/lib/dancr/media-limits";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
@@ -26,6 +26,8 @@ import { keepDefaultPhotoCrop } from "./default-photo-crop";
 import "./dancer-upload-queue.css";
 export function DancerPhotoPanel({
   uploadOnly = false,
+  automaticMain = false,
+  mainPhotoAccessory,
   onBusyChange,
   deletedPhotoIds = [],
   deletedPhotoStoragePaths = [],
@@ -35,6 +37,8 @@ export function DancerPhotoPanel({
   profile,
 }: {
   uploadOnly?: boolean;
+  automaticMain?: boolean;
+  mainPhotoAccessory?: ReactNode;
   onBusyChange?: (busy: boolean) => void;
   deletedPhotoIds?: string[];
   deletedPhotoStoragePaths?: string[];
@@ -331,6 +335,9 @@ export function DancerPhotoPanel({
     let rejectedCount = 0;
     // Reserve distinct positions before requests overlap, including positions retained by retries.
     let nextSortOrder = Math.max(nextGalleryPhotoSortOrder(workingPhotos), ...batch.map(item => (item.uploadSortOrder ?? -1) + 1));
+    // Reserve the main slot before concurrent uploads start; retries retain it.
+    const mainCandidate = automaticMain && !workingPhotos.some(photo => photo.isPrimary && photo.status !== "rejected")
+      ? batch.find(item => item.uploadSortOrder === 0) || batch.find(item => item.uploadSortOrder === undefined) : undefined;
     try {
       await persistQueuedPhotoDeletions(controller.signal);
       await runMediaUploadBatch(batch, batch.some(item => item.replaces) ? 1 : MEDIA_UPLOAD_CONCURRENCY, async (queuedItem, index) => {
@@ -342,7 +349,7 @@ export function DancerPhotoPanel({
           return;
         }
         let item = queuedItem;
-        const uploadSortOrder = item.uploadSortOrder ?? nextSortOrder++;
+        const uploadSortOrder = item.uploadSortOrder ?? (item.id === mainCandidate?.id ? 0 : nextSortOrder++);
         updateQueuedPhoto(item.id, { stage: "preparing", progress: 0, uploadSortOrder, error: undefined });
         try {
           if (!item.file.type.startsWith("image/") || !item.file.size || item.file.size > 25 * 1024 * 1024) {
@@ -400,7 +407,7 @@ export function DancerPhotoPanel({
           const uploadKey = `${item.id}:gallery`;
           const formData = new FormData();
           formData.set("file", file);
-          formData.set("isPrimary", "false");
+          formData.set("isPrimary", String(automaticMain && uploadSortOrder === 0));
           formData.set("replaceExisting", "false");
           formData.set("sortOrder", String(uploadSortOrder));
           formData.set("idempotencyKey", uploadKey);
@@ -723,6 +730,7 @@ export function DancerPhotoPanel({
           </button>
         </div>
         <p className="photo-upload-selection-hint">Select photos, then keep all crops or adjust individually.</p>
+        {automaticMain ? <p className="photo-upload-selection-hint">Your main photo appears on dancer cards and creates your avatar. Choose another from a photo’s menu.</p> : null}
         {status && !(status === "Uploading" && reviews.length) ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       </DancerUploadDisclosure>
@@ -772,11 +780,12 @@ export function DancerPhotoPanel({
           })}
         </div>
       ) : null}
-      <DancerPendingMediaGrid items={awaitingReviews.map(review => {
+      <DancerPendingMediaGrid items={[...awaitingReviews].sort((a, b) => Number(Boolean(b.result?.isPrimary)) - Number(Boolean(a.result?.isPrimary))).map(review => {
         const { item, result } = review;
         return { id: result!.id, kind: "photo", isMainPhoto: Boolean(result!.isPrimary),
-          label: result!.isPrimary ? "Main photo/avatar" : `Photo ${reviews.indexOf(review) + 1}`,
+          label: result!.isPrimary ? "Main photo" : `Photo ${reviews.indexOf(review) + 1}`,
           imageUrl: item?.previewUrl || result!.imageUrl, disabled: photoActionBusy,
+          accessory: result!.isPrimary ? mainPhotoAccessory : undefined,
           removing: deletingPhotoIds.has(result!.id), onRemove: () => void deletePhoto(result!) };
       })} />
       {!uploadOnly && approvedPhotos.length ? (

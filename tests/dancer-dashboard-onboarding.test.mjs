@@ -159,9 +159,9 @@ test("profile and media workspace derives the avatar from the approved main phot
 test("step one uses the shared inline editor and opens an explicit agreement review", () => {
   assert.match(sharedWorkspace, /\{identityContent\}/);
   assert.match(sharedWorkspace, /Your details/);
-  assert.match(sharedWorkspace, /id="dancer-face-photo-title">Avatar</);
-  assert.match(sharedWorkspace, /id="dancer-main-upload-title">Main photo</);
-  assert.match(sharedWorkspace, /Photo uploads/);
+  assert.match(sharedWorkspace, /photoAccessory=/);
+  assert.doesNotMatch(sharedWorkspace, /id="dancer-main-upload-title"/);
+  assert.match(sharedWorkspace, />Photos<\/button>/);
   assert.match(sharedWorkspace, /Video uploads/);
   assert.doesNotMatch(sharedWorkspace, /DancerIdentityEditor|aria-modal/);
   assert.match(dashboard, /onContinue=\{continueToAgreement\}/);
@@ -234,7 +234,7 @@ test("the full profile editor retains accessible add targets that preserve the a
   assert.match(dashboard, /data-profile-editor-trigger="stageName" onClick=\{\(\) => openEditorSection\("stageName"\)\}/);
   assert.match(dashboard, /data-profile-editor-trigger="city" onClick=\{\(\) => openEditorSection\("city"\)\}/);
   assert.match(dashboard, /onClick=\{\(\) => openEditorSection\("avatar"\)\}/);
-  assert.match(dashboard, /workspaceProps = \{ identityContent: identityContent\(\), avatarContent, mainPhotoContent, photoContent, videoContent/);
+  assert.match(dashboard, /workspaceProps = \{ identityContent: identityContent\(\), avatarContent, photoContent, videoContent/);
   assert.doesNotMatch(dashboard, /onClick=\{\(\) => openSocialEditor\(platform\.key\)\}/);
   assert.doesNotMatch(dashboard, /SOCIAL_PLATFORMS\.map\(\(platform\) =>/);
   assert.doesNotMatch(dashboard, /className="social-links-control"[\s\S]*?<h2 id="dancer-profile-builder-social-heading">Social Links<\/h2>/);

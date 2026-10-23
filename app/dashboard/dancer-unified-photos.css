@@ -1,0 +1,78 @@
+/* The uploaded main photo owns its avatar, keeping identity and media together. */
+body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-main-photo-badge {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  z-index: 2;
+  max-width: calc(100% - 12px);
+  padding: 4px 7px;
+  border-radius: 6px;
+  background: var(--dancr-color-overlay);
+  color: var(--dancr-color-text-primary);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  pointer-events: none;
+}
+body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar {
+  display: grid !important;
+  grid-template-columns: 36px minmax(0, 1fr) !important;
+  align-items: center;
+  gap: 4px !important;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 6px 2px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-editor {
+  min-height: 0;
+  display: block;
+}
+body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-upload-controls {
+  display: grid;
+  min-width: 0;
+  gap: 0;
+}
+body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar :is(strong, p) {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--dancr-color-text-secondary);
+}
+body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar > [role="status"] {
+  grid-column: 1 / -1;
+}
+@layer dancr-profile-photo-targets {
+  body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-preview {
+    display: grid !important;
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    min-height: 36px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    overflow: hidden;
+  }
+  body.dancr-button-system main#dancer-dashboard .dancer-profile-workspace .dancer-photo-avatar .dancer-avatar-upload-controls > button {
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 2px 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 11px !important;
+    text-align: left !important;
+    white-space: normal;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}

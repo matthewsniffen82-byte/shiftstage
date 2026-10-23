@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import "./dancer-pending-media-grid.css";
 
@@ -13,6 +14,7 @@ export type PendingMediaCard = {
   disabled?: boolean;
   removing?: boolean;
   onRemove: () => void;
+  accessory?: ReactNode;
 };
 
 export default function DancerPendingMediaGrid({ items, addMore }: {
@@ -34,8 +36,9 @@ export default function DancerPendingMediaGrid({ items, addMore }: {
         <div className="dancer-pending-media-preview" role={item.kind === "video" ? "img" : undefined} aria-label={item.kind === "video" ? item.label : undefined}>
           {item.kind === "video" ? <DancerVideoThumbnail videoUrl={item.videoUrl} posterUrl={item.imageUrl} />
             : item.imageUrl ? <img src={item.imageUrl} alt={item.label} loading="lazy" /> : <span>{item.label}</span>}
-          {item.isMainPhoto ? <strong className="dancer-pending-media-label">Main photo/avatar</strong> : null}
+          {item.isMainPhoto ? <strong className="dancer-pending-media-label">Main photo</strong> : null}
         </div>
+        {item.accessory}
         <button className="dancer-pending-media-remove" type="button" disabled={item.disabled || item.removing}
           aria-label={`Remove ${item.label.toLowerCase()}`} onClick={item.onRemove}>
           {item.removing ? "Removing…" : "Remove"}

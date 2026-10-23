@@ -173,13 +173,13 @@ test("saved media visibility copy respects profile approval and incognito", () =
   assert.match(hidden, /<span aria-hidden="true">Approved uploads appear on your profile\.<\/span>/);
 });
 
-test("all saved gallery photos use ordinary photo labels including legacy primary photos", () => {
+test("saved gallery photos keep numbered labels and identify the main photo once", () => {
   const html = render({ photos: [{ id: "main", status: "approved", isPrimary: true }, { id: "other", status: "approved" }] });
   assert.match(html, /View photo 1: Approved/);
   assert.match(html, /<strong>Photo 1<\/strong>/);
   assert.match(html, /<strong>Photo 2<\/strong>/);
   assert.doesNotMatch(render({ photos: [{ id: "first", status: "approved" }] }), /Main photo/);
-  assert.doesNotMatch(html, /Main photo|Make main/);
+  assert.equal((html.match(/>Main photo</g) || []).length, 1);
 });
 
 test("each photo and video preview has a separate accessible Delete button", () => {

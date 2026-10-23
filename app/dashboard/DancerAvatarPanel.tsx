@@ -7,8 +7,9 @@ import { AvatarUploadBusyContext } from "./DashboardShared";
 import { cropProfilePhoto, type AvatarCrop } from "./profile-photo-crop";
 import { dancerPhotoItemsFromProfile } from "./DancerPhotoPanel";
 
-export function DancerAvatarPanel({ compact = false, onProfileChange, profile }: {
+export function DancerAvatarPanel({ compact = false, inline = false, onProfileChange, profile }: {
   compact?: boolean;
+  inline?: boolean;
   onProfileChange?: (profile: Record<string, unknown>) => void;
   profile?: LoadState["profile"];
 }) {
@@ -79,7 +80,7 @@ export function DancerAvatarPanel({ compact = false, onProfileChange, profile }:
     }
   }
 
-  return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}`} aria-busy={busy} data-avatar-state={pendingAvatarUrl ? "pending" : avatarUrl ? "approved" : "automatic"}>
+  return <article className={`info-panel dancer-avatar-panel${compact ? " is-compact" : ""}${inline ? " dancer-photo-avatar" : ""}`} aria-busy={busy} data-avatar-state={pendingAvatarUrl ? "pending" : avatarUrl ? "approved" : "automatic"}>
     <div className="dancer-avatar-editor" aria-label="Automatic avatar preview">
       <button className="dancer-avatar-preview dancer-photo-edit-target" data-empty={!avatarUrl} type="button" disabled={busy || !canAdjustCrop}
         aria-label={pendingAvatarUrl ? "Avatar preview waiting for final approval" : "Adjust avatar crop"} onClick={() => void adjustCrop()}>
@@ -87,7 +88,8 @@ export function DancerAvatarPanel({ compact = false, onProfileChange, profile }:
       </button>
     </div>
     <div className="dancer-avatar-upload-controls">
-      {pendingAvatarUrl ? <p>Waiting for final approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>Appears after your main photo passes checks.</p>}
+      {inline ? <strong>Avatar</strong> : null}
+      {pendingAvatarUrl ? inline ? null : <p>Waiting for final approval</p> : canAdjustCrop ? <button type="button" disabled={busy} onClick={() => void adjustCrop()}>{busy ? "Updating…" : "Adjust crop"}</button> : <p>{inline ? "Created after checks" : "Appears after your main photo passes checks."}</p>}
     </div>
     {status ? <p role="status" aria-live="polite">{status}</p> : null}
   </article>;
