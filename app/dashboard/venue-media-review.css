@@ -41,6 +41,8 @@
 }
 #venue-media-reviews .venue-media-rejection { display: grid; gap: 6px; margin: 0; }
 #venue-dashboard #venue-media-reviews label { display: grid; gap: 4px; margin: 0; font-size: 12px !important; font-weight: 500 !important; line-height: 1.35; letter-spacing: normal !important; text-transform: none !important; }
+#venue-dashboard #venue-media-reviews > label { min-width: 0; margin-bottom: 12px; }
+#venue-dashboard #venue-media-reviews > label > select { display: block; box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; margin: 0; }
 #venue-dashboard #venue-media-reviews input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px; padding: 8px 10px; font-family: inherit; font-size: 16px; line-height: 1.35; letter-spacing: normal; }
 #venue-dashboard #venue-media-reviews input[aria-invalid="true"] { border-color: #fca5a5; }
 #venue-dashboard #venue-media-reviews .venue-media-review-feedback { overflow-wrap: anywhere; }
