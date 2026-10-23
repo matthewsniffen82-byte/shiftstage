@@ -56481,7 +56481,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     async function playProfileTvViewerVideo(video) {
-      if (document.visibilityState === "hidden") return;
+      if (document.visibilityState === "hidden" || video !== activeProfileTvViewerVideo() || video.dataset.userPaused === "true") return;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      if (video.dataset.autoplayMuted === "true") video.muted = true;
+      video.defaultMuted = video.muted;
+      if (video.muted) video.setAttribute("muted", "");
       try {
         await video.play();
         return;
@@ -56490,7 +56496,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       }
       // iOS may deny sound-on autoplay for the newly scrolled-to element.
       if (!video.muted) {
+        if (document.visibilityState === "hidden" || video.dataset.userPaused === "true") return;
+        video.dataset.autoplayMuted = "true";
         video.muted = true;
+        video.defaultMuted = true;
+        video.setAttribute("muted", "");
         profileTvViewerMuted = true;
         syncProfileTvSoundControl();
         try { await video.play(); return; }
@@ -63082,11 +63092,12 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     function syncHomeTvFeedSoundButtons() {
       document.querySelectorAll("[data-home-tv-sound]").forEach((button) => {
-        const label = homeTvFeedMuted ? "Turn MyDancr TV sound on" : "Mute MyDancr TV";
-        button.classList.toggle("is-muted", homeTvFeedMuted);
+        const muted = button.closest(".home-tv-feed-slide")?.querySelector("video")?.muted ?? homeTvFeedMuted;
+        const label = muted ? "Turn MyDancr TV sound on" : "Mute MyDancr TV";
+        button.classList.toggle("is-muted", muted);
         button.setAttribute("aria-label", label);
         button.setAttribute("title", label);
-        button.setAttribute("aria-pressed", String(!homeTvFeedMuted));
+        button.setAttribute("aria-pressed", String(!muted));
       });
     }
 
@@ -63504,9 +63515,10 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           video.playsInline = true;
           video.setAttribute("playsinline", "");
           video.setAttribute("webkit-playsinline", "");
-          video.muted = homeTvFeedMuted;
-          video.defaultMuted = homeTvFeedMuted;
-          if (homeTvFeedMuted) video.setAttribute("muted", "");
+          video.muted = homeTvFeedMuted || video.dataset.autoplayMuted === "true";
+          video.defaultMuted = video.muted;
+          if (video.muted) video.setAttribute("muted", "");
+          else video.removeAttribute("muted");
           attachDeferredVideoSource(video, "auto");
           const mediaId = String(slide.dataset.videoId || videoId);
           if (!homeTvFeedImpressions.has(mediaId)) {
@@ -63525,12 +63537,30 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             slide.classList.remove("is-paused", "is-autoplay-blocked");
             primeHomeTvFeedNeighbors(videoId);
             scheduleHomeTvFeedEngagedView(videoId, video);
-          }).catch((error) => {
+          }).catch(async (error) => {
             if (
               error?.name === "AbortError" ||
               !slide.classList.contains("is-active") ||
-              slide.dataset.userPaused === "true"
+              slide.dataset.userPaused === "true" ||
+              document.visibilityState === "hidden" || homeTvFeedCoveredByProfile()
             ) return;
+            if (!video.muted) {
+              video.dataset.autoplayMuted = "true";
+              video.muted = video.defaultMuted = true;
+              video.setAttribute("muted", "");
+              syncHomeTvFeedSoundButtons();
+              try {
+                await video.play();
+                if (video.paused || slide.dataset.userPaused === "true") return;
+                slide.classList.remove("is-paused", "is-autoplay-blocked");
+                primeHomeTvFeedNeighbors(videoId);
+                scheduleHomeTvFeedEngagedView(videoId, video);
+                return;
+              } catch (retryError) {
+                if (retryError?.name === "AbortError" || !slide.classList.contains("is-active") ||
+                  slide.dataset.userPaused === "true" || document.visibilityState === "hidden" || homeTvFeedCoveredByProfile()) return;
+              }
+            }
             slide.classList.add("is-paused", "is-autoplay-blocked");
           });
         } else {
@@ -63979,6 +64009,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           return;
         }
         lastTapAt = tapAt;
+        if (video.paused) {
+          // Keep play() inside the tap gesture; iPhone can reject timer-delayed
+          // playback even when the visitor explicitly pressed the video.
+          window.clearTimeout(singleTapTimer);
+          toggleHomeTvFeedPlayback(video);
+          return;
+        }
         singleTapTimer = window.setTimeout(() => {
           if (lastTapAt !== tapAt) return;
           lastTapAt = 0;
@@ -64020,6 +64057,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         syncHomeTvFeedProgress(video, slide);
       });
       video.addEventListener("durationchange", () => syncHomeTvFeedProgress(video, slide));
+      video.addEventListener("volumechange", syncHomeTvFeedSoundButtons);
       video.addEventListener("error", () => {
         if (fallbackHomeTvFeedVideo(video, slide, videoId)) return;
         slide.classList.remove("is-media-loading");
@@ -64405,8 +64443,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       sound.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H3v6h4l4 4V5Z"></path><path class="home-tv-feed-sound-waves" d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"></path><path class="home-tv-feed-sound-muted" d="m16 9 5 5m0-5-5 5"></path></svg>';
       sound.addEventListener("click", () => {
         closeHomeTvFeedReportMenus();
-        homeTvFeedMuted = !homeTvFeedMuted;
+        homeTvFeedMuted = !(slide.querySelector("video")?.muted ?? homeTvFeedMuted);
         results.querySelectorAll(".home-tv-feed-video").forEach((feedVideo) => {
+          delete feedVideo.dataset.autoplayMuted;
           feedVideo.muted = homeTvFeedMuted;
           feedVideo.defaultMuted = homeTvFeedMuted;
           if (homeTvFeedMuted) feedVideo.setAttribute("muted", "");

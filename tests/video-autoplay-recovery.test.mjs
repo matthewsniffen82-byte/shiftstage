@@ -76,7 +76,7 @@ test("profile and venue video strips autoplay only their visible muted preview",
 });
 
 test("the production home shell loads Safari-safe autoplay recovery for dynamically rendered videos", () => {
-  assert.match(rootRoute, /script src="\/video-autoplay-recovery\.js\?v=4" defer/);
+  assert.match(rootRoute, /script src="\/video-autoplay-recovery\.js\?v=5" defer/);
   assert.match(homeRecovery, /const HOME_FEED_VIDEO_SELECTOR = "\.home-tv-feed-video"/);
   assert.match(homeRecovery, /slide\.dataset\.userPaused === "true"/);
   assert.match(homeRecovery, /video\.defaultMuted = true/);
@@ -98,7 +98,7 @@ test("the homepage TV feed only shows its play overlay for an active manual paus
   );
   assert.match(
     homeSource,
-    /video\.play\(\)\.then\(\(\) => \{[\s\S]*?slide\.classList\.remove\("is-paused", "is-autoplay-blocked"\)[\s\S]*?\.catch\(\(error\) => \{[\s\S]*?slide\.dataset\.userPaused === "true"[\s\S]*?slide\.classList\.add\("is-paused", "is-autoplay-blocked"\)/,
+    /video\.play\(\)\.then\(\(\) => \{[\s\S]*?slide\.classList\.remove\("is-paused", "is-autoplay-blocked"\)[\s\S]*?\.catch\(async \(error\) => \{[\s\S]*?slide\.dataset\.userPaused === "true"[\s\S]*?slide\.classList\.add\("is-paused", "is-autoplay-blocked"\)/,
   );
   assert.doesNotMatch(homeSource, /\.home-tv-feed-slide\.is-paused \.home-tv-feed-playback/);
   const playbackToggle = homeSource.match(

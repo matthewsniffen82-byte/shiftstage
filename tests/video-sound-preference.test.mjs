@@ -21,7 +21,7 @@ const [
 test("the live shell loads the shared sound preference controller before autoplay recovery", () => {
   assert.match(
     route,
-    /video-sound-preference\.js\?v=1[\s\S]*video-autoplay-recovery\.js\?v=4/,
+    /video-sound-preference\.js\?v=2[\s\S]*video-autoplay-recovery\.js\?v=5/,
   );
 });
 

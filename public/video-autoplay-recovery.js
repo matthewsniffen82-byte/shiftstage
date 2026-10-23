@@ -46,7 +46,7 @@
     video.setAttribute("playsinline", "");
     video.setAttribute("webkit-playsinline", "");
     video.defaultMuted = true;
-    if (!isHomeFeedSoundEnabled()) {
+    if (!isHomeFeedSoundEnabled() || video.dataset.autoplayMuted === "true") {
       video.muted = true;
       video.setAttribute("muted", "");
     }
@@ -59,7 +59,10 @@
     }
 
     if (!video.muted) {
+      video.dataset.autoplayMuted = "true";
       video.muted = true;
+      video.defaultMuted = true;
+      video.setAttribute("muted", "");
       try {
         await video.play();
         video.closest(".home-tv-feed-slide")?.classList.remove("is-autoplay-blocked");

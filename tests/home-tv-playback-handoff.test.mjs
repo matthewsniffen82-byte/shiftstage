@@ -9,7 +9,7 @@ const activate = shell.match(/    function activateHomeTvFeedVideo\([^]*?\n    \
 function fixture(activeIndex, count = 3) {
   const starts = [], pending = [], primed = [], engaged = [];
   const videos = Array.from({ length: count }, (_, index) => ({
-    paused: index !== activeIndex, currentTime: 4 + index, autoplay: index === activeIndex,
+    paused: index !== activeIndex, currentTime: 4 + index, autoplay: index === activeIndex, dataset: {},
     pauses: 0, attrs: new Map(index === activeIndex ? [["autoplay", ""]] : []),
     hasAttribute(name) { return this.attrs.has(name); },
     setAttribute(name, value) { this.attrs.set(name, value); },
@@ -110,6 +110,41 @@ test("a stale viewport callback cannot restart the feed behind a full profile", 
   await state.settle();
   assert.deepEqual(state.starts, []);
   assert.deepEqual(state.primed, []);
+});
+
+test("an already-buffered iPhone clip retries muted when a sound-on autoplay attempt is rejected", async () => {
+  const state = fixture(0);
+  state.context.homeTvFeedMuted = false;
+  const video = state.videos[1], attempts = [];
+  video.play = () => {
+    attempts.push(video.muted);
+    if (!video.muted) return Promise.reject({ name: 'NotAllowedError' });
+    video.paused = false;
+    return Promise.resolve();
+  };
+  state.select(1); await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(attempts, [false, true]);
+  assert.equal(video.paused, false); assert.equal(video.defaultMuted, true);
+  assert.equal(video.hasAttribute('muted'), true); assert.equal(video.dataset.autoplayMuted, 'true');
+  assert.equal(state.slides[1].classList.contains('is-autoplay-blocked'), false);
+  assert.equal(state.context.homeTvFeedMuted, false, 'the saved sound choice is retained');
+  state.select(1); await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(attempts, [false, true, true], 'later activations preserve this player’s muted fallback');
+});
+
+test("a rejected play request cannot retry after a manual pause, hidden page or profile opens", async () => {
+  for (const changed of ['manual', 'hidden', 'profile', 'inactive']) {
+    const state = fixture(0); state.context.homeTvFeedMuted = false;
+    let reject, calls = 0;
+    state.videos[1].play = () => { calls++; return new Promise((_resolve, fail) => { reject = fail; }); };
+    state.select(1);
+    if (changed === 'manual') state.slides[1].dataset.userPaused = 'true';
+    if (changed === 'hidden') state.context.document.visibilityState = 'hidden';
+    if (changed === 'profile') state.context.homeTvFeedCoveredByProfile = () => true;
+    if (changed === 'inactive') state.select(2);
+    reject({ name: 'NotAllowedError' }); await new Promise(resolve => setImmediate(resolve));
+    assert.equal(calls, 1, changed);
+  }
 });
 
 test("a swipe leaves unrelated paused cards untouched even in a long feed", async () => {

@@ -65,9 +65,12 @@
 
   function applyPreferenceToVideo(video) {
     if (!(video instanceof HTMLVideoElement) || !hasStoredPreference) return;
-    video.muted = preferredMuted;
-    video.defaultMuted = preferredMuted;
-    if (preferredMuted) video.setAttribute("muted", "");
+    // A browser-required muted retry belongs to this player, not the saved
+    // sound preference. Reapplying sound here would make iPhone pause it again.
+    const muted = preferredMuted || video.dataset.autoplayMuted === "true";
+    video.muted = muted;
+    video.defaultMuted = muted;
+    if (muted) video.setAttribute("muted", "");
     else video.removeAttribute("muted");
     syncModalAccessibility(video);
   }
@@ -84,6 +87,7 @@
     if (!hasStoredPreference) return;
     const button = document.querySelector("[data-home-tv-sound]");
     if (!button) return;
+    if (selectedVideoForControl(button)?.dataset.autoplayMuted === "true") return;
     const feedMuted = button.getAttribute("aria-pressed") !== "true";
     if (feedMuted === preferredMuted) return;
     button.click();
@@ -116,7 +120,10 @@
     const control = event.target instanceof Element
       ? event.target.closest(SOUND_CONTROL_SELECTOR)
       : null;
-    if (!control) return;
+    if (!control || event.isTrusted === false) return;
+    document.querySelectorAll(MANAGED_VIDEO_SELECTOR).forEach(video => {
+      delete video.dataset.autoplayMuted;
+    });
     soundTogglePending = true;
     window.setTimeout(() => settleSoundControl(control), 0);
   }, true);
@@ -145,6 +152,9 @@
     if (typeof event.detail?.muted !== "boolean") return;
     preferredMuted = event.detail.muted;
     hasStoredPreference = true;
+    document.querySelectorAll(MANAGED_VIDEO_SELECTOR).forEach(video => {
+      delete video.dataset.autoplayMuted;
+    });
     applyPreferenceToManagedVideos();
     syncHomeFeedState();
   });

@@ -480,7 +480,13 @@
     }
 
     async function playProfileTvViewerVideo(video) {
-      if (document.visibilityState === "hidden") return;
+      if (document.visibilityState === "hidden" || video !== activeProfileTvViewerVideo() || video.dataset.userPaused === "true") return;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      if (video.dataset.autoplayMuted === "true") video.muted = true;
+      video.defaultMuted = video.muted;
+      if (video.muted) video.setAttribute("muted", "");
       try {
         await video.play();
         return;
@@ -489,7 +495,11 @@
       }
       // iOS may deny sound-on autoplay for the newly scrolled-to element.
       if (!video.muted) {
+        if (document.visibilityState === "hidden" || video.dataset.userPaused === "true") return;
+        video.dataset.autoplayMuted = "true";
         video.muted = true;
+        video.defaultMuted = true;
+        video.setAttribute("muted", "");
         profileTvViewerMuted = true;
         syncProfileTvSoundControl();
         try { await video.play(); return; }

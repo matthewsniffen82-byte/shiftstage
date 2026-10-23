@@ -395,11 +395,12 @@
 
     function syncHomeTvFeedSoundButtons() {
       document.querySelectorAll("[data-home-tv-sound]").forEach((button) => {
-        const label = homeTvFeedMuted ? "Turn MyDancr TV sound on" : "Mute MyDancr TV";
-        button.classList.toggle("is-muted", homeTvFeedMuted);
+        const muted = button.closest(".home-tv-feed-slide")?.querySelector("video")?.muted ?? homeTvFeedMuted;
+        const label = muted ? "Turn MyDancr TV sound on" : "Mute MyDancr TV";
+        button.classList.toggle("is-muted", muted);
         button.setAttribute("aria-label", label);
         button.setAttribute("title", label);
-        button.setAttribute("aria-pressed", String(!homeTvFeedMuted));
+        button.setAttribute("aria-pressed", String(!muted));
       });
     }
 
@@ -817,9 +818,10 @@
           video.playsInline = true;
           video.setAttribute("playsinline", "");
           video.setAttribute("webkit-playsinline", "");
-          video.muted = homeTvFeedMuted;
-          video.defaultMuted = homeTvFeedMuted;
-          if (homeTvFeedMuted) video.setAttribute("muted", "");
+          video.muted = homeTvFeedMuted || video.dataset.autoplayMuted === "true";
+          video.defaultMuted = video.muted;
+          if (video.muted) video.setAttribute("muted", "");
+          else video.removeAttribute("muted");
           attachDeferredVideoSource(video, "auto");
           const mediaId = String(slide.dataset.videoId || videoId);
           if (!homeTvFeedImpressions.has(mediaId)) {
@@ -838,12 +840,30 @@
             slide.classList.remove("is-paused", "is-autoplay-blocked");
             primeHomeTvFeedNeighbors(videoId);
             scheduleHomeTvFeedEngagedView(videoId, video);
-          }).catch((error) => {
+          }).catch(async (error) => {
             if (
               error?.name === "AbortError" ||
               !slide.classList.contains("is-active") ||
-              slide.dataset.userPaused === "true"
+              slide.dataset.userPaused === "true" ||
+              document.visibilityState === "hidden" || homeTvFeedCoveredByProfile()
             ) return;
+            if (!video.muted) {
+              video.dataset.autoplayMuted = "true";
+              video.muted = video.defaultMuted = true;
+              video.setAttribute("muted", "");
+              syncHomeTvFeedSoundButtons();
+              try {
+                await video.play();
+                if (video.paused || slide.dataset.userPaused === "true") return;
+                slide.classList.remove("is-paused", "is-autoplay-blocked");
+                primeHomeTvFeedNeighbors(videoId);
+                scheduleHomeTvFeedEngagedView(videoId, video);
+                return;
+              } catch (retryError) {
+                if (retryError?.name === "AbortError" || !slide.classList.contains("is-active") ||
+                  slide.dataset.userPaused === "true" || document.visibilityState === "hidden" || homeTvFeedCoveredByProfile()) return;
+              }
+            }
             slide.classList.add("is-paused", "is-autoplay-blocked");
           });
         } else {

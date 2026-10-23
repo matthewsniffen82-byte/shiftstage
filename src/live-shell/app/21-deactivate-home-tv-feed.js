@@ -235,6 +235,13 @@
           return;
         }
         lastTapAt = tapAt;
+        if (video.paused) {
+          // Keep play() inside the tap gesture; iPhone can reject timer-delayed
+          // playback even when the visitor explicitly pressed the video.
+          window.clearTimeout(singleTapTimer);
+          toggleHomeTvFeedPlayback(video);
+          return;
+        }
         singleTapTimer = window.setTimeout(() => {
           if (lastTapAt !== tapAt) return;
           lastTapAt = 0;
@@ -276,6 +283,7 @@
         syncHomeTvFeedProgress(video, slide);
       });
       video.addEventListener("durationchange", () => syncHomeTvFeedProgress(video, slide));
+      video.addEventListener("volumechange", syncHomeTvFeedSoundButtons);
       video.addEventListener("error", () => {
         if (fallbackHomeTvFeedVideo(video, slide, videoId)) return;
         slide.classList.remove("is-media-loading");
@@ -661,8 +669,9 @@
       sound.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 7 9H3v6h4l4 4V5Z"></path><path class="home-tv-feed-sound-waves" d="M15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"></path><path class="home-tv-feed-sound-muted" d="m16 9 5 5m0-5-5 5"></path></svg>';
       sound.addEventListener("click", () => {
         closeHomeTvFeedReportMenus();
-        homeTvFeedMuted = !homeTvFeedMuted;
+        homeTvFeedMuted = !(slide.querySelector("video")?.muted ?? homeTvFeedMuted);
         results.querySelectorAll(".home-tv-feed-video").forEach((feedVideo) => {
+          delete feedVideo.dataset.autoplayMuted;
           feedVideo.muted = homeTvFeedMuted;
           feedVideo.defaultMuted = homeTvFeedMuted;
           if (homeTvFeedMuted) feedVideo.setAttribute("muted", "");
