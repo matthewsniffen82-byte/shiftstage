@@ -97,7 +97,7 @@ body.dancr-button-system .dancer-age-verification {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
 }
 body.dancr-button-system .dancer-age-heading { display: grid; gap: 6px; }
-body.dancr-button-system .dancer-age-eyebrow { color: #c4b5fd; font-size: 10px; font-weight: 650; letter-spacing: .14em; }
+body.dancr-button-system .dancer-age-eyebrow { color: var(--dancr-color-text-muted); font-size: 10px; font-weight: 650; letter-spacing: .14em; }
 body.dancr-button-system .dancer-age-verification h2 { margin: 0; color: #f5f3f8 !important; font-size: 22px !important; font-weight: 650 !important; line-height: 1.25 !important; letter-spacing: -.025em !important; }
 body.dancr-button-system .dancer-age-verification p { margin: 0; color: #c8c4cf; font-size: 13px; font-weight: 400; line-height: 1.6; }
 body.dancr-button-system .dancer-age-verification .dancer-age-timing { margin-top: -8px; color: #b8b6c2; }
@@ -128,7 +128,7 @@ body.dancr-button-system .dancer-age-consent input {
   flex: 0 0 20px;
   margin: 0;
   padding: 0 !important;
-  accent-color: #a78bfa;
+  accent-color: var(--dancr-color-brand-primary);
 }
 body.dancr-button-system .dancer-age-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 html body.dancr-button-system .dancer-age-verification .button {
@@ -177,6 +177,30 @@ html body.dancr-button-system .dancer-age-verification .button::before {
 html body.dancr-button-system .dancer-age-verification .button::after { content: none !important; }
 html body.dancr-button-system .dancer-age-verification .button.primary:not(:disabled) { --age-button-gradient: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)); --age-button-edge: var(--dancr-color-brand-primary); }
 html body.dancr-button-system .dancer-age-verification .button:disabled { color: #aaa6b3 !important; opacity: .65 !important; cursor: default; }
+/* Each verification action owns its face; inherited violet must not paint
+   secondary actions or controls that are waiting for consent/a response. */
+@layer dancr-palette {
+  html body.dancr-button-system .dancer-age-verification .button {
+    --age-button-face: var(--dancr-color-control-secondary) !important;
+    --age-button-edge: var(--dancr-color-border) !important;
+    --age-button-gradient: linear-gradient(var(--age-button-face), var(--age-button-face)) !important;
+    background: var(--age-button-gradient) !important;
+    border-color: var(--age-button-edge) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+    filter: none !important;
+  }
+  html body.dancr-button-system .dancer-age-verification .button.primary:not(:disabled) {
+    --age-button-face: var(--dancr-color-brand-primary) !important;
+    --age-button-edge: var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system .dancer-age-verification .button:disabled {
+    --age-button-face: var(--dancr-color-surface-card) !important;
+    color: var(--dancr-color-text-muted) !important;
+    opacity: 1 !important;
+    cursor: not-allowed;
+  }
+}
 body.dancr-button-system .dancer-age-verification :is(.button, input, a):focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px; }
 body.dancr-button-system .dancer-age-verification [role="alert"] { padding: 12px 14px; border: 1px solid #fb71854d; border-radius: 12px; background: #fb718514; color: #fecdd3; }
 body.dancr-button-system .dancer-age-footer { display: grid; gap: 4px; }

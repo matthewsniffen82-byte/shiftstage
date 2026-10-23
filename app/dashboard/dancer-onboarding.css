@@ -27,6 +27,12 @@
   html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command :where(.dancer-builder-steps > button[aria-current="step"] > span) {
     color: inherit !important;
   }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command :where(
+    .dancer-onboarding-step-control.is-optional,
+    .dancer-onboarding-step-copy small
+  ) {
+    color: var(--dancr-color-text-muted) !important;
+  }
 }
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-command {
   padding: 0; border: 0; border-radius: 0; background: transparent !important; gap: 16px;
