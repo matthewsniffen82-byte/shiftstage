@@ -729,6 +729,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
           const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
           const uploadStatus = stalled ? "Upload delayed" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : item?.stage === "validating" || item?.stage === "uploading" ? "Uploading" : item?.stage === "checking" ? "Completed" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Completed" : "Uploading";
           const processing = ["Uploading", "Completed"].includes(uploadStatus);
+          const displayStatus = ["Completed", "Waiting for final approval"].includes(uploadStatus) ? "Completed · Waiting for approval" : uploadStatus;
           const uploadProgress = item?.stage === "uploading" ? item.progress : item?.stage === "queued" ? 0 : undefined;
           const note = stalled ? "Processing was interrupted. Retrying automatically, or tap Retry." : video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
           return video?.status === "rejected" ? <DancerRejectedUploadNotice key={video.id} id={video.id} kind="video"
@@ -738,7 +739,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             videoUrl={item?.previewUrl || video?.videoUrl} posterUrl={video?.posterUrl} /></div>
           <div className="dancer-upload-review-copy">
             <strong>Video {index + 1}</strong>
-            <small role="status" aria-live="polite">{uploadStatus === "Uploading" && uploadProgress !== undefined ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
+            <small role="status" aria-live="polite">{uploadStatus === "Uploading" && uploadProgress !== undefined ? `${uploadStatus} · ${uploadProgress}%` : displayStatus}</small>
             {uploadStatus === "Uploading" ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
               role="progressbar" aria-label={`Video ${index + 1}: ${uploadStatus}`}
               aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
