@@ -15,6 +15,10 @@ vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/tv.ts','utf8')
 const compiled=ts.transpileModule(readFileSync('app/api/venue/media-reviews/route.ts','utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
 }).outputText;
+const avatarExports={};
+vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/venue-media-avatar.ts','utf8'),{
+  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
+}).outputText,{exports:avatarExports,require:()=>({APPROVED_PHOTO_BUCKET:'dancer-photos',profilePhotoSlotFromUploadContext})});
 const dancerId='12345678-1234-4123-8123-123456789012';
 const photo={id:'photo',decision:'review',status:'pending_review',updated_at:'2026-10-23T00:00:00Z',upload_context:'profile_main',
   category_flags:{file_checks_passed:true},temporary_storage_path:'private/photo',user_id:'private-owner'};
@@ -50,11 +54,12 @@ function fixture(data,{profiles=[],pending=[],unavailable=[],queryError=null}={}
     };return builder;
   }
   const deps={PublicApiError,profilePhotoSlotFromUploadContext,NextResponse:{json:body=>body},apiError:e=>({status:e.status||500,message:e.message}),
+    venueMediaAvatar:avatarExports.venueMediaAvatar,
     createRequestSupabaseContext:async()=>({user:{id:'actor'},session:{}}),requireActiveVenueAccount:async()=>{},
     requireVenueAccess:async(_db,actor,permission)=>{access.push({actor,permission});return{venueId:'club'};},
     createAdminSupabaseClient:()=>({from,rpc:async(name,args)=>{calls.push({name,args});return{data};},
       storage:{from:bucket=>({createSignedUrl:async(path,ttl)=>{signed.push({bucket,path,ttl});return unavailable.includes(path)
-        ? {error:new Error('Missing file')} : {data:{signedUrl:bucket==='videos'?'/signed-video':'/signed-poster'}};}})}}),
+        ? {error:new Error('Missing file')} : {data:{signedUrl:bucket==='videos'?'/signed-video':path.startsWith('tv-posters/')?'/signed-poster':'/signed/'+path}};}})}}),
     withSignedThumbnail:async(_db,record)=>{thumbnails.push(record);const path=record.decision==='approved'?record.final_storage_path:record.temporary_storage_path;
       return{thumbnailUrl:unavailable.includes(path)?'':'/signed/'+path};},
     MYDANCR_TV_BUCKET:'videos',MYDANCR_TV_POSTER_BUCKET,normalizedVideoPosterStoragePath:tvExports.normalizedVideoPosterStoragePath,
@@ -169,4 +174,66 @@ test('count-only uses no previews; invalid dancer IDs never reach the queue',asy
   assert.equal(f.calls[0].args.p_limit,0);assert.equal(f.signed.length,0);assert.equal(f.thumbnails.length,0);
   assert.equal(f.queries.length,0);
   assert.equal((await f.get('?view=dancers&dancerId=wrong')).status,400);assert.equal(f.calls.length,1);
+});
+
+const avatarPath=`private-owner/${dancerId}/avatar/approved.jpg`;
+const mainPath=`private-owner/${dancerId}/replacement.jpg`;
+const avatarProfile={...profile,avatar_storage_path:avatarPath};
+const selectedData={count:1,uploadCount:1,dancers:[],items:[],dancer:{id:dancerId,stageName:'Star'}};
+const preparedMain={...photo,final_storage_path:mainPath,created_at:'2026-10-23T01:00:00Z',
+  category_flags:{file_checks_passed:true,publication_prepared:true}};
+
+test('opened approval view shows the actual approved avatar without exposing profile data',async()=>{
+  const f=fixture(selectedData,{profiles:[avatarProfile]});
+  const result=await f.get('?view=dancers&dancerId='+dancerId);
+  assert.equal(result.dancerAvatar.url,'/signed/'+avatarPath);assert.equal(result.dancerAvatar.status,'approved');
+  assert.deepEqual(f.signed,[{bucket:'dancer-photos',path:avatarPath,ttl:300}]);
+  assert.doesNotMatch(JSON.stringify(result),/user_id|avatar_storage_path|category_flags/);
+});
+
+test('pending main face crop or pending avatar replaces the approved avatar, including after club signoff',async()=>{
+  for(const upload_context of ['profile_main','profile_main:0','profile_avatar']){
+    const f=fixture(selectedData,{profiles:[avatarProfile],pending:[{...preparedMain,upload_context,club_reviewed_at:'2026-10-23T02:00:00Z'}]});
+    const result=await f.get('?view=dancers&dancerId='+dancerId);
+    const path=mainPath+(upload_context==='profile_avatar'?'':'.avatar.jpg');
+    assert.equal(result.dancerAvatar.url,'/signed/'+path);assert.equal(result.dancerAvatar.status,'pending');
+    assert.deepEqual(f.signed,[{bucket:'dancer-photos',path,ttl:300}]);
+  }
+});
+
+test('unprepared, rejected, unrelated and already-published media cannot become the pending avatar',async()=>{
+  for(const extra of [
+    {category_flags:{file_checks_passed:true}}, {category_flags:{publication_prepared:true}},
+    {decision:'rejected'}, {status:'moderating'}, {upload_context:'profile_gallery:1'}, {user_id:'someone-else'},
+    {image_id:approved.id}, {final_storage_path:approved.storage_path},
+    {upload_context:'profile_avatar',final_storage_path:avatarPath},
+  ]){
+    const f=fixture(selectedData,{profiles:[avatarProfile],pending:[{...preparedMain,...extra}]});
+    const result=await f.get('?view=dancers&dancerId='+dancerId);
+    assert.equal(result.dancerAvatar.status,'approved');assert.equal(f.signed.length,1);assert.equal(f.signed[0].path,avatarPath);
+  }
+});
+
+test('the newest pending avatar wins; unavailable or unsafe crops fall back to the approved avatar',async()=>{
+  const pending=[{...preparedMain,id:'old',final_storage_path:mainPath+'old',created_at:'2026-10-22T00:00:00Z'},preparedMain];
+  const f=fixture(selectedData,{profiles:[avatarProfile],pending});
+  assert.equal((await f.get('?dancerId='+dancerId)).dancerAvatar.url,'/signed/'+mainPath+'.avatar.jpg');
+  for(const path of ['another-owner/main.jpg',`private-owner/${dancerId}/../other.jpg`,`private-owner/${dancerId}/bad\\path.jpg`,mainPath]){
+    const f=fixture(selectedData,{profiles:[avatarProfile],pending:[{...preparedMain,final_storage_path:path}],unavailable:[mainPath+'.avatar.jpg']});
+    assert.equal((await f.get('?dancerId='+dancerId)).dancerAvatar.status,'approved');
+    assert.ok(f.signed.every(item=>item.path===mainPath+'.avatar.jpg'||item.path===avatarPath));
+  }
+  const missing=fixture(selectedData,{profiles:[{...avatarProfile,avatar_storage_path:null}]});
+  assert.equal((await missing.get('?dancerId='+dancerId)).dancerAvatar,null);
+});
+
+test('avatar lookup requires the exact venue-authorized dancer and is skipped for counts and outer grids',async()=>{
+  for(const [data,query] of [
+    [{...selectedData,dancer:null},'?dancerId='+dancerId],
+    [{...selectedData,dancer:{id:'other'}},'?dancerId='+dancerId],
+    [selectedData,'?dancerId='+dancerId+'&countOnly=1'], [selectedData,'?view=dancers'],
+  ]){
+    const f=fixture(data,{profiles:[avatarProfile],pending:[preparedMain]});
+    assert.equal((await f.get(query)).dancerAvatar,null);assert.equal(f.queries.length,0);assert.equal(f.signed.length,0);
+  }
 });

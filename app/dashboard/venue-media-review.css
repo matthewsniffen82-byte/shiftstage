@@ -26,6 +26,8 @@
 #venue-media-reviews .venue-media-dancer-identity > strong { overflow-wrap: anywhere; font-size: clamp(12.5px, calc(3vw + 1.5px), 16.5px); font-weight: 700; line-height: 1.15; }
 #venue-media-reviews .venue-media-dancer-identity > span { font-size: 12px; line-height: 1.35; color: #e2dce9; white-space: normal; }
 #venue-dashboard #venue-media-reviews .venue-media-back { min-height: 44px; margin-bottom: 8px; padding: 6px 10px; font-size: 13px; }
+#venue-media-reviews .venue-media-review-avatar { display: flex; align-items: center; gap: 10px; margin-block: 4px 12px; }
+#venue-media-reviews .venue-media-review-avatar > img { display: block; flex: 0 0 64px; width: 64px; height: 64px; margin: 0; border-radius: 50%; object-fit: cover; }
 #venue-media-reviews details { margin-bottom: 10px; }
 #venue-media-reviews button:focus-visible, #venue-media-reviews a:focus-visible { outline: 2px solid #b99be8; outline-offset: 2px; }
 @media (max-width: 699px) {

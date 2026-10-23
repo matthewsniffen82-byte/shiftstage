@@ -17,6 +17,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   const [items, setItems] = useState<Review[]>([]);
   const [dancers, setDancers] = useState<Dancer[]>([]);
   const [selectedDancer, setSelectedDancer] = useState<Pick<Dancer, "id" | "stageName"> | null>(null);
+  const [dancerAvatar, setDancerAvatar] = useState<{ dancerId: string; venueId: string; url: string; status: "pending" | "approved" } | null>(null);
   const [dancerCount, setDancerCount] = useState(0);
   const [uploadCount, setUploadCount] = useState(0);
   const [count, setCount] = useState<number | null>(null);
@@ -48,12 +49,14 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     }).then(data => {
       if (controller.signal.aborted) return;
       if (data.venueId !== venueId) {
-        setItems([]); setDancers([]); setCount(null); setSelectedDancer(null);
+        setItems([]); setDancers([]); setCount(null); setSelectedDancer(null); setDancerAvatar(null);
         throw new Error("Your club changed. Refresh the dashboard.");
       }
       if (active) {
         if (selectedId) {
           setItems(data.items || []); setUploadCount(data.uploadCount || 0);
+          setDancerAvatar(data.dancer?.id === selectedId && data.dancerAvatar?.url
+            ? { ...data.dancerAvatar, dancerId: selectedId, venueId } : null);
           if (!data.uploadCount) {
             setSelectedDancer(null); setOffset(0); setRejectingId(null); setFeedback(null);
           } else if (offset >= data.uploadCount) setOffset(Math.floor((data.uploadCount - 1) / 12) * 12);
@@ -66,7 +69,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       setCount(data.count); onCountChange(data.count); setLoadError("");
     }).catch(error => {
       if (controller.signal.aborted) return;
-      if ([401, 403].includes(Number(error?.status))) { setItems([]); setDancers([]); setCount(null); setSelectedDancer(null); }
+      if ([401, 403].includes(Number(error?.status))) { setItems([]); setDancers([]); setCount(null); setSelectedDancer(null); setDancerAvatar(null); }
       setLoadError(error.message || "Unable to load media reviews.");
     })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
@@ -75,7 +78,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
 
   function openDancer(dancer: Dancer | null) {
     if (action.current) return;
-    setSelectedDancer(dancer); setItems([]); setUploadCount(dancer?.count || 0); setOffset(0);
+    setSelectedDancer(dancer); setDancerAvatar(null); setItems([]); setUploadCount(dancer?.count || 0); setOffset(0);
     setRejectingId(null); setFeedback(null); setMessage(""); setLoadError("");
   }
 
@@ -126,6 +129,10 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       <p>{selectedDancer ? "Approve each upload to send it to MyDancr for final approval before going live." : "Choose a dancer to review their new photos and videos."}</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
     {selectedDancer ? <button className="venue-media-back" type="button" disabled={busy} onClick={() => openDancer(null)}>← All dancers</button> : null}
+    {selectedDancer && dancerAvatar && dancerAvatar.dancerId === selectedId && dancerAvatar.venueId === venueId ? <div className="venue-media-review-avatar">
+      <img src={dancerAvatar.url} alt={`${selectedDancer.stageName} avatar`} width={64} height={64} />
+      <div><h3>Avatar</h3><p>{dancerAvatar.status === "pending" ? "Pending approval" : "Approved"}</p></div>
+    </div> : null}
     {selectedDancer ? <details><summary>Review guidelines</summary><p>Confirm the media shows only this adult dancer and they have permission to share it. No nudity, sexual activity, unsafe content, logos, watermarks, or contact/payment details. Watch the entire video with sound and check its caption. Reject photos with one tap; video rejections need a brief reason. Rejecting a replacement main photo keeps the current approved photo.</p></details> : null}
     {message ? <p role="status">{message}</p> : null}
     {loadError ? <p role="alert">{loadError}</p> : null}

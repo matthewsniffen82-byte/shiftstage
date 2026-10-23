@@ -18,6 +18,7 @@ function harness(kind = 'photo') {
   const pending = new Promise(resolve => { finish = resolve; });
   const slots = [], calls = [], focused = [], scrolled = [], counts = [];
   const reads = [];
+  let avatar = { url: '/approved-avatar.jpg', status: 'approved' };
   function response(url) {
     const params = new URL(url, 'https://example.test').searchParams;
     const selected = params.get('dancerId'), offset = Number(params.get('offset'));
@@ -28,6 +29,7 @@ function harness(kind = 'photo') {
     });
     const media = rows.filter(row => row.dancerId === selected);
     return { venueId: 'venue', count: rows.length, dancerCount: dancers.length, uploadCount: media.length,
+      dancer: dancers.find(dancer => dancer.id === selected) || null, dancerAvatar: selected ? avatar : null,
       dancers: selected ? [] : dancers.slice(offset, offset + 12), items: media.slice(offset, offset + 12) };
   }
   const changed = (a, b) => !a || b.some((value, i) => !Object.is(value, a[i]));
@@ -74,6 +76,8 @@ function harness(kind = 'photo') {
   const ui = {
     calls, focused, scrolled, counts, finish, render, reads,
     setRows(next) { rows = next; },
+    setAvatar(next) { avatar = next; },
+    get avatar() { return nodes().find(node => node.props?.className === 'venue-media-review-avatar'); },
     get rows() { return rows; },
     get dancerCards() { return nodes().filter(node => node.props?.className === 'venue-media-dancer-card'); },
     open(index = 0) { this.dancerCards[index].props.onClick(); render(); },
@@ -206,13 +210,37 @@ test('count-only updates keep loaded media cards ready when reopening the tab', 
 for (const status of [401, 403, 'changed club']) {
   test(`media reviews clear protected cards on ${status}`, async () => {
     const ui = await ready();
+    assert.ok(ui.avatar);
     ui.respondWith(async () => {
       if (typeof status === 'number') throw Object.assign(new Error('Access removed'), { status });
       return { venueId: 'different', items: [], count: 0 };
     });
-    ui.render({ refreshKey: 'revoked' }); await ui.settle(); assert.equal(ui.cards.length, 0);
+    ui.render({ refreshKey: 'revoked' }); await ui.settle(); assert.equal(ui.cards.length, 0); assert.equal(ui.avatar, undefined);
   });
 }
+
+test('avatar appears only inside the selected dancer approval view and refreshes from pending to approved', async () => {
+  const ui=harness();await ui.settle();assert.equal(ui.avatar,undefined);
+  ui.setAvatar({url:'/pending-face-crop.jpg',status:'pending'});ui.open();await ui.settle();
+  assert.equal(ui.avatar.props.children[0].props.src,'/pending-face-crop.jpg');
+  assert.equal(ui.avatar.props.children[0].props.alt,'Star avatar');
+  assert.match(JSON.stringify(ui.avatar),/Pending approval/);assert.doesNotMatch(JSON.stringify(ui.avatar),/button/);
+  assert.equal(ui.cards.length,2);assert.equal(ui.counts.at(-1),2,'avatar does not add a review or count');
+  ui.setAvatar({url:'/new-approved-face.jpg',status:'approved'});ui.render({refreshKey:'approved'});await ui.settle();
+  assert.equal(ui.avatar.props.children[0].props.src,'/new-approved-face.jpg');assert.match(JSON.stringify(ui.avatar),/Approved/);
+  ui.setAvatar(null);ui.render({refreshKey:'no-avatar'});await ui.settle();assert.equal(ui.avatar,undefined);
+});
+
+test('switching dancers or clubs never carries the previous avatar into the new view',async()=>{
+  const ui=await ready();ui.setRows([...ui.rows,{...ui.rows[0],id:'other',dancerId:'dancer-two'}]);
+  ui.back();assert.equal(ui.avatar,undefined);await ui.settle();
+  let finish;ui.respondWith(()=>new Promise(resolve=>{finish=resolve;}));
+  ui.open(1);assert.equal(ui.avatar,undefined);
+  const resolveDancer=finish;ui.back();resolveDancer({venueId:'venue',dancer:{id:'dancer-two'},dancerAvatar:{url:'/other.jpg',status:'pending'},uploadCount:1,count:3});
+  await ui.settle();assert.equal(ui.avatar,undefined,'a stale request must not restore the other avatar');
+  const fresh=await ready();fresh.respondWith(()=>new Promise(()=>{}));fresh.render({venueId:'changed'});
+  assert.equal(fresh.avatar,undefined,'hide the old club avatar before the next request finishes');
+});
 
 test('dancer cards open only that dancer’s new media, put labels above previews and disappear after the last decision', async () => {
   const ui=harness();await ui.settle();

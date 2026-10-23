@@ -14,6 +14,7 @@ import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
 import { profilePhotoSlotFromUploadContext } from "@/src/lib/dancr/photo-slot";
+import { venueMediaAvatar } from "@/src/lib/dancr/venue-media-avatar";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -106,8 +107,10 @@ export async function GET(request: Request) {
     const previews = await mainPhotoPreviews(admin, gridDancers.map((dancer: any) => dancer.id));
     const dancers = gridDancers.map((dancer: any) => ({ id: dancer.id, stageName: dancer.stageName, count: dancer.count,
       photoCount: dancer.photoCount, videoCount: dancer.videoCount, previewUrl: previews.get(dancer.id) || "" }));
+    const dancerAvatar = dancerId && data?.dancer?.id === dancerId && url.searchParams.get("countOnly") !== "1"
+      ? await venueMediaAvatar(admin, data.dancer.id) : null;
     return json({ ok: true, venueId: access.venueId, count: data?.count || 0, items, session,
-      ...(grouped ? { dancers, dancer: data?.dancer || null, dancerCount: data?.dancerCount || 0, uploadCount: data?.uploadCount || 0 } : {}),
+      ...(grouped ? { dancers, dancer: data?.dancer || null, dancerAvatar, dancerCount: data?.dancerCount || 0, uploadCount: data?.uploadCount || 0 } : {}),
     });
   } catch (error) { return apiError(error, "Unable to load your club’s media reviews."); }
 }
