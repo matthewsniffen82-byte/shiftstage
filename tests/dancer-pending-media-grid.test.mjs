@@ -1,0 +1,111 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import vm from 'node:vm';
+import ts from 'typescript';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { mediaReview } from './helpers/media-review-label.mjs';
+import { mediaBatchSummary, mediaUploadError } from '../app/dashboard/media-upload-feedback.ts';
+import { isVideoProcessingStalled } from '../src/lib/dancr/video-processing-state.ts';
+
+const require = createRequire(import.meta.url);
+function load(file, dependencies, globals = {}) {
+  const exports = {};
+  vm.runInNewContext(ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: {
+    module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX,
+  } }).outputText, { exports, AbortController, Error, DOMException, ...globals,
+    require: name => dependencies[name] || (name === 'react/jsx-runtime' ? require(name) : { default: name }) });
+  return exports.default;
+}
+const Grid = load('app/dashboard/DancerPendingMediaGrid.tsx', {
+  './DancerVideoThumbnail': { default: ({ videoUrl }) => React.createElement('span', { 'data-video-preview': videoUrl }) },
+});
+const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
+
+test('pending grid groups all media under one heading and preserves each compact removal action', () => {
+  const removed = [];
+  const items = Array.from({ length: 11 }, (_, index) => ({
+    id: String(index), kind: index % 2 ? 'video' : 'photo', label: `${index % 2 ? 'Video' : 'Photo'} ${index + 1}`,
+    imageUrl: `/preview-${index}.jpg`, videoUrl: `/video-${index}.mp4`, onRemove: () => removed.push(index),
+  }));
+  const tree = Grid({ items }), html = renderToStaticMarkup(tree);
+  assert.equal((html.match(/>Awaiting final approval</g) || []).length, 1);
+  assert.equal((html.match(/<li>/g) || []).length, 11, 'show the complete queue beyond the first three rows');
+  const buttons = walk(tree).filter(node => node.type === 'button');
+  assert.equal(buttons.length, 11); assert.ok(buttons.every(button => button.props.children === 'Remove'));
+  buttons[7].props.onClick(); assert.deepEqual(removed, [7]);
+  assert.equal(buttons[7].props['aria-label'], 'Remove video 8');
+  assert.match(html, /data-video-preview="\/video-1.mp4"/);
+  assert.match(html, /alt="Photo 1"/);
+  assert.equal(Grid({ items: [] }), null);
+});
+
+test('pending removal stays disabled while its request is in flight', () => {
+  const tree = Grid({ items: [{ id: 'one', kind: 'photo', label: 'Photo 1', removing: true, onRemove() {} }] });
+  const button = walk(tree).find(node => node.type === 'button');
+  assert.equal(button.props.disabled, true); assert.equal(button.props.children, 'Removing…');
+});
+
+function videoFixture(initial) {
+  let cursor = 0, dirty = true, tree, rows = initial;
+  const slots = [], effects = [], calls = [];
+  const hooks = {
+    useState(initial) { const i = cursor++, slot = slots[i] ||= { value: typeof initial === 'function' ? initial() : initial };
+      return [slot.value, next => { slot.value = typeof next === 'function' ? next(slot.value) : next; dirty = true; }]; },
+    useRef(initial) { return slots[cursor++] ||= { current: initial }; },
+    useEffect(fn, deps) { const i = cursor++, old = slots[i];
+      if (!old || deps.some((value, j) => value !== old.deps[j])) effects.push(() => { old?.cleanup?.(); slots[i] = { deps, cleanup: fn() }; }); },
+    useCallback(fn, deps) { const i = cursor++, old = slots[i];
+      if (!old || deps.some((value, j) => value !== old.deps[j])) slots[i] = { deps, fn }; return slots[i].fn; },
+  };
+  const Studio = load('app/dashboard/DancerTvStudio.tsx', {
+    react: hooks,
+    '@/src/lib/dancr/media-review-label': mediaReview,
+    '@/src/lib/dancr/video-processing-state': { isVideoProcessingStalled },
+    '@/src/lib/dancr/media-limits': { MAX_DANCER_PROFILE_VIDEOS: 50 },
+    './DancerPendingMediaGrid': { default: 'PendingGrid' },
+    './DancerUploadFeedback': { DancerUploadSummary: 'Summary', DancerUploadProgress: 'Progress', usePendingUploadNotice() {} },
+    './media-upload-feedback': { mediaBatchSummary, mediaUploadError },
+    './dancer-profile-media-sync': { announceDancerProfileVideosChanged() {} },
+    './dashboard-session': {
+      readDashboardAccessToken: () => 'fixture',
+      requestDancerTvVideosJson: async () => ({ profile: {}, videos: rows, maxVideos: 50, remainingVideoSlots: 50 - rows.length }),
+      requestDancerTvVideoJson: async (id, options) => { calls.push([id, options.method]); rows = rows.filter(row => row.id !== id); return {}; },
+    },
+  }, { URL, document: { visibilityState: 'visible', addEventListener() {}, removeEventListener() {} },
+    window: { confirm: () => true, setInterval() { return 1; }, clearInterval() {} } });
+  const props = { embedded: true, uploadOnly: true };
+  function draw() {
+    for (let pass = 0; dirty && pass < 20; pass++) {
+      dirty = false; cursor = 0; tree = Studio(props); effects.splice(0).forEach(fn => fn());
+    }
+    assert.equal(dirty, false); return walk(tree);
+  }
+  draw();
+  return { calls, get pending() { return draw().find(node => node.type === 'PendingGrid').props.items; },
+    get active() { return draw().filter(node => node.props.className?.includes('dancer-upload-review-card')); },
+    async settle() { await new Promise(resolve => setImmediate(resolve)); draw(); },
+    unmount() { slots.forEach(slot => slot?.cleanup?.()); },
+  };
+}
+
+test('video grid contains saved pending reviews while incomplete and failed processing retain their controls', async () => {
+  const f = videoFixture([
+    { id: 'club', status: 'submitted', moderationDetails: { fileChecksPassed: true }, videoUrl: '/club.mp4' },
+    { id: 'staff', status: 'submitted', clubReviewedAt: '2026-10-22', videoUrl: '/staff.mp4' },
+    { id: 'incomplete', status: 'uploading' },
+    { id: 'processing-error', status: 'submitted', moderationDetails: { fileChecksPassed: false } },
+    { id: 'approved', status: 'approved' },
+  ]);
+  try {
+    await f.settle();
+    assert.deepEqual(Array.from(f.pending, item => item.id), ['club', 'staff']);
+    assert.equal(f.active.length, 2);
+    f.pending[1].onRemove(); await f.settle();
+    assert.deepEqual(f.calls, [['staff', 'DELETE']]);
+    assert.deepEqual(Array.from(f.pending, item => item.id), ['club']);
+    assert.equal(f.active.length, 2);
+  } finally { f.unmount(); }
+});

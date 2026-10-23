@@ -14,6 +14,7 @@ import { createMediaUploadCancellation } from "./media-upload-cancellation";
 import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "./media-upload-batch";
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
+import DancerPendingMediaGrid from "./DancerPendingMediaGrid";
 import { isVideoProcessingStalled } from "@/src/lib/dancr/video-processing-state";
 import DancerRejectedUploadNotice from "./DancerRejectedUploadNotice";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -584,6 +585,16 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     ...visibleQueue.map(item => ({ item, video: reviewVideos.find(video => video.id === item.uploadId) })),
     ...reviewVideos.filter(video => !visibleQueue.some(item => item.uploadId === video.id)).map(video => ({ video })),
   ];
+  const reviewStates = reviews.map((review, index) => {
+    const { item, video } = review;
+    const stalled = Boolean(video && isVideoProcessingStalled(video));
+    const reviewStatus = stalled ? "moderation_error" : video ? videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed) : "";
+    const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
+    const uploadStatus = item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : item && ["queued", "validating", "uploading", "checking"].includes(item.stage) ? "Uploading" : stalled ? "Upload delayed" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Awaiting final approval" : "Uploading";
+    return { ...review, index, stalled, reviewStatus, awaitingClubApproval, uploadStatus };
+  });
+  const awaitingReviews = reviewStates.filter(review => review.uploadStatus === "Awaiting final approval");
+  const activeReviews = reviewStates.filter(review => review.uploadStatus !== "Awaiting final approval");
   const batchProgress = mediaBatchSummary((uploadBatchIds.length ? uploadBatchIds : reviewVideos.map(video => video.id)).map(id => {
     const item = queuedVideos.find(item => item.uploadId === id);
     const video = workspace?.videos.find(video => video.id === id);
@@ -735,19 +746,15 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
       ) : null}
 
       <DancerUploadSummary summary={batchProgress} busy={videoActionBusy || hasUnsavedUploads} />
-      {reviews.length ? <div className="tv-upload-queue" aria-label="Video upload status">
-        <strong>Video uploads · {reviews.length}</strong>
+      {activeReviews.length ? <div className="tv-upload-queue" aria-label="Video upload status">
+        <strong>Video uploads · {activeReviews.length}</strong>
         {isSubmitting && queuedVideos.some(item => ["queued", "validating", "uploading"].includes(item.stage)) ? <button className="dancer-upload-cancel" type="button" disabled={cancelingUploads} onClick={() => {
           uploadCancellationRef.current?.cancel(); setCancelingUploads(true);
         }}>{cancelingUploads ? "Canceling…" : "Cancel uploads"}</button> : null}
-        {reviews.map(({ item, video }, index) => {
+        {activeReviews.map(({ item, video, index, stalled, reviewStatus, awaitingClubApproval, uploadStatus }) => {
           if (item?.stage === "rejected" && !video) return <DancerRejectedUploadNotice key={item.id} id={item.uploadId} kind="video"
             label={item.file.name} message={item.error || "Reason unavailable"} localOnly
             disabled={videoActionBusy} onDismiss={() => dismissRejectedVideo(item.uploadId)} />;
-          const stalled = Boolean(video && isVideoProcessingStalled(video));
-          const reviewStatus = stalled ? "moderation_error" : video ? videoReviewStatus(video.status, video.moderationDecision, video.clubReviewedAt, video.moderationDetails?.fileChecksPassed) : "";
-          const awaitingClubApproval = Boolean(video && isAwaitingClubApproval(reviewStatus));
-          const uploadStatus = item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : item && ["queued", "validating", "uploading", "checking"].includes(item.stage) ? "Uploading" : stalled ? "Upload delayed" : video ? statusLabel(reviewStatus) : item?.stage === "submitted" ? "Awaiting final approval" : "Uploading";
           const processing = uploadStatus === "Uploading";
           const uploadProgress = item?.stage === "uploading" ? item.progress : item?.stage === "queued" ? 0 : undefined;
           const note = stalled || uploadStatus === "Review delayed" ? "Processing paused. Tap Retry." : uploadStatus === "Awaiting final approval" ? "" : video ? mediaReviewExplanation("video", reviewStatus, { reasonCodes: video.moderationReasonCodes, message: video.reviewNotes }) : "";
@@ -774,6 +781,12 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         </article>;
         })}
       </div> : null}
+      <DancerPendingMediaGrid items={awaitingReviews.map(({ item, video, index }) => ({
+        id: video?.id || item!.uploadId, kind: "video", label: `Video ${index + 1}`,
+        imageUrl: video?.posterUrl, videoUrl: item?.previewUrl || video?.videoUrl,
+        disabled: videoActionBusy, removing: removingId === video?.id,
+        onRemove: () => video ? void removeVideo(video.id) : item && void removeQueuedVideo(item),
+      }))} />
 
       {status && !(status === "Uploading" && reviews.length) ? <div className="tv-studio-status" role="status" aria-live="polite">{status}</div> : null}
 

@@ -132,6 +132,7 @@ function photoPanelFixture({ crop, profile = { id: 'profile' } } = {}) {
     '@/src/lib/dancr/media-limits': mediaLimits, '@/src/lib/dancr/media-review-label': mediaReview,
     './DashboardShared': { DANCER_PHOTOS_KEEP_OPEN_EVENT: 'keep-open' },
     './DancerPhotoBatchChoice': { default: 'CropChoice' },
+    './DancerPendingMediaGrid': { default: 'PendingGrid' },
     './DancerUploadFeedback': { DancerUploadSummary: 'UploadSummary', DancerUploadProgress: 'UploadProgress', usePendingUploadNotice() {} },
     './media-upload-feedback': { mediaBatchSummary, mediaUploadError },
     './photo-upload-crop-queue': { createPhotoCropQueue },
@@ -150,7 +151,7 @@ function photoPanelFixture({ crop, profile = { id: 'profile' } } = {}) {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
   }).outputText;
   vm.runInNewContext(source, { exports, File, FormData, URL, AbortController, DOMException, Error, Event,
-    crypto: globalThis.crypto, window: new EventTarget(), require: name => dependencies[name] || { default: name } });
+    crypto: globalThis.crypto, window: Object.assign(new EventTarget(), { confirm: () => true }), require: name => dependencies[name] || { default: name } });
   const props = { profile, deletedPhotoIds: [], deletedPhotoStoragePaths: [] };
   const walk = node => React.isValidElement(node) ? [node, ...React.Children.toArray(node.props.children).flatMap(walk)] : [];
   function draw() {
@@ -167,6 +168,7 @@ function photoPanelFixture({ crop, profile = { id: 'profile' } } = {}) {
     get choice() { return draw().find(node => node.type === 'CropChoice'); },
     get summary() { return draw().find(node => node.type === 'UploadSummary').props; },
     get cards() { return draw().filter(node => node.props.className?.includes('dancer-upload-review-card')); },
+    get pending() { return draw().find(node => node.type === 'PendingGrid').props.items; },
     async settle() { await new Promise(resolve => setImmediate(resolve)); draw(); },
     unmount() { slots.forEach(slot => slot?.cleanup?.()); },
   };
@@ -185,8 +187,14 @@ for (const keep of [true, false]) test(`photo batch waits for crop consent and c
     assert.equal(f.summary.summary.completed, 1); assert.equal(f.summary.busy, true);
     f.requests[1].resolve({ decision: 'pending_review', photo: { id: 'photo-2', sortOrder: 2 } }); await f.settle();
     assert.equal(f.summary.summary.completed, 2); assert.equal(f.summary.summary.allSaved, true); assert.equal(f.summary.busy, false);
-    const labels = f.draw().filter(node => node.type === 'small' && node.props.role === 'status').map(node => node.props.children);
-    assert.deepEqual(labels, ['Awaiting final approval', 'Awaiting final approval']);
+    assert.equal(f.cards.length, 0);
+    assert.deepEqual(Array.from(f.pending, item => item.id), ['photo-1', 'photo-2']);
+    // The compact Remove button retains the server-backed removal handler.
+    f.pending[1].onRemove(); await f.settle();
+    assert.equal(f.requests[2].options.method, 'DELETE');
+    assert.equal(JSON.parse(f.requests[2].options.body).photoId, 'photo-2');
+    f.requests[2].resolve({}); await f.settle();
+    assert.deepEqual(Array.from(f.pending, item => item.id), ['photo-1']);
   } finally { f.unmount(); }
 });
 
@@ -242,10 +250,9 @@ test('canceling remaining individual crops preserves only the already confirmed 
     assert.equal(pending.dialogs.length, 2); assert.equal(f.cards.length, 1);
     f.requests[0].resolve({ decision: 'pending_review', photo: { id: 'saved-photo', sortOrder: 1 } }); await f.settle();
     pending.dialogs[1].cancel(); await f.settle();
-    assert.equal(pending.dialogs.length, 2); assert.equal(f.requests.length, 1); assert.equal(f.cards.length, 1);
+    assert.equal(pending.dialogs.length, 2); assert.equal(f.requests.length, 1); assert.equal(f.cards.length, 0);
     assert.equal(f.summary.summary.total, 1); assert.equal(f.summary.summary.completed, 1); assert.equal(f.summary.busy, false);
-    const labels = f.draw().filter(node => node.type === 'small' && node.props.role === 'status').map(node => node.props.children);
-    assert.deepEqual(labels, ['Awaiting final approval']);
+    assert.deepEqual(Array.from(f.pending, item => item.id), ['saved-photo']);
   } finally { f.unmount(); }
 });
 

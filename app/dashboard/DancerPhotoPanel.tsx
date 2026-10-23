@@ -21,6 +21,7 @@ import { createMediaUploadCancellation } from "./media-upload-cancellation";
 import { mediaBatchSummary, mediaUploadError } from "./media-upload-feedback";
 import { DancerUploadProgress, DancerUploadSummary, usePendingUploadNotice } from "./DancerUploadFeedback";
 import DancerPhotoBatchChoice from "./DancerPhotoBatchChoice";
+import DancerPendingMediaGrid from "./DancerPendingMediaGrid";
 import { keepDefaultPhotoCrop } from "./default-photo-crop";
 import "./dancer-upload-queue.css";
 export function DancerPhotoPanel({
@@ -634,6 +635,9 @@ export function DancerPhotoPanel({
     ...visibleQueuedPhotos.map(item => ({ item, result: reviewPhotos.find(photo => photo.id === item.result?.id) || item.result })),
     ...reviewPhotos.filter(photo => !visibleQueuedPhotos.some(item => item.result?.id === photo.id)).map(result => ({ result })),
   ];
+  const awaitingReviews = reviews.filter(({ item, result }) => !item?.error && result
+    && photoStatusLabel(result.status, result.moderationStatus) === "Awaiting final approval");
+  const activeReviews = reviews.filter(review => !awaitingReviews.includes(review));
   const approvedPhotos = photos.filter(photo => photo.status === "approved");
   const batchEntries = uploadBatchIds.length
     ? confirmedQueuedPhotos.filter(item => uploadBatchIds.includes(item.id)).map(item => ({ item,
@@ -724,14 +728,15 @@ export function DancerPhotoPanel({
       {cropBatchIds.length ? <DancerPhotoBatchChoice photos={queuedPhotos.filter(item => cropBatchIds.includes(item.id))}
         onKeep={() => confirmBatchCrops(true)} onAdjust={() => confirmBatchCrops(false)} onCancel={cancelBatchCrops} /> : null}
       <DancerUploadSummary summary={batchProgress} busy={photoActionBusy || hasUnsavedUploads} />
-      {reviews.length ? (
+      {activeReviews.length ? (
         <div className="photo-upload-queue" role="group" aria-label="Photo upload status">
-          {!uploadOnly ? <strong>Upload status · {reviews.length}</strong> : null}
+          {!uploadOnly ? <strong>Upload status · {activeReviews.length}</strong> : null}
           {isUploading && queuedPhotos.some(item => ["queued", "preparing", "cropping", "uploading"].includes(item.stage)) ? <button className="dancer-upload-cancel" type="button" disabled={cancelingUploads} onClick={() => {
             uploadCancellationRef.current?.cancel(); setCancelingUploads(true);
           }}>{cancelingUploads ? "Canceling…" : "Cancel uploads"}</button> : null}
-          {reviews.map(({ item, result }, index) => {
-            const selectionNumber = index + 1;
+          {activeReviews.map(review => {
+            const { item, result } = review;
+            const selectionNumber = reviews.indexOf(review) + 1;
             const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
             const uploadStatus = item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : result ? photoStatusLabel(result.status, result.moderationStatus) : "Uploading";
             const processing = uploadStatus === "Uploading";
@@ -766,6 +771,12 @@ export function DancerPhotoPanel({
           })}
         </div>
       ) : null}
+      <DancerPendingMediaGrid items={awaitingReviews.map(review => {
+        const { item, result } = review;
+        return { id: result!.id, kind: "photo", label: `Photo ${reviews.indexOf(review) + 1}`,
+          imageUrl: item?.previewUrl || result!.imageUrl, disabled: photoActionBusy,
+          removing: deletingPhotoIds.has(result!.id), onRemove: () => void deletePhoto(result!) };
+      })} />
       {!uploadOnly && approvedPhotos.length ? (
         <div className="dancer-media-manager-title">
           <strong>Your photos</strong>
