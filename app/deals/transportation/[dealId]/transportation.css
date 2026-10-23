@@ -1,22 +1,24 @@
-/* Free-entry and pickup screens use subtle violet surfaces for the arrival choices. */
+/* Free-entry and pickup screens share the neutral site palette. */
 .club-transport-page {
+  --dancr-palette-surface: var(--dancr-color-surface-card);
+  --dancr-palette-control: var(--dancr-color-control-secondary);
   min-height: 100dvh;
   padding: 32px 16px;
   box-sizing: border-box;
   display: grid;
   place-items: center;
   align-content: center;
-  background: #050507;
-  color: #f4f2f8;
+  background: var(--dancr-color-background);
+  color: var(--dancr-color-text-primary);
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 .club-transport-page .club-transport-card {
   box-sizing: border-box;
   width: min(100%, 480px);
   padding: 20px;
-  border: 1px solid rgba(196, 181, 253, .22);
+  border: 1px solid var(--dancr-color-border);
   border-radius: 20px;
-  background: linear-gradient(145deg, #15101e, #0c0c12 44%, #08090c);
+  background: var(--dancr-color-surface-card);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, .07),
     inset 0 -1px 0 rgba(148, 163, 184, .06),
@@ -26,56 +28,56 @@
 }
 .club-transport-card h1 {
   font-size: 28px; line-height: 1.15; letter-spacing: -.7px; margin: 8px 0 16px; padding-bottom: 12px;
-  border-bottom: 1px solid var(--dancr-color-brand-primary-medium, rgba(109, 40, 255, .34));
-  box-shadow: inset 0 -1px 0 rgba(167, 139, 250, .18);
+  border-bottom: 1px solid var(--dancr-color-border);
+  box-shadow: none;
 }
 /* This programmatically focused heading announces screen changes without a touch outline. */
 .club-transport-card h1[tabindex="-1"]:focus { outline: none; }
-.club-transport-card p { font-size: 14px; line-height: 1.5; color: #c8c4cf; }
-.club-transport-back { display: inline-flex; align-items: center; min-height: 44px; color: #c8c4cf; text-decoration: none; font-size: 14px; }
+.club-transport-card p { font-size: 14px; line-height: 1.5; color: var(--dancr-color-text-muted); }
+.club-transport-back { display: inline-flex; align-items: center; min-height: 44px; color: var(--dancr-color-text-muted); text-decoration: none; font-size: 14px; }
 body.dancr-button-system .club-transport-card .club-transport-change {
   display: inline-flex; align-items: center; min-height: 44px; padding: 4px 0;
   border: 0 !important; background: transparent !important; box-shadow: none !important;
-  color: #d8d3e1 !important; font: inherit; font-size: 13px; font-weight: 500 !important;
+  color: var(--dancr-color-text-primary) !important; font: inherit; font-size: 13px; font-weight: 500 !important;
   text-decoration: underline !important; text-underline-offset: 3px; cursor: pointer;
 }
 .club-transport-change:disabled { opacity: .5; cursor: default; }
-.club-transport-terms { color: #c8c4cf; }
+.club-transport-terms { color: var(--dancr-color-text-muted); }
 .club-entry-option + .club-entry-option { margin-top: 12px; }
 .club-entry-option h2 { margin: 0; font-size: 15px; }
 body.dancr-button-system .club-transport-card .club-entry-toggle {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   box-sizing: border-box; width: 100%; min-height: 76px !important; padding: 14px;
-  border: 1px solid #4a3a63 !important; border-radius: 16px !important;
-  background: linear-gradient(115deg, #21162f, #13111b) !important;
+  border: 1px solid var(--dancr-color-border) !important; border-radius: 16px !important;
+  background: var(--dancr-color-control-secondary) !important;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 4px 12px rgba(0, 0, 0, .18) !important;
-  color: #fff !important; text-align: left; font: inherit; cursor: pointer;
+  color: var(--dancr-color-text-primary) !important; text-align: left; font: inherit; cursor: pointer;
   transition: border-color .18s ease, box-shadow .18s ease !important;
 }
 body.dancr-button-system .club-transport-card .club-entry-toggle[aria-expanded=true] {
-  border-color: var(--dancr-color-avatar-ring-violet, #8b5cf6) !important;
-  background: linear-gradient(115deg, #2a1745, #171020) !important;
-  box-shadow: inset 0 1px 0 rgba(196, 181, 253, .12), 0 0 0 1px rgba(139, 92, 246, .12) !important;
+  border-color: var(--dancr-color-brand-primary) !important;
+  background: var(--dancr-color-control-secondary) !important;
+  box-shadow: none !important;
 }
 .club-entry-toggle > span:first-child { min-width: 0; }
 .club-entry-toggle strong, .club-entry-toggle small { display: block; line-height: 1.4; }
 .club-entry-toggle strong { font-size: 15px; font-weight: 650; }
-.club-entry-toggle small { margin-top: 4px; font-size: 12px; font-weight: 400; color: #d1cbdc; }
+.club-entry-toggle small { margin-top: 4px; font-size: 12px; font-weight: 400; color: var(--dancr-color-text-muted); }
 .club-entry-chevron {
   display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px;
-  box-sizing: border-box; border: 1px solid rgba(139, 92, 246, .3); border-radius: 50%;
-  color: var(--dancr-color-avatar-ring-violet, #8b5cf6); background: #21152f;
+  box-sizing: border-box; border: 1px solid var(--dancr-color-border); border-radius: 50%;
+  color: var(--dancr-color-icon-accent); background: transparent;
   transition: transform .18s ease;
 }
 .club-entry-chevron svg { display: block; width: 18px; height: 18px; }
 .club-entry-toggle[aria-expanded=true] .club-entry-chevron { transform: rotate(180deg); }
 .club-transport-note > summary { min-height: 32px; padding-block: 6px; cursor: pointer; }
-.club-transport-note > summary::marker { color: var(--dancr-color-avatar-ring-violet, #8b5cf6); }
-.club-transport-note > summary:focus-visible { outline: 2px solid #c4b5fd; outline-offset: 3px; border-radius: 4px; }
+.club-transport-note > summary::marker { color: var(--dancr-color-icon-accent); }
+.club-transport-note > summary:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; border-radius: 4px; }
 @media (hover: hover) {
   body.dancr-button-system .club-transport-card .club-entry-toggle:not(:disabled):hover {
-    border-color: #9673c3 !important;
-    box-shadow: inset 0 1px 0 rgba(196, 181, 253, .1), 0 4px 16px rgba(0, 0, 0, .24) !important;
+    border-color: var(--dancr-color-border-strong) !important;
+    box-shadow: none !important;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -89,76 +91,76 @@ body.dancr-button-system .club-transport-card .club-entry-toggle[aria-expanded=t
 .club-transport-options legend { font-size: 15px; font-weight: 600; margin-bottom: 10px; }
 .club-transport-options label {
   display: flex; align-items: center; gap: 12px; box-sizing: border-box; min-height: 64px;
-  padding: 12px; border: 1px solid #34343c; border-radius: 12px;
-  background: linear-gradient(#050507, #050507); cursor: pointer;
+  padding: 12px; border: 1px solid var(--dancr-color-border); border-radius: 12px;
+  background: var(--dancr-color-surface-card); cursor: pointer;
 }
-/* Use the city selector’s opaque gradient to preserve its dark violet in mobile dark mode. */
-.club-transport-options label.selected { border-color: #745696; background: linear-gradient(#160e24, #160e24); }
+/* Selected arrival choices retain a neutral surface with a violet indicator. */
+.club-transport-options label.selected { border-color: var(--dancr-color-brand-primary); background: var(--dancr-color-surface-card); }
 .club-transport-options label:has(input:disabled) { opacity: .55; cursor: default; }
 .club-transport-options strong, .club-transport-options small { display: block; font-size: 14px; line-height: 1.4; }
-.club-transport-options small { font-size: 12px; color: #c8c4cf; margin-top: 3px; }
+.club-transport-options small { font-size: 12px; color: var(--dancr-color-text-muted); margin-top: 3px; }
 body.dancr-button-system .club-transport-card input[type=radio] {
   appearance: none; -webkit-appearance: none; box-sizing: border-box;
   width: 20px; height: 20px; min-width: 20px; margin: 0; flex-shrink: 0;
-  border: 1.5px solid #77727f; background: linear-gradient(#050507, #050507); cursor: pointer;
+  border: 1.5px solid var(--dancr-color-text-muted); background: var(--dancr-color-background); cursor: pointer;
 }
 .club-transport-card input[type=radio] { border-radius: 50%; }
 .club-transport-card input[type=checkbox] { --dancr-checkbox-size: 24px; margin: 0; }
 body.dancr-button-system .club-transport-card input[type=radio]:checked {
-  border-color: #b697eb; background: radial-gradient(circle, #b697eb 0 5px, #160e24 5.5px);
+  border-color: var(--dancr-color-brand-primary); background: radial-gradient(circle, var(--dancr-color-brand-primary) 0 5px, var(--dancr-color-background) 5.5px);
 }
-.club-transport-handoff { padding: 12px; border: 1px solid #34343c; background: #0c0c11; border-radius: 12px; margin: 0 0 12px; }
+.club-transport-handoff { padding: 12px; border: 1px solid var(--dancr-color-border); background: var(--dancr-color-surface-card); border-radius: 12px; margin: 0 0 12px; }
 .club-transport-handoff p { margin: 0; }
 .club-transport-handoff p + p { margin-top: 8px; }
-.club-transport-handoff strong { color: #f4f2f8; }
+.club-transport-handoff strong { color: var(--dancr-color-text-primary); }
 .club-transport-fields { display: grid; gap: 12px; }
 .club-guest-list-section { margin-top: 12px; }
 #club-guest-list-panel > p { margin: 12px 0 0; }
-.club-transport-fields label { display: grid; gap: 6px; font-size: 13px; color: #dedbe5; }
+.club-transport-fields label { display: grid; gap: 6px; font-size: 13px; color: var(--dancr-color-text-primary); }
 body.dancr-button-system .club-transport-card :is(.club-transport-fields input:not([type=checkbox]), .club-transport-address textarea) {
   box-sizing: border-box; width: 100%; min-width: 0; min-height: 48px; padding: 12px;
-  border: 1px solid #34343c !important; border-radius: 10px;
-  background: linear-gradient(#050507, #050507) !important; color: #fff; line-height: 1.4;
+  border: 1px solid var(--dancr-color-border) !important; border-radius: 10px;
+  background: var(--dancr-color-background) !important; color: var(--dancr-color-text-primary); line-height: 1.4;
   font-family: inherit; font-size: 16px; box-shadow: none !important;
 }
-.club-transport-fields input::placeholder { color: #aaa6b3; font-size: 13px; opacity: 1; }
+.club-transport-fields input::placeholder { color: var(--dancr-color-text-muted); font-size: 13px; opacity: 1; }
 .club-transport-fields .club-transport-consent { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; padding-block: 4px; line-height: 1.5; cursor: pointer; }
 .club-transport-consent input { margin-top: 1px !important; }
 body.dancr-button-system .club-transport-card .club-transport-submit {
   box-sizing: border-box; display: flex; justify-content: center; align-items: center; width: 100%;
   min-height: 48px; margin-top: 16px; padding: 12px 16px; gap: 4px;
-  border: 1px solid #8153c5 !important; border-radius: 12px !important;
-  background: linear-gradient(120deg, #6429c7, #45159e) !important; color: #fff !important;
+  border: 1px solid var(--dancr-color-border) !important; border-radius: 12px !important;
+  background: var(--dancr-color-brand-primary) !important; color: var(--dancr-color-text-primary) !important;
   box-shadow: inset 0 1px 0 #ffffff0d !important; font: inherit; font-weight: 650 !important; font-size: 15px;
   text-decoration: none; cursor: pointer;
 }
-.club-transport-submit:disabled { opacity: .5; cursor: default; }
-.club-transport-card .club-transport-note { font-size: 12px; color: #c8c4cf; margin: 12px 0 0; }
+.club-transport-submit:disabled { opacity: .5; cursor: default; border-color: var(--dancr-color-border) !important; background: var(--dancr-color-control-secondary) !important; color: var(--dancr-color-text-muted) !important; box-shadow: none !important; }
+.club-transport-card .club-transport-note { font-size: 12px; color: var(--dancr-color-text-muted); margin: 12px 0 0; }
 .club-transport-card .club-transport-error { color: #ffc8d0; }
 .club-transport-ineligible { margin-top: 16px; padding: 14px; border: 1px solid #97704b; border-radius: 12px; background: #211910; color: #ffe4c7; font-size: 14px; line-height: 1.5; }
 .club-transport-ineligible .club-transport-submit { margin-top: 12px; }
-.club-transport-ready { display: grid; gap: 12px; padding: 14px; border: 1px solid #34343c; border-radius: 12px; margin-top: 18px; }
+.club-transport-ready { display: grid; gap: 12px; padding: 14px; border: 1px solid var(--dancr-color-border); border-radius: 12px; margin-top: 18px; }
 .club-transport-ready p { margin: 0; }
-.club-transport-booking { margin-top: 16px; padding: 14px; border: 1px solid #34343c; border-radius: 12px; background: #0c0c11; }
+.club-transport-booking { margin-top: 16px; padding: 14px; border: 1px solid var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-surface-card); }
 .club-transport-booking h2 { font-size: 17px; line-height: 1.3; margin: 0; }
 .club-transport-booking-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
 body.dancr-button-system .club-transport-card .club-transport-provider-button {
   display: flex; align-items: center; justify-content: center; box-sizing: border-box; min-width: 0; min-height: 48px;
-  padding: 10px 8px; border: 1px solid #34343c !important; border-radius: 10px !important;
-  background: linear-gradient(#050507, #050507) !important; box-shadow: none !important;
-  color: #eeeaf4; font: inherit; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none; line-height: 1.35; cursor: pointer;
+  padding: 10px 8px; border: 1px solid var(--dancr-color-border) !important; border-radius: 10px !important;
+  background: var(--dancr-color-control-secondary) !important; box-shadow: none !important;
+  color: var(--dancr-color-text-primary); font: inherit; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none; line-height: 1.35; cursor: pointer;
 }
 .club-transport-provider-button small { display: block; margin-top: 3px; font-size: 11px; font-weight: 400; }
-.club-transport-address { display: grid; gap: 6px; font-size: 12px; color: #c8c4cf; }
+.club-transport-address { display: grid; gap: 6px; font-size: 12px; color: var(--dancr-color-text-muted); }
 .club-transport-address textarea { resize: vertical; }
 .club-transport-confirmation > p { margin: 10px 0 0; }
-.club-transport-confirmation strong { color: #e7e4ed; }
+.club-transport-confirmation strong { color: var(--dancr-color-text-primary); }
 body.dancr-button-system .club-transport-card .club-transport-submit.is-confirmed {
   opacity: 1 !important; filter: none !important; margin-top: 0; border-color: #32634a !important; background: linear-gradient(#0a1711, #0a1711) !important;
   color: #a7e3bf !important; cursor: default;
 }
 body.dancr-button-system .club-transport-card :is(input, textarea, button, a):focus-visible {
-  outline: 2px solid #c4b5fd !important; outline-offset: 3px !important;
+  outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px !important;
 }
 @media(max-width:480px) {
   .club-transport-page { padding: 12px; align-items: start; align-content: start; }
@@ -171,11 +173,11 @@ body:has(> .club-transport-page) { margin: 0; }
 .club-entry-icon svg { display: block; width: 24px; height: 24px; }
 .club-entry-toggle-copy { flex: 1; min-width: 0; }
 .club-entry-brand { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
-.club-entry-brand > img, .club-entry-brand > .club-entry-icon { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; border-radius: 10px; background: #0a090d; }
-.club-entry-eyebrow { color: #b99aea; font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
-.club-transport-card .club-entry-venue { margin: 4px 0 0; color: #f8fafc; font-size: 17px; font-weight: 600; line-height: 1.3; }
+.club-entry-brand > img, .club-entry-brand > .club-entry-icon { width: 48px; height: 48px; flex: 0 0 48px; object-fit: contain; border-radius: 10px; background: var(--dancr-color-surface-card); }
+.club-entry-eyebrow { color: var(--dancr-color-text-muted); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.club-transport-card .club-entry-venue { margin: 4px 0 0; color: var(--dancr-color-text-primary); font-size: 17px; font-weight: 600; line-height: 1.3; }
 .club-entry-field-group { display: grid; gap: 12px; }
-.club-entry-field-group h3 { margin: 2px 0 0; color: #d1c9de; font-size: 13px; font-weight: 600; }
+.club-entry-field-group h3 { margin: 2px 0 0; color: var(--dancr-color-text-primary); font-size: 13px; font-weight: 600; }
 .club-entry-field-group + .club-entry-field-group { padding-top: 8px; }
 .club-transport-card .club-field-error { display: block; color: #ffc8d0; font-size: 12px; line-height: 1.4; font-weight: 400; }
 .club-entry-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
@@ -184,26 +186,26 @@ body:has(> .club-transport-page) { margin: 0; }
 
 /* Free Entry is a single, progressive form on quiet charcoal surfaces. */
 .club-transport-page.is-free-entry {
-  --entry-text-secondary: #bfc0cc;
-  --entry-edge: #37323f;
+  --entry-text-secondary: var(--dancr-color-text-muted);
+  --entry-edge: var(--dancr-color-border);
   --entry-card-radius: 12px;
   --entry-control-radius: 10px;
   align-content: start;
-  background: radial-gradient(ellipse at 50% 0, #1a1026 0, transparent 480px), #050507;
+  background: var(--dancr-color-background);
 }
-.is-free-entry .club-transport-card { width: min(100%, 520px); padding: 24px; border-color: #302737; border-radius: 16px; background: #0b0a0e; box-shadow: 0 12px 36px #0005; }
+.is-free-entry .club-transport-card { width: min(100%, 520px); padding: 24px; border-color: var(--dancr-color-border); border-radius: 16px; background: var(--dancr-color-surface-card); box-shadow: 0 12px 36px #0005; }
 .is-free-entry .club-transport-back { font-size: 13px; color: var(--entry-text-secondary); }
 .is-free-entry .club-transport-card h1 { margin: 20px 0 8px; padding: 0; border: 0; box-shadow: none; font-size: 30px; font-weight: 650; line-height: 1.15; letter-spacing: -.6px; }
 .is-free-entry .club-entry-intro { margin: 0; color: var(--entry-text-secondary); }
-.club-entry-essentials { display: grid; gap: 4px; padding-top: 12px; color: #d8d3e2; font-size: 12px; line-height: 1.5; }
+.club-entry-essentials { display: grid; gap: 4px; padding-top: 12px; color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.5; }
 .club-entry-steps { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 20px 0; padding: 0; list-style: none; }
-.club-entry-steps li { display: flex; align-items: center; gap: 7px; color: #9995a6; font-size: 12px; line-height: 1.4; }
-.club-entry-steps li > span { display: grid; place-items: center; width: 22px; height: 22px; flex: 0 0 22px; border: 1px solid #37323f; border-radius: 50%; font-size: 11px; }
-.club-entry-steps [aria-current=step] { color: #e9ddff; font-weight: 600; }
-.club-entry-steps [aria-current=step] > span { border-color: #9d76d4; background: #39234f; }
-.club-entry-steps [data-complete=true] { color: #c7bfd2; }
-.is-free-entry .club-entry-option { min-width: 0; border: 1px solid var(--entry-edge); border-radius: var(--entry-card-radius); background: #131116; }
-.is-free-entry .club-entry-option:has(> h2 > [aria-expanded=true]) { border-color: #8562ae; background: #18131e; }
+.club-entry-steps li { display: flex; align-items: center; gap: 7px; color: var(--dancr-color-text-muted); font-size: 12px; line-height: 1.4; }
+.club-entry-steps li > span { display: grid; place-items: center; width: 22px; height: 22px; flex: 0 0 22px; border: 1px solid var(--dancr-color-border); border-radius: 50%; font-size: 11px; }
+.club-entry-steps [aria-current=step] { color: var(--dancr-color-text-primary); font-weight: 600; }
+.club-entry-steps [aria-current=step] > span { border-color: var(--dancr-color-brand-primary); background: var(--dancr-color-brand-primary); }
+.club-entry-steps [data-complete=true] { color: var(--dancr-color-text-muted); }
+.is-free-entry .club-entry-option { min-width: 0; border: 1px solid var(--entry-edge); border-radius: var(--entry-card-radius); background: var(--dancr-color-surface-card); }
+.is-free-entry .club-entry-option:has(> h2 > [aria-expanded=true]) { border-color: var(--dancr-color-brand-primary); background: var(--dancr-color-surface-card); }
 .is-free-entry :is(.club-entry-option + .club-entry-option, .club-guest-list-section) { margin-top: 10px; }
 body.dancr-button-system .is-free-entry .club-transport-card .club-entry-toggle {
   min-height: 76px !important; padding: 14px; gap: 12px;
@@ -212,45 +214,45 @@ body.dancr-button-system .is-free-entry .club-transport-card .club-entry-toggle 
 }
 .is-free-entry .club-entry-toggle strong { font-size: 15px; font-weight: 600; line-height: 1.35; }
 .is-free-entry .club-entry-toggle small { margin-top: 3px; color: var(--entry-text-secondary); font-size: 12px; font-weight: 400; }
-.is-free-entry .club-entry-chevron { flex-basis: 18px; width: 18px; height: 18px; border: 0; background: transparent; color: #b99aea; }
+.is-free-entry .club-entry-chevron { flex-basis: 18px; width: 18px; height: 18px; border: 0; background: transparent; color: var(--dancr-color-text-muted); }
 .is-free-entry .club-entry-form { margin: 0; padding: 2px 14px 16px; }
 .is-free-entry #club-guest-list-panel { padding: 0 14px 16px; }
 .is-free-entry #club-guest-list-panel > p { margin: 0 0 14px; font-size: 13px; }
 .is-free-entry #club-guest-list-panel .club-entry-form { padding: 0; }
 .is-free-entry .club-guest-list-section > p { margin: 0; padding: 0 14px 16px; color: #8ce1ba; }
 .is-free-entry .club-transport-options { margin: 0; gap: 8px; }
-.is-free-entry .club-transport-options legend { margin-bottom: 10px; color: #ded9e7; font-size: 13px; font-weight: 500; }
-.is-free-entry .club-transport-options label { min-height: 58px; padding: 10px; gap: 10px; border-color: #3b3543; border-radius: 10px; background: linear-gradient(#101014,#101014); }
-.is-free-entry .club-transport-options label.selected { border-color: #b08add; background: linear-gradient(#271a37,#271a37); }
-.is-free-entry .club-transport-options strong { color: #f8fafc; font-weight: 550; }
+.is-free-entry .club-transport-options legend { margin-bottom: 10px; color: var(--dancr-color-text-primary); font-size: 13px; font-weight: 500; }
+.is-free-entry .club-transport-options label { min-height: 58px; padding: 10px; gap: 10px; border-color: var(--dancr-color-border); border-radius: 10px; background: var(--dancr-color-surface-card); }
+.is-free-entry .club-transport-options label.selected { border-color: var(--dancr-color-brand-primary); background: var(--dancr-color-surface-card); }
+.is-free-entry .club-transport-options strong { color: var(--dancr-color-text-primary); font-weight: 550; }
 .is-free-entry .club-transport-options small { margin-top: 2px; color: var(--entry-text-secondary); }
 .is-free-entry .club-transport-handoff { margin: 0 0 16px; padding: 0; border: 0; background: transparent; font-size: 13px; }
 .is-free-entry .club-transport-card .club-transport-availability { margin: 0 0 14px; padding: 10px; border-left: 2px solid #b69c76; border-radius: 4px; color: #ebcfab; background: #221c16; }
 .is-free-entry .club-transport-fields { gap: 16px; }
-.is-free-entry .club-transport-fields label { gap: 6px; color: #dedbe5; font-weight: 500; }
+.is-free-entry .club-transport-fields label { gap: 6px; color: var(--dancr-color-text-primary); font-weight: 500; }
 body.dancr-button-system .is-free-entry .club-transport-card :is(.club-transport-fields input:not([type=checkbox]),.club-transport-address textarea) {
-  min-height: 48px; padding: 12px; border: 1px solid #494151 !important; border-radius: 10px; background: linear-gradient(#0c0b0f,#0c0b0f) !important; color: #fff; font-size: 16px;
+  min-height: 48px; padding: 12px; border: 1px solid var(--dancr-color-border) !important; border-radius: 10px; background: var(--dancr-color-background) !important; color: var(--dancr-color-text-primary); font-size: 16px;
 }
 body.dancr-button-system .club-transport-page .club-transport-card .club-transport-fields input[aria-invalid=true] { border-color: #e998a5 !important; }
 .is-free-entry .club-transport-fields .club-transport-consent { font-size: 12px; font-weight: 400; color: var(--entry-text-secondary); }
 body.dancr-button-system .is-free-entry .club-transport-card .club-transport-submit {
-  min-height: 48px; margin-top: 16px; padding: 12px; border: 1px solid #9465d1 !important; border-radius: 10px !important;
-  background: linear-gradient(115deg,#6833c7,#5022a3) !important; box-shadow: inset 0 1px 0 #ffffff12 !important; color: #fff !important; font-size: 14px; font-weight: 600 !important; line-height: 1.4;
+  min-height: 48px; margin-top: 16px; padding: 12px; border: 1px solid var(--dancr-color-border) !important; border-radius: 10px !important;
+  background: var(--dancr-color-brand-primary) !important; box-shadow: inset 0 1px 0 #ffffff12 !important; color: var(--dancr-color-text-primary) !important; font-size: 14px; font-weight: 600 !important; line-height: 1.4;
 }
-body.dancr-button-system .is-free-entry .club-transport-card .club-transport-submit:disabled { opacity: 1 !important; color: #c4bbd1 !important; border-color: #484052 !important; background: #2b2438 !important; box-shadow: none !important; }
+body.dancr-button-system .is-free-entry .club-transport-card .club-transport-submit:disabled { opacity: 1 !important; color: var(--dancr-color-text-muted) !important; border-color: var(--dancr-color-border) !important; background: var(--dancr-color-control-secondary) !important; box-shadow: none !important; }
 .is-free-entry .club-transport-card .club-transport-note { margin-top: 14px; font-size: 12px; line-height: 1.5; color: var(--entry-text-secondary); }
-.is-free-entry .club-entry-terms { border-top: 1px solid #302a38; }
-.is-free-entry .club-entry-terms > summary { display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 4px 0; color: #d7c8e9; list-style: none; }
+.is-free-entry .club-entry-terms { border-top: 1px solid var(--dancr-color-border); }
+.is-free-entry .club-entry-terms > summary { display: flex; justify-content: space-between; align-items: center; min-height: 48px; padding: 4px 0; color: var(--dancr-color-text-primary); list-style: none; }
 .is-free-entry .club-entry-terms > summary::-webkit-details-marker { display: none; }
 .is-free-entry .club-entry-terms[open] .club-entry-chevron { transform: rotate(180deg); }
 .is-free-entry .club-entry-terms > p { margin: 0 0 10px; font-size: 12px; }
 .club-entry-complete { display: flex; flex-direction: column; gap: 16px; }
 .club-entry-complete > p { margin: 0; }
-.club-entry-complete .club-transport-ready { order: -1; margin: 0; padding: 16px; border-color: #66517f; background: #191321; }
+.club-entry-complete .club-transport-ready { order: -1; margin: 0; padding: 16px; border-color: var(--dancr-color-border); background: var(--dancr-color-surface-card); }
 .club-entry-complete .club-transport-ready .club-transport-submit { margin-top: 0 !important; }
 .club-entry-complete .club-transport-confirmation { order: -2; padding: 14px; border: 1px solid #655039; border-radius: 12px; background: #1d1812; }
-.club-entry-complete .club-transport-booking { margin: 0; padding: 14px; background: #111015; }
-body.dancr-button-system .is-free-entry .club-transport-card :is(input,textarea,button,a):focus-visible { outline: 2px solid #b99aea !important; outline-offset: 3px !important; }
+.club-entry-complete .club-transport-booking { margin: 0; padding: 14px; background: var(--dancr-color-surface-card); }
+body.dancr-button-system .is-free-entry .club-transport-card :is(input,textarea,button,a):focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px !important; }
 .club-transport-card [hidden] { display: none !important; }
 @media(max-width:720px) {
   body:has(> .club-transport-page) { padding-bottom: 0 !important; }
@@ -258,9 +260,19 @@ body.dancr-button-system .is-free-entry .club-transport-card :is(input,textarea,
   .is-free-entry .club-transport-card { padding: 16px; }
 }
 @media(prefers-reduced-motion:reduce) { .club-entry-chevron { transition: none; } }
-.club-transport-card .club-update-opt-ins { display: grid; gap: 12px; margin: 4px 0 0; padding: 14px; border: 1px solid #4f3b64; border-radius: 12px; min-width: 0; }
-.club-update-opt-ins legend { padding: 0 6px; color: #e0c5ff; font-size: 14px; font-weight: 600; }
+.club-transport-card .club-update-opt-ins { display: grid; gap: 12px; margin: 4px 0 0; padding: 14px; border: 1px solid var(--dancr-color-border); border-radius: 12px; min-width: 0; }
+.club-update-opt-ins legend { padding: 0 6px; color: var(--dancr-color-text-primary); font-size: 14px; font-weight: 600; }
 .club-update-opt-ins .club-transport-note { margin: 0; }
-.club-update-confirmation { border: 1px solid #4f3b64; border-radius: 12px; padding: 14px; }
+.club-update-confirmation { border: 1px solid var(--dancr-color-border); border-radius: 12px; padding: 14px; }
 .club-update-confirmation h2 { margin: 0 0 8px; font-size: 17px; }
-.club-update-confirmation a { color: #d8afff; }
+.club-update-confirmation a { color: var(--dancr-color-text-primary); }
+
+/* Keep selections visible above the shared neutral card treatment. */
+@layer dancr-palette {
+  html body.dancr-button-system .club-transport-page :is(
+    .club-transport-options label.selected,
+    .club-entry-option:has(> h2 > [aria-expanded=true])
+  ) {
+    border-color: var(--dancr-color-brand-primary) !important;
+  }
+}
