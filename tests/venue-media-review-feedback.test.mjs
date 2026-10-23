@@ -98,7 +98,34 @@ async function ready(kind) {
   const ui = harness(kind); await ui.settle(); ui.open(); await ui.settle(); return ui;
 }
 
-for (const kind of ['photo', 'video']) {
+test('photo: Reject hides the upload immediately, sends no reason and cannot be repeated while saving', async () => {
+  const ui = await ready('photo');
+  const reject = ui.buttons().find(button => button.props.children === 'Reject');
+  assert.equal(ui.field(), undefined); assert.equal(ui.form(), undefined);
+  ui.click('Reject'); reject.props.onClick();
+  assert.equal(ui.calls.length, 1); assert.equal(ui.calls[0].notes, '');
+  assert.equal(ui.calls[0].kind, 'photo'); assert.equal(ui.calls[0].decision, 'rejected');
+  assert.equal(ui.cards.length, 1); assert.equal(ui.field(), undefined); assert.equal(ui.form(), undefined);
+  assert.ok(ui.buttons().every(button => button.props.disabled));
+  ui.render({ refreshKey: 'while-saving' }); await ui.settle();
+  assert.equal(ui.cards.length, 1, 'a refresh cannot restore a rejection still being saved');
+  ui.finish(); await ui.settle();
+  assert.equal(ui.cards.length, 1); assert.equal(ui.counts.at(-1), 1);
+  ui.click('Reject'); assert.equal(ui.cards.length, 0); await ui.settle();
+  assert.equal(ui.dancerCards.length, 0); assert.equal(ui.counts.at(-1), 0);
+});
+
+test('photo: a failed rejection restores the card with an error and a one-tap retry', async () => {
+  const ui = await ready('photo'); ui.fail(true); ui.click('Reject');
+  assert.equal(ui.cards.length, 1);
+  ui.finish(); await ui.settle();
+  assert.equal(ui.cards.length, 2); assert.match(ui.alerts()[0].props.children, /Unable to save rejection/);
+  assert.equal(ui.field(), undefined); assert.equal(ui.form(), undefined); assert.equal(ui.alerts(1).length, 0);
+  ui.fail(false); ui.click('Reject'); assert.equal(ui.cards.length, 1); await ui.settle();
+  assert.equal(ui.cards.length, 1); assert.equal(ui.calls.length, 2);
+});
+
+for (const kind of ['video']) {
   test(`${kind}: cards omit AI details and only open a reason field after Reject; Cancel makes no request`, async () => {
     const ui = await ready(kind);
     assert.equal(ui.field(), undefined); assert.equal(ui.form(), undefined);
@@ -134,29 +161,29 @@ for (const kind of ['photo', 'video']) {
 }
 
 test('a failed save keeps the reason and displays the server error on the affected card, allowing retry', async () => {
-  const ui = await ready(); ui.click(); ui.note('Unclear photo'); ui.fail(true); ui.click('Confirm rejection');
+  const ui = await ready('video'); ui.click(); ui.note('Unclear video'); ui.fail(true); ui.click('Confirm rejection');
   ui.finish(); await ui.settle();
   assert.match(ui.alerts()[0].props.children, /Unable to save rejection/);
-  assert.equal(ui.field().props.value, 'Unclear photo'); assert.equal(ui.cards.length, 2);
+  assert.equal(ui.field().props.value, 'Unclear video'); assert.equal(ui.cards.length, 2);
   assert.equal(ui.alerts(1).length, 0);
   ui.fail(false); ui.click('Confirm rejection'); await ui.settle();
   assert.equal(ui.cards.length, 1); assert.equal(ui.calls.length, 2);
 });
 
 test('approval does not require a rejection reason or send a cancelled rejection draft', async () => {
-  const ui = await ready(); ui.click(); ui.note('Logo visible'); ui.click('Cancel'); ui.click('Approve');
+  const ui = await ready('video'); ui.click(); ui.note('Logo visible'); ui.click('Cancel'); ui.click('Approve');
   assert.equal(ui.field(), undefined);
   assert.equal(ui.calls[0].decision, 'approved'); assert.equal(ui.calls[0].notes, '');
   ui.finish(); await ui.settle(); assert.equal(ui.cards.length, 1);
 });
 
 test('automatic media review refresh retains cards and notes while waiting or offline, then publishes a completed result', async () => {
-  const ui = await ready(); ui.click(); ui.note('Logo visible');
+  const ui = await ready('video'); ui.click(); ui.note('Logo visible');
   let finish;
   ui.respondWith(() => new Promise(resolve => { finish = resolve; }));
   ui.render({ refreshKey: 'timer-1' });
   assert.equal(ui.cards.length, 2); assert.equal(ui.field().props.value, 'Logo visible');
-  finish({ venueId: 'venue', items: [{ id: 'first', kind: 'photo', stageName: 'Updated', label: 'photo', previewUrl: '/preview', reasons: [], canApprove: true }], count: 1, uploadCount: 1, dancerCount: 1 });
+  finish({ venueId: 'venue', items: [{ id: 'first', kind: 'video', stageName: 'Updated', label: 'Video', previewUrl: '/preview', reasons: [], canApprove: true }], count: 1, uploadCount: 1, dancerCount: 1 });
   await ui.settle(); assert.equal(ui.cards.length, 1); assert.equal(ui.field().props.value, 'Logo visible');
   ui.respondWith(async () => { throw new Error('Temporarily offline'); });
   ui.render({ refreshKey: 'timer-2' }); await ui.settle();

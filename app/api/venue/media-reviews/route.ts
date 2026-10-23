@@ -115,8 +115,8 @@ export async function POST(request: Request) {
         || typeof version !== "string" || !Number.isFinite(Date.parse(version)) || notes.length > 4000) {
         throw new PublicApiError("INVALID_REQUEST", "Choose an upload and a review decision.", 400);
       }
-      if (decision === "rejected" && !isBriefRejectionReason(notes)) throw new PublicApiError("INVALID_REQUEST", "Enter a rejection reason in 1–3 words.", 400);
       const photo = kind === "photo";
+      if (decision === "rejected" && !photo && !isBriefRejectionReason(notes)) throw new PublicApiError("INVALID_REQUEST", "Enter a rejection reason in 1–3 words.", 400);
       const { data: record, error } = await admin.from(photo ? "image_moderation_records" : "mydancr_tv_videos").select("*").eq("id", id).maybeSingle();
       if (error) throw error;
       if (!record || (photo && !String(record.upload_context).startsWith("profile_"))) throw new PublicApiError("NOT_FOUND", "Upload not found.", 404);
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
         if (signedOff?.id !== id || signedOff?.club_reviewed_by !== user.id || !signedOff.club_reviewed_at) {
           throw new Error("Club review could not be confirmed. Refresh the queue.");
         }
-      } else if (photo) await rejectReviewRecord(admin, record, user.id, notes);
+      } else if (photo) await rejectReviewRecord(admin, record, user.id, notes || "Not approved");
       else await reviewMyDancrTvVideo(admin, user.id, id, "rejected", notes, version);
       followUps.push(async () => {
         await recordVenueActivity(admin, { venueId: access.venueId, actorUserId: user.id, actorRole: access.role,

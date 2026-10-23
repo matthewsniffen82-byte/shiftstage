@@ -27,6 +27,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   const [loadError, setLoadError] = useState("");
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [pendingPhotoRejection, setPendingPhotoRejection] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ id: string; text: string; error: boolean; reasonRequired?: boolean; decision?: "approved" | "rejected" } | null>(null);
   const noteInputs = useRef<Record<string, HTMLInputElement | null>>({});
   const action = useRef<AbortController | null>(null);
@@ -79,22 +80,24 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
 
   async function review(item: Review, decision: "approved" | "rejected") {
     if (action.current) return;
-    if (decision === "rejected" && !isBriefRejectionReason(notes[item.id] || "")) {
+    if (decision === "rejected" && item.kind === "video" && !isBriefRejectionReason(notes[item.id] || "")) {
       setFeedback({ id: item.id, text: "Enter a rejection reason in 1–3 words.", error: true, reasonRequired: true });
       noteInputs.current[item.id]?.focus();
       noteInputs.current[item.id]?.scrollIntoView({ block: "center", behavior: "smooth" });
       return;
     }
     const controller = new AbortController(); action.current = controller;
+    const dismissPhoto = decision === "rejected" && item.kind === "photo";
+    if (dismissPhoto) setPendingPhotoRejection(item.id);
     setBusy(true); setMessage("");
     setFeedback({ id: item.id, text: decision === "approved" ? "Sending to MyDancr…" : "Saving rejection…", error: false, decision });
     try {
       await requestDashboardJson("/api/venue/media-reviews", { method: "POST", expectedRole: "venue", signal: controller.signal,
         timeoutMs: 280000, headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: item.id, kind: item.kind, version: item.version, decision, notes: decision === "rejected" ? notes[item.id] || "" : "" }),
+        body: JSON.stringify({ id: item.id, kind: item.kind, version: item.version, decision, notes: decision === "rejected" && item.kind === "video" ? notes[item.id] || "" : "" }),
       });
       if (controller.signal.aborted) return;
-      setMessage(decision === "approved" ? `${item.stageName}’s ${item.label.toLowerCase()} sent to MyDancr for final approval.` : `${item.stageName}’s ${item.label.toLowerCase()} rejected.`);
+      setMessage(dismissPhoto ? "" : decision === "approved" ? `${item.stageName}’s ${item.label.toLowerCase()} sent to MyDancr for final approval.` : `${item.stageName}’s ${item.label.toLowerCase()} rejected.`);
       setFeedback(null);
       setRejectingId(null);
       setItems(current => current.filter(value => value.id !== item.id));
@@ -110,7 +113,10 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       setRevision(current => current + 1);
     } catch (error) {
       if (!controller.signal.aborted) { setFeedback({ id: item.id, text: error instanceof Error ? error.message : "Unable to save review. Refresh the queue.", error: true }); setRevision(current => current + 1); }
-    } finally { if (!controller.signal.aborted) setBusy(false); if (action.current === controller) action.current = null; }
+    } finally {
+      if (!controller.signal.aborted) { setBusy(false); setPendingPhotoRejection(null); }
+      if (action.current === controller) action.current = null;
+    }
   }
 
   if (!active) return null;
@@ -119,7 +125,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       <p>{selectedDancer ? "Approve each upload to send it to MyDancr for final approval before going live." : "Choose a dancer to review their new photos and videos."}</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
     {selectedDancer ? <button className="venue-media-back" type="button" disabled={busy} onClick={() => openDancer(null)}>← All dancers</button> : null}
-    {selectedDancer ? <details><summary>Review guidelines</summary><p>Confirm the media shows only this adult dancer and they have permission to share it. No nudity, sexual activity, unsafe content, logos, watermarks, or contact/payment details. Watch the entire video with sound and check its caption. Reject anything uncertain with a clear reason. Rejecting a replacement main photo keeps the current approved photo.</p></details> : null}
+    {selectedDancer ? <details><summary>Review guidelines</summary><p>Confirm the media shows only this adult dancer and they have permission to share it. No nudity, sexual activity, unsafe content, logos, watermarks, or contact/payment details. Watch the entire video with sound and check its caption. Reject photos with one tap; video rejections need a brief reason. Rejecting a replacement main photo keeps the current approved photo.</p></details> : null}
     {message ? <p role="status">{message}</p> : null}
     {loadError ? <p role="alert">{loadError}</p> : null}
     {loading ? <p role="status">Updating media reviews…</p> : !(selectedDancer ? items : dancers).length && !loadError ? <p>No new uploads waiting for approval.</p> : null}
@@ -134,7 +140,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
         ].filter(Boolean).join(" · ")}</span></span>
       </button>)}
     </div> : <div className="venue-media-review-grid">
-      {items.map(item => <article key={item.id}>
+      {items.filter(item => item.id !== pendingPhotoRejection).map(item => <article key={item.id}>
         <h3 className="venue-media-type">{item.label}</h3>
         <div className="venue-media-review-preview">
         {item.previewUrl ? item.kind === "video" ? <video controls playsInline preload="metadata" src={item.previewUrl} aria-label={`${item.stageName} video for review`} />
@@ -160,7 +166,10 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
           </div>
         </form> : <div className="venue-media-review-actions">
           <button className="venue-media-approve" type="button" disabled={busy || loading || !item.canApprove || !item.previewUrl} onClick={() => void review(item, "approved")}>{busy && feedback?.id === item.id && feedback.decision === "approved" ? "Approving…" : "Approve"}</button>
-          <button type="button" disabled={busy || loading || item.processing} onClick={() => { setRejectingId(item.id); setFeedback(null); }}>Reject</button>
+          <button type="button" disabled={busy || loading || item.processing} onClick={() => {
+            if (item.kind === "photo") void review(item, "rejected");
+            else { setRejectingId(item.id); setFeedback(null); }
+          }}>Reject</button>
         </div>}
       </article>)}
     </div>}

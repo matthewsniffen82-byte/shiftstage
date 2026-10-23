@@ -15,10 +15,12 @@ const version = '2026-10-22T00:00:00Z';
 function fixture(kind, fields, options = {}) {
   const record = { id, updated_at: version, status: kind === 'photo' ? 'pending_review' : 'submitted',
     upload_context: 'profile_gallery:1', user_id: 'dancer', submitted_by: 'dancer', ...fields };
-  const decisions = [], deferred = [], followUps = [];
+  const decisions = [], deferred = [], followUps = [], rejectionNotes = [];
   const admin = {
     from() { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: record }) }; return q; },
-    rpc: async name => ({ data: name === 'get_venue_dancer_media_review' ? { count: 1, items: [{ id, kind, record }] } : true }),
+    rpc: async name => name === 'assert_dancer_media_reviewer' && options.forbidden
+      ? { error: new Error('Access removed') }
+      : { data: name === 'get_venue_dancer_media_review' ? { count: 1, items: [{ id, kind, record }] } : true },
     storage: { from: () => ({ createSignedUrl: async () => ({ data: { signedUrl: 'private-preview' } }) }) },
   };
   const deps = {
@@ -34,7 +36,10 @@ function fixture(kind, fields, options = {}) {
     approveReviewRecord: async (_admin, _record, _actor, _notes, config) => {
       decisions.push('approved');
       config.deferCleanup(async () => { serverJobs.assertServerJobActive(); followUps.push('cleanup'); });
-    }, rejectReviewRecord: async () => decisions.push('rejected'),
+    }, rejectReviewRecord: async (_admin, _record, _reviewer, notes) => {
+      if (notes.trim().length < 3) throw new PublicApiError('INVALID_REQUEST', 'Add a clear rejection reason for the dancer.', 400);
+      rejectionNotes.push(notes); decisions.push('rejected');
+    },
     reviewMyDancrTvVideo: async (_admin, _reviewer, _id, decision) => decisions.push(decision),
     finalizePendingDancerNfcEnrollment: async () => { serverJobs.assertServerJobActive(); followUps.push('activation'); if (options.followUpError) throw new Error('Synthetic failure'); },
     recordVenueActivity: async () => { serverJobs.assertServerJobActive(); followUps.push('activity'); },
@@ -42,7 +47,7 @@ function fixture(kind, fields, options = {}) {
   };
   const route = {};
   vm.runInNewContext(compiled, { exports: route, require: () => deps, URL, console });
-  return { decisions, followUps, deferred, get: () => route.GET({ url: 'https://example.test/api/venue/media-reviews' }),
+  return { decisions, followUps, deferred, rejectionNotes, get: () => route.GET({ url: 'https://example.test/api/venue/media-reviews' }),
     post: (decision = 'approved', notes = 'Logo visible') => route.POST({ body: { id, kind, version, decision, notes } }) };
 }
 
@@ -58,7 +63,16 @@ for (const kind of ['photo', 'video']) test(`${kind}: saved approval responds be
 });
 
 for (const kind of ['photo', 'video']) {
-  test(`${kind}: a club rejection requires one to three words`, async () => {
+  test(`${kind}: a club rejection ${kind === 'photo' ? 'needs no explanation' : 'requires one to three words'}`, async () => {
+    if (kind === 'photo') {
+      for (const reason of ['', '   ']) {
+        const f = fixture(kind, {});
+        assert.equal((await f.post('rejected', reason)).ok, true);
+        assert.deepEqual(f.decisions, ['rejected']);
+        assert.deepEqual(f.rejectionNotes, ['Not approved']);
+      }
+      return;
+    }
     const f = fixture(kind, {});
     for (const reason of ['', '   ', 'This reason has four']) {
       assert.equal((await f.post('rejected', reason)).status, 400);
@@ -83,6 +97,18 @@ for (const kind of ['photo', 'video']) {
     assert.deepEqual(f.decisions, ['rejected']);
   });
 }
+
+test('photo: a club rejection without a reason still rejects unauthorized, stale and already reviewed requests', async () => {
+  for (const [fields, options, status] of [
+    [{}, { forbidden: true }, 403],
+    [{ updated_at: '2026-10-22T01:00:00Z' }, {}, 409],
+    [{ club_reviewed_at: version }, {}, 409],
+  ]) {
+    const f = fixture('photo', fields, options);
+    assert.equal((await f.post('rejected', '')).status, status);
+    assert.deepEqual(f.decisions, []);
+  }
+});
 
 test('contradictory photo flags cannot bypass automated checks', async () => {
   const f = fixture('photo', { category_flags: { ai_recommended_approval: true, ai_recommended_rejection: true } });
