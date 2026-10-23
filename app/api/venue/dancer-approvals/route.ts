@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     const body = await readBoundedJsonObject(request, { maxBytes: 2048, invalidMessage: "Invalid club approval request.", tooLargeMessage: "Club approval request is too large." });
     if (typeof body.dancerId !== "string" || !uuid.test(body.dancerId) || typeof body.revision !== "string" || !uuid.test(body.revision)
       || !["approved", "rejected"].includes(String(body.decision))) throw new PublicApiError("INVALID_REQUEST", "Choose a dancer and an approval decision.", 400);
-    const { data, error } = await admin.rpc("review_club_dancer_approval", {
+    const { data, error } = await admin.rpc("review_club_dancer_approval_and_check_in", {
       p_actor_user_id: user.id, p_venue_id: access.venueId, p_dancer_id: body.dancerId, p_revision: body.revision, p_decision: body.decision,
     });
     if (error) {
@@ -63,8 +63,12 @@ export async function POST(request: Request) {
       throw error;
     }
     if (data?.venueId !== access.venueId || data.dancerId !== body.dancerId || data.status !== body.decision
-      || typeof data.revision !== "string" || !uuid.test(data.revision) || data.requiresNewTap !== (body.decision === "approved")
-      || data.affiliationActivated !== (body.decision === "approved") || data.shiftCheckedIn !== false) {
+      || typeof data.revision !== "string" || !uuid.test(data.revision)
+      || typeof data.shiftCheckedIn !== "boolean" || data.requiresNewTap !== (body.decision === "approved" && !data.shiftCheckedIn)
+      || data.affiliationActivated !== (body.decision === "approved")
+      || (data.shiftCheckedIn && (body.decision !== "approved" || data.checkInStatus !== "checked_in"
+        || typeof data.shiftId !== "string" || !uuid.test(data.shiftId) || !Number.isFinite(Date.parse(data.workingUntil))))
+      || (!data.shiftCheckedIn && !["not_approved", "tap_expired", "profile_pending", "media_pending", "active_other_club", "cooldown"].includes(data.checkInStatus))) {
       throw new PublicApiError("UNAVAILABLE", "The decision could not be confirmed. Refresh before trying again.", 503);
     }
     return json({ ok: true, ...data });

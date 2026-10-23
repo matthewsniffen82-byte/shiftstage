@@ -38,10 +38,16 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey }
     action.current = controller;
     setBusy(request.dancerId); setMessage(""); setError("");
     try {
-      await requestDashboardJson("/api/venue/dancer-approvals", { method: "POST", expectedRole: "venue", signal: controller.signal,
+      const result = await requestDashboardJson("/api/venue/dancer-approvals", { method: "POST", expectedRole: "venue", signal: controller.signal,
         headers: { "content-type": "application/json" }, body: JSON.stringify({ dancerId: request.dancerId, revision: request.revision, decision }) });
       if (controller.signal.aborted) return;
-      setMessage(decision === "approved" ? `${request.stageName} is affiliated with your club. Media approved by both your club and MyDancr can appear with their chosen visibility. They must tap again to check in.` : `${request.stageName}'s request was declined for this club.`);
+      const checkInMessage = result.shiftCheckedIn === true
+        ? "Working Now is active from their saved NFC tap, using accepted MyDancr-approved media and their chosen visibility."
+        : result.checkInStatus === "tap_expired" ? "Their saved tap’s six-hour window has ended. They need a new eligible club tap to go Working Now."
+        : result.checkInStatus === "active_other_club" || result.checkInStatus === "cooldown"
+          ? "Their existing check-in or cooldown is still active. They can tap here when eligible."
+          : "Working Now is waiting for an approved profile and photo. They can tap here once ready.";
+      setMessage(decision === "approved" ? `${request.stageName} is affiliated with your club. ${checkInMessage}` : `${request.stageName}'s request was declined for this club.`);
       setSelected(null); setReviewDancer(undefined); setPendingMedia(null);
       setRefresh(value => value + 1);
     } catch (reason) {
@@ -51,7 +57,7 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey }
 
   return <section className="club-join-requests" aria-labelledby="club-join-title" aria-busy={loading || Boolean(busy)}>
     <header><h2 id="club-join-title">Dancer approval requests</h2><button type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }}>Refresh</button></header>
-    <p>Review the dancer’s profile and media together. Approving their profile adds your club affiliation. New media needs your approval, then MyDancr’s final approval. Working Now requires another tap.</p>
+    <p>Review the dancer’s profile and media together. Approval completes their saved check-in using media already approved by MyDancr that your club accepts. Rejected media stays hidden here. New media needs your approval, then MyDancr’s final approval.</p>
     {message ? <p role="status">{message}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
     {loading ? <p role="status">Loading requests…</p> : !requests.length && !error ? <p>No requests on this page.</p> : null}

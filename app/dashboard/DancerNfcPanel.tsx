@@ -56,7 +56,7 @@ export default function DancerNfcPanel({
   const isPublic = nfcState.profileAuthorization?.isPublic === true;
   const pendingEnrollment = enrollment?.status === "pending";
   const enrollmentApproval = nfcState.clubApprovals?.find(request => request.venue?.id === enrollment?.venue?.id)?.status;
-  const pendingHeading = enrollmentApproval === "approved" ? "Club approved — tap again" : enrollmentApproval === "rejected" ? "Club request declined" : "Tap saved — awaiting club approval";
+  const pendingHeading = enrollmentApproval === "approved" ? "Club approved" : enrollmentApproval === "rejected" ? "Club request declined" : "Tap saved — awaiting club approval";
   const visibility = VISIBILITY_OPTIONS.find(option => option.value === nfcState.profileAuthorization?.visibility);
   const visibilitySummary = visibility ? <p className="dancer-nfc-status">Last NFC choice: <strong>{visibility.label}</strong>. {visibility.description}</p> : null;
 
@@ -149,7 +149,7 @@ export default function DancerNfcPanel({
 
   const clubRequests = nfcState.clubApprovals?.length ? <div className="dancer-nfc-roster" aria-label="Club approval requests">
     {nfcState.clubApprovals.map(request => <section key={request.venue?.id}><span><strong>{request.venue?.name || "Club"}</strong><small>{request.status === "approved"
-      ? "Approved — tap this club’s sticker again to check in."
+      ? "Club approved. Your saved tap completes check-in when your profile and accepted media are ready. If its six-hour window has ended, tap again when eligible."
       : request.status === "rejected" ? "Request declined — contact this club’s manager."
       : request.expiresAt && Date.parse(request.expiresAt) <= Date.now() ? "Request expired — tap this club’s sticker again to renew it."
       : "Awaiting this club’s approval. You are not checked in there."}</small></span></section>)}
@@ -161,7 +161,7 @@ export default function DancerNfcPanel({
       <div>
         <ul>
           <li>Unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted.</li>
-          <li>Each new club must approve your request before you can check in. Tap again after approval. Media permissions are separate at each club.</li>
+          <li>Each new club reviews your profile and media. Approval completes your saved check-in with accepted MyDancr-approved media, within six hours of your tap. Media permissions are separate at each club.</li>
           <li>Working Now lasts <strong>6 hours</strong>, followed by a <strong>6-hour cooldown</strong> across all clubs. Tapping again won&apos;t extend it.</li>
           <li>Choose Internal only, External only, or Both at each tap. Internal only includes this club’s invited VIP guests, who may be viewing remotely.</li>
         </ul>
@@ -209,13 +209,13 @@ export default function DancerNfcPanel({
         {authorized ? (
           <p className="dancer-nfc-intro">Tap a club&apos;s dressing-room sticker to check in.</p>
         ) : pendingEnrollment ? (
-          <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Check the club’s decision below. After approval, tap again to check in.</p>
+          <p className="dancer-nfc-intro">Your tap at {enrollment?.venue?.name || "the club"} is saved. Club approval completes this check-in with accepted MyDancr-approved media within six hours of your tap.</p>
         ) : (
           <p className="dancer-nfc-intro">{onboarding ? "Tap the club’s sticker when you arrive to request club approval." : "Finish your profile, then tap the club’s dressing-room sticker to request approval."}</p>
         )}
 
         {!onboarding ? <ol className="dancer-nfc-guide">
-          {!authorized ? <li><strong>Activate once</strong><span>Your first tap requests club approval. After approval, tap again to activate and check in.</span></li> : null}
+          {!authorized ? <li><strong>Activate once</strong><span>Your first tap requests club approval. Approval completes the saved check-in when your profile and accepted media are ready.</span></li> : null}
           <li><strong>Check in at any club</strong><span>Each club approves you separately. Once approved, tap its dressing-room sticker to show Working Now there.</span></li>
           <li><strong>Choose where you appear</strong><span>Select Internal only, External only, or Both. Your full profile is required for every choice.</span></li>
         </ol> : null}

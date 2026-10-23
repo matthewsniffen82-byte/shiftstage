@@ -161,6 +161,18 @@ test('legacy published photos can be reviewed, but a changed path does not inher
   assert.deepEqual(await allowed(),[]);assert.equal((await queue()).count,1);
 });
 
+test('a new club accepts already platform-approved media without another platform review',async()=>{
+  await connect();const original=await upload(100,'profile_main');await decide((await queue()).items[0]);
+  const pending=(await db.query('select * from image_moderation_records where id=$1',[original.id])).rows[0];
+  const published=await publish(pending,6);
+  const before=(await db.query('select decision,status,reviewed_by,reviewed_at from image_moderation_records')).rows[0];
+  await connect(21);assert.deepEqual(await allowed(21),[]);
+  await decide((await queue(3,21)).items[0],'approved',3,21);
+  assert.equal((await allowed(21))[0].photoId,published.record.image_id);
+  assert.deepEqual((await db.query('select decision,status,reviewed_by,reviewed_at from image_moderation_records')).rows[0],before);
+  assert.equal((await queue(3,21)).count,0);
+});
+
 test('browser roles cannot read private queues, decisions, or use service approval functions',async()=>{
   await connect();await upload(100);const item=(await queue()).items[0];
   for(const role of ['anon','authenticated']) {

@@ -9,7 +9,7 @@ import {fixtureId as id} from './helpers/dancer-tap-database.mjs';
 const code=ts.transpileModule(readFileSync(new URL('../app/api/venue/dancer-approvals/route.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 function harness(options={}) {
   const calls=[],route={};
-  const admin={async rpc(name,args){calls.push({name,args});return {data:options.receipt || {venueId:id(20),dancerId:id(10),status:args.p_decision,revision:id(81),requiresNewTap:args.p_decision==='approved',affiliationActivated:args.p_decision==='approved',shiftCheckedIn:false},error:options.rpcError};},
+  const admin={async rpc(name,args){calls.push({name,args});return {data:options.receipt || {venueId:id(20),dancerId:id(10),status:args.p_decision,revision:id(81),requiresNewTap:false,affiliationActivated:args.p_decision==='approved',shiftCheckedIn:args.p_decision==='approved',checkInStatus:args.p_decision==='approved'?'checked_in':'not_approved',shiftId:id(90),workingUntil:'2099-01-01T00:00:00Z'},error:options.rpcError};},
     from(table){calls.push({table});const q={};for(const method of ['select','eq','in','is','order','range'])q[method]=(...args)=>{calls.push({table,method,args});return q;};
       q.then=resolve=>resolve({data:[{dancer_id:id(10),status:'pending',requested_at:'2026-10-23',revision:id(80),dancer_profiles:{id:id(10),user_id:id(1),stage_name:'Aria',city:'Vegas'}}],error:null});
       q.maybeSingle=async()=>({data:{expires_at:options.expired?'2000-01-01':'2099-01-01',nfc_tags:{status:'active'}},error:null});return q;}};
@@ -28,10 +28,10 @@ function harness(options={}) {
   return {calls,async post(body={}){const response=await route.POST(new Request('https://example.invalid/api/venue/dancer-approvals',{method:'POST',body:JSON.stringify({dancerId:id(10),revision:id(80),decision:'approved',...body})}));return {status:response.status,body:await response.json(),response};},
     async get(query=''){const response=await route.GET(new Request('https://example.invalid/api/venue/dancer-approvals'+query));return {status:response.status,body:await response.json(),response};}};
 }
-test('approval uses server identity and club, validates receipt, and never starts a shift',async()=>{
+test('approval uses server identity and club and confirms the automatic saved check-in',async()=>{
   const h=harness(),result=await h.post({actorUserId:id(6),venueId:id(21)});
-  assert.equal(result.status,200);assert.equal(result.body.requiresNewTap,true);assert.equal(h.calls.length,1);
-  assert.equal(h.calls[0].name,'review_club_dancer_approval');assert.equal(h.calls[0].args.p_actor_user_id,id(2));assert.equal(h.calls[0].args.p_venue_id,id(20));
+  assert.equal(result.status,200);assert.equal(result.body.requiresNewTap,false);assert.equal(result.body.shiftCheckedIn,true);assert.equal(h.calls.length,1);
+  assert.equal(h.calls[0].name,'review_club_dancer_approval_and_check_in');assert.equal(h.calls[0].args.p_actor_user_id,id(2));assert.equal(h.calls[0].args.p_venue_id,id(20));
   assert.match(result.response.headers.get('cache-control'),/private, no-store/);
 });
 for(const option of ['noAuth','inactive','staff'])test(`${option} cannot list or review requests`,async()=>{
@@ -43,6 +43,16 @@ test('malformed and oversized decisions do not reach the database',async()=>{
 test('changed requests and uncertain acknowledgments cannot report approval',async()=>{
   assert.equal((await harness({rpcError:{code:'40001',message:'private details'}}).post()).status,409);
   const wrong=await harness({receipt:{venueId:id(21)}}).post();assert.equal(wrong.status,503);assert.equal(wrong.body.ok,false);
+});
+
+test('checked-in receipts require a confirmed shift, expiry and matching check-in status',async()=>{
+  const valid={venueId:id(20),dancerId:id(10),status:'approved',revision:id(81),requiresNewTap:false,affiliationActivated:true,shiftCheckedIn:true,checkInStatus:'checked_in',shiftId:id(90),workingUntil:'2099-01-01T00:00:00Z'};
+  for(const invalid of [{shiftId:null},{workingUntil:'bad'},{checkInStatus:'tap_expired'},{requiresNewTap:true}]){
+    assert.equal((await harness({receipt:{...valid,...invalid}}).post()).status,503);
+  }
+  const expired=await harness({receipt:{...valid,requiresNewTap:true,shiftCheckedIn:false,checkInStatus:'tap_expired',shiftId:null,workingUntil:null}}).post();
+  assert.equal(expired.status,200);assert.equal(expired.body.shiftCheckedIn,false);
+  assert.equal((await harness().post({decision:'rejected'})).status,200);
 });
 test('queue reads and private photo previews are scoped to the managed club',async()=>{
   const h=harness(),result=await h.get('?offset=25&venueId='+id(21));assert.equal(result.status,200);
