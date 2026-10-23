@@ -12,6 +12,7 @@ import { MYDANCR_TV_BUCKET, reviewMyDancrTvVideo } from "@/src/lib/dancr/tv";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { isBriefRejectionReason } from "@/src/lib/dancr/media-review-label";
+import { profilePhotoSlotFromUploadContext } from "@/src/lib/dancr/photo-slot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,40 @@ async function context(request: Request) {
   const admin = createAdminSupabaseClient() as any;
   const access = await requireVenueAccess(admin, user.id, "manage_roster");
   return { admin, access, user, session };
+}
+
+async function mainPhotoPreviews(admin: any, dancerIds: string[]) {
+  const previews = new Map<string, string>();
+  if (!dancerIds.length) return previews;
+  // IDs come only from the venue-authorized grid RPC, never request input.
+  const { data: profiles, error: profileError } = await admin.from("dancer_profiles")
+    .select("id, user_id, dancer_photos(id, storage_path)")
+    .in("id", dancerIds)
+    .eq("dancer_photos.is_primary", true)
+    .eq("dancer_photos.review_status", "approved");
+  if (profileError) throw profileError;
+  if (!profiles?.length) return previews;
+  const { data: pending, error: pendingError } = await admin.from("image_moderation_records")
+    .select("id, user_id, image_id, upload_context, decision, status, temporary_storage_path, final_storage_path")
+    .in("user_id", profiles.map((profile: any) => profile.user_id))
+    .like("upload_context", "profile_main%")
+    .eq("decision", "review").eq("status", "pending_review")
+    .eq("category_flags->>file_checks_passed", "true")
+    .not("temporary_storage_path", "is", null)
+    .order("created_at", { ascending: false }).order("id", { ascending: false });
+  if (pendingError) throw pendingError;
+  await Promise.all(profiles.map(async (profile: any) => {
+    const approved = profile.dancer_photos?.[0];
+    const replacement = (pending || []).find((record: any) => record.user_id === profile.user_id
+      && profilePhotoSlotFromUploadContext(record.upload_context).isPrimary
+      && !(approved && (record.image_id === approved.id || record.final_storage_path === approved.storage_path)));
+    let url = replacement ? (await withSignedThumbnail(admin, replacement)).thumbnailUrl : "";
+    if (!url && approved?.storage_path) {
+      url = (await withSignedThumbnail(admin, { decision: "approved", final_storage_path: approved.storage_path })).thumbnailUrl;
+    }
+    previews.set(profile.id, url);
+  }));
+  return previews;
 }
 
 export async function GET(request: Request) {
@@ -58,18 +93,10 @@ export async function GET(request: Request) {
         reasons: photo ? r.reason_codes || [] : r.moderation_reason_codes || [],
       };
     }));
-    const dancers = await Promise.all((data?.dancers || []).map(async (dancer: any) => {
-      let previewUrl = "";
-      // The outer grid never downloads video files. Only sign the chosen private
-      // photo or prepared poster after the database has scoped it to this club.
-      if (dancer.kind === "photo") previewUrl = (await withSignedThumbnail(admin, dancer.record)).thumbnailUrl;
-      else if (dancer.record?.moderation_details?.posterStoragePath) {
-        const signed = await admin.storage.from(MYDANCR_TV_BUCKET).createSignedUrl(dancer.record.moderation_details.posterStoragePath, 300);
-        if (!signed.error) previewUrl = signed.data?.signedUrl || "";
-      }
-      return { id: dancer.id, stageName: dancer.stageName, count: dancer.count,
-        photoCount: dancer.photoCount, videoCount: dancer.videoCount, previewUrl };
-    }));
+    const gridDancers = data?.dancers || [];
+    const previews = await mainPhotoPreviews(admin, gridDancers.map((dancer: any) => dancer.id));
+    const dancers = gridDancers.map((dancer: any) => ({ id: dancer.id, stageName: dancer.stageName, count: dancer.count,
+      photoCount: dancer.photoCount, videoCount: dancer.videoCount, previewUrl: previews.get(dancer.id) || "" }));
     return json({ ok: true, venueId: access.venueId, count: data?.count || 0, items, session,
       ...(grouped ? { dancers, dancer: data?.dancer || null, dancerCount: data?.dancerCount || 0, uploadCount: data?.uploadCount || 0 } : {}),
     });
