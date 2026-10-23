@@ -3,6 +3,18 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerCard, DancerProfile } from "./types";
 
 export type ClubMedia = { photoIds: Set<string>; videoIds: Set<string>; avatarPaths: Set<string> };
+export async function withApprovedClubAffiliations<T extends DancerCard>(client: SupabaseClient, cards: T[]): Promise<T[]> {
+  const ids = [...new Set(cards.filter(card => !card.venueId).map(card => card.id))];
+  if (!ids.length) return cards;
+  const { data, error } = await client.rpc("public_dancer_club_affiliations", { p_dancer_ids: ids });
+  if (error || !Array.isArray(data)) throw error || new Error("Club affiliations unavailable.");
+  const venues = new Map(data.map(row => [row.dancer_id, row]));
+  return cards.map(card => {
+    const venue = !card.venueId && venues.get(card.id);
+    return venue ? { ...card, venueId: venue.venue_id, venueName: venue.venue_name, venueSlug: venue.venue_slug } : card;
+  });
+}
+
 export async function clubMediaPermissions(client: SupabaseClient, venueId: string, dancerIds: string[]) {
   const result = new Map<string, ClubMedia>();
   const ids = [...new Set(dancerIds)];

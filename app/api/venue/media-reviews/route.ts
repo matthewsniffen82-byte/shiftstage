@@ -43,6 +43,13 @@ export async function GET(request: Request) {
       p_dancer_id: dancerId, p_status: url.searchParams.get("status") === "all" ? "all" : "pending",
     });
     if (error) throw error;
+    let pendingMediaCount = dancerId ? data?.uploadCount || 0 : 0;
+    if (dancerId && url.searchParams.get("status") === "all") {
+      const pending = await admin.rpc("get_club_media_queue", { p_actor_id: user.id, p_venue_id: access.venueId,
+        p_offset: 0, p_limit: 0, p_dancer_id: dancerId, p_status: "pending" });
+      if (pending.error) throw pending.error;
+      pendingMediaCount = pending.data?.uploadCount || 0;
+    }
     const items = await Promise.all((data?.items || []).map(async (item: any) => {
       const r = item.record, photo = item.kind === "photo";
       const processing = photo ? ["pending", "moderating", "moderation_retry"].includes(r.status) : r.status === "moderating";
@@ -78,7 +85,7 @@ export async function GET(request: Request) {
     const dancerAvatar = dancerId && data?.dancer?.id === dancerId && url.searchParams.get("countOnly") !== "1"
       ? await venueMediaAvatar(admin, data.dancer.id) : null;
     return json({ ok: true, venueId: access.venueId, count: data?.count || 0, items, session,
-      ...(grouped ? { dancers, dancer: data?.dancer || null, dancerAvatar, dancerCount: data?.dancerCount || 0, uploadCount: data?.uploadCount || 0 } : {}),
+      ...(grouped ? { dancers, dancer: data?.dancer || null, dancerAvatar, pendingMediaCount, dancerCount: data?.dancerCount || 0, uploadCount: data?.uploadCount || 0 } : {}),
     });
   } catch (error) { return apiError(error, "Unable to load your club’s media reviews."); }
 }

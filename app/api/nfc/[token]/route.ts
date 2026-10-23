@@ -143,7 +143,7 @@ export async function POST(request: Request, context: RouteContext) {
         affiliation,
         session: authContext.session || null,
         message: affiliation?.clubApprovalStatus === "rejected" ? `Your request to join ${tag.venue.name} was declined. Contact this club’s manager. You are not checked in there.`
-          : affiliation?.clubApprovalStatus === "pending" ? `Your request to join ${tag.venue.name} is awaiting this club’s approval. You are not checked in there. After approval, tap the sticker again. Photos and videos need separate approval at each club.`
+          : affiliation?.clubApprovalStatus === "pending" ? `Your profile and media are awaiting ${tag.venue.name}’s review. Club approval adds your affiliation. You are not checked in there yet; after approval, tap again to start Working Now. New media needs club approval, then MyDancr’s final approval.`
           : affiliation?.replayed ? "This tap was already processed. It did not change or extend your shift. Open your dashboard for your current status." : `Visibility: ${body.visibility === "internal" ? "Internal only — visible inside the club and to this club’s invited VIP guests; hidden from public discovery" : body.visibility === "external" ? "External only — your full public profile is visible" : "Both — internal roster and external MyDancr"}. ` + (affiliation?.enrollmentStatus === "pending"
           ? `Your tap at ${tag.venue.name} is saved. The club can now review your pending media. Your profile activates after the required photos are approved.`
            : affiliation?.alreadyWorking

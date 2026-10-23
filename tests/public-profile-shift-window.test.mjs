@@ -23,6 +23,7 @@ const service = compile("src/lib/dancr/public.ts", {
   "./profile-approval": compile("src/lib/dancr/profile-approval.ts"),
   "./shift-presence": compile("src/lib/dancr/shift-presence.ts"),
   "./responsive-image": { responsivePublicImage: () => null },
+  "./club-media-permissions": { withApprovedClubAffiliations: async (_client, cards) => cards },
 });
 const venue = { id: "venue", name: "Synthetic Venue", slug: "synthetic", is_active: true, has_active_club_deal: true };
 const profile = { id: "dancer", slug: "synthetic", stage_name: "Synthetic", city: "Las Vegas",

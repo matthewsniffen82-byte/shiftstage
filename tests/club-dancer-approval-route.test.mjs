@@ -9,7 +9,7 @@ import {fixtureId as id} from './helpers/dancer-tap-database.mjs';
 const code=ts.transpileModule(readFileSync(new URL('../app/api/venue/dancer-approvals/route.ts',import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 function harness(options={}) {
   const calls=[],route={};
-  const admin={async rpc(name,args){calls.push({name,args});return {data:options.receipt || {venueId:id(20),dancerId:id(10),status:args.p_decision,revision:id(81),requiresNewTap:args.p_decision==='approved'},error:options.rpcError};},
+  const admin={async rpc(name,args){calls.push({name,args});return {data:options.receipt || {venueId:id(20),dancerId:id(10),status:args.p_decision,revision:id(81),requiresNewTap:args.p_decision==='approved',affiliationActivated:args.p_decision==='approved',shiftCheckedIn:false},error:options.rpcError};},
     from(table){calls.push({table});const q={};for(const method of ['select','eq','in','is','order','range'])q[method]=(...args)=>{calls.push({table,method,args});return q;};
       q.then=resolve=>resolve({data:[{dancer_id:id(10),status:'pending',requested_at:'2026-10-23',revision:id(80),dancer_profiles:{id:id(10),user_id:id(1),stage_name:'Aria',city:'Vegas'}}],error:null});
       q.maybeSingle=async()=>({data:{expires_at:options.expired?'2000-01-01':'2099-01-01',nfc_tags:{status:'active'}},error:null});return q;}};
@@ -22,7 +22,7 @@ function harness(options={}) {
     if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};
     if(name.endsWith('/auth'))return {requireActiveVenueAccount:async()=>{if(options.inactive)throw new PublicApiError('FORBIDDEN','Active venue required.',403);}};
     if(name.endsWith('venue-access'))return {requireVenueAccess:async(_db,actor,permission)=>{assert.equal(actor,id(2));assert.equal(permission,'manage_roster');if(options.staff)throw new PublicApiError('FORBIDDEN','Manager required.',403);return {venueId:id(20),role:'owner'};}};
-    if(name.endsWith('venue-media-avatar'))return {venueMediaAvatar:async(_db,dancer)=>{calls.push({signed:dancer});return {url:'https://example.invalid/private-avatar'};}};
+    if(name.endsWith('media-review-main-photo'))return {mainPhotoPreviews:async(_db,dancers)=>{calls.push({signed:dancers[0]});return new Map(dancers.map(dancer=>[dancer,'https://example.invalid/private-main']));}};
     throw Error(name);
   }});
   return {calls,async post(body={}){const response=await route.POST(new Request('https://example.invalid/api/venue/dancer-approvals',{method:'POST',body:JSON.stringify({dancerId:id(10),revision:id(80),decision:'approved',...body})}));return {status:response.status,body:await response.json(),response};},
@@ -49,5 +49,11 @@ test('queue reads and private photo previews are scoped to the managed club',asy
   assert.ok(h.calls.some(c=>c.table==='club_dancer_approvals'&&c.method==='eq'&&c.args[0]==='venue_id'&&c.args[1]===id(20)));
   assert.ok(h.calls.some(c=>c.method==='range'&&c.args[0]===25&&c.args[1]===50));assert.equal(result.body.requests[0].stageName,'Aria');
   assert.ok(!JSON.stringify(result.body).includes(id(1)));assert.ok(h.calls.some(c=>c.signed===id(10)));
-  const expired=harness({expired:true});assert.equal((await expired.get()).body.requests[0].expired,true);assert.ok(!expired.calls.some(c=>c.signed));
+  assert.equal(result.body.requests[0].avatarUrl,'https://example.invalid/private-main');
+  const expired=harness({expired:true});assert.equal((await expired.get()).body.requests[0].avatarUrl,null);
+});
+
+test('an unfinished combined media review explains why the profile cannot be approved',async()=>{
+  const result=await harness({rpcError:{code:'40001',message:'CLUB_PROFILE_MEDIA_REVIEW_REQUIRED'}}).post();
+  assert.equal(result.status,409);assert.match(JSON.stringify(result.body),/Review every photo and video/);
 });

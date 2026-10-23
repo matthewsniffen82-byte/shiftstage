@@ -1,4 +1,4 @@
-import { restrictClubCards } from "./club-media-permissions";
+import { restrictClubCards, withApprovedClubAffiliations } from "./club-media-permissions";
 import { isPublicVenueRow } from "./venue-public-visibility";
 import { resolveDancerProfileAlias } from "./profile-link-alias";
 import { isAllMyDancrCities } from "./markets";
@@ -39,7 +39,7 @@ export async function getLiveDancerDiscovery(
   dancerIds?: string[],
 ): Promise<{ dancers: DancerCard[]; tonightDancers: DancerCard[]; nextAfterId: string | null }> {
   const { rows, nextAfterId } = await getApprovedDancerRowsByCity(client, city, afterId, dancerIds);
-  const dancers = await restrictClubCards(client, rows.map((row) => buildDancerCard(client, row).card));
+  const dancers = await restrictClubCards(client, await withApprovedClubAffiliations(client, rows.map((row) => buildDancerCard(client, row).card)));
   const now = Date.now();
   const tonightDancers = (await restrictClubCards(client, rows
     .map((row) => buildDancerCard(client, row, { checkedInOnly: true }).card)))
@@ -121,7 +121,8 @@ async function getApprovedDancerRowsByCity(client: DancrClient, city: string, af
   const error: any = current.error;
   if (error) throw error;
 
-  // Only a current check-in can associate a dancer with a public club.
+  // Presence comes only from a current check-in. Approved affiliations are
+  // attached separately and never create a shift or Working Now status.
   const selected = (value: any) => Array.isArray(value) ? value.slice(0, PUBLIC_PROFILE_SHIFT_LIMIT) : value && typeof value === "object" ? [value] : [];
   const page = (data || []).slice(0, PUBLIC_DANCER_PAGE_SIZE);
   const nextAfterId = (data || []).length > PUBLIC_DANCER_PAGE_SIZE ? String(page.at(-1).id) : null;
@@ -259,13 +260,13 @@ export async function getDancerProfile(client: DancrClient, slug: string, resolv
     countDancerProfileViewsToday(client, row.id).catch(unavailableMetric),
     countDancerGoingSignals(client, row.id).catch(unavailableMetric),
   ]);
-  const card = {
+  const [card] = await withApprovedClubAffiliations(client, [{
     ...buildDancerCard(client, { ...row, dancer_photos: approvedPhotos }).card,
     followerCount,
     notificationCount,
     profileViewsToday,
     goingCount,
-  };
+  }]);
 
   return {
     ...card,
@@ -489,7 +490,9 @@ async function toDancerCards(
   rows: any[],
   options: DancerCardOptions = {},
 ): Promise<DancerCard[]> {
-  return hydrateDancerCardMetrics(client, await restrictClubCards(client, rows.map((row) => buildDancerCard(client, row, options).card)));
+  const cards = rows.map((row) => buildDancerCard(client, row, options).card);
+  return hydrateDancerCardMetrics(client, await restrictClubCards(client,
+    options.checkedInOnly ? cards : await withApprovedClubAffiliations(client, cards)));
 }
 
 async function hydrateDancerCardMetrics(client: DancrClient, cards: DancerCard[]): Promise<DancerCard[]> {

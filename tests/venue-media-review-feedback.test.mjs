@@ -11,7 +11,7 @@ const code = ts.transpileModule(readFileSync('app/dashboard/VenueMediaReviewPane
 }).outputText;
 
 // Exercise the component's real handlers with in-memory requests; no browser journeys.
-function harness(kind = 'photo') {
+function harness(kind = 'photo', extraProps = {}) {
   let rows = ['first', 'second'].map(id => ({ id, kind, dancerId: 'dancer-one', stageName: 'Star', version: '2026-10-22T00:00:00Z', source: kind === 'video' ? 'video' : 'upload', contentVersion: 'abc', decisionVersion: null, clubStatus: 'pending',
     previewUrl: '/private-preview', label: kind, processing: false, canApprove: true, reasons: [], aiSummary: 'AI checks passed' }));
   let cursor = 0, dirty = true, effects = [], tree, failure = false, finish, getResponse;
@@ -30,6 +30,7 @@ function harness(kind = 'photo') {
     });
     const media = visible.filter(row => row.dancerId === selected);
     return { venueId: 'venue', count: rows.filter(row => row.clubStatus === 'pending').length, dancerCount: dancers.length, uploadCount: media.length,
+      pendingMediaCount: rows.filter(row => row.dancerId === selected && row.clubStatus === 'pending').length,
       dancer: dancers.find(dancer => dancer.id === selected) || null, dancerAvatar: selected ? avatar : null,
       dancers: selected ? [] : dancers.slice(offset, offset + 12), items: media.slice(offset, offset + 12) };
   }
@@ -61,7 +62,7 @@ function harness(kind = 'photo') {
     } };
     return { default: name };
   } });
-  const props = { venueId: 'venue', active: true, onCountChange: count => counts.push(count) };
+  const props = { venueId: 'venue', active: true, onCountChange: count => counts.push(count), ...extraProps };
   const nodes = (node = tree) => !node || typeof node !== 'object' ? [] : [node, ...[node.props?.children].flat(Infinity).filter(Boolean).flatMap(child => nodes(child))];
   function render(next) {
     if (next) { Object.assign(props, next); dirty = true; }
@@ -390,4 +391,13 @@ test('all-media view retains a reviewed item and sends its latest decision versi
  ui.click('Reject');await ui.settle();assert.equal(ui.cards.length,2);
  assert.equal(ui.calls[1].decisionVersion,'revised');assert.match(JSON.stringify(ui.cards[0]),/Hidden at your club/);
  assert.equal(ui.reads.length,reads);assert.equal(ui.counts.at(-1),1,'changing an existing decision does not decrement pending twice');
+});
+
+test('join review opens all of the requested dancer media, reports undecided items and stays open after decisions',async()=>{
+  const statuses=[];const ui=harness('photo',{reviewDancer:{id:'dancer-one',stageName:'Star'},onReviewStateChange:n=>statuses.push(n)});
+  await ui.settle();assert.match(ui.reads.at(-1),/status=all.*dancerId=dancer-one/);
+  assert.equal(ui.controls,undefined);assert.equal(ui.cards.length,2);assert.equal(statuses.at(-1),2);
+  ui.click('Approve');assert.equal(statuses.at(-1),null);ui.finish();await ui.settle();
+  assert.equal(statuses.at(-1),1);assert.equal(ui.cards.length,2);
+  ui.click('Approve',1);await ui.settle();assert.equal(statuses.at(-1),0);assert.equal(ui.cards.length,2);
 });

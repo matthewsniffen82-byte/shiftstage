@@ -308,7 +308,7 @@ export function NfcTapClient({ token }: { token: string }) {
         {state?.tag.type === "dressing_room" && !complete ? (
           <details className="nfc-help">
             <summary>How check-in works</summary>
-            <p>Your first tap at each club requests that club’s approval. After approval, tap again to check in. Photos and videos have separate club permissions.</p>
+            <p>Your first tap sends your profile and media to the club for review. Club approval adds your affiliation; tap again to start Working Now. New media needs club approval, then MyDancr’s final approval. Your existing approved profile stays visible.</p>
             <p>For future check-ins, unlock your phone and tap the club&apos;s dressing-room sticker. Open the link and sign in if prompted. No particular page needs to be open.</p>
             <p>The internal roster shows your approved avatar and stage name. Customers can tap your avatar to view your full profile. Internal only includes this club’s invited VIP guests, who may be viewing remotely, and keeps you out of public MyDancr discovery.</p>
           </details>

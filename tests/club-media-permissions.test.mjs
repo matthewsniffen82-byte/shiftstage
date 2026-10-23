@@ -8,7 +8,7 @@ const exports = {};
 vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/club-media-permissions.ts','utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022},
 }).outputText,{exports,Map,Set,Error,require:()=>({})});
-const {restrictClubCard,restrictClubCards,restrictClubProfile,clubMediaPermissions}=exports;
+const {restrictClubCard,restrictClubCards,restrictClubProfile,clubMediaPermissions,withApprovedClubAffiliations}=exports;
 const card={id:'dancer',venueId:'club-a',primaryPhotoUrl:'main.jpg',primaryPhotoFocalX:20,primaryPhotoWidth:500,
   avatarPhotoUrl:'personal-avatar.jpg',galleryPhotoIds:['main','safe','declined'],galleryPhotoUrls:['main.jpg','safe.jpg','declined.jpg'],
   galleryPhotoSrcSets:['main-set','safe-set','declined-set'],galleryPhotoPins:[true,false,true],galleryPhotoLikeCounts:[4,2,3]};
@@ -40,4 +40,15 @@ test('permission lookup fails closed and ignores unrelated dancer rows',async()=
   for(const result of [{error:new Error('offline')},{data:null}])await assert.rejects(clubMediaPermissions({rpc:async()=>result},'club-a',['dancer']));
   const result=await clubMediaPermissions({rpc:async()=>({data:[{dancerId:'other',photoId:'main'}]})},'club-a',['dancer']);
   assert.equal(result.get('dancer').photoIds.size,0);
+});
+
+test('approved affiliation decorates an off-shift card without inventing Working Now or replacing live presence',async()=>{
+  const calls=[];
+  const client={rpc:async(name,args)=>{calls.push({name,args});return {data:[{dancer_id:'dancer',venue_id:'club-b',venue_name:'New club',venue_slug:'new-club'}]};}};
+  const personal={...card,venueId:null,shiftId:null,checkedInAt:null,locationVerificationExpiresAt:null};
+  const result=await withApprovedClubAffiliations(client,[personal,card]);
+  assert.equal(result[0].venueId,'club-b');assert.equal(result[0].venueName,'New club');
+  assert.equal(result[0].shiftId,null);assert.equal(result[0].checkedInAt,null);assert.equal(result[1],card);
+  assert.deepEqual(normalize(calls[0]),{name:'public_dancer_club_affiliations',args:{p_dancer_ids:['dancer']}});
+  assert.equal((await withApprovedClubAffiliations({rpc:async()=>({data:[]})},[personal]))[0],personal);
 });

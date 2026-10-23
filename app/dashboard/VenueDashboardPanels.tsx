@@ -349,7 +349,7 @@ export function VenuePanel({
       </section>
 
       <section className="venue-roster-panel venue-dashboard-section" hidden={activeWorkspace !== "roster"} id="venue-workspace-roster" role="tabpanel" aria-labelledby="venue-workspace-roster-tab">
-        {canManageRoster && Boolean(connectedVenueId) && <VenueDancerApprovalPanel key={`${account?.id}:${connectedVenueId}`} active={activeWorkspace === "roster"} refreshKey={refreshedAt} />}
+        {canManageRoster && Boolean(connectedVenueId) && <VenueDancerApprovalPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster"} refreshKey={refreshedAt} />}
         {canManageRoster && Boolean(connectedVenueId) && <VenueMediaReviewPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster"} refreshKey={refreshedAt} onCountChange={setMediaPending} />}
         {(activeWorkspace === "roster" || openedWorkspaces.includes("roster")) && (liveDataReady ? <>
         <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "roster"}>

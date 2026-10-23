@@ -36,6 +36,8 @@ before(async () => {
   await db.exec(read('supabase/migrations/20261023054159_venue_media_dancer_grid.sql'));
   await db.exec('alter table dancer_profiles add column created_at timestamptz default now(),add column updated_at timestamptz default now();alter table venues add column name text default \'Synthetic club\'');
   await db.exec(read('supabase/migrations/20261023081710_club_specific_media_permissions.sql'));
+  const latest=read('supabase/migrations/20261023224617_club_profile_review_affiliation.sql');
+  await db.exec(latest.match(/create or replace function public.guard_dancer_media_decision\(\)[\s\S]*?end \$\$;/)[0]);
   await db.exec('create trigger test_submission before insert or update of status,verification_status,venue_approved_at on dancer_profiles for each row execute function enforce_dancer_onboarding_photos()');
 });
 after(async () => db?.close());
@@ -128,6 +130,26 @@ test('videos retain each club decision after final approval and invalidate it on
   assert.equal((await allowed())[0].videoId,id(200));assert.deepEqual(await allowed(21),[]);
   await db.exec("update mydancr_tv_videos set caption='Changed caption'");
   assert.deepEqual(await allowed(),[]);assert.equal((await queue()).items[0].clubStatus,'pending');
+  const changed=(await db.query('select status,club_reviewed_at,reviewed_by from mydancr_tv_videos')).rows[0];
+  assert.equal(changed.status,'submitted');assert.equal(changed.club_reviewed_at,null);assert.equal(changed.reviewed_by,null);
+  await assert.rejects(db.query("update mydancr_tv_videos set status='approved',reviewed_by=$1,reviewed_at=now()",[id(6)]),e=>e.code==='40001');
+  await decide((await queue()).items[0]);assert.deepEqual(await allowed(),[]);
+  await db.query("update mydancr_tv_videos set status='approved',reviewed_by=$1,reviewed_at=now()",[id(6)]);
+  assert.equal((await allowed())[0].videoId,id(200));
+});
+
+test('a replacement photo waits through club and platform review while the existing approved profile photo stays live',async()=>{
+  await connect();const original=await upload(100,'profile_main');await decide((await queue()).items[0]);
+  const pending=(await db.query('select * from image_moderation_records where id=$1',[original.id])).rows[0];
+  const published=await publish(pending,6);const photoId=published.record.image_id;
+  const replacement=await upload(101,'profile_main',{photo_publication_mode:'replace',replacement_photo_id:photoId});
+  assert.equal((await allowed())[0].photoId,photoId);
+  await decide((await queue()).items[0]);
+  assert.equal((await allowed())[0].photoId,photoId);
+  const awaiting=(await db.query('select * from image_moderation_records where id=$1',[replacement.id])).rows[0];
+  const result=await publish(awaiting,6);
+  assert.equal((await allowed())[0].photoId,result.record.image_id);
+  assert.equal((await db.query('select final_storage_path from image_moderation_records where id=$1',[replacement.id])).rows[0].final_storage_path,result.record.final_storage_path);
 });
 
 test('legacy published photos can be reviewed, but a changed path does not inherit permission',async()=>{

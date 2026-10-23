@@ -8,7 +8,15 @@ let pg;
 const source = file => readFileSync(new URL('../'+file,import.meta.url),'utf8');
 const tap = (tag=id(30),key=id(50),user=id(1),visibility='internal') => pg.query('select public.register_dancer_channel_tap($1,$2,$3,$4,$5) result',[tag,user,key,visibility,{}]).then(r=>r.rows[0].result);
 const request = (venue=id(20)) => pg.query('select * from public.club_dancer_approvals where venue_id=$1 and dancer_id=$2',[venue,id(10)]).then(r=>r.rows[0]);
-const review = async(decision='approved',actor=id(2),venue=id(20),revision) => pg.query('select public.review_club_dancer_approval($1,$2,$3,$4,$5) result',[actor,venue,id(10),revision || (await request(venue)).revision,decision]).then(r=>r.rows[0].result);
+async function approveMedia(venue=id(20)) {
+  await pg.query(`insert into public.club_media_permissions(venue_id,dancer_id,source,media_id,content_version,decision)
+    select $1,dancer_id,source,id,content_version,'approved' from public.dancer_club_media(array[$2]::uuid[])
+    on conflict(venue_id,source,media_id) do nothing`,[venue,id(10)]);
+}
+const review = async(decision='approved',actor=id(2),venue=id(20),revision,reviewMedia=true) => {
+  if(decision==='approved' && reviewMedia) await approveMedia(venue);
+  return pg.query('select public.review_club_dancer_approval($1,$2,$3,$4,$5) result',[actor,venue,id(10),revision || (await request(venue)).revision,decision]).then(r=>r.rows[0].result);
+};
 const count = table => pg.query(`select count(*)::int n from public.${table} where dancer_id=$1`,[id(10)]).then(r=>r.rows[0].n);
 async function rejects(action,code){await pg.exec('savepoint expected_error');await assert.rejects(action,{code});await pg.exec('rollback to expected_error');}
 before(async()=>{
@@ -21,6 +29,19 @@ before(async()=>{
   await tap(id(30),id(49),id(5));
   await pg.exec(source('supabase/migrations/20261023091937_club_dancer_join_approval.sql'));
   await pg.exec(source('supabase/migrations/20261023093339_club_approval_returning_dancer_taps.sql'));
+  await pg.exec(`create table public.club_media_permissions(venue_id uuid,dancer_id uuid,source text,media_id uuid,content_version text,decision text,
+      primary key(venue_id,source,media_id));
+    create function public.dancer_club_media(ids uuid[]) returns table(id uuid,dancer_id uuid,source text,kind text,content_version text,photo_id uuid,record jsonb)
+      language sql as $$select p.id,p.dancer_id,'photo','photo',md5(p.storage_path),p.id,jsonb_build_object('upload_context','profile_gallery','status','approved')
+        from public.dancer_photos p where p.dancer_id=any(ids) and p.review_status='approved'$$;
+    create function public.club_public_media(venue uuid,ids uuid[]) returns jsonb language sql as $$
+      select coalesce(jsonb_agg(jsonb_build_object('photoId',m.id)),'[]') from public.dancer_club_media(ids) m
+        join public.club_media_permissions a on a.media_id=m.id and a.content_version=m.content_version
+        and a.venue_id=venue and a.decision='approved'$$;
+    create function public.has_active_club_deal(public.venues) returns boolean language sql as $$select true$$;
+    grant all on public.club_media_permissions to service_role;`);
+  const latest=source('supabase/migrations/20261023224617_club_profile_review_affiliation.sql');
+  await pg.exec(latest.slice(0,latest.indexOf('create or replace function public.guard_dancer_media_decision()'))+'commit;');
 });
 beforeEach(async()=>pg.exec('begin;set role service_role'));
 afterEach(async()=>pg.exec('rollback;reset role'));
@@ -36,11 +57,10 @@ test('first club tap creates an idempotent pending request without affiliation, 
   assert.equal((await request()).status,'pending');
 });
 
-test('owner approval does not activate remotely; a fresh tap activates only the approved club',async()=>{
+test('profile approval publishes affiliation without starting a shift; a fresh tap starts Working Now',async()=>{
   await tap();const result=await review();assert.equal(result.requiresNewTap,true);
-  assert.equal(await count('venue_dancer_affiliations'),0);assert.equal(await count('shifts'),0);
-  const finalized=(await pg.query('select public.finalize_pending_dancer_nfc_enrollment($1,$2,$3) result',[id(1),id(1),{}])).rows[0].result;
-  assert.equal(finalized.enrollmentStatus,'pending');assert.equal(await count('venue_dancer_affiliations'),0);
+  assert.equal(result.affiliationActivated,true);assert.equal(result.shiftCheckedIn,false);
+  assert.equal(await count('venue_dancer_affiliations'),1);assert.equal(await count('shifts'),0);
   assert.equal((await tap()).clubApprovalStatus,'pending','Replay is not a fresh physical tap');
   const checked=await tap(id(30),id(51));assert.equal(checked.shiftCheckedIn,true);assert.equal(checked.enrollmentStatus,'completed');
   assert.equal(await count('venue_dancer_affiliations'),1);assert.equal(await count('shifts'),1);
@@ -64,8 +84,8 @@ test('legacy NFC helpers and direct affiliation writes cannot bypass the club de
   await rejects(()=>pg.query('select public.register_dancer_nfc_enrollment($1,$2,$3,$4)',[id(30),id(1),id(51),{}]),'42501');
   await rejects(()=>pg.query("insert into public.venue_dancer_affiliations(venue_id,dancer_id,status,approved_by_user_id) values($1,$2,'active',$3)",[id(20),id(10),id(2)]),'42501');
   await review();
-  await rejects(()=>pg.query('select public.approve_dancer_venue_affiliation_from_nfc($1,$2,$3,$4)',[id(30),id(1),id(51),{}]),'42501');
-  assert.equal(await count('venue_dancer_affiliations'),0);
+  assert.equal(await count('venue_dancer_affiliations'),1);
+  assert.equal(await count('shifts'),0);
 });
 
 test('declines survive retaps and can only be reconsidered by this club',async()=>{
@@ -124,4 +144,38 @@ test('a returning dancer keeps club approval but needs a new tap after removal',
   await pg.query("update public.shifts set checked_out_at=clock_timestamp(),nfc_last_tapped_at=now()-interval '13 hours' where dancer_id=$1",[id(10)]);
   const result=await tap(id(30),id(52));assert.equal(result.shiftCheckedIn,true);assert.equal(result.affiliationActivated,true);
   assert.equal((await request()).status,'approved');
+});
+
+test('profile approval is blocked until every current item is reviewed and at least one photo is approved',async()=>{
+  await tap();
+  await rejects(()=>review('approved',id(2),id(20),undefined,false),'40001');
+  assert.equal((await request()).status,'pending');assert.equal(await count('venue_dancer_affiliations'),0);
+  await approveMedia();await pg.exec("update public.club_media_permissions set decision='rejected'");
+  await rejects(()=>review('approved',id(2),id(20),undefined,false),'40001');
+  await pg.query("update public.club_media_permissions set decision='approved' where media_id=$1",[id(110)]);
+  assert.equal((await review('approved',id(2),id(20),undefined,false)).affiliationActivated,true);
+});
+
+test('a changed photo invalidates the reviewed version before membership approval',async()=>{
+  await tap();await approveMedia();
+  await pg.query("update public.dancer_photos set storage_path='changed' where id=$1",[id(110)]);
+  await rejects(()=>review('approved',id(2),id(20),undefined,false),'40001');
+  assert.equal((await request()).status,'pending');
+});
+
+test('approved public profiles gain a feed affiliation without gaining live presence',async()=>{
+  await pg.query("update public.dancer_profiles set status='approved',verification_status='approved',is_public=true where id=$1",[id(10)]);
+  await tap(id(30),id(50),id(1),'external');await review();
+  const affiliations=(await pg.query('select * from public.public_dancer_club_affiliations($1)',[[id(10)]])).rows;
+  assert.equal(affiliations[0].venue_id,id(20));
+  const candidates=(await pg.query("select public.get_public_directory_candidates('Las Vegas',null) value")).rows[0].value;
+  const dancer=candidates.find(row=>row.id===id(10));assert.equal(dancer.venueId,id(20));assert.equal(dancer.availableUntil,null);
+  assert.equal(await count('shifts'),0);
+});
+
+test('club approval respects internal-only visibility',async()=>{
+  await pg.query("update public.dancer_profiles set status='approved',verification_status='approved',is_public=true where id=$1",[id(10)]);
+  await tap();await review();
+  assert.equal((await pg.query('select is_public from public.dancer_profiles where id=$1',[id(10)])).rows[0].is_public,false);
+  assert.equal((await pg.query('select * from public.public_dancer_club_affiliations($1)',[[id(10)]])).rows.length,0);
 });

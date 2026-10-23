@@ -4,7 +4,7 @@ import { PublicApiError } from "@/src/lib/api-error-policy";
 import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
-import { venueMediaAvatar } from "@/src/lib/dancr/venue-media-avatar";
+import { mainPhotoPreviews } from "@/src/lib/dancr/media-review-main-photo";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 
@@ -32,6 +32,7 @@ export async function GET(request: Request) {
       .is("dancer_profiles.disabled_at", null).in("dancer_profiles.status", ["pending_review", "approved"])
       .order("requested_at", { ascending: false }).order("dancer_id").range(offset, offset + 25);
     if (error) throw error;
+    const previews = await mainPhotoPreviews(admin, (data || []).slice(0, 25).map(row => row.dancer_id));
     const requests = await Promise.all((data || []).slice(0, 25).map(async row => {
       const dancer = Array.isArray(row.dancer_profiles) ? row.dancer_profiles[0] : row.dancer_profiles;
       const { data: enrollment, error: enrollmentError } = await admin.from("dancer_nfc_enrollments")
@@ -39,9 +40,8 @@ export async function GET(request: Request) {
       if (enrollmentError) throw enrollmentError;
       const tag = Array.isArray(enrollment?.nfc_tags) ? enrollment.nfc_tags[0] : enrollment?.nfc_tags;
       const expired = !enrollment || tag?.status !== "active" || Date.parse(enrollment.expires_at) <= Date.now();
-      const avatar = expired ? null : await venueMediaAvatar(admin, row.dancer_id);
       return { dancerId: row.dancer_id, stageName: dancer.stage_name, city: dancer.city, status: row.status,
-        requestedAt: row.requested_at, revision: row.revision, expired, avatarUrl: avatar?.url || null };
+        requestedAt: row.requested_at, revision: row.revision, expired, avatarUrl: expired ? null : previews.get(row.dancer_id) || null };
     }));
     return json({ ok: true, requests, hasMore: (data?.length || 0) > 25 });
   } catch (error) { return apiError(error, "Unable to load club approval requests."); }
@@ -57,12 +57,14 @@ export async function POST(request: Request) {
       p_actor_user_id: user.id, p_venue_id: access.venueId, p_dancer_id: body.dancerId, p_revision: body.revision, p_decision: body.decision,
     });
     if (error) {
+      if (error.message?.includes("CLUB_PROFILE_MEDIA_REVIEW_REQUIRED")) throw new PublicApiError("CONFLICT", "Review every photo and video, and approve at least one profile photo before approving this profile.", 409);
       if (["40001", "P0002"].includes(error.code)) throw new PublicApiError("CONFLICT", "This request changed or expired. Refresh the requests. An expired request needs a new club tap.", 409);
       if (error.code === "42501") throw new PublicApiError("FORBIDDEN", "An active club owner or manager must review this request.", 403);
       throw error;
     }
     if (data?.venueId !== access.venueId || data.dancerId !== body.dancerId || data.status !== body.decision
-      || typeof data.revision !== "string" || !uuid.test(data.revision) || data.requiresNewTap !== (body.decision === "approved")) {
+      || typeof data.revision !== "string" || !uuid.test(data.revision) || data.requiresNewTap !== (body.decision === "approved")
+      || data.affiliationActivated !== (body.decision === "approved") || data.shiftCheckedIn !== false) {
       throw new PublicApiError("UNAVAILABLE", "The decision could not be confirmed. Refresh before trying again.", 503);
     }
     return json({ ok: true, ...data });

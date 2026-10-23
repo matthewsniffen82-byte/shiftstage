@@ -22,7 +22,7 @@ function fixture(kind='photo',options={}) {
     apiError:error=>({status:error.status,message:error.message}),readBoundedJsonObject:async r=>r.body,
     createRequestSupabaseContext:async()=>({user:{id:'reviewer'},session:{}}),createAdminSupabaseClient:()=>admin,
     requireActiveVenueAccount:async()=>{},requireVenueAccess:async()=>({venueId:'venue',role:'manager'}),
-    withSignedThumbnail:async()=>({thumbnailUrl:'preview'}),normalizedVideoPosterStoragePath:()=>null,
+    withSignedThumbnail:async()=>({thumbnailUrl:'preview'}),normalizedVideoPosterStoragePath:()=>null, mainPhotoPreviews:async()=>new Map(),
     recordVenueActivity:async(_admin,entry)=>activity.push(entry),safeErrorMetadata:()=>({})};
   const route={};vm.runInNewContext(compiled,{exports:route,require:()=>deps,URL,console});
   return{calls,deferred,activity,get:()=>route.GET({url:'https://example.test/api/venue/media-reviews'}),

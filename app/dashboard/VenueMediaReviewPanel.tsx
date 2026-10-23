@@ -12,19 +12,22 @@ type Review = { id: string; kind: "photo" | "video"; stageName: string; version:
   label: string; processing: boolean; canApprove: boolean; caption?: string | null; posterUrl?: string };
 type Dancer = { id: string; stageName: string; count: number; photoCount: number; videoCount: number; previewUrl: string };
 
-export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onCountChange }: {
+export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onCountChange, reviewDancer, onReviewStateChange }: {
   venueId: string; active: boolean; refreshKey?: string | null; onCountChange: (count: number) => void;
+  reviewDancer?: Pick<Dancer, "id" | "stageName">;
+  onReviewStateChange?: (pending: number | null) => void;
 }) {
   const [items, setItems] = useState<Review[]>([]);
   const [dancers, setDancers] = useState<Dancer[]>([]);
-  const [selectedDancer, setSelectedDancer] = useState<Pick<Dancer, "id" | "stageName"> | null>(null);
+  const [selectedDancer, setSelectedDancer] = useState<Pick<Dancer, "id" | "stageName"> | null>(reviewDancer || null);
   const [dancerAvatar, setDancerAvatar] = useState<{ dancerId: string; venueId: string; url: string; status: "pending" | "approved" } | null>(null);
   const [dancerCount, setDancerCount] = useState(0);
   const [uploadCount, setUploadCount] = useState(0);
   const [count, setCount] = useState<number | null>(null);
   const [offset, setOffset] = useState(0);
   const [revision, setRevision] = useState(0);
-  const [showAll, setShowAll] = useState(false);
+  const [showAll, setShowAll] = useState(Boolean(reviewDancer));
+  const pendingCount = useRef(0);
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -49,6 +52,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     const controller = new AbortController();
     read.current = controller;
     setLoading(true);
+    onReviewStateChange?.(null);
     requestDashboardJson(`/api/venue/media-reviews?view=dancers&offset=${offset}&status=${showAll ? "all" : "pending"}${selectedId && active ? `&dancerId=${selectedId}` : ""}${active ? "" : "&countOnly=1"}`, {
       expectedRole: "venue", cache: "no-store", signal: controller.signal,
     }).then(data => {
@@ -62,9 +66,11 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
           setItems(data.items || []); setUploadCount(data.uploadCount || 0);
           setDancerAvatar(data.dancer?.id === selectedId && data.dancerAvatar?.url
             ? { ...data.dancerAvatar, dancerId: selectedId, venueId } : null);
-          if (!data.uploadCount) {
+          pendingCount.current = data.pendingMediaCount || 0;
+          onReviewStateChange?.(pendingCount.current);
+          if (!data.uploadCount && !reviewDancer) {
             setSelectedDancer(null); setOffset(0); setRejectingId(null); setFeedback(null);
-          } else if (offset >= data.uploadCount) setOffset(Math.floor((data.uploadCount - 1) / 12) * 12);
+          } else if (data.uploadCount && offset >= data.uploadCount) setOffset(Math.floor((data.uploadCount - 1) / 12) * 12);
         } else {
           setDancers(data.dancers || []);
           if (offset > 0 && offset >= data.dancerCount) setOffset(Math.max(0, Math.floor((data.dancerCount - 1) / 12) * 12));
@@ -79,7 +85,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => { controller.abort(); if (read.current === controller) read.current = null; };
-  }, [active, venueId, refreshKey, revision, offset, selectedId, onCountChange, showAll]);
+  }, [active, venueId, refreshKey, revision, offset, selectedId, onCountChange, showAll, reviewDancer, onReviewStateChange]);
 
   function openDancer(dancer: Dancer | null) {
     if (action.current) return;
@@ -102,6 +108,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     const dismissPhoto = decision === "rejected" && item.kind === "photo";
     if (dismissPhoto) setPendingPhotoRejection(item.id);
     setBusy(true); setMessage("");
+    onReviewStateChange?.(null);
     setFeedback({ id: item.id, text: "Saving your club’s decision…", error: false, decision });
     try {
       const result = await requestDashboardJson("/api/venue/media-reviews", { method: "POST", expectedRole: "venue", signal: controller.signal,
@@ -113,6 +120,8 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
       setFeedback(null);
       setRejectingId(null);
       setNotes(current => { const next = { ...current }; delete next[item.id]; return next; });
+      if (item.clubStatus === "pending") pendingCount.current = Math.max(0, pendingCount.current - 1);
+      onReviewStateChange?.(pendingCount.current);
       if (item.clubStatus === "pending" && count !== null) {
         const nextCount = Math.max(0, count - 1);
         setCount(nextCount); onCountChange(nextCount);
@@ -144,14 +153,15 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   }
 
   if (!active) return null;
-  return <section className="venue-media-review" id="venue-media-reviews" aria-labelledby="venue-media-review-title" aria-busy={busy || loading}>
-    <header><div><h2 id="venue-media-review-title" ref={heading} tabIndex={-1}>{selectedDancer ? `${selectedDancer.stageName} · Club media` : "Media approvals"}{count !== null ? ` · ${selectedDancer ? uploadCount : count}` : ""}</h2>
+  const sectionId = reviewDancer ? "venue-join-media" : "venue-media-reviews";
+  return <section className="venue-media-review" id={sectionId} aria-labelledby={`${sectionId}-title`} aria-busy={busy || loading}>
+    <header><div><h2 id={`${sectionId}-title`} ref={heading} tabIndex={-1}>{selectedDancer ? `${selectedDancer.stageName} · Club media` : "Media approvals"}{count !== null ? ` · ${selectedDancer ? uploadCount : count}` : ""}</h2>
       <p>Your approval sends media to MyDancr for final review.</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
-    <div className="venue-media-controls">
+    {!reviewDancer ? <div className="venue-media-controls">
       <label>Show <select value={showAll ? "all" : "pending"} disabled={busy} onChange={event => { setShowAll(event.target.value === "all"); openDancer(null); }}><option value="pending">Waiting for your club</option><option value="all">All media and decisions</option></select></label>
       {selectedDancer ? <button className="venue-media-back" type="button" disabled={busy} onClick={() => openDancer(null)}>← All dancers</button> : null}
-    </div>
+    </div> : null}
     {selectedDancer && dancerAvatar && dancerAvatar.dancerId === selectedId && dancerAvatar.venueId === venueId ? <div className="venue-media-review-avatar">
       <img src={dancerAvatar.url} alt={`${selectedDancer.stageName} avatar`} width={64} height={64} />
       <div><h3>Avatar</h3><p>{dancerAvatar.status === "pending" ? "Pending approval" : "Approved"}</p></div>
