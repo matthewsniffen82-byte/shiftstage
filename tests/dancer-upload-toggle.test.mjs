@@ -40,8 +40,12 @@ test('only the selected media type uses the site brand color', () => {
   assert.equal(active['border-color'], 'var(--dancr-color-brand-primary)');
 });
 
-test('hover, press, keyboard focus and disabled states remain distinct', () => {
-  assert.equal(declarations(`${selector}:hover:not(:disabled)`)['border-color'], '#a3a3af');
+test('tapping does not highlight the border; press, keyboard focus and disabled feedback remain', () => {
+  css.walkRules(rule => {
+    if (rule.selector.startsWith(selector) && /:hover|:active/.test(rule.selector)) {
+      assert.ok(!rule.nodes.some(node => node.type === 'decl' && /^(border|outline)/.test(node.prop)));
+    }
+  });
   assert.notEqual(declarations(`${selector}:active:not(:disabled)`)['box-shadow'], 'none');
   const disabled = declarations(`${selector}:disabled`);
   assert.equal(disabled.opacity, '.55');
