@@ -50,7 +50,7 @@ export async function approveVenueMediaReview(client: SupabaseClient, record: an
   const image = context.kind === "logo" ? await normalizeDancrVenueLogoImage(original) : original;
   const bucket = context.kind === "logo" ? "venue-logo-images" : "venue-cover-images";
   const uploaded = await uploadResponsiveImage(client, bucket, context.venueId, image, "31536000", {
-    archiveOriginal: true, watermark: context.kind === "cover",
+    archiveOriginal: true,
   });
   const { data, error } = await client.rpc("publish_reviewed_venue_image", {
     p_record_id: record.id, p_expected_updated_at: record.updated_at,

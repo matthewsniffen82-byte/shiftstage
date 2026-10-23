@@ -34,7 +34,7 @@ test("platform TV imports use AI moderation and cannot automatically approve hum
   assert.match(tv, /return submitMyDancrTvUpload\(admin, video.submitted_by, video.id\)/);
   assert.doesNotMatch(tv, /bypassedAutomatedModeration: true/);
   assert.doesNotMatch(route, /reviewMyDancrTvVideo/);
-  assert.match(tv, /watermarkStoredVideo/);
+  assert.match(tv, /prepareStoredVideo/);
 });
 
 test("platform TV imports are bounded and unsafe bulk replacement is blocked", () => {

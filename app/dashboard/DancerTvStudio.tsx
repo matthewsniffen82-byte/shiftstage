@@ -9,6 +9,7 @@ import DancerMediaRetryButton from "./DancerMediaRetryButton";
 import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
 import { uploadResumableVideo } from "./resumable-video-upload";
+import { createVideoUploadTiming, type VideoTransfer } from "@/src/lib/dancr/video-upload-timing";
 import { createMediaUploadCancellation } from "./media-upload-cancellation";
 import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "./media-upload-batch";
 import DancerVideoPreviews from "./DancerVideoPreviews";
@@ -360,10 +361,13 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     uploadCancellationRef.current = cancellation;
     const failedItems: QueuedVideo[] = [];
     let submittedCount = 0;
+    const queuedAt = performance.now();
     try {
       await runMediaUploadBatch(batch, MEDIA_UPLOAD_CONCURRENCY, async queuedItem => {
         if (!isCurrentVideoAction(requestId, controller)) return;
         let item = queuedItem;
+        const timing = createVideoUploadTiming(performance.now() - queuedAt, Math.min(batch.length, MEDIA_UPLOAD_CONCURRENCY));
+        let transferDetails: VideoTransfer | undefined;
         const transfer = cancellation.start(queuedItem.id);
         if (!transfer) {
           if (cancellation.isCanceled(queuedItem.id)) {
@@ -377,7 +381,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
         let savedUpload = Boolean(workspace?.videos.some(video => video.id === item.uploadId));
         setStatus("Uploading");
         try {
-          const metadata = await readVideoMetadata(item.file, transfer.signal);
+          const metadata = await timing.measure("metadataMs", () => readVideoMetadata(item.file, transfer.signal));
           if (!isCurrentVideoAction(requestId, controller)) return;
           transfer.signal.throwIfAborted();
           if (item.replaces) {
@@ -391,7 +395,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             item = { ...item, replaces: undefined };
             updateQueuedVideo(item.id, { replaces: undefined });
           }
-          const data = await requestDancerTvVideosJson({
+          const data = await timing.measure("reservationMs", () => requestDancerTvVideosJson({
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({
@@ -406,7 +410,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             }),
             fallbackMessage: "Unable to prepare upload.",
             signal: controller.signal,
-          });
+          }));
           if (!isCurrentVideoAction(requestId, controller)) return;
           savedUpload = true;
           transfer.signal.throwIfAborted();
@@ -417,12 +421,12 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             if (!data.upload.path || !data.upload.token) throw new Error("Unable to prepare upload.");
             setStatus("Uploading");
             updateQueuedVideo(item.id, { stage: "uploading", progress: 0 });
-            await uploadResumableVideo(item.file, {
+            transferDetails = await timing.measure("transferMs", () => uploadResumableVideo(item.file, {
               path: data.upload.path, token: data.upload.token, signal: transfer.signal,
               onProgress: progress => {
                 if (isCurrentVideoAction(requestId, controller) && !transfer.signal.aborted) updateQueuedVideo(item.id, { progress });
               },
-            });
+            }));
             if (!isCurrentVideoAction(requestId, controller)) return;
           }
 
@@ -433,7 +437,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             await requestDancerTvVideoJson(preparedVideoId, {
               method: "PATCH",
               headers: { "content-type": "application/json" },
-              body: JSON.stringify({ action: "submit" }),
+              body: JSON.stringify({ action: "submit", uploadTiming: timing.report(transferDetails) }),
               fallbackMessage: "Unable to submit video for review.",
               signal: transfer.signal,
             });

@@ -1,5 +1,6 @@
 import { getPublicEnv } from "../../src/lib/env";
 import { uploadFormData } from "./upload-form-data";
+import type { VideoTransfer } from "../../src/lib/dancr/video-upload-timing";
 
 class SignedResumableUnavailable extends Error {}
 const unavailableSignedEndpoints = new Set<string>();
@@ -16,7 +17,7 @@ export async function uploadResumableVideo(file: File, options: {
   token: string;
   signal: AbortSignal;
   onProgress: (percent: number) => void;
-}) {
+}): Promise<VideoTransfer> {
   options.signal.throwIfAborted();
   const endpoint = resumableStorageEndpoint(getPublicEnv().supabaseUrl);
   if (unavailableSignedEndpoints.has(endpoint)) return uploadSignedVideo(file, options);
@@ -31,8 +32,9 @@ export async function uploadResumableVideo(file: File, options: {
         && (url.pathname === endpointUrl.pathname || url.pathname.startsWith(endpointUrl.pathname + "/"));
     } catch { return false; }
   };
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<VideoTransfer>((resolve, reject) => {
     let settled = false;
+    let resumed = false;
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
     const markActivity = () => {
       if (settled) return;
@@ -47,7 +49,7 @@ export async function uploadResumableVideo(file: File, options: {
       settled = true;
       clearTimeout(idleTimer);
       options.signal.removeEventListener("abort", abort);
-      if (error) reject(error); else resolve();
+      if (error) reject(error); else resolve({ transport: "resumable", resumed });
     };
     const upload = new Upload(file, {
       endpoint,
@@ -112,7 +114,7 @@ export async function uploadResumableVideo(file: File, options: {
       if (settled || options.signal.aborted) return;
       const matching = previous.find(item => trustedUploadUrl(item.uploadUrl) && item.size === file.size
         && item.metadata.bucketName === "mydancr-tv-videos" && item.metadata.objectName === options.path);
-      if (matching) upload.resumeFromPreviousUpload(matching);
+      if (matching) { upload.resumeFromPreviousUpload(matching); resumed = true; }
       upload.start();
     })().catch(() => finish(new Error("Unable to start the video upload. Please try again.")));
   }).catch(async error => {
@@ -125,7 +127,7 @@ export async function uploadResumableVideo(file: File, options: {
 
 async function uploadSignedVideo(file: File, options: {
   path: string; token: string; signal: AbortSignal; onProgress: (percent: number) => void;
-}) {
+}): Promise<VideoTransfer> {
   options.signal.throwIfAborted();
   const path = options.path.split("/").map(encodeURIComponent).join("/");
   const url = new URL(`/storage/v1/object/upload/sign/mydancr-tv-videos/${path}`, getPublicEnv().supabaseUrl);
@@ -139,4 +141,5 @@ async function uploadSignedVideo(file: File, options: {
     idleTimeoutMs: UPLOAD_IDLE_TIMEOUT_MS,
   });
   if (!response.ok) throw new Error("Video upload couldn't finish. Tap Retry to try again.");
+  return { transport: "signed_put", resumed: false };
 }

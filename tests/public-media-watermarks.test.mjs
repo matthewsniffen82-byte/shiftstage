@@ -35,7 +35,7 @@ const imageModeration = readFileSync(
   "utf8",
 );
 const adminImageModeration = readFileSync(
-  new URL("../app/api/admin/image-moderation/route.ts", import.meta.url),
+  new URL("../src/lib/dancr/image-review.ts", import.meta.url),
   "utf8",
 );
 const venueService = readFileSync(
@@ -171,28 +171,18 @@ test("original archive paths remain private, deterministic, and traversal-safe",
   assert.doesNotMatch(migration, /create policy/i);
 });
 
-test("only public profile photos and venue covers enter the image watermark pipeline", () => {
-  assert.match(
-    imageModeration,
-    /input\.isAvatar[\s\S]*?\? \{\}[\s\S]*?: \{ archiveOriginal: true, watermark: true \}/,
-  );
-  assert.match(
-    adminImageModeration,
-    /isAvatar[\s\S]*?\? \{\}[\s\S]*?: \{ archiveOriginal: true, watermark: true \}/,
-  );
-  assert.match(
-    venueService,
-    /uploadResponsiveImage\([\s\S]*?COVER_BUCKET[\s\S]*?archiveOriginal: true, watermark: true/,
-  );
+test("new profile and venue photos are prepared without requesting watermarks", () => {
+  for (const source of [imageModeration, adminImageModeration, venueService,
+    readFileSync(new URL('../src/lib/dancr/venue-media-review.ts', import.meta.url), 'utf8')]) {
+    assert.doesNotMatch(source, /watermark:\s*(?:true|context\.)/);
+    assert.match(source, /archiveOriginal: true/);
+  }
 });
 
-test("approved videos are watermarked before automatic or manual publication", () => {
-  assert.match(tvService, /if \(decision === "approved"\)[\s\S]*?watermarkStoredVideo/);
-  assert.ok((tvService.match(/watermarkStoredVideo\(/g) || []).length >= 2);
-  assert.match(watermarkSource, /mod\(t,6\)[\s\S]*?W-w-/);
-  assert.match(watermarkSource, /y='H-h-/);
-  assert.match(watermarkSource, /upsert: true/);
-  assert.match(tvService, /public_watermark_processing_failed/);
+test("video upload and final approval prepare unbranded derivatives", () => {
+  assert.doesNotMatch(tvService, /watermarkStoredVideo/);
+  assert.ok((tvService.match(/prepareStoredVideo\(/g) || []).length >= 2);
+  assert.match(tvService, /fileChecksPassed: true/);
 });
 
 test("the idempotent production backfill covers existing public media without avatars or QR codes", () => {

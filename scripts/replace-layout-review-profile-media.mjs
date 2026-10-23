@@ -191,7 +191,7 @@ async function applyReplacements() {
         `${item.profile.user_id}/${item.profile.id}`,
         item.image,
         "31536000",
-        { archiveOriginal: true, watermark: true },
+        { archiveOriginal: true },
       );
       upload.avatar = await uploadResponsiveImage(
         admin,

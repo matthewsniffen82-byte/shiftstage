@@ -205,7 +205,7 @@ export async function uploadVenueCoverImageByAdmin(
       venue.id,
       image,
       "31536000",
-      { archiveOriginal: true, watermark: true },
+      { archiveOriginal: true },
     );
     const finalPath = uploadedImage.storagePath;
 

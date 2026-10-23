@@ -149,10 +149,8 @@ test("missing, malformed, or unbounded face coordinates never publish an arbitra
 });
 
 test("avatar uploads compare real square crops and publish the selected physical crop", () => {
-  assert.match(avatarFaceSource, /createMediaVisualResponse\(openai,/);
-  assert.match(avatarFaceSource, /Candidate \$\{candidate\.position\}/);
-  assert.match(avatarFaceSource, /type: "input_image"/);
-  assert.match(avatarFaceSource, /type: "json_schema"/);
+  assert.match(avatarFaceSource, /locateAvatarFace\(selectedImage\.buffer\)/);
+  assert.doesNotMatch(avatarFaceSource, /createMediaVisualResponse|openai/);
   assert.match(avatarFaceSource, /selectedCandidate/);
   assert.match(avatarFaceSource, /computeFaceCenteredAvatarCrop\(sourceWidth, sourceHeight, candidate, face\)/);
   assert.match(avatarFaceSource, /\.extract\(\{ left: crop\.left, top: crop\.top, width: crop\.size, height: crop\.size \}\)/);
@@ -165,7 +163,7 @@ test("avatar uploads compare real square crops and publish the selected physical
 
 test("gallery photo processing remains separate from avatar face cropping", () => {
   assert.match(moderationSource, /const displayImage = isAvatar[\s\S]*?: input\.image/);
-  assert.match(moderationSource, /isAvatar \? \{\} : \{ archiveOriginal: true, watermark: true, mainPhotoAvatar: true \}/);
+  assert.match(moderationSource, /isAvatar \? \{\} : \{ archiveOriginal: true, mainPhotoAvatar: true \}/);
 });
 
 test("existing approved avatars can be securely reprocessed from an original approved photo", () => {

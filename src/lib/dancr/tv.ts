@@ -20,11 +20,12 @@ import {
   MYDANCR_TV_POSTER_BUCKET,
   myDancrTvPosterStoragePath,
   archivedOriginalStoragePath,
-  watermarkStoredVideo,
+  prepareStoredVideo,
 } from "./media-watermark";
 import { inspectStoredMyDancrTvVideo } from "./video-upload-validation";
 import { safeErrorMetadata } from "../security/safe-error-metadata";
 import { getManagedVideoMetricCounts } from "./tv-metric-counts";
+import { timeMediaStage } from "./media-processing-timing";
 import { PublicApiError } from "../api-error-policy";
 import { assertServerJobActive, runWithServerJob, ServerJobTimeoutError, VIDEO_PROCESSING_JOB_TIMEOUT_MS } from "../server-job.ts";
 
@@ -1182,6 +1183,10 @@ export async function retryMyDancrTvAutomatedModeration(admin: AdminClient, vide
   if (claimError) throw claimError;
   if (!claimed) return null;
   assertVideoWorkerClaim(claimed, video, workerId, attempt, startedAt);
+  if (queued && previous.startedAt) console.info(JSON.stringify({
+    event: "media_processing.stage", media: "video", stage: "queue_wait", videoId: video.id, attempt,
+    durationMs: Math.max(0, Date.parse(startedAt) - Date.parse(previous.startedAt)), succeeded: true,
+  }));
   return finalizeMyDancrTvAutomatedModeration(admin, claimed);
 }
 
@@ -1279,7 +1284,6 @@ async function validateQueuedVideo(admin: AdminClient, video: any) {
   if (video.upload_validation_pending !== true) return video;
   await assertVideoWorkerCurrent(admin, video);
   assertMyDancrTvStoragePath(video);
-  const startedAt = Date.now();
   const verified = await inspectStoredMyDancrTvVideo(admin, {
     bucket: MYDANCR_TV_BUCKET, expectedBytes: Number(video.file_size_bytes), maxBytes: MYDANCR_TV_MAX_BYTES,
     maxDurationSeconds: MYDANCR_TV_MAX_DURATION_SECONDS, mimeType: video.storage_mime, storagePath: video.storage_path,
@@ -1301,7 +1305,6 @@ async function validateQueuedVideo(admin: AdminClient, video: any) {
   assertVideoWorkerClaim(data, { ...video, storage_path: storagePath }, state.workerId, state.attempt, state.startedAt!);
   if (data.upload_validation_pending !== false || data.storage_mime !== mimeType || data.file_size_bytes !== verified.fileSizeBytes
     || data.width !== verified.width || data.height !== verified.height || data.duration_seconds !== verified.durationSeconds) throw videoWorkerUnavailable();
-  console.info(JSON.stringify({ event: "media_processing.stage", media: "video", stage: "inspection_and_edit", durationMs: Date.now() - startedAt, succeeded: true }));
   if (storagePath !== video.storage_path) {
     // A committed canonical path survives cleanup failures and worker restarts.
     try {
@@ -1389,19 +1392,21 @@ function videoWorkerOutcome(data: any, error: unknown, videoId: string, expected
 }
 
 async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: any) {
-  return runWithServerJob(async () => {
+  const timingContext = { videoId: video.id, attempt: video.moderation_attempt_count };
+  return timeMediaStage("video", "processing_total", () => runWithServerJob(async () => {
   if (!videoWorkerState(video).workerId) throw videoWorkerUnavailable();
-  let prepared: Awaited<ReturnType<typeof watermarkStoredVideo>> | null = null;
+  let prepared: Awaited<ReturnType<typeof prepareStoredVideo>> | null = null;
   let preparingPublication = false;
   try {
-    video = await validateQueuedVideo(admin, video);
+    video = await timeMediaStage("video", "inspection_and_edit", () => validateQueuedVideo(admin, video), timingContext);
     await assertVideoWorkerCurrent(admin, video);
     preparingPublication = true;
-    prepared = await watermarkStoredVideo(admin, {
+    prepared = await timeMediaStage("video", "publication_preparation", () => prepareStoredVideo(admin, {
       publicBucket: MYDANCR_TV_BUCKET, storagePath: video.storage_path,
       storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",
       width: Number(video.width), height: Number(video.height),
-    });
+      timingContext,
+    }), timingContext);
   } catch (error) {
     assertServerJobActive();
     const completedAt = new Date().toISOString();
@@ -1490,7 +1495,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     const { data, error: updateError } = await matchVideoWorkerOwner(update, video)
       .select("id, status, submitted_at, moderation_decision, moderation_reason_codes").maybeSingle();
     return videoWorkerOutcome(data, updateError, video.id, "submitted");
-  });
+  }), timingContext);
 }
 
 function myDancrTvExpiry() {
@@ -1656,7 +1661,7 @@ export async function reviewMyDancrTvVideo(
       && ready?.width === video.width && ready?.height === video.height
       && video.moderation_details?.posterStoragePath === myDancrTvPosterStoragePath(video.storage_path);
     // Legacy queue entries are prepared once; new entries publish without encoding.
-    const media = alreadyPrepared ? video.moderation_details : await watermarkStoredVideo(admin, {
+    const media = alreadyPrepared ? video.moderation_details : await prepareStoredVideo(admin, {
       publicBucket: MYDANCR_TV_BUCKET,
       storagePath: video.storage_path,
       storageMime: video.storage_mime === "video/webm" ? "video/webm" : "video/mp4",

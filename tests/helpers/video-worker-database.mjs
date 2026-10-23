@@ -1,4 +1,5 @@
 import { mediaReview } from './media-review-label.mjs';
+import { timeMediaStage } from '../../src/lib/dancr/media-processing-timing.ts';
 import assert from "node:assert/strict";
 import * as serverJobs from "../../src/lib/server-job.ts";
 import { readFileSync } from "node:fs";
@@ -151,13 +152,14 @@ export function videoWorkerHarness(db, options = {}) {
   vm.runInNewContext(compiled, { exports: tv, Error, Date: ControlledDate, crypto: webcrypto, console: { info() {}, warn() {}, error() {} },
     require(name) {
       if (name === "./media-review-label") return mediaReview;
+      if (name === "./media-processing-timing") return { timeMediaStage };
       if (name === "../server-job.ts") return options.jobTimeoutMs ? { ...serverJobs,
         runWithServerJob: operation => serverJobs.runWithServerJob(operation, options.jobTimeoutMs),
       } : serverJobs;
       if (name === "../api-error-policy") return { PublicApiError };
       if (name === "./video-moderation") return { async moderateStoredMyDancrTvVideo() { providers.push(true); assert.fail("AI moderation must not run"); } };
       if (name === "./video-moderation-mode") return { isVideoDemoAutoApproveMode: () => options.demo === true, demoVideoAutoApprovalValues };
-      if (name === "./media-watermark") return { myDancrTvPosterStoragePath: storagePath => storagePath + ".poster.webp", async watermarkStoredVideo(_client, input) {
+      if (name === "./media-watermark") return { myDancrTvPosterStoragePath: storagePath => storagePath + ".poster.webp", async prepareStoredVideo(_client, input) {
         watermarks.push(input);
         if (options.holdPreparations && !released) await new Promise((resolve,reject)=>pending.push({resolve,reject}));
         if (options.preparationError) throw options.preparationError;

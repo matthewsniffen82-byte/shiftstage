@@ -135,7 +135,8 @@ test('videos use direct storage, scoped signed auth, real byte progress, and a t
   assert.equal(options.headers.authorization, undefined);
   assert.equal(options.removeFingerprintOnSuccess, true);
   assert.equal((await options.fingerprint()).includes('scoped-token'), false);
-  options.onProgress(5, 10); options.onSuccess(); await pending;
+  options.onProgress(5, 10); options.onSuccess();
+  assert.deepEqual(JSON.parse(JSON.stringify(await pending)), { transport: 'resumable', resumed: false });
   assert.deepEqual(progress, [50, 100]);
 });
 
@@ -149,7 +150,8 @@ test('Retry resumes only this exact file and storage destination', async () => {
   assert.throws(() => options.onBeforeRequest({ getURL: () => 'https://attacker.invalid/upload' }), /Invalid video upload destination/);
   assert.throws(() => options.onBeforeRequest({ getURL: () => 'https://fixture.storage.supabase.co/unrelated' }), /Invalid video upload destination/);
   options.onBeforeRequest({ getURL: () => resumableUrl });
-  options.onSuccess(); await pending;
+  options.onSuccess();
+  assert.deepEqual(JSON.parse(JSON.stringify(await pending)), { transport: 'resumable', resumed: true });
 });
 
 test('canceling a video aborts transfer without destroying resumable chunks or emitting late progress', async () => {
@@ -214,7 +216,7 @@ test('a TUS signed-token compatibility error falls back to a scoped signed PUT w
   const f = videoFixture([], async (_url, _body, options) => { options.onProgress(50); options.onProgress(100); return new Response('{}'); });
   const pending = f.uploadResumableVideo(file, videoOptions(controller, percent => progress.push(percent))); await tick();
   f.instances[0].options.onError({ originalResponse: { getStatus: () => 400, getBody: () => JSON.stringify({ message: 'Invalid Compact JWS' }) } });
-  await pending;
+  assert.deepEqual(JSON.parse(JSON.stringify(await pending)), { transport: 'signed_put', resumed: false });
   assert.equal(f.putCalls.length, 1);
   const [url, body, options] = f.putCalls[0];
   const target = new URL(url);

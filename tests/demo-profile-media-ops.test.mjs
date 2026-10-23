@@ -29,7 +29,7 @@ test("profile media is validated, face-centered, high-resolution, and bypasses m
   assert.match(source, /cause\?\.status === 429/);
   assert.match(
     source,
-    /uploadResponsiveImage\([\s\S]*?archiveOriginal: true, watermark: true/,
+    /uploadResponsiveImage\([\s\S]*?archiveOriginal: true/,
   );
   assert.match(source, /avatarWidth: avatar\.width/);
   assert.doesNotMatch(source, /moderateAndStoreDancerPhoto|evaluateDancrImageModeration/);

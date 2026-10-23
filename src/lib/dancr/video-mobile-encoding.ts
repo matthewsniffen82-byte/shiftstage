@@ -7,7 +7,7 @@ import { LOCAL_VIDEO_INPUT_OPTIONS } from './local-video-input.ts';
 import { assertAllowedVideoContainer } from './video-upload-policy.ts';
 import type { MobileVideoPlayback } from './video-mobile-playback.ts';
 
-// Encode the already-watermarked output. Never replace the full-resolution copy.
+// Encode a smaller playback copy without replacing or branding the full-resolution source.
 export async function createMobileVideoPlayback(source: Buffer, mime: 'video/mp4' | 'video/webm', width: number, height: number) {
   assertAllowedVideoContainer(source, mime);
   if (!ffmpeg || !Number.isFinite(width) || !Number.isFinite(height) || width < 2 || height < 2) {

@@ -14,6 +14,7 @@ import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 import { dispatchVideoModeration } from "@/src/lib/dancr/video-worker-dispatch";
+import { parseVideoUploadTiming } from "@/src/lib/dancr/video-upload-timing";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -25,6 +26,7 @@ type RouteProps = {
 };
 
 export async function PATCH(request: Request, { params }: RouteProps) {
+  const startedAt = Date.now();
   try {
     const { id } = await params;
     if (!UUID_PATTERN.test(id)) {
@@ -52,6 +54,11 @@ export async function PATCH(request: Request, { params }: RouteProps) {
       { deferModeration: true },
     );
     if (!("submissionAlreadyAccepted" in video) || video.submissionAlreadyAccepted !== true) {
+      const timing = body.action === "submit" ? parseVideoUploadTiming(body.uploadTiming) : null;
+      if (timing) console.info(JSON.stringify({
+        event: "mydancr_tv.upload_timing", videoId: video.id, source: "browser_reported",
+        ...timing, fileBytes: Number(video.file_size_bytes) || null, submitServerMs: Date.now() - startedAt,
+      }));
       after(async () => {
         try {
           await dispatchVideoModeration(video.id);

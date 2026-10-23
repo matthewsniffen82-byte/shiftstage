@@ -335,7 +335,7 @@ async function holdPhotoForClubReview(
     uploadPrivateObject(admin, MODERATION_REVIEW_BUCKET, reviewPath, input.image),
     uploadResponsiveImage(admin, APPROVED_PHOTO_BUCKET,
       `${input.userId}/${input.profileId}${isAvatar ? "/avatar" : ""}`, displayImage,
-      "31536000", isAvatar ? {} : { archiveOriginal: true, watermark: true, mainPhotoAvatar: true }),
+      "31536000", isAvatar ? {} : { archiveOriginal: true, mainPhotoAvatar: true }),
   ]);
   if (reviewCopy.status === "rejected") throw reviewCopy.reason;
   if (displayCopy.status === "rejected") throw displayCopy.reason;

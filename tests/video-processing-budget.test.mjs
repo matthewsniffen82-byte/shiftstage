@@ -5,6 +5,7 @@ import vm from "node:vm";
 import ts from "typescript";
 import * as jobs from "../src/lib/server-job.ts";
 import * as processing from "../src/lib/dancr/video-processing-state.ts";
+import { parseVideoUploadTiming } from "../src/lib/dancr/video-upload-timing.ts";
 
 const videoId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const read = path => readFileSync(new URL("../" + path, import.meta.url), "utf8");
@@ -42,6 +43,7 @@ for (const [elapsed, alreadyAccepted] of [[2000, false], [31_000, false], [2000,
       "next/server": { NextResponse: { json: Response.json }, after: callback => after.push(callback) },
       "@/src/lib/api": { apiError(error) { throw error; } },
       "@/src/lib/bounded-json-body": { readBoundedJsonObject: async () => ({ action: "submit" }) },
+      "@/src/lib/dancr/video-upload-timing": { parseVideoUploadTiming },
       "@/src/lib/dancr/tv": {
         async submitMyDancrTvUpload(_admin, _userId, id, options) {
           assert.equal(options.deferModeration, true);

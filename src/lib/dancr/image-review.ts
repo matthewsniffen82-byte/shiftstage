@@ -89,7 +89,7 @@ export async function approveReviewRecord(admin: any, record: any, reviewerId: s
       "31536000",
       isAvatar
         ? {}
-        : { archiveOriginal: true, watermark: true, mainPhotoAvatar: true },
+        : { archiveOriginal: true, mainPhotoAvatar: true },
     );
     finalPath = uploadedImage.storagePath;
   }

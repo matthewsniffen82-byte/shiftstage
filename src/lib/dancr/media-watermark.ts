@@ -10,6 +10,7 @@ import { LOCAL_VIDEO_INPUT_OPTIONS } from "./local-video-input.ts";
 import { requireStorageUploadReceipt } from "./storage-upload-receipt.ts";
 import { createMobileVideoPlayback } from "./video-mobile-encoding.ts";
 import { mobileVideoStoragePath, type MobileVideoPlayback } from "./video-mobile-playback.ts";
+import { timeMediaStage, type MediaTimingContext } from "./media-processing-timing.ts";
 
 export const DANCR_ORIGINAL_MEDIA_BUCKET = "dancr-media-originals";
 export const DANCR_MEDIA_WATERMARK_TEXT = "mydancr";
@@ -200,40 +201,50 @@ export async function hasArchivedOriginalMedia(
   return Boolean(archived);
 }
 
-export async function watermarkStoredVideo(
-  client: DancrClient,
-  input: {
-    publicBucket: string;
-    storagePath: string;
-    storageMime: "video/mp4" | "video/webm";
-    width: number;
-    height: number;
-  },
-) {
+type StoredVideoInput = {
+  publicBucket: string;
+  storagePath: string;
+  storageMime: "video/mp4" | "video/webm";
+  width: number;
+  height: number;
+  timingContext?: MediaTimingContext;
+};
+
+/** Uploads retain format normalization, posters, and mobile playback without a logo overlay. */
+export async function prepareStoredVideo(client: DancrClient, input: StoredVideoInput) {
+  return prepareStoredVideoAssets(client, input, false);
+}
+
+/** Legacy maintenance only. Upload and approval flows use prepareStoredVideo. */
+export async function watermarkStoredVideo(client: DancrClient, input: StoredVideoInput) {
+  return prepareStoredVideoAssets(client, input, true);
+}
+
+async function prepareStoredVideoAssets(client: DancrClient, input: StoredVideoInput, watermark: boolean) {
   if (!Number.isFinite(input.width) || !Number.isFinite(input.height) || input.width <= 0 || input.height <= 0) {
-    throw new Error("Valid public video dimensions are required for watermarking.");
+    throw new Error("Valid video dimensions are required for preparation.");
   }
   const archivePath = archivedOriginalStoragePath(input.publicBucket, input.storagePath);
   const archiveBucket = originalArchiveBucket(input.publicBucket);
-  const archived = await downloadOptionalObject(
+  const archived = await timeMediaStage("video", "archive_lookup", () => downloadOptionalObject(
     client,
     archiveBucket,
     archivePath,
-  );
-  const original = archived || await downloadRequiredObject(
+  ), input.timingContext);
+  const original = archived || await timeMediaStage("video", "source_download", () => downloadRequiredObject(
     client,
     input.publicBucket,
     input.storagePath,
-  );
+  ), input.timingContext);
   assertAllowedVideoContainer(original, input.storageMime);
   if (!archived) {
-    await archiveOriginalMedia(
+    await timeMediaStage("video", "archive_original", () => archiveOriginalMedia(
       client,
       input.publicBucket,
       input.storagePath,
       original,
       input.storageMime,
-    );
+    ), input.timingContext);
   }
 
   const workspace = await mkdtemp(path.join(tmpdir(), "mydancr-watermark-"));
@@ -243,22 +254,22 @@ export async function watermarkStoredVideo(
   const overlayPath = path.join(workspace, "mydancr-watermark.png");
   try {
     await writeFile(sourcePath, original);
-    await writeVideoWatermark(
+    if (watermark) await writeVideoWatermark(
       overlayPath,
       Math.max(96, Math.round(input.width * 0.22)),
     );
-    await runVideoWatermarkFfmpeg({
+    await timeMediaStage("video", watermark ? "encode_watermark" : "encode_compatible_video", () => runVideoWatermarkFfmpeg({
       sourcePath,
-      overlayPath,
+      overlayPath: watermark ? overlayPath : undefined,
       resultPath,
       storageMime: input.storageMime,
       width: input.width,
       height: input.height,
-    });
+    }), input.timingContext);
     const watermarked = await readFile(resultPath);
-    if (!watermarked.length) throw new Error("The public video watermark could not be generated.");
+    if (!watermarked.length) throw new Error("The prepared video could not be generated.");
     const posterStoragePath = myDancrTvPosterStoragePath(input.storagePath);
-    const poster = await createDancrVideoPoster(watermarked, input.storageMime);
+    const poster = await timeMediaStage("video", "poster", () => createDancrVideoPoster(watermarked, input.storageMime), input.timingContext);
     assertServerJobActive();
     const { data: uploaded, error } = await client.storage
       .from(input.publicBucket)
@@ -282,7 +293,7 @@ export async function watermarkStoredVideo(
     let mobilePlayback: MobileVideoPlayback | null = null;
     try {
       const mobile = serverJobRemainingMs() >= 75_000
-        ? await createMobileVideoPlayback(watermarked, input.storageMime, input.width, input.height)
+        ? await timeMediaStage("video", "encode_mobile", () => createMobileVideoPlayback(watermarked, input.storageMime, input.width, input.height), input.timingContext)
         : null;
       if (mobile) {
         assertServerJobActive();
@@ -302,7 +313,7 @@ export async function watermarkStoredVideo(
     }
     assertServerJobActive();
     console.info(JSON.stringify({
-      event: "public_media.video_watermarked",
+      event: watermark ? "public_media.video_watermarked" : "public_media.video_prepared",
       bytes: watermarked.length,
       posterBytes: poster.length,
     }));
@@ -406,14 +417,14 @@ async function writeVideoWatermark(outputPath: string, width: number) {
 
 async function runVideoWatermarkFfmpeg(input: {
   sourcePath: string;
-  overlayPath: string;
+  overlayPath?: string;
   resultPath: string;
   storageMime: "video/mp4" | "video/webm";
   width: number;
   height: number;
 }) {
   const executable = ffmpegPath;
-  if (!executable) throw new Error("The public video watermark encoder is unavailable.");
+  if (!executable) throw new Error("The video encoder is unavailable.");
   const margin = Math.max(12, Math.round(Math.min(input.width, input.height) * 0.03));
   const overlay = `overlay=x='if(lt(mod(t,6),3),${margin},W-w-${margin})':y='H-h-${margin}':eval=frame:eof_action=repeat`;
   // Keep source dimensions and quality targets while avoiding slow compression
@@ -429,20 +440,15 @@ async function runVideoWatermarkFfmpeg(input: {
       "error",
       "-i",
       input.sourcePath,
-      "-i",
-      input.overlayPath,
-      "-filter_complex",
-      `[0:v][1:v]${overlay}[v]`,
-      "-map",
-      "[v]",
+      ...(input.overlayPath ? ["-i", input.overlayPath, "-filter_complex", `[0:v][1:v]${overlay}[v]`, "-map", "[v]"] : ["-map", "0:v:0"]),
       "-map",
       "0:a?",
       ...codecArgs,
       input.resultPath,
     ], {
       timeoutMs: VIDEO_WATERMARK_TIMEOUT_MS,
-      timeoutMessage: "The public video watermark encoder timed out.",
-      failureMessage: "The public video watermark encoder failed",
+      timeoutMessage: "The video encoder timed out.",
+      failureMessage: "The video encoder failed",
   });
 }
 
