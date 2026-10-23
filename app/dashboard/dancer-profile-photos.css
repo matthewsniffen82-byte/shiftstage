@@ -1,22 +1,14 @@
-/* Match the public directory's three columns, 10px gaps, and page gutters.
-   Size the frame itself so empty, pending, and approved previews stay identical. */
+/* Keep the portrait preview compact and stable across empty, pending and saved states. */
 body.dancr-button-system #dancer-dashboard #dancer-required-photos {
-  --profile-main-photo-width: calc((min(100vw, 1440px) - 88px) / 3);
+  --profile-main-photo-width: clamp(84px, 24vw, 112px);
   display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
-  column-gap:12px; row-gap:6px; align-items:start;
+  column-gap:16px; row-gap:8px; align-items:start;
+  box-sizing:border-box; margin:0 !important; padding:12px !important;
+  border:1px solid var(--dancr-color-border) !important; border-radius:12px;
+  background:var(--dancr-color-surface-card) !important;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos > header {
   grid-column:1 / -1; margin-bottom:0;
-}
-@media (max-width:899px) {
-  body.dancr-button-system #dancer-dashboard #dancer-required-photos {
-    --profile-main-photo-width: calc((100vw - 56px) / 3);
-  }
-}
-@media (max-width:720px) {
-  body.dancr-button-system #dancer-dashboard #dancer-required-photos {
-    --profile-main-photo-width: calc((100vw - 44px) / 3);
-  }
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-profile-photo-slot {
   /* Shared heading and guidance rows keep both photo tops level when text wraps. */
@@ -44,6 +36,15 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-preview > span {
   padding:8px; font-size:12px;
+}
+body.dancr-button-system #dancer-dashboard .dancer-main-photo-placeholder {
+  display:grid; justify-items:center; gap:8px; line-height:1.4;
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos > .dancer-media-upload-rules {
+  margin-top:12px; padding-top:4px; border-top:1px solid var(--dancr-color-border);
+}
+body.dancr-button-system #dancer-dashboard #dancer-required-photos > .dancer-media-upload-rules > summary {
+  width:100%; margin:0; text-align:left;
 }
 body.dancr-button-system #dancer-dashboard #dancer-required-photos .dancer-main-photo-copy {
   display:flex; flex-direction:column; grid-column:1; grid-row:2; min-width:0; gap:6px;
@@ -101,9 +102,9 @@ body.dancr-button-system #dancer-dashboard #dancer-required-photos .photo-source
   white-space:nowrap; font-size:12px !important;
 }
 
-/* Keep setup compact without shrinking the photo previews or 44px menu targets. */
+/* Keep controls compact while retaining 44px menu targets. */
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos {
-  row-gap:2px; min-height:0; align-content:start;
+  row-gap:6px; min-height:0; align-content:start;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-workspace[data-media-layout] #dancer-required-photos .dancer-photo-guidance {
   margin:0; line-height:1.35;

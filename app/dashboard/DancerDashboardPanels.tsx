@@ -147,10 +147,11 @@ export function DancerPanel({
     />
   );
   const avatarContent = <DancerAvatarPanel compact profile={profile} onProfileChange={onProfileChange} />;
-  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} onBusyChange={setMainBusy} profile={profile} onProfileChange={onProfileChange} />;
+  const mainPhotoContent = <DancerMainPhotoPanel key={String(profile?.id || "new-profile")} showRules={false} onBusyChange={setMainBusy} profile={profile} onProfileChange={onProfileChange} />;
   const photoContent = (
     <DancerPhotoPanel
       uploadOnly
+      showRules={false}
       onBusyChange={setPhotosBusy}
       deletedPhotoIds={deletedPhotoIds}
       deletedPhotoStoragePaths={deletedPhotoStoragePaths}

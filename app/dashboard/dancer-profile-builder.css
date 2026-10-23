@@ -32,8 +32,7 @@ body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-d
   box-sizing:border-box; width:100%; min-width:0; padding:8px 5px !important;
 }
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-onboarding] .dancer-workspace-edit > .dancer-workspace-card,
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-profile-media-area > .dancer-workspace-card,
-body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] #dancer-required-photos {
+body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace[data-media-layout] .dancer-profile-media-area > .dancer-workspace-card {
   margin:0 !important; padding:0 !important; border:0 !important; background:transparent !important;
 }
 body.dancr-button-system #dancer-dashboard .dancer-profile-media-area {

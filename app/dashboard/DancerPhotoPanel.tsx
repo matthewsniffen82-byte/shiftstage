@@ -26,6 +26,7 @@ import { keepDefaultPhotoCrop } from "./default-photo-crop";
 import "./dancer-upload-queue.css";
 export function DancerPhotoPanel({
   uploadOnly = false,
+  showRules = true,
   automaticMain = false,
   mainPhotoAccessory,
   onBusyChange,
@@ -37,6 +38,7 @@ export function DancerPhotoPanel({
   profile,
 }: {
   uploadOnly?: boolean;
+  showRules?: boolean;
   automaticMain?: boolean;
   mainPhotoAccessory?: ReactNode;
   onBusyChange?: (busy: boolean) => void;
@@ -647,7 +649,7 @@ export function DancerPhotoPanel({
   const activeReviews = reviews.filter(review => !awaitingReviews.includes(review));
   const approvedPhotos = photos.filter(photo => photo.status === "approved");
   const needsMainPhoto = automaticMain && !photos.some(photo => photo.isPrimary && photo.status !== "rejected");
-  const uploadLabel = needsMainPhoto ? "Main photo & avatar" : "Add photos";
+  const uploadLabel = needsMainPhoto ? "Main photo & avatar" : uploadOnly && !automaticMain ? "More photos" : "Add photos";
   const batchEntries = uploadBatchIds.length
     ? confirmedQueuedPhotos.filter(item => uploadBatchIds.includes(item.id)).map(item => ({ item,
       result: reviewPhotos.find(photo => photo.id === item.result?.id)
@@ -673,7 +675,7 @@ export function DancerPhotoPanel({
           </span>
           <span className="dancer-main-photo-empty-copy"><strong>Add main photo</strong><small>Your avatar will be created automatically.</small></span>
         </button> : null}
-        <DancerMediaUploadRules kind="photo" />
+        {showRules ? <DancerMediaUploadRules kind="photo" /> : null}
         {!uploadOnly && !approvedPhotos.length ? <div className="photo-upload-heading">
           <span><strong>Add at least 1 solo photo of yourself. You can add more later.</strong></span>
         </div> : null}

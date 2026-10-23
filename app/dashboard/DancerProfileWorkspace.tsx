@@ -7,6 +7,7 @@ import { AvatarUploadBusyContext, persistedDancerStageName, saveDancerProfileEdi
 import { dancerPhotoItemsFromProfile, relabelPhotoItems } from "./DancerPhotoPanel";
 import DancerProfileMediaUploads from "./DancerProfileMediaUploads";
 import DancerSavedPhotoCrop from "./DancerSavedPhotoCrop";
+import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import type { DancerIdentityDraft, LoadState } from "./dashboard-types";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
@@ -231,14 +232,15 @@ export default function DancerProfileWorkspace({
         <section hidden={uploadKind !== "photos"} className="dancer-workspace-card dancer-profile-photos" id="dancer-required-photos" aria-label="Main photo and automatic avatar">
           <div className="dancer-profile-photo-slot dancer-workspace-main-photo" id="dancer-main-photo" role="group" aria-labelledby="dancer-main-upload-title">
             <h4 id="dancer-main-upload-title">Main photo</h4>
-            <p className="dancer-photo-guidance">Shown on dancer cards and club rosters.</p>
+            <p className="dancer-photo-guidance">For your card and profile.</p>
             {mainPhotoContent}
           </div>
           <div className="dancer-profile-photo-slot dancer-face-photo" id="dancer-face-photo" role="group" aria-labelledby="dancer-face-photo-title">
             <h4 id="dancer-face-photo-title">Avatar</h4>
-            <p className="dancer-photo-guidance">Created from your main photo.</p>
+            <p className="dancer-photo-guidance">Created automatically.</p>
             {avatarContent}
           </div>
+          <DancerMediaUploadRules kind="photo" />
         </section>
         <div className="dancer-section-uploader">{photoContent}</div>
         <DancerProfileMediaUploads compact expanded mediaType="photos" photos={approvedPhotos} videos={[]}
