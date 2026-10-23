@@ -655,6 +655,7 @@ export function DancerPhotoPanel({
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
       <DancerUploadDisclosure kind="photos" label="Add photos" defaultOpen={!uploadOnly || approvedPhotos.length < MIN_DANCER_ONBOARDING_PHOTOS}>
       <div className="dancer-photo-upload-form">
+        <strong className="photo-source-heading">Add photos</strong>
         <DancerMediaUploadRules kind="photo" />
         {!uploadOnly && !approvedPhotos.length ? <div className="photo-upload-heading">
           <span><strong>Add at least 1 solo photo of yourself. You can add more later.</strong></span>
@@ -771,8 +772,7 @@ export function DancerPhotoPanel({
           })}
         </div>
       ) : null}
-      <DancerPendingMediaGrid addMore={{ label: "Add more photos", disabled: photoActionBusy,
-        onClick: () => galleryPhotoInputRef.current?.click() }} items={awaitingReviews.map(review => {
+      <DancerPendingMediaGrid items={awaitingReviews.map(review => {
         const { item, result } = review;
         return { id: result!.id, kind: "photo", isMainPhoto: Boolean(result!.isPrimary),
           label: result!.isPrimary ? "Main photo/avatar" : `Photo ${reviews.indexOf(review) + 1}`,

@@ -165,6 +165,12 @@ body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .dancer
 body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .dancer-photo-upload-form {
   grid-template-columns:minmax(0,1fr); gap:8px; margin:0; padding:0;
 }
+body.dancr-button-system #dancer-dashboard .dancer-photo-upload-form > .photo-source-heading {
+  grid-column:1 / -1; margin:0; font-size:14px; font-weight:600; line-height:1.4;
+}
+body.dancr-button-system #dancer-dashboard .dancer-upload-picker .photo-source-heading {
+  display:none;
+}
 body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-source-grid {
   margin:0; gap:8px;
 }

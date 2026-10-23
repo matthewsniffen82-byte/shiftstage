@@ -11,13 +11,13 @@ import { mediaBatchSummary, mediaUploadError } from '../app/dashboard/media-uplo
 import { isVideoProcessingStalled } from '../src/lib/dancr/video-processing-state.ts';
 
 const require = createRequire(import.meta.url);
-function load(file, dependencies, globals = {}) {
+function load(file, dependencies, globals = {}, exportName = 'default') {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(file, 'utf8'), { compilerOptions: {
     module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX,
   } }).outputText, { exports, AbortController, Error, DOMException, ...globals,
     require: name => dependencies[name] || (name === 'react/jsx-runtime' ? require(name) : { default: name }) });
-  return exports.default;
+  return exports[exportName];
 }
 const Grid = load('app/dashboard/DancerPendingMediaGrid.tsx', {
   './DancerVideoThumbnail': { default: ({ videoUrl }) => React.createElement('span', { 'data-video-preview': videoUrl }) },
@@ -46,6 +46,45 @@ test('pending removal stays disabled while its request is in flight', () => {
   const tree = Grid({ items: [{ id: 'one', kind: 'photo', label: 'Photo 1', removing: true, onRemove() {} }] });
   const button = walk(tree).find(node => node.type === 'button');
   assert.equal(button.props.disabled, true); assert.equal(button.props.children, 'Removing…');
+});
+
+test('photo uploads have one Add photos label and retain Gallery and Camera without a duplicate pending action', () => {
+  const Panel = load('app/dashboard/DancerPhotoPanel.tsx', {
+    react: { useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}],
+      useRef: initial => ({ current: initial }), useEffect() {} },
+    '@/src/lib/dancr/media-review-label': mediaReview,
+    '@/src/lib/dancr/media-limits': { MAX_DANCER_PROFILE_PHOTOS: 30, MIN_DANCER_ONBOARDING_PHOTOS: 3 },
+    './DancerPendingMediaGrid': { default: Grid },
+    './DancerUploadFeedback': { DancerUploadSummary: 'Summary', usePendingUploadNotice() {} },
+    './media-upload-feedback': { mediaBatchSummary },
+  }, {}, 'DancerPhotoPanel');
+  for (const uploadOnly of [true, false]) {
+    const tree = Panel({ uploadOnly, profile: { pending_photo_reviews: [
+      { id: 'waiting', status: 'pending_review', previewUrl: '/waiting.jpg', club_reviewed_at: '2026-10-22' },
+    ] } });
+    const nodes = walk(tree);
+    const form = nodes.find(node => node.props.className === 'dancer-photo-upload-form');
+    const heading = walk(form).filter(node => node.props.className === 'photo-source-heading');
+    assert.equal(heading.length, 1); assert.equal(heading[0].type, 'strong');
+    assert.equal(heading[0].props.children, 'Add photos');
+    const inputs = walk(form).filter(node => node.type === 'input');
+    const buttons = walk(form).filter(node => node.type === 'button');
+    assert.equal(buttons.length, 2);
+    assert.deepEqual(buttons.map(node => node.props['aria-label']), ['Choose profile photos from your library', 'Take a new profile photo']);
+    const opened = [];
+    inputs.forEach((node, index) => { node.props.ref.current = { click: () => opened.push(index) }; });
+    buttons.forEach(node => node.props.onClick());
+    assert.deepEqual(opened, [0, 1]);
+    assert.equal(inputs[0].props.multiple, true); assert.equal(inputs[1].props.capture, 'environment');
+    const pending = nodes.find(node => node.type === Grid);
+    assert.equal(pending.props.addMore, undefined);
+    const html = renderToStaticMarkup(Grid(pending.props));
+    assert.match(html, /Awaiting final approval/); assert.match(html, /src="\/waiting.jpg"/);
+    assert.match(html, />Remove<\/button>/); assert.doesNotMatch(html, /Add more photos/);
+  }
+  const css = readFileSync('app/dashboard/dancer-profile-photos.css', 'utf8');
+  assert.match(css, /\.dancer-upload-picker \.photo-source-heading\s*\{\s*display:none;/,
+    'the standalone disclosure already labels the box and must not repeat its heading');
 });
 
 function videoFixture(initial) {
