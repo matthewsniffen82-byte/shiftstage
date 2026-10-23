@@ -1,4 +1,14 @@
 /* Compact profile editing, scoped away from dashboard navigation and media viewers. */
+@layer dancr-palette {
+  /* Keep the page at normal brightness while the form blocks duplicate media actions.
+     Native disabled controls and the existing progress messages still handle busy state. */
+  body.dancr-button-system #dancer-dashboard .dancer-profile-workspace:has(> .dancer-workspace-edit:disabled)
+    :is(button:disabled, [aria-disabled="true"], .photo-source-action.is-disabled, .media-review-replace:has(input:disabled)),
+  body.dancr-button-system #dancer-dashboard .dancer-dashboard-workspace:has(.dancer-workspace-edit:disabled)
+    > .dancer-dashboard-nav > button:disabled {
+    opacity:1 !important; filter:none !important;
+  }
+}
 body.dancr-button-system main#dancer-dashboard.dashboard-shell.dashboard-shell-dancer .dancer-profile-workspace {
   /* An image fill keeps native buttons and upload labels alike under mobile auto-darkening. */
   --profile-button-bg: linear-gradient(#292929, #292929);

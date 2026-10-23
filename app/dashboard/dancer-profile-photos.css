@@ -190,6 +190,11 @@ body.dancr-button-system #dancer-dashboard #dancer-profile-media-library .photo-
 
 /* Photo frames are editing targets, with the same dimensions before and after upload. */
 @layer dancr-profile-photo-targets {
+  /* Disabled editing must not change the color of pending or saved media. */
+  body.dancr-button-system #dancer-dashboard button:is(.dancer-photo-edit-target,.dancer-saved-photo-choice),
+  body.dancr-button-system #dancer-dashboard .profile-upload-preview > button:has(> .profile-upload-thumbnail) {
+    opacity:1 !important; filter:none !important;
+  }
   body.dancr-button-system #dancer-dashboard button.dancer-photo-edit-target {
     box-sizing:border-box !important; display:grid !important; place-items:center !important;
     min-width:0 !important; max-width:100% !important; margin:0 !important; padding:0 !important;
