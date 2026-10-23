@@ -72,18 +72,21 @@
   .dancer-pending-media-preview > .dancer-pending-media-label {
     position: absolute;
     top: 4px;
-    left: 4px;
+    left: 0;
+    right: 0;
     z-index: 1;
     box-sizing: border-box;
-    max-width: calc(100% - 8px);
+    width: 100%;
+    max-width: none;
     margin: 0 !important;
-    padding: 0;
+    padding: 0 3px;
     background: none;
     color: #fff !important;
     -webkit-text-fill-color: currentColor !important;
-    font-size: clamp(9px, 2.5vw, 11px) !important;
+    font-size: clamp(10px, 11cqw, 18px) !important;
     font-weight: 600;
     line-height: 1.4;
+    text-align: center;
     white-space: nowrap;
     overflow-wrap: normal;
     text-shadow: 0 1px 3px #000;
@@ -91,6 +94,7 @@
   }
   .dancer-pending-media-preview {
     position: relative;
+    container-type: inline-size;
     display: grid;
     place-items: center;
     width: 100%;
