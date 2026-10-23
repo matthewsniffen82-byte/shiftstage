@@ -1,16 +1,17 @@
 import { requestDashboardJson } from "./dashboard-session";
 import { versionedStaticAssetUrl } from "../../src/lib/dancr/static-asset-cache.mjs";
 export type AvatarCrop = { x: number; y: number; width: number; height: number };
+export type PhotoCropBatch = { position: number; total: number; onCancelBatch: () => void };
 
 declare global {
   interface Window {
     DancrPhotoCrop?: {
-      crop(file: File, options: { signal?: AbortSignal; aspectRatio?: number; confirmLabel?: string; onCrop?: (crop: AvatarCrop) => void; prepare(file: File, signal: AbortSignal): Promise<string> }): Promise<File | null>;
+      crop(file: File, options: { signal?: AbortSignal; aspectRatio?: number; confirmLabel?: string; batch?: PhotoCropBatch; onCrop?: (crop: AvatarCrop) => void; prepare(file: File, signal: AbortSignal): Promise<string> }): Promise<File | null>;
     };
   }
 }
 
-export async function cropProfilePhoto(file: File, signal: AbortSignal, assertSession = () => {}, aspectRatio?: number, savedPreview?: string, onCrop?: (crop: AvatarCrop) => void) {
+export async function cropProfilePhoto(file: File, signal: AbortSignal, assertSession = () => {}, aspectRatio?: number, savedPreview?: string, onCrop?: (crop: AvatarCrop) => void, batch?: PhotoCropBatch) {
   await loadPhotoEditor();
   if (signal.aborted) throw new DOMException("Photo selection closed.", "AbortError");
   assertSession();
@@ -19,7 +20,8 @@ export async function cropProfilePhoto(file: File, signal: AbortSignal, assertSe
     signal,
     aspectRatio,
     onCrop,
-    confirmLabel: savedPreview ? "Save crop" : undefined,
+    batch,
+    confirmLabel: batch ? "Crop & upload" : savedPreview ? "Save crop" : undefined,
     prepare: async (original, previewSignal) => {
       assertSession();
       if (savedPreview) return savedPreview;

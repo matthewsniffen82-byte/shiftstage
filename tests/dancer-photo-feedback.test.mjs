@@ -8,6 +8,7 @@ import { mediaReview } from "./helpers/media-review-label.mjs";
 import { preparePhotoUpload } from "../app/dashboard/prepare-photo-upload.ts";
 import { runMediaUploadBatch } from "../app/dashboard/media-upload-batch.ts";
 import { createMediaUploadCancellation } from "../app/dashboard/media-upload-cancellation.ts";
+import { createPhotoCropQueue } from "../app/dashboard/photo-upload-crop-queue.ts";
 
 const source = readFileSync(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
 const photoSource = source.slice(source.indexOf("type DancerPhotoItem ="), source.indexOf("\nfunction InfoPanel("));
@@ -20,15 +21,15 @@ const approved = (id = "saved", sort = 1, primary = false) => ({ id, imageUrl: `
 const pending = (id = "review", sort = 1) => ({ id, previewUrl: `/${id}.jpg`, sort_order: sort });
 
 // Exercise the real upload handlers, state updates, and profile mapping without uploading user data.
-function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id, pinned) => ({ id, isPinned: pinned }), post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
+function photoHarness({ uploadOnly = false, profile = {}, crop = async file => file, pin = async (_kind, id, pinned) => ({ id, isPinned: pinned }), post = async () => ({ decision: "review", moderationRecordId: "review", photo: { id: "review", sortOrder: 1 } }), read = async () => ({ profile: { dancer_photos: [approved()] } }) } = {}) {
   const slots = [], posts = [], reads = [], profiles = [], pins = [], crops = [], previews = [], revoked = [];
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    preparePhotoUpload, runMediaUploadBatch, createMediaUploadCancellation, RefreshButton: refreshButtonModule.default,
+    preparePhotoUpload, runMediaUploadBatch, createMediaUploadCancellation, createPhotoCropQueue, RefreshButton: refreshButtonModule.default,
     exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, MIN_DANCER_ONBOARDING_PHOTOS: 3, DancerRejectedUploadNotice: "RejectedUploadNotice", DancerUploadDisclosure: "UploadDisclosure", DancerMediaUploadRules: "MediaUploadRules", DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
-    cropProfilePhoto: (...args) => { crops.push(args); throw new Error("Uploads must not open the manual crop editor."); },
+    cropProfilePhoto: (...args) => { crops.push(args); return crop(...args); },
     require: () => ({ jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }),
     useState(initial) {
       const index = cursor++;
@@ -46,7 +47,7 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
     requestDancerPhotosJson: options => { posts.push(options); return post(options); },
     requestDancerProfileJson: options => { reads.push(options); return read(options); },
     URL: { createObjectURL: () => { const url = `blob:fixture-${previews.length}`; previews.push(url); return url; }, revokeObjectURL: url => revoked.push(url) },
-    FormData, AbortController, Event, Error, crypto: globalThis.crypto,
+    FormData, AbortController, DOMException, Event, Error, crypto: globalThis.crypto,
     window: { dispatchEvent() {}, confirm: () => true },
   });
   function render() {
@@ -90,15 +91,65 @@ function photoHarness({ uploadOnly = false, profile = {}, pin = async (_kind, id
   };
 }
 
-test("selecting several photos uploads the batch without opening a crop popup", async () => {
+test("selecting several photos crops each before uploading the batch", async () => {
   const ui = photoHarness();
   ui.select([new File(["first"], "first.jpg", { type: "image/jpeg" }), new File(["second"], "second.jpg", { type: "image/jpeg" })]);
   await ui.settle();
-  assert.equal(ui.crops.length, 0);
+  assert.equal(ui.crops.length, 2);
+  assert.deepEqual(ui.crops.map(args => [args[6].position, args[6].total]), [[1,2],[2,2]]);
   assert.equal(ui.posts.length, 2);
   assert.equal(ui.reads.length, 1);
   assert.deepEqual(await Promise.all(ui.posts.map(post => post.body.get("file").text())), ["first", "second"]);
   assert.equal(ui.buttons.filter(button => button.props.children === "Retry").length, 0);
+});
+
+test("batch crops open one at a time, upload confirmed bytes, and skip without blocking the next photo", async () => {
+  const confirms=[], uploads=[];
+  const ui=photoHarness({crop:()=>new Promise(resolve=>confirms.push(resolve)),
+    post:()=>new Promise(resolve=>uploads.push(resolve))});
+  const files=[1,2,3].map(i=>new File([`original-${i}`],`photo-${i}.jpg`,{type:'image/jpeg'}));
+  ui.select(files);await ui.settle();
+  assert.equal(confirms.length,1);assert.equal(ui.posts.length,0);
+  const cropped=new File(['cropped-1'],'crop.jpg',{type:'image/jpeg'});
+  confirms[0](cropped);await ui.settle();
+  assert.equal(ui.posts.length,1);assert.equal(confirms.length,2,'next crop opens while the first upload is still pending');
+  assert.equal(await ui.posts[0].body.get('file').text(),'cropped-1');
+  confirms[1](null);await ui.settle();
+  assert.equal(ui.posts.length,1);assert.equal(confirms.length,3);
+  confirms[2](files[2]);await ui.settle();
+  assert.equal(ui.posts.length,2);assert.equal(await ui.posts[1].body.get('file').text(),'original-3');
+  assert.deepEqual(ui.crops.map(args=>[args[3],args[6].position,args[6].total]),[[9/16,1,3],[9/16,2,3],[9/16,3,3]]);
+  uploads.forEach((resolve,i)=>resolve({decision:'moderating',moderationRecordId:`uploaded-${i}`}));await ui.settle();
+});
+
+test("Cancel uploads from the crop dialog prevents queued crop dialogs and all unconfirmed uploads", async () => {
+  const ui=photoHarness({crop:(_file,signal)=>new Promise((_resolve,reject)=>{
+    signal.addEventListener('abort',()=>reject(signal.reason),{once:true});
+  })});
+  ui.select([1,2,3].map(i=>new File(['image'],`photo-${i}.jpg`,{type:'image/jpeg'})));await ui.settle();
+  assert.equal(ui.crops.length,1);ui.crops[0][6].onCancelBatch();await ui.settle();
+  assert.equal(ui.posts.length,0);assert.equal(ui.crops.length,1);
+  assert.deepEqual(ui.statuses,['Upload canceled','Upload canceled','Upload canceled']);
+});
+
+test("skipping a replacement crop preserves the saved photo and never deletes or uploads", async () => {
+  const ui=photoHarness({crop:async()=>null,profile:{pending_photo_reviews:[{...pending('previous'),status:'moderation_error'}]}});
+  ui.replacements[0].props.onChange({target:{files:[new File(['new'],'new.jpg',{type:'image/jpeg'})],value:''}});
+  await ui.settle();assert.equal(ui.posts.length,0);
+  assert.equal(ui.cards.length,1);assert.deepEqual(ui.statuses,['Review delayed']);
+});
+
+test("a failed cropped upload retries its confirmed bytes instead of cropping the original again", async () => {
+  let attempts=0;
+  const cropped=new File(['chosen-crop'],'chosen.jpg',{type:'image/jpeg'});
+  const ui=photoHarness({crop:async()=>cropped,post:async()=>{
+    if(++attempts===1)throw new Error('Connection lost.');
+    return {decision:'moderating',moderationRecordId:'retried'};
+  }});
+  ui.select();await ui.settle();ui.buttons.find(button=>button.props.children==='Retry').props.onClick();await ui.settle();
+  assert.equal(ui.crops.length,1);
+  assert.deepEqual(await Promise.all(ui.posts.map(post=>post.body.get('file').text())),['chosen-crop','chosen-crop']);
+  assert.equal(ui.posts[0].headers['idempotency-key'],ui.posts[1].headers['idempotency-key']);
 });
 
 test('Cancel during photo checks waits for its receipt, removes that upload and retains other photos', async () => {
@@ -191,19 +242,19 @@ test("collapsing photo upload controls leaves pending and rejected reviews outsi
   assert.equal(photoHarness({ uploadOnly: true }).picker.props.defaultOpen, true);
 });
 
-test("camera and library photos go directly to the moderated upload with their original bytes", async () => {
+test("camera and library photos can keep their original bytes after crop confirmation", async () => {
   for (const source of ["camera", "gallery"]) {
     const ui = photoHarness();
     ui.select([new File(["original-photo"], "solo.jpg", { type: "image/jpeg" })], source);
     await ui.settle();
-    assert.equal(ui.crops.length, 0);
+    assert.equal(ui.crops.length, 1);
     assert.equal(ui.posts.length, 1);
     assert.equal(await ui.posts[0].body.get("file").text(), "original-photo");
     assert.equal(ui.posts[0].body.get("file").name, "solo.jpg");
   }
 });
 
-test("failed uploads retry the same original photo without a crop dialog or new upload key", async () => {
+test("failed uploads reuse the confirmed crop without reopening the editor or changing the upload key", async () => {
   let attempts = 0;
   const ui = photoHarness({ post: async () => {
     if (++attempts === 1) throw new Error("Connection lost.");
@@ -212,7 +263,7 @@ test("failed uploads retry the same original photo without a crop dialog or new 
   ui.select(); await ui.settle();
   ui.buttons.find(button => button.props.children === "Retry").props.onClick();
   await ui.settle();
-  assert.equal(ui.crops.length, 0);
+  assert.equal(ui.crops.length, 1);
   assert.equal(ui.posts.length, 2);
   assert.equal(ui.posts[0].headers["idempotency-key"], ui.posts[1].headers["idempotency-key"]);
   assert.equal(await ui.posts[1].body.get("file").text(), "fixture");

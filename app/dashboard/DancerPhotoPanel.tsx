@@ -14,6 +14,8 @@ import { readSession, requestDancerPhotosJson, requestDancerProfileJson } from "
 import type { LoadState, DancerPhotoItem, DancerPhotoQueueItem } from "./dashboard-types";
 import { DANCER_PHOTOS_KEEP_OPEN_EVENT } from "./DashboardShared";
 import { preparePhotoUpload } from "./prepare-photo-upload";
+import { cropProfilePhoto } from "./profile-photo-crop";
+import { createPhotoCropQueue } from "./photo-upload-crop-queue";
 import { runMediaUploadBatch } from "./media-upload-batch";
 import { createMediaUploadCancellation } from "./media-upload-cancellation";
 import "./dancer-upload-queue.css";
@@ -193,7 +195,7 @@ export function DancerPhotoPanel({
   async function cancelPhotoUpload(item?: DancerPhotoQueueItem, result?: DancerPhotoItem) {
     const id = item?.id || result!.id;
     setCancelingIds(current => new Set(current).add(id));
-    if (item && ["queued", "preparing", "uploading", "checking"].includes(item.stage) && uploadCancellationRef.current) {
+    if (item && ["queued", "preparing", "cropping", "uploading", "checking"].includes(item.stage) && uploadCancellationRef.current) {
       uploadCancellationRef.current.cancelOne(item.id);
       if (item.stage === "queued") await discardPhotoUpload(item);
       return;
@@ -282,6 +284,7 @@ export function DancerPhotoPanel({
     setIsUploading(true);
     setCancelingUploads(false);
     const cancellation = createMediaUploadCancellation(controller.signal);
+    const cropNext = createPhotoCropQueue();
     uploadCancellationRef.current = cancellation;
     setStatus("Uploading");
     const failedItems: DancerPhotoQueueItem[] = [];
@@ -294,7 +297,7 @@ export function DancerPhotoPanel({
     let nextSortOrder = Math.max(nextGalleryPhotoSortOrder(workingPhotos), ...batch.map(item => (item.uploadSortOrder ?? -1) + 1));
     try {
       await persistQueuedPhotoDeletions(controller.signal);
-      await runMediaUploadBatch(batch, batch.some(item => item.replaces) ? 1 : 2, async queuedItem => {
+      await runMediaUploadBatch(batch, batch.some(item => item.replaces) ? 1 : 2, async (queuedItem, index) => {
         if (!isCurrentPhotoAction(requestId, controller)) return;
         const transfer = cancellation.start(queuedItem.id);
         if (!transfer) {
@@ -309,6 +312,33 @@ export function DancerPhotoPanel({
         try {
           if (!item.file.type.startsWith("image/") || !item.file.size || item.file.size > 25 * 1024 * 1024) {
             throw new Error("Choose a photo between 1 byte and 25 MB.");
+          }
+          if (!item.cropConfirmed) {
+            const assertCurrent = () => {
+              transfer.signal.throwIfAborted();
+              const currentSession = readSession();
+              if (!isCurrentPhotoAction(requestId, controller) || !currentSession?.accessToken || currentSession.account?.id !== session.account?.id) {
+                throw new DOMException("Photo selection closed. Sign in again to upload.", "AbortError");
+              }
+            };
+            const cropped = await cropNext(async () => {
+              assertCurrent();
+              updateQueuedPhoto(item.id, { stage: "cropping" });
+              return cropProfilePhoto(item.file, transfer.signal, assertCurrent, 9 / 16, undefined, undefined, {
+                position: index + 1, total: batch.length,
+                onCancelBatch: () => { cancellation.cancel(); setCancelingUploads(true); },
+              });
+            }, transfer.signal);
+            assertCurrent();
+            if (!cropped) { await discardPhotoUpload(item); return; }
+            const previewUrl = cropped === item.file ? item.previewUrl : URL.createObjectURL(cropped);
+            if (previewUrl !== item.previewUrl) {
+              queuedPreviewUrlsRef.current.add(previewUrl);
+              queuedPreviewUrlsRef.current.delete(item.previewUrl);
+              URL.revokeObjectURL(item.previewUrl);
+            }
+            item = { ...item, file: cropped, previewUrl, cropConfirmed: true };
+            updateQueuedPhoto(item.id, { file: cropped, previewUrl, cropConfirmed: true, stage: "preparing" });
           }
           if (item.replaces) {
             const { photoId, queueId } = item.replaces;
@@ -630,21 +660,21 @@ export function DancerPhotoPanel({
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </button>
         </div>
-        <p className="photo-upload-selection-hint">You can select several photos from your gallery.</p>
+        <p className="photo-upload-selection-hint">Select several photos, then crop or keep each original before uploading.</p>
         {status && !(status === "Uploading" && reviews.length) ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       </DancerUploadDisclosure>
       {reviews.length ? (
         <div className="photo-upload-queue" role="group" aria-label="Photo upload status">
           {!uploadOnly ? <strong>Upload status · {reviews.length}</strong> : null}
-          {isUploading && queuedPhotos.some(item => ["queued", "preparing", "uploading"].includes(item.stage)) ? <button className="dancer-upload-cancel" type="button" disabled={cancelingUploads} onClick={() => {
+          {isUploading && queuedPhotos.some(item => ["queued", "preparing", "cropping", "uploading"].includes(item.stage)) ? <button className="dancer-upload-cancel" type="button" disabled={cancelingUploads} onClick={() => {
             uploadCancellationRef.current?.cancel(); setCancelingUploads(true);
           }}>{cancelingUploads ? "Canceling…" : "Cancel uploads"}</button> : null}
           {reviews.map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
             const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
-            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "checking" ? "Checking photo…" : item?.stage === "preparing" ? "Preparing photo…" : item?.stage === "uploading" ? "Uploading" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : "Waiting to upload";
-            const processing = ["Uploading", "Preparing photo…", "Checking photo…", "Waiting to upload"].includes(uploadStatus);
+            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "cropping" ? "Crop photo" : item?.stage === "checking" ? "Checking photo…" : item?.stage === "preparing" ? "Preparing photo…" : item?.stage === "uploading" ? "Uploading" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : "Waiting to upload";
+            const processing = ["Uploading", "Preparing photo…", "Crop photo", "Checking photo…", "Waiting to upload"].includes(uploadStatus);
             const uploadProgress = uploadStatus === "Uploading" ? item?.progress : uploadStatus === "Waiting to upload" ? 0 : undefined;
             if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
               label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
@@ -655,7 +685,7 @@ export function DancerPhotoPanel({
                 <span className="dancer-upload-review-copy">
                   <strong>{`Photo ${selectionNumber}`}</strong>
                   <small role="status" aria-live="polite">{uploadStatus === "Uploading" ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
-                  {processing ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
+                  {processing && item?.stage !== "cropping" ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
                     role="progressbar" aria-label={`Photo ${selectionNumber}: ${uploadStatus}`}
                     aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
                     <span style={uploadProgress === undefined ? undefined : { width: `${uploadProgress}%` }} />

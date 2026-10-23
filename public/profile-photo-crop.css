@@ -20,3 +20,11 @@ body .dancr-photo-crop button[data-crop-confirm] { background: #5d36cc; }
 body .dancr-photo-crop button:disabled { opacity: .5; cursor: default; }
 .dancr-photo-crop [data-crop-status] { margin: 10px 0 0; font-size: 12px; }
 .dancr-photo-crop [hidden] { display: none !important; }
+dialog.dancr-photo-crop[data-crop-batch] { overflow-y: auto; }
+.dancr-photo-crop[data-crop-batch] [data-crop-actions] { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.dancr-photo-crop[data-crop-batch] [data-crop-confirm] { grid-column: 1 / -1; order: 0; }
+.dancr-photo-crop[data-crop-batch] [data-crop-original] { order: 1; }
+.dancr-photo-crop[data-crop-batch] [data-crop-cancel] { order: 2; }
+.dancr-photo-crop[data-crop-batch] [data-crop-reset] { order: 3; }
+.dancr-photo-crop[data-crop-batch] [data-crop-cancel-batch] { order: 4; }
+.dancr-photo-crop[data-crop-batch] [data-crop-retry] { grid-column: 1 / -1; order: 5; }

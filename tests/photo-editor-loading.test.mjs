@@ -7,13 +7,13 @@ import ts from 'typescript';
 function fixture() {
   const scripts = [], timers = [];
   const source = readFileSync('app/dashboard/profile-photo-crop.ts', 'utf8').replace(/^import .*$/gm, '').replace('export async function', 'async function');
-  const context = vm.createContext({ window: {}, DOMException,
+  const context = vm.createContext({ window: {}, exports: {}, DOMException,
     versionedStaticAssetUrl: () => '/profile-photo-crop.js?v=fixture',
     requestDashboardJson() { throw new Error('test must not upload'); },
     setTimeout: callback => { timers.push(callback); return timers.length; }, clearTimeout() {},
     document: { createElement: () => ({ remove() { this.removed = true; } }), head: { appendChild: script => scripts.push(script) } },
   });
-  vm.runInContext(ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText, context);
+  vm.runInContext(ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS } }).outputText, context);
   return { context, scripts, timers };
 }
 

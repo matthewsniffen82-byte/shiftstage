@@ -39,9 +39,10 @@ test("crop preview measures the existing TV card CSS instead of inventing anothe
   assert.match(fs.readFileSync("app/dashboard/profile-photo-crop.ts", "utf8"), /versionedStaticAssetUrl\("\/profile-photo-crop\.js"\)/);
 });
 
-test("dashboard photos upload directly without opening the manual crop editor", () => {
+test("dashboard gallery photos pass the crop gate before replacing or uploading", () => {
   const batch = dashboard.split("  async function uploadPhotoBatch(")[1].split("  async function pinPhoto(")[0];
-  assert.doesNotMatch(batch, /cropProfilePhoto|cropped|Crop canceled/);
+  assert.ok(batch.indexOf("cropProfilePhoto(") < batch.indexOf("if (item.replaces)"));
+  assert.ok(batch.indexOf("if (!cropped)") < batch.indexOf('formData.set("file", file)'));
   assert.match(batch, /formData\.set\("file", file\)/);
   assert.ok(batch.indexOf("persistQueuedPhotoDeletions(controller.signal)") < batch.indexOf('formData.set("file", file)'));
   assert.match(batch, /await requestDancerPhotosJson\(/);

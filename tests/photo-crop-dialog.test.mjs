@@ -90,3 +90,34 @@ test("canceling while the photo decodes never opens a late dialog", async () => 
   assert.equal(f.dialog.openings, 0);
   assert.equal(f.dialog.removed, true);
 });
+
+test('batch crop shows the photo counter and returns the original only after explicit confirmation',async()=>{
+  const f=fixture();
+  const result=f.start(async()=> 'data:image/jpeg;base64,fixture',{
+    batch:{position:2,total:5,onCancelBatch(){}},confirmLabel:'Crop & upload',
+  });
+  await tick();f.decode();await tick();
+  assert.equal(f.node('h2').textContent,'Photo 2 of 5');
+  assert.equal(f.node('[data-crop-confirm]').textContent,'Crop & upload');
+  assert.equal(f.node('[data-crop-cancel]').textContent,'Skip photo');
+  assert.equal(f.node('[data-crop-original]').hidden,false);
+  f.node('[data-crop-original]').dispatchEvent(new Event('click'));
+  assert.equal((await result).size,100);assert.equal(f.dialog.removed,true);
+});
+
+test('Skip photo closes only the current batch crop without canceling other uploads',async()=>{
+  const f=fixture();let canceled=0;
+  const result=f.start(async()=> 'data:image/jpeg;base64,fixture',{batch:{position:1,total:2,onCancelBatch(){canceled++;}}});
+  await tick();f.decode();await tick();
+  f.node('[data-crop-cancel]').dispatchEvent(new Event('click'));
+  assert.equal(await result,null);assert.equal(canceled,0);
+});
+
+test('Cancel uploads invokes batch cancellation and closes an active crop',async()=>{
+  const f=fixture();let canceled=0;
+  const result=f.start(async()=> 'data:image/jpeg;base64,fixture',{batch:{position:1,total:2,onCancelBatch(){canceled++;f.controller.abort();}}});
+  const rejected=assert.rejects(result,{name:'AbortError'});
+  await tick();f.decode();await tick();
+  f.node('[data-crop-cancel-batch]').dispatchEvent(new Event('click'));
+  await rejected;assert.equal(canceled,1);assert.equal(f.dialog.removed,true);
+});
