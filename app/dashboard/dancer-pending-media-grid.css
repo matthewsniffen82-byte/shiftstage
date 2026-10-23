@@ -61,15 +61,16 @@
     box-sizing: border-box;
     max-width: calc(100% - 8px);
     margin: 0 !important;
-    padding: 4px 6px;
-    border-radius: 4px;
-    background: rgba(0, 0, 0, .78);
+    padding: 0;
+    background: none;
     color: #fff !important;
     -webkit-text-fill-color: currentColor !important;
-    font-size: 11px !important;
+    font-size: clamp(9px, 2.5vw, 11px) !important;
     font-weight: 600;
     line-height: 1.4;
-    overflow-wrap: anywhere;
+    white-space: nowrap;
+    overflow-wrap: normal;
+    text-shadow: 0 1px 3px #000;
     pointer-events: none;
   }
   .dancer-pending-media-preview {
