@@ -53,14 +53,24 @@
     border: 0;
     background: transparent;
   }
-  .dancer-pending-media-grid > li > .dancer-pending-media-label {
+  .dancer-pending-media-preview > .dancer-pending-media-label {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 1;
+    box-sizing: border-box;
+    max-width: calc(100% - 8px);
     margin: 0 !important;
-    padding: 2px 4px;
-    color: var(--dancr-color-text-primary);
-    font-size: 12px !important;
+    padding: 4px 6px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, .78);
+    color: #fff !important;
+    -webkit-text-fill-color: currentColor !important;
+    font-size: 11px !important;
     font-weight: 600;
     line-height: 1.4;
     overflow-wrap: anywhere;
+    pointer-events: none;
   }
   .dancer-pending-media-preview {
     position: relative;

@@ -27,10 +27,10 @@ export default function DancerPendingMediaGrid({ items, addMore }: {
     </div>
     <ul className="dancer-pending-media-grid">
       {items.map(item => <li key={`${item.kind}:${item.id}`}>
-        {item.isMainPhoto ? <strong className="dancer-pending-media-label">Main photo/avatar</strong> : null}
         <div className="dancer-pending-media-preview" role={item.kind === "video" ? "img" : undefined} aria-label={item.kind === "video" ? item.label : undefined}>
           {item.kind === "video" ? <DancerVideoThumbnail videoUrl={item.videoUrl} posterUrl={item.imageUrl} />
             : item.imageUrl ? <img src={item.imageUrl} alt={item.label} loading="lazy" /> : <span>{item.label}</span>}
+          {item.isMainPhoto ? <strong className="dancer-pending-media-label">Main photo/avatar</strong> : null}
         </div>
         <button className="dancer-pending-media-remove" type="button" disabled={item.disabled || item.removing}
           aria-label={`Remove ${item.label.toLowerCase()}`} onClick={item.onRemove}>
