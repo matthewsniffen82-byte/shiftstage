@@ -11,6 +11,7 @@ import { useDancerProfileVideos } from "./useDancerProfileVideos";
 import type { DancerIdentityDraft, LoadState } from "./dashboard-types";
 import { mediaReviewLabel } from "@/src/lib/dancr/media-review-label";
 import { DancerProfileUploadContext, type ProfileUploadKind } from "./DancerProfileUploadContext";
+import { DancerCanLeaveUploadContext, DancerPendingUploadsContext } from "./DancerUploadFeedback";
 import "./dancer-profile-photos.css";
 import "./dancer-profile-builder.css";
 
@@ -57,6 +58,10 @@ export default function DancerProfileWorkspace({
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [mediaBusy, setMediaBusy] = useState(false);
   const [cropBusy, setCropBusy] = useState(false);
+  const [pendingUploads, setPendingUploads] = useState<Record<string, boolean>>({});
+  const reportPendingUploads = useCallback((kind: string, pending: boolean) => {
+    setPendingUploads(current => Boolean(current[kind]) === pending ? current : { ...current, [kind]: pending });
+  }, []);
   const [status, setStatus] = useState("");
   useEffect(() => { setStatus(""); }, [draftIdentity.stageName, draftIdentity.city]);
   const root = useRef<HTMLDivElement>(null);
@@ -198,6 +203,8 @@ export default function DancerProfileWorkspace({
   </section>;
 
   return <div ref={root} className="dancer-profile-workspace" data-media-layout="shared" data-onboarding={onboarding || undefined} data-builder-step={onboarding ? step : undefined} aria-label={onboarding ? "Create your profile" : "Edit your profile"}>
+    <DancerPendingUploadsContext.Provider value={reportPendingUploads}>
+    <DancerCanLeaveUploadContext.Provider value={!busy && !dirty && !Object.values(pendingUploads).some(Boolean)}>
     {onboarding ? <>
       <nav className="dancer-builder-steps" aria-label="Profile setup steps">
         {profileSteps.map((item, index) => <button type="button" key={item.id} aria-current={step === item.id ? "step" : undefined}
@@ -221,7 +228,7 @@ export default function DancerProfileWorkspace({
       <button type="button" disabled={busy} onClick={() => openEditorArea("dancer-visibility-sharing")}>Visibility & sharing</button>
     </nav> : null}
     <DancerProfileUploadContext.Provider value={{ active: uploadKind, open: openUpload }}>
-    <fieldset disabled={busy} className="dancer-workspace-edit">
+    <fieldset disabled={saving} className="dancer-workspace-edit">
       <section hidden={onboarding && step !== "details"} className="dancer-workspace-card" id="dancer-details-section" aria-label={onboarding ? "Name and city" : undefined} aria-labelledby={onboarding ? undefined : "dancer-details-title"}>
         {!onboarding ? <header><h3 id="dancer-details-title">Your details</h3></header> : null}
         {identityContent}
@@ -286,5 +293,7 @@ export default function DancerProfileWorkspace({
       <button className="dancer-workspace-save" type="button" aria-describedby={footerMessage ? "dancer-workspace-next-step" : undefined} disabled={busy || (!onboarding && !dirty)} onClick={() => onboarding ? advanceSetup() : void save()}>{saving ? "Saving…" : onboarding ? step === "media" ? continueLabel : "Continue" : "Save changes"}</button>
       {onboarding && step !== "details" ? <button className="dancer-builder-back" type="button" disabled={busy} onClick={() => chooseStep("details")}>Back</button> : null}
     </footer>
+    </DancerCanLeaveUploadContext.Provider>
+    </DancerPendingUploadsContext.Provider>
   </div>;
 }

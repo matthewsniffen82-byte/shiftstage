@@ -24,7 +24,7 @@ export async function createMobileVideoPlayback(source: Buffer, mime: 'video/mp4
     await runMediaProcess(ffmpeg, [
       '-y', ...LOCAL_VIDEO_INPUT_OPTIONS, '-hide_banner', '-loglevel', 'error', '-i', input,
       '-map', '0:v:0', '-map', '0:a?', '-vf', `scale=${outputWidth}:${outputHeight}:flags=lanczos`,
-      '-c:v', 'libx264', '-preset', 'medium', '-crf', '22', '-maxrate', '2500k', '-bufsize', '5000k',
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '22', '-maxrate', '2500k', '-bufsize', '5000k',
       '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output,
     ], { timeoutMs: 60_000, timeoutMessage: 'Mobile video encoding timed out.', failureMessage: 'Mobile video encoding failed' });
     const bytes = await readFile(output);

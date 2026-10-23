@@ -89,11 +89,11 @@ test('unknown and malformed reasons never invent a violation or expose diagnosti
 for (const kind of ['photo', 'video']) {
   test(`${kind} keeps background processing receipts out of uploading and club approval feedback`, () => {
     for (const status of ['pending', 'moderating']) {
-      assert.equal(mediaReview.mediaReviewLabel(status, '', kind), 'Completed');
+      assert.equal(mediaReview.mediaReviewLabel(status, '', kind), 'Awaiting final approval');
       assert.equal(explain(kind, status, { message: 'Upload received. AI checks are running; club approval is required before it goes live.' }), '');
     }
     for (const status of ['pending_review', 'submitted', 'review', 'completed']) {
-      assert.equal(mediaReview.mediaReviewLabel('pending', status), 'Waiting for final approval');
+      assert.equal(mediaReview.mediaReviewLabel('pending', status), 'Awaiting final approval');
       assert.equal(explain(kind, 'pending', { moderationStatus: status, message: 'AI checks passed. Pending club approval.' }), '');
     }
     assert.equal(mediaReview.mediaReviewLabel('approved', 'pending_review'), 'Approved');

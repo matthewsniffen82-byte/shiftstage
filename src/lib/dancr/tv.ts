@@ -1392,7 +1392,10 @@ function videoWorkerOutcome(data: any, error: unknown, videoId: string, expected
 }
 
 async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: any) {
-  const timingContext = { videoId: video.id, attempt: video.moderation_attempt_count };
+  const processingStarted = Date.now();
+  const processingStages: Record<string, number> = {};
+  const processingTiming = () => ({ ...processingStages, totalMs: Math.max(0, Date.now() - processingStarted) });
+  const timingContext = { videoId: video.id, attempt: video.moderation_attempt_count, stages: processingStages };
   return timeMediaStage("video", "processing_total", () => runWithServerJob(async () => {
   if (!videoWorkerState(video).workerId) throw videoWorkerUnavailable();
   let prepared: Awaited<ReturnType<typeof prepareStoredVideo>> | null = null;
@@ -1424,7 +1427,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
         moderation_decision: "review",
         moderation_reason_codes: [errorCode],
         moderation_provider_flagged: false,
-        moderation_details: { errorCode },
+        moderation_details: { errorCode, processingTiming: processingTiming() },
         moderation_completed_at: completedAt,
         review_notes: mediaReviewExplanation("video", "moderation_error", { reasonCodes: [errorCode] }),
       });
@@ -1448,6 +1451,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     moderation_model: "human-review-v1",
     moderation_details: {
       fileChecksPassed: true,
+      processingTiming: processingTiming(),
       ...(prepared ? {
         ...prepared,
         preparedPublication: { storagePath: video.storage_path, storageMime: video.storage_mime,
@@ -1488,7 +1492,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
     const errorCode = "video_moderation_timeout";
     const update = admin.from("mydancr_tv_videos").update({
       status: "submitted", moderation_decision: "review",
-      moderation_reason_codes: [errorCode], moderation_details: { errorCode },
+      moderation_reason_codes: [errorCode], moderation_details: { errorCode, processingTiming: processingTiming() },
       moderation_completed_at: new Date().toISOString(),
       review_notes: mediaReviewExplanation("video", "moderation_error", { reasonCodes: [errorCode] }),
     });

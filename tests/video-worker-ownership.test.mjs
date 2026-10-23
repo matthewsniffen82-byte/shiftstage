@@ -20,6 +20,7 @@ test('processing timeout immediately becomes retryable and late completion canno
   let snapshot=await workerSnapshot(db);
   assert.equal(snapshot.row.moderation_decision,'review');
   assert.deepEqual(snapshot.row.moderation_reason_codes,['video_moderation_timeout']);
+  assert.ok(snapshot.row.moderation_details.processingTiming.totalMs >= 0);
   assert.equal(snapshot.row.published_at,null);
   h.releaseAll();await new Promise(resolve=>setTimeout(resolve,10));
   assert.equal(h.watermarks.length,1);assert.deepEqual(await workerSnapshot(db),snapshot);
@@ -235,6 +236,10 @@ test("upload processing prepares private video files and approval does not encod
   assert.equal(h.watermarks.length, 1);
   const { row } = await workerSnapshot(db);
   assert.equal(row.moderation_details.preparedPublication.storagePath, row.storage_path);
+  for (const stage of ["inspection_and_edit", "publication_preparation", "totalMs"]) {
+    assert.ok(Number.isFinite(row.moderation_details.processingTiming[stage]));
+    assert.ok(row.moderation_details.processingTiming[stage] >= 0);
+  }
   assert.equal(row.published_at, null);
   assert.equal(row.reviewed_at, null);
   assert.equal(row.reviewed_by, null);

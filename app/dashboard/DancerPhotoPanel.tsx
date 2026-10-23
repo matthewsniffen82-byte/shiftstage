@@ -18,7 +18,10 @@ import { cropProfilePhoto } from "./profile-photo-crop";
 import { createPhotoCropQueue } from "./photo-upload-crop-queue";
 import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "./media-upload-batch";
 import { createMediaUploadCancellation } from "./media-upload-cancellation";
-import { photoBatchProgress } from "./photo-upload-progress";
+import { mediaBatchSummary, mediaUploadError } from "./media-upload-feedback";
+import { DancerUploadProgress, DancerUploadSummary, usePendingUploadNotice } from "./DancerUploadFeedback";
+import DancerPhotoBatchChoice from "./DancerPhotoBatchChoice";
+import { keepDefaultPhotoCrop } from "./default-photo-crop";
 import "./dancer-upload-queue.css";
 export function DancerPhotoPanel({
   uploadOnly = false,
@@ -44,6 +47,7 @@ export function DancerPhotoPanel({
   );
   const [queuedPhotos, setQueuedPhotos] = useState<DancerPhotoQueueItem[]>([]);
   const [uploadBatchIds, setUploadBatchIds] = useState<string[]>([]);
+  const [cropBatchIds, setCropBatchIds] = useState<string[]>([]);
   const [status, setStatus] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [cancelingUploads, setCancelingUploads] = useState(false);
@@ -98,7 +102,7 @@ export function DancerPhotoPanel({
   }, []);
 
   function queuePhotos(files: File[], source: DancerPhotoQueueItem["source"], replaces?: DancerPhotoQueueItem["replaces"]) {
-    if (actionInFlightRef.current) return;
+    if (actionInFlightRef.current || cropBatchIds.length) return;
     window.dispatchEvent(new Event(DANCER_PHOTOS_KEEP_OPEN_EVENT));
     const waitingCount = queuedPhotos.filter((item) => item.stage !== "complete").length;
     const availableProfileSlots = replaces ? 1 : Math.max(0, MAX_DANCER_PROFILE_PHOTOS - photos.length - waitingCount);
@@ -127,9 +131,27 @@ export function DancerPhotoPanel({
     const omitted = files.length - selectedFiles.length;
     setUploadBatchIds(additions.map(item => item.id));
     setQueuedPhotos((current) => [...current, ...additions]);
-    setStatus(`${additions.length} ${additions.length === 1 ? "photo" : "photos"} selected.${omitted ? ` ${omitted} exceeded the available profile slots.` : ""}`);
+    setStatus(omitted ? `${omitted} exceeded the available profile slots.` : "");
     const uploadable = additions.filter((item) => !item.error);
-    if (uploadable.length) void uploadPhotoBatch(uploadable);
+    if (uploadable.length > 1) setCropBatchIds(uploadable.map(item => item.id));
+    else if (uploadable.length) void uploadPhotoBatch(uploadable);
+  }
+
+  function confirmBatchCrops(keepAll: boolean) {
+    const batch = queuedPhotos.filter(item => cropBatchIds.includes(item.id));
+    setCropBatchIds([]);
+    void uploadPhotoBatch(batch, keepAll);
+  }
+
+  function cancelBatchCrops() {
+    const ids = new Set(cropBatchIds);
+    setQueuedPhotos(current => current.filter(item => {
+      if (!ids.has(item.id)) return true;
+      URL.revokeObjectURL(item.previewUrl); queuedPreviewUrlsRef.current.delete(item.previewUrl);
+      return false;
+    }));
+    setUploadBatchIds(current => current.filter(id => !ids.has(id)));
+    setCropBatchIds([]); setStatus("");
   }
 
   function updateQueuedPhoto(id: string, changes: Partial<DancerPhotoQueueItem>) {
@@ -278,7 +300,7 @@ export function DancerPhotoPanel({
     if (data.profile) onProfileChange?.(data.profile);
   }
 
-  async function uploadPhotoBatch(batch: DancerPhotoQueueItem[]) {
+  async function uploadPhotoBatch(batch: DancerPhotoQueueItem[], keepAllCrops = false) {
     const session = readSession();
     if (!session?.accessToken) return setStatus("Sign in required.");
     if (!batch.length) return setStatus("Choose profile photos or take a new photo first.");
@@ -331,6 +353,7 @@ export function DancerPhotoPanel({
             };
             const cropped = await cropNext(async () => {
               assertCurrent();
+              if (keepAllCrops) return keepDefaultPhotoCrop(item.file, transfer.signal);
               updateQueuedPhoto(item.id, { stage: "cropping" });
               return cropProfilePhoto(item.file, transfer.signal, assertCurrent, 9 / 16, undefined, undefined, {
                 position: index + 1, total: batch.length,
@@ -431,10 +454,7 @@ export function DancerPhotoPanel({
             updateQueuedPhoto(item.id, { stage: "failed", progress: 0, error: "Upload canceled." });
             return;
           }
-          const message = error instanceof Error ? error.message : "Unable to upload photo.";
-          const friendlyMessage = message.includes("valid JPEG, PNG, or WebP") || message.includes("HEIC or HEIF")
-            ? "That photo could not be converted. Choose another photo or set your phone camera to Most Compatible."
-            : message;
+          const friendlyMessage = mediaUploadError(error, "photo");
           const failedItem = { ...item, uploadSortOrder, stage: "failed" as const, progress: 0, error: friendlyMessage };
           failedItems.push(failedItem);
           updateQueuedPhoto(item.id, failedItem);
@@ -579,7 +599,9 @@ export function DancerPhotoPanel({
     }
   }
 
-  const photoActionBusy = isUploading || retrying || Boolean(pinningPhotoId) || deletingPhotoIds.size > 0;
+  const photoActionBusy = isUploading || retrying || Boolean(pinningPhotoId) || deletingPhotoIds.size > 0 || cropBatchIds.length > 0;
+  const hasUnsavedUploads = queuedPhotos.some(item => !item.result && item.stage !== "complete" && item.error !== "Upload canceled.");
+  usePendingUploadNotice("photos", hasUnsavedUploads);
   useEffect(() => { onBusyChange?.(photoActionBusy); return () => onBusyChange?.(false); }, [photoActionBusy, onBusyChange]);
   // Approved photos belong in the gallery. Keep unresolved uploads here and
   // use the refreshed library to retire reviews, even when approval changes IDs.
@@ -597,13 +619,17 @@ export function DancerPhotoPanel({
     ...reviewPhotos.filter(photo => !visibleQueuedPhotos.some(item => item.result?.id === photo.id)).map(result => ({ result })),
   ];
   const approvedPhotos = photos.filter(photo => photo.status === "approved");
-  const batchProgress = photoBatchProgress(uploadBatchIds.length
+  const batchEntries = uploadBatchIds.length
     ? queuedPhotos.filter(item => uploadBatchIds.includes(item.id)).map(item => ({ item,
       result: reviewPhotos.find(photo => photo.id === item.result?.id)
         || photos.find(photo => photo.id === item.result?.id)
         || (item.result && approvedPhotos.find(photo => photo.sortOrder === item.result?.sortOrder && photo.isPrimary === item.result?.isPrimary))
         || item.result,
-    })) : reviews);
+    })) : reviews;
+  const batchProgress = mediaBatchSummary(batchEntries.map(({ item, result }) => ({
+    saved: Boolean(result && !["uploading", "failed"].includes(result.status)),
+    failed: Boolean(item?.error) || ["error", "moderation_error", "moderation_retry"].includes(result?.moderationStatus || ""),
+  })));
 
   return (
     <article aria-busy={photoActionBusy} aria-label="Profile photo manager" className="info-panel upload-panel">
@@ -675,25 +701,24 @@ export function DancerPhotoPanel({
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </button>
         </div>
-        <p className="photo-upload-selection-hint">Crop, keep, or skip each photo. Up to {MEDIA_UPLOAD_CONCURRENCY} upload at once; extras wait in line.</p>
+        <p className="photo-upload-selection-hint">Select photos, then keep all crops or adjust individually.</p>
         {status && !(status === "Uploading" && reviews.length) ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       </DancerUploadDisclosure>
-      {batchProgress ? <div className="dancer-upload-overall" role="status" aria-live="polite">
-        {batchProgress.needsAttention ? <strong>Upload needs attention</strong> : null}
-        <small>{batchProgress.completed} of {batchProgress.total} processed</small>
-      </div> : null}
+      {cropBatchIds.length ? <DancerPhotoBatchChoice photos={queuedPhotos.filter(item => cropBatchIds.includes(item.id))}
+        onKeep={() => confirmBatchCrops(true)} onAdjust={() => confirmBatchCrops(false)} onCancel={cancelBatchCrops} /> : null}
+      <DancerUploadSummary summary={batchProgress} busy={photoActionBusy || hasUnsavedUploads} />
       {reviews.length ? (
         <div className="photo-upload-queue" role="group" aria-label="Photo upload status">
           {!uploadOnly ? <strong>Upload status · {reviews.length}</strong> : null}
           {isUploading && queuedPhotos.some(item => ["queued", "preparing", "cropping", "uploading"].includes(item.stage)) ? <button className="dancer-upload-cancel" type="button" disabled={cancelingUploads} onClick={() => {
             uploadCancellationRef.current?.cancel(); setCancelingUploads(true);
           }}>{cancelingUploads ? "Canceling…" : "Cancel uploads"}</button> : null}
-          {reviews.map(({ item, result }, index) => {
+          {reviews.filter(({ item }) => !item || !cropBatchIds.includes(item.id)).map(({ item, result }, index) => {
             const selectionNumber = item ? queuedPhotos.indexOf(item) + 1 : index + 1;
             const awaitingClubApproval = Boolean(result && isAwaitingClubApproval(result.status, result.moderationStatus));
-            const uploadStatus = result ? photoStatusLabel(result.status, result.moderationStatus) : item?.stage === "cropping" ? "Crop photo" : item?.stage === "checking" ? "Completed" : item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : "Uploading";
-            const processing = ["Uploading", "Crop photo", "Completed"].includes(uploadStatus);
+            const uploadStatus = item?.error === "Upload canceled." ? "Upload canceled" : item?.error ? "Upload failed" : result ? photoStatusLabel(result.status, result.moderationStatus) : "Uploading";
+            const processing = uploadStatus === "Uploading";
             const uploadProgress = uploadStatus === "Uploading" && item?.stage === "uploading" ? item.progress : item?.stage === "queued" ? 0 : undefined;
             if (result?.status === "rejected") return <DancerRejectedUploadNotice key={result.id} id={result.id} kind="photo"
               label={item?.file.name || `Photo ${selectionNumber}`} message={result.note || photoStatusNote("rejected")}
@@ -704,12 +729,8 @@ export function DancerPhotoPanel({
                 <span className="dancer-upload-review-copy">
                   <strong>{`Photo ${selectionNumber}`}</strong>
                   <small role="status" aria-live="polite">{uploadStatus === "Uploading" && uploadProgress !== undefined ? `${uploadStatus} · ${uploadProgress}%` : uploadStatus}</small>
-                  {uploadStatus === "Uploading" ? <span className={`dancer-upload-progress${uploadProgress === undefined ? " is-indeterminate" : ""}`}
-                    role="progressbar" aria-label={`Photo ${selectionNumber}: ${uploadStatus}`}
-                    aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadProgress}>
-                    <span style={uploadProgress === undefined ? undefined : { width: `${uploadProgress}%` }} />
-                  </span> : null}
-                  {result?.note ? <em>{result.note}</em> : null}
+                  {processing ? <DancerUploadProgress label={`Photo ${selectionNumber}: Uploading`} progress={uploadProgress} /> : null}
+                  {uploadStatus === "Review delayed" ? <em>Processing paused. Tap Retry.</em> : result?.note && uploadStatus !== "Awaiting final approval" ? <em>{result.note}</em> : null}
                   {result && !awaitingClubApproval && !processing ? <DancerMediaRetryButton id={result.id} kind="photo" status={result.status} moderationStatus={result.moderationStatus}
                     disabled={photoActionBusy || retrying} onBusyChange={busy => { setRetrying(busy); onBusyChange?.(busy); }} onRetried={data => reviewRetried(result.id, data)} /> : null}
                   {item?.error ? <em>{item.error}</em> : null}

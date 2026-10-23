@@ -1,5 +1,12 @@
 /* Share compact upload receipts across onboarding, photos and videos. */
 @layer dancr-upload-reviews {
+  .dancer-photo-batch-choice { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--dancr-color-border); border-radius: 10px; }
+  .dancer-photo-batch-choice p { margin: 0; font-size: 13px; color: var(--dancr-color-text-muted); }
+  .dancer-photo-batch-previews { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 96px)); gap: 6px; max-height: 240px; overflow: auto; }
+  .dancer-photo-batch-previews img { width: 100%; aspect-ratio: 9 / 16; object-fit: cover; object-position: center; border-radius: 6px; }
+  .dancer-upload-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .dancer-upload-actions button { min-height: 44px; padding: 8px 12px; }
+  .dancer-uploads-saved { display: block; font-size: 12px; line-height: 1.4; color: var(--dancr-color-text-muted); }
   .dancer-upload-overall {
     display: grid;
     gap: 6px;
@@ -51,6 +58,7 @@
     font-weight: 400 !important;
   }
   .dancer-upload-review-card > .dancer-upload-review-copy {
+    display: grid !important;
     min-width: 0;
     gap: 4px !important;
   }
@@ -114,7 +122,9 @@
     grid-row: 1 / span 2;
     margin: 0 !important;
   }
-  .dancer-upload-review-copy > :is(.photo-queue-actions, .tv-queue-actions) > button {
+  .dancer-upload-review-copy > :is(.photo-queue-actions, .tv-queue-actions) { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dancer-upload-review-copy > button,
+  .dancer-upload-review-copy > :is(.photo-queue-actions, .tv-queue-actions) > :is(button, label) {
     width: auto !important;
     min-height: 44px !important;
     padding: 6px 8px !important;

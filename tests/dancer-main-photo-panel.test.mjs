@@ -5,6 +5,7 @@ import test from "node:test";
 import ts from "typescript";
 import { mediaReview } from './helpers/media-review-label.mjs';
 import { photoUploadPercent } from '../app/dashboard/photo-upload-progress.ts';
+import { mediaUploadError } from '../app/dashboard/media-upload-feedback.ts';
 
 const compile = path => ts.transpileModule(readFileSync(path, "utf8"), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 },
@@ -34,6 +35,8 @@ function fixture(profile = {}, result, { confirm = true, removeFails = false } =
       if (name === "react/jsx-runtime") return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) };
       if (name === "./DancerPhotoPanel") return mapping;
       if (name === "./photo-upload-progress") return { photoUploadPercent };
+      if (name === "./media-upload-feedback") return { mediaUploadError };
+      if (name === "./DancerUploadFeedback") return { DancerUploadsSavedNotice: "UploadsSavedNotice", usePendingUploadNotice() {} };
       if (name === '@/src/lib/dancr/media-review-label') return mediaReview;
       if (name === './dashboard-session') return {
         readSession: () => ({ account: { id: 'owner' } }),
@@ -92,7 +95,7 @@ test("a first main upload appears in the main slot while awaiting approval, incl
     assert.equal(view.button.props['aria-label'], "Remove pending main photo");
     assert.equal(view.button.props.disabled, false);
     assert.equal(view.crop, undefined);
-    assert.equal(view.badge, 'Waiting for final approval');
+    assert.equal(view.badge, 'Awaiting final approval');
     assert.equal(view.status, '');
   }
   ui.update({ dancer_photos: [main] });
@@ -133,7 +136,7 @@ test('main photo waiting for Club approval offers only Remove and blocks replace
   assert.equal(ui.choices.length, 0);
   assert.equal(ui.target.props.disabled, true);
   assert.equal(ui.button.props.children, 'Remove');
-  assert.equal(ui.badge, 'Waiting for final approval');
+  assert.equal(ui.badge, 'Awaiting final approval');
   await ui.upload();
   assert.equal(ui.uploads.length, 0);
 });
@@ -159,7 +162,7 @@ test('choosing another processing main photo preserves the approved replacement 
 });
 
 test('moderation work and delays use the same labels as the media library', () => {
-  for (const [status, label] of [['moderating', 'Completed'], ['error', 'Review delayed'], ['pending_review', 'Waiting for final approval']]) {
+  for (const [status, label] of [['moderating', 'Awaiting final approval'], ['error', 'Review delayed'], ['pending_review', 'Awaiting final approval']]) {
     const ui = fixture({ pending_photo_reviews: [{ ...pending, status }] });
     assert.equal(ui.badge, label);
     assert.equal(ui.progress, undefined, 'saved uploads use status text without a lingering progress bar');

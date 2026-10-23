@@ -5,6 +5,7 @@ import test from 'node:test';
 import ts from 'typescript';
 import { mediaReview } from './helpers/media-review-label.mjs';
 import * as mediaLimits from '../src/lib/dancr/media-limits.ts';
+import { dancerSubmissionMedia } from '../src/lib/dancr/dancer-submission-media.ts';
 
 // Component event/effect tests; no browser, server, network, or production data.
 function harness(file, props, { valid = true, save = async () => true, hash = '' } = {}) {
@@ -32,6 +33,10 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
   const modules = {
     '@/src/lib/dancr/media-limits': mediaLimits,
     '@/src/lib/dancr/media-review-label': mediaReview,
+    '@/src/lib/dancr/dancer-submission-media': { dancerSubmissionMedia: profile => dancerSubmissionMedia({ ...profile,
+      dancer_photos: (profile.photos || []).map(photo => ({ ...photo, review_status: photo.status, is_primary: photo.isPrimary })),
+      pending_photo_reviews: (profile.photos || []).filter(photo => photo.status === 'pending').map(photo => ({ ...photo, upload_context: photo.isPrimary ? 'profile_main' : 'profile_gallery' })),
+    }) },
     react: React,
     'react/jsx-runtime': { jsx, jsxs: jsx },
     './DashboardShared': { AvatarUploadBusyContext: { Provider: 'AvatarProvider' }, persistedDancerStageName: p => p?.stageName || '', saveDancerProfileEditor: async () => { saves++; return save(); } },
@@ -39,6 +44,7 @@ function harness(file, props, { valid = true, save = async () => true, hash = ''
     './useDancerProfileVideos': { useDancerProfileVideos: () => ({ uploadedVideos: [], setUploadedVideos() {}, isMediaLoading: false, mediaError: '' }) },
     './DancerDashboardIdentity': { DancerDashboardIcon: 'Icon' },
     './DancerProfileUploadContext': { DancerProfileUploadContext: { Provider: 'UploadProvider' } },
+    './DancerUploadFeedback': { DancerCanLeaveUploadContext: { Provider: 'UploadSafetyProvider' }, DancerPendingUploadsContext: { Provider: 'PendingUploadsProvider' } },
     '@/app/dancers/[slug]/DancerPhotoCarousel': { DancerPhotoCarousel: 'Carousel' },
   };
   const exports = {};
@@ -109,6 +115,7 @@ test('uploads lock save and section controls and retain a navigation warning', (
   assert.equal(ui.button('Save changes').props.disabled, true);
   assert.equal(ui.button('Details').props.disabled, true);
   assert.ok(ui.listeners.has('beforeunload'));
+  assert.equal(ui.nodes().find(node => node.type === 'fieldset').props.disabled, false, 'upload cancellation and crop choices remain operable');
   ui.button('Save changes').props.onClick(); assert.equal(ui.saves, 0);
   ui.update({ uploadBusy: false, draftIdentity: props.draftIdentity }); assert.equal(ui.listeners.has('beforeunload'), false);
 });
@@ -162,18 +169,18 @@ test('the library contains all approved photos, including the main photo', () =>
   assert.equal(emptyMain.nodes().find(node => node.type === './DancerProfileMediaUploads').props.photos.length, 1);
 });
 
-test('pending face reviews prevent continuing, and only approved photos count toward setup', async () => {
+test('incomplete media setup asks for more photos, while pending uploads count toward setup', async () => {
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, avatarPhotoUrl: '', pending_avatar_review: { status: 'pending_review' } } });
   await ui.click('Continue to agreement');
   assert.equal(ui.continuing, 0);
-  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /avatar from your main photo/.test(node.props.children)));
+  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more profile photo/.test(node.props.children)));
   ui.update({ profile: readyProfile });
   await ui.click('Continue to agreement'); assert.equal(ui.continuing, 1);
 });
 
-test('saving details never advances past a pending main photo', async () => {
+test('a pending main photo still requires enough profile photos to continue', async () => {
   const ui = harness(editorFile, { ...props, onboarding: true, profile: { ...profile, photos: [{ id: 'main-review', isPrimary: true, status: 'pending', moderationStatus: 'pending_review' }] } });
   await ui.click('Continue to agreement');
   assert.equal(ui.saves, 0); assert.equal(ui.continuing, 0);
-  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Main photo: awaiting review/.test(node.props.children)));
+  assert.ok(ui.nodes().some(node => node.props?.role === 'status' && /Add .* more profile photo/.test(node.props.children)));
 });
