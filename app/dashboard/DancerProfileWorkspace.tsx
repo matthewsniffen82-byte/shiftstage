@@ -242,9 +242,8 @@ export default function DancerProfileWorkspace({
           <button type="button" aria-pressed={uploadKind === "videos"} disabled={busy} onClick={() => setUploadKind("videos")}>Videos</button>
         </div>
       </section>
-      <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
+      <section hidden={(onboarding && step !== "media") || uploadKind === "videos"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-media-library" aria-label="Photo uploads and library">
         <div className="dancer-section-uploader">{photoContent}</div>
-        <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>
         <DancerProfileMediaUploads compact expanded mediaType="photos" photos={approvedPhotos} videos={[]}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={false} videoError=""
@@ -273,7 +272,8 @@ export default function DancerProfileWorkspace({
           }}
         />
       </section>
-      <section hidden={onboarding && step !== "media"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
+      <section hidden={(onboarding && step !== "media") || uploadKind === "photos"} className="dancer-workspace-card dancer-workspace-media" id="dancer-profile-video-library" aria-label="Video uploads and library">
+        <div className="dancer-section-uploader dancer-builder-video-uploader" id="dancer-builder-video-upload">{videoContent}</div>
         <DancerProfileMediaUploads compact expanded mediaType="videos" photos={[]} videos={uploadedVideos.filter(video => video.status === "approved").map(video => ({ ...video, imageUrl: video.posterUrl }))}
           onProfileChange={onProfileChange}
           isApproved={!onboarding} isPublic={isPublic} isVideoLoading={isMediaLoading} videoError={mediaError}

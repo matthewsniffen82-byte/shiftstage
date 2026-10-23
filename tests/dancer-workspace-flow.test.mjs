@@ -148,15 +148,28 @@ test('active uploads disable Continue and step navigation without unmounting the
   assert.ok(f.draw().some(n=>n.props.children==='Photo uploader'));
 });
 
-for (const onboarding of [true, false]) test(`one media chooser switches forms while both uploaders remain mounted: onboarding=${onboarding}`,async()=>{
+for (const onboarding of [true, false]) test(`media tabs separate complete queues and galleries while both uploaders remain mounted: onboarding=${onboarding}`,async()=>{
   const f=fixture({onboarding});await f.click('+ Add photos/videos');
   const active=()=>f.draw().find(n=>n.type===uploadContext.Provider).props.value.active;
-  assert.equal(active(),'photos');await f.click('Videos');assert.equal(active(),'videos');
+  const photoPanel=()=>f.draw().find(n=>n.props.id==='dancer-profile-media-library');
+  const videoPanel=()=>f.draw().find(n=>n.props.id==='dancer-profile-video-library');
+  assert.equal(active(),'photos');
+  assert.equal(photoPanel().props.hidden,false);assert.equal(videoPanel().props.hidden,true);
+  assert.ok(walk(photoPanel()).some(n=>n.props.children==='Photo uploader'));
+  assert.ok(!walk(photoPanel()).some(n=>n.props.children==='Video uploader'));
+  assert.ok(walk(photoPanel()).some(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='photos'));
+  assert.ok(walk(videoPanel()).some(n=>n.props.children==='Video uploader'));
+  assert.ok(walk(videoPanel()).some(n=>n.type==='./DancerProfileMediaUploads'&&n.props.mediaType==='videos'));
+  await f.click('Videos');assert.equal(active(),'videos');
+  assert.equal(photoPanel().props.hidden,true);assert.equal(videoPanel().props.hidden,false);
+  await f.click('Photos');assert.equal(active(),'photos');
+  assert.equal(photoPanel().props.hidden,false);assert.equal(videoPanel().props.hidden,true);
   assert.equal(f.button('Close uploads').props['aria-expanded'],true);
   assert.equal(f.button('Close uploads').props.disabled,false);
   f.props.uploadBusy=true;assert.equal(f.button('Close uploads').props.disabled,true);
   f.props.uploadBusy=false;
   await f.click('Close uploads');assert.equal(active(),null);
+  assert.equal(photoPanel().props.hidden,false);assert.equal(videoPanel().props.hidden,false);
   assert.equal(f.button('+ Add photos/videos').props['aria-expanded'],false);
   assert.ok(f.draw().some(n=>n.props.children==='Photo uploader'));assert.ok(f.draw().some(n=>n.props.children==='Video uploader'));
   const media=f.draw().find(n=>n.props.className==='dancer-profile-media-area');
@@ -184,6 +197,8 @@ test('returning dancers can open photo and video uploads from incoming links',()
   for (const [hash,kind] of [['#dancer-profile-videos','videos'],['#dancer-profile-media-library','photos'],['#dancer-photos-title','photos'],['#dancer-videos-title','videos']]) {
     const f=fixture({onboarding:false,hash});
     assert.equal(f.draw().find(n=>n.type===uploadContext.Provider).props.value.active,kind);
+    assert.equal(f.draw().find(n=>n.props.id==='dancer-profile-media-library').props.hidden,kind==='videos');
+    assert.equal(f.draw().find(n=>n.props.id==='dancer-profile-video-library').props.hidden,kind==='photos');
   }
 });
 
