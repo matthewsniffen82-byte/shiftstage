@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { authorizeCronRequest } from "@/src/lib/dancr/cron-auth";
 import {
   retryMyDancrTvAutomatedModeration,
@@ -13,6 +14,27 @@ export const maxDuration = 300;
 
 const MAX_JOBS_PER_RUN = 2;
 const STALE_AFTER_MS = MODERATION_WORKER_STALE_MS;
+
+/** Uploads dispatch here after saving a durable job; claims make delivery idempotent. */
+export async function POST(request: Request) {
+  const unauthorized = authorizeCronRequest(request);
+  if (unauthorized) return unauthorized;
+  try {
+    const body = await readBoundedJsonObject(request, { maxBytes: 256,
+      invalidMessage: "Invalid video job.", tooLargeMessage: "Invalid video job." });
+    if (typeof body.videoId !== "string" || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(body.videoId)) {
+      return NextResponse.json({ ok: false, error: "Invalid video job." }, { status: 400 });
+    }
+    const result = await runWithServerJob(
+      () => retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), body.videoId as string),
+      VIDEO_PROCESSING_ROUTE_TIMEOUT_MS,
+    );
+    return NextResponse.json({ ok: true, status: result?.status || "not_claimed" });
+  } catch (error) {
+    console.error(JSON.stringify({ event: "mydancr_tv.worker_failed", ...safeErrorMetadata(error) }));
+    return NextResponse.json({ ok: false, error: "Video worker failed; saved jobs remain recoverable." }, { status: 500 });
+  }
+}
 
 export async function GET(request: Request) {
   const unauthorized = authorizeCronRequest(request);

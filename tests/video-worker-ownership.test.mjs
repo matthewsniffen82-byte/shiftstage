@@ -291,10 +291,10 @@ test("an uncertain claim response is never replayed", async () => {
 for (const decision of ["approved", "review", "rejected"]) test(`the current worker can persist ${decision} exactly once`, async () => {
   const h = videoWorkerHarness(db, { decision });
   const result = await h.retry();
-  assert.equal(result.status, decision === "approved" ? "submitted" : "rejected");
+  assert.equal(result.status, decision === "rejected" ? "rejected" : "submitted");
   assert.equal(h.providers.length, 1);
   assert.equal(h.calls.filter(call => call.kind === "result").length, 1);
-  assert.equal((await workerSnapshot(db)).row.moderation_decision, decision === "approved" ? "approved" : "rejected");
+  assert.equal((await workerSnapshot(db)).row.moderation_decision, decision);
   assert.doesNotMatch((await workerSnapshot(db)).row.review_notes, /manual review|human review/i);
 });
 

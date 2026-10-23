@@ -4,7 +4,6 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   hideOwnMyDancrTvVideo,
   queueOwnMyDancrTvReviewRetry,
-  retryMyDancrTvAutomatedModeration,
   submitMyDancrTvUpload,
 } from "@/src/lib/dancr/tv";
 import {
@@ -14,7 +13,7 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
-import { runWithServerJob, VIDEO_PROCESSING_JOB_TIMEOUT_MS, VIDEO_PROCESSING_ROUTE_TIMEOUT_MS } from "@/src/lib/server-job";
+import { dispatchVideoModeration } from "@/src/lib/dancr/video-worker-dispatch";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,7 +25,6 @@ type RouteProps = {
 };
 
 export async function PATCH(request: Request, { params }: RouteProps) {
-  const startedAt = performance.now();
   try {
     const { id } = await params;
     if (!UUID_PATTERN.test(id)) {
@@ -56,13 +54,7 @@ export async function PATCH(request: Request, { params }: RouteProps) {
     if (!("submissionAlreadyAccepted" in video) || video.submissionAlreadyAccepted !== true) {
       after(async () => {
         try {
-          const remainingMs = Math.floor(VIDEO_PROCESSING_ROUTE_TIMEOUT_MS - (performance.now() - startedAt));
-          // Leave a queued upload for recovery if this request cannot finish a job.
-          if (remainingMs < VIDEO_PROCESSING_JOB_TIMEOUT_MS) return;
-          await runWithServerJob(
-            () => retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), video.id),
-            remainingMs,
-          );
+          await dispatchVideoModeration(video.id);
         } catch (error) {
           console.error(JSON.stringify({
             event: "mydancr_tv.background_moderation_failed",

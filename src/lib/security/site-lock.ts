@@ -41,6 +41,7 @@ export function bypassSiteLock(request: NextRequest) {
   if (request.method === "POST" && ["/api/public/customer-email", "/api/public/venue-updates"].includes(path)) return true;
   // Machine endpoints retain their existing cron/signature authentication.
   if (request.method === "GET" && workerPaths.has(path)) return true;
+  if (request.method === "POST" && path === "/api/cron/video-moderation") return true;
   if (request.method === "POST" && ["/api/stripe/webhook", "/api/ondato/webhook"].includes(path)) return true;
   // The anonymous metrics sink returns no site data. Keep its deliberately
   // credential-free reporting intact rather than attaching visitor cookies.

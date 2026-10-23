@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { createMediaVisualResponse } from './helpers/media-visual-runtime.mjs';
 import test from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
@@ -55,9 +56,9 @@ function load(file, functions, timer, client, audioStream = { destroy() {} }) {
   const math = Object.create(Math);
   math.random = () => 0;
   return compile(selected.join("\n") + "\nexport { " + functions.join(", ") + " };", {
-    ...timer, Math: math, withTimeout: helper, withOpenAIRequestDeadline: helper, safeErrorMetadata: () => ({}),
+    ...timer, createMediaVisualResponse, Math: math, withTimeout: helper, withOpenAIRequestDeadline: helper, safeErrorMetadata: () => ({}),
     DANCR_IMAGE_MODERATION_MODEL: "omni-moderation-latest",
-    VIDEO_TRANSCRIPTION_MODEL: "whisper-1", VIDEO_POLICY_MODEL: "gpt-4.1-mini",
+    VIDEO_TRANSCRIPTION_MODEL: "gpt-transcribe", VIDEO_POLICY_MODEL: "gpt-6-astra",
     VIDEO_POLICY_REASON_CODES: ["safe_adult_promotional_content"],
     DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES,
     DANCR_MEDIA_IDENTITY_MODEL: "gpt-4o-mini", MEDIA_IDENTITY_TIMEOUT_MS: 30_000,
@@ -81,25 +82,9 @@ const cases = [
   ["video text", "video-moderation.ts", videoFunctions, 1, (f, c) => f.moderateText(c, "fixture")],
   ["video policy", "video-moderation.ts", videoFunctions, 1, (f, c) => f.classifyVideoPolicy(c, [], "fixture", "")],
   ["image moderation", "image-moderation.ts", ["createModeration", "withRetry"], 3, (f, c) => f.createModeration(c, [])],
-  ["image diagnostic", "image-moderation.ts", ["runOpenAITextDiagnostic"], 1, (f, c) => f.runOpenAITextDiagnostic(c)],
   ["media identity", "media-identity.ts", ["analyzeDancerMediaIdentity"], 1,
     f => f.analyzeDancerMediaIdentity({ targetImages: [Buffer.from("fixture")], mediaType: "photo" })],
 ];
-
-test("diagnostic failures stay scoped to the client of the current moderation job", async () => {
-  const timer = clock();
-  const f = load("src/lib/dancr/image-moderation.ts", ["runOpenAITextDiagnostic"], timer, {});
-  let failedCalls = 0, healthyCalls = 0;
-  const failed = { moderations: { async create() { failedCalls++; throw new Error("synthetic cancelled job"); } } };
-  const healthy = { moderations: { async create() { healthyCalls++; return { results: [{ flagged: false }] }; } } };
-  await Promise.all([
-    assert.rejects(f.runOpenAITextDiagnostic(failed), /synthetic cancelled job/),
-    f.runOpenAITextDiagnostic(healthy),
-  ]);
-  await f.runOpenAITextDiagnostic(healthy);
-  await assert.rejects(f.runOpenAITextDiagnostic(failed), /synthetic cancelled job/);
-  assert.equal(healthyCalls, 1); assert.equal(failedCalls, 2);
-});
 
 for (const [name, file, functions, expectedCalls, invoke] of cases) {
   test(`${name} aborts each expired request before an application retry`, async () => {

@@ -134,7 +134,7 @@ function scenario({decision='review',concurrentDecision='',defer=false,providerE
 
 for(const avatar of [false,true])for(const retry of [false,true]){
   const context=(avatar?'avatar':'gallery')+(retry?' retry':' first upload');
-  for(const [personCount,personCountConfidence,expected] of [[2,0.99,'rejected'],[1,0.7,'rejected'],[0,0.99,'rejected']]){
+  for(const [personCount,personCountConfidence,expected] of [[2,0.99,'rejected'],[1,0.7,'pending_review'],[0,0.99,'rejected']]){
     test(context+' blocks count '+personCount+' with certainty '+personCountConfidence,async()=>{
       const s=scenario({avatar,retry,decision:'approved',identityAnalysis:{personCount,personCountConfidence,singlePersonOnly:personCount===1,referenceMatch:'match',confidence:0.99}});
       const result=await s.run();
@@ -155,18 +155,18 @@ for(const avatar of [false,true])for(const retry of [false,true]){
   for(const branding of ['present','uncertain'])test(context+' keeps '+branding+' branding off the public site despite an overall approval',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,branding}});
     const result=await s.run();
-    assert.equal(result.decision,'rejected');
-    assert.equal(s.record.status,'rejected');
+    assert.equal(result.decision,branding==='uncertain'?'pending_review':'rejected');
+    assert.equal(s.record.status,result.decision);
     assert.equal(s.events.includes('public-upload'),false);
     assert.ok(result.reasonCodes.includes(branding==='uncertain'?'branding_or_logo_uncertain':'visible_branding_or_logo'));
-    assert.equal(s.files.size,0);
+    assert.equal(s.files.size,branding==='uncertain'?1:0);
   });
-  test(context+' rejects: uncertain clothing coverage',async()=>{
+  test(context+' holds uncertain clothing coverage',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,nudity:'uncertain',confidence:0.7}});
     const result=await s.run();
-    assert.equal(result.decision,'rejected');assert.equal(s.record.status,'rejected');
+    assert.equal(result.decision,'pending_review');assert.equal(s.record.status,'pending_review');
     assert.equal(s.record.category_flags.ai_recommended_approval,false);
-    assert.equal(result.photo,undefined);assert.equal(s.files.size,0);assert.equal(s.events.includes('public-upload'),false);
+    assert.ok(result.photo);assert.equal(s.files.size,1);assert.equal(s.record.category_flags.ai_needs_review,true);assert.equal(s.events.includes('public-upload'),false);
   });
   test(context+' cannot publish after the content classifier fails',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentError:true});
@@ -188,9 +188,9 @@ for(const avatar of [false,true])for(const retry of [false,true]){
   test(context+' rejects: an ambiguous venue logo/contact overlay',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{...clearContent,decision:'review',reasonCodes:['contact_or_payment_overlay']}});
     const result=await s.run();
-    assert.equal(result.decision,'rejected');assert.equal(s.record.status,'rejected');
+    assert.equal(result.decision,'pending_review');assert.equal(s.record.status,'pending_review');
     assert.equal(s.record.category_flags.ai_recommended_approval,false);
-    assert.equal(result.photo,undefined);assert.equal(s.files.size,0);assert.equal(s.events.includes('public-upload'),false);
+    assert.ok(result.photo);assert.equal(s.files.size,1);assert.equal(s.record.category_flags.ai_needs_review,true);assert.equal(s.events.includes('public-upload'),false);
   });
   test(context+' cannot publish a legacy response missing the additional policy checks',async()=>{
     const s=scenario({avatar,retry,decision:'approved',contentAnalysis:{nudity:'absent',sexualActivity:'absent',confidence:0.99}});
@@ -218,7 +218,7 @@ for(const concurrentDecision of ['approved','rejected']){
 }
 for(const stateResponseLoss of ['before','after']){
   test('private source survives an unconfirmed rejection '+stateResponseLoss+' commit',async()=>{
-    const s=scenario({stateResponseLoss,stateResponseStatus:'rejected',decision:'review'});
+    const s=scenario({stateResponseLoss,stateResponseStatus:'rejected',decision:'rejected'});
     await assert.rejects(s.run(),error=>error===s.transportError);
     assert.ok(s.files.has(s.record.temporary_storage_path));
     assert.equal(s.events.some(e=>e.startsWith('remove:')),false);
@@ -232,15 +232,15 @@ for(const stateResponseLoss of ['before','after']){
   });
 }
 for (const avatar of [false,true]) for (const retry of [false,true]) {
-  test((avatar?'avatar':'gallery')+(retry?' retry':' upload')+' rejects an inconclusive result before cleaning its private source',async()=>{
+  test((avatar?'avatar':'gallery')+(retry?' retry':' upload')+' retains an inconclusive result privately for review',async()=>{
     const s=scenario({avatar,retry});const result=await s.run();
-    assert.equal(result.decision,'rejected');assert.equal(s.record.decision,'rejected');
-    assert.equal(s.record.status,'rejected');assert.equal(result.photo,undefined);
+    assert.equal(result.decision,'pending_review');assert.equal(s.record.decision,'review');
+    assert.equal(s.record.status,'pending_review');assert.ok(result.photo);
     assert.equal(s.record.category_flags.ai_recommended_approval,false);
-    assert.equal(result.message,'Approval unconfirmed');
-    assert.equal(s.files.size,0);
-    assert.equal(s.events.includes('upload:dancr-image-moderation-review'),false);
-    assert.ok(s.events.indexOf('state:rejected')<s.events.indexOf('remove:dancr-image-moderation-temp'));
+    assert.equal(s.record.category_flags.ai_needs_review,true);
+    assert.equal(s.files.size,1);assert.ok(s.files.has(s.record.temporary_storage_path));
+    assert.equal(s.events.includes('public-upload'),false);
+    assert.ok(s.events.indexOf('state:pending_review')<s.events.indexOf('remove:dancr-image-moderation-temp'));
   });
 }
 for (const avatar of [false,true]) for (const replayStatus of ['pending_review','completed','moderating','moderation_retry','moderation_error']) {
@@ -256,17 +256,17 @@ for (const avatar of [false, true]) for (const retry of [false, true]) {
   for (const decision of ['approved', 'review', 'rejected']) test(`${avatar ? 'avatar' : 'gallery'} ${retry ? 'retry' : 'upload'} routes AI ${decision} to club approval only after a pass`, async () => {
     const s = scenario({avatar, retry, decision});
     const result = await s.run();
-    assert.equal(result.decision, decision === 'approved' ? 'pending_review' : 'rejected');
-    assert.equal(s.record.decision, decision === 'approved' ? 'review' : 'rejected');
+    assert.equal(result.decision, decision === 'rejected' ? 'rejected' : 'pending_review');
+    assert.equal(s.record.decision, decision === 'rejected' ? 'rejected' : 'review');
     assert.equal(s.record.status, result.decision);
     assert.equal(s.record.category_flags.ai_recommended_approval, decision === 'approved');
-    assert.equal(s.record.category_flags.ai_recommended_rejection, decision !== 'approved');
+    assert.equal(s.record.category_flags.ai_recommended_rejection, decision === 'rejected');
     assert.equal(s.events.includes('public-upload'), decision === 'approved');
-    assert.equal(s.record.category_flags.publication_prepared, decision === 'approved' ? true : undefined);
+    assert.equal(s.record.category_flags.publication_prepared, decision === 'approved' ? true : decision === 'review' ? false : undefined);
     assert.equal(s.record.final_storage_path, decision === 'approved' ? 'owner/profile/public.jpg' : undefined);
     assert.equal(s.rpcVersion, undefined);
-    assert.equal(s.files.has(s.record.temporary_storage_path), decision === 'approved');
-    assert.equal(s.files.size, decision === 'approved' ? 1 : 0);
+    assert.equal(s.files.has(s.record.temporary_storage_path), decision !== 'rejected');
+    assert.equal(s.files.size, decision !== 'rejected' ? 1 : 0);
   });
 }
 for (const avatar of [false, true]) test(`${avatar ? 'avatar' : 'gallery'} deferred upload is pending before AI starts`, async () => {

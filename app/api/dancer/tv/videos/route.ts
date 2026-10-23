@@ -4,7 +4,6 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import {
   createMyDancrTvUpload,
   getDancerMyDancrTvWorkspace,
-  retryMyDancrTvAutomatedModeration,
 } from "@/src/lib/dancr/tv";
 import {
   DancerMediaRateLimitError,
@@ -13,7 +12,7 @@ import {
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { canRecoverVideoProcessing } from "@/src/lib/dancr/video-processing-state";
-import { runWithServerJob, VIDEO_PROCESSING_JOB_TIMEOUT_MS, VIDEO_PROCESSING_ROUTE_TIMEOUT_MS } from "@/src/lib/server-job";
+import { dispatchVideoModeration } from "@/src/lib/dancr/video-worker-dispatch";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
 
 export const runtime = "nodejs";
@@ -22,7 +21,6 @@ export const maxDuration = 300;
 const MAX_TV_UPLOAD_METADATA_BYTES = 4_096;
 
 export async function GET(request: Request) {
-  const startedAt = performance.now();
   try {
     const { user } = await createRequestSupabaseContext(request, { role: "dancer" });
     const workspace = await getDancerMyDancrTvWorkspace(createAdminSupabaseClient(), user.id);
@@ -32,11 +30,9 @@ export async function GET(request: Request) {
       .sort((a, b) => String(a.moderationStartedAt || "").localeCompare(String(b.moderationStartedAt || "")))
       .slice(0, 2);
     if (recoverable.length) after(async () => {
-      const remainingMs = Math.floor(VIDEO_PROCESSING_ROUTE_TIMEOUT_MS - (performance.now() - startedAt));
-      if (remainingMs < VIDEO_PROCESSING_JOB_TIMEOUT_MS) return;
       await Promise.allSettled(recoverable.map(async video => {
         try {
-          await runWithServerJob(() => retryMyDancrTvAutomatedModeration(createAdminSupabaseClient(), video.id), remainingMs);
+          await dispatchVideoModeration(video.id);
         } catch (error) {
           console.error(JSON.stringify({ event: "mydancr_tv.owner_recovery_failed", videoId: video.id, ...safeErrorMetadata(error) }));
         }

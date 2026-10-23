@@ -1,3 +1,4 @@
+import * as visualProvider from './media-visual-runtime.mjs';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
@@ -8,6 +9,7 @@ export function mediaIdentityRuntime({ createResponse, createClient, getServerEn
   const exports = {};
   const dependencies = {
     'server-only': {},
+    './media-visual-provider.ts': visualProvider,
     '../openai-client': { createOpenAIClient: createClient || (async () => ({ responses: { create: createResponse } })) },
     '../openai-request.ts': { withOpenAIRequestDeadline },
     '../server-env.ts': { getServerEnv, getOptionalServerEnv: () => null },

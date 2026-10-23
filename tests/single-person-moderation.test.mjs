@@ -39,7 +39,7 @@ test('an incomplete response cannot certify a single person even if its partial 
   await assert.rejects(runtime.analyzeDancerMediaIdentity({ targetImages: [Buffer.from('photo')], mediaType: 'photo' }), /incomplete response/);
 });
 
-function videoRuntime(identityAnalysis) {
+function videoRuntime(identityAnalysis, scenes = { frames: [], complete: true }) {
   const source = readFileSync(new URL('../src/lib/dancr/video-moderation.ts', import.meta.url), 'utf8');
   const ast = ts.createSourceFile('video-moderation.ts', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
   const names = ['moderateStoredMyDancrTvVideo', 'combineVideoDecisions', 'strongestDecision', 'buildModerationText', 'maximumCategoryScores', 'uniqueReasonCodes'];
@@ -56,12 +56,14 @@ function videoRuntime(identityAnalysis) {
     downloadVideo: async () => Buffer.from('video'), assertAllowedVideoContainer() {},
     probeVideoDurationSeconds: async () => 30, extractVideoFrames: async () => frames,
     extractOptionalAudio: async () => null,
+    extractSceneFrames: async () => scenes,
+    MEDIA_VISUAL_SERVICE_TIER: "ultrafast", VIDEO_TRANSCRIPTION_MODEL: "gpt-transcribe",
     runVideoReviewChecks, evaluateDancerMediaIdentity, evaluateDancrImageModeration, evaluateMediaBranding,
     moderateFrames: async () => frames.map(() => ({ flagged: false })),
     moderateText: async () => ({ flagged: false }),
     classifyVideoPolicy: async () => ({ decision: 'approved', reasonCodes: [], confidence: 0.99, branding: 'absent', brandingConfidence: 0.99 }),
     analyzeDancerMediaIdentity: async input => {
-      assert.equal(input.mediaType, 'video');assert.equal(input.targetImages, frames);
+      assert.equal(input.mediaType, 'video');assert.deepEqual(Array.from(input.targetImages), [...frames, ...scenes.frames]);
       assert.equal('referenceImage' in input, false);
       return identityAnalysis;
     },
@@ -88,4 +90,13 @@ for (const [name, analysis, expected] of [
   assert.equal(result.details.personCount, analysis.personCount);
   assert.equal(result.details.personCountConfidence, analysis.personCountConfidence);
   if (analysis.personCount > 1) assert.ok(result.reasonCodes.includes('multiple_people_detected'));
+});
+
+for (const complete of [true, false]) test('scene frames reach person counting and incomplete coverage stays pending: ' + complete, async () => {
+  const result = await videoRuntime(solo, { frames: [Buffer.from('scene')], complete })();
+  assert.equal(result.frameCount, 4);
+  assert.equal(result.details.sceneFrameCount, 1);
+  assert.equal(result.details.sceneCoverageComplete, complete);
+  assert.equal(result.decision, complete ? 'approved' : 'review');
+  assert.equal(result.reasonCodes.includes('video_scene_coverage_incomplete'), !complete);
 });

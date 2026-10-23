@@ -55,7 +55,7 @@ test("an unlocalized verified face retains its original square instead of a gues
 test("local face detection never bypasses the existing face verification", async () => {
   const sample = await avatarSample();
   const runtime = avatarRuntime({
-    createResponse: async () => ({ output_text: JSON.stringify({ clearFace: false, fullyVisible: false, selectedCandidate: "none", confidence: 0.99 }) }),
+    createResponse: async () => ({ status: "completed", output_text: JSON.stringify({ clearFace: false, fullyVisible: false, selectedCandidate: "none", confidence: 0.99 }) }),
     locate: async () => assert.fail("rejected images must not proceed to cropping"),
   });
   await assert.rejects(runtime.prepareFaceCenteredAvatar(sample), AvatarFaceRequiredError);

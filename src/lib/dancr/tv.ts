@@ -1445,8 +1445,8 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
   }
 
   assertServerJobActive();
-  const decision = moderation.decision === "approved" ? "approved" : "rejected";
-  const reasonCodes = [...new Set([...moderation.reasonCodes, ...(moderation.decision === "review" ? ["video_approval_not_confirmed"] : [])])];
+  const decision = moderation.decision;
+  const reasonCodes = [...new Set(moderation.reasonCodes)];
   const completedAt = new Date().toISOString();
   // Prepared files remain private: only human approval changes publication status.
   const update = {
@@ -1465,7 +1465,7 @@ async function finalizeMyDancrTvAutomatedModeration(admin: AdminClient, video: a
       } : {}),
     },
     moderation_completed_at: completedAt,
-    status: decision === "approved" ? "submitted" : "rejected",
+    status: decision === "rejected" ? "rejected" : "submitted",
     review_notes: decision === "approved"
       ? "AI checks passed. Pending club approval."
       : videoModerationReviewNotes(decision, reasonCodes),

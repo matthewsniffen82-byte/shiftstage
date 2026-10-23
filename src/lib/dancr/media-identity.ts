@@ -1,8 +1,9 @@
 import "server-only";
+import { createMediaVisualResponse, MEDIA_VISUAL_MODEL } from "./media-visual-provider.ts";
 import { withOpenAIRequestDeadline as withTimeout } from "../openai-request.ts";
 
 import { createOpenAIClient } from "../openai-client";
-import { getOptionalServerEnv, getServerEnv } from "../server-env.ts";
+import { getServerEnv } from "../server-env.ts";
 import {
   parseDancerMediaIdentityAnalysis,
   type DancerMediaIdentityAnalysis,
@@ -17,8 +18,7 @@ export {
   type DancerMediaIdentityEvaluation,
 } from "./media-identity-core.ts";
 
-export const DANCR_MEDIA_IDENTITY_MODEL =
-  getOptionalServerEnv("DANCR_MEDIA_IDENTITY_MODEL") || "gpt-4o-mini";
+export const DANCR_MEDIA_IDENTITY_MODEL = MEDIA_VISUAL_MODEL;
 
 const MEDIA_IDENTITY_TIMEOUT_MS = 30_000;
 
@@ -58,11 +58,7 @@ export async function analyzeDancerMediaIdentity(input: {
   });
 
   const response = await withTimeout(
-    (requestOptions) => openai.responses.create({
-      model: DANCR_MEDIA_IDENTITY_MODEL,
-      store: false,
-      temperature: 0,
-      max_output_tokens: 240,
+    (requestOptions) => createMediaVisualResponse(openai, {
       instructions:
         "Perform only person counting. Do not compare appearance with an avatar or verify identity. Do not identify or name anyone and do not infer sensitive traits.",
       input: [{ role: "user", content }],

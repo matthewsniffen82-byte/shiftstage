@@ -58,6 +58,7 @@ for (const [elapsed, alreadyAccepted] of [[2000, false], [31_000, false], [2000,
         assert.equal(access.role, "dancer"); return { user: { id: "synthetic-user" } };
       } },
       "@/src/lib/security/safe-error-metadata": { safeErrorMetadata: () => ({}) },
+      "@/src/lib/dancr/video-worker-dispatch": { dispatchVideoModeration: async id => { retried.push(id); } },
       "@/src/lib/server-job": { ...jobs, async runWithServerJob(operation, timeoutMs) {
         budgets.push(timeoutMs); return operation();
       } },
@@ -68,9 +69,9 @@ for (const [elapsed, alreadyAccepted] of [[2000, false], [31_000, false], [2000,
     assert.equal(retried.length, 0, "encoding must not delay the upload acknowledgment");
     assert.equal(after.length, alreadyAccepted ? 0 : 1);
     for (const work of after) await work();
-    const enoughTime = !alreadyAccepted && jobs.VIDEO_PROCESSING_ROUTE_TIMEOUT_MS - elapsed >= jobs.VIDEO_PROCESSING_JOB_TIMEOUT_MS;
+    const enoughTime = !alreadyAccepted;
     assert.deepEqual(retried, enoughTime ? [videoId] : []);
-    assert.deepEqual(budgets, enoughTime ? [jobs.VIDEO_PROCESSING_ROUTE_TIMEOUT_MS - elapsed] : []);
+    assert.deepEqual(budgets, [], "the worker invocation owns its own budget");
   });
 }
 
@@ -84,6 +85,7 @@ test("cron leaves the next video unclaimed when a full encoding job no longer fi
   };
   const route = loadRoute("app/api/cron/video-moderation/route.ts", {
     "next/server": { NextResponse: { json: Response.json } },
+    "@/src/lib/bounded-json-body": {},
     "@/src/lib/dancr/cron-auth": { authorizeCronRequest: () => null },
     "@/src/lib/dancr/tv": { async retryMyDancrTvAutomatedModeration(_admin, id) {
       retried.push(id); remaining -= 60_000; return { status: "approved" };
@@ -121,7 +123,7 @@ test('dashboard refresh acknowledges immediately and recovers only bounded eligi
       assert.equal(options.role,'dancer');return {user:{id:'owner'}};}},
     '@/src/lib/dancr/video-processing-state':processing,
     '@/src/lib/security/safe-error-metadata':{safeErrorMetadata:()=>({})},
-    '@/src/lib/server-job':{...jobs,runWithServerJob:async fn=>fn()},
+    '@/src/lib/dancr/video-worker-dispatch':{dispatchVideoModeration:async id=>{retried.push(id);}},
   },{performance:{now:()=>0},Promise});
   const result=await route.GET(new Request('https://synthetic.invalid'));
   assert.equal(result.status,200);assert.equal(result.headers.get('cache-control'),'no-store');

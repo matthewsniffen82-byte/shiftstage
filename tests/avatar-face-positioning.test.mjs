@@ -15,7 +15,7 @@ const tvService = readFileSync(
   "utf8",
 );
 const dancerProfile = readFileSync(
-  new URL("../app/dancers/[slug]/page.tsx", import.meta.url),
+  new URL("../app/dancers/[slug]/PublicDancerProfile.tsx", import.meta.url),
   "utf8",
 );
 const tvFeed = readFileSync(
@@ -49,7 +49,7 @@ test("public dancer and TV payloads carry the stored avatar focal point", () => 
 
 test("every public avatar surface uses the face-aware position without changing full-card media", () => {
   assert.match(dancerProfile, /height: "100%"[\s\S]*?objectFit: "cover"/);
-  assert.match(dancerProfile, /const avatarPhoto = profile\.avatarPhotoUrl \|\| heroPhoto/);
+  assert.match(dancerProfile, /const avatarPhoto = profile\.avatarPhotoUrl \|\| \(preview \? "" : heroPhoto\)/);
   assert.match(dancerProfile, /objectPosition: imageFocalPointCss\(avatarPhotoFocalX, avatarPhotoFocalY\)/);
   assert.match(dancerProfile, /objectPosition:[\s\S]*?width: "100%"/);
   assert.match(tvFeed, /backgroundPosition: imageFocalPointCss\([\s\S]*?avatarPhotoFocalX,[\s\S]*?avatarPhotoFocalY/);

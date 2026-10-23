@@ -1,8 +1,10 @@
 import "server-only";
+import { createMediaVisualResponse, MEDIA_VISUAL_MODEL } from "./media-visual-provider.ts";
+import { withOpenAIRequestDeadline } from "../openai-request.ts";
 
 import { createHash } from "crypto";
 import { createOpenAIClient } from "../openai-client";
-import { getOptionalServerEnv, getServerEnv } from "../server-env.ts";
+import { getServerEnv } from "../server-env.ts";
 import {
   AvatarFaceDetectionUnavailableError,
   AvatarFaceRequiredError,
@@ -28,8 +30,7 @@ export {
   type AvatarSquareCrop,
 } from "./avatar-face-core.ts";
 
-export const DANCR_AVATAR_FACE_MODEL =
-  getOptionalServerEnv("DANCR_AVATAR_FACE_MODEL") || "gpt-4o-mini";
+export const DANCR_AVATAR_FACE_MODEL = MEDIA_VISUAL_MODEL;
 
 const AVATAR_FACE_ANALYSIS_TIMEOUT_MS = 25_000;
 const AVATAR_ANALYSIS_MAX_DIMENSION = 1024;
@@ -136,12 +137,8 @@ async function selectPrimaryAvatarCandidate(
   }
 
   try {
-    const response = await withTimeout(
-      openai.responses.create({
-        model: DANCR_AVATAR_FACE_MODEL,
-        store: false,
-        temperature: 0,
-        max_output_tokens: 220,
+    const response = await withOpenAIRequestDeadline(
+      options => createMediaVisualResponse(openai, {
         instructions:
           "Compare avatar crop candidates only. Do not identify the person or infer sensitive traits.",
         input: [{ role: "user", content }],
@@ -167,10 +164,11 @@ async function selectPrimaryAvatarCandidate(
             },
           },
         },
-      }),
+      }, options),
       AVATAR_FACE_ANALYSIS_TIMEOUT_MS,
+      "provider_timeout: avatar crop review",
     );
-    if (!response.output_text) throw new AvatarFaceDetectionUnavailableError();
+    if (response.status !== "completed" || !response.output_text) throw new AvatarFaceDetectionUnavailableError();
     return parseAvatarCandidateSelection(
       JSON.parse(response.output_text),
       candidates.map((candidate) => candidate.position),
@@ -190,16 +188,6 @@ function fileStem(fileName: string) {
   const normalized = String(fileName || "avatar").trim();
   const extensionIndex = normalized.lastIndexOf(".");
   return extensionIndex > 0 ? normalized.slice(0, extensionIndex) : normalized || "avatar";
-}
-
-function withTimeout<T>(promise: Promise<T>, milliseconds: number): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(
-      () => reject(new AvatarFaceDetectionUnavailableError()),
-      milliseconds,
-    );
-    promise.then(resolve, reject).finally(() => clearTimeout(timer));
-  });
 }
 
 async function loadSharp(): Promise<any> {

@@ -443,7 +443,7 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
   });
 }
 
-/** Only a clear automated pass reaches club approval; no automated result publishes media. */
+/** Uncertain checks remain private for review; no automated result publishes media. */
 async function holdPhotoForClubReview(
   admin: DancrClient,
   input: {
@@ -454,8 +454,8 @@ async function holdPhotoForClubReview(
   },
 ): Promise<ModeratedPhotoResult> {
   const { evaluation } = input;
-  if (evaluation.decision !== "approved") {
-    const reasonCodes = [...new Set([...evaluation.reasonCodes, ...(evaluation.decision === "review" ? ["photo_approval_not_confirmed"] : [])])];
+  if (evaluation.decision === "rejected") {
+    const reasonCodes = evaluation.reasonCodes;
     await updateModerationRecord(admin, input.recordId, {
       decision: "rejected", status: "rejected", reasonCodes,
       categoryFlags: { ...input.categoryFlags, ai_recommended_approval: false, ai_recommended_rejection: true, ai_needs_review: false },
@@ -470,6 +470,23 @@ async function holdPhotoForClubReview(
   }
   // A unique private copy avoids an obsolete worker overwriting a newer review.
   const reviewPath = input.tempPath.replace(/([^/]+)$/, `review-${randomUUID()}-$1`);
+  if (evaluation.decision === "review") {
+    await uploadPrivateObject(admin, MODERATION_REVIEW_BUCKET, reviewPath, input.image);
+    await updateModerationRecord(admin, input.recordId, {
+      temporaryStoragePath: reviewPath,
+      decision: "review", status: "pending_review", reasonCodes: evaluation.reasonCodes,
+      categoryFlags: { ...input.categoryFlags, ai_recommended_approval: false,
+        ai_recommended_rejection: false, ai_needs_review: true, publication_prepared: false },
+      categoryScores: evaluation.categoryScores, providerFlagged: evaluation.providerFlagged,
+      errorCode: null, nextAttemptAt: null, lockedAt: null,
+      lastErrorCode: null, lastErrorMessage: null, completedAt: new Date().toISOString(),
+    }, input.expectedUpdatedAt);
+    await safeRemoveObject(admin, MODERATION_TEMP_BUCKET, input.tempPath);
+    return { decision: "pending_review", moderationRecordId: input.recordId,
+      reasonCodes: evaluation.reasonCodes, providerFlagged: evaluation.providerFlagged,
+      message: "AI checks need review. Your upload stays private until club approval.",
+      photo: pendingModerationPhoto(input.recordId, input.uploadContext) };
+  }
   // Prepare private display files now, so human approval only publishes references.
   // Neither a gallery row nor an avatar reference exists until the club approves.
   const isAvatar = isProfileAvatarUploadContext(input.uploadContext);
@@ -720,7 +737,7 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
       temporary_storage_path: input.temporaryStoragePath,
       upload_context: input.uploadContext,
       provider: "openai",
-      provider_model: DANCR_IMAGE_MODERATION_MODEL,
+      provider_model: `${DANCR_IMAGE_MODERATION_MODEL}+gpt-6-astra:ultrafast`,
       provider_flagged: false,
       decision: "review",
       status: "moderating",
@@ -740,7 +757,8 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
 
 async function updateModerationRecord(client: DancrClient, id: string, update: Record<string, unknown>, expectedUpdatedAt: string) {
   assertServerJobActive();
-  const dbUpdate: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  const dbUpdate: Record<string, unknown> = { updated_at: new Date().toISOString(),
+    provider_model: `${DANCR_IMAGE_MODERATION_MODEL}+gpt-6-astra:ultrafast` };
   if ("imageId" in update) dbUpdate.image_id = update.imageId;
   if ("temporaryStoragePath" in update) dbUpdate.temporary_storage_path = update.temporaryStoragePath;
   if ("finalStoragePath" in update) dbUpdate.final_storage_path = update.finalStoragePath;

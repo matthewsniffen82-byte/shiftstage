@@ -1,3 +1,4 @@
+import * as visualProvider from './media-visual-runtime.mjs';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
@@ -9,6 +10,7 @@ export function photoContentRuntime({ createResponse, createClient, getServerEnv
   const exports = {};
   const dependencies = {
     'server-only': {},
+    './media-visual-provider.ts': visualProvider,
     '../openai-client': { createOpenAIClient: createClient || (async () => ({ responses: { create: createResponse } })) },
     '../openai-request.ts': { withOpenAIRequestDeadline },
     '../server-env.ts': { getServerEnv },

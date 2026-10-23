@@ -1,3 +1,5 @@
+import * as visualProvider from './media-visual-runtime.mjs';
+import { withOpenAIRequestDeadline as visualDeadline } from '../../src/lib/openai-request.ts';
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import vm from "node:vm";
@@ -29,9 +31,11 @@ export const detector = load("src/lib/dancr/avatar-face-detector.ts", {
 
 export function avatarRuntime({ createResponse, locate = detector.locateAvatarFace } = {}) {
   return load("src/lib/dancr/avatar-face.ts", {
-    "server-only": {}, crypto: require("node:crypto"), sharp,
+    "server-only": {},
+    "./media-visual-provider.ts": visualProvider,
+    "../openai-request.ts": { withOpenAIRequestDeadline: visualDeadline }, crypto: require("node:crypto"), sharp,
     "../openai-client": { createOpenAIClient: async () => ({ responses: { create: createResponse || (async () => ({
-      output_text: JSON.stringify({ clearFace: true, fullyVisible: true, selectedCandidate: "start", confidence: 0.98, rejectionReason: "" }),
+      status: "completed", output_text: JSON.stringify({ clearFace: true, fullyVisible: true, selectedCandidate: "start", confidence: 0.98, rejectionReason: "" }),
     })) } }) },
     "../server-env.ts": { getOptionalServerEnv: () => null, getServerEnv: () => "synthetic-key" },
     "./avatar-face-core.ts": core,

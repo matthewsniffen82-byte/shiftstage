@@ -149,7 +149,7 @@ test("missing, malformed, or unbounded face coordinates never publish an arbitra
 });
 
 test("avatar uploads compare real square crops and publish the selected physical crop", () => {
-  assert.match(avatarFaceSource, /openai\.responses\.create\(/);
+  assert.match(avatarFaceSource, /createMediaVisualResponse\(openai,/);
   assert.match(avatarFaceSource, /Candidate \$\{candidate\.position\}/);
   assert.match(avatarFaceSource, /type: "input_image"/);
   assert.match(avatarFaceSource, /type: "json_schema"/);
@@ -157,15 +157,15 @@ test("avatar uploads compare real square crops and publish the selected physical
   assert.match(avatarFaceSource, /computeFaceCenteredAvatarCrop\(sourceWidth, sourceHeight, candidate, face\)/);
   assert.match(avatarFaceSource, /\.extract\(\{ left: crop\.left, top: crop\.top, width: crop\.size, height: crop\.size \}\)/);
   assert.match(avatarFaceSource, /width !== height/);
-  assert.match(moderationSource, /const publicationImage = isAvatar[\s\S]*?prepareFaceCenteredAvatar\(image\)/);
-  assert.match(moderationSource, /image: publicationImage/);
+  assert.match(moderationSource, /const displayImage = isAvatar[\s\S]*?prepareFaceCenteredAvatar\(input\.image\)/);
+  assert.match(moderationSource, /displayImage,/);
   assert.match(avatarRouteSource, /isAvatarFaceRequiredError\(error\)[\s\S]*?422/);
   assert.match(avatarRouteSource, /isAvatarFaceDetectionUnavailableError\(error\)[\s\S]*?503/);
 });
 
 test("gallery photo processing remains separate from avatar face cropping", () => {
-  assert.match(moderationSource, /const publicationImage = isAvatar[\s\S]*?: image/);
-  assert.match(moderationSource, /input\.isAvatar[\s\S]*?\? \{\}[\s\S]*?: \{ archiveOriginal: true, watermark: true \}/);
+  assert.match(moderationSource, /const displayImage = isAvatar[\s\S]*?: input\.image/);
+  assert.match(moderationSource, /isAvatar \? \{\} : \{ archiveOriginal: true, watermark: true, mainPhotoAvatar: true \}/);
 });
 
 test("existing approved avatars can be securely reprocessed from an original approved photo", () => {

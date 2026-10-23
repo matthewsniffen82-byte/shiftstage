@@ -1,3 +1,4 @@
+import { createMediaVisualResponse } from './helpers/media-visual-runtime.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -19,11 +20,12 @@ function runtime(analysis){
   mkdtemp:async()=>'/synthetic',path:{join:(...parts)=>parts.join('/')},tmpdir:()=>'/tmp',writeFile:async()=>{},
   rm:async p=>deleted.push(p),downloadVideo:async()=>Buffer.from('video'),assertAllowedVideoContainer(){},
   probeVideoDurationSeconds:async()=>30,extractVideoFrames:async()=>[Buffer.from('frame')],extractOptionalAudio:async()=>null,
+  extractSceneFrames:async()=>({frames:[],complete:true}),MEDIA_VISUAL_SERVICE_TIER:"ultrafast",VIDEO_TRANSCRIPTION_MODEL:"gpt-transcribe",
   runVideoReviewChecks:async()=>({frameResults:[{}],textResult:{},policyDecision:analysis,identityAnalysis:{personCount:1,personCountConfidence:.99,singlePersonOnly:true}}),
   evaluateDancrImageModeration:()=>generic,evaluateDancerMediaIdentity:()=>generic,
   evaluateMediaBranding,parseMediaBrandingAnalysis,DANCR_IMAGE_MODERATION_MODEL:'synthetic',VIDEO_POLICY_MODEL:'synthetic',DANCR_MEDIA_IDENTITY_MODEL:'synthetic',
   VIDEO_POLICY_APPROVE_CONFIDENCE:.75,VIDEO_POLICY_REJECT_CONFIDENCE:.95,
-  withTimeout:fn=>fn({}),OPENAI_TIMEOUT_MS:1000,DANCER_MEDIA_CONTENT_RULES:MEDIA_BRANDING_RULES,
+  createMediaVisualResponse, withTimeout:fn=>fn({}),OPENAI_TIMEOUT_MS:1000,DANCER_MEDIA_CONTENT_RULES:MEDIA_BRANDING_RULES,
   VIDEO_POLICY_REASON_CODES:['safe_adult_promotional_content','visible_branding_or_logo','branding_or_logo_uncertain'],
  });
  return {exports,deleted};
@@ -53,7 +55,7 @@ test('malformed or missing findings cannot approve photos or videos',async()=>{
  }
 });
 test('a missing branding response from the video provider stops classification',async()=>{
- const r=runtime(clear),client={chat:{completions:{create:async()=>({choices:[{message:{content:JSON.stringify({decision:'approved',reason_codes:['safe_adult_promotional_content'],confidence:.99})}}]})}}};
+ const r=runtime(clear),client={responses:{create:async()=>({status:'completed',output_text:JSON.stringify({decision:'approved',reason_codes:['safe_adult_promotional_content'],confidence:.99})})}};
  await assert.rejects(r.exports.classifyVideoPolicy(client,[Buffer.from('frame')],'',''),/provider_response_incomplete/);
 });
 test('no club, clothing, watermark, ownership, or incidental-brand exemption remains',()=>{
