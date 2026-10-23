@@ -3,7 +3,7 @@ import type OpenAI from "openai";
 import type { ResponseCreateParamsNonStreaming } from "openai/resources/responses/responses";
 
 export const MEDIA_VISUAL_MODEL = "gpt-6-astra";
-export const MEDIA_VISUAL_SERVICE_TIER = "ultrafast";
+export const MEDIA_VISUAL_SERVICE_TIER = "fast";
 
 type VisualRequest = Pick<ResponseCreateParamsNonStreaming, "instructions" | "input" | "text">;
 
@@ -18,7 +18,7 @@ export function createMediaVisualResponse(openai: OpenAI, request: VisualRequest
     // Reasoning tokens share this budget with the short, strict JSON result.
     max_output_tokens: 2_000,
   };
-  // SDK 5's service-tier union predates Ultrafast. The API accepts this exact
+  // SDK 5's service-tier union predates the Fast alias. The API accepts this exact
   // payload; keep the compatibility assertion at this single tested boundary.
   return openai.responses.create(body as unknown as ResponseCreateParamsNonStreaming, options);
 }

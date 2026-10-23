@@ -57,15 +57,14 @@ function videoRuntime(identityAnalysis, scenes = { frames: [], complete: true })
     probeVideoDurationSeconds: async () => 30, extractVideoFrames: async () => frames,
     extractOptionalAudio: async () => null,
     extractSceneFrames: async () => scenes,
-    MEDIA_VISUAL_SERVICE_TIER: "ultrafast", VIDEO_TRANSCRIPTION_MODEL: "gpt-transcribe",
+    MEDIA_VISUAL_SERVICE_TIER: "fast", VIDEO_TRANSCRIPTION_MODEL: "gpt-transcribe",
     runVideoReviewChecks, evaluateDancerMediaIdentity, evaluateDancrImageModeration, evaluateMediaBranding,
     moderateFrames: async () => frames.map(() => ({ flagged: false })),
     moderateText: async () => ({ flagged: false }),
-    classifyVideoPolicy: async () => ({ decision: 'approved', reasonCodes: [], confidence: 0.99, branding: 'absent', brandingConfidence: 0.99 }),
-    analyzeDancerMediaIdentity: async input => {
+    analyzeDancerVisualMedia: async input => {
       assert.equal(input.mediaType, 'video');assert.deepEqual(Array.from(input.targetImages), [...frames, ...scenes.frames]);
       assert.equal('referenceImage' in input, false);
-      return identityAnalysis;
+      return { identityAnalysis, contentAnalysis: { decision: 'approved', reasonCodes: [], confidence: 0.99, branding: 'absent', brandingConfidence: 0.99 } };
     },
     DANCR_IMAGE_MODERATION_MODEL: 'synthetic', VIDEO_POLICY_MODEL: 'synthetic', DANCR_MEDIA_IDENTITY_MODEL: 'synthetic',
     VIDEO_POLICY_APPROVE_CONFIDENCE: 0.75, VIDEO_POLICY_REJECT_CONFIDENCE: 0.95,

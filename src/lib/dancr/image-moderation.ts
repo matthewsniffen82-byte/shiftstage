@@ -1,4 +1,6 @@
 import "server-only";
+import { analyzeDancerVisualMedia } from "./media-visual-review.ts";
+import { MEDIA_VISUAL_MODEL, MEDIA_VISUAL_SERVICE_TIER } from "./media-visual-provider.ts";
 import { withOpenAIRequestDeadline as withTimeout } from "../openai-request.ts";
 import { assertServerJobActive, MODERATION_WORKER_STALE_MS, runWithServerJob } from "../server-job.ts";
 
@@ -19,12 +21,10 @@ import { validateAndPrepareDancrImage, type ValidatedDancrImage } from "./image-
 import { MAX_DANCER_PROFILE_PHOTOS } from "./media-limits";
 import { resolvePhotoPublicationIntent } from "./photo-publication-intent";
 import {
-  analyzeDancerPhotoContent,
   applyDancerPhotoContentPolicy,
   dancerPhotoContentCategoryFlags,
 } from "./photo-content-policy";
 import {
-  analyzeDancerMediaIdentity,
   combineDancerMediaModeration,
   dancerMediaIdentityCategoryFlags,
   evaluateDancerMediaIdentity,
@@ -180,13 +180,11 @@ export async function moderateAndStoreDancerPhoto(client: DancrClient, admin: Da
 
   try {
     const reviewStartedAt = Date.now();
-    const [providerResult, identityAnalysis, contentAnalysis] = await Promise.all([
+    const [providerResult, { identityAnalysis, contentAnalysis }] = await Promise.all([
       moderateImageWithOpenAI(admin, tempPath, image),
-      analyzeDancerMediaIdentity({
-        targetImages: [image.buffer],
-        mediaType: "photo",
+      analyzeDancerVisualMedia({
+        targetImages: [image.buffer], contentType: image.contentType, mediaType: "photo",
       }),
-      analyzeDancerPhotoContent(image),
     ]);
     logModeration("stage_timing", { stage: "all_ai_checks", durationMs: Date.now() - reviewStartedAt });
     categoryFlags = {
@@ -372,13 +370,11 @@ export async function processImageModerationRetryRecord(admin: DancrClient, reco
     const downloadedImage = moderationImageFromPrivateObject(downloaded);
     if (isAvatar) avatarRetryReference(record, profile);
     const reviewStartedAt = Date.now();
-    const [providerResult, identityAnalysis, contentAnalysis] = await Promise.all([
+    const [providerResult, { identityAnalysis, contentAnalysis }] = await Promise.all([
       moderateImageWithOpenAI(admin, tempPath, downloadedImage),
-      analyzeDancerMediaIdentity({
-        targetImages: [downloadedImage.buffer],
-        mediaType: "photo",
+      analyzeDancerVisualMedia({
+        targetImages: [downloadedImage.buffer], contentType: downloadedImage.contentType, mediaType: "photo",
       }),
-      analyzeDancerPhotoContent(downloadedImage),
     ]);
     logModeration("stage_timing", { stage: "all_ai_checks", durationMs: Date.now() - reviewStartedAt });
     categoryFlags = {
@@ -737,7 +733,7 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
       temporary_storage_path: input.temporaryStoragePath,
       upload_context: input.uploadContext,
       provider: "openai",
-      provider_model: `${DANCR_IMAGE_MODERATION_MODEL}+gpt-6-astra:ultrafast`,
+      provider_model: `${DANCR_IMAGE_MODERATION_MODEL}+${MEDIA_VISUAL_MODEL}:${MEDIA_VISUAL_SERVICE_TIER}`,
       provider_flagged: false,
       decision: "review",
       status: "moderating",
@@ -758,7 +754,7 @@ async function createModerationRecord(client: DancrClient, input: { userId: stri
 async function updateModerationRecord(client: DancrClient, id: string, update: Record<string, unknown>, expectedUpdatedAt: string) {
   assertServerJobActive();
   const dbUpdate: Record<string, unknown> = { updated_at: new Date().toISOString(),
-    provider_model: `${DANCR_IMAGE_MODERATION_MODEL}+gpt-6-astra:ultrafast` };
+    provider_model: `${DANCR_IMAGE_MODERATION_MODEL}+${MEDIA_VISUAL_MODEL}:${MEDIA_VISUAL_SERVICE_TIER}` };
   if ("imageId" in update) dbUpdate.image_id = update.imageId;
   if ("temporaryStoragePath" in update) dbUpdate.temporary_storage_path = update.temporaryStoragePath;
   if ("finalStoragePath" in update) dbUpdate.final_storage_path = update.finalStoragePath;

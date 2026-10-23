@@ -12,7 +12,7 @@ const [identitySource, imageModeration, videoModeration, tvSource, dashboard, st
     readFile(new URL("../src/lib/dancr/image-moderation.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/dancr/video-moderation.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/dancr/tv.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/dashboard/DancerPhotoPanel.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/dashboard/DancerTvStudio.tsx", import.meta.url), "utf8"),
   ]);
 
@@ -125,18 +125,16 @@ test("malformed model counts and confidences cannot become a confident single pe
 });
 
 test("photo and video moderation count people without an avatar reference", () => {
-  assert.match(identitySource, /Count every distinct visibly depicted person/);
+  assert.match(identitySource, /DANCER_PERSON_COUNT_RULES/);
   assert.match(identitySource, /Do not compare appearance with an avatar or verify identity/);
-  assert.match(identitySource, /store: false/);
+  assert.match(identitySource, /createMediaVisualResponse/);
   for (const text of [identitySource, imageModeration, videoModeration, tvSource]) {
     assert.doesNotMatch(text, /loadApprovedDancerIdentityReference|referenceImage|referenceRequired|DancerIdentityReferenceRequiredError|must match your approved avatar/);
   }
   assert.match(imageModeration, /combineDancerMediaModeration/);
-  assert.match(imageModeration, /multiple_people_detected/);
-  assert.match(dashboard, /Use a clear solo face photo of yourself/);
-  assert.match(dashboard, /Add at least 1 solo picture of yourself/);
+  assert.match(imageModeration, /evaluateDancerMediaIdentity\(identityAnalysis\)/);
+  assert.match(dashboard, /Add at least 1 solo photo of yourself/);
   assert.match(videoModeration, /singlePersonOnly: identityAnalysis.singlePersonOnly/);
-  assert.match(videoModeration, /strongestDecision\(\[safetyDecision, identityEvaluation.decision\]\)/);
-  assert.match(tvSource, /Only you can appear in a profile video/);
+  assert.match(videoModeration, /strongestDecision\(\[safetyDecision, identityEvaluation.decision, brandingEvaluation.decision/);
   assert.match(studio, /I am the only person shown, and this video is of me\./);
 });

@@ -1,13 +1,9 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { createMediaVisualResponse } from './helpers/media-visual-runtime.mjs';
+import { visualReviewRuntime } from './helpers/media-visual-review-runtime.mjs';
 import test from "node:test";
-import vm from "node:vm";
-import ts from "typescript";
 import { DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES } from "../src/lib/dancr/media-content-rules.ts";
-import { withOpenAIRequestDeadline } from "../src/lib/openai-request.ts";
 import { evaluateDancrImageModeration } from "../src/lib/dancr/moderation-policy.ts";
-import { parseMediaBrandingAnalysis } from "../src/lib/dancr/media-branding-policy.ts";
 import {
   getDistributedVideoFrameSampling,
   parseFfmpegDuration,
@@ -84,9 +80,7 @@ test("video moderation checks server-decoded frames, caption, and spoken audio",
   assert.match(videoModeration, /const MAX_VIDEO_FRAMES = 10/);
   assert.match(videoModeration, /openai\.moderations\.create\([\s\S]*?input/);
   assert.match(videoModeration, /openai\.audio\.transcriptions\.create/);
-  assert.match(videoModeration, /text: \{ format:[\s\S]*?type: "json_schema"/);
-  assert.match(videoModeration, /DANCER_MEDIA_POLICY_REASON_CODES as VIDEO_POLICY_REASON_CODES/);
-  assert.match(videoModeration, /analyzeDancerMediaIdentity/);
+  assert.match(videoModeration, /analyzeDancerVisualMedia/);
   assert.doesNotMatch(videoModeration, /identityReferenceMatch|dancerAvatarStoragePath/);
   assert.match(videoModeration, /singlePersonOnly/);
   assert.match(videoModeration, /const VIDEO_POLICY_APPROVE_CONFIDENCE = 0\.75/);
@@ -97,18 +91,8 @@ test("video moderation checks server-decoded frames, caption, and spoken audio",
 });
 
 test("video classifier receives the same full policy as photos, including covered thongs and cleavage", async () => {
-  const ast = ts.createSourceFile('video-moderation.ts', videoModeration, ts.ScriptTarget.Latest, true, ts.ScriptKind.TS);
-  const selected = ast.statements.filter(node => ts.isFunctionDeclaration(node)
-    && ['classifyVideoPolicy', 'uniqueReasonCodes'].includes(node.name?.text)).map(node => node.getText(ast));
-  const exports = {};
-  vm.runInNewContext(ts.transpileModule(selected.join('\n') + '\nexport { classifyVideoPolicy };', {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText, {
-    exports, Buffer, createMediaVisualResponse, parseMediaBrandingAnalysis, DANCER_MEDIA_CONTENT_RULES, VIDEO_POLICY_REASON_CODES: DANCER_MEDIA_POLICY_REASON_CODES,
-    VIDEO_POLICY_MODEL: 'synthetic', OPENAI_TIMEOUT_MS: 1000, withTimeout: withOpenAIRequestDeadline,
-  });
   const client = { responses: { create: async (request, options) => {
-    const rules = request.instructions;
+    const rules = request.input[0].content[0].text;
     for (const instruction of DANCER_MEDIA_CONTENT_RULES) assert.ok(rules.includes(instruction));
     assert.match(rules, /Thongs and cleavage are explicitly allowed when nipples\/areolas, genitals, and anus are covered/);
     assert.match(rules, /Exposed buttocks from a thong/);
@@ -118,10 +102,10 @@ test("video classifier receives the same full policy as photos, including covere
     assert.equal(request.input[0].content[1].detail, 'high');
     assert.ok(request.text.format.schema.required.includes('branding'));
     assert.ok(request.text.format.schema.required.includes('brandingConfidence'));
-    return { status: 'completed', output_text: JSON.stringify({ branding: 'absent', brandingConfidence: 0.99, decision: 'approved', reason_codes: ['safe_adult_promotional_content'], confidence: 0.99 }) };
+    return { status: 'completed', output_text: JSON.stringify({ nudity: 'absent', sexualActivity: 'absent', branding: 'absent', brandingConfidence: 0.99, decision: 'approved', reasonCodes: ['safe_adult_promotional_content'], confidence: 0.99, personCount: 1, personCountConfidence: 0.99, singlePersonOnly: true }) };
   } } };
-  const result = await exports.classifyVideoPolicy(client, [Buffer.from('frame')], 'fixture caption', 'fixture transcript');
-  assert.equal(result.decision, 'approved');
+  const result = await visualReviewRuntime().analyzeDancerVisualMedia({ targetImages: [Buffer.from('frame')], mediaType: 'video', caption: 'fixture caption', transcript: 'fixture transcript' }, client);
+  assert.equal(result.contentAnalysis.decision, 'approved');
 });
 
 test("video moderation distributes frames through the full decoded timeline", () => {

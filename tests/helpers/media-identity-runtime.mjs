@@ -3,12 +3,14 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
 import { withOpenAIRequestDeadline } from '../../src/lib/openai-request.ts';
+import * as personRules from '../../src/lib/dancr/person-count-rules.ts';
 import * as core from '../../src/lib/dancr/media-identity-core.ts';
 
 export function mediaIdentityRuntime({ createResponse, createClient, getServerEnv = () => 'synthetic-key' } = {}) {
   const exports = {};
   const dependencies = {
     'server-only': {},
+    './person-count-rules.ts': personRules,
     './media-visual-provider.ts': visualProvider,
     '../openai-client': { createOpenAIClient: createClient || (async () => ({ responses: { create: createResponse } })) },
     '../openai-request.ts': { withOpenAIRequestDeadline },

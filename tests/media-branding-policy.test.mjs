@@ -1,4 +1,4 @@
-import { createMediaVisualResponse } from './helpers/media-visual-runtime.mjs';
+import { visualReviewRuntime } from './helpers/media-visual-review-runtime.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -9,9 +9,9 @@ import { applyDancerPhotoContentPolicy } from '../src/lib/dancr/photo-content-po
 
 const source=readFileSync(new URL('../src/lib/dancr/video-moderation.ts',import.meta.url),'utf8');
 const ast=ts.createSourceFile('video.ts',source,ts.ScriptTarget.Latest,true);
-const names=['moderateStoredMyDancrTvVideo','combineVideoDecisions','strongestDecision','uniqueReasonCodes','maximumCategoryScores','classifyVideoPolicy'];
+const names=['moderateStoredMyDancrTvVideo','combineVideoDecisions','strongestDecision','uniqueReasonCodes','maximumCategoryScores'];
 const selected=ast.statements.filter(n=>ts.isFunctionDeclaration(n)&&names.includes(n.name?.text)).map(n=>n.getText(ast)).join('\n');
-const compiled=ts.transpileModule(selected+'\nexport {moderateStoredMyDancrTvVideo,classifyVideoPolicy};',{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const compiled=ts.transpileModule(selected+'\nexport {moderateStoredMyDancrTvVideo};',{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
 const generic={decision:'approved',reasonCodes:[],categoryScores:{},providerFlagged:false};
 const clear={nudity:'absent',sexualActivity:'absent',decision:'approved',reasonCodes:['safe_adult_promotional_content'],confidence:0.99,branding:'absent',brandingConfidence:0.99};
 function runtime(analysis){
@@ -20,12 +20,12 @@ function runtime(analysis){
   mkdtemp:async()=>'/synthetic',path:{join:(...parts)=>parts.join('/')},tmpdir:()=>'/tmp',writeFile:async()=>{},
   rm:async p=>deleted.push(p),downloadVideo:async()=>Buffer.from('video'),assertAllowedVideoContainer(){},
   probeVideoDurationSeconds:async()=>30,extractVideoFrames:async()=>[Buffer.from('frame')],extractOptionalAudio:async()=>null,
-  extractSceneFrames:async()=>({frames:[],complete:true}),MEDIA_VISUAL_SERVICE_TIER:"ultrafast",VIDEO_TRANSCRIPTION_MODEL:"gpt-transcribe",
+  extractSceneFrames:async()=>({frames:[],complete:true}),MEDIA_VISUAL_SERVICE_TIER:"fast",VIDEO_TRANSCRIPTION_MODEL:"gpt-transcribe",
   runVideoReviewChecks:async()=>({frameResults:[{}],textResult:{},policyDecision:analysis,identityAnalysis:{personCount:1,personCountConfidence:.99,singlePersonOnly:true}}),
   evaluateDancrImageModeration:()=>generic,evaluateDancerMediaIdentity:()=>generic,
   evaluateMediaBranding,parseMediaBrandingAnalysis,DANCR_IMAGE_MODERATION_MODEL:'synthetic',VIDEO_POLICY_MODEL:'synthetic',DANCR_MEDIA_IDENTITY_MODEL:'synthetic',
   VIDEO_POLICY_APPROVE_CONFIDENCE:.75,VIDEO_POLICY_REJECT_CONFIDENCE:.95,
-  createMediaVisualResponse, withTimeout:fn=>fn({}),OPENAI_TIMEOUT_MS:1000,DANCER_MEDIA_CONTENT_RULES:MEDIA_BRANDING_RULES,
+  withTimeout:fn=>fn({}),OPENAI_TIMEOUT_MS:1000,DANCER_MEDIA_CONTENT_RULES:MEDIA_BRANDING_RULES,
   VIDEO_POLICY_REASON_CODES:['safe_adult_promotional_content','visible_branding_or_logo','branding_or_logo_uncertain'],
  });
  return {exports,deleted};
@@ -55,8 +55,8 @@ test('malformed or missing findings cannot approve photos or videos',async()=>{
  }
 });
 test('a missing branding response from the video provider stops classification',async()=>{
- const r=runtime(clear),client={responses:{create:async()=>({status:'completed',output_text:JSON.stringify({decision:'approved',reason_codes:['safe_adult_promotional_content'],confidence:.99})})}};
- await assert.rejects(r.exports.classifyVideoPolicy(client,[Buffer.from('frame')],'',''),/provider_response_incomplete/);
+ const client={responses:{create:async()=>({status:'completed',output_text:JSON.stringify({decision:'approved',reason_codes:['safe_adult_promotional_content'],confidence:.99})})}};
+ await assert.rejects(visualReviewRuntime().analyzeDancerVisualMedia({mediaType:'video',targetImages:[Buffer.from('frame')]},client),/provider_response_incomplete/);
 });
 test('no club, clothing, watermark, ownership, or incidental-brand exemption remains',()=>{
  const rules=MEDIA_BRANDING_RULES.join(' ');

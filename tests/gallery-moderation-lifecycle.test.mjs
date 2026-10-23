@@ -100,16 +100,13 @@ function scenario({decision='review',concurrentDecision='',defer=false,providerE
         decision:'review',status:'moderating',updated_at:version});
       return {id:record.id,updated_at:version};
     },
-    analyzeDancerMediaIdentity:async input=>{
+    analyzeDancerVisualMedia:async input=>{
       assert.equal('referenceImage' in input,false);
-      assert.equal(input.targetImages[0].toString(),'synthetic','count people in the original photo, including outside the avatar crop');
-      return identityAnalysis;
-    },
-    analyzeDancerPhotoContent:async image=>{
-      assert.equal(image.buffer.toString(),'synthetic','check the entire original photo, never just the avatar crop');
+      assert.equal(input.targetImages.length,1);
+      assert.equal(input.targetImages[0].toString(),'synthetic','all visual checks use the entire original photo');
       events.push('content-check');
-      if(contentError)throw new Error('provider_timeout: photo content review');
-      return contentAnalysis;
+      if(contentError)throw new Error('provider_timeout: combined visual review');
+      return {identityAnalysis,contentAnalysis};
     },
     evaluateDancrImageModeration:()=>evaluation,
     safeErrorMetadata:()=>({code:'synthetic'}),isAvatarFaceRequiredError:()=>faceRejection,

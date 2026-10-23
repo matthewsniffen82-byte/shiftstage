@@ -44,7 +44,7 @@ test("SDK load and construction failures propagate without an approval fallback"
 
 test("all AI review entry points use the server-only lazy client after credential checks", async () => {
   assert.match(source, /import "server-only"/);
-  for (const name of ["avatar-face", "image-moderation", "media-identity", "video-moderation"]) {
+  for (const name of ["avatar-face", "image-moderation", "media-identity", "media-visual-review", "video-moderation"]) {
     const reviewSource = await readFile(new URL(`../src/lib/dancr/${name}.ts`, import.meta.url), "utf8");
     assert.doesNotMatch(reviewSource, /import OpenAI from|new OpenAI\(/);
     assert.match(reviewSource, /await createOpenAIClient\(/);

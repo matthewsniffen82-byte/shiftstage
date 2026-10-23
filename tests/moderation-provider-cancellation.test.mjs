@@ -8,6 +8,7 @@ import OpenAI from "openai";
 import { PassThrough } from "node:stream";
 import { DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES } from "../src/lib/dancr/media-content-rules.ts";
 
+import { DANCER_PERSON_COUNT_RULES } from '../src/lib/dancr/person-count-rules.ts';
 const root = new URL("../", import.meta.url);
 const source = path => readFileSync(new URL(path, root), "utf8");
 const quiet = { log() {}, info() {}, warn() {}, error() {} };
@@ -60,7 +61,7 @@ function load(file, functions, timer, client, audioStream = { destroy() {} }) {
     DANCR_IMAGE_MODERATION_MODEL: "omni-moderation-latest",
     VIDEO_TRANSCRIPTION_MODEL: "gpt-transcribe", VIDEO_POLICY_MODEL: "gpt-6-astra",
     VIDEO_POLICY_REASON_CODES: ["safe_adult_promotional_content"],
-    DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES,
+    DANCER_MEDIA_CONTENT_RULES, DANCER_MEDIA_POLICY_REASON_CODES, DANCER_PERSON_COUNT_RULES,
     DANCR_MEDIA_IDENTITY_MODEL: "gpt-4o-mini", MEDIA_IDENTITY_TIMEOUT_MS: 30_000,
     PHOTO_CONTENT_MODEL: "gpt-4.1-mini", PHOTO_CONTENT_TIMEOUT_MS: 25_000,
     OPENAI_TIMEOUT_MS: 30_000, FRAME_MODERATION_TIMEOUT_MS: 12_000,
@@ -73,14 +74,14 @@ function load(file, functions, timer, client, audioStream = { destroy() {} }) {
 }
 
 const videoFunctions = ["moderateFrame", "withVideoProviderRetry", "isRetryableVideoProviderError",
-  "providerErrorStatus", "providerErrorCode", "delay", "transcribeAudio", "moderateText", "classifyVideoPolicy"];
+  "providerErrorStatus", "providerErrorCode", "delay", "transcribeAudio", "moderateText"];
 const cases = [
   ["photo content policy", "photo-content-policy.ts", ["analyzeDancerPhotoContent"], 1,
     f => f.analyzeDancerPhotoContent({ buffer: Buffer.from("fixture"), contentType: "image/jpeg" })],
   ["video frame", "video-moderation.ts", videoFunctions, 2, (f, c) => f.moderateFrame(c, Buffer.from("fixture"), 0)],
   ["video transcript", "video-moderation.ts", videoFunctions, 1, (f, c) => f.transcribeAudio(c, "synthetic")],
   ["video text", "video-moderation.ts", videoFunctions, 1, (f, c) => f.moderateText(c, "fixture")],
-  ["video policy", "video-moderation.ts", videoFunctions, 1, (f, c) => f.classifyVideoPolicy(c, [], "fixture", "")],
+  ["combined visual review", "media-visual-review.ts", ["buildDancerVisualReviewRequest", "analyzeDancerVisualMedia"], 1, (f, c) => f.analyzeDancerVisualMedia({ targetImages: [Buffer.from("fixture")], mediaType: "video" }, c)],
   ["image moderation", "image-moderation.ts", ["createModeration", "withRetry"], 3, (f, c) => f.createModeration(c, [])],
   ["media identity", "media-identity.ts", ["analyzeDancerMediaIdentity"], 1,
     f => f.analyzeDancerMediaIdentity({ targetImages: [Buffer.from("fixture")], mediaType: "photo" })],

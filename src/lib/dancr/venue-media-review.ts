@@ -1,4 +1,5 @@
 import "server-only";
+import { MEDIA_VISUAL_MODEL, MEDIA_VISUAL_SERVICE_TIER } from "./media-visual-provider.ts";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api";
 import { analyzeImageBranding } from "./image-branding";
@@ -39,7 +40,7 @@ export async function queueVenueMediaReview(client: SupabaseClient, input: {
   requireStorageUploadReceipt(uploaded, REVIEW_BUCKET, path);
   const { data, error } = await client.from("image_moderation_records").insert({
     user_id: adminId, upload_context: `venue_${kind}`, temporary_storage_path: path,
-    provider_model: "omni-moderation-latest+gpt-6-astra:ultrafast", provider_flagged: evaluation.providerFlagged,
+    provider_model: `omni-moderation-latest+${MEDIA_VISUAL_MODEL}:${MEDIA_VISUAL_SERVICE_TIER}`, provider_flagged: evaluation.providerFlagged,
     decision: "review", status: "pending_review", reason_codes: evaluation.reasonCodes, category_scores: evaluation.categoryScores,
     venue_media_context: { venueId: venue.id, kind,
       expectedPath: kind === "logo" ? venue.logoStoragePath : venue.coverImageStoragePath,
