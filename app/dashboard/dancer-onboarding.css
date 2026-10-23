@@ -1,4 +1,33 @@
 /* Guided setup uses existing sections and dialogs, with one current step. */
+@layer dancr-palette {
+  /* Setup navigation stays charcoal so Continue remains the primary action. */
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command :where(
+    .dancer-onboarding-steps > .is-current > button,
+    .dancer-builder-steps > button[aria-current="step"]
+  ) {
+    background: var(--dancr-control-secondary-background) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command :where(.dancer-builder-steps > button[aria-current="step"]) {
+    box-shadow: inset 0 -2px 0 var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command :where(
+    .dancer-onboarding-steps > .is-current > button .dancer-onboarding-step-marker,
+    .dancer-onboarding-steps > .is-current > button .dancer-onboarding-step-control.is-action
+  ) {
+    background: transparent !important;
+    border-color: transparent !important;
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command :where(.dancer-builder-steps > button > span) {
+    color: var(--dancr-color-text-muted) !important;
+  }
+  html body.dancr-button-system #dancer-dashboard .dancer-onboarding-command :where(.dancer-builder-steps > button[aria-current="step"] > span) {
+    color: inherit !important;
+  }
+}
 body.dancr-button-system main.dashboard-shell.dashboard-shell-dancer .dancer-onboarding-command {
   padding: 0; border: 0; border-radius: 0; background: transparent !important; gap: 16px;
 }
