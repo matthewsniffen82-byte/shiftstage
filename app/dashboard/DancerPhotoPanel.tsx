@@ -16,7 +16,7 @@ import { DANCER_PHOTOS_KEEP_OPEN_EVENT } from "./DashboardShared";
 import { preparePhotoUpload } from "./prepare-photo-upload";
 import { cropProfilePhoto } from "./profile-photo-crop";
 import { createPhotoCropQueue } from "./photo-upload-crop-queue";
-import { runMediaUploadBatch } from "./media-upload-batch";
+import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "./media-upload-batch";
 import { createMediaUploadCancellation } from "./media-upload-cancellation";
 import "./dancer-upload-queue.css";
 export function DancerPhotoPanel({
@@ -297,7 +297,7 @@ export function DancerPhotoPanel({
     let nextSortOrder = Math.max(nextGalleryPhotoSortOrder(workingPhotos), ...batch.map(item => (item.uploadSortOrder ?? -1) + 1));
     try {
       await persistQueuedPhotoDeletions(controller.signal);
-      await runMediaUploadBatch(batch, batch.some(item => item.replaces) ? 1 : 2, async (queuedItem, index) => {
+      await runMediaUploadBatch(batch, batch.some(item => item.replaces) ? 1 : MEDIA_UPLOAD_CONCURRENCY, async (queuedItem, index) => {
         if (!isCurrentPhotoAction(requestId, controller)) return;
         const transfer = cancellation.start(queuedItem.id);
         if (!transfer) {
@@ -660,7 +660,7 @@ export function DancerPhotoPanel({
             <span className="photo-source-cta" aria-hidden="true">Open</span>
           </button>
         </div>
-        <p className="photo-upload-selection-hint">Select several photos, then crop or keep each original before uploading.</p>
+        <p className="photo-upload-selection-hint">Crop, keep, or skip each photo. Up to {MEDIA_UPLOAD_CONCURRENCY} upload at once; extras wait in line.</p>
         {status && !(status === "Uploading" && reviews.length) ? <p className="photo-upload-status" role="status" aria-live="polite">{status}</p> : null}
       </div>
       </DancerUploadDisclosure>

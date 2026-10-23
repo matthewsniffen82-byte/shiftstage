@@ -1,3 +1,5 @@
+export const MEDIA_UPLOAD_CONCURRENCY = 5;
+
 /** Keep mobile memory/network use bounded while overlapping transfer and server review. */
 export async function runMediaUploadBatch<T>(items: T[], concurrency: number,
   upload: (item: T, index: number) => Promise<void>, signal: AbortSignal) {

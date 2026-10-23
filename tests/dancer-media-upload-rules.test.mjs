@@ -60,7 +60,7 @@ function rule(css, suffix) {
   return Object.fromEntries(match.nodes.filter(node => node.type === 'decl').map(node => [node.prop, node.value]));
 }
 
-test('video upload styling keeps unboxed permission rows and a gated primary action in both editors', () => {
+test('video upload styling keeps unboxed permission rows and shared button fills in both editors', () => {
   for (const file of ['dancer-profile-workspace.css', 'dancer-profile-builder-polish.css']) {
     const css = source(file);
     const consent = rule(css, '.tv-check');
@@ -72,9 +72,9 @@ test('video upload styling keeps unboxed permission rows and a gated primary act
     const action = rule(css, '.tv-upload-form .tv-video-source-action');
     assert.equal(action['min-height'], '44px');
     assert.equal(action['white-space'], 'normal');
-    assert.equal(action.background, 'linear-gradient(#121016,#121016)');
+    assert.equal(action.background, 'linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary))');
     const primary = rule(css, '.tv-video-source-action.tv-video-source-library[aria-disabled="false"]:not(:disabled)');
-    assert.equal(primary.background, 'linear-gradient(#6d28d9,#6d28d9)');
+    assert.equal(primary.background, 'linear-gradient(var(--dancr-color-control-secondary),var(--dancr-color-control-secondary))');
     assert.equal(primary.color, '#fff');
   }
 });

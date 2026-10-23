@@ -10,7 +10,7 @@ import DancerMediaUploadRules from "./DancerMediaUploadRules";
 import DancerUploadDisclosure from "./DancerUploadDisclosure";
 import { uploadResumableVideo } from "./resumable-video-upload";
 import { createMediaUploadCancellation } from "./media-upload-cancellation";
-import { runMediaUploadBatch } from "./media-upload-batch";
+import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "./media-upload-batch";
 import DancerVideoPreviews from "./DancerVideoPreviews";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import { isVideoProcessingStalled } from "@/src/lib/dancr/video-processing-state";
@@ -359,7 +359,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
     const failedItems: QueuedVideo[] = [];
     let submittedCount = 0;
     try {
-      await runMediaUploadBatch(batch, 3, async queuedItem => {
+      await runMediaUploadBatch(batch, MEDIA_UPLOAD_CONCURRENCY, async queuedItem => {
         if (!isCurrentVideoAction(requestId, controller)) return;
         let item = queuedItem;
         const transfer = cancellation.start(queuedItem.id);
@@ -697,7 +697,7 @@ export default function DancerTvStudio({ embedded = false, uploadOnly = false, o
             </button>
           </div>
           <small className="tv-upload-requirements">
-            Vertical or square · MP4, WebM, MOV · 1–{VIDEO_UPLOAD_MAX_SECONDS} sec · {VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB max
+            Vertical or square · MP4, WebM, MOV · 1–{VIDEO_UPLOAD_MAX_SECONDS} sec · {VIDEO_UPLOAD_MAX_BYTES / (1024 * 1024)} MB max · Up to {MEDIA_UPLOAD_CONCURRENCY} videos upload at once; extras wait in line.
           </small>
           {!embedded ? (
             <div className="tv-schedule-context-note">

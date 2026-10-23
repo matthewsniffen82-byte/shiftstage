@@ -6,7 +6,7 @@ import test from "node:test";
 import ts from "typescript";
 import { mediaReview } from "./helpers/media-review-label.mjs";
 import { preparePhotoUpload } from "../app/dashboard/prepare-photo-upload.ts";
-import { runMediaUploadBatch } from "../app/dashboard/media-upload-batch.ts";
+import { MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch } from "../app/dashboard/media-upload-batch.ts";
 import { createMediaUploadCancellation } from "../app/dashboard/media-upload-cancellation.ts";
 import { createPhotoCropQueue } from "../app/dashboard/photo-upload-crop-queue.ts";
 
@@ -26,7 +26,7 @@ function photoHarness({ uploadOnly = false, profile = {}, crop = async file => f
   let cursor = 0, effects = [], dirty = true, tree;
   const exports = {};
   runInNewContext(code, {
-    preparePhotoUpload, runMediaUploadBatch, createMediaUploadCancellation, createPhotoCropQueue, RefreshButton: refreshButtonModule.default,
+    preparePhotoUpload, MEDIA_UPLOAD_CONCURRENCY, runMediaUploadBatch, createMediaUploadCancellation, createPhotoCropQueue, RefreshButton: refreshButtonModule.default,
     exports, ...mediaReview, MAX_DANCER_PROFILE_PHOTOS: 30, MIN_DANCER_ONBOARDING_PHOTOS: 3, DancerRejectedUploadNotice: "RejectedUploadNotice", DancerUploadDisclosure: "UploadDisclosure", DancerMediaUploadRules: "MediaUploadRules", DancerMediaRetryButton: "MediaRetryButton", DancerMediaPinButton: "MediaPinButton", DancerInternalMainPhotoPicker: "InternalMainPhotoPicker",
     requestDancerMediaPin: (...args) => { pins.push(args); return pin(...args); },
     cropProfilePhoto: (...args) => { crops.push(args); return crop(...args); },
@@ -79,6 +79,7 @@ function photoHarness({ uploadOnly = false, profile = {}, crop = async file => f
     get replacements() { return nodes().filter(node => node.type === "input" && /^Replace photo/.test(node.props['aria-label'] || '')); },
     get progress() { return nodes().filter(node => node.props?.role === "progressbar"); },
     get uploadMessages() { return nodes().filter(node => node.props?.className === "photo-upload-status").map(node => node.props.children); },
+    get uploadHint() { return Array.from(nodes().find(node => node.props?.className === "photo-upload-selection-hint").props.children).join(''); },
     select(files = [new File(["fixture"], "solo.jpg", { type: "image/jpeg" })], source = "gallery") {
       nodes().find(node => node.type === "input" && node.props.className === "photo-source-input"
         && Boolean(node.props.capture) === (source === "camera")).props.onChange({ target: { files, value: "" } });
@@ -172,29 +173,33 @@ test('a restored processing photo has an enabled Cancel button that deletes only
   assert.deepEqual(JSON.parse(ui.posts[0].body),{photoId:'stuck'});assert.equal(ui.cards.length,0);
 });
 
-test("overlapping photo reviews reserve selection order and show real progress before results arrive", async () => {
+test("five photo uploads reserve selection order, show progress and queue extras until a slot opens", async () => {
   const releases = [];
+  const names = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth'];
   const ui = photoHarness({ uploadOnly: true,
     post: () => new Promise(resolve => releases.push(resolve)),
-    read: async () => ({ profile: { dancer_photos: [approved('first', 1), approved('second', 2), approved('third', 3)] } }),
+    read: async () => ({ profile: { dancer_photos: names.map((name, index) => approved(name, index + 1)) } }),
   });
-  ui.select(['first', 'second', 'third'].map(name => new File([name], name + '.jpg', { type: 'image/jpeg' })));
+  assert.equal(ui.uploadHint, 'Crop, keep, or skip each photo. Up to 5 upload at once; extras wait in line.');
+  ui.select(names.map(name => new File([name], name + '.jpg', { type: 'image/jpeg' })));
   await ui.settle();
-  assert.equal(ui.posts.length, 2, 'the second upload starts before the first review completes');
+  assert.equal(ui.posts.length, 5, 'five uploads start while the sixth waits');
+  assert.equal(ui.crops.length, 5, 'queued photos wait before opening their crop editor');
   ui.posts[0].onUploadProgress(43); ui.posts[1].onUploadProgress(100); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Uploading · 43%', 'Checking photo…', 'Waiting to upload']);
-  assert.deepEqual(ui.progress.map(bar => bar.props['aria-valuenow']), [43, undefined, 0]);
+  assert.deepEqual(ui.statuses, ['Uploading · 43%', 'Checking photo…', 'Uploading · 0%', 'Uploading · 0%', 'Uploading · 0%', 'Waiting to upload']);
+  assert.deepEqual(ui.progress.map(bar => bar.props['aria-valuenow']), [43, undefined, 0, 0, 0, 0]);
   assert.equal(ui.progress[0].props.children.props.style.width, '43%');
   assert.match(ui.progress[1].props.className, /is-indeterminate/);
   assert.equal(ui.progress[1].props.children.props.style, undefined, 'checks have no invented percentage');
   assert.equal(ui.replacements.length, 0, 'active and queued uploads cannot be replaced');
   assert.equal(ui.reviewButtons.length, 0);
-  assert.deepEqual(ui.buttons.filter(button => button.props.className !== 'photo-source-action is-disabled').map(button => button.props.children), ['Cancel uploads', 'Cancel', 'Cancel', 'Cancel']);
+  assert.deepEqual(ui.buttons.filter(button => button.props.className !== 'photo-source-action is-disabled').map(button => button.props.children), ['Cancel uploads', ...Array(6).fill('Cancel')]);
   assert.deepEqual(ui.uploadMessages, [], 'each receipt already announces its upload status');
   releases[1]({ decision: 'approved', photo: approved('second', 2) }); await ui.settle();
-  assert.equal(ui.posts.length, 3, 'the third upload does not wait for the first review');
-  assert.deepEqual(ui.posts.map(post => Number(post.body.get('sortOrder'))), [1, 2, 3]);
-  releases[2]({ decision: 'approved', photo: approved('third', 3) }); await ui.settle();
+  assert.equal(ui.posts.length, 6, 'the next upload does not wait for the first review');
+  assert.equal(ui.crops.length, 6);
+  assert.deepEqual(ui.posts.map(post => Number(post.body.get('sortOrder'))), [1, 2, 3, 4, 5, 6]);
+  releases.slice(2).forEach((release, index) => release({ decision: 'approved', photo: approved(names[index + 2], index + 3) })); await ui.settle();
   assert.equal(ui.reads.length, 0, 'final refresh waits for all in-flight reviews');
   releases[0]({ decision: 'approved', photo: approved('first', 1) }); await ui.settle();
   assert.equal(ui.reads.length, 1);
@@ -210,26 +215,27 @@ test("Cancel uploads stops photo transfers and queued files, preserves an active
     }),
     read: async () => ({ profile: { pending_photo_reviews: [{ ...pending('kept', 2), status: 'pending_review' }] } }),
   });
-  ui.select(['first', 'second', 'third'].map(name => new File([name], name + '.jpg', { type: 'image/jpeg' })));
+  ui.select(['first', 'second', 'third', 'fourth', 'fifth', 'sixth'].map(name => new File([name], name + '.jpg', { type: 'image/jpeg' })));
   await ui.settle();
   ui.posts[0].onUploadProgress(40); ui.posts[1].onUploadProgress(100); await ui.settle();
   ui.buttons.find(button => button.props.children === 'Cancel uploads').props.onClick();
   await ui.settle();
   assert.equal(ui.posts[0].signal.aborted, true);
   assert.equal(ui.posts[1].signal.aborted, false, 'completed transfer keeps its review response');
-  assert.equal(ui.posts.length, 2, 'queued third file never starts');
+  assert.equal(ui.posts.length, 5, 'queued sixth file never starts');
+  assert.ok(ui.posts.filter((_, index) => index !== 1).every(post => post.signal.aborted));
   ui.posts[0].onUploadProgress(100); await ui.settle();
-  assert.deepEqual(ui.statuses, ['Upload canceled', 'Checking photo…', 'Upload canceled']);
+  assert.deepEqual(ui.statuses, ['Upload canceled', 'Checking photo…', ...Array(4).fill('Upload canceled')]);
   releases[1]({ decision: 'review', photo: { id: 'kept', reviewStatus: 'pending', sortOrder: 2 } });
   await ui.settle();
-  assert.deepEqual(ui.statuses, ['Upload canceled', 'Waiting for Club approval', 'Upload canceled']);
+  assert.deepEqual(ui.statuses, ['Upload canceled', 'Waiting for Club approval', ...Array(4).fill('Upload canceled')]);
   assert.equal(ui.progress.length, 0);
   const retry = ui.buttons.find(button => button.props.children === 'Retry');
   assert.equal(retry.props.disabled, false); retry.props.onClick(); await ui.settle();
-  assert.equal(ui.posts.length, 3);
-  assert.equal(ui.posts[2].signal.aborted, false);
-  assert.equal(ui.posts[2].body.get('idempotencyKey'), ui.posts[0].body.get('idempotencyKey'));
-  releases[2]({ decision: 'review', photo: { id: 'retry', reviewStatus: 'pending', sortOrder: 1 } });
+  assert.equal(ui.posts.length, 6);
+  assert.equal(ui.posts[5].signal.aborted, false);
+  assert.equal(ui.posts[5].body.get('idempotencyKey'), ui.posts[0].body.get('idempotencyKey'));
+  releases[5]({ decision: 'review', photo: { id: 'retry', reviewStatus: 'pending', sortOrder: 1 } });
   await ui.settle();
 });
 
@@ -701,11 +707,11 @@ test("settled photos alone do not start a background refresh loop", () => {
 test("Cancel immediately removes a queued photo without waiting for active transfers", async () => {
   const transfers=[];
   const ui=photoHarness({post:()=>new Promise(resolve=>transfers.push(resolve))});
-  ui.select([1,2,3].map(i=>new File(["fixture"],`photo-${i}.jpg`,{type:"image/jpeg"})));await ui.settle();
-  ui.buttons.filter(button=>button.props.children==="Cancel")[2].props.onClick();await ui.settle();
-  assert.equal(ui.cards.length,2);assert.equal(transfers.length,2);
+  ui.select([1,2,3,4,5,6].map(i=>new File(["fixture"],`photo-${i}.jpg`,{type:"image/jpeg"})));await ui.settle();
+  ui.buttons.filter(button=>button.props.children==="Cancel")[5].props.onClick();await ui.settle();
+  assert.equal(ui.cards.length,5);assert.equal(transfers.length,5);
   transfers.forEach((resolve,i)=>resolve({decision:"moderating",moderationRecordId:`review-${i}`}));await ui.settle();
-  assert.equal(transfers.length,2);
+  assert.equal(transfers.length,5);
 });
 
 test("a failed cancellation keeps the accepted photo receipt without offering another upload", async () => {
