@@ -1,118 +1,54 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import {readFileSync} from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
-import { mediaReview } from './helpers/media-review-label.mjs';
-import { PublicApiError } from '../src/lib/api-error-policy.ts';
+import {mediaReview} from './helpers/media-review-label.mjs';
+import {PublicApiError} from '../src/lib/api-error-policy.ts';
 import * as serverJobs from '../src/lib/server-job.ts';
-
-const compiled = ts.transpileModule(readFileSync(new URL('../app/api/venue/media-reviews/route.ts', import.meta.url), 'utf8'), {
-  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-}).outputText;
-const id = '12345678-1234-4123-8123-123456789012';
-const version = '2026-10-22T00:00:00Z';
-function fixture(kind, fields, options = {}) {
-  const record = { id, updated_at: version, status: kind === 'photo' ? 'pending_review' : 'submitted',
-    upload_context: 'profile_gallery:1', user_id: 'dancer', submitted_by: 'dancer', ...fields };
-  const decisions = [], deferred = [], followUps = [], rejectionNotes = [];
-  const admin = {
-    from() { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: record }) }; return q; },
-    rpc: async name => name === 'assert_dancer_media_reviewer' && options.forbidden
-      ? { error: new Error('Access removed') }
-      : { data: name === 'get_venue_dancer_media_review' ? { count: 1, items: [{ id, kind, record }] } : true },
-    storage: { from: () => ({ createSignedUrl: async () => ({ data: { signedUrl: 'private-preview' } }) }) },
-  };
-  const deps = {
-    ...mediaReview, PublicApiError, NextResponse: { json: body => body },
-    apiError: error => ({ status: error.status, message: error.message }),
-    readBoundedJsonObject: async request => request.body,
-    ...serverJobs,
-    after: work => deferred.push(work),
-    createRequestSupabaseContext: async () => ({ user: { id: 'reviewer' }, session: {} }),
-    createAdminSupabaseClient: () => admin,
-    requireActiveVenueAccount: async () => {}, requireVenueAccess: async () => ({ venueId: 'venue', role: 'manager' }),
-    withSignedThumbnail: async () => ({ thumbnailUrl: 'private-preview' }),
-    approveReviewRecord: async (_admin, _record, _actor, _notes, config) => {
-      decisions.push('approved');
-      config.deferCleanup(async () => { serverJobs.assertServerJobActive(); followUps.push('cleanup'); });
-    }, rejectReviewRecord: async (_admin, _record, _reviewer, notes) => {
-      if (notes.trim().length < 3) throw new PublicApiError('INVALID_REQUEST', 'Add a clear rejection reason for the dancer.', 400);
-      rejectionNotes.push(notes); decisions.push('rejected');
-    },
-    reviewMyDancrTvVideo: async (_admin, _reviewer, _id, decision) => decisions.push(decision),
-    finalizePendingDancerNfcEnrollment: async () => { serverJobs.assertServerJobActive(); followUps.push('activation'); if (options.followUpError) throw new Error('Synthetic failure'); },
-    recordVenueActivity: async () => { serverJobs.assertServerJobActive(); followUps.push('activity'); },
-    safeErrorMetadata: () => ({ code: 'SYNTHETIC' }),
-  };
-  const route = {};
-  vm.runInNewContext(compiled, { exports: route, require: () => deps, URL, console });
-  return { decisions, followUps, deferred, rejectionNotes, get: () => route.GET({ url: 'https://example.test/api/venue/media-reviews' }),
-    post: (decision = 'approved', notes = 'Logo visible') => route.POST({ body: { id, kind, version, decision, notes } }) };
+const compiled=ts.transpileModule(readFileSync('app/api/venue/media-reviews/route.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const id='12345678-1234-4123-8123-123456789012', version='a'.repeat(32);
+function fixture(kind='photo',options={}) {
+  const calls=[],deferred=[],activity=[];
+  const record={id,status:'approved',upload_context:'profile_gallery:1',updated_at:'2026-10-22',...options.record};
+  const item={id,kind,source:kind==='photo'?'upload':'video',dancerId:id,contentVersion:version,decisionVersion:null,clubStatus:'pending',record};
+  const admin={rpc:async(name,args)=>{
+    calls.push({name,args});
+    if(name==='get_club_media_queue')return{data:{items:[item],count:1,dancers:[]}};
+    if(name==='set_club_media_permission')return options.error?{error:options.error}:{data:{media_id:id,venue_id:'venue',reviewer_id:'reviewer',decision:args.p_decision,platformApproved:record.status==='approved'}};
+    throw Error('Unexpected RPC');
+  },storage:{from:()=>({createSignedUrl:async()=>({data:{signedUrl:'preview'}})})}};
+  const deps={...mediaReview,...serverJobs,PublicApiError,NextResponse:{json:body=>body},after:work=>deferred.push(work),
+    apiError:error=>({status:error.status,message:error.message}),readBoundedJsonObject:async r=>r.body,
+    createRequestSupabaseContext:async()=>({user:{id:'reviewer'},session:{}}),createAdminSupabaseClient:()=>admin,
+    requireActiveVenueAccount:async()=>{},requireVenueAccess:async()=>({venueId:'venue',role:'manager'}),
+    withSignedThumbnail:async()=>({thumbnailUrl:'preview'}),normalizedVideoPosterStoragePath:()=>null,
+    recordVenueActivity:async(_admin,entry)=>activity.push(entry),safeErrorMetadata:()=>({})};
+  const route={};vm.runInNewContext(compiled,{exports:route,require:()=>deps,URL,console});
+  return{calls,deferred,activity,get:()=>route.GET({url:'https://example.test/api/venue/media-reviews'}),
+    post:(decision='approved',notes='',extra={})=>route.POST({body:{...item,record:undefined,decision,notes,venueId:'untrusted-other-club',...extra}})};
 }
-
-for (const kind of ['photo', 'video']) test(`${kind}: saved approval responds before cleanup, activation and activity logging`, async () => {
-  const f = fixture(kind, { category_flags: { ai_recommended_approval: true }, moderation_decision: 'approved' }, { followUpError: true });
-  assert.equal((await f.post()).ok, true);
-  assert.deepEqual(f.followUps, []);
-  assert.equal(f.deferred.length, 1);
-  await f.deferred[0]();
-  assert.ok(f.followUps.includes('activation'));
-  assert.ok(f.followUps.includes('activity'));
-  assert.equal(f.followUps.includes('cleanup'), kind === 'photo');
+for(const kind of ['photo','video'])test(kind+': approval is stored for the authenticated club and logging follows the response',async()=>{
+  const f=fixture(kind);const result=await f.post();assert.equal(result.ok,true);assert.match(result.message,/your club/);
+  const call=f.calls[0];assert.equal(call.name,'set_club_media_permission');assert.equal(call.args.p_venue_id,'venue');
+  assert.equal(call.args.p_actor_id,'reviewer');assert.equal(call.args.p_content_version,version);
+  assert.deepEqual(f.activity,[]);await f.deferred[0]();assert.equal(f.activity.length,1);
 });
-
-for (const kind of ['photo', 'video']) {
-  test(`${kind}: a club rejection ${kind === 'photo' ? 'needs no explanation' : 'requires one to three words'}`, async () => {
-    if (kind === 'photo') {
-      for (const reason of ['', '   ']) {
-        const f = fixture(kind, {});
-        assert.equal((await f.post('rejected', reason)).ok, true);
-        assert.deepEqual(f.decisions, ['rejected']);
-        assert.deepEqual(f.rejectionNotes, ['Not approved']);
-      }
-      return;
-    }
-    const f = fixture(kind, {});
-    for (const reason of ['', '   ', 'This reason has four']) {
-      assert.equal((await f.post('rejected', reason)).status, 400);
-      assert.equal(f.decisions.length, 0);
-    }
-    assert.equal((await f.post('rejected', 'Nudity')).ok, true);
-  });
-  for (const decision of ['approved', 'review', 'rejected', null]) test(`${kind}: only an automated pass enables and accepts Club approval (${decision})`, async () => {
-    const f = fixture(kind, kind === 'photo' ? { category_flags: {
-      ai_recommended_approval: decision === 'approved', ai_recommended_rejection: decision === 'rejected',
-    } } : { moderation_decision: decision });
-    const queue = await f.get();
-    assert.equal(queue.items[0].canApprove, decision === 'approved');
-    assert.doesNotMatch(queue.items[0].aiSummary, /manual review|human review/i);
-    const result = await f.post();
-    if (decision === 'approved') { assert.equal(result.ok, true); assert.deepEqual(f.decisions, ['approved']); }
-    else { assert.equal(result.status, 409); assert.deepEqual(f.decisions, []); }
-  });
-  test(`${kind}: the club can still reject an unchecked legacy upload with a reason`, async () => {
-    const f = fixture(kind, {});
-    assert.equal((await f.post('rejected')).ok, true);
-    assert.deepEqual(f.decisions, ['rejected']);
-  });
-}
-
-test('photo: a club rejection without a reason still rejects unauthorized, stale and already reviewed requests', async () => {
-  for (const [fields, options, status] of [
-    [{}, { forbidden: true }, 403],
-    [{ updated_at: '2026-10-22T01:00:00Z' }, {}, 409],
-    [{ club_reviewed_at: version }, {}, 409],
-  ]) {
-    const f = fixture('photo', fields, options);
-    assert.equal((await f.post('rejected', '')).status, status);
-    assert.deepEqual(f.decisions, []);
+test('rejection writes only the club decision; photos need no reason and videos need a brief reason',async()=>{
+  const photo=fixture();assert.equal((await photo.post('rejected')).ok,true);
+  assert.equal(photo.calls[0].args.p_notes,'Not approved for this club');
+  const video=fixture('video');for(const reason of ['','This has four words'])assert.equal((await video.post('rejected',reason)).status,400);
+  assert.equal(video.calls.length,0);assert.equal((await video.post('rejected','Club dress code')).ok,true);
+});
+test('stale and unauthorized decisions surface conflicts and cannot report success',async()=>{
+  for(const [code,status] of [['40001',409],['42501',403]])assert.equal((await fixture('photo',{error:{code}}).post()).status,status);
+  for(const extra of [{contentVersion:'bad'},{decisionVersion:'bad'},{dancerId:'bad'},{source:'video'}]){
+    const f=fixture();assert.equal((await f.post('approved','',extra)).status,400);assert.equal(f.calls.length,0);
   }
 });
-
-test('contradictory photo flags cannot bypass automated checks', async () => {
-  const f = fixture('photo', { category_flags: { ai_recommended_approval: true, ai_recommended_rejection: true } });
-  assert.equal((await f.get()).items[0].canApprove, false);
-  assert.equal((await f.post()).status, 409);
-  assert.deepEqual(f.decisions, []);
+test('published items remain reviewable and pending publication has distinct copy',async()=>{
+  const published=fixture();assert.equal((await published.get()).items[0].canApprove,true);
+  const pending=fixture('photo',{record:{status:'pending_review',category_flags:{file_checks_passed:true}}});
+  const q=await pending.get();assert.equal(q.items[0].canApprove,true);assert.equal(q.items[0].contentVersion,version);
+  assert.match((await pending.post()).message,/MyDancr final approval/);
 });

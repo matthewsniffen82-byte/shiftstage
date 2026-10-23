@@ -7,8 +7,8 @@ import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { requireActiveVenueAccount } from "@/src/lib/dancr/auth";
 import { requireVenueAccess } from "@/src/lib/dancr/venue-access";
-import { rejectReviewRecord, withSignedThumbnail } from "@/src/lib/dancr/image-review";
-import { MYDANCR_TV_BUCKET, normalizedVideoPosterStoragePath, reviewMyDancrTvVideo } from "@/src/lib/dancr/tv";
+import { withSignedThumbnail } from "@/src/lib/dancr/image-review";
+import { MYDANCR_TV_BUCKET, normalizedVideoPosterStoragePath } from "@/src/lib/dancr/tv";
 import { MYDANCR_TV_POSTER_BUCKET } from "@/src/lib/dancr/media-watermark";
 import { recordVenueActivity } from "@/src/lib/dancr/venue-team";
 import { safeErrorMetadata } from "@/src/lib/security/safe-error-metadata";
@@ -72,9 +72,9 @@ export async function GET(request: Request) {
     const dancerId = url.searchParams.get("dancerId");
     if (dancerId !== null && !uuid.test(dancerId)) throw new PublicApiError("INVALID_REQUEST", "Choose a dancer to review.", 400);
     const grouped = url.searchParams.get("view") === "dancers" || dancerId !== null;
-    const { data, error } = await admin.rpc(grouped ? "get_venue_dancer_media_grid" : "get_venue_dancer_media_review", {
+    const { data, error } = await admin.rpc("get_club_media_queue", {
       p_actor_id: user.id, p_venue_id: access.venueId, p_offset: offset, p_limit: url.searchParams.get("countOnly") === "1" ? 0 : 12,
-      ...(grouped ? { p_dancer_id: dancerId } : {}),
+      p_dancer_id: dancerId, p_status: url.searchParams.get("status") === "all" ? "all" : "pending",
     });
     if (error) throw error;
     const items = await Promise.all((data?.items || []).map(async (item: any) => {
@@ -93,13 +93,15 @@ export async function GET(request: Request) {
           if (!poster.error) posterUrl = poster.data?.signedUrl || "";
         }
       }
-      const ready = photo ? r.category_flags?.file_checks_passed === true : r.moderation_details?.fileChecksPassed === true;
+      const ready = r.status === "approved" || (photo ? r.category_flags?.file_checks_passed === true : r.moderation_details?.fileChecksPassed === true);
       const caption = photo ? "" : String(r.caption || "").trim();
-      return { id: item.id, kind: item.kind, dancerId: item.dancerId, stageName: item.stageName, version: r.updated_at, previewUrl, posterUrl,
+      return { id: item.id, kind: item.kind, source: item.source, dancerId: item.dancerId, stageName: item.stageName,
+        contentVersion: item.contentVersion, decisionVersion: item.decisionVersion, clubStatus: item.clubStatus,
+        version: r.updated_at, previewUrl, posterUrl,
         caption: caption && !uuid.test(caption.replace(/\.(?:mp4|mov|m4v|webm)$/i, "")) ? caption : null,
         label: photo ? r.upload_context === "profile_avatar" ? "Avatar" : r.upload_context.startsWith("profile_main") ? "Main photo/avatar" : "Photo" : "Video",
-        processing, canApprove: !processing && ready && !r.club_reviewed_at && (photo || !r.upload_validation_pending),
-        reviewSummary: processing ? "Preparing upload" : "Club review required before MyDancr final approval",
+        processing, canApprove: !processing && ready && (photo || !r.upload_validation_pending),
+        reviewSummary: r.status === "approved" ? "MyDancr approved · Your club controls display here" : "MyDancr final approval is also required before display",
         reasons: photo ? r.reason_codes || [] : r.moderation_reason_codes || [],
       };
     }));
@@ -121,39 +123,36 @@ export async function POST(request: Request) {
     const response = await runWithServerJob(async () => {
       const { admin, access, user, session } = await context(request);
       const body = await readBoundedJsonObject(request, { maxBytes: 8192, invalidMessage: "Invalid media review.", tooLargeMessage: "Review notes are too long." });
-      const { id, kind, decision, version } = body;
+      const { id, kind, decision, dancerId, source, contentVersion, decisionVersion } = body;
       const notes = typeof body.notes === "string" ? body.notes.trim() : "";
       if (typeof id !== "string" || !uuid.test(id) || !["photo", "video"].includes(String(kind)) || !["approved", "rejected"].includes(String(decision))
-        || typeof version !== "string" || !Number.isFinite(Date.parse(version)) || notes.length > 4000) {
+        || typeof dancerId !== "string" || !uuid.test(dancerId)
+        || !["upload", "photo", "avatar", "video"].includes(String(source))
+        || (kind === "video") !== (source === "video")
+        || typeof contentVersion !== "string" || !/^[a-f0-9]{32}$/.test(contentVersion)
+        || (decisionVersion !== null && (typeof decisionVersion !== "string" || !uuid.test(decisionVersion))) || notes.length > 4000) {
         throw new PublicApiError("INVALID_REQUEST", "Choose an upload and a review decision.", 400);
       }
       const photo = kind === "photo";
       if (decision === "rejected" && !photo && !isBriefRejectionReason(notes)) throw new PublicApiError("INVALID_REQUEST", "Enter a rejection reason in 1–3 words.", 400);
-      const { data: record, error } = await admin.from(photo ? "image_moderation_records" : "mydancr_tv_videos").select("*").eq("id", id).maybeSingle();
-      if (error) throw error;
-      if (!record || (photo && !String(record.upload_context).startsWith("profile_"))) throw new PublicApiError("NOT_FOUND", "Upload not found.", 404);
-      const dancerUserId = photo ? record.user_id : record.submitted_by;
-      const authorization = await admin.rpc("assert_dancer_media_reviewer", { p_actor_id: user.id, p_dancer_user_id: dancerUserId, p_venue_id: access.venueId });
-      if (authorization.error) throw new PublicApiError("FORBIDDEN", "This dancer is not connected to your club. Refresh the queue.", 403);
-      if (record.updated_at !== version) throw new PublicApiError("CONFLICT", "This upload changed. Refresh before reviewing it.", 409);
-      if (record.club_reviewed_at) throw new PublicApiError("CONFLICT", "This upload is already waiting for MyDancr approval.", 409);
-      if (decision === "approved") {
-        const { data: signedOff, error: signoffError } = await admin.rpc("review_club_dancer_media", {
-          p_actor_id: user.id, p_venue_id: access.venueId, p_kind: kind, p_id: id,
-          p_expected_updated_at: version, p_notes: notes,
-        });
-        if (signoffError) throw new PublicApiError("CONFLICT", "The upload changed or is still processing. Refresh the queue.", 409);
-        if (signedOff?.id !== id || signedOff?.club_reviewed_by !== user.id || !signedOff.club_reviewed_at) {
-          throw new Error("Club review could not be confirmed. Refresh the queue.");
-        }
-      } else if (photo) await rejectReviewRecord(admin, record, user.id, notes || "Not approved");
-      else await reviewMyDancrTvVideo(admin, user.id, id, "rejected", notes, version);
+      const { data: saved, error } = await admin.rpc("set_club_media_permission", {
+        p_actor_id: user.id, p_venue_id: access.venueId, p_dancer_id: dancerId, p_source: source,
+        p_id: id, p_content_version: contentVersion, p_decision_version: decisionVersion,
+        p_decision: decision, p_notes: notes || (decision === "rejected" ? "Not approved for this club" : ""),
+      });
+      if (error?.code === "42501") throw new PublicApiError("FORBIDDEN", "This dancer is not connected to your club. Refresh the queue.", 403);
+      if (error) throw new PublicApiError("CONFLICT", "The media or club decision changed. Refresh before reviewing it.", 409);
+      if (saved?.media_id !== id || saved?.venue_id !== access.venueId || saved?.reviewer_id !== user.id || saved?.decision !== decision) {
+        throw new Error("Club review could not be confirmed. Refresh the queue.");
+      }
       followUps.push(async () => {
         await recordVenueActivity(admin, { venueId: access.venueId, actorUserId: user.id, actorRole: access.role,
           action: `media.${decision}`, targetType: photo ? "image_moderation_record" : "mydancr_tv_video", targetId: id,
-          summary: `${photo ? "Photo" : "Video"} ${decision} by the club.` });
+          summary: `${photo ? "Photo" : "Video"} ${decision} for this club only.` });
       });
-      return json({ ok: true, message: decision === "approved" ? "Sent to MyDancr for final approval. Still private." : "Upload rejected.", session });
+      return json({ ok: true, message: decision === "approved"
+        ? saved.platformApproved ? "Approved for your club." : "Approved for your club. Waiting for MyDancr final approval."
+        : "Hidden at your club. Other clubs and the dancer’s profile are unchanged.", session });
     }, 270000);
     // Register outside the completed job's cancellation scope. Next keeps this
     // bounded work alive after returning the confirmed result to the dashboard.

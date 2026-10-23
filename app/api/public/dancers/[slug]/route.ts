@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
+import { restrictClubProfile } from "@/src/lib/dancr/club-media-permissions";
 import { getDancerProfile } from "@/src/lib/dancr/public";
 import { PRIVATE_NO_STORE_CACHE_CONTROL, PUBLIC_DYNAMIC_CACHE_CONTROL } from "@/src/lib/dancr/public-cache-policy";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
@@ -19,7 +20,13 @@ export async function GET(_request: Request, context: RouteContext) {
     if (!PUBLIC_SLUG_PATTERN.test(slug) || slug.length > 100) {
       return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });
     }
-    const profile = await getDancerProfile(createAdminSupabaseClient(), slug);
+    const client = createAdminSupabaseClient();
+    const venueId = new URL(_request.url).searchParams.get("venue");
+    if (venueId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(venueId)) {
+      return NextResponse.json({ ok: false, error: "Invalid club." }, { status: 400 });
+    }
+    const personalProfile = await getDancerProfile(client, slug);
+    const profile = personalProfile && venueId ? await restrictClubProfile(client, personalProfile, venueId) : personalProfile;
 
     if (!profile) {
       return NextResponse.json({ ok: false, error: "Dancer profile not found." }, { status: 404 });

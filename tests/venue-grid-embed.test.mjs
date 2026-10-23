@@ -18,6 +18,7 @@ import * as embedMedia from "../src/lib/dancr/venue-embed-media.mjs";
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const { pathToRegexp } = pathToRegexpModule;
 function loadTs(path, dependencies, globals = {}) {
+  dependencies = { "@/src/lib/dancr/club-media-permissions": {restrictClubProfile: async (_client,profile) => profile}, ...dependencies };
   const exports = {};
   const js = ts.transpileModule(read(path), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
   vm.runInNewContext(js, { ...globals, exports, Request, Response, URL, URLSearchParams, require(name) {

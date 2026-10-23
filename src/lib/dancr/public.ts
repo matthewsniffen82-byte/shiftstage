@@ -1,3 +1,4 @@
+import { restrictClubCards } from "./club-media-permissions";
 import { isPublicVenueRow } from "./venue-public-visibility";
 import { resolveDancerProfileAlias } from "./profile-link-alias";
 import { isAllMyDancrCities } from "./markets";
@@ -38,10 +39,10 @@ export async function getLiveDancerDiscovery(
   dancerIds?: string[],
 ): Promise<{ dancers: DancerCard[]; tonightDancers: DancerCard[]; nextAfterId: string | null }> {
   const { rows, nextAfterId } = await getApprovedDancerRowsByCity(client, city, afterId, dancerIds);
-  const dancers = rows.map((row) => buildDancerCard(client, row).card);
+  const dancers = await restrictClubCards(client, rows.map((row) => buildDancerCard(client, row).card));
   const now = Date.now();
-  const tonightDancers = rows
-    .map((row) => buildDancerCard(client, row, { checkedInOnly: true }).card)
+  const tonightDancers = (await restrictClubCards(client, rows
+    .map((row) => buildDancerCard(client, row, { checkedInOnly: true }).card)))
     .filter((card) => {
       return Boolean(
         card.shiftId &&
@@ -488,7 +489,7 @@ async function toDancerCards(
   rows: any[],
   options: DancerCardOptions = {},
 ): Promise<DancerCard[]> {
-  return hydrateDancerCardMetrics(client, rows.map((row) => buildDancerCard(client, row, options).card));
+  return hydrateDancerCardMetrics(client, await restrictClubCards(client, rows.map((row) => buildDancerCard(client, row, options).card)));
 }
 
 async function hydrateDancerCardMetrics(client: DancrClient, cards: DancerCard[]): Promise<DancerCard[]> {

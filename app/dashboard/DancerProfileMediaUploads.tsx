@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { requestDancerPhotosJson, requestDancerTvVideoJson, requestDancerMediaPin } from "./dashboard-session";
+import { requestDashboardJson, requestDancerPhotosJson, requestDancerTvVideoJson, requestDancerMediaPin } from "./dashboard-session";
 import { announceDancerProfileVideosChanged } from "./dancer-profile-media-sync";
 import DancerVideoThumbnail from "./DancerVideoThumbnail";
 import DancerMediaPinButton from "./DancerMediaPinButton";
@@ -59,6 +59,18 @@ export default function DancerProfileMediaUploads({
   onMediaPinned?: (mediaType: "photo" | "video", mediaId: string, pinned: boolean) => void;
   onProfileChange?: (profile: Record<string, unknown>) => void;
 }) {
+  const [clubStatuses, setClubStatuses] = useState<Array<{ id: string; photoId: string | null; kind: string; venueId: string; venueName: string; status: string; reason: string | null }>>([]);
+  const [clubError, setClubError] = useState("");
+  const mediaKey = [...photos, ...videos].map(item => item.id + item.status).join(":");
+  useEffect(() => {
+    const controller = new AbortController();
+    requestDashboardJson("/api/dancer/club-media", { expectedRole: "dancer", cache: "no-store", signal: controller.signal })
+      .then(data => { if (!controller.signal.aborted) { setClubStatuses(data.statuses || []); setClubError(""); } })
+      .catch(() => { if (!controller.signal.aborted) setClubError("Club approvals are temporarily unavailable."); });
+    return () => controller.abort();
+  }, [mediaKey]);
+  const clubLabels = (item: UploadItem, kind: string) => clubStatuses.filter(row => row.kind === kind
+    && (row.photoId === item.id || row.id === item.id || item.id === "review:" + row.id || item.id === "pending:" + row.id));
   const [deletingPhotoId, setDeletingPhotoId] = useState("");
   const [deletedPhotoIds, setDeletedPhotoIds] = useState<Set<string>>(() => new Set());
   const [photoStatus, setPhotoStatus] = useState("");
@@ -178,6 +190,16 @@ export default function DancerProfileMediaUploads({
 
   return (
     <section className={`dancer-profile-media-uploads${compact ? " is-compact" : ""}`} aria-label={mediaType === "photos" ? "Uploaded photos" : mediaType === "videos" ? "Uploaded videos" : "Add profile photos and videos"}>
+      {clubError ? <p role="status">{clubError}</p> : null}
+      {clubStatuses.some(row => !mediaType || row.kind === (mediaType === "photos" ? "photo" : "video")) ? <details>
+        <summary>Club approvals</summary>
+        <p>Each club decides which media appears there. MyDancr approval is also required.</p>
+        {[...new Set(clubStatuses.map(row => row.venueId))].map(venueId => {
+          const rows = clubStatuses.filter(row => row.venueId === venueId && (!mediaType || row.kind === (mediaType === "photos" ? "photo" : "video")));
+          if (!rows.length) return null;
+          return <p key={venueId}><strong>{rows[0].venueName}</strong>: {rows.filter(row => row.status === "approved").length} approved, {rows.filter(row => row.status === "pending").length} waiting for club, {rows.filter(row => row.status === "rejected").length} not approved</p>;
+        })}
+      </details> : null}
       {(["photos", "videos"] as const).map((section) => {
         if (mediaType && section !== mediaType) return null;
         const isPhoto = section === "photos";
@@ -206,6 +228,7 @@ export default function DancerProfileMediaUploads({
               <ul className="profile-upload-items" aria-label={`Uploaded ${section}`}>
                 {items.map((item, index) => (
                   <li key={item.id} data-review-status={item.status}>
+                    {!compact ? <div>{clubLabels(item, isPhoto ? "photo" : "video").map(club => <small key={club.venueId}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}{club.status === "rejected" && club.reason ? " · " + club.reason : ""}<br /></small>)}</div> : null}
                     <div className="profile-upload-preview">
                       <button aria-label={`${isPhoto ? compact ? "Edit" : "View" : "Play"} ${label.toLowerCase()} ${index + 1}: ${profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}`} disabled={Boolean(deletingVideoId || pinningId) || disabled} onClick={event => {
                         if (compact && isPhoto) {
@@ -223,6 +246,8 @@ export default function DancerProfileMediaUploads({
                       {isPhoto && item.isPinned ? <svg className="dancer-photo-pin-indicator" role="img" aria-label="Pinned photo" viewBox="0 0 24 24"><path d="m16 3 5 5-4 1-3 5-4-4 5-3 1-4Z" /><path d="m9 9 6 6M12 12l-7 7" /></svg> : null}
                       {compact ? <details className="dancer-thumbnail-menu" data-compact-menu name="dancer-media-options"><summary className="dashboard-menu-trigger" aria-label={`Options for ${label.toLowerCase()} ${index + 1}`}><span className="dashboard-menu-dots" aria-hidden="true">•••</span></summary><div>
                         <p className="profile-upload-menu-caption">{label} {index + 1} · {profileUploadStatus(item.status, item.moderationStatus, isPhoto ? "photo" : "video")}</p>
+                        {clubLabels(item, isPhoto ? "photo" : "video").map(club => <p key={club.venueId}>{club.venueName}: {club.status === "approved" ? "Approved here" : club.status === "rejected" ? "Not approved here" : "Pending here"}{club.status === "rejected" && club.reason ? " · " + club.reason : ""}</p>)}
+                        {clubError ? <p role="status">{clubError}</p> : null}
                         {isPhoto ? photoActions?.(item.id) : null}
                         {isPhoto ? <button type="button" disabled={actionsDisabled} onClick={() => setActivePreview({ kind: "photo", id: item.id, label: `${label} ${index + 1}` })}>View photo</button> : null}
                         {onMediaPinned ? <button type="button" disabled={actionsDisabled || item.status !== "approved"} onClick={() => void pinPreview(isPhoto ? "photo" : "video", item)}>{item.isPinned ? "Unpin" : "Pin"}</button> : null}

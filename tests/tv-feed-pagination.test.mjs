@@ -46,6 +46,7 @@ function fixture(count, excluded = new Set()) {
     orderByPerformance: async (_, rows) => [...rows].reverse(),
     signPublicVideos: async (_, rows) => rows, getActiveClubDealListsForVenues: async () => new Map(),
     toPublicClubDeal: deal => deal,
+    clubMediaPermissions: async (_, venueId, ids) => new Map(ids.map(id=>[id,{videoIds:new Set(rows.map(row=>row.id))}])),
   });
   vm.runInContext(ts.transpileModule(code, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText, context);
   return { ...context.exports, admin, queries, rows, context };

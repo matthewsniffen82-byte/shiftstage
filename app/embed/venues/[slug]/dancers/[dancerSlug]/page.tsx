@@ -1,3 +1,4 @@
+import { restrictClubProfile } from "@/src/lib/dancr/club-media-permissions";
 import { notFound } from "next/navigation";
 import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
 import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
@@ -27,7 +28,8 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
   if (![slug, dancerSlug].every(value => value.length <= 160 && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value))) notFound();
   const client = createAdminSupabaseClient();
   const venue = await getVenueProfile(client, slug);
-  const source = venue ? await getDancerProfile(client, dancerSlug) : null;
+  const unscoped = venue ? await getDancerProfile(client, dancerSlug) : null;
+    const source = venue && unscoped ? await restrictClubProfile(client, unscoped, venue.id) : null;
   // Only publicly visible dancers currently working at this exact club.
   if (!venue || !source || source.venueId !== venue.id || !isActiveNfcPresence(source)) notFound();
   const query = await searchParams;
@@ -36,7 +38,7 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
   const location = rhinoLocation(typeof query.location === "string" ? query.location : "");
   if (demo && source.shiftSource !== "demo_locked") notFound();
   const [content, colors] = await Promise.all([
-    loadPublicDancerContent(client, source),
+    loadPublicDancerContent(client, source, venue.id),
     getVenueGuestColors(client, venue.id),
   ]);
   const profile = {

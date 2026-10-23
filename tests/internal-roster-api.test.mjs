@@ -16,7 +16,7 @@ const compile=file=>ts.transpileModule(readFileSync(new URL('../'+file,import.me
 const responsive={};
 vm.runInNewContext(compile('src/lib/dancr/responsive-image.ts'),{exports:responsive,require:()=>({})});
 const {responsiveImageStoragePaths}=responsive;
-function fixture({members=true,active=true,staff=true,kind='table',choice=null,photoStatus='approved',requests=[],shifts=[],videos=[],photoPath='PRIVATE STORAGE',upstreamHeaders={},upstreamStatus=200,beforeRead=async()=>{}}={}){
+function fixture({declinedPhotos=[],declinedVideos=[],members=true,active=true,staff=true,kind='table',choice=null,photoStatus='approved',requests=[],shifts=[],videos=[],photoPath='PRIVATE STORAGE',upstreamHeaders={},upstreamStatus=200,beforeRead=async()=>{}}={}){
  const calls=[];
  const tables={
   internal_roster_links:[{id:id(1),venue_id:id(2),token:id(3),active,kind,label:'Table 4'}],
@@ -54,16 +54,17 @@ function fixture({members=true,active=true,staff=true,kind='table',choice=null,p
    }
    return q;
   },
-  async rpc(name,args){calls.push({name,args});await beforeRead(name);if(name==='cancel_internal_roster_request'){const row=tables.internal_roster_requests.find(r=>r.id===args.p_request_id&&r.venue_id===args.p_venue_id&&r.link_id===args.p_link_id&&r.dancer_id===args.p_dancer_id);if(!row||!['pending','acknowledged','cancelled'].includes(row.status))return {data:null,error:{code:'40001'}};row.status='cancelled';return {data:{id:row.id,status:row.status},error:null};}return {data:['internal_roster_members','venue_roster_members'].includes(name)?(Array.isArray(members)?members:members?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]):{id:id(9)},error:null};},
+  async rpc(name,args){calls.push({name,args});await beforeRead(name);if(name==='club_public_media')return{data:[...tables.dancer_photos.filter(p=>!declinedPhotos.includes(p.id)).map(p=>({dancerId:p.dancer_id,photoId:p.id})),...tables.mydancr_tv_videos.filter(v=>!declinedVideos.includes(v.id)).map(v=>({dancerId:v.dancer_id,videoId:v.id}))]};if(name==='cancel_internal_roster_request'){const row=tables.internal_roster_requests.find(r=>r.id===args.p_request_id&&r.venue_id===args.p_venue_id&&r.link_id===args.p_link_id&&r.dancer_id===args.p_dancer_id);if(!row||!['pending','acknowledged','cancelled'].includes(row.status))return {data:null,error:{code:'40001'}};row.status='cancelled';return {data:{id:row.id,status:row.status},error:null};}return {data:['internal_roster_members','venue_roster_members'].includes(name)?(Array.isArray(members)?members:members?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]):{id:id(9)},error:null};},
   storage:{from(bucket){return {createSignedUrl:async(path)=>{calls.push({name:'signMedia',bucket,path});return {data:{signedUrl:'https://storage.invalid/private-signed-link'}};}}}},
  };
  const fetchMedia=async(url,options)=>{calls.push({name:'fetch',url,options});return new Response('synthetic-image',{status:Array.isArray(upstreamStatus)?upstreamStatus.shift():upstreamStatus,headers:{'content-type':'image/jpeg',...upstreamHeaders}});};
- const lib={},route={},mainPhoto={},activity={},cancel={};
+ const lib={},route={},mainPhoto={},activity={},cancel={},permissions={};
+ vm.runInNewContext(compile("src/lib/dancr/club-media-permissions.ts"),{exports:permissions,require:()=>({})});
  vm.runInNewContext(compile("src/lib/dancr/internal-request-cancel.ts"),{exports:cancel,Date,require:name=>name.endsWith("api-error-policy")?{PublicApiError}:{}});
  vm.runInNewContext(compile('src/lib/dancr/internal-request-activity.ts'),{exports:activity,Date,require(){return {}}});
- vm.runInNewContext(compile('src/lib/dancr/internal-main-photo.ts'),{exports:mainPhoto,require(){return {}}});
+ vm.runInNewContext(compile('src/lib/dancr/internal-main-photo.ts'),{exports:mainPhoto,require(name){return name.endsWith('club-media-permissions')?permissions:{}}});
  vm.runInNewContext(compile('src/lib/dancr/internal-roster.ts'),{exports:lib,require(name){if(name==='server-only')return {};if(name.endsWith('api-error-policy'))return {PublicApiError};if(name.endsWith('responsive-image'))return {responsivePublicImage:()=>null};if(name.endsWith('venue-branding'))return {verifiedVenueLogoUrl};if(name.endsWith('venue-access'))return {requireVenueAccess:async()=>{if(!staff)throw new Error('An active venue account is required.');return {venueId:id(2),venueName:'Synthetic club',role:'owner'}}};if(name.endsWith('supabase/request'))return {createRequestSupabaseContext:async request=>{if(request.headers.get('authorization')!=='Bearer staff')throw new Error('Sign in required.');return {user:{id:id(4)}}}};throw Error(name);}});
- vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,performance,fetch:fetchMedia,require(name){if(name.endsWith('vip-profile'))return {
+ vm.runInNewContext(compile('app/api/internal/[[...path]]/route.ts'),{exports:route,URL,Response,Headers,Request,Date,performance,fetch:fetchMedia,require(name){if(name.endsWith('club-media-permissions'))return permissions;if(name.endsWith('vip-profile'))return {
  vipProfileScope:async(_db,request,venueId)=>{calls.push({name:'vipScope',venueId});if(request.headers.get('authorization')!=='Bearer vip'||venueId!==id(2)||!active)throw new PublicApiError('FORBIDDEN','VIP access unavailable.',403);return {venueId,venueName:'Synthetic club',link:null,session:null};},
  vipProfileMembers:async()=>members&&!tables.dancer_profiles[0].is_incognito?[{id:id(5),stage_name:'Aster',avatar_storage_path:'private/avatar',working_until:new Date(Date.now()+3600000).toISOString()}]:[]
  };if(name.endsWith('venue-guest-colors'))return {getVenueGuestColors:async(_admin,venueId)=>{calls.push({name:'guestColors',venueId});await beforeRead('guestColors');return {internalAccent:'#c99842',embedAccent:'#123456',configured:true}}};if(name.endsWith('performance-placement'))return {orderByPerformance:async(_admin,rows,identity)=>{calls.push({name:'performancePlacement',identities:rows.map(identity)});await beforeRead('performancePlacement');return [...rows].reverse();}};if(name==='node:crypto')return {createHash};if(name==='next/server')return {NextResponse:{json:Response.json},after:work=>{calls.push({name:'after'});void work();}};if(name.endsWith('internal-request-cancel'))return cancel;if(name.endsWith('internal-request-cancellation-push'))return {deliverInternalCancellationPush:async(_client,requestId)=>calls.push({name:'cancelAlert',requestId})};if(name.endsWith('internal-request-alerts'))return {deliverInternalRequestAlerts:async(_client,requestId)=>{calls.push({name:'deliverInternalRequestAlerts',requestId});}};if(name.endsWith('supabase/admin'))return {createAdminSupabaseClient:()=>admin};if(name.endsWith('bounded-json-body'))return {readBoundedJsonObject};if(name.endsWith('api-error-policy'))return {PublicApiError,resolveApiError};if(name.endsWith('internal-request-activity'))return activity;if(name.endsWith('internal-main-photo'))return mainPhoto;if(name.endsWith('internal-media-delivery'))return {serveInternalMedia:(request,options)=>serveInternalMedia(request,{...options,fetch:fetchMedia})};if(name.endsWith('internal-roster'))return lib;if(name.endsWith('responsive-image'))return {responsiveImageStoragePaths};if(name.endsWith('media-watermark'))return {MYDANCR_TV_POSTER_BUCKET,myDancrTvPosterStoragePath};if(name.endsWith('social-profile-url'))return {safeSocialProfileUrl};throw Error(name);}});
@@ -95,11 +96,11 @@ for(const [label,change] of [
  assert.equal(f.calls.some(call=>['internal_roster_members','signMedia','fetch'].includes(call.name)),false);
 });
 
-test('roster photos, ranking, request state, receipt, and colors load concurrently',async()=>{
+test('after media permissions, roster ranking, request state, receipt, and colors load concurrently',async()=>{
  const started=[];
  let release;
  const gate=new Promise(resolve=>{release=resolve;});
- const independent=new Set(['dancer_photos','performancePlacement','internal_roster_requests','guestColors']);
+ const independent=new Set(['performancePlacement','internal_roster_requests','guestColors']);
  const f=fixture({beforeRead:async(source,columns)=>{
   if(independent.has(source)){started.push({source,columns});await gate;}
  }});
@@ -116,7 +117,7 @@ test('media metadata and live roster membership load together before any storage
  const started=[];
  const releases={};
  const f=fixture({beforeRead:async source=>{
-  if(['dancer_photos','internal_roster_members'].includes(source)){
+  if(['dancer_photos','internal_roster_members'].includes(source) && !started.includes(source)){
    started.push(source);await new Promise(resolve=>{releases[source]=resolve;});
   }
  }});
@@ -398,7 +399,7 @@ test('internal and venue roster grids apply score order only after authorization
 // Keep the same legacy choice while the dancer changes the shared main photo.
 test('roster cards follow main photo changes and never publish rejected or foreign photos',async()=>{
  const f=fixture({choice:10});
- const displayed=async()=> (await (await f.get(['link',id(3)])).json()).dancers[0].mainPhotoId;
+ const displayed=async()=> (await (await f.get(['link',id(3)])).json()).dancers[0]?.mainPhotoId ?? null;
  assert.equal(await displayed(),id(6));
  for(const photo of f.tables.dancer_photos) photo.is_primary=photo.id===id(10);
  assert.equal(await displayed(),id(10));
@@ -424,4 +425,15 @@ test('VIP profile and media reads require current membership and privacy, and ca
  for(const path of [['profile',id(5)],['avatar',id(5)],['photo',id(6)]])assert.equal((await f.get(path,query,'vip')).status,404);
  assert.ok(!f.calls.some(c=>c.name==='signMedia'));
  assert.equal((await fixture({active:false}).get(['profile',id(5)],query,'vip')).status,403);
+});
+
+test('club decisions filter full profiles and deny direct photo and video access, with an approved fallback',async()=>{
+ const video={id:id(20),dancer_id:id(5),status:'approved',storage_path:'private/video.mp4',published_at:'2026-01-01',expires_at:null};
+ const f=fixture({declinedPhotos:[id(6)],declinedVideos:[id(20)],videos:[video]});
+ const response=await f.get(['profile',id(5)],'?token='+id(3));assert.equal(response.status,200);
+ const profile=(await response.json()).profile;assert.deepEqual(profile.photos.map(p=>p.id),[id(10)]);assert.deepEqual(profile.videos,[]);
+ assert.equal((await f.get(['photo',id(6)],'?token='+id(3))).status,404);
+ assert.equal((await f.get(['video',id(20)],'?token='+id(3))).status,404);
+ assert.equal((await f.get(['photo',id(10)],'?token='+id(3))).status,200);
+ const hidden=fixture({declinedPhotos:[id(6),id(10)]});assert.deepEqual((await(await hidden.get(['link',id(3)])).json()).dancers,[]);
 });

@@ -1,3 +1,4 @@
+import { clubMediaPermissions } from "@/src/lib/dancr/club-media-permissions";
 import { after, NextResponse } from "next/server";
 import { orderByPerformance } from "@/src/lib/dancr/performance-placement";
 import { cancelInternalRequest } from "@/src/lib/dancr/internal-request-cancel";
@@ -65,11 +66,15 @@ export async function GET(request: Request, context: Context) {
       if (video) mediaQuery = mediaQuery.lte("published_at", new Date().toISOString()).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
     }
     // Media ownership and current roster eligibility can be read together after scope authorization.
-    const [members, mediaResult] = await Promise.all([
+    const [rawMembers, mediaResult] = await Promise.all([
       vipVenueId !== null ? vipProfileMembers(admin, scope.venueId) : scope.link ? internalMembers(admin, scope.venueId) : venueRosterMembers(admin, scope.venueId),
       mediaQuery?.maybeSingle() ?? null,
     ]);
     if (mediaResult?.error) throw mediaResult.error;
+    const permissions = await clubMediaPermissions(admin, scope.venueId, rawMembers.map(member => member.id));
+    const scopedMainPhotos = await internalMainPhotos(admin, rawMembers.map(member => member.id), scope.venueId);
+    const members = rawMembers.filter(member => !(scope.link || vipVenueId !== null) || scopedMainPhotos.has(member.id))
+      .map(member => ({ ...member, avatar_storage_path: scopedMainPhotos.get(member.id)?.storage_path || "" }));
     if (path[0] === "profile") {
       if (!members.some(member => member.id === path[1])) return json({ ok: false, error: "This profile is no longer on the club roster." }, 404);
       const results = await Promise.all([
@@ -88,18 +93,18 @@ export async function GET(request: Request, context: Context) {
         vipVenueId !== null ? 0 : internalRequestsTonight(admin, scope.venueId, path[1]),
         scope.link ? internalTableRequestStates(admin, scope.venueId, scope.link.id) : null,
       ]);
-      const videos = (results[3].data || []).map(({ storage_path, moderation_details, ...video }) => ({
+      const videos = (results[3].data || []).filter(video => permissions.get(path[1])?.videoIds.has(video.id)).map(({ storage_path, moderation_details, ...video }) => ({
         ...video, has_poster: Boolean(videoPosterStoragePath({ storage_path, moderation_details })),
       }));
       const { is_public, ...identity } = results[0].data!;
       const internalAccent = scope.link ? (await getVenueGuestColors(admin, scope.venueId)).internalAccent : null;
-      return json({ ok: true, profile: { ...identity, ...(vipVenueId !== null ? { is_public } : {}), internalAccent, venueSlug: scope.venueSlug, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: results[1].data || [], socialLinks: socials, videos }, session: scope.session });
+      return json({ ok: true, profile: { ...identity, ...(vipVenueId !== null ? { is_public } : {}), internalAccent, venueSlug: scope.venueSlug, avatarRevision, workingUntil: members.find(member => member.id === path[1])?.working_until, venueName: scope.venueName, requestsTonight, requestStatus: tableRequests?.get(path[1])?.status || null, requestId: tableRequests?.get(path[1])?.id || null, photos: (results[1].data || []).filter(photo => permissions.get(path[1])?.photoIds.has(photo.id)), socialLinks: socials, videos }, session: scope.session });
     }
     if (media) {
       let storagePath = members.find(item => item.id === path[1])?.avatar_storage_path;
       if (path[0] !== "avatar") {
         const data = mediaResult?.data;
-        storagePath = data && members.some(member => member.id === data.dancer_id)
+        storagePath = data && (video ? permissions.get(data.dancer_id)?.videoIds.has(path[1]) : permissions.get(data.dancer_id)?.photoIds.has(path[1])) && members.some(member => member.id === data.dancer_id)
           ? poster ? videoPosterStoragePath(data) : data.storage_path : null;
       }
       if (!storagePath) return json({ ok: false, error: "Media unavailable." }, 404);
@@ -119,7 +124,7 @@ export async function GET(request: Request, context: Context) {
     const key = url.searchParams.get("requestKey");
     // These reads share the authorized scope and do not depend on each other.
     const [mainPhotos, orderedMembers, tableRequests, colors, receiptResult, linksResult, requests] = await Promise.all([
-      internalMainPhotos(admin, members.map(item => item.id)),
+      Promise.resolve(scopedMainPhotos),
       orderByPerformance<(typeof members)[number]>(admin, members, item => ({ dancerId: item.id, venueId: scope.venueId }), item => item.id),
       scope.link ? internalTableRequestStates(admin, scope.venueId, scope.link.id) : null,
       scope.link ? getVenueGuestColors(admin, scope.venueId) : null,

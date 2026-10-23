@@ -62,7 +62,7 @@ export default function VipPlan({ venue, dancers, draft, onChange, onSubmit, onF
           const unavailable = !isVipRequestable(dancer);
           const profile = <><DancerPhoto key={`${dancer.id}:${dancer.photoUrl || ""}`} dancer={dancer} /><span className="vip-dancer-copy"><strong>{dancer.stage_name}</strong><small className="vip-working">● Working now</small><span className="vip-open-profile">{dancer.profileHref ? "Open profile" : "Profile unavailable"}</span></span></>;
           return <article className={`vip-dancer ${checked ? "is-selected" : ""}`} key={dancer.id}>
-            {vipProfileSlug(dancer) ? <a className="vip-profile-link" href={`/?profile=${encodeURIComponent(vipProfileSlug(dancer))}`} aria-label={`Open ${dancer.stage_name} profile`} onClick={event => {
+            {vipProfileSlug(dancer) ? <a className="vip-profile-link" href={dancer.profileHref?.includes("?venue=") ? dancer.profileHref : `/?profile=${encodeURIComponent(vipProfileSlug(dancer))}`} aria-label={`Open ${dancer.stage_name} profile`} onClick={event => {
               if (!event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey
                 && onOpenProfile?.(dancer)) event.preventDefault();
             }}>{profile}</a> : <div className="vip-profile-link">{profile}</div>}

@@ -8,6 +8,11 @@ import { plannerHarness } from './helpers/vip-planner-fixture.mjs';
 
 class PublicApiError extends Error { constructor(code, message, status) { super(message); this.code = code; this.status = status; } }
 const service = compileVip('src/lib/dancr/vip.ts', {
+  './internal-main-photo': { internalMainPhotos: async (client, ids, venueId) => {
+    assert.ok(venueId);
+    const {data}=await client.from('dancer_profiles').select('id,avatar_storage_path').in('id',ids);
+    return new Map(data.map(p=>[p.id,{id:p.id,storage_path:p.avatar_storage_path}]));
+  } },
   '../api-error-policy': { PublicApiError }, './media-delivery-url': { dancerPhotoDeliveryUrl: path => `/photo/${path}` },
 });
 const cards = [
@@ -98,7 +103,7 @@ test('overview follows use only the guest follows and the selected venue current
   assert.deepEqual(Array.from(result.dancers, d => d.id), ['aria']);
   assert.equal(result.dancers[0].canRequest, true);
   assert.equal(result.dancers[0].photoUrl, '/photo/aria/photo.jpg');
-  assert.equal(result.dancers[0].profileHref, '/dancers/aria');
+  assert.equal(result.dancers[0].profileHref, `/dancers/aria?venue=${venues[1].id}`);
   assert.equal(db.calls.find(c => c.rpc).args.p_venue, venues[1].id);
   assert.ok(db.calls.filter(c => ['follows'].includes(c.table)).every(c => c.steps.some(s => s[0] === 'eq' && s[1] === 'customer_id' && s[2] === guest.id)));
   assert.ok(!db.calls.some(c => c.steps?.some(s => s[0] === 'select' && s[1] === 'id,dancers')));
@@ -296,7 +301,7 @@ test('Internal-only VIP cards use authenticated media and retain profiles; Incog
  const db=database();db.tables.dancer_profiles[0].is_public=false;
  const result=await service.getVipState(db.client,guest.id,new URLSearchParams({view:'dancers'}));
  const dancer=result.dancers.find(d=>d.id==='aria');
- assert.equal(dancer.profileHref,'/dancers/aria');assert.equal(dancer.canRequest,true);
+ assert.equal(dancer.profileHref,`/dancers/aria?venue=${venues[0].id}`);assert.equal(dancer.canRequest,true);
  assert.equal(dancer.photoUrl,`/api/internal/avatar/aria?width=320&vipVenueId=${venues[0].id}`);
  db.tables.dancer_profiles[0].is_incognito=true;
  for(const view of ['dancers','overview','plan']) {

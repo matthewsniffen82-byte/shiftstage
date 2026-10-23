@@ -30,7 +30,7 @@ vm.runInNewContext(ts.transpileModule(readFileSync(new URL("../app/dashboard/Dan
 const staticHooks = { ...React, useState: initial => [typeof initial === "function" ? initial() : initial, () => {}], useRef: initial => ({ current: initial }), useEffect() {} };
 function loadUploads({ hooks = staticHooks, api = {}, confirm = () => false, announce = () => {} } = {}) {
   const exports = {};
-  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? api : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
+  vm.runInNewContext(code, { exports, AbortController, Error, window: { confirm }, require: name => name === "./DancerMediaRetryButton" ? retryButton : name === "@/src/lib/dancr/media-review-label" ? mediaReview : name === "react" ? hooks : name === "./dashboard-session" ? { requestDashboardJson: async () => ({statuses: []}), ...api } : name === "./DancerVideoThumbnail" ? thumbnail : name === "./DancerMediaPinButton" ? pinButton : name === "./DancerMediaViewer" ? viewer : name === "./dancer-profile-media-sync" ? { announceDancerProfileVideosChanged: announce } : requireTest(name) });
   return exports;
 }
 const exports = loadUploads();
@@ -189,7 +189,7 @@ test("each photo and video preview has a separate accessible Delete button", () 
   for (const button of buttons(tree)) assert.equal(buttons(button).length, 1, "delete and preview buttons must never be nested");
 });
 
-function deletionHarness({ section = "photos", items, confirm = () => true, remove = async () => ({ ok: true }) } = {}) {
+function deletionHarness({ section = "photos", items, statuses = [], confirm = () => true, remove = async () => ({ ok: true }) } = {}) {
   const slots = [], effects = [], requests = [], changes = [], busy = [], announcements = [];
   let cursor = 0, dirty = true, tree;
   const hooks = { ...React,
@@ -202,6 +202,7 @@ function deletionHarness({ section = "photos", items, confirm = () => true, remo
     useEffect(effect) { const index = cursor++; if (!(index in slots)) { slots[index] = true; effects.push(effect); } },
   };
   const Module = loadUploads({ hooks, confirm, announce: () => announcements.push(true), api: {
+    requestDashboardJson: async () => ({statuses}),
     requestDancerPhotosJson: options => { requests.push(options); return remove(options); },
     requestDancerProfileJson: options => { requests.push(options); throw new Error("Deletion must not wait for a profile refresh."); },
     requestDancerTvVideoJson: (videoId, options) => { requests.push({ ...options, videoId }); return remove(options); },
@@ -387,4 +388,14 @@ test("large saved libraries remain accessible and thumbnails do not start video 
 test("video upload confirmation only claims posting for approved media on an eligible visible profile", () => {
   const studio = readFileSync(new URL("../app/dashboard/DancerTvStudio.tsx", import.meta.url), "utf8");
   assert.match(studio, /video.status === "approved" \? \([\s\S]*?!workspace\??\.profileEligible[\s\S]*?after setup and approval[\s\S]*?workspace\??\.profileVisible[\s\S]*?Added to your profile[\s\S]*?Hidden while incognito is on/);
+});
+
+test('dancers see independent club decisions, pending counts and rejection reasons', async()=>{
+ const ui=deletionHarness({statuses:[
+  {id:'upload',photoId:'photo-id',kind:'photo',venueId:'a',venueName:'Club A',status:'approved'},
+  {id:'upload',photoId:'photo-id',kind:'photo',venueId:'b',venueName:'Club B',status:'rejected',reason:'Club dress code'},
+  {id:'new-upload',kind:'photo',venueId:'b',venueName:'Club B',status:'pending'},
+ ]});await ui.settle();
+ assert.match(ui.html,/Club A: Approved here/);assert.match(ui.html,/Club B: Not approved here.*Club dress code/);
+ assert.match(ui.html,/1 waiting for club/);ui.unmount();
 });

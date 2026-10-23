@@ -11,7 +11,7 @@ export type VipDancerFilter = "all" | "working" | "selected" | "previous" | "fol
 export const emptyVipDraft = (): VipDraft => ({ selected: [], date: "", time: "" });
 
 export function vipProfileSlug(dancer: VipDancer): string {
-  const match = dancer.profileHref?.match(/^\/dancers\/([^/?#]+)$/);
+  const match = dancer.profileHref?.match(/^\/dancers\/([^/?#]+)(?:\?venue=[0-9a-f-]+)?$/i);
   if (!match) return "";
   try { return decodeURIComponent(match[1]); } catch { return ""; }
 }

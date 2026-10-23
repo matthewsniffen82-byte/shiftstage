@@ -8,7 +8,7 @@ import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { DancerProfile } from "./types";
 
-export async function loadPublicDancerContent(client: SupabaseClient, profile: DancerProfile) {
+export async function loadPublicDancerContent(client: SupabaseClient, profile: DancerProfile, venueId?: string) {
   const activeShift = profile.upcomingShifts.find(shift => isActiveNfcPresence(shift));
   const actionShift = activeShift || null;
   let secondaryUnavailable = false;
@@ -23,6 +23,7 @@ export async function loadPublicDancerContent(client: SupabaseClient, profile: D
     getPublicMyDancrTvFeed(client, {
       city: profile.city,
       dancerId: profile.id,
+      venueId,
       limit: MAX_DANCER_PROFILE_VIDEOS,
     }).catch(() => { optionalFailure(); return []; }),
     actionShift?.venueSlug

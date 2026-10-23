@@ -1,3 +1,4 @@
+import { restrictClubProfile } from "@/src/lib/dancr/club-media-permissions";
 import { NextResponse } from "next/server";
 import { apiError } from "@/src/lib/api";
 import { getDancerProfile, getVenueProfile } from "@/src/lib/dancr/public";
@@ -18,14 +19,15 @@ export async function GET(_request: Request, context: { params: Promise<{ slug: 
     }
     const client = createAdminSupabaseClient();
     const venue = await getVenueProfile(client, slug);
-    const profile = venue ? await getDancerProfile(client, dancerSlug) : null;
+    const unscoped = venue ? await getDancerProfile(client, dancerSlug) : null;
+    const profile = venue && unscoped ? await restrictClubProfile(client, unscoped, venue.id) : null;
     if (!venue || !profile || profile.venueId !== venue.id || !isActiveNfcPresence(profile)) {
       return NextResponse.json({ ok: false, error: "This dancer is no longer working here or their profile is unavailable." }, { status: 404, headers });
     }
     if (_request && new URL(_request.url).searchParams.get("presence") === "1") {
       return NextResponse.json({ ok: true }, { headers });
     }
-    const content = await loadPublicDancerContent(client, profile);
+    const content = await loadPublicDancerContent(client, profile, venue.id);
     return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name }, profile: {
       id: profile.id, slug: profile.slug, stageName: profile.stageName, city: profile.city,
       primaryPhotoUrl: venueEmbedMediaUrl(profile.primaryPhotoUrl),

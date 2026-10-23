@@ -1,3 +1,5 @@
+import { internalMainPhotos } from "./internal-main-photo";
+import { clubMediaPermissions } from "./club-media-permissions";
 import { editedVideoDimensions, normalizeVideoUploadEdit, videoUploadSourcePath, VIDEO_UPLOAD_MAX_BYTES } from "./video-upload-edit-policy.ts";
 import { dancerVideoDeliveryUrl } from './media-delivery-url';
 import { mediaReviewExplanation } from "./media-review-label";
@@ -344,6 +346,10 @@ export async function getPublicMyDancrTvFeed(
     );
   }
 
+  if (venueId) {
+    const allowed = await clubMediaPermissions(admin, venueId, rows.map(row => row.dancer.id));
+    rows = rows.filter(row => allowed.get(row.dancer.id)?.videoIds.has(row.id));
+  }
   const performanceOrdered = options.dancerId || options.candidateVideoIds ? rows
     : await orderByPerformance(admin, rows, row => ({ dancerId: row.dancer.id, venueId: row.venue?.id }), row => `${row.dancer.id}:${row.id}`);
   const profileOrdered = [...performanceOrdered].sort((a, b) => {
@@ -362,7 +368,7 @@ export async function getPublicMyDancrTvFeed(
     .filter((video) => video.shift?.isActive && video.venue)
     .map((video) => video.venue?.id || "");
   const [signedVideos, deals] = await Promise.all([
-    signPublicVideos(admin, deduped),
+    signPublicVideos(admin, deduped, venueId),
     getActiveClubDealListsForVenues(admin, activeVenueIds),
   ]);
   return result(signedVideos.map((video) => {
@@ -612,6 +618,7 @@ function isConfirmedActiveTvShift(shift: any, now: number) {
 async function signPublicVideos(
   admin: AdminClient,
   rows: NormalizedFeedRow[],
+  venueId?: string,
 ): Promise<MyDancrTvVideo[]> {
   if (!rows.length) return [];
   const dancerIds = [...new Set(rows.map((row) => row.dancer.id))];
@@ -625,6 +632,7 @@ async function signPublicVideos(
       .eq("review_status", "approved");
   if (photoError) throw photoError;
 
+  const clubPhotos = venueId ? await internalMainPhotos(admin, dancerIds, venueId) : null;
   const photoByDancer = new Map(
     (photos || []).map((photo: any) => [photo.dancer_id, photo.storage_path]),
   );
@@ -632,11 +640,11 @@ async function signPublicVideos(
   return rows.map((row) => {
     const videoUrl = dancerVideoDeliveryUrl(row.id);
     if (!videoUrl) throw new Error("Unable to prepare MyDancr TV playback.");
-    const photoPath = photoByDancer.get(row.dancer.id);
+    const photoPath = clubPhotos ? clubPhotos.get(row.dancer.id)?.storage_path : photoByDancer.get(row.dancer.id);
     const primaryPhoto = photoPath
       ? responsivePublicImage(admin, "dancer-photos", photoPath)
       : null;
-    const avatarPath = row.dancerAvatarPath;
+    const avatarPath = venueId ? photoPath : row.dancerAvatarPath;
     const avatarPhoto = avatarPath
       ? responsivePublicImage(admin, "dancer-photos", avatarPath, { avatar: true })
       : primaryPhoto;

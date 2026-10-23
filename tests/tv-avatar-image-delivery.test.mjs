@@ -9,7 +9,7 @@ const { responsivePublicImage } = await importMediaModule('responsive-image.ts')
 const tv = readFileSync('src/lib/dancr/tv.ts', 'utf8');
 const shell = readFileSync('outputs/index.html', 'utf8');
 const start = tv.indexOf('async function signPublicVideos(');
-const end = tv.indexOf('\nfunction normalizedVideoPosterStoragePath', start);
+const end = tv.indexOf('\nexport function normalizedVideoPosterStoragePath', start);
 assert.ok(start >= 0 && end > start);
 const code = ts.transpileModule(tv.slice(start, end), {
   compilerOptions: { target: ts.ScriptTarget.ES2022 },

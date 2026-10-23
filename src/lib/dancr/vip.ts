@@ -1,4 +1,5 @@
 import "server-only";
+import { internalMainPhotos } from "./internal-main-photo";
 import { createHash, randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { PublicApiError } from "../api-error-policy";
@@ -157,11 +158,12 @@ async function vipWorkingFollowing(client: SupabaseClient, userId: string, venue
   const { data: profiles, error: profileError } = await client.from("dancer_profiles").select("id,slug,is_public,avatar_storage_path")
     .in("id", dancers.map(dancer => dancer.id)).eq("status", "approved").eq("verification_status", "approved").eq("is_incognito", false).is("disabled_at", null);
   if (profileError) throw profileError;
+  const mainPhotos = await internalMainPhotos(client, dancers.map(dancer => dancer.id), venueId);
   const authorizedProfiles = new Map((profiles || []).map(profile => [profile.id, profile]));
-  return dancers.filter(dancer => authorizedProfiles.has(dancer.id)).map(dancer => {
-    const profile = authorizedProfiles.get(dancer.id), path = profile?.avatar_storage_path;
+  return dancers.filter(dancer => authorizedProfiles.has(dancer.id) && mainPhotos.has(dancer.id)).map(dancer => {
+    const profile = authorizedProfiles.get(dancer.id), path = mainPhotos.get(dancer.id)?.storage_path;
     return { ...dancer, following: true, canRequest: true,
-      profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
+      profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}?venue=${venueId}` : null,
       photoUrl: path && !/^https?:\/\//i.test(path) ? profile?.is_public ? dancerPhotoDeliveryUrl(path, 320) : `/api/internal/avatar/${dancer.id}?width=320&vipVenueId=${venueId}` : null };
   });
 }
@@ -185,14 +187,15 @@ async function vipMyDancers(client: SupabaseClient, userId: string, venueId: str
     if (error) throw error;
     for (const profile of data || []) profiles.set(profile.id, profile);
   }
-  return ids.filter(id => profiles.has(id)).map(id => {
-    const profile = profiles.get(id), dancer = eligible.get(id), path = profile?.avatar_storage_path;
+  const mainPhotos = await internalMainPhotos(client, ids, venueId);
+  return ids.filter(id => profiles.has(id) && mainPhotos.has(id)).map(id => {
+    const profile = profiles.get(id), dancer = eligible.get(id), path = mainPhotos.get(id)?.storage_path;
     return { id, stage_name: profile?.stage_name || dancer?.stage_name || history.get(id) || "Unavailable dancer",
       working_now: dancer?.working_now === true, canRequest: dancer?.working_now === true,
       following: follows.has(id), previouslyRequested: history.has(id),
       // Compatibility for cached VIP clients; Follow is the only subscription.
       workingAlertsEnabled: follows.has(id),
-      profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
+      profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}?venue=${venueId}` : null,
       photoUrl: path && !/^https?:\/\//i.test(path) ? profile?.is_public ? dancerPhotoDeliveryUrl(path, 320) : `/api/internal/avatar/${id}?width=320&vipVenueId=${venueId}` : null };
   });
 }
@@ -231,12 +234,13 @@ async function vipDancerCards(client: SupabaseClient, dancers: VipDancer[], user
     previouslyRequestedDancers(client, userId, venueId, new Set(ids)),
   ]);
   if (profiles.error) throw profiles.error;
+  const mainPhotos = await internalMainPhotos(client, dancers.map(dancer => dancer.id), venueId);
   const authorizedProfiles = new Map((profiles.data || []).map(row => [row.id, row]));
-  return dancers.filter(dancer => authorizedProfiles.has(dancer.id)).map(dancer => {
-    const profile = authorizedProfiles.get(dancer.id), path = profile?.avatar_storage_path;
+  return dancers.filter(dancer => authorizedProfiles.has(dancer.id) && mainPhotos.has(dancer.id)).map(dancer => {
+    const profile = authorizedProfiles.get(dancer.id), path = mainPhotos.get(dancer.id)?.storage_path;
     // Public images use anonymous RLS; Internal-only images require the invited VIP session.
     return { ...dancer, canRequest: dancer.working_now === true, photoUrl: path && !/^https?:\/\//i.test(path) ? profile?.is_public ? dancerPhotoDeliveryUrl(path, 320) : `/api/internal/avatar/${dancer.id}?width=320&vipVenueId=${venueId}` : null,
-      profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}` : null,
+      profileHref: profile?.slug ? `/dancers/${encodeURIComponent(profile.slug)}?venue=${venueId}` : null,
       following: follows.has(dancer.id), previouslyRequested: previous.has(dancer.id) };
   });
 }

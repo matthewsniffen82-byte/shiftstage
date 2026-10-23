@@ -696,7 +696,7 @@
       if (profile?.internalRoster) return profile.internalVideosRequest || Promise.resolve({ ok: true, videos: profile.internalVideos || [] });
       if (!profile?.id || !/^[0-9a-f-]{36}$/i.test(profile.id)) return Promise.resolve(null);
       const now = Date.now();
-      const key = `${city}:${profile.id}`;
+      const key = `${city}:${profile.id}:${profile.venueId || ""}`;
       const cached = profileNavigationPrefetchCache.get(key);
       if (cached?.expiresAt > now) return cached.promise;
       pruneProfileNavigationPrefetchCache(now);
@@ -705,6 +705,7 @@
         dancer: profile.id,
         limit: String(MAX_DANCER_PROFILE_VIDEOS)
       });
+      if (profile.venueId) params.set("venue", profile.venueId);
       const promise = fetchJson(`/api/public/tv?${params.toString()}`, {
         retries: PUBLIC_DISCOVERY_REQUEST_RETRIES
       })

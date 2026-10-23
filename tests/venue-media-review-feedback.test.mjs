@@ -12,7 +12,7 @@ const code = ts.transpileModule(readFileSync('app/dashboard/VenueMediaReviewPane
 
 // Exercise the component's real handlers with in-memory requests; no browser journeys.
 function harness(kind = 'photo') {
-  let rows = ['first', 'second'].map(id => ({ id, kind, dancerId: 'dancer-one', stageName: 'Star', version: '2026-10-22T00:00:00Z',
+  let rows = ['first', 'second'].map(id => ({ id, kind, dancerId: 'dancer-one', stageName: 'Star', version: '2026-10-22T00:00:00Z', source: kind === 'video' ? 'video' : 'upload', contentVersion: 'abc', decisionVersion: null, clubStatus: 'pending',
     previewUrl: '/private-preview', label: kind, processing: false, canApprove: true, reasons: [], aiSummary: 'AI checks passed' }));
   let cursor = 0, dirty = true, effects = [], tree, failure = false, finish, getResponse;
   const pending = new Promise(resolve => { finish = resolve; });
@@ -51,7 +51,7 @@ function harness(kind = 'photo') {
       if (options.method === 'POST') {
         const body = JSON.parse(options.body); calls.push(body); await pending;
         if (failure) throw new Error('Unable to save rejection. Try again.');
-        rows = rows.filter(row => row.id !== body.id); return { ok: true };
+        rows = reads.at(-1)?.includes('status=all') ? rows.map(row => row.id === body.id ? {...row,clubStatus:body.decision,decisionVersion:'revised'} : row) : rows.filter(row => row.id !== body.id); return { ok: true, message:'Saved for your club.' };
       }
       reads.push(_url);
       if (getResponse) return getResponse(_url, options);
@@ -75,6 +75,7 @@ function harness(kind = 'photo') {
   }
   const ui = {
     calls, focused, scrolled, counts, finish, render, reads,
+    showAll() { nodes().find(node => node.type === "select").props.onChange({target:{value:"all"}}); render(); },
     setRows(next) { rows = next; },
     setAvatar(next) { avatar = next; },
     get avatar() { return nodes().find(node => node.props?.className === 'venue-media-review-avatar'); },
@@ -254,12 +255,12 @@ test('dancer cards open only that dancer’s new media, put labels above preview
   assert.equal(ui.dancerCards[0].props['aria-label'],'Review 2 new uploads from Star');
   ui.open();await ui.settle();assert.equal(ui.cards.length,2);
   for (const [index, label] of ['Main photo/avatar', 'Video'].entries()) {
-    const [heading, preview] = ui.cards[index].props.children;
+    const heading = ui.cards[index].props.children[0], preview = ui.cards[index].props.children.find(node => node?.props?.className === "venue-media-review-preview");
     assert.equal(heading.type, 'h3');assert.equal(heading.props.children, label);
     assert.equal(preview.props.className, 'venue-media-review-preview');
     assert.doesNotMatch(JSON.stringify(preview), /venue-media-type/);
   }
-  assert.equal(ui.cards[0].props.children[1].props.children.props.href, '/private-preview');
+  assert.equal(ui.cards[0].props.children.find(node => node?.props?.className === "venue-media-review-preview").props.children.props.href, '/private-preview');
   assert.match(JSON.stringify(ui.cards[1]), /video.*controls.*New clip/);
   ui.click('Approve');ui.finish();await ui.settle();
   assert.equal(ui.cards.length,1);assert.equal(ui.dancerCards.length,0);
@@ -274,14 +275,14 @@ test('video review tiles show posters, prime a first frame when missing, and kee
   const ui=await ready('video');
   ui.setRows(ui.rows.map((row,index)=>({...row,posterUrl:index===0?'/private-poster.webp':'',caption:index===0?null:'New performance'})));
   ui.render({refreshKey:'posters'});await ui.settle();
-  const withPoster=ui.cards[0].props.children[1].props.children;
+  const withPoster=ui.cards[0].props.children.find(node => node?.props?.className === "venue-media-review-preview").props.children;
   assert.equal(withPoster.type,'video');assert.equal(withPoster.props.poster,'/private-poster.webp');
   assert.equal(withPoster.props.controls,true);assert.equal(withPoster.props.playsInline,true);
   assert.equal(withPoster.props.autoPlay,undefined);assert.equal(withPoster.props.muted,undefined);
   assert.doesNotMatch(JSON.stringify(ui.cards[0]),/Caption:/);
   const first={duration:10,currentTime:0};withPoster.props.onLoadedMetadata({currentTarget:first});
   assert.equal(first.currentTime,0);
-  const withoutPoster=ui.cards[1].props.children[1].props.children;
+  const withoutPoster=ui.cards[1].props.children.find(node => node?.props?.className === "venue-media-review-preview").props.children;
   assert.equal(withoutPoster.props.poster,undefined);
   withoutPoster.props.onLoadedMetadata({currentTarget:first});assert.ok(first.currentTime>0);
   first.currentTime=4;withoutPoster.props.onLoadedMetadata({currentTarget:first});assert.equal(first.currentTime,4);
@@ -295,7 +296,7 @@ test('reviewing the last item on a later media page loads the previous page inst
   assert.equal(ui.cards.length,12);ui.next();await ui.settle();assert.equal(ui.cards.length,1);
   ui.click('Approve');ui.finish();await ui.settle();
   assert.equal(ui.cards.length,12);assert.equal(ui.dancerCards.length,0);
-  assert.match(ui.reads.at(-1),/offset=0&dancerId=dancer-one/);
+  assert.match(ui.reads.at(-1),/offset=0&status=pending&dancerId=dancer-one/);
 });
 
 test('a late response after backing out cannot replace the dancer grid',async()=>{
@@ -304,4 +305,12 @@ test('a late response after backing out cannot replace the dancer grid',async()=
   ui.open();ui.back();await ui.settle();
   finish({venueId:'venue',count:1,uploadCount:1,items:ui.rows.slice(0,1)});await ui.settle();
   assert.equal(ui.cards.length,0);assert.equal(ui.dancerCards.length,0);assert.equal(ui.counts.at(-1),0);
+});
+
+test('all-media view retains a reviewed item and sends its latest decision version when changed again',async()=>{
+ const ui=harness();await ui.settle();ui.showAll();await ui.settle();ui.open();await ui.settle();
+ assert.match(ui.reads.at(-1),/status=all/);ui.click('Approve');ui.finish();await ui.settle();
+ assert.equal(ui.cards.length,2);assert.match(JSON.stringify(ui.cards[0]),/Approved at your club/);
+ ui.click('Reject');await ui.settle();assert.equal(ui.cards.length,2);
+ assert.equal(ui.calls[1].decisionVersion,'revised');assert.match(JSON.stringify(ui.cards[0]),/Hidden at your club/);
 });

@@ -78,7 +78,7 @@ test('dancer overview uses pending main photos and approved mains for video-only
   ]},{profiles:[profile,{id:'other',user_id:'other-owner',dancer_photos:[{...approved,storage_path:'other/main.jpg'}]}],pending:[photo]});
   const result=await f.get('?view=dancers&offset=12');
   assert.equal(result.dancers.length,2);assert.equal(result.count,5);assert.equal(result.dancerCount,2);
-  assert.equal(f.calls[0].name,'get_venue_dancer_media_grid');assert.equal(f.calls[0].args.p_offset,12);
+  assert.equal(f.calls[0].name,'get_club_media_queue');assert.equal(f.calls[0].args.p_offset,12);
   assert.deepEqual(f.access,[{actor:'actor',permission:'manage_roster'}]);
   assert.deepEqual(f.signed,[]);
   assert.equal(result.dancers[0].previewUrl,'/signed/private/photo');

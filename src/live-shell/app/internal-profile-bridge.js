@@ -69,7 +69,7 @@
         const payload = response.ok ? await response.json() : null;
         if (target !== internalProfileLoadSequence) return;
         if (payload?.profile?.id !== profileId || authSession?.accessToken !== session.accessToken) throw new Error("Profile unavailable.");
-        if (payload.profile.is_public !== true) return openInternalProfileMessage({ origin: event.origin, source: event.source, data: { type: "mydancr:internal-profile-open", profile: payload.profile, vipVenueId, vipRequest: event.data.vipRequest } });
+        return openInternalProfileMessage({ origin: event.origin, source: event.source, data: { type: "mydancr:internal-profile-open", profile: payload.profile, vipVenueId, vipRequest: event.data.vipRequest } });
       }
       const revision = `public:${profileId}:${slug}`;
       const vipRequest = event.data.vipRequest;
