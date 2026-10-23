@@ -52,7 +52,7 @@ export async function GET(request: Request) {
       }
       const ready = photo ? r.category_flags?.file_checks_passed === true : r.moderation_details?.fileChecksPassed === true;
       return { id: item.id, kind: item.kind, dancerId: item.dancerId, stageName: item.stageName, version: r.updated_at, previewUrl, caption: photo ? null : r.caption,
-        label: photo ? r.upload_context === "profile_avatar" ? "Avatar" : r.upload_context.startsWith("profile_main") ? "Main photo" : "Photo" : "Video",
+        label: photo ? r.upload_context === "profile_avatar" ? "Avatar" : r.upload_context.startsWith("profile_main") ? "Main photo/avatar" : "Photo" : "Video",
         processing, canApprove: !processing && ready && !r.club_reviewed_at && (photo || !r.upload_validation_pending),
         reviewSummary: processing ? "Preparing upload" : "Club review required before MyDancr final approval",
         reasons: photo ? r.reason_codes || [] : r.moderation_reason_codes || [],

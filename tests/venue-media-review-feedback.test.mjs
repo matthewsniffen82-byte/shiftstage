@@ -188,7 +188,7 @@ for (const status of [401, 403, 'changed club']) {
 test('dancer cards open only that dancer’s new media, put labels above previews and disappear after the last decision', async () => {
   const ui=harness();await ui.settle();
   ui.setRows([
-    { ...ui.rows[0], label:'Main photo' },
+    { ...ui.rows[0], label:'Main photo/avatar' },
     { ...ui.rows[1], kind:'video',label:'Video',caption:'New clip' },
     { ...ui.rows[0], id:'other', dancerId:'dancer-two' },
   ]);
@@ -196,7 +196,7 @@ test('dancer cards open only that dancer’s new media, put labels above preview
   assert.equal(ui.dancerCards.length,2);assert.equal(ui.cards.length,0);
   assert.equal(ui.dancerCards[0].props['aria-label'],'Review 2 new uploads from Star');
   ui.open();await ui.settle();assert.equal(ui.cards.length,2);
-  for (const [index, label] of ['Main photo', 'Video'].entries()) {
+  for (const [index, label] of ['Main photo/avatar', 'Video'].entries()) {
     const [heading, preview] = ui.cards[index].props.children;
     assert.equal(heading.type, 'h3');assert.equal(heading.props.children, label);
     assert.equal(preview.props.className, 'venue-media-review-preview');

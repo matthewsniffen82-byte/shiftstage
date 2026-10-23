@@ -36,11 +36,11 @@ test('dancer overview signs only card photos/posters and returns no raw private 
   assert.deepEqual(f.signed,[{bucket:'videos',path:'private/poster.jpg',ttl:300}]);
   assert.doesNotMatch(JSON.stringify(result),/private-owner|temporary_storage_path|storage_path|moderation_details|category_flags/);
 });
-test('selected dancer query preserves the Main photo label and approval gates',async()=>{
+test('selected dancer query uses the Main photo/avatar label and preserves approval gates',async()=>{
   const f=fixture({count:3,uploadCount:1,dancerCount:2,dancers:[],items:[{id:'photo',dancerId,kind:'photo',stageName:'Star',record:photo}]});
   const result=await f.get('?view=dancers&dancerId='+dancerId);
   assert.equal(f.calls[0].args.p_dancer_id,dancerId);assert.equal(result.uploadCount,1);
-  assert.equal(result.items[0].label,'Main photo');assert.equal(result.items[0].canApprove,true);
+  assert.equal(result.items[0].label,'Main photo/avatar');assert.equal(result.items[0].canApprove,true);
   assert.equal(result.items[0].version,photo.updated_at);assert.equal(result.items[0].previewUrl,'/signed-photo');
 });
 test('count-only uses no previews; invalid dancer IDs never reach the queue',async()=>{
