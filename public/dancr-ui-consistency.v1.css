@@ -2786,22 +2786,19 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     content: "" !important;
     display: block !important;
     position: absolute !important;
-    inset: 6px !important;
+    inset: 8px !important;
     border: 0 !important;
     border-radius: 50% !important;
-    background: rgba(0, 0, 0, .56) !important;
+    background: rgba(24, 24, 24, .78) !important;
     pointer-events: none;
   }
   html body.dancr-button-system #results .home-dancer-grid-quick-follow :is(.action-icon, svg) {
     position: relative !important;
-    width: 20px !important;
-    height: 20px !important;
-    min-width: 20px !important;
-    flex: 0 0 20px !important;
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    flex: 0 0 18px !important;
     color: inherit !important;
-  }
-  html body.dancr-button-system #results .home-dancer-grid-quick-follow[aria-pressed="true"] {
-    color: #34d399 !important;
   }
   html body.dancr-button-system #results .home-dancer-grid-quick-follow:focus-visible {
     outline: 2px solid #fff !important;
@@ -2813,7 +2810,7 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
   }
   @media (hover: hover) {
     html body.dancr-button-system #results .home-dancer-grid-quick-follow:enabled:hover::before {
-      background: rgba(0, 0, 0, .76) !important;
+      background: rgba(24, 24, 24, .9) !important;
     }
   }
 }

@@ -91,7 +91,7 @@ for (const authenticated of [false, true]) {
   });
 }
 
-test("quick-follow CSS is overlay-only with a 44px touch target and 32px visible circle", () => {
+test("quick-follow CSS is overlay-only with a 44px touch target and 28px visible circle", () => {
   const css = postcss.parse(read("../public/dancr-ui-consistency.v1.css"));
   const layer = css.nodes.find(node => node.type === "atrule" && node.params === "dancr-follow-controls.grid-follow");
   assert.ok(layer, "Nested important layer overrides legacy follow-button frames");
@@ -103,7 +103,7 @@ test("quick-follow CSS is overlay-only with a 44px touch target and 32px visible
   assert.equal(button.height, "44px");
   assert.equal(button.background, "transparent");
   assert.equal(button.border, "0");
-  assert.equal(values(rules.find(rule => rule.selector.endsWith("::before"))).inset, "6px");
+  assert.equal(values(rules.find(rule => rule.selector.endsWith("::before"))).inset, "8px");
   assert.ok(rules.some(rule => rule.selector.endsWith(":focus-visible")));
   layer.walkRules(rule => assert.ok(rule.selector.includes("#results .home-dancer-grid"), "Never style dashboard/internal cards"));
 });
