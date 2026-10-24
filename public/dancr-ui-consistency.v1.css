@@ -1052,8 +1052,8 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   align-items: stretch !important;
   gap: 12px !important;
   min-height: var(--venue-detail-logo-size) !important;
-  /* Preserve the card inset and spacing around the Back control. */
-  padding: 12px 12px 4px !important;
+  /* Reserve the Back control's 44px target plus clear space above the logo. */
+  padding: 56px 12px 4px !important;
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
@@ -1143,7 +1143,7 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   margin-right: 6px;
 }
 
-/* Share the dancer profile's Back control without adding a row above the card. */
+/* Keep Back inside the card, in the space reserved above the brand row. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero > .venue-detail-close {
   position: absolute !important;
   inset: 2px auto auto 2px !important;

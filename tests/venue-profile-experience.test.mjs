@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import vm from "node:vm";
+import postcss from "postcss";
 
 const profileRoute = await readFile(new URL("../app/venues/[slug]/page.tsx", import.meta.url), "utf8");
 const liveApp = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
@@ -299,6 +300,34 @@ test("venue scroll cards remain separate from the deeper venue detail hierarchy"
   assert.ok(venueCard, "the venue scroll-card renderer must remain available");
   assert.doesNotMatch(venueCard, /venue-detail-exploration|venue-information-section|Venue information/);
   assert.match(venueCard, /venueExperienceHref\(venue, city\)/);
+});
+
+test("venue profile Back has clear space above the unchanged logo slot", async () => {
+  const consistency = postcss.parse(await readFile(new URL("../public/dancr-ui-consistency.v1.css", import.meta.url), "utf8"));
+  const prefix = "html body.dancr-button-system #results.venue-profile-overlay .venue-detail";
+  const declarations = (root, selector) => {
+    const values = {};
+    root.walkRules(selector, rule => rule.walkDecls(declaration => { values[declaration.prop] = declaration.value; }));
+    return values;
+  };
+  const brand = declarations(consistency, `${prefix} .venue-hero-brand-row`);
+  const back = declarations(consistency, `${prefix} .venue-hero > .venue-detail-close`);
+  let target;
+  postcss.parse(aesthetic).walkRules(rule => {
+    if (rule.selector.includes(".venue-detail .venue-detail-close") && rule.nodes.some(node => node.prop === "--dancr-close-face") && rule.nodes.some(node => node.prop === "width")) {
+      target = Object.fromEntries(rule.nodes.filter(node => node.type === "decl").map(node => [node.prop, node.value]));
+    }
+  });
+  assert.ok(target, "The shared Back target must remain available");
+  assert.equal(target.width, "44px");
+  assert.equal(target.height, "44px");
+  assert.equal(back.position, "absolute");
+  assert.equal(back.inset, "2px auto auto 2px");
+  assert.equal(brand.padding, "56px 12px 4px");
+  assert.ok(parseFloat(brand.padding) - parseFloat(back.inset) - parseFloat(target.height) >= 8, "The logo must clear the entire Back tap target");
+  assert.equal(brand["--venue-detail-logo-size"], "clamp(100px, 30.6vw, 166px)");
+  assert.equal(brand["grid-template-columns"], "var(--venue-detail-logo-size) minmax(0, 1fr)");
+  assert.equal(brand.gap, "12px");
 });
 
 test("venue profiles keep Back inside the card and preserve the shared floating navigation", () => {
