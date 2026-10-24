@@ -6,7 +6,7 @@ export const staticAssetVersions = {
   "/venue-grid-embed.css": "78ab75bb050e69a0",
   "/venue-brand-themes.css": "e97f564c493e0a95",
   "/dancr-account-forms.v1.css": "882959a2d903bc6e",
-  "/dancr-ui-consistency.v1.css": "3a7d3b4fbb0fa0bb",
+  "/dancr-ui-consistency.v1.css": "64ae3679acfd8e26",
   "/dancr-auth.v1.css": "a4ce6eace8adddc3",
   "/dancr-checkboxes.v1.css": "412ddff9485b8f76",
   "/dancr-aesthetic.v1.css": "95001b4cd7e2043e",

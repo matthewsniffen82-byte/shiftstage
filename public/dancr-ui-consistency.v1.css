@@ -1559,7 +1559,7 @@ html body.dancr-button-system :is(#venueSelectClose, #distanceSelectClose)::befo
   content: none !important;
 }
 html body.dancr-button-system #venueSelectOptions {
-  gap: 0;
+  gap: 8px;
   padding: 4px;
 }
 html body.dancr-button-system #venueSelectDialog .venue-picker-option {
@@ -1582,7 +1582,7 @@ html body.dancr-button-system #venueSelectDialog .venue-picker-radio::after {
   height: 8px;
 }
 html body.dancr-button-system #venueSelectDone {
-  margin: 6px 12px 12px;
+  margin: 8px 12px 12px;
 }
 html body.dancr-button-system #distanceSelectDialog .distance-picker-panel {
   gap: 10px;
