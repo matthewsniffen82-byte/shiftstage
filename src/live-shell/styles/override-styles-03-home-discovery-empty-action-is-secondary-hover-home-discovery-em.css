@@ -229,37 +229,37 @@
             scroll-padding-top: calc(var(--mydancr-preview-banner-offset, env(safe-area-inset-top, 0px)) + 12px);
             scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px));
           }
-          /* Reuse the viewport-edge indicator without enabling TV snapping on dancers. */
+          /* Hide the native viewport thumb only while its replacement is enabled. */
           html.home-page-scroll-indicator,
           html.home-page-scroll-indicator body {
-            scrollbar-width: none;
+            scrollbar-width: none !important;
+            scrollbar-color: transparent transparent !important;
           }
           html.home-page-scroll-indicator::-webkit-scrollbar,
           html.home-page-scroll-indicator body::-webkit-scrollbar {
-            width: 0;
-            height: 0;
-            display: none;
+            width: 0 !important;
+            height: 0 !important;
+            display: none !important;
           }
-          /* Request a hidden Samsung viewport thumb without changing page scrolling. */
-          html.is-samsung-browser,
-          html.is-samsung-browser body {
-            scrollbar-width: none;
-          }
-          html.is-samsung-browser::-webkit-scrollbar,
-          html.is-samsung-browser body::-webkit-scrollbar {
-            width: 0;
-            height: 0;
-            display: none;
+          html.home-page-scroll-indicator::-webkit-scrollbar-thumb,
+          html.home-page-scroll-indicator body::-webkit-scrollbar-thumb {
+            background: transparent !important;
+            box-shadow: none !important;
           }
           .home-tv-page-scroll-rail {
             position: fixed;
             z-index: 115;
             top: max(2px, env(safe-area-inset-top, 0px));
-            right: 2px;
+            right: 1px;
             bottom: max(2px, env(safe-area-inset-bottom, 0px));
             width: 2px;
             background: transparent;
             pointer-events: none;
+            opacity: 0;
+            transition: opacity .2s ease;
+          }
+          .home-tv-page-scroll-rail.is-scrolling {
+            opacity: .6;
           }
           .home-tv-page-scroll-rail[hidden] {
             display: none !important;
@@ -273,17 +273,12 @@
             width: 2px;
             min-height: 48px;
             border-radius: 999px;
-            background: var(--mydancr-scrollbar-thumb, #686868);
-            box-shadow: none;
-            transition: background-color .18s ease;
-            will-change: height, transform;
-          }
-          .home-tv-page-scroll-rail.is-scrolling .home-tv-page-scroll-thumb {
             background: var(--mydancr-scrollbar-thumb-active, #808080);
             box-shadow: none;
+            will-change: height, transform;
           }
           @media (prefers-reduced-motion: reduce) {
-            .home-tv-page-scroll-thumb {
+            .home-tv-page-scroll-rail {
               transition: none;
             }
           }

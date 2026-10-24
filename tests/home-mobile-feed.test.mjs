@@ -537,19 +537,19 @@ test("TV uses document-level mobile snapping while discovery cards keep natural 
 test("mobile TV uses a quiet page-scroll thumb at the true viewport edge", () => {
   assert.match(
     homeSource,
-    /html\.home-page-scroll-indicator,[\s\S]*?html\.home-page-scroll-indicator body \{[\s\S]*?scrollbar-width: none;[\s\S]*?html\.home-page-scroll-indicator::-webkit-scrollbar,[\s\S]*?html\.home-page-scroll-indicator body::-webkit-scrollbar \{[\s\S]*?width: 0;[\s\S]*?display: none;/,
+    /html\.home-page-scroll-indicator,[\s\S]*?html\.home-page-scroll-indicator body \{[\s\S]*?scrollbar-width: none !important;[\s\S]*?html\.home-page-scroll-indicator::-webkit-scrollbar,[\s\S]*?html\.home-page-scroll-indicator body::-webkit-scrollbar \{[\s\S]*?width: 0 !important;[\s\S]*?display: none !important;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-page-scroll-rail \{[\s\S]*?position: fixed;[\s\S]*?right: 2px;[\s\S]*?width: 2px;[\s\S]*?pointer-events: none;/,
+    /\.home-tv-page-scroll-rail \{[\s\S]*?position: fixed;[\s\S]*?right: 1px;[\s\S]*?width: 2px;[\s\S]*?pointer-events: none;[\s\S]*?opacity: 0;[\s\S]*?transition: opacity \.2s ease;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-page-scroll-thumb \{[\s\S]*?width: 2px;[\s\S]*?min-height: 48px;[\s\S]*?background: var\(--mydancr-scrollbar-thumb, #686868\);[\s\S]*?box-shadow: none;[\s\S]*?transition: background-color \.18s ease;/,
+    /\.home-tv-page-scroll-thumb \{[\s\S]*?width: 2px;[\s\S]*?min-height: 48px;[\s\S]*?background: var\(--mydancr-scrollbar-thumb-active, #808080\);[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-page-scroll-rail\.is-scrolling \.home-tv-page-scroll-thumb \{[\s\S]*?background: var\(--mydancr-scrollbar-thumb-active, #808080\);[\s\S]*?box-shadow: none;/,
+    /\.home-tv-page-scroll-rail\.is-scrolling \{\s+opacity: \.6;/,
   );
   assert.match(
     homeSource,

@@ -61,23 +61,24 @@ function harness({ tab = "dancers", mobile = true, samsung = false, scrollHeight
   return { context, root, children, timers, observers, flush() { while (frames.length) frames.shift()(); } };
 }
 
-test("mobile dancers show one edge indicator on first load without TV snapping", () => {
+test("mobile dancers prepare one compact edge indicator without TV snapping", () => {
   const { context, root, children } = harness();
   context.syncHomeTvPageScrollIndicator();
   assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
   assert.equal(root.classList.contains("home-tv-page-snap"), false);
   assert.equal(context.homeTvPageScrollRail.hidden, false);
   assert.equal(context.homeTvPageScrollRail.attributes["aria-hidden"], "true");
-  assert.equal(context.homeTvPageScrollThumb.style.height, "199px");
+  assert.equal(context.homeTvPageScrollThumb.style.height, "96px");
+  assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), false);
   assert.equal(context.homeTvPageScrollThumb.style.transform, "translate3d(0, 0px, 0)");
   context.syncHomeTvPageScrollIndicator();
   assert.equal(children.length, 1);
   root.scrollTop = 1200;
   context.syncHomeTvPageScrollIndicator();
-  assert.equal(context.homeTvPageScrollThumb.style.transform, "translate3d(0, 299px, 0)");
+  assert.equal(context.homeTvPageScrollThumb.style.transform, "translate3d(0, 350px, 0)");
   root.scrollTop = 2400;
   context.syncHomeTvPageScrollIndicator();
-  assert.equal(context.homeTvPageScrollThumb.style.transform, "translate3d(0, 597px, 0)");
+  assert.equal(context.homeTvPageScrollThumb.style.transform, "translate3d(0, 700px, 0)");
 });
 
 test("a short page hides the indicator and loaded results make it measurable again", () => {
@@ -89,7 +90,7 @@ test("a short page hides the indicator and loaded results make it measurable aga
   observers[0]();
   flush();
   assert.equal(context.homeTvPageScrollRail.hidden, false);
-  assert.equal(context.homeTvPageScrollThumb.style.height, "199px");
+  assert.equal(context.homeTvPageScrollThumb.style.height, "96px");
 });
 
 test("desktop and other destinations restore native scrolling and clear activity timers", () => {
@@ -103,7 +104,7 @@ test("desktop and other destinations restore native scrolling and clear activity
   assert.equal(context.homeTvPageScrollRail.hidden, true);
   assert.equal(timers.size, 0);
   context.homeTvFeedSnapMedia.matches = true;
-  context.activeTab = "venues";
+  context.activeTab = "account";
   context.syncHomeTvPageScrollIndicator();
   assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
   assert.equal(context.homeTvPageScrollRail.hidden, true);
@@ -123,40 +124,72 @@ test("TV keeps its existing snap behavior and shares the same indicator", () => 
   assert.equal(children.length, 1);
 });
 
-test("Samsung never adds a second indicator on dancers or TV, including scroll and resize", () => {
+test("Samsung shares one fading indicator across dancers, clubs and TV", () => {
   const { context, root, children, timers, flush } = harness({ samsung: true });
   context.queueHomeTvPageScrollIndicatorSync();
   flush();
-  assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
-  assert.equal(children.length, 0);
+  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
+  assert.equal(children.length, 1);
   context.markHomeTvPageScrollIndicatorActive();
-  assert.equal(timers.size, 0);
+  assert.equal(timers.size, 1);
+  assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), true);
+  [...timers.values()][0]();
+  assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), false);
+  context.activeTab = "venues";
+  context.syncHomeTvPageSnapState();
+  flush();
+  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
+  assert.equal(root.classList.contains("home-tv-page-snap"), false);
+  assert.equal(children.length, 1);
   context.activeTab = "tv";
   context.syncHomeTvPageSnapState();
   flush();
   assert.equal(root.classList.contains("home-tv-page-snap"), true);
-  assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
-  assert.equal(children.length, 0);
+  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
+  assert.equal(children.length, 1);
   context.homeTvFeedSnapMedia.matches = false;
   context.syncHomeTvPageSnapState();
   flush();
   context.homeTvFeedSnapMedia.matches = true;
   context.syncHomeTvPageSnapState();
   flush();
-  assert.equal(children.length, 0);
-  assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
+  assert.equal(children.length, 1);
+  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
 });
 
-test("Samsung detection clears an already-created custom indicator and its active timer", () => {
+test("late Samsung detection keeps the same indicator without a duplicate", () => {
   const { context, root, timers } = harness();
   context.syncHomeTvPageScrollIndicator();
   context.markHomeTvPageScrollIndicatorActive();
   root.classList.add("is-samsung-browser");
   context.syncHomeTvPageScrollIndicator();
-  assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
-  assert.equal(context.homeTvPageScrollRail.hidden, true);
+  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
+  assert.equal(context.homeTvPageScrollRail.hidden, false);
+  assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), true);
+  assert.equal(timers.size, 1);
+});
+
+test("club thumb stays compact on short pages and retains a visible minimum on long pages", () => {
+  for (const [scrollHeight, expected] of [[1000, "96px"], [32000, "48px"]]) {
+    const { context, root } = harness({ tab: "venues", scrollHeight });
+    context.syncHomeTvPageScrollIndicator();
+    assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
+    assert.equal(context.homeTvPageScrollThumb.style.height, expected);
+    root.scrollTop = scrollHeight - 800;
+    context.syncHomeTvPageScrollIndicator();
+    assert.equal(context.homeTvPageScrollThumb.style.transform, `translate3d(0, ${796 - parseInt(expected)}px, 0)`);
+  }
+});
+
+test("scroll activity restarts the idle timer so continuous scrolling remains visible", () => {
+  const { context, timers } = harness({ tab: "venues" });
+  context.syncHomeTvPageScrollIndicator();
+  context.markHomeTvPageScrollIndicatorActive();
+  context.markHomeTvPageScrollIndicatorActive();
+  assert.equal(timers.size, 1);
+  assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), true);
+  [...timers.values()][0]();
   assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), false);
-  assert.equal(timers.size, 0);
 });
 
 test("indicator styles stay at the mobile viewport edge without changing content geometry", () => {
@@ -168,16 +201,18 @@ test("indicator styles stay at the mobile viewport edge without changing content
   const declarations = Object.fromEntries(rail.nodes.map(({ prop, value }) => [prop, value]));
   assert.equal(rail.parent.params, "(max-width: 720px)");
   assert.equal(declarations.position, "fixed");
-  assert.equal(declarations.right, "2px");
+  assert.equal(declarations.right, "1px");
   assert.equal(declarations.width, "2px");
   assert.equal(declarations["pointer-events"], "none");
+  assert.equal(declarations.opacity, "0");
+  assert.equal(declarations.transition, "opacity .2s ease");
+  const activeRail = rules.find((rule) => rule.selector === ".home-tv-page-scroll-rail.is-scrolling");
+  assert.equal(activeRail.nodes.find(({ prop }) => prop === "opacity").value, ".6");
   const nativeScroll = rules.find((rule) => rule.selectors.includes("html.home-page-scroll-indicator"));
-  assert.deepEqual(nativeScroll.nodes.map(({ prop, value }) => [prop, value]), [["scrollbar-width", "none"]]);
-  const samsungScroll = rules.find((rule) => rule.selectors.includes("html.is-samsung-browser"));
-  assert.equal(samsungScroll.parent.params, "(max-width: 720px)");
-  assert.deepEqual(samsungScroll.nodes.map(({ prop, value }) => [prop, value]), [["scrollbar-width", "none"]]);
-  const samsungFallback = rules.find((rule) => rule.selectors.includes("html.is-samsung-browser::-webkit-scrollbar"));
-  assert.deepEqual(samsungFallback.nodes.map(({ prop, value }) => [prop, value]), [["width", "0"], ["height", "0"], ["display", "none"]]);
+  assert.deepEqual(nativeScroll.nodes.map(({ prop, value, important }) => [prop, value, important]), [["scrollbar-width", "none", true], ["scrollbar-color", "transparent transparent", true]]);
+  const nativeFallback = rules.find((rule) => rule.selectors.includes("html.home-page-scroll-indicator::-webkit-scrollbar"));
+  assert.deepEqual(nativeFallback.nodes.map(({ prop, value, important }) => [prop, value, important]), [["width", "0", true], ["height", "0", true], ["display", "none", true]]);
+  assert.equal(rules.some((rule) => rule.selector.includes("html.is-samsung-browser")), false, "Native hiding must depend on the replacement, not the user agent.");
   assert.ok(rules.some((rule) => rule.selector.includes(".overlay-open") && rule.nodes.some(({ prop, value }) => prop === "display" && value === "none")));
   assert.match(source, /function render\(\) \{[^]*?queueHomeTvPageScrollIndicatorSync\(\);/);
 });

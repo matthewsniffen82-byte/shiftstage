@@ -957,10 +957,9 @@
     }
 
     function syncHomeTvPageScrollIndicator() {
-      // Avoid a second indicator if Samsung ignores the CSS viewport-scrollbar hiding.
-      const usesBrowserScrollbar = document.documentElement.classList.contains("is-samsung-browser");
-      const usesPageIndicator = !usesBrowserScrollbar && homeTvFeedUsesSnapViewport() &&
-        (activeTab === "dancers" || document.documentElement.classList.contains("home-tv-page-snap"));
+      // All mobile discovery tabs share one indicator, including Samsung.
+      const usesPageIndicator = homeTvFeedUsesSnapViewport() &&
+        (activeTab === "dancers" || activeTab === "venues" || document.documentElement.classList.contains("home-tv-page-snap"));
       document.documentElement.classList.toggle("home-page-scroll-indicator", usesPageIndicator);
       if (!usesPageIndicator) {
         if (homeTvPageScrollRail) {
@@ -987,7 +986,7 @@
       }
       const thumbHeight = Math.min(
         trackHeight,
-        Math.max(48, Math.round(trackHeight * (viewportHeight / scrollHeight))),
+        Math.max(48, Math.min(96, Math.round(trackHeight * (viewportHeight / scrollHeight)))),
       );
       const progress = Math.min(1, Math.max(0, scroller.scrollTop / maxScroll));
       const thumbOffset = Math.round((trackHeight - thumbHeight) * progress);
