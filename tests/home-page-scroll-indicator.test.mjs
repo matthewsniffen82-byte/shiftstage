@@ -123,7 +123,7 @@ test("TV keeps its existing snap behavior and shares the same indicator", () => 
   assert.equal(children.length, 1);
 });
 
-test("Samsung keeps only its native scrollbar on dancers and TV, including scroll and resize", () => {
+test("Samsung never adds a second indicator on dancers or TV, including scroll and resize", () => {
   const { context, root, children, timers, flush } = harness({ samsung: true });
   context.queueHomeTvPageScrollIndicatorSync();
   flush();
@@ -162,7 +162,7 @@ test("Samsung detection clears an already-created custom indicator and its activ
 test("indicator styles stay at the mobile viewport edge without changing content geometry", () => {
   const rules = [];
   styles.walkRules((rule) => {
-    if (/home-page-scroll-indicator|home-tv-page-scroll-rail/.test(rule.selector)) rules.push(rule);
+    if (/home-page-scroll-indicator|home-tv-page-scroll-rail|is-samsung-browser/.test(rule.selector)) rules.push(rule);
   });
   const rail = rules.find((rule) => rule.selector === ".home-tv-page-scroll-rail");
   const declarations = Object.fromEntries(rail.nodes.map(({ prop, value }) => [prop, value]));
@@ -173,6 +173,11 @@ test("indicator styles stay at the mobile viewport edge without changing content
   assert.equal(declarations["pointer-events"], "none");
   const nativeScroll = rules.find((rule) => rule.selectors.includes("html.home-page-scroll-indicator"));
   assert.deepEqual(nativeScroll.nodes.map(({ prop, value }) => [prop, value]), [["scrollbar-width", "none"]]);
+  const samsungScroll = rules.find((rule) => rule.selectors.includes("html.is-samsung-browser"));
+  assert.equal(samsungScroll.parent.params, "(max-width: 720px)");
+  assert.deepEqual(samsungScroll.nodes.map(({ prop, value }) => [prop, value]), [["scrollbar-width", "none"]]);
+  const samsungFallback = rules.find((rule) => rule.selectors.includes("html.is-samsung-browser::-webkit-scrollbar"));
+  assert.deepEqual(samsungFallback.nodes.map(({ prop, value }) => [prop, value]), [["width", "0"], ["height", "0"], ["display", "none"]]);
   assert.ok(rules.some((rule) => rule.selector.includes(".overlay-open") && rule.nodes.some(({ prop, value }) => prop === "display" && value === "none")));
   assert.match(source, /function render\(\) \{[^]*?queueHomeTvPageScrollIndicatorSync\(\);/);
 });

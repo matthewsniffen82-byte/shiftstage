@@ -957,7 +957,7 @@
     }
 
     function syncHomeTvPageScrollIndicator() {
-      // Use Samsung's browser-level thumb instead of drawing a second page indicator.
+      // Avoid a second indicator if Samsung ignores the CSS viewport-scrollbar hiding.
       const usesBrowserScrollbar = document.documentElement.classList.contains("is-samsung-browser");
       const usesPageIndicator = !usesBrowserScrollbar && homeTvFeedUsesSnapViewport() &&
         (activeTab === "dancers" || document.documentElement.classList.contains("home-tv-page-snap"));

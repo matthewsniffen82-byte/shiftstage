@@ -240,6 +240,17 @@
             height: 0;
             display: none;
           }
+          /* Request a hidden Samsung viewport thumb without changing page scrolling. */
+          html.is-samsung-browser,
+          html.is-samsung-browser body {
+            scrollbar-width: none;
+          }
+          html.is-samsung-browser::-webkit-scrollbar,
+          html.is-samsung-browser body::-webkit-scrollbar {
+            width: 0;
+            height: 0;
+            display: none;
+          }
           .home-tv-page-scroll-rail {
             position: fixed;
             z-index: 115;
