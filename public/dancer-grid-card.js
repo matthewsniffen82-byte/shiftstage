@@ -11,15 +11,20 @@
     const group = ["is-now", "is-upcoming"].includes(card.groupClass) ? card.groupClass : "is-open";
     const href = /^(\/dancers\/|#profile-)/.test(card.href)
       || /^\/embed\/venues\/[a-z0-9-]+\/dancers\/[a-z0-9-]+(?:\?[a-zA-Z0-9%=&._-]*)?$/.test(card.href) ? card.href : "#";
+    const nameMarkup = card.compact
+      ? `<span class="home-dancer-grid-name-text">${escape(card.name)}</span>${group === "is-now" ? `<span class="home-dancer-grid-availability" role="img" aria-label="${escape(card.scheduleLabel)}" title="${escape(card.scheduleLabel)}"></span>` : ""}`
+      : escape(card.name);
+    const detailsMarkup = card.compact
+      ? card.venueMarkup || card.cityMarkup || ""
+      : `${card.cityMarkup || ""}${card.venueMarkup || ""}${card.distanceMarkup || ""}<span class="home-dancer-grid-status ${group}">${escape(card.scheduleLabel)}</span>`;
     return `<article data-venue-brand="${escape(card.venueSlug || "")}" data-public-dancer-id="${escape(card.id)}"${card.discoveryAttributes || ""} class="dancer-card home-dancer-grid-card ${group}${card.compact ? " is-compact-directory" : ""}" data-profile="${escape(card.name)}" data-profile-reference="${escape(card.reference)}" data-grid-group="${group}" aria-label="${escape(card.name)}, ${escape(card.scheduleLabel)}">
       <a class="home-dancer-grid-link" href="${escape(href)}"${card.newTab ? ' target="_blank" rel="noopener noreferrer"' : ""} aria-label="Open ${escape(card.name)}'s full profile${card.newTab ? " (opens in a new tab)" : ""}">
         ${card.photoMarkup || ""}
         <span class="home-dancer-grid-copy">
-          <h3 class="home-dancer-grid-name">${escape(card.name)}</h3>
-          ${card.cityMarkup || ""}${card.venueMarkup || ""}${card.distanceMarkup || ""}
-          <span class="home-dancer-grid-status ${group}">${escape(card.scheduleLabel)}</span>
+          <h3 class="home-dancer-grid-name">${nameMarkup}</h3>
+          ${detailsMarkup}
         </span>
-      </a>${card.actionsMarkup || ""}
+      </a>${card.compact ? card.quickFollowMarkup || "" : ""}${card.actionsMarkup || ""}
     </article>`;
   }
   // Patch cards in place so changing a count, placement or name does not

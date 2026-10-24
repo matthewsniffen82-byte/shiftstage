@@ -302,6 +302,13 @@
       `;
     }
 
+    function homeDancerGridQuickFollowMarkup(profile, city) {
+      if (!profile.id) return "";
+      const following = isFollowingProfile(profile.city || city, profile.id);
+      const label = escapeOptionValue(`${following ? "Following" : "Follow"} ${profile.name}`);
+      return `<button class="feed-card-action home-dancer-grid-quick-follow${following ? " is-active" : ""}" type="button" data-feed-action="follow" data-icon-only-action="true" data-profile="${escapeOptionValue(profile.id)}" aria-label="${label}" title="${label}" aria-pressed="${following}">${actionIconMarkup(following ? "check" : "personPlus")}</button>`;
+    }
+
     function homeDancerGridCard(profile, city, compactDirectory = false, imageIndex = 0) {
       const cityMarkup = city === ALL_CITIES && profile.city
         ? `<span class="home-dancer-grid-city">${escapeHtml(profile.city)}</span>`
@@ -350,6 +357,7 @@
         id: profile.id, venueSlug: profile.venueSlug, name: profile.name, reference: profileReferenceValue(profile), href: profileHref,
         discoveryAttributes: discoveryCardAttributes(profile), groupClass, compact: compactDirectory,
         scheduleLabel, photoMarkup, cityMarkup, venueMarkup, distanceMarkup,
+        quickFollowMarkup: compactDirectory ? homeDancerGridQuickFollowMarkup(profile, city) : "",
         actionsMarkup: compactDirectory ? "" : homeDancerGridActionsMarkup(profile, city)
       });
     }
