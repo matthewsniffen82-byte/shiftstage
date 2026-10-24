@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
+import postcss from "postcss";
 
 const [homeSource, actionsSource, profilePageSource, reportsRouteSource, profileNavigationSource, venueFollowsRouteSource, aesthetic] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
@@ -214,7 +215,7 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
   assert.doesNotMatch(actionsSource, /action === "notify"|requireCustomerAccount\("notify"\)/);
   assert.match(
     aesthetic,
-    /\.guest-account-prompt \{[\s\S]*?width: min\(420px, 100%\);[\s\S]*?max-height: calc\(100dvh - 32px\);[\s\S]*?overflow-y: auto;[\s\S]*?border-radius: 24px !important;/,
+    /\.guest-account-prompt \{[\s\S]*?width: min\(360px, 100%\);[\s\S]*?max-height: calc\(100dvh - 32px\);[\s\S]*?overflow-y: auto;[\s\S]*?border-radius: 16px !important;/,
   );
   assert.match(
     aesthetic,
@@ -224,6 +225,41 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
     aesthetic,
     /\.guest-account-prompt :is\(a, button\):focus-visible \{[\s\S]*?outline: 2px solid var\(--dancr-color-brand-primary\) !important;/,
   );
+});
+
+test("guest account prompt spacing stays compact without shrinking touch targets or clipping content", () => {
+  const css = postcss.parse(aesthetic);
+  const selector = "html body.dancr-button-system .guest-account-prompt";
+  const declarations = suffix => {
+    const rule = css.nodes.find(node => node.type === "rule" && node.selector === selector + suffix);
+    assert.ok(rule, `Missing prompt rule: ${suffix}`);
+    return Object.fromEntries(rule.nodes.filter(node => node.type === "decl").map(node => [node.prop, node.value]));
+  };
+  const prompt = declarations("");
+  assert.equal(prompt.width, "min(360px, 100%)");
+  assert.equal(prompt.padding, "16px");
+  assert.equal(prompt.gap, "8px");
+  assert.equal(prompt["max-height"], "calc(100dvh - 32px)");
+  assert.equal(prompt["overflow-y"], "auto");
+  assert.equal(prompt.height, undefined, "Longer messages and larger text can grow the dialog");
+  const heading = declarations(" :is(h2, h3)");
+  assert.equal(heading["font-size"], "20px");
+  assert.equal(heading["letter-spacing"], "0");
+  assert.equal(heading.padding, "0 36px 0 0", "Reserve room for the close button even when the title wraps");
+  assert.equal(heading["overflow-wrap"], "anywhere");
+  const message = declarations(" .guest-account-message");
+  assert.equal(message["font-size"], "14px");
+  assert.equal(message["line-height"], "1.4");
+  const actions = declarations(" .guest-account-actions");
+  assert.equal(actions.gap, "2px");
+  assert.equal(actions["margin-top"], "4px");
+  for (const suffix of [" .guest-account-actions a", " .guest-account-actions .guest-account-signin", " .guest-account-close"]) {
+    assert.equal(declarations(suffix)["min-height"], "44px", `${suffix} remains easy to tap`);
+  }
+  const close = declarations(" .guest-account-close");
+  assert.equal(close["min-width"], "44px");
+  assert.equal(close.top, "6px");
+  assert.equal(close.right, "6px");
 });
 
 test("venue follows stay empty until a real customer session and remain account-scoped", () => {
