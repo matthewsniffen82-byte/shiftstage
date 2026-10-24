@@ -18,6 +18,9 @@
     }
 
     function venueOperatingStatus(hours, city = selectedCity(), now = new Date()) {
+      if (/^24\s+hours$/i.test(String(hours || "").trim())) {
+        return { state: "open", label: "Open", hoursLabel: "24 hours" };
+      }
       const hoursLabel = displayShiftTime(hours);
       const parts = String(hours || "").split(/\s*(?:-|–|—|\bto\b)\s*/i);
       if (!hoursLabel || parts.length !== 2) {
@@ -35,6 +38,9 @@
           label: "Hours unavailable",
           hoursLabel: ""
         };
+      }
+      if (start === end) {
+        return { state: "open", label: "Open", hoursLabel: "24 hours" };
       }
       const cityNow = cityWallClock(now, city);
       let currentMinutes = (cityNow.getUTCHours() * 60) + cityNow.getUTCMinutes();

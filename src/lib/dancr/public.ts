@@ -710,6 +710,11 @@ function formatPublicShiftStartDate(startsAt: string): string {
 export function formatVenueHours(opensAt: string | null, closesAt: string | null): string | null {
   if (!opensAt || !closesAt) return null;
 
+  const clockPattern = /^(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d+)?)?$/;
+  if (clockPattern.test(opensAt) && clockPattern.test(closesAt) && opensAt.slice(0, 5) === closesAt.slice(0, 5)) {
+    return "24 hours";
+  }
+
   return `${formatTimeOnly(opensAt)} - ${formatTimeOnly(closesAt)}`;
 }
 
