@@ -9,7 +9,7 @@ export const staticAssetVersions = {
   "/dancr-ui-consistency.v1.css": "64ae3679acfd8e26",
   "/dancr-auth.v1.css": "a4ce6eace8adddc3",
   "/dancr-checkboxes.v1.css": "412ddff9485b8f76",
-  "/dancr-aesthetic.v1.css": "95001b4cd7e2043e",
+  "/dancr-aesthetic.v1.css": "33013389f4079624",
   "/dancr-brand-tokens.v1.css": "2baff41c13e44b3a",
   "/dancr-palette.v1.css": "efea2ef415c03f80",
   "/dancr-button-system.v1.css": "2b8d5593362c4138",
@@ -30,8 +30,8 @@ export const staticAssetVersions = {
   "/outputs/dancr-hero.png": "d16974879eb78003",
   "/outputs/dancr-hero.webp": "04a290c3af4ad444",
   "/outputs/live-shell.css": "2e63cab8cb0817e9",
-  "/outputs/dancr-aesthetic.css": "b0207368b55d6010",
-  "/outputs/live-shell-overrides.css": "aeecbb3db182873d",
+  "/outputs/dancr-aesthetic.css": "301661cf2b021e9a",
+  "/outputs/live-shell-overrides.css": "7595c66f03a92e17",
   "/outputs/mydancr-logo-current.png": "e7f5af001692cb08",
   "/outputs/mydancr-logo.png": "4b6b66793bf7a63d",
   "/profile-media-owner-controls.css": "368219e3780504b9",
@@ -47,6 +47,6 @@ export const staticAssetVersions = {
   "/third-party-social-link-warning.js": "0843cd3ce5fb584c",
   "/trending-flame-clean.png": "22dd616e6de1cf86",
   "/trending-flame.png": "058fa71484bc4433",
-  "/video-autoplay-recovery.js": "0c34163ce6685447",
-  "/video-sound-preference.js": "8f075662e607f34a"
+  "/video-autoplay-recovery.js": "92f425289dd9c18b",
+  "/video-sound-preference.js": "cfa0d4618b14f68a"
 };

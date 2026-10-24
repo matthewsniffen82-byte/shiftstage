@@ -545,11 +545,11 @@ test("mobile TV uses a quiet page-scroll thumb at the true viewport edge", () =>
   );
   assert.match(
     homeSource,
-    /\.home-tv-page-scroll-thumb \{[\s\S]*?width: 2px;[\s\S]*?min-height: 48px;[\s\S]*?background: rgba\(226, 232, 240, \.2\);[\s\S]*?transition: background-color \.18s ease, box-shadow \.18s ease;/,
+    /\.home-tv-page-scroll-thumb \{[\s\S]*?width: 2px;[\s\S]*?min-height: 48px;[\s\S]*?background: var\(--mydancr-scrollbar-thumb, #686868\);[\s\S]*?box-shadow: none;[\s\S]*?transition: background-color \.18s ease;/,
   );
   assert.match(
     homeSource,
-    /\.home-tv-page-scroll-rail\.is-scrolling \.home-tv-page-scroll-thumb \{[\s\S]*?background: rgba\(226, 232, 240, \.46\);/,
+    /\.home-tv-page-scroll-rail\.is-scrolling \.home-tv-page-scroll-thumb \{[\s\S]*?background: var\(--mydancr-scrollbar-thumb-active, #808080\);[\s\S]*?box-shadow: none;/,
   );
   assert.match(
     homeSource,
@@ -962,7 +962,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(244,242,248,.86\)[\s\S]*?--home-nav-accent-soft: rgba\(244,242,248,.78\)[\s\S]*?--home-nav-active: #f5f3ff[\s\S]*?--home-nav-active-violet-core: rgba\(109,40,255,.96\)[\s\S]*?--home-nav-active-violet-glow: rgba\(109,40,255,.58\)[\s\S]*?--home-nav-active-violet-depth: rgba\(49,46,129,.72\)/,
+    /#discoveryTabs \.tab,\s*#discoveryTabs \.home-bottom-tv \{[\s\S]*?--home-nav-accent: rgba\(244,242,248,.86\)[\s\S]*?--home-nav-accent-soft: rgba\(244,242,248,.78\)[\s\S]*?--home-nav-active: #f5f3ff[\s\S]*?--home-nav-active-violet-core: rgba\(109,40,255,.96\)[\s\S]*?--home-nav-active-violet-glow: rgba\(109,40,255,.58\)[\s\S]*?--home-nav-active-violet-depth: rgba\(109,40,255,.72\)/,
   );
   assert.match(
     homeSource,
@@ -995,7 +995,7 @@ test("the account menu groups published policies behind one Legal and Privacy li
   assert.doesNotMatch(homeMain, /legal-links|data-legal-page|contactAdminBtn|adminBtn/);
   assert.match(
     accountMenu,
-    /class="utility-menu-support" aria-label="Legal and support"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"[\s\S]*?href="\/legal">Legal &amp; Privacy<\/a>/,
+    /class="utility-menu-support" aria-label="Legal and support"[\s\S]*?id="contactAdminBtn"[\s\S]*?id="adminBtn"[\s\S]*?href="\/legal">[\s\S]*?<span>Legal &amp; Privacy<\/span><\/a>/,
   );
   assert.equal((accountMenu.match(/href="\/legal"/g) || []).length, 1);
   assert.doesNotMatch(accountMenu, /href="\/(?:privacy(?:\/california)?|dmca)"/);

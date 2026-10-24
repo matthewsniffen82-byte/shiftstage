@@ -9,8 +9,8 @@
   --mydancr-verified-foreground: var(--dancr-color-verification-foreground);
   --mydancr-verified-surface: var(--dancr-color-verification);
   --mydancr-verified-outline: var(--dancr-color-verification-outline);
-  --mydancr-scrollbar-thumb: rgba(255, 255, 255, .18);
-  --mydancr-scrollbar-thumb-active: rgba(255, 255, 255, .32);
+  --mydancr-scrollbar-thumb: #686868;
+  --mydancr-scrollbar-thumb-active: #808080;
   /* Shared overlay offsets retain safe-area clearance without a banner. */
   --mydancr-preview-banner-height: 0px;
   --dancer-discovery-content-gutter: 6px;

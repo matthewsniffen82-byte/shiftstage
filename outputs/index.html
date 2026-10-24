@@ -35187,6 +35187,7 @@
             right: 2px;
             bottom: max(2px, env(safe-area-inset-bottom, 0px));
             width: 2px;
+            background: transparent;
             pointer-events: none;
           }
           .home-tv-page-scroll-rail[hidden] {
@@ -35201,14 +35202,14 @@
             width: 2px;
             min-height: 48px;
             border-radius: 999px;
-            background: rgba(226, 232, 240, .2);
+            background: var(--mydancr-scrollbar-thumb, #686868);
             box-shadow: none;
-            transition: background-color .18s ease, box-shadow .18s ease;
+            transition: background-color .18s ease;
             will-change: height, transform;
           }
           .home-tv-page-scroll-rail.is-scrolling .home-tv-page-scroll-thumb {
-            background: rgba(226, 232, 240, .46);
-            box-shadow: 0 0 4px rgba(255, 255, 255, .08);
+            background: var(--mydancr-scrollbar-thumb-active, #808080);
+            box-shadow: none;
           }
           @media (prefers-reduced-motion: reduce) {
             .home-tv-page-scroll-thumb {
