@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import vm from "node:vm";
+import postcss from "postcss";
 
 const [liveShell, aesthetic] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
@@ -61,7 +63,8 @@ test("a remote visitor gets an honest near-me state instead of a distant support
     /userLocationOutsideMarkets = false;[\s\S]*?citySelect\.value = nearestMarket\.city;[\s\S]*?syncCityPickerSelection\(nearestMarket\.city\);[\s\S]*?\$\{nearestMarket\.city\} selected from your location\./,
   );
   assert.match(liveShell, /function discoveryLocationPhrase\(city = selectedCity\(\)\)[\s\S]*?userLocationOutsideMarkets \? "near you" : `in \$\{city\}`/);
-  assert.match(liveShell, /citySelectButtonText\.textContent = userLocationOutsideMarkets \? "Near me" : citySelect\.value/);
+  assert.match(liveShell, /const label = userLocationOutsideMarkets \? "Near me" : citySelect\.value/);
+  assert.match(liveShell, /citySelectButtonText\.textContent !== label\) citySelectButtonText\.textContent = label/);
   assert.match(liveShell, /if \(userLocationOutsideMarkets && \["tonight", "dancers", "venues"\]\.includes\(tab\)\) return \[\];/);
   assert.match(liveShell, /No MyDancr clubs near you[\s\S]*?Choose another city to browse clubs\.[\s\S]*?Choose another city/);
   assert.match(liveShell, /citySelect\.addEventListener\("change"[\s\S]*?userLocationOutsideMarkets = false;[\s\S]*?userLocation = null;/);
@@ -74,4 +77,101 @@ test("mobile location feedback stays concise and clears the floating navigation"
     liveShell,
     /@media \(max-width: 720px\) \{[\s\S]*?body \.toast \{[\s\S]*?z-index: 110;[\s\S]*?bottom: calc\(92px \+ env\(safe-area-inset-bottom, 0px\)\) !important;[\s\S]*?max-width: calc\(100% - 32px\);[\s\S]*?text-align: center;/,
   );
+});
+
+function pickerFixture() {
+  const writes = { city: 0, label: 0, options: 0 };
+  let value = "Las Vegas", text = "", markup = "";
+  const citySelect = {
+    options: ["All cities", "Las Vegas", "Miami"].map(value => ({ value })),
+    get value() { return value; },
+    set value(next) { writes.city += 1; value = next; },
+  };
+  const citySelectButtonText = {
+    get textContent() { return text; },
+    set textContent(next) { writes.label += 1; text = next; },
+  };
+  const citySelectOptions = {
+    get innerHTML() { return markup; },
+    set innerHTML(next) { writes.options += 1; markup = next; },
+  };
+  const context = vm.createContext({
+    citySelect, citySelectButtonText, citySelectOptions, ALL_CITIES: "All cities",
+    activeTab: "dancers", dancerDirectoryFilter: "now", userLocationOutsideMarkets: false,
+    lastSpecificDiscoveryCity: "Las Vegas", markets: { "Las Vegas": {}, Miami: {} },
+    window: { sessionStorage: { setItem() {} } }, escapeHtml: value => value,
+    cityDiscoveryStatsByName: new Map([["Las Vegas", { dancers: 9, venues: 1 }]]),
+  });
+  const markupStart = liveShell.indexOf("    function cityPickerOptionMarkup(");
+  const syncStart = liveShell.indexOf("    function syncDiscoveryCityScope(", markupStart);
+  const syncEnd = liveShell.indexOf("    function openCityPicker(", syncStart);
+  assert.ok(markupStart > 0 && syncStart > markupStart && syncEnd > syncStart);
+  vm.runInContext(liveShell.slice(markupStart, syncEnd), context);
+  return { context, writes, citySelect, citySelectButtonText, citySelectOptions };
+}
+
+test("Working Now / Not Working Now switches leave an unchanged city selector and its options intact", () => {
+  const f = pickerFixture();
+  f.context.syncCityPickerSelection("Las Vegas");
+  assert.deepEqual(f.writes, { city: 0, label: 1, options: 1 });
+  const initialOptions = f.citySelectOptions.innerHTML;
+  for (const filter of ["not_now", "now", "not_now", "now"]) {
+    f.context.dancerDirectoryFilter = filter;
+    f.context.syncDiscoveryCityScope();
+    f.context.syncCityPickerSelection(f.citySelect.value);
+  }
+  assert.deepEqual(f.writes, { city: 0, label: 1, options: 1 }, "No native-select writes, label replacement or option remounts on status-only redraws");
+  assert.equal(f.citySelect.value, "Las Vegas");
+  assert.equal(f.citySelectButtonText.textContent, "Las Vegas");
+  assert.equal(f.citySelectOptions.innerHTML, initialOptions);
+});
+
+test("actual city, count and Near me changes still update the picker", () => {
+  const f = pickerFixture();
+  f.context.syncCityPickerSelection("Las Vegas");
+  f.context.cityDiscoveryStatsByName.set("Las Vegas", { dancers: 12, venues: 2 });
+  f.context.renderCityPickerOptions();
+  assert.match(f.citySelectOptions.innerHTML, /12 dancers/);
+  assert.equal(f.writes.options, 2);
+  f.context.syncCityPickerSelection("Miami");
+  assert.equal(f.citySelect.value, "Miami");
+  assert.equal(f.citySelectButtonText.textContent, "Miami");
+  assert.match(f.citySelectOptions.innerHTML, /data-city-picker-value="Miami" aria-selected="true"/);
+  f.context.userLocationOutsideMarkets = true;
+  f.context.syncCityPickerSelection("Miami");
+  assert.equal(f.citySelectButtonText.textContent, "Near me");
+  assert.doesNotMatch(f.citySelectOptions.innerHTML, /aria-selected="true"/);
+  f.context.userLocationOutsideMarkets = false;
+  f.context.syncCityPickerSelection("All cities");
+  assert.equal(f.citySelect.value, "All cities");
+  assert.equal(f.citySelectButtonText.textContent, "All cities");
+  assert.match(f.citySelectOptions.innerHTML, /data-city-picker-value="All cities" aria-selected="true"/);
+});
+
+test("city and filter triggers have one stable face in all status tabs, with open and keyboard-focus feedback", async () => {
+  const consistency = postcss.parse(await readFile(new URL("../public/dancr-ui-consistency.v1.css", import.meta.url), "utf8"));
+  const layer = consistency.nodes.find(node => node.type === "atrule" && node.params === "dancr-palette.discovery-triggers");
+  assert.ok(layer, "Nested palette layer overrides the legacy important mobile paint");
+  const rules = layer.nodes.filter(node => node.type === "rule");
+  const declarations = rule => Object.fromEntries(rule.nodes.map(node => [node.prop, node.value]));
+  const face = declarations(rules[0]);
+  assert.equal(face.background, "var(--dancr-control-secondary-background)");
+  for (const property of ["box-shadow", "filter", "backdrop-filter", "-webkit-backdrop-filter", "transform"]) assert.equal(face[property], "none");
+  const overlays = declarations(rules[1]);
+  assert.ok(rules[1].selector.includes("::before") && rules[1].selector.includes("::after"));
+  assert.equal(overlays.content, "none");
+  assert.equal(overlays.display, "none");
+  assert.ok(rules[2].selector.includes('[aria-expanded="true"]'));
+  assert.ok(rules[2].selector.includes(".has-active-filters"));
+  assert.equal(declarations(rules[2])["box-shadow"], "inset 0 0 0 1px var(--dancr-color-brand-primary)");
+  assert.ok(rules[3].selector.endsWith(":focus-visible"));
+  assert.equal(declarations(rules[3]).outline, "2px solid var(--dancr-color-brand-primary)");
+  for (const rule of rules) {
+    assert.ok(rule.selector.includes(".home-discovery-controls"));
+    assert.doesNotMatch(rule.selector, /dancer-directory-active|data-dancer-directory-filter|home-dancer-grid/, "Paint cannot depend on the selected status or affect grid cards");
+    for (const declaration of rule.nodes) {
+      assert.ok(declaration.important);
+      assert.ok(!["height", "width", "padding", "margin", "gap"].includes(declaration.prop), "Keep existing control geometry");
+    }
+  }
 });

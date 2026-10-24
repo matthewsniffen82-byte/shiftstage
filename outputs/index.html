@@ -68690,21 +68690,23 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     function renderCityPickerOptions() {
       if (!citySelectOptions || !citySelect) return;
-      citySelectOptions.innerHTML = [...citySelect.options]
+      const markup = [...citySelect.options]
         .filter((option) => !option.hidden && !option.disabled)
         .map((option) => cityPickerOptionMarkup(option.value))
         .join("");
+      if (citySelectOptions.innerHTML !== markup) citySelectOptions.innerHTML = markup;
     }
 
     function syncCityPickerSelection(city = citySelect?.value || "Las Vegas") {
       if (!citySelect) return;
       const availableCities = [...citySelect.options].map((option) => option.value);
-      if (availableCities.includes(city)) citySelect.value = city;
+      if (availableCities.includes(city) && citySelect.value !== city) citySelect.value = city;
       if (city !== ALL_CITIES && markets[city]) {
         lastSpecificDiscoveryCity = city;
         try { window.sessionStorage.setItem("mydancrLastDiscoveryCity", city); } catch {}
       }
-      if (citySelectButtonText) citySelectButtonText.textContent = userLocationOutsideMarkets ? "Near me" : citySelect.value;
+      const label = userLocationOutsideMarkets ? "Near me" : citySelect.value;
+      if (citySelectButtonText && citySelectButtonText.textContent !== label) citySelectButtonText.textContent = label;
       renderCityPickerOptions();
     }
 

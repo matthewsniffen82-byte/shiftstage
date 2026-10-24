@@ -1349,6 +1349,31 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #city
   --discovery-control-face: #22152f;
   --discovery-control-edge: #5a4075;
 }
+/* Paint these triggers once. Inset faces over a blurred button backing can
+ * leave a doubled edge when Samsung Browser repaints after a status switch. */
+@layer dancr-palette.discovery-triggers {
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#citySelectButton, #homeFilterToggle) {
+    background: var(--dancr-control-secondary-background) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    transform: none !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#citySelectButton, #homeFilterToggle)::before,
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#citySelectButton, #homeFilterToggle)::after {
+    content: none !important;
+    display: none !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#citySelectButton[aria-expanded="true"], #homeFilterToggle:is(.has-active-filters, .is-open)) {
+    box-shadow: inset 0 0 0 1px var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#citySelectButton, #homeFilterToggle):focus-visible {
+    outline: 2px solid var(--dancr-color-brand-primary) !important;
+    outline-offset: 2px !important;
+  }
+}
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters {
   grid-column: 1 / -1;
   display: none !important;
