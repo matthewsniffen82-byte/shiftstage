@@ -296,7 +296,7 @@
     function venueDancerGridMarkup(profiles, city, label) {
       return `
         <div class="venue-dancer-grid home-dancer-grid home-dancer-three-column" aria-label="${escapeHtml(label)}">
-          ${profiles.map((profile) => homeDancerGridCard(profile, city, true)).join("")}
+          ${profiles.map((profile) => homeDancerGridCard(profile, city, true, 0, false)).join("")}
         </div>
       `;
     }

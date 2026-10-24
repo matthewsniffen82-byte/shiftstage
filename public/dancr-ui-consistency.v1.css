@@ -2122,10 +2122,11 @@ html body.dancr-button-system > .app main.stack > section.stack
   line-height: 1.2;
 }
 html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directory .home-dancer-grid-distance {
-  color: #e2e4ec !important;
+  display: block;
+  color: var(--dancr-color-text-secondary) !important;
   -webkit-text-fill-color: currentColor !important;
   color-scheme: only dark;
-  font-size: clamp(7px, 1.8vw, 8px);
+  font-size: clamp(9px, 2.15vw, 10px);
   font-weight: 400;
   line-height: 1.2;
 }

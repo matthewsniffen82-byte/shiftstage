@@ -828,8 +828,15 @@
       return Number.isFinite(distance) ? `${distance.toFixed(1)} mi` : "";
     }
 
-    function profileCardDistanceLabel(profile) {
+    function profileCardDistanceLabel(profile, visitorOnly = false) {
       const city = profile?.city || selectedCity();
+      if (visitorOnly) {
+        const venue = discoveryMarket(city)?.venues.find((item) => profile?.venueId
+          ? item.id === profile.venueId
+          : profile?.venueSlug ? item.slug === profile.venueSlug : item.name === profile?.venue);
+        // Never present a city-center or demo estimate as distance from the visitor.
+        return formatDistanceMiles(distanceMilesBetween(userLocation, venue));
+      }
       const profileVenue = profile?.venue ? discoveryMarket(city)?.venues.find((venue) => venue.name === profile.venue) : null;
       const venueMiles = profileVenue ? venueDistanceMiles(profileVenue, city) : null;
       if (Number.isFinite(venueMiles)) return formatDistanceMiles(venueMiles);

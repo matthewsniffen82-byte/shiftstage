@@ -94,11 +94,11 @@ test("venue details reuse the production Dancers grid for dancers working now", 
     /function venueDetailPage\(venue\) \{[\s\S]*?(?=\n    function findProfile)/,
   )?.[0] || "";
   const sharedCard = liveApp.match(
-    /function homeDancerGridCard\(profile, city, compactDirectory = false, imageIndex = 0\) \{[\s\S]*?(?=\n    function homeDancerGridSectionMarkup)/,
+    /function homeDancerGridCard\([^)]*\) \{[\s\S]*?(?=\n    function homeDancerGridSectionMarkup)/,
   )?.[0] || "";
 
   assert.match(venueGrid, /class="venue-dancer-grid home-dancer-grid home-dancer-three-column"/);
-  assert.match(venueGrid, /profiles\.map\(\(profile\) => homeDancerGridCard\(profile, city, true\)\)/);
+  assert.match(venueGrid, /profiles\.map\(\(profile\) => homeDancerGridCard\(profile, city, true, 0, false\)\)/);
   assert.match(venueDetail, /const tonight = localProfiles[\s\S]*?isWorkingTonight\(profile\)/);
   assert.equal((venueDetail.match(/venueDancerGridMarkup\(/g) || []).length, 1);
   assert.doesNotMatch(venueDetail, /profileCard\(|venueUpcomingShiftRow\(|venue-shift-row|venue-shift-list/);

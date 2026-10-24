@@ -309,7 +309,7 @@
       return `<button class="feed-card-action home-dancer-grid-quick-follow${following ? " is-active" : ""}" type="button" data-feed-action="follow" data-icon-only-action="true" data-profile="${escapeOptionValue(profile.id)}" aria-label="${label}" title="${label}" aria-pressed="${following}">${actionIconMarkup(following ? "check" : "personPlus")}</button>`;
     }
 
-    function homeDancerGridCard(profile, city, compactDirectory = false, imageIndex = 0) {
+    function homeDancerGridCard(profile, city, compactDirectory = false, imageIndex = 0, showClubDistance = true) {
       const cityMarkup = city === ALL_CITIES && profile.city
         ? `<span class="home-dancer-grid-city">${escapeHtml(profile.city)}</span>`
         : "";
@@ -339,14 +339,14 @@
         venueName &&
         venueName.toLowerCase() !== "venue pending"
       );
-      const distanceLabel = profileCardDistanceLabel(profile);
+      const distanceLabel = compactDirectory && !showClubDistance ? "" : profileCardDistanceLabel(profile, compactDirectory);
       const status = homeDiscoveryFeedStatus(profile);
       const scheduleLabel = homeDancerGridScheduleLabel(profile, city);
       const venueMarkup = hasPublishedVenue
         ? `<span class="home-dancer-grid-venue">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel && !compactDirectory ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
         : "";
       const distanceMarkup = compactDirectory && hasPublishedVenue && distanceLabel
-        ? `<span class="home-dancer-grid-distance">${escapeHtml(distanceLabel)}</span>`
+        ? `<span class="home-dancer-grid-distance">${escapeHtml(distanceLabel)} away</span>`
         : "";
       const groupClass = status.className === "is-now"
         ? "is-now"

@@ -47044,8 +47044,15 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       return Number.isFinite(distance) ? `${distance.toFixed(1)} mi` : "";
     }
 
-    function profileCardDistanceLabel(profile) {
+    function profileCardDistanceLabel(profile, visitorOnly = false) {
       const city = profile?.city || selectedCity();
+      if (visitorOnly) {
+        const venue = discoveryMarket(city)?.venues.find((item) => profile?.venueId
+          ? item.id === profile.venueId
+          : profile?.venueSlug ? item.slug === profile.venueSlug : item.name === profile?.venue);
+        // Never present a city-center or demo estimate as distance from the visitor.
+        return formatDistanceMiles(distanceMilesBetween(userLocation, venue));
+      }
       const profileVenue = profile?.venue ? discoveryMarket(city)?.venues.find((venue) => venue.name === profile.venue) : null;
       const venueMiles = profileVenue ? venueDistanceMiles(profileVenue, city) : null;
       if (Number.isFinite(venueMiles)) return formatDistanceMiles(venueMiles);
@@ -54409,7 +54416,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function venueDancerGridMarkup(profiles, city, label) {
       return `
         <div class="venue-dancer-grid home-dancer-grid home-dancer-three-column" aria-label="${escapeHtml(label)}">
-          ${profiles.map((profile) => homeDancerGridCard(profile, city, true)).join("")}
+          ${profiles.map((profile) => homeDancerGridCard(profile, city, true, 0, false)).join("")}
         </div>
       `;
     }
@@ -62121,7 +62128,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       return `<button class="feed-card-action home-dancer-grid-quick-follow${following ? " is-active" : ""}" type="button" data-feed-action="follow" data-icon-only-action="true" data-profile="${escapeOptionValue(profile.id)}" aria-label="${label}" title="${label}" aria-pressed="${following}">${actionIconMarkup(following ? "check" : "personPlus")}</button>`;
     }
 
-    function homeDancerGridCard(profile, city, compactDirectory = false, imageIndex = 0) {
+    function homeDancerGridCard(profile, city, compactDirectory = false, imageIndex = 0, showClubDistance = true) {
       const cityMarkup = city === ALL_CITIES && profile.city
         ? `<span class="home-dancer-grid-city">${escapeHtml(profile.city)}</span>`
         : "";
@@ -62151,14 +62158,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         venueName &&
         venueName.toLowerCase() !== "venue pending"
       );
-      const distanceLabel = profileCardDistanceLabel(profile);
+      const distanceLabel = compactDirectory && !showClubDistance ? "" : profileCardDistanceLabel(profile, compactDirectory);
       const status = homeDiscoveryFeedStatus(profile);
       const scheduleLabel = homeDancerGridScheduleLabel(profile, city);
       const venueMarkup = hasPublishedVenue
         ? `<span class="home-dancer-grid-venue">${venueIconMarkup()}<span>${escapeHtml(venueName)}${distanceLabel && !compactDirectory ? ` &middot; ${escapeHtml(distanceLabel)}` : ""}</span></span>`
         : "";
       const distanceMarkup = compactDirectory && hasPublishedVenue && distanceLabel
-        ? `<span class="home-dancer-grid-distance">${escapeHtml(distanceLabel)}</span>`
+        ? `<span class="home-dancer-grid-distance">${escapeHtml(distanceLabel)} away</span>`
         : "";
       const groupClass = status.className === "is-now"
         ? "is-now"

@@ -21,15 +21,16 @@ const card = {
   groupClass: "is-now", scheduleLabel: "Working now", photoMarkup: '<img src="original.jpg" alt="Star">',
   cityMarkup: '<span class="home-dancer-grid-city">Las Vegas</span>',
   venueMarkup: '<span class="home-dancer-grid-venue">Spearmint Rhino</span>',
-  distanceMarkup: '<span class="home-dancer-grid-distance">3 mi</span>',
+  distanceMarkup: '<span class="home-dancer-grid-distance">3.2 mi away</span>',
 };
 
-test("compact public cards keep their portrait and show name, working dot, then club", () => {
+test("compact public cards show name, working dot, club, then available distance", () => {
   const markup = render(card);
   assert.ok(markup.includes(card.photoMarkup));
   assert.match(markup, /<h3 class="home-dancer-grid-name"><span class="home-dancer-grid-name-text">Star<\/span><span class="home-dancer-grid-availability" role="img" aria-label="Working now" title="Working now"><\/span><\/h3>/);
   assert.ok(markup.includes(card.venueMarkup));
-  assert.doesNotMatch(markup, /home-dancer-grid-(?:status|city|distance)/);
+  assert.ok(markup.includes(card.venueMarkup + card.distanceMarkup));
+  assert.doesNotMatch(markup, /home-dancer-grid-(?:status|city)/);
 });
 
 test("offline cards omit the green dot and missing clubs fall back to the city", () => {
@@ -37,6 +38,7 @@ test("offline cards omit the green dot and missing clubs fall back to the city",
   assert.doesNotMatch(markup, /home-dancer-grid-availability/);
   assert.match(markup, /aria-label="Star, Not working now"/);
   assert.ok(markup.includes(card.cityMarkup));
+  assert.doesNotMatch(markup, /home-dancer-grid-distance/);
 });
 
 test("name and status remain escaped, and follow sits outside the profile link", () => {
