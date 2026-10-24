@@ -1044,15 +1044,15 @@ html body.dancr-button-system #results.venue-card-grid > .venue-card .venue-card
 
 }
 
-/* Keep the large venue logo on the left and its compact details on the right. */
+/* Give every venue the same compact logo slot beside its details. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-brand-row {
-  --venue-detail-logo-size: clamp(112px, 34vw, 184px);
+  --venue-detail-logo-size: clamp(100px, 30.6vw, 166px);
   display: grid !important;
   grid-template-columns: var(--venue-detail-logo-size) minmax(0, 1fr) !important;
   align-items: stretch !important;
   gap: 12px !important;
   min-height: var(--venue-detail-logo-size) !important;
-  /* Reduce empty top space while preserving the logo's existing size. */
+  /* Preserve the card inset and spacing around the Back control. */
   padding: 12px 12px 4px !important;
   border: 0 !important;
   background: transparent !important;
@@ -1131,15 +1131,16 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
 }
 
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-identity-meta {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  justify-items: start;
-  gap: 3px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 3px 6px;
 }
 
-/* Each detail starts under the name, even when the distance label is long. */
+/* Match the listing's city and distance row; long labels can still wrap. */
 html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary .venue-identity-distance::before {
-  content: none;
+  content: "·";
+  margin-right: 6px;
 }
 
 /* Share the dancer profile's Back control without adding a row above the card. */
