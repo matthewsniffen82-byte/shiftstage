@@ -454,7 +454,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 /* Raise the profile content while preserving the full 44px navigation targets. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-summary, .profile-titlebar) {
   padding-top: 2px !important;
-  padding-bottom: 8px !important;
+  padding-bottom: 2px !important;
 }
 /* Bring the details closer to the controls without moving their tap targets. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-modal-header-controls + .profile-modal-person, .profile-titlebar-controls + .profile-titlebar-person) {
@@ -477,7 +477,7 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   font-variant-numeric: tabular-nums;
 }
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) :is(.profile-activity-metrics, .profile-header-metrics) dt {
-  font-size: clamp(9.5px, 1.05vw, 12px) !important;
+  font-size: clamp(9px, 1vw, 11px) !important;
   font-weight: 600 !important;
   line-height: 1.2 !important;
   color: var(--profile-secondary-text) !important;
