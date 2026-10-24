@@ -2763,9 +2763,10 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
 @layer dancr-follow-controls.grid-follow {
   html body.dancr-button-system #results .home-dancer-grid-card.is-compact-directory > .home-dancer-grid-quick-follow {
     position: absolute !important;
-    top: 2px !important;
-    right: 2px !important;
+    top: 0 !important;
+    right: 0 !important;
     z-index: 3 !important;
+    box-sizing: border-box !important;
     width: 44px !important;
     height: 44px !important;
     min-width: 44px !important;
@@ -2773,7 +2774,7 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     max-width: 44px !important;
     max-height: 44px !important;
     margin: 0 !important;
-    padding: 0 !important;
+    padding: 0 0 8px 8px !important;
     border: 0 !important;
     border-radius: 50% !important;
     background: transparent !important;
@@ -2786,10 +2787,10 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
     content: "" !important;
     display: block !important;
     position: absolute !important;
-    inset: 8px !important;
+    inset: 4px 4px 12px 12px !important;
     border: 0 !important;
     border-radius: 50% !important;
-    background: rgba(24, 24, 24, .78) !important;
+    background: rgba(24, 24, 24, .5) !important;
     pointer-events: none;
   }
   html body.dancr-button-system #results .home-dancer-grid-quick-follow :is(.action-icon, svg) {
@@ -2810,7 +2811,7 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
   }
   @media (hover: hover) {
     html body.dancr-button-system #results .home-dancer-grid-quick-follow:enabled:hover::before {
-      background: rgba(24, 24, 24, .9) !important;
+      background: rgba(24, 24, 24, .68) !important;
     }
   }
 }

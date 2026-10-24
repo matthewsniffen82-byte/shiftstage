@@ -103,7 +103,7 @@ test("quick-follow CSS is overlay-only with a 44px touch target and 28px visible
   assert.equal(button.height, "44px");
   assert.equal(button.background, "transparent");
   assert.equal(button.border, "0");
-  assert.equal(values(rules.find(rule => rule.selector.endsWith("::before"))).inset, "8px");
+  assert.equal(values(rules.find(rule => rule.selector.endsWith("::before"))).inset, "4px 4px 12px 12px");
   assert.ok(rules.some(rule => rule.selector.endsWith(":focus-visible")));
   layer.walkRules(rule => assert.ok(rule.selector.includes("#results .home-dancer-grid"), "Never style dashboard/internal cards"));
 });
