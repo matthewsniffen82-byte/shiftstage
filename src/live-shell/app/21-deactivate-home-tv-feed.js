@@ -449,9 +449,17 @@
             });
           }
           venue.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>';
+          const venueCopy = document.createElement("span");
+          venueCopy.className = "home-tv-feed-venue-copy";
           const venueLabel = document.createElement("span");
+          venueLabel.className = "home-tv-feed-venue-name";
           venueLabel.textContent = venueName;
-          venue.appendChild(venueLabel);
+          const venueDistance = document.createElement("span");
+          venueDistance.className = "home-tv-feed-venue-distance";
+          venueDistance.hidden = true;
+          venueCopy.append(venueLabel, venueDistance);
+          venue.appendChild(venueCopy);
+          syncHomeTvFeedVenueDistance(venue, item);
           const clubRow = document.createElement("div");
           clubRow.className = "home-tv-feed-club-row";
           clubRow.appendChild(venue);
@@ -462,6 +470,29 @@
         copy.appendChild(context);
       }
       return copy;
+    }
+
+    function syncHomeTvFeedVenueDistance(venue, item) {
+      const distance = venue?.querySelector(".home-tv-feed-venue-distance");
+      if (!distance) return;
+      const label = item?.shift?.isActive ? profileCardDistanceLabel({
+        city: item.venue?.city || item.dancer?.city || selectedCity(),
+        venueId: item.venue?.id,
+        venueSlug: item.venue?.slug,
+        venue: item.venue?.name
+      }) : "";
+      distance.textContent = label ? `${label} away` : "";
+      distance.hidden = !label;
+      if (venue.hasAttribute("href")) {
+        venue.setAttribute("aria-label", `Open ${String(item?.venue?.name || "").trim()} club profile${label ? `, ${label} away` : ""}`);
+      }
+    }
+
+    function syncHomeTvFeedDistances() {
+      const videos = new Map(homeTvFeedVideos.map(item => [String(item.id), item]));
+      results.querySelectorAll(".home-tv-feed-slide[data-video-id]").forEach(slide => {
+        syncHomeTvFeedVenueDistance(slide.querySelector(".home-tv-feed-venue"), videos.get(slide.dataset.videoId));
+      });
     }
 
     function createHomeTvFeedActionButton(className, label, iconMarkup) {
@@ -1097,6 +1128,7 @@
       );
       const feedKey = `${city}:${venueId}:${homeTvFeedVideos.map((item) => item.id).join(",")}`;
       if (results.dataset.homeTvFeedKey === feedKey) {
+        syncHomeTvFeedDistances();
         settleHomeTvFeedLanding({ complete: true });
         return;
       }
