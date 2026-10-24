@@ -570,10 +570,11 @@
           ? " is-medium-name"
           : " is-long-name";
       const statusClass = options.live ? " is-live" : options.upcoming ? " is-upcoming" : "";
+      const distanceLabel = options.live && !options.preview ? profileCardDistanceLabel(profile) : "";
       return `
         <button class="profile-venue-destination${statusClass}${venueNameSizeClass}" type="button" data-open-venue="${venueReference}" aria-label="Open ${safeVenueName} club details">
           ${venueIconMarkup()}
-          <span class="profile-venue-copy"><span class="profile-venue-name">${safeVenueName}</span></span>
+          <span class="profile-venue-copy"><span class="profile-venue-name">${safeVenueName}</span>${distanceLabel ? `<span class="profile-venue-distance">${escapeHtml(distanceLabel)} away</span>` : ""}</span>
           <span class="profile-venue-cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
       `;
@@ -588,7 +589,7 @@
             <strong>Current shift</strong>
             <div class="profile-schedule-primary modal-schedule-text tonight">Working now</div>
             <div class="schedule-stack">
-              ${profileVenueDestinationMarkup(profile, { live: true })}
+              ${profileVenueDestinationMarkup(profile, { live: true, preview: isEditorPreview })}
             </div>
             <p class="profile-schedule-explanation">This dancer is venue-confirmed as working here now.</p>
           </div>

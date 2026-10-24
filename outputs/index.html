@@ -47044,24 +47044,12 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       return Number.isFinite(distance) ? `${distance.toFixed(1)} mi` : "";
     }
 
-    function profileCardDistanceLabel(profile, visitorOnly = false) {
+    function profileCardDistanceLabel(profile) {
       const city = profile?.city || selectedCity();
-      if (visitorOnly) {
-        const venue = discoveryMarket(city)?.venues.find((item) => profile?.venueId
-          ? item.id === profile.venueId
-          : profile?.venueSlug ? item.slug === profile.venueSlug : item.name === profile?.venue);
-        // Never present a city-center or demo estimate as distance from the visitor.
-        return formatDistanceMiles(distanceMilesBetween(userLocation, venue));
-      }
-      const profileVenue = profile?.venue ? discoveryMarket(city)?.venues.find((venue) => venue.name === profile.venue) : null;
-      const venueMiles = profileVenue ? venueDistanceMiles(profileVenue, city) : null;
-      if (Number.isFinite(venueMiles)) return formatDistanceMiles(venueMiles);
-      const rawDistance = String(profile?.distance || "").trim();
-      if (/^\d+(?:\.\d+)?\s*mi$/i.test(rawDistance)) {
-        return rawDistance.replace(/\s*mi$/i, " mi");
-      }
-      const liveDistance = Number(profile?.distanceMiles);
-      return Number.isFinite(liveDistance) ? `${liveDistance.toFixed(1)} mi` : "";
+      const venue = discoveryMarket(city)?.venues.find((item) => profile?.venueId
+        ? item.id === profile.venueId
+        : profile?.venueSlug ? item.slug === profile.venueSlug : item.name === profile?.venue);
+      return visitorVenueDistanceLabel(venue);
     }
 
     function mapLiveDancer(item, isTonight, index, venueShiftCounts) {
@@ -50285,17 +50273,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       return `${Math.round(miles)} mi`;
     }
 
-    function venueDistanceLabel(venue, city = selectedCity(), demoFallback = false) {
-      const measured = formatDistanceMiles(venueDistanceMiles(venue, city));
-      if (measured) return measured;
-      if (!demoFallback) return String(venue?.distance || "").trim() || "Distance unavailable";
-      // Display-only sample: never used for nearby filtering, sorting, or directions.
-      const key = String(venue?.id || venue?.slug || venue?.name || city);
-      let seed = 0;
-      for (const character of key) seed = (seed * 31 + character.codePointAt(0)) >>> 0;
-      const rhino = ["talk-of-the-town", "spearmint-rhino-las-vegas-demo"].includes(venue?.slug)
-        || ["260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af", "11fd5e46-d24f-4a02-87f6-2aa18b0876ae"].includes(venue?.id);
-      return `${formatDistanceMiles(1 + (seed % 80) / 10)}${rhino ? "" : " (demo)"}`;
+    function visitorVenueDistanceLabel(venue) {
+      // Displayed distances always share the visitor's location and club coordinates.
+      // City-center fallbacks remain available only to the explicitly labeled radius filter.
+      return formatDistanceMiles(distanceMilesBetween(userLocation, venue));
+    }
+
+    function venueDistanceLabel(venue) {
+      return visitorVenueDistanceLabel(venue) || "Distance unavailable";
     }
 
     function compareVenueDistance(left, right, city = selectedCity()) {
@@ -54124,14 +54109,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       openUnifiedDashboard("dancer", "dancer-schedule");
     }
 
-    function venueDetails(venue, city, options = {}) {
+    function venueDetails(venue, city) {
       const venueCity = venue.city || city;
       const state = venue.state || stateByCity[venueCity] || "";
       return {
         ...venue,
         city: venueCity,
         state,
-        distanceLabel: venueDistanceLabel(venue, city, options.demoDistance === true),
+        distanceLabel: venueDistanceLabel(venue),
         address: venue.address || "",
         hours: venue.hours || ""
       };
@@ -55672,10 +55657,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           ? " is-medium-name"
           : " is-long-name";
       const statusClass = options.live ? " is-live" : options.upcoming ? " is-upcoming" : "";
+      const distanceLabel = options.live && !options.preview ? profileCardDistanceLabel(profile) : "";
       return `
         <button class="profile-venue-destination${statusClass}${venueNameSizeClass}" type="button" data-open-venue="${venueReference}" aria-label="Open ${safeVenueName} club details">
           ${venueIconMarkup()}
-          <span class="profile-venue-copy"><span class="profile-venue-name">${safeVenueName}</span></span>
+          <span class="profile-venue-copy"><span class="profile-venue-name">${safeVenueName}</span>${distanceLabel ? `<span class="profile-venue-distance">${escapeHtml(distanceLabel)} away</span>` : ""}</span>
           <span class="profile-venue-cue" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"></path></svg></span>
         </button>
       `;
@@ -55690,7 +55676,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <strong>Current shift</strong>
             <div class="profile-schedule-primary modal-schedule-text tonight">Working now</div>
             <div class="schedule-stack">
-              ${profileVenueDestinationMarkup(profile, { live: true })}
+              ${profileVenueDestinationMarkup(profile, { live: true, preview: isEditorPreview })}
             </div>
             <p class="profile-schedule-explanation">This dancer is venue-confirmed as working here now.</p>
           </div>
@@ -62027,7 +62013,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
       city = venue.city || city;
-      const details = venueDetails(venue, city, { demoDistance: true });
+      const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
@@ -62158,7 +62144,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         venueName &&
         venueName.toLowerCase() !== "venue pending"
       );
-      const distanceLabel = compactDirectory && !showClubDistance ? "" : profileCardDistanceLabel(profile, compactDirectory);
+      const distanceLabel = compactDirectory && !showClubDistance ? "" : profileCardDistanceLabel(profile);
       const status = homeDiscoveryFeedStatus(profile);
       const scheduleLabel = homeDancerGridScheduleLabel(profile, city);
       const venueMarkup = hasPublishedVenue

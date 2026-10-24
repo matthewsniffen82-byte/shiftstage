@@ -74,7 +74,7 @@ test("current schedules use one compact venue destination", () => {
   );
   assert.match(
     liveApp,
-    /profileVenueDestinationMarkup\(profile, \{ live: true \}\)/,
+    /profileVenueDestinationMarkup\(profile, \{ live: true, preview: isEditorPreview \}\)/,
   );
   assert.doesNotMatch(
     liveApp,

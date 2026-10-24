@@ -208,7 +208,7 @@
 
     function homeVenueDiscoveryFeedSlide(venue, index, total, city) {
       city = venue.city || city;
-      const details = venueDetails(venue, city, { demoDistance: true });
+      const details = venueDetails(venue, city);
       const operatingStatus = venueOperatingStatus(details.hours, city);
       const safeName = escapeHtml(venue.name);
       const venueValue = escapeOptionValue(venue.id || venue.name);
@@ -339,7 +339,7 @@
         venueName &&
         venueName.toLowerCase() !== "venue pending"
       );
-      const distanceLabel = compactDirectory && !showClubDistance ? "" : profileCardDistanceLabel(profile, compactDirectory);
+      const distanceLabel = compactDirectory && !showClubDistance ? "" : profileCardDistanceLabel(profile);
       const status = homeDiscoveryFeedStatus(profile);
       const scheduleLabel = homeDancerGridScheduleLabel(profile, city);
       const venueMarkup = hasPublishedVenue

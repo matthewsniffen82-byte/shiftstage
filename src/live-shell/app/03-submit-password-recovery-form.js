@@ -828,24 +828,12 @@
       return Number.isFinite(distance) ? `${distance.toFixed(1)} mi` : "";
     }
 
-    function profileCardDistanceLabel(profile, visitorOnly = false) {
+    function profileCardDistanceLabel(profile) {
       const city = profile?.city || selectedCity();
-      if (visitorOnly) {
-        const venue = discoveryMarket(city)?.venues.find((item) => profile?.venueId
-          ? item.id === profile.venueId
-          : profile?.venueSlug ? item.slug === profile.venueSlug : item.name === profile?.venue);
-        // Never present a city-center or demo estimate as distance from the visitor.
-        return formatDistanceMiles(distanceMilesBetween(userLocation, venue));
-      }
-      const profileVenue = profile?.venue ? discoveryMarket(city)?.venues.find((venue) => venue.name === profile.venue) : null;
-      const venueMiles = profileVenue ? venueDistanceMiles(profileVenue, city) : null;
-      if (Number.isFinite(venueMiles)) return formatDistanceMiles(venueMiles);
-      const rawDistance = String(profile?.distance || "").trim();
-      if (/^\d+(?:\.\d+)?\s*mi$/i.test(rawDistance)) {
-        return rawDistance.replace(/\s*mi$/i, " mi");
-      }
-      const liveDistance = Number(profile?.distanceMiles);
-      return Number.isFinite(liveDistance) ? `${liveDistance.toFixed(1)} mi` : "";
+      const venue = discoveryMarket(city)?.venues.find((item) => profile?.venueId
+        ? item.id === profile.venueId
+        : profile?.venueSlug ? item.slug === profile.venueSlug : item.name === profile?.venue);
+      return visitorVenueDistanceLabel(venue);
     }
 
     function mapLiveDancer(item, isTonight, index, venueShiftCounts) {

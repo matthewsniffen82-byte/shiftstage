@@ -19,7 +19,7 @@ test('address-only publication still requires address, logo, and an active offer
 const live=readFileSync(new URL('../outputs/index.html',import.meta.url),'utf8');
 function source(name){const start=live.indexOf('    function '+name+'(');assert(start>=0);const end=live.indexOf('\n    function ',start+10);assert(end>start);return live.slice(start,end);}
 function discovery(){const context=vm.createContext({distanceSelect:{value:'25 mi'},venueSelect:{value:'all'},selectedCity:()=> 'Las Vegas',ALL_CITIES:'All cities',userLocation:null,cityCoordinates:{'Las Vegas':{latitude:36.1699,longitude:-115.1398}},venueDetails:v=>v,fictionalDemoVenueTravelAddress:()=>'',actionButtonLabel:()=> 'Directions'});
- for(const name of ['liveVenueCoordinate','selectedRadiusMiles','parseMiles','hasCoordinates','distanceMilesBetween','activeDistanceOrigin','venueDistanceMiles','formatDistanceMiles','venueDistanceLabel','venueWithinSelectedRadius','selectedVenueFilter','venueMatchesCurrentFilter','escapeHtml','escapeOptionValue','venueDirectionsMarkup'])vm.runInContext(source(name),context);
+ for(const name of ['liveVenueCoordinate','selectedRadiusMiles','parseMiles','hasCoordinates','distanceMilesBetween','activeDistanceOrigin','venueDistanceMiles','formatDistanceMiles','visitorVenueDistanceLabel','venueDistanceLabel','venueWithinSelectedRadius','selectedVenueFilter','venueMatchesCurrentFilter','escapeHtml','escapeOptionValue','venueDirectionsMarkup'])vm.runInContext(source(name),context);
  return context;
 }
 test('address-only venues stay in their city scroll with unknown distance, and use address directions',()=>{
@@ -29,16 +29,13 @@ test('address-only venues stay in their city scroll with unknown distance, and u
  assert.equal(c.venueMatchesCurrentFilter({...venue,latitude:5,longitude:100}),false);
 });
 
-test('card demo distances are stable and never affect proximity or directions',()=>{
+test('address-only cards never show demo or stored estimates as visitor distances',()=>{
  const c=discovery();const venue={id:'club-b',name:'Club B',latitude:null,longitude:null};
- const label=c.venueDistanceLabel(venue,'Las Vegas',true);
- assert.match(label,/^\d+\.\d mi \(demo\)$/);
- assert.equal(c.venueDistanceLabel({...venue,name:'Renamed club'},'Las Vegas',true),label);
  assert.equal(c.venueDistanceMiles(venue),null);
- assert.equal(c.venueDistanceLabel(venue),'Distance unavailable');
- assert.equal(c.venueDistanceLabel({...venue,distanceMiles:2.4},'Las Vegas',true),'2.4 mi');
- assert.equal(c.venueDistanceLabel({...venue,distance:'4.2 mi'},'Las Vegas',true),'4.2 mi');
- for (const identity of [{slug:'talk-of-the-town'}, {slug:'spearmint-rhino-las-vegas-demo'}, {id:'260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af'}]) {
-  assert.match(c.venueDistanceLabel({...venue,...identity},'Las Vegas',true),/^\d+\.\d mi$/);
+ for (const location of [null,{latitude:36.1699,longitude:-115.1398}]) {
+  c.userLocation=location;
+  for (const patch of [{},{distanceMiles:2.4},{distance:'4.2 mi'},{slug:'talk-of-the-town'}, {slug:'spearmint-rhino-las-vegas-demo'}, {id:'260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af'}]) {
+   assert.equal(c.venueDistanceLabel({...venue,...patch}),'Distance unavailable');
+  }
  }
 });

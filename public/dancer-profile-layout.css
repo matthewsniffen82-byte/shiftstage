@@ -558,6 +558,16 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   min-width: 16px !important;
   flex: 0 0 16px !important;
 }
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-venue-distance {
+  display: block;
+  font-size: 11px !important;
+  font-weight: 400 !important;
+  line-height: 1.3 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  color: var(--dancr-color-text-secondary, #b4b4be) !important;
+  -webkit-text-fill-color: currentColor !important;
+}
 /* Restore the 6px raised above the details at the frame's bottom, preserving
    the original card and portrait height while keeping the content higher. */
 html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profile-shell).profile-split-layout:not(.dancer-profile-preview-shell) .modal-body { padding-bottom: 14px !important; }

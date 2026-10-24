@@ -14,7 +14,7 @@ const rhino = { id: '260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af', slug: 'talk-of-the-t
 
 test('profile club buttons resolve the assigned venue even when names collide', () => {
   const context = vm.createContext({
-    displayText: String, escapeOptionValue: String, venueIconMarkup: () => '',
+    displayText: String, escapeOptionValue: String, venueIconMarkup: () => '', profileCardDistanceLabel: () => '',
     citySelect: { value: 'Las Vegas' }, selectedCity: () => 'Las Vegas', URLSearchParams,
     slugify: value => value.toLowerCase().replaceAll(' ', '-'),
     discoveryMarket: () => ({ venues: [{ id: 'other-club', slug: 'other-club', name: rhino.name }, rhino] }),

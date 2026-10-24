@@ -4,14 +4,14 @@
       openUnifiedDashboard("dancer", "dancer-schedule");
     }
 
-    function venueDetails(venue, city, options = {}) {
+    function venueDetails(venue, city) {
       const venueCity = venue.city || city;
       const state = venue.state || stateByCity[venueCity] || "";
       return {
         ...venue,
         city: venueCity,
         state,
-        distanceLabel: venueDistanceLabel(venue, city, options.demoDistance === true),
+        distanceLabel: venueDistanceLabel(venue),
         address: venue.address || "",
         hours: venue.hours || ""
       };

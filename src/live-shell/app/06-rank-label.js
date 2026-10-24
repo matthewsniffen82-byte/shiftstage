@@ -803,17 +803,14 @@
       return `${Math.round(miles)} mi`;
     }
 
-    function venueDistanceLabel(venue, city = selectedCity(), demoFallback = false) {
-      const measured = formatDistanceMiles(venueDistanceMiles(venue, city));
-      if (measured) return measured;
-      if (!demoFallback) return String(venue?.distance || "").trim() || "Distance unavailable";
-      // Display-only sample: never used for nearby filtering, sorting, or directions.
-      const key = String(venue?.id || venue?.slug || venue?.name || city);
-      let seed = 0;
-      for (const character of key) seed = (seed * 31 + character.codePointAt(0)) >>> 0;
-      const rhino = ["talk-of-the-town", "spearmint-rhino-las-vegas-demo"].includes(venue?.slug)
-        || ["260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af", "11fd5e46-d24f-4a02-87f6-2aa18b0876ae"].includes(venue?.id);
-      return `${formatDistanceMiles(1 + (seed % 80) / 10)}${rhino ? "" : " (demo)"}`;
+    function visitorVenueDistanceLabel(venue) {
+      // Displayed distances always share the visitor's location and club coordinates.
+      // City-center fallbacks remain available only to the explicitly labeled radius filter.
+      return formatDistanceMiles(distanceMilesBetween(userLocation, venue));
+    }
+
+    function venueDistanceLabel(venue) {
+      return visitorVenueDistanceLabel(venue) || "Distance unavailable";
     }
 
     function compareVenueDistance(left, right, city = selectedCity()) {
