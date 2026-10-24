@@ -453,7 +453,7 @@ test("TV sound and fullscreen controls retain their sizes and remain icon-only",
   );
   assert.match(
     homeSource,
-    /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("title", label\)[\s\S]*?button\.setAttribute\("aria-pressed", String\(!homeTvFeedMuted\)\)/,
+    /function syncHomeTvFeedSoundButtons\(\)[\s\S]*?const muted = button\.closest\("\.home-tv-feed-slide"\)\?\.querySelector\("video"\)\?\.muted \?\? homeTvFeedMuted[\s\S]*?button\.setAttribute\("aria-label", label\)[\s\S]*?button\.setAttribute\("title", label\)[\s\S]*?button\.setAttribute\("aria-pressed", String\(!muted\)\)/,
   );
   assert.match(
     homeSource,

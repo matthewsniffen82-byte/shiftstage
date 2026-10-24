@@ -14518,7 +14518,7 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action:
 }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::before,
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-report-action::after { display: none !important; }
-html body.dancr-button-system #results.home-tv-feed .home-tv-feed-copy { right: 76px; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-copy { right: 76px; row-gap: 2px; }
 @media (max-width: 720px) {
   html body.dancr-button-system #results.home-tv-feed .home-tv-feed-copy { padding-bottom: 32px; }
 }
@@ -14552,7 +14552,15 @@ html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule.is-no
 }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-schedule.is-now::before { content: ""; flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px; width: 100%; }
-html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-venue { min-width: 0; font-weight: 650; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-venue { min-width: 0; align-items: center; font-weight: 650; }
+html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-venue > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  white-space: normal;
+}
 html body.dancr-button-system #results.home-tv-feed .home-tv-feed-club-row .home-tv-feed-deal-action {
   width: auto !important;
   min-width: 98px !important;
