@@ -253,7 +253,7 @@ test("mobile venue filters cannot flash the retired venue grid before the inline
 test("empty club discovery distinguishes an empty city from filtered results and provides working recovery actions", () => {
   assert.match(
     homeSource,
-    /function homeClubEmptyStateMarkup\(city\) \{[\s\S]*?publicClubs[\s\S]*?hasPublicClubs[\s\S]*?No clubs match these filters[\s\S]*?No clubs in \$\{safeCity\} yet/,
+    /function homeClubEmptyStateMarkup\(city\) \{[\s\S]*?publicClubs[\s\S]*?hasPublicClubs[\s\S]*?No clubs match these filters[\s\S]*?No clubs \$\{locationPhrase\} yet/,
   );
   assert.match(homeSource, /data-home-empty-action="choose-city">Choose another city/);
   assert.match(homeSource, /data-home-empty-action="expand-radius"[\s\S]*?>Expand radius/);
@@ -264,7 +264,7 @@ test("empty club discovery distinguishes an empty city from filtered results and
   );
   assert.match(
     homeSource,
-    /\.home-discovery-empty\.is-club-empty \{[\s\S]*?grid-template-columns: 44px minmax\(0, 1fr\)[\s\S]*?min-height: 0[\s\S]*?padding: 18px/,
+    /#results \.home-results-empty \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)[\s\S]*?padding: 24px 16px[\s\S]*?white-space: normal[\s\S]*?overflow-wrap: anywhere/,
   );
 });
 
@@ -411,7 +411,7 @@ test("Venues uses natural one-column cards with a visible next-card continuation
   );
   assert.match(
     homeSource,
-    /if \(!items\.length\)[\s\S]*?activeTab === "venues"[\s\S]*?homeClubEmptyStateMarkup\(city\)[\s\S]*?No dancers are currently checked in on MyDancr[\s\S]*?No approved dancer profiles are available/,
+    /if \(!items\.length\)[\s\S]*?activeTab === "venues"[\s\S]*?homeClubEmptyStateMarkup\(city\)[\s\S]*?No dancers working now[\s\S]*?No dancers \$\{locationPhrase\} yet/,
   );
   assert.doesNotMatch(homeSource, /No upcoming shifts are posted for tonight|Now and Next appearances/);
 });

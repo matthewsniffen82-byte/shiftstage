@@ -75,8 +75,32 @@ test("ordinary forbidden responses remain ordinary errors without initiating ver
   f.context.fetch = async () => Response.json({ ok: false }, { status: 403 });
   await f.load();
   assert.equal(f.context.homeTvFeedStatus, "error");
+  assert.equal(f.context.results.children[0].className, "locked");
+  assert.equal(f.context.results.children[0].attributes.role, "alert");
   assert.equal(f.button().textContent, "Retry MyDancr TV");
   assert.equal(f.navigations.length, 0);
+});
+
+test("an empty TV response uses a neutral status, not a clipped warning badge", async () => {
+  const f = fixture();
+  f.context.fetch = async () => Response.json({ ok: true, videos: [] });
+  await f.load();
+  assert.equal(f.context.homeTvFeedStatus, "ready");
+  assert.equal(f.context.results.children.length, 1);
+  const state = f.context.results.children[0];
+  assert.equal(state.className, "home-results-empty");
+  assert.equal(state.attributes.role, "status");
+  assert.equal(state.textContent, "No videos in Vegas yet.");
+  assert.equal(f.button(), undefined, "empty results are not a failed request");
+});
+
+test("an empty club-filtered TV feed names the club and retains its working-now scope", async () => {
+  const f = fixture();
+  f.context.homeTvFeedVenueId = "fixture-club";
+  f.context.fetch = async () => Response.json({ ok: true, videos: [] });
+  await f.load();
+  assert.equal(f.context.results.children[0].className, "home-results-empty");
+  assert.equal(f.context.results.children[0].textContent, "No videos from dancers working now at Fixture Club.");
 });
 
 test("an unavailable TV chunk offers a user-requested page reload with the current feed scope", async () => {

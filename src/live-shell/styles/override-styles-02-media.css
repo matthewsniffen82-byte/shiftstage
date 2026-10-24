@@ -1137,37 +1137,40 @@
           outline: 2px solid #7eeaff;
           outline-offset: 3px;
         }
-        .home-discovery-empty.is-club-empty {
-          grid-template-columns: 44px minmax(0, 1fr);
-          align-items: center;
-          gap: 12px 14px;
-          min-height: 0;
-          padding: 18px;
-          border-color: rgba(139,92,246,.3);
-          border-radius: 18px;
-          background:
-            radial-gradient(circle at 14% 10%,rgba(93,58,183,.16),transparent 38%),
-            linear-gradient(145deg,rgba(13,13,20,.98),rgba(6,7,11,.98));
-        }
-        .home-discovery-empty-icon {
-          width: 44px;
-          height: 44px;
+        #results .home-results-empty {
+          box-sizing: border-box;
+          grid-column: 1 / -1;
+          width: 100%;
+          min-width: 0;
+          max-width: 100%;
+          min-height: 96px;
+          height: auto;
           display: grid;
-          place-items: center;
-          border: 1px solid rgba(139,92,246,.38);
-          border-radius: 14px;
-          color: #b69cff;
-          background: rgba(35,22,68,.42);
-          box-shadow: inset 0 1px 0 rgba(255,255,255,.05),0 0 20px rgba(111,66,193,.12);
+          grid-template-columns: minmax(0, 1fr);
+          align-content: center;
+          justify-items: center;
+          gap: 16px;
+          padding: 24px 16px;
+          border: 0;
+          border-radius: 0;
+          background: transparent;
+          box-shadow: none;
+          color: #d4d4d8;
+          font-size: 16px;
+          font-weight: 500;
+          line-height: 1.5;
+          text-align: center;
+          white-space: normal;
+          overflow-wrap: anywhere;
         }
-        .home-discovery-empty-icon svg {
-          width: 23px;
-          height: 23px;
-          fill: none;
-          stroke: currentColor;
-          stroke-width: 1.8;
-          stroke-linecap: round;
-          stroke-linejoin: round;
+        #results .home-results-empty strong {
+          font: inherit;
+        }
+        #results .home-results-empty p {
+          margin: 0;
+          color: #a1a1aa;
+          font-size: 14px;
+          font-weight: 400;
         }
         .home-discovery-empty-copy {
           min-width: 0;
@@ -1180,6 +1183,7 @@
         .home-discovery-empty-actions {
           grid-column: 1 / -1;
           width: 100%;
+          max-width: 420px;
           display: flex;
           flex-wrap: wrap;
           gap: 8px;

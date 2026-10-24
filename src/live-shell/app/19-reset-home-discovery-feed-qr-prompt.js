@@ -489,8 +489,8 @@
       }).join("");
       const moreProfiles = hasMoreDiscovery(city);
       const emptyLabels = {
-        now: `No dancers are currently checked in on MyDancr ${locationPhrase}.`,
-        not_now: `No dancers are off shift ${locationPhrase}.`
+        now: `No dancers working now ${locationPhrase}.`,
+        not_now: `No off-shift dancers ${locationPhrase}.`
       };
       results.classList.add("card-grid", "home-dancer-grid");
       results.classList.add("home-dancer-three-column");
@@ -500,7 +500,7 @@
         ${dancerDirectoryFilterMarkup(profiles, city)}
         <p class="roster-participation-note">Only participating MyDancr dancers are shown. Additional dancers may be working at the club.</p>
         ${sectionMarkup}
-        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty">${escapeHtml(moreProfiles ? "Checking the remaining dancers…" : emptyLabels[dancerDirectoryFilter] || `No approved dancer profiles are available ${locationPhrase} yet.`)}</div>`}
+        ${visibleCount ? "" : `<div class="dancer-directory-filter-empty home-results-empty" role="status">${escapeHtml(moreProfiles ? "Checking the remaining dancers…" : emptyLabels[dancerDirectoryFilter] || `No dancers ${locationPhrase} yet.`)}</div>`}
       `;
       const pagedMarkup = gridMarkup + discoveryPaginationMarkup(city);
       const nextRenderKey = homeDancerGridContentKey(city, pagedMarkup);
@@ -591,7 +591,7 @@
     function renderHomeDiscoveryFeedMessage(message) {
       homeDiscoveryFeedRenderKey = "";
       results.innerHTML = `
-        <div class="locked">${escapeHtml(message)}</div>
+        <div class="home-results-empty" role="status">${escapeHtml(message)}</div>
       `;
     }
 
@@ -630,28 +630,25 @@
     function homeClubEmptyStateMarkup(city) {
       if (userLocationOutsideMarkets) {
         return `
-          <section class="home-discovery-empty is-club-empty" aria-labelledby="homeClubsEmptyTitle">
-            <span class="home-discovery-empty-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M5 20V7l7-3 7 3v13"></path><path d="M3 20h18"></path><path d="M9 10h6M9 14h6"></path></svg>
-            </span>
-            <div class="home-discovery-empty-copy">
+          <section class="home-results-empty" aria-labelledby="homeClubsEmptyTitle">
+            <div class="home-discovery-empty-copy" role="status">
               <strong id="homeClubsEmptyTitle">No MyDancr clubs near you</strong>
-              <p>MyDancr is not in your area yet. Choose a city to browse its dancers and clubs.</p>
+              <p>Choose another city to browse clubs.</p>
             </div>
             <div class="home-discovery-empty-actions"><button class="home-discovery-empty-action is-secondary" type="button" data-home-empty-action="choose-city">Choose another city</button></div>
           </section>
         `;
       }
-      const safeCity = escapeHtml(city);
+      const locationPhrase = escapeHtml(discoveryLocationPhrase(city));
       const publicClubs = (discoveryMarket(city)?.venues || []).filter((venue) => !venue?.hidden);
       const hasPublicClubs = publicClubs.length > 0;
       const selectedClub = selectedVenueFilter();
       const nextRadius = nextHomeDiscoveryRadiusOption();
       const hasExplicitFilters = selectedClub !== "all" || selectedRadiusMiles() !== 25;
-      const title = hasPublicClubs ? "No clubs match these filters" : `No clubs in ${safeCity} yet`;
+      const title = hasPublicClubs ? "No clubs match these filters" : `No clubs ${locationPhrase} yet`;
       const description = hasPublicClubs
-        ? `Expand your search radius or clear the current filters to see more club profiles near ${safeCity}.`
-        : `MyDancr is adding club profiles in ${safeCity}. Choose another city or check back soon.`;
+        ? "Try a wider radius or different filters."
+        : "Try another city or check back later.";
       const actions = hasPublicClubs
         ? [
             nextRadius
@@ -667,11 +664,8 @@
           ];
 
       return `
-        <section class="home-discovery-empty is-club-empty" aria-labelledby="homeClubsEmptyTitle">
-          <span class="home-discovery-empty-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M5 20V7l7-3 7 3v13"></path><path d="M3 20h18"></path><path d="M9 10h6M9 14h6"></path></svg>
-          </span>
-          <div class="home-discovery-empty-copy">
+        <section class="home-results-empty" aria-labelledby="homeClubsEmptyTitle">
+          <div class="home-discovery-empty-copy" role="status">
             <strong id="homeClubsEmptyTitle">${title}</strong>
             <p>${description}</p>
           </div>
@@ -717,8 +711,8 @@
         }
         renderHomeDiscoveryFeedMessage(
           activeTab === "tonight"
-            ? `No dancers are currently checked in on MyDancr ${locationPhrase}.`
-            : `No approved dancer profiles are available ${locationPhrase} yet.`
+            ? `No dancers working now ${locationPhrase}.`
+            : `No dancers ${locationPhrase} yet.`
         );
         return;
       }

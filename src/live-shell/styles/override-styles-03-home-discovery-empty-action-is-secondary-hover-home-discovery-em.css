@@ -106,7 +106,6 @@
           .home-discovery-controls select,
           .home-discovery-controls .location-btn { min-height: 44px !important; font-size: clamp(15px, 4vw, 17px) !important; }
           .home-live-summary { grid-template-columns: max-content minmax(0, 1fr) max-content; }
-          .home-discovery-empty.is-club-empty { padding: 16px; }
           .home-discovery-empty-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
           .home-discovery-empty-actions .home-discovery-empty-action { width: 100%; min-height: 44px; }
           .home-tv-launch { min-height: 70px; gap: 9px; margin-top: 8px; padding: 10px 11px; border-radius: 14px; }

@@ -88,6 +88,7 @@ test("the grid and Working Now count include all 237 loaded dancers", () => {
   fixture.state.render();
   assert.equal(fixture.state.headerCount, "237 dancers");
   assert.equal((fixture.markup.match(/<article /g) || []).length, 237);
+  assert.doesNotMatch(fixture.markup, /home-results-empty/);
   assert.match(fixture.markup, /dancer-directory-filter-count">237<\/span>/);
   assert.doesNotMatch(fixture.markup, /100\+|Load more dancers/);
 });
@@ -139,6 +140,18 @@ test("both filter counts appear from the first scoped response and remain visibl
   }
 });
 
+test("an incomplete dancer search stays a checking status until pagination finishes", () => {
+  const fixture = directoryFixture([]);
+  fixture.state.hasMoreDiscovery = () => true;
+  fixture.state.render();
+  assert.match(fixture.markup, /home-results-empty" role="status">Checking the remaining dancers/);
+  assert.doesNotMatch(fixture.markup, /No dancers working now/);
+  fixture.state.hasMoreDiscovery = () => false;
+  fixture.state.render();
+  assert.match(fixture.markup, /No dancers working now in Las Vegas/);
+  assert.doesNotMatch(fixture.markup, /Checking the remaining dancers/);
+});
+
 test("inactive zero is visible, unknown is not invented, and completed active counts follow the actual cards", () => {
   const fixture = directoryFixture([{ name: "Working dancer", now: true }]);
   let statusCounts = { now: 2, not_now: 0 };
@@ -162,13 +175,13 @@ test("filtered totals handle one or zero dancers without hiding the selected sta
   fixture.state.render();
   assert.equal(fixture.state.headerCount, "1 dancer");
   assert.match(fixture.markup, /<strong>Working Now<\/strong>\s*<span>0<\/span>/);
-  assert.match(fixture.markup, /No dancers are currently checked in on MyDancr in Las Vegas/);
+  assert.match(fixture.markup, /class="dancer-directory-filter-empty home-results-empty" role="status">No dancers working now in Las Vegas\./);
   fixture.state.profiles = [{ name: "Working dancer", scheduled: true, now: true }];
   fixture.state.dancerDirectoryFilter = "not_now";
   fixture.state.render();
   assert.equal(fixture.state.headerCount, "1 dancer");
   assert.match(fixture.markup, /<strong>Not Working Now<\/strong>\s*<span>0<\/span>/);
-  assert.match(fixture.markup, /No dancers are off shift in Las Vegas/);
+  assert.match(fixture.markup, /No off-shift dancers in Las Vegas/);
   fixture.state.profiles = [];
   fixture.state.loading = true;
   fixture.state.render();
@@ -281,7 +294,7 @@ test("choosing a specific club resets Not Working Now and shows only the Working
   fixture.state.profiles = [];
   fixture.state.render();
   assert.equal(fixture.state.headerCount, "0 dancers");
-  assert.match(fixture.markup, /No dancers are currently checked in on MyDancr at Test Club/);
+  assert.match(fixture.markup, /No dancers working now at Test Club/);
   fixture.state.venueFilter = "all";
   fixture.state.render();
   assert.equal((fixture.markup.match(/role="tab"/g) || []).length, 2);

@@ -66,10 +66,10 @@ test("the consolidated Dancers destination exposes equal-width Working Now and N
     /const empty = counts\[filter\.id\] === 0;[\s\S]*?\$\{empty \? " is-empty" : ""\}/,
   );
   assert.match(homeSource, /dancerDirectoryFilter = nextFilter;[\s\S]*?syncHomeDestinationLocation\("dancers"\)[\s\S]*?render\(\)/);
-  assert.match(homeSource, /No dancers are currently checked in on MyDancr \$\{locationPhrase\}\./);
+  assert.match(homeSource, /No dancers working now \$\{locationPhrase\}\./);
   assert.doesNotMatch(homeSource, /No dancers are trending in \$\{city\} yet\./);
   assert.match(homeSource, /data-dancer-directory-filter="\$\{filter\.id\}"/);
-  assert.match(homeSource, /No dancers are off shift \$\{locationPhrase\}\./);
+  assert.match(homeSource, /No off-shift dancers \$\{locationPhrase\}\./);
 });
 
 test("visible homepages refresh public discovery without retaining deleted venues", () => {

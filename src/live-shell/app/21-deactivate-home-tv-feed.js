@@ -823,7 +823,8 @@
 
     function renderHomeTvFeedMessage(message, retryCity = "", requiresVerification = false) {
       const state = document.createElement("div");
-      state.className = "locked";
+      state.className = retryCity ? "locked" : "home-results-empty";
+      state.setAttribute("role", retryCity ? "alert" : "status");
       state.textContent = message;
       results.replaceChildren(state);
       delete results.dataset.homeTvFeedKey;
@@ -1079,8 +1080,8 @@
         homeTvLandingPreload.clear();
         setHomeTvFeedCount("0 videos", venueFilter);
         renderHomeTvFeedMessage(venueFilter
-          ? `No approved MyDancr TV videos are available from dancers working now at ${venueFilter.name}.`
-          : `No approved MyDancr TV videos are available ${discoveryLocationPhrase(city)} yet.`);
+          ? `No videos from dancers working now at ${venueFilter.name}.`
+          : `No videos ${discoveryLocationPhrase(city)} yet.`);
         settleHomeTvFeedLanding({ complete: true });
         return;
       }

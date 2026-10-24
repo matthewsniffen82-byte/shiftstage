@@ -63,7 +63,7 @@ test("a remote visitor gets an honest near-me state instead of a distant support
   assert.match(liveShell, /function discoveryLocationPhrase\(city = selectedCity\(\)\)[\s\S]*?userLocationOutsideMarkets \? "near you" : `in \$\{city\}`/);
   assert.match(liveShell, /citySelectButtonText\.textContent = userLocationOutsideMarkets \? "Near me" : citySelect\.value/);
   assert.match(liveShell, /if \(userLocationOutsideMarkets && \["tonight", "dancers", "venues"\]\.includes\(tab\)\) return \[\];/);
-  assert.match(liveShell, /No MyDancr clubs near you[\s\S]*?MyDancr is not in your area yet\.[\s\S]*?Choose another city/);
+  assert.match(liveShell, /No MyDancr clubs near you[\s\S]*?Choose another city to browse clubs\.[\s\S]*?Choose another city/);
   assert.match(liveShell, /citySelect\.addEventListener\("change"[\s\S]*?userLocationOutsideMarkets = false;[\s\S]*?userLocation = null;/);
   assert.doesNotMatch(liveShell, /showToast\("Location updated\."\)/);
 });

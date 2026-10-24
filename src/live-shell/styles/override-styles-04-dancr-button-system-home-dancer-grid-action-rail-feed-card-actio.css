@@ -501,18 +501,6 @@
           outline: 2px solid #6d28ff;
           outline-offset: 2px;
         }
-        .dancer-directory-filter-empty {
-          min-height: 92px;
-          display: grid;
-          place-items: center;
-          padding: 18px;
-          border: 1px solid rgba(148, 163, 184, .24);
-          border-radius: 14px;
-          color: #cbd5e1;
-          background: #111118;
-          text-align: center;
-          font-weight: 800;
-        }
         #results.home-dancer-grid.home-dancer-three-column > .home-dancer-grid-card {
           width: 100% !important;
           min-width: 0 !important;
