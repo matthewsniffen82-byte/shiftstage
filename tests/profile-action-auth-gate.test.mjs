@@ -112,12 +112,12 @@ test("the live dancer profile back control exits shared links and remains toucha
   assert.match(profileNavigationSource, /className="public-profile-close"/);
   assert.match(
     profileNavigationSource,
-    /profileType = "dancer"[\s\S]*?aria-label=\{vipReturnHref \? "Back to VIP dashboard" : profileType === "dancer" \? "Back to previous page or dancer discovery results" : `Close full \$\{profileType\} profile and return to the previous page or discovery results`\}/,
+    /profileType = "dancer"[\s\S]*?aria-label=\{vipReturnHref \? "Back to VIP dashboard" : venueReturnHref \? "Back to venue dashboard" : profileType === "dancer" \? "Back to previous page or dancer discovery results" : `Close full \$\{profileType\} profile and return to the previous page or discovery results`\}/,
   );
   assert.match(profileNavigationSource, /window\.history\.back\(\)/);
   assert.match(profileNavigationSource, /window\.setTimeout\(navigateToFallback, 900\)/);
   assert.match(profileNavigationSource, /window\.location\.assign\(destination\.toString\(\)\)/);
-  assert.match(profileNavigationSource, />\s*×\s*<\/button>/);
+  assert.match(profileNavigationSource, /profileType === "dancer" \? \([\s\S]*?<path d="m12 5-7 7 7 7M5 12h14" \/>[\s\S]*?\) : "×"\}/);
   assert.match(
     homeSource,
     /<div class="card-badges">[\s\S]*?<\/div>\s+\$\{options\.feedActions && !isPending \? `<span class="card-profile-destination" aria-hidden="true"><svg class="card-profile-symbol"[\s\S]*?<rect[\s\S]*?<circle[\s\S]*?<\/svg><svg class="card-profile-chevron"[\s\S]*?<\/svg><\/span>` : ""\}\s+<\/div>\s+<div class="profile-body">/,
@@ -222,7 +222,7 @@ test("guest account prompts use a compact benefit-led hierarchy without duplicat
   );
   assert.match(
     aesthetic,
-    /\.guest-account-prompt :is\(a, button\):focus-visible \{[\s\S]*?outline: 2px solid var\(--dancr-color-text-secondary\) !important;/,
+    /\.guest-account-prompt :is\(a, button\):focus-visible \{[\s\S]*?outline: 2px solid var\(--dancr-color-brand-primary\) !important;/,
   );
 });
 
