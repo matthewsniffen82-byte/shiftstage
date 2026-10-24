@@ -18,7 +18,7 @@ test('address-only publication still requires address, logo, and an active offer
 });
 const live=readFileSync(new URL('../outputs/index.html',import.meta.url),'utf8');
 function source(name){const start=live.indexOf('    function '+name+'(');assert(start>=0);const end=live.indexOf('\n    function ',start+10);assert(end>start);return live.slice(start,end);}
-function discovery(){const context=vm.createContext({distanceSelect:{value:'25 mi'},venueSelect:{value:'all'},selectedCity:()=> 'Las Vegas',ALL_CITIES:'All cities',userLocation:null,cityCoordinates:{'Las Vegas':{latitude:36.1699,longitude:-115.1398}},venueDetails:v=>v,fictionalDemoVenueTravelAddress:()=>'',actionButtonLabel:()=> 'Directions'});
+function discovery(){const context=vm.createContext({distanceSelect:{value:'25 mi'},venueSelect:{value:'all'},selectedCity:()=> 'Las Vegas',ALL_CITIES:'All cities',userLocation:null,visitorLocation:null,cityCoordinates:{'Las Vegas':{latitude:36.1699,longitude:-115.1398}},venueDetails:v=>v,fictionalDemoVenueTravelAddress:()=>'',actionButtonLabel:()=> 'Directions'});
  for(const name of ['liveVenueCoordinate','selectedRadiusMiles','parseMiles','hasCoordinates','distanceMilesBetween','activeDistanceOrigin','venueDistanceMiles','formatDistanceMiles','visitorVenueDistanceLabel','venueDistanceLabel','venueWithinSelectedRadius','selectedVenueFilter','venueMatchesCurrentFilter','escapeHtml','escapeOptionValue','venueDirectionsMarkup'])vm.runInContext(source(name),context);
  return context;
 }

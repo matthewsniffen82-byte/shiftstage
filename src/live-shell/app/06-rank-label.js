@@ -806,7 +806,7 @@
     function visitorVenueDistanceLabel(venue) {
       // Displayed distances always share the visitor's location and club coordinates.
       // City-center fallbacks remain available only to the explicitly labeled radius filter.
-      return formatDistanceMiles(distanceMilesBetween(userLocation, venue));
+      return formatDistanceMiles(distanceMilesBetween(visitorLocation || userLocation, venue));
     }
 
     function venueDistanceLabel(venue) {
@@ -843,10 +843,78 @@
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy
           }),
-          () => reject(new Error("Location permission is required for accurate venue distances.")),
+          (error) => reject(new Error(error?.code === 1
+            ? "Allow location for mydancr.com in your browser settings to see distances."
+            : error?.code === 3
+              ? "Finding your location timed out. Try again."
+              : "Your location is unavailable. Turn on device location and try again.")),
           { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
         );
       });
+    }
+
+    function syncVisitorLocationNotice() {
+      const notice = document.getElementById("homeDistanceNotice");
+      if (!notice) return;
+      notice.hidden = hasCoordinates(visitorLocation || userLocation);
+      const pending = Boolean(visitorLocationPending);
+      notice.setAttribute("aria-busy", String(pending));
+      const message = document.getElementById("homeDistanceMessage");
+      if (message) message.textContent = pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
+      const button = document.getElementById("homeDistanceLocationBtn");
+      if (button) {
+        button.disabled = pending;
+        button.textContent = visitorLocationError ? "Try again" : "Enable location";
+      }
+    }
+
+    function refreshVisitorDistanceViews() {
+      render();
+      const copy = profileModal?.querySelector(".profile-venue-destination.is-live .profile-venue-copy");
+      const profile = copy && findProfile(profileModal.dataset.publicDancerId);
+      if (!profile) return;
+      const label = profileCardDistanceLabel(profile);
+      let distance = copy.querySelector(".profile-venue-distance");
+      if (!label) { distance?.remove(); return; }
+      if (!distance) {
+        distance = document.createElement("span");
+        distance.className = "profile-venue-distance";
+        copy.appendChild(distance);
+      }
+      distance.textContent = `${label} away`;
+    }
+
+    function requestVisitorLocation() {
+      if (visitorLocationPending) return visitorLocationPending;
+      visitorLocationError = "";
+      visitorLocationPending = requestVenuePosition().then(coords => {
+        if (!hasCoordinates(coords)) throw new Error("Your location is unavailable. Try again.");
+        visitorLocation = coords;
+        refreshVisitorDistanceViews();
+      }).catch(error => {
+        visitorLocationError = error?.message || "Your location is unavailable. Try again.";
+      }).finally(() => {
+        visitorLocationPending = null;
+        syncVisitorLocationNotice();
+      });
+      syncVisitorLocationNotice();
+      return visitorLocationPending;
+    }
+
+    async function restoreVisitorLocation() {
+      if (internalProfileFrameId || hasCoordinates(visitorLocation)) return;
+      try {
+        if (navigator.permissions?.query) {
+          const permission = await navigator.permissions.query({ name: "geolocation" });
+          if (permission.state === "denied") {
+            visitorLocationError = "Allow location for mydancr.com in your browser settings to see distances.";
+            syncVisitorLocationNotice();
+            return;
+          }
+        }
+      } catch { /* Some browsers support geolocation without the Permissions API. */ }
+      // The browser asks first-time visitors and reuses existing location permission.
+      if (!hasCoordinates(visitorLocation)) await requestVisitorLocation();
     }
 
     function venueWithinSelectedRadius(venue) {

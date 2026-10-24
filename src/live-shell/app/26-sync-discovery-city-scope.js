@@ -344,6 +344,7 @@
     venueSelectDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeVenuePicker(); });
     venueSelectDialog?.addEventListener("click", (event) => { if (event.target === venueSelectDialog) closeVenuePicker(); });
 
+    document.getElementById("homeDistanceLocationBtn")?.addEventListener("click", () => { void requestVisitorLocation(); });
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
       const label = button?.querySelector(".location-btn-label");
@@ -356,6 +357,8 @@
       try {
         showToast("Checking your location...");
         const requestedLocation = await requestVenuePosition();
+        visitorLocation = requestedLocation;
+        visitorLocationError = "";
         const nearestMarket = nearestCityForCoordinates(requestedLocation);
         if (!nearestMarket || nearestMarket.miles > MAX_LOCATION_MARKET_DISTANCE_MILES) {
           userLocation = requestedLocation;
@@ -394,6 +397,7 @@
           button.removeAttribute("aria-busy");
         }
         if (label) label.textContent = originalText;
+        syncVisitorLocationNotice();
       }
     });
 
@@ -712,6 +716,7 @@
       : null;
     try { localStorage.removeItem("mydancrGuestPickupsV1"); localStorage.removeItem("mydancrGuestPickupReadV1"); } catch { /* Storage may be unavailable. */ }
     if (!internalProfileFrameId) render();
+    if (!internalProfileFrameId) void restoreVisitorLocation();
     if (initialHomeDestinationRequested) {
       focusHomeResults();
     }

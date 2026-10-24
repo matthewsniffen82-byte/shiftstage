@@ -32502,6 +32502,10 @@
         <span id="homeLiveRadius">25 mi · All Clubs</span>
         <span class="home-live-summary-divider" aria-hidden="true">·</span>
         <strong id="homeLiveWorking">0 Working Now</strong>
+        <div class="home-distance-notice" id="homeDistanceNotice" role="status">
+          <span id="homeDistanceMessage">Enable location to see distances.</span>
+          <button id="homeDistanceLocationBtn" type="button">Enable location</button>
+        </div>
       </div>
 
       <a
@@ -44241,6 +44245,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     const MAX_LOCATION_MARKET_DISTANCE_MILES = 50;
     let userLocation = null;
     let userLocationOutsideMarkets = false;
+    let visitorLocation = null;
+    let visitorLocationPending = null;
+    let visitorLocationError = "";
     const authPage = document.getElementById("authPage");
     const passwordRecoveryCard = document.getElementById("passwordRecoveryCard");
     const passwordRecoveryForm = document.getElementById("passwordRecoveryForm");
@@ -50276,7 +50283,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function visitorVenueDistanceLabel(venue) {
       // Displayed distances always share the visitor's location and club coordinates.
       // City-center fallbacks remain available only to the explicitly labeled radius filter.
-      return formatDistanceMiles(distanceMilesBetween(userLocation, venue));
+      return formatDistanceMiles(distanceMilesBetween(visitorLocation || userLocation, venue));
     }
 
     function venueDistanceLabel(venue) {
@@ -50313,10 +50320,78 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             longitude: position.coords.longitude,
             accuracy: position.coords.accuracy
           }),
-          () => reject(new Error("Location permission is required for accurate venue distances.")),
+          (error) => reject(new Error(error?.code === 1
+            ? "Allow location for mydancr.com in your browser settings to see distances."
+            : error?.code === 3
+              ? "Finding your location timed out. Try again."
+              : "Your location is unavailable. Turn on device location and try again.")),
           { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
         );
       });
+    }
+
+    function syncVisitorLocationNotice() {
+      const notice = document.getElementById("homeDistanceNotice");
+      if (!notice) return;
+      notice.hidden = hasCoordinates(visitorLocation || userLocation);
+      const pending = Boolean(visitorLocationPending);
+      notice.setAttribute("aria-busy", String(pending));
+      const message = document.getElementById("homeDistanceMessage");
+      if (message) message.textContent = pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
+      const button = document.getElementById("homeDistanceLocationBtn");
+      if (button) {
+        button.disabled = pending;
+        button.textContent = visitorLocationError ? "Try again" : "Enable location";
+      }
+    }
+
+    function refreshVisitorDistanceViews() {
+      render();
+      const copy = profileModal?.querySelector(".profile-venue-destination.is-live .profile-venue-copy");
+      const profile = copy && findProfile(profileModal.dataset.publicDancerId);
+      if (!profile) return;
+      const label = profileCardDistanceLabel(profile);
+      let distance = copy.querySelector(".profile-venue-distance");
+      if (!label) { distance?.remove(); return; }
+      if (!distance) {
+        distance = document.createElement("span");
+        distance.className = "profile-venue-distance";
+        copy.appendChild(distance);
+      }
+      distance.textContent = `${label} away`;
+    }
+
+    function requestVisitorLocation() {
+      if (visitorLocationPending) return visitorLocationPending;
+      visitorLocationError = "";
+      visitorLocationPending = requestVenuePosition().then(coords => {
+        if (!hasCoordinates(coords)) throw new Error("Your location is unavailable. Try again.");
+        visitorLocation = coords;
+        refreshVisitorDistanceViews();
+      }).catch(error => {
+        visitorLocationError = error?.message || "Your location is unavailable. Try again.";
+      }).finally(() => {
+        visitorLocationPending = null;
+        syncVisitorLocationNotice();
+      });
+      syncVisitorLocationNotice();
+      return visitorLocationPending;
+    }
+
+    async function restoreVisitorLocation() {
+      if (internalProfileFrameId || hasCoordinates(visitorLocation)) return;
+      try {
+        if (navigator.permissions?.query) {
+          const permission = await navigator.permissions.query({ name: "geolocation" });
+          if (permission.state === "denied") {
+            visitorLocationError = "Allow location for mydancr.com in your browser settings to see distances.";
+            syncVisitorLocationNotice();
+            return;
+          }
+        }
+      } catch { /* Some browsers support geolocation without the Permissions API. */ }
+      // The browser asks first-time visitors and reuses existing location permission.
+      if (!hasCoordinates(visitorLocation)) await requestVisitorLocation();
     }
 
     function venueWithinSelectedRadius(venue) {
@@ -69038,6 +69113,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     venueSelectDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeVenuePicker(); });
     venueSelectDialog?.addEventListener("click", (event) => { if (event.target === venueSelectDialog) closeVenuePicker(); });
 
+    document.getElementById("homeDistanceLocationBtn")?.addEventListener("click", () => { void requestVisitorLocation(); });
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
       const label = button?.querySelector(".location-btn-label");
@@ -69050,6 +69126,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       try {
         showToast("Checking your location...");
         const requestedLocation = await requestVenuePosition();
+        visitorLocation = requestedLocation;
+        visitorLocationError = "";
         const nearestMarket = nearestCityForCoordinates(requestedLocation);
         if (!nearestMarket || nearestMarket.miles > MAX_LOCATION_MARKET_DISTANCE_MILES) {
           userLocation = requestedLocation;
@@ -69088,6 +69166,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           button.removeAttribute("aria-busy");
         }
         if (label) label.textContent = originalText;
+        syncVisitorLocationNotice();
       }
     });
 
@@ -69406,6 +69485,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       : null;
     try { localStorage.removeItem("mydancrGuestPickupsV1"); localStorage.removeItem("mydancrGuestPickupReadV1"); } catch { /* Storage may be unavailable. */ }
     if (!internalProfileFrameId) render();
+    if (!internalProfileFrameId) void restoreVisitorLocation();
     if (initialHomeDestinationRequested) {
       focusHomeResults();
     }

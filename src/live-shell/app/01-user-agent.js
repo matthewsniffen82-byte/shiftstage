@@ -424,6 +424,9 @@
     const MAX_LOCATION_MARKET_DISTANCE_MILES = 50;
     let userLocation = null;
     let userLocationOutsideMarkets = false;
+    let visitorLocation = null;
+    let visitorLocationPending = null;
+    let visitorLocationError = "";
     const authPage = document.getElementById("authPage");
     const passwordRecoveryCard = document.getElementById("passwordRecoveryCard");
     const passwordRecoveryForm = document.getElementById("passwordRecoveryForm");

@@ -11,7 +11,7 @@ const profile = { id: "star", slug: "star", name: "Star", city: "Las Vegas", ven
 
 function fixture({ location = { latitude: 0, longitude: 0 }, club = venue } = {}) {
   const context = vm.createContext({
-    window: {}, userLocation: location, ALL_CITIES: "All cities", stateByCity: { "Las Vegas": "NV" },
+    window: {}, userLocation: location, visitorLocation: null, ALL_CITIES: "All cities", stateByCity: { "Las Vegas": "NV" },
     cityCoordinates: { "Las Vegas": { latitude: 0, longitude: 0.026 } },
     selectedCity: () => "Las Vegas", discoveryMarket: () => ({ venues: [club] }),
     profileDiscoveryCity: (item, city) => item.city || city,
