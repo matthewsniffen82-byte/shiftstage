@@ -765,7 +765,7 @@ function SavedVenueCard({
         <span className="home-venue-discovery-location"><span className="venue-dot" aria-hidden="true"><VenueCardIcon icon="pin" /></span><span>{[venue.city, venue.state].filter(Boolean).join(", ") || "Location unavailable"}</span></span>
         <span className="home-venue-discovery-meta">
           <span className={`home-venue-discovery-operating-status is-${status.state}`}>{status.label}</span>
-          {venue.hoursLabel ? <span className="home-venue-discovery-hours" aria-label="Opening hours"><span className="venue-dot" aria-hidden="true"><VenueCardIcon icon="clock" /></span><span>{venue.hoursLabel}</span></span> : null}
+          {venue.hoursLabel ? <span className="home-venue-discovery-hours" aria-label="Opening hours"><span aria-hidden="true">·</span><span>{venue.hoursLabel}</span></span> : null}
         </span>
       </div>
       <div className="home-venue-discovery-lineup-slot">

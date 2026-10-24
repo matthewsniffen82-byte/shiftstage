@@ -368,7 +368,7 @@
                 </div>
                 <div class="venue-profile-hours" aria-label="Opening hours" data-operating-state="${operatingStatus.state}">
                   <strong>${escapeHtml(operatingStatus.label)}</strong>
-                  ${operatingStatus.hoursLabel ? `<span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
+                  ${operatingStatus.hoursLabel ? `<span><span aria-hidden="true">·</span> ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
                 </div>
               </div>
             </div>

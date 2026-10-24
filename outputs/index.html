@@ -54481,7 +54481,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
                 </div>
                 <div class="venue-profile-hours" aria-label="Opening hours" data-operating-state="${operatingStatus.state}">
                   <strong>${escapeHtml(operatingStatus.label)}</strong>
-                  ${operatingStatus.hoursLabel ? `<span>Hours · ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
+                  ${operatingStatus.hoursLabel ? `<span><span aria-hidden="true">·</span> ${escapeHtml(operatingStatus.hoursLabel)}</span>` : ""}
                 </div>
               </div>
             </div>
@@ -62027,7 +62027,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       const followsVenue = isFollowingVenue(city, venue.name);
       const locationLabel = `${details.city}${details.state ? `, ${details.state}` : ""}`;
       const hoursMarkup = operatingStatus.hoursLabel
-        ? `<span class="home-venue-discovery-hours" aria-label="Opening hours">${clockIconMarkup()}<span>${escapeHtml(operatingStatus.hoursLabel)}</span></span>`
+        ? `<span class="home-venue-discovery-hours" aria-label="Opening hours"><span aria-hidden="true">·</span><span>${escapeHtml(operatingStatus.hoursLabel)}</span></span>`
         : "";
       const operatingStatusMarkup = `<span class="home-venue-discovery-operating-status is-${operatingStatus.state}">${escapeHtml(operatingStatus.label)}</span>`;
       const railQrMarkup = homeVenueDiscoveryQrMarkup(venue);

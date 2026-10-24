@@ -2957,3 +2957,30 @@ html body.dancr-button-system #discoveryRefresh { margin: 0 !important; }
   }
 
 }
+
+/* Club names lead; location and posted hours remain readable supporting text. */
+html body.dancr-button-system > .app main.stack > section.stack
+  > #results.home-discovery-feed.home-venue-discovery-feed > .home-venue-discovery-slide
+  :is(.home-venue-discovery-location, .home-venue-discovery-location > span, .home-venue-discovery-operating-status, .home-venue-discovery-hours, .home-venue-discovery-hours > span),
+html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-hero-summary
+  :is(.venue-identity-meta .meta, .venue-identity-distance, .venue-profile-hours, .venue-profile-hours > strong, .venue-profile-hours > span) {
+  font-weight: 500 !important;
+}
+
+/* Match labels within each utility row, including the shared Follow layer. */
+@layer dancr-follow-controls {
+  html body.dancr-button-system .home-venue-discovery-slide .venue-card-secondary-actions
+    :is(.venue-card-secondary-action, .venue-card-secondary-action > span:not(.action-icon)) {
+    font-family: var(--font-ui) !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+  html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venue-action-stack
+    :is(.venue-address-directions, .follow-venue-btn, .profile-action-main) {
+    font-family: var(--font-ui) !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+  }
+}
