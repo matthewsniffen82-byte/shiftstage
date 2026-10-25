@@ -1284,10 +1284,10 @@ html body.dancr-button-system #results.venue-profile-overlay .venue-detail .venu
   text-align: center;
 }
 
-/* Keep compact spacing around the hero's original, uncropped artwork. */
+/* Add 10px to the effective 6px stack gap for 16px above the city filter. */
 html body.dancr-button-system > .app main.stack > .hero.reference-hero.uploaded-hero-ready {
   border-radius: 0 !important;
-  margin-block: 0 !important;
+  margin-block: 0 10px !important;
 }
 
 /* City stays visible; the existing filter toggle reveals the advanced controls. */
