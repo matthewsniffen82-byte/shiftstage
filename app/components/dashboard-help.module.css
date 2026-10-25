@@ -1,46 +1,46 @@
-.launcher { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: 0 0 auto; min-height: 40px; padding: 8px 14px; border: 1px solid #5e506f; border-radius: 999px; background: #241a36; color: #f7f4ff; font: inherit; font-weight: 700; cursor: pointer; }
+.launcher { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: 0 0 auto; min-height: 40px; padding: 8px 14px; border: 1px solid var(--dancr-color-border); border-radius: 999px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font: inherit; font-weight: 700; cursor: pointer; }
 .launcher span { display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid currentColor; border-radius: 50%; font-size: 13px; }
-.dialog { box-sizing: border-box; position: fixed; inset: 0; width: min(560px, calc(100vw - 24px)); height: min(720px, calc(100dvh - 32px)); max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid #51425f; border-radius: 22px; background: #141219; color: #f5f2fa; font: 16px/1.5 system-ui, sans-serif; overflow: hidden; box-shadow: 0 22px 90px #000a; }
+.dialog { box-sizing: border-box; position: fixed; inset: 0; width: min(560px, calc(100vw - 24px)); height: min(720px, calc(100dvh - 32px)); max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid var(--dancr-color-border); border-radius: 22px; background: var(--dancr-color-surface-card); color: var(--dancr-color-text-primary); font: 16px/1.5 system-ui, sans-serif; overflow: hidden; box-shadow: 0 22px 90px #000a; }
 .dialog[open] { display: flex; flex-direction: column; }
 .dialog::backdrop { background: #000b; }
 .dialog * { box-sizing: border-box; }
 .dialog h2, .dialog h3, .dialog p { margin: 0; }
 .dialog h2 { font-size: 23px; line-height: 1.3; }
 .dialog h3 { font-size: 20px; }
-.dialog a { color: #d2baff; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.dialog a { color: var(--dancr-color-text-primary); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .dialog button, .dialog input, .dialog textarea { font: inherit; }
-.dialog button { min-height: 44px; padding: 9px 14px; border: 1px solid #51465c; border-radius: 12px; color: #f5f2fa; background: #302a39; cursor: pointer; }
-.dialog button:disabled { opacity: .55; cursor: default; }
-.dialog :is(button,a,input,textarea):focus-visible, .launcher:focus-visible { outline: 3px solid #bd94ff; outline-offset: 3px; }
-.header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid #39303f; flex-shrink: 0; }
-.eyebrow { color: #c3b8d0; font-size: 13px; }
+.dialog button { min-height: 44px; padding: 9px 14px; border: 1px solid var(--dancr-color-border); border-radius: 12px; color: var(--dancr-color-text-primary); background: var(--dancr-color-control-secondary); cursor: pointer; }
+.dialog button:disabled { opacity: 1; color: var(--dancr-color-text-muted); background: var(--dancr-color-control-secondary); cursor: default; }
+.dialog :is(button,a,input,textarea):focus-visible, .launcher:focus-visible { outline: 3px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
+.header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--dancr-color-border); flex-shrink: 0; }
+.eyebrow { color: var(--dancr-color-text-muted); font-size: 13px; }
 .dialog .close { width: 44px; padding: 0; border-radius: 50%; font-size: 28px; }
 .log { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 18px; }
-.message { max-width: 95%; margin: 0 0 14px; padding: 14px; border: 1px solid #3c3347; border-radius: 16px 16px 16px 4px; background: #201b29; overflow-wrap: anywhere; }
-.message strong { font-size: 13px; color: #cbb9e6; }
+.message { max-width: 95%; margin: 0 0 14px; padding: 14px; border: 1px solid var(--dancr-color-border); border-radius: 16px 16px 16px 4px; background: var(--dancr-color-surface); overflow-wrap: anywhere; }
+.message strong { font-size: 13px; color: var(--dancr-color-text-muted); }
 .message p { margin-top: 5px; white-space: pre-wrap; }
 .message a { display: inline-block; margin-top: 10px; }
-.mine { margin-left: auto; border-radius: 16px 16px 4px 16px; background: #35214d; }
+.mine { margin-left: auto; border-radius: 16px 16px 4px 16px; background: var(--dancr-color-control-secondary); }
 .topics { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
 .dialog .topics button { text-align: left; font-size: 14px; }
-.composer { flex-shrink: 0; padding: 14px 18px 6px; border-top: 1px solid #39303f; }
+.composer { flex-shrink: 0; padding: 14px 18px 6px; border-top: 1px solid var(--dancr-color-border); }
 .composer label, .handoff label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 700; }
 .inputRow { display: flex; gap: 8px; }
-.dialog input, .dialog textarea { min-width: 0; width: 100%; border: 1px solid #6a597c; border-radius: 12px; padding: 11px 12px; background: #0e0c12; color: #fff; }
+.dialog input, .dialog textarea { min-width: 0; width: 100%; border: 1px solid var(--dancr-color-border); border-radius: 12px; padding: 11px 12px; background: var(--dancr-color-control-secondary); color: #fff; }
 .dialog textarea { resize: vertical; min-height: 120px; max-height: 300px; }
-.dialog input::placeholder { color: #b5aabb; }
+.dialog :is(input, textarea)::placeholder { color: var(--dancr-color-text-muted); }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 18px 16px; flex-shrink: 0; }
 .actions button { flex: 1; font-size: 14px; }
 .handoff { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 18px; }
 .handoff p { margin: 12px 0; }
 .handoff h3 { margin-top: 16px; }
-.handoff small { display: block; color: #bfb3cb; margin: 4px 0 14px; }
+.handoff small { display: block; color: var(--dancr-color-text-muted); margin: 4px 0 14px; }
 .handoff > a { display: inline-block; margin-top: 16px; }
-.dialog .primary { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #a777ff; background: #6923d7; color: #fff; text-align: center; text-decoration: none; }
+.dialog .primary { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--dancr-color-brand-primary); background: var(--dancr-color-brand-primary); color: #fff; text-align: center; text-decoration: none; }
 .error { color: #ffb9c6; }
-.tabs { display: flex; gap: 8px; padding: 10px 18px; border-bottom: 1px solid #39303f; flex-shrink: 0; }
+.tabs { display: flex; gap: 8px; padding: 10px 18px; border-bottom: 1px solid var(--dancr-color-border); flex-shrink: 0; }
 .tabs button { flex: 1; }
-.tabs button[aria-pressed="true"] { background: #542294; border-color: #bd94ff; }
+.tabs button[aria-pressed="true"] { background: var(--dancr-color-brand-primary); border-color: var(--dancr-color-brand-primary); }
 .assistantPane, .messagesPane { min-height: 0; flex: 1; display: flex; flex-direction: column; }
 .assistantPane[hidden], .messagesPane[hidden] { display: none; }
 .messageTools { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
@@ -49,7 +49,43 @@
 .threadList button { display: grid; gap: 3px; text-align: left; overflow-wrap: anywhere; }
 .threadList small { margin: 0; }
 .threadHistory { max-height: 300px; overflow-y: auto; overscroll-behavior: contain; padding-top: 8px; margin-bottom: 12px; }
-.handoff .meta { color: #c4b7d1; font-size: 14px; margin: 6px 0 12px; }
+.handoff .meta { color: var(--dancr-color-text-muted); font-size: 14px; margin: 6px 0 12px; }
 .handoff form label { margin-top: 12px; }
 .confirmation { padding: 12px; border: 1px solid #457c62; border-radius: 12px; background: #142a20; color: #b4f5cf; }
+/* Portaled help panels keep the shared palette above legacy button paint. */
+@layer dancr-palette {
+  :global(html body.dancr-button-system) .launcher,
+  :global(html body.dancr-button-system) .dialog button {
+    color: var(--dancr-color-text-primary) !important;
+    border-color: var(--dancr-color-border) !important;
+    background: var(--dancr-color-control-secondary) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  :global(html body.dancr-button-system) .dialog :is(input, textarea) {
+    color: var(--dancr-color-text-primary) !important;
+    border-color: var(--dancr-color-border) !important;
+    background: var(--dancr-color-control-secondary) !important;
+    box-shadow: none !important;
+  }
+  :global(html body.dancr-button-system) .dialog a:not(.primary) {
+    color: var(--dancr-color-text-primary) !important;
+  }
+  :global(html body.dancr-button-system) .dialog :is(.primary, .inputRow button[type="submit"], .tabs button[aria-pressed="true"]):not(:disabled) {
+    color: var(--dancr-color-text-primary) !important;
+    border-color: var(--dancr-color-brand-primary) !important;
+    background: var(--dancr-color-brand-primary) !important;
+  }
+  :global(html body.dancr-button-system) .dialog button:disabled {
+    opacity: 1 !important;
+    color: var(--dancr-color-text-muted) !important;
+    border-color: var(--dancr-color-border) !important;
+    background: var(--dancr-color-control-secondary) !important;
+  }
+  :global(html body.dancr-button-system) .dialog :is(button, a, input, textarea):focus-visible,
+  :global(html body.dancr-button-system) .launcher:focus-visible {
+    outline: 2px solid var(--dancr-color-brand-primary) !important;
+    outline-offset: 2px !important;
+  }
+}
 @media (max-width: 380px) { .header, .composer, .handoff, .log { padding: 12px; } .actions { padding: 8px 12px 12px; } .dialog { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); } }
