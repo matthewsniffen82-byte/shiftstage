@@ -32,8 +32,17 @@ test("directory heading, dynamic total, and segmented filters are compact and ac
   );
 });
 
-test("discovery controls, summary, heading, tabs, and cards share one master gutter", () => {
+test("mobile discovery shares a scrollbar-safe gutter without changing profile or card gaps", () => {
   assert.match(aesthetic, /--dancer-discovery-content-gutter: 6px/);
+  const mobileGutters = [];
+  postcss.parse(aesthetic).walkDecls("--dancer-discovery-content-gutter", declaration => {
+    if (declaration.parent.selector !== "body.dancer-directory-active > .app > main.stack") return;
+    mobileGutters.push(declaration);
+  });
+  assert.equal(mobileGutters.length, 1);
+  assert.equal(mobileGutters[0].value, "12px");
+  assert.equal(mobileGutters[0].parent.parent.params, "(max-width: 720px)");
+  assert.match(aesthetic, /--dancr-media-grid-gap: 3px/);
   assert.match(
     aesthetic,
     /> :is\(\.home-discovery-controls, \.home-live-summary, section\.stack\) \{[\s\S]*?width: calc\(100% - \(2 \* var\(--dancer-discovery-content-gutter\)\)\) !important;[\s\S]*?margin-inline: var\(--dancer-discovery-content-gutter\) !important/,

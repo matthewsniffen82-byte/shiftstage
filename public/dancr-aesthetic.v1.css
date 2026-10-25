@@ -8586,6 +8586,12 @@ body.dancer-directory-active > .app > main.stack {
  * content gutter. Descendants fill this boundary instead of adding their own
  * page-level padding or expanding into the viewport edges. */
 @media (max-width: 720px) {
+  body.dancer-directory-active > .app > main.stack {
+    /* Leave the viewport scrollbar outside the controls and cards, matching
+     * the hero inset without changing profile gutters or gaps between cards. */
+    --dancer-discovery-content-gutter: 12px;
+  }
+
   body.dancer-directory-active > .app > main.stack
     > :is(.home-discovery-controls, .home-live-summary, section.stack) {
     width: calc(100% - (2 * var(--dancer-discovery-content-gutter))) !important;
