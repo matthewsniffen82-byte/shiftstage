@@ -661,14 +661,14 @@
     color-scheme: only dark !important;
     background: var(--dancr-control-secondary-background) !important;
   }
-  /* Selected Working Now has a translucent live-green face over the page. */
-  html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]):not(.is-empty) {
+  /* Selected Working Now stays green even when the current result count is zero. */
+  html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]) {
     --dancr-color-live: #4dec9d !important;
     --discovery-control-face: rgba(77, 236, 157, .16) !important;
     --discovery-control-edge: #48755c !important;
     color: var(--dancr-color-live) !important;
   }
-  html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]):not(.is-empty)::before {
+  html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"])::before {
     background: linear-gradient(var(--discovery-control-face), var(--discovery-control-face)) !important;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06) !important;
   }

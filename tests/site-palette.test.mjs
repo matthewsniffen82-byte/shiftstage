@@ -118,13 +118,15 @@ test('dashboard cards and controls have distinct fills without recoloring public
 
 test('Working Now uses translucent green, the floating dock keeps its own paint, and the account shortcut stays charcoal', () => {
   const working = rules.find(rule => rule.selector.includes('.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"]'));
-  assert.ok(working.selector.includes(':not(.is-empty)'));
+  assert.equal(working.selector, 'html body.dancr-button-system :where(.dancer-directory-filter[data-dancer-directory-filter="now"][aria-selected="true"])', 'selected Working Now stays green with zero results too');
   assert.ok(working.nodes.some(decl => decl.prop === '--dancr-color-live' && decl.value === '#4dec9d'));
   assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-face' && decl.value === 'rgba(77, 236, 157, .16)'));
   assert.ok(working.nodes.some(decl => decl.prop === '--discovery-control-edge' && decl.value === '#48755c'));
   assert.ok(working.nodes.some(decl => decl.prop === 'color' && decl.value === 'var(--dancr-color-live)'));
   const face = rules.find(rule => rule.selector === 'html body.dancr-button-system :where(.dancer-directory-filter)::before');
   assert.ok(face.nodes.some(decl => decl.prop === 'background' && decl.value === 'var(--discovery-control-face)'));
+  const workingFace = rules.find(rule => rule.selector === `${working.selector}::before`);
+  assert.ok(workingFace.nodes.some(decl => decl.prop === 'background' && decl.value === 'linear-gradient(var(--discovery-control-face), var(--discovery-control-face))'), 'the visible mobile face also stays green with zero results');
   // Broad tab and focus rules must also exclude the dock, so its original
   // glass face, inactive silver icons, white active icon and halo can render.
   const palette = read('public/dancr-palette.v1.css');
