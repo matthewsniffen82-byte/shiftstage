@@ -942,6 +942,8 @@
     }
 
     function profileMatchesVenueFilter(profile) {
+      const profileVenue = resolveVenueByName(profile?.venueId || profile?.venue, profile?.city || selectedCity());
+      if (profileVenue && !venueWithinSelectedRadius(profileVenue)) return false;
       const venueName = selectedVenueFilter();
       if (venueName === "all") return true;
       const venue = resolveVenueByName(venueName);

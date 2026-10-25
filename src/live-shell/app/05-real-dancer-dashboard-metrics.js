@@ -841,7 +841,8 @@
           tonightDancers = mergeDiscoveryPageRows(tonightDancers, discovery.tonightDancers || []);
           venues = discovery.venues || venues;
           if (["now", "not_now"].every(key => Number.isSafeInteger(discovery.statusCounts?.[key]) && discovery.statusCounts[key] >= 0)) {
-            statusCounts = { now: discovery.statusCounts.now, not_now: discovery.statusCounts.not_now };
+            statusCounts = { now: discovery.statusCounts.now, not_now: discovery.statusCounts.not_now,
+              ...(discovery.statusCounts.nowByVenue ? { nowByVenue: discovery.statusCounts.nowByVenue } : {}) };
           }
           cursor = discovery.nextCursor || null;
           pageCount += 1;
@@ -944,7 +945,8 @@
         if (discovery.ok === false || !Array.isArray(discovery.dancers)
           || discovery.nextCursor != null && (typeof discovery.nextCursor !== "string" || !discovery.nextCursor)) throw new Error("Invalid discovery page.");
         const statusCounts = ["now", "not_now"].every(key => Number.isSafeInteger(discovery.statusCounts?.[key]) && discovery.statusCounts[key] >= 0)
-          ? { now: discovery.statusCounts.now, not_now: discovery.statusCounts.not_now } : null;
+          ? { now: discovery.statusCounts.now, not_now: discovery.statusCounts.not_now,
+            ...(discovery.statusCounts.nowByVenue ? { nowByVenue: discovery.statusCounts.nowByVenue } : {}) } : null;
         cacheDiscoveryScope(cacheKey, { page: {
           scopeKey, filter, identity, dancers: discovery.dancers, tonightDancers: discovery.tonightDancers || [],
           venues: discovery.venues || [], statusCounts, nextCursor: discovery.nextCursor || null, pageCount: 1, loading: false, error: false

@@ -6,7 +6,7 @@ import vm from "node:vm";
 const html = await readFile(new URL("../outputs/index.html", import.meta.url), "utf8");
 const renderSource = html.match(/function render\(\) \{[\s\S]*?(?=\n    async function renderHomeTvLaunch)/)[0];
 const sectionsSource = html.match(/function dancerDirectorySections\(profiles, city\) \{[\s\S]*?(?=\n    function homeDancerGridContentKey)/)[0];
-const tabCountsSource = html.match(/function updateTabCounts\(city\) \{[\s\S]*?(?=\n    function updateHomeLiveSummary)/)[0];
+const tabCountsSource = html.match(/function discoveryWorkingNowCount\(city\) \{[\s\S]*?(?=\n    function updateHomeLiveSummary)/)[0];
 const discoveryCountSource = html.match(/function discoveryDancerCount\(city, tab = "dancers"\) \{[\s\S]*?(?=\n    function discoveryPaginationMarkup)/)[0];
 const noop = () => {};
 const node = () => ({ classList: { toggle: noop, remove: noop }, setAttribute: noop, replaceChildren: noop, closest: () => node() });
@@ -28,7 +28,8 @@ function harness({ working = 7, off = 7, venue = "all", loading = false, error =
     syncHomeDestinationLocation: noop, homeNavigationIconMarkup: () => "", updateHomeLiveSummary: noop,
     deactivateHomeTvFeed: noop, deactivateHomeDiscoveryFeed: noop,
     selectedVenueFilter: () => venue, selectedHomeTvVenueFilter: () => null,
-    observeDiscoveryGrid: noop, hasMoreDiscovery: () => more, liveDiscoveryIsLoading: () => loading, getItems: () => items,
+    observeDiscoveryGrid: noop, hasMoreDiscovery: () => more, liveDiscoveryIsLoading: () => loading,
+    getItems: (_city, tab) => tab === "tonight" ? items.filter(p => p.working) : items,
     discoveryMarket: () => ({ pagination: { scopeKey: "scope", filter: "all", statusCounts } }),
     discoveryRequestScope: () => ({ key: "scope" }),
     discoveryLocationPhrase: () => "in Las Vegas", resolveVenueByName: () => null,
@@ -51,7 +52,9 @@ function harness({ working = 7, off = 7, venue = "all", loading = false, error =
 test("city total stays at 14 while either seven-dancer status tab is selected", () => {
   const h = harness();
   assert.deepEqual(h.render("now"), { count: "14 dancers", visible: 7 });
+  assert.equal(h.navCount(), "7");
   assert.deepEqual(h.render("not_now"), { count: "14 dancers", visible: 7 });
+  assert.equal(h.navCount(), "7");
 });
 
 test("an empty status tab does not erase the city total", () => {
@@ -73,7 +76,7 @@ test("loading and unavailable discovery never present a misleading numeric total
 test("partial directory counts explicitly describe loaded profiles", () => {
   const h = harness({ more: true });
   assert.equal(h.render().count, "14 dancers loaded");
-  assert.equal(h.navCount(), "14+");
+  assert.equal(h.navCount(), "7+");
 });
 
 test("heading and bottom navigation show the actual complete count above 100", () => {
@@ -83,7 +86,7 @@ test("heading and bottom navigation show the actual complete count above 100", (
 });
 
 test("first-page cards show the server's full total while the remaining cards are loading", () => {
-  const h = harness({ working: 100, off: 0, more: true, statusCounts: { now: 498, not_now: 31 } });
+  const h = harness({ working: 100, off: 0, more: true, statusCounts: { now: 498, not_now: 31, nowByVenue: { club: 498 } } });
   assert.deepEqual(h.render(), { count: "529 dancers", visible: 100 });
-  assert.equal(h.navCount(), "529");
+  assert.equal(h.navCount(), "498");
 });

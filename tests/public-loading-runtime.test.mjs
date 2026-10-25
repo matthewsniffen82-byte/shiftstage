@@ -412,14 +412,15 @@ test("a stalled continuation cannot cause an endless pagination loop", async () 
 
 test("both status totals survive pagination and failed continuations without leaking across scopes", async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
+  const statusCounts = { now: 498, not_now: 31, nowByVenue: { club: 498 } };
   ctx.activeTab = "dancers";
   let request = ctx.loadLiveDiscovery("Vegas");
-  requests[0].resolve({ dancers: [{ id: "working" }], statusCounts: { now: 498, not_now: 31 }, nextCursor: "next" }); await nextPage();
+  requests[0].resolve({ dancers: [{ id: "working" }], statusCounts, nextCursor: "next" }); await nextPage();
   requests[1].reject(new Error("offline")); await request;
-  assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, { now: 498, not_now: 31 });
+  assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, statusCounts);
   request = ctx.loadLiveDiscovery("Vegas", { more: true });
   requests[2].resolve({ dancers: [{ id: "second" }], nextCursor: null }); await request;
-  assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, { now: 498, not_now: 31 });
+  assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, statusCounts);
   ctx.dancerDirectoryFilter = "not_now";
   request = ctx.loadLiveDiscovery("Vegas");
   requests[3].resolve({ dancers: [], statusCounts: { now: -1, not_now: "unknown" }, nextCursor: null }); await request;
@@ -475,6 +476,7 @@ test("a filter change while a page is pending discards the stale response and fe
 
 for (const filter of ["now", "not_now"]) test(`preloading ${filter} warms one batch and immediately resumes its continuation when selected`, async () => {
   const { ctx, requests } = pagedDiscoveryFixture();
+  const statusCounts = { now: 50, not_now: 31, nowByVenue: { club: 50 } };
   ctx.activeTab = "dancers";
   ctx.dancerDirectoryFilter = filter === "now" ? "not_now" : "now";
   const initial = ctx.loadLiveDiscovery("Vegas");
@@ -483,17 +485,19 @@ for (const filter of ["now", "not_now"]) test(`preloading ${filter} warms one ba
   ctx.prefetchDancerDirectory("Vegas");
   assert.equal(requests.length, 2, "duplicate renders reuse the same warmup");
   assert.match(requests[1].url, new RegExp(`filter=${filter}`));
-  requests[1].resolve({ dancers: [{ id: "warm" }], statusCounts: { now: 50, not_now: 31 }, nextCursor: "rest" }); await nextPage();
+  requests[1].resolve({ dancers: [{ id: "warm" }], statusCounts, nextCursor: "rest" }); await nextPage();
   assert.equal(requests.length, 2, "the unselected list does not download continuation pages");
   assert.equal(ctx.markets.Vegas.dancers[0].id, "original", "prefetch cannot replace the visible list");
   ctx.dancerDirectoryFilter = filter;
   const selected = ctx.loadLiveDiscovery("Vegas");
   assert.equal(ctx.markets.Vegas.dancers[0].id, "warm", "the first cards switch synchronously from cache");
   assert.equal(ctx.liveMarketState.Vegas, "ready");
+  assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, statusCounts);
   assert.match(requests[2].url, /cursor=rest/);
   assert.doesNotMatch(requests[2].url, /refresh=/);
   requests[2].resolve({ dancers: [{ id: "rest" }], nextCursor: null }); await selected;
   assert.deepEqual(Array.from(ctx.markets.Vegas.dancers, row => row.id), ["warm", "rest"]);
+  assert.deepEqual({ ...ctx.markets.Vegas.pagination.statusCounts }, statusCounts);
 });
 
 test("selecting a warming tab shares its request and publishes its first batch immediately", async () => {

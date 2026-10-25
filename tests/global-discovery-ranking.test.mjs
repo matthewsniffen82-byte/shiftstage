@@ -107,7 +107,7 @@ test('status totals include both filters, refresh with presence, and respect cit
   const f = directoryFixture(candidates);
   const totals = async options => {
     const page = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', ...options });
-    return { ...page.statusCounts };
+    return { now: page.statusCounts.now, not_now: page.statusCounts.not_now };
   };
   for (const filter of ['now', 'not_now', 'all']) {
     assert.deepEqual(await totals({ filter }), { now: 1, not_now: 2 });
@@ -119,6 +119,29 @@ test('status totals include both filters, refresh with presence, and respect cit
   candidates.splice(1, 1);
   assert.deepEqual(await totals({ filter: 'now' }), { now: 0, not_now: 2 }, 'removed public candidates leave both totals');
   assert.deepEqual(await totals({ city: 'Empty city' }), { now: 0, not_now: 0 });
+});
+
+test('working counts by club cover the city even while paging an inactive or club-specific list', async () => {
+  const expiry = new Date(Date.now() + 3600000).toISOString();
+  const candidates = [
+    row(1, { availableUntil: expiry, venueId: id(8000) }),
+    row(2, { availableUntil: expiry, venueId: id(8000) }),
+    row(3, { availableUntil: expiry, venueId: id(8001) }),
+    row(4, { venueId: id(8001) }),
+    row(5, { city: 'Miami', availableUntil: expiry, venueId: id(8002) }),
+  ];
+  const f = directoryFixture(candidates);
+  for (const options of [{ filter: 'now' }, { filter: 'not_now' }, { filter: 'all' }, { filter: 'now', venueId: id(8001) }]) {
+    const page = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', ...options });
+    assert.deepEqual({ ...page.statusCounts.nowByVenue }, { [id(8000)]: 2, [id(8001)]: 1 });
+  }
+  candidates[0].availableUntil = null;
+  const refreshed = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Vegas', filter: 'not_now' });
+  assert.deepEqual({ ...refreshed.statusCounts.nowByVenue }, { [id(8000)]: 1, [id(8001)]: 1 });
+  const all = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'All cities' });
+  assert.deepEqual({ ...all.statusCounts.nowByVenue }, { [id(8000)]: 1, [id(8001)]: 1, [id(8002)]: 1 });
+  const empty = await f.directory.getRankedDirectoryPage(f.admin, f.request(), { city: 'Empty city' });
+  assert.deepEqual({ ...empty.statusCounts.nowByVenue }, {});
 });
 
 test('later visibility revocation is rechecked and backfilled without duplicates', async () => {

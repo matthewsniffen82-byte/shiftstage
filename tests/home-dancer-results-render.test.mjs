@@ -49,7 +49,7 @@ function directoryFixture(profiles) {
     prefetchDancerDirectory() {},
     observeDiscoveryGrid() {},
     renderStableMediaMarkup: (container, content) => { container.innerHTML = content; },
-    getItems: () => state.profiles,
+    getItems: (_city, tab) => tab === "tonight" ? state.profiles.filter(profile => profile.now) : state.profiles,
     selectedVenueFilter: () => state.venueFilter, selectedHomeTvVenueFilter: () => null,
     syncHomeDestinationLocation: () => { state.syncedFilter = state.dancerDirectoryFilter; },
     resolveVenueByName: () => null, liveDiscoveryIsLoading: () => state.loading,
@@ -71,7 +71,7 @@ function directoryFixture(profiles) {
     "queueHomeTvPageScrollIndicatorSync",
   ]) state[name] = () => {};
   const functions = [
-    "dancerGridPosition", "dancerDirectoryGroups", "dancerDirectorySections", "dancerDirectoryFilterMarkup",
+    "dancerGridPosition", "dancerDirectoryGroups", "dancerDirectorySections", "discoveryWorkingNowCount", "dancerDirectoryFilterMarkup",
     "spreadDancerGridPhotos", "homeDancerGridSectionMarkup", "homeDancerGridContentKey", "renderHomeDancerGrid", "render",
   ].map((name) => {
     const source = homeSource.match(new RegExp(`    function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?(?=\\r?\\n    (?:async )?function )`))?.[0];
@@ -132,7 +132,7 @@ test("both filter counts appear from the first scoped response and remain visibl
   for (const filter of ["now", "not_now"]) {
     const fixture = directoryFixture([{ name: "Loaded dancer", now: filter === "now" }]);
     fixture.state.dancerDirectoryFilter = filter;
-    fixture.state.discoveryMarket = () => ({ pagination: { filter, statusCounts: { now: 498, not_now: 31 } } });
+    fixture.state.discoveryMarket = () => ({ pagination: { filter, statusCounts: { now: 498, not_now: 31, nowByVenue: { club: 498 } } } });
     fixture.state.hasMoreDiscovery = () => true;
     fixture.state.render();
     assert.deepEqual([...fixture.markup.matchAll(/dancer-directory-filter-count">([^<]+)/g)].map(match => match[1]), ["498", "31"]);

@@ -901,20 +901,44 @@
       return `<span class="home-nav-icon" aria-hidden="true"><span class="mobile-nav-selection-halo"></span>${icons[tabName] || icons.tonight}</span>`;
     }
 
+    function discoveryWorkingNowCount(city) {
+      if (userLocationOutsideMarkets) return { count: 0, partial: false };
+      const market = discoveryMarket(city);
+      const page = market?.pagination;
+      const totals = page?.statusCounts?.nowByVenue;
+      const venueName = selectedVenueFilter();
+      const selectedVenue = venueName === "all" ? null : resolveVenueByName(venueName, city);
+      if (totals && typeof totals === "object" && !Array.isArray(totals)
+        && Object.values(totals).every(count => Number.isSafeInteger(count) && count >= 0)) {
+        const count = Object.entries(totals).reduce((sum, [venueId, total]) => {
+          const venue = market.venues?.find(item => item.id === venueId);
+          if (venueName !== "all" && venueId !== selectedVenue?.id) return sum;
+          if (venue && !venueWithinSelectedRadius(venue)) return sum;
+          return sum + total;
+        }, 0);
+        return { count, partial: false };
+      }
+      // Older/incomplete responses may not contain the opposite status list.
+      // Do not turn that absence into a false zero or a city-wide estimate.
+      if (page?.filter === "not_now") return { count: null, partial: false };
+      return { count: getItems(city, "tonight").length, partial: hasMoreDiscovery(city) };
+    }
+
     function updateTabCounts(city) {
       const loading = liveDiscoveryIsLoading(city);
       const unavailable = liveMarketState[city] === "error";
+      const workingNow = discoveryWorkingNowCount(city);
       const counts = {
-        tonight: discoveryDancerCount(city, "tonight") ?? getItems(city, "tonight").length,
-        dancers: discoveryDancerCount(city) ?? getItems(city, "dancers").length,
+        tonight: workingNow.count,
+        dancers: workingNow.count,
         venues: getItems(city, "venues").length
       };
       document.querySelectorAll(".tab[data-tab]").forEach((tab) => {
         const tabName = tab.dataset.tab;
         const label = tab.dataset.tabLabel || tab.textContent.trim();
         const liveTab = ["tonight", "dancers", "venues"].includes(tabName);
-        const partial = ["tonight", "dancers"].includes(tabName) && hasMoreDiscovery(city) && discoveryDancerCount(city, tabName) === null;
-        const count = liveTab && (loading || unavailable) ? "..." : `${counts[tabName] ?? 0}${partial ? "+" : ""}`;
+        const partial = ["tonight", "dancers"].includes(tabName) && workingNow.partial;
+        const count = liveTab && (loading || unavailable || counts[tabName] === null) ? "..." : `${counts[tabName] ?? 0}${partial ? "+" : ""}`;
         tab.innerHTML = `${homeNavigationIconMarkup(tabName)}<span class="home-nav-label">${label}</span><span class="tab-count">${count}</span>`;
       });
     }

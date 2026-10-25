@@ -386,6 +386,7 @@
       const clubSelected = selectedVenueFilter() !== "all";
       const page = discoveryMarket(city)?.pagination;
       const partial = hasMoreDiscovery(city);
+      const workingNow = discoveryWorkingNowCount(city);
       const filters = clubSelected ? [{ id: "now", label: "Working Now" }] : [
         { id: "now", label: "Working Now" },
         { id: "not_now", label: "Not Working Now" }
@@ -400,8 +401,10 @@
             const totalKnown = Number.isSafeInteger(total) && total >= 0;
             const countKnown = localCountKnown || totalKnown;
             const count = localCountKnown && !partial ? counts[filter.id] : totalKnown ? total : counts[filter.id];
-            const countLabel = countKnown ? `${count}${partial && !totalKnown ? "+" : ""}` : "…";
-            const empty = countKnown && count === 0;
+            const countLabel = filter.id === "now"
+              ? workingNow.count === null ? "…" : `${workingNow.count}${workingNow.partial ? "+" : ""}`
+              : countKnown ? `${count}${partial && !totalKnown ? "+" : ""}` : "…";
+            const empty = filter.id === "now" ? workingNow.count === 0 : countKnown && count === 0;
             const statusDot = '<span class="dancer-directory-filter-status" aria-hidden="true"></span>';
             return `<button class="dancer-directory-filter ${active ? "is-active" : ""}${empty ? " is-empty" : ""}" type="button" role="tab" data-dancer-directory-filter="${filter.id}" aria-controls="results" aria-selected="${active}" aria-pressed="${active}">${statusDot}<span class="dancer-directory-filter-label">${filter.label}</span><span class="dancer-directory-filter-count">${countLabel}</span></button>`;
           }).join("")}

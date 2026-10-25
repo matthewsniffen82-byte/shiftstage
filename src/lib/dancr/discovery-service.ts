@@ -18,10 +18,17 @@ type Snapshot = { id: string; ordered_ids: string[]; expires_at: string };
 let lastPruned = 0;
 
 function directoryStatusCounts(candidates: RankingCandidate[], venueId?: string, now = Date.now()) {
-  const counts = { now: 0, not_now: 0 };
+  const counts = { now: 0, not_now: 0, nowByVenue: {} as Record<string, number> };
   for (const row of candidates) {
+    const working = Date.parse(row.availableUntil || "") > now;
+    // Navigation follows the city/club/radius selection, independently of the
+    // status list or club profile whose cards are currently being paged.
+    if (working) {
+      const id = row.venueId || "";
+      counts.nowByVenue[id] = (counts.nowByVenue[id] || 0) + 1;
+    }
     if (venueId && row.venueId !== venueId) continue;
-    counts[Date.parse(row.availableUntil || "") > now ? "now" : "not_now"] += 1;
+    counts[working ? "now" : "not_now"] += 1;
   }
   return counts;
 }
