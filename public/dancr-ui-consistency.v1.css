@@ -1466,6 +1466,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#
   }
   html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectOptions {
     gap: 0 !important;
+    border-top: 1px solid #28232f;
   }
   html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #locationBtn {
     height: 44px !important;
@@ -1475,7 +1476,6 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#
     gap: 8px !important;
     padding: 0 12px !important;
     border: 0 !important;
-    border-bottom: 1px solid #28232f !important;
     border-radius: 0 !important;
     background: var(--dancr-color-surface-plum) !important;
     color: #f8fafc !important;

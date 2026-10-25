@@ -32463,10 +32463,16 @@
           </div>
         </div>
         <div class="city-picker-inline" id="citySelectPanel" hidden>
-          <button class="location-btn" id="locationBtn" type="button">
+          <button class="location-btn" id="locationBtn" type="button" aria-describedby="homeDistanceMessage">
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
             <span class="location-btn-label">Use current location</span>
           </button>
+          <div class="home-distance-notice" id="homeDistanceNotice">
+            <span id="homeDistanceMessage" role="status">Enable location to see distances.</span>
+            <button id="homeDistanceDismiss" type="button" aria-label="Dismiss location message" title="Dismiss location message" hidden>
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+            </button>
+          </div>
           <div class="venue-picker-options city-picker-options" id="citySelectOptions" role="listbox" aria-labelledby="citySelectLabel"></div>
         </div>
         <dialog id="distanceSelectDialog" aria-labelledby="distanceSelectDialogTitle" aria-describedby="distanceSelectOrigin">
@@ -32502,10 +32508,6 @@
         <span id="homeLiveRadius">25 mi · All Clubs</span>
         <span class="home-live-summary-divider" aria-hidden="true">·</span>
         <strong id="homeLiveWorking">0 Working Now</strong>
-        <div class="home-distance-notice" id="homeDistanceNotice" role="status">
-          <span id="homeDistanceMessage">Enable location to see distances.</span>
-          <button id="homeDistanceLocationBtn" type="button">Enable location</button>
-        </div>
       </div>
 
       <a
@@ -50333,16 +50335,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function syncVisitorLocationNotice() {
       const notice = document.getElementById("homeDistanceNotice");
       if (!notice) return;
-      notice.hidden = hasCoordinates(visitorLocation || userLocation);
-      const pending = Boolean(visitorLocationPending);
+      const pending = Boolean(visitorLocationPending || document.getElementById("locationBtn")?.disabled);
+      notice.hidden = hasCoordinates(visitorLocation || userLocation) && !visitorLocationError && !pending;
       notice.setAttribute("aria-busy", String(pending));
       const message = document.getElementById("homeDistanceMessage");
-      if (message) message.textContent = pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
-      const button = document.getElementById("homeDistanceLocationBtn");
-      if (button) {
-        button.disabled = pending;
-        button.textContent = visitorLocationError ? "Try again" : "Enable location";
-      }
+      if (message) message.textContent = notice.hidden ? "" : pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
+      const dismiss = document.getElementById("homeDistanceDismiss");
+      if (dismiss) dismiss.hidden = pending || !visitorLocationError;
     }
 
     function refreshVisitorDistanceViews() {
@@ -50361,15 +50360,16 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       distance.textContent = `${label} away`;
     }
 
-    function requestVisitorLocation() {
+    function requestVisitorLocation({ silent = false } = {}) {
       if (visitorLocationPending) return visitorLocationPending;
-      visitorLocationError = "";
+      if (!silent) visitorLocationError = "";
       visitorLocationPending = requestVenuePosition().then(coords => {
         if (!hasCoordinates(coords)) throw new Error("Your location is unavailable. Try again.");
         visitorLocation = coords;
+        visitorLocationError = "";
         refreshVisitorDistanceViews();
       }).catch(error => {
-        visitorLocationError = error?.message || "Your location is unavailable. Try again.";
+        if (!silent) visitorLocationError = error?.message || "Your location is unavailable. Try again.";
       }).finally(() => {
         visitorLocationPending = null;
         syncVisitorLocationNotice();
@@ -50386,7 +50386,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         if (permission.state !== "granted") return;
       } catch { return; }
       // Never trigger a permission prompt on load, including Safari fallbacks.
-      if (!hasCoordinates(visitorLocation)) await requestVisitorLocation();
+      if (!hasCoordinates(visitorLocation)) await requestVisitorLocation({ silent: true });
     }
 
     function venueWithinSelectedRadius(venue) {
@@ -69111,7 +69111,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     venueSelectDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeVenuePicker(); });
     venueSelectDialog?.addEventListener("click", (event) => { if (event.target === venueSelectDialog) closeVenuePicker(); });
 
-    document.getElementById("homeDistanceLocationBtn")?.addEventListener("click", () => { void requestVisitorLocation(); });
+    document.getElementById("homeDistanceDismiss")?.addEventListener("click", () => {
+      visitorLocationError = "";
+      syncVisitorLocationNotice();
+      document.getElementById("locationBtn")?.focus({ preventScroll: true });
+    });
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
       if (button?.disabled) return;
@@ -69122,8 +69126,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         button.setAttribute("aria-busy", "true");
       }
       if (label) label.textContent = "Checking location...";
+      visitorLocationError = "";
+      syncVisitorLocationNotice();
       try {
-        showToast("Checking your location...");
         const requestedLocation = await requestVenuePosition();
         if (!hasCoordinates(requestedLocation)) throw new Error("Your location is unavailable. Try again.");
         visitorLocation = requestedLocation;
@@ -69161,7 +69166,6 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         showToast(`${nearestMarket.city} selected from your location.`);
       } catch (error) {
         visitorLocationError = error.message || "Could not read location.";
-        showToast(visitorLocationError);
       } finally {
         if (button) {
           button.disabled = false;

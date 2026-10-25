@@ -856,16 +856,13 @@
     function syncVisitorLocationNotice() {
       const notice = document.getElementById("homeDistanceNotice");
       if (!notice) return;
-      notice.hidden = hasCoordinates(visitorLocation || userLocation);
-      const pending = Boolean(visitorLocationPending);
+      const pending = Boolean(visitorLocationPending || document.getElementById("locationBtn")?.disabled);
+      notice.hidden = hasCoordinates(visitorLocation || userLocation) && !visitorLocationError && !pending;
       notice.setAttribute("aria-busy", String(pending));
       const message = document.getElementById("homeDistanceMessage");
-      if (message) message.textContent = pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
-      const button = document.getElementById("homeDistanceLocationBtn");
-      if (button) {
-        button.disabled = pending;
-        button.textContent = visitorLocationError ? "Try again" : "Enable location";
-      }
+      if (message) message.textContent = notice.hidden ? "" : pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
+      const dismiss = document.getElementById("homeDistanceDismiss");
+      if (dismiss) dismiss.hidden = pending || !visitorLocationError;
     }
 
     function refreshVisitorDistanceViews() {
@@ -884,15 +881,16 @@
       distance.textContent = `${label} away`;
     }
 
-    function requestVisitorLocation() {
+    function requestVisitorLocation({ silent = false } = {}) {
       if (visitorLocationPending) return visitorLocationPending;
-      visitorLocationError = "";
+      if (!silent) visitorLocationError = "";
       visitorLocationPending = requestVenuePosition().then(coords => {
         if (!hasCoordinates(coords)) throw new Error("Your location is unavailable. Try again.");
         visitorLocation = coords;
+        visitorLocationError = "";
         refreshVisitorDistanceViews();
       }).catch(error => {
-        visitorLocationError = error?.message || "Your location is unavailable. Try again.";
+        if (!silent) visitorLocationError = error?.message || "Your location is unavailable. Try again.";
       }).finally(() => {
         visitorLocationPending = null;
         syncVisitorLocationNotice();
@@ -909,7 +907,7 @@
         if (permission.state !== "granted") return;
       } catch { return; }
       // Never trigger a permission prompt on load, including Safari fallbacks.
-      if (!hasCoordinates(visitorLocation)) await requestVisitorLocation();
+      if (!hasCoordinates(visitorLocation)) await requestVisitorLocation({ silent: true });
     }
 
     function venueWithinSelectedRadius(venue) {

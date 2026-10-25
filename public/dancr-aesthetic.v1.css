@@ -1128,35 +1128,46 @@ body > .app main.stack > .home-live-summary {
   line-height: 1.2 !important;
 }
 
-body > .app main.stack > .home-live-summary .home-distance-notice {
+body > .app main.stack > .home-discovery-controls #citySelectPanel .home-distance-notice {
   display: flex;
-  flex: 1 0 100%;
   align-items: center;
   gap: 8px;
   min-width: 0;
+  padding: 0 12px 10px;
 }
-body > .app main.stack > .home-live-summary .home-distance-notice[hidden] { display: none !important; }
-body > .app main.stack > .home-live-summary #homeDistanceMessage {
-  flex: 1 1 auto;
+body > .app main.stack > .home-discovery-controls #citySelectPanel .home-distance-notice[hidden] { display: none !important; }
+body > .app main.stack > .home-discovery-controls #citySelectPanel #homeDistanceMessage {
+  flex: 1 1 0;
+  min-width: 0;
   white-space: normal;
+  overflow-wrap: anywhere;
+  color: var(--dancr-color-text-secondary);
+  font-size: 12px;
   font-weight: 400;
   line-height: 1.4;
 }
 @layer dancr-palette {
-  html body.dancr-button-system #homeDistanceLocationBtn {
-    flex: 0 0 auto;
-    min-height: 32px;
-    padding: 4px 0 !important;
+  html body.dancr-button-system #citySelectPanel #homeDistanceDismiss {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    padding: 0 !important;
     border: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
-    color: var(--dancr-color-icon-accent-small) !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    color: var(--dancr-color-text-secondary) !important;
   }
-  html body.dancr-button-system #homeDistanceLocationBtn:disabled { opacity: .6; }
+  html body.dancr-button-system #citySelectPanel #homeDistanceDismiss[hidden] { display: none !important; }
+  html body.dancr-button-system #citySelectPanel #homeDistanceDismiss .icon {
+    width: 18px;
+    height: 18px;
+  }
+  html body.dancr-button-system #citySelectPanel #homeDistanceDismiss:focus-visible {
+    outline: 2px solid var(--dancr-color-icon-location) !important;
+    outline-offset: -3px !important;
+  }
 }
 
 body > .app main.stack > .home-live-summary :is(span, strong) {

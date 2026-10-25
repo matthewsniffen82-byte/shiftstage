@@ -19,7 +19,7 @@ test("city discovery keeps the native select as a fallback and enhances it with 
 });
 
 test("current location is a separate action inside the city selector, before manual cities", async () => {
-  assert.match(liveShell, /id="citySelectPanel" hidden>\s*<button class="location-btn" id="locationBtn" type="button">[\s\S]*?>Use current location<\/span>\s*<\/button>\s*<div[^>]*id="citySelectOptions"[^>]*role="listbox"/);
+  assert.match(liveShell, /id="citySelectPanel" hidden>\s*<button class="location-btn" id="locationBtn" type="button" aria-describedby="homeDistanceMessage">[\s\S]*?>Use current location<\/span>\s*<\/button>\s*<div[^>]*id="homeDistanceNotice">[\s\S]*?id="homeDistanceMessage" role="status">Enable location to see distances\.[\s\S]*?id="homeDistanceDismiss"[^>]*hidden>[\s\S]*?<\/button>\s*<\/div>\s*<div[^>]*id="citySelectOptions"[^>]*role="listbox"/);
   assert.equal((liveShell.match(/id="locationBtn"/g) || []).length, 1);
   assert.match(liveShell, /citySelectPanel\?\.addEventListener\("keydown", \(event\) => \{\s*if \(event.key === "Escape"\) \{\s*event.preventDefault\(\);\s*closeCityPicker\(true\);/);
   const css = postcss.parse(await readFile(new URL("../public/dancr-ui-consistency.v1.css", import.meta.url), "utf8"));
@@ -32,6 +32,28 @@ test("current location is a separate action inside the city selector, before man
   let emptyActions;
   css.walkRules(`${prefix}#homeAdvancedFilters .home-filter-actions:has(> #homeFilterReset[hidden])`, rule => { emptyActions = rule; });
   assert.ok(emptyActions.nodes.some(node => node.prop === "display" && node.value === "none" && node.important), "No empty filter row after moving location");
+});
+
+test("location help stays inside the picker without a results banner or duplicate retry action", () => {
+  const summary = liveShell.match(/<div class="home-live-summary"[^]*?<\/div>/)?.[0];
+  assert.ok(summary);
+  assert.doesNotMatch(summary, /homeDistance|location/);
+  assert.doesNotMatch(liveShell, /homeDistanceLocationBtn/);
+  const css = postcss.parse(aesthetic);
+  const declarations = selector => {
+    let values;
+    css.walkRules(selector, rule => { values = Object.fromEntries(rule.nodes.map(node => [node.prop, node.value])); });
+    return values;
+  };
+  const text = declarations("body > .app main.stack > .home-discovery-controls #citySelectPanel #homeDistanceMessage");
+  assert.equal(text["font-size"], "12px");
+  assert.equal(text["white-space"], "normal");
+  assert.equal(text["overflow-wrap"], "anywhere");
+  const dismiss = declarations("html body.dancr-button-system #citySelectPanel #homeDistanceDismiss");
+  assert.equal(dismiss.width, "44px");
+  assert.equal(dismiss.height, "44px");
+  assert.equal(dismiss.background, "transparent");
+  assert.equal(declarations("html body.dancr-button-system #citySelectPanel #homeDistanceDismiss[hidden]").display, "none");
 });
 
 test("city selection expands inline, applies immediately, and remains keyboard accessible", () => {

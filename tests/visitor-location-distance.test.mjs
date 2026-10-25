@@ -11,9 +11,10 @@ const venue = { latitude: 0, longitude: 0.04632 };
 
 function fixture(permission = "granted") {
   const requests = [];
-  const elements = Object.fromEntries(["homeDistanceNotice", "homeDistanceMessage", "homeDistanceLocationBtn"].map(id => [id, {
-    hidden: false, disabled: false, textContent: "", attributes: {},
+  const elements = Object.fromEntries(["homeDistanceNotice", "homeDistanceMessage", "homeDistanceDismiss"].map(id => [id, {
+    hidden: false, disabled: false, textContent: "", attributes: {}, events: {},
     setAttribute(key, value) { this.attributes[key] = value; },
+    addEventListener(event, handler) { this.events[event] = handler; },
   }]));
   let renders = 0;
   const context = vm.createContext({
@@ -31,6 +32,7 @@ function fixture(permission = "granted") {
     assert.ok(code, name);
     vm.runInContext(code, context);
   }
+  context.syncVisitorLocationNotice();
   return { context, requests, elements, renders: () => renders };
 }
 
@@ -40,7 +42,8 @@ test("each page load restores the visitor position with existing permission and 
     const pending = f.context.restoreVisitorLocation();
     await new Promise(setImmediate);
     assert.equal(f.requests.length, 1);
-    assert.equal(f.elements.homeDistanceLocationBtn.disabled, true);
+    assert.equal(f.elements.homeDistanceNotice.attributes["aria-busy"], "true");
+    assert.equal(f.elements.homeDistanceDismiss.hidden, true);
     f.requests[0].success({ coords });
     await pending;
     assert.equal(f.context.visitorVenueDistanceLabel(venue), "3.2 mi");
@@ -65,7 +68,7 @@ test("first-time visitors are not prompted until a location action and denial ke
   assert.equal(f.elements.homeDistanceNotice.hidden, false);
   assert.match(f.elements.homeDistanceMessage.textContent, /browser settings/);
   assert.match(f.elements.homeDistanceMessage.textContent, /choose a city manually/);
-  assert.equal(f.elements.homeDistanceLocationBtn.disabled, false);
+  assert.equal(f.elements.homeDistanceDismiss.hidden, false);
   assert.equal(f.renders(), 0);
 });
 
@@ -75,8 +78,24 @@ test("already denied permissions do not automatically ask again or nag on reload
   await f.context.restoreVisitorLocation();
   assert.equal(f.requests.length, 0);
   assert.equal(f.context.visitorLocationError, "");
+  assert.equal(f.elements.homeDistanceMessage.textContent, "Enable location to see distances.");
+  assert.equal(f.elements.homeDistanceDismiss.hidden, true);
   assert.equal(f.elements.homeDistanceNotice.hidden, false);
   assert.equal(f.context.visitorVenueDistanceLabel(venue), "");
+});
+
+test("failed background restoration does not show settings instructions without a location tap", async () => {
+  for (const code of [1, 2, 3]) {
+    const f = fixture("granted");
+    const pending = f.context.restoreVisitorLocation();
+    await new Promise(setImmediate);
+    f.requests[0].error({ code });
+    await pending;
+    assert.equal(f.context.visitorLocationError, "");
+    assert.equal(f.elements.homeDistanceMessage.textContent, "Enable location to see distances.");
+    assert.equal(f.elements.homeDistanceDismiss.hidden, true);
+    assert.equal(f.context.citySelect.value, "Las Vegas");
+  }
 });
 
 test("browsers without permission-query support wait for a location action", async () => {
@@ -112,6 +131,7 @@ function cityLocationFixture() {
     setAttribute(key, value) { this.attributes[key] = value; },
     removeAttribute(key) { delete this.attributes[key]; },
     addEventListener(event, handler) { assert.equal(event, "click"); click = handler; },
+    focus(options) { f.focusOptions = options; },
   };
   f.context.citySelect.options = [{ value: "Las Vegas" }, { value: "Miami" }];
   f.context.citySelect.dispatchEvent = event => { f.changed = event.type; };
@@ -128,12 +148,12 @@ function cityLocationFixture() {
     customerDashboard: { classList: { contains: () => false } },
     Event: class { constructor(type) { this.type = type; } },
   });
-  const start = citySource.indexOf('    document.getElementById("locationBtn").addEventListener');
+  const start = citySource.indexOf('    document.getElementById("homeDistanceDismiss")?.addEventListener');
   const end = citySource.indexOf("    function installReferenceHomeShell()", start);
   assert.ok(start >= 0 && end > start);
   vm.runInContext(citySource.slice(start, end), f.context);
   vm.runInContext(citySource.match(/    function applyCityPickerSelection\([^]*?\n    \}/)[0], f.context);
-  return { ...f, state: f, click: () => click(), label };
+  return { ...f, state: f, click: () => click(), dismiss: () => f.elements.homeDistanceDismiss.events.click(), label };
 }
 
 test("Android and iPhone location taps request immediately, select the nearby city, and restore the control", async () => {
@@ -170,11 +190,36 @@ test("declining a location tap leaves the city list usable for manual selection"
   assert.equal(f.context.citySelect.value, "Las Vegas");
   assert.equal(f.context.userLocation, null);
   assert.equal(f.elements.locationBtn.disabled, false);
-  assert.match(f.state.toast, /choose a city manually/);
+  assert.match(f.elements.homeDistanceMessage.textContent, /choose a city manually/);
+  assert.doesNotMatch(f.elements.homeDistanceMessage.textContent, /try again/i);
+  assert.equal(f.elements.homeDistanceDismiss.hidden, false);
+  assert.equal(f.state.toast, undefined, "Failure guidance stays inside the city selector");
   f.context.applyCityPickerSelection("Miami");
   assert.equal(f.context.citySelect.value, "Miami");
   assert.equal(f.state.changed, "change");
   assert.equal(f.requests.length, 1, "Manual selection never requests location");
+});
+
+test("location errors can be dismissed without a retry, navigation or focus loss", async () => {
+  const f = cityLocationFixture();
+  const pending = f.click();
+  f.requests[0].error({ code: 1 });
+  await pending;
+  f.dismiss();
+  assert.equal(f.context.visitorLocationError, "");
+  assert.equal(f.elements.homeDistanceDismiss.hidden, true);
+  assert.equal(f.elements.homeDistanceMessage.textContent, "Enable location to see distances.");
+  assert.equal(f.state.focusOptions.preventScroll, true);
+  assert.equal(f.state.closed, false);
+  f.context.syncVisitorLocationNotice();
+  assert.equal(f.elements.homeDistanceDismiss.hidden, true, "A redraw cannot bring back a dismissed error");
+  assert.equal(f.requests.length, 1);
+  const retry = f.click();
+  assert.equal(f.elements.homeDistanceDismiss.hidden, true);
+  f.requests[1].error({ code: 3 });
+  await retry;
+  assert.match(f.elements.homeDistanceMessage.textContent, /timed out/);
+  assert.equal(f.elements.homeDistanceDismiss.hidden, false, "A new failed action can show fresh guidance");
 });
 
 test("repeat clicks share one location request and a timeout can be retried", async () => {
@@ -246,7 +291,7 @@ test("invalid or unavailable device coordinates never produce a guessed distance
     await pending;
     assert.equal(f.context.visitorVenueDistanceLabel(venue), "");
     assert.equal(f.elements.homeDistanceNotice.hidden, false);
-    assert.equal(f.elements.homeDistanceLocationBtn.disabled, false);
+    assert.equal(f.elements.homeDistanceDismiss.hidden, false);
   }
 });
 

@@ -345,7 +345,11 @@
     venueSelectDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeVenuePicker(); });
     venueSelectDialog?.addEventListener("click", (event) => { if (event.target === venueSelectDialog) closeVenuePicker(); });
 
-    document.getElementById("homeDistanceLocationBtn")?.addEventListener("click", () => { void requestVisitorLocation(); });
+    document.getElementById("homeDistanceDismiss")?.addEventListener("click", () => {
+      visitorLocationError = "";
+      syncVisitorLocationNotice();
+      document.getElementById("locationBtn")?.focus({ preventScroll: true });
+    });
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
       if (button?.disabled) return;
@@ -356,8 +360,9 @@
         button.setAttribute("aria-busy", "true");
       }
       if (label) label.textContent = "Checking location...";
+      visitorLocationError = "";
+      syncVisitorLocationNotice();
       try {
-        showToast("Checking your location...");
         const requestedLocation = await requestVenuePosition();
         if (!hasCoordinates(requestedLocation)) throw new Error("Your location is unavailable. Try again.");
         visitorLocation = requestedLocation;
@@ -395,7 +400,6 @@
         showToast(`${nearestMarket.city} selected from your location.`);
       } catch (error) {
         visitorLocationError = error.message || "Could not read location.";
-        showToast(visitorLocationError);
       } finally {
         if (button) {
           button.disabled = false;
