@@ -18,7 +18,7 @@ function rememberAcknowledgment(accountId: string) {
 }
 
 const ACCOUNT_ALERT_REASONS = {
-  customer: "Working updates from followed dancers and new club deals.",
+  customer: "We’ll email you when dancers you follow are working and about new club deals.",
   dancer: "Table requests, VIP selections and approvals.",
   venue: "Table and VIP requests.",
   vip: "VIP requests and confirmed visits.",
@@ -105,6 +105,9 @@ export default function EmailNotificationGuidance({
   const reason = accountRole === "venue" && clubApplication
     ? "Updates on your club application."
     : ACCOUNT_ALERT_REASONS[accountRole];
+  const instructions = accountRole === "customer"
+    ? "For phone alerts, turn on notifications in your email app for the address you used to sign up."
+    : "Email is on by default. Enable alerts in your email app for your MyDancr address.";
 
   return <aside className="email-notification-guidance" aria-label="Email alerts">
     <div className="email-guidance-heading">
@@ -117,7 +120,7 @@ export default function EmailNotificationGuidance({
     <button className="email-guidance-acknowledge" type="button" disabled={saving} onClick={() => void acknowledge()}>
       {saving ? "Saving…" : "Got it"}
     </button>
-    <p><strong>{reason}</strong> Email is on by default. Enable alerts in your email app for your MyDancr address.</p>
+    <p><strong>{reason}</strong> {instructions}</p>
     {error ? <p className="email-guidance-error" role="alert">{error}</p> : null}
   </aside>;
 }
