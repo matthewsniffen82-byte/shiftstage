@@ -558,7 +558,26 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   min-width: 16px !important;
   flex: 0 0 16px !important;
 }
+/* Keep the pin aligned with the club name when a distance adds a second row. */
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-shift-card .profile-venue-destination.is-live:has(.profile-venue-distance) {
+  grid-template-areas: "pin name cue" ". distance .";
+  row-gap: 2px !important;
+  margin-bottom: 8px !important;
+}
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-venue-destination.is-live:has(.profile-venue-distance) > .profile-venue-copy {
+  display: contents !important;
+}
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-venue-destination.is-live:has(.profile-venue-distance) .profile-venue-name {
+  grid-area: name;
+}
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-venue-destination.is-live:has(.profile-venue-distance) > .venue-dot {
+  grid-area: pin;
+}
+html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-venue-destination.is-live:has(.profile-venue-distance) > .profile-venue-cue {
+  grid-area: cue;
+}
 html body.dancr-button-system #profileBackdrop #profileModal.profile-split-layout .profile-venue-distance {
+  grid-area: distance;
   display: block;
   font-size: 11px !important;
   font-weight: 400 !important;
