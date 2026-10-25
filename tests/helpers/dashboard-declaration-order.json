@@ -113,10 +113,6 @@
   },
   {
     "file": "CustomerDashboardPanels.tsx",
-    "name": "CustomerWelcomeCard"
-  },
-  {
-    "file": "CustomerDashboardPanels.tsx",
     "name": "CustomerDashboardNav"
   },
   {

@@ -89,51 +89,6 @@ function groupFollowedVenuesByCity(items: CustomerVenueFollow[]) {
 }
 
 
-export function CustomerWelcomeCard({ accountKey, show }: { accountKey: string; show: boolean }) {
-  const [visible, setVisible] = useState(show);
-  const storageKey = `mydancr:customer-welcome-dismissed:${accountKey}`;
-
-  useEffect(() => {
-    if (!show) {
-      setVisible(false);
-      return;
-    }
-    try {
-      setVisible(window.localStorage.getItem(storageKey) !== "1");
-    } catch {
-      setVisible(true);
-    }
-  }, [show, storageKey]);
-
-  function dismissWelcome() {
-    setVisible(false);
-    try {
-      window.localStorage.setItem(storageKey, "1");
-    } catch {
-      // Dismissing still works for this visit if storage is unavailable.
-    }
-    const url = new URL(window.location.href);
-    url.searchParams.delete("confirmed");
-    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-  }
-
-  if (!visible) return null;
-
-  return (
-    <section className="customer-welcome-card" aria-labelledby="customer-welcome-title">
-      <div className="customer-welcome-lock" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>
-      </div>
-      <div className="customer-welcome-copy">
-        <h2 id="customer-welcome-title">Your account is ready</h2>
-        <p>Your account and activity aren’t public.</p>
-      </div>
-      <button type="button" onClick={dismissWelcome} aria-label="Dismiss guest account welcome">×</button>
-    </section>
-  );
-}
-
-
 export function CustomerDashboardNav({ active, onNavigate, alertCount = 0 }: {
   active: CustomerView;
   onNavigate: (view: CustomerView) => void;
@@ -194,13 +149,11 @@ export function CustomerPanel({
   initialSection,
   alertsContent,
   accountContent,
-  welcomeContent,
   alertCount,
 }: {
   initialSection?: string;
   alertsContent?: ReactNode;
   accountContent?: ReactNode;
-  welcomeContent?: ReactNode;
   alertCount?: number;
   isLoading: boolean;
   accountSavedUnavailable: boolean;
@@ -480,7 +433,6 @@ export function CustomerPanel({
         {workingFollows.length ? <CustomerSurface id="customer-working-now" title="Working Now" description="Dancers you follow, checked in now." count={workingFollows.length}>
           <div className="customer-saved-card-grid customer-followed-dancer-grid">{workingFollows.map(item => <FollowedDancerGridCard key={item.dancerId || item.dancer!.id} dancer={item.dancer!} onUnfollow={() => void unfollowDancer(String(item.dancerId || item.dancer!.id))} pending={Boolean(pendingAction)} unfollowing={pendingAction === `dancer-${item.dancerId || item.dancer!.id}`} />)}</div>
         </CustomerSurface> : null}
-        {welcomeContent}
       </> : <p className="customer-loading-state">Your night is unavailable. Use Try again above to reload your saved activity.</p>}
     </section>
     <section id="customer-view-saved" className="customer-view" hidden={view !== "saved"} aria-label="Saved" tabIndex={-1}>

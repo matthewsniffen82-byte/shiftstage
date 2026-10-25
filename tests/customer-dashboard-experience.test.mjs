@@ -139,16 +139,14 @@ test("Club Deal wallet and alerts expose real status, expiry, history, and direc
   assert.match(dashboard, /scans the QR to confirm one admission/);
 });
 
-test("new guest confirmation explains private account benefits once", () => {
-  assert.match(customerPage, /showCustomerWelcome=\{params\.confirmed === "1"\}/);
-  assert.match(dashboard, /mydancr:customer-welcome-dismissed:/);
-  assert.match(dashboard, /Your account is ready/);
-  assert.match(dashboard, /Your account and activity aren’t public/);
+test("guest dashboard opens without the account-ready notice and retains discovery actions", () => {
+  assert.match(customerPage, /<DashboardClient role="customer" \/>/);
+  assert.doesNotMatch(dashboard, /CustomerWelcomeCard|showCustomerWelcome|welcomeContent|mydancr:customer-welcome-dismissed:/);
+  assert.doesNotMatch(dashboard, /Your account is ready|Your account and activity aren’t public/);
   assert.match(dashboard, /Plan your night/);
   assert.match(dashboard, /Choose a city/);
   assert.match(dashboard, /homeDiscoveryHref\("dancers", city\)/);
   assert.match(dashboard, /homeDiscoveryHref\("venues", city\)/);
-  assert.match(dashboard, /url\.searchParams\.delete\("confirmed"\)/);
 });
 
 test("Club Deals can be privately bookmarked without reserving or redeeming them", () => {

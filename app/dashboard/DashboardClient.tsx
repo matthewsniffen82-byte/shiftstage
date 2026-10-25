@@ -42,7 +42,7 @@ import { DASHBOARD_SESSION_KEY as SESSION_KEY, DashboardDataRequestError, dashbo
 import type { DashboardRole, CustomerDashboardSection, LoadState, CustomerSavedState } from "./dashboard-types";
 import { dashboardName, SupportInboxPanel, DashboardLoadingState, InfoPanel, DashboardSection, NotificationPanel, AccountControlsPanel, AccountSummaryPanel } from "./DashboardShared";
 import { DashboardStyles } from "./DashboardStyles";
-import { CustomerWelcomeCard, CustomerPanel, CustomerPreferencesPanel } from "./CustomerDashboardPanels";
+import { CustomerPanel, CustomerPreferencesPanel } from "./CustomerDashboardPanels";
 import dynamic from "next/dynamic";
 const VenuePanel = dynamic(() => import("./VenueDashboardPanels").then(module => module.VenuePanel));
 
@@ -64,11 +64,9 @@ function warmDashboardRoleTools(role: DashboardRole) {
 export default function DashboardClient({
   role,
   initialSection,
-  showCustomerWelcome = false,
 }: {
   role: DashboardRole;
   initialSection?: CustomerDashboardSection;
-  showCustomerWelcome?: boolean;
 }) {
   const [state, setState] = useState<LoadState>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -577,9 +575,6 @@ export default function DashboardClient({
                 accountSavedUnavailable={Boolean(state.savedError && !state.saved)}
                 initialSection={initialSection}
                 alertCount={customerAlertCount}
-                welcomeContent={<>
-                  <CustomerWelcomeCard accountKey={String(state.account?.id || state.account?.email || "guest")} show={showCustomerWelcome} />
-                </>}
                 alertsContent={<div id="customer-alerts" tabIndex={-1}>
                   <details className="customer-manage-alerts" id="customer-notification-preferences" tabIndex={-1}>
                     <summary>Manage alerts <span>Preferences & delivery</span></summary>
