@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import DashboardHelp from "../components/DashboardHelp";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import EmailNotificationGuidance from "@/app/components/EmailNotificationGuidance";
 import { PasswordField } from "@/app/components/PasswordField";
@@ -493,6 +494,7 @@ export default function DashboardClient({
       <section className="dashboard-identity-header" data-account-kind="venue">
         <div className="dashboard-identity-back-row">
           <DashboardCloseButton fallbackHref={dashboardCloseHref} label="Back to MyDancr" />
+          {state.account?.id && <DashboardHelp key={state.account.id} role="venue" accountId={state.account.id} />}
         </div>
         <div className="dashboard-identity-copy"><span className="dashboard-identity-label">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
       </section>
@@ -516,6 +518,7 @@ export default function DashboardClient({
             fallbackHref={dashboardCloseHref}
             label="Back to MyDancr"
           />
+          {state.account?.id && !state.signInRequired && <DashboardHelp key={state.account.id} role={role === "venue" && state.venueAccess?.role === "staff" ? "staff" : role} accountId={state.account.id} />}
         </div>
         <div className="dashboard-identity-row">
           <div className="dashboard-identity-avatar">

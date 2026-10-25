@@ -75,6 +75,7 @@ function harness(fetch, { token = "table-token", session = null, component = "In
     require(name) {
       if (name === "react/jsx-runtime") return require(name);
       if (name === "../components/RefreshButton") return refreshButtonModule;
+      if (name === "../components/DashboardHelp") return { InternalDashboardHelp: () => null };
       if (name.endsWith(".css")) return {};
       if (name === "react") return {
         createContext: () => ({ Provider: "VenueProfileContext" }), useContext: () => sharedOpen ? { open: sharedOpen } : null,

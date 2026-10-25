@@ -4,6 +4,7 @@ import RefreshButton from "../components/RefreshButton";
 import "../components/dashboard-header.css";
 
 import Link from "next/link";
+import DashboardHelp from "../components/DashboardHelp";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import { readSession, requestDashboardJson, type DashboardSessionAccount } from "@/app/dashboard/dashboard-session";
@@ -330,9 +331,10 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
 
   return <main ref={dashboardSurface} className="vip-shell vip-dashboard-shell" id="vip-dashboard" data-global-navigation-swipe="ignore"><div className="vip-container">
     <header className="dashboard-identity-header" data-account-kind="vip">
-      <div className="dashboard-identity-back-row">
+      <div className="dashboard-identity-back-row" style={{ flexWrap: "wrap", gap: 12 }}>
         <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
         <RefreshButton label="Refresh VIP dashboard" busy={loading} className="vip-refresh" type="button" disabled={disabled || loading} onClick={refresh} />
+        <DashboardHelp key={account.id} role="vip" accountId={account.id} />
       </div>
       <div className="dashboard-identity-row">
         <div className="dashboard-identity-avatar"><span className="vip-identity-mark" aria-hidden="true"><VipIcon kind="overview" /></span></div>

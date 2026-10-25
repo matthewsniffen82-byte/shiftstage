@@ -1,5 +1,6 @@
 "use client";
 import RefreshButton from "../components/RefreshButton";
+import { InternalDashboardHelp } from "../components/DashboardHelp";
 
 import { createContext, useContext, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { DEMO_TABLE_REQUEST_COUNT } from "@/src/lib/dancr/venue-dashboard-demo";
@@ -450,7 +451,7 @@ export function InternalRoster({ token, operationsOnly = false, sampleTableReque
       <a className="ir-brand" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span className="ir-brand-caption">Powered by mydancr.com</span>{staff ? <span>INTERNAL</span> : null}</a>
       {!staff && snapshot?.venueLogoUrl ? <VenueBrandLogo key={snapshot.venueLogoUrl} url={snapshot.venueLogoUrl} name={snapshot.venueName} /> : <h1 className={staff ? undefined : "ir-venue-identity"}>{snapshot?.venueName || "Club roster"}</h1>}
       <p>{staff ? "Your floor. Your team. One live roster." : snapshot?.label || "Welcome to the club"}</p>
-    </div>{staff ? <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a> : null}</header> : null}
+    </div><div className="ir-actions">{staff ? <a className="ir-secondary" href="/dashboard/venue">Club dashboard</a> : null}{snapshot && <InternalDashboardHelp />}</div></header> : null}
     {error ? <section className="ir-panel" role="alert"><h2>Roster unavailable</h2><p>{error}</p>{staff ? <a className="ir-button" data-sign-in-action href="/account?role=venue&mode=login&return_to=%2Finternal">Sign in to MyDancr</a> : null}<button onClick={() => void refresh()}>Try again</button></section> : !snapshot && !operationsOnly ? <p role="status">Loading the live roster…</p> : null}
     {notice ? <p className="ir-notice" role="status">{notice}</p> : null}
     {snapshot ? <>

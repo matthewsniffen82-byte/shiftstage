@@ -6,6 +6,7 @@ import RefreshButton from "../components/RefreshButton";
 
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import DashboardHelp from "../components/DashboardHelp";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import EmailNotificationGuidance from "@/app/components/EmailNotificationGuidance";
@@ -759,7 +760,8 @@ export default function AdminClient() {
           </div>
         </div>
         {!isLoading && !needsSignIn ? (
-          <div className="admin-dashboard-session">
+          <div className="admin-dashboard-session" style={{ flexWrap: "wrap" }}>
+            {access && <DashboardHelp key={access.userId} role={access.role === "owner" ? "admin" : access.role} accountId={access.userId} />}
             <span><i aria-hidden="true" />Admin session active</span>
             <button className="admin-logout" type="button" onClick={signOut} disabled={isSigningOut}>
               {isSigningOut ? "Logging out..." : "Log out"}
