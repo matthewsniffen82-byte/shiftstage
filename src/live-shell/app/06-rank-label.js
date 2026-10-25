@@ -861,6 +861,8 @@
       notice.setAttribute("aria-busy", String(pending));
       const message = document.getElementById("homeDistanceMessage");
       if (message) message.textContent = notice.hidden ? "" : pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
+      const button = document.getElementById("homeDistanceLocationBtn");
+      if (button) button.disabled = pending;
       const dismiss = document.getElementById("homeDistanceDismiss");
       if (dismiss) dismiss.hidden = pending || !visitorLocationError;
     }

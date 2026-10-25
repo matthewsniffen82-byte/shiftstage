@@ -345,10 +345,11 @@
     venueSelectDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeVenuePicker(); });
     venueSelectDialog?.addEventListener("click", (event) => { if (event.target === venueSelectDialog) closeVenuePicker(); });
 
+    document.getElementById("homeDistanceLocationBtn")?.addEventListener("click", () => { void requestVisitorLocation(); });
     document.getElementById("homeDistanceDismiss")?.addEventListener("click", () => {
       visitorLocationError = "";
       syncVisitorLocationNotice();
-      document.getElementById("locationBtn")?.focus({ preventScroll: true });
+      document.getElementById("homeDistanceLocationBtn")?.focus({ preventScroll: true });
     });
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");

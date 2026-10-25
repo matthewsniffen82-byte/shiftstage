@@ -32467,12 +32467,6 @@
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
             <span class="location-btn-label">Use current location</span>
           </button>
-          <div class="home-distance-notice" id="homeDistanceNotice">
-            <span id="homeDistanceMessage" role="status">Enable location to see distances.</span>
-            <button id="homeDistanceDismiss" type="button" aria-label="Dismiss location message" title="Dismiss location message" hidden>
-              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
-            </button>
-          </div>
           <div class="venue-picker-options city-picker-options" id="citySelectOptions" role="listbox" aria-labelledby="citySelectLabel"></div>
         </div>
         <dialog id="distanceSelectDialog" aria-labelledby="distanceSelectDialogTitle" aria-describedby="distanceSelectOrigin">
@@ -32508,6 +32502,13 @@
         <span id="homeLiveRadius">25 mi · All Clubs</span>
         <span class="home-live-summary-divider" aria-hidden="true">·</span>
         <strong id="homeLiveWorking">0 Working Now</strong>
+        <div class="home-distance-notice" id="homeDistanceNotice">
+          <span id="homeDistanceMessage" role="status">Enable location to see distances.</span>
+          <button id="homeDistanceLocationBtn" type="button" aria-describedby="homeDistanceMessage">Enable location</button>
+          <button id="homeDistanceDismiss" type="button" aria-label="Dismiss location message" title="Dismiss location message" hidden>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+          </button>
+        </div>
       </div>
 
       <a
@@ -50340,6 +50341,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       notice.setAttribute("aria-busy", String(pending));
       const message = document.getElementById("homeDistanceMessage");
       if (message) message.textContent = notice.hidden ? "" : pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
+      const button = document.getElementById("homeDistanceLocationBtn");
+      if (button) button.disabled = pending;
       const dismiss = document.getElementById("homeDistanceDismiss");
       if (dismiss) dismiss.hidden = pending || !visitorLocationError;
     }
@@ -69111,10 +69114,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     venueSelectDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeVenuePicker(); });
     venueSelectDialog?.addEventListener("click", (event) => { if (event.target === venueSelectDialog) closeVenuePicker(); });
 
+    document.getElementById("homeDistanceLocationBtn")?.addEventListener("click", () => { void requestVisitorLocation(); });
     document.getElementById("homeDistanceDismiss")?.addEventListener("click", () => {
       visitorLocationError = "";
       syncVisitorLocationNotice();
-      document.getElementById("locationBtn")?.focus({ preventScroll: true });
+      document.getElementById("homeDistanceLocationBtn")?.focus({ preventScroll: true });
     });
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
