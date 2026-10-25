@@ -957,8 +957,10 @@
     }
 
     function syncHomeTvPageScrollIndicator() {
-      // All mobile discovery tabs share one indicator, including Samsung.
-      const usesPageIndicator = homeTvFeedUsesSnapViewport() &&
+      // Android supplies its own viewport indicator; do not add a second one.
+      const usesNativeIndicator = document.documentElement.classList.contains("is-android") ||
+        document.documentElement.classList.contains("is-samsung-browser");
+      const usesPageIndicator = !usesNativeIndicator && homeTvFeedUsesSnapViewport() &&
         (activeTab === "dancers" || activeTab === "venues" || document.documentElement.classList.contains("home-tv-page-snap"));
       document.documentElement.classList.toggle("home-page-scroll-indicator", usesPageIndicator);
       if (!usesPageIndicator) {

@@ -18,8 +18,9 @@ function classList() {
   };
 }
 
-function harness({ tab = "dancers", mobile = true, samsung = false, scrollHeight = 3200 } = {}) {
+function harness({ tab = "dancers", mobile = true, android = false, samsung = false, scrollHeight = 3200 } = {}) {
   const root = { classList: classList(), clientHeight: 800, scrollHeight, scrollTop: 0 };
+  if (android) root.classList.add("is-android");
   if (samsung) root.classList.add("is-samsung-browser");
   const children = [];
   const frames = [];
@@ -124,49 +125,44 @@ test("TV keeps its existing snap behavior and shares the same indicator", () => 
   assert.equal(children.length, 1);
 });
 
-test("Samsung shares one fading indicator across dancers, clubs and TV", () => {
-  const { context, root, children, timers, flush } = harness({ samsung: true });
-  context.queueHomeTvPageScrollIndicatorSync();
-  flush();
-  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
-  assert.equal(children.length, 1);
-  context.markHomeTvPageScrollIndicatorActive();
-  assert.equal(timers.size, 1);
-  assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), true);
-  [...timers.values()][0]();
-  assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), false);
-  context.activeTab = "venues";
-  context.syncHomeTvPageSnapState();
-  flush();
-  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
-  assert.equal(root.classList.contains("home-tv-page-snap"), false);
-  assert.equal(children.length, 1);
-  context.activeTab = "tv";
-  context.syncHomeTvPageSnapState();
-  flush();
-  assert.equal(root.classList.contains("home-tv-page-snap"), true);
-  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
-  assert.equal(children.length, 1);
-  context.homeTvFeedSnapMedia.matches = false;
-  context.syncHomeTvPageSnapState();
-  flush();
-  context.homeTvFeedSnapMedia.matches = true;
-  context.syncHomeTvPageSnapState();
-  flush();
-  assert.equal(children.length, 1);
-  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
+test("Android and Samsung use only native indicators across dancers, clubs and TV", () => {
+  for (const device of [{ android: true }, { android: true, samsung: true }, { samsung: true }]) {
+    const { context, root, children, timers, observers, flush } = harness(device);
+    for (const mobile of [true, false, true]) {
+      context.homeTvFeedSnapMedia.matches = mobile;
+      for (const tab of ["dancers", "venues", "tv", "dancers"]) {
+        context.activeTab = tab;
+        context.syncHomeTvPageSnapState();
+        flush();
+        context.markHomeTvPageScrollIndicatorActive();
+        flush();
+        assert.equal(root.classList.contains("home-page-scroll-indicator"), false, "Never hide the native indicator");
+        assert.equal(root.classList.contains("home-tv-page-snap"), mobile && tab === "tv", "Keep TV snapping unchanged");
+        assert.equal(context.homeTvPageScrollRail, null);
+        assert.equal(children.length, 0, "Do not create a custom scroll indicator");
+        assert.equal(timers.size, 0);
+        assert.equal(observers.length, 0);
+      }
+    }
+  }
 });
 
-test("late Samsung detection keeps the same indicator without a duplicate", () => {
-  const { context, root, timers } = harness();
-  context.syncHomeTvPageScrollIndicator();
-  context.markHomeTvPageScrollIndicatorActive();
-  root.classList.add("is-samsung-browser");
-  context.syncHomeTvPageScrollIndicator();
-  assert.equal(root.classList.contains("home-page-scroll-indicator"), true);
-  assert.equal(context.homeTvPageScrollRail.hidden, false);
-  assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), true);
-  assert.equal(timers.size, 1);
+test("late Android or Samsung detection clears the custom indicator and restores the native one", () => {
+  for (const deviceClass of ["is-android", "is-samsung-browser"]) {
+    const { context, root, children, timers, flush } = harness();
+    context.syncHomeTvPageScrollIndicator();
+    context.markHomeTvPageScrollIndicatorActive();
+    assert.equal(timers.size, 1);
+    root.classList.add(deviceClass);
+    context.syncHomeTvPageScrollIndicator();
+    flush();
+    context.markHomeTvPageScrollIndicatorActive();
+    assert.equal(root.classList.contains("home-page-scroll-indicator"), false);
+    assert.equal(context.homeTvPageScrollRail.hidden, true);
+    assert.equal(context.homeTvPageScrollRail.classList.contains("is-scrolling"), false);
+    assert.equal(timers.size, 0);
+    assert.equal(children.length, 1, "The disabled rail must not be recreated");
+  }
 });
 
 test("club thumb stays compact on short pages and retains a visible minimum on long pages", () => {
