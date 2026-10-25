@@ -458,7 +458,7 @@
       let remaining = seconds;
       const render = () => {
         button.disabled = true;
-        button.textContent = `Resend confirmation in ${remaining}s`;
+        button.textContent = "Confirmation email sent";
       };
       render();
       const timer = window.setInterval(() => {
