@@ -18,6 +18,22 @@ test("city discovery keeps the native select as a fallback and enhances it with 
   assert.match(aesthetic, /\.home-city-filter\.is-enhanced #citySelect[\s\S]*?clip-path: inset\(50%\)/);
 });
 
+test("current location is a separate action inside the city selector, before manual cities", async () => {
+  assert.match(liveShell, /id="citySelectPanel" hidden>\s*<button class="location-btn" id="locationBtn" type="button">[\s\S]*?>Use current location<\/span>\s*<\/button>\s*<div[^>]*id="citySelectOptions"[^>]*role="listbox"/);
+  assert.equal((liveShell.match(/id="locationBtn"/g) || []).length, 1);
+  assert.match(liveShell, /citySelectPanel\?\.addEventListener\("keydown", \(event\) => \{\s*if \(event.key === "Escape"\) \{\s*event.preventDefault\(\);\s*closeCityPicker\(true\);/);
+  const css = postcss.parse(await readFile(new URL("../public/dancr-ui-consistency.v1.css", import.meta.url), "utf8"));
+  const prefix = "html body.dancr-button-system > .app main.stack > .home-discovery-controls ";
+  let button;
+  css.walkRules(`${prefix}#citySelectPanel #locationBtn`, rule => { button = Object.fromEntries(rule.nodes.map(node => [node.prop, node.value])); });
+  assert.equal(button.height, "44px");
+  assert.equal(button["justify-content"], "flex-start");
+  assert.equal(button["border-radius"], "0");
+  let emptyActions;
+  css.walkRules(`${prefix}#homeAdvancedFilters .home-filter-actions:has(> #homeFilterReset[hidden])`, rule => { emptyActions = rule; });
+  assert.ok(emptyActions.nodes.some(node => node.prop === "display" && node.value === "none" && node.important), "No empty filter row after moving location");
+});
+
 test("city selection expands inline, applies immediately, and remains keyboard accessible", () => {
   assert.match(liveShell, /function openCityPicker\(\)[\s\S]*?citySelectPanel\.hidden = false[\s\S]*?querySelector\('\[aria-selected="true"\]'\)\?\.focus\(\)/);
   assert.match(liveShell, /function applyCityPickerSelection\(nextCity\)[\s\S]*?const changed = userLocationOutsideMarkets \|\| citySelect\.value !== nextCity;[\s\S]*?citySelect\.value = nextCity[\s\S]*?closeCityPicker\(true\)[\s\S]*?citySelect\.dispatchEvent\(new Event\("change", \{ bubbles: true \}\)\)/);
@@ -60,7 +76,7 @@ test("a remote visitor gets an honest near-me state instead of a distant support
   );
   assert.match(
     liveShell,
-    /userLocationOutsideMarkets = false;[\s\S]*?citySelect\.value = nearestMarket\.city;[\s\S]*?syncCityPickerSelection\(nearestMarket\.city\);[\s\S]*?\$\{nearestMarket\.city\} selected from your location\./,
+    /userLocationOutsideMarkets = false;[\s\S]*?citySelect\.value = nearestMarket\.city;[\s\S]*?closeCityPicker\(true\);[\s\S]*?\$\{nearestMarket\.city\} selected from your location\./,
   );
   assert.match(liveShell, /function discoveryLocationPhrase\(city = selectedCity\(\)\)[\s\S]*?userLocationOutsideMarkets \? "near you" : `in \$\{city\}`/);
   assert.match(liveShell, /const label = userLocationOutsideMarkets \? "Near me" : citySelect\.value/);

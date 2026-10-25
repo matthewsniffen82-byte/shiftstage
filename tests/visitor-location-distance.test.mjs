@@ -5,6 +5,7 @@ import vm from "node:vm";
 
 const source = ["05-real-dancer-dashboard-metrics", "06-rank-label"].map(file =>
   readFileSync(new URL(`../src/live-shell/app/${file}.js`, import.meta.url), "utf8")).join("\n");
+const citySource = readFileSync(new URL("../src/live-shell/app/26-sync-discovery-city-scope.js", import.meta.url), "utf8");
 const coords = { latitude: 0, longitude: 0, accuracy: 20 };
 const venue = { latitude: 0, longitude: 0.04632 };
 
@@ -50,39 +51,130 @@ test("each page load restores the visitor position with existing permission and 
   }
 });
 
-test("first-time visitors receive a native location request and denial keeps browsing available", async () => {
+test("first-time visitors are not prompted until a location action and denial keeps browsing available", async () => {
   const f = fixture("prompt");
-  const pending = f.context.restoreVisitorLocation();
-  await new Promise(setImmediate);
+  await f.context.restoreVisitorLocation();
+  await f.context.restoreVisitorLocation();
+  assert.equal(f.requests.length, 0);
+  assert.equal(f.context.visitorLocationError, "");
+  const pending = f.context.requestVisitorLocation();
+  assert.equal(f.requests.length, 1);
   f.requests[0].error({ code: 1 });
   await pending;
   assert.equal(f.context.visitorVenueDistanceLabel(venue), "");
   assert.equal(f.elements.homeDistanceNotice.hidden, false);
   assert.match(f.elements.homeDistanceMessage.textContent, /browser settings/);
+  assert.match(f.elements.homeDistanceMessage.textContent, /choose a city manually/);
   assert.equal(f.elements.homeDistanceLocationBtn.disabled, false);
   assert.equal(f.renders(), 0);
 });
 
-test("already denied permissions show an explanation without repeatedly requesting location", async () => {
+test("already denied permissions do not automatically ask again or nag on reload", async () => {
   const f = fixture("denied");
   await f.context.restoreVisitorLocation();
+  await f.context.restoreVisitorLocation();
   assert.equal(f.requests.length, 0);
-  assert.match(f.elements.homeDistanceMessage.textContent, /Allow location/);
+  assert.equal(f.context.visitorLocationError, "");
   assert.equal(f.elements.homeDistanceNotice.hidden, false);
   assert.equal(f.context.visitorVenueDistanceLabel(venue), "");
 });
 
-test("permission-query incompatibility still uses the browser's native geolocation permission flow", async () => {
+test("browsers without permission-query support wait for a location action", async () => {
   for (const permissions of [undefined, { query: async () => { throw new Error("Unsupported"); } }]) {
     const f = fixture();
     f.context.navigator.permissions = permissions;
-    const pending = f.context.restoreVisitorLocation();
-    await new Promise(setImmediate);
+    await f.context.restoreVisitorLocation();
+    assert.equal(f.requests.length, 0);
+    const pending = f.context.requestVisitorLocation();
     assert.equal(f.requests.length, 1);
     f.requests[0].success({ coords });
     await pending;
     assert.equal(f.context.visitorVenueDistanceLabel(venue), "3.2 mi");
   }
+});
+
+test("unknown permission states never fall through to a startup prompt", async () => {
+  for (const state of [undefined, "unknown"]) {
+    const f = fixture(state);
+    f.context.navigator.permissions.query = async () => ({ state });
+    await f.context.restoreVisitorLocation();
+    assert.equal(f.requests.length, 0);
+  }
+});
+
+function cityLocationFixture() {
+  const f = fixture("prompt");
+  let click;
+  const label = { textContent: "Use current location" };
+  f.elements.locationBtn = {
+    disabled: false, attributes: {},
+    querySelector() { return label; },
+    setAttribute(key, value) { this.attributes[key] = value; },
+    removeAttribute(key) { delete this.attributes[key]; },
+    addEventListener(event, handler) { assert.equal(event, "click"); click = handler; },
+  };
+  f.context.citySelect.options = [{ value: "Las Vegas" }, { value: "Miami" }];
+  f.context.citySelect.dispatchEvent = event => { f.changed = event.type; };
+  f.closed = false;
+  Object.assign(f.context, {
+    userLocationOutsideMarkets: false,
+    venueSelect: { value: "all" },
+    MAX_LOCATION_MARKET_DISTANCE_MILES: 50,
+    nearestCityForCoordinates: () => ({ city: "Miami", miles: 3 }),
+    closeCityPicker() { f.closed = true; },
+    syncCityPickerSelection() {},
+    showToast(message) { f.toast = message; },
+    loadLiveDiscovery(city) { f.loadedCity = city; },
+    customerDashboard: { classList: { contains: () => false } },
+    Event: class { constructor(type) { this.type = type; } },
+  });
+  const start = citySource.indexOf('    document.getElementById("locationBtn").addEventListener');
+  const end = citySource.indexOf("    function installReferenceHomeShell()", start);
+  assert.ok(start >= 0 && end > start);
+  vm.runInContext(citySource.slice(start, end), f.context);
+  vm.runInContext(citySource.match(/    function applyCityPickerSelection\([^]*?\n    \}/)[0], f.context);
+  return { ...f, state: f, click: () => click(), label };
+}
+
+test("Android and iPhone location taps request immediately, select the nearby city, and restore the control", async () => {
+  for (const userAgent of ["Android Chrome", "Android SamsungBrowser", "iPhone Safari"]) {
+    const f = cityLocationFixture();
+    f.context.navigator.userAgent = userAgent;
+    if (userAgent.includes("Safari")) f.context.navigator.permissions = undefined;
+    await f.context.restoreVisitorLocation();
+    assert.equal(f.requests.length, 0);
+    const pending = f.click();
+    assert.equal(f.requests.length, 1, "Request starts inside the click, without awaiting a permission query");
+    assert.equal(f.elements.locationBtn.disabled, true);
+    assert.equal(f.elements.locationBtn.attributes["aria-busy"], "true");
+    await f.click();
+    assert.equal(f.requests.length, 1, "Ignore another tap while waiting");
+    f.requests[0].success({ coords });
+    await pending;
+    assert.equal(f.context.citySelect.value, "Miami");
+    assert.equal(f.state.loadedCity, "Miami");
+    assert.equal(f.context.visitorVenueDistanceLabel(venue), "3.2 mi");
+    assert.equal(f.state.closed, true);
+    assert.equal(f.elements.locationBtn.disabled, false);
+    assert.equal(f.elements.locationBtn.attributes["aria-busy"], undefined);
+    assert.equal(f.label.textContent, "Use current location");
+  }
+});
+
+test("declining a location tap leaves the city list usable for manual selection", async () => {
+  const f = cityLocationFixture();
+  const pending = f.click();
+  f.requests[0].error({ code: 1 });
+  await pending;
+  assert.equal(f.state.closed, false);
+  assert.equal(f.context.citySelect.value, "Las Vegas");
+  assert.equal(f.context.userLocation, null);
+  assert.equal(f.elements.locationBtn.disabled, false);
+  assert.match(f.state.toast, /choose a city manually/);
+  f.context.applyCityPickerSelection("Miami");
+  assert.equal(f.context.citySelect.value, "Miami");
+  assert.equal(f.state.changed, "change");
+  assert.equal(f.requests.length, 1, "Manual selection never requests location");
 });
 
 test("repeat clicks share one location request and a timeout can be retried", async () => {

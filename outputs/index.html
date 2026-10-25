@@ -32459,14 +32459,14 @@
             </button>
           </div>
           <div class="home-filter-actions">
-            <button class="location-btn" id="locationBtn" type="button">
-              <svg class="icon" viewBox="0 0 24 24"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
-              <span class="location-btn-label">Use current location</span>
-            </button>
             <button class="home-filter-reset" id="homeFilterReset" type="button" hidden>Reset</button>
           </div>
         </div>
         <div class="city-picker-inline" id="citySelectPanel" hidden>
+          <button class="location-btn" id="locationBtn" type="button">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v4"></path><path d="M12 18v4"></path><path d="M2 12h4"></path><path d="M18 12h4"></path><circle cx="12" cy="12" r="4"></circle></svg>
+            <span class="location-btn-label">Use current location</span>
+          </button>
           <div class="venue-picker-options city-picker-options" id="citySelectOptions" role="listbox" aria-labelledby="citySelectLabel"></div>
         </div>
         <dialog id="distanceSelectDialog" aria-labelledby="distanceSelectDialogTitle" aria-describedby="distanceSelectOrigin">
@@ -50321,7 +50321,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             accuracy: position.coords.accuracy
           }),
           (error) => reject(new Error(error?.code === 1
-            ? "Allow location for mydancr.com in your browser settings to see distances."
+            ? "Allow location in your browser settings, or choose a city manually."
             : error?.code === 3
               ? "Finding your location timed out. Try again."
               : "Your location is unavailable. Turn on device location and try again.")),
@@ -50380,17 +50380,12 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     async function restoreVisitorLocation() {
       if (internalProfileFrameId || hasCoordinates(visitorLocation)) return;
+      if (!navigator.permissions?.query) return;
       try {
-        if (navigator.permissions?.query) {
-          const permission = await navigator.permissions.query({ name: "geolocation" });
-          if (permission.state === "denied") {
-            visitorLocationError = "Allow location for mydancr.com in your browser settings to see distances.";
-            syncVisitorLocationNotice();
-            return;
-          }
-        }
-      } catch { /* Some browsers support geolocation without the Permissions API. */ }
-      // The browser asks first-time visitors and reuses existing location permission.
+        const permission = await navigator.permissions.query({ name: "geolocation" });
+        if (permission.state !== "granted") return;
+      } catch { return; }
+      // Never trigger a permission prompt on load, including Safari fallbacks.
       if (!hasCoordinates(visitorLocation)) await requestVisitorLocation();
     }
 
@@ -68866,12 +68861,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (!option) return;
       applyCityPickerSelection(option.dataset.cityPickerValue || citySelect.value);
     });
-    citySelectOptions?.addEventListener("keydown", (event) => {
+    citySelectPanel?.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
         closeCityPicker(true);
-        return;
       }
+    });
+    citySelectOptions?.addEventListener("keydown", (event) => {
       if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
       const options = [...citySelectOptions.querySelectorAll("[data-city-picker-value]")];
       const currentIndex = options.indexOf(document.activeElement);
@@ -69118,6 +69114,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     document.getElementById("homeDistanceLocationBtn")?.addEventListener("click", () => { void requestVisitorLocation(); });
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
+      if (button?.disabled) return;
       const label = button?.querySelector(".location-btn-label");
       const originalText = "Use current location";
       if (button) {
@@ -69128,12 +69125,14 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       try {
         showToast("Checking your location...");
         const requestedLocation = await requestVenuePosition();
+        if (!hasCoordinates(requestedLocation)) throw new Error("Your location is unavailable. Try again.");
         visitorLocation = requestedLocation;
         visitorLocationError = "";
         const nearestMarket = nearestCityForCoordinates(requestedLocation);
         if (!nearestMarket || nearestMarket.miles > MAX_LOCATION_MARKET_DISTANCE_MILES) {
           userLocation = requestedLocation;
           userLocationOutsideMarkets = true;
+          closeCityPicker(true);
           tonightExpanded = false;
           dancersExpanded = false;
           dashboardTonightExpanded = false;
@@ -69148,7 +69147,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         userLocation = requestedLocation;
         userLocationOutsideMarkets = false;
         citySelect.value = nearestMarket.city;
-        syncCityPickerSelection(nearestMarket.city);
+        closeCityPicker(true);
         tonightExpanded = false;
         dancersExpanded = false;
         dashboardTonightExpanded = false;
@@ -69161,7 +69160,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         if (customerDashboard.classList.contains("show")) renderDashboard();
         showToast(`${nearestMarket.city} selected from your location.`);
       } catch (error) {
-        showToast(error.message || "Could not read location.");
+        visitorLocationError = error.message || "Could not read location.";
+        showToast(visitorLocationError);
       } finally {
         if (button) {
           button.disabled = false;

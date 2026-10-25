@@ -844,7 +844,7 @@
             accuracy: position.coords.accuracy
           }),
           (error) => reject(new Error(error?.code === 1
-            ? "Allow location for mydancr.com in your browser settings to see distances."
+            ? "Allow location in your browser settings, or choose a city manually."
             : error?.code === 3
               ? "Finding your location timed out. Try again."
               : "Your location is unavailable. Turn on device location and try again.")),
@@ -903,17 +903,12 @@
 
     async function restoreVisitorLocation() {
       if (internalProfileFrameId || hasCoordinates(visitorLocation)) return;
+      if (!navigator.permissions?.query) return;
       try {
-        if (navigator.permissions?.query) {
-          const permission = await navigator.permissions.query({ name: "geolocation" });
-          if (permission.state === "denied") {
-            visitorLocationError = "Allow location for mydancr.com in your browser settings to see distances.";
-            syncVisitorLocationNotice();
-            return;
-          }
-        }
-      } catch { /* Some browsers support geolocation without the Permissions API. */ }
-      // The browser asks first-time visitors and reuses existing location permission.
+        const permission = await navigator.permissions.query({ name: "geolocation" });
+        if (permission.state !== "granted") return;
+      } catch { return; }
+      // Never trigger a permission prompt on load, including Safari fallbacks.
       if (!hasCoordinates(visitorLocation)) await requestVisitorLocation();
     }
 

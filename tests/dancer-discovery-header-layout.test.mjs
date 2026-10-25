@@ -103,7 +103,7 @@ test("city and Filters labels share one visual center without resizing their con
 });
 
 test("expanded discovery filters stay compact and expose truthful reset state", () => {
-  assert.match(liveShell, /class="home-filter-actions"[\s\S]*?id="locationBtn"[\s\S]*?>Use current location<[\s\S]*?id="homeFilterReset"[^>]*hidden>Reset<\/button>/);
+  assert.match(liveShell, /class="home-filter-actions">\s*<button class="home-filter-reset" id="homeFilterReset"[^>]*hidden>Reset<\/button>\s*<\/div>/);
   assert.match(liveShell, /const homeFilterReset = document\.getElementById\("homeFilterReset"\)/);
   assert.match(liveShell, /if \(homeFilterReset\) homeFilterReset\.hidden = activeFilterCount === 0/);
   assert.match(liveShell, /homeFilterReset\?\.addEventListener\("click"[\s\S]*?distanceSelect\.value = "25 mi"[\s\S]*?venueSelect\.value = "all"[\s\S]*?syncVenuePickerSelection\("all"\)[\s\S]*?render\(\)[\s\S]*?showToast\("Filters reset"\)/);

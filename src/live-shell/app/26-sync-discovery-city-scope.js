@@ -95,12 +95,13 @@
       if (!option) return;
       applyCityPickerSelection(option.dataset.cityPickerValue || citySelect.value);
     });
-    citySelectOptions?.addEventListener("keydown", (event) => {
+    citySelectPanel?.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
         closeCityPicker(true);
-        return;
       }
+    });
+    citySelectOptions?.addEventListener("keydown", (event) => {
       if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
       const options = [...citySelectOptions.querySelectorAll("[data-city-picker-value]")];
       const currentIndex = options.indexOf(document.activeElement);
@@ -347,6 +348,7 @@
     document.getElementById("homeDistanceLocationBtn")?.addEventListener("click", () => { void requestVisitorLocation(); });
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
+      if (button?.disabled) return;
       const label = button?.querySelector(".location-btn-label");
       const originalText = "Use current location";
       if (button) {
@@ -357,12 +359,14 @@
       try {
         showToast("Checking your location...");
         const requestedLocation = await requestVenuePosition();
+        if (!hasCoordinates(requestedLocation)) throw new Error("Your location is unavailable. Try again.");
         visitorLocation = requestedLocation;
         visitorLocationError = "";
         const nearestMarket = nearestCityForCoordinates(requestedLocation);
         if (!nearestMarket || nearestMarket.miles > MAX_LOCATION_MARKET_DISTANCE_MILES) {
           userLocation = requestedLocation;
           userLocationOutsideMarkets = true;
+          closeCityPicker(true);
           tonightExpanded = false;
           dancersExpanded = false;
           dashboardTonightExpanded = false;
@@ -377,7 +381,7 @@
         userLocation = requestedLocation;
         userLocationOutsideMarkets = false;
         citySelect.value = nearestMarket.city;
-        syncCityPickerSelection(nearestMarket.city);
+        closeCityPicker(true);
         tonightExpanded = false;
         dancersExpanded = false;
         dashboardTonightExpanded = false;
@@ -390,7 +394,8 @@
         if (customerDashboard.classList.contains("show")) renderDashboard();
         showToast(`${nearestMarket.city} selected from your location.`);
       } catch (error) {
-        showToast(error.message || "Could not read location.");
+        visitorLocationError = error.message || "Could not read location.";
+        showToast(visitorLocationError);
       } finally {
         if (button) {
           button.disabled = false;
