@@ -7,11 +7,15 @@ import sharp from 'sharp';
 import * as core from '../src/lib/dancr/avatar-face-core.ts';
 import { detector, avatarSample } from './helpers/avatar-face-runtime.mjs';
 
-const exports = {};
-vm.runInNewContext(ts.transpileModule(readFileSync('src/lib/dancr/main-photo-avatar-image.ts', 'utf8'), {
+const code = ts.transpileModule(readFileSync('src/lib/dancr/main-photo-avatar-image.ts', 'utf8'), {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true },
-}).outputText, { exports, Buffer, require: name => ({ 'server-only': {}, sharp, './avatar-face-core': core, './avatar-face-detector': detector })[name] });
-const { cropMainPhotoAvatar } = exports;
+}).outputText;
+function avatarCropper(locateAvatarFace = detector.locateAvatarFace) {
+  const exports = {};
+  vm.runInNewContext(code, { exports, Buffer, require: name => ({ 'server-only': {}, sharp, './avatar-face-core': core, './avatar-face-detector': { locateAvatarFace } })[name] });
+  return exports.cropMainPhotoAvatar;
+}
+const cropMainPhotoAvatar = avatarCropper();
 
 test('automatic avatars are square for portrait, landscape and square approved photos', async () => {
   for (const [width, height] of [[900,1200],[1200,900],[300,300]]) {
@@ -24,6 +28,36 @@ test('automatic crop uses the local face detector on an actual photo', async () 
   const sample = await avatarSample();
   const result = await cropMainPhotoAvatar(sample.buffer);
   assert.ok(await detector.locateAvatarFace(result));
+});
+
+test('automatic crops compare all areas and prefer the main face over a smaller face found first', async () => {
+  for (const portrait of [true, false]) {
+    const width = portrait ? 300 : 900, height = portrait ? 900 : 300;
+    const lastSquare = await sharp({ create: { width: 300, height: 300, channels: 3, background: '#0000ff' } }).png().toBuffer();
+    const source = await sharp({ create: { width, height, channels: 3, background: '#ff0000' } })
+      .composite([{ input: lastSquare, left: portrait ? 0 : 600, top: portrait ? 600 : 0 }]).png().toBuffer();
+    const faces = [
+      { left: .45, top: .45, right: .55, bottom: .55 },
+      null,
+      { left: .3, top: .35, right: .7, bottom: .75 },
+    ];
+    let calls = 0;
+    const crop = avatarCropper(async () => faces[calls++]);
+    const stats = await sharp(await crop(source)).stats();
+    assert.equal(calls, 3, 'inspect every candidate before choosing the subject');
+    assert.ok(stats.channels[2].mean > 240, 'crop the dominant face in the final area');
+    assert.ok(stats.channels[0].mean < 10);
+  }
+});
+
+test('manual crop coordinates refer to the upright main photo after EXIF rotation', async () => {
+  const blue = await sharp({ create: { width: 300, height: 300, channels: 3, background: '#0000ff' } }).png().toBuffer();
+  const source = await sharp({ create: { width: 600, height: 300, channels: 3, background: '#ff0000' } })
+    .composite([{ input: blue, left: 300, top: 0 }]).jpeg().withMetadata({ orientation: 6 }).toBuffer();
+  const output = await cropMainPhotoAvatar(source, { x: 0, y: .5, width: 1, height: .5 });
+  const stats = await sharp(output).stats();
+  assert.ok(stats.channels[2].mean > 240);
+  assert.ok(stats.channels[0].mean < 10);
 });
 test('manual crop honors position and zoom from the approved source without replacing bytes', async () => {
   const top = await sharp({ create: { width: 300, height: 300, channels: 3, background: '#ff0000' } }).png().toBuffer();

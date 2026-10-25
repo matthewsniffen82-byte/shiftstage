@@ -25,10 +25,18 @@ export async function cropMainPhotoAvatar(buffer: Buffer, crop?: AvatarCrop) {
   } else {
     const candidates = computeAvatarCandidateCrops(width, height);
     let selected = candidates.find(item => item.position === "middle") || candidates[0];
+    let largestFaceArea = 0;
     for (const candidate of candidates) {
       const square = await sharp(normalized.data).extract({ left: candidate.left, top: candidate.top, width: candidate.size, height: candidate.size }).toBuffer();
       const face = await locateAvatarFace(square);
-      if (face) { selected = computeFaceCenteredAvatarCrop(width, height, candidate, face); break; }
+      if (!face) continue;
+      // Compare the whole photo before choosing: the first square can contain
+      // a small background face while the main subject is farther right/down.
+      const area = (face.right - face.left) * (face.bottom - face.top) * candidate.size ** 2;
+      if (area > largestFaceArea) {
+        selected = computeFaceCenteredAvatarCrop(width, height, candidate, face);
+        largestFaceArea = area;
+      }
     }
     rect = { left: selected.left, top: selected.top, width: selected.size, height: selected.size };
   }

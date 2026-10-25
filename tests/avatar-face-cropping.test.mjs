@@ -120,6 +120,23 @@ test("portrait candidate offsets map the face back into the original image", () 
   assert.deepEqual(crop, { position: "middle", left: 0, top: 270, size: 1000 });
 });
 
+test("off-center faces stay inside the circular avatar without unnecessarily tightening centered photos", () => {
+  const candidate = computeAvatarCandidateCrops(1000, 1000)[0];
+  for (const face of [
+    { left: .06, top: .2, right: .26, bottom: .45 },
+    { left: .74, top: .2, right: .94, bottom: .45 },
+  ]) {
+    const crop = computeFaceCenteredAvatarCrop(1000, 1000, candidate, face);
+    assert.ok(crop.size < 1000 && crop.size >= 1000 / 3);
+    for (const x of [face.left, face.right]) for (const y of [face.top, face.bottom]) {
+      assert.ok(Math.hypot(x * 1000 - crop.left - crop.size / 2, y * 1000 - crop.top - crop.size / 2) <= crop.size * .48,
+        'the full face must clear the circular mask');
+    }
+  }
+  const centered = computeFaceCenteredAvatarCrop(1000, 1000, candidate, { left: .4, top: .3, right: .6, bottom: .55 });
+  assert.equal(centered.size, 1000);
+});
+
 test("face crops stay inside the source at every edge and for close-up portraits", () => {
   const candidate = computeAvatarCandidateCrops(900, 900)[0];
   for (const face of [
