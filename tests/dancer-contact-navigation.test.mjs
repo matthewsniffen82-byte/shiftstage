@@ -114,7 +114,7 @@ test("Contact targets messaging inside Help & Account and opens its collapsed an
   const account = dashboard.slice(dashboard.indexOf('id="dancer-account"'), dashboard.indexOf('id="venue-account"'));
   assert.match(account, /<SupportInboxPanel[^>]*panelId="dancer-support"/);
   const inbox = dashboard.slice(dashboard.indexOf("function SupportInboxPanel("), dashboard.indexOf("\nfunction AccountControlsPanel("));
-  assert.match(inbox, /id=\{panelId\} tabIndex=\{panelId \? -1 : undefined\}/);
+  assert.match(inbox, /<DashboardHelpShortcut panelId=\{panelId\}/);
   const start = dashboard.indexOf('  useEffect(() => {\n    if (isLoading || state.error || role === "customer") return;');
   const end = dashboard.indexOf('\n\n  const updateProfile', start);
   assert.ok(start >= 0 && end > start);

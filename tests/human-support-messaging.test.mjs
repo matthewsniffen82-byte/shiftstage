@@ -11,6 +11,7 @@ const [supportSource, routeSource, dashboardSource, adminSource, liveAppSource, 
   readFile(new URL("../public/sw.js", import.meta.url), "utf8"),
   readFile(new URL("../app/route.ts", import.meta.url), "utf8"),
 ]);
+const helpMessages = await readFile(new URL("../app/components/DashboardHelpMessages.tsx", import.meta.url), "utf8");
 
 test("support API accepts authenticated customer, dancer, and venue accounts", () => {
   assert.match(routeSource, /createRequestSupabaseContext\(request\)/);
@@ -53,9 +54,9 @@ test("live support interfaces use the production API and the venue dashboard exp
   assert.match(liveAppSource, /if \(status\) status\.textContent = "Message sent to admin\.";[\s\S]*?return true;/);
   const venueAccount = dashboardSource.slice(dashboardSource.indexOf('id="venue-account"', dashboardSource.indexOf("function VenuePanel(")));
   assert.match(venueAccount, /<SupportInboxPanel initialThreads=\{supportThreads\} panelId="venue-support" \/>/);
-  assert.match(dashboardSource, /const \[sendConfirmation, setSendConfirmation\] = useState\(false\)/);
-  assert.match(dashboardSource, /setStatus\("Message sent to admin\."\);[\s\S]*?setSendConfirmation\(true\)/);
-  assert.match(dashboardSource, /sendConfirmation \? "✓ Message sent" : "Send message"/);
+  assert.match(dashboardSource, /return <DashboardHelpShortcut panelId=\{panelId\}/);
+  assert.match(helpMessages, /Message sent to the team\. Replies will appear in this conversation\./);
+  assert.match(helpMessages, /selected \? "Send reply" : "Send message"/);
   assert.doesNotMatch(liveAppSource, /Dancr Support AI|AI answers|AI replied/);
   assert.doesNotMatch(liveAppSource, /supportStorageKey|readStoredSupportThreads|writeStoredSupportThreads|localSupportThread/);
 });

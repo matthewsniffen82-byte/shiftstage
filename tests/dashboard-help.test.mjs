@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import { HELP_TOPICS, HELP_ROLE_LABELS, helpTopicsFor, matchHelpQuestion, helpSupportRole, helpSupportHref, helpEmailHref } from '../src/lib/dancr/dashboard-help.ts';
-import { sendHelpMessage } from '../app/components/dashboard-help-support.ts';
+import { loadHelpThreads, sendHelpMessage } from '../app/components/dashboard-help-support.ts';
 
 test('every account and staff workspace has scoped topics and a human handoff', () => {
   for (const role of Object.keys(HELP_ROLE_LABELS)) {
@@ -73,11 +73,11 @@ function fixture(role = 'customer') {
   const controller = new AbortController();
   const input = { role, accountId: 'one', message: '  Help with this account  ', requestId: 'attempt-one', signal: controller.signal };
   const dependencies = { readSession: () => session, request: async (...args) => { calls.push(args); return response(); } };
-  return { input, calls, controller, send: (overrides = {}) => sendHelpMessage({ ...input, ...overrides }, dependencies), switchAccount: () => { session = { ...session, account: { ...session.account, id: 'two' } }; }, respond: fn => { response = fn; } };
+  return { input, calls, controller, load: () => loadHelpThreads(input, dependencies), send: (overrides = {}) => sendHelpMessage({ ...input, ...overrides }, dependencies), switchAccount: () => { session = { ...session, account: { ...session.account, id: 'two' } }; }, respond: fn => { response = fn; } };
 }
 test('handoff sends only reviewed text to existing support and requires a receipt', async () => {
   const f = fixture();
-  assert.equal(await f.send(), 'thread-one');
+  assert.equal((await f.send()).id, 'thread-one');
   assert.equal(f.calls[0][0], '/api/support');
   assert.equal(f.calls[0][1].expectedRole, 'customer');
   assert.deepEqual(JSON.parse(f.calls[0][1].body), { subject: 'Guest dashboard help', message: 'Help with this account', requestId: 'attempt-one' });
@@ -112,4 +112,20 @@ test('product limits remain sourced from implementation constants', () => {
   assert.match(source, /\$\{MIN_DANCER_ONBOARDING_PHOTOS\}/);
   assert.match(source, /\$\{MAX_DANCER_PROFILE_PHOTOS\}/);
   assert.doesNotMatch(source, /fetch\(|process\.env|OpenAI/);
+});
+test('history reads require a real list and the same account before and after loading', async () => {
+  const f = fixture();
+  f.respond(async () => ({ threads: [{ id: 'existing', messages: [{ id: 'reply', senderRole: 'admin', body: 'Team answer' }] }] }));
+  assert.equal((await f.load())[0].messages[0].body, 'Team answer');
+  assert.equal(f.calls[0][1].cache, 'no-store');
+  f.respond(async () => ({})); await assert.rejects(f.load(), /could not be loaded/);
+  f.respond(async () => { f.switchAccount(); return { threads: [] }; });
+  await assert.rejects(f.load(), /sign-in changed/);
+  const count = f.calls.length; await assert.rejects(f.load(), /sign-in changed/); assert.equal(f.calls.length, count);
+});
+test('replies use the existing thread and reject a receipt for a different conversation', async () => {
+  const f = fixture();
+  await f.send({ threadId: 'thread-one', subject: 'ignored for replies' });
+  assert.deepEqual(JSON.parse(f.calls[0][1].body), { threadId: 'thread-one', message: 'Help with this account', requestId: 'attempt-one' });
+  await assert.rejects(f.send({ threadId: 'different' }), /reply could not be confirmed/);
 });

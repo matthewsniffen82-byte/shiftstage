@@ -78,7 +78,6 @@ export default function DashboardClient({
   const [isVenueRefreshing, setIsVenueRefreshing] = useState(false);
   const [venueRefreshStatus, setVenueRefreshStatus] = useState("");
   const [customerAlertCount, setCustomerAlertCount] = useState(0);
-  const [customerSupportCount, setCustomerSupportCount] = useState(0);
   const [dancerWorkingNow, setDancerWorkingNow] = useState(false);
   const venueRefreshAbortRef = useRef<AbortController | null>(null);
   const venueRefreshRequestRef = useRef(0);
@@ -591,10 +590,9 @@ export default function DashboardClient({
                     <CustomerAccountPanel account={state.account || {}} onAccountChange={updateAccountDetails} />
                     {state.profile ? <CustomerEmailPreferencesPanel key={String(state.account?.id || "")} profile={state.profile} onProfileChange={updateProfile} /> : <p role="status">{state.profile === null ? "Email preferences are unavailable right now." : "Loading your email preferences…"}</p>}
                     <CustomerClubPrivacyPanel key={String(state.account?.id || "")} accountId={String(state.account?.id || "")} />
-                    <details className="customer-account-disclosure" id="customer-support-section">
-                      <summary>Help & support <span>{customerSupportCount ? `${customerSupportCount} conversations` : "Get in touch"}</span></summary>
-                      <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" onCountChange={setCustomerSupportCount} />
-                    </details>
+                    <div id="customer-support-section">
+                      <SupportInboxPanel initialThreads={state.supportThreads || []} panelId="customer-support" />
+                    </div>
                     <details className="customer-account-disclosure"><summary>Account controls</summary><AccountControlsPanel accountState={String(state.account?.accountState || "active")} /></details>
                   </div>}
                 </div>}

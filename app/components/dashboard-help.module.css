@@ -38,4 +38,18 @@
 .handoff > a { display: inline-block; margin-top: 16px; }
 .dialog .primary { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #a777ff; background: #6923d7; color: #fff; text-align: center; text-decoration: none; }
 .error { color: #ffb9c6; }
+.tabs { display: flex; gap: 8px; padding: 10px 18px; border-bottom: 1px solid #39303f; flex-shrink: 0; }
+.tabs button { flex: 1; }
+.tabs button[aria-pressed="true"] { background: #542294; border-color: #bd94ff; }
+.assistantPane, .messagesPane { min-height: 0; flex: 1; display: flex; flex-direction: column; }
+.assistantPane[hidden], .messagesPane[hidden] { display: none; }
+.messageTools { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+.messageTools h3 { margin: 0; }
+.threadList { display: grid; gap: 8px; margin: 12px 0 20px; max-height: 200px; overflow-y: auto; }
+.threadList button { display: grid; gap: 3px; text-align: left; overflow-wrap: anywhere; }
+.threadList small { margin: 0; }
+.threadHistory { max-height: 300px; overflow-y: auto; overscroll-behavior: contain; padding-top: 8px; margin-bottom: 12px; }
+.handoff .meta { color: #c4b7d1; font-size: 14px; margin: 6px 0 12px; }
+.handoff form label { margin-top: 12px; }
+.confirmation { padding: 12px; border: 1px solid #457c62; border-radius: 12px; background: #142a20; color: #b4f5cf; }
 @media (max-width: 380px) { .header, .composer, .handoff, .log { padding: 12px; } .actions { padding: 8px 12px 12px; } .dialog { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); } }

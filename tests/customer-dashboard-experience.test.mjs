@@ -24,7 +24,7 @@ test("customer dashboard leads with My Night and four dedicated destinations", (
   assert.match(dashboard, /const dashboardHeading = role === "customer" \? "My Night"/);
   assert.doesNotMatch(dashboard, /Welcome back, \$\{displayName\}/);
   assert.match(dashboard, /<DashboardCloseButton[\s\S]*?label="Back to MyDancr"/);
-  assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" onCountChange=\{setCustomerSupportCount\} \/>/);
+  assert.match(dashboard, /<SupportInboxPanel initialThreads=\{state\.supportThreads \|\| \[\]\} panelId="customer-support" \/>/);
 });
 
 test("dancer dashboard header prefers the saved stage name and never the email-derived account name", () => {

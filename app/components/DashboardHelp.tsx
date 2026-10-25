@@ -1,13 +1,33 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { HELP_ROLE_LABELS, helpEmailHref, helpSupportHref, helpSupportRole, helpTopicsFor, matchHelpQuestion, type HelpRole } from "../../src/lib/dancr/dashboard-help";
-import { readSession, requestDashboardJson } from "../dashboard/dashboard-session";
-import { sendHelpMessage } from "./dashboard-help-support";
+import { HELP_ROLE_LABELS, helpSupportRole, helpTopicsFor, matchHelpQuestion, type HelpRole } from "../../src/lib/dancr/dashboard-help";
+import { readSession } from "../dashboard/dashboard-session";
+import DashboardHelpMessages from "./DashboardHelpMessages";
+import { DASHBOARD_HELP_UPDATED, OPEN_DASHBOARD_HELP, openDashboardHelp, type HelpView } from "./dashboard-help-events";
 import styles from "./dashboard-help.module.css";
 
 type Entry = { who: "you" | "help"; text: string; href?: string; topics?: ReturnType<typeof helpTopicsFor> };
+
+export function DashboardHelpShortcut({ panelId, conversationCount = 0, onCountChange }: { panelId?: string; conversationCount?: number; onCountChange?: (count: number) => void }) {
+  const [count, setCount] = useState(conversationCount);
+  useEffect(() => { setCount(conversationCount); }, [conversationCount]);
+  useEffect(() => { onCountChange?.(count); }, [count, onCountChange]);
+  useEffect(() => {
+    const updated = (event: Event) => {
+      const detail = (event as CustomEvent<{ accountId: string; count: number }>).detail;
+      if (detail && detail.accountId === readSession()?.account?.id && Number.isInteger(detail.count) && detail.count >= 0) setCount(detail.count);
+    };
+    window.addEventListener(DASHBOARD_HELP_UPDATED, updated);
+    return () => window.removeEventListener(DASHBOARD_HELP_UPDATED, updated);
+  }, []);
+  return <article className="info-panel support-panel" id={panelId} tabIndex={panelId ? -1 : undefined}>
+    <h2>Help &amp; support</h2><p>Ask the assistant, message the team, and read replies in one place.</p>
+    {count > 0 && <p>{count} {count === 1 ? "conversation" : "conversations"}</p>}
+    <button type="button" className={styles.launcher} aria-haspopup="dialog" onClick={() => openDashboardHelp(readSession()?.account?.id || "")}>Open Help &amp; support</button>
+  </article>;
+}
 
 // Internal club links also serve signed-out guests. Only signed-in staff get dashboard help here.
 export function InternalDashboardHelp() {
@@ -28,7 +48,30 @@ export function InternalDashboardHelp() {
 export default function DashboardHelp({ role, accountId }: { role: HelpRole; accountId?: string | null }) {
   const [opened, setOpened] = useState(false);
   const [identity, setIdentity] = useState("");
+  const [initialView, setInitialView] = useState<HelpView>("assistant");
+  const [openRevision, setOpenRevision] = useState(0);
   const launcher = useRef<HTMLButtonElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const open = (view: HelpView) => {
+      const session = readSession();
+      const id = accountId || session?.account?.id;
+      if (!id || !session?.accessToken || session.account?.id !== id) return;
+      opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : launcher.current;
+      setIdentity(id); setInitialView(view); setOpenRevision(current => current + 1); setOpened(true);
+    };
+    const requested = (event: Event) => {
+      const detail = (event as CustomEvent<{ accountId: string; view: HelpView }>).detail;
+      if (detail && detail.accountId === (accountId || readSession()?.account?.id)) open(detail.view === "assistant" ? "assistant" : "messages");
+    };
+    const fromHash = () => {
+      const prefix = helpSupportRole(role);
+      if ((prefix && [`#${prefix}-support`, `#${prefix}-support-section`].includes(window.location.hash)) || (role === "vip" && window.location.hash === "#vip-support")) open("messages");
+    };
+    fromHash();
+    window.addEventListener(OPEN_DASHBOARD_HELP, requested); window.addEventListener("hashchange", fromHash);
+    return () => { window.removeEventListener(OPEN_DASHBOARD_HELP, requested); window.removeEventListener("hashchange", fromHash); };
+  }, [accountId, role]);
   useEffect(() => {
     if (!opened) return;
     const checkIdentity = () => {
@@ -38,38 +81,32 @@ export default function DashboardHelp({ role, accountId }: { role: HelpRole; acc
     window.addEventListener("focus", checkIdentity);
     return () => { window.removeEventListener("storage", checkIdentity); window.removeEventListener("focus", checkIdentity); };
   }, [opened, identity]);
-  function close() { setOpened(false); launcher.current?.focus(); }
+  function close() { setOpened(false); (opener.current || launcher.current)?.focus(); }
   return <>
     <button ref={launcher} className={styles.launcher} type="button" aria-haspopup="dialog" onClick={() => {
-      setIdentity(accountId || readSession()?.account?.id || ""); setOpened(true);
+      opener.current = launcher.current; setInitialView("assistant"); setIdentity(accountId || readSession()?.account?.id || ""); setOpened(true);
     }}><span aria-hidden="true">?</span> Help</button>
-    {opened && createPortal(<HelpDialog key={`${role}:${identity}`} role={role} accountId={identity} onClose={close} />, document.body)}
+    {opened && createPortal(<HelpDialog key={`${role}:${identity}`} role={role} accountId={identity} initialView={initialView} openRevision={openRevision} onClose={close} />, document.body)}
   </>;
 }
 
-function HelpDialog({ role, accountId, onClose }: { role: HelpRole; accountId: string; onClose: () => void }) {
+function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { role: HelpRole; accountId: string; initialView: HelpView; openRevision: number; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const [question, setQuestion] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [mode, setMode] = useState<"chat" | "handoff">("chat");
+  const [mode, setMode] = useState<HelpView>(initialView);
   const [draft, setDraft] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [receipt, setReceipt] = useState("");
-  const [error, setError] = useState("");
+  const [messagesOpened, setMessagesOpened] = useState(initialView === "messages");
+  const [draftRevision, setDraftRevision] = useState(0);
   const [showTopics, setShowTopics] = useState(false);
-  const sending = useRef(false);
-  const controller = useRef<AbortController | null>(null);
-  const attempt = useRef<{ message: string; id: string } | null>(null);
   const topics = helpTopicsFor(role);
-  const supportRole = helpSupportRole(role);
-  const inboxHref = helpSupportHref(role);
 
   useEffect(() => {
     dialog.current?.showModal();
-    return () => { controller.current?.abort(); };
   }, []);
+  useEffect(() => { setMode(initialView); if (initialView === "messages") setMessagesOpened(true); }, [initialView, openRevision]);
   useEffect(() => { if (log.current) log.current.scrollTop = log.current.scrollHeight; }, [entries, showTopics]);
 
   function ask(text: string) {
@@ -93,32 +130,19 @@ function HelpDialog({ role, accountId, onClose }: { role: HelpRole; accountId: s
       const conversation = entries.slice(-6).map(entry => `${entry.who === "you" ? "Me" : "Help guide"}: ${entry.text}`).join("\n\n");
       setDraft((question.trim() ? `My question: ${question.trim()}\n\n` : "") + conversation.slice(0, 3000));
     }
-    setMode("handoff"); setError("");
-  }
-  async function send(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (sending.current || receipt) return;
-    sending.current = true; setBusy(true); setError("");
-    const request = new AbortController(); controller.current = request;
-    try {
-      const message = draft.trim();
-      if (attempt.current?.message !== message) attempt.current = { message, id: crypto.randomUUID() };
-      const id = await sendHelpMessage({ role, accountId, message, requestId: attempt.current.id, signal: request.signal }, { readSession, request: requestDashboardJson });
-      if (!request.signal.aborted) setReceipt(id);
-    } catch (failure) {
-      if (!request.signal.aborted) setError(failure instanceof Error ? failure.message : "Unable to send your message. Please try again.");
-    } finally {
-      sending.current = false;
-      if (!request.signal.aborted) setBusy(false);
-    }
+    setDraftRevision(current => current + 1); setMessagesOpened(true); setMode("messages");
   }
 
   return <dialog ref={dialog} className={styles.dialog} aria-labelledby={titleId} onCancel={onClose} onClose={onClose} data-global-navigation-swipe="ignore">
     <header className={styles.header}>
-      <div><span className={styles.eyebrow}>{HELP_ROLE_LABELS[role]} dashboard</span><h2 id={titleId}>MyDancr help</h2></div>
+      <div><span className={styles.eyebrow}>{HELP_ROLE_LABELS[role]} dashboard</span><h2 id={titleId}>Help &amp; support</h2></div>
       <button type="button" className={styles.close} aria-label="Close help" onClick={onClose}>×</button>
     </header>
-    {mode === "chat" ? <>
+    <nav className={styles.tabs} aria-label="Help & support sections">
+      <button type="button" aria-pressed={mode === "assistant"} onClick={() => setMode("assistant")}>Ask assistant</button>
+      <button type="button" aria-pressed={mode === "messages"} onClick={() => { setMessagesOpened(true); setMode("messages"); }}>Messages</button>
+    </nav>
+    <section className={styles.assistantPane} hidden={mode !== "assistant"} aria-label="Ask assistant">
       <div className={styles.log} ref={log} role="log" aria-label="Help conversation" aria-live="polite" aria-relevant="additions">
         <div className={styles.message}><strong>MyDancr help</strong><p>Ask about your {HELP_ROLE_LABELS[role].toLowerCase()} dashboard. I use the built-in help guide and cannot view live account details or make changes.</p></div>
         {entries.map((entry, index) => <div className={`${styles.message} ${entry.who === "you" ? styles.mine : ""}`} key={index}>
@@ -132,24 +156,10 @@ function HelpDialog({ role, accountId, onClose }: { role: HelpRole; accountId: s
         <label htmlFor={`${titleId}-question`}>Your question</label>
         <div className={styles.inputRow}><input id={`${titleId}-question`} value={question} onChange={event => setQuestion(event.target.value)} maxLength={600} placeholder="How do I…" autoComplete="off" /><button type="submit" disabled={!question.trim()}>Ask</button></div>
       </form>
-      <footer className={styles.actions}><button type="button" onClick={() => setShowTopics(value => !value)}>{showTopics ? "Hide topics" : "Browse topics"}</button><button type="button" onClick={handoff}>{receipt ? "View sent message" : "Send to the team"}</button></footer>
-    </> : <div className={styles.handoff}>
-      <button type="button" className={styles.back} onClick={() => setMode("chat")} disabled={busy}>‹ Back to help</button>
-      <h3>{receipt ? "Message sent to the team" : "Ask a person"}</h3>
-      {receipt ? <div role="status"><p>Your message is saved. Replies will appear in Account → Help &amp; support. You can continue the conversation there.</p><p>Reference: {receipt}</p>{inboxHref && <a href={inboxHref}>Open support inbox →</a>}</div> : <>
-        <p>Review the message before sending. Include what happened and what you expected. Leave out passwords, codes and private sign-in links.</p>
-        <form onSubmit={send}>
-          <label htmlFor={`${titleId}-draft`}>Message to the MyDancr team</label>
-          <textarea id={`${titleId}-draft`} value={draft} onChange={event => setDraft(event.target.value)} maxLength={4000} rows={7} required disabled={busy} />
-          <small>{draft.length.toLocaleString()} / 4,000 characters</small>
-          {supportRole ? <button className={styles.primary} type="submit" disabled={busy || !draft.trim()}>{busy ? "Sending…" : "Send message"}</button> : <>
-            <p>Open a prepared email to support@mydancr.com, then send it from your email app. Opening the draft does not send it.</p>
-            {draft.trim() ? <a className={styles.primary} href={helpEmailHref(role, draft)}>Open email</a> : <p>Add your question to prepare the email.</p>}
-          </>}
-        </form>
-        {error && <p role="alert" className={styles.error}>{error}</p>}
-        {inboxHref && <a href={inboxHref}>View existing support conversations →</a>}
-      </>}
-    </div>}
+      <footer className={styles.actions}><button type="button" onClick={() => setShowTopics(value => !value)}>{showTopics ? "Hide topics" : "Browse topics"}</button><button type="button" onClick={handoff}>Message the team</button></footer>
+    </section>
+    <section className={styles.messagesPane} hidden={mode !== "messages"} aria-label="Messages">
+      {messagesOpened && <DashboardHelpMessages role={role} accountId={accountId} draft={draft} onDraftChange={setDraft} draftRevision={draftRevision} />}
+    </section>
   </dialog>;
 }

@@ -3,6 +3,7 @@ import { readFile } from "./helpers/dashboard-test-fs-promises.mjs";
 import test from "node:test";
 
 const dashboard = await readFile(new URL("../app/dashboard/DashboardClient.tsx", import.meta.url), "utf8");
+const help = await readFile(new URL("../app/components/DashboardHelp.tsx", import.meta.url), "utf8");
 
 test("dancer account details expose the sign-in editor inside Help & Account", () => {
   const dancerAccountSection = dashboard.match(/id="dancer-account"[\s\S]*?id="venue-account"/)?.[0] || "";
@@ -26,10 +27,10 @@ test("support and account controls have clear action hierarchy", () => {
   const support = dashboard.match(/function SupportInboxPanel[\s\S]*?function AccountControlsPanel/)?.[0] || "";
   const controls = dashboard.match(/function AccountControlsPanel[\s\S]*?function CustomerPanel/)?.[0] || "";
 
-  assert.match(support, /<h2>Help &amp; support<\/h2>[\s\S]*?Send a private message to the MyDancr team\./);
-  assert.match(support, /How can we help\?/);
-  assert.match(support, /Add the details/);
-  assert.match(support, /Send message/);
+  assert.match(support, /<DashboardHelpShortcut/);
+  assert.doesNotMatch(support, /<form|<textarea/);
+  assert.match(help, /Ask the assistant, message the team, and read replies in one place/);
+  assert.match(help, /Open Help &amp; support/);
   assert.match(controls, /const accountHeading = ownsVenueWorkspace \? "Venue account & security" : "Account & security"/);
   assert.match(controls, /<h2>\{accountHeading\}<\/h2>/);
   assert.ok(controls.indexOf("Sign out") < controls.indexOf("Disable account"));

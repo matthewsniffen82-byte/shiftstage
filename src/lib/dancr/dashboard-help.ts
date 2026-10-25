@@ -88,7 +88,7 @@ export const HELP_TOPICS: readonly Topic[] = [
   { id: "guides", roles: ["dancer", "venue", ...admins], title: "Read the operating guides", phrases: ["guide", "manual", "training", "instructions", "cheat sheet"],
     answer: "The Guides page has onboarding guides and cheat sheets for eligible accounts. Dancers can access dancer guides; active club owners and managers, and admins, can access the guides their account permits. Sign in with the correct account before opening a document.", href: "/guides", sources: ["src/lib/dancr/operations-guides.ts"] },
   { id: "human", roles: everyone, title: "Contact a person", phrases: ["human", "person", "agent", "contact support", "contact admin", "talk to someone", "not helpful"],
-    answer: "Choose Send to the team below to review your question and any details before sending. For admin accounts, Open email prepares a message to the MyDancr support address; you send it from your email app. This is an asynchronous handoff, so a response is not immediate.", sources: ["app/api/support/route.ts", "src/lib/dancr/operations-guides.ts"] },
+    answer: "Choose Message the team to review your question before sending. The Messages section keeps your conversations and team replies together. For admin accounts, Open email prepares a support message that you send from your email app; replies arrive by email. A response is not immediate.", sources: ["app/api/support/route.ts", "src/lib/dancr/operations-guides.ts"] },
 ];
 
 export const helpTopicsFor = (role: HelpRole) => HELP_TOPICS.filter(topic => topic.roles.includes(role));
