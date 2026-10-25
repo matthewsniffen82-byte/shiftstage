@@ -302,7 +302,7 @@ test("venue scroll cards remain separate from the deeper venue detail hierarchy"
   assert.match(venueCard, /venueExperienceHref\(venue, city\)/);
 });
 
-test("venue profile Back has clear space above the unchanged logo slot", async () => {
+test("venue profile restores the compact logo position and keeps the Back target", async () => {
   const consistency = postcss.parse(await readFile(new URL("../public/dancr-ui-consistency.v1.css", import.meta.url), "utf8"));
   const prefix = "html body.dancr-button-system #results.venue-profile-overlay .venue-detail";
   const declarations = (root, selector) => {
@@ -323,8 +323,7 @@ test("venue profile Back has clear space above the unchanged logo slot", async (
   assert.equal(target.height, "44px");
   assert.equal(back.position, "absolute");
   assert.equal(back.inset, "2px auto auto 2px");
-  assert.equal(brand.padding, "56px 12px 4px");
-  assert.ok(parseFloat(brand.padding) - parseFloat(back.inset) - parseFloat(target.height) >= 8, "The logo must clear the entire Back tap target");
+  assert.equal(brand.padding, "12px 12px 4px");
   assert.equal(brand["--venue-detail-logo-size"], "clamp(100px, 30.6vw, 166px)");
   assert.equal(brand["grid-template-columns"], "var(--venue-detail-logo-size) minmax(0, 1fr)");
   assert.equal(brand.gap, "12px");
