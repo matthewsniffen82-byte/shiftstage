@@ -151,13 +151,19 @@
       const venueCodeInput = document.getElementById("venueSignupCode");
       const emailInput = document.getElementById("venueLoginEmail");
       const passwordInput = document.getElementById("venueLoginPassword");
+      const confirmationInput = document.getElementById("venueConfirmPassword");
       const submittedCode = formatVenueAccessCode(venueCodeInput.value);
       if (!verifiedVenueSignupCode || submittedCode !== verifiedVenueSignupCode || !verifiedVenueSignupPreview) {
         const verified = await verifyVenueAccessCode();
         if (!verified) venueCodeInput.focus();
         return false;
       }
-      if (!emailInput.reportValidity() || !passwordInput.reportValidity()) return false;
+      if (!emailInput.reportValidity() || !passwordInput.reportValidity() || !confirmationInput.reportValidity()) return false;
+      if (passwordInput.value !== confirmationInput.value) {
+        setVenueAuthStatus("Passwords do not match.");
+        confirmationInput.focus();
+        return false;
+      }
       button.disabled = true;
       setVenueAuthStatus(`Creating the manager account for ${verifiedVenueSignupPreview.name}…`);
       try {
@@ -337,11 +343,17 @@
       setDancerSignupStatus("");
       try {
         const email = document.getElementById("dancerEmail").value.trim();
+        const password = document.getElementById("dancerPassword").value;
+        const confirmation = document.getElementById("dancerConfirmPassword");
+        if (password !== confirmation.value) {
+          confirmation.focus();
+          throw new Error("Passwords do not match.");
+        }
         const result = await requestAuth({
           mode: "signup",
           role: "dancer",
           email,
-          password: document.getElementById("dancerPassword").value,
+          password,
           emailRedirectTo: saveAuthResume("dancer")
         });
         if (result.requiresEmailConfirmation) {

@@ -106,7 +106,7 @@
     }
 
     function clearDancerSignupFields() {
-      ["dancerLegalName", "dancerStageName", "dancerEmail", "dancerPassword"].forEach((id) => {
+      ["dancerLegalName", "dancerStageName", "dancerEmail", "dancerPassword", "dancerConfirmPassword"].forEach((id) => {
         const input = document.getElementById(id);
         if (input) input.value = "";
       });

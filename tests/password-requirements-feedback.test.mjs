@@ -60,6 +60,7 @@ test('every primary homepage account password has a linked four-rule live checkl
   assert.equal(primary.length, inputs.length);
   for (const list of checklists) {
     assert.equal(list.labels.length, policy.PASSWORD_REQUIREMENTS.length);
+    assert.deepEqual(list.labels, [...policy.PASSWORD_REQUIREMENTS]);
     assert.ok(primary.some(input => input.includes('id="' + list.input + '"') && input.includes('aria-describedby="' + list.id + '"')));
   }
   assert.doesNotMatch(shell.match(/<ul[^>]*id="customerPasswordRequirements"[^>]*>/)[0], /\bhidden\b/);

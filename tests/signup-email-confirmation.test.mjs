@@ -20,7 +20,7 @@ function fixture(role) {
   const nodes = {
     [formId]: { addEventListener: (_event, fn) => { handler = fn; } }, authSubmit: submit,
     dancerEmail: { value: 'signup@example.test' }, customerEmail: { value: 'signup@example.test' },
-    dancerPassword: { value: 'Example1!password' }, customerPassword: { value: 'Example1!password' }, customerConfirmPassword: { value: 'Example1!password' },
+    dancerPassword: { value: 'Example1!password' }, dancerConfirmPassword: { value: 'Example1!password' }, customerPassword: { value: 'Example1!password' }, customerConfirmPassword: { value: 'Example1!password' },
     customerTermsAccepted: { checked: true, dataset: { termsVersion: 'current' } }, customerEmailOptIn: { checked: false, dataset: {} },
     customerFollowEmailOptIn: { checked: false }, customerVenueShareOptIn: { checked: false },
     signupEmailConfirmation: dialog, signupEmailConfirmationRecipient: recipient,

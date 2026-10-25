@@ -1026,6 +1026,7 @@
         clearValue("venueSignupCode");
         clearValue("venueLoginEmail");
         clearValue("venueLoginPassword");
+        clearValue("venueConfirmPassword");
         verifiedVenueSignupCode = "";
         verifiedVenueSignupPreview = null;
         const preview = document.getElementById("venueAccessPreview");

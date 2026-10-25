@@ -476,19 +476,28 @@
               <div class="field">
                 <label for="venueLoginPassword">Password</label>
                 <div class="password-wrap">
-                  <input id="venueLoginPassword" type="password" autocomplete="current-password" aria-describedby="venuePasswordRequirements" required>
+                  <input id="venueLoginPassword" type="password" autocomplete="new-password" minlength="6" maxlength="1024" placeholder="Enter password" aria-describedby="venuePasswordRequirements" required>
                   <button class="password-toggle" type="button" data-password-toggle="venueLoginPassword" aria-label="Show password" aria-pressed="false">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                   </button>
                 </div>
               </div>
+              <ul class="field-note" id="venuePasswordRequirements" data-password-requirements="venueLoginPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
+                <li>6+ characters</li>
+                <li>1 uppercase letter</li>
+                <li>1 number</li>
+                <li>1 symbol (! @ # $)</li>
+              </ul>
+              <div class="field">
+                <label for="venueConfirmPassword">Confirm password</label>
+                <div class="password-wrap">
+                  <input id="venueConfirmPassword" type="password" autocomplete="new-password" minlength="6" maxlength="1024" placeholder="Re-enter password" required>
+                  <button class="password-toggle" type="button" data-password-toggle="venueConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  </button>
+                </div>
+              </div>
             </div>
-            <ul class="field-note" id="venuePasswordRequirements" data-password-requirements="venueLoginPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6" hidden>
-              <li>At least 6 characters</li>
-              <li>At least 1 capital letter</li>
-              <li>At least 1 number</li>
-              <li>At least 1 special character (for example, ! @ # $)</li>
-            </ul>
             <button class="ghost auth-join-now venue-join-now" id="venueJoinNowBtn" type="submit" hidden>Create venue account</button>
             <p class="rule-note"><a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></p>
             <button class="auth-back-to-types" id="venueBackToTypes" type="button">← Back to account types</button>
@@ -569,7 +578,7 @@
                 <div class="field">
                   <label for="venueRequestPassword">Password</label>
                   <div class="password-wrap">
-                    <input id="venueRequestPassword" name="password" type="password" autocomplete="new-password" minlength="6" maxlength="1024" aria-describedby="venueRequestPasswordHelp" required>
+                    <input id="venueRequestPassword" name="password" type="password" placeholder="Enter password" autocomplete="new-password" minlength="6" maxlength="1024" aria-describedby="venueRequestPasswordHelp" required>
                     <button class="password-toggle" type="button" data-password-toggle="venueRequestPassword" aria-label="Show password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
@@ -578,7 +587,7 @@
                 <div class="field">
                   <label for="venueRequestConfirmPassword">Confirm password</label>
                   <div class="password-wrap">
-                    <input id="venueRequestConfirmPassword" name="confirmPassword" type="password" autocomplete="new-password" minlength="6" maxlength="1024" required>
+                    <input id="venueRequestConfirmPassword" name="confirmPassword" type="password" placeholder="Re-enter password" autocomplete="new-password" minlength="6" maxlength="1024" required>
                     <button class="password-toggle" type="button" data-password-toggle="venueRequestConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
@@ -586,10 +595,10 @@
                 </div>
               </div>
               <ul class="field-note" id="venueRequestPasswordHelp" data-password-requirements="venueRequestPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
-                <li>At least 6 characters</li>
-                <li>At least 1 capital letter</li>
-                <li>At least 1 number</li>
-                <li>At least 1 special character (for example, ! @ # $)</li>
+                <li>6+ characters</li>
+                <li>1 uppercase letter</li>
+                <li>1 number</li>
+                <li>1 symbol (! @ # $)</li>
               </ul>
             </section>
             <label class="venue-request-honeypot" aria-hidden="true">
@@ -702,17 +711,26 @@
             <div class="field">
               <label for="dancerPassword">Password</label>
               <div class="password-wrap">
-                <input id="dancerPassword" type="password" value="" autocomplete="new-password" minlength="6" placeholder="At least 6 characters" aria-describedby="dancerPasswordRequirements" required>
+                <input id="dancerPassword" type="password" value="" autocomplete="new-password" minlength="6" maxlength="1024" placeholder="Enter password" aria-describedby="dancerPasswordRequirements" required>
                 <button class="password-toggle" type="button" data-password-toggle="dancerPassword" aria-label="Show password" aria-pressed="false">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </button>
               </div>
               <ul class="field-note" id="dancerPasswordRequirements" data-password-requirements="dancerPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
-                <li>At least 6 characters</li>
-                <li>At least 1 capital letter</li>
-                <li>At least 1 number</li>
-                <li>At least 1 special character (for example, ! @ # $)</li>
+                <li>6+ characters</li>
+                <li>1 uppercase letter</li>
+                <li>1 number</li>
+                <li>1 symbol (! @ # $)</li>
               </ul>
+            </div>
+            <div class="field">
+              <label for="dancerConfirmPassword">Confirm password</label>
+              <div class="password-wrap">
+                <input id="dancerConfirmPassword" type="password" autocomplete="new-password" minlength="6" maxlength="1024" placeholder="Re-enter password" required>
+                <button class="password-toggle" type="button" data-password-toggle="dancerConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
             </div>
             <div class="auth-signup-guidance">
               <p>Free account. Your profile stays private until setup and verification are complete.</p>
@@ -1220,10 +1238,10 @@
                     </button>
                   </div>
                   <ul class="field-note" id="dancerAccountPasswordRequirements" data-password-requirements="dancerAccountPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
-                    <li>At least 6 characters</li>
-                    <li>At least 1 capital letter</li>
-                    <li>At least 1 number</li>
-                    <li>At least 1 special character (for example, ! @ # $)</li>
+                    <li>6+ characters</li>
+                    <li>1 uppercase letter</li>
+                    <li>1 number</li>
+                    <li>1 symbol (! @ # $)</li>
                   </ul>
                   <label for="dancerAccountPasswordConfirm">Confirm password</label>
                   <div class="password-wrap">
@@ -1393,11 +1411,20 @@
             </div>
           </div>
           <ul class="field-note" id="adminPasswordRequirements" data-password-requirements="adminPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
-            <li>At least 6 characters</li>
-            <li>At least 1 capital letter</li>
-            <li>At least 1 number</li>
-            <li>At least 1 special character (for example, ! @ # $)</li>
+            <li>6+ characters</li>
+            <li>1 uppercase letter</li>
+            <li>1 number</li>
+            <li>1 symbol (! @ # $)</li>
           </ul>
+          <div class="field" id="adminConfirmPasswordField" hidden>
+            <label for="adminConfirmPassword">Confirm password</label>
+            <div class="password-wrap">
+              <input id="adminConfirmPassword" type="password" autocomplete="new-password" minlength="6" maxlength="1024" placeholder="Re-enter password" disabled>
+              <button class="password-toggle" type="button" data-password-toggle="adminConfirmPassword" aria-label="Show confirm password" aria-pressed="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              </button>
+            </div>
+          </div>
           <div class="field" id="adminCodeField" hidden>
             <label for="adminCode">Admin code</label>
             <input id="adminCode" type="password" autocomplete="one-time-code">
@@ -1640,10 +1667,10 @@
                   </button>
                 </div>
                 <ul class="field-note" id="customerAccountPasswordRequirements" data-password-requirements="customerAccountPassword" aria-label="Password requirements" style="margin:0;padding-left:20px;line-height:1.6">
-                  <li>At least 6 characters</li>
-                  <li>At least 1 capital letter</li>
-                  <li>At least 1 number</li>
-                  <li>At least 1 special character (for example, ! @ # $)</li>
+                  <li>6+ characters</li>
+                  <li>1 uppercase letter</li>
+                  <li>1 number</li>
+                  <li>1 symbol (! @ # $)</li>
                 </ul>
                 <label for="customerAccountPasswordConfirm">Confirm password</label>
                 <div class="password-wrap">

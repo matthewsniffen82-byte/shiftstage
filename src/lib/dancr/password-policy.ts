@@ -1,8 +1,8 @@
 export const PASSWORD_REQUIREMENTS = [
-  "At least 6 characters",
-  "At least 1 capital letter",
-  "At least 1 number",
-  "At least 1 special character (for example, ! @ # $)",
+  "6+ characters",
+  "1 uppercase letter",
+  "1 number",
+  "1 symbol (! @ # $)",
 ] as const;
 
 export function passwordRequirementStatus(password: string) {

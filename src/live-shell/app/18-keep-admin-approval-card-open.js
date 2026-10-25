@@ -308,6 +308,14 @@
       const createButton = document.getElementById("adminCreateBtn");
       if (codeField) codeField.hidden = adminAuthMode !== "signup";
       if (codeInput) codeInput.required = adminAuthMode === "signup";
+      const confirmationField = document.getElementById("adminConfirmPasswordField");
+      const confirmationInput = document.getElementById("adminConfirmPassword");
+      if (confirmationField) confirmationField.hidden = adminAuthMode !== "signup";
+      if (confirmationInput) {
+        confirmationInput.required = adminAuthMode === "signup";
+        confirmationInput.disabled = adminAuthMode !== "signup";
+        confirmationInput.value = "";
+      }
       if (forgotButton) forgotButton.hidden = adminAuthMode !== "login";
       if (loginButton) loginButton.hidden = adminAuthMode !== "login";
       if (createButton) createButton.hidden = adminAuthMode !== "signup";

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { PASSWORD_REQUIREMENTS } from "../src/lib/dancr/password-policy.ts";
 
 const [liveApp, authRoute] = await Promise.all([
   readFile(new URL("../outputs/index.html", import.meta.url), "utf8"),
@@ -113,7 +114,7 @@ test("dancer signup keeps a concise privacy note without duplicating later setup
   assert.match(guidance, /href="\/privacy"[^>]*>Privacy Policy<\/a>/);
   assert.doesNotMatch(guidance, /Confirm your email|Dancer Agreement|before submitting/);
   assert.match(form, /id="dancerPasswordRequirements" data-password-requirements="dancerPassword"/);
-  for (const requirement of ["At least 6 characters", "At least 1 capital letter", "At least 1 number", "At least 1 special character"]) {
+  for (const requirement of PASSWORD_REQUIREMENTS) {
     assert.ok(form.includes(requirement), requirement);
   }
   assert.match(form, /type="submit">Create dancer account<\/button>/);

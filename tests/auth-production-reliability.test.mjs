@@ -533,7 +533,7 @@ test("dancer signup displays the password rejection and lets the user correct it
   const accepted = authFixture(null, { role: "dancer", authSession: null });
   vm.runInNewContext(`${sessionGuard}\n${requestAuth}\n${friendlyError}\n${signupHandler}`, {
     localStorage: { getItem: () => null },
-    document: { getElementById: id => ({ dancerSignupForm: form, dancerEmail: email, dancerPassword: password, dancerAgreementAccepted: agreement })[id] },
+    document: { getElementById: id => ({ dancerSignupForm: form, dancerEmail: email, dancerPassword: password, dancerConfirmPassword: password, dancerAgreementAccepted: agreement })[id] },
     fetch: async (_url, options) => {
       const body = JSON.parse(options.body);
       sentPasswords.push(body.password);

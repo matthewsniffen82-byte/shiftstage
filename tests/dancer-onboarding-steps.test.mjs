@@ -183,7 +183,6 @@ test("background dashboard refreshes do not replace Step 1 while the dancer is t
     "loadLiveDancerDeals",
     "loadLiveDancerWeeklyReport",
     "loadLiveDancerBilling",
-    "loadLiveDancerRankingEvents",
     "loadLiveDancerReviews",
     "hydrateDancerApprovalProgress",
   ];
@@ -202,7 +201,7 @@ test("background dashboard refreshes do not replace Step 1 while the dancer is t
   );
 });
 
-test("three approved profile photos unlock submission while optional media reviews continue separately", () => {
+test("profile submission requires the photo minimum while optional media reviews continue separately", () => {
   const profileHydrator =
     liveAppSource.match(/function applyDancerApprovalProfile[\s\S]*?\n    function setDancerSetupField/)?.[0] || "";
   const photoEligibility =
@@ -218,8 +217,10 @@ test("three approved profile photos unlock submission while optional media revie
   assert.doesNotMatch(liveAppSource, /function dancerProfileVideoModerationComplete\(\)/);
   assert.doesNotMatch(liveSubmit, /dancerProfileVideoModerationComplete/);
   assert.match(liveSubmit, /Other media can finish review separately/);
-  assert.match(serverSubmit, /approvedProfilePhotoCount\(photos\) < MIN_DANCER_ONBOARDING_PHOTOS/);
-  assert.match(serverSubmit, /profile photos must be approved before completing setup/);
+  assert.match(serverSubmit, /rpc\("dancer_submission_media", \{ p_dancer_id: dancerId \}\)/);
+  assert.match(serverSubmit, /!media\?\.hasMain \|\| Number\(media.count\) < MIN_DANCER_ONBOARDING_PHOTOS/);
+  assert.match(serverSubmit, /Upload a main photo and at least/);
+  assert.match(serverSubmit, /"submit_for_venue_review"/);
   assert.doesNotMatch(serverSubmit, /mydancr_tv_videos/);
   assert.doesNotMatch(serverSubmit, /Every uploaded profile picture/);
   assert.doesNotMatch(serverSubmit, /Wait for every uploaded video/);

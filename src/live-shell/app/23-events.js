@@ -805,6 +805,13 @@
       const status = document.getElementById("adminLiveStatus");
       button.disabled = true;
       try {
+        if (adminAuthMode === "signup") {
+          const confirmation = document.getElementById("adminConfirmPassword");
+          if (document.getElementById("adminPassword").value !== confirmation.value) {
+            confirmation.focus();
+            throw new Error("Passwords do not match.");
+          }
+        }
         const result = await requestAuth({
           mode: adminAuthMode,
           role: "admin",

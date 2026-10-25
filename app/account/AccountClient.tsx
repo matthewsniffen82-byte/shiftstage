@@ -282,7 +282,7 @@ export default function AccountClient() {
     const isSessionUnchanged = captureBrowserAuthSessionGuard();
     setStatus("");
 
-    if (mode === "signup" && role === "customer" && password !== confirmPassword) {
+    if (mode === "signup" && password !== confirmPassword) {
       setStatus("Passwords do not match.");
       return;
     }
@@ -613,6 +613,8 @@ export default function AccountClient() {
                 type={showPassword ? "text" : "password"}
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 minLength={mode === "signup" ? 6 : undefined}
+                maxLength={1024}
+                placeholder="Enter password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 required
@@ -631,13 +633,16 @@ export default function AccountClient() {
             </span>
           </label>
           <PasswordRequirements password={password} />
-          {mode === "signup" && role === "customer" ? (
+          {mode === "signup" ? (
             <label>
               Confirm password
               <span className="password-control">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
+                  autoComplete="new-password"
                   minLength={6}
+                  maxLength={1024}
+                  placeholder="Re-enter password"
                   value={confirmPassword}
                   onChange={(event) => setConfirmPassword(event.target.value)}
                   required
