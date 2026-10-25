@@ -63,5 +63,5 @@ test('a private link is submitted explicitly and refreshes the saved preference 
   f.nodes().find(n=>n.type==='input').props.onChange({target:{value:'/updates/'+'x'.repeat(43)}});f.render();
   f.nodes().find(n=>n.type==='form').props.onSubmit({preventDefault(){}});await f.settle();
   assert.equal(JSON.parse(f.calls[1].options.body).action,'link');assert.equal(f.calls[2].url,'/api/customer/club-privacy?page=0');
-  assert.equal(f.nodes().find(n=>n.type==='input').props.value,'');assert.match(f.status(),/added to your account/);
+  assert.equal(f.nodes().find(n=>n.type==='input').props.value,'');assert.match(f.status(),/Club update preferences linked/);
 });

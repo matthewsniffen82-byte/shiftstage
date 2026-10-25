@@ -49,11 +49,11 @@ export default function CustomerClubPrivacyPanel({ accountId }: { accountId: str
       if (!current(request)) return;
       if (body.action === "stop_sharing") {
         setClubs(items => items.map(club => club.venue_id === body.venueId ? { ...club, share: null } : club));
-        setStatus("Contact sharing stopped. Your email, text and visit choices are unchanged.");
+        setStatus("Contact sharing stopped.");
       } else if (body.action === "stop_updates") {
         setClubs(items => items.map(club => ({ ...club, subscriptions: club.subscriptions.map(item => item.id === body.subscriptionId ? { ...item, withdrawnAt: new Date().toISOString() } : item) })));
-        setStatus("Updates stopped for this channel. Your other choices are unchanged.");
-      } else { setLink(""); setStatus("Update preference added to your account."); linked = true; }
+        setStatus("Club updates stopped for this channel.");
+      } else { setLink(""); setStatus("Club update preferences linked."); linked = true; }
       window.dispatchEvent(new Event(CLUB_PRIVACY_CHANGED_EVENT));
     } catch (reason) { if (current(request)) setError(reason instanceof Error ? reason.message : "Unable to save this choice."); }
     finally { if (pending.current === request) { pending.current = null; setBusy(false); } }
@@ -62,18 +62,18 @@ export default function CustomerClubPrivacyPanel({ accountId }: { accountId: str
   function addLink(event: FormEvent<HTMLFormElement>) { event.preventDefault(); void change({ action: "link", link }); }
 
   return <details className="customer-account-disclosure customer-club-privacy" id="customer-account-privacy" onToggle={event => setOpen(event.currentTarget.open)}>
-    <summary>Privacy & club updates</summary>
+    <summary>Club contact permissions</summary>
     {open ? <div className="customer-privacy-content">
-      <p>Manage shared contact details and updates from each club. Following a club does not subscribe you to emails or texts.</p>
+      {loaded && clubs.length > 0 ? <p>Manage contact sharing and direct emails or texts from each club.</p> : null}
       {busy ? <p role="status">Updating preferences…</p> : null}
       {error ? <div role="alert"><p>{error}</p><RefreshButton label="Reload preferences" busy={busy} type="button" disabled={busy} onClick={() => void load()}>Reload preferences</RefreshButton></div> : null}
       {status ? <p role="status">{status}</p> : null}
       {loaded ? <>
-        <p className="customer-privacy-note">{email ? `Includes email updates for ${email} and preferences linked to this account.` : "Verify your account email to see matching email subscriptions. Linked preferences appear below."}</p>
+        {!email ? <p className="customer-privacy-note">Confirm your account email to see matching club email permissions.</p> : null}
         {clubs.map(club => <section className="customer-privacy-club" key={club.venue_id} aria-labelledby={`privacy-${club.venue_id}`}>
           <h3 id={`privacy-${club.venue_id}`}>{club.venue_name}</h3>
           <div className="customer-privacy-choice"><div><strong>Shared contact details</strong>
-            {club.share ? <><p>{club.share.name} · {club.share.email}{club.share.city ? ` · ${club.share.city}` : ""}</p><small>Shared {dateLabel(club.share.consentedAt)}</small></> : <p>Not shared through Following.</p>}</div>
+            {club.share ? <><p>{club.share.name} · {club.share.email}{club.share.city ? ` · ${club.share.city}` : ""}</p><small>Shared {dateLabel(club.share.consentedAt)}</small></> : <p>Contact sharing is off.</p>}</div>
             {club.share ? <button type="button" disabled={busy} onClick={() => void change({ action: "stop_sharing", venueId: club.venue_id })}>Stop sharing</button> : null}
           </div>
           {(["email", "text"] as const).map(channel => {
@@ -82,20 +82,25 @@ export default function CustomerClubPrivacyPanel({ accountId }: { accountId: str
               <strong>{channel === "email" ? "Email" : "Text"} updates · {item.withdrawnAt ? "Off" : "On"}</strong>
               <p>{item.destination}</p><small>{item.withdrawnAt ? `Stopped ${dateLabel(item.withdrawnAt)}` : `Opted in ${dateLabel(item.consentedAt)}`}</small>
             </div>{!item.withdrawnAt ? <button type="button" disabled={busy} onClick={() => void change({ action: "stop_updates", subscriptionId: item.id })}>Stop {channel} updates</button> : null}</div>)
-              : <p className="customer-privacy-note" key={channel}>{channel === "email" ? "Email" : "Text"} updates: no linked preference.</p>;
+              : null;
           })}
         </section>)}
-        {!clubs.length ? <p>No shared contact details or linked club updates.</p> : null}
+        {!clubs.length ? <p>No contact sharing or club updates linked yet.</p> : null}
         {hasMore ? <button type="button" disabled={busy} onClick={() => void load(page + 1)}>Show more clubs</button> : null}
       </> : null}
-      <details className="customer-add-update-link"><summary>Add a guest update link</summary>
-        <p>For texts or another email address, paste the private update link from your guest-list or ride confirmation. Adding it does not subscribe you again.</p>
-        <form onSubmit={addLink}><label htmlFor="customer-update-link">Private update link</label>
+      <details className="customer-add-update-link"><summary>Link guest-list or ride updates</summary>
+        <p>Paste the update link from your guest-list or ride confirmation to manage those preferences here. Linking does not sign you up for new emails or texts.</p>
+        <form onSubmit={addLink}><label htmlFor="customer-update-link">Update link</label>
           <input id="customer-update-link" value={link} onChange={event => setLink(event.target.value)} autoComplete="off" spellCheck={false} maxLength={512} required disabled={busy} />
-          <button type="submit" disabled={busy || !link.trim()}>Add to my account</button>
+          <button type="submit" disabled={busy || !link.trim()}>Link preferences</button>
         </form>
       </details>
-      <p className="customer-privacy-note">Stopping contact sharing removes your follower details. Visit and ride records remain available to the club for those requests. To opt in to updates again, choose them on a new guest-list or ride request.</p>
+      {loaded && clubs.length > 0 ? <details className="customer-add-update-link">
+        <summary>About these permissions</summary>
+        <p>Following adds updates to Alerts. Direct club emails and texts require a separate opt-in.</p>
+        <p>Stopping contact sharing removes your follower contact details. Guest-list and ride records remain with the club.</p>
+        {clubs.some(club => club.subscriptions.some(item => item.withdrawnAt)) ? <p>To restart club emails or texts, opt in on a new guest-list or ride request.</p> : null}
+      </details> : null}
     </div> : null}
   </details>;
 }

@@ -40,7 +40,7 @@ export default function UpdatePreferences({ token }: { token: string }) {
       {preference.active && <button type="button" disabled={busy} onClick={() => void load("unsubscribe")}>Stop {preference.channel} updates</button>}
       <p>Your visit, ride request and other update choices are unchanged.</p></>}
     {preference && accountId ? <div>{linked ? <p role="status">Saved to your account.</p> : <button type="button" disabled={busy} onClick={() => void saveToAccount()}>Save preference to my account</button>}
-      <p><Link href="/dashboard/customer#customer-account-privacy">Privacy & club updates</Link></p></div> : null}
+      <p><Link href="/dashboard/customer#customer-account-privacy">Club contact permissions</Link></p></div> : null}
     {error && <button type="button" disabled={busy} onClick={() => void load("read")}>Try again</button>}
   </section></main>;
 }
