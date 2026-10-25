@@ -22,11 +22,12 @@ function fixture(role) {
     dancerEmail: { value: 'signup@example.test' }, customerEmail: { value: 'signup@example.test' },
     dancerPassword: { value: 'Example1!password' }, customerPassword: { value: 'Example1!password' }, customerConfirmPassword: { value: 'Example1!password' },
     customerTermsAccepted: { checked: true, dataset: { termsVersion: 'current' } }, customerEmailOptIn: { checked: false, dataset: {} },
+    customerFollowEmailOptIn: { checked: false }, customerVenueShareOptIn: { checked: false },
     signupEmailConfirmation: dialog, signupEmailConfirmationRecipient: recipient,
   };
   vm.runInNewContext(`${popup}\n${handlerSource}`, {
     document: { getElementById: id => nodes[id] }, authMode: 'signup', isCustomerLoggedIn: false,
-    citySelect: { value: 'Las Vegas' }, pendingAccountAuthReturnTo: '', updateAccountHeader() {},
+    citySelect: { value: 'Las Vegas' }, pendingAccountAuthReturnTo: '', customerSignupVenue: null, updateAccountHeader() {},
     saveAuthResume: () => '/auth/callback', requestAuth: () => request,
     setDancerSignupStatus: value => statuses.push(value), setCustomerAuthStatus: value => statuses.push(value),
     showToast: value => toasts.push(value), friendlyAuthErrorMessage: value => value,

@@ -1,5 +1,6 @@
 
 
+    document.getElementById("customerVenueShareOptIn").addEventListener("change", syncCustomerSignupSharing);
     document.getElementById("authForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const submit = document.getElementById("authSubmit");
@@ -30,7 +31,16 @@
           payload.userTermsAccepted = document.getElementById("customerTermsAccepted").checked;
           payload.userTermsVersion = document.getElementById("customerTermsAccepted").dataset.termsVersion;
           payload.customerEmailOptIn = document.getElementById("customerEmailOptIn").checked;
+          payload.customerFollowEmailOptIn = document.getElementById("customerFollowEmailOptIn").checked;
           payload.customerEmailConsentVersion = document.getElementById("customerEmailOptIn").dataset.consentVersion;
+          payload.customerVenueShareOptIn = Boolean(customerSignupVenue && document.getElementById("customerVenueShareOptIn").checked);
+          if (payload.customerVenueShareOptIn) {
+            payload.customerVenueId = customerSignupVenue.id;
+            payload.customerVenueName = customerSignupVenue.name;
+            payload.customerVenueShareVersion = document.getElementById("customerVenueShareOptIn").dataset.consentVersion;
+            payload.customerShareName = document.getElementById("customerShareName").value;
+            payload.customerShareCity = document.getElementById("customerShareCity").value;
+          }
         }
         const result = await requestAuth(payload);
         if (authMode === "signup") {

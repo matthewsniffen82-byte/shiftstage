@@ -581,6 +581,9 @@
     let verifiedVenueSignupPreview = null;
     let pendingVenueAuthReturnTo = "";
     let pendingAccountAuthReturnTo = "";
+    let customerSignupVenueKey = "";
+    let customerSignupVenue = null;
+    let customerSignupVenueRequest = 0;
     let pendingVenueAgentReferralCode = "";
     let adminAuthMode = "login";
     let adminApprovedDancerSearch = "";

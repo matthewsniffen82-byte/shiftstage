@@ -5,6 +5,7 @@ import { createRequire } from "node:module";
 import vm from "node:vm";
 import ts from "typescript";
 import * as preferences from "../src/lib/dancr/customer-notification-preferences.ts";
+import * as venueSharing from "../src/lib/dancr/venue-customers.ts";
 import * as policy from "../src/lib/api-error-policy.ts";
 import * as bounded from "../src/lib/bounded-json-body.ts";
 import * as mutation from "../src/lib/security/browser-mutation.ts";
@@ -19,7 +20,7 @@ function compile(path, dependencies) {
   });
   return exports;
 }
-const consent = compile("src/lib/dancr/customer-email-consent.ts", { "../api-error-policy": policy, "./customer-notification-preferences": preferences });
+const consent = compile("src/lib/dancr/customer-email-consent.ts", { "../api-error-policy": policy, "./customer-notification-preferences": preferences, "./venue-customers": venueSharing });
 const version = preferences.CUSTOMER_EMAIL_CONSENT_VERSION;
 const token = "a".repeat(64);
 test("signup records only a literal opt-in to the current consent wording", async () => {
@@ -30,7 +31,7 @@ test("signup records only a literal opt-in to the current consent wording", asyn
     await assert.rejects(consent.prepareCustomerEmailSignup(admin, "a@b.test", input), error => error.status === 400);
   assert.equal(calls.length, 0);
   assert.equal(await consent.prepareCustomerEmailSignup(admin, "a@b.test", { customerEmailOptIn: true, customerEmailConsentVersion: version }), nonce);
-  assert.deepEqual(calls, [["prepare_customer_email_signup", { p_email: "a@b.test", p_version: version }]]);
+  assert.deepEqual(calls, [["prepare_customer_signup_choices", { p_email: "a@b.test", p_version: version, p_follow: false, p_marketing: true, p_venue_id: null, p_venue_name: null, p_name: null, p_city: "" }]]);
   await assert.rejects(consent.prepareCustomerEmailSignup({ rpc: async () => ({ error: new Error("offline") }) }, "a@b.test", { customerEmailOptIn: true, customerEmailConsentVersion: version }), error => error.status === 503);
 });
 test("old clients can unsubscribe but cannot subscribe without current explicit consent", async () => {
@@ -38,12 +39,25 @@ test("old clients can unsubscribe but cannot subscribe without current explicit 
   const admin = { rpc: async (name, args) => { calls.push([name, plain(args)]); return { data: { userId: "customer", notificationSettings: { emailEnabled: args.p_enabled } } }; } };
   await consent.setCustomerEmailPreference(admin, "customer", false);
   assert.equal(calls[0][1].p_source, "legacy_preferences");
+  assert.equal(calls[0][0], "set_customer_email_preference", "old unsubscribe requests still withdraw both categories");
   for (const [source, v] of [[undefined, undefined], ["legacy_preferences", version], ["invented", version], ["account_preferences", "old"]])
     await assert.rejects(consent.setCustomerEmailPreference(admin, "customer", true, source, v), error => error.status === 400);
   assert.equal(calls.length, 1);
   await consent.setCustomerEmailPreference(admin, "customer", true, "account_preferences", version);
-  assert.deepEqual(calls[1][1], { p_user_id: "customer", p_enabled: true, p_source: "account_preferences", p_version: version });
+  assert.deepEqual(calls[1][1], { p_user_id: "customer", p_channel: "marketing", p_enabled: true, p_source: "account_preferences", p_version: version });
   await assert.rejects(consent.setCustomerEmailPreference({ rpc: async () => ({ data: { userId: "other" } }) }, "customer", false), error => error.status === 503);
+});
+
+test("signup passes only individually checked choices and never shares details from unchecked fields",async()=>{
+  const calls=[],nonce="11111111-1111-4111-8111-111111111111";
+  const admin={rpc:async(name,args)=>{calls.push(plain(args));return {data:nonce};}};
+  const input={customerEmailConsentVersion:version,customerFollowEmailOptIn:true,customerVenueId:nonce,customerVenueName:"Named Club",customerShareName:"My Name",customerShareCity:"Las Vegas",customerVenueShareVersion:venueSharing.VENUE_SHARING_CONSENT_VERSION};
+  await consent.prepareCustomerEmailSignup(admin,"a@example.test",input);
+  assert.equal(calls[0].p_follow,true);assert.equal(calls[0].p_marketing,false);assert.equal(calls[0].p_venue_id,null);assert.equal(calls[0].p_name,null);
+  await consent.prepareCustomerEmailSignup(admin,"a@example.test",{...input,customerVenueShareOptIn:true});
+  assert.equal(calls[1].p_venue_id,nonce);assert.equal(calls[1].p_name,"My Name");
+  await assert.rejects(()=>consent.prepareCustomerEmailSignup(admin,"a@example.test",{...input,customerVenueShareOptIn:true,customerShareName:"x"}),e=>e.status===400);
+  await assert.rejects(()=>consent.prepareCustomerEmailSignup(admin,"a@example.test",{...input,customerFollowEmailOptIn:"true"}),e=>e.status===400);
 });
 function routeFixture(result = { data: { active: false } }) {
   const calls = [];
@@ -98,5 +112,5 @@ test("signup email choice is unchecked, optional, separate from required terms a
   assert.ok(field); assert.doesNotMatch(field, /\b(?:checked|required)(?:\s|=|>)/);
   assert.ok(field.includes(preferences.CUSTOMER_EMAIL_CONSENT_TEXT));
   assert.ok(field.includes(`data-consent-version="${version}"`));
-  assert.ok(read("supabase/migrations/20261022140405_customer_email_explicit_consent.sql").includes(preferences.CUSTOMER_EMAIL_CONSENT_TEXT));
+  assert.ok(read("supabase/migrations/20261025060937_customer_signup_choices.sql").includes(preferences.CUSTOMER_EMAIL_CONSENT_TEXT));
 });

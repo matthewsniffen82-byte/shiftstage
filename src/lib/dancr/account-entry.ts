@@ -12,6 +12,8 @@ export function accountEntryHref(params: AccountEntryParams) {
     ? { venueAccess: "1", venueMode: mode }
     : { auth: mode, role });
   const returnTo = safeLocalReturnPath(value("return_to"));
+  const signupVenue = value("signup_venue");
+  if (role === "customer" && /^[a-zA-Z0-9-]{1,120}$/.test(signupVenue)) query.set("signup_venue", signupVenue);
   if (returnTo && !/^\/(?:account|auth)(?:[/?#]|$)/.test(returnTo)) query.set("return_to", returnTo);
   return `/?${query.toString()}`;
 }

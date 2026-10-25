@@ -52,7 +52,7 @@ export default function VenueCustomerSharing({ venueId, venueName, disabled }: {
     finally { updating.current = false; if (!request.signal.aborted) setBusy(false); }
   }
   return <details className="venue-customer-sharing" onToggle={event => setOpen(event.currentTarget.open)}>
-    <summary>Share details with this club</summary>
+    <summary>Share details with {venueName}</summary>
     <p>Following stays private. You can choose to share your details with {venueName} and stop sharing here at any time. Unfollowing also removes your follower details.</p>
     {busy ? <p role="status">Loading…</p> : null}{error ? <p role="alert">{error}</p> : null}{status ? <p role="status">{status}</p> : null}
     {loaded && share ? <div><p>Shared with {venueName}: {share.name} · {share.email}{share.city ? ` · ${share.city}` : ""}</p>

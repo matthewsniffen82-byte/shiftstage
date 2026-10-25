@@ -40,7 +40,7 @@ const userTerms = compile(readFileSync(new URL("../src/lib/dancr/user-terms.ts",
 });
 const customerEmail = compile(readFileSync(new URL("../src/lib/dancr/customer-email-consent.ts", import.meta.url), "utf8"), {
   "../api-error-policy": policy,
-  "./customer-notification-preferences": { CUSTOMER_EMAIL_CONSENT_VERSION: "customer-email-v1" },
+  "./customer-notification-preferences": { CUSTOMER_EMAIL_CONSENT_VERSION: "customer-email-v2" },
 });
 const agreementVersion = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement-version.ts", import.meta.url), "utf8"));
 const dancerAgreement = compile(readFileSync(new URL("../src/lib/dancr/dancer-agreement.ts", import.meta.url), "utf8"), {
@@ -212,11 +212,11 @@ test("guest signup refuses absent, unchecked, string and outdated acceptance bef
 });
 
 test("customer signup passes a server-issued email-consent intent only after affirmative current opt-in", async () => {
-  const input = { mode: "signup", role: "customer", email: "new@example.test", password: "Unique1!password", userTermsAccepted: true, userTermsVersion: userTermsVersion.USER_TERMS_VERSION, customerEmailOptIn: true, customerEmailConsentVersion: "customer-email-v1" };
+  const input = { mode: "signup", role: "customer", email: "new@example.test", password: "Unique1!password", userTermsAccepted: true, userTermsVersion: userTermsVersion.USER_TERMS_VERSION, customerEmailOptIn: true, customerEmailConsentVersion: "customer-email-v2" };
   const calls = [], nonce = "22222222-2222-4222-8222-222222222222";
   const f = authFixture(null, { adminClient: { rpc: async (name, args) => { calls.push([name, args]); return { data: nonce }; } } });
   assert.equal((await f.POST(jsonRequest("POST", input))).status, 200);
-  assert.equal(calls[0][0], "prepare_customer_email_signup");
+  assert.equal(calls[0][0], "prepare_customer_signup_choices");
   assert.equal(calls[0][1].p_email, input.email);
   assert.equal(f.calls[0].options.data.customer_email_intent, nonce);
   const stale = authFixture();

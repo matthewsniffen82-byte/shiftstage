@@ -66,10 +66,10 @@ function fixture(emailEnabled = true, emailAvailable = true) {
     for (const child of [node.props?.children].flat(Infinity)) { const result = find(child, match); if (result) return result; }
     return null;
   }
-  const button = () => find(render(), node => node.type === 'button');
+  const button = (key = 'emailEnabled') => find(render(), node => node.props?.['data-email-choice'] === key);
   return {
     requests, updates, render, find, button,
-    click: () => button().props.onClick(),
+    click: (key = 'emailEnabled') => button(key).props.onClick(),
     feedback: () => find(render(), node => ['status', 'alert'].includes(node.props?.role)),
     respondWith(fn) { respond = fn; },
     changeSession(next = { accessToken: 'new-token', account: { id: 'guest-two', role: 'customer' } }) { session = next; },
@@ -84,10 +84,22 @@ test('saved choices show the appropriate action without changing subscription on
     const f = fixture(enabled);
     assert.equal(f.button().props.children, enabled ? 'Unsubscribe' : 'Subscribe');
     assert.equal(f.requests.length, 0);
-    const description = f.find(f.render(), node => node.props?.id === 'customer-email-description').props.children;
+    const description = f.find(f.render(), node => node.props?.id === 'customer-email-emailEnabled').props.children;
     assert.equal(description, preferences.CUSTOMER_EMAIL_CONSENT_TEXT);
-    assert.equal(f.button().props['aria-describedby'], 'customer-email-description');
+    assert.equal(f.button().props['aria-describedby'], 'customer-email-emailEnabled');
   }
+});
+
+test('follow email changes leave offers and newsletters subscribed',async()=>{
+  const f=fixture(true);
+  assert.equal(f.button('followEmailEnabled').props.children,'Subscribe');
+  await f.click('followEmailEnabled');
+  assert.deepEqual(JSON.parse(f.requests[0].body).notificationSettings,{followEmailEnabled:true});
+  assert.equal(f.getProfile().notificationSettings.emailEnabled,true);
+  assert.equal(f.button('followEmailEnabled').props.children,'Unsubscribe');
+  await f.click('followEmailEnabled');
+  assert.equal(f.getProfile().notificationSettings.followEmailEnabled,false);
+  assert.equal(f.getProfile().notificationSettings.emailEnabled,true);
 });
 
 test('guests can unsubscribe and subscribe again, changing only the email preference', async () => {

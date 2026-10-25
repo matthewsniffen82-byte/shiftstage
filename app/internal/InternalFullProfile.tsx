@@ -66,7 +66,8 @@ export function InternalFullProfile({ hidden = false, publicSlug, vipVenueId, pu
         && ["signup", "login"].includes(event.data.mode)) {
         try {
           const returnTo = createInternalFollowReturn(latest.current.profile.id, latest.current.token || "");
-          window.location.assign(`/account?role=customer&mode=${event.data.mode}&return_to=${encodeURIComponent(returnTo)}`);
+          const signupVenue = latest.current.profile.venueSlug;
+          window.location.assign(`/account?role=customer&mode=${event.data.mode}&return_to=${encodeURIComponent(returnTo)}${signupVenue ? `&signup_venue=${encodeURIComponent(signupVenue)}` : ""}`);
         } catch {
           frame.current?.contentWindow?.postMessage({ type: "mydancr:internal-profile-auth-error", message: "Sign-in could not open. Use the club's guest link and allow browser storage, then try again." }, window.location.origin);
         }

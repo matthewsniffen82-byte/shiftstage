@@ -61,7 +61,8 @@ export async function deliverNotificationRows(client: DancrClient, rows: Notific
     if (!settingsById.has(recipient.id)) return false;
     const settings = settingsById.get(recipient.id);
     const key = followAlertKey((row.payload as Record<string, unknown> | null)?.kind);
-    return customerNotificationSettings(settings)[channel] && (!key || customerFollowAlertEnabled(settings, key));
+    const preference = channel === "emailEnabled" && key ? "followEmailEnabled" : channel;
+    return customerNotificationSettings(settings)[preference] && (!key || customerFollowAlertEnabled(settings, key));
   };
   const pushRows = rows.filter(row => allowed(row, "pushEnabled"));
   const push = options.push === false ? 0 : await deliverPushNotifications(client, pushRows);
@@ -170,7 +171,10 @@ async function deliverEmailNotifications(client: DancrClient, rows: Notification
     if (recipient?.role === "customer") {
       // Fresh consent, verified address and withdrawal check immediately before each send.
       try {
-        const { data, error } = await client.rpc("customer_email_delivery_target", { p_user_id: row.recipient_id });
+        const { data, error } = await client.rpc("customer_email_channel_delivery_target", {
+          p_user_id: row.recipient_id,
+          p_channel: followAlertKey((row.payload as Record<string, unknown> | null)?.kind) ? "follow" : "marketing",
+        });
         if (error || !data || typeof data.email !== "string" || !/^[a-f0-9]{64}$/.test(data.token || "")) continue;
         email = data.email;
         unsubscribeUrl = `${publicAppUrl()}/email-preferences/${data.token}`;

@@ -56,7 +56,7 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ ok: false, error: (error as Error).message }, { status: 400 });
       }
       const delivery = customerNotificationDelivery(user.id, user.email);
-      if (update.notificationSettings.emailEnabled === true && !delivery.emailAvailable) {
+      if ((update.notificationSettings.emailEnabled === true || update.notificationSettings.followEmailEnabled === true) && !delivery.emailAvailable) {
         return NextResponse.json({ ok: false, error: "Email alerts are not available yet." }, { status: 503 });
       }
       if (update.notificationSettings.pushEnabled === true && !delivery.pushAvailable) {
@@ -68,12 +68,13 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ ok: false, error: "No guest profile updates provided." }, { status: 400 });
     }
 
-    const emailEnabled = update.notificationSettings?.emailEnabled;
+    const emailKey = typeof update.notificationSettings?.followEmailEnabled === "boolean" ? "followEmailEnabled" : "emailEnabled";
+    const emailEnabled = update.notificationSettings?.[emailKey];
     if (typeof emailEnabled === "boolean" && (update.city !== undefined || Object.keys(update.notificationSettings!).length !== 1)) {
       return NextResponse.json({ ok: false, error: "Change the optional email preference separately from other settings." }, { status: 400 });
     }
     const profile = typeof emailEnabled === "boolean"
-      ? await setCustomerEmailPreference(createAdminSupabaseClient(), user.id, emailEnabled, body.emailConsentSource, body.emailConsentVersion)
+      ? await setCustomerEmailPreference(createAdminSupabaseClient(), user.id, emailEnabled, body.emailConsentSource, body.emailConsentVersion, emailKey)
       : await updateCustomerProfile(client, user.id, update);
     return NextResponse.json({ ok: true, profile: { ...profile, notificationDelivery: customerNotificationDelivery(user.id, user.email) }, session });
   } catch (error) {

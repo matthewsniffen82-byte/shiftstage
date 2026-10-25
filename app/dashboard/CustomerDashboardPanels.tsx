@@ -6,7 +6,8 @@ import dynamic from "next/dynamic";
 import { homeDiscoveryHref } from "@/src/lib/dancr/navigation";
 import { verifiedVenueLogoUrl } from "@/src/lib/dancr/venue-branding";
 import { venueOperatingStatus } from "@/src/lib/dancr/venue-operating-status";
-import { CUSTOMER_FOLLOW_ALERTS, CUSTOMER_EMAIL_CONSENT_TEXT, CUSTOMER_EMAIL_CONSENT_VERSION, customerNotificationSettings, type CustomerNotificationKey } from "@/src/lib/dancr/customer-notification-preferences";
+import { CUSTOMER_FOLLOW_ALERTS, CUSTOMER_FOLLOW_EMAIL_CONSENT_TEXT, CUSTOMER_EMAIL_CONSENT_VERSION, customerNotificationSettings, type CustomerNotificationKey } from "@/src/lib/dancr/customer-notification-preferences";
+import VenueCustomerSharing from "./VenueCustomerSharing";
 import { customerPushDeviceEnabled, customerPushSupportMessage, disableCustomerPush, enableCustomerPush, type CustomerNotificationDelivery } from "@/src/lib/dancr/customer-push";
 import { CustomerDashboardIcon } from "./CustomerDashboardIdentity";
 import { DEVICE_SAVED_DEALS_CHANGED_EVENT, removeDeviceSavedClubDeal } from "@/src/lib/dancr/customer-device-deals";
@@ -754,7 +755,7 @@ function SavedVenueCard({
   const count = venue.activity?.workingNowCount;
   const dancers = venue.activity?.workingDancers || [];
   const entryClass = "feed-card-action home-card-qr-rail-action home-venue-discovery-rail-qr venue-card-primary-action venue-card-deals-action free-entry-cta";
-  return (
+  return (<>
     <article data-venue-brand={venue.slug} className={`venue home-discovery-feed-slide home-venue-discovery-slide${count ? " has-live-lineup" : ""}`} aria-label={venue.name || "Club"}>
       <div className={`home-venue-discovery-art is-venue-logo-artwork has-venue-logo ${venue.imageUrl ? "has-custom-photo has-venue-cover" : "is-venue-artwork"}`} data-venue-visual-source={venue.imageUrl ? "venue_cover" : "artwork"} style={venue.imageUrl ? { "--custom-photo": `url("${venue.imageUrl}")` } as CSSProperties : undefined}>
         <SavedVenueLogo venue={venue} />
@@ -788,7 +789,8 @@ function SavedVenueCard({
         <button className="feed-card-action venue-card-secondary-action venue-card-favorite-action is-active" type="button" data-venue-follow={venue.id} aria-label={`Unfollow ${venue.name || "club"}`} aria-pressed="true" aria-busy={removing || undefined} disabled={pending} onClick={onUnfollow}><span className="action-icon" data-action-icon="check" aria-hidden="true"><VenueCardIcon icon="check" /></span><span>{removing ? "Unfollowing…" : "Following"}</span></button>
       </div>
     </article>
-  );
+    <VenueCustomerSharing venueId={venue.id} venueName={venue.name} disabled={pending} />
+  </>);
 }
 
 
@@ -1151,7 +1153,7 @@ export function CustomerPreferencesPanel({
       const data = await requestCustomerProfileJson({
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ notificationSettings: { [key]: nextEnabled }, ...(key === "emailEnabled" ? { emailConsentSource: "notification_preferences", emailConsentVersion: CUSTOMER_EMAIL_CONSENT_VERSION } : {}) }),
+        body: JSON.stringify({ notificationSettings: { [key]: nextEnabled }, ...(key === "followEmailEnabled" ? { emailConsentSource: "notification_preferences", emailConsentVersion: CUSTOMER_EMAIL_CONSENT_VERSION } : {}) }),
         fallbackMessage: "Unable to update notifications.",
         signal: controller.signal,
       });
@@ -1211,8 +1213,8 @@ export function CustomerPreferencesPanel({
       <div className="customer-delivery-heading"><h3>Delivery options</h3><p>Your alerts appear here. Email and push are optional.</p></div>
       <div className="customer-preference-list">
         <div className="customer-preference-row">
-          <span><strong>Email updates</strong><small>{delivery.emailAvailable ? CUSTOMER_EMAIL_CONSENT_TEXT : "Email subscriptions are not available yet. You can still unsubscribe."}</small></span>
-          <CustomerNotificationSwitch label="Email updates" checked={settings.emailEnabled} disabled={isSaving || (!delivery.emailAvailable && !settings.emailEnabled)} busy={savingKey === "emailEnabled"} saved={savedKey === "emailEnabled"} onChange={() => void savePreference("emailEnabled", !settings.emailEnabled)} />
+          <span><strong>Follow emails</strong><small>{delivery.emailAvailable ? CUSTOMER_FOLLOW_EMAIL_CONSENT_TEXT : "Email subscriptions are not available yet. You can still unsubscribe."}</small></span>
+          <CustomerNotificationSwitch label="Follow emails" checked={settings.followEmailEnabled} disabled={isSaving || (!delivery.emailAvailable && !settings.followEmailEnabled)} busy={savingKey === "followEmailEnabled"} saved={savedKey === "followEmailEnabled"} onChange={() => void savePreference("followEmailEnabled", !settings.followEmailEnabled)} />
         </div>
         <div className="customer-preference-row">
           <span><strong>Push notifications</strong><small>{!delivery.pushAvailable ? "Push notifications are not available yet." : pushSupportMessage || (pushDeviceEnabled ? "Enabled on this device." : "Allow alerts from your browser, even when MyDancr is closed.")}</small></span>

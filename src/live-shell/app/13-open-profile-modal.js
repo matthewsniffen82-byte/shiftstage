@@ -1011,6 +1011,11 @@
         clearValue("customerEmail");
         const emailOptIn = document.getElementById("customerEmailOptIn");
         if (emailOptIn) emailOptIn.checked = false;
+        document.getElementById("customerFollowEmailOptIn").checked = false;
+        document.getElementById("customerVenueShareOptIn").checked = false;
+        clearValue("customerShareName");
+        clearValue("customerShareCity");
+        syncCustomerSignupSharing();
         clearValue("customerPassword");
         clearValue("customerConfirmPassword");
         stopConfirmationResendCooldown(document.getElementById("authSubmit"), authMode === "signup" ? "Create guest account" : "Sign in");

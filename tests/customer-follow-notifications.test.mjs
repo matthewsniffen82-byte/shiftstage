@@ -20,7 +20,7 @@ test("customer alert preferences use independent auto-saving switches under Aler
   assert.match(panel, /savePreference\(alert.key, !settings\[alert.key\]\)/);
   assert.match(panel, /notificationSettings: \{ \[key\]: nextEnabled \}/);
   assert.doesNotMatch(panel, /City|Save preferences|type="checkbox"|CUSTOMER_NOTIFICATION_OPTIONS/);
-  assert.match(panel, /Email updates/);
+  assert.match(panel, /Follow emails/);
   assert.match(panel, /Push notifications/);
   const alerts = dashboard.slice(dashboard.indexOf('id="customer-alerts"'), dashboard.indexOf('id="customer-account"'));
   assert.match(alerts, /<CustomerPreferencesPanel/);

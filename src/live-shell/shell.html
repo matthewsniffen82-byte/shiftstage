@@ -417,7 +417,18 @@
               <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link. <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></span>
             </div>
             <label class="customer-terms-consent" id="customerTermsField" hidden><input id="customerTermsAccepted" type="checkbox" data-terms-version="2026-10-08-v3"><span>I agree to the <a href="/terms/user/2026-10-08-v3" target="_blank" rel="noopener">User Terms</a>.</span></label>
-            <label class="customer-terms-consent" id="customerEmailOptInField" hidden><input id="customerEmailOptIn" type="checkbox" data-consent-version="customer-email-v1" disabled><span>Email me MyDancr promotions, newsletters, dancer and club alerts, and offers. Optional; unsubscribe at any time.</span></label>
+            <fieldset id="customerSignupChoices" hidden>
+              <legend>Optional choices</legend>
+              <label class="customer-terms-consent" id="customerFollowEmailOptInField"><input id="customerFollowEmailOptIn" type="checkbox" disabled><span>Email me updates from dancers and clubs I follow.</span></label>
+              <label class="customer-terms-consent" id="customerEmailOptInField"><input id="customerEmailOptIn" type="checkbox" data-consent-version="customer-email-v2" disabled><span>Email me MyDancr offers and newsletters.</span></label>
+              <label class="customer-terms-consent" id="customerVenueShareField" hidden><input id="customerVenueShareOptIn" type="checkbox" data-consent-version="venue-customer-sharing-v1" disabled><span id="customerVenueShareText"></span></label>
+              <div id="customerVenueShareDetails" hidden>
+                <div class="field"><label for="customerShareName">Name to share with this club</label><input id="customerShareName" autocomplete="name" minlength="2" maxlength="100" disabled></div>
+                <div class="field"><label for="customerShareCity">City to share (optional)</label><input id="customerShareCity" autocomplete="address-level2" maxlength="100" disabled></div>
+                <p class="rule-note">This also follows the club and adds it to Saved. You can stop sharing in Account. Sharing does not subscribe you to club marketing.</p>
+              </div>
+              <p class="rule-note">Following adds updates to Alerts, even without email. Change these choices anytime in your dashboard.</p>
+            </fieldset>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>

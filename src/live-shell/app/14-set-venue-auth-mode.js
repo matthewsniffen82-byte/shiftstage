@@ -230,6 +230,9 @@
       }
       pendingVenueAuthReturnTo = "";
       pendingAccountAuthReturnTo = "";
+      customerSignupVenueKey = "";
+      customerSignupVenue = null;
+      customerSignupVenueRequest += 1;
       pendingVenueAgentReferralCode = "";
       clearAuthFields("all");
       closeRecoveryPopover(passwordRecoveryCard, false);
@@ -403,9 +406,13 @@
       termsInput.required = isSignup;
       termsInput.disabled = !isSignup;
       const emailOptIn = document.getElementById("customerEmailOptIn");
-      document.getElementById("customerEmailOptInField").hidden = !isSignup;
+      document.getElementById("customerSignupChoices").hidden = !isSignup;
       emailOptIn.checked = false;
       emailOptIn.disabled = !isSignup;
+      const followEmail = document.getElementById("customerFollowEmailOptIn");
+      followEmail.checked = false;
+      followEmail.disabled = !isSignup;
+      void loadCustomerSignupVenue(isSignup);
       document.getElementById("customerBackToTypes").hidden = !isSignup;
       const vipSignInLink = document.getElementById("vipSignInLink");
       if (vipSignInLink) vipSignInLink.hidden = isSignup;
@@ -421,6 +428,37 @@
         submit.disabled = false;
       }
       if (!isSignup) stopConfirmationResendCooldown(submit, "Sign in");
+    }
+
+    function syncCustomerSignupSharing() {
+      const sharing = authMode === "signup" && customerSignupVenue && document.getElementById("customerVenueShareOptIn").checked;
+      document.getElementById("customerVenueShareDetails").hidden = !sharing;
+      document.getElementById("customerShareName").required = Boolean(sharing);
+      document.getElementById("customerShareName").disabled = !sharing;
+      document.getElementById("customerShareCity").disabled = !sharing;
+    }
+
+    async function loadCustomerSignupVenue(isSignup) {
+      const request = ++customerSignupVenueRequest;
+      customerSignupVenue = null;
+      const checkbox = document.getElementById("customerVenueShareOptIn");
+      checkbox.checked = false;
+      checkbox.disabled = true;
+      document.getElementById("customerVenueShareField").hidden = true;
+      syncCustomerSignupSharing();
+      if (!isSignup) return;
+      const venue = selectedVenueName ? resolveVenueByName(selectedVenueName) : null;
+      const key = customerSignupVenueKey || venue?.id;
+      if (!key) return;
+      try {
+        const response = await fetch(`/api/public/signup-venue?venue=${encodeURIComponent(key)}`, { cache: "no-store" });
+        const data = await response.json();
+        if (request !== customerSignupVenueRequest || authMode !== "signup" || !response.ok || !data.ok || !data.venue?.id) return;
+        customerSignupVenue = data.venue;
+        document.getElementById("customerVenueShareText").textContent = `Share my name, email, and city with ${data.venue.name}.`;
+        document.getElementById("customerVenueShareField").hidden = false;
+        checkbox.disabled = false;
+      } catch { /* A failed club lookup never creates sharing permission. */ }
     }
 
     function setCustomerAuthStatus(message) {

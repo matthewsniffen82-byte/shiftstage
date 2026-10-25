@@ -27,7 +27,7 @@ const capability = compile("src/lib/dancr/customer-notification-delivery.ts", {"
 test("customer email defaults off while in-app and push choices and saved opt-outs are preserved", () => {
   for (const stored of [null, {}, { followedDancersOnly: true, anyDancerInCity: false }]) {
     assert.equal(preferences.customerNotificationSettings(stored).emailEnabled, false);
-    assert.ok(Object.entries(preferences.customerNotificationSettings(stored)).filter(([key]) => key !== "emailEnabled").every(([,value]) => value === true));
+    assert.ok(Object.entries(preferences.customerNotificationSettings(stored)).filter(([key]) => !["emailEnabled", "followEmailEnabled"].includes(key)).every(([,value]) => value === true));
   }
   for (const key of Object.keys(preferences.DEFAULT_CUSTOMER_NOTIFICATION_SETTINGS)) {
     assert.equal(preferences.customerNotificationSettings({ [key]: false })[key], false);
@@ -67,9 +67,9 @@ function profileFixture(available = true) {
   const route = compile("app/api/customer/profile/route.ts", {
     "@/src/lib/dancr/customer-notification-preferences": preferences,
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
-    "@/src/lib/dancr/customer-email-consent": { setCustomerEmailPreference: async (_client, userId, enabled) => {
-      writes.push({ userId, notificationSettings: { emailEnabled: enabled } });
-      return { userId, notificationSettings: { emailEnabled: enabled } };
+    "@/src/lib/dancr/customer-email-consent": { setCustomerEmailPreference: async (_client, userId, enabled, _source, _version, key) => {
+      writes.push({ userId, notificationSettings: { [key]: enabled } });
+      return { userId, notificationSettings: { [key]: enabled } };
     } },
     "@/src/lib/dancr/customer-notification-delivery": { customerNotificationDelivery: () => ({ emailAvailable: available, pushAvailable: available }) },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: request => request.json() },
@@ -147,7 +147,7 @@ function deliveryFixture(settings, options = {}) {
   const requests = [];
   const recipients = [{ id: "customer-one", email: "customer@example.com", role: "customer" }, { id: "dancer-one", email: "dancer@example.com", role: "dancer" }];
   const client = { rpc: async (name, args) => {
-    assert.equal(name, "customer_email_delivery_target"); assert.equal(args.p_user_id, "customer-one");
+    assert.equal(name, "customer_email_channel_delivery_target"); assert.ok(["follow", "marketing"].includes(args.p_channel)); assert.equal(args.p_user_id, "customer-one");
     return { data: options.noConsent ? null : { email: "customer@example.com", token: "a".repeat(64) }, error: options.consentError };
   }, from(table) {
     const result = table === "app_users" ? { data: recipients } : { data: options.missing ? [] : [{ user_id: "customer-one", notification_settings: settings }], error: options.error };
@@ -166,8 +166,26 @@ function deliveryFixture(settings, options = {}) {
 }
 const row = (kind, recipient_id = "customer-one") => ({ recipient_id, notification_type: "engagement", title: "Test alert", body: "Test body", payload: { kind } });
 
+test("follow emails and marketing subscriptions deliver independently", async () => {
+  for (const [settings,subject] of [[{followEmailEnabled:true,emailEnabled:false},"Followed"],[{followEmailEnabled:false,emailEnabled:true},"Offers"]]) {
+    const f=deliveryFixture({...settings,pushEnabled:false});
+    const rows=[{...row(kinds.workingNow),title:"Followed"},{...row("newsletter"),title:"Offers"}];
+    assert.deepEqual(plain(await f.deliverNotificationRows(f.client,rows)),{email:1,push:0});
+    assert.deepEqual(f.requests.map(r=>r.body.subject),[subject]);
+  }
+});
+
+test("the profile API handles follow email consent separately and rejects mixed consent writes",async()=>{
+  const f=profileFixture();
+  assert.equal((await f.PATCH(patch({notificationSettings:{followEmailEnabled:true},emailConsentSource:"account_preferences",emailConsentVersion:preferences.CUSTOMER_EMAIL_CONSENT_VERSION}))).status,200);
+  assert.deepEqual(f.writes,[{userId:"signed-in-customer",notificationSettings:{followEmailEnabled:true}}]);
+  for(const notificationSettings of [{followEmailEnabled:true,emailEnabled:true},{followEmailEnabled:false,pushEnabled:false}])
+    assert.equal((await f.PATCH(patch({notificationSettings}))).status,400);
+  assert.equal((await profileFixture(false).PATCH(patch({notificationSettings:{followEmailEnabled:true}}))).status,503);
+});
+
 for (const [key, kind] of Object.entries(kinds)) test(key + " opt-out prevents that event reaching email or push", async () => {
-  const f = deliveryFixture({ emailEnabled: true, pushEnabled: true, [key]: false });
+  const f = deliveryFixture({ emailEnabled: true, followEmailEnabled: true, pushEnabled: true, [key]: false });
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row(kind)])), { email: 0, push: 0 });
   assert.equal(f.requests.length, 0);
   const otherKind = Object.values(kinds).find(value => value !== kind);
@@ -182,12 +200,12 @@ test("delivery respects independent channels, master pause, defaults and unavail
     [{ pushEnabled: false }, { email: 0, push: 0 }],
     [{ emailEnabled: false }, { email: 0, push: 1 }],
     [{ emailEnabled: false, pushEnabled: false }, { email: 0, push: 0 }],
-    [{ emailEnabled: true, pushEnabled: true, followAlertsEnabled: false }, { email: 0, push: 0 }],
+    [{ emailEnabled: true, followEmailEnabled: true, pushEnabled: true, followAlertsEnabled: false }, { email: 0, push: 0 }],
   ]) {
     const f = deliveryFixture(settings);
     assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row(kinds.workingNow)])), expected);
   }
-  const failed = deliveryFixture({ emailEnabled: true, pushEnabled: true }, { error: new Error("unavailable") });
+  const failed = deliveryFixture({ emailEnabled: true, followEmailEnabled: true, pushEnabled: true }, { error: new Error("unavailable") });
   assert.deepEqual(plain(await failed.deliverNotificationRows(failed.client, [row(kinds.workingNow), row(kinds.workingNow, "inactive-account")])), { email: 0, push: 0 });
   assert.equal(failed.requests.length, 0);
   const missing = deliveryFixture({}, { missing: true });
@@ -204,11 +222,11 @@ test("customer choices do not suppress transactional email or other account role
 
 test("email fails closed without a fresh consent receipt and includes anonymous unsubscribe controls", async () => {
   for (const options of [{ noConsent: true }, { consentError: new Error("unavailable") }]) {
-    const f = deliveryFixture({ emailEnabled: true, pushEnabled: false }, options);
+    const f = deliveryFixture({ emailEnabled: true, followEmailEnabled: true, pushEnabled: false }, options);
     assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [row("newsletter")])), { email: 0, push: 0 });
     assert.equal(f.requests.length, 0);
   }
-  const f = deliveryFixture({ emailEnabled: true, pushEnabled: false });
+  const f = deliveryFixture({ emailEnabled: true, followEmailEnabled: true, pushEnabled: false });
   await f.deliverNotificationRows(f.client, [row("newsletter")]);
   const email = f.requests[0].body;
   assert.ok(email.text.includes("/email-preferences/" + "a".repeat(64)));
@@ -223,7 +241,7 @@ test("email unsubscribe suppresses all optional kinds while preserving push, and
   const rows = [...Object.values(kinds), "newsletter", "club_promotion", "advertisement", "support_reply"].map(kind => row(kind));
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, rows)), { email: 0, push: rows.length });
   assert.equal(f.requests.filter(request => request.url).length, 0);
-  settings.emailEnabled = true;
+  settings.emailEnabled = true; settings.followEmailEnabled = true;
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, rows)), { email: rows.length, push: rows.length });
 });
 
@@ -233,7 +251,7 @@ test("VIP working alerts default on and honor channel and master/category mutes,
     const f = deliveryFixture(settings);
     assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [vipRow])), { email: 0, push: 0 });
   }
-  const f = deliveryFixture({ emailEnabled: true });
+  const f = deliveryFixture({ followEmailEnabled: true });
   assert.deepEqual(plain(await f.deliverNotificationRows(f.client, [vipRow])), { email: 1, push: 1 });
   assert.equal(f.requests[0].body.url, "https://mydancr.com/vip?venueId=club-one#vip-plan");
 });

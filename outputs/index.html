@@ -40639,6 +40639,11 @@
           cursor: pointer;
         }
         .customer-terms-consent[hidden] { display: none; }
+        #customerSignupChoices { margin: 0; padding: 12px; border: 1px solid rgba(255,255,255,.16); border-radius: 12px; min-width: 0; }
+        #customerSignupChoices[hidden], #customerVenueShareDetails[hidden] { display: none; }
+        #customerSignupChoices legend { padding: 0 5px; font-size: 14px; font-weight: 650; }
+        #customerSignupChoices .customer-terms-consent { margin: 8px 0; }
+        #customerSignupChoices .rule-note { margin: 8px 0 0; }
         /* Keep the native check square despite the mobile text-input minimum. */
         #authPage .customer-terms-consent input[type="checkbox"] {
           appearance: auto;
@@ -41882,7 +41887,18 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               <span class="auth-signup-note-copy">Your guest account and activity aren’t shown publicly. We’ll email you a confirmation link. <a href="/privacy" target="_blank" rel="noopener">Privacy Policy</a></span>
             </div>
             <label class="customer-terms-consent" id="customerTermsField" hidden><input id="customerTermsAccepted" type="checkbox" data-terms-version="2026-10-08-v3"><span>I agree to the <a href="/terms/user/2026-10-08-v3" target="_blank" rel="noopener">User Terms</a>.</span></label>
-            <label class="customer-terms-consent" id="customerEmailOptInField" hidden><input id="customerEmailOptIn" type="checkbox" data-consent-version="customer-email-v1" disabled><span>Email me MyDancr promotions, newsletters, dancer and club alerts, and offers. Optional; unsubscribe at any time.</span></label>
+            <fieldset id="customerSignupChoices" hidden>
+              <legend>Optional choices</legend>
+              <label class="customer-terms-consent" id="customerFollowEmailOptInField"><input id="customerFollowEmailOptIn" type="checkbox" disabled><span>Email me updates from dancers and clubs I follow.</span></label>
+              <label class="customer-terms-consent" id="customerEmailOptInField"><input id="customerEmailOptIn" type="checkbox" data-consent-version="customer-email-v2" disabled><span>Email me MyDancr offers and newsletters.</span></label>
+              <label class="customer-terms-consent" id="customerVenueShareField" hidden><input id="customerVenueShareOptIn" type="checkbox" data-consent-version="venue-customer-sharing-v1" disabled><span id="customerVenueShareText"></span></label>
+              <div id="customerVenueShareDetails" hidden>
+                <div class="field"><label for="customerShareName">Name to share with this club</label><input id="customerShareName" autocomplete="name" minlength="2" maxlength="100" disabled></div>
+                <div class="field"><label for="customerShareCity">City to share (optional)</label><input id="customerShareCity" autocomplete="address-level2" maxlength="100" disabled></div>
+                <p class="rule-note">This also follows the club and adds it to Saved. You can stop sharing in Account. Sharing does not subscribe you to club marketing.</p>
+              </div>
+              <p class="rule-note">Following adds updates to Alerts, even without email. Change these choices anytime in your dashboard.</p>
+            </fieldset>
             <button class="action-btn" id="authSubmit" type="submit">Sign in</button>
             <button class="auth-back-to-types" id="customerBackToTypes" type="button" hidden>← Back to account types</button>
             <div class="rule-note auth-status" id="customerAuthStatus" role="status" aria-live="polite" hidden></div>
@@ -44404,6 +44420,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     let verifiedVenueSignupPreview = null;
     let pendingVenueAuthReturnTo = "";
     let pendingAccountAuthReturnTo = "";
+    let customerSignupVenueKey = "";
+    let customerSignupVenue = null;
+    let customerSignupVenueRequest = 0;
     let pendingVenueAgentReferralCode = "";
     let adminAuthMode = "login";
     let adminApprovedDancerSearch = "";
@@ -57083,6 +57102,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         clearValue("customerEmail");
         const emailOptIn = document.getElementById("customerEmailOptIn");
         if (emailOptIn) emailOptIn.checked = false;
+        document.getElementById("customerFollowEmailOptIn").checked = false;
+        document.getElementById("customerVenueShareOptIn").checked = false;
+        clearValue("customerShareName");
+        clearValue("customerShareCity");
+        syncCustomerSignupSharing();
         clearValue("customerPassword");
         clearValue("customerConfirmPassword");
         stopConfirmationResendCooldown(document.getElementById("authSubmit"), authMode === "signup" ? "Create guest account" : "Sign in");
@@ -57379,6 +57403,9 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       }
       pendingVenueAuthReturnTo = "";
       pendingAccountAuthReturnTo = "";
+      customerSignupVenueKey = "";
+      customerSignupVenue = null;
+      customerSignupVenueRequest += 1;
       pendingVenueAgentReferralCode = "";
       clearAuthFields("all");
       closeRecoveryPopover(passwordRecoveryCard, false);
@@ -57552,9 +57579,13 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       termsInput.required = isSignup;
       termsInput.disabled = !isSignup;
       const emailOptIn = document.getElementById("customerEmailOptIn");
-      document.getElementById("customerEmailOptInField").hidden = !isSignup;
+      document.getElementById("customerSignupChoices").hidden = !isSignup;
       emailOptIn.checked = false;
       emailOptIn.disabled = !isSignup;
+      const followEmail = document.getElementById("customerFollowEmailOptIn");
+      followEmail.checked = false;
+      followEmail.disabled = !isSignup;
+      void loadCustomerSignupVenue(isSignup);
       document.getElementById("customerBackToTypes").hidden = !isSignup;
       const vipSignInLink = document.getElementById("vipSignInLink");
       if (vipSignInLink) vipSignInLink.hidden = isSignup;
@@ -57570,6 +57601,37 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
         submit.disabled = false;
       }
       if (!isSignup) stopConfirmationResendCooldown(submit, "Sign in");
+    }
+
+    function syncCustomerSignupSharing() {
+      const sharing = authMode === "signup" && customerSignupVenue && document.getElementById("customerVenueShareOptIn").checked;
+      document.getElementById("customerVenueShareDetails").hidden = !sharing;
+      document.getElementById("customerShareName").required = Boolean(sharing);
+      document.getElementById("customerShareName").disabled = !sharing;
+      document.getElementById("customerShareCity").disabled = !sharing;
+    }
+
+    async function loadCustomerSignupVenue(isSignup) {
+      const request = ++customerSignupVenueRequest;
+      customerSignupVenue = null;
+      const checkbox = document.getElementById("customerVenueShareOptIn");
+      checkbox.checked = false;
+      checkbox.disabled = true;
+      document.getElementById("customerVenueShareField").hidden = true;
+      syncCustomerSignupSharing();
+      if (!isSignup) return;
+      const venue = selectedVenueName ? resolveVenueByName(selectedVenueName) : null;
+      const key = customerSignupVenueKey || venue?.id;
+      if (!key) return;
+      try {
+        const response = await fetch(`/api/public/signup-venue?venue=${encodeURIComponent(key)}`, { cache: "no-store" });
+        const data = await response.json();
+        if (request !== customerSignupVenueRequest || authMode !== "signup" || !response.ok || !data.ok || !data.venue?.id) return;
+        customerSignupVenue = data.venue;
+        document.getElementById("customerVenueShareText").textContent = `Share my name, email, and city with ${data.venue.name}.`;
+        document.getElementById("customerVenueShareField").hidden = false;
+        checkbox.disabled = false;
+      } catch { /* A failed club lookup never creates sharing permission. */ }
     }
 
     function setCustomerAuthStatus(message) {
@@ -67107,6 +67169,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     });
 
 
+    document.getElementById("customerVenueShareOptIn").addEventListener("change", syncCustomerSignupSharing);
     document.getElementById("authForm").addEventListener("submit", async (event) => {
       event.preventDefault();
       const submit = document.getElementById("authSubmit");
@@ -67137,7 +67200,16 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           payload.userTermsAccepted = document.getElementById("customerTermsAccepted").checked;
           payload.userTermsVersion = document.getElementById("customerTermsAccepted").dataset.termsVersion;
           payload.customerEmailOptIn = document.getElementById("customerEmailOptIn").checked;
+          payload.customerFollowEmailOptIn = document.getElementById("customerFollowEmailOptIn").checked;
           payload.customerEmailConsentVersion = document.getElementById("customerEmailOptIn").dataset.consentVersion;
+          payload.customerVenueShareOptIn = Boolean(customerSignupVenue && document.getElementById("customerVenueShareOptIn").checked);
+          if (payload.customerVenueShareOptIn) {
+            payload.customerVenueId = customerSignupVenue.id;
+            payload.customerVenueName = customerSignupVenue.name;
+            payload.customerVenueShareVersion = document.getElementById("customerVenueShareOptIn").dataset.consentVersion;
+            payload.customerShareName = document.getElementById("customerShareName").value;
+            payload.customerShareCity = document.getElementById("customerShareCity").value;
+          }
         }
         const result = await requestAuth(payload);
         if (authMode === "signup") {
@@ -69408,7 +69480,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       if (mode !== "login" && mode !== "signup") return false;
       const role = url.searchParams.get("role") === "dancer" ? "dancer" : "customer";
       const returnTo = safeLocalReturnPath(url.searchParams.get("return_to"));
-      for (const key of ["auth", "role", "return_to"]) url.searchParams.delete(key);
+      customerSignupVenueKey = /^[a-zA-Z0-9-]{1,120}$/.test(url.searchParams.get("signup_venue") || "") ? url.searchParams.get("signup_venue") : "";
+      for (const key of ["auth", "role", "return_to", "signup_venue"]) url.searchParams.delete(key);
       window.history.replaceState({}, document.title, url.pathname + url.search + url.hash);
       openAuthRole(role);
       if (mode === "signup") {
