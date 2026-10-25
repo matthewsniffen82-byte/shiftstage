@@ -26,14 +26,14 @@ body.dancr-button-system #authPage #venueRequestStateButton svg {
   fill: none; stroke: currentColor; stroke-width: 1.8;
 }
 body.dancr-button-system #authPage #venueRequestStateButton[aria-expanded="true"] {
-  border-color: #c4b5fd !important;
+  border-color: var(--dancr-color-brand-primary) !important;
 }
 body.dancr-button-system #authPage #venueRequestStateOptions {
   position: absolute; z-index: 30; inset: calc(100% + 4px) 0 auto;
   box-sizing: border-box; max-height: 240px; overflow-y: auto;
   overscroll-behavior: contain; padding: 4px;
-  border: 1px solid #6b5c78; border-radius: 12px;
-  background: #19191f; box-shadow: 0 12px 28px rgba(0,0,0,.4);
+  border: 1px solid var(--dancr-color-border); border-radius: 12px;
+  background: var(--dancr-color-surface); box-shadow: 0 12px 28px rgba(0,0,0,.4);
 }
 body.dancr-button-system #authPage #venueRequestStateOptions [role="option"] {
   box-sizing: border-box; min-height: 44px; padding: 10px 12px;
@@ -41,10 +41,10 @@ body.dancr-button-system #authPage #venueRequestStateOptions [role="option"] {
   cursor: pointer;
 }
 body.dancr-button-system #authPage #venueRequestStateOptions [role="option"]:is(.is-active, :hover) {
-  background: #303036; outline: 1px solid #c4b5fd; outline-offset: -1px;
+  background: var(--dancr-color-control-secondary); outline: 1px solid var(--dancr-color-brand-primary); outline-offset: -1px;
 }
 body.dancr-button-system #authPage #venueRequestStateOptions [aria-selected="true"] {
-  color: #ddd6fe; font-weight: 650;
+  color: var(--dancr-color-text-primary); font-weight: 650;
 }
 body.dancr-button-system #authPage #venueRequestStateError { color: #fca5a5; font-size: 13px; }
 body.dancr-button-system #authPage #venueRequestStateButton[aria-invalid="true"] { border-color: #fca5a5 !important; }
