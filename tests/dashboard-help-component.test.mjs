@@ -33,7 +33,15 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     useEffect(effect, deps) { const instance = active, slot = instance.index++, previous = instance.slots[slot]; if (!previous || deps.some((value, index) => value !== previous.deps[index])) { instance.effects.push(() => { previous?.cleanup?.(); instance.slots[slot] = { deps, cleanup: effect() }; }); } },
   };
   const window = {
-    location: { hash },
+    location: { hash, pathname: '/dashboard/venue', search: '?help=support' },
+    history: {
+      state: { dashboard: 'preserved' },
+      replaceState(state, _title, url) {
+        this.state = state;
+        const parsed = new URL(url, 'https://example.test');
+        Object.assign(window.location, { hash: parsed.hash, pathname: parsed.pathname, search: parsed.search });
+      },
+    },
     addEventListener(name, fn) { if (!listeners.has(name)) listeners.set(name, new Set()); listeners.get(name).add(fn); },
     removeEventListener: (name, fn) => listeners.get(name)?.delete(fn),
     dispatchEvent(event) { for (const fn of [...(listeners.get(event.type) || [])]) fn(event); },
@@ -61,7 +69,7 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     const instance = { slots: [], index: 0, effects: [] }; mounted.push(instance);
     return { render() { const currentProps = typeof props === 'function' ? props() : props; active = instance; instance.index = 0; instance.effects = []; const tree = component(currentProps); for (const effect of instance.effects) effect(); return tree; } };
   }
-  const parent = mount(exports.default, { role, accountId: 'account-one' });
+  let parent = mount(exports.default, { role, accountId: 'account-one' });
   const internal = mount(exports.InternalDashboardHelp, {});
   const accountLink = mount(exports.DashboardHelpShortcut, { panelId: 'customer-support', conversationCount: 1 });
   let view;
@@ -89,6 +97,13 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     shortcut(accountId = 'account-one') { events.openDashboardHelp(accountId); },
     clickAccountLink() { find(accountLink.render(), node => node.type === 'button').props.onClick(); },
     deepLink(value) { window.location.hash = value; window.dispatchEvent(new Event('hashchange')); },
+    close() { find(render(), node => node.props?.['aria-label'] === 'Close help').props.onClick(); },
+    location: window.location, history: window.history,
+    remountHelp() {
+      for (const instance of mounted) for (const slot of instance.slots) slot?.cleanup?.();
+      parent = mount(exports.default, { role, accountId: 'account-one' });
+      parent.render(); parent.render();
+    },
     messagesProps: () => find(render(), node => node.type === messageExports.default)?.props,
     unmount() { for (const instance of mounted) for (const slot of instance.slots) slot?.cleanup?.(); },
   };
@@ -117,6 +132,33 @@ test('opening an old support URL starts in Messages without a second click', () 
     const f = fixture('customer', { hash });
     assert.equal(f.button('Messages').props['aria-pressed'], true); f.unmount();
   }
+});
+
+test('closing linked support prevents approval refreshes from reopening it', () => {
+  for (const [role, hash] of [['venue', '#venue-support'], ['venue', '#venue-support-section'], ['staff', '#venue-support'], ['dancer', '#dancer-support'], ['customer', '#customer-support'], ['vip', '#vip-support']]) {
+    const f = fixture(role, { hash });
+    assert.equal(f.button('Messages').props['aria-pressed'], true);
+    f.close();
+    assert.equal(f.closed(), true);
+    assert.equal(f.location.hash, '');
+    assert.equal(f.location.pathname, '/dashboard/venue');
+    assert.equal(f.location.search, '?help=support');
+    assert.deepEqual(f.history.state, { dashboard: 'preserved' });
+    f.remountHelp();
+    assert.equal(f.closed(), true, 'refreshing a dashboard must not replay a dismissed support link');
+    f.deepLink(hash);
+    assert.equal(f.closed(), false, 'a new deliberate support click must still open help');
+    f.unmount();
+  }
+});
+
+test('closing help preserves an unrelated dashboard section', () => {
+  const f = fixture('venue');
+  f.deepLink('#venue-dancer-roster');
+  f.close();
+  assert.equal(f.location.hash, '#venue-dancer-roster');
+  assert.equal(f.closed(), true);
+  f.unmount();
 });
 test('cross-account open requests are ignored and switching accounts closes help', () => {
   const f = fixture(); f.render(); f.shortcut('someone-else');

@@ -178,6 +178,12 @@ for (const supportThreads of [undefined, []]) test(`paused venue rendering shows
     } };
     if (name === "react/jsx-runtime") return require(name);
     if (name === "next/dynamic") return { default: () => () => null };
+    // Support is now a shared shortcut; keep this isolated dashboard render
+    // checking that the pending/paused branch mounts it with the correct target.
+    if (name === "../components/DashboardHelp") return {
+      __esModule: true, default: () => null,
+      DashboardHelpShortcut: ({ panelId }) => React.createElement("article", { id: panelId }, "Help & support"),
+    };
     return new Proxy(() => null, { get: (_target, key) => key === "__esModule" ? false : () => null });
   } });
   const html = renderToStaticMarkup(React.createElement(exports.default, { role: "venue" })).replace(/<style>[\s\S]*?<\/style>/g, "");

@@ -10,6 +10,11 @@ import styles from "./dashboard-help.module.css";
 
 type Entry = { who: "you" | "help"; text: string; href?: string; topics?: ReturnType<typeof helpTopicsFor> };
 
+function isSupportHash(role: HelpRole, hash: string) {
+  const prefix = helpSupportRole(role);
+  return Boolean((prefix && [`#${prefix}-support`, `#${prefix}-support-section`].includes(hash)) || (role === "vip" && hash === "#vip-support"));
+}
+
 export function DashboardHelpShortcut({ panelId, conversationCount = 0, onCountChange }: { panelId?: string; conversationCount?: number; onCountChange?: (count: number) => void }) {
   const [count, setCount] = useState(conversationCount);
   useEffect(() => { setCount(conversationCount); }, [conversationCount]);
@@ -69,8 +74,7 @@ export default function DashboardHelp({ role, accountId }: { role: HelpRole; acc
       if (detail && detail.accountId === (accountId || readSession()?.account?.id)) open(detail.view === "assistant" ? "assistant" : "messages");
     };
     const fromHash = () => {
-      const prefix = helpSupportRole(role);
-      if ((prefix && [`#${prefix}-support`, `#${prefix}-support-section`].includes(window.location.hash)) || (role === "vip" && window.location.hash === "#vip-support")) open("messages");
+      if (isSupportHash(role, window.location.hash)) open("messages");
     };
     fromHash();
     window.addEventListener(OPEN_DASHBOARD_HELP, requested); window.addEventListener("hashchange", fromHash);
@@ -85,7 +89,14 @@ export default function DashboardHelp({ role, accountId }: { role: HelpRole; acc
     window.addEventListener("focus", checkIdentity);
     return () => { window.removeEventListener("storage", checkIdentity); window.removeEventListener("focus", checkIdentity); };
   }, [opened, identity]);
-  function close() { setOpened(false); (opener.current || launcher.current)?.focus(); }
+  function close() {
+    // A dismissed support link must not reopen the dialog when the dashboard reloads.
+    if (isSupportHash(role, window.location.hash)) {
+      window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    }
+    setOpened(false);
+    (opener.current || launcher.current)?.focus();
+  }
   return <>
     <button ref={launcher} className={styles.launcher} type="button" aria-haspopup="dialog" onClick={() => {
       opener.current = launcher.current; setInitialView("assistant"); setIdentity(accountId || readSession()?.account?.id || ""); setOpened(true);

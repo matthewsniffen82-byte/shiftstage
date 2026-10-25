@@ -22,6 +22,7 @@ import "./venue-dashboard-compact.css";
 import "./venue-operations.css";
 import "./venue-premium.css";
 import VenueAdminUtilities from "./VenueAdminUtilities";
+import VenueApprovalPanel from "./VenueApprovalPanel";
 import "./dancer-profile-builder-polish.css";
 import "./dancer-onboarding.css";
 import "./dancer-premium.css";
@@ -498,11 +499,7 @@ export default function DashboardClient({
         <div className="dashboard-identity-copy"><span className="dashboard-identity-label">Club request</span><h1>{state.venueRequest.venueName}</h1></div>
       </section>
       <EmailNotificationGuidance accountId={String(state.account?.id || "")} accountRole="venue" clubApplication />
-      <article className="info-panel">
-        <h2>{state.venueRequest.status === "rejected" ? "Request not approved" : "Waiting for approval"}</h2>
-        <p>{state.venueRequest.status === "rejected" ? "Your club request was reviewed and was not approved. Contact support if you need help with the decision." : "Your manager login is saved. We’ll email you when your club is approved. Your dashboard will unlock with this same account—no new password or access code needed."}</p>
-        <div className="action-row"><button type="button" onClick={retryDashboard}>Check approval status</button><a href="#venue-support">Contact support</a></div>
-      </article>
+      <VenueApprovalPanel key={state.venueRequest.id} request={state.venueRequest} onApproved={retryDashboard} />
       {state.supportThreads ? <SupportInboxPanel initialThreads={state.supportThreads} panelId="venue-support" /> : <p role="status">Loading support…</p>}
     </main>;
   }
