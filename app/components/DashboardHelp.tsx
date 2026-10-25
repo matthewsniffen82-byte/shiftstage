@@ -22,6 +22,10 @@ export function DashboardHelpShortcut({ panelId, conversationCount = 0, onCountC
     window.addEventListener(DASHBOARD_HELP_UPDATED, updated);
     return () => window.removeEventListener(DASHBOARD_HELP_UPDATED, updated);
   }, []);
+  if (panelId === "venue-support") return <article className={`info-panel support-panel ${styles.compactShortcut}`} id={panelId} tabIndex={-1}>
+    <div className={styles.shortcutCopy}><h2>Help &amp; support</h2><p>Quick answers &amp; team messages.</p>{count > 0 && <small>{count} {count === 1 ? "conversation" : "conversations"}</small>}</div>
+    <button type="button" className={styles.launcher} aria-haspopup="dialog" onClick={() => openDashboardHelp(readSession()?.account?.id || "")}>Open support</button>
+  </article>;
   return <article className="info-panel support-panel" id={panelId} tabIndex={panelId ? -1 : undefined}>
     <h2>Help &amp; support</h2><p>Ask the assistant, message the team, and read replies in one place.</p>
     {count > 0 && <p>{count} {count === 1 ? "conversation" : "conversations"}</p>}
@@ -102,6 +106,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
   const [draftRevision, setDraftRevision] = useState(0);
   const [showTopics, setShowTopics] = useState(false);
   const topics = helpTopicsFor(role);
+  const compact = role === "venue" || role === "staff";
 
   useEffect(() => {
     dialog.current?.showModal();
@@ -133,7 +138,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
     setDraftRevision(current => current + 1); setMessagesOpened(true); setMode("messages");
   }
 
-  return <dialog ref={dialog} className={styles.dialog} aria-labelledby={titleId} onCancel={onClose} onClose={onClose} data-global-navigation-swipe="ignore">
+  return <dialog ref={dialog} className={`${styles.dialog}${compact ? ` ${styles.compact}` : ""}`} aria-labelledby={titleId} onCancel={onClose} onClose={onClose} data-global-navigation-swipe="ignore">
     <header className={styles.header}>
       <div><span className={styles.eyebrow}>{HELP_ROLE_LABELS[role]} dashboard</span><h2 id={titleId}>Help &amp; support</h2></div>
       <button type="button" className={styles.close} aria-label="Close help" onClick={onClose}>×</button>
@@ -144,7 +149,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
     </nav>
     <section className={styles.assistantPane} hidden={mode !== "assistant"} aria-label="Ask assistant">
       <div className={styles.log} ref={log} role="log" aria-label="Help conversation" aria-live="polite" aria-relevant="additions">
-        <div className={styles.message}><strong>MyDancr help</strong><p>Ask about your {HELP_ROLE_LABELS[role].toLowerCase()} dashboard. I use the built-in help guide and cannot view live account details or make changes.</p></div>
+        <div className={styles.message}><strong>MyDancr help</strong><p>{compact ? "Ask about your club dashboard. For account-specific help, message the team." : `Ask about your ${HELP_ROLE_LABELS[role].toLowerCase()} dashboard. I use the built-in help guide and cannot view live account details or make changes.`}</p></div>
         {entries.map((entry, index) => <div className={`${styles.message} ${entry.who === "you" ? styles.mine : ""}`} key={index}>
           <strong>{entry.who === "you" ? "You" : "MyDancr help"}</strong><p>{entry.text}</p>
           {entry.href && <a href={entry.href} onClick={onClose}>Open this section →</a>}

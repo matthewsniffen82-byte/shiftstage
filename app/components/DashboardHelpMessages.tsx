@@ -33,6 +33,7 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
   const sendAbort = useRef<AbortController | null>(null);
   const attempts = useRef(new Map<string, string>());
   const supportRole = helpSupportRole(role);
+  const compact = role === "venue" || role === "staff";
   const conversation = threads.find(thread => thread.id === selected);
   const message = selected ? replies[selected] || "" : draft;
   const history = useRef<HTMLDivElement>(null);
@@ -93,10 +94,10 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
 
   return <div className={styles.handoff}>
     {supportRole ? <>
-      <div className={styles.messageTools}><h3>Messages with the team</h3><button type="button" disabled={busy || loading} onClick={() => void refresh()}>{loading ? "Refreshing…" : "Refresh messages"}</button></div>
+      <div className={styles.messageTools}><h3>{compact ? "Team messages" : "Messages with the team"}</h3><button type="button" disabled={busy || loading} onClick={() => void refresh()}>{loading ? "Refreshing…" : "Refresh messages"}</button></div>
       {loadError && <p role="alert" className={styles.error}>{loadError}</p>}
       {selected ? <>
-        <button type="button" disabled={busy} onClick={() => { setSelected(""); setConfirmation(""); setSendError(""); }}>‹ All conversations / new message</button>
+        <button type="button" disabled={busy} onClick={() => { setSelected(""); setConfirmation(""); setSendError(""); }}>{compact ? "‹ Conversations / new message" : "‹ All conversations / new message"}</button>
         {conversation ? <>
           <h3>{conversation.subject}</h3><p className={styles.meta}>Status: {conversation.status}</p>
           <div ref={history} className={styles.threadHistory} role="log" aria-label="Conversation with the team" aria-live="polite" aria-relevant="additions">
@@ -107,7 +108,7 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
           </div>
         </> : <p>This conversation is unavailable. Refresh messages to try again, or choose another conversation.</p>}
       </> : <>
-        <p>Ask a person directly, or continue a previous conversation. Team replies appear here.</p>
+        <p>{compact ? "Team replies appear here." : "Ask a person directly, or continue a previous conversation. Team replies appear here."}</p>
         {loading && !threads.length ? <p role="status">Loading conversations…</p> : null}
         <div className={styles.threadList} aria-label="Previous conversations">
           {threads.map(thread => <button type="button" key={thread.id} disabled={busy} onClick={() => { setSelected(thread.id); setConfirmation(""); setSendError(""); }}><strong>{thread.subject}</strong><small>{thread.status} · {dateLabel(thread.lastMessageAt)}</small></button>)}
@@ -119,12 +120,14 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
     {confirmation && <p role="status" className={styles.confirmation}>{confirmation}</p>}
     <form onSubmit={send}>
       {!selected && supportRole && <><label htmlFor={`${id}-subject`}>Subject</label><input id={`${id}-subject`} value={subject} onChange={event => setSubject(event.target.value)} maxLength={160} required disabled={busy} /></>}
-      <label htmlFor={`${id}-message`}>{selected ? "Reply to the team" : "Message to the MyDancr team"}</label>
-      {!selected && <p className={styles.meta}>Review before sending. Leave out passwords, codes and private sign-in links.</p>}
-      <textarea id={`${id}-message`} value={message} onChange={event => { if (selected) setReplies(current => ({ ...current, [selected]: event.target.value })); else onDraftChange(event.target.value); }} maxLength={4000} rows={selected ? 3 : 5} required disabled={busy || Boolean(selected && !conversation)} />
-      <small>{message.length.toLocaleString()} / 4,000 characters</small>
-      {supportRole ? <button className={styles.primary} type="submit" disabled={busy || !message.trim() || Boolean(selected && !conversation)}>{busy ? "Sending…" : selected ? "Send reply" : "Send message"}</button>
-        : <><p>Opening the draft does not send it.</p>{draft.trim() ? <a className={styles.primary} href={helpEmailHref(role, draft)}>Open email</a> : <p>Add your question to prepare the email.</p>}</>}
+      <label htmlFor={`${id}-message`}>{compact ? selected ? "Reply" : "Your message" : selected ? "Reply to the team" : "Message to the MyDancr team"}</label>
+      {!selected && <p className={styles.meta}>{compact ? "No passwords, codes or sign-in links." : "Review before sending. Leave out passwords, codes and private sign-in links."}</p>}
+      <textarea id={`${id}-message`} value={message} onChange={event => { if (selected) setReplies(current => ({ ...current, [selected]: event.target.value })); else onDraftChange(event.target.value); }} maxLength={4000} rows={compact ? selected ? 2 : 3 : selected ? 3 : 5} required disabled={busy || Boolean(selected && !conversation)} />
+      <div className={compact ? styles.compactSendRow : undefined}>
+        <small>{message.length.toLocaleString()} / 4,000{compact ? "" : " characters"}</small>
+        {supportRole ? <button className={styles.primary} type="submit" disabled={busy || !message.trim() || Boolean(selected && !conversation)}>{busy ? "Sending…" : selected ? "Send reply" : "Send message"}</button>
+          : <><p>Opening the draft does not send it.</p>{draft.trim() ? <a className={styles.primary} href={helpEmailHref(role, draft)}>Open email</a> : <p>Add your question to prepare the email.</p>}</>}
+      </div>
     </form>
     {sendError && <p role="alert" className={styles.error}>{sendError}</p>}
   </div>;
