@@ -78,7 +78,7 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     calls, render, button, text: () => plainText(render()),
     posts: () => calls.filter(([, options]) => options.method === 'POST'),
     ask(question) { find(render(), node => node.type === 'input').props.onChange({ target: { value: question } }); find(render(), node => node.type === 'form').props.onSubmit({ preventDefault() {} }); },
-    handoff() { button('Message the team').props.onClick(); },
+    handoff() { button('Message the MyDancr Team').props.onClick(); },
     draft(text) { find(render(), node => node.type === 'textarea').props.onChange({ target: { value: text } }); },
     submit: () => find(render(), node => node.type === 'form').props.onSubmit({ preventDefault() {} }),
     respond(fn) { respond = fn; },

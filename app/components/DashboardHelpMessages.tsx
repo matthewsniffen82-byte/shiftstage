@@ -116,7 +116,7 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
         </div>
         <h3>New message</h3>
       </>}
-    </> : <><h3>Message the team</h3><p>Admin support uses email. Open the prepared message below and send it from your email app. Replies will arrive in your email inbox.</p></>}
+    </> : <><h3>Message the MyDancr Team</h3><p>Admin support uses email. Open the prepared message below and send it from your email app. Replies will arrive in your email inbox.</p></>}
     {confirmation && <p role="status" className={styles.confirmation}>{confirmation}</p>}
     <form onSubmit={send}>
       {!selected && supportRole && <><label htmlFor={`${id}-subject`}>Subject</label><input id={`${id}-subject`} value={subject} onChange={event => setSubject(event.target.value)} maxLength={160} required disabled={busy} /></>}

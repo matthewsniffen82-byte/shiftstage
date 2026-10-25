@@ -27,7 +27,7 @@ export function DashboardHelpShortcut({ panelId, conversationCount = 0, onCountC
     <button type="button" className={styles.launcher} aria-haspopup="dialog" onClick={() => openDashboardHelp(readSession()?.account?.id || "")}>Open support</button>
   </article>;
   return <article className="info-panel support-panel" id={panelId} tabIndex={panelId ? -1 : undefined}>
-    <h2>Help &amp; support</h2><p>Ask the assistant, message the team, and read replies in one place.</p>
+    <h2>Help &amp; support</h2><p>Ask the assistant, message the MyDancr Team, and read replies in one place.</p>
     {count > 0 && <p>{count} {count === 1 ? "conversation" : "conversations"}</p>}
     <button type="button" className={styles.launcher} aria-haspopup="dialog" onClick={() => openDashboardHelp(readSession()?.account?.id || "")}>Open Help &amp; support</button>
   </article>;
@@ -149,7 +149,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
     </nav>
     <section className={styles.assistantPane} hidden={mode !== "assistant"} aria-label="Ask assistant">
       <div className={styles.log} ref={log} role="log" aria-label="Help conversation" aria-live="polite" aria-relevant="additions">
-        <div className={styles.message}><strong>MyDancr help</strong><p>{compact ? "Ask about your club dashboard. For account-specific help, message the team." : `Ask about your ${HELP_ROLE_LABELS[role].toLowerCase()} dashboard. I use the built-in help guide and cannot view live account details or make changes.`}</p></div>
+        <div className={styles.message}><strong>MyDancr help</strong><p>{compact ? "Ask about your club dashboard. For account-specific help, message the MyDancr Team." : `Ask about your ${HELP_ROLE_LABELS[role].toLowerCase()} dashboard. I use the built-in help guide and cannot view live account details or make changes.`}</p></div>
         {entries.map((entry, index) => <div className={`${styles.message} ${entry.who === "you" ? styles.mine : ""}`} key={index}>
           <strong>{entry.who === "you" ? "You" : "MyDancr help"}</strong><p>{entry.text}</p>
           {entry.href && <a href={entry.href} onClick={onClose}>Open this section →</a>}
@@ -161,7 +161,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
         <label htmlFor={`${titleId}-question`}>Your question</label>
         <div className={styles.inputRow}><input id={`${titleId}-question`} value={question} onChange={event => setQuestion(event.target.value)} maxLength={600} placeholder="How do I…" autoComplete="off" /><button type="submit" disabled={!question.trim()}>Ask</button></div>
       </form>
-      <footer className={styles.actions}><button type="button" onClick={() => setShowTopics(value => !value)}>{showTopics ? "Hide topics" : "Browse topics"}</button><button type="button" onClick={handoff}>Message the team</button></footer>
+      <footer className={styles.actions}><button type="button" onClick={() => setShowTopics(value => !value)}>{showTopics ? "Hide topics" : "Browse topics"}</button><button type="button" onClick={handoff}>Message the MyDancr Team</button></footer>
     </section>
     <section className={styles.messagesPane} hidden={mode !== "messages"} aria-label="Messages">
       {messagesOpened && <DashboardHelpMessages role={role} accountId={accountId} draft={draft} onDraftChange={setDraft} draftRevision={draftRevision} />}
