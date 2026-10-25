@@ -663,6 +663,7 @@ function CustomerFollowedClubsPanel({
                 return (
                   <SavedVenueCard
                     key={venueId}
+                    venueId={venueId}
                     entryDealId={saved?.clubEntryDeals?.[venueId]}
                     onDirections={onDirections}
                     onUnfollow={() => void onVenueFollowChange(venueId, false)}
@@ -737,6 +738,7 @@ function FollowedDancerGridCard({
 
 
 function SavedVenueCard({
+  venueId,
   entryDealId,
   onDirections,
   onUnfollow,
@@ -744,6 +746,7 @@ function SavedVenueCard({
   removing,
   venue,
 }: {
+  venueId: string;
   entryDealId?: string;
   onDirections: (venue: SavedVenueSummary) => void;
   onUnfollow: () => void;
@@ -789,7 +792,7 @@ function SavedVenueCard({
         <button className="feed-card-action venue-card-secondary-action venue-card-favorite-action is-active" type="button" data-venue-follow={venue.id} aria-label={`Unfollow ${venue.name || "club"}`} aria-pressed="true" aria-busy={removing || undefined} disabled={pending} onClick={onUnfollow}><span className="action-icon" data-action-icon="check" aria-hidden="true"><VenueCardIcon icon="check" /></span><span>{removing ? "Unfollowing…" : "Following"}</span></button>
       </div>
     </article>
-    <VenueCustomerSharing venueId={venue.id} venueName={venue.name} disabled={pending} />
+    {venue.name ? <VenueCustomerSharing venueId={venueId} venueName={venue.name} disabled={pending} /> : null}
   </>);
 }
 
