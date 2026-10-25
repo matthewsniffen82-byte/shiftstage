@@ -153,9 +153,9 @@ function callbackHtml(
       a:focus-visible { outline: 3px solid #91e7f5; outline-offset: 3px; }
       [hidden] { display: none !important; }
     </style>
-    <link rel="stylesheet" href="/dancr-status-pages.v1.css?v=1">
+    <link rel="stylesheet" href="/dancr-status-pages.v1.css?v=2">
   </head>
-  <body class="dancr-status-page">
+  <body class="dancr-status-page dancr-confirmation-page">
     <main id="emailConfirmation" class="dancr-status-card" aria-live="polite" hidden>
       <p class="eyebrow">MyDancr</p>
       <span class="dancr-status-mark is-success" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12 4 4 8-8" /></svg></span>
