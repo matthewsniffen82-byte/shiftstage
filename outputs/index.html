@@ -35649,16 +35649,16 @@
             position: absolute;
             z-index: 2;
             top: 2px !important;
-            /* Grow inward inside the tab instead of clipping larger counts. */
-            left: auto !important;
-            right: 8px !important;
+            /* Sit 6px beyond the centered 28px icon, independent of tab width. */
+            left: calc(50% + 20px) !important;
+            right: auto !important;
             width: max-content !important;
-            min-width: 3ch !important;
+            min-width: 0 !important;
             max-width: none !important;
             height: auto !important;
             min-height: 14px !important;
             display: block;
-            padding: 0 2px !important;
+            padding: 0 !important;
             border: 0 !important;
             border-radius: 0 !important;
             color: #fff !important;
@@ -35669,7 +35669,7 @@
             font-variant-numeric: tabular-nums;
             letter-spacing: normal;
             line-height: 14px !important;
-            text-align: center;
+            text-align: left;
             overflow: visible !important;
             text-overflow: clip;
             text-shadow: 0 1px 2px rgba(0,0,0,.96);

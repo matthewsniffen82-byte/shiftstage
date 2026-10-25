@@ -942,7 +942,7 @@ test("bottom navigation keeps every destination on one uniform baseline", () => 
   );
   assert.match(
     homeSource,
-    /#discoveryTabs \.tab-count \{[\s\S]*?top: 2px !important[\s\S]*?left: auto !important[\s\S]*?right: 8px !important[\s\S]*?width: max-content !important[\s\S]*?min-width: 3ch !important[\s\S]*?max-width: none !important[\s\S]*?overflow: visible !important/,
+    /#discoveryTabs \.tab-count \{[\s\S]*?top: 2px !important[\s\S]*?left: calc\(50% \+ 20px\) !important[\s\S]*?right: auto !important[\s\S]*?width: max-content !important[\s\S]*?min-width: 0 !important[\s\S]*?max-width: none !important[\s\S]*?padding: 0 !important[\s\S]*?font-size: 11px !important[\s\S]*?text-align: left[\s\S]*?overflow: visible !important/,
   );
   assert.match(
     homeSource,
