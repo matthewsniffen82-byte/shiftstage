@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { mapApprovedVenue } from "./admin-venue-registration";
 import { sendTransactionalEmail } from "./notification-delivery";
 import { publicAppUrl } from "./public-app-url";
+import { createVenueApprovalLink } from "./venue-approval-link";
 import {
   createVenueSignupCredential,
   hashVenueClaimRequestIp,
@@ -250,7 +251,7 @@ export async function reviewVenueSignupRequest(
 
   if (credential && venue) {
     emailDelivery = await (request.loginEmail && request.requesterUserId
-      ? deliverVenueAccountApproval(request, venue)
+      ? deliverVenueAccountApproval(client, request, venue)
       : deliverVenueAccessCode({
       request,
       venue,
@@ -326,13 +327,13 @@ function normalizeWebsite(value: unknown) {
   }
 }
 
-async function deliverVenueAccountApproval(request: ReturnType<typeof mapVenueSignupRequest>, venue: NonNullable<ReturnType<typeof mapApprovedVenue>>) {
-  const dashboardUrl = new URL("/dashboard/venue", publicAppUrl()).toString();
+async function deliverVenueAccountApproval(client: DancrClient, request: ReturnType<typeof mapVenueSignupRequest>, venue: NonNullable<ReturnType<typeof mapApprovedVenue>>) {
+  const dashboardUrl = await createVenueApprovalLink(client, { requestId: request.id, userId: request.requesterUserId!, email: request.loginEmail! });
   return sendTransactionalEmail({
     to: request.loginEmail!,
     subject: `Your MyDancr dashboard for ${venue.name} is ready`,
-    text: `Hi ${request.contactName},\n\nYour request for ${venue.name} was approved. Your existing manager login is ready.\n\nOpen your dashboard: ${dashboardUrl}\n\nIf you are signed out, use the email and password you created when submitting your request. You do not need an access code or a new password.\n\nMyDancr will prepare your private venue page for your review.`,
-    html: `<p>Hi ${escapeHtml(request.contactName)},</p><p>Your request for <strong>${escapeHtml(venue.name)}</strong> was approved.</p><p><a href="${escapeHtml(dashboardUrl)}">Open your venue dashboard</a></p><p>If you are signed out, use the email and password you created with your request. You do not need an access code or a new password.</p><p>MyDancr will prepare your private venue page for your review.</p>`,
+    text: `Hi ${request.contactName},\n\nYour request for ${venue.name} was approved.\n\nOpen your Club dashboard: ${dashboardUrl}\n\nThis private link signs you in automatically. It stays available until you successfully enter your Club dashboard, then stops working. Keep it private. After your first visit, use your existing email and password to sign in.\n\nMyDancr will prepare your private club page for your review.`,
+    html: `<p>Hi ${escapeHtml(request.contactName)},</p><p>Your request for <strong>${escapeHtml(venue.name)}</strong> was approved.</p><p><a href="${escapeHtml(dashboardUrl)}">Open your Club dashboard</a></p><p>This private link signs you in automatically. It stays available until you successfully enter your Club dashboard, then stops working. Keep it private. After your first visit, use your existing email and password to sign in.</p><p>MyDancr will prepare your private club page for your review.</p>`,
   });
 }
 

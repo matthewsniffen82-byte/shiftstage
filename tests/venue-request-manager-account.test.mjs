@@ -104,6 +104,7 @@ test('approval emails the existing login and never exposes a reusable access cod
     './admin-venue-registration': compile(read('src/lib/dancr/admin-venue-registration.ts')),
     './venue-claims': { createVenueSignupCredential: () => ({ code: 'legacy-secret', digest: 'a'.repeat(64) }) },
     './public-app-url': { publicAppUrl: () => 'https://mydancr.com' },
+    './venue-approval-link': { createVenueApprovalLink: async (_client, input) => { assert.deepEqual(JSON.parse(JSON.stringify(input)), { requestId: 'request', userId: 'manager', email: 'login@example.com' }); return 'https://mydancr.com/auth/venue-approval#link=private-approval-link'; } },
     './notification-delivery': { sendTransactionalEmail: async message => { messages.push(message); return { delivered: true }; } },
   });
   const client = {
@@ -114,7 +115,10 @@ test('approval emails the existing login and never exposes a reusable access cod
   assert.equal(result.managerAccountReady, true);
   assert.equal(result.accessCode, null); assert.equal(result.claimCode, null);
   assert.equal(messages[0].to, 'login@example.com');
-  assert.match(messages[0].text, /https:\/\/mydancr.com\/dashboard\/venue/);
+  assert.match(messages[0].text, /https:\/\/mydancr.com\/auth\/venue-approval#link=private-approval-link/);
+  assert.match(messages[0].html, /Open your Club dashboard/);
+  assert.match(messages[0].text, /stays available until you successfully enter/);
+  assert.doesNotMatch(JSON.stringify(result), /private-approval-link/);
   assert.doesNotMatch(JSON.stringify(messages), /legacy-secret/);
 });
 

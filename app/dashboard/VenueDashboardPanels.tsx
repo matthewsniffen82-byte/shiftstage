@@ -22,6 +22,7 @@ import VenueValueAnalytics from "./VenueValueAnalytics";
 import type { VenueValueReport } from "@/src/lib/dancr/venue-analytics";
 import { DEMO_TABLE_REQUEST_COUNT, isVenueDashboardDemo, withDemoWorkingRoster } from "@/src/lib/dancr/venue-dashboard-demo";
 import { useVenueOperations } from "./useVenueOperations";
+import { useVenueApprovalCompletion } from "./useVenueApprovalCompletion";
 import VenueTonightOverview from "./VenueTonightOverview";
 import VenueSetupChecklist from "./VenueSetupChecklist";
 import "./venue-workspace.css";
@@ -98,6 +99,7 @@ export function VenuePanel({
   onPublicationChange: (publication: Record<string, unknown>) => void;
   onDealRequestsChange: (dealRequests: Array<Record<string, unknown>>) => void;
 }) {
+  useVenueApprovalCompletion(account?.id || undefined, typeof profile?.id === "string" ? profile.id : undefined);
   const [publicationStatus, setPublicationStatus] = useState("");
   const [isPublishingVenue, setIsPublishingVenue] = useState(false);
   const [reviewNotes, setReviewNotes] = useState("");
