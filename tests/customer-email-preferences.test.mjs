@@ -82,7 +82,7 @@ function fixture(emailEnabled = true, emailAvailable = true) {
 test('saved choices show the appropriate action without changing subscription on mount', () => {
   for (const enabled of [true, false]) {
     const f = fixture(enabled);
-    assert.equal(f.button().props.children, enabled ? 'Unsubscribe from emails' : 'Subscribe to emails');
+    assert.equal(f.button().props.children, enabled ? 'Unsubscribe' : 'Subscribe');
     assert.equal(f.requests.length, 0);
     const description = f.find(f.render(), node => node.props?.id === 'customer-email-description').props.children;
     assert.equal(description, preferences.CUSTOMER_EMAIL_CONSENT_TEXT);
@@ -101,8 +101,8 @@ test('guests can unsubscribe and subscribe again, changing only the email prefer
     assert.equal(f.updates.at(-1).notificationSettings.pushEnabled, true);
     assert.equal(f.updates.at(-1).notificationSettings.clubDeals, false);
     assert.equal(f.feedback().props.role, 'status');
-    assert.match(f.feedback().props.children, enabled ? /You’re subscribed/ : /You’re unsubscribed/);
-    assert.equal(f.button().props.children, enabled ? 'Unsubscribe from emails' : 'Subscribe to emails');
+    assert.match(f.feedback().props.children, enabled ? /^Subscribed$/ : /^Not subscribed$/);
+    assert.equal(f.button().props.children, enabled ? 'Unsubscribe' : 'Subscribe');
   }
 });
 
@@ -120,7 +120,7 @@ test('pending saves disable duplicate requests and wait for confirmation before 
   assert.equal(f.feedback(), null);
   resolve({ profile: { ...f.getProfile(), notificationSettings: { emailEnabled: true } } });
   await pending;
-  assert.equal(f.button().props.children, 'Unsubscribe from emails');
+  assert.equal(f.button().props.children, 'Unsubscribe');
 });
 
 test('failed saves keep the previous preference and allow retry', async () => {
@@ -131,10 +131,10 @@ test('failed saves keep the previous preference and allow retry', async () => {
   assert.match(f.feedback().props.children, /Please retry/);
   assert.equal(f.updates.length, 0);
   assert.equal(f.button().props.disabled, false);
-  assert.equal(f.button().props.children, 'Unsubscribe from emails');
+  assert.equal(f.button().props.children, 'Unsubscribe');
   f.respondWith(async () => ({ profile: { ...f.getProfile(), notificationSettings: { emailEnabled: false } } }));
   await f.click();
-  assert.equal(f.button().props.children, 'Subscribe to emails');
+  assert.equal(f.button().props.children, 'Subscribe');
 });
 
 test('unconfirmed or wrong-account responses cannot report a successful preference change', async () => {
@@ -144,7 +144,7 @@ test('unconfirmed or wrong-account responses cannot report a successful preferen
     await f.click();
     assert.equal(f.updates.length, 0);
     assert.match(f.feedback().props.children, /not confirmed/);
-    assert.equal(f.button().props.children, 'Unsubscribe from emails');
+    assert.equal(f.button().props.children, 'Unsubscribe');
   }
 });
 
@@ -175,7 +175,7 @@ test('changes from Manage alerts update the account button without another save'
   const f = fixture();
   f.render();
   f.changeProfile({ ...f.getProfile(), notificationSettings: { emailEnabled: false } });
-  assert.equal(f.button().props.children, 'Subscribe to emails');
+  assert.equal(f.button().props.children, 'Subscribe');
   assert.equal(f.requests.length, 0);
 });
 
@@ -183,7 +183,7 @@ test('unavailable delivery still permits unsubscribe and explains why subscribe 
   const f = fixture(true, false);
   assert.equal(f.button().props.disabled, false);
   await f.click();
-  assert.equal(f.button().props.children, 'Subscribe to emails');
+  assert.equal(f.button().props.children, 'Subscribe');
   assert.equal(f.button().props.disabled, true);
   assert.ok(f.find(f.render(), node => node.type === 'p' && String(node.props.children).includes('temporarily unavailable')));
   await f.click();

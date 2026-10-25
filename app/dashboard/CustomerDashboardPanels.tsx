@@ -1211,8 +1211,8 @@ export function CustomerPreferencesPanel({
       <div className="customer-delivery-heading"><h3>Delivery options</h3><p>Your alerts appear here. Email and push are optional.</p></div>
       <div className="customer-preference-list">
         <div className="customer-preference-row">
-          <span><strong>Email communications</strong><small>{delivery.emailAvailable ? CUSTOMER_EMAIL_CONSENT_TEXT : "Email subscriptions are not available yet. You can still unsubscribe."}</small></span>
-          <CustomerNotificationSwitch label="Email notifications" checked={settings.emailEnabled} disabled={isSaving || (!delivery.emailAvailable && !settings.emailEnabled)} busy={savingKey === "emailEnabled"} saved={savedKey === "emailEnabled"} onChange={() => void savePreference("emailEnabled", !settings.emailEnabled)} />
+          <span><strong>Email updates</strong><small>{delivery.emailAvailable ? CUSTOMER_EMAIL_CONSENT_TEXT : "Email subscriptions are not available yet. You can still unsubscribe."}</small></span>
+          <CustomerNotificationSwitch label="Email updates" checked={settings.emailEnabled} disabled={isSaving || (!delivery.emailAvailable && !settings.emailEnabled)} busy={savingKey === "emailEnabled"} saved={savedKey === "emailEnabled"} onChange={() => void savePreference("emailEnabled", !settings.emailEnabled)} />
         </div>
         <div className="customer-preference-row">
           <span><strong>Push notifications</strong><small>{!delivery.pushAvailable ? "Push notifications are not available yet." : pushSupportMessage || (pushDeviceEnabled ? "Enabled on this device." : "Allow alerts from your browser, even when MyDancr is closed.")}</small></span>

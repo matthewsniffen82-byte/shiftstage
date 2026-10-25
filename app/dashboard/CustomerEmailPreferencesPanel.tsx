@@ -14,7 +14,7 @@ export default function CustomerEmailPreferencesPanel({ profile, onProfileChange
   const delivery = (profile.notificationDelivery || {}) as CustomerNotificationDelivery;
   const [emailEnabled, setEmailEnabled] = useState(savedEmailEnabled);
   const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState<{ error: boolean; message: string } | null>(null);
+  const [feedback, setFeedback] = useState<{ error: true; message: string } | { error: false } | null>(null);
   const pending = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -54,9 +54,7 @@ export default function CustomerEmailPreferencesPanel({ profile, onProfileChange
       }
       setEmailEnabled(nextEnabled);
       onProfileChange(data.profile);
-      setFeedback({ error: false, message: nextEnabled
-        ? "You’re subscribed to MyDancr emails. You can unsubscribe at any time."
-        : "You’re unsubscribed from optional MyDancr emails." });
+      setFeedback({ error: false });
     } catch (error) {
       if (isCurrent()) setFeedback({ error: true, message: error instanceof Error ? error.message : "Unable to save your email preference. Please try again." });
     } finally {
@@ -69,21 +67,21 @@ export default function CustomerEmailPreferencesPanel({ profile, onProfileChange
 
   return (
     <article className="info-panel customer-account-details customer-email-preferences" aria-labelledby="customer-email-heading">
-      <h2 id="customer-email-heading">Email communications</h2>
+      <h2 id="customer-email-heading">Email updates</h2>
       <p id="customer-email-description">{CUSTOMER_EMAIL_CONSENT_TEXT}</p>
-      {!emailEnabled && <p>Optional emails stay off until you choose “Subscribe to emails”. Creating an account or following a dancer does not automatically subscribe you.</p>}
-      <p className="customer-email-state">Optional emails are <strong>{emailEnabled ? "on" : "off"}</strong>.</p>
+      <p className="customer-email-state" role={feedback?.error === false ? "status" : undefined}>{emailEnabled ? "Subscribed" : "Not subscribed"}</p>
       <button className="account-action-button" type="button" disabled={busy || (!emailEnabled && !delivery.emailAvailable)} aria-busy={busy || undefined} aria-describedby="customer-email-description" onClick={changeEmailSubscription}>
-        {busy ? emailEnabled ? "Unsubscribing…" : "Subscribing…" : emailEnabled ? "Unsubscribe from emails" : "Subscribe to emails"}
+        {busy ? emailEnabled ? "Unsubscribing…" : "Subscribing…" : emailEnabled ? "Unsubscribe" : "Subscribe"}
       </button>
       {!emailEnabled && !delivery.emailAvailable ? <p>Email subscriptions are temporarily unavailable. Please try again later.</p> : null}
-      <p>Password resets and essential account emails will still be sent. Your in-app alerts and push preferences stay the same.</p>
-      {feedback ? <p className="customer-email-feedback" data-error={feedback.error || undefined} role={feedback.error ? "alert" : "status"}>{feedback.message}</p> : null}
+      <p>Essential account emails still arrive. In-app and push alerts are managed separately.</p>
+      {feedback?.error ? <p className="customer-email-feedback" data-error role="alert">{feedback.message}</p> : null}
       <style jsx>{`
         .customer-email-preferences { display: grid; gap: 12px; min-width: 0; }
         .customer-email-preferences h2, .customer-email-preferences p { margin: 0; }
         .customer-email-preferences p { color: var(--customer-muted); font-size: 13px; line-height: 1.6; }
         .customer-email-preferences .customer-email-state, .customer-email-preferences .customer-email-feedback { color: inherit; }
+        .customer-email-preferences .customer-email-state { font-weight: 600; }
         .customer-email-preferences .customer-email-feedback[data-error] { color: var(--customer-danger); }
         .customer-email-preferences button { justify-self: start; max-width: 100%; }
         .customer-email-preferences button:focus-visible { outline: 2px solid var(--customer-selected-line); outline-offset: 3px; }
