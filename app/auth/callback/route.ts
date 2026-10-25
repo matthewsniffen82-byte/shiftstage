@@ -131,6 +131,7 @@ function callbackHtml(
   const sessionJson = JSON.stringify(callbackSession || null).replace(/</g, "\\u003c");
   const redirectJson = JSON.stringify(redirectPath).replace(/</g, "\\u003c");
   const sessionKeyJson = JSON.stringify(BROWSER_AUTH_SESSION_KEY);
+  const canResendSignup = !passwordReset && !vipReturnPath(redirectPath) && !vipRecoveryReturn && !redirectPath.startsWith("/dashboard/venue");
   return `<!doctype html>
 <html lang="en">
   <head>
@@ -151,6 +152,14 @@ function callbackHtml(
       a:hover { filter: brightness(1.08); }
       a:active { transform: translateY(1px); }
       a:focus-visible { outline: 3px solid #91e7f5; outline-offset: 3px; }
+      .confirmation-resend { display: grid; gap: 12px; text-align: left; }
+      .confirmation-resend label { font-size: 14px; font-weight: 700; }
+      .confirmation-resend input { width: 100%; min-height: 48px; padding: 12px; border: 1px solid #57515f; border-radius: 12px; background: #25232b; color: #fff; font: inherit; }
+      .confirmation-resend button { min-height: 48px; padding: 13px 16px; border: 1px solid #6d28ff; border-radius: 13px; background: #6d28ff; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+      .confirmation-resend button:disabled { opacity: .6; cursor: default; }
+      .confirmation-resend :focus-visible { outline: 3px solid #b89cff; outline-offset: 3px; }
+      .confirmation-resend p { font-size: 14px; }
+      #confirmationError .confirmation-sign-in { background: transparent !important; border-color: #57515f !important; box-shadow: none !important; }
       [hidden] { display: none !important; }
     </style>
     <link rel="stylesheet" href="/dancr-status-pages.v1.css?v=3">
@@ -174,8 +183,14 @@ function callbackHtml(
       <p class="eyebrow">MyDancr</p>
       <span class="dancr-status-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" /><path d="M12 8v4m0 4h.01" /></svg></span>
       <h1>Confirmation link unavailable</h1>
-      <p>This link is invalid, already used, or has expired. Try signing in if you already confirmed your email, or request a new email.</p>
-      <a href="${escapeHtml(vipReturnPath(redirectPath) || vipRecoveryReturn || "/?auth=login")}">Continue to sign in</a>
+      <p>This link is invalid, already used, or expired. Signed up again after deleting an account? Open your newest confirmation email.</p>
+      ${canResendSignup ? `<form id="confirmationResend" class="confirmation-resend">
+        <label for="confirmationEmail">Account email</label>
+        <input id="confirmationEmail" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <button id="confirmationResendButton" type="submit">Send a new confirmation link</button>
+        <p id="confirmationResendStatus" role="status" aria-live="polite"></p>
+      </form>` : ""}
+      <a class="confirmation-sign-in" href="${escapeHtml(vipReturnPath(redirectPath) || vipRecoveryReturn || "/?auth=login")}">Continue to sign in</a>
       ${redirectPath.startsWith("/dashboard/venue") ? '<a href="/venue/confirm-email">Request a new confirmation email</a>' : ""}
     </main>
     <main id="openingDancr" class="dancr-status-card">
@@ -208,6 +223,54 @@ function callbackHtml(
       const isPasswordReset = ${JSON.stringify(passwordReset)} || fragmentParams.get("type") === "recovery";
       const redirectUrl = new URL(redirectTo, window.location.origin);
       const serverUnavailable = ${JSON.stringify(unavailable)};
+
+      const resendForm = document.getElementById("confirmationResend");
+      if (resendForm) {
+        const emailInput = document.getElementById("confirmationEmail");
+        const resendButton = document.getElementById("confirmationResendButton");
+        const resendStatus = document.getElementById("confirmationResendStatus");
+        let sending = false;
+        let retryAt = 0;
+        resendForm.onsubmit = async function(event) {
+          event.preventDefault();
+          if (sending) return;
+          if (Date.now() < retryAt) {
+            resendStatus.textContent = "Please wait before requesting another email.";
+            return;
+          }
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 15000);
+          sending = true;
+          emailInput.disabled = true;
+          resendButton.disabled = true;
+          resendButton.textContent = "Sending…";
+          resendStatus.textContent = "";
+          try {
+            const response = await fetch("/api/auth/confirmation", {
+              method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({ email: emailInput.value.trim() }), signal: controller.signal,
+            });
+            const data = await response.json();
+            if (response.status === 429) {
+              const seconds = Number(response.headers.get("retry-after")) || 60;
+              retryAt = Date.now() + Math.max(1, Math.min(seconds, 86400)) * 1000;
+            }
+            if (!response.ok || !data?.ok) throw new Error(data?.error || "Unable to send the email. Please try again.");
+            retryAt = Date.now() + 60000;
+            resendStatus.textContent = data.message;
+          } catch (error) {
+            resendStatus.textContent = controller.signal.aborted
+              ? "The request took too long. Check your inbox before trying again."
+              : error instanceof Error ? error.message : "Unable to send the email. Please try again.";
+          } finally {
+            clearTimeout(timeout);
+            sending = false;
+            emailInput.disabled = false;
+            resendButton.disabled = false;
+            resendButton.textContent = "Send a new confirmation link";
+          }
+        };
+      }
 
       function showTemporaryError(message) {
         document.getElementById("openingDancr").hidden = true;

@@ -46,7 +46,8 @@ async function callbackFixture({ role = 'customer', stored = savedSession('custo
   const redirectTimers = new Set();
   const nodes = new Map();
   const node = id => {
-    if (!nodes.has(id)) nodes.set(id, { hidden: id !== 'openingDancr', href: '', textContent: '' });
+    if (id === 'confirmationResend' && !html.includes('id="confirmationResend"')) return null;
+    if (!nodes.has(id)) nodes.set(id, { hidden: id !== 'openingDancr', href: '', textContent: '', value: '', disabled: false });
     return nodes.get(id);
   };
   const context = vm.createContext({ URL, URLSearchParams, AbortController,
@@ -124,6 +125,64 @@ test('a signed-out reused link shows current sign-in links and does not claim ve
   assert.doesNotMatch(f.html, /href="\/account(?:\?|"|\/)/);
   assert.match(f.html, /href="\/\?auth=login">Continue to sign in/);
 });
+
+test('an invalid link can request a new confirmation without signing in or restoring the deleted session', async () => {
+  const f = await callbackFixture({ stored: null, fetcher: async () => Response.json({ ok: true, message: 'Open the newest email.' }) });
+  await f.completion;
+  assert.equal(f.calls.length, 0, 'opening a link never sends an email automatically');
+  assert.match(f.html, /Signed up again after deleting an account/);
+  assert.match(f.html, /type="email" autocomplete="email" maxlength="254" required/);
+  f.node('confirmationEmail').value = ' guest@example.test ';
+  await f.node('confirmationResend').onsubmit({ preventDefault() {} });
+  assert.equal(f.calls.length, 1);
+  assert.equal(f.calls[0].url, '/api/auth/confirmation');
+  assert.deepEqual(f.calls[0].body, { email: 'guest@example.test' });
+  assert.equal(f.node('confirmationResendStatus').textContent, 'Open the newest email.');
+  assert.equal(f.node('confirmationResendButton').disabled, false);
+  assert.equal(f.store.get(sessionKey), undefined);
+  assert.deepEqual(f.navigation, []);
+  await f.node('confirmationResend').onsubmit({ preventDefault() {} });
+  assert.equal(f.calls.length, 1, 'a successful resend has a cooldown');
+});
+
+test('resend prevents duplicate submission while email delivery is pending', async () => {
+  let finish;
+  const f = await callbackFixture({ stored: null, fetcher: () => new Promise(resolve => { finish = resolve; }) });
+  await f.completion;
+  f.node('confirmationEmail').value = 'guest@example.test';
+  const first = f.node('confirmationResend').onsubmit({ preventDefault() {} });
+  assert.equal(f.node('confirmationEmail').disabled, true);
+  assert.equal(f.node('confirmationResendButton').disabled, true);
+  await f.node('confirmationResend').onsubmit({ preventDefault() {} });
+  assert.equal(f.calls.length, 1);
+  finish(Response.json({ ok: true, message: 'Check your email.' }));
+  await first;
+  assert.equal(f.node('confirmationEmail').disabled, false);
+});
+
+for (const status of [429, 503]) test(`resend failure ${status} shows retry guidance without claiming verification`, async () => {
+  const f = await callbackFixture({ stored: null, fetcher: async () => Response.json({ ok: false, error: 'Please try later.' }, { status, headers: { 'retry-after': '600' } }) });
+  await f.completion;
+  f.node('confirmationEmail').value = 'guest@example.test';
+  await f.node('confirmationResend').onsubmit({ preventDefault() {} });
+  assert.equal(f.node('confirmationResendStatus').textContent, 'Please try later.');
+  assert.equal(f.node('confirmationResendButton').disabled, false);
+  assert.equal(f.node('emailConfirmation').hidden, true);
+  assert.equal(f.store.get(sessionKey), undefined);
+  if (status === 429) {
+    await f.node('confirmationResend').onsubmit({ preventDefault() {} });
+    assert.equal(f.calls.length, 1);
+  }
+});
+
+for (const query of ['?role=venue&error_code=otp_expired', '?return_to=' + encodeURIComponent('/vip/invite/vip_' + 'a'.repeat(48)) + '&error_code=otp_expired', '?type=recovery']) {
+  test(`specialized confirmation keeps its existing recovery path: ${query}`, async () => {
+    const f = await callbackFixture({ stored: null, query });
+    await f.completion;
+    assert.doesNotMatch(f.html, /<form id="confirmationResend"/);
+    assert.equal(f.calls.length, 0);
+  });
+}
 
 test('an expired stored session uses the modern sign-in fallback without a redirect loop', async () => {
   const f = await callbackFixture({ fetcher: async () => Response.json({ ok: false }, { status: 401 }) });

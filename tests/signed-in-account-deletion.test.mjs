@@ -65,7 +65,7 @@ test("successful account deletion invalidates cached public venue discovery", ()
   );
   assert.match(
     liveShell,
-    /const initialDiscoveryRequest = loadLiveDiscovery\(citySelect\.value, \{\s*force: consumePublicDiscoveryRefreshRequest\(\)\s*\}\)/,
+    /const initialDiscoveryRequest = internalProfileFrameId \? Promise\.resolve\(\) : loadLiveDiscovery\(citySelect\.value, \{\s*force: consumePublicDiscoveryRefreshRequest\(\)\s*\}\)/,
   );
 });
 
