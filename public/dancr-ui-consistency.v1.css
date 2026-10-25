@@ -1466,31 +1466,6 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls :is(#
   }
   html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectOptions {
     gap: 0 !important;
-    border-top: 1px solid #28232f;
-  }
-  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #locationBtn {
-    height: 44px !important;
-    min-height: 44px !important;
-    max-height: 44px !important;
-    justify-content: flex-start !important;
-    gap: 8px !important;
-    padding: 0 12px !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    background: var(--dancr-color-surface-plum) !important;
-    color: #f8fafc !important;
-    font-size: 14px !important;
-    font-weight: 600 !important;
-  }
-  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #locationBtn .icon {
-    width: 16px !important;
-    height: 16px !important;
-    flex: 0 0 16px !important;
-    color: var(--dancr-color-icon-location) !important;
-  }
-  html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #locationBtn:focus-visible {
-    outline: 2px solid var(--dancr-color-icon-location) !important;
-    outline-offset: -3px !important;
   }
   html body.dancr-button-system > .app main.stack > .home-discovery-controls #citySelectPanel #citySelectOptions .city-picker-option {
     --discovery-control-face: var(--dancr-color-surface-plum) !important;
@@ -1542,6 +1517,7 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
   grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr) !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .home-filter-actions {
+  display: flex;
   grid-column: 1 / -1;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters.is-open {
@@ -1550,9 +1526,6 @@ html body.dancr-button-system > .app main.stack > .home-discovery-controls #home
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .field {
   gap: 2px !important;
-}
-html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .home-filter-actions:has(> #homeFilterReset[hidden]) {
-  display: none !important;
 }
 html body.dancr-button-system > .app main.stack > .home-discovery-controls #homeAdvancedFilters .field > label {
   color: #aaa6b3 !important;

@@ -18,20 +18,25 @@ test("city discovery keeps the native select as a fallback and enhances it with 
   assert.match(aesthetic, /\.home-city-filter\.is-enhanced #citySelect[\s\S]*?clip-path: inset\(50%\)/);
 });
 
-test("current location is a separate action inside the city selector, before manual cities", async () => {
-  assert.match(liveShell, /id="citySelectPanel" hidden>\s*<button class="location-btn" id="locationBtn" type="button" aria-describedby="homeDistanceMessage">[\s\S]*?>Use current location<\/span>\s*<\/button>\s*<div[^>]*id="citySelectOptions"[^>]*role="listbox"/);
+test("current location remains visible beneath Distance and Club when filters are open", async () => {
+  const filters = liveShell.slice(liveShell.indexOf('id="homeAdvancedFilters"'), liveShell.indexOf('id="citySelectPanel" hidden'));
+  assert.match(filters, /id="distancePickerField"[^]*?id="venuePickerField"[^]*?class="home-filter-actions">\s*<button class="location-btn" id="locationBtn" type="button" aria-describedby="homeDistanceMessage">[^]*?>Use current location<\/span>\s*<\/button>\s*<button[^>]*id="homeFilterReset"[^>]*hidden/);
+  assert.match(liveShell, /id="citySelectPanel" hidden>\s*<div[^>]*id="citySelectOptions"[^>]*role="listbox"/);
   assert.equal((liveShell.match(/id="locationBtn"/g) || []).length, 1);
   assert.match(liveShell, /citySelectPanel\?\.addEventListener\("keydown", \(event\) => \{\s*if \(event.key === "Escape"\) \{\s*event.preventDefault\(\);\s*closeCityPicker\(true\);/);
   const css = postcss.parse(await readFile(new URL("../public/dancr-ui-consistency.v1.css", import.meta.url), "utf8"));
   const prefix = "html body.dancr-button-system > .app main.stack > .home-discovery-controls ";
-  let button;
-  css.walkRules(`${prefix}#citySelectPanel #locationBtn`, rule => { button = Object.fromEntries(rule.nodes.map(node => [node.prop, node.value])); });
-  assert.equal(button.height, "44px");
-  assert.equal(button["justify-content"], "flex-start");
-  assert.equal(button["border-radius"], "0");
-  let emptyActions;
-  css.walkRules(`${prefix}#homeAdvancedFilters .home-filter-actions:has(> #homeFilterReset[hidden])`, rule => { emptyActions = rule; });
-  assert.ok(emptyActions.nodes.some(node => node.prop === "display" && node.value === "none" && node.important), "No empty filter row after moving location");
+  const actions = {};
+  css.walkRules(`${prefix}#homeAdvancedFilters .home-filter-actions`, rule => {
+    Object.assign(actions, Object.fromEntries(rule.nodes.map(node => [node.prop, node.value])));
+  });
+  assert.equal(actions.display, "flex");
+  assert.equal(actions["grid-column"], "1 / -1");
+  css.walkRules(rule => {
+    if (rule.selector.includes(".home-filter-actions")) {
+      assert.ok(!rule.nodes.some(node => node.prop === "display" && node.value === "none"), "Hiding Reset must not hide the location button");
+    }
+  });
 });
 
 test("enable location and dismissible help sit below the city and filter summary", () => {
