@@ -87,6 +87,11 @@
     outline: 2px solid var(--dancr-color-brand-primary) !important;
     outline-offset: 2px !important;
   }
+  /* Keep the close control ring-free; a lighter gray face indicates focus. */
+  :global(html body.dancr-button-system) .dialog .close:focus-visible {
+    outline: none !important;
+    background: color-mix(in srgb, var(--dancr-color-control-secondary) 75%, var(--dancr-color-text-primary)) !important;
+  }
 }
 @media (max-width: 380px) { .header, .composer, .handoff, .log { padding: 12px; } .actions { padding: 8px 12px 12px; } .dialog { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); } }
 
