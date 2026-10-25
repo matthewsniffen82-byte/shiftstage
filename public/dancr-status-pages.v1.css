@@ -246,7 +246,7 @@ body .dancer-activation-copy h2 {
   font-weight: 650;
 }
 
-/* Email-link results use the same compact type scale as account forms. */
+/* Email-link results share the email confirmation dialog's type scale. */
 body.dancr-confirmation-page {
   padding: max(20px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
 }
@@ -259,18 +259,20 @@ body.dancr-confirmation-page .dancr-status-card {
 }
 
 body.dancr-confirmation-page .dancr-status-card > h1 {
-  font-size: 22px;
-  font-weight: 650;
+  font-size: 24px;
+  font-weight: 700;
   line-height: 1.25;
   letter-spacing: -.025em;
 }
 
 body.dancr-confirmation-page .dancr-status-card > p:not(.eyebrow) {
-  font-size: 14px;
+  font-size: 15px;
+  font-weight: 400;
   line-height: 1.5;
 }
 
 body.dancr-confirmation-page .dancr-status-card > .eyebrow {
+  font-weight: 600;
   letter-spacing: .1em;
 }
 
@@ -290,7 +292,7 @@ body.dancr-confirmation-page .dancr-status-card > a {
   margin-top: 2px;
   padding: 10px 14px;
   border-radius: 12px !important;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 @media (max-width: 480px) {

@@ -153,7 +153,7 @@ function callbackHtml(
       a:focus-visible { outline: 3px solid #91e7f5; outline-offset: 3px; }
       [hidden] { display: none !important; }
     </style>
-    <link rel="stylesheet" href="/dancr-status-pages.v1.css?v=2">
+    <link rel="stylesheet" href="/dancr-status-pages.v1.css?v=3">
   </head>
   <body class="dancr-status-page dancr-confirmation-page">
     <main id="emailConfirmation" class="dancr-status-card" aria-live="polite" hidden>
