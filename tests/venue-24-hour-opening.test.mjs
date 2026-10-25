@@ -19,6 +19,7 @@ function loadFunctions(file, names, globals = {}) {
 }
 
 const { formatVenueHours } = loadFunctions("src/lib/dancr/public.ts", ["formatVenueHours", "formatTimeOnly"]);
+const { formatVenueReviewHours } = loadFunctions("app/dashboard/DashboardShared.tsx", ["formatVenueReviewHours"]);
 const { parseClockMinutes } = loadFunctions("src/live-shell/app/06-rank-label.js", ["parseClockMinutes"]);
 const { displayShiftTime } = loadFunctions("src/live-shell/app/07-shift-window-for-date.js", ["shortMeridiemTime", "displayShiftTime"]);
 const { venueOperatingStatus } = loadFunctions("src/live-shell/app/11-post-verified-shift.js", ["venueOperatingStatus"], {
@@ -35,6 +36,16 @@ test("public club hours label equal opening and closing times as 24 hours", () =
   assert.equal(formatVenueHours(null, "04:00:00"), null);
   assert.equal(formatVenueHours("20:00:00", null), null);
   assert.notEqual(formatVenueHours("25:00:00", "25:00:00"), "24 hours");
+});
+
+test("the club dashboard review also labels saved 24-hour opening clearly", () => {
+  for (const [opens, closes] of [["00:00:00", "00:00"], ["08:30:00", "08:30:00"]]) {
+    assert.equal(formatVenueReviewHours(opens, closes), "24 hours");
+  }
+  assert.equal(formatVenueReviewHours("20:00:00", "04:00:00"), "8:00 PM – 4:00 AM");
+  assert.equal(formatVenueReviewHours(null, null), "");
+  assert.equal(formatVenueReviewHours("25:00", "25:00"), "");
+  assert.equal(formatVenueReviewHours("08:60", "08:60"), "");
 });
 
 test("discovery cards and club profiles show 24-hour clubs open throughout the day", () => {

@@ -35,6 +35,7 @@ import AdminVenueColors from "./AdminVenueColors";
 import AdminTableQrCodes from "./AdminTableQrCodes";
 import AdminClubSetupChecklist from "./AdminClubSetupChecklist";
 import AdminClubApprovalHistory from "./AdminClubApprovalHistory";
+import AdminClubHoursFields from "./AdminClubHoursFields";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
 import "./admin-operations-workspace.css";
@@ -2785,6 +2786,7 @@ function VenueManager({
   const [commercialStates, setCommercialStates] = useState<Record<string, { dirty: boolean; busy: boolean }>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [unsavedByVenue, setUnsavedByVenue] = useState<Record<string, boolean>>({});
+  const [hoursResetByVenue, setHoursResetByVenue] = useState<Record<string, number>>({});
   const [statusByVenue, setStatusByVenue] = useState<Record<string, string>>({});
   const [busyVenueId, setBusyVenueId] = useState("");
   const mountedRef = useRef(false);
@@ -3161,7 +3163,7 @@ function VenueManager({
                 {reviewStatus === "changes_requested" && asText(venue.page_review_notes) ? (
                   <div className="venue-page-change-request"><strong>Venue requested changes</strong><p>{asText(venue.page_review_notes)}</p></div>
                 ) : null}
-                <form id={`venue-page-editor-${venueId}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={() => setUnsavedByVenue(current => ({ ...current, [venueId]: true }))} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
+                <form id={`venue-page-editor-${venueId}`} className="venue-page-editor" data-admin-unsaved={Boolean(unsavedByVenue[venueId])} onChange={() => setUnsavedByVenue(current => ({ ...current, [venueId]: true }))} onReset={() => setHoursResetByVenue(current => ({ ...current, [venueId]: (current[venueId] || 0) + 1 }))} onSubmit={(event) => void saveVenuePage(event, venue)} onInvalidCapture={(event) => {
                   const input = event.target as HTMLInputElement;
                   setVenueStatus(venueId, `${input.labels?.[0]?.textContent || "Field"}: ${input.validationMessage}`);
                 }}>
@@ -3178,8 +3180,8 @@ function VenueManager({
                   <label>Public phone<input name="phone" defaultValue={asText(venue.phone)} readOnly={controlsBusy} type="tel" /></label>
                   <label>Website<input name="website" defaultValue={asText(venue.website)} readOnly={controlsBusy} inputMode="url" /></label>
                   <label>Time zone<input name="timezone" defaultValue={asText(venue.timezone) || "America/Los_Angeles"} required readOnly={controlsBusy} /></label>
-                  <label>Opens<input name="opensAt" defaultValue={asText(venue.opens_at).slice(0, 5)} readOnly={controlsBusy} type="time" /></label>
-                  <label>Closes<input name="closesAt" defaultValue={asText(venue.closes_at).slice(0, 5)} readOnly={controlsBusy} type="time" /></label>
+                  <AdminClubHoursFields key={JSON.stringify([venue.opens_at, venue.closes_at, hoursResetByVenue[venueId]])}
+                    opensAt={asText(venue.opens_at)} closesAt={asText(venue.closes_at)} busy={controlsBusy} />
                   {isActive ? <small>Save changes to update the live venue page.</small> : null}
                 </form>
                 <div className="venue-page-media-admin" data-setup-step="branding">

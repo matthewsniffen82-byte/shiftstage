@@ -79,6 +79,17 @@ test('published page edits save all public fields while keeping the live status 
  for(const key of ['is_active','published_at','page_review_status','page_reviewed_at','page_reviewed_by_user_id']) assert.equal(f.row()[key],undefined);
 });
 
+test('private and published club pages save 24-hour opening and can return to custom hours',async()=>{
+ for(const isActive of [false,true]) {
+   const f=fixture('Miami',isActive);
+   const saved=await f.save({opensAt:'00:00',closesAt:'00:00'});
+   assert.equal(saved.opens_at,'00:00');assert.equal(saved.closes_at,'00:00');
+   await f.save({opensAt:'20:00',closesAt:'04:00'});
+   assert.equal(f.row().opens_at,'20:00');assert.equal(f.row().closes_at,'04:00');
+   assert.equal(f.row().is_active,undefined);
+ }
+});
+
 test('an existing unavailable city cannot bypass selection through approval or publishing',async()=>{
  for(const action of ['send_for_review','publish']) {
    const f=fixture('Portland');

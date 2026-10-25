@@ -863,12 +863,14 @@ export function formatVenueReviewHours(opensAt: unknown, closesAt: unknown) {
     if (!match) return "";
     const hour = Number(match[1]);
     if (!Number.isInteger(hour) || hour < 0 || hour > 23) return "";
+    if (Number(match[2]) > 59) return "";
     const suffix = hour >= 12 ? "PM" : "AM";
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${match[2]} ${suffix}`;
   };
   const opens = formatTime(opensAt);
   const closes = formatTime(closesAt);
+  if (opens && opens === closes) return "24 hours";
   return opens && closes ? `${opens} – ${closes}` : "";
 }
 
