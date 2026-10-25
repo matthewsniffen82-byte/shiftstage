@@ -33,6 +33,7 @@
       "app/21-deactivate-home-tv-feed.js",
       "app/22-create-home-tv-landing-preloader.js",
       "app/23-events.js",
+      "app/venue-state-picker.js",
       "app/24-events.js",
       "app/25-events.js",
       "app/26-sync-discovery-city-scope.js"

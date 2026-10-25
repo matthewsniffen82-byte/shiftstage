@@ -2,6 +2,53 @@
 :root {
   --dancr-sign-in-purple: #29009b;
 }
+/* Club states open below their field, including on mobile browsers. */
+body.dancr-button-system #authPage #venueRequestStateField { position: relative; }
+body.dancr-button-system #authPage #venueRequestStateField.is-enhanced > select {
+  position: absolute !important;
+  width: 1px !important; height: 1px !important; min-height: 0 !important;
+  padding: 0 !important; margin: -1px !important;
+  overflow: hidden !important; clip-path: inset(50%); border: 0 !important;
+}
+body.dancr-button-system #authPage #venueRequestStateButton {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  box-sizing: border-box; width: 100%; min-width: 0; min-height: 44px !important;
+  padding: 9px 14px !important;
+  border: 1px solid var(--dancr-form-border, #34343c) !important;
+  border-radius: 12px !important;
+  background: var(--dancr-color-surface, #191820) !important;
+  color: #f8fafc !important; box-shadow: none !important;
+  font: inherit; font-size: 16px !important; font-weight: 400 !important;
+  line-height: 1.5; text-align: left; cursor: pointer;
+}
+body.dancr-button-system #authPage #venueRequestStateButton svg {
+  width: 18px; height: 18px; flex: 0 0 18px;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+}
+body.dancr-button-system #authPage #venueRequestStateButton[aria-expanded="true"] {
+  border-color: #c4b5fd !important;
+}
+body.dancr-button-system #authPage #venueRequestStateOptions {
+  position: absolute; z-index: 30; inset: calc(100% + 4px) 0 auto;
+  box-sizing: border-box; max-height: 240px; overflow-y: auto;
+  overscroll-behavior: contain; padding: 4px;
+  border: 1px solid #6b5c78; border-radius: 12px;
+  background: #19191f; box-shadow: 0 12px 28px rgba(0,0,0,.4);
+}
+body.dancr-button-system #authPage #venueRequestStateOptions [role="option"] {
+  box-sizing: border-box; min-height: 44px; padding: 10px 12px;
+  border-radius: 8px; color: #f8fafc; font-size: 16px; line-height: 1.5;
+  cursor: pointer;
+}
+body.dancr-button-system #authPage #venueRequestStateOptions [role="option"]:is(.is-active, :hover) {
+  background: #303036; outline: 1px solid #c4b5fd; outline-offset: -1px;
+}
+body.dancr-button-system #authPage #venueRequestStateOptions [aria-selected="true"] {
+  color: #ddd6fe; font-weight: 650;
+}
+body.dancr-button-system #authPage #venueRequestStateError { color: #fca5a5; font-size: 13px; }
+body.dancr-button-system #authPage #venueRequestStateButton[aria-invalid="true"] { border-color: #fca5a5 !important; }
+body.dancr-button-system #authPage :is(#venueRequestStateButton, #venueRequestStateOptions, #venueRequestStateError)[hidden] { display: none !important; }
 body.dancr-button-system :is(#authPage, #dancerSignupPage, .account-shell, .vip-auth-shell, .reset-page) {
   --dancr-form-height: 44px;
   --dancr-auth-card: #111018;
