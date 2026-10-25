@@ -856,13 +856,11 @@
     function syncVisitorLocationNotice() {
       const notice = document.getElementById("homeDistanceNotice");
       if (!notice) return;
-      const pending = Boolean(visitorLocationPending || document.getElementById("locationBtn")?.disabled);
-      notice.hidden = hasCoordinates(visitorLocation || userLocation) && !visitorLocationError && !pending;
+      const pending = Boolean(document.getElementById("locationBtn")?.disabled);
+      notice.hidden = !visitorLocationError && !pending;
       notice.setAttribute("aria-busy", String(pending));
       const message = document.getElementById("homeDistanceMessage");
-      if (message) message.textContent = notice.hidden ? "" : pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
-      const button = document.getElementById("homeDistanceLocationBtn");
-      if (button) button.disabled = pending;
+      if (message) message.textContent = pending ? "Finding your location…" : visitorLocationError;
       const dismiss = document.getElementById("homeDistanceDismiss");
       if (dismiss) dismiss.hidden = pending || !visitorLocationError;
     }

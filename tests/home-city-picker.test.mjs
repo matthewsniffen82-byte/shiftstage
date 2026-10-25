@@ -39,11 +39,11 @@ test("current location remains visible beneath Distance and Club when filters ar
   });
 });
 
-test("enable location and dismissible help sit below the city and filter summary", () => {
+test("the summary has no enable-location prompt and keeps action feedback hidden until needed", () => {
   const summary = liveShell.match(/<div class="home-live-summary"[^]*?<\/div>/)?.[0];
   assert.ok(summary);
-  assert.match(summary, /id="homeLiveWorking"[^]*?id="homeDistanceNotice"[^]*?id="homeDistanceMessage" role="status"[^]*?id="homeDistanceLocationBtn"[^>]*>Enable location<\/button>[^]*?id="homeDistanceDismiss"/);
-  assert.equal((liveShell.match(/id="homeDistanceLocationBtn"/g) || []).length, 1);
+  assert.match(summary, /id="homeDistanceNotice" hidden>\s*<span id="homeDistanceMessage" role="status"><\/span>[^]*?id="homeDistanceDismiss"/);
+  assert.doesNotMatch(liveShell, /homeDistanceLocationBtn|Enable location to see distances/);
   const css = postcss.parse(aesthetic);
   const declarations = selector => {
     let values;

@@ -1147,20 +1147,6 @@ body > .app main.stack > .home-live-summary #homeDistanceMessage {
   line-height: 1.4;
 }
 @layer dancr-palette {
-  html body.dancr-button-system #homeDistanceLocationBtn {
-    flex: 0 0 auto;
-    min-height: 32px;
-    padding: 4px 0 !important;
-    border: 0 !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: var(--dancr-color-icon-accent-small) !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    text-decoration: underline;
-    text-underline-offset: 3px;
-  }
-  html body.dancr-button-system #homeDistanceLocationBtn:disabled { opacity: .6; }
   html body.dancr-button-system #homeDistanceDismiss {
     display: inline-grid;
     place-items: center;

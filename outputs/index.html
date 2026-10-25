@@ -32502,9 +32502,8 @@
         <span id="homeLiveRadius">25 mi · All Clubs</span>
         <span class="home-live-summary-divider" aria-hidden="true">·</span>
         <strong id="homeLiveWorking">0 Working Now</strong>
-        <div class="home-distance-notice" id="homeDistanceNotice">
-          <span id="homeDistanceMessage" role="status">Enable location to see distances.</span>
-          <button id="homeDistanceLocationBtn" type="button" aria-describedby="homeDistanceMessage">Enable location</button>
+        <div class="home-distance-notice" id="homeDistanceNotice" hidden>
+          <span id="homeDistanceMessage" role="status"></span>
           <button id="homeDistanceDismiss" type="button" aria-label="Dismiss location message" title="Dismiss location message" hidden>
             <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
@@ -50336,13 +50335,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     function syncVisitorLocationNotice() {
       const notice = document.getElementById("homeDistanceNotice");
       if (!notice) return;
-      const pending = Boolean(visitorLocationPending || document.getElementById("locationBtn")?.disabled);
-      notice.hidden = hasCoordinates(visitorLocation || userLocation) && !visitorLocationError && !pending;
+      const pending = Boolean(document.getElementById("locationBtn")?.disabled);
+      notice.hidden = !visitorLocationError && !pending;
       notice.setAttribute("aria-busy", String(pending));
       const message = document.getElementById("homeDistanceMessage");
-      if (message) message.textContent = notice.hidden ? "" : pending ? "Finding your location…" : visitorLocationError || "Enable location to see distances.";
-      const button = document.getElementById("homeDistanceLocationBtn");
-      if (button) button.disabled = pending;
+      if (message) message.textContent = pending ? "Finding your location…" : visitorLocationError;
       const dismiss = document.getElementById("homeDistanceDismiss");
       if (dismiss) dismiss.hidden = pending || !visitorLocationError;
     }
@@ -69114,11 +69111,11 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     venueSelectDialog?.addEventListener("cancel", (event) => { event.preventDefault(); closeVenuePicker(); });
     venueSelectDialog?.addEventListener("click", (event) => { if (event.target === venueSelectDialog) closeVenuePicker(); });
 
-    document.getElementById("homeDistanceLocationBtn")?.addEventListener("click", () => { void requestVisitorLocation(); });
     document.getElementById("homeDistanceDismiss")?.addEventListener("click", () => {
       visitorLocationError = "";
       syncVisitorLocationNotice();
-      document.getElementById("homeDistanceLocationBtn")?.focus({ preventScroll: true });
+      const focusTarget = homeAdvancedFilters?.classList.contains("is-open") ? "locationBtn" : "homeFilterToggle";
+      document.getElementById(focusTarget)?.focus({ preventScroll: true });
     });
     document.getElementById("locationBtn").addEventListener("click", async () => {
       const button = document.getElementById("locationBtn");
