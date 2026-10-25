@@ -327,8 +327,24 @@ function normalizeWebsite(value: unknown) {
   }
 }
 
-async function deliverVenueAccountApproval(client: DancrClient, request: ReturnType<typeof mapVenueSignupRequest>, venue: NonNullable<ReturnType<typeof mapApprovedVenue>>) {
-  const dashboardUrl = await createVenueApprovalLink(client, { requestId: request.id, userId: request.requesterUserId!, email: request.loginEmail! });
+export async function resendVenueAccountApproval(client: DancrClient, requestId: string) {
+  const { data, error } = await client.from("venue_signup_requests").select(REQUEST_COLUMNS).eq("id", requestId).maybeSingle();
+  if (error) throw error;
+  const request = mapVenueSignupRequest(data || {});
+  if (!data || request.status !== "approved") throw new VenueSignupRequestUserError("Only approved clubs can receive a dashboard link.");
+  if (!request.loginEmail || !request.requesterUserId || !request.matchedVenueId) {
+    throw new VenueSignupRequestUserError("This older approval uses an access code. Manage its access from the club account.");
+  }
+  const venueResult = await client.from("venues").select("id,name").eq("id", request.matchedVenueId).maybeSingle();
+  if (venueResult.error) throw venueResult.error;
+  const venue = mapApprovedVenue(venueResult.data);
+  if (!venue) throw new VenueSignupRequestUserError("This club is no longer available.");
+  const delivery = await deliverVenueAccountApproval(client, request, venue, true);
+  return { ...delivery, recipient: request.loginEmail };
+}
+
+async function deliverVenueAccountApproval(client: DancrClient, request: ReturnType<typeof mapVenueSignupRequest>, venue: NonNullable<ReturnType<typeof mapApprovedVenue>>, reissue = false) {
+  const dashboardUrl = await createVenueApprovalLink(client, { requestId: request.id, userId: request.requesterUserId!, email: request.loginEmail!, ...(reissue ? { reissue: true } : {}) });
   return sendTransactionalEmail({
     to: request.loginEmail!,
     subject: `Your MyDancr dashboard for ${venue.name} is ready`,

@@ -1,0 +1,20 @@
+.history { display: grid; gap: 12px; }
+.history p, .history h3 { margin: 0; }
+.history small { display: block; color: var(--dancr-color-text-muted, #c5c3cc); }
+.tools { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+.tools label { display: grid; gap: 5px; min-width: 0; flex: 1 1 170px; }
+.tools input, .tools select { width: 100%; min-height: 44px; padding: 9px 10px; border: 1px solid var(--dancr-color-border, #414047); border-radius: 10px; background: var(--dancr-color-control-secondary, #303035); color: inherit; font: inherit; font-size: 16px; }
+.history button { min-height: 44px; }
+.record { border: 1px solid var(--dancr-color-border, #414047); border-radius: 12px; }
+.record summary { display: flex; justify-content: space-between; gap: 12px; padding: 12px; cursor: pointer; }
+.record summary > span { min-width: 0; overflow-wrap: anywhere; }
+.details { display: grid; gap: 12px; padding: 0 12px 12px; overflow-wrap: anywhere; }
+.details dl { display: grid; gap: 8px; margin: 0; }
+.details dl > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; }
+.details dt { color: var(--dancr-color-text-muted, #c5c3cc); }
+.details dd { margin: 0; white-space: pre-wrap; }
+.details ul { margin: 0; padding-left: 20px; }
+.details h3 { font-size: 15px; }
+.resend { display: grid; justify-items: start; gap: 8px; }
+.paging { display: flex; justify-content: space-between; gap: 10px; }
+@media (max-width: 420px) { .details dl > div { grid-template-columns: 1fr; gap: 2px; } }

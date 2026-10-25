@@ -9,6 +9,7 @@ import { requireVenueAccess } from "./venue-access";
 import { publicAppUrl } from "./public-app-url";
 
 const completedKey = "mydancr_venue_approval_login";
+const issuedKey = "mydancr_venue_approval_link";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type ApprovalClaim = { v: 1; requestId: string; userId: string; venueId: string; reviewedAt: string; emailTag: string; nonce: string };
 export const VENUE_APPROVAL_HEADERS = { "cache-control": "private, no-store, max-age=0", "referrer-policy": "no-referrer" };
@@ -17,7 +18,11 @@ function signature(value: string) {
 }
 function emailTag(email: string) { return signature("email:" + email.toLowerCase()).toString("base64url"); }
 function unavailable() { return new PublicApiError("FORBIDDEN", "This club approval link is no longer available. Sign in with your club email and password.", 403); }
-function completionId(row: { id: string; reviewed_at: string }) { return `${row.id}:${row.reviewed_at}`; }
+function completionId(row: { id: string; reviewed_at: string }, nonce?: string) { return `${row.id}:${row.reviewed_at}${nonce ? `:${nonce}` : ""}`; }
+function activeNonce(metadata: Record<string, unknown>, row: { id: string; reviewed_at: string }) {
+  const issued = metadata[issuedKey] as { requestId?: string; reviewedAt?: string; nonce?: string } | undefined;
+  return issued?.requestId === row.id && issued.reviewedAt === row.reviewed_at && typeof issued.nonce === "string" && /^[A-Za-z0-9_-]{24}$/.test(issued.nonce) ? issued.nonce : undefined;
+}
 
 export function readVenueApprovalToken(value: unknown): ApprovalClaim {
   if (typeof value !== "string" || value.length > 2048 || !/^vca_[A-Za-z0-9_-]+\.[A-Za-z0-9_-]{43}$/.test(value)) throw unavailable();
@@ -45,16 +50,28 @@ async function approvedManager(admin: SupabaseClient, requestId: string, allowCo
   const account = await requireActiveVenueAccount(admin, user.id);
   const access = await requireVenueAccess(admin, user.id, "view_dashboard");
   if (access.venueId !== row.matched_venue_id) throw unavailable();
-  const completed = user.app_metadata?.[completedKey] === completionId(row);
+  const nonce = activeNonce(user.app_metadata, row);
+  const completed = user.app_metadata?.[completedKey] === completionId(row, nonce);
   if (completed && !allowCompleted) throw unavailable();
-  return { row, user, account, completed };
+  return { row, user, account, completed, nonce };
 }
 
-export async function createVenueApprovalLink(admin: SupabaseClient, input: { requestId: string; userId: string; email: string }) {
-  const { row, user } = await approvedManager(admin, input.requestId);
+export async function createVenueApprovalLink(admin: SupabaseClient, input: { requestId: string; userId: string; email: string; reissue?: boolean }) {
+  const { row, user, completed, nonce: existingNonce } = await approvedManager(admin, input.requestId, input.reissue === true);
   if (user.id !== input.userId || user.email?.toLowerCase() !== input.email.toLowerCase()) throw unavailable();
+  let nonce = existingNonce || randomBytes(18).toString("base64url");
+  if (completed) {
+    // An explicit admin resend can issue a new link after successful entry.
+    // Its generation changes; retired links never become valid again.
+    nonce = randomBytes(18).toString("base64url");
+    const updated = await admin.auth.admin.updateUserById(user.id, { app_metadata: {
+      [issuedKey]: { requestId: row.id, reviewedAt: row.reviewed_at, nonce },
+    } });
+    if (updated.error) throw updated.error;
+    if (updated.data.user?.id !== user.id || activeNonce(updated.data.user.app_metadata, row) !== nonce) throw unavailable();
+  }
   const claim: ApprovalClaim = { v: 1, requestId: row.id, userId: user.id, venueId: row.matched_venue_id,
-    reviewedAt: row.reviewed_at, emailTag: emailTag(user.email!), nonce: randomBytes(18).toString("base64url") };
+    reviewedAt: row.reviewed_at, emailTag: emailTag(user.email!), nonce };
   const encoded = Buffer.from(JSON.stringify(claim)).toString("base64url");
   // No time-based expiry: current approval, identity and successful dashboard
   // entry are checked on every use. Fragments stay out of HTTP/access logs.
@@ -64,7 +81,8 @@ export async function createVenueApprovalLink(admin: SupabaseClient, input: { re
 async function verifyApproval(admin: SupabaseClient, claim: ApprovalClaim) {
   const current = await approvedManager(admin, claim.requestId);
   if (current.user.id !== claim.userId || current.row.matched_venue_id !== claim.venueId
-    || current.row.reviewed_at !== claim.reviewedAt || emailTag(current.user.email!) !== claim.emailTag) throw unavailable();
+    || current.row.reviewed_at !== claim.reviewedAt || emailTag(current.user.email!) !== claim.emailTag
+    || (current.nonce && current.nonce !== claim.nonce)) throw unavailable();
   return current;
 }
 
@@ -99,7 +117,7 @@ export async function completeVenueApprovalLogin(admin: SupabaseClient, userId: 
   const current = await approvedManager(admin, result.data.id, true);
   if (current.user.id !== userId) throw unavailable();
   if (current.completed) return;
-  const value = completionId(current.row);
+  const value = completionId(current.row, current.nonce);
   const updated = await admin.auth.admin.updateUserById(userId, { app_metadata: { [completedKey]: value } });
   if (updated.error) throw updated.error;
   if (updated.data.user?.id !== userId || updated.data.user.app_metadata?.[completedKey] !== value) {

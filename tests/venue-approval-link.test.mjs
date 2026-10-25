@@ -126,6 +126,17 @@ test('completion cannot retire another manager’s link', async () => {
   assert.equal(f.user.app_metadata[completedKey], undefined); assert.equal((await f.redeem(claim)).account.id, userId);
 });
 
+test('an admin resend after successful entry creates a new generation without reviving retired links', async () => {
+  const f = fixture(); const old = f.claim(await f.link()); await f.complete();
+  const url = await f.service.createVenueApprovalLink(f.admin, { requestId, userId, email: f.row.login_email, reissue: true });
+  const fresh = f.claim(url);
+  await assert.rejects(f.redeem(old), { status: 403 });
+  assert.equal((await f.redeem(fresh)).account.id, userId);
+  const resent = f.claim(await f.service.createVenueApprovalLink(f.admin, { requestId, userId, email: f.row.login_email, reissue: true }));
+  assert.equal(resent.nonce, fresh.nonce);
+  await f.complete(); await assert.rejects(f.redeem(fresh), { status: 403 }); await assert.rejects(f.redeem(old), { status: 403 });
+});
+
 async function pageFixture(options = {}) {
   const page = compile('app/auth/venue-approval/route.ts', {
     '@/src/lib/dancr/browser-session': { BROWSER_AUTH_SESSION_KEY: 'session' },

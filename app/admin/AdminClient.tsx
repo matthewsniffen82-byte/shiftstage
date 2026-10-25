@@ -34,6 +34,7 @@ import AdminGuestOperations from "./AdminGuestOperations";
 import AdminVenueColors from "./AdminVenueColors";
 import AdminTableQrCodes from "./AdminTableQrCodes";
 import AdminClubSetupChecklist from "./AdminClubSetupChecklist";
+import AdminClubApprovalHistory from "./AdminClubApprovalHistory";
 import { AdminDashboardIcon } from "./AdminDashboardIcon";
 import "./admin-dashboard.css";
 import "./admin-operations-workspace.css";
@@ -707,7 +708,7 @@ export default function AdminClient() {
       } : current.operations };
     });
   }
-  const clubRequestPanel = <Panel id="admin-club-requests" title="Pending club requests" badge={
+  const clubRequestPanel = <><Panel id="admin-club-requests" title="Pending club requests" badge={
     (state.warnings || []).some(warning => warning.startsWith("Venue signup requests:"))
       ? "Unavailable" : `${adminCountLabel(pendingClubCount)} awaiting approval`
   }>
@@ -727,7 +728,9 @@ export default function AdminClient() {
       onActionConfirmed={confirmAdminAction}
       onContinueSetup={venueId => { setRequestedClubId(venueId); openWorkspace("clubs", "admin-club-accounts"); }}
     />}
-  </Panel>;
+  </Panel><Panel id="admin-club-approval-history" title="Club approval history & resend links">
+    <AdminClubApprovalHistory onActionConfirmed={confirmAdminAction} />
+  </Panel></>;
   const dashboardDescription = isLoading
     ? "Loading live operations..."
     : needsSignIn
