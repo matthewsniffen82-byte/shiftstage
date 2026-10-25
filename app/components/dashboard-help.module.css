@@ -14,7 +14,8 @@
 .dialog :is(button,a,input,textarea):focus-visible, .launcher:focus-visible { outline: 3px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
 .header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--dancr-color-border); flex-shrink: 0; }
 .eyebrow { color: var(--dancr-color-text-muted); font-size: 13px; }
-.dialog .close { width: 44px; padding: 0; border-radius: 50%; font-size: 28px; }
+.dialog .close { display: inline-grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; }
+.close svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; }
 .log { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 18px; }
 .message { max-width: 95%; margin: 0 0 14px; padding: 14px; border: 1px solid var(--dancr-color-border); border-radius: 16px 16px 16px 4px; background: var(--dancr-color-surface); overflow-wrap: anywhere; }
 .message strong { font-size: 13px; color: var(--dancr-color-text-muted); }
@@ -87,10 +88,29 @@
     outline: 2px solid var(--dancr-color-brand-primary) !important;
     outline-offset: 2px !important;
   }
-  /* Keep the close control ring-free; a lighter gray face indicates focus. */
-  :global(html body.dancr-button-system) .dialog .close:focus-visible {
+  /* A plain X with a full tap target, without the legacy circular face. */
+  :global(html body.dancr-button-system) .dialog .close {
+    color: var(--dancr-color-text-muted) !important;
+    border: 0 !important;
+    background: transparent !important;
     outline: none !important;
-    background: color-mix(in srgb, var(--dancr-color-control-secondary) 75%, var(--dancr-color-text-primary)) !important;
+  }
+  :global(html body.dancr-button-system) .dialog .close::before,
+  :global(html body.dancr-button-system) .dialog .close::after {
+    content: none !important;
+    display: none !important;
+  }
+  :global(html body.dancr-button-system) .dialog .close svg {
+    display: block !important;
+    width: 22px !important;
+    height: 22px !important;
+  }
+  :global(html body.dancr-button-system) .dialog .close:is(:hover, :focus-visible) {
+    color: var(--dancr-color-text-primary) !important;
+    outline: none !important;
+  }
+  :global(html body.dancr-button-system) .dialog .close:focus-visible svg {
+    stroke-width: 2.25 !important;
   }
 }
 @media (max-width: 380px) { .header, .composer, .handoff, .log { padding: 12px; } .actions { padding: 8px 12px 12px; } .dialog { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); } }
@@ -107,7 +127,7 @@
 .compact .eyebrow { font-size: 12px; }
 .compact .tabs { padding: 6px 12px; gap: 6px; }
 .compact button { padding: 7px 10px; font-size: 13px; }
-.compact .close { padding: 0; font-size: 26px; }
+.compact .close { padding: 0; }
 .compact .log, .compact .handoff { padding: 12px; }
 .compact .message { padding: 10px; margin-bottom: 8px; border-radius: 12px; }
 .compact .message strong { font-size: 12px; }

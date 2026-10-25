@@ -152,7 +152,9 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
   return <dialog ref={dialog} className={`${styles.dialog}${compact ? ` ${styles.compact}` : ""}`} aria-labelledby={titleId} onCancel={onClose} onClose={onClose} data-global-navigation-swipe="ignore">
     <header className={styles.header}>
       <div><span className={styles.eyebrow}>{HELP_ROLE_LABELS[role]} dashboard</span><h2 id={titleId}>Help &amp; support</h2></div>
-      <button type="button" className={styles.close} aria-label="Close help" onClick={onClose}>×</button>
+      <button type="button" className={styles.close} aria-label="Close help" onClick={onClose}>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
+      </button>
     </header>
     <nav className={styles.tabs} aria-label="Help & support sections">
       <button type="button" aria-pressed={mode === "assistant"} onClick={() => setMode("assistant")}>Ask assistant</button>
