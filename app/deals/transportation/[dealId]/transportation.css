@@ -215,8 +215,9 @@ body.dancr-button-system .is-free-entry .club-transport-card .club-entry-toggle 
 .is-free-entry .club-entry-toggle strong { font-size: 15px; font-weight: 600; line-height: 1.35; }
 .is-free-entry .club-entry-toggle small { margin-top: 3px; color: var(--entry-text-secondary); font-size: 12px; font-weight: 400; }
 .is-free-entry .club-entry-chevron { flex-basis: 18px; width: 18px; height: 18px; border: 0; background: transparent; color: var(--dancr-color-text-muted); }
-.is-free-entry .club-entry-form { margin: 0; padding: 2px 14px 16px; }
-.is-free-entry #club-guest-list-panel { padding: 0 14px 16px; }
+/* Give the first line room below each expanded gray option header. */
+.is-free-entry .club-entry-form { margin: 0; padding: 16px 14px; }
+.is-free-entry #club-guest-list-panel { padding: 16px 14px; }
 .is-free-entry #club-guest-list-panel > p { margin: 0 0 14px; font-size: 13px; }
 .is-free-entry #club-guest-list-panel .club-entry-form { padding: 0; }
 .is-free-entry .club-guest-list-section > p { margin: 0; padding: 0 14px 16px; color: #8ce1ba; }
