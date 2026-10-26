@@ -11,6 +11,7 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
   const slug = canonicalVenueSlug(requestedSlug);
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 160) return new Response("Club not found.", { status: 404 });
   const url = new URL(request.url);
+  const fromClubDashboard = url.searchParams.get("from") === "club-dashboard";
   const rhino = slug === RHINO_VENUE_SLUG;
   // Rhino's embed is a presentation: older live-only links use the same showcase.
   if (rhino && url.searchParams.get("demo") !== "1") {
@@ -50,8 +51,9 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <link href="/venue-grid-embed.css" rel="stylesheet">
     <link href="/venue-brand-themes.css" rel="stylesheet">
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
-  </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-demo="${demo}" data-accent="${venueEmbedAccent()}">
+  </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-demo="${demo}" data-from-club-dashboard="${fromClubDashboard}" data-accent="${venueEmbedAccent()}">
     <div class="app"><main class="stack">
+      ${fromClubDashboard ? '<a class="dancr-home-back" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>' : ""}
       <div class="venue-embed-heading"><div>
         <div class="venue-embed-brand">${rhino ? '<img class="venue-embed-logo" src="/venue-logos/spearmint-rhino-las-vegas.png" alt="Spearmint Rhino logo" width="48" height="48">' : ""}<p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p></div>
         <h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1>

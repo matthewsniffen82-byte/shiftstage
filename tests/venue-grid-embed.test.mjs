@@ -137,6 +137,21 @@ function runtime() {
   return window;
 }
 
+test("only dashboard previews show the fixed club dashboard return link", async () => {
+  const route = documentRoute();
+  for (const [query, expected] of [["", false], ["?from=club-dashboard", true], ["?from=https://example.com", false]]) {
+    const response = await route.GET(new Request(`https://www.mydancr.com/embed/venues/echo-house${query}`), { params: Promise.resolve({ slug: venue.slug }) });
+    const html = await response.text();
+    assert.equal(html.includes('href="/dashboard/venue"'), expected);
+    assert.equal(html.includes("Back to club dashboard"), expected);
+    assert.ok(html.includes(`data-from-club-dashboard="${expected}"`));
+  }
+  const redirect = await route.GET(new Request(`https://www.mydancr.com/embed/venues/${rhino.RHINO_VENUE_SLUG}?from=club-dashboard`), { params: Promise.resolve({ slug: rhino.RHINO_VENUE_SLUG }) });
+  const location = new URL(redirect.headers.get("location"));
+  assert.equal(location.searchParams.get("from"), "club-dashboard");
+  assert.equal(location.searchParams.get("demo"), "1");
+});
+
 test("embed cards use the shared homepage renderer, escape content and open full profiles safely", () => {
   const window = runtime();
   const html = window.MydancrVenueEmbed.cardMarkup({ ...dancer, stageName: '<img onerror="bad">', primaryPhotoUrl: "javascript:alert(1)" }, { name: "<club>" }, 0);
@@ -177,6 +192,15 @@ function componentFixture() {
   return { window, document, node, requests, timers, styles, respond: fn => { responder = fn; } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
+
+test("dashboard origin follows profile links without changing public embed links", async () => {
+  for (const from of ["true", "false", undefined]) {
+    const f = componentFixture();
+    f.document.body.dataset.fromClubDashboard = from;
+    await f.window.MydancrVenueEmbed.mount(f.document);
+    assert.equal(f.node("results").innerHTML.includes("from=club-dashboard"), from === "true");
+  }
+});
 
 test("Rhino location picker supports selection, keyboard navigation and dismissing without changing location", () => {
   let focused, changes = 0;
@@ -501,7 +525,7 @@ test("dashboard preview, copied link and iframe all open the full Rhino presenta
   const nodes = flatten(component({ slug: "spearmint-rhino-las-vegas-demo" }));
   const links = nodes.filter(node => node.type === "a");
   const url = `https://www.mydancr.com/embed/venues/${rhino.RHINO_VENUE_SLUG}?demo=1`;
-  assert.deepEqual(links.map(node => node.props.href), [url]);
+  assert.deepEqual(links.map(node => node.props.href), [`${url}&from=club-dashboard`]);
   nodes.filter(node => node.type === "button").forEach(node => node.props.onClick());
   await settle();
   assert.equal(copied[0], url);
@@ -572,6 +596,8 @@ test("embedded profile uses the full shared component, preserves media and retur
   assert.equal(result.props.profile.photos.length, source.photos.length);
   assert.equal(result.props.tvVideos[0].videoUrl, "/api/public/venue-embed-media/video?id=v1");
   assert.equal(result.props.returnHref, "/embed/venues/talk-of-the-town?location=boise&demo=1");
+  const dashboardPreview = await render({ demo: "1", location: "boise", from: "club-dashboard" });
+  assert.equal(dashboardPreview.props.returnHref, "/embed/venues/talk-of-the-town?location=boise&demo=1&from=club-dashboard");
   assert.equal(result.props.accent, "#b8860b");
   const boiseDirections = new URL(result.props.venueDirectionsHref);
   assert.equal(boiseDirections.origin + boiseDirections.pathname, "https://www.google.com/maps/dir/");
@@ -593,7 +619,7 @@ test("embedded profile uses the full shared component, preserves media and retur
   await assert.rejects(render({}), /NOT_FOUND/);
   profile = { ...source, checkedOutAt: new Date().toISOString() };
   await assert.rejects(render({}), /NOT_FOUND/);
-  assert.equal(contentReads, 4);
+  assert.equal(contentReads, 5);
   const client = read("app/embed/venues/[slug]/dancers/[dancerSlug]/EmbeddedDancerProfile.tsx");
   assert.match(client, /<PublicDancerProfile \{\.\.\.props\}/);
   assert.match(client, /\?presence=1/);

@@ -11,6 +11,7 @@ export default function VenueWebsiteGrid({ slug }: { slug: string }) {
   const rhino = canonical === RHINO_VENUE_SLUG;
   const url = `https://www.mydancr.com/embed/venues/${encodeURIComponent(canonical)}`;
   const previewUrl = rhino ? `${url}?demo=1` : url;
+  const dashboardPreviewUrl = `${previewUrl}${rhino ? "&" : "?"}from=club-dashboard`;
   const code = `<iframe src="${previewUrl}" title="Dancers working now" width="100%" height="900" style="border:0;border-radius:16px" loading="lazy" allow="fullscreen" referrerpolicy="strict-origin-when-cross-origin"></iframe>`;
 
   async function copy(value: string, label: string) {
@@ -32,7 +33,7 @@ export default function VenueWebsiteGrid({ slug }: { slug: string }) {
         <p>The MyDancr dancer grid and full profiles, in your club’s colors.</p>
       </div>
       <div className="venue-publication-actions">
-        <a href={previewUrl} target="_blank" rel="noopener noreferrer">Preview website grid</a>
+        <a href={dashboardPreviewUrl} target="_blank" rel="noopener noreferrer">Preview website grid</a>
         <button type="button" onClick={() => void copy(previewUrl, "Preview link")}>Copy preview link</button>
         <button type="button" onClick={() => void copy(code, "Embed code")}>Copy embed code</button>
       </div>

@@ -153,6 +153,7 @@
       const query = new URLSearchParams();
       if (option) query.set("location", option.value);
       if (demo) query.set("demo", "1");
+      if (document.body.dataset.fromClubDashboard === "true") query.set("from", "club-dashboard");
       const suffix = query.size ? `?${query}` : "";
       const markup = visible.map((dancer, index) => cardMarkup(dancer, displayVenue, index,
         `/embed/venues/${encodeURIComponent(venue.slug)}/dancers/${encodeURIComponent(dancer.slug)}${suffix}`)).join("");

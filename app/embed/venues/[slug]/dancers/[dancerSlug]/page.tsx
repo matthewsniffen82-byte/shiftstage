@@ -62,6 +62,7 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
   const returnQuery = new URLSearchParams();
   if (rhino) returnQuery.set("location", location.key);
   if (demo) returnQuery.set("demo", "1");
+  if (query.from === "club-dashboard") returnQuery.set("from", "club-dashboard");
   const returnHref = `/embed/venues/${slug}${returnQuery.size ? `?${returnQuery}` : ""}`;
   // Showcase locations share media, but directions must follow the selected
   // location instead of the Las Vegas venue supplying those sample profiles.
