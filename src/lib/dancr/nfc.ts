@@ -340,10 +340,9 @@ async function requireProvisionableVenue(client: DancrClient, venueId: string) {
     .from("venues")
     .select("id, name, slug, is_active")
     .eq("id", venueId)
-    .eq("is_active", true)
     .maybeSingle();
   if (error) throw error;
-  if (!data) throw new Error("An active venue is required.");
+  if (!data) throw new Error("Venue not found. Choose a club before assigning a sticker.");
   return { id: String(data.id), name: String(data.name), slug: String(data.slug) };
 }
 

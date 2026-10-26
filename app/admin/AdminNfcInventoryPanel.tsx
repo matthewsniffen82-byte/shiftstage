@@ -10,6 +10,7 @@ type VenueOption = {
   city: string;
   state: string | null;
   isClaimed: boolean;
+  isPublished: boolean;
 };
 
 type AdminNfcTag = {
@@ -55,9 +56,10 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
         fallbackMessage: "Unable to load tap sticker inventory.",
       });
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
-      setVenues((data.venues || []).filter((venue: VenueOption) => !scopedVenueId || venue.id === scopedVenueId));
+      const availableVenues: VenueOption[] = (data.venues || []).filter((venue: VenueOption) => !scopedVenueId || venue.id === scopedVenueId);
+      setVenues(availableVenues);
       setTags((data.tags || []).filter((tag: AdminNfcTag) => !scopedVenueId || tag.venueId === scopedVenueId));
-      setVenueId((current) => current || data.venues?.[0]?.id || "");
+      setVenueId((current) => availableVenues.some((venue) => venue.id === current) ? current : availableVenues[0]?.id || "");
       if (clearStatus) setStatus("");
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== loadSequenceRef.current) return;
@@ -82,10 +84,12 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
   }, [load]);
 
   const activeCount = useMemo(() => tags.filter((tag) => tag.status === "active").length, [tags]);
+  const selectedVenue = venues.find((venue) => venue.id === venueId && (!scopedVenueId || venue.id === scopedVenueId));
+  const canProvision = !isLoading && !isSaving && Boolean(selectedVenue);
 
   async function provision(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!mountedRef.current || actionInFlightRef.current) return;
+    if (!mountedRef.current || actionInFlightRef.current || !canProvision) return;
     actionInFlightRef.current = true;
     loadSequenceRef.current += 1;
     loadAbortRef.current?.abort();
@@ -168,17 +172,28 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
     <div className="admin-nfc-inventory">
       <div className="admin-nfc-summary">
         <span><strong>{isLoading && !tags.length ? "…" : activeCount}</strong><small>active supplied stickers</small></span>
-        <span><strong>{isLoading && !venues.length ? "…" : venues.length}</strong><small>active venues</small></span>
+        <span><strong>{isLoading && !venues.length ? "…" : venues.length}</strong><small>clubs available for setup</small></span>
       </div>
       <p className="admin-nfc-intro">MyDancr owns provisioning. Program, test, label, and lock each physical sticker before it is delivered to the assigned venue.</p>
+      <details className="admin-nfc-instructions">
+        <summary>How to program an NFC sticker</summary>
+        <ol>
+          <li>Choose the placement and select <strong>Assign sticker</strong>.</li>
+          <li>Copy the programming URL shown below.</li>
+          <li>In NFC Tools on your phone, choose <strong>Write → Add a record → URL / URI</strong>, paste the link, then choose <strong>Write</strong> and hold your phone against the sticker.</li>
+          <li>Once the club is published, tap the sticker on iPhone and Android to check it opens the correct club. Label it, then lock it read-only only after testing.</li>
+        </ol>
+      </details>
       <form onSubmit={provision}>
         <label>Assigned venue
           <select value={venueId} onChange={(event) => setVenueId(event.target.value)} disabled={Boolean(scopedVenueId) || isLoading || isSaving || !venues.length} required>
+            {!venues.length ? <option value="">{isLoading ? "Loading clubs…" : "No club available"}</option> : null}
             {venues.map((venue) => (
-              <option key={venue.id} value={venue.id}>{venue.name} · {venue.city}{venue.isClaimed ? "" : " · account not claimed"}</option>
+              <option key={venue.id} value={venue.id}>{venue.name} · {venue.city}{venue.isPublished ? "" : " · not published"}{venue.isClaimed ? "" : " · account not claimed"}</option>
             ))}
           </select>
         </label>
+        {selectedVenue && !selectedVenue.isPublished ? <p className="admin-nfc-intro">You can program stickers for this club now. Dancer check-in and Club Deal redemption will work after the club is published. Wait until then to test and permanently lock the sticker.</p> : null}
         <label>Placement
           <select value={type} disabled={isSaving} onChange={(event) => {
             const next = event.target.value as AdminNfcTag["type"];
@@ -192,7 +207,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
         <label>Sticker label
           <input value={label} disabled={isSaving} onChange={(event) => setLabel(event.target.value)} minLength={2} maxLength={80} required />
         </label>
-        <button type="submit" disabled={isSaving || !venueId}>{isSaving ? "Working…" : "Assign sticker"}</button>
+        <button type="submit" disabled={!canProvision}>{isSaving ? "Working…" : "Assign sticker"}</button>
       </form>
       {programmingUrl ? (
         <section className="admin-nfc-programming" aria-label="One-time sticker setup link">
@@ -222,6 +237,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
       </div>
       {status ? <p role="status" className="admin-nfc-status">{status}</p> : null}
       <style>{`
+        .admin-nfc-instructions{color:#b9accd;font-size:13px;line-height:1.5}.admin-nfc-instructions summary{cursor:pointer;color:#fff;font-weight:700}.admin-nfc-instructions ol{margin:8px 0;padding-left:22px}.admin-nfc-instructions li+li{margin-top:6px}
         .admin-nfc-inventory,.admin-nfc-list{display:grid;gap:10px}.admin-nfc-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px}.admin-nfc-summary span{display:grid;gap:2px;padding:11px;border:1px solid rgba(148,229,255,.16);border-radius:8px;background:rgba(148,229,255,.05)}.admin-nfc-summary strong{color:#fff;font-size:24px}.admin-nfc-summary small,.admin-nfc-intro,.admin-nfc-row small{color:#b9accd}.admin-nfc-intro{margin:0;line-height:1.45}.admin-nfc-inventory form{display:grid;gap:9px}.admin-nfc-inventory label{display:grid;gap:6px;color:#d8cfeb;font-size:12px;font-weight:850}.admin-nfc-inventory input,.admin-nfc-inventory select{width:100%;min-height:42px;padding:8px 10px;border:1px solid rgba(255,255,255,.14);border-radius:8px;color:#fff;background:var(--dancr-color-control-secondary);font:inherit}.admin-nfc-inventory button{min-height:40px;padding:8px 11px;border:1px solid rgba(148,229,255,.24);border-radius:8px;color:#fff;background:rgba(48, 48, 56, 0.3);font:inherit;font-weight:900;cursor:pointer}.admin-nfc-inventory button:disabled{opacity:.55;cursor:wait}.admin-nfc-programming{display:grid;gap:8px;padding:12px;border:1px solid rgba(50,255,164,.3);border-radius:8px;background:rgba(50,255,164,.07)}.admin-nfc-programming code{padding:9px;border-radius:6px;color:#c7ffe3;background:#070a08;overflow-wrap:anywhere}.admin-nfc-programming small{color:#9db5a8;line-height:1.4}.admin-nfc-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:11px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.035)}.admin-nfc-row>span{display:grid;gap:3px}.admin-nfc-row>b{color:#7dffbd;font-size:10px;text-transform:uppercase}.admin-nfc-row.disabled>b,.admin-nfc-row.revoked>b{color:#b9accd}.admin-nfc-row>div{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:7px}.admin-nfc-status{margin:0;color:#94e5ff;line-height:1.4}@media(max-width:680px){.admin-nfc-summary{grid-template-columns:1fr}.admin-nfc-row{grid-template-columns:1fr}.admin-nfc-row>b{justify-self:start}}
       `}</style>
     </div>

@@ -29,7 +29,6 @@ export async function GET(request: Request) {
       ok: true,
       tags,
       venues: venues
-        .filter((venue: any) => venue.is_active === true)
         .map((venue: any) => ({
           id: String(venue.id),
           name: String(venue.name),
@@ -37,6 +36,7 @@ export async function GET(request: Request) {
           city: String(venue.city),
           state: venue.state ? String(venue.state) : null,
           isClaimed: Boolean(venue.owner_user_id),
+          isPublished: venue.is_active === true,
         })),
       session: authContext.session || null,
     });
