@@ -50439,7 +50439,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
     }
 
     function venueDistanceLabel(venue) {
-      return visitorVenueDistanceLabel(venue) || "Distance unavailable";
+      return visitorVenueDistanceLabel(venue);
     }
 
     function compareVenueDistance(left, right, city = selectedCity()) {
@@ -54599,7 +54599,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             </div>
             <div class="profile-body">
               <h3>${safeName}</h3>
-              <div class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""} · ${escapeHtml(details.distanceLabel)}</div>
+              <div class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
               <div class="pill-row">
                 ${details.hours ? `<span class="pill">${escapeHtml(displayShiftTime(details.hours))}</span>` : ""}
                 ${dealMarkup}
@@ -54699,7 +54699,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
                     <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
                     <div class="venue-identity-meta">
                       <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
-                      <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
+                      ${details.distanceLabel ? `<span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>` : ""}
                     </div>
                   </div>
                 </div>
@@ -62351,7 +62351,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <div class="home-discovery-feed-copy">
             <h3 class="home-venue-discovery-name">${safeName}</h3>
-            <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
+            <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</span></span>
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
           </div>
           <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>

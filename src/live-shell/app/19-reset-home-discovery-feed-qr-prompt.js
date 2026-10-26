@@ -244,7 +244,7 @@
           <div class="home-discovery-feed-shade" aria-hidden="true"></div>
           <div class="home-discovery-feed-copy">
             <h3 class="home-venue-discovery-name">${safeName}</h3>
-            <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)} · ${escapeHtml(details.distanceLabel)}</span></span>
+            <span class="home-venue-discovery-location">${venueIconMarkup()}<span>${escapeHtml(locationLabel)}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</span></span>
             <span class="home-venue-discovery-meta">${operatingStatusMarkup}${hoursMarkup}</span>
           </div>
           <div class="home-venue-discovery-lineup-slot">${lineupMarkup}</div>

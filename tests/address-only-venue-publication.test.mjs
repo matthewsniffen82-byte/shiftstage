@@ -35,7 +35,7 @@ test('address-only cards never show demo or stored estimates as visitor distance
  for (const location of [null,{latitude:36.1699,longitude:-115.1398}]) {
   c.userLocation=location;
   for (const patch of [{},{distanceMiles:2.4},{distance:'4.2 mi'},{slug:'talk-of-the-town'}, {slug:'spearmint-rhino-las-vegas-demo'}, {id:'260a8cc4-e7d9-46b8-8ef3-a041fd4fe2af'}]) {
-   assert.equal(c.venueDistanceLabel({...venue,...patch}),'Distance unavailable');
+   assert.equal(c.venueDistanceLabel({...venue,...patch}),'');
   }
  }
 });

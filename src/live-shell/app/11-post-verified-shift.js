@@ -268,7 +268,7 @@
             </div>
             <div class="profile-body">
               <h3>${safeName}</h3>
-              <div class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""} · ${escapeHtml(details.distanceLabel)}</div>
+              <div class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}${details.distanceLabel ? ` · ${escapeHtml(details.distanceLabel)}` : ""}</div>
               <div class="pill-row">
                 ${details.hours ? `<span class="pill">${escapeHtml(displayShiftTime(details.hours))}</span>` : ""}
                 ${dealMarkup}
@@ -368,7 +368,7 @@
                     <h2 id="venueDetailName" class="venue-detail-accessible-name">${escapeHtml(details.name)}</h2>
                     <div class="venue-identity-meta">
                       <span class="venue-identity-location"><span class="meta">${escapeHtml(details.city)}${details.state ? `, ${escapeHtml(details.state)}` : ""}</span></span>
-                      <span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>
+                      ${details.distanceLabel ? `<span class="venue-identity-distance">${escapeHtml(details.distanceLabel)}</span>` : ""}
                     </div>
                   </div>
                 </div>

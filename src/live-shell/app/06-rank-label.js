@@ -810,7 +810,7 @@
     }
 
     function venueDistanceLabel(venue) {
-      return visitorVenueDistanceLabel(venue) || "Distance unavailable";
+      return visitorVenueDistanceLabel(venue);
     }
 
     function compareVenueDistance(left, right, city = selectedCity()) {

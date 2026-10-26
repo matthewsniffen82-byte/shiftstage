@@ -92,7 +92,7 @@ test("club cards, dancer cards and the opened profile use the same visitor-to-cl
 
 test("missing location never turns a city-center, demo or stored estimate into a visitor distance", () => {
   const context = fixture({ location: null });
-  assert.equal(context.venueDistanceLabel({ ...venue, distanceMiles: 3.2, distance: "3.2 mi" }), "Distance unavailable");
+  assert.equal(context.venueDistanceLabel({ ...venue, distanceMiles: 3.2, distance: "3.2 mi" }), "");
   assert.equal(context.profileCardDistanceLabel(profile), "");
   assert.doesNotMatch(context.profileVenueDestinationMarkup(profile, { live: true }), /profile-venue-distance|mi away/);
 });
