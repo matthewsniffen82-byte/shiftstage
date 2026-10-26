@@ -182,6 +182,8 @@ visit(ast); assert.ok(handler);
 function formHarness(responder) {
   let nextId = 199;
   const calls = [], state = { canRequestSupport: true, supportTagId: input.tagId, supportType: "damaged", supportNotes: "Synthetic details",
+    tags: [{ id: input.tagId, label: "Dressing room" }], supportFeedback: null,
+    setSupportFeedback: value => { state.supportFeedback = value; },
     mountedRef: { current: true }, savingRef: { current: false }, supportSubmissionRef: { current: null }, actionSequenceRef: { current: 0 },
     actionAbortRef: { current: null }, loadSequenceRef: { current: 0 }, loadAbortRef: { current: null }, loadInFlightRef: { current: null },
     readDashboardAccessToken: () => "synthetic token", setStatus: value => { state.status = value; }, setIsLoading() {}, setIsSaving() {},
@@ -195,8 +197,11 @@ function formHarness(responder) {
 test("form keeps fields and UUID after failure, then clears them only after confirmed success", async () => {
   const form = formHarness((body, n) => { if (n === 1) throw new Error("Temporary failure"); return { supportRequest: { id: body.requestId } }; });
   await form.send(); assert.equal(form.state.supportNotes, input.notes); assert.equal(form.state.savingRef.current, false);
+  assert.equal(form.state.supportFeedback.kind, "error"); assert.equal(form.state.supportFeedback.message, "Temporary failure");
   await form.send(); assert.equal(form.calls[0].requestId, form.calls[1].requestId);
   assert.equal(form.state.supportNotes, ""); assert.equal(form.state.supportTagId, ""); assert.equal(form.state.supportSubmissionRef.current, null);
+  assert.equal(form.state.supportFeedback.kind, "success");
+  assert.equal(form.state.supportFeedback.message, "MyDancr received your support request for Dressing room.");
 });
 test("changed submission content gets a new UUID after failure", async () => {
   const form = formHarness(() => { throw new Error("Temporary failure"); });
@@ -207,12 +212,14 @@ test("double submit while the first call is pending is ignored synchronously", a
   let complete;
   const form = formHarness(body => new Promise(resolve => { complete = () => resolve({ supportRequest: { id: body.requestId } }); }));
   const first = form.send(); await form.send(); assert.equal(form.calls.length, 1);
+  assert.equal(form.state.supportFeedback, null, "confirmation waits for the server receipt");
   complete(); await first; assert.equal(form.state.savingRef.current, false);
 });
 test("an unconfirmed form response preserves fields and identity for retry", async () => {
   const form = formHarness(() => ({ supportRequest: { id: fixtureId(999) } }));
   await form.send(); assert.equal(form.state.supportNotes, input.notes); assert.ok(form.state.supportSubmissionRef.current);
-  assert.match(form.state.status, /could not be confirmed/);
+  assert.equal(form.state.supportFeedback.kind, "error");
+  assert.match(form.state.supportFeedback.message, /could not be confirmed/);
 });
 test("form cannot submit without support permission", async () => {
   const form = formHarness(() => assert.fail("No submission expected")); form.state.canRequestSupport = false;

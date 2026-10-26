@@ -77,6 +77,7 @@ export default function VenueNfcTagPanel({
   const [supportTagId, setSupportTagId] = useState("");
   const [supportType, setSupportType] = useState<"damaged" | "lost" | "relocate" | "replacement">("damaged");
   const [supportNotes, setSupportNotes] = useState("");
+  const [supportFeedback, setSupportFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const supportSubmissionRef = useRef<{ payload: string; id: string } | null>(null);
   const mountedRef = useRef(false);
   const loadInFlightRef = useRef<Promise<void> | null>(null);
@@ -285,9 +286,10 @@ export default function VenueNfcTagPanel({
 
   async function sendSupportRequest() {
     if (!canRequestSupport || savingRef.current) return;
-    if (!readDashboardAccessToken("venue")) return setStatus("Sign in required.");
-    if (!supportTagId) return setStatus("Choose an assigned sticker.");
+    if (!readDashboardAccessToken("venue")) return setSupportFeedback({ kind: "error", message: "Sign in required." });
+    if (!supportTagId) return setSupportFeedback({ kind: "error", message: "Choose an assigned sticker." });
     if (!mountedRef.current) return;
+    setSupportFeedback(null);
     const requestId = ++actionSequenceRef.current;
     actionAbortRef.current?.abort();
     const controller = new AbortController();
@@ -314,12 +316,12 @@ export default function VenueNfcTagPanel({
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
       if (data.supportRequest?.id !== submission.id) throw new Error("The request could not be confirmed. Try again with the same details.");
       supportSubmissionRef.current = null;
-      setStatus(data.message || "Sticker support request sent.");
+      setSupportFeedback({ kind: "success", message: `MyDancr received your support request for ${tags.find((tag) => tag.id === supportTagId)?.label || "this sticker"}.` });
       setSupportTagId("");
       setSupportNotes("");
     } catch (error) {
       if (!mountedRef.current || controller.signal.aborted || requestId !== actionSequenceRef.current) return;
-      setStatus(error instanceof Error ? error.message : "Unable to request sticker support.");
+      setSupportFeedback({ kind: "error", message: error instanceof Error ? error.message : "Unable to request sticker support." });
     } finally {
       if (requestId === actionSequenceRef.current) {
         actionAbortRef.current = null;
@@ -433,7 +435,7 @@ export default function VenueNfcTagPanel({
             <div className="nfc-tag-actions">
               <b>{tag.status}</b>
               {tag.status === "active" ? <button type="button" disabled={Boolean(testingTagId)} onClick={() => startTapTest(tag)}>{testingTagId === tag.id ? "Listening…" : "Test"}</button> : null}
-              {canRequestSupport ? <button type="button" disabled={isSaving} onClick={() => setSupportTagId(tag.id)}>Support</button> : null}
+              {canRequestSupport ? <button type="button" disabled={isSaving} onClick={() => { setSupportFeedback(null); setSupportTagId(tag.id); }}>Support</button> : null}
             </div>
           </section>
         ))}
@@ -451,12 +453,20 @@ export default function VenueNfcTagPanel({
             </select>
           </label>
           <label>Details<textarea value={supportNotes} disabled={isSaving} maxLength={1000} rows={3} onChange={(event) => setSupportNotes(event.target.value)} /></label>
-          <div><button type="button" disabled={isSaving} onClick={() => void sendSupportRequest()}>Send request</button><button type="button" disabled={isSaving} onClick={() => { supportSubmissionRef.current = null; setSupportTagId(""); }}>Cancel</button></div>
+          <div><button type="button" disabled={isSaving} aria-busy={isSaving} onClick={() => void sendSupportRequest()}>{isSaving ? "Sending…" : "Send request"}</button><button type="button" disabled={isSaving} onClick={() => { supportSubmissionRef.current = null; setSupportFeedback(null); setSupportTagId(""); }}>Cancel</button></div>
         </section>
+      ) : null}
+      {supportFeedback ? (
+        <div className={`nfc-support-feedback is-${supportFeedback.kind}`} role={supportFeedback.kind === "success" ? "status" : "alert"} aria-atomic="true">
+          {supportFeedback.kind === "success" ? <strong><span aria-hidden="true">✓ </span>Request sent</strong> : null}
+          <span>{supportFeedback.message}</span>
+        </div>
       ) : null}
       {!tags.length && !isLoading ? <p>No stickers are assigned yet.</p> : null}
       </details>
       <style>{`
+        .nfc-support-feedback{display:grid;gap:4px;margin-top:12px;padding:12px 14px;border:1px solid rgba(16,185,129,.3);border-radius:11px;background:rgba(16,185,129,.06);color:#a7f3d0;font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+        .nfc-support-feedback.is-error{border-color:rgba(251,113,133,.3);background:rgba(159,18,57,.08);color:#fda4af}
         .venue-roster-content{display:grid;gap:8px;padding-top:10px}
         .venue-nfc-roster:not([open])>.venue-roster-content{display:none}
         .venue-roster-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(140px,180px);gap:12px;align-items:end}
