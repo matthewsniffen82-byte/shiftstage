@@ -20,7 +20,7 @@ function rememberAcknowledgment(accountId: string) {
 const ACCOUNT_ALERT_REASONS = {
   customer: "Following adds dancer and club updates to Alerts.",
   dancer: "Table requests, VIP selections and approvals.",
-  venue: "Table and VIP requests.",
+  venue: "Table, VIP and other selected club alerts go to the email you use to sign in.",
   vip: "VIP requests and confirmed visits.",
   admin: "Support messages needing your attention.",
 };
@@ -105,9 +105,15 @@ export default function EmailNotificationGuidance({
   const reason = accountRole === "venue" && clubApplication
     ? "Updates on your club application."
     : ACCOUNT_ALERT_REASONS[accountRole];
-  const instructions = accountRole === "customer"
+  let instructions = accountRole === "customer"
     ? "Manage email updates in Account. For phone alerts, enable notifications in your email app."
     : "Email is on by default. Enable alerts in your email app for your MyDancr address.";
+  if (accountRole === "venue") {
+    instructions = clubApplication
+      ? "Updates go to the email you use to sign in. Email is on by default."
+      : "Email is on by default. Choose your alerts under Manage venue → Notification preferences.";
+    instructions += " For phone alerts, enable notifications for your email app.";
+  }
   const title = accountRole === "customer" ? "Email updates" : "Email alerts";
 
   return <aside className="email-notification-guidance" aria-label={title}>
@@ -122,6 +128,7 @@ export default function EmailNotificationGuidance({
       {saving ? "Saving…" : "Got it"}
     </button>
     <p><strong>{reason}</strong> {instructions}</p>
+    {accountRole === "venue" ? <p>“Got it” hides this notice without changing your alerts.</p> : null}
     {error ? <p className="email-guidance-error" role="alert">{error}</p> : null}
   </aside>;
 }
