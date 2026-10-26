@@ -41,16 +41,16 @@ function fixture(rows, error = null) {
 
 test('plan entry lookup uses the existing active offer query and exposes only an eligible deal ID', async () => {
   const client = fixture([
-    offer('inactive','club',{is_active:false}), offer('unfunded','club',{payout_amount_cents:0}),
+    offer('inactive','club',{is_active:false}), offer('subscription','club',{payout_amount_cents:0}),
     offer('paid','club',{deal_title:'Half-off admission'}), offer('other','club',{offer_type:'other'}),
     offer('alcohol','club',{deal_description:'Free beer'}), offer('free','club'),
     offer('unrelated','another-club'),
   ]);
-  assert.deepEqual(copy(await getCustomerPlanEntryDeals(client,[plan('club'),plan('club')],now)), {club:'free'});
+  assert.deepEqual(copy(await getCustomerPlanEntryDeals(client,[plan('club'),plan('club')],now)), {club:'subscription'});
   assert.equal(client.calls.length,1);
   assert.equal(client.calls[0].table,'club_deals');
   assert.deepEqual(copy(client.calls[0].methods.filter(([method])=>['in','eq','gt'].includes(method))), [
-    ['in','venue_id',['club']], ['eq','is_active',true], ['eq','payout_type','flat'], ['gt','payout_amount_cents',0],
+    ['in','venue_id',['club']], ['eq','is_active',true],
   ]);
 });
 

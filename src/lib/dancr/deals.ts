@@ -9,6 +9,8 @@ type DancrClient = SupabaseClient;
 export const CLUB_DEAL_COLUMNS =
   "id, venue_id, deal_title, deal_description, deal_terms, is_active, valid_days, valid_start_time, valid_end_time, redemption_rules, payout_type, payout_amount_cents, currency, offer_type, booking_url, sort_order, created_at";
 
+// Pilot and subscription offers do not require a legacy referral payout to be
+// reviewed, displayed, or claimed. Billing is separate from offer eligibility.
 export async function getActiveClubDealForVenue(client: DancrClient, venueId: string): Promise<ClubDeal | null> {
   const deals = await getActiveClubDealsForVenue(client, venueId);
   return deals[0] || null;
@@ -20,8 +22,6 @@ export async function getActiveClubDealsForVenue(client: DancrClient, venueId: s
     .select(CLUB_DEAL_COLUMNS)
     .eq("venue_id", venueId)
     .eq("is_active", true)
-    .eq("payout_type", "flat")
-    .gt("payout_amount_cents", 0)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false })
     .limit(20);
@@ -41,8 +41,6 @@ export async function getActiveClubDealByIdForVenue(
     .eq("id", dealId)
     .eq("venue_id", venueId)
     .eq("is_active", true)
-    .eq("payout_type", "flat")
-    .gt("payout_amount_cents", 0)
     .maybeSingle();
 
   if (error) throw error;
@@ -58,8 +56,6 @@ export async function getActiveClubDealById(
     .select(CLUB_DEAL_COLUMNS)
     .eq("id", dealId)
     .eq("is_active", true)
-    .eq("payout_type", "flat")
-    .gt("payout_amount_cents", 0)
     .maybeSingle();
 
   if (error) throw error;
@@ -87,8 +83,6 @@ export async function getActiveClubDealListsForVenues(
     .select(CLUB_DEAL_COLUMNS)
     .in("venue_id", uniqueVenueIds)
     .eq("is_active", true)
-    .eq("payout_type", "flat")
-    .gt("payout_amount_cents", 0)
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 

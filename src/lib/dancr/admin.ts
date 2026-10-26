@@ -722,13 +722,13 @@ export async function transitionAdminManagedVenuePage(
     const missing = publication.requirements
       .filter((requirement) => !requirement.complete)
       .map((requirement) => requirement.label);
-    throw new Error(`Complete the MyDancr venue page first: ${missing.join(", ")}.`);
+    throw new PublicApiError("INVALID_REQUEST", `Complete the MyDancr venue page first: ${missing.join(", ")}.`, 400);
   }
 
   const now = new Date().toISOString();
   if (action === "send_for_review") {
-    if (!profile.ownerUserId) throw new Error("The approved venue manager must create their account before review can be sent.");
-    if (profile.isActive) throw new Error("This venue page is already published.");
+    if (!profile.ownerUserId) throw new PublicApiError("INVALID_REQUEST", "The approved venue manager must create their account before review can be sent.", 400);
+    if (profile.isActive) throw new PublicApiError("CONFLICT", "This venue page is already published.", 409);
     const { data, error } = await (client as any)
       .from("venues")
       .update({
@@ -765,7 +765,7 @@ export async function transitionAdminManagedVenuePage(
   }
 
   if (profile.pageReviewStatus !== "venue_approved") {
-    throw new Error("The connected venue manager must approve this exact page before MyDancr can publish it.");
+    throw new PublicApiError("INVALID_REQUEST", "The connected venue manager must approve this exact page before MyDancr can publish it.", 400);
   }
 
   const data = await changeVenuePublication(client, adminId, venueId, "admin_publish", {}, "id, slug, name, city, state, address, latitude, longitude, phone, website, timezone, opens_at, closes_at, is_active, published_at, owner_user_id, logo_storage_path, cover_image_storage_path, page_review_status, page_review_sent_at, page_reviewed_at, page_reviewed_by_user_id, page_review_notes");
