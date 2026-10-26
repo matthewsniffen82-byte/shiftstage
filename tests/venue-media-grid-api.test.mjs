@@ -80,6 +80,21 @@ const approved={id:'approved',storage_path:'approved/main.jpg',is_primary:true,r
 const profile={id:dancerId,user_id:'private-owner',dancer_photos:[approved]};
 const card={id:dancerId,stageName:'Star',count:3,photoCount:2,videoCount:1,kind:'photo',record:{...photo,upload_context:'profile_gallery:1'}};
 
+test('media update scope applies to the grid, counts, history and selected dancer pending totals',async()=>{
+  for(const query of ['?scope=updates&view=dancers','?scope=updates&countOnly=1',`?scope=updates&status=all&dancerId=${dancerId}`]) {
+    const f=fixture({count:0,dancers:[],items:[]});
+    await f.get(query);
+    assert.ok(f.calls.length > 0);
+    assert.ok(f.calls.every(call=>call.name==='get_club_media_updates_queue'));
+    assert.ok(f.calls.every(call=>call.args.p_actor_id==='actor' && call.args.p_venue_id==='club'));
+    if(query.includes('countOnly')) assert.equal(f.calls[0].args.p_limit,0);
+    if(query.includes('status=all')) assert.deepEqual(f.calls.map(call=>call.args.p_status),['all','pending']);
+  }
+  const invalid=fixture({});
+  assert.equal((await invalid.get('?scope=unknown')).status,400);
+  assert.equal(invalid.calls.length,0);
+});
+
 test('dancer overview uses pending main photos and approved mains for video-only queues without returning private records',async()=>{
   const f=fixture({count:5,dancerCount:2,items:[],dancers:[
     card,

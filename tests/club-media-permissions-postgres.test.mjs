@@ -36,6 +36,10 @@ before(async () => {
   await db.exec(read('supabase/migrations/20261023054159_venue_media_dancer_grid.sql'));
   await db.exec('alter table dancer_profiles add column created_at timestamptz default now(),add column updated_at timestamptz default now();alter table venues add column name text default \'Synthetic club\'');
   await db.exec(read('supabase/migrations/20261023081710_club_specific_media_permissions.sql'));
+  await db.exec(`create table club_dancer_approvals(venue_id uuid references venues(id) on delete cascade,
+    dancer_id uuid references dancer_profiles(id) on delete cascade,status text,primary key(venue_id,dancer_id));
+    grant all on club_dancer_approvals to service_role;`);
+  await db.exec(read('supabase/migrations/20261026161730_club_media_updates_queue.sql'));
   const latest=read('supabase/migrations/20261023224617_club_profile_review_affiliation.sql');
   await db.exec(latest.match(/create or replace function public.guard_dancer_media_decision\(\)[\s\S]*?end \$\$;/)[0]);
   await db.exec('create trigger test_submission before insert or update of status,verification_status,venue_approved_at on dancer_profiles for each row execute function enforce_dancer_onboarding_photos()');
@@ -73,6 +77,52 @@ async function publish(record,actor=2) {
   return (await db.query("select publish_approved_dancer_gallery_photo($1,$2,$3,'[]','{}','{}',false,null,$4,'Reviewed') value",[record.id,record.updated_at,path,actor===null?null:id(actor)])).rows[0].value;
 }
 const forbidden = error => error.code==='42501';
+
+test('media updates exclude new and declined dancers before counting and pagination, but initial review keeps their media', async () => {
+  await connect(); await upload(100, 'profile_main');
+  await db.query("insert into club_dancer_approvals values($1,$2,'pending')", [id(20),id(10)]);
+  const updates = async (status='pending', offset=0, selected=null) => (await db.query(
+    'select get_club_media_updates_queue($1,$2,$3,$4,1,$5) value', [id(2),id(20),selected,offset,status])).rows[0].value;
+  assert.equal((await queue()).uploadCount,1);
+  assert.equal((await updates()).count,0);
+  assert.deepEqual((await updates('all',0,id(10))).items,[]);
+  await db.query("update club_dancer_approvals set status='rejected'");
+  assert.equal((await updates()).dancerCount,0);
+  await db.query("update club_dancer_approvals set status='approved'");
+  assert.equal((await updates()).count,1);
+  assert.equal((await updates('all',0,id(10))).uploadCount,1);
+
+  // A second pending dancer's older media must not occupy the first update page.
+  await db.query('insert into auth.users values($1)',[id(7)]);
+  await db.query("insert into app_users(id,role) values($1,'dancer')",[id(7)]);
+  await db.query('insert into dancer_profiles(id,user_id) values($1,$2)',[id(11),id(7)]);
+  await db.query("insert into venue_dancer_affiliations(venue_id,dancer_id,status) values($1,$2,'active')",[id(20),id(11)]);
+  await db.query("insert into club_dancer_approvals values($1,$2,'pending')",[id(20),id(11)]);
+  await db.query("insert into dancer_photos(id,dancer_id,storage_path,review_status,created_at) values($1,$2,'older.jpg','approved','2020-01-01')",[id(101),id(11)]);
+  const first = await updates();
+  assert.equal(first.count,1); assert.equal(first.dancerCount,1);
+  assert.equal(first.dancers[0].id,id(10)); assert.deepEqual((await updates('pending',1)).dancers,[]);
+  assert.equal((await queue()).count,2);
+  await decide((await queue()).items[0]);
+  assert.equal((await updates()).count,0);
+  assert.equal((await updates('all')).dancerCount,1);
+  await db.query("update venue_dancer_affiliations set revoked_at=now() where dancer_id=$1",[id(10)]);
+  assert.equal((await updates('all')).dancerCount,0);
+});
+
+test('media update queue preserves manager authorization and is not browser callable', async () => {
+  await connect(); await upload(100);
+  await db.query("insert into club_dancer_approvals values($1,$2,'approved')", [id(20),id(10)]);
+  const read = actor => db.query('select get_club_media_updates_queue($1,$2)',[id(actor),id(20)]);
+  await read(4);
+  await assert.rejects(read(5),forbidden);
+  await assert.rejects(read(3),forbidden);
+  for(const role of ['anon','authenticated']) {
+    await db.exec(`set role ${role}`);
+    await assert.rejects(read(2),forbidden);
+    await db.exec('reset role; set role service_role');
+  }
+});
 
 test('two clubs keep independent decisions through platform publication and later reversals',async()=>{
   await connect();await connect(21);const r=await upload(100,'profile_main');

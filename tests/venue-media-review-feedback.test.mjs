@@ -109,6 +109,18 @@ async function ready(kind) {
   const ui = harness(kind); await ui.settle(); ui.open(); await ui.settle(); return ui;
 }
 
+test('media updates keep their scope while inactive, opening a dancer and changing filters', async () => {
+  const ui = harness('photo', { updatesOnly: true, active: false }); await ui.settle();
+  assert.match(ui.reads.at(-1), /countOnly=1/);
+  ui.render({ active: true }); await ui.settle(); ui.open(); await ui.settle();
+  assert.match(ui.reads.at(-1), /dancerId=dancer-one/);
+  ui.showAll(); await ui.settle(); ui.open(); await ui.settle();
+  assert.match(ui.reads.at(-1), /status=all/);
+  assert.ok(ui.reads.every(url => new URL(url, 'https://example.test').searchParams.get('scope') === 'updates'));
+  const join = harness('photo', { reviewDancer: { id: 'dancer-one', stageName: 'Star' } }); await join.settle();
+  assert.ok(join.reads.every(url => !new URL(url, 'https://example.test').searchParams.has('scope')));
+});
+
 test('filter and back button share one toolbar and retain their navigation behavior', async () => {
   const ui = harness(); await ui.settle();
   const children = () => ui.controls.props.children.filter(Boolean);

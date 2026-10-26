@@ -1,0 +1,11 @@
+#venue-dashboard .venue-approvals { min-width: 0; margin-block: 12px 20px; }
+#venue-dashboard .venue-approvals > h2 { margin: 0 0 12px; font-size: 20px; }
+#venue-dashboard .venue-approvals-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 12px; }
+#venue-dashboard .venue-approvals-tabs > button { min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid transparent; border-radius: 12px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+#venue-dashboard .venue-approvals-tabs > button[aria-selected="true"] { background: var(--dancr-color-control-primary, #6d28ff); color: #fff; }
+#venue-dashboard .venue-approvals-tabs > button:focus-visible { outline: 2px solid var(--dancr-color-control-primary, #6d28ff); outline-offset: 3px; }
+#venue-dashboard .venue-approvals > [hidden] { display: none; }
+#venue-dashboard .venue-approvals .club-join-requests { margin: 0; padding: 0; border: 0; border-radius: 0; }
+#venue-dashboard .venue-approvals .club-join-requests > header { margin-bottom: 6px; }
+#venue-dashboard .venue-approvals .club-join-requests > header h2 { margin: 0; font-size: 18px; }
+#venue-dashboard .venue-approvals .club-join-requests > p { margin-block: 6px; }

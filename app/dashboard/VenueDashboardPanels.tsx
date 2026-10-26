@@ -14,8 +14,7 @@ import { type VenueDancerAffiliation } from "@/src/lib/dancr/venue-roster";
 import { requestDashboardJson, type DashboardSessionAccount } from "./dashboard-session";
 import { PUBLIC_DISCOVERY_REFRESH_KEY, formatVenueReviewHours, Metric, DashboardSection, InfoPanel, NotificationPanel, SupportInboxPanel, AccountControlsPanel, formatDashboardDate } from "./DashboardShared";
 import type { VenueWorkspace, LoadState } from "./dashboard-types";
-const VenueMediaReviewPanel = dynamic(() => import("./VenueMediaReviewPanel"));
-const VenueDancerApprovalPanel = dynamic(() => import("./VenueDancerApprovalPanel"));
+const VenueApprovalsPanel = dynamic(() => import("./VenueApprovalsPanel"));
 const VenueNfcTagPanel = dynamic(() => import("./VenueNfcTagPanel"));
 
 import VenueValueAnalytics from "./VenueValueAnalytics";
@@ -45,7 +44,7 @@ function notifyPublicVenuePublication() {
 function venueWorkspaceForSection(sectionId: string): VenueWorkspace | null {
   if (["venue-pickups", "venue-guest-list", "venue-vip", "venue-customers"].includes(sectionId)) return "tonight";
   if (sectionId === "venue-overview") return "business";
-  if (["venue-working-now", "venue-dancer-roster", "venue-dancer-approvals", "venue-nfc-tags", "table-requests", "venue-media-reviews"].includes(sectionId)) return "roster";
+  if (["venue-working-now", "venue-dancer-roster", "venue-approvals", "venue-dancer-approvals", "venue-nfc-tags", "table-requests", "venue-media-reviews"].includes(sectionId)) return "roster";
   if (["venue-publication", "venue-website-grid", "venue-notification-settings", "venue-club-deals", "venue-deal-contract-ledger", "venue-tv", "venue-team", "venue-account", "venue-support"].includes(sectionId)) return "venue";
   return null;
 }
@@ -351,8 +350,7 @@ export function VenuePanel({
       </section>
 
       <section className="venue-roster-panel venue-dashboard-section" hidden={activeWorkspace !== "roster"} id="venue-workspace-roster" role="tabpanel" aria-labelledby="venue-workspace-roster-tab">
-        {canManageRoster && Boolean(connectedVenueId) && <VenueDancerApprovalPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster"} refreshKey={refreshedAt} />}
-        {canManageRoster && Boolean(connectedVenueId) && <VenueMediaReviewPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster"} refreshKey={refreshedAt} onCountChange={setMediaPending} />}
+        {canManageRoster && Boolean(connectedVenueId) && <VenueApprovalsPanel key={`${account?.id}:${connectedVenueId}`} venueId={String(connectedVenueId)} active={activeWorkspace === "roster"} refreshKey={refreshedAt} onCountChange={setMediaPending} />}
         {(activeWorkspace === "roster" || openedWorkspaces.includes("roster")) && (liveDataReady ? <>
         <section className="venue-dashboard-metrics venue-tonight-metrics" aria-label="Tonight at a glance" hidden={activeWorkspace !== "roster"}>
           <Metric label="Working now" value={String(workingNow.length)} href="#venue-working-now" onClick={event => openVenueSection(event, "venue-working-now")} />

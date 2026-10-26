@@ -38,14 +38,17 @@ export async function GET(request: Request) {
     const dancerId = url.searchParams.get("dancerId");
     if (dancerId !== null && !uuid.test(dancerId)) throw new PublicApiError("INVALID_REQUEST", "Choose a dancer to review.", 400);
     const grouped = url.searchParams.get("view") === "dancers" || dancerId !== null;
-    const { data, error } = await admin.rpc("get_club_media_queue", {
+    const scope = url.searchParams.get("scope");
+    if (scope !== null && scope !== "updates") throw new PublicApiError("INVALID_REQUEST", "Choose a valid review queue.", 400);
+    const queue = scope === "updates" ? "get_club_media_updates_queue" : "get_club_media_queue";
+    const { data, error } = await admin.rpc(queue, {
       p_actor_id: user.id, p_venue_id: access.venueId, p_offset: offset, p_limit: url.searchParams.get("countOnly") === "1" ? 0 : 12,
       p_dancer_id: dancerId, p_status: url.searchParams.get("status") === "all" ? "all" : "pending",
     });
     if (error) throw error;
     let pendingMediaCount = dancerId ? data?.uploadCount || 0 : 0;
     if (dancerId && url.searchParams.get("status") === "all") {
-      const pending = await admin.rpc("get_club_media_queue", { p_actor_id: user.id, p_venue_id: access.venueId,
+      const pending = await admin.rpc(queue, { p_actor_id: user.id, p_venue_id: access.venueId,
         p_offset: 0, p_limit: 0, p_dancer_id: dancerId, p_status: "pending" });
       if (pending.error) throw pending.error;
       pendingMediaCount = pending.data?.uploadCount || 0;

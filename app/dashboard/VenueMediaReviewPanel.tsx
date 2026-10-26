@@ -12,10 +12,11 @@ type Review = { id: string; kind: "photo" | "video"; stageName: string; version:
   label: string; processing: boolean; canApprove: boolean; caption?: string | null; posterUrl?: string };
 type Dancer = { id: string; stageName: string; count: number; photoCount: number; videoCount: number; previewUrl: string };
 
-export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onCountChange, reviewDancer, onReviewStateChange }: {
+export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onCountChange, reviewDancer, onReviewStateChange, updatesOnly = false }: {
   venueId: string; active: boolean; refreshKey?: string | null; onCountChange: (count: number) => void;
   reviewDancer?: Pick<Dancer, "id" | "stageName">;
   onReviewStateChange?: (pending: number | null) => void;
+  updatesOnly?: boolean;
 }) {
   const [items, setItems] = useState<Review[]>([]);
   const [dancers, setDancers] = useState<Dancer[]>([]);
@@ -53,7 +54,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     read.current = controller;
     setLoading(true);
     onReviewStateChange?.(null);
-    requestDashboardJson(`/api/venue/media-reviews?view=dancers&offset=${offset}&status=${showAll ? "all" : "pending"}${selectedId && active ? `&dancerId=${selectedId}` : ""}${active ? "" : "&countOnly=1"}`, {
+    requestDashboardJson(`/api/venue/media-reviews?view=dancers&offset=${offset}&status=${showAll ? "all" : "pending"}${updatesOnly ? "&scope=updates" : ""}${selectedId && active ? `&dancerId=${selectedId}` : ""}${active ? "" : "&countOnly=1"}`, {
       expectedRole: "venue", cache: "no-store", signal: controller.signal,
     }).then(data => {
       if (controller.signal.aborted) return;
@@ -85,7 +86,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     })
       .finally(() => { if (!controller.signal.aborted) setLoading(false); });
     return () => { controller.abort(); if (read.current === controller) read.current = null; };
-  }, [active, venueId, refreshKey, revision, offset, selectedId, onCountChange, showAll, reviewDancer, onReviewStateChange]);
+  }, [active, venueId, refreshKey, revision, offset, selectedId, onCountChange, showAll, reviewDancer, onReviewStateChange, updatesOnly]);
 
   function openDancer(dancer: Dancer | null) {
     if (action.current) return;
@@ -155,8 +156,8 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   if (!active) return null;
   const sectionId = reviewDancer ? "venue-join-media" : "venue-media-reviews";
   return <section className="venue-media-review" id={sectionId} aria-labelledby={`${sectionId}-title`} aria-busy={busy || loading}>
-    <header><div><h2 id={`${sectionId}-title`} ref={heading} tabIndex={-1}>{selectedDancer ? `${selectedDancer.stageName} · Club media` : "Media approvals"}{count !== null ? ` · ${selectedDancer ? uploadCount : count}` : ""}</h2>
-      <p>New media needs your approval, then MyDancr’s.</p></div>
+    <header><div><h2 id={`${sectionId}-title`} ref={heading} tabIndex={-1}>{selectedDancer ? `${selectedDancer.stageName} · Club media` : updatesOnly ? "Media updates" : "Media approvals"}{count !== null ? ` · ${selectedDancer ? uploadCount : count}` : ""}</h2>
+      <p>{reviewDancer ? "Choose which media can appear at your club. MyDancr-approved media needs no repeat review from MyDancr." : "New uploads need your approval, then MyDancr’s. Approved media stays visible."}</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
     {!reviewDancer ? <div className="venue-media-controls">
       <label>Show <select value={showAll ? "all" : "pending"} disabled={busy} onChange={event => { setShowAll(event.target.value === "all"); openDancer(null); }}><option value="pending">Waiting for your club</option><option value="all">All media and decisions</option></select></label>
@@ -169,7 +170,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
     {selectedDancer ? <details><summary>Review guidelines</summary><p>Confirm the media shows only this adult dancer and they have permission to share it. No nudity, sexual activity, unsafe content, logos, watermarks, or contact/payment details. Watch the entire video with sound and check its caption. Your club’s additional standards apply here only. Reject photos with one tap; video rejections need a brief reason. A rejected upload stays hidden at your club.</p></details> : null}
     {message ? <p role="status">{message}</p> : null}
     {loadError ? <p role="alert">{loadError}</p> : null}
-    {loading ? <p role="status">Updating media reviews…</p> : !(selectedDancer ? items : dancers).length && !loadError ? <p>No media in this view.</p> : null}
+    {loading ? <p role="status">Updating media reviews…</p> : !(selectedDancer ? items : dancers).length && !loadError ? <p>{updatesOnly && !showAll ? "No media updates to review." : "No media in this view."}</p> : null}
     {!selectedDancer ? <div className="venue-media-dancer-grid">
       {dancers.map(dancer => <button className="venue-media-dancer-card" type="button" key={dancer.id} disabled={loading || busy}
         aria-label={`Review ${dancer.count} ${showAll ? "media items" : "new uploads"} from ${dancer.stageName}`} onClick={() => openDancer(dancer)}>

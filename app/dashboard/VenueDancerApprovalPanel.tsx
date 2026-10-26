@@ -3,11 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { requestDashboardJson } from "./dashboard-session";
 import VenueMediaReviewPanel from "./VenueMediaReviewPanel";
+import RefreshButton from "../components/RefreshButton";
 
 type JoinRequest = { dancerId: string; stageName: string; city: string; status: "pending" | "rejected"; requestedAt: string; revision: string; expired: boolean; avatarUrl: string | null };
 
 const ignoreCount = () => {};
-export default function VenueDancerApprovalPanel({ venueId, active, refreshKey }: { venueId: string; active: boolean; refreshKey?: string | null }) {
+export default function VenueDancerApprovalPanel({ venueId, active, refreshKey, onDecision }: { venueId: string; active: boolean; refreshKey?: string | null; onDecision?: () => void }) {
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(false);
@@ -50,17 +51,18 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey }
       setMessage(decision === "approved" ? `${request.stageName} is affiliated with your club. ${checkInMessage}` : `${request.stageName}'s request was declined for this club.`);
       setSelected(null); setReviewDancer(undefined); setPendingMedia(null);
       setRefresh(value => value + 1);
+      onDecision?.();
     } catch (reason) {
       if (!controller.signal.aborted) { setError(reason instanceof Error ? reason.message : "Unable to save the decision."); setRefresh(value => value + 1); }
     } finally { if (!controller.signal.aborted) { action.current = null; setBusy(""); } }
   }
 
   return <section id="venue-dancer-approvals" className="club-join-requests" tabIndex={-1} aria-labelledby="club-join-title" aria-busy={loading || Boolean(busy)}>
-    <header><h2 id="club-join-title">Dancer approvals</h2><button type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }}>Refresh</button></header>
-    <p>Review each dancer’s profile and media. Approval completes eligible saved check-ins.</p>
+    <header><h2 id="club-join-title">New dancers</h2><RefreshButton label="Refresh new dancers" busy={loading} type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }} /></header>
+    <p>Review their profile and media, then approve joining your club.</p>
     {message ? <p role="status">{message}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
-    {loading ? <p role="status">Loading requests…</p> : !requests.length && !error ? <p>No requests on this page.</p> : null}
+    {loading ? <p role="status">Loading requests…</p> : !requests.length && !error ? <p>{offset ? "No requests on this page." : "No new dancers to review."}</p> : null}
     {requests.map(request => <article key={request.dancerId}>
       {/* Private, short-lived preview for the authorized club reviewer. */}
       {request.avatarUrl ? <img src={request.avatarUrl} alt={`${request.stageName} profile photo`} width={64} height={80} /> : null}
