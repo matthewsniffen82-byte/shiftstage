@@ -102,7 +102,7 @@ export default function DashboardHelp({ role, accountId, renderMessages, onOpenC
     (opener.current || launcher.current)?.focus({ preventScroll: true });
   }
   return <>
-    <button ref={launcher} className={styles.launcher} type="button" aria-haspopup={role === "admin" && !renderMessages ? undefined : "dialog"}
+    <button ref={launcher} className={`${styles.launcher} ${styles.compactLauncher}`} type="button" aria-haspopup={role === "admin" && !renderMessages ? undefined : "dialog"}
       aria-label={unreadCount ? `Help & Messages, ${unreadCount} unread` : "Help & Messages"}
       onClick={() => {
         if (role === "admin" && !renderMessages) window.location.assign("/admin#admin-support");
