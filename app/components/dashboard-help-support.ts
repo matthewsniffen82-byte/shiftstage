@@ -4,7 +4,7 @@ type Identity = { accessToken?: string; account?: { id?: string | null; role?: s
 type SupportOptions = { method: string; expectedRole: "customer" | "dancer" | "venue"; headers?: Record<string, string>; body?: string; signal: AbortSignal; cache?: "no-store"; fallbackMessage: string };
 type Dependencies = { readSession: () => Identity; request: (path: string, options: SupportOptions) => Promise<{ thread?: unknown; threads?: unknown }> };
 type AccountInput = { role: HelpRole; accountId: string; signal: AbortSignal };
-export type HelpMessage = { id: string; body: string; senderRole: string; createdAt: string };
+export type HelpMessage = { id: string; body: string; senderRole: string; createdAt: string; readAt: string | null };
 export type HelpThread = { id: string; subject: string; status: string; lastMessageAt: string; messages: HelpMessage[] };
 
 function assertAccount(input: AccountInput, dependencies: Dependencies) {
@@ -22,7 +22,7 @@ function readThread(value: unknown): HelpThread {
   return {
     id: value.id, subject: String(row.subject || "Message to the team"), status: String(row.status || "open"), lastMessageAt: String(row.lastMessageAt || ""),
     messages: Array.isArray(row.messages) ? row.messages.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object" && typeof item.body === "string")).map((item, index) => ({
-      id: String(item.id || index), body: String(item.body), senderRole: String(item.senderRole || ""), createdAt: String(item.createdAt || ""),
+      id: String(item.id || index), body: String(item.body), senderRole: String(item.senderRole || ""), createdAt: String(item.createdAt || ""), readAt: typeof item.readAt === "string" ? item.readAt : null,
     })) : [],
   };
 }

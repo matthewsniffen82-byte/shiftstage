@@ -11,6 +11,7 @@ import RefreshButton from "../components/RefreshButton";
 import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import DashboardHelp from "../components/DashboardHelp";
+import SupportMessageReadTracker from "../components/SupportMessageReadTracker";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import EmailNotificationGuidance from "@/app/components/EmailNotificationGuidance";
@@ -420,6 +421,23 @@ export default function AdminClient() {
       else document.querySelector(".admin-workspace-nav")?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
   }
+
+  function openMessages() {
+    if (access?.role !== "owner" && access?.role !== "support") return;
+    const inbox = document.getElementById("admin-support");
+    if (access.role === "owner" && (workspace !== "more" || !inbox)) openWorkspace("more", "admin-support");
+    else { inbox?.focus({ preventScroll: true }); inbox?.scrollIntoView({ block: "start", behavior: "smooth" }); }
+  }
+
+  // Internal staff pages link directly to the admin inbox without exposing it
+  // to reviewers or billing staff who do not have support access.
+  const messageLinkHandled = useRef<string | null>(null);
+  useEffect(() => {
+    if (isLoading || !access || messageLinkHandled.current === access.userId || window.location.hash !== "#admin-support") return;
+    if (access.role !== "owner" && access.role !== "support") return;
+    messageLinkHandled.current = access.userId;
+    openMessages();
+  });
 
   async function openClubDealRequest(request: ClubDealRequest) {
     const identity = readBrowserAccountIdentity();
@@ -847,7 +865,8 @@ export default function AdminClient() {
         </div>
         {!isLoading && !needsSignIn ? (
           <div className="admin-dashboard-session" style={{ flexWrap: "wrap" }}>
-            {access && <DashboardHelp key={access.userId} role={access.role === "owner" ? "admin" : access.role} accountId={access.userId} />}
+            {access && <DashboardHelp key={access.userId} role={access.role === "owner" ? "admin" : access.role} accountId={access.userId}
+              onMessages={access.role === "owner" || access.role === "support" ? openMessages : undefined} />}
             <span><i aria-hidden="true" />Admin session active</span>
             <button className="admin-logout" type="button" onClick={signOut} disabled={isSigningOut}>
               {isSigningOut ? "Logging out..." : "Log out"}
@@ -946,7 +965,7 @@ export default function AdminClient() {
           </div>}
           {access?.role === "reviewer" && <AdminMediaWorkbench venueId={requestedClubId} userId={access.userId} onSaved={confirmAdminAction} />}
           {access?.role === "support" && <AdminInboxArchive supportOnly />}
-          {access?.role === "support" && <AdminSupportInbox threads={state.supportThreads || []} onThreadsChange={supportThreads => setState(current => ({ ...current, supportThreads }))} />}
+          {access?.role === "support" && <section id="admin-support" tabIndex={-1} aria-label="Messages"><AdminSupportInbox threads={state.supportThreads || []} accountId={access.userId} onThreadsChange={supportThreads => setState(current => ({ ...current, supportThreads }))} /></section>}
           {access?.role === "billing" && <AdminVenueSubscriptions venues={access.venues.filter(venue => !requestedClubId || venue.id === requestedClubId)} />}
           {access?.role === "owner" && <>
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
@@ -1131,6 +1150,8 @@ export default function AdminClient() {
                 <Panel id="admin-support" title="Support Inbox" collapsible={false} badge={`${state.supportThreads?.filter((thread) => String(thread.status) === "open").length || 0} open`}>
                   <AdminSupportInbox
                     threads={state.supportThreads || []}
+                    accountId={access.userId}
+                    visible={workspace === "more"}
                     onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
                   />
                 </Panel>
@@ -2291,10 +2312,15 @@ function ImageModerationQueue({
 function AdminSupportInbox({
   threads,
   onThreadsChange,
+  accountId,
+  visible = true,
 }: {
   threads: Array<Record<string, unknown>>;
   onThreadsChange: (threads: Array<Record<string, unknown>>) => void;
+  accountId: string;
+  visible?: boolean;
 }) {
+  const messageContainer = useRef<HTMLDivElement>(null);
   const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
   const [statusByThread, setStatusByThread] = useState<Record<string, string>>({});
   const pendingReplyAttempt = useRef<{ key: string; id?: string } | null>(null);
@@ -2429,7 +2455,8 @@ function AdminSupportInbox({
   }
 
   return (
-    <div className="support-inbox-list">
+    <div className="support-inbox-list" ref={messageContainer}>
+      <SupportMessageReadTracker container={messageContainer} revision={threads} active={visible} accountId={accountId} />
       <div className="support-inbox-toolbar">
       <button type="button" disabled={isRefreshing || Boolean(busyThreadId) || archiving} onClick={() => void refreshMessages()}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
       <AdminInboxActions disabled={Boolean(busyThreadId) || archiving} items={threads.map(thread => ({ kind: "support", id: String(thread.id), version: String(thread.lastMessageAt || ""), title: String(thread.subject || "Support message") }))}
@@ -2456,7 +2483,7 @@ function AdminSupportInbox({
               {messages.map((message) => {
                 const senderLabel = String(message.senderRole) === "admin" ? "MyDancr" : userLabel;
                 return (
-                <div className={String(message.senderRole) === "admin" ? "support-inbox-message from-admin" : "support-inbox-message"} key={String(message.id)}>
+                <div data-support-message-id={String(message.senderRole) !== "admin" && !message.readAt ? String(message.id) : undefined} className={String(message.senderRole) === "admin" ? "support-inbox-message from-admin" : "support-inbox-message"} key={String(message.id)}>
                   <div className="support-message-meta"><strong>{senderLabel}</strong><span>{messageTime(message.createdAt)}</span></div>
                   <p>{String(message.body || "")}</p>
                 </div>

@@ -41,7 +41,7 @@ function scrollPage() {
   return { document, window };
 }
 
-function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
+function fixture(role = 'customer', { messages = false, hash = '', onMessages } = {}) {
   let active, draft = '', revision = 0;
   let session = { accessToken: 'example-token', account: { id: 'account-one', role: knowledge.helpSupportRole(role) || 'admin' } };
   const calls = [], listeners = new Map(), mounted = [];
@@ -56,6 +56,7 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
   const page = scrollPage();
   const window = {
     ...page.window,
+    setInterval: () => 1, clearInterval: () => {},
     location: { hash, pathname: '/dashboard/venue', search: '?help=support' },
     history: {
       state: { dashboard: 'preserved' },
@@ -69,6 +70,9 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     removeEventListener: (name, fn) => listeners.get(name)?.delete(fn),
     dispatchEvent(event) { for (const fn of [...(listeners.get(event.type) || [])]) fn(event); },
   };
+  page.document.visibilityState = 'visible';
+  page.document.addEventListener = window.addEventListener;
+  page.document.removeEventListener = window.removeEventListener;
   const events = { OPEN_DASHBOARD_HELP: 'dancr:open-dashboard-help', DASHBOARD_HELP_UPDATED: 'dancr:dashboard-help-updated', openDashboardHelp: (accountId, view = 'messages') => window.dispatchEvent(new CustomEvent('dancr:open-dashboard-help', { detail: { accountId, view } })) };
   const messageExports = {}, exports = {};
   const context = {
@@ -82,6 +86,8 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
       if (name === './dashboard-help-events') return events;
       if (name === './dashboard-help-scroll') return { lockHelpPageScroll: () => lockHelpPageScroll(page.document, window) };
       if (name === './DashboardHelpMessages') return messageExports;
+      if (name === './SupportMessageReadTracker') return { default: 'ReadTracker' };
+      if (name === './dashboard-message-unread') return { useSupportUnreadCount: (_id, enabled) => enabled ? 2 : null, MESSAGES_READ: 'dancr:messages-read' };
       if (name.endsWith('/dashboard-session')) return { readSession: () => session, requestDashboardJson: async (...args) => { calls.push(args); return respond(...args); } };
       if (name.endsWith('.css')) return { default: new Proxy({}, { get: (_, name) => name }) };
       throw new Error(`Unexpected import: ${name}`);
@@ -100,14 +106,14 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     const instance = { slots: [], index: 0, effects: [] }; mounted.push(instance);
     return { render() { const currentProps = typeof props === 'function' ? props() : props; active = instance; instance.index = 0; instance.effects = []; const tree = component(currentProps); attachConversationRef(tree); for (const effect of instance.effects) effect(); return tree; } };
   }
-  let parent = mount(exports.default, { role, accountId: 'account-one' });
+  let parent = mount(exports.default, { role, accountId: 'account-one', onMessages });
   const internal = mount(exports.InternalDashboardHelp, {});
   const accountLink = mount(exports.DashboardHelpShortcut, { panelId: 'customer-support', conversationCount: 1 });
   let view;
   if (messages) view = mount(messageExports.default, () => ({ role, accountId: 'account-one', draft, draftRevision: revision, onDraftChange: next => { draft = next; } }));
   else {
     const initial = parent.render();
-    if (!hash) find(initial, node => node.type === 'button').props.onClick();
+    if (!hash) find(initial, node => node.type === 'button' && plainText(node).includes('Help')).props.onClick();
     const child = find(parent.render(), node => typeof node.type === 'function');
     view = mount(child.type, () => find(parent.render(), node => typeof node.type === 'function')?.props || child.props);
   }
@@ -115,6 +121,8 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
   const button = label => find(render(), node => node.type === 'button' && plainText(node).replace(/\s+/g, ' ').trim() === label);
   return {
     calls, render, button, document: page.document, window, text: () => plainText(render()),
+    header: () => parent.render(),
+    headerMessages: () => find(parent.render(), node => node.type === 'button' && node.props['aria-label']?.startsWith('Messages')),
     posts: () => calls.filter(([, options]) => options.method === 'POST'),
     ask(question) { find(render(), node => node.type === 'input').props.onChange({ target: { value: question } }); find(render(), node => node.type === 'form').props.onSubmit({ preventDefault() {} }); },
     handoff() { button('Message the MyDancr Team').props.onClick(); },
@@ -128,7 +136,7 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     shortcut(accountId = 'account-one') { events.openDashboardHelp(accountId); },
     clickAccountLink() { find(accountLink.render(), node => node.type === 'button').props.onClick(); },
     deepLink(value) { window.location.hash = value; window.dispatchEvent(new Event('hashchange')); },
-    close() { find(render(), node => node.props?.['aria-label'] === 'Close help').props.onClick(); },
+    close() { find(render(), node => ['Close help', 'Close messages'].includes(node.props?.['aria-label'])).props.onClick(); },
     location: window.location, history: window.history,
     remountHelp() {
       for (const instance of mounted) for (const slot of instance.slots) slot?.cleanup?.();
@@ -139,6 +147,29 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     unmount() { for (const instance of mounted) for (const slot of instance.slots) slot?.cleanup?.(); },
   };
 }
+
+test('every account dashboard has a separate accessible Messages shortcut that opens messages directly', () => {
+  for (const role of ['customer', 'dancer', 'venue', 'vip', 'staff', 'reviewer', 'billing']) {
+    const f = fixture(role);
+    assert.match(f.headerMessages().props['aria-label'], knowledge.helpSupportRole(role) ? /Messages, 2 unread/ : /^Messages$/);
+    assert.equal(f.headerMessages().props['aria-haspopup'], 'dialog');
+    assert.ok(find(f.header(), node => node.type === 'button' && plainText(node).includes('Help')));
+    f.headerMessages().props.onClick();
+    assert.equal(f.button('Messages').props['aria-pressed'], true);
+    assert.equal(f.messagesProps().active, true);
+    f.button('Ask assistant').props.onClick(); assert.equal(f.messagesProps(), undefined);
+    f.unmount();
+  }
+});
+
+test('site admin and support shortcuts use the supplied inbox action instead of the help dialog', () => {
+  for (const role of ['admin', 'support']) {
+    let opened = 0; const f = fixture(role, { onMessages: () => opened++ });
+    f.headerMessages().props.onClick();
+    assert.equal(opened, 1); assert.equal(f.headerMessages().props['aria-haspopup'], undefined);
+    assert.equal(f.button('Ask assistant').props['aria-pressed'], true); f.unmount();
+  }
+});
 
 test('local answers do not call a service and the assistant stays available beside messages', () => {
   const f = fixture('dancer'); f.ask('How do I adjust my avatar?');

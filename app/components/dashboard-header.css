@@ -4,7 +4,7 @@ body.dancr-button-system :is(.dashboard-shell, .vip-dashboard-shell) .dashboard-
   margin: 0 auto 16px; padding: 0 0 16px; border: 0; border-bottom: 1px solid var(--dancr-color-border);
   border-radius: 0; background: transparent; box-shadow: none; font-family: var(--font-ui, Inter, ui-sans-serif, system-ui, sans-serif);
 }
-body.dancr-button-system .dashboard-identity-header .dashboard-identity-back-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; min-height: 44px; }
+body.dancr-button-system .dashboard-identity-header .dashboard-identity-back-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; min-height: 44px; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-row { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 12px; min-width: 0; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar { width: 48px; height: 48px; }
 body.dancr-button-system .dashboard-identity-header .dashboard-identity-avatar > :is(.customer-dashboard-avatar, .dancer-dashboard-avatar, .venue-dashboard-logo, .vip-identity-mark) {

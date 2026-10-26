@@ -5,6 +5,8 @@ import { HELP_ROLE_LABELS, helpEmailHref, helpSupportRole, type HelpRole } from 
 import { readSession, requestDashboardJson } from "../dashboard/dashboard-session";
 import { loadHelpThreads, sendHelpMessage, type HelpThread } from "./dashboard-help-support";
 import { DASHBOARD_HELP_UPDATED } from "./dashboard-help-events";
+import SupportMessageReadTracker from "./SupportMessageReadTracker";
+import { MESSAGES_READ } from "./dashboard-message-unread";
 import styles from "./dashboard-help.module.css";
 
 const dependencies = { readSession, request: requestDashboardJson };
@@ -13,8 +15,8 @@ function dateLabel(value: string) {
   return Number.isNaN(date.getTime()) ? "" : date.toLocaleString();
 }
 
-export default function DashboardHelpMessages({ role, accountId, draft, onDraftChange, draftRevision }: {
-  role: HelpRole; accountId: string; draft: string; onDraftChange: (value: string) => void; draftRevision: number;
+export default function DashboardHelpMessages({ role, accountId, draft, onDraftChange, draftRevision, active = true }: {
+  role: HelpRole; accountId: string; draft: string; onDraftChange: (value: string) => void; draftRevision: number; active?: boolean;
 }) {
   const id = useId();
   const [threads, setThreads] = useState<HelpThread[]>([]);
@@ -61,8 +63,17 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
     window.addEventListener("focus", focus);
     return () => { alive.current = false; loadAbort.current?.abort(); sendAbort.current?.abort(); window.removeEventListener("focus", focus); };
   }, [refresh]);
+  useEffect(() => {
+    if (!active) return;
+    const load = () => { if (document.visibilityState === "visible") void refresh(); };
+    const read = (event: Event) => { if ((event as CustomEvent<{ accountId: string }>).detail?.accountId === accountId) load(); };
+    const timer = window.setInterval(load, 60_000);
+    document.addEventListener("visibilitychange", load);
+    window.addEventListener(MESSAGES_READ, read);
+    return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", load); window.removeEventListener(MESSAGES_READ, read); };
+  }, [active, accountId, refresh]);
   useEffect(() => { if (draftRevision) { setSelected(""); setSendError(""); setConfirmation(""); } }, [draftRevision]);
-  useEffect(() => { if (history.current) history.current.scrollTop = history.current.scrollHeight; }, [conversation]);
+  useEffect(() => { if (history.current) history.current.scrollTop = history.current.scrollHeight; }, [conversation?.id, conversation?.messages.length]);
 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,6 +103,7 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
   }
 
   return <div className={styles.handoff}>
+    <SupportMessageReadTracker container={history} revision={conversation} active={active} accountId={accountId} />
     {supportRole ? <>
       <div className={styles.messageTools}>
         {selected ? <button className={styles.back} type="button" disabled={busy} onClick={() => { setSelected(""); setConfirmation(""); setSendError(""); }}><span aria-hidden="true">‹</span> Conversations</button> : <h3>Team messages</h3>}
@@ -102,7 +114,7 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
         {conversation ? <>
           <h3>{conversation.subject}</h3><p className={styles.meta}>Status: {conversation.status}</p>
           <div ref={history} className={styles.threadHistory} role="log" aria-label="Conversation with the team" aria-live="polite" aria-relevant="additions">
-            {conversation.messages.map(item => <div key={item.id} className={`${styles.message} ${item.senderRole === "admin" ? "" : styles.mine}`}>
+            {conversation.messages.map(item => <div key={item.id} data-support-message-id={item.senderRole === "admin" && !item.readAt ? item.id : undefined} className={`${styles.message} ${item.senderRole === "admin" ? "" : styles.mine}`}>
               <strong>{item.senderRole === "admin" ? "MyDancr team" : "You"}</strong><p>{item.body}</p><small>{dateLabel(item.createdAt)}</small>
             </div>)}
             {!conversation.messages.length && <p>Your message was saved. Refresh messages to load the conversation.</p>}
@@ -112,7 +124,7 @@ export default function DashboardHelpMessages({ role, accountId, draft, onDraftC
         <p>Team replies appear here.</p>
         {loading && !threads.length ? <p role="status">Loading conversations…</p> : null}
         <div className={styles.threadList} aria-label="Previous conversations">
-          {threads.map(thread => <button type="button" key={thread.id} disabled={busy} onClick={() => { setSelected(thread.id); setConfirmation(""); setSendError(""); }}><strong>{thread.subject}</strong><small>{thread.status} · {dateLabel(thread.lastMessageAt)}</small></button>)}
+          {threads.map(thread => <button type="button" key={thread.id} disabled={busy} onClick={() => { setSelected(thread.id); setConfirmation(""); setSendError(""); }}><strong>{thread.subject}</strong><small>{thread.messages.some(item => item.senderRole === "admin" && !item.readAt) ? "Unread · " : ""}{thread.status} · {dateLabel(thread.lastMessageAt)}</small></button>)}
           {!loading && !loadError && !threads.length && <p>No conversations yet.</p>}
         </div>
         <h3>New message</h3>

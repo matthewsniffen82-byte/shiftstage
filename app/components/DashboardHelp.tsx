@@ -7,6 +7,7 @@ import { readSession } from "../dashboard/dashboard-session";
 import DashboardHelpMessages from "./DashboardHelpMessages";
 import { DASHBOARD_HELP_UPDATED, OPEN_DASHBOARD_HELP, openDashboardHelp, type HelpView } from "./dashboard-help-events";
 import { lockHelpPageScroll } from "./dashboard-help-scroll";
+import { useSupportUnreadCount } from "./dashboard-message-unread";
 import styles from "./dashboard-help.module.css";
 
 type Entry = { who: "you" | "help"; text: string; href?: string; topics?: ReturnType<typeof helpTopicsFor> };
@@ -50,13 +51,14 @@ export function InternalDashboardHelp() {
   return account ? <DashboardHelp key={account.id} role={account.role === "admin" ? "admin" : "staff"} accountId={account.id} /> : null;
 }
 
-export default function DashboardHelp({ role, accountId }: { role: HelpRole; accountId?: string | null }) {
+export default function DashboardHelp({ role, accountId, onMessages }: { role: HelpRole; accountId?: string | null; onMessages?: () => void }) {
   const [opened, setOpened] = useState(false);
   const [identity, setIdentity] = useState("");
   const [initialView, setInitialView] = useState<HelpView>("assistant");
   const [openRevision, setOpenRevision] = useState(0);
   const launcher = useRef<HTMLButtonElement>(null);
   const opener = useRef<HTMLElement | null>(null);
+  const unreadCount = useSupportUnreadCount(accountId, Boolean(helpSupportRole(role) || role === "admin" || role === "support"));
   useEffect(() => {
     const open = (view: HelpView) => {
       const session = readSession();
@@ -94,9 +96,21 @@ export default function DashboardHelp({ role, accountId }: { role: HelpRole; acc
     (opener.current || launcher.current)?.focus({ preventScroll: true });
   }
   return <>
+    <div className={styles.headerActions} role="group" aria-label="Messages and help">
+    <button className={styles.launcher} type="button" aria-haspopup={onMessages || role === "admin" ? undefined : "dialog"}
+      aria-label={unreadCount ? `Messages, ${unreadCount} unread` : "Messages"}
+      onClick={() => {
+        if (onMessages) onMessages();
+        else if (role === "admin") window.location.assign("/admin#admin-support");
+        else openDashboardHelp(accountId || readSession()?.account?.id || "", "messages");
+      }}>
+      <svg className={styles.messageIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H7l-5 3V11.5a9.5 9.5 0 0 1 19 0Z" /><path d="M7 10h10M7 14h6" /></svg>
+      Messages {Boolean(unreadCount) && <span className={styles.unreadBadge} aria-hidden="true">{unreadCount! > 99 ? "99+" : unreadCount}</span>}
+    </button>
     <button ref={launcher} className={styles.launcher} type="button" aria-haspopup="dialog" onClick={() => {
       opener.current = launcher.current; setInitialView("assistant"); setIdentity(accountId || readSession()?.account?.id || ""); setOpened(true);
-    }}><span aria-hidden="true">?</span> Help</button>
+    }}><span className={styles.helpIcon} aria-hidden="true">?</span> Help</button>
+    </div>
     {opened && createPortal(<HelpDialog key={`${role}:${identity}`} role={role} accountId={identity} initialView={initialView} openRevision={openRevision} onClose={close} />, document.body)}
   </>;
 }
@@ -151,8 +165,8 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
 
   return <dialog ref={dialog} className={styles.dialog} aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose(); }} onClose={onClose} data-global-navigation-swipe="ignore">
     <header className={styles.header}>
-      <div><span className={styles.eyebrow}>{HELP_ROLE_LABELS[role]} dashboard</span><h2 id={titleId}>Help &amp; support</h2></div>
-      <button type="button" className={styles.close} data-close-control="" aria-label="Close help" onClick={onClose}>
+      <div><span className={styles.eyebrow}>{HELP_ROLE_LABELS[role]} dashboard</span><h2 id={titleId}>{mode === "messages" ? "Messages" : "Help & support"}</h2></div>
+      <button type="button" className={styles.close} data-close-control="" aria-label={mode === "messages" ? "Close messages" : "Close help"} onClick={onClose}>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
     </header>
@@ -177,7 +191,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
       <footer className={styles.actions}><button type="button" onClick={() => setShowTopics(value => !value)}>{showTopics ? "Hide topics" : "Browse topics"}</button><button type="button" onClick={handoff}>Message the MyDancr Team</button></footer>
     </section>
     <section className={styles.messagesPane} hidden={mode !== "messages"} aria-label="Messages">
-      {messagesOpened && <DashboardHelpMessages role={role} accountId={accountId} draft={draft} onDraftChange={setDraft} draftRevision={draftRevision} />}
+      {messagesOpened && <DashboardHelpMessages role={role} accountId={accountId} draft={draft} onDraftChange={setDraft} draftRevision={draftRevision} active={mode === "messages"} />}
     </section>
   </dialog>;
 }

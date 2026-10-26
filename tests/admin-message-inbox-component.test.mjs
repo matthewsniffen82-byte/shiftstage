@@ -24,7 +24,7 @@ function mount(initial = Array.from({ length: 12 }, (_, i) => thread(i))) {
   const props = { threads: initial, onThreadsChange(value) { props.threads = value; } };
   const exports = {}, jsx = (type, props, key) => ({ type, props, key });
   vm.runInNewContext(compile(inbox.getText(ast) + '\nexport {AdminSupportInbox};'), {
-    exports, AdminInboxActions: "ArchiveControls", ADMIN_DATA_CHANGED: "changed", ...hooks, document, window, AbortController, Error, Set,
+    exports, SupportMessageReadTracker: "ReadTracker", AdminInboxActions: "ArchiveControls", ADMIN_DATA_CHANGED: "changed", ...hooks, document, window, AbortController, Error, Set,
     requestAdminJson: (url, options) => new Promise((resolve, reject) => pending.push({ url, options, resolve, reject })),
     asRecordArray: value => Array.isArray(value) ? value : [], formatDate: () => '', readAdminSession: () => ({ account: { id: 'admin' } }),
     require: name => { assert.equal(name, 'react/jsx-runtime'); return { jsx, jsxs: jsx }; },
