@@ -1,5 +1,5 @@
 import { canonicalVenueSlug } from "@/src/lib/dancr/venue-branding";
-import { RHINO_LOCATIONS, RHINO_VENUE_SLUG, rhinoLocation } from "@/src/lib/dancr/rhino-locations";
+import { RHINO_ACCENT, RHINO_LOCATIONS, RHINO_VENUE_SLUG, isRhinoVenue, rhinoLocation } from "@/src/lib/dancr/rhino-locations";
 import { versionStaticAssetReferences } from "@/src/lib/dancr/static-asset-cache.mjs";
 import { venueEmbedPolicy } from "@/src/lib/security/venue-embed-policy.mjs";
 import { venueEmbedAccent } from "@/src/lib/dancr/venue-embed-theme.mjs";
@@ -51,11 +51,11 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
     <link href="/venue-grid-embed.css" rel="stylesheet">
     <link href="/venue-brand-themes.css" rel="stylesheet">
     <script defer src="/dancer-grid-card.js"></script><script defer src="/venue-grid-embed.js"></script>
-  </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-demo="${demo}" data-from-club-dashboard="${fromClubDashboard}" data-accent="${venueEmbedAccent()}">
+  </head><body class="dancr-button-system dancer-directory-active venue-grid-embed" data-venue-slug="${slug}" data-demo="${demo}" data-from-club-dashboard="${fromClubDashboard}" data-accent="${isRhinoVenue(slug) ? RHINO_ACCENT : venueEmbedAccent()}">
     <div class="app"><main class="stack">
       ${fromClubDashboard ? '<a class="dancr-home-back" href="/dashboard/venue"><span aria-hidden="true">‹</span> Back to club dashboard</a>' : ""}
       <div class="venue-embed-heading"><div>
-        <div class="venue-embed-brand">${rhino ? '<img class="venue-embed-logo" src="/venue-logos/spearmint-rhino-las-vegas.png" alt="Spearmint Rhino logo" width="48" height="48">' : ""}<p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p></div>
+        <div class="venue-embed-brand"><img id="venue-logo" class="venue-embed-logo"${rhino ? ' src="/venue-logos/spearmint-rhino-las-vegas.png" alt="Spearmint Rhino logo"' : ' alt="" hidden'} width="64" height="64"><p id="venue-name">${rhino ? "Spearmint Rhino" : ""}</p></div>
         <h1 aria-live="polite">Working now <span id="venue-count" hidden></span></h1>
       </div><button id="venue-refresh" class="mydancr-refresh-button" type="button" aria-label="Refresh working dancers" title="Refresh working dancers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-9-9c2.5 0 4.9 1 6.7 2.8L21 8"></path><path d="M21 3v5h-5"></path></svg></button>
         <a class="venue-embed-credit" href="https://www.mydancr.com" target="_blank" rel="noopener noreferrer"><span>Powered by mydancr.com</span></a>

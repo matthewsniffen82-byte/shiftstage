@@ -7,7 +7,7 @@ import { PublicRequestRateLimitError } from "@/src/lib/dancr/public-request-rate
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue-embed-media.mjs";
 import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
-import { RHINO_ACCENT, RHINO_VENUE_SLUG } from "@/src/lib/dancr/rhino-locations";
+import { RHINO_ACCENT, RHINO_VENUE_SLUG, isRhinoVenue } from "@/src/lib/dancr/rhino-locations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,7 +32,11 @@ export async function GET(request: Request, context: { params: Promise<{ slug: s
       primaryPhotoUrl: venueEmbedMediaUrl(dancer.primaryPhotoUrl), primaryPhotoSrcSet: venueEmbedMediaSrcSet(dancer.primaryPhotoSrcSet),
     }));
     const { embedAccent, configured } = await getVenueGuestColors(client, venue.id);
-    return NextResponse.json({ ok: true, venue: { id: venue.id, slug: venue.slug, name: venue.name, embedAccent: slug === RHINO_VENUE_SLUG ? RHINO_ACCENT : configured ? embedAccent || "#6d28ff" : null }, dancers, nextCursor: page.nextCursor }, { headers });
+    return NextResponse.json({ ok: true, venue: {
+      id: venue.id, slug: venue.slug, name: venue.name,
+      logoImageUrl: venue.logoImageUrl || null,
+      embedAccent: isRhinoVenue(venue.slug) ? RHINO_ACCENT : configured ? embedAccent || "#6d28ff" : null,
+    }, dancers, nextCursor: page.nextCursor }, { headers });
   } catch (error) {
     if (error instanceof PublicRequestRateLimitError) return NextResponse.json({ ok: false, error: "Please wait before refreshing." },
       { status: 429, headers: { ...headers, "Retry-After": String(error.retryAfterSeconds) } });

@@ -5,7 +5,7 @@ import { loadPublicDancerContent } from "@/src/lib/dancr/public-dancer-content";
 import { isActiveNfcPresence } from "@/src/lib/dancr/shift-presence";
 import { canonicalVenueSlug } from "@/src/lib/dancr/venue-branding";
 import { getVenueGuestColors } from "@/src/lib/dancr/venue-guest-colors";
-import { RHINO_ACCENT, RHINO_VENUE_SLUG, rhinoLocation } from "@/src/lib/dancr/rhino-locations";
+import { RHINO_ACCENT, RHINO_VENUE_SLUG, isRhinoVenue, rhinoLocation } from "@/src/lib/dancr/rhino-locations";
 import { venueEmbedMediaUrl, venueEmbedMediaSrcSet } from "@/src/lib/dancr/venue-embed-media.mjs";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import EmbeddedDancerProfile from "./EmbeddedDancerProfile";
@@ -81,6 +81,6 @@ export default async function EmbeddedDancerPage({ params, searchParams }: {
     venueSlug={slug}
     returnHref={returnHref}
     venueDirectionsHref={venueDirectionsHref}
-    accent={rhino ? RHINO_ACCENT : colors.embedAccent || "#6d28ff"}
+    accent={isRhinoVenue(venue.slug) ? RHINO_ACCENT : colors.embedAccent || "#6d28ff"}
   />;
 }

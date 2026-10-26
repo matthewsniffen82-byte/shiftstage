@@ -30,9 +30,13 @@
     });
   }
   function applyTheme(document) {
-    // Saved club colors and legacy URL accents no longer change presentation.
-    document.body.style.setProperty("--embed-accent", "#6d28ff");
-    document.body.style.setProperty("--embed-accent-text", "#f5f3f7");
+    const value = String(document.body.dataset.accent || "").trim();
+    const accent = /^#[0-9a-f]{6}$/i.test(value) ? value.toLowerCase() : "#6d28ff";
+    const channels = accent.slice(1).match(/../g).map(value => parseInt(value, 16) / 255)
+      .map(value => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4);
+    const luminance = channels[0] * .2126 + channels[1] * .7152 + channels[2] * .0722;
+    document.body.style.setProperty("--embed-accent", accent);
+    document.body.style.setProperty("--embed-accent-text", luminance > .179 ? "#050507" : "#ffffff");
   }
   function sampleRoster(rows, key, count) {
     // Stable selection per location; retain the shared feed's rank order.
@@ -132,6 +136,8 @@
     const refresh = document.getElementById("venue-refresh");
     const more = document.getElementById("venue-more");
     const venueName = document.getElementById("venue-name");
+    const venueLogo = document.getElementById("venue-logo");
+    venueLogo?.addEventListener("error", () => { venueLogo.hidden = true; });
     const count = document.getElementById("venue-count");
     const locations = document.getElementById("venue-location");
     const sourceSlug = document.body.dataset.venueSlug;
@@ -170,6 +176,17 @@
         });
       }
       venueName.textContent = option ? "Spearmint Rhino" : venue.name;
+      const logo = safeImageUrl(venue.logoImageUrl || (demo ? "/venue-logos/spearmint-rhino-las-vegas.png" : ""));
+      if (venueLogo) {
+        venueLogo.alt = `${venueName.textContent} logo`;
+        if (logo && venueLogo.src !== logo) {
+          venueLogo.src = logo;
+          venueLogo.hidden = false;
+        } else if (!logo) {
+          venueLogo.hidden = true;
+          venueLogo.removeAttribute("src");
+        }
+      }
       showCount(`${visible.length}${nextCursor && !demo ? "+" : ""}`);
     }
     async function load(append = false) {

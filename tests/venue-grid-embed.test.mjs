@@ -94,6 +94,22 @@ test("saved embed colors exclude the internal color and resetting overrides old 
   assert.equal((await (await apiFixture().get()).json()).venue.embedAccent, null);
 });
 
+test("the live Rhino embed supplies its uploaded logo and gold without becoming a demo", async () => {
+  const liveVenue = { ...venue, slug: "spearmint-rhino", name: "Spearmint Rhino", logoImageUrl: "https://images.example/rhino-logo.webp" };
+  const f = apiFixture({ venue: liveVenue, page: { dancers: [dancer], tonightDancers: [dancer], nextCursor: null } });
+  const body = await (await f.get()).json();
+  assert.equal(body.venue.logoImageUrl, liveVenue.logoImageUrl);
+  assert.equal(body.venue.embedAccent, "#b8860b");
+  assert.equal(body.dancers.length, 1);
+  const response = await documentRoute().GET(new Request("https://www.mydancr.com/embed/venues/spearmint-rhino"), { params: Promise.resolve({ slug: liveVenue.slug }) });
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /data-demo="false"/);
+  assert.match(html, /data-accent="#b8860b"/);
+  assert.match(html, /id="venue-logo"/);
+  assert.doesNotMatch(html, /<select id="venue-location"/);
+});
+
 test("only the exact embed document path is exempt from DENY and gets public-only CSP", async () => {
   const matcher = pathToRegexp(nonEmbedDocumentSource);
   for (const path of ["/", "/dashboard", "/dancers/ty", "/api/public/venue-grid/echo-house", "/embed/venues/echo-house/settings", "/embed/venues/"]) assert.ok(matcher.test(path), path);
@@ -179,7 +195,7 @@ function componentFixture() {
   const node = id => {
     if (!nodes.has(id)) nodes.set(id, { textContent: "", innerHTML: "", hidden: false, listeners: {},
       focus() {}, close() {}, showModal() {},
-      addEventListener(event, handler) { this.listeners[event] = handler; }, setAttribute() {}, querySelectorAll() { return []; } });
+      addEventListener(event, handler) { this.listeners[event] = handler; }, setAttribute() {}, removeAttribute(key) { delete this[key]; }, querySelectorAll() { return []; } });
     return nodes.get(id);
   };
   const styles = new Map();
@@ -285,15 +301,39 @@ test("Rhino location picker supports selection, keyboard navigation and dismissi
   assert.equal(get("venueLocationScrollbar").hidden, true);
 });
 
-test("an existing embed ignores saved club colors on load and refresh without replacing its link", async () => {
+test("an existing embed applies saved club colors on load and refresh without replacing its link", async () => {
   const f = componentFixture();
   f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#00aaff" }, dancers: [dancer], nextCursor: null }));
   await f.window.MydancrVenueEmbed.mount(f.document);
-  assert.equal(f.styles.get("--embed-accent"), "#6d28ff");
+  assert.equal(f.styles.get("--embed-accent"), "#00aaff");
   f.respond(() => ({ ok: true, venue: { ...venue, embedAccent: "#6d28ff" }, dancers: [dancer], nextCursor: null }));
   f.timers[0].handler(); await settle();
   assert.equal(f.styles.get("--embed-accent"), "#6d28ff");
   assert.ok(f.requests.every(request => request.url.includes(`/venue-grid/${venue.slug}`)));
+});
+
+test("empty rosters retain club branding and refresh updated or removed logos safely", async () => {
+  const f = componentFixture();
+  const brand = { ...venue, logoImageUrl: "https://images.example/club-logo.webp", embedAccent: "#b8860b" };
+  f.respond(() => ({ ok: true, venue: brand, dancers: [], nextCursor: null }));
+  await f.window.MydancrVenueEmbed.mount(f.document);
+  assert.equal(f.node("venue-logo").src, brand.logoImageUrl);
+  assert.equal(f.node("venue-logo").alt, "Echo House logo");
+  assert.equal(f.node("venue-logo").hidden, false);
+  assert.equal(f.node("venue-count").textContent, "0");
+  assert.equal(f.styles.get("--embed-accent"), brand.embedAccent);
+  f.node("venue-logo").listeners.error();
+  assert.equal(f.node("venue-logo").hidden, true);
+  brand.logoImageUrl = "https://images.example/replacement.webp";
+  await f.node("venue-refresh").listeners.click();
+  assert.equal(f.node("venue-logo").hidden, false);
+  assert.equal(f.node("venue-logo").src, brand.logoImageUrl);
+  for (const value of ["javascript:alert(1)", ""]) {
+    brand.logoImageUrl = value;
+    await f.node("venue-refresh").listeners.click();
+    assert.equal(f.node("venue-logo").hidden, true);
+    assert.equal(f.node("venue-logo").src, undefined);
+  }
 });
 
 test("widget paginates without cookies and refreshes all loaded pages with a new placement visit", async () => {
@@ -383,7 +423,7 @@ for (const status of [401, 403, 404, 410]) test(`confirmed club/access removal (
   assert.equal(f.node("venue-count").hidden, true);
 });
 
-test("every location and legacy accent URL uses the shared site palette", async () => {
+test("venue scope ignores URL color overrides and saved colors use readable button text", async () => {
   const locations = [venue, { id: "venue-florida", slug: "company-miami", name: "Company Miami", city: "Miami" }];
   for (const location of locations) {
     const fixture = apiFixture({ venue: location, page: { dancers: [], tonightDancers: [], nextCursor: null } });
@@ -394,11 +434,11 @@ test("every location and legacy accent URL uses the shared site palette", async 
   }
   for (const value of ["red", "javascript:alert(1)", "ff0000; color:red", "fff"]) assert.equal(venueEmbedAccent(new URL(`https://example.com/?accent=${encodeURIComponent(value)}`)), "#6d28ff");
   const window = runtime();
-  for (const accent of ["#ffffff", "#000000", "#c99842"]) {
+  for (const [accent, text] of [["#ffffff", "#050507"], ["#000000", "#ffffff"], ["#c99842", "#050507"], ["red", "#ffffff"]]) {
     const values = new Map();
     window.MydancrVenueEmbed.applyTheme({ body: { dataset: { accent }, style: { setProperty: (key, value) => values.set(key, value) } } });
-    assert.equal(values.get("--embed-accent"), "#6d28ff");
-    assert.equal(values.get("--embed-accent-text"), "#f5f3f7");
+    assert.equal(values.get("--embed-accent"), accent === "red" ? "#6d28ff" : accent);
+    assert.equal(values.get("--embed-accent-text"), text);
   }
   assert.doesNotMatch(read("public/venue-grid-embed.js"), /localStorage|sessionStorage|postMessage/);
   assert.doesNotMatch(read("src/live-shell/shell.html"), /venue-grid-embed\.css|venue-grid-embed\.js/);

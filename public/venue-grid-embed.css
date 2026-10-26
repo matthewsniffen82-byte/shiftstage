@@ -26,7 +26,7 @@ html body.venue-grid-embed .venue-embed-brand {
   grid-area: name; display: flex; align-items: center; gap: 10px; min-width: 0; margin-bottom: 2px;
 }
 html body.venue-grid-embed .venue-embed-logo {
-  display: block; flex: 0 0 48px; width: 48px; height: 48px; object-fit: contain;
+  display: block; flex: 0 0 64px; width: 64px; height: 64px; object-fit: contain;
 }
 html body.venue-grid-embed .venue-embed-heading h1 {
   grid-area: title; min-width: 0;
@@ -80,7 +80,7 @@ html body.venue-grid-embed #venue-refresh:disabled svg { animation: venue-refres
 html body.venue-grid-embed #venue-more { justify-self: center; min-height: 44px; }
 html body.venue-grid-embed [hidden] { display: none !important; }
 
-/* Website embeds share the site palette; older accent values are ignored. */
+/* The public feed supplies each club's saved accent. */
 html body.venue-grid-embed {
   --embed-accent: #6d28ff;
   --embed-accent-text: #fff;

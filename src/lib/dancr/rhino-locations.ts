@@ -3,6 +3,10 @@
 // Random counts are saved once so each location keeps a stable 25–80 roster.
 export const RHINO_VENUE_SLUG = "talk-of-the-town";
 export const RHINO_ACCENT = "#b8860b";
+// The live club is separate from the older multi-location showcase.
+export function isRhinoVenue(slug: string) {
+  return [RHINO_VENUE_SLUG, "spearmint-rhino-las-vegas-demo", "spearmint-rhino"].includes(slug);
+}
 export const RHINO_LOCATIONS = [
   { key: "las-vegas", label: "Las Vegas, NV", city: "Las Vegas", sampleCount: 49, venueSlug: RHINO_VENUE_SLUG },
   { key: "boise", label: "Boise, ID", city: "Boise", sampleCount: 78 },

@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
+import { DEFAULT_GUEST_ACCENT, guestAccentText, normalizeGuestAccent } from "@/src/lib/dancr/venue-guest-theme";
 import PublicDancerProfile, { type PublicDancerProfileProps } from "@/app/dancers/[slug]/PublicDancerProfile";
 
-export default function EmbeddedDancerProfile({ venueSlug, returnHref, ...props }: PublicDancerProfileProps & {
+export default function EmbeddedDancerProfile({ venueSlug, returnHref, accent, ...props }: PublicDancerProfileProps & {
   venueSlug: string;
   returnHref: string;
   accent: string;
 }) {
   const [available, setAvailable] = useState(true);
+  const clubAccent = normalizeGuestAccent(accent) || DEFAULT_GUEST_ACCENT;
   useEffect(() => {
     let disposed = false;
     let busy = false;
@@ -38,6 +40,7 @@ export default function EmbeddedDancerProfile({ venueSlug, returnHref, ...props 
 
   return (
     <div className="venue-embed-profile-page" data-venue-slug={venueSlug}
+      style={{ "--embed-accent": clubAccent, "--embed-accent-text": guestAccentText(clubAccent) } as CSSProperties}
       onClickCapture={event => {
         // Account and club pages stay in the main app; never frame private pages.
         const anchor = (event.target as Element).closest<HTMLAnchorElement>("a[href]");

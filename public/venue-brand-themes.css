@@ -8,13 +8,58 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
 @media screen {
 @layer dancr-palette {
+  /* Public club embeds and their profile document share the club's accent.
+     Root-scoped variables leave MyDancr's public discovery palette untouched. */
+  html body.dancr-button-system.venue-grid-embed,
+  html body.dancr-button-system .venue-embed-profile-page {
+    --dancr-color-brand-primary: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-brand-primary-deep: color-mix(in srgb, var(--embed-accent, #6d28ff) 80%, #000) !important;
+    --dancr-color-brand-glow: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-brand-glow-soft: color-mix(in srgb, var(--embed-accent, #6d28ff) 12%, transparent) !important;
+    --dancr-color-brand-glow-medium: color-mix(in srgb, var(--embed-accent, #6d28ff) 24%, transparent) !important;
+    --dancr-color-brand-primary-soft: color-mix(in srgb, var(--embed-accent, #6d28ff) 16%, #121214) !important;
+    --dancr-color-brand-primary-medium: color-mix(in srgb, var(--embed-accent, #6d28ff) 40%, #121214) !important;
+    --dancr-color-brand-primary-strong: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-control-primary: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-control-primary-deep: var(--dancr-color-brand-primary-deep) !important;
+    --dancr-color-control-selected: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-control-selected-soft: color-mix(in srgb, var(--embed-accent, #6d28ff) 20%, transparent) !important;
+    --dancr-color-control-indicator: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-icon-location: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-icon-accent: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-icon-accent-small: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-beam-violet: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-beam-violet-medium: color-mix(in srgb, var(--embed-accent, #6d28ff) 58%, transparent) !important;
+    --dancr-color-beam-violet-soft: color-mix(in srgb, var(--embed-accent, #6d28ff) 20%, transparent) !important;
+    --dancr-color-avatar-ring-magenta: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-avatar-ring-violet: var(--embed-accent, #6d28ff) !important;
+    --dancr-color-avatar-ring-indigo: var(--embed-accent, #6d28ff) !important;
+  }
+  html body.dancr-button-system.venue-grid-embed .venue-embed-heading :is(h1, #venue-name, #venue-count),
+  html body.dancr-button-system.venue-grid-embed #venue-refresh svg {
+    color: color-mix(in srgb, var(--embed-accent, #6d28ff) 50%, #fff) !important;
+  }
+  html body.dancr-button-system.venue-grid-embed #venue-count {
+    background: color-mix(in srgb, var(--embed-accent, #6d28ff) 14%, #090908) !important;
+    border-color: color-mix(in srgb, var(--embed-accent, #6d28ff) 60%, #090908) !important;
+  }
+  html body.dancr-button-system.venue-grid-embed #venue-refresh svg { stroke: currentColor !important; }
+  html body.dancr-button-system .venue-embed-profile-page :where(
+    .free-entry-cta, .profile-media-entry, .profile-free-entry-action,
+    .profile-club-deal-cta, .club-deal-launcher-action, .club-deal-checkout-action,
+    .deal-pass-action.primary, .deal-pass-booking, .profile-action-primary
+  ):not(:where(:disabled, [aria-disabled="true"], .is-unavailable, .profile-action-unavailable)) {
+    color: var(--embed-accent-text, #fff) !important;
+    -webkit-text-fill-color: currentColor !important;
+  }
+
   /* Scope to the actual venue identity, never a saved color or URL accent.
      Full Internal profiles are isolated documents and carry their club identity.
      Ordinary public dancer/club pages retain the main site's colors. */
   html body.dancr-button-system:is(
-    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"]),
+    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"]),
     :has(.ir-shell:not(.ir-embedded):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"])),
-    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"])),
+    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"])),
     :is([data-internal-profile-audience="guest"], [data-internal-profile-audience="staff"]):is([data-internal-venue-brand="talk-of-the-town"], [data-internal-venue-brand="spearmint-rhino-las-vegas-demo"])
   ) {
     --dancr-color-brand-primary: #b8860b !important;
@@ -60,9 +105,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   /* Dark lettering keeps gold action faces readable. Pending, confirmed,
      disabled and destructive actions keep their existing state styling. */
   html body.dancr-button-system:is(
-    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"]),
+    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"]),
     :has(.ir-shell:not(.ir-embedded):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"])),
-    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"])),
+    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"])),
     :is([data-internal-profile-audience="guest"], [data-internal-profile-audience="staff"]):is([data-internal-venue-brand="talk-of-the-town"], [data-internal-venue-brand="spearmint-rhino-las-vegas-demo"])
   ) :where(
     button[type="submit"], input[type="submit"], .primary-action, .primary-link,
@@ -82,9 +127,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
 
   /* Replace the shared violet offer glow with the same quiet gold accent. */
   html body.dancr-button-system:is(
-    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"]),
+    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"]),
     :has(.ir-shell:not(.ir-embedded):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"])),
-    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"])),
+    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"])),
     :is([data-internal-profile-audience="guest"], [data-internal-profile-audience="staff"]):is([data-internal-venue-brand="talk-of-the-town"], [data-internal-venue-brand="spearmint-rhino-las-vegas-demo"])
   ) :where(.free-entry-cta, .profile-media-entry, .club-deal-launcher-action, [data-free-entry-glow="true"]):not(:where(
     :disabled, [aria-disabled="true"], [aria-busy="true"],
@@ -96,9 +141,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   }
 
   html body.dancr-button-system:is(
-    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"]),
+    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"]),
     :has(.ir-shell:not(.ir-embedded):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"])),
-    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"])),
+    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"])),
     :is([data-internal-profile-audience="guest"], [data-internal-profile-audience="staff"]):is([data-internal-venue-brand="talk-of-the-town"], [data-internal-venue-brand="spearmint-rhino-las-vegas-demo"])
   ) :where(.free-entry-label, .free-entry-cue) {
     color: inherit !important;
@@ -106,9 +151,9 @@ html body.dancr-button-system :is(#profileBackdrop #profileModal, .public-profil
   }
 
   html body.dancr-button-system:is(
-    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"]),
+    .venue-grid-embed:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"]),
     :has(.ir-shell:not(.ir-embedded):is([data-venue-brand="talk-of-the-town"], [data-venue-brand="spearmint-rhino-las-vegas-demo"])),
-    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"])),
+    :has(.venue-embed-profile-page:is([data-venue-slug="talk-of-the-town"], [data-venue-slug="spearmint-rhino-las-vegas-demo"], [data-venue-slug="spearmint-rhino"])),
     :is([data-internal-profile-audience="guest"], [data-internal-profile-audience="staff"]):is([data-internal-venue-brand="talk-of-the-town"], [data-internal-venue-brand="spearmint-rhino-las-vegas-demo"])
   ) :where(.ir-header h1, .ir-brand > span:not(.ir-brand-caption), #venue-name, .ir-table-tools > summary:hover) {
     color: #dfba64 !important;
