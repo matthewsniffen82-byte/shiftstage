@@ -46,6 +46,8 @@ body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section > summary:f
 /* Section links focus the panel; keep its focus cue on the header. */
 body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section[tabindex="-1"]:focus { outline: none; }
 body .dashboard-shell.dashboard-shell-venue .venue-dashboard-section[tabindex="-1"]:focus-visible > summary { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: -3px; }
+/* Keep the offers navigation target focusable without framing all its content. */
+body .dashboard-shell.dashboard-shell-venue #venue-deal-contract-ledger:focus { outline: none; }
 
 
 @media (max-width: 620px) {
