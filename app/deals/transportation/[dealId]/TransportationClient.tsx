@@ -257,7 +257,6 @@ export default function TransportationClient({ deal, venue, shuttleAvailable, in
   return <main className={`club-transport-page${deal ? " is-free-entry" : ""}`}>
     <section className="club-transport-card" aria-labelledby="club-transport-heading">
       <Link className="club-transport-back" href={preview?.returnHref || `/venues/${encodeURIComponent(venue.slug)}`}>‹ {venue.name} details</Link>
-      {preview ? <aside className="club-transport-preview"><strong>Customer experience preview</strong><p>Explore the arrival options and forms. Passes, pickup requests and guest-list entries are disabled in preview.</p></aside> : null}
       <header className="club-entry-header">
         <div className="club-entry-brand">
           {venue.logoImageUrl && !logoFailed ? <img src={venue.logoImageUrl} alt="" width={48} height={48} onError={() => setLogoFailed(true)} /> : <EntryIcon kind="club" />}

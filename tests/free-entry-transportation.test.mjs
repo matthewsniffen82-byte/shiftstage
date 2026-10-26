@@ -138,7 +138,8 @@ test("multiple invalid fields retain individual feedback and only the edited fie
 test("private club previews expose arrival forms without creating passes, pickups or guest-list entries", async () => {
   const returnHref = '/?venue=test-club&venue_preview=1&venue_id=' + venue.id;
   const f = client({ preview: { returnHref } });
-  assert.match(f.html(), /Customer experience preview/);
+  const withoutBackDestination = html => html.replace(/(<a class="club-transport-back" href=")[^"]+/, '$1#');
+  assert.equal(withoutBackDestination(f.html()), withoutBackDestination(client().html()));
   assert.equal(nodes(f.render()).find(node => node.props.className === 'club-transport-back').props.href, returnHref);
   f.stored.set(key, JSON.stringify({ venueId: venue.id, passUrl: '/existing-pass' }));
   for (const arrival of ['self_drive', 'autonomous_cab', 'rideshare_taxi', 'club_shuttle']) {

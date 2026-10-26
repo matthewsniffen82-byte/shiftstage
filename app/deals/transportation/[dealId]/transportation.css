@@ -1,6 +1,4 @@
 /* Free-entry and pickup screens share the neutral site palette. */
-.club-transport-preview { margin: 12px 0; padding: 12px; border: 1px solid rgba(167,139,250,.4); border-radius: 12px; background: rgba(109,40,255,.1); }
-.club-transport-preview p { margin: 6px 0 0; font-size: 14px; line-height: 1.5; }
 .club-transport-page {
   --dancr-palette-surface: var(--dancr-color-surface-card);
   --dancr-palette-control: var(--dancr-color-control-secondary);
