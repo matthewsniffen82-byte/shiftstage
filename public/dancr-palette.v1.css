@@ -4,6 +4,28 @@
  * Semantic errors, confirmations, switches, and media controls keep their states. */
 @media screen {
 @layer dancr-palette {
+  /* Black artboards in uploaded club logos blend with the actual surface below
+     them. Blend the logo-only paint group, including isolated inner wrappers,
+     so the result follows card colors without changing logo sizing or assets. */
+  html body.dancr-button-system :where(
+    .home-venue-discovery-art:has(.home-venue-discovery-logo),
+    .venue-card-link > .venue-art:has(.venue-card-logo),
+    .venue-main-photo:has(.venue-detail-logo),
+    .venue-dashboard-logo, .venue-review-logo,
+    .ir-venue-logo, .venue-embed-logo
+  ) {
+    mix-blend-mode: lighten !important;
+  }
+  html body.dancr-button-system :where(
+    .home-venue-discovery-logo-shell, .venue-card-logo-shell,
+    .venue-detail-logo-shell, .venue-dashboard-logo, .venue-review-logo
+  ) {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
   html body.dancr-button-system {
     color-scheme: only dark !important;
     --bg: var(--dancr-color-background) !important;
