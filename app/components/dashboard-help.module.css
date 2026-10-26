@@ -1,67 +1,91 @@
-.launcher { display: inline-flex; align-items: center; justify-content: center; gap: 7px; flex: 0 0 auto; min-height: 40px; padding: 8px 14px; border: 1px solid var(--dancr-color-border); border-radius: 999px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font: inherit; font-weight: 700; cursor: pointer; }
-.launcher span { display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid currentColor; border-radius: 50%; font-size: 13px; }
-.dialog { box-sizing: border-box; position: fixed; inset: 0; width: min(560px, calc(100vw - 24px)); height: min(720px, calc(100dvh - 32px)); max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid var(--dancr-color-border); border-radius: 22px; background: var(--dancr-color-surface-card); color: var(--dancr-color-text-primary); font: 16px/1.5 system-ui, sans-serif; overflow: hidden; box-shadow: 0 22px 90px #000a; }
+.launcher { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto; min-height: 44px; padding: 8px 12px; border: 1px solid var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font: 600 14px/1.35 Inter, ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
+.launcher span { display: grid; place-items: center; width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 50%; font-size: 12px; }
+.dialog { box-sizing: border-box; position: fixed; inset: 0; width: min(520px, calc(100vw - 24px)); height: min(600px, calc(100dvh - 32px)); max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid var(--dancr-color-border); border-radius: 18px; background: var(--dancr-color-surface-card); color: var(--dancr-color-text-primary); font: 400 14px/1.45 Inter, ui-sans-serif, system-ui, sans-serif; overflow: hidden; overscroll-behavior: contain; box-shadow: var(--dancr-shadow-modal); }
 .dialog[open] { display: flex; flex-direction: column; }
-.dialog::backdrop { background: #000b; }
+.dialog::backdrop { background: var(--dancr-color-overlay); overscroll-behavior: none; }
 .dialog * { box-sizing: border-box; }
 .dialog h2, .dialog h3, .dialog p { margin: 0; }
-.dialog h2 { font-size: 23px; line-height: 1.3; }
-.dialog h3 { font-size: 20px; }
+.dialog h2 { font-size: 18px; font-weight: 650; line-height: 1.3; letter-spacing: -.02em; }
+.dialog h3 { font-size: 15px; font-weight: 650; line-height: 1.35; overflow-wrap: anywhere; }
 .dialog a { color: var(--dancr-color-text-primary); text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .dialog button, .dialog input, .dialog textarea { font: inherit; }
-.dialog button { min-height: 44px; padding: 9px 14px; border: 1px solid var(--dancr-color-border); border-radius: 12px; color: var(--dancr-color-text-primary); background: var(--dancr-color-control-secondary); cursor: pointer; }
+.dialog button { min-height: 44px; min-width: 0; padding: 8px 10px; border: 1px solid var(--dancr-color-border); border-radius: 12px; color: var(--dancr-color-text-primary); background: var(--dancr-color-control-secondary); font-size: 14px; font-weight: 600; line-height: 1.35; cursor: pointer; }
 .dialog button:disabled { opacity: 1; color: var(--dancr-color-text-muted); background: var(--dancr-color-control-secondary); cursor: default; }
-.dialog :is(button,a,input,textarea):focus-visible, .launcher:focus-visible { outline: 3px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
-.header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--dancr-color-border); flex-shrink: 0; }
-.eyebrow { color: var(--dancr-color-text-muted); font-size: 13px; }
+.dialog :is(button,a,input,textarea):focus-visible, .launcher:focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 2px; }
+.header { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--dancr-color-border); flex-shrink: 0; }
+.eyebrow { color: var(--dancr-color-text-muted); font-size: 12px; }
 .dialog .close { display: inline-grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; }
-.close svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; }
-.log { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 18px; }
-.message { max-width: 95%; margin: 0 0 14px; padding: 14px; border: 1px solid var(--dancr-color-border); border-radius: 16px 16px 16px 4px; background: var(--dancr-color-surface); overflow-wrap: anywhere; }
-.message strong { font-size: 13px; color: var(--dancr-color-text-muted); }
-.message p { margin-top: 5px; white-space: pre-wrap; }
-.message a { display: inline-block; margin-top: 10px; }
-.mine { margin-left: auto; border-radius: 16px 16px 4px 16px; background: var(--dancr-color-control-secondary); }
-.topics { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-.dialog .topics button { text-align: left; font-size: 14px; }
-.composer { flex-shrink: 0; padding: 14px 18px 6px; border-top: 1px solid var(--dancr-color-border); }
-.composer label, .handoff label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 700; }
-.inputRow { display: flex; gap: 8px; }
-.dialog input, .dialog textarea { min-width: 0; width: 100%; border: 1px solid var(--dancr-color-border); border-radius: 12px; padding: 11px 12px; background: var(--dancr-color-control-secondary); color: #fff; }
-.dialog textarea { resize: vertical; min-height: 120px; max-height: 300px; }
-.dialog :is(input, textarea)::placeholder { color: var(--dancr-color-text-muted); }
-.actions { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 18px 16px; flex-shrink: 0; }
-.actions button { flex: 1; font-size: 14px; }
-.handoff { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 18px; }
-.handoff p { margin: 12px 0; }
-.handoff h3 { margin-top: 16px; }
-.handoff small { display: block; color: var(--dancr-color-text-muted); margin: 4px 0 14px; }
-.handoff > a { display: inline-block; margin-top: 16px; }
-.dialog .primary { display: block; width: 100%; padding: 12px; border-radius: 12px; border: 1px solid var(--dancr-color-brand-primary); background: var(--dancr-color-brand-primary); color: #fff; text-align: center; text-decoration: none; }
-.error { color: #ffb9c6; }
-.tabs { display: flex; gap: 8px; padding: 10px 18px; border-bottom: 1px solid var(--dancr-color-border); flex-shrink: 0; }
+.close svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; }
+.tabs { display: flex; gap: 6px; padding: 6px 12px; border-bottom: 1px solid var(--dancr-color-border); flex-shrink: 0; }
 .tabs button { flex: 1; }
 .tabs button[aria-pressed="true"] { background: var(--dancr-color-brand-primary); border-color: var(--dancr-color-brand-primary); }
-.assistantPane, .messagesPane { min-height: 0; flex: 1; display: flex; flex-direction: column; }
+.assistantPane, .messagesPane { min-height: 0; min-width: 0; flex: 1; display: flex; flex-direction: column; }
 .assistantPane[hidden], .messagesPane[hidden] { display: none; }
-.messageTools { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+.log, .handoff { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px; }
+.log { flex: 1; }
+.dialog .intro { margin: 0 0 10px; color: var(--dancr-color-text-muted); }
+.message { max-width: 95%; margin: 0 0 8px; padding: 10px; border: 1px solid var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-surface); overflow-wrap: anywhere; }
+.message strong { font-size: 12px; font-weight: 600; color: var(--dancr-color-text-muted); }
+.message p { margin-top: 3px; white-space: pre-wrap; }
+.message a { display: inline-block; margin-top: 6px; }
+.mine { margin-left: auto; background: var(--dancr-color-control-secondary); }
+.topics { display: grid; gap: 6px; margin-top: 6px; }
+.dialog .topics button { width: 100%; text-align: left; }
+.composer { flex-shrink: 0; padding: 10px 12px 4px; border-top: 1px solid var(--dancr-color-border); }
+.composer label, .handoff label { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 600; }
+.inputRow { display: flex; gap: 6px; }
+.dialog input, .dialog textarea { min-width: 0; width: 100%; border: 1px solid var(--dancr-color-border); border-radius: 12px; padding: 8px 10px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font-size: 16px; line-height: 1.4; }
+.dialog input { min-height: 44px; }
+.dialog textarea { resize: vertical; min-height: 80px; max-height: 200px; }
+.dialog :is(input, textarea)::placeholder { color: var(--dancr-color-text-muted); }
+.actions { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 6px; padding: 6px 12px 10px; flex-shrink: 0; }
+.handoff p { margin: 6px 0; }
+.handoff h3 { margin-top: 10px; }
+.handoff small { display: block; color: var(--dancr-color-text-muted); font-size: 12px; margin: 3px 0 8px; }
+.dialog .primary { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--dancr-color-brand-primary); background: var(--dancr-color-brand-primary); color: var(--dancr-color-text-primary); font-size: 14px; font-weight: 600; line-height: 1.35; text-align: center; text-decoration: none; }
+.error { color: var(--dancr-color-danger); }
+.messageTools { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 6px; }
 .messageTools h3 { margin: 0; }
-.threadList { display: grid; gap: 8px; margin: 12px 0 20px; max-height: 200px; overflow-y: auto; }
+.threadList { display: grid; gap: 6px; margin: 8px 0 12px; max-height: 150px; overflow-y: auto; overscroll-behavior: contain; }
 .threadList button { display: grid; gap: 3px; text-align: left; overflow-wrap: anywhere; }
+.threadList strong { font-weight: 600; }
 .threadList small { margin: 0; }
-.threadHistory { max-height: 300px; overflow-y: auto; overscroll-behavior: contain; padding-top: 8px; margin-bottom: 12px; }
-.handoff .meta { color: var(--dancr-color-text-muted); font-size: 14px; margin: 6px 0 12px; }
-.handoff form label { margin-top: 12px; }
-.confirmation { padding: 12px; border: 1px solid #457c62; border-radius: 12px; background: #142a20; color: #b4f5cf; }
-/* Portaled help panels keep the shared palette above legacy button paint. */
+.threadHistory { max-height: 220px; overflow-y: auto; overscroll-behavior: contain; padding-top: 8px; margin-bottom: 8px; }
+.handoff .meta { color: var(--dancr-color-text-muted); font-size: 12px; margin: 4px 0 6px; }
+.handoff form label { margin-top: 8px; }
+.compactSendRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.compactSendRow small { margin: 0; }
+.compactSendRow p { flex-basis: 100%; margin: 0; }
+.compactSendRow .primary { min-width: 120px; margin-left: auto; }
+.handoff .confirmation { padding: 8px 10px; border: 1px solid var(--dancr-color-success-medium); border-radius: 12px; background: var(--dancr-color-success-soft); color: var(--dancr-color-success); }
+.compactShortcut { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px !important; }
+.compactShortcut .shortcutCopy { min-width: 0; display: grid; gap: 3px !important; }
+.compactShortcut .shortcutCopy :is(h2, p, small) { margin: 0 !important; }
+.compactShortcut .shortcutCopy h2 { font-size: 16px !important; font-weight: 650 !important; line-height: 1.3; }
+.compactShortcut .shortcutCopy p { color: var(--dancr-color-text-muted); font-size: 13px !important; line-height: 1.45; }
+.compactShortcut .shortcutCopy small { color: var(--dancr-color-text-muted); font-size: 12px; }
+.compactShortcut .launcher { white-space: nowrap; }
+
+/* Portaled panels share the dashboard type and flat controls. This layer
+   takes precedence over legacy button shapes, fonts and device paint rules. */
 @layer dancr-palette {
   :global(html body.dancr-button-system) .launcher,
-  :global(html body.dancr-button-system) .dialog button {
+  :global(html body.dancr-button-system) .dialog :is(button, .primary) {
+    min-height: 44px !important;
+    border-radius: 12px !important;
     color: var(--dancr-color-text-primary) !important;
     border-color: var(--dancr-color-border) !important;
     background: var(--dancr-color-control-secondary) !important;
     box-shadow: none !important;
     text-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
   }
   :global(html body.dancr-button-system) .dialog :is(input, textarea) {
     color: var(--dancr-color-text-primary) !important;
@@ -88,12 +112,10 @@
     outline: 2px solid var(--dancr-color-brand-primary) !important;
     outline-offset: 2px !important;
   }
-  /* A plain X with a full tap target, without the legacy circular face. */
   :global(html body.dancr-button-system) .dialog .close {
     color: var(--dancr-color-text-muted) !important;
     border: 0 !important;
     background: transparent !important;
-    outline: none !important;
   }
   :global(html body.dancr-button-system) .dialog .close::before,
   :global(html body.dancr-button-system) .dialog .close::after {
@@ -102,56 +124,21 @@
   }
   :global(html body.dancr-button-system) .dialog .close svg {
     display: block !important;
-    width: 22px !important;
-    height: 22px !important;
+    width: 20px !important;
+    height: 20px !important;
   }
   :global(html body.dancr-button-system) .dialog .close:is(:hover, :focus-visible) {
     color: var(--dancr-color-text-primary) !important;
-    outline: none !important;
-  }
-  :global(html body.dancr-button-system) .dialog .close:focus-visible svg {
-    stroke-width: 2.25 !important;
   }
 }
-@media (max-width: 380px) { .header, .composer, .handoff, .log { padding: 12px; } .actions { padding: 8px 12px 12px; } .dialog { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); } }
-
-/* Club and club-staff help uses a denser layout, including the portal dialog. */
-.compactShortcut { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px !important; }
-.compactShortcut .shortcutCopy { min-width: 0; display: grid; gap: 3px !important; }
-.compactShortcut .shortcutCopy :is(h2, p, small) { margin: 0 !important; }
-.compactShortcut .launcher { white-space: nowrap; }
-.dialog.compact { width: min(520px, calc(100vw - 24px)); height: min(600px, calc(100dvh - 32px)); border-radius: 16px; font-size: 14px; line-height: 1.45; }
-.compact .header { padding: 10px 14px; gap: 8px; }
-.compact h2 { font-size: 19px; }
-.compact h3 { font-size: 15px; }
-.compact .eyebrow { font-size: 12px; }
-.compact .tabs { padding: 6px 12px; gap: 6px; }
-.compact button { padding: 7px 10px; font-size: 13px; }
-.compact .close { padding: 0; }
-.compact .log, .compact .handoff { padding: 12px; }
-.compact .message { padding: 10px; margin-bottom: 8px; border-radius: 12px; }
-.compact .message strong { font-size: 12px; }
-.compact .message p { margin-top: 3px; }
-.compact .message a { margin-top: 6px; }
-.compact .topics { gap: 6px; margin-top: 6px; }
-.compact .topics button { font-size: 13px; }
-.compact .composer { padding: 10px 12px 4px; }
-.compact .actions { padding: 6px 12px 10px; gap: 6px; }
-.compact .actions button { font-size: 13px; }
-.compact input, .compact textarea { padding: 8px 10px; font-size: 16px; line-height: 1.4; }
-.compact textarea { min-height: 80px; max-height: 200px; }
-.compact .handoff p { margin: 6px 0; }
-.compact .handoff h3 { margin-top: 10px; }
-.compact .handoff small { font-size: 12px; margin: 3px 0 8px; }
-.compact .handoff label { margin-top: 8px; margin-bottom: 4px; font-size: 13px; }
-.compact .handoff .meta { margin: 4px 0 6px; font-size: 12px; }
-.compact .messageTools { gap: 8px; margin-bottom: 6px; }
-.compact .messageTools h3 { margin: 0; }
-.compact .threadList { gap: 6px; margin: 8px 0 12px; max-height: 150px; }
-.compact .threadList small { margin: 0; }
-.compact .threadHistory { max-height: 220px; margin-bottom: 8px; }
-.compact .compactSendRow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
-.compactSendRow small { margin: 0 !important; }
-.compact .compactSendRow .primary { width: auto; min-width: 120px; padding: 8px 12px; }
-.compact .confirmation { padding: 8px 10px; border-radius: 10px; }
-@media (max-width: 340px) { .compactShortcut { grid-template-columns: minmax(0, 1fr); } .compactShortcut .launcher { justify-self: start; } }
+@media (max-width: 340px) {
+  .compactShortcut { grid-template-columns: minmax(0, 1fr); }
+  .compactShortcut .launcher { justify-self: start; }
+}
+/* Keep all content reachable inside help when a keyboard or landscape viewport
+   leaves too little height for the usual pinned composer. */
+@media (max-height: 520px) {
+  .dialog { height: calc(100dvh - 16px); max-height: calc(100dvh - 16px); }
+  .assistantPane { overflow-y: auto; overscroll-behavior: contain; }
+  .log { flex: none; overflow: visible; }
+}

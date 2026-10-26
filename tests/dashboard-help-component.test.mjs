@@ -6,6 +6,7 @@ import test from 'node:test';
 import ts from 'typescript';
 import * as knowledge from '../src/lib/dancr/dashboard-help.ts';
 import * as support from '../app/components/dashboard-help-support.ts';
+import { lockHelpPageScroll } from '../app/components/dashboard-help-scroll.ts';
 
 const require = createRequire(import.meta.url);
 const compile = file => ts.transpileModule(readFileSync(new URL(`../app/components/${file}.tsx`, import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX } }).outputText;
@@ -20,6 +21,26 @@ const find = (node, predicate) => {
 const plainText = node => typeof node === 'string' ? node : !node || typeof node !== 'object' || node.props?.hidden ? '' : [node.props?.children].flat(Infinity).map(plainText).join(' ');
 const thread = (id = 'receipt-one', body = 'Reviewed details only') => ({ id, subject: 'Existing conversation', status: 'open', lastMessageAt: '2026-10-25T12:00:00Z', messages: [{ id: 'm-one', body, senderRole: 'customer', createdAt: '2026-10-25T12:00:00Z' }] });
 
+function styleDeclaration() {
+  const properties = new Map();
+  return {
+    getPropertyValue: name => properties.get(name)?.value || '',
+    getPropertyPriority: name => properties.get(name)?.priority || '',
+    setProperty: (name, value, priority = '') => properties.set(name, { value, priority }),
+    removeProperty: name => properties.delete(name),
+  };
+}
+
+function scrollPage() {
+  const document = { body: { style: styleDeclaration() }, documentElement: { style: styleDeclaration(), clientWidth: 390 } };
+  const window = {
+    scrollX: 0, scrollY: 840, innerWidth: 390,
+    getComputedStyle: () => ({ paddingRight: '8px' }),
+    scrollTo({ left, top, behavior }) { this.scrollX = left; this.scrollY = top; this.lastScrollBehavior = behavior; },
+  };
+  return { document, window };
+}
+
 function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
   let active, draft = '', revision = 0;
   let session = { accessToken: 'example-token', account: { id: 'account-one', role: knowledge.helpSupportRole(role) || 'admin' } };
@@ -32,7 +53,9 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
     useCallback(fn, deps) { const instance = active, slot = instance.index++, previous = instance.slots[slot]; if (!previous || deps.some((value, index) => value !== previous.deps[index])) instance.slots[slot] = { deps, fn }; return instance.slots[slot].fn; },
     useEffect(effect, deps) { const instance = active, slot = instance.index++, previous = instance.slots[slot]; if (!previous || deps.some((value, index) => value !== previous.deps[index])) { instance.effects.push(() => { previous?.cleanup?.(); instance.slots[slot] = { deps, cleanup: effect() }; }); } },
   };
+  const page = scrollPage();
   const window = {
+    ...page.window,
     location: { hash, pathname: '/dashboard/venue', search: '?help=support' },
     history: {
       state: { dashboard: 'preserved' },
@@ -49,7 +72,7 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
   const events = { OPEN_DASHBOARD_HELP: 'dancr:open-dashboard-help', DASHBOARD_HELP_UPDATED: 'dancr:dashboard-help-updated', openDashboardHelp: (accountId, view = 'messages') => window.dispatchEvent(new CustomEvent('dancr:open-dashboard-help', { detail: { accountId, view } })) };
   const messageExports = {}, exports = {};
   const context = {
-    AbortController, crypto, Error, CustomEvent, HTMLElement: class {}, document: { body: {} }, window,
+    AbortController, crypto, Error, CustomEvent, HTMLElement: class {}, document: page.document, window,
     require(name) {
       if (name === 'react') return hooks;
       if (name === 'react-dom') return { createPortal: node => node };
@@ -57,6 +80,7 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
       if (name.endsWith('/dashboard-help')) return knowledge;
       if (name === './dashboard-help-support') return support;
       if (name === './dashboard-help-events') return events;
+      if (name === './dashboard-help-scroll') return { lockHelpPageScroll: () => lockHelpPageScroll(page.document, window) };
       if (name === './DashboardHelpMessages') return messageExports;
       if (name.endsWith('/dashboard-session')) return { readSession: () => session, requestDashboardJson: async (...args) => { calls.push(args); return respond(...args); } };
       if (name.endsWith('.css')) return { default: new Proxy({}, { get: (_, name) => name }) };
@@ -83,7 +107,7 @@ function fixture(role = 'customer', { messages = false, hash = '' } = {}) {
   const render = () => { view.render(); return view.render(); };
   const button = label => find(render(), node => node.type === 'button' && plainText(node) === label);
   return {
-    calls, render, button, text: () => plainText(render()),
+    calls, render, button, document: page.document, window, text: () => plainText(render()),
     posts: () => calls.filter(([, options]) => options.method === 'POST'),
     ask(question) { find(render(), node => node.type === 'input').props.onChange({ target: { value: question } }); find(render(), node => node.type === 'form').props.onSubmit({ preventDefault() {} }); },
     handoff() { button('Message the MyDancr Team').props.onClick(); },
@@ -211,10 +235,10 @@ test('switching conversations preserves reply drafts and uncertain-send retry ke
   find(f.render(), node => node.type === 'button' && node.key === 'first').props.onClick();
   f.draft('First reply'); f.respond(async () => { throw new Error('Connection lost'); }); await f.submit();
   const requestId = JSON.parse(f.posts()[0][1].body).requestId;
-  f.button('‹ All conversations / new message').props.onClick();
+  f.button('‹ Conversations / new message').props.onClick();
   find(f.render(), node => node.type === 'button' && node.key === 'second').props.onClick();
   f.draft('Second reply'); f.respond(async () => ({ thread: second })); await f.submit();
-  f.button('‹ All conversations / new message').props.onClick();
+  f.button('‹ Conversations / new message').props.onClick();
   find(f.render(), node => node.type === 'button' && node.key === 'first').props.onClick();
   assert.equal(find(f.render(), node => node.type === 'textarea').props.value, 'First reply');
   f.respond(async () => ({ thread: first })); await f.submit();
@@ -253,4 +277,84 @@ test('shared internal links offer dashboard help only to signed-in club or admin
     const f = fixture(role); assert.equal(f.internalHelp()?.props.role || null, expected); f.unmount();
   }
   const f = fixture('staff'); f.signOut(); assert.equal(f.internalHelp(), null); f.unmount();
+});
+
+for (const role of Object.keys(knowledge.HELP_ROLE_LABELS)) {
+  test(`${role} uses shared help styling and releases the page scroll lock on unmount`, () => {
+    const f = fixture(role);
+    const dialog = f.render();
+    assert.equal(dialog.props.className, 'dialog');
+    assert.match(f.text().replace(/\s+/g, ' '), new RegExp(`Quick answers about your ${knowledge.HELP_ROLE_LABELS[role].toLowerCase()} dashboard`));
+    assert.equal(f.document.body.style.getPropertyValue('position'), 'fixed');
+    assert.equal(f.document.body.style.getPropertyValue('top'), '-840px');
+    assert.equal(f.document.documentElement.style.getPropertyValue('overflow'), 'hidden');
+    f.window.scrollY = 0;
+    f.unmount();
+    assert.equal(f.document.body.style.getPropertyValue('position'), '');
+    assert.equal(f.document.documentElement.style.getPropertyValue('overflow'), '');
+    assert.equal(f.window.scrollY, 840);
+  });
+
+  test(`${role} uses the compact message composer`, () => {
+    const f = fixture(role, { messages: true });
+    assert.equal(find(f.render(), node => node.type === 'textarea').props.rows, 3);
+    assert.ok(find(f.render(), node => node.props?.className === 'compactSendRow'));
+    assert.match(f.text(), /Your message/);
+    f.unmount();
+  });
+}
+
+test('Escape dismisses help through the same close handler', () => {
+  const f = fixture('venue');
+  let prevented = false;
+  f.render().props.onCancel({ preventDefault() { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(f.closed(), true);
+  f.unmount();
+  assert.equal(f.document.body.style.getPropertyValue('position'), '');
+});
+
+test('scroll lock preserves existing styles, priorities, scroll offset and unrelated edits', () => {
+  const { document, window } = scrollPage();
+  const root = document.documentElement.style, body = document.body.style;
+  root.setProperty('overflow', 'auto', 'important');
+  body.setProperty('position', 'relative');
+  body.setProperty('padding-right', '8px', 'important');
+  window.innerWidth = 405;
+  window.scrollX = 12;
+  const unlock = lockHelpPageScroll(document, window);
+  assert.equal(root.getPropertyPriority('overflow'), 'important');
+  assert.equal(body.getPropertyValue('left'), '-12px');
+  assert.equal(body.getPropertyValue('padding-right'), 'calc(8px + 15px)');
+  body.setProperty('color', 'red');
+  window.scrollY = 0;
+  unlock();
+  assert.equal(root.getPropertyValue('overflow'), 'auto');
+  assert.equal(root.getPropertyPriority('overflow'), 'important');
+  assert.equal(body.getPropertyValue('position'), 'relative');
+  assert.equal(body.getPropertyPriority('position'), '');
+  assert.equal(body.getPropertyValue('padding-right'), '8px');
+  assert.equal(body.getPropertyPriority('padding-right'), 'important');
+  assert.equal(body.getPropertyValue('color'), 'red');
+  assert.equal(window.scrollX, 12);
+  assert.equal(window.scrollY, 840);
+  assert.equal(window.lastScrollBehavior, 'instant');
+  window.scrollY = 900;
+  unlock();
+  assert.equal(window.scrollY, 900, 'repeated cleanup must not jump the page again');
+});
+
+test('mobile scroll lock leaves padding alone and survives an effect cleanup/reopen cycle', () => {
+  const { document, window } = scrollPage();
+  const body = document.body.style;
+  body.setProperty('padding-right', '8px');
+  const first = lockHelpPageScroll(document, window);
+  assert.equal(body.getPropertyValue('padding-right'), '8px');
+  first();
+  const second = lockHelpPageScroll(document, window);
+  assert.equal(body.getPropertyValue('top'), '-840px');
+  second();
+  assert.equal(body.getPropertyValue('top'), '');
+  assert.equal(body.getPropertyValue('position'), '');
+  assert.equal(window.scrollY, 840);
 });
