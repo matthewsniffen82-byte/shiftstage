@@ -56,8 +56,8 @@ export default function VenueDancerApprovalPanel({ venueId, active, refreshKey }
   }
 
   return <section className="club-join-requests" aria-labelledby="club-join-title" aria-busy={loading || Boolean(busy)}>
-    <header><h2 id="club-join-title">Dancer approval requests</h2><button type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }}>Refresh</button></header>
-    <p>Review the dancer’s profile and media together. Approval completes their saved check-in using media already approved by MyDancr that your club accepts. Rejected media stays hidden here. New media needs your approval, then MyDancr’s final approval.</p>
+    <header><h2 id="club-join-title">Dancer approvals</h2><button type="button" disabled={loading || Boolean(busy)} onClick={() => { setError(""); setRefresh(value => value + 1); }}>Refresh</button></header>
+    <p>Review each dancer’s profile and media. Approval completes eligible saved check-ins.</p>
     {message ? <p role="status">{message}</p> : null}
     {error ? <p role="alert">{error}</p> : null}
     {loading ? <p role="status">Loading requests…</p> : !requests.length && !error ? <p>No requests on this page.</p> : null}

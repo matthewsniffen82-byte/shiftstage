@@ -156,7 +156,7 @@ export default function VenueMediaReviewPanel({ venueId, active, refreshKey, onC
   const sectionId = reviewDancer ? "venue-join-media" : "venue-media-reviews";
   return <section className="venue-media-review" id={sectionId} aria-labelledby={`${sectionId}-title`} aria-busy={busy || loading}>
     <header><div><h2 id={`${sectionId}-title`} ref={heading} tabIndex={-1}>{selectedDancer ? `${selectedDancer.stageName} · Club media` : "Media approvals"}{count !== null ? ` · ${selectedDancer ? uploadCount : count}` : ""}</h2>
-      <p>Your approval sends media to MyDancr for final review.</p></div>
+      <p>New media needs your approval, then MyDancr’s.</p></div>
       <RefreshButton label="Refresh media approvals" busy={loading} type="button" disabled={busy || loading} onClick={() => { setMessage(""); setRevision(n => n + 1); }} /></header>
     {!reviewDancer ? <div className="venue-media-controls">
       <label>Show <select value={showAll ? "all" : "pending"} disabled={busy} onChange={event => { setShowAll(event.target.value === "all"); openDancer(null); }}><option value="pending">Waiting for your club</option><option value="all">All media and decisions</option></select></label>
