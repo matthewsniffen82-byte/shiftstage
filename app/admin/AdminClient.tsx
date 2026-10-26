@@ -180,6 +180,7 @@ function adminSectionsForWorkspace(workspace: AdminWorkspace): AdminDataSection[
 
 export default function AdminClient() {
   const [access, setAccess] = useState<WorkspaceAccess | null>(null);
+  const [helpOpened, setHelpOpened] = useState(false);
   const scrollPositions = useRef<Partial<Record<AdminWorkspace, number>>>({});
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
@@ -423,23 +424,6 @@ export default function AdminClient() {
       else document.querySelector(".admin-workspace-nav")?.scrollIntoView({ block: "start", behavior: "smooth" });
     });
   }
-
-  function openMessages() {
-    if (access?.role !== "owner" && access?.role !== "support") return;
-    const inbox = document.getElementById("admin-support");
-    if (access.role === "owner" && (workspace !== "more" || !inbox)) openWorkspace("more", "admin-support");
-    else { inbox?.focus({ preventScroll: true }); inbox?.scrollIntoView({ block: "start", behavior: "smooth" }); }
-  }
-
-  // Internal staff pages link directly to the admin inbox without exposing it
-  // to reviewers or billing staff who do not have support access.
-  const messageLinkHandled = useRef<string | null>(null);
-  useEffect(() => {
-    if (isLoading || !access || messageLinkHandled.current === access.userId || window.location.hash !== "#admin-support") return;
-    if (access.role !== "owner" && access.role !== "support") return;
-    messageLinkHandled.current = access.userId;
-    openMessages();
-  });
 
   async function openClubDealRequest(request: ClubDealRequest) {
     const identity = readBrowserAccountIdentity();
@@ -859,7 +843,10 @@ export default function AdminClient() {
             label="Back to MyDancr"
           />
           {!isLoading && !needsSignIn && access && <DashboardHelp key={access.userId} role={access.role === "owner" ? "admin" : access.role} accountId={access.userId}
-            onMessages={access.role === "owner" || access.role === "support" ? openMessages : undefined} />}
+            onOpenChange={setHelpOpened}
+            renderMessages={access.role === "owner" || access.role === "support" ? active => <AdminSupportInbox
+              threads={state.supportThreads || []} accountId={access.userId} visible={active}
+              onThreadsChange={supportThreads => setState(current => ({ ...current, supportThreads }))} /> : undefined} />}
         </div>
         <div className="dashboard-identity-row">
           <div className="dashboard-identity-avatar"><span className="admin-dashboard-identity" aria-hidden="true"><AdminDashboardIcon section="shield" /></span></div>
@@ -969,7 +956,7 @@ export default function AdminClient() {
           </div>}
           {access?.role === "reviewer" && <AdminMediaWorkbench venueId={requestedClubId} userId={access.userId} onSaved={confirmAdminAction} />}
           {access?.role === "support" && <AdminInboxArchive supportOnly />}
-          {access?.role === "support" && <section id="admin-support" tabIndex={-1} aria-label="Messages"><AdminSupportInbox threads={state.supportThreads || []} accountId={access.userId} onThreadsChange={supportThreads => setState(current => ({ ...current, supportThreads }))} /></section>}
+          {access?.role === "support" && <section id="admin-support" tabIndex={-1} aria-label="Messages"><AdminSupportInbox threads={state.supportThreads || []} accountId={access.userId} visible={!helpOpened} onThreadsChange={supportThreads => setState(current => ({ ...current, supportThreads }))} /></section>}
           {access?.role === "billing" && <AdminVenueSubscriptions venues={access.venues.filter(venue => !requestedClubId || venue.id === requestedClubId)} />}
           {access?.role === "owner" && <>
           <nav className="admin-workspace-nav" aria-label="Admin workspaces">
@@ -1155,7 +1142,7 @@ export default function AdminClient() {
                   <AdminSupportInbox
                     threads={state.supportThreads || []}
                     accountId={access.userId}
-                    visible={workspace === "more"}
+                    visible={workspace === "more" && !helpOpened}
                     onThreadsChange={(supportThreads) => setState((current) => ({ ...current, supportThreads }))}
                   />
                 </Panel>
@@ -2325,6 +2312,8 @@ function AdminSupportInbox({
   visible?: boolean;
 }) {
   const messageContainer = useRef<HTMLDivElement>(null);
+  const visibleRef = useRef(visible);
+  useEffect(() => { visibleRef.current = visible; }, [visible]);
   const [replyByThread, setReplyByThread] = useState<Record<string, string>>({});
   const [statusByThread, setStatusByThread] = useState<Record<string, string>>({});
   const pendingReplyAttempt = useRef<{ key: string; id?: string } | null>(null);
@@ -2356,7 +2345,7 @@ function AdminSupportInbox({
   }, []);
 
   async function refreshMessages(more = false) {
-    if (readAbortRef.current || actionInFlightRef.current || document.visibilityState !== "visible") return;
+    if (!visibleRef.current || readAbortRef.current || actionInFlightRef.current || document.visibilityState !== "visible") return;
     const controller = new AbortController(); readAbortRef.current = controller;
     const page = more ? pageRef.current + 1 : 0;
     setIsRefreshing(true);
@@ -2381,13 +2370,17 @@ function AdminSupportInbox({
   }
 
   useEffect(() => {
+    if (!visible) { setIsRefreshing(false); return; }
     const load = () => void refreshMessages();
     load();
     const interval = window.setInterval(load, 60_000);
     document.addEventListener("visibilitychange", load);
     window.addEventListener(ADMIN_DATA_CHANGED, load);
-    return () => { window.clearInterval(interval); document.removeEventListener("visibilitychange", load); window.removeEventListener(ADMIN_DATA_CHANGED, load); };
-  }, []);
+    return () => {
+      window.clearInterval(interval); document.removeEventListener("visibilitychange", load); window.removeEventListener(ADMIN_DATA_CHANGED, load);
+      readAbortRef.current?.abort(); readAbortRef.current = null;
+    };
+  }, [visible]);
 
   function beginSupportAction() {
     if (!mountedRef.current || actionInFlightRef.current) return null;

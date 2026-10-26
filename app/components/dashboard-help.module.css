@@ -1,6 +1,4 @@
 .launcher { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: 0 0 auto; min-height: 44px; padding: 8px 12px; border: 1px solid var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-control-secondary); color: var(--dancr-color-text-primary); font: 600 14px/1.35 Inter, ui-sans-serif, system-ui, sans-serif; cursor: pointer; }
-.headerActions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
-.helpIcon { display: grid; place-items: center; width: 18px; height: 18px; border: 1px solid currentColor; border-radius: 50%; font-size: 12px; }
 .messageIcon { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .unreadBadge { display: inline-grid; place-items: center; min-width: 22px; min-height: 22px; padding: 2px 5px; border-radius: 999px; background: var(--dancr-color-brand-primary); color: #fff; font-size: 12px; line-height: 1; }
 .dialog { box-sizing: border-box; position: fixed; inset: 0; width: min(520px, calc(100vw - 24px)); height: min(600px, calc(100dvh - 32px)); max-width: calc(100vw - 24px); max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid var(--dancr-color-border); border-radius: 18px; background: var(--dancr-color-surface-card); color: var(--dancr-color-text-primary); font: 400 14px/1.45 Inter, ui-sans-serif, system-ui, sans-serif; overflow: hidden; overscroll-behavior: contain; box-shadow: var(--dancr-shadow-modal); }
@@ -24,6 +22,10 @@
 .tabs button[aria-pressed="true"] { background: var(--dancr-color-brand-primary); border-color: var(--dancr-color-brand-primary); }
 .assistantPane, .messagesPane { min-height: 0; min-width: 0; flex: 1; display: flex; flex-direction: column; }
 .assistantPane[hidden], .messagesPane[hidden] { display: none; }
+.adminMessages { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 10px; }
+.adminMessages :global(.support-inbox-list), .adminMessages :global(.support-inbox-thread), .adminMessages :global(.support-inbox-messages) { gap: 8px; }
+.adminMessages :global(.support-inbox-thread) { padding: 10px; }
+.adminMessages input[type="checkbox"] { width: 20px; height: 20px; min-height: 20px; flex: 0 0 20px; }
 .log, .handoff { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 10px; }
 .log { flex: 1; }
 .dialog .intro { margin: 0 0 8px; color: var(--dancr-color-text-muted); }

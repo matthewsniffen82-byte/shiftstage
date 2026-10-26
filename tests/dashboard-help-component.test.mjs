@@ -41,8 +41,9 @@ function scrollPage() {
   return { document, window };
 }
 
-function fixture(role = 'customer', { messages = false, hash = '', onMessages } = {}) {
+function fixture(role = 'customer', { messages = false, hash = '', startInMessages = false, renderMessages, onOpenChange } = {}) {
   let active, draft = '', revision = 0;
+  const renderInbox = renderMessages || (['admin', 'support'].includes(role) ? active => ({ type: 'AdminInbox', props: { active } }) : undefined);
   let session = { accessToken: 'example-token', account: { id: 'account-one', role: knowledge.helpSupportRole(role) || 'admin' } };
   const calls = [], listeners = new Map(), mounted = [];
   let respond = async (_url, options) => options.method === 'GET' ? { threads: [] } : { thread: thread() };
@@ -106,7 +107,7 @@ function fixture(role = 'customer', { messages = false, hash = '', onMessages } 
     const instance = { slots: [], index: 0, effects: [] }; mounted.push(instance);
     return { render() { const currentProps = typeof props === 'function' ? props() : props; active = instance; instance.index = 0; instance.effects = []; const tree = component(currentProps); attachConversationRef(tree); for (const effect of instance.effects) effect(); return tree; } };
   }
-  let parent = mount(exports.default, { role, accountId: 'account-one', onMessages });
+  let parent = mount(exports.default, { role, accountId: 'account-one', renderMessages: renderInbox, onOpenChange });
   const internal = mount(exports.InternalDashboardHelp, {});
   const accountLink = mount(exports.DashboardHelpShortcut, { panelId: 'customer-support', conversationCount: 1 });
   let view;
@@ -117,12 +118,13 @@ function fixture(role = 'customer', { messages = false, hash = '', onMessages } 
     const child = find(parent.render(), node => typeof node.type === 'function');
     view = mount(child.type, () => find(parent.render(), node => typeof node.type === 'function')?.props || child.props);
   }
+  if (!messages && !hash && !startInMessages) find(view.render(), node => node.type === 'button' && plainText(node) === 'Quick Help').props.onClick();
   const render = () => { view.render(); return view.render(); };
   const button = label => find(render(), node => node.type === 'button' && plainText(node).replace(/\s+/g, ' ').trim() === label);
   return {
     calls, render, button, document: page.document, window, text: () => plainText(render()),
     header: () => parent.render(),
-    headerMessages: () => find(parent.render(), node => node.type === 'button' && node.props['aria-label']?.startsWith('Messages')),
+    headerMessages: () => find(parent.render(), node => node.type === 'button' && node.props['aria-label']?.startsWith('Help & Messages')),
     posts: () => calls.filter(([, options]) => options.method === 'POST'),
     ask(question) { find(render(), node => node.type === 'input').props.onChange({ target: { value: question } }); find(render(), node => node.type === 'form').props.onSubmit({ preventDefault() {} }); },
     handoff() { button('Message the MyDancr Team').props.onClick(); },
@@ -140,7 +142,7 @@ function fixture(role = 'customer', { messages = false, hash = '', onMessages } 
     location: window.location, history: window.history,
     remountHelp() {
       for (const instance of mounted) for (const slot of instance.slots) slot?.cleanup?.();
-      parent = mount(exports.default, { role, accountId: 'account-one' });
+      parent = mount(exports.default, { role, accountId: 'account-one', renderMessages: renderInbox, onOpenChange });
       parent.render(); parent.render();
     },
     messagesProps: () => find(render(), node => node.type === messageExports.default)?.props,
@@ -148,26 +150,32 @@ function fixture(role = 'customer', { messages = false, hash = '', onMessages } 
   };
 }
 
-test('every account dashboard has a separate accessible Messages shortcut that opens messages directly', () => {
-  for (const role of ['customer', 'dancer', 'venue', 'vip', 'staff', 'reviewer', 'billing']) {
-    const f = fixture(role);
-    assert.match(f.headerMessages().props['aria-label'], knowledge.helpSupportRole(role) ? /Messages, 2 unread/ : /^Messages$/);
+test('every dashboard has one combined launcher with Messages selected first and Quick Help inside', () => {
+  for (const role of ['customer', 'dancer', 'venue', 'vip', 'staff', 'reviewer', 'billing', 'admin', 'support']) {
+    const f = fixture(role, { startInMessages: true });
+    const hasUnread = knowledge.helpSupportRole(role) || ['admin', 'support'].includes(role);
+    assert.match(f.headerMessages().props['aria-label'], hasUnread ? /Help & Messages, 2 unread/ : /^Help & Messages$/);
     assert.equal(f.headerMessages().props['aria-haspopup'], 'dialog');
-    assert.ok(find(f.header(), node => node.type === 'button' && plainText(node).includes('Help')));
-    f.headerMessages().props.onClick();
+    assert.equal([f.header().props.children].flat().filter(node => node?.type === 'button').length, 1);
     assert.equal(f.button('Messages').props['aria-pressed'], true);
-    assert.equal(f.messagesProps().active, true);
-    f.button('Ask assistant').props.onClick(); assert.equal(f.messagesProps(), undefined);
+    f.button('Quick Help').props.onClick(); assert.equal(f.button('Quick Help').props['aria-pressed'], true);
+    f.headerMessages().props.onClick(); assert.equal(f.button('Messages').props['aria-pressed'], true);
     f.unmount();
   }
 });
 
-test('site admin and support shortcuts use the supplied inbox action instead of the help dialog', () => {
+test('admin and support share the panel with their inbox; hidden messages pause reading and the panel releases its state', () => {
   for (const role of ['admin', 'support']) {
-    let opened = 0; const f = fixture(role, { onMessages: () => opened++ });
-    f.headerMessages().props.onClick();
-    assert.equal(opened, 1); assert.equal(f.headerMessages().props['aria-haspopup'], undefined);
-    assert.equal(f.button('Ask assistant').props['aria-pressed'], true); f.unmount();
+    const opened = [];
+    const f = fixture(role, { startInMessages: true, onOpenChange: value => opened.push(value) });
+    assert.equal(find(f.render(), node => node.type === 'AdminInbox').props.active, true);
+    assert.equal(f.messagesProps(), undefined, 'admin inbox does not use the customer or email form');
+    f.button('Quick Help').props.onClick();
+    assert.equal(find(f.render(), node => node.type === 'AdminInbox'), null);
+    f.button('Open messages').props.onClick();
+    assert.equal(find(f.render(), node => node.type === 'AdminInbox').props.active, true);
+    f.close(); assert.equal(f.closed(), true); assert.equal(opened.at(-1), false);
+    f.unmount();
   }
 });
 
@@ -176,7 +184,7 @@ test('local answers do not call a service and the assistant stays available besi
   assert.match(f.text(), /position the part of the photo/);
   f.ask('Will it rain tomorrow?'); assert.match(f.text(), /don’t have a reliable answer/);
   f.handoff(); assert.match(f.messagesProps().draft, /Will it rain tomorrow/);
-  f.button('Ask assistant').props.onClick(); assert.match(f.text(), /Will it rain tomorrow/);
+  f.button('Quick Help').props.onClick(); assert.match(f.text(), /Will it rain tomorrow/);
   assert.equal(f.calls.length, 0); f.unmount();
 });
 
@@ -201,7 +209,7 @@ test('account shortcut and old support links open Messages in the same dialog', 
   for (const role of ['customer', 'dancer', 'venue', 'vip', 'staff']) {
     const f = fixture(role); f.render(); f.clickAccountLink();
     assert.equal(f.button('Messages').props['aria-pressed'], true);
-    f.button('Ask assistant').props.onClick();
+    f.button('Quick Help').props.onClick();
     f.deepLink(`#${knowledge.helpSupportRole(role)}-support`);
     assert.equal(f.button('Messages').props['aria-pressed'], true);
     assert.ok(f.messagesProps()); f.unmount();
@@ -215,7 +223,7 @@ test('opening an old support URL starts in Messages without a second click', () 
 });
 
 test('closing linked support prevents approval refreshes from reopening it', () => {
-  for (const [role, hash] of [['venue', '#venue-support'], ['venue', '#venue-support-section'], ['staff', '#venue-support'], ['dancer', '#dancer-support'], ['customer', '#customer-support'], ['vip', '#vip-support']]) {
+  for (const [role, hash] of [['venue', '#venue-support'], ['venue', '#venue-support-section'], ['staff', '#venue-support'], ['dancer', '#dancer-support'], ['customer', '#customer-support'], ['vip', '#vip-support'], ['admin', '#admin-support'], ['support', '#admin-support']]) {
     const f = fixture(role, { hash });
     assert.equal(f.button('Messages').props['aria-pressed'], true);
     f.close();
@@ -242,7 +250,7 @@ test('closing help preserves an unrelated dashboard section', () => {
 });
 test('cross-account open requests are ignored and switching accounts closes help', () => {
   const f = fixture(); f.render(); f.shortcut('someone-else');
-  assert.equal(f.button('Ask assistant').props['aria-pressed'], true);
+  assert.equal(f.button('Quick Help').props['aria-pressed'], true);
   f.switchAccount(); assert.equal(f.closed(), true); f.unmount();
 });
 test('prior conversations and team replies load and stay in the panel', async () => {

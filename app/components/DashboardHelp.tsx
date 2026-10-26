@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { HELP_ROLE_LABELS, helpSupportRole, helpTopicsFor, matchHelpQuestion, type HelpRole } from "../../src/lib/dancr/dashboard-help";
 import { readSession } from "../dashboard/dashboard-session";
@@ -14,7 +14,7 @@ type Entry = { who: "you" | "help"; text: string; href?: string; topics?: Return
 
 function isSupportHash(role: HelpRole, hash: string) {
   const prefix = helpSupportRole(role);
-  return Boolean((prefix && [`#${prefix}-support`, `#${prefix}-support-section`].includes(hash)) || (role === "vip" && hash === "#vip-support"));
+  return Boolean((prefix && [`#${prefix}-support`, `#${prefix}-support-section`].includes(hash)) || (role === "vip" && hash === "#vip-support") || ((role === "admin" || role === "support") && hash === "#admin-support"));
 }
 
 export function DashboardHelpShortcut({ panelId, conversationCount = 0, onCountChange }: { panelId?: string; conversationCount?: number; onCountChange?: (count: number) => void }) {
@@ -30,7 +30,7 @@ export function DashboardHelpShortcut({ panelId, conversationCount = 0, onCountC
     return () => window.removeEventListener(DASHBOARD_HELP_UPDATED, updated);
   }, []);
   return <article className={`info-panel support-panel ${styles.compactShortcut}`} id={panelId} tabIndex={panelId ? -1 : undefined}>
-    <div className={styles.shortcutCopy}><h2>Help &amp; support</h2><p>Quick answers &amp; team messages.</p>{count > 0 && <small>{count} {count === 1 ? "conversation" : "conversations"}</small>}</div>
+    <div className={styles.shortcutCopy}><h2>Help &amp; Messages</h2><p>Quick answers &amp; team messages.</p>{count > 0 && <small>{count} {count === 1 ? "conversation" : "conversations"}</small>}</div>
     <button type="button" className={styles.launcher} aria-haspopup="dialog" onClick={() => openDashboardHelp(readSession()?.account?.id || "")}>Open support</button>
   </article>;
 }
@@ -51,14 +51,20 @@ export function InternalDashboardHelp() {
   return account ? <DashboardHelp key={account.id} role={account.role === "admin" ? "admin" : "staff"} accountId={account.id} /> : null;
 }
 
-export default function DashboardHelp({ role, accountId, onMessages }: { role: HelpRole; accountId?: string | null; onMessages?: () => void }) {
+export default function DashboardHelp({ role, accountId, renderMessages, onOpenChange }: {
+  role: HelpRole; accountId?: string | null; renderMessages?: (active: boolean) => ReactNode; onOpenChange?: (opened: boolean) => void;
+}) {
   const [opened, setOpened] = useState(false);
   const [identity, setIdentity] = useState("");
-  const [initialView, setInitialView] = useState<HelpView>("assistant");
+  const [initialView, setInitialView] = useState<HelpView>("messages");
   const [openRevision, setOpenRevision] = useState(0);
   const launcher = useRef<HTMLButtonElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   const unreadCount = useSupportUnreadCount(accountId, Boolean(helpSupportRole(role) || role === "admin" || role === "support"));
+  useEffect(() => {
+    onOpenChange?.(opened);
+    return () => onOpenChange?.(false);
+  }, [opened, onOpenChange]);
   useEffect(() => {
     const open = (view: HelpView) => {
       const session = readSession();
@@ -96,26 +102,22 @@ export default function DashboardHelp({ role, accountId, onMessages }: { role: H
     (opener.current || launcher.current)?.focus({ preventScroll: true });
   }
   return <>
-    <div className={styles.headerActions} role="group" aria-label="Messages and help">
-    <button className={styles.launcher} type="button" aria-haspopup={onMessages || role === "admin" ? undefined : "dialog"}
-      aria-label={unreadCount ? `Messages, ${unreadCount} unread` : "Messages"}
+    <button ref={launcher} className={styles.launcher} type="button" aria-haspopup={role === "admin" && !renderMessages ? undefined : "dialog"}
+      aria-label={unreadCount ? `Help & Messages, ${unreadCount} unread` : "Help & Messages"}
       onClick={() => {
-        if (onMessages) onMessages();
-        else if (role === "admin") window.location.assign("/admin#admin-support");
+        if (role === "admin" && !renderMessages) window.location.assign("/admin#admin-support");
         else openDashboardHelp(accountId || readSession()?.account?.id || "", "messages");
       }}>
       <svg className={styles.messageIcon} viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M21 11.5a8.5 8.5 0 0 1-8.5 8.5H7l-5 3V11.5a9.5 9.5 0 0 1 19 0Z" /><path d="M7 10h10M7 14h6" /></svg>
-      Messages {Boolean(unreadCount) && <span className={styles.unreadBadge} aria-hidden="true">{unreadCount! > 99 ? "99+" : unreadCount}</span>}
+      Help &amp; Messages {Boolean(unreadCount) && <span className={styles.unreadBadge} aria-hidden="true">{unreadCount! > 99 ? "99+" : unreadCount}</span>}
     </button>
-    <button ref={launcher} className={styles.launcher} type="button" aria-haspopup="dialog" onClick={() => {
-      opener.current = launcher.current; setInitialView("assistant"); setIdentity(accountId || readSession()?.account?.id || ""); setOpened(true);
-    }}><span className={styles.helpIcon} aria-hidden="true">?</span> Help</button>
-    </div>
-    {opened && createPortal(<HelpDialog key={`${role}:${identity}`} role={role} accountId={identity} initialView={initialView} openRevision={openRevision} onClose={close} />, document.body)}
+    {opened && createPortal(<HelpDialog key={`${role}:${identity}`} role={role} accountId={identity} initialView={initialView} openRevision={openRevision} renderMessages={renderMessages} onClose={close} />, document.body)}
   </>;
 }
 
-function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { role: HelpRole; accountId: string; initialView: HelpView; openRevision: number; onClose: () => void }) {
+function HelpDialog({ role, accountId, initialView, openRevision, renderMessages, onClose }: {
+  role: HelpRole; accountId: string; initialView: HelpView; openRevision: number; renderMessages?: (active: boolean) => ReactNode; onClose: () => void;
+}) {
   const dialog = useRef<HTMLDialogElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -156,6 +158,7 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
     setShowTopics(false);
   }
   function handoff() {
+    if (renderMessages) { setMessagesOpened(true); setMode("messages"); return; }
     if (!draft) {
       const conversation = entries.slice(-6).map(entry => `${entry.who === "you" ? "Me" : "Help guide"}: ${entry.text}`).join("\n\n");
       setDraft((question.trim() ? `My question: ${question.trim()}\n\n` : "") + conversation.slice(0, 3000));
@@ -165,18 +168,18 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
 
   return <dialog ref={dialog} className={styles.dialog} aria-labelledby={titleId} onCancel={event => { event.preventDefault(); onClose(); }} onClose={onClose} data-global-navigation-swipe="ignore">
     <header className={styles.header}>
-      <div><span className={styles.eyebrow}>{HELP_ROLE_LABELS[role]} dashboard</span><h2 id={titleId}>{mode === "messages" ? "Messages" : "Help & support"}</h2></div>
+      <div><span className={styles.eyebrow}>{HELP_ROLE_LABELS[role]} dashboard</span><h2 id={titleId}>Help &amp; Messages</h2></div>
       <button type="button" className={styles.close} data-close-control="" aria-label={mode === "messages" ? "Close messages" : "Close help"} onClick={onClose}>
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
     </header>
-    <nav className={styles.tabs} aria-label="Help & support sections">
-      <button type="button" aria-pressed={mode === "assistant"} onClick={() => setMode("assistant")}>Ask assistant</button>
+    <nav className={styles.tabs} aria-label="Help and messages sections">
       <button type="button" aria-pressed={mode === "messages"} onClick={() => { setMessagesOpened(true); setMode("messages"); }}>Messages</button>
+      <button type="button" aria-pressed={mode === "assistant"} onClick={() => setMode("assistant")}>Quick Help</button>
     </nav>
-    <section className={styles.assistantPane} hidden={mode !== "assistant"} aria-label="Ask assistant">
+    <section className={styles.assistantPane} hidden={mode !== "assistant"} aria-label="Quick Help">
       <div className={styles.log} ref={log} role="log" aria-label="Help conversation" aria-live="polite" aria-relevant="additions">
-        <p className={styles.intro}>Quick answers about your {HELP_ROLE_LABELS[role].toLowerCase()} dashboard. For account-specific help, message the MyDancr Team.</p>
+        <p className={styles.intro}>Quick answers about your {HELP_ROLE_LABELS[role].toLowerCase()} dashboard. {renderMessages ? "Open Messages to reply to accounts." : "For account-specific help, message the MyDancr Team."}</p>
         {entries.map((entry, index) => <div className={`${styles.message} ${entry.who === "you" ? styles.mine : ""}`} key={index}>
           <strong>{entry.who === "you" ? "You" : "MyDancr help"}</strong><p>{entry.text}</p>
           {entry.href && <a href={entry.href} onClick={onClose}>Open this section →</a>}
@@ -188,10 +191,12 @@ function HelpDialog({ role, accountId, initialView, openRevision, onClose }: { r
         <label htmlFor={`${titleId}-question`}>Your question</label>
         <div className={styles.inputRow}><input id={`${titleId}-question`} value={question} onChange={event => setQuestion(event.target.value)} maxLength={600} placeholder="How do I…" autoComplete="off" /><button type="submit" disabled={!question.trim()}>Ask</button></div>
       </form>
-      <footer className={styles.actions}><button type="button" onClick={() => setShowTopics(value => !value)}>{showTopics ? "Hide topics" : "Browse topics"}</button><button type="button" onClick={handoff}>Message the MyDancr Team</button></footer>
+      <footer className={styles.actions}><button type="button" onClick={() => setShowTopics(value => !value)}>{showTopics ? "Hide topics" : "Browse topics"}</button><button type="button" onClick={handoff}>{renderMessages ? "Open messages" : "Message the MyDancr Team"}</button></footer>
     </section>
     <section className={styles.messagesPane} hidden={mode !== "messages"} aria-label="Messages">
-      {messagesOpened && <DashboardHelpMessages role={role} accountId={accountId} draft={draft} onDraftChange={setDraft} draftRevision={draftRevision} active={mode === "messages"} />}
+      {messagesOpened && (renderMessages
+        ? <div className={styles.adminMessages}>{renderMessages(mode === "messages")}</div>
+        : <DashboardHelpMessages role={role} accountId={accountId} draft={draft} onDraftChange={setDraft} draftRevision={draftRevision} active={mode === "messages"} />)}
     </section>
   </dialog>;
 }

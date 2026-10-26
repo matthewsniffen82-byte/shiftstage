@@ -85,6 +85,20 @@ test('support failures retain messages, hidden pages do not poll, and late respo
   assert.equal(f.pending[2].options.signal.aborted, true); assert.equal(f.props.threads, before);
 });
 
+test('an inbox hidden by Quick Help or the shared panel pauses reads and retains its reply drafts', async () => {
+  const f = mount(); await f.complete(0);
+  f.all().find(node => node.type === 'textarea').props.onChange({ target: { value: 'Keep this reply' } }); f.render();
+  f.tick(); assert.equal(f.pending.length, 2);
+  f.props.visible = false; f.render();
+  assert.equal(f.pending[1].options.signal.aborted, true);
+  f.tick(); f.focus(); assert.equal(f.pending.length, 2);
+  await f.complete(1, []); assert.equal(f.props.threads.length, 12);
+  assert.ok(f.all().some(node => node.type === 'textarea' && node.props.value === 'Keep this reply'));
+  f.props.visible = true; f.render(); assert.equal(f.pending.length, 3);
+  await f.complete(2);
+  assert.ok(f.all().some(node => node.type === 'textarea' && node.props.value === 'Keep this reply')); f.close();
+});
+
 test('older message pages are reachable without duplicates or resetting drafts', async () => {
   const first = Array.from({ length: 100 }, (_, i) => thread(i)); const f = mount(first); await f.complete(0, first, true);
   f.all().find(node => node.type === 'button' && node.props.children === 'Load more messages').props.onClick();
