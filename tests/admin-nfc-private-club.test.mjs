@@ -105,8 +105,10 @@ test('missing clubs and inactive admins cannot provision a sticker', async () =>
 });
 
 const nodes = node => node && typeof node === 'object' ? [node, ...[node.props?.children].flat(Infinity).flatMap(nodes)] : [];
-function panelFixture({ venues = [option(published), option(draft)], failed = false } = {}) {
+function panelFixture({ venues = [option(published), option(draft)], failed = false, legacyCopy = true, clipboard = 'missing' } = {}) {
   const slots = [], effects = [], calls = [];
+  const copied = [], selection = [], copyControls = {};
+  const field = { value: '', focus() {}, select() {}, setSelectionRange(start, end) { selection.push([start, end]); } };
   let cursor = 0, tree, resolveLoad;
   const ready = new Promise(resolve => { resolveLoad = resolve; });
   const hooks = {
@@ -124,12 +126,29 @@ function panelFixture({ venues = [option(published), option(draft)], failed = fa
       if (init.method === 'POST') return { programmingUrl: 'https://example.test/nfc/synthetic-only' };
       await ready; if (failed) throw new Error('Inventory unavailable'); return { venues, tags: [] };
     } },
-  }, { AbortController, Intl });
-  const render = () => { cursor = 0; tree = panel.default({ scopedVenueId: draft.id }); while (effects.length) effects.shift()(); };
+  }, { AbortController, Intl,
+    document: { execCommand(command) {
+      assert.equal(command, 'copy');
+      if (legacyCopy === 'throws') throw new Error('Copy unsupported');
+      if (legacyCopy) copied.push(field.value);
+      return legacyCopy;
+    } },
+    navigator: clipboard === 'missing' ? {} : { clipboard: { async writeText(value) {
+      if (clipboard === 'rejects') throw new Error('Clipboard blocked');
+      if (clipboard === 'pending') await new Promise(resolve => { copyControls.finish = resolve; });
+      copied.push(value);
+    } } },
+  });
+  const render = () => {
+    cursor = 0; tree = panel.default({ scopedVenueId: draft.id });
+    for (const node of nodes(tree)) if (node.type === 'textarea' && node.props.ref) { field.value = node.props.value; node.props.ref.current = field; }
+    while (effects.length) effects.shift()();
+  };
   render(); render();
   const find = predicate => nodes(tree).find(predicate);
-  return { render, find, calls, async ready() { resolveLoad(); await new Promise(resolve => setImmediate(resolve)); render(); },
+  return { render, find, calls, copied, selection, field, copyControls, async ready() { resolveLoad(); await new Promise(resolve => setImmediate(resolve)); render(); },
     async submit() { await find(n => n.type === 'form').props.onSubmit({ preventDefault() {} }); render(); },
+    copy() { const promise = find(n => n.type === 'button' && ['Copy programming URL', 'Copied!'].includes(n.props.children)).props.onClick(); render(); return promise.then(render); },
     unmount() { slots.forEach(slot => slot?.cleanup?.()); },
   };
 }
@@ -145,7 +164,7 @@ test('scoped draft club is named, warns about publication and can be assigned af
   assert.equal(f.find(n => n.props?.type === 'submit').props.disabled, false);
   await f.submit();
   assert.equal(JSON.parse(f.calls.find(c => c.method === 'POST').body).venueId, draft.id);
-  assert.equal(f.find(n => n.type === 'code').props.children, 'https://example.test/nfc/synthetic-only');
+  assert.equal(f.find(n => n.type === 'textarea').props.value, 'https://example.test/nfc/synthetic-only');
   f.unmount();
 });
 
@@ -155,6 +174,50 @@ test('missing scoped club or failed inventory cannot silently assign a different
     assert.equal(f.find(n => n.props?.type === 'submit').props.disabled, true);
     await f.submit(); assert.equal(f.calls.filter(c => c.method === 'POST').length, 0); f.unmount();
   }
+});
+
+test('copying the NFC programming link uses the selected complete URL and confirms next to the button', async () => {
+  const f = panelFixture(); await f.ready(); await f.submit();
+  const field = f.find(n => n.type === 'textarea');
+  assert.equal(field.props.readOnly, true);
+  field.props.onFocus({ currentTarget: f.field });
+  assert.deepEqual(f.selection.at(-1), [0, field.props.value.length]);
+  await f.copy();
+  assert.deepEqual(f.copied, [field.props.value]);
+  const section = f.find(n => n.props?.className === 'admin-nfc-programming');
+  assert.ok(nodes(section).some(n => n.type === 'button' && n.props.children === 'Copied!'));
+  assert.ok(nodes(section).some(n => n.props?.role === 'status' && /Paste it into NFC Tools/.test(n.props.children)));
+  f.unmount();
+});
+
+test('clipboard API fallback succeeds when selection-based copy is unsupported', async () => {
+  for (const legacyCopy of [false, 'throws']) {
+    const f = panelFixture({ legacyCopy, clipboard: 'success' }); await f.ready(); await f.submit(); await f.copy();
+    assert.deepEqual(f.copied, [f.field.value]);
+    assert.ok(f.find(n => n.type === 'button' && n.props.children === 'Copied!')); f.unmount();
+  }
+});
+
+test('blocked or unavailable clipboard leaves the link selectable with honest manual-copy feedback', async () => {
+  for (const clipboard of ['missing', 'rejects']) {
+    const f = panelFixture({ legacyCopy: false, clipboard }); await f.ready(); await f.submit(); await f.copy();
+    assert.equal(f.copied.length, 0);
+    assert.deepEqual(f.selection.at(-1), [0, f.field.value.length]);
+    const section = f.find(n => n.props?.className === 'admin-nfc-programming');
+    assert.ok(nodes(section).some(n => n.props?.role === 'status' && /Press and hold/.test(n.props.children)));
+    assert.equal(f.find(n => n.type === 'button' && n.props.children === 'Copy programming URL').props.disabled, false);
+    f.unmount();
+  }
+});
+
+test('pending clipboard permission shows progress and does not mark a replacement link copied', async () => {
+  const f = panelFixture({ legacyCopy: false, clipboard: 'pending' }); await f.ready(); await f.submit();
+  const copying = f.copy();
+  assert.equal(f.find(n => n.type === 'button' && n.props.children === 'Copying…').props.disabled, true);
+  await f.submit();
+  f.copyControls.finish(); await copying;
+  assert.ok(f.find(n => n.type === 'button' && n.props.children === 'Copy programming URL'));
+  assert.equal(f.find(n => n.type === 'button' && n.props.children === 'Copied!'), undefined); f.unmount();
 });
 
 test('private club provisioning and replacement preserve capacity, audit and permissions in Postgres', async t => {

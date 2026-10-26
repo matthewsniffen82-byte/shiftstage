@@ -34,6 +34,8 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
   const [status, setStatus] = useState("Loading MyDancr tap sticker inventory…");
   const [isLoading, setIsLoading] = useState(true);
   const [programmingUrl, setProgrammingUrl] = useState("");
+  const [copyState, setCopyState] = useState<"idle" | "copying" | "copied" | "manual">("idle");
+  const programmingFieldRef = useRef<HTMLTextAreaElement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const mountedRef = useRef(false);
   const loadSequenceRef = useRef(0);
@@ -99,6 +101,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
     const controller = new AbortController();
     actionAbortRef.current = controller;
     setIsSaving(true);
+    setCopyState("idle");
     setProgrammingUrl("");
     try {
       const data = await requestAdminJson("/api/admin/nfc-tags", {
@@ -134,6 +137,7 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
     const controller = new AbortController();
     actionAbortRef.current = controller;
     setIsSaving(true);
+    setCopyState("idle");
     setProgrammingUrl("");
     try {
       const data = await requestAdminJson("/api/admin/nfc-tags", {
@@ -158,14 +162,30 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
   }
 
   async function copyProgrammingUrl() {
+    const field = programmingFieldRef.current;
+    if (!programmingUrl || !field || copyState === "copying") return;
+    const actionId = actionSequenceRef.current;
+    setCopyState("copying");
+    let copied = false;
     try {
-      await navigator.clipboard.writeText(programmingUrl);
-      if (!mountedRef.current) return;
-      setStatus("Programming URL copied. Write one NDEF URL record, test it, then lock the sticker read-only.");
+      // Keep selection-based copying inside the original tap for mobile browsers.
+      selectProgrammingUrl(field);
+      copied = document.execCommand("copy");
     } catch {
-      if (!mountedRef.current) return;
-      setStatus("Copy failed. Select the programming URL manually.");
+      // Some browsers only support the asynchronous clipboard API.
     }
+    if (!copied) {
+      try {
+        if (navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(programmingUrl);
+          copied = true;
+        }
+      } catch {
+        // The visible, selected field remains available for native manual copy.
+      }
+    }
+    if (!mountedRef.current || actionId !== actionSequenceRef.current || programmingFieldRef.current !== field) return;
+    setCopyState(copied ? "copied" : "manual");
   }
 
   return (
@@ -212,8 +232,12 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
       {programmingUrl ? (
         <section className="admin-nfc-programming" aria-label="One-time sticker setup link">
           <strong>Shown once — program the physical sticker now</strong>
-          <code>{programmingUrl}</code>
-          <button type="button" onClick={copyProgrammingUrl}>Copy programming URL</button>
+          <label>Programming URL
+            <textarea ref={programmingFieldRef} value={programmingUrl} readOnly rows={3} spellCheck={false} autoCapitalize="off" autoCorrect="off" onFocus={(event) => selectProgrammingUrl(event.currentTarget)} onClick={(event) => selectProgrammingUrl(event.currentTarget)} />
+          </label>
+          <button type="button" onClick={copyProgrammingUrl} disabled={copyState === "copying"}>{copyState === "copied" ? "Copied!" : copyState === "copying" ? "Copying…" : "Copy programming URL"}</button>
+          {copyState === "copied" ? <p role="status" className="admin-nfc-status">Programming URL copied. Paste it into NFC Tools.</p> : null}
+          {copyState === "manual" ? <p role="status" className="admin-nfc-status">Your browser blocked automatic copying. Press and hold the selected link above, then choose Copy.</p> : null}
           <small>Do not send this URL to venue staff. Test on iPhone and Android, label the placement, then permanently lock the NDEF record.</small>
         </section>
       ) : null}
@@ -237,11 +261,18 @@ export default function AdminNfcInventoryPanel({ scopedVenueId = "" }: { scopedV
       </div>
       {status ? <p role="status" className="admin-nfc-status">{status}</p> : null}
       <style>{`
+        .admin-nfc-programming textarea{box-sizing:border-box;width:100%;min-width:0;padding:9px;border:1px solid rgba(50,255,164,.3);border-radius:6px;color:#c7ffe3;background:#070a08;font:16px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere;resize:vertical;-webkit-user-select:text;user-select:text}
         .admin-nfc-instructions{color:#b9accd;font-size:13px;line-height:1.5}.admin-nfc-instructions summary{cursor:pointer;color:#fff;font-weight:700}.admin-nfc-instructions ol{margin:8px 0;padding-left:22px}.admin-nfc-instructions li+li{margin-top:6px}
         .admin-nfc-inventory,.admin-nfc-list{display:grid;gap:10px}.admin-nfc-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px}.admin-nfc-summary span{display:grid;gap:2px;padding:11px;border:1px solid rgba(148,229,255,.16);border-radius:8px;background:rgba(148,229,255,.05)}.admin-nfc-summary strong{color:#fff;font-size:24px}.admin-nfc-summary small,.admin-nfc-intro,.admin-nfc-row small{color:#b9accd}.admin-nfc-intro{margin:0;line-height:1.45}.admin-nfc-inventory form{display:grid;gap:9px}.admin-nfc-inventory label{display:grid;gap:6px;color:#d8cfeb;font-size:12px;font-weight:850}.admin-nfc-inventory input,.admin-nfc-inventory select{width:100%;min-height:42px;padding:8px 10px;border:1px solid rgba(255,255,255,.14);border-radius:8px;color:#fff;background:var(--dancr-color-control-secondary);font:inherit}.admin-nfc-inventory button{min-height:40px;padding:8px 11px;border:1px solid rgba(148,229,255,.24);border-radius:8px;color:#fff;background:rgba(48, 48, 56, 0.3);font:inherit;font-weight:900;cursor:pointer}.admin-nfc-inventory button:disabled{opacity:.55;cursor:wait}.admin-nfc-programming{display:grid;gap:8px;padding:12px;border:1px solid rgba(50,255,164,.3);border-radius:8px;background:rgba(50,255,164,.07)}.admin-nfc-programming code{padding:9px;border-radius:6px;color:#c7ffe3;background:#070a08;overflow-wrap:anywhere}.admin-nfc-programming small{color:#9db5a8;line-height:1.4}.admin-nfc-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:11px;border:1px solid rgba(255,255,255,.08);border-radius:8px;background:rgba(255,255,255,.035)}.admin-nfc-row>span{display:grid;gap:3px}.admin-nfc-row>b{color:#7dffbd;font-size:10px;text-transform:uppercase}.admin-nfc-row.disabled>b,.admin-nfc-row.revoked>b{color:#b9accd}.admin-nfc-row>div{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:7px}.admin-nfc-status{margin:0;color:#94e5ff;line-height:1.4}@media(max-width:680px){.admin-nfc-summary{grid-template-columns:1fr}.admin-nfc-row{grid-template-columns:1fr}.admin-nfc-row>b{justify-self:start}}
       `}</style>
     </div>
   );
+}
+
+function selectProgrammingUrl(field: HTMLTextAreaElement) {
+  field.focus({ preventScroll: true });
+  field.select();
+  field.setSelectionRange(0, field.value.length);
 }
 
 function formatDate(value: string) {
