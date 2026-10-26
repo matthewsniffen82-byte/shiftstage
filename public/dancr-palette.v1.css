@@ -776,6 +776,89 @@
   html body.dancr-button-system :where(.utility-menu-support, .utility-menu-session-end) {
     border-color: var(--dancr-color-border) !important;
   }
+  /* All account roles share the header inbox. Its painted mobile row faces,
+     icon tiles and unread indicators must use the same palette as the TV inbox. */
+  html body.dancr-button-system :where(.tv-notification-panel) {
+    background: var(--dancr-color-surface) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .45) !important;
+  }
+  html body.dancr-button-system :where(
+    #customerNotificationsQuickPanel .customer-quick-item,
+    #customerNotificationsQuickPanel .customer-quick-empty,
+    .tv-notification-list button
+  ) {
+    --inbox-row-face: var(--dancr-color-surface-card) !important;
+    --inbox-row-edge: var(--dancr-color-border) !important;
+    background: var(--dancr-color-surface-card) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system :where(
+    #customerNotificationsQuickPanel .customer-notification-title > .action-icon,
+    .tv-notification-button, .tv-notification-clear
+  ) {
+    background: var(--dancr-control-secondary-background) !important;
+    border-color: var(--dancr-color-border) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  html body.dancr-button-system :where(
+    #customerNotificationsQuickPanel h3,
+    #customerNotificationsQuickPanel .customer-notification-title,
+    #customerNotificationsQuickPanel .customer-notification-label,
+    .tv-notification-head strong, .tv-notification-head a,
+    .tv-notification-list button strong
+  ) {
+    color: var(--dancr-color-text-primary) !important;
+  }
+  html body.dancr-button-system :where(
+    #customerNotificationsQuickPanel .customer-notification-date,
+    #customerNotificationsQuickPanel .customer-notification-message,
+    #customerNotificationsQuickPanel .customer-quick-empty,
+    .tv-notification-head span, .tv-notification-list button > span,
+    .tv-notification-list button.read strong,
+    .tv-notification-list p, .tv-notification-status
+  ) {
+    color: var(--dancr-color-text-muted) !important;
+  }
+  html body.dancr-button-system :where(
+    #customerNotificationsQuickPanel .customer-notification-title > .action-icon,
+    #customerNotificationsQuickPanel .customer-notification-title > .action-icon svg,
+    .tv-notification-list .notification-type-icon
+  ) {
+    color: var(--dancr-color-icon-accent) !important;
+  }
+  html body.dancr-button-system :where(
+    #customerNotificationQuickCount, .customer-notification-unread, .tv-notification-count
+  ) {
+    background: var(--dancr-color-brand-primary) !important;
+    border-color: var(--dancr-color-brand-primary) !important;
+    color: var(--dancr-color-text-primary) !important;
+    box-shadow: none !important;
+  }
+  html body.dancr-button-system :where(
+    #customerNotificationsQuickPanel button:focus-visible,
+    .tv-notification-panel :is(button, a):focus-visible,
+    .tv-notification-button:focus-visible
+  ) {
+    outline-color: var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system :where(.tv-notification-button[aria-expanded="true"]) {
+    border-color: var(--dancr-color-brand-primary) !important;
+  }
+  html body.dancr-button-system :where(
+    #customerNotificationsQuickPanel .customer-quick-item:hover,
+    .tv-notification-list button:hover:not(:disabled)
+  ) {
+    --inbox-row-face: var(--dancr-color-control-hover) !important;
+    --inbox-row-edge: var(--dancr-color-border-strong) !important;
+    background: var(--dancr-color-control-hover) !important;
+    border-color: var(--dancr-color-border-strong) !important;
+  }
   html body.dancr-button-system :where(.utility-menu-section-label) {
     color: var(--dancr-color-text-muted) !important;
   }
