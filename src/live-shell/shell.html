@@ -78,8 +78,8 @@
                 <h3 id="customerNotificationsQuickTitle">Notifications</h3>
                 <div class="customer-notification-header-actions">
                   <button class="customer-quick-clear" type="button" data-notification-action="clear-all" aria-label="Clear all notifications">Clear all</button>
-                  <button class="customer-notification-close" type="button" data-notification-action="close" aria-label="Close notifications">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                  <button class="customer-notification-close" type="button" data-notification-action="close" data-close-control="" aria-label="Close notifications">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
                   </button>
                 </div>
               </div>
@@ -226,7 +226,7 @@
           <form class="distance-picker-panel" id="distanceSelectForm">
             <div class="distance-picker-header">
               <h2 id="distanceSelectDialogTitle">Search radius</h2>
-              <button id="distanceSelectClose" type="button" aria-label="Close distance picker"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+              <button id="distanceSelectClose" type="button" data-close-control="" aria-label="Close distance picker"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             </div>
             <p id="distanceSelectOrigin">From the center of Las Vegas</p>
             <fieldset class="distance-picker-options">
@@ -243,7 +243,7 @@
           <div class="venue-picker-panel">
             <div class="venue-picker-header">
               <h2 id="venueSelectDialogTitle">Choose a club</h2>
-              <button class="venue-picker-close" id="venueSelectClose" type="button" aria-label="Close club search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+              <button class="venue-picker-close" id="venueSelectClose" type="button" data-close-control="" aria-label="Close club search"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             </div>
             <div class="venue-picker-options" id="venueSelectOptions" role="listbox" aria-labelledby="venueSelectDialogTitle"></div>
             <button class="venue-picker-done" id="venueSelectDone" type="button">Done</button>
@@ -257,8 +257,8 @@
         <strong id="homeLiveWorking">0 Working Now</strong>
         <div class="home-distance-notice" id="homeDistanceNotice" hidden>
           <span id="homeDistanceMessage" role="status"></span>
-          <button id="homeDistanceDismiss" type="button" aria-label="Dismiss location message" title="Dismiss location message" hidden>
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+          <button id="homeDistanceDismiss" type="button" data-close-control="" aria-label="Dismiss location message" title="Dismiss location message" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
         </div>
       </div>
@@ -677,7 +677,7 @@
             <div class="recovery-popover-surface" id="passwordRecoverySurface">
               <div class="password-recovery-topline">
                 <span class="password-recovery-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
-                <button class="login-recovery-close" id="passwordRecoveryClose" type="button" aria-label="Close password recovery">×</button>
+                <button class="login-recovery-close" id="passwordRecoveryClose" type="button" data-close-control="" aria-label="Close password recovery"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
               </div>
               <div class="password-recovery-heading"><span class="eyebrow">Password recovery</span><h3 id="passwordRecoveryTitle">Reset your password</h3></div>
               <p class="login-recovery-copy" id="passwordRecoveryDescription">Enter your account email and we’ll help you get back in with a secure reset link.</p>
@@ -697,7 +697,7 @@
             <div class="recovery-popover-surface account-form-surface" id="loginRecoverySurface">
               <div class="login-recovery-head">
                 <div><span class="eyebrow">Email recovery</span><h3 id="loginRecoveryTitle">Find your sign-in email</h3></div>
-                <button class="login-recovery-close" id="loginRecoveryClose" type="button" aria-label="Close email recovery">×</button>
+                <button class="login-recovery-close" id="loginRecoveryClose" type="button" data-close-control="" aria-label="Close email recovery"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
               </div>
               <p class="login-recovery-copy">MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
               <form class="auth-form" id="loginRecoveryForm">
@@ -807,8 +807,8 @@
             <span class="eyebrow">Stripe-hosted checkout</span>
             <h2>Stripe checkout</h2>
           </div>
-          <button class="close-btn" id="stripeClose" aria-label="Close Stripe checkout">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          <button class="close-btn" id="stripeClose" data-close-control="" aria-label="Close Stripe checkout">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
         </div>
         <div class="auth-card stripe-hosted">
@@ -907,8 +907,8 @@
               </div>
             </div>
             <div class="approved-tool-dropdown" id="approvedEditProfileDropdown" hidden>
-              <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close aria-label="Close edit profile">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close data-close-control="" aria-label="Close edit profile">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
               </button>
               <div class="approved-tool-dropdown-head">
                 <strong>Edit profile</strong>
@@ -1865,8 +1865,8 @@
 
     <div class="admin-preview-popover account-required-popover" id="accountRequiredPopover" role="dialog" aria-modal="true" aria-labelledby="accountRequiredTitle" aria-describedby="accountRequiredMessage" hidden>
       <section class="admin-preview-sheet account-required-sheet guest-account-prompt">
-        <button class="close-btn admin-preview-close guest-account-close" id="accountRequiredClose" type="button" aria-label="Close account prompt">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        <button class="close-btn admin-preview-close guest-account-close" id="accountRequiredClose" type="button" data-close-control="" aria-label="Close account prompt">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
         </button>
         <p class="guest-account-eyebrow">FREE GUEST ACCOUNT</p>
         <h3 id="accountRequiredTitle">Follow dancers</h3>
@@ -1882,8 +1882,8 @@
       <section class="admin-preview-sheet content-report-sheet">
         <header class="content-report-header">
           <h3 id="contentReportTitle">Report content</h3>
-          <button class="close-btn admin-preview-close content-report-close" id="contentReportClose" type="button" aria-label="Close report form">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          <button class="close-btn admin-preview-close content-report-close" id="contentReportClose" type="button" data-close-control="" aria-label="Close report form">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
         </header>
         <span>Safety report</span>
@@ -1920,8 +1920,8 @@
 
     <div class="admin-preview-popover" id="adminPreviewPopover" role="dialog" aria-modal="true" aria-labelledby="adminPreviewTitle" hidden>
       <section class="admin-preview-sheet">
-        <button class="close-btn admin-preview-close" id="adminPreviewClose" type="button" aria-label="Close preview">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        <button class="close-btn admin-preview-close" id="adminPreviewClose" type="button" data-close-control="" aria-label="Close preview">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
         </button>
         <h3 id="adminPreviewTitle">Preview</h3>
         <div class="admin-preview-body" id="adminPreviewBody"></div>
@@ -1935,8 +1935,8 @@
             <h2 id="publicContactTitle">Contact support</h2>
             <p id="publicContactIntro">Send a message to the MyDancr team.</p>
           </div>
-          <button class="close-btn" id="publicContactClose" type="button" aria-label="Close contact form" autofocus>
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          <button class="close-btn" id="publicContactClose" type="button" data-close-control="" aria-label="Close contact form" autofocus>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
         </div>
         <form class="auth-form support-contact-form" id="publicContactForm">

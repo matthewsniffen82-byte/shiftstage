@@ -669,7 +669,7 @@
       document.body.insertAdjacentHTML("beforeend", `
         <div class="profile-qr-overlay" id="profileQrOverlay" aria-hidden="true" hidden>
           <div class="profile-qr-sheet" role="dialog" aria-modal="true" aria-labelledby="profileQrTitle">
-            <button class="profile-qr-close" type="button" data-close-qr-overlay aria-label="Close QR code">${actionIconMarkup("close")}</button>
+            <button class="profile-qr-close" type="button" data-close-qr-overlay data-close-control="" aria-label="Close QR code"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <p class="profile-qr-kicker">Profile-sharing QR</p>
             <h3 class="profile-qr-title" id="profileQrTitle">Open dancer account profile</h3>
             <p class="profile-qr-subtitle" id="profileQrSubtitle">Scan to open this dancer profile. This is not a Club Deal.</p>
@@ -709,7 +709,7 @@
       document.body.insertAdjacentHTML("beforeend", `
         <div class="profile-qr-overlay profile-share-choice-overlay" id="profileShareChoiceOverlay" aria-hidden="true" hidden>
           <div class="profile-qr-sheet" role="dialog" aria-modal="true" aria-labelledby="profileShareChoiceTitle">
-            <button class="profile-qr-close" type="button" data-close-profile-share-choice aria-label="Close profile sharing">${actionIconMarkup("close")}</button>
+            <button class="profile-qr-close" type="button" data-close-profile-share-choice data-close-control="" aria-label="Close profile sharing"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
             <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.</p>

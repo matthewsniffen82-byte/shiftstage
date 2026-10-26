@@ -635,9 +635,9 @@ export default function TvFeedClient({
           <Link
             className="tv-close"
             href={homepageHref}
-            aria-label="Close MyDancr TV and return to homepage"
+            data-close-control="" aria-label="Close MyDancr TV and return to homepage"
           >
-            ×
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
           </Link>
       </header>
 

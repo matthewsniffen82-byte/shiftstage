@@ -32325,8 +32325,8 @@
                 <h3 id="customerNotificationsQuickTitle">Notifications</h3>
                 <div class="customer-notification-header-actions">
                   <button class="customer-quick-clear" type="button" data-notification-action="clear-all" aria-label="Clear all notifications">Clear all</button>
-                  <button class="customer-notification-close" type="button" data-notification-action="close" aria-label="Close notifications">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                  <button class="customer-notification-close" type="button" data-notification-action="close" data-close-control="" aria-label="Close notifications">
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
                   </button>
                 </div>
               </div>
@@ -32473,7 +32473,7 @@
           <form class="distance-picker-panel" id="distanceSelectForm">
             <div class="distance-picker-header">
               <h2 id="distanceSelectDialogTitle">Search radius</h2>
-              <button id="distanceSelectClose" type="button" aria-label="Close distance picker"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+              <button id="distanceSelectClose" type="button" data-close-control="" aria-label="Close distance picker"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             </div>
             <p id="distanceSelectOrigin">From the center of Las Vegas</p>
             <fieldset class="distance-picker-options">
@@ -32490,7 +32490,7 @@
           <div class="venue-picker-panel">
             <div class="venue-picker-header">
               <h2 id="venueSelectDialogTitle">Choose a club</h2>
-              <button class="venue-picker-close" id="venueSelectClose" type="button" aria-label="Close club search"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
+              <button class="venue-picker-close" id="venueSelectClose" type="button" data-close-control="" aria-label="Close club search"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             </div>
             <div class="venue-picker-options" id="venueSelectOptions" role="listbox" aria-labelledby="venueSelectDialogTitle"></div>
             <button class="venue-picker-done" id="venueSelectDone" type="button">Done</button>
@@ -32504,8 +32504,8 @@
         <strong id="homeLiveWorking">0 Working Now</strong>
         <div class="home-distance-notice" id="homeDistanceNotice" hidden>
           <span id="homeDistanceMessage" role="status"></span>
-          <button id="homeDistanceDismiss" type="button" aria-label="Dismiss location message" title="Dismiss location message" hidden>
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+          <button id="homeDistanceDismiss" type="button" data-close-control="" aria-label="Dismiss location message" title="Dismiss location message" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
         </div>
       </div>
@@ -42192,7 +42192,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <div class="recovery-popover-surface" id="passwordRecoverySurface">
               <div class="password-recovery-topline">
                 <span class="password-recovery-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m4 7 8 6 8-6"/></svg></span>
-                <button class="login-recovery-close" id="passwordRecoveryClose" type="button" aria-label="Close password recovery">×</button>
+                <button class="login-recovery-close" id="passwordRecoveryClose" type="button" data-close-control="" aria-label="Close password recovery"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
               </div>
               <div class="password-recovery-heading"><span class="eyebrow">Password recovery</span><h3 id="passwordRecoveryTitle">Reset your password</h3></div>
               <p class="login-recovery-copy" id="passwordRecoveryDescription">Enter your account email and we’ll help you get back in with a secure reset link.</p>
@@ -42212,7 +42212,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <div class="recovery-popover-surface account-form-surface" id="loginRecoverySurface">
               <div class="login-recovery-head">
                 <div><span class="eyebrow">Email recovery</span><h3 id="loginRecoveryTitle">Find your sign-in email</h3></div>
-                <button class="login-recovery-close" id="loginRecoveryClose" type="button" aria-label="Close email recovery">×</button>
+                <button class="login-recovery-close" id="loginRecoveryClose" type="button" data-close-control="" aria-label="Close email recovery"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
               </div>
               <p class="login-recovery-copy">MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
               <form class="auth-form" id="loginRecoveryForm">
@@ -42322,8 +42322,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <span class="eyebrow">Stripe-hosted checkout</span>
             <h2>Stripe checkout</h2>
           </div>
-          <button class="close-btn" id="stripeClose" aria-label="Close Stripe checkout">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          <button class="close-btn" id="stripeClose" data-close-control="" aria-label="Close Stripe checkout">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
         </div>
         <div class="auth-card stripe-hosted">
@@ -42422,8 +42422,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
               </div>
             </div>
             <div class="approved-tool-dropdown" id="approvedEditProfileDropdown" hidden>
-              <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close aria-label="Close edit profile">
-                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+              <button class="approved-profile-editor-close" type="button" data-approved-profile-editor-close data-close-control="" aria-label="Close edit profile">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
               </button>
               <div class="approved-tool-dropdown-head">
                 <strong>Edit profile</strong>
@@ -43380,8 +43380,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     <div class="admin-preview-popover account-required-popover" id="accountRequiredPopover" role="dialog" aria-modal="true" aria-labelledby="accountRequiredTitle" aria-describedby="accountRequiredMessage" hidden>
       <section class="admin-preview-sheet account-required-sheet guest-account-prompt">
-        <button class="close-btn admin-preview-close guest-account-close" id="accountRequiredClose" type="button" aria-label="Close account prompt">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        <button class="close-btn admin-preview-close guest-account-close" id="accountRequiredClose" type="button" data-close-control="" aria-label="Close account prompt">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
         </button>
         <p class="guest-account-eyebrow">FREE GUEST ACCOUNT</p>
         <h3 id="accountRequiredTitle">Follow dancers</h3>
@@ -43397,8 +43397,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       <section class="admin-preview-sheet content-report-sheet">
         <header class="content-report-header">
           <h3 id="contentReportTitle">Report content</h3>
-          <button class="close-btn admin-preview-close content-report-close" id="contentReportClose" type="button" aria-label="Close report form">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          <button class="close-btn admin-preview-close content-report-close" id="contentReportClose" type="button" data-close-control="" aria-label="Close report form">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
         </header>
         <span>Safety report</span>
@@ -43435,8 +43435,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
 
     <div class="admin-preview-popover" id="adminPreviewPopover" role="dialog" aria-modal="true" aria-labelledby="adminPreviewTitle" hidden>
       <section class="admin-preview-sheet">
-        <button class="close-btn admin-preview-close" id="adminPreviewClose" type="button" aria-label="Close preview">
-          <svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+        <button class="close-btn admin-preview-close" id="adminPreviewClose" type="button" data-close-control="" aria-label="Close preview">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
         </button>
         <h3 id="adminPreviewTitle">Preview</h3>
         <div class="admin-preview-body" id="adminPreviewBody"></div>
@@ -43450,8 +43450,8 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
             <h2 id="publicContactTitle">Contact support</h2>
             <p id="publicContactIntro">Send a message to the MyDancr team.</p>
           </div>
-          <button class="close-btn" id="publicContactClose" type="button" aria-label="Close contact form" autofocus>
-            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg>
+          <button class="close-btn" id="publicContactClose" type="button" data-close-control="" aria-label="Close contact form" autofocus>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg>
           </button>
         </div>
         <form class="auth-form support-contact-form" id="publicContactForm">
@@ -51810,7 +51810,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       document.body.insertAdjacentHTML("beforeend", `
         <div class="deal-pass-overlay" id="dealPassOverlay" aria-hidden="true" hidden>
           <div class="deal-pass-sheet" role="dialog" aria-modal="true" aria-labelledby="dealPassTitle" data-deal-state="preview">
-            <button class="deal-pass-close" type="button" data-close-deal-pass aria-label="Close Club Deal">${actionIconMarkup("close")}</button>
+            <button class="deal-pass-close" type="button" data-close-deal-pass data-close-control="" aria-label="Close Club Deal"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <h3 class="deal-pass-title" id="dealPassTitle" tabindex="-1">Club Deal</h3>
             <p class="deal-pass-copy" id="dealPassCopy">Club offer</p>
             <div class="deal-pass-available-content" data-deal-pass-available>
@@ -52197,7 +52197,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       document.body.insertAdjacentHTML("beforeend", `
         <div class="deal-pass-overlay club-deal-hub-overlay" id="clubDealHubOverlay" aria-hidden="true" hidden>
           <section class="deal-pass-sheet club-deal-hub-sheet" role="dialog" aria-modal="true" aria-labelledby="clubDealHubTitle" aria-describedby="clubDealHubCopy" tabindex="-1">
-            <button class="deal-pass-close" type="button" data-close-club-deal-hub aria-label="Close Club Deals">${actionIconMarkup("close")}</button>
+            <button class="deal-pass-close" type="button" data-close-club-deal-hub data-close-control="" aria-label="Close Club Deals"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <p class="deal-pass-kicker">Live club offers</p>
             <h3 class="deal-pass-title" id="clubDealHubTitle">Club Deals</h3>
             <p class="deal-pass-copy" id="clubDealHubCopy">Choose your admission offer.</p>
@@ -53955,7 +53955,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
           ? `<div class="approved-visual-reason">${displayText(data.label || "Photo")} not approved: ${displayText(data.notes || "No reason added.")}</div>`
           : "";
         card.innerHTML = `
-          <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">${pending ? "This upload is awaiting review. You can remove it below. Your approved photos stay live." : "Replace or delete this picture. Approved photos go live automatically. Save Profile keeps your live profile in sync."}</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">${pending ? "This upload is awaiting review. You can remove it below. Your approved photos stay live." : "Replace or delete this picture. Approved photos go live automatically. Save Profile keeps your live profile in sync."}</div></div><button class="close-btn" type="button" data-approved-edit-close data-close-control="" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></div>
           ${rejectionReason}
           <div class="approved-visual-photo-actions">
             ${pending ? "" : `<button type="button" data-approved-visual-photo-replace data-photo-id="${displayText(data.photoId || "")}" data-photo-target="${displayText(data.target || "gallery")}">Replace picture</button>`}
@@ -65913,7 +65913,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       document.body.insertAdjacentHTML("beforeend", `
         <div class="profile-qr-overlay" id="profileQrOverlay" aria-hidden="true" hidden>
           <div class="profile-qr-sheet" role="dialog" aria-modal="true" aria-labelledby="profileQrTitle">
-            <button class="profile-qr-close" type="button" data-close-qr-overlay aria-label="Close QR code">${actionIconMarkup("close")}</button>
+            <button class="profile-qr-close" type="button" data-close-qr-overlay data-close-control="" aria-label="Close QR code"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <p class="profile-qr-kicker">Profile-sharing QR</p>
             <h3 class="profile-qr-title" id="profileQrTitle">Open dancer account profile</h3>
             <p class="profile-qr-subtitle" id="profileQrSubtitle">Scan to open this dancer profile. This is not a Club Deal.</p>
@@ -65953,7 +65953,7 @@ html.internal-profile-embed #profileModal .vip-profile-queue-action:focus-visibl
       document.body.insertAdjacentHTML("beforeend", `
         <div class="profile-qr-overlay profile-share-choice-overlay" id="profileShareChoiceOverlay" aria-hidden="true" hidden>
           <div class="profile-qr-sheet" role="dialog" aria-modal="true" aria-labelledby="profileShareChoiceTitle">
-            <button class="profile-qr-close" type="button" data-close-profile-share-choice aria-label="Close profile sharing">${actionIconMarkup("close")}</button>
+            <button class="profile-qr-close" type="button" data-close-profile-share-choice data-close-control="" aria-label="Close profile sharing"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <p class="profile-qr-kicker">Share profile</p>
             <h3 class="profile-qr-title" id="profileShareChoiceTitle">Share this dancer profile</h3>
             <p class="profile-qr-subtitle" id="profileShareChoiceSubtitle">Share this public profile, copy its link, or show a QR code. Show your Club Deal admission pass to venue staff for scanning.</p>

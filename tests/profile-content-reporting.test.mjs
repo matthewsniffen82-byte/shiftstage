@@ -38,7 +38,7 @@ test("standalone profile photos and videos expose a circular report action", () 
 });
 
 test("live profiles expose reporting through the labeled options disclosure", () => {
-  assert.match(liveShell, /<details class="profile-options">\s*<summary aria-label="Profile options"[\s\S]*?class="profile-options-panel">\s*<button class="profile-header-report-action" id="reportBtn"[^>]*aria-haspopup="dialog"[^>]*><svg[\s\S]*?<span>Report profile<\/span>/);
+  assert.match(liveShell, /<details class="profile-options"[^>]*>\s*<summary aria-label="Profile options"[\s\S]*?class="profile-options-panel">\s*<button class="profile-header-report-action" id="reportBtn"[^>]*aria-haspopup="dialog"[^>]*><svg[\s\S]*?<span>Report profile<\/span>/);
   assert.doesNotMatch(liveShell, /profileHeaderOverflowToggle|profileHeaderOverflowMenu|profile-footer-report-action/);
   assert.match(liveShell, /\.profile-header-report-action svg \{[^}]*width: 14px;[^}]*height: 14px;/);
   assert.match(liveShell, /actionButton.id === "reportBtn"[\s\S]*?openContentReportDialog\(\{/);
@@ -46,7 +46,7 @@ test("live profiles expose reporting through the labeled options disclosure", ()
 });
 
 test("standalone profiles expose reporting through the labeled options disclosure", () => {
-  assert.match(profilePage, /<details className="profile-options">\s*<summary aria-label="Profile options"[\s\S]*?className="profile-options-panel">\s*<DancerReportControl preview=\{preview\} dancerId=\{profile.id\} profileName=\{profile.stageName\} \/>/);
+  assert.match(profilePage, /<details className="profile-options"[^>]*>\s*<summary aria-label="Profile options"[\s\S]*?className="profile-options-panel">\s*<DancerReportControl preview=\{preview\} dancerId=\{profile.id\} profileName=\{profile.stageName\} \/>/);
   assert.match(profileActions, /className="profile-header-report-action"[\s\S]*?onClick=\{openReport\}[\s\S]*?<ReportFlagIcon \/>/);
   assert.doesNotMatch(profileActions, /profile-header-overflow|reportMenuOpen/);
   assert.match(profilePage, /\.profile-header-report-action \{[^}]*width: 44px;[^}]*min-height: 44px;[^}]*background: transparent !important;/);

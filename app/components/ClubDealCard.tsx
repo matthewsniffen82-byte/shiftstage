@@ -539,11 +539,11 @@ export function ClubDealCard({
             <button
               className="club-deal-dialog-close"
               type="button"
-              aria-label="Close Club Deal"
+              data-close-control="" aria-label="Close Club Deal"
               autoFocus
               onClick={() => setDialogOpen(false)}
             >
-              ×
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
             {offerDeals.length > 1 && intentState !== "ready" ? (
               <div className="club-deal-offer-picker">

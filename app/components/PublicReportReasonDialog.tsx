@@ -40,16 +40,13 @@ export function PublicReportReasonDialog({
         <header className="public-report-reason-header">
           <h2 id={titleId}>{title}</h2>
           <button
-            aria-label={`Close ${title.toLowerCase()}`}
+            data-close-control="" aria-label={`Close ${title.toLowerCase()}`}
             className="public-report-reason-close"
             disabled={saving}
             onClick={onClose}
             type="button"
           >
-            <svg aria-hidden="true" viewBox="0 0 24 24">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
           </button>
         </header>
         <div className="public-report-reason-options" role="menu">

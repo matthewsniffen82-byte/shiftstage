@@ -748,11 +748,11 @@ export function DancerProfileActions({
             <button
               className="profile-account-gate-close guest-account-close"
               type="button"
-              aria-label="Close account prompt"
+              data-close-control="" aria-label="Close account prompt"
               autoFocus
               onClick={() => setAccountRequiredAction(null)}
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
             <span className="guest-account-eyebrow">FREE GUEST ACCOUNT</span>
             <h2 id="profile-account-gate-title">Follow dancers</h2>

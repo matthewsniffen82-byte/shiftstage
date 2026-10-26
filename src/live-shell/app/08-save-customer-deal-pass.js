@@ -171,7 +171,7 @@
       document.body.insertAdjacentHTML("beforeend", `
         <div class="deal-pass-overlay" id="dealPassOverlay" aria-hidden="true" hidden>
           <div class="deal-pass-sheet" role="dialog" aria-modal="true" aria-labelledby="dealPassTitle" data-deal-state="preview">
-            <button class="deal-pass-close" type="button" data-close-deal-pass aria-label="Close Club Deal">${actionIconMarkup("close")}</button>
+            <button class="deal-pass-close" type="button" data-close-deal-pass data-close-control="" aria-label="Close Club Deal"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <h3 class="deal-pass-title" id="dealPassTitle" tabindex="-1">Club Deal</h3>
             <p class="deal-pass-copy" id="dealPassCopy">Club offer</p>
             <div class="deal-pass-available-content" data-deal-pass-available>
@@ -558,7 +558,7 @@
       document.body.insertAdjacentHTML("beforeend", `
         <div class="deal-pass-overlay club-deal-hub-overlay" id="clubDealHubOverlay" aria-hidden="true" hidden>
           <section class="deal-pass-sheet club-deal-hub-sheet" role="dialog" aria-modal="true" aria-labelledby="clubDealHubTitle" aria-describedby="clubDealHubCopy" tabindex="-1">
-            <button class="deal-pass-close" type="button" data-close-club-deal-hub aria-label="Close Club Deals">${actionIconMarkup("close")}</button>
+            <button class="deal-pass-close" type="button" data-close-club-deal-hub data-close-control="" aria-label="Close Club Deals"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button>
             <p class="deal-pass-kicker">Live club offers</p>
             <h3 class="deal-pass-title" id="clubDealHubTitle">Club Deals</h3>
             <p class="deal-pass-copy" id="clubDealHubCopy">Choose your admission offer.</p>

@@ -691,7 +691,7 @@ export default function AccountClient() {
                   <span className="eyebrow">Password recovery</span>
                   <h2 id="password-recovery-title">Reset your password</h2>
                 </div>
-                <button className="recovery-close" type="button" aria-label="Close password recovery" onClick={closeRecovery}>×</button>
+                <button className="recovery-close" type="button" data-close-control="" aria-label="Close password recovery" onClick={closeRecovery}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
               </div>
               <p>Enter the email used for this account. MyDancr will send a secure reset link if the email matches an account.</p>
               <label>
@@ -714,7 +714,7 @@ export default function AccountClient() {
                   <span className="eyebrow">Email recovery</span>
                   <h2 id="login-recovery-title">Find your sign-in email</h2>
                 </div>
-                <button className="recovery-close" type="button" aria-label="Close email recovery" onClick={closeRecovery}>×</button>
+                <button className="recovery-close" type="button" data-close-control="" aria-label="Close email recovery" onClick={closeRecovery}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
               </div>
               <p>MyDancr will not display possible account emails. Give support enough information to verify that the account belongs to you.</p>
               <fieldset className="account-form-fields" disabled={isSendingLoginHelp}>

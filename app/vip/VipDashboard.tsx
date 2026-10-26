@@ -354,7 +354,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
         <VipIcon kind={item.id === "plan" ? "dancers" : item.id} /><span>{item.label}</span>{item.id === "plan" && draft.selected.length > 0 && <span className="vip-draft-dot" aria-label="Unsubmitted visit draft" />}
       </button>)}
     </nav>
-    {status && <div className="vip-feedback vip-row" role="status"><span>{status}</span><button type="button" className="vip-dismiss" onClick={() => setStatus("")} aria-label="Dismiss confirmation">×</button></div>}
+    {status && <div className="vip-feedback vip-row" role="status"><span>{status}</span><button type="button" className="vip-dismiss" onClick={() => setStatus("")} data-close-control="" aria-label="Dismiss confirmation"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button></div>}
     {accountError && <p className="vip-feedback vip-error" role="alert">{accountError}</p>}
     {error && <div className="vip-feedback vip-error" role="alert"><p>{error}</p><RefreshButton label="Refresh VIP dashboard" busy={loading} type="button" disabled={disabled || loading} onClick={refresh} /></div>}
     {loading && data && <p className="vip-updating" role="status">Updating your lounge…</p>}

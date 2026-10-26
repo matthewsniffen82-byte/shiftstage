@@ -429,14 +429,14 @@ export function DancerProfilePreview({
                 </div>
               </div>
               <button
-                aria-label={isEditor ? "Close profile editor" : "Close profile preview"}
+                data-close-control="" aria-label={isEditor ? "Close profile editor" : "Close profile preview"}
                 className="public-profile-close"
                 disabled={isPhotoDeleting}
                 onClick={closePreview}
                 ref={closeRef}
                 type="button"
               >
-                <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" /></svg>
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
               </button>
             </header>
             {isEditor ? mediaUploads : (
@@ -466,7 +466,7 @@ export function DancerProfilePreview({
                 >
                   <header>
                     <h2 id="dancer-profile-builder-panel-heading">{activeEditorLabel}</h2>
-                    <button aria-label={`Close ${activeEditorLabel} editor`} disabled={isSectionSaving || isAvatarUploading} onClick={closeActiveEditor} type="button"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+                    <button data-close-control="" aria-label={`Close ${activeEditorLabel} editor`} disabled={isSectionSaving || isAvatarUploading} onClick={closeActiveEditor} type="button"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
                   </header>
                   <div className="dancer-profile-editor-modal-body"><AvatarUploadBusyContext.Provider value={reportAvatarBusy}>{activeEditorContent}</AvatarUploadBusyContext.Provider></div>
                   {(["identity", "stageName", "city", "avatar", "photos", "videos"] as DancerProfileEditorSectionId[]).includes(activeEditorSection) ? (

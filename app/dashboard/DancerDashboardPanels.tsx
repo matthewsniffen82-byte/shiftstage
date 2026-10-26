@@ -276,8 +276,8 @@ function DancerActivationConfirmation({
           <a href="#dancer-profile-media" onClick={openProfileManager}>Go to dashboard</a>
         </div>
       </div>
-      <button type="button" onClick={acknowledgeCompletion} aria-label="Dismiss profile live confirmation">
-        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      <button type="button" onClick={acknowledgeCompletion} data-close-control="" aria-label="Dismiss profile live confirmation">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
     </section>
   );

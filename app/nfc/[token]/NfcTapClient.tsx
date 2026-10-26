@@ -239,10 +239,8 @@ export function NfcTapClient({ token }: { token: string }) {
   return (
     <main className="nfc-page">
       <section className={`nfc-card${complete ? " complete" : ""}`} data-phase={phase} aria-busy={phase === "reading" || phase === "redeeming"}>
-        <a className="nfc-exit" href={exitHref} aria-label={exitLabel} title={exitLabel}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="m6 6 12 12M18 6 6 18" />
-          </svg>
+        <a className="nfc-exit" href={exitHref} data-close-control="" aria-label={exitLabel} title={exitLabel}>
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
         </a>
         <div className="nfc-symbol"><NfcIcon /></div>
         <span className="eyebrow">{state?.tag.type === "cashier" ? "Cashier tap redemption" : "Verified club tap"}</span>

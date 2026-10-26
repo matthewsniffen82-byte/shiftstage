@@ -32,8 +32,8 @@ export default function DancerMediaViewer({ kind, label, imageUrl, videoUrl, onC
   >
     <header>
       <strong>{label}</strong>
-      <button aria-label="Close media preview" onClick={onClose} type="button">
-        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
+      <button data-close-control="" aria-label="Close media preview" onClick={onClose} type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
     </header>
     {available ? kind === "photo"

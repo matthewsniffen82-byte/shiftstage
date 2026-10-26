@@ -27,31 +27,26 @@ test("stage name and city use the compact editor without changing persistence or
   assert.match(identityEditor, /requestDancerProfileJson\([\s\S]*?method: "PATCH"/);
 });
 
-test("avatar editor has one compact requirement and keeps the real upload workflow", () => {
-  assert.match(dashboard, /avatar: "Upload avatar"/);
-  assert.match(avatarEditor, /Use a clear solo face photo of yourself\./);
-  assert.match(avatarEditor, /"Change" : "Add" : "Gallery"/);
-  assert.match(avatarEditor, />Camera<\/strong>/);
-  assert.doesNotMatch(avatarEditor, /Profile identity|<h2>Avatar<\/h2>/i);
-  assert.match(avatarEditor, /void uploadAvatar\(nextFile\)/);
-  assert.match(avatarEditor, /requestDancerAvatarJson/);
+test("avatar editor derives its preview from the main photo and offers crop adjustment", () => {
+  assert.match(avatarEditor, /photos\.find\(photo => photo\.status === "approved" && photo\.isPrimary\)/);
+  assert.match(avatarEditor, /dancerAvatarPreview\(profile, pendingMain\?\.id\)/);
+  assert.match(avatarEditor, /canAdjustCrop = Boolean\(main && !pendingAvatarUrl\)/);
+  assert.match(avatarEditor, /alt="Avatar from your main photo"/);
+  assert.match(avatarEditor, /Add your main photo first\./);
+  assert.match(avatarEditor, /void adjustCrop\(\)/);
+  assert.doesNotMatch(avatarEditor, /uploadAvatar|removeAvatar|type="file"/);
 });
 
-test("avatar upload and removal reject duplicate and stale work", () => {
-  assert.match(avatarEditor, /const mountedRef = useRef\(false\);/);
-  assert.match(avatarEditor, /const actionSequenceRef = useRef\(0\);/);
-  assert.match(avatarEditor, /const actionAbortRef = useRef<AbortController \| null>\(null\);/);
-  assert.match(avatarEditor, /const actionInFlightRef = useRef\(false\);/);
-  assert.match(avatarEditor, /if \(!mountedRef\.current \|\| actionInFlightRef\.current\) return null;/);
-  assert.match(avatarEditor, /function selectAvatar[\s\S]*?if \(actionInFlightRef\.current\) return;/);
-  assert.match(avatarEditor, /async function removeAvatar\(\) \{\s*if \(actionInFlightRef\.current\) return;/);
-  assert.match(avatarEditor, /const uploadIdentityRef = useRef<\{ signature: string; key: string \} \| null>\(null\);/);
-  assert.match(avatarEditor, /uploadIdentityRef\.current\?\.signature === signature[\s\S]*?uploadIdentityRef\.current[\s\S]*?createAvatarUploadIdentity\(nextFile\)/);
-  assert.match(avatarEditor, /key: `\$\{signature\}:avatar:\$\{crypto\.randomUUID\(\)\}`/);
+test("avatar crop adjustment rejects duplicate, canceled, and stale-owner work", () => {
+  assert.match(avatarEditor, /if \(!main \|\| !canAdjustCrop \|\| action\.current\) return;/);
+  assert.match(avatarEditor, /controller\.signal\.aborted \|\| session\?\.account\?\.id !== owner \|\| session\.account\.role !== "dancer"/);
+  assert.match(avatarEditor, /return \(\) => \{ action\.current\?\.abort\(\); action\.current = null; \}/);
+  assert.match(avatarEditor, /window\.addEventListener\("storage", accountChanged\)/);
+  assert.match(avatarEditor, /window\.removeEventListener\("storage", accountChanged\)/);
+  assert.match(avatarEditor, /sourcePath: main\.storagePath, expectedAvatarUpdatedAt: profile\?\.avatar_updated_at \?\? null/);
   assert.equal((avatarEditor.match(/signal: controller\.signal/g) || []).length, 3);
-  assert.equal((avatarEditor.match(/refreshProfile\(controller\.signal\)/g) || []).length, 2);
-  assert.equal((avatarEditor.match(/if \(!isCurrentAvatarAction\(requestId, controller\)\) return;/g) || []).length, 5);
-  assert.match(avatarEditor, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
+  assert.match(avatarEditor, /if \(action\.current === controller\) \{ action\.current = null; setBusy\(false\); \}/);
+  assert.match(avatarEditor, /Avatar crop saved\. Reload to see the latest photo\./);
 });
 
 test("photo editor shows actual media only and does not advertise capacity", () => {
@@ -73,11 +68,13 @@ test("photo uploads, arrangement, and deletion reject duplicate and stale work",
   assert.match(photoEditor, /function queuePhotos[\s\S]*?if \(actionInFlightRef\.current\) return;/);
   assert.match(photoEditor, /async function deletePhoto\(photo: DancerPhotoItem\) \{\s*if \(actionInFlightRef\.current\) return;/);
   assert.match(photoEditor, /const uploadKey = `\$\{item\.id\}:gallery`/);
-  assert.match(photoEditor, /uploadSortOrder = uploadSortOrder \?\? nextGalleryPhotoSortOrder\(workingPhotos\)/);
+  assert.match(photoEditor, /let nextSortOrder = Math\.max\(nextGalleryPhotoSortOrder\(workingPhotos\),/);
+  assert.match(photoEditor, /const uploadSortOrder = item\.uploadSortOrder \?\? \(item\.id === mainCandidate\?\.id \? 0 : nextSortOrder\+\+\)/);
   assert.doesNotMatch(photoEditor, /Date\.now\(\)/);
   assert.match(photoEditor, /persistQueuedPhotoDeletions\(controller\.signal\)/);
   assert.match(photoEditor, /if \(signal\.aborted \|\| !mountedRef\.current\) return;/);
-  assert.equal((photoEditor.match(/signal: controller\.signal/g) || []).length, 7);
+  assert.equal((photoEditor.match(/signal: controller\.signal/g) || []).length, 5);
+  assert.equal((photoEditor.match(/signal: transfer\.signal/g) || []).length, 2);
   assert.equal((photoEditor.match(/finishPhotoAction\(requestId\)/g) || []).length, 4);
   assert.match(photoEditor, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
 });
@@ -108,9 +105,10 @@ test("video uploads, retries, and removal reject duplicate and stale work", () =
   assert.match(videoUpload, /uploadId: item\.uploadId/);
   assert.match(videoUpload, /!data\.upload\.alreadySubmitted && !data\.upload\.uploadComplete/);
   assert.match(videoUpload, /if \(!data\.upload\.alreadySubmitted\)/);
-  assert.match(videoUpload, /if \(item\.replaces\) \{[\s\S]*?if \(videoId\) \{[\s\S]*?method: "DELETE", signal: controller\.signal/);
+  assert.match(videoUpload, /if \(item\.replaces\) \{[\s\S]*?if \(videoId\) \{[\s\S]*?method: "DELETE", signal: transfer\.signal/);
   assert.equal((videoUpload.match(/method: "DELETE"/g) || []).length, 1);
-  assert.equal((videoUpload.match(/signal: controller\.signal/g) || []).length, 3);
+  assert.equal((videoUpload.match(/signal: controller\.signal/g) || []).length, 1);
+  assert.equal((videoUpload.match(/signal: transfer\.signal/g) || []).length, 3);
   assert.match(dancerStudio, /mountedRef\.current = false;[\s\S]*?actionSequenceRef\.current \+= 1;[\s\S]*?actionAbortRef\.current\?\.abort\(\);[\s\S]*?actionInFlightRef\.current = false;/);
 });
 
@@ -134,7 +132,7 @@ test("approved videos refresh into the builder and video cards render a visible 
   assert.match(dashboard, /controller\.signal\.aborted \|\| requestId !== requestSequence/);
   assert.match(dashboard, /requestController\?\.abort\(\);[\s\S]*?requestController = null;[\s\S]*?removeEventListener\(DANCER_PROFILE_VIDEOS_CHANGED_EVENT, refreshAfterVideoChange\)/);
   assert.match(dashboard, /requestId === requestSequence\) setIsMediaLoading\(false\)/);
-  assert.match(dancerStudio, /onLoadedMetadata=\{event => primeVideoPreviewFrame\(event\.currentTarget\)\}/);
+  assert.match(dancerStudio, /<DancerVideoPreview[\s\S]*?videoUrl=\{item\?\.previewUrl \|\| video\?\.videoUrl\} posterUrl=\{video\?\.posterUrl\}/);
   assert.match(dashboard, /imageUrl: video\.posterUrl, status: video\.status/);
   assert.doesNotMatch(dashboard, /primeVideoPreviewFrame/);
   assert.match(mediaSync, /video\.currentTime = Math\.min\(0\.15, Math\.max\(0\.05, video\.duration \/ 100\)\)/);
@@ -142,7 +140,7 @@ test("approved videos refresh into the builder and video cards render a visible 
 
 
 test("saving onboarding identity stays separate from the profile completion requirements", () => {
-  assert.match(dashboard, /const profileReady = Boolean\(\s*persistedStageName\s*&& persistedCity\s*&& avatarUrl\s*&& galleryReady,\s*\)/);
+  assert.match(dashboard, /const profileReady = Boolean\(\s*persistedStageName\s*&& persistedCity\s*&& submissionMedia\.hasMain\s*&& galleryReady,\s*\)/);
   const workspace = dashboard.match(/function DancerOnboardingProfileMediaWorkspace[\s\S]*?(?=\nfunction |$)/)?.[0] || "";
   assert.match(workspace, /<DancerIdentityEditor[^>]*>\s*\{identityContent\(\)\}\s*<\/DancerIdentityEditor>/);
   assert.doesNotMatch(workspace, /DancerProfilePreview|builderRequirements|continueAfterSave/);

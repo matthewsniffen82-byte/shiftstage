@@ -58,8 +58,8 @@ function DancerAgreementDialog({ onClose }: { onClose: () => void }) {
   >
     <header className="dancer-agreement-dialog-header">
       <h2 id={headingId}>Dancer Agreement</h2>
-      <button type="button" aria-label="Close Dancer Agreement" onClick={onClose}>
-        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" /></svg>
+      <button type="button" data-close-control="" aria-label="Close Dancer Agreement" onClick={onClose}>
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
     </header>
     <div className="dancer-agreement-dialog-body" onClick={followSection}>

@@ -405,7 +405,7 @@
           ? `<div class="approved-visual-reason">${displayText(data.label || "Photo")} not approved: ${displayText(data.notes || "No reason added.")}</div>`
           : "";
         card.innerHTML = `
-          <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">${pending ? "This upload is awaiting review. You can remove it below. Your approved photos stay live." : "Replace or delete this picture. Approved photos go live automatically. Save Profile keeps your live profile in sync."}</div></div><button class="close-btn" type="button" data-approved-edit-close aria-label="Close"><svg class="icon" viewBox="0 0 24 24"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button></div>
+          <div class="row"><div><strong>${displayText(data.label || "Profile photo")}</strong><div class="meta">${pending ? "This upload is awaiting review. You can remove it below. Your approved photos stay live." : "Replace or delete this picture. Approved photos go live automatically. Save Profile keeps your live profile in sync."}</div></div><button class="close-btn" type="button" data-approved-edit-close data-close-control="" aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18"></path></svg></button></div>
           ${rejectionReason}
           <div class="approved-visual-photo-actions">
             ${pending ? "" : `<button type="button" data-approved-visual-photo-replace data-photo-id="${displayText(data.photoId || "")}" data-photo-target="${displayText(data.target || "gallery")}">Replace picture</button>`}

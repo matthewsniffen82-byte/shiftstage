@@ -294,14 +294,11 @@ export function TvVideoStrip({
             <button
               className="tv-video-viewer-close"
               type="button"
-              aria-label="Close full-screen video"
+              data-close-control="" aria-label="Close full-screen video"
               ref={closeButton}
               onClick={() => setActiveVideo(null)}
             >
-              <svg aria-hidden="true" viewBox="0 0 24 24">
-                <path d="M6 6l12 12" />
-                <path d="M18 6 6 18" />
-              </svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
             <div
               className="tv-video-viewer-stage"

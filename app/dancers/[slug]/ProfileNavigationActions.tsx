@@ -55,7 +55,7 @@ export function ProfileCloseButton({
 
   return (
     <button
-      aria-label={vipReturnHref ? "Back to VIP dashboard" : venueReturnHref ? "Back to venue dashboard" : profileType === "dancer" ? "Back to previous page or dancer discovery results" : `Close full ${profileType} profile and return to the previous page or discovery results`}
+      data-close-control={profileType === "venue" ? "" : undefined} aria-label={vipReturnHref ? "Back to VIP dashboard" : venueReturnHref ? "Back to venue dashboard" : profileType === "dancer" ? "Back to previous page or dancer discovery results" : `Close full ${profileType} profile and return to the previous page or discovery results`}
       className="public-profile-close"
       onClick={closeProfile}
       type="button"
@@ -64,7 +64,7 @@ export function ProfileCloseButton({
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="m12 5-7 7 7 7M5 12h14" />
         </svg>
-      ) : "×"}
+      ) : <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>}
     </button>
   );
 }
@@ -164,13 +164,13 @@ export function ProfileShareButton({ dancerId, stageName, preview = false }: { d
             role="dialog"
           >
             <button
-              aria-label="Close profile sharing"
+              data-close-control="" aria-label="Close profile sharing"
               autoFocus
               className="profile-share-dialog-close"
               onClick={closeDialog}
               type="button"
             >
-              ×
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
             <span>Share profile</span>
             <h2 id="profile-share-dialog-title">{stageName} on MyDancr</h2>

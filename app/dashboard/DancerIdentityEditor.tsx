@@ -58,8 +58,8 @@ export default function DancerIdentityEditor({ children, onClose }: { children: 
     >
       <header>
         <h2 id={titleId}>Stage name &amp; city</h2>
-        <button aria-label="Close stage name and city editor" disabled={saving} onClick={() => dialogRef.current?.close()} type="button">
-          <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M5.5 5.5l9 9M14.5 5.5l-9 9" /></svg>
+        <button data-close-control="" aria-label="Close stage name and city editor" disabled={saving} onClick={() => dialogRef.current?.close()} type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
         </button>
       </header>
       <div className="dancer-profile-editor-modal-body">

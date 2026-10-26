@@ -764,7 +764,7 @@ export default function AdminClient() {
         <div className="admin-action-toast" role="status" aria-live="polite" aria-atomic="true">
           <span aria-hidden="true">✓</span>
           <strong>{actionNotice.message}</strong>
-          <button type="button" aria-label="Dismiss confirmation" onClick={() => setActionNotice(null)}>×</button>
+          <button type="button" data-close-control="" aria-label="Dismiss confirmation" onClick={() => setActionNotice(null)}><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
         </div>
       ) : null}
       <section className="dashboard-head admin-dashboard-head" aria-busy={isLoading || undefined}>
@@ -2512,7 +2512,7 @@ function ReportManager({
     {previewReport ? (
       <div className="admin-preview-overlay" role="dialog" aria-modal="true" aria-label="Reported dancer profile" onClick={closeReportedProfile}>
         <div className="admin-preview-modal admin-profile-modal reported-profile-modal" onClick={(event) => event.stopPropagation()}>
-          <button className="admin-preview-close" type="button" onClick={closeReportedProfile} aria-label="Close reported profile">×</button>
+          <button className="admin-preview-close" type="button" onClick={closeReportedProfile} data-close-control="" aria-label="Close reported profile"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
           <h3>{previewProfile ? `${asText(previewProfile.stageName || previewProfile.stage_name) || "Dancer"} — reported profile` : "Reported profile"}</h3>
           <section className="reported-profile-context" aria-label="Report context">
             <small>Reported target</small>
@@ -3602,10 +3602,10 @@ function ApprovalQueue({
               className="admin-preview-close"
               type="button"
               onClick={() => setSelectedProfile(null)}
-              aria-label="Close full profile"
+              data-close-control="" aria-label="Close full profile"
               disabled={controlsBusy}
             >
-              ×
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
             <h3>{`${asText(selectedProfile.stageName || selectedProfile.stage_name) || "Dancer"} — full profile`}</h3>
             {selectedProfileStatus ? <p role={selectedProfileStatus.startsWith("Unable") ? "alert" : "status"}>{selectedProfileStatus}</p> : null}
@@ -3938,8 +3938,8 @@ function SubmissionDetails({
       {preview ? (
         <div className="admin-preview-overlay" role="dialog" aria-modal="true" aria-label={preview.title} onClick={() => setPreview(null)}>
           <div className="admin-preview-modal" onClick={(event) => event.stopPropagation()}>
-            <button className="admin-preview-close" type="button" onClick={() => setPreview(null)} aria-label="Close preview">
-              ×
+            <button className="admin-preview-close" type="button" onClick={() => setPreview(null)} data-close-control="" aria-label="Close preview">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
             <h3>{preview.title}</h3>
             {preview.kind === "image" ? (
@@ -4419,10 +4419,10 @@ function DancerDirectory({
               className="admin-preview-close"
               type="button"
               onClick={closeProfile}
-              aria-label="Close full profile"
+              data-close-control="" aria-label="Close full profile"
               disabled={controlsBusy}
             >
-              ×
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m6 6 12 12M18 6 6 18" /></svg>
             </button>
             <h3>{profile ? `${asText(profile.stageName || profile.stage_name) || "Dancer"} — full profile` : "Full dancer profile"}</h3>
             {status ? <p role={status.startsWith("Unable") ? "alert" : "status"}>{status}</p> : null}
