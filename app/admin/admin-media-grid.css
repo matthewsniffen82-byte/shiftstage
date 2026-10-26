@@ -31,10 +31,10 @@ body .admin-shell .admin-media-grid-workbench .admin-media-back { display: inlin
 }
 .admin-media-dancer-card > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; }
 .admin-media-placeholder { display: grid; height: 100%; place-items: center; font-size: 52px; }
-.admin-media-count { position: absolute; inset: 5px 5px auto auto; padding: 3px 5px; border-radius: 6px; background: #6d28d9; color: #fff; font-size: 11px; }
+.admin-media-count { position: absolute; inset: 5px 5px auto auto; padding: 3px 5px; border-radius: 6px; background: var(--dancr-color-brand-primary); color: #fff; font-size: 11px; }
 .admin-media-identity { position: absolute; inset: auto 0 0; display: grid; gap: 3px; padding: 12px 6px 8px; background: linear-gradient(transparent,#050508f0); }
 .admin-media-identity strong { font-size: clamp(12.5px, calc(3vw + 1.5px), 16.5px); line-height: 1.15; overflow-wrap: anywhere; }
-.admin-media-identity > span { font-size: 11px; color: #e2dce9; }
+.admin-media-identity > span { font-size: 11px; color: var(--dancr-color-text-muted); }
 .admin-media-grid-workbench .admin-media-card-actions { display: flex; gap: 6px; }
 .admin-media-grid-workbench :is(.admin-media-card-actions,.admin-media-rejection) button { box-sizing: border-box; flex: 1; min-width: 0; max-width: 100%; min-height: 44px !important; padding: 8px !important; border-radius: 8px !important; font-size: 13px !important; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
 .admin-media-grid-workbench .admin-media-rejection { display: grid; gap: 6px; }

@@ -40,11 +40,11 @@ body.dancr-button-system main#venue-dashboard.dashboard-shell.dashboard-shell-ve
 .venue-setup-step-number { align-self:start; color:var(--dancr-color-text-muted); }
 .venue-setup-step-copy { display:grid; gap:4px; min-width:0; }
 .venue-setup-step-chevron { width:18px; height:18px; fill:none; stroke:var(--dancr-color-text-muted); stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
-.venue-setup-checklist li a:focus-visible { outline:2px solid #c4b5fd; outline-offset:3px; }
+.venue-setup-checklist li a:focus-visible { outline:2px solid var(--dancr-color-brand-primary); outline-offset:3px; }
 @media (hover:hover) {
-  .venue-setup-checklist li a:hover { background:var(--dancr-color-control-hover); border-color:#8b6bb5; }
+  .venue-setup-checklist li a:hover { background:var(--dancr-color-control-hover); border-color:var(--dancr-color-brand-primary); }
 }
-.venue-setup-checklist li a:active { background:var(--dancr-color-control-secondary); border-color:#c4b5fd; }
+.venue-setup-checklist li a:active { background:var(--dancr-color-control-secondary); border-color:var(--dancr-color-brand-primary); }
 .venue-setup-checklist small { font-size:12px; color:#bfb3cd; }
 .venue-setup-checklist [data-complete=true] { color:#83d6ab; }
 .venue-setup-checklist [data-complete=true] :is(strong,.venue-setup-step-number) { color:#83d6ab; }

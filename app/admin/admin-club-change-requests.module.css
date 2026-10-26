@@ -4,7 +4,7 @@
 .queue h2 span { display: inline-block; padding: 3px 9px; border-radius: 20px; color: #fde68a; background: rgba(251,191,36,.13); }
 .queue article { display: grid; gap: 9px; padding: 13px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; }
 .queue article div { display: grid; gap: 4px; }
-.queue small { color: #b9accd; }
+.queue small { color: var(--dancr-color-text-muted); }
 .queue p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 .queue button { min-height: 42px; padding: 8px 14px; border: 1px solid rgba(255,255,255,.15); border-radius: 9px; color: #fff; background: var(--dancr-color-control-secondary, #303038); font: inherit; font-weight: 700; cursor: pointer; }
 .queue article button { justify-self: start; }

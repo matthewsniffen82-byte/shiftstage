@@ -1,5 +1,5 @@
 .admin-table-qr { margin-top: 12px; border-block: 1px solid var(--dancr-color-border); }
-.admin-table-qr > summary { display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer; color: #f7f5fa; }
+.admin-table-qr > summary { display: flex; align-items: center; gap: 12px; min-height: 48px; cursor: pointer; color: var(--dancr-color-text-primary); }
 .admin-table-qr > summary::before { content: "+"; width: 16px; color: var(--dancr-color-icon-accent); text-align: center; }
 .admin-table-qr[open] > summary::before { content: "-"; }
 .admin-table-qr > summary span { margin-left: auto; color: #a5cabb; font-size: 12px; }
@@ -14,17 +14,17 @@
 .admin-table-qr .admin-table-qr-range { display: grid; gap: 10px; padding: 0; }
 .admin-table-qr-range-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .admin-table-qr-range-fields label { font-size: 13px; }
-.admin-table-qr-range-preview { color: #ddd0ef; }
-.admin-table-qr-range-preview strong { color: #f7f5fa; }
+.admin-table-qr-range-preview { color: var(--dancr-color-text-primary); }
+.admin-table-qr-range-preview strong { color: var(--dancr-color-text-primary); }
 .admin-table-qr-range > button { justify-self: start; }
 .admin-table-qr-progress { display: grid; justify-items: start; gap: 8px; padding: 10px; border: 1px solid var(--dancr-color-border); border-radius: 8px; }
 .admin-table-qr-list { list-style: none; margin: 0; padding: 0; }
 .admin-table-qr-list > li { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--dancr-color-border); }
 .admin-table-qr-identity strong { min-width: 0; overflow-wrap: anywhere; }
-.admin-table-qr-identity > span { flex-shrink: 0; color: #aba5b3; font-size: 12px; }
+.admin-table-qr-identity > span { flex-shrink: 0; color: var(--dancr-color-text-muted); font-size: 12px; }
 .admin-table-qr-identity > span.active { color: #78d9af; }
 .admin-table-qr-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.venue-manager .admin-table-qr button, .admin-table-qr-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; width: auto; padding: 8px 12px; border: 1px solid var(--dancr-color-border); border-radius: 8px; color: #f7f5fa; background: var(--dancr-color-control-secondary); font: inherit; font-size: 13px; font-weight: 650; text-decoration: none; box-sizing: border-box; cursor: pointer; }
+.venue-manager .admin-table-qr button, .admin-table-qr-actions a { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; width: auto; padding: 8px 12px; border: 1px solid var(--dancr-color-border); border-radius: 8px; color: var(--dancr-color-text-primary); background: var(--dancr-color-control-secondary); font: inherit; font-size: 13px; font-weight: 650; text-decoration: none; box-sizing: border-box; cursor: pointer; }
 .venue-manager .admin-table-qr button[type="submit"] { background: var(--dancr-color-brand-primary); border-color: var(--dancr-color-brand-primary); }
 .venue-manager .admin-table-qr button.admin-table-qr-disable { color: #f2b3bb; }
 .admin-table-qr button:hover:not(:disabled), .admin-table-qr a:hover { filter: brightness(1.16); }

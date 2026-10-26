@@ -1,7 +1,7 @@
-/* Admin workspace shares the compact lavender materials of dancer and customer dashboards. */
+/* Admin workspace shares the compact neutral materials of the account dashboards. */
 body .admin-shell.dashboard-shell-admin {
-  --admin-workspace-text: #f3f0f7;
-  --admin-workspace-muted: #aaa4b6;
+  --admin-workspace-text: var(--dancr-color-text-primary);
+  --admin-workspace-muted: var(--dancr-color-text-muted);
   --admin-workspace-line: var(--dancr-color-border);
   --mydancr-dashboard-gap: 12px;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
@@ -9,46 +9,46 @@ body .admin-shell.dashboard-shell-admin {
 }
 body .dashboard-shell-admin .admin-dashboard-head { gap: 14px; margin-bottom: 16px; padding: 22px; border: 1px solid var(--admin-workspace-line); border-radius: 22px; background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)); box-shadow: inset 0 1px 0 #ffffff08, 0 12px 32px #0003; }
 body .dashboard-shell-admin .dashboard-head-row { grid-template-columns: 56px minmax(0, 1fr) 44px; align-items: center; gap: 16px; }
-body .dashboard-shell-admin .admin-dashboard-identity { display: grid; place-items: center; width: 56px; height: 56px; border: 1px solid var(--dancr-color-border); border-radius: 50%; color: #e3d7f3; background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)); box-shadow: none; }
+body .dashboard-shell-admin .admin-dashboard-identity { display: grid; place-items: center; width: 56px; height: 56px; border: 1px solid var(--dancr-color-border); border-radius: 50%; color: var(--dancr-color-text-primary); background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)); box-shadow: none; }
 body .dashboard-shell-admin .admin-dashboard-identity svg { width: 27px; height: 27px; }
 body .dashboard-shell-admin .dashboard-head-copy { gap: 6px; }
-body .dashboard-shell-admin .eyebrow { color: #b4a6c8; font-size: 10px; font-weight: 600; letter-spacing: .14em; }
+body .dashboard-shell-admin .eyebrow { color: var(--dancr-color-text-muted); font-size: 10px; font-weight: 600; letter-spacing: .14em; }
 body .dashboard-shell-admin .dashboard-head h1 { margin: 0; color: var(--admin-workspace-text); font-family: inherit; font-size: clamp(23px, 4vw, 32px); font-weight: 650; line-height: 1.15; letter-spacing: -.04em; }
-body .dashboard-shell-admin .dashboard-head p { margin: 0; color: #b8b0c4; font-size: 12px; font-weight: 400; line-height: 1.5; }
-body .dashboard-shell-admin .dashboard-close { width: 44px; height: 44px; min-height: 44px; border-color: #ffffff20; color: #d3ccdf; background: #ffffff07; box-shadow: none; }
+body .dashboard-shell-admin .dashboard-head p { margin: 0; color: var(--dancr-color-text-muted); font-size: 12px; font-weight: 400; line-height: 1.5; }
+body .dashboard-shell-admin .dashboard-close { width: 44px; height: 44px; min-height: 44px; border-color: #ffffff20; color: var(--dancr-color-text-muted); background: #ffffff07; box-shadow: none; }
 body .dashboard-shell-admin .dashboard-close svg { width: 18px; height: 18px; }
 body .dashboard-shell-admin .admin-dashboard-session { padding-top: 12px; border-top: 1px solid var(--admin-workspace-line); }
-body .dashboard-shell-admin .admin-dashboard-session > span { font-size: 11px; font-weight: 500; color: #b8b0c4; }
-body .dashboard-shell-admin .admin-dashboard-session .admin-logout { min-height: 40px; border-color: #ffffff16; border-radius: 10px; color: #c8c0d4; background: #ffffff03; box-shadow: none; font-size: 12px; font-weight: 550; }
+body .dashboard-shell-admin .admin-dashboard-session > span { font-size: 11px; font-weight: 500; color: var(--dancr-color-text-muted); }
+body .dashboard-shell-admin .admin-dashboard-session .admin-logout { min-height: 40px; border-color: #ffffff16; border-radius: 10px; color: var(--dancr-color-text-muted); background: #ffffff03; box-shadow: none; font-size: 12px; font-weight: 550; }
 body .dashboard-shell-admin .admin-workspace-nav { gap: 8px; padding: 10px; border: 1px solid var(--admin-workspace-line); border-radius: 20px; background: rgba(20, 20, 27, 0.9608); box-shadow: inset 0 1px 0 #ffffff06, 0 8px 24px #0003; }
-body .dashboard-shell-admin .admin-workspace-nav button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px 8px; border: 1px solid transparent; border-radius: 12px; color: #b8aec8; font-size: 12px; font-weight: 550; }
+body .dashboard-shell-admin .admin-workspace-nav button { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 10px 8px; border: 1px solid transparent; border-radius: 12px; color: var(--dancr-color-text-muted); font-size: 12px; font-weight: 550; }
 body .dashboard-shell-admin .admin-workspace-nav button > svg { flex: 0 0 19px; width: 19px; height: 19px; color: var(--dancr-color-icon-accent); }
 body .dashboard-shell-admin .admin-workspace-nav button.active > svg { color: var(--dancr-color-icon-accent-active); }
-body .dashboard-shell-admin .admin-workspace-nav button.active { border: 1px solid var(--dancr-color-brand-primary); color: #f0eaf7; background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)); box-shadow: inset 0 1px 0 #ffffff06; }
-body .dashboard-shell-admin .admin-workspace-nav button > span { border: 1px solid var(--dancr-color-border); border-radius: 7px; color: #e5d5fc; background: var(--dancr-color-control-secondary); font-size: 10px; font-weight: 600; }
+body .dashboard-shell-admin .admin-workspace-nav button.active { border: 1px solid var(--dancr-color-brand-primary); color: var(--dancr-color-text-primary); background: linear-gradient(var(--dancr-color-brand-primary), var(--dancr-color-brand-primary)); box-shadow: inset 0 1px 0 #ffffff06; }
+body .dashboard-shell-admin .admin-workspace-nav button > span { border: 1px solid var(--dancr-color-border); border-radius: 7px; color: var(--dancr-color-text-primary); background: var(--dancr-color-control-secondary); font-size: 10px; font-weight: 600; }
 body .dashboard-shell-admin :is(.operations-status-line h2, .workspace-lead h2, .admin-workspace-heading h2) { font-family: inherit; font-size: clamp(20px, 3vw, 26px); font-weight: 600; line-height: 1.3; letter-spacing: -.03em; }
 body .dashboard-shell-admin :is(.workspace-lead p, .admin-workspace-heading p, .empty) { color: var(--admin-workspace-muted); font-size: 12px; font-weight: 400; line-height: 1.5; }
 body .dashboard-shell-admin .attention-grid button { min-height: 88px; gap: 5px; border: 1px solid var(--dancr-color-border); border-radius: 12px; background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)); box-shadow: inset 0 1px 0 #ffffff06; }
-body .dashboard-shell-admin .attention-grid span { color: #b8b0c4; font-size: 11px; font-weight: 500; }
-body .dashboard-shell-admin .attention-grid strong { color: #f0eaf7; font-size: 24px; font-weight: 600; letter-spacing: -.04em; }
-body .dashboard-shell-admin .attention-grid small { color: #aaa4b6; font-size: 9px; font-weight: 500; }
+body .dashboard-shell-admin .attention-grid span { color: var(--dancr-color-text-muted); font-size: 11px; font-weight: 500; }
+body .dashboard-shell-admin .attention-grid strong { color: var(--dancr-color-text-primary); font-size: 24px; font-weight: 600; letter-spacing: -.04em; }
+body .dashboard-shell-admin .attention-grid small { color: var(--dancr-color-text-muted); font-size: 9px; font-weight: 500; }
 body .dashboard-shell-admin details.admin-panel { padding: 0; border: 1px solid var(--admin-workspace-line); border-radius: 18px; background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)); box-shadow: inset 0 1px 0 #ffffff04; overflow: hidden; }
 body .dashboard-shell-admin .admin-panel-head { min-height: 78px; gap: 12px; padding: 17px 18px; }
 body .dashboard-shell-admin .admin-panel-title { display: flex; align-items: center; gap: 12px; }
 body .dashboard-shell-admin .admin-panel-icon { flex: 0 0 38px; display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--dancr-color-border); border-radius: 12px; color: var(--dancr-color-icon-accent); background: var(--dancr-color-surface-card); }
 body .dashboard-shell-admin .admin-panel-icon svg { width: 20px; height: 20px; }
 body .dashboard-shell-admin .admin-panel h2 { margin: 0; color: var(--admin-workspace-text); font-family: inherit; font-size: 17px; font-weight: 600; line-height: 1.3; letter-spacing: -.025em; text-transform: none; }
-body .dashboard-shell-admin .admin-panel-badge { padding: 5px 7px; border: 1px solid var(--dancr-color-border); border-radius: 8px; color: #e5d5fc; background: var(--dancr-color-surface-card); font-size: 10px; font-weight: 600; letter-spacing: 0; text-transform: none; }
-body .dashboard-shell-admin .admin-panel-chevron { display: grid; place-items: center; width: 18px; height: 20px; border: 0; color: #b4a4c9; background: transparent; }
+body .dashboard-shell-admin .admin-panel-badge { padding: 5px 7px; border: 1px solid var(--dancr-color-border); border-radius: 8px; color: var(--dancr-color-text-primary); background: var(--dancr-color-surface-card); font-size: 10px; font-weight: 600; letter-spacing: 0; text-transform: none; }
+body .dashboard-shell-admin .admin-panel-chevron { display: grid; place-items: center; width: 18px; height: 20px; border: 0; color: var(--dancr-color-text-muted); background: transparent; }
 body .dashboard-shell-admin .admin-panel-chevron svg { width: 17px; height: 17px; }
 body .dashboard-shell-admin details.admin-panel[open] { border-color: var(--dancr-color-border); }
 body .dashboard-shell-admin details.admin-panel[open] > summary { border-bottom: 1px solid var(--admin-workspace-line); }
 body .dashboard-shell-admin .admin-panel-body { margin: 0; padding: 18px; background: #09090d; }
-body .dashboard-shell-admin :is(.metric span, .operations-list small) { color: #b1a9bf; font-size: 12px; font-weight: 400; line-height: 1.5; }
-body .dashboard-shell-admin .metric strong { color: #f0eaf7; font-size: 20px; font-weight: 600; letter-spacing: -.025em; }
+body .dashboard-shell-admin :is(.metric span, .operations-list small) { color: var(--dancr-color-text-muted); font-size: 12px; font-weight: 400; line-height: 1.5; }
+body .dashboard-shell-admin .metric strong { color: var(--dancr-color-text-primary); font-size: 20px; font-weight: 600; letter-spacing: -.025em; }
 body .dashboard-shell-admin :is(.operations-list > div, .dancer-directory-row, .submission-value, .submission-detail) { border-color: var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-surface-card); box-shadow: none; }
 body .dashboard-shell-admin :is(.operations-list strong, .submission-value strong, .dancer-roster-identity strong) { font-weight: 550; }
-body .dashboard-shell-admin :is(.secondary-action, .quick-links a) { border-color: var(--dancr-color-border); border-radius: 10px; color: #e1d9eb; background: var(--dancr-color-control-secondary); box-shadow: inset 0 1px 0 #ffffff06; font-weight: 550; }
+body .dashboard-shell-admin :is(.secondary-action, .quick-links a) { border-color: var(--dancr-color-border); border-radius: 10px; color: var(--dancr-color-text-primary); background: var(--dancr-color-control-secondary); box-shadow: inset 0 1px 0 #ffffff06; font-weight: 550; }
 body .dashboard-shell-admin :is(input:not([type=checkbox]):not([type=radio]), textarea, select) { border-color: var(--dancr-color-border); background: var(--dancr-color-control-secondary); }
 body .dashboard-shell-admin :is(a, button, summary, input, textarea, select):focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
 body .dashboard-shell-admin .admin-panel-head:focus-visible { outline-offset: -3px; }
@@ -76,19 +76,19 @@ body .dashboard-shell-admin :is(.health-pill, .dancer-roster-badge) { font-weigh
 }
 /* The global button system uses important declarations; keep admin controls in this workspace palette. */
 body.dancr-button-system .dashboard-shell-admin :is(.admin-workspace-nav button, .attention-grid button, .admin-logout, .secondary-action, .quick-links a) { font-family: inherit !important; font-weight: 550 !important; letter-spacing: 0 !important; border-radius: 12px !important; box-shadow: inset 0 1px 0 #ffffff06 !important; }
-body.dancr-button-system .dashboard-shell-admin .admin-workspace-nav button { border: 1px solid transparent !important; color: #b8aec8 !important; background: transparent !important; }
-body.dancr-button-system .dashboard-shell-admin .admin-workspace-nav button.active { border-color: var(--dancr-color-control-border-soft) !important; color: #f0eaf7 !important; background: linear-gradient(var(--dancr-color-control-selected), var(--dancr-color-control-selected)) !important; }
+body.dancr-button-system .dashboard-shell-admin .admin-workspace-nav button { border: 1px solid transparent !important; color: var(--dancr-color-text-muted) !important; background: transparent !important; }
+body.dancr-button-system .dashboard-shell-admin .admin-workspace-nav button.active { border-color: var(--dancr-color-control-border-soft) !important; color: var(--dancr-color-text-primary) !important; background: linear-gradient(var(--dancr-color-control-selected), var(--dancr-color-control-selected)) !important; }
 body.dancr-button-system .dashboard-shell-admin .attention-grid button { border-color: var(--dancr-color-border) !important; background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important; }
-body.dancr-button-system .dashboard-shell-admin :is(.secondary-action, .quick-links a) { border-color: var(--dancr-color-border) !important; color: #e1d9eb !important; background: var(--dancr-color-control-secondary) !important; }
-body.dancr-button-system .dashboard-shell-admin .admin-logout { border-color: #ffffff16 !important; color: #c8c0d4 !important; background: #ffffff03 !important; }
+body.dancr-button-system .dashboard-shell-admin :is(.secondary-action, .quick-links a) { border-color: var(--dancr-color-border) !important; color: var(--dancr-color-text-primary) !important; background: var(--dancr-color-control-secondary) !important; }
+body.dancr-button-system .dashboard-shell-admin .admin-logout { border-color: #ffffff16 !important; color: var(--dancr-color-text-muted) !important; background: #ffffff03 !important; }
 body.dancr-button-system .dashboard-shell-admin :is(.admin-workspace-nav button, .attention-grid button):hover { border-color: var(--dancr-color-border-strong) !important; background: var(--dancr-color-control-secondary) !important; }
-body.dancr-button-system .dashboard-shell-admin .dashboard-close { width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important; border: 1px solid #ffffff20 !important; border-radius: 50% !important; color: #d3ccdf !important; background: #ffffff07 !important; box-shadow: none !important; }
+body.dancr-button-system .dashboard-shell-admin .dashboard-close { width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 !important; border: 1px solid #ffffff20 !important; border-radius: 50% !important; color: var(--dancr-color-text-muted) !important; background: #ffffff07 !important; box-shadow: none !important; }
 body.dancr-button-system .dashboard-shell-admin :is(a, button, summary, input, textarea, select):focus-visible { outline: 2px solid var(--dancr-color-brand-primary) !important; outline-offset: 3px; }
 body .admin-shell.dashboard-shell-admin details.admin-panel { padding: 0 !important; border-color: var(--admin-workspace-line) !important; background: linear-gradient(var(--dancr-color-surface-card), var(--dancr-color-surface-card)) !important; box-shadow: inset 0 1px 0 #ffffff04 !important; }
 body .admin-shell.dashboard-shell-admin details.admin-panel[open] { border-color: var(--dancr-color-border) !important; }
 body .admin-shell.dashboard-shell-admin .admin-panel-head h2 { font-size: 17px !important; font-weight: 600 !important; }
 body .admin-shell.dashboard-shell-admin .admin-panel-head h2::before { content: none; }
-body .admin-shell.dashboard-shell-admin .admin-panel-badge { border: 1px solid var(--dancr-color-border) !important; color: #e5d5fc !important; background: var(--dancr-color-surface-card) !important; }
+body .admin-shell.dashboard-shell-admin .admin-panel-badge { border: 1px solid var(--dancr-color-border) !important; color: var(--dancr-color-text-primary) !important; background: var(--dancr-color-surface-card) !important; }
 @media (max-width: 680px) {
   body .admin-shell.dashboard-shell-admin .admin-panel-head h2 { font-size: 15px !important; }
 }
@@ -100,7 +100,7 @@ body .admin-shell.dashboard-shell-admin .admin-panel-badge { border: 1px solid v
 body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-workspace-nav button > .admin-workspace-count {
   position: static; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
   min-width: 20px; height: auto; padding: 2px 5px; border: 1px solid var(--dancr-color-border) !important; border-radius: 6px;
-  color: #f5edff !important; -webkit-text-fill-color: #f5edff !important;
+  color: var(--dancr-color-text-primary) !important; -webkit-text-fill-color: var(--dancr-color-text-primary) !important;
   background: linear-gradient(var(--dancr-color-control-secondary), var(--dancr-color-control-secondary)) !important; box-shadow: none !important; text-shadow: none !important;
   font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; text-align: center; line-height: 1.3; white-space: nowrap;
 }
@@ -113,7 +113,7 @@ body .dashboard-shell-admin .venue-commercial-setup { display: grid; gap: 12px; 
 body .dashboard-shell-admin .venue-commercial-setup .operations-center { max-width: 100%; margin: 0; }
 body .dashboard-shell-admin .venue-commercial-setup .admin-panel-chevron { transform: rotate(0); }
 body .dashboard-shell-admin .venue-commercial-setup .admin-panel[open] > .admin-panel-head .admin-panel-chevron { transform: rotate(180deg); }
-body .dashboard-shell-admin .venue-commercial-setup select:disabled { opacity: 1; color: #e1d9eb; }
+body .dashboard-shell-admin .venue-commercial-setup select:disabled { opacity: 1; color: var(--dancr-color-text-primary); }
 
 /* Keep daily actions prominent; open the detailed tools only when needed. */
 body .admin-shell .admin-unified-review { display: grid; gap: 12px; }
@@ -123,14 +123,14 @@ body .admin-shell .admin-review-toolbar { display: flex; align-items: end; flex-
 body .admin-shell .admin-review-toolbar label { display: grid; gap: 5px; flex: 1; min-width: 140px; }
 body .admin-shell .admin-review-toolbar :is(select, button) { min-height: 44px; }
 body .admin-shell .admin-review-current { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-block: 8px; border-block: 1px solid #ffffff1f; }
-body .admin-shell .admin-review-current span { color: #bdb3ca; font-size: 13px; }
+body .admin-shell .admin-review-current span { color: var(--dancr-color-text-muted); font-size: 13px; }
 body .admin-shell #admin-review-queue { grid-column: 1 / -1; }
 body .admin-shell .admin-club-checklist { margin: 12px; padding: 12px; display: grid; gap: 10px; border: 1px solid var(--dancr-color-border); border-radius: 12px; background: var(--dancr-color-surface-card); }
 body .admin-shell .admin-club-checklist header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 body .admin-shell .admin-club-checklist ol { display: grid; gap: 4px; list-style: none; margin: 0; padding: 0; }
 body .admin-shell .admin-club-checklist li > button { display: grid; grid-template-columns: 20px minmax(0, 1fr) 16px; align-items: center; width: 100%; min-height: 50px; gap: 8px; text-align: left; background: transparent; border-color: transparent; }
 body .admin-shell .admin-club-checklist li > button > span:nth-child(2) { display: grid; gap: 3px; }
-body .admin-shell .admin-club-checklist small { font-size: 12px; color: #bdb3ca; font-weight: 400; line-height: 1.4; }
+body .admin-shell .admin-club-checklist small { font-size: 12px; color: var(--dancr-color-text-muted); font-weight: 400; line-height: 1.4; }
 body .admin-shell .admin-club-checklist .is-complete { color: #74d8aa; }
 body .admin-shell .admin-club-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 12px; }
 body .admin-shell [data-setup-step] { scroll-margin-top: 145px; }
@@ -158,12 +158,12 @@ body .admin-shell.dashboard-shell-admin .admin-queues-clear { margin: 0; padding
 body.dancr-button-system .admin-shell.dashboard-shell-admin .support-inbox-list button { min-height: 44px !important; padding: 6px 12px !important; border-radius: 10px !important; font-size: 13px !important; font-weight: 600 !important; box-shadow: none !important; }
 body.dancr-button-system .admin-shell.dashboard-shell-admin .support-reply-actions button { color: #fff !important; background: var(--dancr-color-brand-primary) !important; }
 body .admin-shell.dashboard-shell-admin .admin-task-shortcuts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-task-shortcuts button { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; min-height: 48px !important; padding: 10px !important; border: 1px solid var(--dancr-color-border) !important; border-radius: 10px !important; background: var(--dancr-color-control-secondary) !important; color: #e9dcfa !important; font-size: 12px !important; text-align: left; box-shadow: none !important; }
+body.dancr-button-system .admin-shell.dashboard-shell-admin .admin-task-shortcuts button { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; min-height: 48px !important; padding: 10px !important; border: 1px solid var(--dancr-color-border) !important; border-radius: 10px !important; background: var(--dancr-color-control-secondary) !important; color: var(--dancr-color-text-primary) !important; font-size: 12px !important; text-align: left; box-shadow: none !important; }
 body .admin-shell.dashboard-shell-admin .admin-record-section { margin: 8px 0; padding: 0; border: 1px solid var(--admin-workspace-line); border-radius: 10px; background: var(--dancr-color-surface-card); }
-body .admin-shell.dashboard-shell-admin .admin-record-section > summary { min-height: 48px; padding: 12px; color: #e9def5; font-size: 14px; font-weight: 600; cursor: pointer; }
+body .admin-shell.dashboard-shell-admin .admin-record-section > summary { min-height: 48px; padding: 12px; color: var(--dancr-color-text-primary); font-size: 14px; font-weight: 600; cursor: pointer; }
 body .admin-shell.dashboard-shell-admin .admin-record-section > :not(summary) { margin: 0; padding: 12px; }
 body .admin-shell.dashboard-shell-admin .admin-feature-note { padding: 12px; border-left: 3px solid var(--dancr-color-border); border-radius: 8px; background: var(--dancr-color-surface-card); }
-body .admin-shell.dashboard-shell-admin .admin-feature-note p { margin: 6px 0 0; color: #d5c7e4; font-size: 13px; line-height: 1.5; }
+body .admin-shell.dashboard-shell-admin .admin-feature-note p { margin: 6px 0 0; color: var(--dancr-color-text-muted); font-size: 13px; line-height: 1.5; }
 @media (max-width: 680px) {
   body .admin-shell.dashboard-shell-admin .admin-workspace-nav button { font-size: 11px !important; gap: 4px; }
   body .admin-shell.dashboard-shell-admin .admin-workspace-nav button > svg { display: none; }

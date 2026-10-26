@@ -3,9 +3,9 @@
 .history small { display: block; color: var(--dancr-color-text-muted, #c5c3cc); }
 .tools { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
 .tools label { display: grid; gap: 5px; min-width: 0; flex: 1 1 170px; }
-.tools input, .tools select { width: 100%; min-height: 44px; padding: 9px 10px; border: 1px solid var(--dancr-color-border, #414047); border-radius: 10px; background: var(--dancr-color-control-secondary, #303035); color: inherit; font: inherit; font-size: 16px; }
+.tools input, .tools select { width: 100%; min-height: 44px; padding: 9px 10px; border: 1px solid var(--dancr-color-border, #35313f); border-radius: 10px; background: var(--dancr-color-control-secondary, #303038); color: inherit; font: inherit; font-size: 16px; }
 .history button { min-height: 44px; }
-.record { border: 1px solid var(--dancr-color-border, #414047); border-radius: 12px; }
+.record { border: 1px solid var(--dancr-color-border, #35313f); border-radius: 12px; }
 .record summary { display: flex; justify-content: space-between; gap: 12px; padding: 12px; cursor: pointer; }
 .record summary > span { min-width: 0; overflow-wrap: anywhere; }
 .details { display: grid; gap: 12px; padding: 0 12px 12px; overflow-wrap: anywhere; }

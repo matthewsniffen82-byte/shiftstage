@@ -397,22 +397,22 @@ function AdminTvPanelStyles() {
       .admin-tv-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; }
       .admin-tv-head > div { display: grid; gap: 3px; }
       .admin-tv-head > div span { color: #94e5ff; font-size: 12px; }
-      .admin-tv-head label, .admin-tv-copy label { display: grid; gap: 5px; color: #b9accd; font-size: 11px; font-weight: 850; }
+      .admin-tv-head label, .admin-tv-copy label { display: grid; gap: 5px; color: var(--dancr-color-text-muted); font-size: 11px; font-weight: 850; }
       .admin-tv-head select, .admin-tv-copy textarea { min-height: 38px; border: 1px solid rgba(255,255,255,.13); border-radius: 8px; color: #fff; background: rgba(255,255,255,.05); padding: 8px 10px; font: inherit; }
       .admin-tv-video { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 12px; padding: 10px; border: 1px solid rgba(255,255,255,.09); border-radius: 8px; background: rgba(255,255,255,.035); }
       .admin-tv-video > video, .admin-tv-missing { width: 150px; aspect-ratio: 9 / 16; max-height: 270px; object-fit: contain; border-radius: 7px; background: #000; }
-      .admin-tv-missing { display: grid; place-items: center; color: #9c90b3; font-size: 11px; }
+      .admin-tv-missing { display: grid; place-items: center; color: var(--dancr-color-text-muted); font-size: 11px; }
       .admin-tv-copy > span { width: fit-content; color: #ffe19d; font-size: 10px; font-weight: 950; letter-spacing: .1em; text-transform: uppercase; }
       .admin-tv-copy h3, .admin-tv-copy p { margin: 0; }
-      .admin-tv-copy p { color: #ddd4ed; line-height: 1.4; }
-      .admin-tv-copy small { color: #a99ebc; line-height: 1.4; }
+      .admin-tv-copy p { color: var(--dancr-color-text-primary); line-height: 1.4; }
+      .admin-tv-copy small { color: var(--dancr-color-text-muted); line-height: 1.4; }
       .admin-tv-copy > a { width: fit-content; color: #94e5ff; font-size: 12px; font-weight: 850; }
       .admin-tv-ai-decision { display: grid; gap: 5px; padding: 9px; border: 1px solid rgba(255,200,90,.24); border-radius: 8px; background: rgba(255,200,90,.05); }
       .admin-tv-ai-decision.decision-approved { border-color: rgba(58,255,164,.3); background: rgba(58,255,164,.06); }
       .admin-tv-ai-decision.decision-rejected { border-color: rgba(255,91,116,.32); background: rgba(255,91,116,.06); }
       .admin-tv-ai-decision strong { color: #fff; text-transform: capitalize; }
       .admin-tv-ai-decision ul { display: flex; flex-wrap: wrap; gap: 5px; margin: 0; padding: 0; list-style: none; }
-      .admin-tv-ai-decision li { padding: 3px 6px; border-radius: 999px; color: #d8cfeb; background: rgba(255,255,255,.07); font-size: 10px; text-transform: capitalize; }
+      .admin-tv-ai-decision li { padding: 3px 6px; border-radius: 999px; color: var(--dancr-color-text-primary); background: rgba(255,255,255,.07); font-size: 10px; text-transform: capitalize; }
       .admin-tv-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
       .admin-tv-actions button { min-height: 40px; border: 1px solid rgba(58,255,164,.34); border-radius: 8px; color: #0a1b12; background: #85ffc1; font-weight: 950; cursor: pointer; }
       .admin-tv-actions button.reject { color: #fff; border-color: rgba(255,91,116,.4); background: #bc3048; }
@@ -430,7 +430,7 @@ function AdminTvPanelStyles() {
       .admin-tv-result.is-working .admin-tv-result-icon { color: #a9efff; animation: admin-tv-spin .9s linear infinite; }
       .admin-tv-result.is-error, .admin-tv-result.is-rejected { border-color: rgba(255,91,116,.38); background: rgba(255,91,116,.08); }
       .admin-tv-result.is-error .admin-tv-result-icon, .admin-tv-result.is-rejected .admin-tv-result-icon { background: #bc3048; }
-      .admin-tv-empty { padding: 18px; border: 1px dashed rgba(255,255,255,.14); border-radius: 8px; color: #a99ebc; text-align: center; }
+      .admin-tv-empty { padding: 18px; border: 1px dashed rgba(255,255,255,.14); border-radius: 8px; color: var(--dancr-color-text-muted); text-align: center; }
       @keyframes admin-tv-spin { to { transform: rotate(360deg); } }
       @media (max-width: 680px) {
         .admin-tv-head { align-items: stretch; flex-direction: column; }

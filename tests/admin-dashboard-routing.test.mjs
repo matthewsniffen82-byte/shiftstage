@@ -35,7 +35,9 @@ test("advanced admin operations stay available through the canonical dashboard",
 
 test("admin uses the same routed dashboard chrome and structured loading hierarchy", () => {
   assert.match(adminClient, /className="admin-shell dashboard-shell-admin"/);
-  assert.match(adminClient, /className="dashboard-head admin-dashboard-head"/);
+  assert.match(adminClient, /className="dashboard-head admin-dashboard-head dashboard-identity-header"/);
+  assert.match(adminClient, /className="dashboard-identity-back-row"/);
+  assert.match(adminClient, /className="dashboard-identity-row"/);
   assert.match(adminClient, /<DashboardCloseButton/);
   assert.match(adminClient, /fallbackHref=\{homeDiscoveryHref\("tonight"\)\}/);
   assert.match(adminClient, /<AdminDashboardLoadingState \/>/);
