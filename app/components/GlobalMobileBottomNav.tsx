@@ -179,6 +179,7 @@ export function GlobalMobileBottomNav() {
   }, []);
 
   useEffect(() => {
+    if (pathname === "/admin" || pathname.startsWith("/admin/")) return;
     if (pathname.startsWith("/embed/")) return;
     if (pathname === "/venue/confirm-email") return;
     if (pathname === "/vip" || pathname.startsWith("/vip/")) return;
@@ -354,6 +355,7 @@ export function GlobalMobileBottomNav() {
     };
   }, [city, pathname]);
 
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return null;
   if (pathname.startsWith("/internal") || pathname.startsWith("/embed/")) return null;
   if (pathname === "/venue/confirm-email") return null;
   if (pathname === "/vip" || pathname.startsWith("/vip/")) return null;
