@@ -175,9 +175,10 @@ test("admin API accepts seeded table row IDs for download, rename and disable", 
   }
 });
 
+const Preview = () => null;
 function componentFixture(handler) {
   const slots = [], effects = []; let cursor = 0, tree; const requests = [];
-  const printJobs = [], printWindows = [];
+  const printWindows = [];
   let nextId = 80;
   const hooks = {
     useState(initial) { const index = cursor++; if (!(index in slots)) slots[index] = initial; return [slots[index], value => { slots[index] = typeof value === "function" ? value(slots[index]) : value; }]; },
@@ -190,13 +191,13 @@ function componentFixture(handler) {
     react: hooks, "react/jsx-runtime": { jsx, jsxs: jsx }, "./admin-table-qr.css": {},
     "../components/RefreshButton": refreshButtonModule,
     "./admin-table-qr-range": { existingTableNumbers, readTableQrRange },
-    "./admin-table-qr-print": { loadTableQrPrintImages, renderTableQrPrintDocument: async (_doc, name, images) => { printJobs.push({ name, images }); } },
+    "./admin-table-qr-print": { loadTableQrPrintImages },
+    "./AdminTableQrPreview": { default: Preview },
     "./admin-session": { isAdminAuthenticationError: error => error.status === 401, requestAdminJson: async (url, options) => {
       requests.push({ url, options }); return handler(url, options, requests.length);
     } },
   }, { crypto: { randomUUID: () => id(nextId++) }, window: { confirm: () => true, location: { origin: "https://www.mydancr.com" }, open: () => {
-    const popup = { closed: false, document: { body: {} }, focus() {}, print() { this.printed = true; } };
-    printWindows.push(popup); return popup;
+    printWindows.push(true); return null; // Mobile popup blockers must not prevent previews.
   } },
     navigator: { clipboard: { writeText: async () => {} } } });
   function render() { cursor = 0; tree = Component({ venueId: id(20), name: "Synthetic club" }); while (effects.length) effects.shift()(); return tree; }
@@ -204,7 +205,7 @@ function componentFixture(handler) {
   const find = predicate => nodes(tree).find(predicate);
   async function settle() { for (let i = 0; i < 3; i++) { await new Promise(resolve => setImmediate(resolve)); render(); } }
   render();
-  return { requests, printJobs, printWindows, render, find, settle, open() { tree.props.onToggle({ currentTarget: { open: true } }); render(); },
+  return { requests, printWindows, render, find, settle, preview: () => find(node => node.type === Preview)?.props, open() { tree.props.onToggle({ currentTarget: { open: true } }); render(); },
     unmount() { for (const slot of slots) slot?.cleanup?.(); } };
 }
 test("admin component loads on demand, creates once and exposes an authenticated print action", async () => {
@@ -223,7 +224,7 @@ test("admin component loads on demand, creates once and exposes an authenticated
   f.unmount();
 });
 
-test("single and bulk printing load only the selected active signs through the Admin API", async () => {
+test("single and bulk signs preview in Admin even when popup windows are blocked", async () => {
   const codes = [code(), code({ id: id(81), label: 'Table 2' }), code({ id: id(82), active: false })];
   const f = componentFixture(async path => {
     const download = new URL(path, 'https://example.invalid').searchParams.get('download');
@@ -231,13 +232,12 @@ test("single and bulk printing load only the selected active signs through the A
   });
   f.open(); await f.settle();
   f.find(node => node.type === 'button' && node.props.children === 'Print QR sign').props.onClick(); await f.settle();
-  assert.equal(f.printJobs.length, 1);
-  assert.deepEqual(f.printJobs[0].images.map(image => image.label), ['Table 1']);
-  assert.equal(f.printWindows[0].printed, true);
+  assert.deepEqual(f.preview().images.map(image => image.label), ['Table 1']);
+  assert.equal(f.printWindows.length, 0);
   assert.equal(f.requests.filter(request => request.url.includes('download=')).length, 1);
   f.find(node => node.type === 'button' && node.props.children === 'Print all').props.onClick(); await f.settle();
-  assert.deepEqual(f.printJobs[1].images.map(image => image.label), ['Table 1', 'Table 2']);
-  assert.equal(f.printWindows[1].printed, true);
+  assert.deepEqual(f.preview().images.map(image => image.label), ['Table 1', 'Table 2']);
+  assert.equal(f.printWindows.length, 0);
   assert.ok(f.requests.every(request => request.url.startsWith('/api/admin/venues/table-qr')));
   f.unmount();
 });
@@ -249,11 +249,45 @@ test("expired Admin authorization cannot render or print a saved table sign", as
   });
   f.open(); await f.settle();
   f.find(node => node.type === 'button' && node.props.children === 'Print QR sign').props.onClick(); await f.settle();
-  assert.equal(f.printJobs.length, 0);
-  assert.equal(f.printWindows[0].printed, undefined);
-  assert.match(f.printWindows[0].document.body.textContent, /Unable to prepare/);
+  assert.equal(f.preview(), undefined);
+  assert.equal(f.printWindows.length, 0);
+  assert.match(f.find(node => node.props.role === 'alert').props.children, /Sign in required/);
   assert.equal(f.find(node => node.type === 'button' && node.props.children === 'Print QR sign'), undefined);
   f.unmount();
+});
+
+test("view and download waits for a matching saved image without claiming a download happened", async () => {
+  let finish;
+  const f = componentFixture(async path => path.includes('download=')
+    ? new Promise(resolve => { finish = resolve; }) : { venueId: id(20), links: [code()] });
+  f.open(); await f.settle();
+  const button = f.find(node => node.type === 'button' && node.props.children === 'View / download QR');
+  button.props.onClick(); button.props.onClick(); await f.settle();
+  assert.equal(f.requests.filter(request => request.url.includes('download=')).length, 1);
+  assert.equal(f.preview(), undefined);
+  finish({ venueId: id(20), id: id(80), imageDataUrl: 'data:image/png;base64,cXI=' }); await f.settle();
+  assert.equal(f.preview().images[0].id, id(80));
+  assert.match(f.find(node => node.props.role === 'status').props.children, /QR preview ready/);
+  assert.equal(f.printWindows.length, 0);
+  f.preview().onClose(); f.render(); assert.equal(f.preview(), undefined);
+  f.unmount();
+});
+
+test("failed, mismatched and aborted image requests cannot expose a stale QR preview", async () => {
+  for (const failure of ['request', 'venue', 'code', 'unmount']) {
+    let finish;
+    const f = componentFixture(async path => path.includes('download=')
+      ? new Promise((resolve, reject) => { finish = failure === 'request' ? () => reject(new Error('Image request failed')) : resolve; })
+      : { venueId: id(20), links: [code()] });
+    f.open(); await f.settle();
+    f.find(node => node.type === 'button' && node.props.children === 'View / download QR').props.onClick(); await f.settle();
+    if (failure === 'unmount') f.unmount();
+    finish({ venueId: failure === 'venue' ? id(21) : id(20), id: failure === 'code' ? id(81) : id(80), imageDataUrl: 'data:image/png;base64,cXI=' });
+    await f.settle();
+    assert.equal(f.preview(), undefined);
+    if (failure !== 'unmount') assert.ok(f.find(node => node.props.role === 'alert'));
+    f.unmount();
+  }
 });
 test("Echo's existing sample tables do not block the create form or a new table", async () => {
   const existing = echoTableIds.map((tableId, i) => code({ id: tableId, label: `Sample table ${i + 1}`, token: id(100 + i) }));

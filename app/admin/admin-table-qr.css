@@ -31,6 +31,17 @@
 .admin-table-qr button:disabled { opacity: .55; cursor: default; }
 .admin-table-qr :is(button, a, summary, input):focus-visible { outline: 2px solid var(--dancr-color-brand-primary); outline-offset: 3px; }
 .admin-table-qr p { margin: 0; font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+.admin-table-qr-preview { position: relative; display: grid; gap: 12px; min-width: 0; padding: 14px; border: 1px solid var(--dancr-color-border-strong); border-radius: 12px; background: var(--dancr-color-surface-card); }
+.admin-table-qr-preview, .admin-table-qr-feedback { scroll-margin-block: 100px 20px; }
+.admin-table-qr-preview-images { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 16px; }
+.admin-table-qr-preview figure { display: grid; gap: 8px; min-width: 0; margin: 0; }
+.admin-table-qr-preview figcaption { font-weight: 650; }
+.admin-table-qr-preview img { display: block; width: 100%; max-width: 360px; height: auto; aspect-ratio: 1; object-fit: contain; background: #fff; border-radius: 4px; }
+.admin-table-qr-preview > button { justify-self: start; }
+.admin-table-qr-print-frame { position: absolute; width: 1px; height: 1px; border: 0; opacity: 0; pointer-events: none; }
+@media (max-width: 720px) {
+  .admin-table-qr-preview, .admin-table-qr-feedback { scroll-margin-block-start: 180px; }
+}
 @media (max-width: 480px) {
   .admin-table-qr-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .admin-table-qr-actions :is(a, button) { min-width: 0; white-space: normal; text-align: center; overflow-wrap: anywhere; }

@@ -4,7 +4,8 @@ import RefreshButton from "../components/RefreshButton";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { isAdminAuthenticationError, requestAdminJson } from "./admin-session";
 import { existingTableNumbers, readTableQrRange } from "./admin-table-qr-range";
-import { loadTableQrPrintImages, renderTableQrPrintDocument } from "./admin-table-qr-print";
+import { loadTableQrPrintImages, type TableQrPrintImage } from "./admin-table-qr-print";
+import AdminTableQrPreview from "./AdminTableQrPreview";
 import "./admin-table-qr.css";
 
 type TableCode = { id: string; venue_id: string; kind: "table"; label: string; token: string; active: boolean; updated_at: string };
@@ -33,11 +34,17 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
   const [editLabel, setEditLabel] = useState("");
   const [status, setStatus] = useState("");
   const [failed, setFailed] = useState(false);
+  const [preview, setPreview] = useState<TableQrPrintImage[] | null>(null);
+  const feedback = useRef<HTMLParagraphElement>(null);
   const lifetime = useRef<AbortController | null>(null);
   const inFlight = useRef(false);
   const createAttempt = useRef<{ id: string; label: string } | null>(null);
   const bulkAttempt = useRef<{ venueId: string; id: string; label: string } | null>(null);
   const bulkControl = useRef<{ stop: boolean } | null>(null);
+
+  useEffect(() => {
+    if (status && (busy || failed)) feedback.current?.scrollIntoView({ block: "start" });
+  }, [status, busy, failed]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -47,7 +54,7 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
   useEffect(() => {
     if (!opened) return;
     const controller = new AbortController();
-    setLoading(true); setStatus(""); setFailed(false); setEditing(null);
+    setLoading(true); setStatus(""); setFailed(false); setEditing(null); setPreview(null);
     void requestAdminJson(`/api/admin/venues/table-qr?venueId=${encodeURIComponent(venueId)}`, {
       cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
       fallbackMessage: "Unable to load table QR codes.",
@@ -70,7 +77,7 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
     if (action !== "disable" && (!nextLabel || nextLabel.length > 60)) return;
     if (action === "disable" && !window.confirm(`Disable ${code?.label}? Its printed QR code will stop working and its open requests will be cancelled.`)) return;
     const controller = lifetime.current;
-    inFlight.current = true; setBusy(true); setStatus(""); setFailed(false);
+    inFlight.current = true; setBusy(true); setStatus(""); setFailed(false); setPreview(null);
     try {
       if (action === "create" && createAttempt.current?.label !== nextLabel) {
         createAttempt.current = { id: crypto.randomUUID(), label: nextLabel };
@@ -173,53 +180,21 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
       setFailed(true); setStatus("Copy is unavailable. Open the roster and copy its address.");
     }
   }
-  async function download(code: TableCode) {
-    if (inFlight.current || loading || !lifetime.current) return;
-    const controller = lifetime.current;
-    inFlight.current = true; setBusy(true); setStatus(""); setFailed(false);
-    try {
-      const data = await requestAdminJson(`/api/admin/venues/table-qr?venueId=${encodeURIComponent(venueId)}&download=${encodeURIComponent(code.id)}`, {
-        cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]), fallbackMessage: "Unable to download the QR code.",
-      });
-      if (controller.signal.aborted) return;
-      if (data.venueId !== venueId || data.id !== code.id || typeof data.imageDataUrl !== "string" || !data.imageDataUrl.startsWith("data:image/png;base64,")) {
-        throw new Error("The QR image could not be confirmed.");
-      }
-      const anchor = document.createElement("a");
-      anchor.href = data.imageDataUrl; anchor.download = `table-qr-${code.id}.png`;
-      document.body.appendChild(anchor); anchor.click(); anchor.remove();
-      setStatus("QR image downloaded.");
-    } catch (error) {
-      if (controller.signal.aborted) return;
-      if (isAdminAuthenticationError(error)) setLinks(null);
-      setFailed(true); setStatus(error instanceof Error ? error.message : "Unable to download the QR code.");
-    } finally {
-      inFlight.current = false;
-      if (!controller.signal.aborted) setBusy(false);
-    }
-  }
-  async function printCodes(codes: TableCode[]) {
+  async function previewCodes(codes: TableCode[]) {
     if (!codes.some(code => code.active) || loading || inFlight.current || !lifetime.current) return;
-    const printWindow = window.open("", "_blank");
-    if (!printWindow) { setFailed(true); setStatus("Allow the print window, then try printing again."); return; }
-    printWindow.opener = null;
-    printWindow.document.title = "Preparing table QR signs";
-    printWindow.document.body.textContent = "Preparing table signs…";
     const controller = lifetime.current;
-    inFlight.current = true; setBusy(true); setFailed(false); setStatus("Preparing print signs…");
+    inFlight.current = true; setBusy(true); setFailed(false); setPreview(null); setStatus("Preparing QR preview…");
     try {
       const images = await loadTableQrPrintImages(venueId, codes, path => requestAdminJson(path, {
-        cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]), fallbackMessage: "Unable to prepare table signs.",
+        cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]), fallbackMessage: "Unable to prepare table QR codes.",
       }));
-      if (controller.signal.aborted || printWindow.closed) return;
-      await renderTableQrPrintDocument(printWindow.document, name, images);
-      if (controller.signal.aborted || printWindow.closed) return;
-      printWindow.focus(); printWindow.print(); setStatus(`${images.length} table signs ready to print.`);
+      if (controller.signal.aborted) return;
+      setPreview(images);
+      setStatus("QR preview ready. Choose Download PNG or Print / save PDF.");
     } catch (error) {
-      if (!printWindow.closed) printWindow.document.body.textContent = "Unable to prepare signs. Return to the table QR list and try again.";
       if (!controller.signal.aborted) {
         if (isAdminAuthenticationError(error)) setLinks(null);
-        setFailed(true); setStatus(error instanceof Error ? error.message : "Unable to print table signs.");
+        setFailed(true); setStatus(error instanceof Error ? error.message : "Unable to prepare table QR codes.");
       }
     } finally { inFlight.current = false; if (!controller.signal.aborted) setBusy(false); }
   }
@@ -233,12 +208,14 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
     {opened ? <div className="admin-table-qr-body" aria-label={`${name} table QR codes`}>
       <div className="admin-table-qr-heading"><h3>{name}</h3><RefreshButton label="Refresh table QR codes" busy={loading} type="button" disabled={loading || busy} onClick={() => setRevision(value => value + 1)} /></div>
       {loading ? <p role="status">Loading table QR codes...</p> : null}
+      {status ? <p ref={feedback} className="admin-table-qr-feedback" role={failed ? "alert" : "status"}>{status}</p> : null}
+      {preview ? <AdminTableQrPreview name={name} images={preview} onClose={() => { setPreview(null); setStatus(""); }} /> : null}
       {links ? <>
         <div className="admin-table-qr-mode" role="group" aria-label="Create table QR codes">
           <button type="button" aria-pressed={createMode === "single"} disabled={busy || loading} onClick={() => setCreateMode("single")}>Single table</button>
           <button type="button" aria-pressed={createMode === "range"} disabled={busy || loading} onClick={() => setCreateMode("range")}>Number range</button>
           <button type="button" disabled={busy || loading} onClick={() => { setCreateMode("range"); setFirstTable("1"); setLastTable("20"); }}>Tables 1–20</button>
-          <button type="button" disabled={busy || loading || !links.some(code => code.active)} onClick={() => void printCodes(links)}>Print all</button>
+          <button type="button" disabled={busy || loading || !links.some(code => code.active)} onClick={() => void previewCodes(links)}>Print all</button>
         </div>
         {createMode === "single" ? <form className="admin-table-qr-create" onSubmit={submit}>
           <label>Table label<input value={label} onChange={event => setLabel(event.target.value)} placeholder="Table 1" maxLength={60} required disabled={busy || loading} /></label>
@@ -265,8 +242,8 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
             <button type="submit" disabled={busy || loading || !editLabel.trim()}>Save label</button>
             <button type="button" disabled={busy} onClick={() => setEditing(null)}>Cancel</button>
           </form> : code.active ? <div className="admin-table-qr-actions">
-            <button type="button" disabled={busy || loading} onClick={() => void download(code)}>Download QR</button>
-            <button type="button" disabled={busy || loading} onClick={() => void printCodes([code])}>Print QR sign</button>
+            <button type="button" disabled={busy || loading} onClick={() => void previewCodes([code])}>View / download QR</button>
+            <button type="button" disabled={busy || loading} onClick={() => void previewCodes([code])}>Print QR sign</button>
             <a href={`/internal/club/${code.token}`} target="_blank" rel="noopener noreferrer">Open roster</a>
             <button type="button" disabled={busy || loading} onClick={() => void copy(code)}>Copy link</button>
             <button type="button" disabled={busy || loading} onClick={() => { setEditing(code); setEditLabel(code.label); }}>Rename</button>
@@ -276,7 +253,6 @@ export default function AdminTableQrCodes({ venueId, name }: { venueId: string; 
         {!sorted.length && !loading ? <p>No table QR codes yet.</p> : null}
       </> : !loading ? <button type="button" onClick={() => setRevision(value => value + 1)}>Retry loading codes</button> : null}
       {busy && !bulkProgress ? <p role="status">Working...</p> : null}
-      {status ? <p role={failed ? "alert" : "status"}>{status}</p> : null}
     </div> : null}
   </details>;
 }
