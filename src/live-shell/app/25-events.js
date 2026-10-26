@@ -601,6 +601,16 @@
         document.title,
         `${url.pathname}${search ? `?${search}` : ""}${url.hash}`
       );
+      rememberHomeDiscoveryDestination(nextTab);
+    }
+
+    function rememberHomeDiscoveryDestination(nextTab) {
+      const params = new URLSearchParams(window.location.search);
+      if (internalProfileFrameId || params.has("venue_preview") || params.has("auth")
+        || params.has("dancr_dashboard") || !homeDestinationOrder.includes(nextTab)) return;
+      const remembered = new URLSearchParams({ city: citySelect.value, view: nextTab });
+      if (nextTab === "dancers") remembered.set("dancer_filter", dancerDirectoryFilter);
+      try { window.sessionStorage.setItem("mydancr:home-return:v1", `/?${remembered}`); } catch { /* The dashboard can still use its referring homepage. */ }
     }
 
     function clearHomeDestinationLocation() {

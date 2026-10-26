@@ -719,6 +719,7 @@
       selectedVenueName = initialProfileParams.get("venue");
       activeTab = "venues";
     }
+    rememberHomeDiscoveryDestination(activeTab);
     const initialDiscoveryRequest = internalProfileFrameId ? Promise.resolve() : loadLiveDiscovery(citySelect.value, {
       force: consumePublicDiscoveryRefreshRequest()
     });

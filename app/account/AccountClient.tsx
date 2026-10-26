@@ -2,6 +2,7 @@
 
 import { CSSProperties, FormEvent, KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { DashboardCloseButton } from "@/app/components/DashboardCloseButton";
 import { PasswordRequirements } from "@/app/components/PasswordRequirements";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -474,7 +475,7 @@ export default function AccountClient() {
       <section className={`account-grid${isNfcAuth ? " nfc-account-grid" : " account-entry-card"}`}>
         {!isNfcAuth && (
           <nav className="top-nav" aria-label="Primary">
-            <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
+            <DashboardCloseButton />
             <Link className="brand" href="/">
               mydancr
             </Link>

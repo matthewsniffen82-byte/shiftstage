@@ -4,6 +4,7 @@ import RefreshButton from "../components/RefreshButton";
 import "../components/dashboard-header.css";
 
 import Link from "next/link";
+import { DashboardCloseButton } from "../components/DashboardCloseButton";
 import DashboardHelp from "../components/DashboardHelp";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
@@ -332,7 +333,7 @@ export default function VipDashboard({ account, onSignOut, signingOut, accountEr
   return <main ref={dashboardSurface} className="vip-shell vip-dashboard-shell" id="vip-dashboard" data-global-navigation-swipe="ignore"><div className="vip-container">
     <header className="dashboard-identity-header" data-account-kind="vip">
       <div className="dashboard-identity-back-row" style={{ flexWrap: "wrap", gap: 12 }}>
-        <Link href="/" className="dancr-home-back"><span aria-hidden="true">‹</span> Back to MyDancr</Link>
+        <DashboardCloseButton />
         <RefreshButton label="Refresh VIP dashboard" busy={loading} className="vip-refresh" type="button" disabled={disabled || loading} onClick={refresh} />
         <DashboardHelp key={account.id} role="vip" accountId={account.id} />
       </div>

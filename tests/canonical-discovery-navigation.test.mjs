@@ -146,12 +146,12 @@ test("canonical homepage deep links select and retain the requested destination"
 
 test("working status deep links round-trip and retired filters default to Working Now", () => {
   const state = {
-    URL, URLSearchParams, document: { title: "Dancers" }, citySelect: { value: "Las Vegas" },
+    URL, URLSearchParams, document: { title: "Dancers" }, citySelect: { value: "Las Vegas" }, internalProfileFrameId: "",
     window: { location: {}, history: { replaceState(_state, _title, path) { state.savedPath = path; } } },
   };
   vm.createContext(state);
   const constants = homeSource.match(/const homeDestinationOrder = [^;]+;\s*const dancerDirectoryFilters = [^;]+;/)[0];
-  const functions = ["dancerDirectoryFilterFromLocation", "syncHomeDestinationLocation"].map(name =>
+  const functions = ["dancerDirectoryFilterFromLocation", "syncHomeDestinationLocation", "rememberHomeDiscoveryDestination"].map(name =>
     homeSource.match(new RegExp(`    function ${name}\\([^\\n]*\\) \\{[\\s\\S]*?(?=\\n    function )`))[0]).join("\n");
   vm.runInContext(constants + functions, state);
   for (const [search, expected] of [
