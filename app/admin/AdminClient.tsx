@@ -2391,7 +2391,7 @@ function AdminSupportInbox({
     if (!request) return;
 
     setBusyThreadId(threadId);
-    setStatusByThread((current) => ({ ...current, [threadId]: "Sending reply..." }));
+    setStatusByThread((current) => ({ ...current, [threadId]: "" }));
     try {
       const session = readAdminSession();
       const key = JSON.stringify([session?.account?.id || session?.accessToken, threadId, message]);
@@ -2419,49 +2419,65 @@ function AdminSupportInbox({
     }
   }
 
+  function messageTime(value: unknown) {
+    const date = new Date(String(value || ""));
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString(undefined, {
+      month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+      ...(date.getFullYear() !== new Date().getFullYear() ? { year: "numeric" as const } : {}),
+    });
+  }
+
   return (
     <div className="support-inbox-list">
+      <div className="support-inbox-toolbar">
+      <button type="button" disabled={isRefreshing || Boolean(busyThreadId) || archiving} onClick={() => void refreshMessages()}>{isRefreshing ? "Refreshing…" : "Refresh"}</button>
       <AdminInboxActions disabled={Boolean(busyThreadId) || archiving} items={threads.map(thread => ({ kind: "support", id: String(thread.id), version: String(thread.lastMessageAt || ""), title: String(thread.subject || "Support message") }))}
         onStart={() => { actionInFlightRef.current = true; readAbortRef.current?.abort(); readAbortRef.current = null; setIsRefreshing(false); setArchiving(true); }}
         onSettled={() => { actionInFlightRef.current = false; setArchiving(false); void refreshMessages(); }}
         onComplete={archived => { const remaining = threadsRef.current.filter(thread => !archived.some(item => item.id === String(thread.id))); threadsRef.current = remaining; pageRef.current = 0; onThreadsChangeRef.current(remaining); }} />
-      <button type="button" disabled={isRefreshing || Boolean(busyThreadId) || archiving} onClick={() => void refreshMessages()}>Refresh messages</button>
+      </div>
       {refreshError ? <p role="alert">{refreshError} Your current messages and draft replies are kept.</p> : null}
       {!threads.length ? <p className="empty">{isRefreshing ? "Checking messages…" : refreshError ? "Messages are unavailable." : "No support messages yet."}</p> : null}
       {[...threads].sort((a, b) => Number(b.status === "open") - Number(a.status === "open")).map((thread) => {
         const threadId = String(thread.id || "");
         const messages = asRecordArray(thread.messages);
         const userLabel = String(thread.userName || thread.userEmail || thread.userRole || "User");
+        const accountRole = ({ venue: "Club", customer: "Guest", dancer: "Dancer" } as Record<string, string>)[String(thread.userRole)] || "Account";
+        const subject = String(thread.subject || "Support message");
+        const needsReply = thread.status === "open";
         return (
-          <article className="support-inbox-thread" key={threadId}>
-            <header>
-              <span>
-                <strong>{String(thread.subject || "Support message")}</strong>
-                <small>{userLabel} / {String(thread.userRole || "user")} / {String(thread.status || "open")} / {formatDate(thread.lastMessageAt)}</small>
-              </span>
+          <article className="support-inbox-thread" key={threadId} aria-label={`${userLabel}: ${subject}`}>
+            <header className="support-thread-heading">
+              <div><h3>{userLabel}</h3><p>{accountRole} · {subject}</p></div>
+              <span className={needsReply ? "support-thread-status needs-reply" : "support-thread-status"}>{needsReply ? "Needs reply" : thread.status === "closed" ? "Closed" : "Replied"}</span>
             </header>
-            <div className="support-inbox-messages">
+            <div className="support-inbox-messages" role="log" aria-label={`Conversation with ${userLabel}`} aria-live="polite" aria-relevant="additions">
               {messages.map((message) => {
-                const senderLabel = String(message.senderRole) === "admin" ? "Admin Support" : userLabel;
+                const senderLabel = String(message.senderRole) === "admin" ? "MyDancr" : userLabel;
                 return (
                 <div className={String(message.senderRole) === "admin" ? "support-inbox-message from-admin" : "support-inbox-message"} key={String(message.id)}>
-                  <strong>{senderLabel}</strong>
+                  <div className="support-message-meta"><strong>{senderLabel}</strong><span>{messageTime(message.createdAt)}</span></div>
                   <p>{String(message.body || "")}</p>
-                  <small>{formatDate(message.createdAt)}</small>
                 </div>
                 );
               })}
             </div>
+            <form className="support-reply-composer" onSubmit={event => { event.preventDefault(); void reply(threadId); }}>
             <textarea
+              aria-label={`Reply to ${userLabel}`}
+              rows={2}
+              maxLength={4000}
               value={replyByThread[threadId] || ""}
               disabled={Boolean(busyThreadId) || archiving}
               onChange={(event) => setReplyByThread((current) => ({ ...current, [threadId]: event.target.value }))}
-              placeholder="Reply to this guest, dancer, or venue"
+              placeholder="Write a reply…"
             />
-            <button type="button" onClick={() => reply(threadId)} disabled={Boolean(busyThreadId) || archiving}>
-              {busyThreadId === threadId ? "Sending reply..." : "Reply to account"}
-            </button>
-            {statusByThread[threadId] ? <p>{statusByThread[threadId]}</p> : null}
+            <div className="support-reply-actions">
+              {statusByThread[threadId] ? <p role="status">{statusByThread[threadId]}</p> : null}
+              <button type="submit" disabled={Boolean(busyThreadId) || archiving}>{busyThreadId === threadId ? "Sending…" : "Send reply"}</button>
+            </div>
+            </form>
           </article>
         );
       })}
@@ -5344,22 +5360,34 @@ function AdminStyles() {
       .dmca-case-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .dmca-case-actions button { min-height: 38px; padding: 8px 10px; }
       .support-admin-panel { grid-column: span 2; }
-      .support-inbox-list, .support-inbox-thread, .support-inbox-messages { display: grid; gap: 10px; }
-      .support-inbox-thread { padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
+      .support-inbox-list, .support-inbox-thread, .support-inbox-messages { display: grid; gap: 14px; min-width: 0; }
+      .support-inbox-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+      .support-inbox-toolbar > div { min-width: 0; max-width: 100%; margin: 0; }
+      .support-inbox-thread { padding: 16px; border-radius: 14px; border: 1px solid var(--dancr-color-border); background: rgba(255,255,255,.02); }
       .support-inbox-thread.is-escalated { border-color: rgba(255,180,84,.52); box-shadow: inset 3px 0 #ffb454; }
-      .support-inbox-thread header { color: #fff; font-weight: 900; }
-      .support-inbox-thread header span { display: grid; gap: 3px; }
-      .support-inbox-thread small { color: #b9accd; font-size: 12px; }
+      .support-thread-heading { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,.08); }
+      .support-thread-heading > div { flex: 1; min-width: 0; }
+      .support-thread-heading h3 { margin: 0; color: #f5f3fa; font-size: 16px; font-weight: 650; overflow-wrap: anywhere; }
+      .support-inbox-thread .support-thread-heading p { margin-top: 4px; color: #aaa5b6; font-size: 12px; }
+      .support-thread-status { flex: 0 0 auto; padding: 4px 8px; border-radius: 999px; color: #aaa5b6; background: rgba(255,255,255,.05); font-size: 11px; font-weight: 600; }
+      .support-thread-status.needs-reply { color: #fbbf24; background: rgba(251,191,36,.1); }
       .support-escalation { display: grid; gap: 5px; padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,180,84,.32); background: rgba(255,180,84,.09); }
       .support-escalation strong { color: #ffd19a; font-size: 12px; letter-spacing: .05em; }
       .support-escalation p { margin: 0; color: #ffe1bd; }
       .support-escalation.priority-urgent { border-color: rgba(255,91,116,.55); background: rgba(255,91,116,.12); }
       .support-escalation.priority-urgent strong { color: #ff9cac; }
-      .support-inbox-message { display: grid; gap: 4px; padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.04); }
-      .support-inbox-message.from-admin { border-color: rgba(148,229,255,.28); background: rgba(148,229,255,.08); }
-      .support-inbox-message p, .support-inbox-thread p { color: #cfc5de; font-size: 14px; line-height: 1.45; }
-      .support-inbox-thread textarea { width: 100%; min-height: 82px; resize: vertical; border-radius: 8px; border: 1px solid rgba(255,255,255,.14); background: rgba(255,255,255,.06); color: #fff; padding: 10px 12px; font: inherit; }
-      .support-inbox-thread button { justify-self: start; color: #090911; background: #f7f2ff; padding: 0 14px; }
+      .support-inbox-message { display: grid; gap: 7px; justify-self: start; max-width: 92%; min-width: 0; padding: 10px 12px; border-radius: 12px 12px 12px 3px; background: rgba(255,255,255,.055); }
+      .support-inbox-message.from-admin { justify-self: end; border-radius: 12px 12px 3px 12px; background: rgba(133,56,250,.13); }
+      .support-message-meta { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 3px 14px; color: #aaa5b6; font-size: 11px; }
+      .support-message-meta strong { font-size: 11px; font-weight: 600; overflow-wrap: anywhere; }
+      .support-message-meta span { white-space: nowrap; }
+      .support-inbox-thread p { color: #e1dce9; font-size: 14px; line-height: 1.5; }
+      .support-inbox-message p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+      .support-reply-composer { display: grid; gap: 8px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.08); }
+      .support-inbox-thread textarea { width: 100%; min-height: 64px; resize: vertical; border-radius: 10px; border: 1px solid var(--dancr-color-border); background: rgba(255,255,255,.035); color: #fff; padding: 10px 12px; font: inherit; font-size: 14px; }
+      .support-reply-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 8px 12px; }
+      .support-reply-actions p { flex: 1; font-size: 12px; color: #b9accd; }
+      .support-inbox-thread button { min-height: 44px; padding: 0 14px; }
       .ranking-manager { display: grid; gap: 12px; }
       .ranking-manager form { display: grid; gap: 10px; }
       .ranking-manager label { display: grid; gap: 7px; color: #d8cfeb; font-size: 13px; font-weight: 850; }

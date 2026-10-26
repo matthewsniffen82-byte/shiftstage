@@ -46,7 +46,21 @@ test('support displays more than eight messages and keeps draft replies through 
   await f.complete(1, [thread(99), ...f.props.threads]);
   assert.equal(f.all().filter(node => node.type === 'article' && node.props.className === 'support-inbox-thread').length, 13);
   assert.ok(f.all().some(node => node.type === 'textarea' && node.props.value === 'Draft reply'));
-  assert.ok(f.pending.every(call => !call.options.method)); f.close();
+  assert.ok(f.pending.every(call => !call.options.method));
+  const replyCard = f.all().find(node => node.type === 'article' && nodes(node).some(child => child.type === 'textarea' && child.props.value === 'Draft reply'));
+  const form = nodes(replyCard).find(node => node.type === 'form');
+  let prevented = false;
+  form.props.onSubmit({ preventDefault() { prevented = true; } }); f.render();
+  assert.equal(prevented, true);
+  assert.equal(f.pending[2].options.method, 'POST');
+  assert.equal(JSON.parse(f.pending[2].options.body).threadId, 'thread-0');
+  assert.equal(JSON.parse(f.pending[2].options.body).message, 'Draft reply');
+  form.props.onSubmit({ preventDefault() {} }); assert.equal(f.pending.length, 3);
+  f.pending[2].resolve({ thread: { ...thread(0), status: 'answered', messages: [{ id: 'sent', senderRole: 'admin', body: 'Draft reply', createdAt: '2026-10-26T12:00:00Z' }] } });
+  await settle(); f.render();
+  assert.ok(f.all().some(node => node.props.className === 'support-inbox-message from-admin'));
+  assert.ok(!f.all().some(node => node.type === 'textarea' && node.props.value === 'Draft reply'));
+  f.close();
 });
 
 test('archiving support cancels stale refreshes, removes only selected threads and keeps other drafts', async () => {

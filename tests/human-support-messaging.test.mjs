@@ -39,7 +39,7 @@ test("admins can reply and account owners receive notifications", () => {
   assert.match(supportSource, /app_users!support_threads_user_id_fkey\(display_name, email, role\)/);
   assert.match(supportSource, /sender_role: "admin"/);
   assert.match(supportSource, /title: "Admin replied"/);
-  assert.match(adminSource, /Reply to account/);
+  assert.match(adminSource, /Send reply/);
   assert.doesNotMatch(adminSource, /Dancr Support AI|Awaiting human review|escalationReason/);
 });
 

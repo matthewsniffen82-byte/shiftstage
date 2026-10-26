@@ -26,5 +26,5 @@ test("admin support replies recover from failures and prevent duplicate submissi
   assert.match(supportInbox, /catch \(error\)[\s\S]*?error instanceof Error \? error\.message/);
   assert.match(supportInbox, /finally \{[\s\S]*?finishSupportAction\(request\)/);
   assert.match(supportInbox, /disabled=\{Boolean\(busyThreadId\) \|\| archiving\}/);
-  assert.match(supportInbox, /busyThreadId === threadId \? "Sending reply\.\.\." : "Reply to account"/);
+  assert.match(supportInbox, /busyThreadId === threadId \? "Sending…" : "Send reply"/);
 });
