@@ -22,6 +22,7 @@ const passwordVerifier = {
 };
 const encoder = new TextEncoder();
 const workerPaths = new Set([
+  "/api/cron/venue-emails", "/api/cron/venue-campaigns",
   "/api/cron/main-photo-analysis", "/api/cron/photo-upload-cleanup",
   "/api/cron/internal-request-push", "/api/cron/image-moderation",
   "/api/cron/video-moderation", "/api/cron/dmca-restoration",
