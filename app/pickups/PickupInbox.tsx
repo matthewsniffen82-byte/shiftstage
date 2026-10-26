@@ -5,6 +5,7 @@ import Link from "next/link";
 import VenueAdminUtilities from "../dashboard/VenueAdminUtilities";
 import type { PhonePickupRequest, PickupVenue } from "@/src/lib/dancr/pickup-domain";
 import { PickupAccountGate, requestPickupJson } from "./pickup-session";
+import "./pickup-inbox.css";
 
 export default function PickupInbox() {
   return <PickupAccountGate>{role => <Inbox role={role} />}</PickupAccountGate>;
@@ -55,26 +56,28 @@ function Inbox({ role }: { role: "venue" | "admin" }) {
     } catch (failure) { if (mounted.current && expectedQuery === queryRef.current) setError(failure instanceof Error ? failure.message : "Unable to load more pickups."); }
     finally { paginationLock.current = false; if (mounted.current && expectedQuery === queryRef.current) setLoading(false); }
   }
-  return <section className="pickup-card pickup-inbox">
+  return <section className="pickup-card pickup-inbox" aria-labelledby="pickup-inbox-title">
     <VenueAdminUtilities />
-    <Link href={role === "admin" ? "/admin" : "/dashboard/venue"}>‹ Dashboard</Link>
-    <header className="pickup-inbox-heading"><h1>Pickup requests</h1><RefreshButton label="Refresh ride requests" busy={loading} onClick={() => setRevision(value => value + 1)} disabled={loading} /></header>
-    <p>Call or email guests to arrange and confirm pickup.</p>
-    <div className="pickup-period" role="group" aria-label="Pickup period (UTC)">{[["all", "All"], ["today", "Today"], ["7", "7 days"], ["30", "30 days"], ["custom", "Custom"]].map(([value, title]) => <button key={value} type="button" aria-pressed={period === value} disabled={loading} onClick={() => selectPeriod(value)}>{title}</button>)}</div>
+    <header className="pickup-inbox-header">
+      <Link className="pickup-inbox-back" href={role === "admin" ? "/admin" : "/dashboard/venue"}>‹ Back to dashboard</Link>
+      <div className="pickup-inbox-heading"><h1 id="pickup-inbox-title">Pickup requests</h1><RefreshButton label="Refresh pickup requests" busy={loading} onClick={() => setRevision(value => value + 1)} disabled={loading} /></div>
+      <p>Call or email guests to arrange and confirm pickup.</p>
+    </header>
+    <div className="pickup-period" role="group" aria-label="Pickup period (UTC)">{[["all", "All"], ["today", "Today"], ["7", "7 days"], ["30", "30 days"], ["custom", "Custom"]].map(([value, title]) => <button className="pickup-button" key={value} type="button" aria-pressed={period === value} disabled={loading} onClick={() => selectPeriod(value)}>{title}</button>)}</div>
     <div className="pickup-filters">
       {venues.length > 1 && <label>Club<select disabled={loading} value={venueId} onChange={event => setVenueId(event.target.value)}><option value="">All clubs</option>{venues.map(venue => <option key={venue.id} value={venue.id}>{venue.name}</option>)}</select></label>}
       {period === "custom" ? <><label>From date (UTC)<input disabled={loading} type="date" value={from} onChange={event => setFrom(event.target.value)} /></label>
       <label>Through date (UTC)<input disabled={loading} type="date" value={to} onChange={event => setTo(event.target.value)} /></label></> : null}
     </div>
-    {error && <p role="alert">{error}</p>}{loading && <p role="status">Loading pickup requests…</p>}
-    {!loading && !error && !requests.length && <p>No pickup requests found.</p>}
+    {error && <p className="pickup-inbox-state" role="alert">{error}</p>}{loading && <p className="pickup-inbox-state" role="status">Loading pickup requests…</p>}
+    {!loading && !error && !requests.length && <p className="pickup-inbox-state">No pickup requests found.</p>}
     <div className="pickup-list">{requests.map(request => <article className="pickup-list-item" key={request.id}>
-      <strong>{request.venue_name} · {request.name}</strong>
+      <div className="pickup-request-heading"><strong>{request.name}</strong><span>{request.venue_name}</span></div>
       <span>{request.party_size} {request.party_size === 1 ? "guest" : "guests"} · {request.location}</span>
       <time dateTime={request.requested_at}>{new Date(request.requested_at).toLocaleString()}</time>
-      <div className="pickup-contact-actions"><a href={"tel:" + request.phone} aria-label={`Call ${request.name} at ${request.phone}`}>Call</a>
-      <a href={"mailto:" + encodeURIComponent(request.email)} aria-label={`Email ${request.name} at ${request.email}`}>Email</a></div>
+      <div className="pickup-contact-actions"><a className="pickup-button" href={"tel:" + request.phone} aria-label={`Call ${request.name} at ${request.phone}`}>Call</a>
+      <a className="pickup-button" href={"mailto:" + encodeURIComponent(request.email)} aria-label={`Email ${request.name} at ${request.email}`}>Email</a></div>
     </article>)}</div>
-    {more && <button disabled={loading} onClick={() => void loadMore()}>Load more requests</button>}
+    {more && <button className="pickup-button pickup-load-more" disabled={loading} onClick={() => void loadMore()}>Load more requests</button>}
   </section>;
 }
