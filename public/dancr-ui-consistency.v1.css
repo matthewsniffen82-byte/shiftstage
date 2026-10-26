@@ -2302,19 +2302,19 @@ html body.dancr-button-system header #customerDealsQuickPanel .saved-deal-nfc-sy
   background: linear-gradient(#22152f, #22152f);
   color: var(--dancr-color-icon-accent) !important;
 }
-html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-title { align-items: center; gap: 12px; }
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-title { align-items: center; gap: 8px; }
 html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-title > .action-icon {
   box-sizing: border-box;
-  flex: 0 0 32px;
-  width: 32px !important;
-  height: 32px !important;
+  flex: 0 0 24px;
+  width: 24px !important;
+  height: 24px !important;
   border: 1px solid #4a365f;
-  border-radius: 10px;
+  border-radius: 8px;
   background: linear-gradient(#22152f, #22152f);
   color: var(--dancr-color-icon-accent) !important;
 }
 html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-date {
-  padding-inline-start: 44px;
+  padding-inline-start: 32px;
   color: #bdb5c9 !important;
   font: 400 11px/1.4 var(--font-ui) !important;
 }
@@ -2331,6 +2331,32 @@ html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #cust
 html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) button:focus-visible { outline: 2px solid #c4a3f1 !important; outline-offset: 2px !important; }
 @media (hover: hover) {
   html body.dancr-button-system header :is(#customerNotificationsQuickPanel, #customerDealsQuickPanel) .customer-quick-item:hover { --inbox-row-face: #000; --inbox-row-edge: #72518e; }
+}
+
+/* The shared account inbox stays compact without reducing header tap targets
+ * or clipping long notification titles. Saved admission passes keep their sizing. */
+html body.dancr-button-system header #customerNotificationsQuickPanel {
+  gap: 4px !important;
+  padding: 8px !important;
+  border-radius: 14px !important;
+}
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-heading {
+  min-height: 44px;
+  margin: 0;
+}
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-quick-list { gap: 6px; }
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-quick-item {
+  min-height: 54px !important;
+  padding: 6px 10px !important;
+  gap: 2px !important;
+  border-radius: 10px !important;
+}
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-notification-title > .action-icon svg {
+  width: 16px;
+  height: 16px;
+}
+html body.dancr-button-system header #customerNotificationsQuickPanel .customer-quick-empty {
+  padding: 8px 10px;
 }
 
 /* Keep the Clubs and TV headings, shared roster disclaimer, and first card close together. */

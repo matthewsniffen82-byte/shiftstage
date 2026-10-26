@@ -1090,15 +1090,15 @@ function TvStyles() {
       .tv-notification-button { display: grid; place-items: center; color: #22c7ff; }
       .tv-notification-button:hover, .tv-notification-button:focus-visible, .tv-notification-button.active, .tv-global-account:hover, .tv-global-account:focus-visible { border-color: rgba(34,199,255,.68); box-shadow: 0 0 22px rgba(34,199,255,.2), 0 0 18px rgba(139,92,246,.18); }
       .tv-notification-count { position: absolute; z-index: 2; top: -7px; left: -8px; min-width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; border-radius: 999px; color: #050507; background: #22c7ff; box-shadow: 0 0 14px rgba(34,199,255,.42); font-size: 10px; font-weight: 950; }
-      .tv-notification-panel { position: absolute; z-index: 80; top: calc(100% + 12px); right: 0; width: min(340px, calc(100vw - 28px)); max-height: min(520px, 70dvh); display: grid; gap: 10px; padding: 14px; overflow: auto; border: 1px solid rgba(139,92,246,.42); border-radius: 14px; color: #f7f4ff; background: rgba(5,5,9,.98); box-shadow: 0 22px 60px rgba(0,0,0,.68), 0 0 28px rgba(109,40,217,.2); }
+      .tv-notification-panel { position: absolute; z-index: 80; top: calc(100% + 12px); right: 0; width: min(340px, calc(100vw - 28px)); max-height: min(520px, 70dvh); display: grid; gap: 6px; padding: 8px; overflow: auto; border: 1px solid rgba(139,92,246,.42); border-radius: 14px; color: #f7f4ff; background: rgba(5,5,9,.98); box-shadow: 0 22px 60px rgba(0,0,0,.68), 0 0 28px rgba(109,40,217,.2); }
       .tv-notification-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
       .tv-notification-head > div { display: grid; gap: 2px; }
       .tv-notification-head strong { font-size: 16px; }
       .tv-notification-head span { color: #a99fba; font-size: 11px; font-weight: 800; }
       .tv-notification-head a { color: #7eeaff; font-size: 11px; font-weight: 900; text-decoration: none; }
-      .tv-notification-list { display: grid; gap: 7px; }
-      .tv-notification-list p { margin: 0; padding: 12px; color: #aaa0b8; text-align: center; }
-      .tv-notification-list button { display: grid; gap: 3px; padding: 10px 11px; border: 1px solid rgba(34,199,255,.2); border-radius: 10px; color: #f6f3fb; background: rgba(34,199,255,.07); text-align: left; cursor: pointer; }
+      .tv-notification-list { display: grid; gap: 6px; }
+      .tv-notification-list p { margin: 0; padding: 8px 10px; color: #aaa0b8; text-align: center; }
+      .tv-notification-list button { display: grid; min-height: 44px; gap: 2px; padding: 8px 10px; border: 1px solid rgba(34,199,255,.2); border-radius: 10px; color: #f6f3fb; background: rgba(34,199,255,.07); text-align: left; cursor: pointer; }
       .tv-notification-list button.read { border-color: rgba(255,255,255,.08); background: rgba(255,255,255,.025); }
       .tv-notification-list button strong { font-size: 12px; }
       .tv-notification-list button span { color: #bdb4ca; font-size: 11px; line-height: 1.35; }
