@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import * as vipEntry from "../src/lib/dancr/vip-entry.ts";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import test from "node:test";
@@ -41,12 +42,11 @@ function resetFixture(providerError) {
       },
     },
     "@/src/lib/bounded-json-body": { readBoundedJsonObject: (request) => request.json() },
-    "@/src/lib/supabase/server": { createServerSupabaseClient: () => ({ auth: {
-      resetPasswordForEmail: async (email, options) => {
-        calls.push({ email, options });
-        return { error: providerError };
-      },
-    } }) },
+    "@/src/lib/supabase/server": { createServerSupabaseClient: () => ({}) },
+    "@/src/lib/dancr/vip-entry": vipEntry,
+    "@/src/lib/dancr/email-actions": { sendPendingAccountEmail: async (_admin, email, purpose) => {
+      calls.push({ email, purpose }); if (providerError) throw providerError; return true;
+    } },
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({}) },
     "@/src/lib/dancr/account-recovery": {
       AccountRecoveryRateLimitError: class extends Error {},
@@ -82,14 +82,14 @@ for (const message of ["upstream connection failure", "Error sending recovery em
     assert.equal(fixture.calls.length, 2);
   });
 
-test("an accepted reset preserves the account-neutral confirmation and callback", async () => {
+test("an accepted reset preserves the account-neutral confirmation and requests a durable recovery link", async () => {
   const fixture = resetFixture(null);
   const response = await fixture.POST(request());
   const body = await response.json();
   assert.equal(response.status, 200);
   assert.equal(body.ok, true);
   assert.match(body.message, /If that email has a MyDancr account/);
-  assert.equal(fixture.calls[1].options.redirectTo, "https://mydancr.com/auth/callback");
+  assert.equal(fixture.calls[1].purpose, "recovery");
 });
 
 test("provider email rate limits remain retryable errors", async () => {

@@ -32,6 +32,7 @@ const limiter = compile("src/lib/dancr/public-request-rate-limit.ts", {
 const vip = compile("src/lib/dancr/vip.ts", {
   "../api-error-policy": { PublicApiError }, "./venue-access": {},
   "./media-delivery-url": {}, "./venue-vip-dancer-cards": {},
+  "./internal-main-photo": {},
 });
 
 function fixture({ decision = { allowed: true }, rateError = null, available = true } = {}) {
@@ -49,6 +50,7 @@ function fixture({ decision = { allowed: true }, rateError = null, available = t
         eq: (key, value) => { filters.push([key, value]); return query; },
         is: (key, value) => { filters.push([key, value]); return query; },
         gt: (key, value) => { filters.push([key, value]); return query; },
+        or: value => { filters.push(['or',value]); return query; },
         async maybeSingle() {
           return { data: available ? {
             email: "guest@example.test", expires_at: "2027-01-01T00:00:00Z", nickname: "Private nickname",

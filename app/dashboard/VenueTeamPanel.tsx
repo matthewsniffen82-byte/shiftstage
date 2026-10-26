@@ -9,7 +9,7 @@ import {
 
 type Access = { role: "owner" | "manager" | "staff"; permissions: string[] };
 type Member = { id: string; role: "manager" | "staff"; status: string; displayName: string; email: string; joinedAt: string };
-type Invitation = { id: string; email: string; role: "manager" | "staff"; expiresAt: string };
+type Invitation = { id: string; email: string; role: "manager" | "staff"; expiresAt: string | null };
 type Activity = { id: string; actorName: string; actorRole: string; summary: string; createdAt: string };
 
 export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Access | null }) {
@@ -259,7 +259,7 @@ export default function VenueTeamPanel({ initialAccess }: { initialAccess?: Acce
       {isOwner && invitations.length ? (
         <section className="venue-team-list" aria-label="Pending venue team invitations">
           <div className="venue-team-subhead"><strong>Pending invitations</strong><span>{invitations.length}</span></div>
-          {invitations.map((invitation) => <div className="venue-team-member" key={invitation.id}><span><strong>{invitation.email}</strong><small>{invitation.role} · expires {formatDate(invitation.expiresAt)}</small></span><button type="button" disabled={isWorking} onClick={() => void revokeInvitation(invitation.id)}>Revoke</button></div>)}
+          {invitations.map((invitation) => <div className="venue-team-member" key={invitation.id}><span><strong>{invitation.email}</strong><small>{invitation.role} · {invitation.expiresAt ? `expires ${formatDate(invitation.expiresAt)}` : "Available until accepted"}</small></span><button type="button" disabled={isWorking} onClick={() => void revokeInvitation(invitation.id)}>Revoke</button></div>)}
         </section>
       ) : null}
       <section className="venue-activity-list" aria-label="Venue activity log">

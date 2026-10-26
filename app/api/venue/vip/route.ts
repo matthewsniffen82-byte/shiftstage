@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     let nickname = body.action === "invite" ? vipNickname(body.nickname ?? "") : "";
     if (replacingInvitation) {
       const previous = await admin.from("venue_vip_invitations").select("email,nickname").eq("id", vipId(body.id)).eq("venue_id", access.venueId)
-        .is("accepted_at", null).is("revoked_at", null).gt("expires_at", new Date().toISOString()).maybeSingle();
+        .is("accepted_at", null).is("revoked_at", null).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).maybeSingle();
       if (previous.error) throw previous.error;
       if (!previous.data) throw new PublicApiError("NOT_FOUND", "This invitation is no longer pending. Refresh VIP access.", 404);
       email = previous.data.email; nickname = previous.data.nickname || "";

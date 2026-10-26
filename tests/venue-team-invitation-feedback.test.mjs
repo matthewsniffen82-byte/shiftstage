@@ -187,16 +187,26 @@ test('private and published clubs can open valid team invitations without consum
   }
 });
 
-test('invalid, expired, revoked and accepted invitation links have actionable errors and cannot be redeemed', async () => {
+test('invalid, expired and revoked invitation links have actionable errors and cannot be redeemed', async () => {
   const invalid = invitationLookupFixture(), response = await invalid.get('bad-token');
   assert.equal(response.status, 400); assert.match((await response.json()).error, /full link from your invitation email/);
   assert.equal(invalid.queries.length, 0);
-  for (const invitation of [null, { expires_at: new Date(0).toISOString() }, { accepted_at: new Date().toISOString() }, { revoked_at: new Date().toISOString() }, { venues: null }, { venues: { owner_user_id: null } }]) {
+  for (const invitation of [null, { expires_at: new Date(0).toISOString() }, { revoked_at: new Date().toISOString() }, { venues: null }, { venues: { owner_user_id: null } }]) {
     const f = invitationLookupFixture({ invitation }), response = await f.get(), body = await response.json();
     assert.equal(response.status, 409); assert.match(body.error, /Ask the club owner for a new invitation/);
     assert.equal(body.invitation, undefined);
     await assert.rejects(f.redeem(), error => error instanceof policy.PublicApiError && error.status === 409);
     assert.equal(f.redemptions.length, 0);
+  }
+});
+
+test('accepted invitations open the sign-in recovery flow and pending invitations have no deadline', async () => {
+  for (const accepted_at of [null, new Date().toISOString()]) {
+    const f = invitationLookupFixture({ invitation: { accepted_at, expires_at: null } });
+    const response = await f.get(), body = await response.json();
+    assert.equal(response.status,200);
+    assert.equal(body.invitation.accepted,Boolean(accepted_at));
+    assert.equal(body.invitation.expiresAt,null);
   }
 });
 

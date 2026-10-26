@@ -4,7 +4,7 @@ import { readBoundedJsonObject } from "@/src/lib/bounded-json-body";
 import { getAccountByUserId, setAccountState } from "@/src/lib/dancr/auth";
 import { recoverVerifiedPublicAccount } from "@/src/lib/dancr/account-profile-recovery";
 import { sendTransactionalEmail } from "@/src/lib/dancr/notification-delivery";
-import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
+import { completePasswordRecovery, sendAccountEmailAction } from "@/src/lib/dancr/email-actions";
 import type { AccountState } from "@/src/lib/dancr/types";
 import { createAdminSupabaseClient } from "@/src/lib/supabase/admin";
 import { createRequestSupabaseContext } from "@/src/lib/supabase/request";
@@ -55,15 +55,13 @@ export async function PATCH(request: Request) {
 
       // Resolve required response context before accepting the email change.
       const account = await getAccountByUserId(client, user.id);
-      const origin = publicAppUrl();
       const accountRole = account?.role === "dancer" ? "dancer" : "customer";
       const returnTo = accountRole === "customer" && body.returnTo === "/vip" ? "/vip" : `/dashboard/${accountRole}`;
-      const emailRedirectTo = `${origin}/auth/callback?role=${accountRole}&return_to=${encodeURIComponent(returnTo)}`;
-      const { error } = await client.auth.updateUser({ email }, { emailRedirectTo });
-
-      if (error) {
+      try {
+        await sendAccountEmailAction(createAdminSupabaseClient(), { userId: user.id, purpose: "email_change", newEmail: email, returnTo });
+      } catch (error) {
         console.warn("ACCOUNT_EMAIL_UPDATE_REJECTED", safeErrorMetadata(error));
-        if (isTemporaryCredentialError(error)) return credentialUnavailableResponse();
+        if (isTemporaryCredentialError(error as { status?: number; name?: string })) return credentialUnavailableResponse();
         return NextResponse.json({ ok: false, error: "Unable to update email. Check the address and try again." }, { status: 400 });
       }
 
@@ -90,6 +88,9 @@ export async function PATCH(request: Request) {
         if (isTemporaryCredentialError(error)) return credentialUnavailableResponse();
         return NextResponse.json({ ok: false, error: "Unable to update password. Check the password and try again." }, { status: 400 });
       }
+
+      // A matching password produces no database update, so close its recovery links explicitly.
+      if (error?.code === "same_password") await completePasswordRecovery(createAdminSupabaseClient(), user.id);
 
       const passwordSetupComplete = account?.role === "customer"
         ? await recordPasswordSetup(createAdminSupabaseClient, user) : undefined;

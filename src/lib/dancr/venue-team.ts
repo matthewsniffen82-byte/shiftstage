@@ -26,7 +26,7 @@ export async function getVenueTeamState(client: DancrClient, actorUserId: string
         .eq("venue_id", access.venueId)
         .is("accepted_at", null)
         .is("revoked_at", null)
-        .gt("expires_at", new Date().toISOString())
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
         .order("created_at", { ascending: false })
     : Promise.resolve({ data: [], error: null });
   const [{ data: members, error: memberError }, { data: invitations, error: invitationError }, activity] = await Promise.all([
@@ -47,14 +47,12 @@ export async function getVenueTeamState(client: DancrClient, actorUserId: string
 
 export async function createVenueTeamInvitation(
   client: DancrClient,
-  input: { actorUserId: string; email: string; role: AssignableVenueRole; expiresInDays?: number },
+  input: { actorUserId: string; email: string; role: AssignableVenueRole },
 ) {
   const access = await requireVenueAccess(client, input.actorUserId, "manage_team");
   const email = normalizeEmail(input.email);
   const role = normalizeAssignableRole(input.role);
-  const expiresInDays = Math.max(1, Math.min(14, Number(input.expiresInDays || 7)));
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + expiresInDays * 24 * 60 * 60 * 1000);
 
   const { data: ownerAccount, error: ownerAccountError } = await (client as any)
     .from("app_users")
@@ -116,7 +114,7 @@ export async function createVenueTeamInvitation(
       role,
       token_digest: hashInvitationToken(token),
       invited_by_user_id: input.actorUserId,
-      expires_at: expiresAt.toISOString(),
+      expires_at: null,
     })
     .select("id, email, role, expires_at, accepted_at, revoked_at, created_at")
     .single();
@@ -130,7 +128,7 @@ export async function createVenueTeamInvitation(
     targetType: "venue_team_invitation",
     targetId: String(data.id),
     summary: `${email} was invited as ${role}.`,
-    metadata: { email, role, expiresAt: expiresAt.toISOString() },
+    metadata: { email, role },
   });
 
   return { invitation: mapInvitation(data), token, access };
@@ -153,9 +151,8 @@ export async function resolveVenueTeamInvitation(
     !data
     || !venue
     || !venue.owner_user_id
-    || data.accepted_at
     || data.revoked_at
-    || new Date(data.expires_at).getTime() <= Date.now()
+    || (data.expires_at && new Date(data.expires_at).getTime() <= Date.now())
   ) {
     throw new PublicApiError("CONFLICT", "This venue team invitation is no longer active. Ask the club owner for a new invitation.", 409);
   }
@@ -176,7 +173,8 @@ export async function resolveVenueTeamInvitation(
     invitationId: String(data.id),
     email: String(data.email),
     role: normalizeAssignableRole(data.role),
-    expiresAt: String(data.expires_at),
+    accepted: Boolean(data.accepted_at),
+    expiresAt: data.expires_at ? String(data.expires_at) : null,
     venue: {
       id: String(venue.id),
       name: String(venue.name),
@@ -197,7 +195,7 @@ export async function redeemVenueTeamInvitation(
     p_user_id: input.userId,
   });
   if (error) throw error;
-  await recordVenueActivity(client, {
+  if (!invitation.accepted) await recordVenueActivity(client, {
     venueId: invitation.venue.id,
     actorUserId: input.userId,
     actorRole: invitation.role,
@@ -351,7 +349,7 @@ function mapInvitation(row: any) {
     id: String(row.id),
     email: String(row.email),
     role: normalizeAssignableRole(row.role),
-    expiresAt: String(row.expires_at),
+    expiresAt: row.expires_at ? String(row.expires_at) : null,
     createdAt: String(row.created_at),
   };
 }

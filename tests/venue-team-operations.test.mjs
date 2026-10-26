@@ -53,10 +53,10 @@ test("venue team roles are least-privilege and private workspace access remains 
   assert.match(migration, /This account already belongs to another venue team/);
 });
 
-test("venue invitations are expiring, hashed, email-bound, and service-role redeemed", () => {
+test("venue invitations remain available until accepted, hashed, email-bound, and service-role redeemed", () => {
   assert.match(team, /crypto\.randomBytes\(36\)\.toString\("base64url"\)/);
   assert.match(team, /createHash\("sha256"\)/);
-  assert.match(team, /Math\.max\(1, Math\.min\(14/);
+  assert.match(team, /expires_at: null/);
   assert.match(team, /resolveVenueTeamInvitation\(client, input\.token, input\.email\)/);
   assert.match(migration, /token_digest text not null unique/);
   assert.doesNotMatch(migration, /\btoken text\b/);

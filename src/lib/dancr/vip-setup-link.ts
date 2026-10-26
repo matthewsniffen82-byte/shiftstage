@@ -11,20 +11,18 @@ import { resolveVipInvitation, vipTokenDigest } from "./vip";
 import { publicAppUrl } from "./public-app-url";
 import { sendTransactionalEmail } from "./notification-delivery";
 
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-type SetupClaim = { v: 1; invitation: string; userId: string; emailTag: string; issuedAt: number; expiresAt: number; nonce: string };
+type SetupClaim = { v: 1 | 2; invitation: string; userId: string; emailTag: string; issuedAt: number; expiresAt: number | null; nonce: string };
 function signature(value: string) {
   const secret = getOptionalServerEnv("DANCR_VIP_SETUP_SECRET") || getServerEnv("SUPABASE_SERVICE_ROLE_KEY");
   return createHmac("sha256", secret).update("mydancr:vip-setup:v1\0" + value).digest();
 }
 function emailTag(email: string) { return signature("email:" + email.trim().toLowerCase()).toString("base64url"); }
-function unavailable() { return new PublicApiError("NOT_FOUND", "This VIP setup link expired or is no longer available. Use your newest venue invitation or ask the venue for a new one.", 404); }
+function unavailable() { return new PublicApiError("NOT_FOUND", "This VIP setup link is no longer available. Sign in to VIP or ask the venue for a new invitation.", 404); }
 
-export function createVipSetupToken(invitation: string, user: Pick<User, "id" | "email">, expiresAt: string, now = Date.now()) {
+export function createVipSetupToken(invitation: string, user: Pick<User, "id" | "email">, _expiresAt: string | null, now = Date.now()) {
   vipTokenDigest(invitation);
-  const expiry = Math.min(Date.parse(expiresAt), now + WEEK_MS);
-  if (!user.email || !Number.isFinite(expiry) || expiry <= now) throw unavailable();
-  const claim: SetupClaim = { v: 1, invitation, userId: user.id, emailTag: emailTag(user.email), issuedAt: now, expiresAt: expiry, nonce: randomBytes(18).toString("base64url") };
+  if (!user.email) throw unavailable();
+  const claim: SetupClaim = { v: 2, invitation, userId: user.id, emailTag: emailTag(user.email), issuedAt: now, expiresAt: null, nonce: randomBytes(18).toString("base64url") };
   const encoded = Buffer.from(JSON.stringify(claim)).toString("base64url");
   return `vips_${encoded}.${signature(encoded).toString("base64url")}`;
 }
@@ -35,9 +33,9 @@ export function readVipSetupToken(value: unknown, now = Date.now()): SetupClaim 
   if (actual.length !== 32 || !timingSafeEqual(actual, signature(encoded))) throw unavailable();
   let claim: SetupClaim;
   try { claim = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")); } catch { throw unavailable(); }
-  if (claim?.v !== 1 || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(claim.userId) || !/^[A-Za-z0-9_-]{43}$/.test(claim.emailTag)
-    || !/^[A-Za-z0-9_-]{24}$/.test(claim.nonce) || !Number.isSafeInteger(claim.issuedAt) || !Number.isSafeInteger(claim.expiresAt)
-    || claim.issuedAt > now || claim.expiresAt <= now || claim.expiresAt <= claim.issuedAt || claim.expiresAt - claim.issuedAt > WEEK_MS) throw unavailable();
+  if (![1, 2].includes(claim?.v) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(claim.userId) || !/^[A-Za-z0-9_-]{43}$/.test(claim.emailTag)
+    || !/^[A-Za-z0-9_-]{24}$/.test(claim.nonce) || !Number.isSafeInteger(claim.issuedAt)
+    || claim.issuedAt > now || (claim.v === 1 ? !Number.isSafeInteger(claim.expiresAt) : claim.expiresAt !== null)) throw unavailable();
   vipTokenDigest(claim.invitation);
   return claim;
 }
@@ -51,7 +49,7 @@ export async function sendVipInvitationEmail(admin: SupabaseClient, input: { inv
     metadata: { role: "customer", display_name: input.email.split("@")[0], city: "Las Vegas" } });
 }
 
-export async function sendVipSetupLink(admin: SupabaseClient, input: { invitation: string; email: string; expiresAt: string; metadata?: Record<string, unknown>; venueName?: string }) {
+export async function sendVipSetupLink(admin: SupabaseClient, input: { invitation: string; email: string; expiresAt: string | null; metadata?: Record<string, unknown>; venueName?: string }) {
   const lookup = await admin.from("app_users").select("id,role,account_state").eq("email", input.email).maybeSingle();
   if (lookup.error) throw lookup.error;
   if (lookup.data && (lookup.data.role !== "customer" || lookup.data.account_state !== "active")) return false;
@@ -73,8 +71,8 @@ export async function sendVipSetupLink(admin: SupabaseClient, input: { invitatio
   const url = `${publicAppUrl()}/auth/vip-setup#link=${token}`;
   const heading = input.venueName ? `You’re invited to ${input.venueName}` : "Confirm your email";
   const instructions = "Confirm your email below. Your email will already be filled in. Choose your password, then click Create account to enter your VIP dashboard.";
-  const validity = "You can reopen this link during your invitation’s 7-day window until you have saved a password and successfully signed in. Resending does not extend the deadline.";
-  const expiry = `Expires: ${new Date(input.expiresAt).toUTCString()}. A revoked or replaced invitation stops working immediately.`;
+  const validity = "You can reopen this link until you have saved a password and successfully signed in. Opening the email does not use it up.";
+  const expiry = "A revoked or replaced invitation stops working immediately.";
   const privacy = "Keep this private link to yourself. If you did not request it, ignore this email.";
   const delivery = await sendTransactionalEmail({ to: input.email, subject: input.venueName ? `Your private VIP invitation to ${input.venueName}` : "Confirm your email for MyDancr VIP",
     text: `Confirm email:\n${url}\n\n${heading}\n\n${instructions}\n\n${validity}\n\n${expiry}\n\n${privacy}`,
@@ -88,10 +86,9 @@ function escapeHtml(value: string) {
 }
 
 async function verifyLiveSetup(admin: SupabaseClient, claim: SetupClaim) {
-  if (claim.expiresAt <= Date.now()) throw unavailable();
   await resolveVipInvitation(admin, claim.invitation);
   const invitation = await admin.from("venue_vip_invitations").select("email")
-    .eq("token_digest", vipTokenDigest(claim.invitation)).is("accepted_at", null).is("revoked_at", null).gt("expires_at", new Date().toISOString()).maybeSingle();
+    .eq("token_digest", vipTokenDigest(claim.invitation)).is("accepted_at", null).is("revoked_at", null).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).maybeSingle();
   if (invitation.error) throw invitation.error;
   const result = await admin.auth.admin.getUserById(claim.userId);
   if (result.error && result.error.status !== 404) throw result.error;

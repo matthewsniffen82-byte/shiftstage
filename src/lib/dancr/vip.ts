@@ -56,7 +56,7 @@ export async function resolveVipInvitation(client: SupabaseClient, token: unknow
   const { data, error } = await client.from("venue_vip_invitations")
     .select("email,expires_at,venue:venues!inner(name,is_active,owner:app_users!venues_owner_user_id_fkey(role,account_state))")
     .eq("token_digest", vipTokenDigest(token)).is("accepted_at", null).is("revoked_at", null)
-    .gt("expires_at", new Date().toISOString()).maybeSingle();
+    .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).maybeSingle();
   if (error) throw error;
   const venue = first(data?.venue);
   const owner = first(venue?.owner);
@@ -128,7 +128,7 @@ export async function getVenueVipState(client: SupabaseClient, userId: string, s
   if (status === "pending") requestQuery = requestQuery.eq("status", "pending");
   const [invitations, members, requests] = await Promise.all([
     client.from("venue_vip_invitations").select("id,email,nickname,expires_at").eq("venue_id", access.venueId)
-      .is("accepted_at", null).is("revoked_at", null).gt("expires_at", new Date().toISOString()).order("created_at", { ascending: false }),
+      .is("accepted_at", null).is("revoked_at", null).or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).order("created_at", { ascending: false }),
     client.rpc("vip_search_members", { p_actor: userId, p_venue: access.venueId, p_search: memberSearch, p_offset: memberPage * 50 }),
     requestQuery
       .order("created_at", { ascending: false }).order("id", { ascending: false }).range(page * 50, page * 50 + 50),

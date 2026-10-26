@@ -9,7 +9,8 @@ import { captureBrowserAuthSessionGuard, persistBrowserAuthSession } from "@/src
 type Invitation = {
   email: string;
   role: "manager" | "staff";
-  expiresAt: string;
+  accepted?: boolean;
+  expiresAt: string | null;
   venue: { name: string; city: string; state: string | null };
 };
 
@@ -50,6 +51,7 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
         if (controller.signal.aborted) return;
         if (!response.ok || !data.ok) throw new Error(data.error || "Unable to open this invitation.");
         setInvitation(data.invitation);
+        if (data.invitation.accepted) setMode("login");
         setStatus("");
       })
       .catch((error) => {
@@ -136,7 +138,7 @@ export default function VenueTeamInviteClient({ token }: { token: string }) {
                 {isWorking ? "Please wait…" : mode === "signup" ? "Create account and join" : "Sign in and join"}
               </button>
             </form>
-            <small>Invitation expires {new Date(invitation.expiresAt).toLocaleString()}.</small>
+            <small>{invitation.expiresAt ? `Invitation expires ${new Date(invitation.expiresAt).toLocaleString()}.` : "This invitation stays available until you join the team, unless it is revoked or replaced."}</small>
           </>
         ) : (
           <p role="status">{status || "Opening invitation…"}</p>

@@ -65,6 +65,12 @@ function authFixture(providerError = null, { role = "customer", authSession = se
   const rateLimits = [];
   const accountReads = [];
   const vipQueries = [], revocations = [];
+  Object.assign(adminClient, {
+    from: adminClient.from || (() => { const q = { select: () => q, eq: () => q, maybeSingle: async () => ({ data: null }) }; return q; }),
+    auth: { ...adminClient.auth, admin: { ...adminClient.auth?.admin,
+      generateLink: async payload => { calls.push(payload); return { data: { user: authUser }, error: providerError }; },
+    } },
+  });
   const vipClient = {
     ...adminClient,
     auth: { ...adminClient.auth, admin: { ...adminClient.auth?.admin, signOut: async (...args) => {
@@ -78,6 +84,7 @@ function authFixture(providerError = null, { role = "customer", authSession = se
         eq: (key, value) => { steps.push(["eq", key, value]); predicates.push(row => row[key] === value); return query; },
         is: (key, value) => { steps.push(["is", key, value]); predicates.push(row => row[key] === value); return query; },
         gt: (key, value) => { steps.push(["gt", key, value]); predicates.push(row => row[key] > value); return query; },
+        or: value => { steps.push(["or",value]); const after=value.split('expires_at.gt.')[1]; predicates.push(row=>row.expires_at==null||row.expires_at>after);return query; },
         limit: value => { steps.push(["limit", value]); return query; },
         maybeSingle: async () => ({ data: (table === "venue_vip_members" ? memberships : invitations).find(row => predicates.every(matches => matches(row))) || null, error: lookupError }),
       };
@@ -86,6 +93,7 @@ function authFixture(providerError = null, { role = "customer", authSession = se
   };
   const result = { data: { user: authUser, session: authSession }, error: providerError };
   return { calls, provisions, rateLimits, accountReads, vipQueries, revocations, ...compile(authSource, {
+    "@/src/lib/dancr/email-actions": { sendAccountEmailAction: async () => true },
     "@/src/lib/dancr/password-policy": passwordPolicy,
     "@/src/lib/dancr/password-setup": passwordSetup,
     "@/src/lib/dancr/vip-login": vipLogin,
@@ -145,8 +153,8 @@ for (const requestedRole of ["customer", "dancer", "venue"]) test(`VIP cannot si
   assert.match(response.headers.get("cache-control"), /no-store/);
 });
 
-test("pending invited customers use VIP entry before activation, matched to the verified email", async () => {
-  const f = authFixture(null, { invitations: [pendingVip], authUser: { id: account.id, email: "Guest@Example.Test" } });
+for(const expires_at of [pendingVip.expires_at,null]) test(`pending invited customers use VIP entry before activation, matched to the verified email (deadline ${expires_at})`, async () => {
+  const f = authFixture(null, { invitations: [{...pendingVip,expires_at}], authUser: { id: account.id, email: "Guest@Example.Test" } });
   const response = await f.POST(jsonRequest("POST", { ...vipLoginInput, email: "other@example.test" }));
   assert.equal(response.status, 403);
   assert.equal(f.vipQueries[1].table, "venue_vip_invitations");
@@ -488,15 +496,15 @@ for (const role of ["dancer", "customer"]) {
   }
 }
 
-for (const authSession of [null, session]) test(`accepted dancer signup preserves ${authSession ? "session" : "email confirmation"} flow`, async () => {
+for (const authSession of [null, session]) test(`dancer signup waits for durable email confirmation (provider session ${Boolean(authSession)})`, async () => {
   const f = authFixture(null, { role: "dancer", authSession });
   const response = await f.POST(jsonRequest("POST", { mode: "signup", role: "dancer", email: "signup@example.com", password: "Unique1!Test1!password" }));
   const body = await response.json();
   assert.equal(response.status, 200);
   assert.equal(body.ok, true);
   assert.equal(body.account.role, "dancer");
-  assert.equal(body.requiresEmailConfirmation, !authSession);
-  assert.equal(body.session?.accessToken ?? null, authSession?.access_token ?? null);
+  assert.equal(body.requiresEmailConfirmation, true);
+  assert.equal(body.session, null);
   assert.equal(f.calls.length, 1);
   assert.equal(f.provisions.length, 1);
   assert.equal(f.provisions[0].role, "dancer");
@@ -569,6 +577,7 @@ function passwordFixture({ providerError = null, revokeFails = false, revokeThro
     signOut: async options => { assert.equal(options.scope, "others"); calls.push("revoke"); if (revokeThrows) throw new Error("network"); return { error: revokeFails ? new Error("network") : null }; },
   } };
   const route = compile(accountSource, {
+    "@/src/lib/dancr/email-actions": { completePasswordRecovery: async (_admin, id) => { assert.equal(id, account.id); calls.push("recovery-completed"); } },
     "@/src/lib/dancr/password-policy": passwordPolicy,
     "@/src/lib/dancr/password-setup": passwordSetup,
     "@/src/lib/supabase/admin": { createAdminSupabaseClient: () => ({ auth: { admin: { updateUserById: async (id, input) => ({ data: { user: { id, app_metadata: input.app_metadata } }, error: setupRecordFails ? new Error('unavailable') : null }) } } }) },
@@ -662,7 +671,8 @@ for (const options of [{}, { revokeFails: true }, { revokeThrows: true }, { emai
   const reusedResponse = await reused.PATCH(jsonRequest("PATCH", payload));
   assert.equal(reusedResponse.status, 200);
   assert.deepEqual(await reusedResponse.json(), await changedResponse.json());
-  assert.deepEqual(JSON.parse(JSON.stringify(reused.calls)), JSON.parse(JSON.stringify(changed.calls)));
+  assert.equal(reused.calls.filter(call => call === "recovery-completed").length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(reused.calls.filter(call => call !== "recovery-completed"))), JSON.parse(JSON.stringify(changed.calls)));
   assert.equal(reused.calls.filter(call => call.update).length, 1);
   assert.equal(reused.calls.find(call => call.update).update.password, payload.password);
   assert.equal(reused.calls.filter(call => call === "revoke").length, 1);

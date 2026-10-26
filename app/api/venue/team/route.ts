@@ -37,7 +37,6 @@ export async function POST(request: Request) {
       actorUserId: user.id,
       email: typeof body.email === "string" ? body.email : "",
       role: readAssignableRole(body.role),
-      expiresInDays: 7,
     });
     const invitationUrl = new URL(`/venue-team/invite/${encodeURIComponent(result.token)}`, publicAppUrl()).toString();
     const roleDescription = VENUE_TEAM_ROLE_DESCRIPTIONS[result.invitation.role];
@@ -59,7 +58,7 @@ export async function POST(request: Request) {
           "",
           `Accept the secure invitation: ${invitationUrl}`,
           "",
-          `This invitation expires ${new Date(result.invitation.expiresAt).toLocaleString("en-US", { timeZone: "America/Los_Angeles" })} Pacific Time.`,
+          "This invitation stays available until you join the team, unless the club owner revokes or replaces it.",
           "If you were not expecting this invitation, you can ignore this email.",
         ].join("\n"),
       });

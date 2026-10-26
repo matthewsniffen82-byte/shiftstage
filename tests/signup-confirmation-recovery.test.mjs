@@ -40,9 +40,12 @@ function fixture({ providerError = null, limitError = null, resend } = {}) {
       enforcePublicRequestRateLimit: async (_client, input) => { limits.push(input); if (limitError) throw limitError; },
     },
     '@/src/lib/supabase/admin': { createAdminSupabaseClient: () => ({}) },
-    '@/src/lib/supabase/server': { createServerSupabaseClient: () => ({ auth: {
-      resend: async input => { calls.push(input); return resend ? resend(input) : { error: providerError }; },
-    } }) },
+    '@/src/lib/dancr/email-actions': { sendPendingAccountEmail: async (_admin, email, purpose) => {
+      calls.push({ email, purpose });
+      if (providerError?.status === 429) throw new RateLimitError(60);
+      if (providerError && providerError.status !== 400) throw new policy.PublicApiError('UNAVAILABLE', 'Email delivery is temporarily unavailable.', 503);
+      return resend ? resend({ email, purpose }) : !providerError;
+    } },
   });
   return { ...route, calls, limits };
 }
@@ -54,12 +57,12 @@ test('a fresh confirmation uses the current email and trusted callback, never su
   const f = fixture();
   const response = await f.POST(request({ email: ' Guest@Example.Test ', role: 'admin', userId: 'deleted-id', password: 'ignored', emailRedirectTo: 'https://outside.test' }));
   assert.equal(response.status, 200);
-  assert.deepEqual(JSON.parse(JSON.stringify(f.calls)), [{ type: 'signup', email: 'guest@example.test', options: { emailRedirectTo: 'https://www.mydancr.com/auth/callback' } }]);
+  assert.deepEqual(JSON.parse(JSON.stringify(f.calls)), [{ email: 'guest@example.test', purpose: 'confirmation' }]);
   assert.equal(f.limits[0].subject, 'guest@example.test');
   assert.equal(f.limits[0].subjectLimit, 3);
   assert.equal(f.limits[0].ipLimit, 8);
   assert.match(response.headers.get('cache-control'), /no-store/);
-  assert.match((await response.json()).message, /newest email/);
+  assert.match((await response.json()).message, /Check your inbox/);
 });
 
 test('resending cannot recreate a deleted account or reveal whether an email exists', async () => {

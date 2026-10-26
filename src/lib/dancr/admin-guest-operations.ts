@@ -80,7 +80,7 @@ export async function getAdminGuestOperations(admin: SupabaseClient, search: URL
     if (status !== "all") query = query.eq("active", status === "active");
   } else if (section === "invitations") {
     query = admin.from("venue_vip_invitations").select("id,email,nickname,created_at,expires_at,accepted_at,revoked_at").eq("venue_id", venueId);
-    if (status === "pending") query = query.is("accepted_at", null).is("revoked_at", null).gt("expires_at", timestamp);
+    if (status === "pending") query = query.is("accepted_at", null).is("revoked_at", null).or(`expires_at.is.null,expires_at.gt.${timestamp}`);
     if (status === "accepted") query = query.not("accepted_at", "is", null);
     if (status === "revoked") query = query.not("revoked_at", "is", null);
     if (status === "expired") query = query.is("accepted_at", null).is("revoked_at", null).lte("expires_at", timestamp);

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import vm from 'node:vm';
+import { createHmac } from 'node:crypto';
 import { compileVip } from './helpers/vip-dashboard-fixture.mjs';
 import { createRootContentSecurityPolicy } from '../src/lib/security/root-content-security-policy.mjs';
 
@@ -18,7 +19,7 @@ function fixture(options = {}) {
   const calls = [], emails = [];
   let live = true, gets = 0;
   const admin = { from: table => {
-    const chain = { select: () => chain, eq: () => chain, is: () => chain, gt: () => chain, maybeSingle: async () => ({ data: table === 'app_users' ? options.missingProfile ? null : { id: userId, role: account?.role, account_state: account?.accountState } : live ? { email: options.invitedEmail || 'guest@example.test' } : null }) };
+    const chain = { select: () => chain, eq: () => chain, is: () => chain, gt: () => chain, or: () => chain, maybeSingle: async () => ({ data: table === 'app_users' ? options.missingProfile ? null : { id: userId, role: account?.role, account_state: account?.accountState } : live ? { email: options.invitedEmail || 'guest@example.test' } : null }) };
     return chain;
   }, auth: { admin: {
     getUserById: async id => { gets++; calls.push(['get', id]); if (options.onRead) options.onRead(user, gets); return { data: { user: options.deleted ? null : user }, error: options.readError }; },
@@ -45,17 +46,17 @@ function fixture(options = {}) {
     send: metadata => service.sendVipSetupLink(admin, { invitation, email: 'guest@example.test', expiresAt, ...(metadata ? { metadata } : {}) }) };
 }
 
-test('signed setup links are reusable through the original seven-day deadline, never beyond it', () => {
+test('signed setup links remain reusable without a time deadline', () => {
   const f = fixture();
   for (const time of [f.now, f.now + 86400000, f.now + week - 1]) {
     for (let i = 0; i < 2; i++) assert.equal(f.service.readVipSetupToken(f.token, time).userId, userId);
   }
-  assert.throws(() => f.service.readVipSetupToken(f.token, f.now + week), { status: 404 });
+  assert.equal(f.service.readVipSetupToken(f.token, f.now + 52 * week).userId, userId);
   assert.throws(() => f.service.readVipSetupToken(f.token, f.now - 1), { status: 404 });
   const daySix = f.service.createVipSetupToken(invitation, f.user, f.expiresAt, f.now + 6 * 86400000);
-  assert.equal(f.service.readVipSetupToken(daySix, f.now + 6 * 86400000).expiresAt, f.now + week);
+  assert.equal(f.service.readVipSetupToken(daySix, f.now + 6 * 86400000).expiresAt, null);
   const long = f.service.createVipSetupToken(invitation, f.user, new Date(f.now + 2 * week).toISOString(), f.now);
-  assert.equal(f.service.readVipSetupToken(long, f.now).expiresAt, f.now + week);
+  assert.equal(f.service.readVipSetupToken(long, f.now).expiresAt, null);
   const payload = JSON.parse(Buffer.from(f.token.slice(5).split('.')[0], 'base64url').toString());
   assert.equal(JSON.stringify(payload).includes(f.user.email), false);
 });
@@ -69,10 +70,21 @@ test('modified, malformed and plain invitation tokens cannot authorize a session
   }
 });
 
+test('older signed VIP setup emails survive their former deadline while the invitation remains pending', async () => {
+  const f=fixture();const claim=JSON.parse(Buffer.from(f.token.slice(5).split('.')[0],'base64url').toString());
+  Object.assign(claim,{v:1,issuedAt:f.now-2*week,expiresAt:f.now-week});
+  const encoded=Buffer.from(JSON.stringify(claim)).toString('base64url');
+  const signature=createHmac('sha256','synthetic-signing-secret').update('mydancr:vip-setup:v1\0'+encoded).digest('base64url');
+  const token=`vips_${encoded}.${signature}`;
+  assert.equal(f.service.readVipSetupToken(token).userId,userId);
+  assert.equal((await f.service.redeemVipSetupLink(f.admin,f.service.readVipSetupToken(token))).complete,false);
+  f.revoke();await assert.rejects(f.service.redeemVipSetupLink(f.admin,f.service.readVipSetupToken(token)));
+});
+
 test('the reusable credential is sent only to the invited inbox and never returned by send', async () => {
   const f = fixture();
   assert.equal(await f.send(), true); assert.equal(f.emails.length, 1);
-  const email = f.emails[0]; assert.equal(email.to, f.user.email); assert.match(email.text, /7-day window/);
+  const email = f.emails[0]; assert.equal(email.to, f.user.email); assert.match(email.text, /until.*password.*signed in/i);
   assert.equal(email.subject, 'Confirm your email for MyDancr VIP');
   assert.match(email.html, />Confirm email<\/a>/);
   assert.match(email.text, /email will already be filled in/);

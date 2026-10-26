@@ -14,6 +14,7 @@ import {
   resolveVenueSignupCode,
 } from "@/src/lib/dancr/venue-claims";
 import { redeemVenueTeamInvitation, resolveVenueTeamInvitation } from "@/src/lib/dancr/venue-team";
+import { sendAccountEmailAction, sendPendingAccountEmail } from "@/src/lib/dancr/email-actions";
 import { publicAppUrl } from "@/src/lib/dancr/public-app-url";
 import {
   AccountRecoveryRateLimitError,
@@ -35,6 +36,7 @@ import { getOptionalServerEnv } from "@/src/lib/server-env";
 import { prepareUserTermsSignup } from "@/src/lib/dancr/user-terms";
 import { recordPasswordSetup } from "@/src/lib/dancr/password-setup";
 import { requireVipLoginArea } from "@/src/lib/dancr/vip-login";
+import { vipReturnPath } from "@/src/lib/dancr/vip-entry";
 import { prepareCustomerEmailSignup } from "@/src/lib/dancr/customer-email-consent";
 
 export const runtime = "nodejs";
@@ -115,10 +117,10 @@ export async function POST(request: Request) {
         request,
         subject: email,
       });
-      const { error } = await client.auth.resetPasswordForEmail(email, {
-        redirectTo: safeEmailRedirectTo(body.emailRedirectTo),
-      });
-      if (error) {
+      try {
+        const callback = new URL(safeEmailRedirectTo(body.emailRedirectTo));
+        await sendPendingAccountEmail(admin, email, "recovery", vipReturnPath(callback.searchParams.get("vip_return_to")));
+      } catch (error) {
         const rateLimitMessage = authRateLimitMessage(error);
         if (rateLimitMessage) throw error;
         console.error("ACCOUNT_PASSWORD_RESET_DELIVERY_FAILED", {
@@ -248,14 +250,26 @@ export async function POST(request: Request) {
             stage_name: submittedStageName || null,
           };
 
-    const { data, error } = await client.auth.signUp({
+    const signupAdmin = createAdminSupabaseClient();
+    const existing = await signupAdmin.from("app_users").select("id,role,account_state").eq("email", email).maybeSingle();
+    if (existing.error) throw existing.error;
+    if (existing.data) {
+      const identity = await signupAdmin.auth.admin.getUserById(existing.data.id);
+      if (identity.error) throw identity.error;
+      if (!identity.data.user || identity.data.user.email_confirmed_at || existing.data.role !== role || existing.data.account_state !== "active") return signupSignInResponse();
+      await sendAccountEmailAction(signupAdmin, { userId: existing.data.id, purpose: "confirmation" });
+      return authJson(await authResponse(existing.data.id, role, null, true));
+    }
+    const generated = await signupAdmin.auth.admin.generateLink({
+      type: "signup",
       email,
       password,
       options: {
         data: metadata,
-        emailRedirectTo: safeEmailRedirectTo(body.emailRedirectTo),
       },
     });
+    const { error } = generated;
+    const data = { user: generated.data.user, session: null };
 
     if (error) throw error;
     if (!data.user) throw new Error("Unable to create account.");
@@ -273,6 +287,8 @@ export async function POST(request: Request) {
       displayName,
       city,
     });
+
+    await sendAccountEmailAction(signupAdmin, { userId: data.user.id, purpose: "confirmation" });
 
     if (role === "customer") {
       await recordPasswordSetup(createAdminSupabaseClient, data.user);

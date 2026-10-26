@@ -6,7 +6,7 @@ export type VipRequest = {
   status: "pending" | "confirmed" | "declined" | "cancelled";
   response_note: string; created_at: string; updated_at?: string;
 };
-export type VipInvitation = { venueName: string; maskedEmail: string; expiresAt: string };
+export type VipInvitation = { venueName: string; maskedEmail: string; expiresAt: string | null };
 export type VipDashboardView = "overview" | "dancers" | "plan" | "requests" | "account";
 export type VipRequestFilter = "all" | VipRequest["status"];
 export type VipSummary = { pending: number; upcoming: number; nextVisit: VipRequest | null };
@@ -15,7 +15,7 @@ export type VipState = {
   summary?: VipSummary; requestCount?: number;
 };
 export type VenueVipState = {
-  invitations: Array<{ id: string; email: string; nickname?: string; expires_at: string }>;
+  invitations: Array<{ id: string; email: string; nickname?: string; expires_at: string | null }>;
   members: Array<{ id: string; display_name: string; nickname: string }>;
   memberCount: number; membersHasMore: boolean;
   requests: VipRequest[]; hasMore: boolean; requestCount?: number;

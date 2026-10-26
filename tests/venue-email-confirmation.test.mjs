@@ -11,14 +11,14 @@ const read = p => readFileSync(new URL('../'+p,import.meta.url),'utf8');
 function compile(source,deps={}){const exports={};vm.runInNewContext(ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,{exports,URL,URLSearchParams,Error,Request,Response,console:{warn(){},error(){}},require:n=>n==='next/server'?require(n):deps[n]||{}});return exports;}
 function confirmationFixture({confirmed=false,wrongUser=false}={}){
  const messages=[],generated=[];
- const service=compile(read('src/lib/dancr/venue-email-confirmation.ts'),{'./public-app-url':{publicAppUrl:()=> 'https://mydancr.com'},'./notification-delivery':{sendTransactionalEmail:async msg=>{messages.push(msg);return {delivered:true};}}});
- const client={auth:{admin:{getUserById:async()=>({data:{user:{id:'manager',email:'manager@example.com',email_confirmed_at:confirmed?'2026-09-08':null,app_metadata:{mydancr_provisioned_role:'venue'}}}}),generateLink:async args=>{generated.push(args);return {data:{user:{id:wrongUser?'different':'manager'},properties:{hashed_token:'private-proof'}}};}}}};
+ const service=compile(read('src/lib/dancr/venue-email-confirmation.ts'),{'./email-actions':{sendAccountEmailAction:async (_client,input)=>{messages.push(input);return true;}}});
+ const client={auth:{admin:{getUserById:async()=>({data:{user:{id:wrongUser?'different':'manager',email:'manager@example.com',email_confirmed_at:confirmed?'2026-09-08':null,app_metadata:{mydancr_provisioned_role:'venue'}}}})}}};
  return {messages,generated,send:()=>service.sendVenueRequestConfirmation(client,{userId:'manager',email:'manager@example.com'})};
 }
-test('email confirmation proof is mailed privately with the venue callback destination',async()=>{
- const f=confirmationFixture();assert.equal((await f.send()).delivered,true);assert.equal(f.messages[0].to,'manager@example.com');
- assert.match(f.messages[0].text,/auth\/callback\?role=venue&type=email&token_hash=private-proof/);
- assert.equal(f.generated[0].type,'magiclink');assert.equal('password' in f.generated[0],false);
+test('venue confirmation requests a durable email action with the venue dashboard destination',async()=>{
+ const f=confirmationFixture();assert.equal((await f.send()).delivered,true);
+ assert.equal(f.messages[0].userId,'manager');assert.equal(f.messages[0].purpose,'confirmation');
+ assert.equal(f.messages[0].returnTo,'/dashboard/venue?confirmed=1');
 });
 test('confirmed accounts are not issued new confirmation links',async()=>{const f=confirmationFixture({confirmed:true});await f.send();assert.equal(f.generated.length,0);assert.equal(f.messages.length,0);});
 test('a confirmation for another account is never emailed',async()=>{const f=confirmationFixture({wrongUser:true});await assert.rejects(f.send(),/does not match/);assert.equal(f.messages.length,0);});

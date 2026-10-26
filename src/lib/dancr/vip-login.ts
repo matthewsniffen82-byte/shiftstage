@@ -22,7 +22,7 @@ export async function requireVipLoginArea(client: SupabaseClient, input: {
       const invitation = await client.from("venue_vip_invitations").select("id")
         .eq("email", input.verifiedEmail.trim().toLowerCase())
         .is("accepted_at", null).is("revoked_at", null)
-        .gt("expires_at", new Date().toISOString()).limit(1).maybeSingle();
+        .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`).limit(1).maybeSingle();
       if (invitation.error) throw invitation.error;
       isVip = Boolean(invitation.data);
     }
